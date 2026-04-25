@@ -1,0 +1,26 @@
+[package]
+name = "dust_driver"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+dust_text = { path = "../dust_text" }
+dust_diagnostics = { path = "../dust_diagnostics" }
+dust_cache = { path = "../dust_cache" }
+dust_workspace = { path = "../dust_workspace" }
+dust_parser_dart = { path = "../dust_parser_dart" }
+dust_parser_dart_ts = { path = "../dust_parser_dart_ts" }
+dust_resolver = { path = "../dust_resolver" }
+dust_ir = { path = "../dust_ir" }
+dust_plugin_api = { path = "../dust_plugin_api" }
+dust_plugin_derive = { path = "../dust_plugin_derive" }
+dust_plugin_serde = { path = "../dust_plugin_serde" }
+dust_emitter = { path = "../dust_emitter" }
+
+[dev-dependencies]
+tempfile = "3.27.0"
+
+[lib]
+path = "src/lib.rs"

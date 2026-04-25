@@ -1,0 +1,19 @@
+[package]
+name = "dust_cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+dust_driver = { path = "../dust_driver" }
+
+[dev-dependencies]
+tempfile = "3.27.0"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "dust"
+path = "src/main.rs"

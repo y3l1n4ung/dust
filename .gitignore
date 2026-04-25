@@ -1,0 +1,6 @@
+target/
+**/.dart_tool/
+**/.DS_Store
+**/pubspec.lock
+examples/stress_project/lib/generated_models/
+*.log

@@ -1,0 +1,24 @@
+name: derive_serde_annotation
+description: Dust serde annotations for JSON serialization and deserialization.
+version: 0.1.0
+publish_to: none
+homepage: https://github.com/yelinaung/dart_codegeneration_engine
+repository: https://github.com/yelinaung/dart_codegeneration_engine
+issue_tracker: https://github.com/yelinaung/dart_codegeneration_engine/issues
+
+environment:
+  sdk: ^3.11.0
+
+topics:
+  - codegen
+  - annotations
+  - serialization
+  - dust
+
+dependencies:
+  derive_annotation:
+    path: ../derive_annotation
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.26.0

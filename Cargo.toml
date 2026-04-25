@@ -1,0 +1,27 @@
+[workspace]
+members = [
+    "crates/dust_text",
+    "crates/dust_diagnostics",
+    "crates/dust_cache",
+    "crates/dust_parser_dart",
+    "crates/dust_parser_dart_ts",
+    "crates/dust_ir",
+    "crates/dust_resolver",
+    "crates/dust_plugin_api",
+    "crates/dust_plugin_derive",
+    "crates/dust_plugin_serde",
+    "crates/dust_emitter",
+    "crates/dust_workspace",
+    "crates/dust_driver",
+    "crates/dust_cli",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+rust-version = "1.85"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"

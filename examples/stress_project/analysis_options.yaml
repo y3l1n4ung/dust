@@ -1,0 +1,4 @@
+analyzer:
+  exclude:
+    - lib/generated_models/**
+

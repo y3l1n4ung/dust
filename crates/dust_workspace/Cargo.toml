@@ -1,0 +1,15 @@
+[package]
+name = "dust_workspace"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+dust_diagnostics = { path = "../dust_diagnostics" }
+
+[dev-dependencies]
+tempfile = "3.27.0"
+
+[lib]
+path = "src/lib.rs"

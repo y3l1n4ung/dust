@@ -1,0 +1,19 @@
+[package]
+name = "dust_emitter"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+dust_diagnostics = { path = "../dust_diagnostics" }
+dust_ir = { path = "../dust_ir" }
+dust_plugin_api = { path = "../dust_plugin_api" }
+
+[dev-dependencies]
+tempfile = "3.15.0"
+dust_text = { path = "../dust_text" }
+dust_plugin_derive = { path = "../dust_plugin_derive" }
+
+[lib]
+path = "src/lib.rs"

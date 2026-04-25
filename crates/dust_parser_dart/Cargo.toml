@@ -1,0 +1,13 @@
+[package]
+name = "dust_parser_dart"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+dust_text = { path = "../dust_text" }
+dust_diagnostics = { path = "../dust_diagnostics" }
+
+[lib]
+path = "src/lib.rs"

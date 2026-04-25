@@ -1,0 +1,9 @@
+[package]
+name = "dust_text"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+path = "src/lib.rs"

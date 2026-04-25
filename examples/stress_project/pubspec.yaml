@@ -1,0 +1,10 @@
+name: dust_stress_project
+description: Large local fixture package for Dust generator scale testing.
+publish_to: none
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  derive_annotation:
+    path: ../../packages/derive_annotation
+
