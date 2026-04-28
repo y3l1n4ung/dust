@@ -35,29 +35,13 @@ mixin _$OptionalNoteDust {
     Object? note = _undefined,
     Object? aliases = _undefined,
   }) {
-    final nextIdSource = id ?? _dustSelf.id;
-    final nextId = nextIdSource;
-    final nextNoteSource = identical(note, _undefined) ? _dustSelf.note : note as String?;
-    final nextNote = nextNoteSource;
     final nextAliasesSource = identical(aliases, _undefined) ? _dustSelf.aliases : aliases as List<String>?;
     final nextAliases = nextAliasesSource == null ? null : List<String>.of(nextAliasesSource);
 
     return OptionalNote(
-      id: nextId,
-      note: nextNote,
+      id: id ?? _dustSelf.id,
+      note: identical(note, _undefined) ? _dustSelf.note : note as String?,
       aliases: nextAliases,
-    );
-  }
-
-  OptionalNote clone() {
-    final clonedId = _dustSelf.id;
-    final clonedNote = _dustSelf.note;
-    final clonedAliases = _dustSelf.aliases == null ? null : List<String>.of(_dustSelf.aliases!);
-
-    return OptionalNote(
-      id: clonedId,
-      note: clonedNote,
-      aliases: clonedAliases,
     );
   }
 }

@@ -4,14 +4,14 @@ import 'audit.dart';
 
 part 'entity.g.dart';
 
-@Derive([Debug(), PartialEq(), Hash()])
+@Derive([Debug(), Eq()])
 abstract class Entity extends CatalogNode with AuditStamp, _$EntityDust {
   const Entity(this.id);
 
   final String id;
 }
 
-@Derive([Debug(), Clone(), PartialEq(), Hash(), CopyWith()])
+@Derive([Debug(), Eq(), CopyWith()])
 class DetailedEntity extends Entity with _$DetailedEntityDust {
   const DetailedEntity(
     super.id, {

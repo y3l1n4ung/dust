@@ -20,6 +20,14 @@ mixin _$JsonAccountDust {
           _dustDeepCollectionEquality.equals(other.metrics, _dustSelf.metrics) &&
           other.archived == _dustSelf.archived;
 
+  @override
+  int get hashCode => Object.hashAll([
+    runtimeType,
+    _dustSelf.profile,
+    _dustDeepCollectionEquality.hash(_dustSelf.metrics),
+    _dustSelf.archived,
+  ]);
+
   Map<String, Object?> toJson() => _$JsonAccountToJson(_dustSelf);
 }
 

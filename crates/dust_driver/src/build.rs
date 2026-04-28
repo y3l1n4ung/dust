@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     fs, io,
     path::Path,
     sync::{
@@ -11,7 +12,7 @@ use std::{
 
 use dust_cache::{CacheEntry, WorkspaceCache};
 use dust_diagnostics::Diagnostic;
-use dust_emitter::write_library;
+use dust_emitter::{emit_library_with_plan, write_library_with_plan};
 use dust_parser_dart::{ParseOptions, parse_file_with_backend};
 use dust_parser_dart_ts::TreeSitterDartBackend;
 use dust_plugin_api::PluginRegistry;
@@ -61,7 +62,7 @@ where
 
 fn run_build_inner(
     request: BuildRequest,
-    progress: Option<&(dyn Fn(ProgressEvent) + Send + Sync)>,
+    progress: Option<&(dyn Fn(ProgressEvent) + Send + Sync + '_)>,
 ) -> CommandResult {
     let started = Instant::now();
     let mut result = CommandResult::default();
@@ -105,19 +106,21 @@ fn run_build_inner(
         ..CacheReport::default()
     };
     let indexed = prepare_and_process_batch(
-        &workspace.root,
+        BatchConfig {
+            workspace_root: &workspace.root,
+            package_config_hash,
+            tool_hash,
+            cache: &cache,
+            catalog: &catalog,
+            registry: &registry,
+            write_output: true,
+            fail_fast: request.fail_fast,
+            jobs: request.jobs,
+            file_id_base: 1,
+            phase: ProgressPhase::Build,
+            progress,
+        },
         &workspace.libraries,
-        package_config_hash,
-        tool_hash,
-        &cache,
-        &catalog,
-        &registry,
-        true,
-        request.fail_fast,
-        request.jobs,
-        1,
-        ProgressPhase::Build,
-        progress,
         &mut cache_report,
     );
 
@@ -192,32 +195,94 @@ struct PendingLibrary {
     input: LoadedLibraryInput,
 }
 
-pub(crate) fn prepare_and_process_batch(
-    workspace_root: &Path,
-    libraries: &[SourceLibrary],
-    package_config_hash: u64,
-    tool_hash: u64,
-    cache: &WorkspaceCache,
-    catalog: &dust_resolver::SymbolCatalog,
-    registry: &PluginRegistry,
+type ProgressCallback<'a> = dyn Fn(ProgressEvent) + Send + Sync + 'a;
+
+#[derive(Clone, Copy)]
+pub(crate) struct BatchConfig<'a> {
+    pub(crate) workspace_root: &'a Path,
+    pub(crate) package_config_hash: u64,
+    pub(crate) tool_hash: u64,
+    pub(crate) cache: &'a WorkspaceCache,
+    pub(crate) catalog: &'a dust_resolver::SymbolCatalog,
+    pub(crate) registry: &'a PluginRegistry,
+    pub(crate) write_output: bool,
+    pub(crate) fail_fast: bool,
+    pub(crate) jobs: Option<usize>,
+    pub(crate) file_id_base: u32,
+    pub(crate) phase: ProgressPhase,
+    pub(crate) progress: Option<&'a ProgressCallback<'a>>,
+}
+
+#[derive(Clone, Copy)]
+struct ProcessingConfig<'a> {
+    catalog: &'a dust_resolver::SymbolCatalog,
+    registry: &'a PluginRegistry,
+    copyable_types: &'a HashSet<String>,
     write_output: bool,
-    fail_fast: bool,
-    jobs: Option<usize>,
-    file_id_base: u32,
+}
+
+#[derive(Clone, Copy)]
+struct ProgressReporter<'a> {
+    progress: Option<&'a ProgressCallback<'a>>,
+    completed: &'a AtomicUsize,
     phase: ProgressPhase,
-    progress: Option<&(dyn Fn(ProgressEvent) + Send + Sync)>,
+    total: usize,
+}
+
+struct ProgressSnapshot<'a> {
+    library: &'a SourceLibrary,
+    cached: bool,
+    written: bool,
+    changed: bool,
+    had_errors: bool,
+    elapsed_ms: u128,
+}
+
+impl ProgressReporter<'_> {
+    fn started_batch(&self) {
+        if let Some(progress) = self.progress {
+            progress(ProgressEvent::StartedBatch {
+                phase: self.phase,
+                total: self.total,
+            });
+        }
+    }
+
+    fn finish(&self, snapshot: ProgressSnapshot<'_>) {
+        if let Some(progress) = self.progress {
+            let completed = self.completed.fetch_add(1, Ordering::SeqCst) + 1;
+            progress(ProgressEvent::FinishedLibrary {
+                phase: self.phase,
+                completed,
+                total: self.total,
+                source_path: snapshot.library.source_path.clone(),
+                cached: snapshot.cached,
+                written: snapshot.written,
+                changed: snapshot.changed,
+                had_errors: snapshot.had_errors,
+                elapsed_ms: snapshot.elapsed_ms,
+            });
+        }
+    }
+}
+
+pub(crate) fn prepare_and_process_batch(
+    config: BatchConfig<'_>,
+    libraries: &[SourceLibrary],
     cache_report: &mut CacheReport,
 ) -> Vec<IndexedBuildOutcome> {
-    if let Some(progress) = progress {
-        progress(ProgressEvent::StartedBatch {
-            phase,
-            total: libraries.len(),
-        });
-    }
+    let completed = Arc::new(AtomicUsize::new(0));
+    let reporter = ProgressReporter {
+        progress: config.progress,
+        completed: &completed,
+        phase: config.phase,
+        total: libraries.len(),
+    };
+    reporter.started_batch();
 
     let mut outcomes = Vec::new();
     let mut pending = Vec::new();
-    let completed = Arc::new(AtomicUsize::new(0));
+    let mut loaded_sources = Vec::new();
 
     for (index, library) in libraries.iter().enumerate() {
         let input = match load_library_input(library) {
@@ -239,32 +304,33 @@ pub(crate) fn prepare_and_process_batch(
                         expected_output_hash: None,
                     },
                 });
-                emit_progress(
-                    progress,
-                    &completed,
-                    phase,
-                    libraries.len(),
+                reporter.finish(ProgressSnapshot {
                     library,
-                    false,
-                    false,
-                    false,
-                    true,
-                    0,
-                );
-                if fail_fast {
+                    cached: false,
+                    written: false,
+                    changed: false,
+                    had_errors: true,
+                    elapsed_ms: 0,
+                });
+                if config.fail_fast {
                     break;
                 }
                 continue;
             }
         };
+        loaded_sources.push((
+            FileId::new(config.file_id_base + index as u32),
+            library.clone(),
+            input.source.clone(),
+        ));
 
         if matches_cache(
-            cache,
-            workspace_root,
+            config.cache,
+            config.workspace_root,
             library,
             &input,
-            package_config_hash,
-            tool_hash,
+            config.package_config_hash,
+            config.tool_hash,
         ) {
             cache_report.hits += 1;
             outcomes.push(IndexedBuildOutcome {
@@ -283,45 +349,40 @@ pub(crate) fn prepare_and_process_batch(
                     expected_output_hash: input.output_hash,
                 },
             });
-            emit_progress(
-                progress,
-                &completed,
-                phase,
-                libraries.len(),
+            reporter.finish(ProgressSnapshot {
                 library,
-                true,
-                false,
-                false,
-                false,
-                0,
-            );
+                cached: true,
+                written: false,
+                changed: false,
+                had_errors: false,
+                elapsed_ms: 0,
+            });
             continue;
         }
 
         cache_report.misses += 1;
         pending.push(PendingLibrary {
             index,
-            file_id: FileId::new(file_id_base + index as u32),
+            file_id: FileId::new(config.file_id_base + index as u32),
             library: library.clone(),
             input,
         });
     }
 
-    let desired_jobs = jobs.unwrap_or_else(default_parallel_jobs).max(1);
-    let mut processed = if fail_fast || desired_jobs <= 1 || pending.len() <= 1 {
+    let copyable_types = collect_workspace_copyable_types(&loaded_sources, config.catalog);
+    let processing = ProcessingConfig {
+        catalog: config.catalog,
+        registry: config.registry,
+        copyable_types: &copyable_types,
+        write_output: config.write_output,
+    };
+
+    let desired_jobs = config.jobs.unwrap_or_else(default_parallel_jobs).max(1);
+    let mut processed = if config.fail_fast || desired_jobs <= 1 || pending.len() <= 1 {
         let mut processed = Vec::new();
 
         for pending in pending {
-            let outcome = process_pending_library(
-                pending,
-                catalog,
-                registry,
-                write_output,
-                phase,
-                progress,
-                libraries.len(),
-                &completed,
-            );
+            let outcome = process_pending_library(pending, &processing, &reporter);
             let has_error = outcome
                 .outcome
                 .diagnostics
@@ -329,24 +390,14 @@ pub(crate) fn prepare_and_process_batch(
                 .any(|diagnostic| diagnostic.is_error());
             processed.push(outcome);
 
-            if fail_fast && has_error {
+            if config.fail_fast && has_error {
                 break;
             }
         }
 
         processed
     } else {
-        process_pending_parallel(
-            pending,
-            desired_jobs,
-            catalog,
-            registry,
-            write_output,
-            phase,
-            progress,
-            libraries.len(),
-            &completed,
-        )
+        process_pending_parallel(pending, desired_jobs, &processing, &reporter)
     };
 
     outcomes.append(&mut processed);
@@ -356,13 +407,8 @@ pub(crate) fn prepare_and_process_batch(
 
 fn process_pending_library(
     pending: PendingLibrary,
-    catalog: &dust_resolver::SymbolCatalog,
-    registry: &PluginRegistry,
-    write_output: bool,
-    phase: ProgressPhase,
-    progress: Option<&(dyn Fn(ProgressEvent) + Send + Sync)>,
-    total: usize,
-    completed: &AtomicUsize,
+    processing: &ProcessingConfig<'_>,
+    reporter: &ProgressReporter<'_>,
 ) -> IndexedBuildOutcome {
     let backend = TreeSitterDartBackend::new();
     let started = Instant::now();
@@ -371,27 +417,21 @@ fn process_pending_library(
         &pending.library,
         pending.input.source,
         &backend,
-        catalog,
-        registry,
-        write_output,
+        processing,
     );
     let elapsed_ms = started.elapsed().as_millis();
     let had_errors = outcome
         .diagnostics
         .iter()
         .any(|diagnostic| diagnostic.is_error());
-    emit_progress(
-        progress,
-        completed,
-        phase,
-        total,
-        &pending.library,
-        false,
-        outcome.artifact.written,
-        outcome.artifact.changed,
+    reporter.finish(ProgressSnapshot {
+        library: &pending.library,
+        cached: false,
+        written: outcome.artifact.written,
+        changed: outcome.artifact.changed,
         had_errors,
         elapsed_ms,
-    );
+    });
 
     IndexedBuildOutcome {
         index: pending.index,
@@ -404,13 +444,8 @@ fn process_pending_library(
 fn process_pending_parallel(
     pending: Vec<PendingLibrary>,
     jobs: usize,
-    catalog: &dust_resolver::SymbolCatalog,
-    registry: &PluginRegistry,
-    write_output: bool,
-    phase: ProgressPhase,
-    progress: Option<&(dyn Fn(ProgressEvent) + Send + Sync)>,
-    total: usize,
-    completed: &AtomicUsize,
+    processing: &ProcessingConfig<'_>,
+    reporter: &ProgressReporter<'_>,
 ) -> Vec<IndexedBuildOutcome> {
     let threads = jobs.min(pending.len()).max(1);
     let mut groups = (0..threads).map(|_| Vec::new()).collect::<Vec<_>>();
@@ -424,18 +459,7 @@ fn process_pending_parallel(
             handles.push(scope.spawn(move || {
                 group
                     .into_iter()
-                    .map(|pending| {
-                        process_pending_library(
-                            pending,
-                            catalog,
-                            registry,
-                            write_output,
-                            phase,
-                            progress,
-                            total,
-                            completed,
-                        )
-                    })
+                    .map(|pending| process_pending_library(pending, processing, reporter))
                     .collect::<Vec<_>>()
             }));
         }
@@ -448,48 +472,18 @@ fn process_pending_parallel(
     })
 }
 
-fn emit_progress(
-    progress: Option<&(dyn Fn(ProgressEvent) + Send + Sync)>,
-    completed: &AtomicUsize,
-    phase: ProgressPhase,
-    total: usize,
-    library: &SourceLibrary,
-    cached: bool,
-    written: bool,
-    changed: bool,
-    had_errors: bool,
-    elapsed_ms: u128,
-) {
-    if let Some(progress) = progress {
-        let completed = completed.fetch_add(1, Ordering::SeqCst) + 1;
-        progress(ProgressEvent::FinishedLibrary {
-            phase,
-            completed,
-            total,
-            source_path: library.source_path.clone(),
-            cached,
-            written,
-            changed,
-            had_errors,
-            elapsed_ms,
-        });
-    }
-}
-
 fn default_parallel_jobs() -> usize {
     thread::available_parallelism()
         .map(usize::from)
         .unwrap_or(1)
 }
 
-pub(crate) fn process_library_from_source(
+fn process_library_from_source(
     file_id: FileId,
     library: &SourceLibrary,
     source: String,
     backend: &TreeSitterDartBackend,
-    catalog: &dust_resolver::SymbolCatalog,
-    registry: &PluginRegistry,
-    write_output: bool,
+    processing: &ProcessingConfig<'_>,
 ) -> BuildOutcome {
     let mut diagnostics = Vec::new();
     let artifact = BuildArtifact {
@@ -507,7 +501,7 @@ pub(crate) fn process_library_from_source(
         file_id,
         &library.source_path.to_string_lossy(),
         &parsed.library,
-        catalog,
+        processing.catalog,
     );
     diagnostics.extend(resolved.diagnostics.clone());
 
@@ -522,8 +516,11 @@ pub(crate) fn process_library_from_source(
         };
     }
 
-    let output = if write_output {
-        match write_library(&lowered.value, registry) {
+    let mut plan = processing.registry.build_symbol_plan(&lowered.value);
+    plan.extend_copyable_types(processing.copyable_types.iter().cloned());
+
+    let output = if processing.write_output {
+        match write_library_with_plan(&lowered.value, processing.registry, plan.clone()) {
             Ok(output) => output,
             Err(error) => {
                 diagnostics.push(Diagnostic::error(format!(
@@ -539,7 +536,12 @@ pub(crate) fn process_library_from_source(
         }
     } else {
         let previous = fs::read_to_string(&library.output_path).ok();
-        let emitted = dust_emitter::emit_library(&lowered.value, registry, previous.as_deref());
+        let emitted = emit_library_with_plan(
+            &lowered.value,
+            processing.registry,
+            plan,
+            previous.as_deref(),
+        );
         dust_emitter::WriteResult {
             source: emitted.source,
             symbols: emitted.symbols,
@@ -563,6 +565,40 @@ pub(crate) fn process_library_from_source(
         },
         expected_output_hash: Some(hash_text(&output.source)),
     }
+}
+
+fn collect_workspace_copyable_types(
+    loaded_sources: &[(FileId, SourceLibrary, String)],
+    catalog: &dust_resolver::SymbolCatalog,
+) -> HashSet<String> {
+    let backend = TreeSitterDartBackend::new();
+
+    loaded_sources
+        .iter()
+        .flat_map(|(file_id, library, source)| {
+            let source_text = SourceText::new(*file_id, source.clone());
+            let parsed = parse_file_with_backend(&backend, &source_text, ParseOptions::default());
+            let resolved = resolve_library(
+                *file_id,
+                &library.source_path.to_string_lossy(),
+                &parsed.library,
+                catalog,
+            );
+
+            resolved
+                .library
+                .classes
+                .into_iter()
+                .filter(|class| {
+                    class
+                        .traits
+                        .iter()
+                        .any(|trait_app| trait_app.symbol.0 == "derive_annotation::CopyWith")
+                })
+                .map(|class| class.name)
+                .collect::<Vec<_>>()
+        })
+        .collect()
 }
 
 pub(crate) fn load_library_input(

@@ -124,3 +124,79 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
         format!("{}\n", lines.join("\n"))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use dust_diagnostics::Diagnostic;
+    use dust_driver::{CacheReport, CleanReport, CommandResult, DoctorReport, WatchReport};
+
+    use super::*;
+
+    #[test]
+    fn help_lists_public_commands() {
+        let help = render_help();
+
+        assert!(help.contains("build"));
+        assert!(help.contains("watch"));
+        assert!(help.contains("clean"));
+        assert!(help.contains("help"));
+    }
+
+    #[test]
+    fn render_clean_and_doctor_summaries() {
+        let clean = render_result(
+            &CliCommand::Clean,
+            &CommandResult {
+                clean: Some(CleanReport {
+                    root: PathBuf::from("/tmp/project"),
+                    scanned_files: 4,
+                    removed_files: 3,
+                    cache_cleared: true,
+                }),
+                elapsed_ms: 18,
+                ..CommandResult::default()
+            },
+        );
+        let doctor = render_result(
+            &CliCommand::Doctor,
+            &CommandResult {
+                doctor: Some(DoctorReport {
+                    root: PathBuf::from("/tmp/project"),
+                    library_count: 7,
+                    plugin_names: vec!["derive".to_owned(), "serde".to_owned()],
+                    libraries: vec![PathBuf::from("lib/user.dart")],
+                }),
+                elapsed_ms: 9,
+                ..CommandResult::default()
+            },
+        );
+
+        assert!(clean.contains("clean  scanned: 4  removed: 3  cache: cleared  time: 18ms"));
+        assert!(doctor.contains("doctor  workspace: ok  libraries: 7  plugins: 2  time: 9ms"));
+        assert!(doctor.contains("plugins derive, serde"));
+    }
+
+    #[test]
+    fn render_watch_and_diagnostics() {
+        let rendered = render_result(
+            &CliCommand::Watch,
+            &CommandResult {
+                watch: Some(WatchReport {
+                    cycles: 2,
+                    rebuild_batches: 1,
+                    rebuilt_libraries: vec![PathBuf::from("lib/user.dart")],
+                }),
+                cache: Some(CacheReport::default()),
+                elapsed_ms: 22,
+                diagnostics: vec![Diagnostic::warning("something happened")],
+                ..CommandResult::default()
+            },
+        );
+
+        assert!(rendered.contains("watch  scanned: 0  generated: 0  skipped: 0  time: 22ms"));
+        assert!(rendered.contains("watch  cycles: 2  rebuilds: 1"));
+        assert!(rendered.contains("warning: something happened"));
+    }
+}

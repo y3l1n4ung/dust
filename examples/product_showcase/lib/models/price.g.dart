@@ -33,29 +33,13 @@ mixin _$PriceDust {
     int? cents,
     List<String>? tags,
   }) {
-    final nextCurrencySource = currency ?? _dustSelf.currency;
-    final nextCurrency = nextCurrencySource;
-    final nextCentsSource = cents ?? _dustSelf.cents;
-    final nextCents = nextCentsSource;
     final nextTagsSource = tags ?? _dustSelf.tags;
     final nextTags = List<String>.of(nextTagsSource);
 
     return Price(
-      currency: nextCurrency,
-      cents: nextCents,
+      currency: currency ?? _dustSelf.currency,
+      cents: cents ?? _dustSelf.cents,
       tags: nextTags,
-    );
-  }
-
-  Price clone() {
-    final clonedCurrency = _dustSelf.currency;
-    final clonedCents = _dustSelf.cents;
-    final clonedTags = List<String>.of(_dustSelf.tags);
-
-    return Price(
-      currency: clonedCurrency,
-      cents: clonedCents,
-      tags: clonedTags,
     );
   }
 }

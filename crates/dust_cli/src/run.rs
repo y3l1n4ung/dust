@@ -131,3 +131,68 @@ fn split_output(
 
     (String::new(), rendered)
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use dust_diagnostics::Diagnostic;
+    use dust_driver::{CheckedLibrary, CommandResult};
+
+    use super::*;
+
+    #[test]
+    fn split_output_keeps_success_on_stdout() {
+        let rendered = "build result\n".to_owned();
+        let (stdout, stderr) = split_output(
+            ExitCode::Success as i32,
+            &CliCommand::Build,
+            &CommandResult::default(),
+            rendered.clone(),
+        );
+
+        assert_eq!(stdout, rendered);
+        assert!(stderr.is_empty());
+    }
+
+    #[test]
+    fn split_output_routes_stale_check_to_stderr() {
+        let result = CommandResult {
+            checked_libraries: vec![CheckedLibrary {
+                source_path: PathBuf::from("lib/user.dart"),
+                output_path: PathBuf::from("lib/user.g.dart"),
+                stale: true,
+                cached: false,
+            }],
+            ..CommandResult::default()
+        };
+
+        let (stdout, stderr) = split_output(
+            ExitCode::Stale as i32,
+            &CliCommand::Check,
+            &result,
+            "check stale\n".to_owned(),
+        );
+
+        assert!(stdout.is_empty());
+        assert_eq!(stderr, "check stale\n");
+    }
+
+    #[test]
+    fn split_output_routes_real_errors_to_stderr() {
+        let result = CommandResult {
+            diagnostics: vec![Diagnostic::error("broken")],
+            ..CommandResult::default()
+        };
+
+        let (stdout, stderr) = split_output(
+            ExitCode::Failure as i32,
+            &CliCommand::Build,
+            &result,
+            "error output\n".to_owned(),
+        );
+
+        assert!(stdout.is_empty());
+        assert_eq!(stderr, "error output\n");
+    }
+}

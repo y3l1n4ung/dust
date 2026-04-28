@@ -656,9 +656,9 @@ fn looks_like_function_type(source: &str) -> bool {
                 && index > 0 =>
             {
                 let tail = &source[index..];
-                if tail.starts_with("Function") {
+                if let Some(stripped) = tail.strip_prefix("Function") {
                     let prev = source[..index].chars().next_back().unwrap_or_default();
-                    let after = tail["Function".len()..].trim_start();
+                    let after = stripped.trim_start();
                     if prev.is_whitespace() && after.starts_with('(') {
                         return true;
                     }

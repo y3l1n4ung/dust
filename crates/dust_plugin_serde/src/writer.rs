@@ -4,7 +4,7 @@ use dust_ir::{
     BuiltinType, ClassIr, ConstructorIr, ParamKind, SerdeFieldConfigIr, SerdeRenameRuleIr, TypeIr,
 };
 
-pub(crate) fn find_deserialize_constructor<'a>(class: &'a ClassIr) -> Option<&'a ConstructorIr> {
+pub(crate) fn find_deserialize_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
     class
         .constructors
         .iter()
@@ -116,10 +116,7 @@ pub(crate) fn encode_expr(
 }
 
 fn nullable_identity_encode(ty: &TypeIr) -> bool {
-    matches!(
-        ty,
-        TypeIr::Builtin { nullable: true, .. } | TypeIr::Dynamic
-    )
+    matches!(ty, TypeIr::Builtin { nullable: true, .. } | TypeIr::Dynamic)
 }
 
 pub(crate) fn decode_expr(
@@ -241,9 +238,7 @@ fn decode_non_nullable_expr(
 fn non_nullable(ty: &TypeIr) -> TypeIr {
     match ty {
         TypeIr::Builtin { kind, .. } => TypeIr::builtin(*kind),
-        TypeIr::Named { name, args, .. } => {
-            TypeIr::generic(name.as_ref(), args.iter().cloned().collect::<Vec<_>>())
-        }
+        TypeIr::Named { name, args, .. } => TypeIr::generic(name.as_ref(), args.to_vec()),
         TypeIr::Function { signature, .. } => TypeIr::function(signature.as_ref()),
         TypeIr::Record { shape, .. } => TypeIr::record(shape.as_ref()),
         TypeIr::Dynamic => TypeIr::dynamic(),

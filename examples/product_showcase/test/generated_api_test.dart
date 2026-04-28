@@ -48,7 +48,7 @@ void main() {
 
     expect(product, equals(sameProduct));
     expect(product.hashCode, equals(sameProduct.hashCode));
-    expect(product.clone(), equals(product));
+    expect(product.copyWith(), equals(product));
     expect(product.copyWith(featured: false).featured, isFalse);
 
     final inventory = const [
@@ -89,6 +89,42 @@ void main() {
     expect(catalog.toString(), contains('Catalog('));
   });
 
+  test('copyWith deep clones nested Dust models', () {
+    final price = Price(currency: 'USD', cents: 1999, tags: ['featured', 'sale']);
+    final category = Category(
+      id: 'cat-1',
+      title: 'Shoes',
+      labels: {'summer', 'sale'},
+    );
+    final product = Product(
+      sku: 'sku-1',
+      title: 'Runner',
+      price: price,
+      categories: [category],
+      attributes: {'color': 'black'},
+      featured: true,
+    );
+
+    final cloned = product.copyWith();
+    price.tags.add('vip');
+    category.labels.add('clearance');
+
+    expect(cloned.price, isNot(same(price)));
+    expect(cloned.categories[0], isNot(same(category)));
+    expect(cloned.price.tags, ['featured', 'sale']);
+    expect(cloned.categories[0].labels, {'summer', 'sale'});
+
+    final copied = product.copyWith(featured: false);
+    price.tags.add('limited');
+    category.labels.add('outlet');
+
+    expect(copied.featured, isFalse);
+    expect(copied.price, isNot(same(price)));
+    expect(copied.categories[0], isNot(same(category)));
+    expect(copied.price.tags, ['featured', 'sale', 'vip']);
+    expect(copied.categories[0].labels, {'summer', 'sale', 'clearance'});
+  });
+
   test('generated derive features work for abstract annotated classes', () {
     const left = EntityView('entity-1');
     const right = EntityView('entity-1');
@@ -124,7 +160,7 @@ void main() {
           'DetailedEntity(id: entity-1, label: Featured, tags: [summer, sale])',
         ),
       );
-      expect(left.clone(), equals(left));
+      expect(left.copyWith(), equals(left));
 
       final updated = left.copyWith(
         id: 'entity-2',
@@ -144,7 +180,7 @@ void main() {
 
       expect(left, equals(right));
       expect(left.hashCode, equals(right.hashCode));
-      expect(left.clone(), equals(left));
+      expect(left.copyWith(), equals(left));
       expect(left.auditLabel(), 'audited');
       expect(
         left.toString(),
@@ -157,7 +193,7 @@ void main() {
     },
   );
 
-  test('clone deep copies nested collection fields', () {
+  test('copyWith deep copies nested collection fields without replacement', () {
     final original = NestedBundle(
       groups: [
         ['sale', 'featured'],
@@ -169,7 +205,7 @@ void main() {
       },
     );
 
-    final cloned = original.clone();
+    final cloned = original.copyWith();
     original.groups[0].add('vip');
     original.metrics['yangon']!.add(99);
 
@@ -261,7 +297,7 @@ void main() {
       expect(left.auditLabel(), 'audited');
       expect(left, equals(right));
       expect(left.hashCode, equals(right.hashCode));
-      expect(left.clone(), equals(left));
+      expect(left.copyWith(), equals(left));
 
       final updated = left.copyWith(archived: true);
       expect(updated.archived, isTrue);

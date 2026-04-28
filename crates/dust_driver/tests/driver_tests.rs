@@ -32,13 +32,13 @@ fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
     write_file(
         &workspace.path().join("lib/models.dart"),
         "part 'models.g.dart';\n\
-         @Derive([Debug(), Eq(), Hash(), CopyWith()])\n\
+         @Derive([Debug(), Eq(), CopyWith()])\n\
          class User {\n\
            final String id;\n\
            final int? age;\n\
            const User(this.id, this.age);\n\
          }\n\
-         @Clone()\n\
+         @CopyWith()\n\
          class Team {\n\
            final String name;\n\
            const Team(this.name);\n\
@@ -82,21 +82,21 @@ fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
             .contains("String toString() => 'User(id: ${_dustSelf.id}, age: ${_dustSelf.age})';")
     );
     assert!(models_output.contains("mixin _$TeamDust {"));
-    assert!(models_output.contains("Team clone() {"));
-    assert!(models_output.contains("final clonedName = _dustSelf.name;"));
-    assert!(models_output.contains("return Team("));
+    assert!(models_output.contains("Team copyWith({"));
+    assert!(models_output.contains("String? name,"));
+    assert!(models_output.contains("name ?? _dustSelf.name,"));
     assert!(request_output.contains("part of 'request.dart';"));
     assert!(request_output.contains("mixin _$RequestDust {"));
     assert!(request_output.contains("Request copyWith({"));
     assert!(request_output.contains("String? path,"));
     assert!(request_output.contains("Map<String, String>? headers,"));
-    assert!(request_output.contains("final nextPathSource = path ?? _dustSelf.path;"));
+    assert!(!request_output.contains("final nextPathSource = path ?? _dustSelf.path;"));
     assert!(request_output.contains("final nextHeadersSource = headers ?? _dustSelf.headers;"));
     assert!(
         request_output.contains("final nextHeaders = Map<String, String>.of(nextHeadersSource);")
     );
     assert!(request_output.contains("return Request.create("));
-    assert!(request_output.contains("path: nextPath,"));
+    assert!(request_output.contains("path: path ?? _dustSelf.path,"));
     assert!(request_output.contains("headers: nextHeaders,"));
 }
 
@@ -147,14 +147,23 @@ fn build_writes_real_serde_outputs() {
     let account_output = fs::read_to_string(workspace.path().join("lib/account.g.dart")).unwrap();
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
-    assert!(profile_output.contains("Map<String, Object?> toJson() => _$ProfileToJson(_dustSelf);"));
+    assert!(
+        profile_output.contains("Map<String, Object?> toJson() => _$ProfileToJson(_dustSelf);")
+    );
     assert!(profile_output.contains("Profile _$ProfileFromJson(Map<String, Object?> json)"));
-    assert!(profile_output.contains("const allowedKeys = <String>{'id', 'display_name', 'displayName', 'tags'};"));
+    assert!(
+        profile_output
+            .contains("const allowedKeys = <String>{'id', 'display_name', 'displayName', 'tags'};")
+    );
     assert!(profile_output.contains("final tagsValue = json.containsKey('tags') ?"));
     assert!(profile_output.contains(": const ['guest'];"));
-    assert!(account_output.contains("Map<String, Object?> toJson() => _$AccountToJson(_dustSelf);"));
+    assert!(
+        account_output.contains("Map<String, Object?> toJson() => _$AccountToJson(_dustSelf);")
+    );
     assert!(account_output.contains("'profile': instance.profile.toJson()"));
-    assert!(account_output.contains("Profile.fromJson(Map<String, Object?>.from(rawProfile as Map))"));
+    assert!(
+        account_output.contains("Profile.fromJson(Map<String, Object?>.from(rawProfile as Map))")
+    );
     assert!(account_output.contains("Map<String, Object?>.from(rawMetrics as Map).map((key, value) => MapEntry(key, (value as List<Object?>).map((item) => item as int).toList()))"));
 }
 
@@ -246,7 +255,7 @@ fn parallel_build_keeps_artifact_order_deterministic() {
     write_file(
         &workspace.path().join("lib/z_team.dart"),
         "part 'z_team.g.dart';\n\
-         @Clone()\n\
+         @CopyWith()\n\
          class Team {\n\
            final String id;\n\
            const Team(this.id);\n\
@@ -289,16 +298,17 @@ fn build_skips_invalid_library_and_continues_when_fail_fast_is_false() {
     write_file(
         &workspace.path().join("lib/bad.dart"),
         "part 'bad.g.dart';\n\
-         @Hash()\n\
+         @CopyWith()\n\
          class Broken {\n\
            final String id;\n\
+           final int age;\n\
            const Broken(this.id);\n\
          }\n",
     );
     write_file(
         &workspace.path().join("lib/good.dart"),
         "part 'good.g.dart';\n\
-         @Clone()\n\
+         @CopyWith()\n\
          class Good {\n\
            final String id;\n\
            const Good(this.id);\n\
@@ -313,9 +323,9 @@ fn build_skips_invalid_library_and_continues_when_fail_fast_is_false() {
 
     assert!(result.has_errors());
     assert!(result.diagnostics.iter().any(|diagnostic| {
-        diagnostic
-            .message
-            .contains("`Hash` requires `Eq` or `PartialEq` on class `Broken`")
+        diagnostic.message.contains(
+            "`CopyWith` requires a constructor that accepts every field on class `Broken`",
+        )
     }));
     assert!(!workspace.path().join("lib/bad.g.dart").exists());
     assert!(workspace.path().join("lib/good.g.dart").exists());
@@ -327,16 +337,17 @@ fn build_stops_after_first_error_when_fail_fast_is_true() {
     write_file(
         &workspace.path().join("lib/a_bad.dart"),
         "part 'a_bad.g.dart';\n\
-         @Hash()\n\
+         @CopyWith()\n\
          class Broken {\n\
            final String id;\n\
+           final int age;\n\
            const Broken(this.id);\n\
          }\n",
     );
     write_file(
         &workspace.path().join("lib/z_good.dart"),
         "part 'z_good.g.dart';\n\
-         @Clone()\n\
+         @CopyWith()\n\
          class Good {\n\
            final String id;\n\
            const Good(this.id);\n\
@@ -366,7 +377,7 @@ fn build_supports_abstract_and_mixin_clause_shapes_without_unrelated_warnings() 
          class CatalogNode {\n\
            const CatalogNode();\n\
          }\n\
-         @Derive([Debug(), PartialEq(), Hash()])\n\
+         @Derive([Debug(), Eq()])\n\
          abstract class Entity extends CatalogNode with AuditStamp {\n\
            final String id;\n\
            const Entity(this.id);\n\
@@ -381,7 +392,7 @@ fn build_supports_abstract_and_mixin_clause_shapes_without_unrelated_warnings() 
          mixin LabelStamp {\n\
            String labelKind() => 'tagged';\n\
          }\n\
-         @Derive([Debug(), Clone(), PartialEq(), Hash(), CopyWith()])\n\
+         @Derive([Debug(), Eq(), CopyWith()])\n\
          class TaggedValue with LabelStamp {\n\
            final String code;\n\
            final List<String> aliases;\n\
@@ -411,8 +422,6 @@ fn build_supports_abstract_and_mixin_clause_shapes_without_unrelated_warnings() 
     assert!(entity_output.contains("Entity get _dustSelf => this as Entity;"));
     assert!(entity_output.contains("other is Entity"));
     assert!(tagged_output.contains("mixin _$TaggedValueDust {"));
-    assert!(tagged_output.contains("TaggedValue clone() {"));
-    assert!(tagged_output.contains("final clonedAliases = List<String>.of(_dustSelf.aliases);"));
     assert!(tagged_output.contains("_dustDeepCollectionEquality.equals"));
     assert!(tagged_output.contains("TaggedValue copyWith({"));
     assert!(tagged_output.contains("final nextAliases = List<String>.of(nextAliasesSource);"));
@@ -424,12 +433,12 @@ fn build_includes_inherited_fields_for_annotated_subclasses() {
     write_file(
         &workspace.path().join("lib/entity.dart"),
         "part 'entity.g.dart';\n\
-         @Derive([Debug(), PartialEq(), Hash()])\n\
+         @Derive([Debug(), Eq()])\n\
          abstract class Entity with _$EntityDust {\n\
            final String id;\n\
            const Entity(this.id);\n\
          }\n\
-         @Derive([Debug(), Clone(), PartialEq(), Hash(), CopyWith()])\n\
+         @Derive([Debug(), Eq(), CopyWith()])\n\
          class DetailedEntity extends Entity with _$DetailedEntityDust {\n\
            final String label;\n\
            final List<String> tags;\n\
@@ -470,7 +479,7 @@ fn build_rejects_mixin_class_targets_with_clear_diagnostic() {
     write_file(
         &workspace.path().join("lib/mixin_target.dart"),
         "part 'mixin_target.g.dart';\n\
-         @Derive([Debug(), Clone()])\n\
+         @Derive([Debug(), CopyWith()])\n\
          mixin class MixinTarget {\n\
            final String id;\n\
            const MixinTarget(this.id);\n\
@@ -660,7 +669,7 @@ fn watch_rebuilds_only_the_changed_library() {
     write_file(
         &workspace.path().join("lib/team.dart"),
         "part 'team.g.dart';\n\
-         @Clone()\n\
+         @CopyWith()\n\
          class Team {\n\
            final String name;\n\
            const Team(this.name);\n\
@@ -702,7 +711,7 @@ fn watch_rebuilds_only_the_changed_library() {
         vec![workspace.path().join("lib/user.dart")]
     );
     assert!(user_output.contains("User(id: ${_dustSelf.id}, age: ${_dustSelf.age})"));
-    assert!(team_output.contains("Team clone() {"));
+    assert!(team_output.contains("Team copyWith({"));
     assert_eq!(result.build_artifacts.len(), 3);
 }
 
@@ -721,7 +730,7 @@ fn watch_rebuilds_all_libraries_when_package_config_changes() {
     write_file(
         &workspace.path().join("lib/team.dart"),
         "part 'team.g.dart';\n\
-         @Clone()\n\
+         @CopyWith()\n\
          class Team {\n\
            final String name;\n\
            const Team(this.name);\n\

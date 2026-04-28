@@ -7,7 +7,7 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::LibraryIr;
 use dust_plugin_api::{PluginRegistry, SymbolPlan};
 
-use crate::emit_library;
+use crate::{emit_library, emit_library_with_plan};
 
 /// The filesystem result of emitting one generated library.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -33,7 +33,22 @@ pub fn write_library(library: &LibraryIr, registry: &PluginRegistry) -> io::Resu
     let output_path = PathBuf::from(&library.output_path);
     let previous_output = read_previous_output(&output_path)?;
     let emitted = emit_library(library, registry, previous_output.as_deref());
+    finish_write(output_path, emitted)
+}
 
+/// Emits and writes one library using an explicitly prepared symbol plan.
+pub fn write_library_with_plan(
+    library: &LibraryIr,
+    registry: &PluginRegistry,
+    plan: SymbolPlan,
+) -> io::Result<WriteResult> {
+    let output_path = PathBuf::from(&library.output_path);
+    let previous_output = read_previous_output(&output_path)?;
+    let emitted = emit_library_with_plan(library, registry, plan, previous_output.as_deref());
+    finish_write(output_path, emitted)
+}
+
+fn finish_write(output_path: PathBuf, emitted: crate::EmitResult) -> io::Result<WriteResult> {
     let has_errors = emitted
         .diagnostics
         .iter()

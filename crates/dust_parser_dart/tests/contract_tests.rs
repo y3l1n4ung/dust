@@ -105,3 +105,41 @@ fn directive_span_accessor_returns_stored_span() {
 
     assert_eq!(directive.span(), TextRange::new(0_u32, 22_u32));
 }
+
+#[test]
+fn parsed_surface_helpers_cover_empty_and_mixin_class_cases() {
+    let library = ParsedLibrarySurface {
+        span: TextRange::new(0_u32, 0_u32),
+        directives: Vec::new(),
+        classes: Vec::new(),
+    };
+    let class = ParsedClassSurface {
+        kind: ParsedClassKind::MixinClass,
+        name: "UserMixin".to_owned(),
+        is_abstract: true,
+        superclass_name: None,
+        annotations: vec![ParsedAnnotation {
+            name: "Derive".to_owned(),
+            arguments_source: None,
+            span: TextRange::new(1_u32, 8_u32),
+        }],
+        fields: vec![ParsedFieldSurface {
+            name: "id".to_owned(),
+            annotations: vec![ParsedAnnotation {
+                name: "SerDe".to_owned(),
+                arguments_source: Some("rename: 'user_id'".to_owned()),
+                span: TextRange::new(9_u32, 20_u32),
+            }],
+            type_source: Some("String".to_owned()),
+            has_default: true,
+            span: TextRange::new(21_u32, 35_u32),
+        }],
+        constructors: Vec::new(),
+        span: TextRange::new(0_u32, 40_u32),
+    };
+
+    assert!(library.is_empty());
+    assert!(class.is_mixin_class());
+    assert!(class.has_annotation("Derive"));
+    assert!(class.fields[0].has_annotation("SerDe"));
+}

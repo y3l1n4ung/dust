@@ -75,31 +75,12 @@ impl LineIndex {
             .copied()
             .unwrap_or(self.text_len);
 
-        let end = if next > start {
-            let last = next - TextSize::new(1);
-            if last >= start && self.line_col(last).is_some() {
-                if last == start || self.contains_newline(last) {
-                    last
-                } else {
-                    next
-                }
-            } else {
-                next
-            }
-        } else {
-            next
-        };
-
-        let end = if end > start && self.line_starts.contains(&end) {
-            end
+        let end = if line + 1 < self.line_starts.len() {
+            next - TextSize::new(1)
         } else {
             next
         };
 
         Some(TextRange::new(start, end))
-    }
-
-    fn contains_newline(&self, offset: TextSize) -> bool {
-        self.line_starts.binary_search(&offset).is_ok()
     }
 }

@@ -98,49 +98,28 @@ fn plugin_claims_core_derive_traits() {
         names,
         vec![
             "derive_annotation::Debug",
-            "derive_annotation::PartialEq",
             "derive_annotation::Eq",
-            "derive_annotation::Hash",
-            "derive_annotation::Clone",
             "derive_annotation::CopyWith",
         ]
     );
 }
 
 #[test]
-fn hash_requires_eq() {
+fn eq_requires_no_companion_trait() {
     let plugin = register_plugin();
-    let diagnostics = plugin.validate(&sample_library(&["derive_annotation::Hash"]));
-
-    assert_eq!(diagnostics.len(), 1);
-    assert!(
-        diagnostics[0]
-            .message
-            .contains("`Hash` requires `Eq` or `PartialEq` on class `User`")
-    );
-}
-
-#[test]
-fn hash_accepts_partial_eq() {
-    let plugin = register_plugin();
-    let diagnostics = plugin.validate(&sample_library(&[
-        "derive_annotation::Hash",
-        "derive_annotation::PartialEq",
-    ]));
+    let diagnostics = plugin.validate(&sample_library(&["derive_annotation::Eq"]));
 
     assert!(diagnostics.is_empty());
 }
 
 #[test]
-fn requests_undefined_when_clone_or_copywith_is_present() {
+fn requests_undefined_only_for_copywith_when_needed() {
     let plugin = register_plugin();
 
-    let clone_requested = plugin.requested_symbols(&sample_library(&["derive_annotation::Clone"]));
     let copywith_requested =
         plugin.requested_symbols(&sample_library(&["derive_annotation::CopyWith"]));
     let no_requested = plugin.requested_symbols(&sample_library(&["derive_annotation::Debug"]));
 
-    assert!(clone_requested.is_empty());
     assert_eq!(copywith_requested, vec!["_undefined".to_owned()]);
     assert!(no_requested.is_empty());
 }
@@ -151,15 +130,13 @@ fn emits_full_fragments_for_matching_traits() {
     let library = sample_library(&[
         "derive_annotation::Debug",
         "derive_annotation::Eq",
-        "derive_annotation::Hash",
-        "derive_annotation::Clone",
         "derive_annotation::CopyWith",
     ]);
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let members = members_for_class(&contribution, "User");
 
     assert_eq!(contribution.mixin_members.len(), 1);
-    assert_eq!(members.len(), 5);
+    assert_eq!(members.len(), 4);
     assert!(members.iter().any(|fragment| {
         fragment
             .contains("String toString() => 'User(id: ${_dustSelf.id}, age: ${_dustSelf.age})';")
@@ -175,11 +152,6 @@ fn emits_full_fragments_for_matching_traits() {
             && fragment.contains("_dustSelf.id,")
             && fragment.contains("_dustSelf.age,")
     }));
-    assert!(members.iter().any(|fragment| {
-        fragment.contains("User clone() {")
-            && fragment.contains("final clonedId = _dustSelf.id;")
-            && fragment.contains("return User(")
-    }));
     assert!(
         members
             .iter()
@@ -188,10 +160,12 @@ fn emits_full_fragments_for_matching_traits() {
     assert!(members.iter().any(|fragment| {
         fragment.contains("String? id,")
             && fragment.contains("Object? age = _undefined,")
-            && fragment.contains("final nextIdSource = id ?? _dustSelf.id;")
-            && fragment.contains(
+            && !fragment.contains("final nextIdSource = id ?? _dustSelf.id;")
+            && !fragment.contains(
                 "final nextAgeSource = identical(age, _undefined) ? _dustSelf.age : age as int?;",
             )
+            && fragment.contains("id ?? _dustSelf.id,")
+            && fragment.contains("identical(age, _undefined) ? _dustSelf.age : age as int?,")
     }));
     assert!(
         members
@@ -201,7 +175,7 @@ fn emits_full_fragments_for_matching_traits() {
 }
 
 #[test]
-fn emits_only_eq_fragment_when_only_eq_is_present() {
+fn emits_eq_and_hash_fragments_when_eq_is_present() {
     let plugin = register_plugin();
     let contribution = plugin.emit(
         &sample_library(&["derive_annotation::Eq"]),
@@ -210,16 +184,21 @@ fn emits_only_eq_fragment_when_only_eq_is_present() {
     let members = members_for_class(&contribution, "User");
 
     assert_eq!(contribution.mixin_members.len(), 1);
-    assert_eq!(members.len(), 1);
+    assert_eq!(members.len(), 2);
     assert!(
         members
             .iter()
             .any(|fragment| fragment.contains("bool operator ==(Object other) =>"))
     );
+    assert!(
+        members
+            .iter()
+            .any(|fragment| fragment.contains("int get hashCode => Object.hashAll(["))
+    );
 }
 
 #[test]
-fn clone_copywith_requires_reconstructible_constructor() {
+fn copywith_requires_reconstructible_constructor() {
     let plugin = register_plugin();
     let broken = LibraryIr {
         source_path: "lib/user.dart".to_owned(),
@@ -272,12 +251,12 @@ fn clone_copywith_requires_reconstructible_constructor() {
     assert!(
         diagnostics[0]
             .message
-            .contains("`Clone`/`CopyWith` requires a constructor that accepts every field")
+            .contains("`CopyWith` requires a constructor that accepts every field")
     );
 }
 
 #[test]
-fn clone_copywith_rejects_abstract_classes() {
+fn copywith_rejects_abstract_classes() {
     let plugin = register_plugin();
     let abstract_library = LibraryIr {
         source_path: "lib/entity.dart".to_owned(),
@@ -308,7 +287,7 @@ fn clone_copywith_rejects_abstract_classes() {
                 }],
             }],
             traits: vec![TraitApplicationIr {
-                symbol: SymbolId::new("derive_annotation::Clone"),
+                symbol: SymbolId::new("derive_annotation::CopyWith"),
                 span: span(5, 9),
             }],
             serde: None,
@@ -375,7 +354,7 @@ fn rejects_mixin_class_targets() {
 }
 
 #[test]
-fn clone_copies_collection_fields() {
+fn copywith_copies_collection_fields_without_aliasing() {
     let plugin = register_plugin();
     let contribution = plugin.emit(
         &LibraryIr {
@@ -453,7 +432,7 @@ fn clone_copies_collection_fields() {
                     ],
                 }],
                 traits: vec![TraitApplicationIr {
-                    symbol: SymbolId::new("derive_annotation::Clone"),
+                    symbol: SymbolId::new("derive_annotation::CopyWith"),
                     span: span(5, 9),
                 }],
                 serde: None,
@@ -464,14 +443,119 @@ fn clone_copies_collection_fields() {
     let members = members_for_class(&contribution, "Catalog");
 
     assert_eq!(members.len(), 1);
+    assert!(members[0].contains("Catalog copyWith({"));
     assert!(members[0].contains(
-        "List<List<String>>.of(_dustSelf.groups.map((item_0) => List<String>.of(item_0)))"
+        "List<List<String>>.of(nextGroupsSource.map((item_0) => List<String>.of(item_0)))"
     ));
-    assert!(members[0].contains("List<String>.of(_dustSelf.items)"));
-    assert!(members[0].contains("_dustSelf.tags == null ? null : Set<String>.of(_dustSelf.tags!)"));
+    assert!(members[0].contains("List<String>.of(nextItemsSource)"));
+    assert!(members[0].contains("nextTagsSource == null ? null : Set<String>.of(nextTagsSource)"));
     assert!(members[0].contains("Map<String, List<int>>.fromEntries("));
     assert!(members[0].contains("List<int>.of(entry_"));
     assert!(members[0].contains(".value)"));
+}
+
+#[test]
+fn copywith_clones_nested_dust_models() {
+    let plugin = register_plugin();
+    let contribution = plugin.emit(
+        &LibraryIr {
+            source_path: "lib/product.dart".to_owned(),
+            output_path: "lib/product.g.dart".to_owned(),
+            span: span(0, 120),
+            classes: vec![
+                ClassIr {
+                    kind: ClassKindIr::Class,
+                    name: "Price".to_owned(),
+                    is_abstract: false,
+                    superclass_name: None,
+                    span: span(1, 20),
+                    fields: vec![FieldIr {
+                        name: "currency".to_owned(),
+                        ty: TypeIr::string(),
+                        span: span(2, 3),
+                        has_default: false,
+                        serde: None,
+                    }],
+                    constructors: vec![ConstructorIr {
+                        name: None,
+                        span: span(3, 4),
+                        params: vec![ConstructorParamIr {
+                            name: "currency".to_owned(),
+                            ty: TypeIr::string(),
+                            span: span(3, 4),
+                            kind: ParamKind::Positional,
+                            has_default: false,
+                        }],
+                    }],
+                    traits: vec![TraitApplicationIr {
+                        symbol: SymbolId::new("derive_annotation::CopyWith"),
+                        span: span(1, 2),
+                    }],
+                    serde: None,
+                },
+                ClassIr {
+                    kind: ClassKindIr::Class,
+                    name: "Product".to_owned(),
+                    is_abstract: false,
+                    superclass_name: None,
+                    span: span(20, 100),
+                    fields: vec![
+                        FieldIr {
+                            name: "price".to_owned(),
+                            ty: TypeIr::named("Price"),
+                            span: span(21, 22),
+                            has_default: false,
+                            serde: None,
+                        },
+                        FieldIr {
+                            name: "prices".to_owned(),
+                            ty: TypeIr::list_of(TypeIr::named("Price")),
+                            span: span(22, 23),
+                            has_default: false,
+                            serde: None,
+                        },
+                    ],
+                    constructors: vec![ConstructorIr {
+                        name: None,
+                        span: span(24, 25),
+                        params: vec![
+                            ConstructorParamIr {
+                                name: "price".to_owned(),
+                                ty: TypeIr::named("Price"),
+                                span: span(24, 25),
+                                kind: ParamKind::Positional,
+                                has_default: false,
+                            },
+                            ConstructorParamIr {
+                                name: "prices".to_owned(),
+                                ty: TypeIr::list_of(TypeIr::named("Price")),
+                                span: span(25, 26),
+                                kind: ParamKind::Positional,
+                                has_default: false,
+                            },
+                        ],
+                    }],
+                    traits: vec![TraitApplicationIr {
+                        symbol: SymbolId::new("derive_annotation::CopyWith"),
+                        span: span(21, 22),
+                    }],
+                    serde: None,
+                },
+            ],
+        },
+        &SymbolPlan::default(),
+    );
+
+    let members = members_for_class(&contribution, "Product");
+    assert_eq!(members.len(), 1);
+    assert!(members.iter().any(|fragment| {
+        fragment.contains("Product copyWith({")
+            && fragment.contains("final nextPriceSource = price ?? _dustSelf.price;")
+            && fragment.contains("final nextPrice = nextPriceSource.copyWith();")
+            && fragment.contains("final nextPrices = List<Price>.of(nextPricesSource.map((")
+            && fragment.contains("=> item_")
+            && fragment.contains(".copyWith()));")
+    }));
 }
 
 #[test]

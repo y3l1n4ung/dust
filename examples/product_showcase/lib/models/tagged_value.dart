@@ -4,7 +4,7 @@ import 'audit.dart';
 
 part 'tagged_value.g.dart';
 
-@Derive([Debug(), Clone(), PartialEq(), Hash(), CopyWith()])
+@Derive([Debug(), Eq(), CopyWith()])
 class TaggedValue with AuditStamp, _$TaggedValueDust {
   const TaggedValue({
     required this.code,

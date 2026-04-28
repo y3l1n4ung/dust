@@ -36,34 +36,16 @@ mixin _$FeaturedProductDust {
     Set<String>? tags,
     bool? archived,
   }) {
-    final nextSkuSource = sku ?? _dustSelf.sku;
-    final nextSku = nextSkuSource;
     final nextPriceSource = price ?? _dustSelf.price;
-    final nextPrice = nextPriceSource;
+    final nextPrice = nextPriceSource.copyWith();
     final nextTagsSource = tags ?? _dustSelf.tags;
     final nextTags = Set<String>.of(nextTagsSource);
-    final nextArchivedSource = archived ?? _dustSelf.archived;
-    final nextArchived = nextArchivedSource;
 
     return FeaturedProduct(
-      sku: nextSku,
+      sku: sku ?? _dustSelf.sku,
       price: nextPrice,
       tags: nextTags,
-      archived: nextArchived,
-    );
-  }
-
-  FeaturedProduct clone() {
-    final clonedSku = _dustSelf.sku;
-    final clonedPrice = _dustSelf.price;
-    final clonedTags = Set<String>.of(_dustSelf.tags);
-    final clonedArchived = _dustSelf.archived;
-
-    return FeaturedProduct(
-      sku: clonedSku,
-      price: clonedPrice,
-      tags: clonedTags,
-      archived: clonedArchived,
+      archived: archived ?? _dustSelf.archived,
     );
   }
 }

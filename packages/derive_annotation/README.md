@@ -6,7 +6,7 @@ This package defines the shared annotation contract used by Dust code generation
 It contains:
 
 - the `@Derive([...])` container annotation
-- core derive trait markers like `Debug`, `Clone`, `PartialEq`, `Eq`, `Hash`, and `CopyWith`
+- core derive trait markers like `Debug`, `Eq`, and `CopyWith`
 - base extension points for future packages such as `derive_serde_annotation`
 - a re-export of `package:collection/collection.dart` so generated deep-equality
   support can use collection helpers through the same library import
@@ -18,7 +18,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 
 part 'user.g.dart';
 
-@Derive([Debug(), PartialEq(), Hash(), CopyWith()])
+@Derive([Debug(), Eq(), CopyWith()])
 class User {
   final String id;
   final String? name;
@@ -50,11 +50,8 @@ Dust generates `.g.dart` files as `part of` the source library. Part files canno
 their own imports, so any deep equality helpers used by generated code must already
 be visible through the source library's imports. Re-exporting
 `package:collection/collection.dart` from `derive_annotation.dart` makes those helpers
-available automatically for future deep `Eq` and `Hash` generation.
+available automatically for future deep equality and hash generation.
 
 ## Notes
 
-- `PartialEq` and `Eq` are both exposed because Dust is borrowing derive naming
-  conventions from other ecosystems.
-- The current Dart backend generates one `operator ==` implementation, so
-  `PartialEq` and `Eq` are treated the same by code generation today.
+- `Eq` generates both `operator ==` and matching `hashCode`.

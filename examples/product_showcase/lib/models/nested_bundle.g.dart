@@ -40,14 +40,4 @@ mixin _$NestedBundleDust {
       metrics: nextMetrics,
     );
   }
-
-  NestedBundle clone() {
-    final clonedGroups = List<List<String>>.of(_dustSelf.groups.map((item_0) => List<String>.of(item_0)));
-    final clonedMetrics = Map<String, List<int>>.fromEntries(_dustSelf.metrics.entries.map((entry_1) => MapEntry(entry_1.key, List<int>.of(entry_1.value))));
-
-    return NestedBundle(
-      groups: clonedGroups,
-      metrics: clonedMetrics,
-    );
-  }
 }

@@ -26,6 +26,16 @@ pub fn emit_library(
     previous_output: Option<&str>,
 ) -> EmitResult {
     let plan = registry.build_symbol_plan(library);
+    emit_library_with_plan(library, registry, plan, previous_output)
+}
+
+/// Emits one generated library with an explicitly prepared symbol plan.
+pub fn emit_library_with_plan(
+    library: &LibraryIr,
+    registry: &PluginRegistry,
+    plan: SymbolPlan,
+    previous_output: Option<&str>,
+) -> EmitResult {
     let diagnostics = registry.validate_library(library);
     let contributions = registry.emit_contributions(library, &plan);
     let merged = MergedSections::from_contributions(&contributions);

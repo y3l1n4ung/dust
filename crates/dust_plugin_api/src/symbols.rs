@@ -16,6 +16,7 @@ impl RequestedSymbol {
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct SymbolPlan {
     reserved: Vec<RequestedSymbol>,
+    known_copyable_types: Vec<String>,
 }
 
 impl SymbolPlan {
@@ -35,5 +36,34 @@ impl SymbolPlan {
     /// Returns `true` if the plan already contains the given symbol name.
     pub fn contains(&self, name: &str) -> bool {
         self.reserved.iter().any(|entry| entry.name == name)
+    }
+
+    /// Records one known `copyWith()`-capable Dart type name for emission decisions.
+    pub fn add_copyable_type(&mut self, name: impl Into<String>) {
+        let name = name.into();
+        if !self.known_copyable_types.iter().any(|entry| entry == &name) {
+            self.known_copyable_types.push(name);
+        }
+    }
+
+    /// Extends the plan with multiple known `copyWith()`-capable Dart type names.
+    pub fn extend_copyable_types<I>(&mut self, names: I)
+    where
+        I: IntoIterator,
+        I::Item: Into<String>,
+    {
+        for name in names {
+            self.add_copyable_type(name);
+        }
+    }
+
+    /// Returns the known `copyWith()`-capable Dart type names in deterministic order.
+    pub fn known_copyable_types(&self) -> &[String] {
+        &self.known_copyable_types
+    }
+
+    /// Returns `true` if the plan already knows the given copyable type name.
+    pub fn contains_copyable_type(&self, name: &str) -> bool {
+        self.known_copyable_types.iter().any(|entry| entry == name)
     }
 }

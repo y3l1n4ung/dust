@@ -5,7 +5,7 @@ import 'product.dart';
 
 part 'catalog.g.dart';
 
-@Derive([Debug(), Clone(), PartialEq(), Hash(), CopyWith()])
+@Derive([Debug(), Eq(), CopyWith()])
 class InventoryEntry with _$InventoryEntryDust {
   const InventoryEntry({
     required this.productSku,
@@ -18,10 +18,11 @@ class InventoryEntry with _$InventoryEntryDust {
   final int quantity;
 }
 
-@Derive([Debug(), Clone(), PartialEq(), Hash(), CopyWith()])
+@Derive([Debug(), Eq(), CopyWith()])
 class Catalog with _$CatalogDust {
-  const Catalog({
+  Catalog({
     required this.id,
+
     required this.products,
     required this.categoryById,
     required this.featuredSkus,
@@ -33,4 +34,18 @@ class Catalog with _$CatalogDust {
   final Map<String, Category> categoryById;
   final Set<String> featuredSkus;
   final List<InventoryEntry> inventory;
+}
+
+void main(List<String> args) {
+  final c = Catalog(
+    id: "1",
+    products: [],
+    categoryById: {},
+    featuredSkus: {},
+    inventory: [],
+  );
+  print(c.hashCode);
+  final d = c.copyWith(id: "3");
+
+  print(d.hashCode);
 }

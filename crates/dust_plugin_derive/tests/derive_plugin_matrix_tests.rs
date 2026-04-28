@@ -96,11 +96,7 @@ fn emits_debug_eq_and_hash_for_zero_field_class() {
             "Unit",
             Vec::new(),
             vec![constructor(None, Vec::new())],
-            &[
-                "derive_annotation::Debug",
-                "derive_annotation::Eq",
-                "derive_annotation::Hash",
-            ],
+            &["derive_annotation::Debug", "derive_annotation::Eq"],
         )]),
         &SymbolPlan::default(),
     );
@@ -157,11 +153,11 @@ fn copywith_uses_named_arguments_without_braces_in_constructor_calls() {
     assert!(members[0].contains("Request copyWith({"));
     assert!(members[0].contains("String? path,"));
     assert!(members[0].contains("Map<String, String>? headers,"));
-    assert!(members[0].contains("final nextPathSource = path ?? _dustSelf.path;"));
+    assert!(!members[0].contains("final nextPathSource = path ?? _dustSelf.path;"));
     assert!(members[0].contains("final nextHeadersSource = headers ?? _dustSelf.headers;"));
     assert!(members[0].contains("final nextHeaders = Map<String, String>.of(nextHeadersSource);"));
     assert!(members[0].contains("return Request.create("));
-    assert!(members[0].contains("path: nextPath,"));
+    assert!(members[0].contains("path: path ?? _dustSelf.path,"));
     assert!(members[0].contains("headers: nextHeaders,"));
     assert!(!members[0].contains("Request.create({"));
 }
@@ -209,56 +205,38 @@ fn copywith_renders_nested_generic_and_dynamic_casts() {
     assert!(fragment.contains("items as List<String>?"));
     assert!(fragment.contains("extra as Object?"));
     assert!(fragment.contains("void Function(String, int)? transform,"));
-    assert!(fragment.contains("final nextTransformSource = transform ?? _dustSelf.transform;"));
+    assert!(!fragment.contains("final nextTransformSource = transform ?? _dustSelf.transform;"));
+    assert!(fragment.contains("transform ?? _dustSelf.transform,"));
     assert!(fragment.contains("(String, int)? summary,"));
-    assert!(fragment.contains("final nextSummarySource = summary ?? _dustSelf.summary;"));
+    assert!(!fragment.contains("final nextSummarySource = summary ?? _dustSelf.summary;"));
+    assert!(fragment.contains("summary ?? _dustSelf.summary,"));
     assert!(fragment.contains("_dustSelf.items"));
 }
 
 #[test]
 fn validation_accumulates_multiple_class_errors() {
     let plugin = register_plugin();
-    let diagnostics = plugin.validate(&library(vec![
-        class(
-            "BrokenHash",
-            vec![field("id", TypeIr::string())],
-            vec![constructor(
-                None,
-                vec![constructor_param(
-                    "id",
-                    TypeIr::string(),
-                    ParamKind::Positional,
-                )],
+    let diagnostics = plugin.validate(&library(vec![class(
+        "BrokenCopyWith",
+        vec![field("id", TypeIr::string()), field("age", TypeIr::int())],
+        vec![constructor(
+            None,
+            vec![constructor_param(
+                "id",
+                TypeIr::string(),
+                ParamKind::Positional,
             )],
-            &["derive_annotation::Hash"],
-        ),
-        class(
-            "BrokenCopyWith",
-            vec![field("id", TypeIr::string()), field("age", TypeIr::int())],
-            vec![constructor(
-                None,
-                vec![constructor_param(
-                    "id",
-                    TypeIr::string(),
-                    ParamKind::Positional,
-                )],
-            )],
-            &["derive_annotation::CopyWith"],
-        ),
-    ]));
+        )],
+        &["derive_annotation::CopyWith"],
+    )]));
 
-    assert_eq!(diagnostics.len(), 2);
-    assert!(diagnostics.iter().any(|diagnostic| {
-        diagnostic
-            .message
-            .contains("`Hash` requires `Eq` or `PartialEq` on class `BrokenHash`")
-    }));
+    assert_eq!(diagnostics.len(), 1);
     assert!(
         diagnostics
             .iter()
             .any(|diagnostic| diagnostic
                 .message
-                .contains("`Clone`/`CopyWith` requires a constructor that accepts every field on class `BrokenCopyWith`"))
+                .contains("`CopyWith` requires a constructor that accepts every field on class `BrokenCopyWith`"))
     );
 }
 
@@ -326,7 +304,7 @@ fn emits_fragments_for_multiple_classes_in_stable_feature_order() {
                         ParamKind::Positional,
                     )],
                 )],
-                &["derive_annotation::Clone"],
+                &["derive_annotation::CopyWith"],
             ),
         ]),
         &SymbolPlan::default(),
@@ -335,13 +313,14 @@ fn emits_fragments_for_multiple_classes_in_stable_feature_order() {
     let team_members = members_for_class(&contribution, "Team");
 
     assert_eq!(contribution.mixin_members.len(), 2);
-    assert_eq!(user_members.len(), 2);
+    assert_eq!(user_members.len(), 3);
     assert_eq!(team_members.len(), 1);
     assert!(user_members[0].contains("String toString() => 'User(id: ${_dustSelf.id})';"));
     assert!(user_members[1].contains("bool operator ==(Object other) =>"));
-    assert!(team_members[0].contains("Team clone() {"));
-    assert!(team_members[0].contains("final clonedName = _dustSelf.name;"));
-    assert!(team_members[0].contains("return Team("));
+    assert!(user_members[2].contains("int get hashCode => Object.hashAll(["));
+    assert!(team_members[0].contains("Team copyWith({"));
+    assert!(team_members[0].contains("String? name,"));
+    assert!(team_members[0].contains("name ?? _dustSelf.name,"));
 }
 
 #[test]
@@ -381,7 +360,7 @@ fn emits_deep_equality_and_hash_for_collection_fields() {
                     ),
                 ],
             )],
-            &["derive_annotation::Eq", "derive_annotation::Hash"],
+            &["derive_annotation::Eq"],
         )]),
         &SymbolPlan::default(),
     );

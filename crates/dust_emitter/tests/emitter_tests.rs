@@ -212,7 +212,7 @@ fn write_library_writes_real_file_and_skips_rewrite_when_unchanged() {
     let library = sample_library(output_path.display().to_string());
 
     let mut contribution = PluginContribution::default();
-    contribution.push_mixin_member("User", "User clone() => User();");
+    contribution.push_mixin_member("User", "User copyWith({String? id}) => User();");
 
     let mut registry = PluginRegistry::new();
     registry
@@ -287,7 +287,6 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
                 traits: vec![
                     trait_app("derive_annotation::Debug"),
                     trait_app("derive_annotation::Eq"),
-                    trait_app("derive_annotation::Hash"),
                     trait_app("derive_annotation::CopyWith"),
                 ],
                 serde: None,
@@ -307,7 +306,7 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
                         ParamKind::Positional,
                     )],
                 )],
-                traits: vec![trait_app("derive_annotation::Clone")],
+                traits: vec![trait_app("derive_annotation::CopyWith")],
                 serde: None,
             },
         ],
@@ -332,11 +331,13 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
         "int get hashCode => Object.hashAll([\n    runtimeType,\n    _dustSelf.id,\n    _dustSelf.age,\n  ]);"
     ));
     assert!(written.contains("User copyWith({"));
-    assert!(written.contains("final nextIdSource = id ?? _dustSelf.id;"));
+    assert!(!written.contains("final nextIdSource = id ?? _dustSelf.id;"));
+    assert!(written.contains("id ?? _dustSelf.id,"));
     assert!(written.contains("return User("));
     assert!(written.contains("mixin _$TeamDust {"));
-    assert!(written.contains("Team clone() {"));
-    assert!(written.contains("final clonedName = _dustSelf.name;"));
+    assert!(written.contains("Team copyWith({"));
+    assert!(!written.contains("final clonedName = _dustSelf.name;"));
+    assert!(written.contains("_dustSelf.name,"));
     assert!(written.contains("return Team("));
     assert!(!written.contains("return   "));
 }

@@ -38,7 +38,7 @@ pub(crate) fn render_type(ty: &TypeIr) -> String {
     }
 }
 
-pub(crate) fn find_clone_constructor<'a>(class: &'a ClassIr) -> Option<&'a ConstructorIr> {
+pub(crate) fn find_clone_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
     class.constructors.iter().find(|constructor| {
         class.fields.iter().all(|field| {
             constructor

@@ -1,0 +1,137 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-binaries:
+    name: ${{ matrix.asset_name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            archive_ext: tar.gz
+            asset_name: dust-x86_64-unknown-linux-gnu.tar.gz
+            binary_name: dust
+          - runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            archive_ext: tar.gz
+            asset_name: dust-aarch64-unknown-linux-gnu.tar.gz
+            binary_name: dust
+          - runner: macos-13
+            target: x86_64-apple-darwin
+            archive_ext: tar.gz
+            asset_name: dust-x86_64-apple-darwin.tar.gz
+            binary_name: dust
+          - runner: macos-14
+            target: aarch64-apple-darwin
+            archive_ext: tar.gz
+            asset_name: dust-aarch64-apple-darwin.tar.gz
+            binary_name: dust
+          - runner: windows-2022
+            target: x86_64-pc-windows-msvc
+            archive_ext: zip
+            asset_name: dust-x86_64-pc-windows-msvc.zip
+            binary_name: dust.exe
+          - runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            archive_ext: zip
+            asset_name: dust-aarch64-pc-windows-msvc.zip
+            binary_name: dust.exe
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Build binary (Unix)
+        if: matrix.archive_ext == 'tar.gz'
+        shell: bash
+        run: cargo build --release -p dart_cli --bin dust
+
+      - name: Build binary (Windows)
+        if: matrix.archive_ext == 'zip'
+        shell: pwsh
+        run: cargo build --release -p dart_cli --bin dust
+
+      - name: Stage archive contents (Unix)
+        if: matrix.archive_ext == 'tar.gz'
+        shell: bash
+        run: |
+          mkdir -p dist/${{ matrix.target }}
+          cp target/release/${{ matrix.binary_name }} dist/${{ matrix.target }}/${{ matrix.binary_name }}
+
+      - name: Stage archive contents (Windows)
+        if: matrix.archive_ext == 'zip'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "dist/${{ matrix.target }}" | Out-Null
+          Copy-Item "target/release/${{ matrix.binary_name }}" "dist/${{ matrix.target }}/${{ matrix.binary_name }}" -Force
+
+      - name: Create tarball
+        if: matrix.archive_ext == 'tar.gz'
+        shell: bash
+        run: |
+          cd dist/${{ matrix.target }}
+          tar -czf ../../${{ matrix.asset_name }} ${{ matrix.binary_name }}
+
+      - name: Create zip
+        if: matrix.archive_ext == 'zip'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist/${{ matrix.target }}/${{ matrix.binary_name }}" -DestinationPath "${{ matrix.asset_name }}" -Force
+
+      - name: Upload packaged binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-release:
+    name: Publish release
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download packaged binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p upload
+          find release-artifacts -type f \( -name '*.tar.gz' -o -name '*.zip' \) -exec cp {} upload/ \;
+
+      - name: Generate checksums
+        run: |
+          cd upload
+          sha256sum *.tar.gz *.zip > SHA256SUMS.txt
+
+      - name: Create or update GitHub release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          TITLE="$TAG"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" upload/* --clobber
+          else
+            gh release create "$TAG" upload/* --title "$TITLE" --notes "Dust release $TAG"
+          fi

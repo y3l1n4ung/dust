@@ -30,24 +30,12 @@ mixin _$TaggedValueDust {
     String? code,
     List<String>? aliases,
   }) {
-    final nextCodeSource = code ?? _dustSelf.code;
-    final nextCode = nextCodeSource;
     final nextAliasesSource = aliases ?? _dustSelf.aliases;
     final nextAliases = List<String>.of(nextAliasesSource);
 
     return TaggedValue(
-      code: nextCode,
+      code: code ?? _dustSelf.code,
       aliases: nextAliases,
-    );
-  }
-
-  TaggedValue clone() {
-    final clonedCode = _dustSelf.code;
-    final clonedAliases = List<String>.of(_dustSelf.aliases);
-
-    return TaggedValue(
-      code: clonedCode,
-      aliases: clonedAliases,
     );
   }
 }

@@ -33,29 +33,13 @@ mixin _$CategoryDust {
     String? title,
     Set<String>? labels,
   }) {
-    final nextIdSource = id ?? _dustSelf.id;
-    final nextId = nextIdSource;
-    final nextTitleSource = title ?? _dustSelf.title;
-    final nextTitle = nextTitleSource;
     final nextLabelsSource = labels ?? _dustSelf.labels;
     final nextLabels = Set<String>.of(nextLabelsSource);
 
     return Category(
-      id: nextId,
-      title: nextTitle,
+      id: id ?? _dustSelf.id,
+      title: title ?? _dustSelf.title,
       labels: nextLabels,
-    );
-  }
-
-  Category clone() {
-    final clonedId = _dustSelf.id;
-    final clonedTitle = _dustSelf.title;
-    final clonedLabels = Set<String>.of(_dustSelf.labels);
-
-    return Category(
-      id: clonedId,
-      title: clonedTitle,
-      labels: clonedLabels,
     );
   }
 }

@@ -2,7 +2,7 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 
 part 'json_profile.g.dart';
 
-@Derive([Debug(), PartialEq(), Serialize(), Deserialize()])
+@Derive([Debug(), Eq(), Serialize(), Deserialize()])
 @SerDe(renameAll: SerdeRename.snakeCase, disallowUnrecognizedKeys: true)
 class JsonProfile with _$JsonProfileDust {
   const JsonProfile({

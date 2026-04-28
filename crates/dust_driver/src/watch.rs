@@ -12,7 +12,7 @@ use dust_workspace::{SourceLibrary, discover_workspace};
 
 use crate::{
     build::{
-        codegen_tool_hash, default_registry, hash_text, prepare_and_process_batch,
+        BatchConfig, codegen_tool_hash, default_registry, hash_text, prepare_and_process_batch,
         read_package_config_hash,
     },
     catalog::build_symbol_catalog,
@@ -36,7 +36,7 @@ where
 
 fn run_watch_inner(
     request: WatchRequest,
-    progress: Option<&(dyn Fn(ProgressEvent) + Send + Sync)>,
+    progress: Option<&(dyn Fn(ProgressEvent) + Send + Sync + '_)>,
 ) -> CommandResult {
     let started = Instant::now();
     let mut result = CommandResult::default();
@@ -81,19 +81,21 @@ fn run_watch_inner(
     };
 
     let initial = prepare_and_process_batch(
-        &workspace.root,
+        BatchConfig {
+            workspace_root: &workspace.root,
+            package_config_hash,
+            tool_hash,
+            cache: &cache,
+            catalog: &catalog,
+            registry: &registry,
+            write_output: true,
+            fail_fast: request.fail_fast,
+            jobs: request.jobs,
+            file_id_base: 1,
+            phase: ProgressPhase::WatchInitial,
+            progress,
+        },
         &workspace.libraries,
-        package_config_hash,
-        tool_hash,
-        &cache,
-        &catalog,
-        &registry,
-        true,
-        request.fail_fast,
-        request.jobs,
-        1,
-        ProgressPhase::WatchInitial,
-        progress,
         &mut cache_report,
     );
 
@@ -189,19 +191,21 @@ fn run_watch_inner(
 
         watch.rebuild_batches += 1;
         let rebuilt = prepare_and_process_batch(
-            &workspace.root,
+            BatchConfig {
+                workspace_root: &workspace.root,
+                package_config_hash,
+                tool_hash,
+                cache: &cache,
+                catalog: &catalog,
+                registry: &registry,
+                write_output: true,
+                fail_fast: request.fail_fast,
+                jobs: request.jobs,
+                file_id_base: 10_000,
+                phase: ProgressPhase::WatchRebuild,
+                progress,
+            },
             &changed,
-            package_config_hash,
-            tool_hash,
-            &cache,
-            &catalog,
-            &registry,
-            true,
-            request.fail_fast,
-            request.jobs,
-            10_000,
-            ProgressPhase::WatchRebuild,
-            progress,
             &mut cache_report,
         );
 
@@ -327,4 +331,102 @@ fn changed_libraries(previous: &WorkspaceSnapshot, next: &WorkspaceSnapshot) -> 
 
     changed.sort_by_key(|library| library.source_path.clone());
     changed
+}
+
+#[cfg(test)]
+mod tests {
+    use tempfile::tempdir;
+
+    use super::*;
+
+    fn library(path: &str) -> SourceLibrary {
+        let source_path = PathBuf::from(path);
+        let output_path = PathBuf::from(path.replace(".dart", ".g.dart"));
+        SourceLibrary {
+            source_path,
+            output_path,
+        }
+    }
+
+    fn snapshot(hash: Option<u64>, libraries: Vec<(&str, u64)>) -> WorkspaceSnapshot {
+        let libraries = libraries
+            .into_iter()
+            .map(|(path, source_hash)| {
+                let library = library(path);
+                (
+                    library.source_path.clone(),
+                    SnapshotEntry {
+                        library,
+                        source_hash,
+                    },
+                )
+            })
+            .collect();
+
+        WorkspaceSnapshot {
+            package_config_hash: hash,
+            libraries,
+        }
+    }
+
+    #[test]
+    fn changed_libraries_rebuilds_all_when_package_config_hash_changes() {
+        let previous = snapshot(Some(1), vec![("lib/a.dart", 10), ("lib/b.dart", 20)]);
+        let next = snapshot(Some(2), vec![("lib/a.dart", 10), ("lib/b.dart", 20)]);
+
+        let changed = changed_libraries(&previous, &next);
+
+        assert_eq!(changed.len(), 2);
+        assert_eq!(changed[0].source_path, PathBuf::from("lib/a.dart"));
+        assert_eq!(changed[1].source_path, PathBuf::from("lib/b.dart"));
+    }
+
+    #[test]
+    fn changed_libraries_detects_added_and_modified_files_in_order() {
+        let previous = snapshot(Some(1), vec![("lib/a.dart", 10)]);
+        let next = snapshot(Some(1), vec![("lib/a.dart", 11), ("lib/b.dart", 20)]);
+
+        let changed = changed_libraries(&previous, &next);
+
+        assert_eq!(changed.len(), 2);
+        assert_eq!(changed[0].source_path, PathBuf::from("lib/a.dart"));
+        assert_eq!(changed[1].source_path, PathBuf::from("lib/b.dart"));
+    }
+
+    #[test]
+    fn changed_libraries_ignores_removed_and_unchanged_files() {
+        let previous = snapshot(Some(1), vec![("lib/a.dart", 10), ("lib/old.dart", 99)]);
+        let next = snapshot(Some(1), vec![("lib/a.dart", 10)]);
+
+        let changed = changed_libraries(&previous, &next);
+
+        assert!(changed.is_empty());
+    }
+
+    #[test]
+    fn build_snapshot_hashes_package_config_and_library_contents() {
+        let temp = tempdir().unwrap();
+        let root = temp.path();
+        let dart_tool = root.join(".dart_tool");
+        let lib = root.join("lib");
+        fs::create_dir_all(&dart_tool).unwrap();
+        fs::create_dir_all(&lib).unwrap();
+        fs::write(root.join("pubspec.yaml"), "name: sample\n").unwrap();
+        fs::write(
+            dart_tool.join("package_config.json"),
+            r#"{"configVersion":2,"packages":[]}"#,
+        )
+        .unwrap();
+        fs::write(
+            lib.join("user.dart"),
+            "import 'package:derive_annotation/derive_annotation.dart';\npart 'user.g.dart';\n@Derive([Debug()])\nclass User with _$UserDust { const User(); }\n",
+        )
+        .unwrap();
+
+        let snapshot = build_snapshot(root).unwrap();
+
+        assert!(snapshot.package_config_hash.is_some());
+        assert_eq!(snapshot.libraries.len(), 1);
+        assert!(snapshot.libraries.contains_key(&lib.join("user.dart")));
+    }
 }

@@ -2,7 +2,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 
 part 'nested_bundle.g.dart';
 
-@Derive([Debug(), Clone(), PartialEq(), Hash(), CopyWith()])
+@Derive([Debug(), Eq(), CopyWith()])
 class NestedBundle with _$NestedBundleDust {
   const NestedBundle({
     required this.groups,

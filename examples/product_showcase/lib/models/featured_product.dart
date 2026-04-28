@@ -5,7 +5,7 @@ import 'price.dart';
 
 part 'featured_product.g.dart';
 
-@Derive([Debug(), Clone(), PartialEq(), Hash(), CopyWith()])
+@Derive([Debug(), Eq(), CopyWith()])
 class FeaturedProduct extends CatalogNode with AuditStamp, _$FeaturedProductDust {
   const FeaturedProduct({
     required this.sku,

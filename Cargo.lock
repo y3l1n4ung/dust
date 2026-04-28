@@ -40,19 +40,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
+name = "dart_cli"
+version = "0.1.0"
+dependencies = [
+ "dust_diagnostics",
+ "dust_driver",
+ "tempfile",
+]
+
+[[package]]
 name = "dust_cache"
 version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
- "tempfile",
-]
-
-[[package]]
-name = "dust_cli"
-version = "0.1.0"
-dependencies = [
- "dust_driver",
  "tempfile",
 ]
 

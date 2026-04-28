@@ -53,29 +53,13 @@ mixin _$DetailedEntityDust {
     String? label,
     List<String>? tags,
   }) {
-    final nextIdSource = id ?? _dustSelf.id;
-    final nextId = nextIdSource;
-    final nextLabelSource = label ?? _dustSelf.label;
-    final nextLabel = nextLabelSource;
     final nextTagsSource = tags ?? _dustSelf.tags;
     final nextTags = List<String>.of(nextTagsSource);
 
     return DetailedEntity(
-      nextId,
-      label: nextLabel,
+      id ?? _dustSelf.id,
+      label: label ?? _dustSelf.label,
       tags: nextTags,
-    );
-  }
-
-  DetailedEntity clone() {
-    final clonedId = _dustSelf.id;
-    final clonedLabel = _dustSelf.label;
-    final clonedTags = List<String>.of(_dustSelf.tags);
-
-    return DetailedEntity(
-      clonedId,
-      label: clonedLabel,
-      tags: clonedTags,
     );
   }
 }

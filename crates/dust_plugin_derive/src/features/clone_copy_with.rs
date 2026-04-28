@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use dust_diagnostics::Diagnostic;
 use dust_ir::{BuiltinType, ClassIr, SymbolId, TypeIr};
 
@@ -16,7 +18,7 @@ pub(crate) fn copy_with_requires_undefined(class: &ClassIr) -> bool {
         .any(|field| uses_undefined_sentinel(&field.ty))
 }
 
-pub(crate) fn emit_copy_with(class: &ClassIr) -> Option<String> {
+pub(crate) fn emit_copy_with(class: &ClassIr, copyable_types: &HashSet<String>) -> Option<String> {
     let copy_with = SymbolId::new("derive_annotation::CopyWith");
 
     if !has_trait(class, &copy_with) {
@@ -25,101 +27,61 @@ pub(crate) fn emit_copy_with(class: &ClassIr) -> Option<String> {
 
     let constructor = find_clone_constructor(class)?;
     let params = render_copy_with_params(class);
-    let setup = class
-        .fields
-        .iter()
-        .enumerate()
-        .flat_map(|(depth, field)| {
-            let source_var = temp_name("next", &field.name, "Source");
-            let source_expr = render_copy_with_source_expr(field.name.as_str(), &field.ty);
+    let mut setup = Vec::new();
+    let mut values = Vec::with_capacity(class.fields.len());
+
+    for (depth, field) in class.fields.iter().enumerate() {
+        let source_var = temp_name("next", &field.name, "Source");
+        let source_expr = render_copy_with_source_expr(field.name.as_str(), &field.ty);
+        let copied_expr =
+            render_copied_value(&field.ty, source_var.as_str(), depth, copyable_types);
+
+        if copied_expr == source_var {
+            values.push((field.name.as_str(), source_expr));
+        } else {
             let next_var = temp_name("next", &field.name, "");
-            let copied_expr = render_clone_value(&field.ty, source_var.as_str(), depth);
-
-            let mut lines = vec![format!("final {source_var} = {source_expr};")];
-            if copied_expr == source_var {
-                lines.push(format!("final {next_var} = {source_var};"));
-            } else {
-                lines.push(format!("final {next_var} = {copied_expr};"));
-            }
-            lines
-        })
-        .collect::<Vec<_>>();
-    let call = build_constructor_call_multiline(
-        class,
-        constructor,
-        &class
-            .fields
-            .iter()
-            .map(|field| (field.name.as_str(), temp_name("next", &field.name, "")))
-            .collect::<Vec<_>>(),
-    )?;
-    let setup = setup
-        .into_iter()
-        .map(|line| format!("  {line}"))
-        .collect::<Vec<_>>()
-        .join("\n");
-    let return_call = render_return_statement(&call, "  ");
-
-    Some(format!(
-        "{name} copyWith({params}) {{\n{setup}\n\n{return_call}\n}}",
-        name = class.name,
-        params = params,
-        setup = setup,
-        return_call = return_call
-    ))
-}
-
-pub(crate) fn emit_clone(class: &ClassIr) -> Option<String> {
-    let clone = SymbolId::new("derive_annotation::Clone");
-    if !has_trait(class, &clone) {
-        return None;
+            setup.push(format!("final {source_var} = {source_expr};"));
+            setup.push(format!("final {next_var} = {copied_expr};"));
+            values.push((field.name.as_str(), next_var));
+        }
     }
 
-    let constructor = find_clone_constructor(class)?;
-    let setup = class
-        .fields
-        .iter()
-        .enumerate()
-        .map(|(depth, field)| {
-            let value = format!("_dustSelf.{}", field.name);
-            format!(
-                "  final {} = {};",
-                temp_name("cloned", &field.name, ""),
-                render_clone_value(&field.ty, value.as_str(), depth)
-            )
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
-    let call = build_constructor_call_multiline(
-        class,
-        constructor,
-        &class
-            .fields
-            .iter()
-            .map(|field| (field.name.as_str(), temp_name("cloned", &field.name, "")))
-            .collect::<Vec<_>>(),
-    )?;
+    let call = build_constructor_call_multiline(class, constructor, &values)?;
+    let setup = if setup.is_empty() {
+        String::new()
+    } else {
+        setup
+            .into_iter()
+            .map(|line| format!("  {line}"))
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
     let return_call = render_return_statement(&call, "  ");
 
+    let body = if setup.is_empty() {
+        return_call
+    } else {
+        format!("{setup}\n\n{return_call}")
+    };
+
     Some(format!(
-        "{name} clone() {{\n{setup}\n\n{return_call}\n}}",
+        "{name} copyWith({params}) {{\n{body}\n}}",
         name = class.name,
-        setup = setup,
-        return_call = return_call
+        params = params,
+        body = body
     ))
 }
 
-pub(crate) fn validate_clone_copy_with(class: &ClassIr) -> Vec<Diagnostic> {
-    let clone = SymbolId::new("derive_annotation::Clone");
+pub(crate) fn validate_copy_with(class: &ClassIr) -> Vec<Diagnostic> {
     let copy_with = SymbolId::new("derive_annotation::CopyWith");
 
-    if !has_trait(class, &clone) && !has_trait(class, &copy_with) {
+    if !has_trait(class, &copy_with) {
         return Vec::new();
     }
 
     if class.is_abstract {
         return vec![Diagnostic::error(format!(
-            "`Clone`/`CopyWith` cannot target abstract class `{}` because Dust cannot instantiate it",
+            "`CopyWith` cannot target abstract class `{}` because Dust cannot instantiate it",
             class.name
         ))];
     }
@@ -128,37 +90,49 @@ pub(crate) fn validate_clone_copy_with(class: &ClassIr) -> Vec<Diagnostic> {
         Vec::new()
     } else {
         vec![Diagnostic::error(format!(
-            "`Clone`/`CopyWith` requires a constructor that accepts every field on class `{}`",
+            "`CopyWith` requires a constructor that accepts every field on class `{}`",
             class.name
         ))]
     }
 }
 
-fn render_clone_value(ty: &TypeIr, value: &str, depth: usize) -> String {
+fn render_copied_value(
+    ty: &TypeIr,
+    value: &str,
+    depth: usize,
+    copyable_types: &HashSet<String>,
+) -> String {
     match ty {
         TypeIr::Named {
             name,
             args,
             nullable,
         } if name.as_ref() == "List" => {
-            render_sequence_clone("List", args, *nullable, value, depth)
+            render_sequence_copy("List", args, *nullable, value, depth, copyable_types)
         }
         TypeIr::Named {
             name,
             args,
             nullable,
-        } if name.as_ref() == "Set" => render_sequence_clone("Set", args, *nullable, value, depth),
+        } if name.as_ref() == "Set" => {
+            render_sequence_copy("Set", args, *nullable, value, depth, copyable_types)
+        }
         TypeIr::Named {
             name,
             args,
             nullable,
-        } if name.as_ref() == "Map" => render_map_clone(args, *nullable, value, depth),
+        } if name.as_ref() == "Map" => {
+            render_map_copy(args, *nullable, value, depth, copyable_types)
+        }
         TypeIr::Named {
             name,
             args,
             nullable,
         } if name.as_ref() == "Iterable" => {
-            render_sequence_clone("List", args, *nullable, value, depth)
+            render_sequence_copy("List", args, *nullable, value, depth, copyable_types)
+        }
+        TypeIr::Named { name, nullable, .. } if copyable_types.contains(name.as_ref()) => {
+            render_named_copy(*nullable, value)
         }
         TypeIr::Builtin {
             kind: BuiltinType::Object,
@@ -173,12 +147,13 @@ fn render_clone_value(ty: &TypeIr, value: &str, depth: usize) -> String {
     }
 }
 
-fn render_sequence_clone(
+fn render_sequence_copy(
     container: &str,
     args: &[TypeIr],
     nullable: bool,
     value: &str,
     depth: usize,
+    copyable_types: &HashSet<String>,
 ) -> String {
     let item_ty = args.first();
     let item_rendered = item_ty
@@ -191,24 +166,30 @@ fn render_sequence_clone(
     };
     let item_binding = format!("item_{depth}");
     let mapped_value = if let Some(item_ty) = item_ty {
-        let cloned_item = render_clone_value(item_ty, &item_binding, depth + 1);
-        if cloned_item == item_binding {
+        let copied_item = render_copied_value(item_ty, &item_binding, depth + 1, copyable_types);
+        if copied_item == item_binding {
             source_value.clone()
         } else {
-            format!("{source_value}.map(({item_binding}) => {cloned_item})")
+            format!("{source_value}.map(({item_binding}) => {copied_item})")
         }
     } else {
         source_value.clone()
     };
 
-    wrap_nullable_clone(
+    wrap_nullable_copy(
         nullable,
         value,
         format!("{container}<{item_rendered}>.of({mapped_value})"),
     )
 }
 
-fn render_map_clone(args: &[TypeIr], nullable: bool, value: &str, depth: usize) -> String {
+fn render_map_copy(
+    args: &[TypeIr],
+    nullable: bool,
+    value: &str,
+    depth: usize,
+    copyable_types: &HashSet<String>,
+) -> String {
     let key_ty = args.first();
     let value_ty = args.get(1);
     let key_rendered = key_ty
@@ -224,10 +205,24 @@ fn render_map_clone(args: &[TypeIr], nullable: bool, value: &str, depth: usize) 
     };
     let entry_binding = format!("entry_{depth}");
     let key_expr = key_ty
-        .map(|ty| render_clone_value(ty, &format!("{entry_binding}.key"), depth + 1))
+        .map(|ty| {
+            render_copied_value(
+                ty,
+                &format!("{entry_binding}.key"),
+                depth + 1,
+                copyable_types,
+            )
+        })
         .unwrap_or_else(|| format!("{entry_binding}.key"));
     let value_expr = value_ty
-        .map(|ty| render_clone_value(ty, &format!("{entry_binding}.value"), depth + 1))
+        .map(|ty| {
+            render_copied_value(
+                ty,
+                &format!("{entry_binding}.value"),
+                depth + 1,
+                copyable_types,
+            )
+        })
         .unwrap_or_else(|| format!("{entry_binding}.value"));
 
     let body = if key_expr == format!("{entry_binding}.key")
@@ -240,14 +235,24 @@ fn render_map_clone(args: &[TypeIr], nullable: bool, value: &str, depth: usize) 
         )
     };
 
-    wrap_nullable_clone(nullable, value, body)
+    wrap_nullable_copy(nullable, value, body)
 }
 
-fn wrap_nullable_clone(nullable: bool, original: &str, cloned: String) -> String {
-    if nullable {
-        format!("{original} == null ? null : {cloned}")
+fn render_named_copy(nullable: bool, value: &str) -> String {
+    let source_value = if nullable {
+        non_null_value_expr(value)
     } else {
-        cloned
+        value.to_owned()
+    };
+
+    wrap_nullable_copy(nullable, value, format!("{source_value}.copyWith()"))
+}
+
+fn wrap_nullable_copy(nullable: bool, original: &str, copied: String) -> String {
+    if nullable {
+        format!("{original} == null ? null : {copied}")
+    } else {
+        copied
     }
 }
 

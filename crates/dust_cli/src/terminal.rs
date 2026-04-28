@@ -131,3 +131,64 @@ fn display_name(path: &Path) -> String {
         path.to_string_lossy().into_owned()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use dust_driver::{ProgressEvent, ProgressPhase};
+
+    use super::*;
+
+    #[test]
+    fn render_bar_handles_progress_and_empty_batches() {
+        assert_eq!(render_bar(0, 0), "[------------------------] 0/1");
+        assert_eq!(render_bar(6, 12), "[############------------] 6/12");
+    }
+
+    #[test]
+    fn progress_labels_match_cli_output_contract() {
+        assert_eq!(progress_label(ProgressPhase::Build), "build");
+        assert_eq!(progress_label(ProgressPhase::WatchInitial), "watch:init");
+        assert_eq!(progress_label(ProgressPhase::WatchRebuild), "watch:rebuild");
+    }
+
+    #[test]
+    fn display_name_prefers_file_name() {
+        assert_eq!(
+            display_name(Path::new("/tmp/example/user.dart")),
+            "user.dart".to_owned()
+        );
+
+        let fallback = PathBuf::from("/");
+        assert_eq!(display_name(&fallback), "/".to_owned());
+    }
+
+    #[test]
+    fn terminal_progress_tracks_activity_and_resets_on_finish() {
+        let mut progress = TerminalProgress::default();
+        progress.handle(ProgressEvent::StartedBatch {
+            phase: ProgressPhase::Build,
+            total: 3,
+        });
+        assert!(progress.active);
+        assert!(progress.last_len > 0);
+
+        progress.handle(ProgressEvent::FinishedLibrary {
+            phase: ProgressPhase::Build,
+            completed: 1,
+            total: 3,
+            source_path: PathBuf::from("/tmp/lib/user.dart"),
+            cached: false,
+            written: true,
+            changed: true,
+            had_errors: false,
+            elapsed_ms: 12,
+        });
+        assert!(progress.last_len > 0);
+
+        progress.finish();
+        assert!(!progress.active);
+        assert_eq!(progress.last_len, 0);
+    }
+}

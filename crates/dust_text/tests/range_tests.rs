@@ -1,6 +1,14 @@
 use dust_text::{FileId, LineIndex, SourceText, TextRange, TextSize};
 
 #[test]
+fn file_id_round_trips_raw_value_and_default() {
+    let file_id = FileId::new(42);
+
+    assert_eq!(file_id.raw(), 42);
+    assert_eq!(FileId::default().raw(), 0);
+}
+
+#[test]
 fn text_size_supports_arithmetic() {
     let start = TextSize::new(5);
     let width = TextSize::new(7);
@@ -43,6 +51,39 @@ fn line_index_tracks_offsets() {
 }
 
 #[test]
+fn line_index_reports_ranges_for_regular_and_empty_lines() {
+    let index = LineIndex::new("first\n\nthird\n");
+
+    assert_eq!(index.line_range(0), Some(TextRange::new(0_u32, 5_u32)));
+    assert_eq!(index.line_range(1), Some(TextRange::new(6_u32, 6_u32)));
+    assert_eq!(index.line_range(2), Some(TextRange::new(7_u32, 12_u32)));
+    assert_eq!(index.line_range(3), Some(TextRange::new(13_u32, 13_u32)));
+    assert_eq!(index.line_range(4), None);
+}
+
+#[test]
+fn line_index_rejects_offsets_past_end_and_accepts_end_of_file() {
+    let index = LineIndex::new("abc\ndef");
+
+    assert_eq!(index.line_col(TextSize::new(7)).unwrap().line, 1);
+    assert_eq!(index.line_col(TextSize::new(7)).unwrap().column, 3);
+    assert_eq!(index.line_col(TextSize::new(8)), None);
+}
+
+#[test]
+fn source_text_reports_full_range_and_empty_state() {
+    let empty = SourceText::new(FileId::new(1), "");
+    let non_empty = SourceText::new(FileId::new(7), "class User {}");
+
+    assert!(empty.is_empty());
+    assert_eq!(empty.full_range(), TextRange::new(0_u32, 0_u32));
+    assert!(!non_empty.is_empty());
+    assert_eq!(non_empty.as_str(), "class User {}");
+    assert_eq!(non_empty.full_range(), TextRange::new(0_u32, 13_u32));
+    assert_eq!(non_empty.line_index().line_count(), 1);
+}
+
+#[test]
 fn source_text_slices_and_reports_positions() {
     let source = SourceText::new(FileId::new(7), "class User {\n  final String name;\n}\n");
     let field_range = TextRange::new(15_u32, 32_u32);
@@ -50,4 +91,6 @@ fn source_text_slices_and_reports_positions() {
     assert_eq!(source.file_id(), FileId::new(7));
     assert_eq!(source.slice(field_range), Some("final String name"));
     assert_eq!(source.line_col(TextSize::new(15)).unwrap().line, 1);
+    assert_eq!(source.line_col(TextSize::new(15)).unwrap().column, 2);
+    assert_eq!(source.slice(TextRange::new(100_u32, 101_u32)), None);
 }

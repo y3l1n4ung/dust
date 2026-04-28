@@ -9,17 +9,7 @@ pub(crate) fn has_trait(class: &ClassIr, symbol: &SymbolId) -> bool {
 }
 
 pub(crate) fn validate_eq_hash(class: &ClassIr) -> Vec<Diagnostic> {
-    let hash = SymbolId::new("derive_annotation::Hash");
-    let eq = SymbolId::new("derive_annotation::Eq");
-    let partial_eq = SymbolId::new("derive_annotation::PartialEq");
-
-    if has_trait(class, &hash) && !has_trait(class, &eq) && !has_trait(class, &partial_eq) {
-        return vec![Diagnostic::error(format!(
-            "`Hash` requires `Eq` or `PartialEq` on class `{}`",
-            class.name
-        ))];
-    }
-
+    let _ = class;
     Vec::new()
 }
 
@@ -54,8 +44,7 @@ pub(crate) fn emit_shared_helpers(library: &LibraryIr) -> Vec<String> {
 
 pub(crate) fn emit_eq(class: &ClassIr) -> Option<String> {
     let eq = SymbolId::new("derive_annotation::Eq");
-    let partial_eq = SymbolId::new("derive_annotation::PartialEq");
-    if !has_trait(class, &eq) && !has_trait(class, &partial_eq) {
+    if !has_trait(class, &eq) {
         return None;
     }
 
@@ -78,8 +67,8 @@ pub(crate) fn emit_eq(class: &ClassIr) -> Option<String> {
 }
 
 pub(crate) fn emit_hash_code(class: &ClassIr) -> Option<String> {
-    let hash = SymbolId::new("derive_annotation::Hash");
-    if !has_trait(class, &hash) {
+    let eq = SymbolId::new("derive_annotation::Eq");
+    if !has_trait(class, &eq) {
         return None;
     }
 

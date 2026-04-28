@@ -42,44 +42,20 @@ mixin _$ProductDust {
     Map<String, String>? attributes,
     bool? featured,
   }) {
-    final nextSkuSource = sku ?? _dustSelf.sku;
-    final nextSku = nextSkuSource;
-    final nextTitleSource = title ?? _dustSelf.title;
-    final nextTitle = nextTitleSource;
     final nextPriceSource = price ?? _dustSelf.price;
-    final nextPrice = nextPriceSource;
+    final nextPrice = nextPriceSource.copyWith();
     final nextCategoriesSource = categories ?? _dustSelf.categories;
-    final nextCategories = List<Category>.of(nextCategoriesSource);
+    final nextCategories = List<Category>.of(nextCategoriesSource.map((item_3) => item_3.copyWith()));
     final nextAttributesSource = attributes ?? _dustSelf.attributes;
     final nextAttributes = Map<String, String>.of(nextAttributesSource);
-    final nextFeaturedSource = featured ?? _dustSelf.featured;
-    final nextFeatured = nextFeaturedSource;
 
     return Product(
-      sku: nextSku,
-      title: nextTitle,
+      sku: sku ?? _dustSelf.sku,
+      title: title ?? _dustSelf.title,
       price: nextPrice,
       categories: nextCategories,
       attributes: nextAttributes,
-      featured: nextFeatured,
-    );
-  }
-
-  Product clone() {
-    final clonedSku = _dustSelf.sku;
-    final clonedTitle = _dustSelf.title;
-    final clonedPrice = _dustSelf.price;
-    final clonedCategories = List<Category>.of(_dustSelf.categories);
-    final clonedAttributes = Map<String, String>.of(_dustSelf.attributes);
-    final clonedFeatured = _dustSelf.featured;
-
-    return Product(
-      sku: clonedSku,
-      title: clonedTitle,
-      price: clonedPrice,
-      categories: clonedCategories,
-      attributes: clonedAttributes,
-      featured: clonedFeatured,
+      featured: featured ?? _dustSelf.featured,
     );
   }
 }

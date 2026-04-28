@@ -6,7 +6,8 @@ use dust_workspace::discover_workspace;
 
 use crate::{
     build::{
-        codegen_tool_hash, default_registry, prepare_and_process_batch, read_package_config_hash,
+        BatchConfig, codegen_tool_hash, default_registry, prepare_and_process_batch,
+        read_package_config_hash,
     },
     catalog::build_symbol_catalog,
     progress::ProgressPhase,
@@ -59,19 +60,21 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
     };
 
     let indexed = prepare_and_process_batch(
-        &workspace.root,
+        BatchConfig {
+            workspace_root: &workspace.root,
+            package_config_hash,
+            tool_hash,
+            cache: &cache,
+            catalog: &catalog,
+            registry: &registry,
+            write_output: false,
+            fail_fast: request.fail_fast,
+            jobs: request.jobs,
+            file_id_base: 1,
+            phase: ProgressPhase::Build,
+            progress: None,
+        },
         &workspace.libraries,
-        package_config_hash,
-        tool_hash,
-        &cache,
-        &catalog,
-        &registry,
-        false,
-        request.fail_fast,
-        request.jobs,
-        1,
-        ProgressPhase::Build,
-        None,
         &mut cache_report,
     );
 

@@ -1,5 +1,5 @@
 [package]
-name = "dust_cli"
+name = "dart_cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,9 +9,11 @@ rust-version.workspace = true
 dust_driver = { path = "../dust_driver" }
 
 [dev-dependencies]
+dust_diagnostics = { path = "../dust_diagnostics" }
 tempfile = "3.27.0"
 
 [lib]
+name = "dust_cli"
 path = "src/lib.rs"
 
 [[bin]]

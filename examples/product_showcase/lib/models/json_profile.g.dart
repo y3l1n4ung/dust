@@ -20,6 +20,14 @@ mixin _$JsonProfileDust {
           other.displayName == _dustSelf.displayName &&
           _dustDeepCollectionEquality.equals(other.tags, _dustSelf.tags);
 
+  @override
+  int get hashCode => Object.hashAll([
+    runtimeType,
+    _dustSelf.id,
+    _dustSelf.displayName,
+    _dustDeepCollectionEquality.hash(_dustSelf.tags),
+  ]);
+
   Map<String, Object?> toJson() => _$JsonProfileToJson(_dustSelf);
 }
 

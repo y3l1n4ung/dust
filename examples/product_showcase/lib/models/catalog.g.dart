@@ -34,29 +34,10 @@ mixin _$InventoryEntryDust {
     String? warehouse,
     int? quantity,
   }) {
-    final nextProductSkuSource = productSku ?? _dustSelf.productSku;
-    final nextProductSku = nextProductSkuSource;
-    final nextWarehouseSource = warehouse ?? _dustSelf.warehouse;
-    final nextWarehouse = nextWarehouseSource;
-    final nextQuantitySource = quantity ?? _dustSelf.quantity;
-    final nextQuantity = nextQuantitySource;
-
     return InventoryEntry(
-      productSku: nextProductSku,
-      warehouse: nextWarehouse,
-      quantity: nextQuantity,
-    );
-  }
-
-  InventoryEntry clone() {
-    final clonedProductSku = _dustSelf.productSku;
-    final clonedWarehouse = _dustSelf.warehouse;
-    final clonedQuantity = _dustSelf.quantity;
-
-    return InventoryEntry(
-      productSku: clonedProductSku,
-      warehouse: clonedWarehouse,
-      quantity: clonedQuantity,
+      productSku: productSku ?? _dustSelf.productSku,
+      warehouse: warehouse ?? _dustSelf.warehouse,
+      quantity: quantity ?? _dustSelf.quantity,
     );
   }
 }
@@ -95,39 +76,21 @@ mixin _$CatalogDust {
     Set<String>? featuredSkus,
     List<InventoryEntry>? inventory,
   }) {
-    final nextIdSource = id ?? _dustSelf.id;
-    final nextId = nextIdSource;
     final nextProductsSource = products ?? _dustSelf.products;
-    final nextProducts = List<Product>.of(nextProductsSource);
+    final nextProducts = List<Product>.of(nextProductsSource.map((item_1) => item_1.copyWith()));
     final nextCategoryByIdSource = categoryById ?? _dustSelf.categoryById;
-    final nextCategoryById = Map<String, Category>.of(nextCategoryByIdSource);
+    final nextCategoryById = Map<String, Category>.fromEntries(nextCategoryByIdSource.entries.map((entry_2) => MapEntry(entry_2.key, entry_2.value.copyWith())));
     final nextFeaturedSkusSource = featuredSkus ?? _dustSelf.featuredSkus;
     final nextFeaturedSkus = Set<String>.of(nextFeaturedSkusSource);
     final nextInventorySource = inventory ?? _dustSelf.inventory;
-    final nextInventory = List<InventoryEntry>.of(nextInventorySource);
+    final nextInventory = List<InventoryEntry>.of(nextInventorySource.map((item_4) => item_4.copyWith()));
 
     return Catalog(
-      id: nextId,
+      id: id ?? _dustSelf.id,
       products: nextProducts,
       categoryById: nextCategoryById,
       featuredSkus: nextFeaturedSkus,
       inventory: nextInventory,
-    );
-  }
-
-  Catalog clone() {
-    final clonedId = _dustSelf.id;
-    final clonedProducts = List<Product>.of(_dustSelf.products);
-    final clonedCategoryById = Map<String, Category>.of(_dustSelf.categoryById);
-    final clonedFeaturedSkus = Set<String>.of(_dustSelf.featuredSkus);
-    final clonedInventory = List<InventoryEntry>.of(_dustSelf.inventory);
-
-    return Catalog(
-      id: clonedId,
-      products: clonedProducts,
-      categoryById: clonedCategoryById,
-      featuredSkus: clonedFeaturedSkus,
-      inventory: clonedInventory,
     );
   }
 }

@@ -23,10 +23,7 @@ impl DustPlugin for DerivePlugin {
     fn claimed_traits(&self) -> Vec<SymbolId> {
         vec![
             SymbolId::new("derive_annotation::Debug"),
-            SymbolId::new("derive_annotation::PartialEq"),
             SymbolId::new("derive_annotation::Eq"),
-            SymbolId::new("derive_annotation::Hash"),
-            SymbolId::new("derive_annotation::Clone"),
             SymbolId::new("derive_annotation::CopyWith"),
         ]
     }

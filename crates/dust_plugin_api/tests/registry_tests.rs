@@ -188,8 +188,8 @@ fn plugin_names_follow_registration_order() {
 fn push_mixin_member_groups_members_by_class() {
     let mut contribution = PluginContribution::default();
     contribution.push_mixin_member("User", "String toString() => 'User()';");
-    contribution.push_mixin_member("User", "User clone() => User();");
-    contribution.push_mixin_member("Team", "Team clone() => Team();");
+    contribution.push_mixin_member("User", "User copyWith({String? id}) => User();");
+    contribution.push_mixin_member("Team", "Team copyWith({String? name}) => Team();");
 
     assert_eq!(
         contribution.mixin_members,
@@ -198,12 +198,12 @@ fn push_mixin_member_groups_members_by_class() {
                 class_name: "User".to_owned(),
                 members: vec![
                     "String toString() => 'User()';".to_owned(),
-                    "User clone() => User();".to_owned(),
+                    "User copyWith({String? id}) => User();".to_owned(),
                 ],
             },
             ClassMixinContribution {
                 class_name: "Team".to_owned(),
-                members: vec!["Team clone() => Team();".to_owned()],
+                members: vec!["Team copyWith({String? name}) => Team();".to_owned()],
             },
         ]
     );

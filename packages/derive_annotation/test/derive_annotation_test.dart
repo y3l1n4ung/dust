@@ -14,30 +14,25 @@ void main() {
     test('core markers are derive traits', () {
       const traits = <DeriveTrait>[
         Debug(),
-        Clone(),
         CopyWith(),
-        PartialEq(),
         Eq(),
-        Hash(),
       ];
 
-      expect(traits, hasLength(6));
+      expect(traits, hasLength(3));
       expect(traits, everyElement(isA<DeriveMeta>()));
     });
 
     test('Derive stores a typed trait list', () {
       const annotation = Derive([
         Debug(),
-        PartialEq(),
-        Hash(),
+        Eq(),
         CopyWith(),
       ]);
 
-      expect(annotation.traits, hasLength(4));
+      expect(annotation.traits, hasLength(3));
       expect(annotation.traits[0], isA<Debug>());
-      expect(annotation.traits[1], isA<PartialEq>());
-      expect(annotation.traits[2], isA<Hash>());
-      expect(annotation.traits[3], isA<CopyWith>());
+      expect(annotation.traits[1], isA<Eq>());
+      expect(annotation.traits[2], isA<CopyWith>());
     });
   });
 
