@@ -2,7 +2,7 @@ use dust_driver::CommandResult;
 
 use crate::args::CliCommand;
 
-const BANNER: &str = include_str!("../../../../brand/dust-logo-cli.txt");
+const BANNER: &str = include_str!("../../../assets/dust-logo-cli.txt");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn render_banner() -> &'static str {
