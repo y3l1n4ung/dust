@@ -139,6 +139,13 @@ dust watch
 
 ---
 
+## Roadmap
+
+See [docs/roadmap](docs/roadmap/README.md) for generated code, serde,
+HttpClient, route annotation, and state management plans.
+
+---
+
 ## License
 
 MIT. See [LICENSE](LICENSE). Copyright (c) 2026 [Ye Lin Aung](https://github.com/y3l1n4ung).
