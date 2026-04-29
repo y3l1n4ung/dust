@@ -97,6 +97,7 @@ fn plugin_claims_core_derive_traits() {
     assert_eq!(
         names,
         vec![
+            "derive_annotation::ToString",
             "derive_annotation::Debug",
             "derive_annotation::Eq",
             "derive_annotation::CopyWith",
@@ -118,7 +119,7 @@ fn requests_undefined_only_for_copywith_when_needed() {
 
     let copywith_requested =
         plugin.requested_symbols(&sample_library(&["derive_annotation::CopyWith"]));
-    let no_requested = plugin.requested_symbols(&sample_library(&["derive_annotation::Debug"]));
+    let no_requested = plugin.requested_symbols(&sample_library(&["derive_annotation::ToString"]));
 
     assert_eq!(copywith_requested, vec!["_undefined".to_owned()]);
     assert!(no_requested.is_empty());
@@ -128,7 +129,7 @@ fn requests_undefined_only_for_copywith_when_needed() {
 fn emits_full_fragments_for_matching_traits() {
     let plugin = register_plugin();
     let library = sample_library(&[
-        "derive_annotation::Debug",
+        "derive_annotation::ToString",
         "derive_annotation::Eq",
         "derive_annotation::CopyWith",
     ]);
@@ -138,8 +139,10 @@ fn emits_full_fragments_for_matching_traits() {
     assert_eq!(contribution.mixin_members.len(), 1);
     assert_eq!(members.len(), 4);
     assert!(members.iter().any(|fragment| {
-        fragment
-            .contains("String toString() => 'User(id: ${_dustSelf.id}, age: ${_dustSelf.age})';")
+        fragment.contains("String toString() {")
+            && fragment.contains("return 'User('")
+            && fragment.contains("'id: ${_dustSelf.id}, '")
+            && fragment.contains("'age: ${_dustSelf.age}'")
     }));
     assert!(
         members
@@ -171,6 +174,22 @@ fn emits_full_fragments_for_matching_traits() {
         members
             .iter()
             .any(|fragment| fragment.contains("return User("))
+    );
+}
+
+#[test]
+fn legacy_debug_symbol_still_emits_tostring() {
+    let plugin = register_plugin();
+    let contribution = plugin.emit(
+        &sample_library(&["derive_annotation::Debug"]),
+        &SymbolPlan::default(),
+    );
+    let members = members_for_class(&contribution, "User");
+
+    assert!(
+        members
+            .iter()
+            .any(|fragment| fragment.contains("String toString() {"))
     );
 }
 
@@ -336,7 +355,7 @@ fn rejects_mixin_class_targets() {
                 }],
             }],
             traits: vec![TraitApplicationIr {
-                symbol: SymbolId::new("derive_annotation::Debug"),
+                symbol: SymbolId::new("derive_annotation::ToString"),
                 span: span(5, 9),
             }],
             serde: None,
@@ -444,10 +463,12 @@ fn copywith_copies_collection_fields_without_aliasing() {
 
     assert_eq!(members.len(), 1);
     assert!(members[0].contains("Catalog copyWith({"));
-    assert!(members[0].contains(
-        "List<List<String>>.of(nextGroupsSource.map((item_0) => List<String>.of(item_0)))"
-    ));
-    assert!(members[0].contains("List<String>.of(nextItemsSource)"));
+    assert!(members[0].contains("List<List<String>>.of(\n"));
+    assert!(
+        members[0]
+            .contains("(groups ?? _dustSelf.groups).map((item_0) => List<String>.of(item_0)),")
+    );
+    assert!(members[0].contains("List<String>.of(items ?? _dustSelf.items)"));
     assert!(members[0].contains("nextTagsSource == null ? null : Set<String>.of(nextTagsSource)"));
     assert!(members[0].contains("Map<String, List<int>>.fromEntries("));
     assert!(members[0].contains("List<int>.of(entry_"));
@@ -550,11 +571,12 @@ fn copywith_clones_nested_dust_models() {
     assert_eq!(members.len(), 1);
     assert!(members.iter().any(|fragment| {
         fragment.contains("Product copyWith({")
-            && fragment.contains("final nextPriceSource = price ?? _dustSelf.price;")
-            && fragment.contains("final nextPrice = nextPriceSource.copyWith();")
-            && fragment.contains("final nextPrices = List<Price>.of(nextPricesSource.map((")
+            && !fragment.contains("final nextPriceSource = price ?? _dustSelf.price;")
+            && fragment.contains("final nextPrice = (price ?? _dustSelf.price).copyWith();")
+            && fragment.contains("final nextPrices = List<Price>.of(\n")
+            && fragment.contains("(prices ?? _dustSelf.prices).map((")
             && fragment.contains("=> item_")
-            && fragment.contains(".copyWith()));")
+            && fragment.contains(".copyWith()),")
     }));
 }
 
@@ -622,8 +644,12 @@ fn copywith_copies_collection_fields() {
     assert_eq!(members.len(), 1);
     assert!(members[0].contains("Catalog copyWith({"));
     assert!(members[0].contains("List<List<String>>? groups,"));
-    assert!(members[0].contains("final nextGroupsSource = groups ?? _dustSelf.groups;"));
-    assert!(members[0].contains("final nextGroups = List<List<String>>.of(nextGroupsSource.map((item_0) => List<String>.of(item_0)));"));
+    assert!(!members[0].contains("final nextGroupsSource = groups ?? _dustSelf.groups;"));
+    assert!(members[0].contains("final nextGroups = List<List<String>>.of(\n"));
+    assert!(
+        members[0]
+            .contains("(groups ?? _dustSelf.groups).map((item_0) => List<String>.of(item_0)),")
+    );
     assert!(members[0].contains("final nextMetrics = Map<String, List<int>>.fromEntries("));
     assert!(members[0].contains("return Catalog("));
 }

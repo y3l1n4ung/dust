@@ -9,7 +9,11 @@ mixin _$EntityDust {
   Entity get _dustSelf => this as Entity;
 
   @override
-  String toString() => 'Entity(id: ${_dustSelf.id})';
+  String toString() {
+    return 'Entity('
+        'id: ${_dustSelf.id}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -29,7 +33,13 @@ mixin _$DetailedEntityDust {
   DetailedEntity get _dustSelf => this as DetailedEntity;
 
   @override
-  String toString() => 'DetailedEntity(id: ${_dustSelf.id}, label: ${_dustSelf.label}, tags: ${_dustSelf.tags})';
+  String toString() {
+    return 'DetailedEntity('
+        'id: ${_dustSelf.id}, '
+        'label: ${_dustSelf.label}, '
+        'tags: ${_dustSelf.tags}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -53,8 +63,7 @@ mixin _$DetailedEntityDust {
     String? label,
     List<String>? tags,
   }) {
-    final nextTagsSource = tags ?? _dustSelf.tags;
-    final nextTags = List<String>.of(nextTagsSource);
+    final nextTags = List<String>.of(tags ?? _dustSelf.tags);
 
     return DetailedEntity(
       id ?? _dustSelf.id,

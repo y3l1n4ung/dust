@@ -16,7 +16,7 @@ final class Deserialize extends DeriveTrait {
 ///
 /// These values intentionally mirror the common Rust `serde(rename_all = "...")`
 /// naming families, but use Dart enum-friendly casing.
-enum SerdeRename {
+enum SerDeRename {
   /// Convert names to `lowercase`.
   lowerCase,
 
@@ -63,7 +63,7 @@ final class SerDe extends DeriveConfig {
   final String? rename;
 
   /// Automatic rename rule applied to child fields without an explicit [rename].
-  final SerdeRename? renameAll;
+  final SerDeRename? renameAll;
 
   /// Fallback value used when deserialization omits the annotated field.
   final Object? defaultValue;

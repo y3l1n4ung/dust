@@ -4,19 +4,13 @@ import 'package:test/test.dart';
 void main() {
   group('Serde derive traits', () {
     test('serde markers are derive traits', () {
-      const traits = <DeriveTrait>[
-        Serialize(),
-        Deserialize(),
-      ];
+      const traits = <DeriveTrait>[Serialize(), Deserialize()];
 
       expect(traits, hasLength(2));
     });
 
     test('package re-exports the Derive container', () {
-      const annotation = Derive([
-        Serialize(),
-        Deserialize(),
-      ]);
+      const annotation = Derive([Serialize(), Deserialize()]);
 
       expect(annotation.traits, hasLength(2));
       expect(annotation.traits[0], isA<Serialize>());
@@ -42,7 +36,7 @@ void main() {
     test('custom config values are preserved', () {
       const config = SerDe(
         rename: 'payload',
-        renameAll: SerdeRename.snakeCase,
+        renameAll: SerDeRename.snakeCase,
         defaultValue: 42,
         skip: false,
         skipSerializing: true,
@@ -52,7 +46,7 @@ void main() {
       );
 
       expect(config.rename, 'payload');
-      expect(config.renameAll, SerdeRename.snakeCase);
+      expect(config.renameAll, SerDeRename.snakeCase);
       expect(config.defaultValue, 42);
       expect(config.skip, isFalse);
       expect(config.skipSerializing, isTrue);
@@ -92,16 +86,16 @@ void main() {
 
   test('rename enum exposes stable strategies', () {
     expect(
-      SerdeRename.values,
+      SerDeRename.values,
       equals(const [
-        SerdeRename.lowerCase,
-        SerdeRename.upperCase,
-        SerdeRename.pascalCase,
-        SerdeRename.camelCase,
-        SerdeRename.snakeCase,
-        SerdeRename.screamingSnakeCase,
-        SerdeRename.kebabCase,
-        SerdeRename.screamingKebabCase,
+        SerDeRename.lowerCase,
+        SerDeRename.upperCase,
+        SerDeRename.pascalCase,
+        SerDeRename.camelCase,
+        SerDeRename.snakeCase,
+        SerDeRename.screamingSnakeCase,
+        SerDeRename.kebabCase,
+        SerDeRename.screamingKebabCase,
       ]),
     );
   });

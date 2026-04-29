@@ -854,7 +854,7 @@ mod tests {
             configs: vec![ConfigApplicationIr {
                 symbol: SymbolId::new("derive_serde_annotation::SerDe"),
                 arguments_source: Some(
-                    "(renameAll: SerdeRename.snakeCase, disallowUnrecognizedKeys: true)".to_owned(),
+                    "(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)".to_owned(),
                 ),
                 span: span(1, 10),
             }],
@@ -908,7 +908,7 @@ mod tests {
                 span: span(20, 30),
                 configs: vec![ConfigApplicationIr {
                     symbol: SymbolId::new("derive_serde_annotation::SerDe"),
-                    arguments_source: Some("(renameAll: SerdeRename.snakeCase)".to_owned()),
+                    arguments_source: Some("(renameAll: SerDeRename.snakeCase)".to_owned()),
                     span: span(18, 30),
                 }],
             }],

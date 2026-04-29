@@ -419,7 +419,7 @@ mod tests {
         .unwrap();
         fs::write(
             lib.join("user.dart"),
-            "import 'package:derive_annotation/derive_annotation.dart';\npart 'user.g.dart';\n@Derive([Debug()])\nclass User with _$UserDust { const User(); }\n",
+            "import 'package:derive_annotation/derive_annotation.dart';\npart 'user.g.dart';\n@Derive([ToString()])\nclass User with _$UserDust { const User(); }\n",
         )
         .unwrap();
 

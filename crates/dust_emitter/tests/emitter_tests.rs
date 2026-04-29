@@ -285,7 +285,7 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
                     ],
                 )],
                 traits: vec![
-                    trait_app("derive_annotation::Debug"),
+                    trait_app("derive_annotation::ToString"),
                     trait_app("derive_annotation::Eq"),
                     trait_app("derive_annotation::CopyWith"),
                 ],
@@ -323,10 +323,9 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
     assert!(written.contains("const Object _undefined = Object();"));
     assert!(written.contains("mixin _$UserDust {"));
     assert!(written.contains("User get _dustSelf => this as User;"));
-    assert!(
-        written
-            .contains("String toString() => 'User(id: ${_dustSelf.id}, age: ${_dustSelf.age})';")
-    );
+    assert!(written.contains("String toString() {\n    return 'User('"));
+    assert!(written.contains("'id: ${_dustSelf.id}, '"));
+    assert!(written.contains("'age: ${_dustSelf.age}'"));
     assert!(written.contains(
         "int get hashCode => Object.hashAll([\n    runtimeType,\n    _dustSelf.id,\n    _dustSelf.age,\n  ]);"
     ));

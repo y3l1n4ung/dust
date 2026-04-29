@@ -9,7 +9,12 @@ mixin _$NestedBundleDust {
   NestedBundle get _dustSelf => this as NestedBundle;
 
   @override
-  String toString() => 'NestedBundle(groups: ${_dustSelf.groups}, metrics: ${_dustSelf.metrics})';
+  String toString() {
+    return 'NestedBundle('
+        'groups: ${_dustSelf.groups}, '
+        'metrics: ${_dustSelf.metrics}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -30,10 +35,14 @@ mixin _$NestedBundleDust {
     List<List<String>>? groups,
     Map<String, List<int>>? metrics,
   }) {
-    final nextGroupsSource = groups ?? _dustSelf.groups;
-    final nextGroups = List<List<String>>.of(nextGroupsSource.map((item_0) => List<String>.of(item_0)));
-    final nextMetricsSource = metrics ?? _dustSelf.metrics;
-    final nextMetrics = Map<String, List<int>>.fromEntries(nextMetricsSource.entries.map((entry_1) => MapEntry(entry_1.key, List<int>.of(entry_1.value))));
+    final nextGroups = List<List<String>>.of(
+      (groups ?? _dustSelf.groups).map((item_0) => List<String>.of(item_0)),
+    );
+    final nextMetrics = Map<String, List<int>>.fromEntries(
+      (metrics ?? _dustSelf.metrics).entries.map(
+        (entry_1) => MapEntry(entry_1.key, List<int>.of(entry_1.value)),
+      ),
+    );
 
     return NestedBundle(
       groups: nextGroups,

@@ -25,13 +25,13 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 part 'user.g.dart';
 
 @Derive([
-  Debug(),
+  ToString(),
   CopyWith(),
   Eq(),
   Serialize(),
   Deserialize(),
 ])
-@SerDe(renameAll: SerdeRename.snakeCase)
+@SerDe(renameAll: SerDeRename.snakeCase)
 class User with _$UserDust {
   final String id;
   final String displayName;
@@ -51,15 +51,15 @@ Dust generates `user.g.dart` — the file referenced by `part 'user.g.dart'` —
 
 Generated output includes:
 
-| Derive | What it generates |
-| --- | --- |
-| `Debug()` | `toString()` with all field values |
-| `CopyWith()` | `copyWith({...})` with named parameters |
-| `Eq()` | `==` operator and matching `hashCode` |
-| `Serialize()` | `toJson()` -> `Map<String, dynamic>` |
-| `Deserialize()` | `fromJson()` factory constructor |
+| Derive          | What it generates                       |
+| --------------- | --------------------------------------- |
+| `ToString()`    | `toString()` with all field values      |
+| `CopyWith()`    | `copyWith({...})` with named parameters |
+| `Eq()`          | `==` operator and matching `hashCode`   |
+| `Serialize()`   | `toJson()` -> `Map<String, dynamic>`    |
+| `Deserialize()` | `fromJson()` factory constructor        |
 
-`@SerDe(renameAll: SerdeRename.snakeCase)` controls how field names are mapped in JSON — `displayName` becomes `display_name`, etc.
+`@SerDe(renameAll: SerDeRename.snakeCase)` controls how field names are mapped in JSON — `displayName` becomes `display_name`, etc.
 
 ---
 

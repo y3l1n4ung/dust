@@ -30,7 +30,7 @@ requested, and safe for production JSON boundaries.
 
 ```dart
 @Derive([Serialize(), Deserialize()])
-@SerDe(renameAll: SerdeRename.snakeCase, disallowUnrecognizedKeys: true)
+@SerDe(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)
 class User with _$UserDust {
   final String id;
 

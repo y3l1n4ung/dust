@@ -9,7 +9,13 @@ mixin _$JsonAccountDust {
   JsonAccount get _dustSelf => this as JsonAccount;
 
   @override
-  String toString() => 'JsonAccount(profile: ${_dustSelf.profile}, metrics: ${_dustSelf.metrics}, archived: ${_dustSelf.archived})';
+  String toString() {
+    return 'JsonAccount('
+        'profile: ${_dustSelf.profile}, '
+        'metrics: ${_dustSelf.metrics}, '
+        'archived: ${_dustSelf.archived}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>

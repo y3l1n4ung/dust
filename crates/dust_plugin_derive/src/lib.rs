@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
-#![doc = "First-party derive plugin for Debug, Eq, and CopyWith."]
+#![doc = "First-party derive plugin for ToString, Eq, and CopyWith."]
 
 mod emit;
 mod features;

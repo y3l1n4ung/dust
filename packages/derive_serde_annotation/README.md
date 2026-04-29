@@ -11,7 +11,7 @@ It contains:
 - `Serialize` for generated `toJson()`
 - `Deserialize` for generated `fromJson(...)`
 - `SerDe(...)` for Rust-serde-style declaration and field metadata
-- `SerdeRename` for automatic rename rules
+- `SerDeRename` for automatic rename rules
 
 ## Example
 
@@ -21,7 +21,7 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 part 'user.g.dart';
 
 @Derive([Serialize(), Deserialize()])
-@SerDe(renameAll: SerdeRename.snakeCase)
+@SerDe(renameAll: SerDeRename.snakeCase)
 class User {
   @SerDe(rename: 'user_id')
   final String userId;

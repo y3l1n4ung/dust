@@ -5,7 +5,7 @@ import 'product.dart';
 
 part 'catalog.g.dart';
 
-@Derive([Debug(), Eq(), CopyWith()])
+@Derive([ToString(), Eq(), CopyWith()])
 class InventoryEntry with _$InventoryEntryDust {
   const InventoryEntry({
     required this.productSku,
@@ -18,7 +18,7 @@ class InventoryEntry with _$InventoryEntryDust {
   final int quantity;
 }
 
-@Derive([Debug(), Eq(), CopyWith()])
+@Derive([ToString(), Eq(), CopyWith()])
 class Catalog with _$CatalogDust {
   Catalog({
     required this.id,

@@ -11,7 +11,13 @@ mixin _$OptionalNoteDust {
   OptionalNote get _dustSelf => this as OptionalNote;
 
   @override
-  String toString() => 'OptionalNote(id: ${_dustSelf.id}, note: ${_dustSelf.note}, aliases: ${_dustSelf.aliases})';
+  String toString() {
+    return 'OptionalNote('
+        'id: ${_dustSelf.id}, '
+        'note: ${_dustSelf.note}, '
+        'aliases: ${_dustSelf.aliases}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>

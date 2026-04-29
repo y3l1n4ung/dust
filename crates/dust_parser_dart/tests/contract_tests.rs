@@ -24,7 +24,7 @@ impl ParseBackend for FakeBackend {
                     superclass_name: Some("Entity".to_owned()),
                     annotations: vec![ParsedAnnotation {
                         name: "Derive".to_owned(),
-                        arguments_source: Some("[Debug(), Eq()]".to_owned()),
+                        arguments_source: Some("[ToString(), Eq()]".to_owned()),
                         span: TextRange::new(20_u32, 44_u32),
                     }],
                     fields: vec![ParsedFieldSurface {

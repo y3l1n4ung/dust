@@ -10,7 +10,7 @@ fn extracts_library_surface_from_real_dart_source() {
 import 'dart:convert';
 part 'user.g.dart';
 
-@Derive([Debug(), Serialize(), Deserialize()])
+@Derive([ToString(), Serialize(), Deserialize()])
 class User {
   final String name;
   final int? age;
@@ -245,7 +245,7 @@ fn detects_mixin_class_declarations_for_validation() {
         r#"
 part 'mixin_target.g.dart';
 
-@Derive([Debug()])
+@Derive([ToString()])
 abstract mixin class MixinTarget {
   const MixinTarget(this.id);
 

@@ -7,14 +7,17 @@ use dust_text::{FileId, SourceText};
 #[test]
 fn symbol_catalog_registers_traits_and_configs() {
     let mut catalog = SymbolCatalog::new();
-    catalog.register_trait("Debug", "derive_annotation::Debug");
+    catalog.register_trait("ToString", "derive_annotation::ToString");
     catalog.register_config("SerDe", "derive_serde_annotation::SerDe");
 
-    let debug = catalog.resolve("Debug").unwrap();
+    let to_string = catalog.resolve("ToString").unwrap();
     let serde = catalog.resolve("SerDe").unwrap();
 
-    assert_eq!(debug.symbol, SymbolId::new("derive_annotation::Debug"));
-    assert_eq!(debug.kind, SymbolKind::Trait);
+    assert_eq!(
+        to_string.symbol,
+        SymbolId::new("derive_annotation::ToString")
+    );
+    assert_eq!(to_string.kind, SymbolKind::Trait);
     assert_eq!(serde.kind, SymbolKind::Config);
 }
 
@@ -36,8 +39,8 @@ fn resolves_real_dart_traits_and_configs() {
         r#"
 part 'user.g.dart';
 
-@Derive([Debug(), Serialize(), Deserialize()])
-@SerDe(renameAll: SerdeRename.snakeCase)
+@Derive([ToString(), Serialize(), Deserialize()])
+@SerDe(renameAll: SerDeRename.snakeCase)
 class User {
   @SerDe(rename: 'full_name')
   final String name;
@@ -49,7 +52,7 @@ class User {
 
     let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
     let mut catalog = SymbolCatalog::new();
-    catalog.register_trait("Debug", "derive_annotation::Debug");
+    catalog.register_trait("ToString", "derive_annotation::ToString");
     catalog.register_trait("Serialize", "derive_serde_annotation::Serialize");
     catalog.register_trait("Deserialize", "derive_serde_annotation::Deserialize");
     catalog.register_config("SerDe", "derive_serde_annotation::SerDe");
@@ -70,7 +73,7 @@ class User {
         resolved.library.classes[0].configs[0]
             .arguments_source
             .as_deref(),
-        Some("(renameAll: SerdeRename.snakeCase)")
+        Some("(renameAll: SerDeRename.snakeCase)")
     );
     assert_eq!(resolved.library.classes[0].fields.len(), 1);
     assert_eq!(resolved.library.classes[0].fields[0].configs.len(), 1);
@@ -87,7 +90,7 @@ fn missing_generated_part_is_reported_when_dust_symbols_are_present() {
     let source = SourceText::new(
         FileId::new(2),
         r#"
-@Derive([Debug()])
+@Derive([ToString()])
 class User {
   final String name;
 }
@@ -96,7 +99,7 @@ class User {
 
     let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
     let mut catalog = SymbolCatalog::new();
-    catalog.register_trait("Debug", "derive_annotation::Debug");
+    catalog.register_trait("ToString", "derive_annotation::ToString");
 
     let resolved = resolve_library(FileId::new(2), "lib/user.dart", &parsed.library, &catalog);
 
@@ -115,14 +118,14 @@ fn unknown_derive_members_are_reported_but_do_not_abort_resolution() {
         r#"
 part 'user.g.dart';
 
-@Derive([Debug(), UnknownThing()])
+@Derive([ToString(), UnknownThing()])
 class User {}
 "#,
     );
 
     let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
     let mut catalog = SymbolCatalog::new();
-    catalog.register_trait("Debug", "derive_annotation::Debug");
+    catalog.register_trait("ToString", "derive_annotation::ToString");
 
     let resolved = resolve_library(FileId::new(3), "lib/user.dart", &parsed.library, &catalog);
 

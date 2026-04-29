@@ -70,7 +70,7 @@ fn registry_rejects_duplicate_trait_ownership() {
     registry
         .register(Box::new(FakePlugin {
             name: "plugin_a",
-            traits: vec![SymbolId::new("derive_annotation::Debug")],
+            traits: vec![SymbolId::new("derive_annotation::ToString")],
             configs: Vec::new(),
             requested: Vec::new(),
         }))
@@ -79,7 +79,7 @@ fn registry_rejects_duplicate_trait_ownership() {
     let error = registry
         .register(Box::new(FakePlugin {
             name: "plugin_b",
-            traits: vec![SymbolId::new("derive_annotation::Debug")],
+            traits: vec![SymbolId::new("derive_annotation::ToString")],
             configs: Vec::new(),
             requested: Vec::new(),
         }))
@@ -88,7 +88,7 @@ fn registry_rejects_duplicate_trait_ownership() {
     assert!(
         error
             .message
-            .contains("trait symbol `derive_annotation::Debug` is already owned")
+            .contains("trait symbol `derive_annotation::ToString` is already owned")
     );
 }
 

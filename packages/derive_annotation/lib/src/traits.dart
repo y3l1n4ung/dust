@@ -1,8 +1,15 @@
 import 'base.dart';
 
-/// Generates a readable debug-oriented `toString()` implementation.
+/// Generates a `toString()` implementation from the class fields.
+final class ToString extends DeriveTrait {
+  /// Creates the `ToString` derive marker.
+  const ToString();
+}
+
+/// Deprecated alias for `ToString()`.
+@Deprecated('Use ToString() instead.')
 final class Debug extends DeriveTrait {
-  /// Creates the `Debug` derive marker.
+  /// Creates the legacy `Debug` derive marker.
   const Debug();
 }
 

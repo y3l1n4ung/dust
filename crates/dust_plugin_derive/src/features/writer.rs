@@ -33,7 +33,7 @@ pub(crate) fn render_type(ty: &TypeIr) -> String {
             let nullable = if *nullable { "?" } else { "" };
             format!("{shape}{nullable}")
         }
-        TypeIr::Dynamic => "Object?".to_owned(),
+        TypeIr::Dynamic => "dynamic".to_owned(),
         TypeIr::Unknown => "Object?".to_owned(),
     }
 }

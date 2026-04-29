@@ -9,7 +9,14 @@ mixin _$FeaturedProductDust {
   FeaturedProduct get _dustSelf => this as FeaturedProduct;
 
   @override
-  String toString() => 'FeaturedProduct(sku: ${_dustSelf.sku}, price: ${_dustSelf.price}, tags: ${_dustSelf.tags}, archived: ${_dustSelf.archived})';
+  String toString() {
+    return 'FeaturedProduct('
+        'sku: ${_dustSelf.sku}, '
+        'price: ${_dustSelf.price}, '
+        'tags: ${_dustSelf.tags}, '
+        'archived: ${_dustSelf.archived}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -36,10 +43,8 @@ mixin _$FeaturedProductDust {
     Set<String>? tags,
     bool? archived,
   }) {
-    final nextPriceSource = price ?? _dustSelf.price;
-    final nextPrice = nextPriceSource.copyWith();
-    final nextTagsSource = tags ?? _dustSelf.tags;
-    final nextTags = Set<String>.of(nextTagsSource);
+    final nextPrice = (price ?? _dustSelf.price).copyWith();
+    final nextTags = Set<String>.of(tags ?? _dustSelf.tags);
 
     return FeaturedProduct(
       sku: sku ?? _dustSelf.sku,

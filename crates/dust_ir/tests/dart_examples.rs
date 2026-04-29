@@ -72,7 +72,7 @@ fn models_real_dart_data_class_shapes() {
             }],
             traits: vec![
                 TraitApplicationIr {
-                    symbol: SymbolId::new("derive_annotation::Debug"),
+                    symbol: SymbolId::new("derive_annotation::ToString"),
                     span: span(1, 41, 48),
                 },
                 TraitApplicationIr {

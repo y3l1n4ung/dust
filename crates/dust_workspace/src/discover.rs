@@ -12,7 +12,7 @@ use crate::SourceLibrary;
 /// The scan is deterministic and only keeps source files that:
 /// - are not already generated `*.g.dart` files
 /// - declare a matching `part 'x.g.dart';` or `part "x.g.dart";`
-/// - contain at least one annotation marker like `@Derive` or `@Debug`
+/// - contain at least one annotation marker like `@Derive` or `@ToString`
 pub fn discover_libraries(root: &Path) -> Result<Vec<SourceLibrary>, Diagnostic> {
     let lib_dir = root.join("lib");
     if !lib_dir.is_dir() {

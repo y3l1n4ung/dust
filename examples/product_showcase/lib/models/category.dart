@@ -2,7 +2,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 
 part 'category.g.dart';
 
-@Derive([Debug(), Eq(), CopyWith()])
+@Derive([ToString(), Eq(), CopyWith()])
 class Category with _$CategoryDust {
   const Category({
     required this.id,

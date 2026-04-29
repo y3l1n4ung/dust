@@ -1,4 +1,4 @@
-/// Normalized rename strategies derived from `SerdeRename`.
+/// Normalized rename strategies derived from `SerDeRename`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SerdeRenameRuleIr {
     /// Lowercase words without separators.

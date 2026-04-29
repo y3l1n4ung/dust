@@ -9,7 +9,13 @@ mixin _$PriceDust {
   Price get _dustSelf => this as Price;
 
   @override
-  String toString() => 'Price(currency: ${_dustSelf.currency}, cents: ${_dustSelf.cents}, tags: ${_dustSelf.tags})';
+  String toString() {
+    return 'Price('
+        'currency: ${_dustSelf.currency}, '
+        'cents: ${_dustSelf.cents}, '
+        'tags: ${_dustSelf.tags}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -33,8 +39,7 @@ mixin _$PriceDust {
     int? cents,
     List<String>? tags,
   }) {
-    final nextTagsSource = tags ?? _dustSelf.tags;
-    final nextTags = List<String>.of(nextTagsSource);
+    final nextTags = List<String>.of(tags ?? _dustSelf.tags);
 
     return Price(
       currency: currency ?? _dustSelf.currency,

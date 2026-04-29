@@ -26,7 +26,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
             superclass_name: Some("Entity".to_owned()),
             annotations: vec![ParsedAnnotation {
                 name: "Derive".to_owned(),
-                arguments_source: Some("[Debug(), Serialize(), Deserialize()]".to_owned()),
+                arguments_source: Some("[ToString(), Serialize(), Deserialize()]".to_owned()),
                 span: TextRange::new(44_u32, 84_u32),
             }],
             fields: vec![

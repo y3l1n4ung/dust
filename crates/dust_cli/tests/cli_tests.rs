@@ -23,7 +23,7 @@ fn cli_build_writes_real_output() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -47,7 +47,7 @@ fn cli_second_build_reports_cached_output() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -71,7 +71,7 @@ fn cli_clean_removes_dust_outputs_and_cache() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -111,7 +111,7 @@ fn cli_check_returns_stale_exit_code_before_build() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -131,7 +131,7 @@ fn cli_watch_reports_rebuilt_library() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -145,7 +145,7 @@ fn cli_watch_reports_rebuilt_library() {
         write_file(
             &user_path,
             "part 'user.g.dart';\n\
-             @Debug()\n\
+             @ToString()\n\
              class User {\n\
                final String id;\n\
                final int age;\n\

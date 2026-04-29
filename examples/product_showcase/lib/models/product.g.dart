@@ -9,7 +9,16 @@ mixin _$ProductDust {
   Product get _dustSelf => this as Product;
 
   @override
-  String toString() => 'Product(sku: ${_dustSelf.sku}, title: ${_dustSelf.title}, price: ${_dustSelf.price}, categories: ${_dustSelf.categories}, attributes: ${_dustSelf.attributes}, featured: ${_dustSelf.featured})';
+  String toString() {
+    return 'Product('
+        'sku: ${_dustSelf.sku}, '
+        'title: ${_dustSelf.title}, '
+        'price: ${_dustSelf.price}, '
+        'categories: ${_dustSelf.categories}, '
+        'attributes: ${_dustSelf.attributes}, '
+        'featured: ${_dustSelf.featured}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -42,12 +51,11 @@ mixin _$ProductDust {
     Map<String, String>? attributes,
     bool? featured,
   }) {
-    final nextPriceSource = price ?? _dustSelf.price;
-    final nextPrice = nextPriceSource.copyWith();
-    final nextCategoriesSource = categories ?? _dustSelf.categories;
-    final nextCategories = List<Category>.of(nextCategoriesSource.map((item_3) => item_3.copyWith()));
-    final nextAttributesSource = attributes ?? _dustSelf.attributes;
-    final nextAttributes = Map<String, String>.of(nextAttributesSource);
+    final nextPrice = (price ?? _dustSelf.price).copyWith();
+    final nextCategories = List<Category>.of(
+      (categories ?? _dustSelf.categories).map((item_3) => item_3.copyWith()),
+    );
+    final nextAttributes = Map<String, String>.of(attributes ?? _dustSelf.attributes);
 
     return Product(
       sku: sku ?? _dustSelf.sku,

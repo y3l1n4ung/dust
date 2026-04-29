@@ -96,7 +96,7 @@ fn emits_debug_eq_and_hash_for_zero_field_class() {
             "Unit",
             Vec::new(),
             vec![constructor(None, Vec::new())],
-            &["derive_annotation::Debug", "derive_annotation::Eq"],
+            &["derive_annotation::ToString", "derive_annotation::Eq"],
         )]),
         &SymbolPlan::default(),
     );
@@ -107,7 +107,7 @@ fn emits_debug_eq_and_hash_for_zero_field_class() {
     assert!(
         members
             .iter()
-            .any(|fragment| fragment.contains("String toString() => 'Unit()';"))
+            .any(|fragment| fragment.contains("String toString() {\n  return 'Unit()';\n}"))
     );
     assert!(
         members
@@ -154,8 +154,11 @@ fn copywith_uses_named_arguments_without_braces_in_constructor_calls() {
     assert!(members[0].contains("String? path,"));
     assert!(members[0].contains("Map<String, String>? headers,"));
     assert!(!members[0].contains("final nextPathSource = path ?? _dustSelf.path;"));
-    assert!(members[0].contains("final nextHeadersSource = headers ?? _dustSelf.headers;"));
-    assert!(members[0].contains("final nextHeaders = Map<String, String>.of(nextHeadersSource);"));
+    assert!(!members[0].contains("final nextHeadersSource = headers ?? _dustSelf.headers;"));
+    assert!(
+        members[0]
+            .contains("final nextHeaders = Map<String, String>.of(headers ?? _dustSelf.headers);")
+    );
     assert!(members[0].contains("return Request.create("));
     assert!(members[0].contains("path: path ?? _dustSelf.path,"));
     assert!(members[0].contains("headers: nextHeaders,"));
@@ -203,7 +206,8 @@ fn copywith_renders_nested_generic_and_dynamic_casts() {
     let fragment = &members_for_class(&contribution, "Payload")[0];
     assert!(fragment.contains("Object? items = _undefined,"));
     assert!(fragment.contains("items as List<String>?"));
-    assert!(fragment.contains("extra as Object?"));
+    assert!(fragment.contains("dynamic extra = _undefined,"));
+    assert!(fragment.contains("extra as dynamic"));
     assert!(fragment.contains("void Function(String, int)? transform,"));
     assert!(!fragment.contains("final nextTransformSource = transform ?? _dustSelf.transform;"));
     assert!(fragment.contains("transform ?? _dustSelf.transform,"));
@@ -291,7 +295,7 @@ fn emits_fragments_for_multiple_classes_in_stable_feature_order() {
                         ParamKind::Positional,
                     )],
                 )],
-                &["derive_annotation::Debug", "derive_annotation::Eq"],
+                &["derive_annotation::ToString", "derive_annotation::Eq"],
             ),
             class(
                 "Team",
@@ -315,7 +319,9 @@ fn emits_fragments_for_multiple_classes_in_stable_feature_order() {
     assert_eq!(contribution.mixin_members.len(), 2);
     assert_eq!(user_members.len(), 3);
     assert_eq!(team_members.len(), 1);
-    assert!(user_members[0].contains("String toString() => 'User(id: ${_dustSelf.id})';"));
+    assert!(user_members[0].contains("String toString() {"));
+    assert!(user_members[0].contains("return 'User('"));
+    assert!(user_members[0].contains("'id: ${_dustSelf.id}'"));
     assert!(user_members[1].contains("bool operator ==(Object other) =>"));
     assert!(user_members[2].contains("int get hashCode => Object.hashAll(["));
     assert!(team_members[0].contains("Team copyWith({"));

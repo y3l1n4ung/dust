@@ -2,8 +2,8 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 
 part 'json_profile.g.dart';
 
-@Derive([Debug(), Eq(), Serialize(), Deserialize()])
-@SerDe(renameAll: SerdeRename.snakeCase, disallowUnrecognizedKeys: true)
+@Derive([ToString(), Eq(), Serialize(), Deserialize()])
+@SerDe(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)
 class JsonProfile with _$JsonProfileDust {
   const JsonProfile({
     required this.id,

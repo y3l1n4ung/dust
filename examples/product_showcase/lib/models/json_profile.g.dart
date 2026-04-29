@@ -9,7 +9,13 @@ mixin _$JsonProfileDust {
   JsonProfile get _dustSelf => this as JsonProfile;
 
   @override
-  String toString() => 'JsonProfile(id: ${_dustSelf.id}, displayName: ${_dustSelf.displayName}, tags: ${_dustSelf.tags})';
+  String toString() {
+    return 'JsonProfile('
+        'id: ${_dustSelf.id}, '
+        'displayName: ${_dustSelf.displayName}, '
+        'tags: ${_dustSelf.tags}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>

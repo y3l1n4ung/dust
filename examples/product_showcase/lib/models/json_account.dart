@@ -4,7 +4,7 @@ import 'json_profile.dart';
 
 part 'json_account.g.dart';
 
-@Derive([Debug(), Eq(), Serialize(), Deserialize()])
+@Derive([ToString(), Eq(), Serialize(), Deserialize()])
 class JsonAccount with _$JsonAccountDust {
   const JsonAccount({
     required this.profile,

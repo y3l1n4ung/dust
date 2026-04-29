@@ -10,7 +10,13 @@ mixin _$InventoryEntryDust {
   InventoryEntry get _dustSelf => this as InventoryEntry;
 
   @override
-  String toString() => 'InventoryEntry(productSku: ${_dustSelf.productSku}, warehouse: ${_dustSelf.warehouse}, quantity: ${_dustSelf.quantity})';
+  String toString() {
+    return 'InventoryEntry('
+        'productSku: ${_dustSelf.productSku}, '
+        'warehouse: ${_dustSelf.warehouse}, '
+        'quantity: ${_dustSelf.quantity}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -46,7 +52,15 @@ mixin _$CatalogDust {
   Catalog get _dustSelf => this as Catalog;
 
   @override
-  String toString() => 'Catalog(id: ${_dustSelf.id}, products: ${_dustSelf.products}, categoryById: ${_dustSelf.categoryById}, featuredSkus: ${_dustSelf.featuredSkus}, inventory: ${_dustSelf.inventory})';
+  String toString() {
+    return 'Catalog('
+        'id: ${_dustSelf.id}, '
+        'products: ${_dustSelf.products}, '
+        'categoryById: ${_dustSelf.categoryById}, '
+        'featuredSkus: ${_dustSelf.featuredSkus}, '
+        'inventory: ${_dustSelf.inventory}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -76,14 +90,18 @@ mixin _$CatalogDust {
     Set<String>? featuredSkus,
     List<InventoryEntry>? inventory,
   }) {
-    final nextProductsSource = products ?? _dustSelf.products;
-    final nextProducts = List<Product>.of(nextProductsSource.map((item_1) => item_1.copyWith()));
-    final nextCategoryByIdSource = categoryById ?? _dustSelf.categoryById;
-    final nextCategoryById = Map<String, Category>.fromEntries(nextCategoryByIdSource.entries.map((entry_2) => MapEntry(entry_2.key, entry_2.value.copyWith())));
-    final nextFeaturedSkusSource = featuredSkus ?? _dustSelf.featuredSkus;
-    final nextFeaturedSkus = Set<String>.of(nextFeaturedSkusSource);
-    final nextInventorySource = inventory ?? _dustSelf.inventory;
-    final nextInventory = List<InventoryEntry>.of(nextInventorySource.map((item_4) => item_4.copyWith()));
+    final nextProducts = List<Product>.of(
+      (products ?? _dustSelf.products).map((item_1) => item_1.copyWith()),
+    );
+    final nextCategoryById = Map<String, Category>.fromEntries(
+      (categoryById ?? _dustSelf.categoryById).entries.map(
+        (entry_2) => MapEntry(entry_2.key, (entry_2.value).copyWith()),
+      ),
+    );
+    final nextFeaturedSkus = Set<String>.of(featuredSkus ?? _dustSelf.featuredSkus);
+    final nextInventory = List<InventoryEntry>.of(
+      (inventory ?? _dustSelf.inventory).map((item_4) => item_4.copyWith()),
+    );
 
     return Catalog(
       id: id ?? _dustSelf.id,

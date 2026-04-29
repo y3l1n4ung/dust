@@ -9,7 +9,13 @@ mixin _$CategoryDust {
   Category get _dustSelf => this as Category;
 
   @override
-  String toString() => 'Category(id: ${_dustSelf.id}, title: ${_dustSelf.title}, labels: ${_dustSelf.labels})';
+  String toString() {
+    return 'Category('
+        'id: ${_dustSelf.id}, '
+        'title: ${_dustSelf.title}, '
+        'labels: ${_dustSelf.labels}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -33,8 +39,7 @@ mixin _$CategoryDust {
     String? title,
     Set<String>? labels,
   }) {
-    final nextLabelsSource = labels ?? _dustSelf.labels;
-    final nextLabels = Set<String>.of(nextLabelsSource);
+    final nextLabels = Set<String>.of(labels ?? _dustSelf.labels);
 
     return Category(
       id: id ?? _dustSelf.id,

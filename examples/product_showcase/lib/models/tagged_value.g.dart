@@ -9,7 +9,12 @@ mixin _$TaggedValueDust {
   TaggedValue get _dustSelf => this as TaggedValue;
 
   @override
-  String toString() => 'TaggedValue(code: ${_dustSelf.code}, aliases: ${_dustSelf.aliases})';
+  String toString() {
+    return 'TaggedValue('
+        'code: ${_dustSelf.code}, '
+        'aliases: ${_dustSelf.aliases}'
+        ')';
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -30,8 +35,7 @@ mixin _$TaggedValueDust {
     String? code,
     List<String>? aliases,
   }) {
-    final nextAliasesSource = aliases ?? _dustSelf.aliases;
-    final nextAliases = List<String>.of(nextAliasesSource);
+    final nextAliases = List<String>.of(aliases ?? _dustSelf.aliases);
 
     return TaggedValue(
       code: code ?? _dustSelf.code,

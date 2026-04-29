@@ -63,7 +63,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 
 part '$fileName.g.dart';
 
-@Derive([Debug(), Eq(), CopyWith()])
+@Derive([ToString(), Eq(), CopyWith()])
 class $className with _\$$className Dust {
   const $className({
     required this.id,
@@ -86,7 +86,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 
 part '$fileName.g.dart';
 
-@Derive([Debug(), Eq(), CopyWith()])
+@Derive([ToString(), Eq(), CopyWith()])
 class $className with _\$$className Dust {
   const $className({
     required this.id,
@@ -109,7 +109,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 
 part '$fileName.g.dart';
 
-@Derive([Debug(), Eq(), CopyWith()])
+@Derive([ToString(), Eq(), CopyWith()])
 class $className with _\$$className Dust {
   const $className({
     required this.tags,
@@ -132,7 +132,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 
 part '$fileName.g.dart';
 
-@Derive([Debug(), Eq(), CopyWith()])
+@Derive([ToString(), Eq(), CopyWith()])
 class $className with _\$$className Dust {
   const $className.create({
     required this.path,
@@ -156,14 +156,14 @@ import '../support/common.dart';
 
 part '$fileName.g.dart';
 
-@Derive([Debug(), Eq()])
+@Derive([ToString(), Eq()])
 abstract class $abstractName extends GeneratedNode with AuditStamp, _\$$abstractName Dust {
   const $abstractName(this.id);
 
   final String id;
 }
 
-@Derive([Debug(), Eq(), CopyWith()])
+@Derive([ToString(), Eq(), CopyWith()])
 class $concreteName extends $abstractName with _\$$concreteName Dust {
   const $concreteName(
     super.id, {
@@ -185,7 +185,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 
 part '$fileName.g.dart';
 
-@Derive([Debug(), Eq(), CopyWith()])
+@Derive([ToString(), Eq(), CopyWith()])
 class $className with _\$$className Dust {
   const $className({
     required this.groups,
@@ -208,7 +208,7 @@ import '../support/common.dart';
 
 part '$fileName.g.dart';
 
-@Derive([Debug(), Eq(), CopyWith()])
+@Derive([ToString(), Eq(), CopyWith()])
 class $className with AuditStamp, _\$$className Dust {
   const $className({
     required this.code,
@@ -229,7 +229,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 
 part '$fileName.g.dart';
 
-@Derive([Debug(), Eq(), CopyWith()])
+@Derive([ToString(), Eq(), CopyWith()])
 class $className with _\$$className Dust {
   const $className({
     required this.transform,

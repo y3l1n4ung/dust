@@ -54,11 +54,11 @@ fn discover_libraries_scans_recursively_in_stable_order() {
 
     write_file(
         &root.path().join("lib/src/team.dart"),
-        "part 'team.g.dart';\n@Derive([Debug()])\nclass Team {}\n",
+        "part 'team.g.dart';\n@Derive([ToString()])\nclass Team {}\n",
     );
     write_file(
         &root.path().join("lib/user.dart"),
-        "part 'user.g.dart';\n@Debug()\nclass User {}\n",
+        "part 'user.g.dart';\n@ToString()\nclass User {}\n",
     );
     write_file(&root.path().join("lib/user.g.dart"), "// generated\n");
     write_file(
@@ -111,7 +111,7 @@ fn discover_workspace_composes_root_config_and_library_scan() {
     write_file(&root.path().join(".dart_tool/package_config.json"), "{}\n");
     write_file(
         &root.path().join("lib/models/user.dart"),
-        "part 'user.g.dart';\n@Derive([Debug(), Eq()])\nclass User {}\n",
+        "part 'user.g.dart';\n@Derive([ToString(), Eq()])\nclass User {}\n",
     );
 
     let nested = root.path().join("lib/models");

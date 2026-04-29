@@ -32,7 +32,7 @@ fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
     write_file(
         &workspace.path().join("lib/models.dart"),
         "part 'models.g.dart';\n\
-         @Derive([Debug(), Eq(), CopyWith()])\n\
+         @Derive([ToString(), Eq(), CopyWith()])\n\
          class User {\n\
            final String id;\n\
            final int? age;\n\
@@ -77,10 +77,9 @@ fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
     assert!(models_output.contains("part of 'models.dart';"));
     assert!(models_output.contains("mixin _$UserDust {"));
     assert!(models_output.contains("User get _dustSelf => this as User;"));
-    assert!(
-        models_output
-            .contains("String toString() => 'User(id: ${_dustSelf.id}, age: ${_dustSelf.age})';")
-    );
+    assert!(models_output.contains("String toString() {\n    return 'User('"));
+    assert!(models_output.contains("'id: ${_dustSelf.id}, '"));
+    assert!(models_output.contains("'age: ${_dustSelf.age}'"));
     assert!(models_output.contains("mixin _$TeamDust {"));
     assert!(models_output.contains("Team copyWith({"));
     assert!(models_output.contains("String? name,"));
@@ -91,9 +90,10 @@ fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
     assert!(request_output.contains("String? path,"));
     assert!(request_output.contains("Map<String, String>? headers,"));
     assert!(!request_output.contains("final nextPathSource = path ?? _dustSelf.path;"));
-    assert!(request_output.contains("final nextHeadersSource = headers ?? _dustSelf.headers;"));
+    assert!(!request_output.contains("final nextHeadersSource = headers ?? _dustSelf.headers;"));
     assert!(
-        request_output.contains("final nextHeaders = Map<String, String>.of(nextHeadersSource);")
+        request_output
+            .contains("final nextHeaders = Map<String, String>.of(headers ?? _dustSelf.headers);")
     );
     assert!(request_output.contains("return Request.create("));
     assert!(request_output.contains("path: path ?? _dustSelf.path,"));
@@ -107,7 +107,7 @@ fn build_writes_real_serde_outputs() {
         &workspace.path().join("lib/profile.dart"),
         "part 'profile.g.dart';\n\
          @Derive([Serialize(), Deserialize()])\n\
-         @SerDe(renameAll: SerdeRename.snakeCase, disallowUnrecognizedKeys: true)\n\
+         @SerDe(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)\n\
          class Profile {\n\
            const Profile({required this.id, this.displayName, this.tags = const ['guest']});\n\
            final String id;\n\
@@ -173,7 +173,7 @@ fn second_build_uses_persistent_cache_under_dot_dart_tool() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -212,7 +212,7 @@ fn clean_removes_dust_outputs_and_cache_but_keeps_foreign_generated_files() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -264,7 +264,7 @@ fn parallel_build_keeps_artifact_order_deterministic() {
     write_file(
         &workspace.path().join("lib/a_user.dart"),
         "part 'a_user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -377,7 +377,7 @@ fn build_supports_abstract_and_mixin_clause_shapes_without_unrelated_warnings() 
          class CatalogNode {\n\
            const CatalogNode();\n\
          }\n\
-         @Derive([Debug(), Eq()])\n\
+         @Derive([ToString(), Eq()])\n\
          abstract class Entity extends CatalogNode with AuditStamp {\n\
            final String id;\n\
            const Entity(this.id);\n\
@@ -392,7 +392,7 @@ fn build_supports_abstract_and_mixin_clause_shapes_without_unrelated_warnings() 
          mixin LabelStamp {\n\
            String labelKind() => 'tagged';\n\
          }\n\
-         @Derive([Debug(), Eq(), CopyWith()])\n\
+         @Derive([ToString(), Eq(), CopyWith()])\n\
          class TaggedValue with LabelStamp {\n\
            final String code;\n\
            final List<String> aliases;\n\
@@ -424,7 +424,10 @@ fn build_supports_abstract_and_mixin_clause_shapes_without_unrelated_warnings() 
     assert!(tagged_output.contains("mixin _$TaggedValueDust {"));
     assert!(tagged_output.contains("_dustDeepCollectionEquality.equals"));
     assert!(tagged_output.contains("TaggedValue copyWith({"));
-    assert!(tagged_output.contains("final nextAliases = List<String>.of(nextAliasesSource);"));
+    assert!(
+        tagged_output
+            .contains("final nextAliases = List<String>.of(aliases ?? _dustSelf.aliases);")
+    );
 }
 
 #[test]
@@ -433,12 +436,12 @@ fn build_includes_inherited_fields_for_annotated_subclasses() {
     write_file(
         &workspace.path().join("lib/entity.dart"),
         "part 'entity.g.dart';\n\
-         @Derive([Debug(), Eq()])\n\
+         @Derive([ToString(), Eq()])\n\
          abstract class Entity with _$EntityDust {\n\
            final String id;\n\
            const Entity(this.id);\n\
          }\n\
-         @Derive([Debug(), Eq(), CopyWith()])\n\
+         @Derive([ToString(), Eq(), CopyWith()])\n\
          class DetailedEntity extends Entity with _$DetailedEntityDust {\n\
            final String label;\n\
            final List<String> tags;\n\
@@ -464,12 +467,13 @@ fn build_includes_inherited_fields_for_annotated_subclasses() {
     );
     assert!(output.contains("mixin _$DetailedEntityDust {"));
     assert!(output.contains("DetailedEntity get _dustSelf => this as DetailedEntity;"));
-    assert!(output.contains(
-        "DetailedEntity(id: ${_dustSelf.id}, label: ${_dustSelf.label}, tags: ${_dustSelf.tags})"
-    ));
+    assert!(output.contains("return 'DetailedEntity('"));
+    assert!(output.contains("'id: ${_dustSelf.id}, '"));
+    assert!(output.contains("'label: ${_dustSelf.label}, '"));
+    assert!(output.contains("'tags: ${_dustSelf.tags}'"));
     assert!(output.contains("other.id == _dustSelf.id"));
     assert!(output.contains("DetailedEntity copyWith({"));
-    assert!(output.contains("final nextTags = List<String>.of(nextTagsSource);"));
+    assert!(output.contains("final nextTags = List<String>.of(tags ?? _dustSelf.tags);"));
     assert!(output.contains("return DetailedEntity("));
 }
 
@@ -479,7 +483,7 @@ fn build_rejects_mixin_class_targets_with_clear_diagnostic() {
     write_file(
         &workspace.path().join("lib/mixin_target.dart"),
         "part 'mixin_target.g.dart';\n\
-         @Derive([Debug(), CopyWith()])\n\
+         @Derive([ToString(), CopyWith()])\n\
          mixin class MixinTarget {\n\
            final String id;\n\
            const MixinTarget(this.id);\n\
@@ -507,7 +511,7 @@ fn check_reports_stale_before_build_and_fresh_after_build() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -543,7 +547,7 @@ fn doctor_reports_workspace_and_registered_plugins() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -586,7 +590,7 @@ fn build_emits_progress_events() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -633,7 +637,7 @@ fn watch_runs_initial_build_for_existing_candidates() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -660,7 +664,7 @@ fn watch_rebuilds_only_the_changed_library() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\
@@ -683,7 +687,7 @@ fn watch_rebuilds_only_the_changed_library() {
         write_file(
             &user_path,
             "part 'user.g.dart';\n\
-             @Debug()\n\
+             @ToString()\n\
              class User {\n\
                final String id;\n\
                final int age;\n\
@@ -710,7 +714,9 @@ fn watch_rebuilds_only_the_changed_library() {
         watch.rebuilt_libraries,
         vec![workspace.path().join("lib/user.dart")]
     );
-    assert!(user_output.contains("User(id: ${_dustSelf.id}, age: ${_dustSelf.age})"));
+    assert!(user_output.contains("return 'User('"));
+    assert!(user_output.contains("'id: ${_dustSelf.id}, '"));
+    assert!(user_output.contains("'age: ${_dustSelf.age}'"));
     assert!(team_output.contains("Team copyWith({"));
     assert_eq!(result.build_artifacts.len(), 3);
 }
@@ -721,7 +727,7 @@ fn watch_rebuilds_all_libraries_when_package_config_changes() {
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
-         @Debug()\n\
+         @ToString()\n\
          class User {\n\
            final String id;\n\
            const User(this.id);\n\

@@ -13,7 +13,7 @@ void main() {
   group('Derive trait markers', () {
     test('core markers are derive traits', () {
       const traits = <DeriveTrait>[
-        Debug(),
+        ToString(),
         CopyWith(),
         Eq(),
       ];
@@ -24,13 +24,13 @@ void main() {
 
     test('Derive stores a typed trait list', () {
       const annotation = Derive([
-        Debug(),
+        ToString(),
         Eq(),
         CopyWith(),
       ]);
 
       expect(annotation.traits, hasLength(3));
-      expect(annotation.traits[0], isA<Debug>());
+      expect(annotation.traits[0], isA<ToString>());
       expect(annotation.traits[1], isA<Eq>());
       expect(annotation.traits[2], isA<CopyWith>());
     });

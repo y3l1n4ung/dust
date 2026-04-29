@@ -31,31 +31,28 @@ pub(crate) fn emit_copy_with(class: &ClassIr, copyable_types: &HashSet<String>) 
     let mut values = Vec::with_capacity(class.fields.len());
 
     for (depth, field) in class.fields.iter().enumerate() {
-        let source_var = temp_name("next", &field.name, "Source");
         let source_expr = render_copy_with_source_expr(field.name.as_str(), &field.ty);
-        let copied_expr =
-            render_copied_value(&field.ty, source_var.as_str(), depth, copyable_types);
+        let copied_expr = render_copied_value(&field.ty, &source_expr, depth, copyable_types);
 
-        if copied_expr == source_var {
+        if copied_expr == source_expr {
             values.push((field.name.as_str(), source_expr));
+        } else if should_keep_source_local(&field.ty) {
+            let source_var = temp_name("next", &field.name, "Source");
+            let next_var = temp_name("next", &field.name, "");
+            let copied_expr =
+                render_copied_value(&field.ty, source_var.as_str(), depth, copyable_types);
+            setup.push(format!("final {source_var} = {source_expr};"));
+            setup.push(format!("final {next_var} = {copied_expr};"));
+            values.push((field.name.as_str(), next_var));
         } else {
             let next_var = temp_name("next", &field.name, "");
-            setup.push(format!("final {source_var} = {source_expr};"));
             setup.push(format!("final {next_var} = {copied_expr};"));
             values.push((field.name.as_str(), next_var));
         }
     }
 
     let call = build_constructor_call_multiline(class, constructor, &values)?;
-    let setup = if setup.is_empty() {
-        String::new()
-    } else {
-        setup
-            .into_iter()
-            .map(|line| format!("  {line}"))
-            .collect::<Vec<_>>()
-            .join("\n")
-    };
+    let setup = render_setup_blocks(setup);
     let return_call = render_return_statement(&call, "  ");
 
     let body = if setup.is_empty() {
@@ -170,17 +167,22 @@ fn render_sequence_copy(
         if copied_item == item_binding {
             source_value.clone()
         } else {
-            format!("{source_value}.map(({item_binding}) => {copied_item})")
+            format!(
+                "{}.map(({item_binding}) => {copied_item})",
+                member_access_expr(&source_value)
+            )
         }
     } else {
         source_value.clone()
     };
 
-    wrap_nullable_copy(
-        nullable,
-        value,
-        format!("{container}<{item_rendered}>.of({mapped_value})"),
-    )
+    let body = if mapped_value == source_value {
+        format!("{container}<{item_rendered}>.of({mapped_value})")
+    } else {
+        format!("{container}<{item_rendered}>.of(\n  {mapped_value},\n)")
+    };
+
+    wrap_nullable_copy(nullable, value, body)
 }
 
 fn render_map_copy(
@@ -231,7 +233,8 @@ fn render_map_copy(
         format!("Map<{key_rendered}, {value_rendered}>.of({source_value})")
     } else {
         format!(
-            "Map<{key_rendered}, {value_rendered}>.fromEntries({source_value}.entries.map(({entry_binding}) => MapEntry({key_expr}, {value_expr})))"
+            "Map<{key_rendered}, {value_rendered}>.fromEntries(\n  {}.entries.map(\n    ({entry_binding}) => MapEntry({key_expr}, {value_expr}),\n  ),\n)",
+            member_access_expr(&source_value)
         )
     };
 
@@ -245,7 +248,11 @@ fn render_named_copy(nullable: bool, value: &str) -> String {
         value.to_owned()
     };
 
-    wrap_nullable_copy(nullable, value, format!("{source_value}.copyWith()"))
+    wrap_nullable_copy(
+        nullable,
+        value,
+        format!("{}.copyWith()", member_access_expr(&source_value)),
+    )
 }
 
 fn wrap_nullable_copy(nullable: bool, original: &str, copied: String) -> String {
@@ -266,7 +273,11 @@ fn render_copy_with_params(class: &ClassIr) -> String {
         .iter()
         .map(|field| {
             if uses_undefined_sentinel(&field.ty) {
-                format!("  Object? {} = _undefined,", field.name)
+                format!(
+                    "  {} {} = _undefined,",
+                    undefined_parameter_type(&field.ty),
+                    field.name
+                )
             } else {
                 format!(
                     "  {} {},",
@@ -298,7 +309,16 @@ fn render_copy_with_param_type(ty: &TypeIr) -> String {
         TypeIr::Named { .. } | TypeIr::Function { .. } | TypeIr::Record { .. } => {
             nullable_parameter_type(render_type(ty))
         }
-        TypeIr::Dynamic | TypeIr::Unknown => "Object?".to_owned(),
+        TypeIr::Dynamic => "dynamic".to_owned(),
+        TypeIr::Unknown => "Object?".to_owned(),
+    }
+}
+
+fn undefined_parameter_type(ty: &TypeIr) -> &'static str {
+    if matches!(ty, TypeIr::Dynamic) {
+        "dynamic"
+    } else {
+        "Object?"
     }
 }
 
@@ -320,6 +340,32 @@ fn non_null_value_expr(value: &str) -> String {
     } else {
         format!("{value}!")
     }
+}
+
+fn should_keep_source_local(ty: &TypeIr) -> bool {
+    ty.is_nullable()
+}
+
+fn member_access_expr(value: &str) -> String {
+    if is_simple_identifier(value) {
+        value.to_owned()
+    } else {
+        format!("({value})")
+    }
+}
+
+fn render_setup_blocks(blocks: Vec<String>) -> String {
+    blocks
+        .into_iter()
+        .map(|block| {
+            block
+                .lines()
+                .map(|line| format!("  {line}"))
+                .collect::<Vec<_>>()
+                .join("\n")
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 fn is_simple_identifier(value: &str) -> bool {
