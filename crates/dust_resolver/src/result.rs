@@ -17,6 +17,29 @@ pub struct ResolvedField {
     pub configs: Vec<ConfigApplicationIr>,
 }
 
+/// One resolved enum plus its resolved Dust symbols.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ResolvedEnum {
+    /// The enum name.
+    pub name: String,
+    /// The enum source span.
+    pub span: SpanIr,
+    /// The resolved variants.
+    pub variants: Vec<ResolvedEnumVariant>,
+    /// Resolved traits applications.
+    pub traits: Vec<TraitApplicationIr>,
+    /// Resolved config applications.
+    pub configs: Vec<ConfigApplicationIr>,
+}
+/// One resolved enum variant.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ResolvedEnumVariant {
+    /// The variant name.
+    pub name: String,
+    /// The variant source span.
+    pub span: SpanIr,
+}
+
 /// One resolved class plus its resolved Dust symbols.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolvedClass {
@@ -55,6 +78,8 @@ pub struct ResolvedLibrary {
     pub part_uri: Option<String>,
     /// The resolved classes in declaration order.
     pub classes: Vec<ResolvedClass>,
+    ///  The resolved enums in declaration order.
+    pub enums: Vec<ResolvedEnum>,
 }
 
 /// The result of resolving one parsed library.

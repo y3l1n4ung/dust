@@ -70,6 +70,7 @@ fn sample_library(traits: &[&str]) -> LibraryIr {
         output_path: "lib/user.g.dart".to_owned(),
         span: span(0, 100),
         classes: vec![class_with_traits("User", traits)],
+        enums: Vec::new(),
     }
 }
 
@@ -262,6 +263,7 @@ fn copywith_requires_reconstructible_constructor() {
             }],
             serde: None,
         }],
+        enums: Vec::new(),
     };
 
     let diagnostics = plugin.validate(&broken);
@@ -311,6 +313,7 @@ fn copywith_rejects_abstract_classes() {
             }],
             serde: None,
         }],
+        enums: Vec::new(),
     };
 
     let diagnostics = plugin.validate(&abstract_library);
@@ -360,6 +363,7 @@ fn rejects_mixin_class_targets() {
             }],
             serde: None,
         }],
+        enums: Vec::new(),
     };
 
     let diagnostics = plugin.validate(&mixin_class_library);
@@ -456,6 +460,7 @@ fn copywith_copies_collection_fields_without_aliasing() {
                 }],
                 serde: None,
             }],
+            enums: Vec::new(),
         },
         &SymbolPlan::default(),
     );
@@ -563,6 +568,7 @@ fn copywith_clones_nested_dust_models() {
                     serde: None,
                 },
             ],
+            enums: Vec::new(),
         },
         &SymbolPlan::default(),
     );
@@ -636,6 +642,7 @@ fn copywith_copies_collection_fields() {
                 }],
                 serde: None,
             }],
+            enums: Vec::new(),
         },
         &SymbolPlan::default(),
     );

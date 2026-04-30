@@ -6,7 +6,7 @@ use dust_diagnostics::{Diagnostic, SourceLabel};
 use dust_parser_dart::{
     ParameterKind, ParseBackend, ParseOptions, ParseResult, ParsedAnnotation, ParsedClassKind,
     ParsedClassSurface, ParsedConstructorParamSurface, ParsedConstructorSurface, ParsedDirective,
-    ParsedFieldSurface, ParsedLibrarySurface,
+    ParsedEnumSurface, ParsedEnumVariantSurface, ParsedFieldSurface, ParsedLibrarySurface,
 };
 use dust_text::{SourceText, TextRange, TextSize};
 use tree_sitter::{Node, Parser, Tree};
@@ -57,10 +57,77 @@ impl ParseBackend for TreeSitterDartBackend {
                 span: text_range(root),
                 directives: extract_directives(root, source),
                 classes: extract_classes(root, source),
+                enums: extract_enums(root, source),
             },
             diagnostics: extract_diagnostics(&tree, source),
             options,
         }
+    }
+}
+
+fn extract_enums(root: Node<'_>, source: &SourceText) -> Vec<ParsedEnumSurface> {
+    let mut enums: Vec<ParsedEnumSurface> = Vec::new();
+    let mut cursor = root.walk();
+
+    for child in root.children(&mut cursor).filter(|node| node.is_named()) {
+        if child.kind() == "enum_declaration" {
+            enums.push(extract_enum(child, source));
+        }
+    }
+    enums
+}
+
+fn extract_enum(node: Node<'_>, source: &SourceText) -> ParsedEnumSurface {
+    let name = node
+        .child_by_field_name("name")
+        .map(|n| node_text(n, source))
+        .unwrap_or_default();
+
+    let mut annotations: Vec<ParsedAnnotation> = Vec::new();
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor).filter(|child| child.is_named()) {
+        if child.kind() == "annotation" {
+            annotations.push(extract_annotation(child, source));
+        }
+    }
+
+    let mut variants: Vec<ParsedEnumVariantSurface> = Vec::new();
+    if let Some(body) = node.child_by_field_name("body") {
+        let mut body_cursor = body.walk();
+        for member in body
+            .children(&mut body_cursor)
+            .filter(|child| child.is_named())
+        {
+            if member.kind() == "enum_constant" {
+                variants.push(extract_enum_variant(member, source));
+            }
+        }
+    }
+
+    ParsedEnumSurface {
+        name,
+        annotations,
+        variants,
+        span: text_range(node),
+    }
+}
+
+fn extract_enum_variant(node: Node<'_>, source: &SourceText) -> ParsedEnumVariantSurface {
+    let name = node
+        .child_by_field_name("name")
+        .map(|n| node_text(n, source))
+        .unwrap_or_default();
+    let mut annotations: Vec<ParsedAnnotation> = Vec::new();
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor).filter(|child| child.is_named()) {
+        if child.kind() == "annotation" {
+            annotations.push(extract_annotation(child, source));
+        }
+    }
+    ParsedEnumVariantSurface {
+        name,
+        annotations,
+        span: text_range(node),
     }
 }
 
@@ -69,6 +136,7 @@ fn empty_library(source: &SourceText) -> ParsedLibrarySurface {
         span: source.full_range(),
         directives: Vec::new(),
         classes: Vec::new(),
+        enums: Vec::new(),
     }
 }
 

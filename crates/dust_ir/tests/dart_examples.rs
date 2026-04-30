@@ -86,6 +86,7 @@ fn models_real_dart_data_class_shapes() {
             ],
             serde: None,
         }],
+        enums: Vec::new(),
     };
 
     let class = &library.classes[0];

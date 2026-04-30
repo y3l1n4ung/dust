@@ -1,6 +1,6 @@
 use dust_text::{FileId, TextRange};
 
-use crate::ClassIr;
+use crate::{ClassIr, enum_type::EnumIr};
 
 /// A file-backed source span stored in the semantic IR.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -29,4 +29,6 @@ pub struct LibraryIr {
     pub span: SpanIr,
     /// The lowered classes in this library.
     pub classes: Vec<ClassIr>,
+    /// The lowered enums in this library.
+    pub enums: Vec<EnumIr>,
 }

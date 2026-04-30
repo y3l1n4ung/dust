@@ -1,51 +1,133 @@
 use std::collections::HashSet;
 
-use dust_ir::{ClassIr, LibraryIr};
+use dust_ir::{ClassIr, EnumIr, LibraryIr};
 use dust_plugin_api::PluginContribution;
+use heck::AsPascalCase;
 
 use crate::writer::{
     all_allowed_keys, decode_field_expr, encode_field_expr, find_deserialize_constructor, json_key,
     render_constructor_call,
 };
 
+/// Orchestrates the emission of all SerDe-related code for a library.
+///
+/// This function identifies which models (classes and enums) have requested
+/// serialization or deserialization and generates the corresponding Dart code.
 pub(crate) fn emit_library(library: &LibraryIr) -> PluginContribution {
     let mut contribution = PluginContribution::default();
-    let serializable_models = library
+    let serializable_classes = library
         .classes
         .iter()
         .filter(|class| wants_serialize(class))
         .map(|class| class.name.clone())
         .collect::<HashSet<_>>();
-    let deserializable_models = library
+    let serializable_enums = library
+        .enums
+        .iter()
+        .filter(|e| wants_serialize_enum(e))
+        .map(|e| e.name.clone())
+        .collect::<HashSet<_>>();
+
+    let deserializable_classes = library
         .classes
         .iter()
         .filter(|class| wants_deserialize(class))
         .map(|class| class.name.clone())
         .collect::<HashSet<_>>();
+    let deserializable_enums = library
+        .enums
+        .iter()
+        .filter(|e| wants_deserialize_enum(e))
+        .map(|e| e.name.clone())
+        .collect::<HashSet<_>>();
 
-    if library.classes.iter().any(wants_deserialize) {
+    // If any model needs deserialization, include the standard shared JSON helpers.
+    if !deserializable_classes.is_empty() || !deserializable_enums.is_empty() {
         contribution
             .shared_helpers
             .push(render_deserialize_helpers().to_owned());
     }
 
+    // Generate class-specific code.
     for class in &library.classes {
         if wants_serialize(class) {
             contribution.push_mixin_member(&class.name, emit_to_json_mixin(class));
-            contribution
-                .top_level_functions
-                .push(emit_to_json_helper(class, &serializable_models));
+            contribution.top_level_functions.push(emit_to_json_helper(
+                class,
+                &serializable_classes,
+                &serializable_enums,
+            ));
         }
         if wants_deserialize(class) {
-            if let Some(helper) = emit_from_json_helper(class, &deserializable_models) {
+            if let Some(helper) = emit_from_json_helper(
+                class,
+                &deserializable_classes,
+                &deserializable_enums,
+            ) {
                 contribution.top_level_functions.push(helper);
             }
         }
     }
 
+    // Generate enum-specific code.
+    for e in &library.enums {
+        if wants_serialize_enum(e) {
+            contribution
+                .top_level_functions
+                .push(emit_enum_to_json_helper(e));
+        }
+        if wants_deserialize_enum(e) {
+            contribution
+                .top_level_functions
+                .push(emit_enum_from_json_helper(e));
+        }
+    }
     contribution
 }
 
+/// Generates the `_$EnumNameFromJson` helper for Dart enums.
+///
+/// Enums are deserialized from their string representations, mapping back
+/// to the appropriate variant.
+fn emit_enum_from_json_helper(e: &EnumIr) -> String {
+    let mut cases = Vec::new();
+    for variant in &e.variants {
+        let key = match e.serde.as_ref().and_then(|s| s.rename_all) {
+            Some(rule) => crate::writer::apply_rename_rule(&variant.name, rule),
+            None => variant.name.clone(),
+        };
+        cases.push(format!("    '{}' => {}.{},", key, e.name, variant.name));
+    }
+
+    format!(
+        "{} _${}FromJson(Object? json) {{\n  return switch (json) {{\n{}\n    _ => throw ArgumentError.value(json, 'json', 'unknown value for {}'),\n  }};\n}}",
+        e.name, e.name, cases.join("\n"), e.name
+    )
+}
+
+/// Generates the `_$EnumNameToJson` helper for Dart enums.
+///
+/// Enums are serialized to their string representations based on the variant name
+/// and any applied rename rules.
+fn emit_enum_to_json_helper(e: &EnumIr) -> String {
+    let mut cases = Vec::new();
+    for variant in &e.variants {
+        let key = match e.serde.as_ref().and_then(|s| s.rename_all) {
+            Some(rule) => crate::writer::apply_rename_rule(&variant.name, rule),
+            None => variant.name.clone(),
+        };
+        cases.push(format!("    {}.{} => '{}',", e.name, variant.name, key));
+    }
+
+    format!(
+        "Object? _${}ToJson({} instance) {{\n  return switch (instance) {{\n{}\n  }};\n}}",
+        e.name,
+        e.name,
+        cases.join("\n")
+    )
+}
+
+/// Generates the `toJson()` mixin member for a class.
 fn emit_to_json_mixin(class: &ClassIr) -> String {
     format!(
         "Map<String, Object?> toJson() => _${}ToJson(_dustSelf);",
@@ -53,7 +135,14 @@ fn emit_to_json_mixin(class: &ClassIr) -> String {
     )
 }
 
-fn emit_to_json_helper(class: &ClassIr, serializable_models: &HashSet<String>) -> String {
+/// Generates the private top-level `_$ClassNameToJson` helper for a class.
+///
+/// This helper performs the actual mapping of fields to a JSON-compatible Map.
+fn emit_to_json_helper(
+    class: &ClassIr,
+    serializable_classes: &HashSet<String>,
+    serializable_enums: &HashSet<String>,
+) -> String {
     let mut lines = Vec::new();
     for field in &class.fields {
         if field
@@ -68,7 +157,8 @@ fn emit_to_json_helper(class: &ClassIr, serializable_models: &HashSet<String>) -
         let value = encode_field_expr(
             &format!("instance.{}", field.name),
             field,
-            serializable_models,
+            serializable_classes,
+            serializable_enums,
         );
         lines.push(format_prefixed_expr(4, &format!("'{key}': "), &value, ","));
     }
@@ -85,13 +175,19 @@ fn emit_to_json_helper(class: &ClassIr, serializable_models: &HashSet<String>) -
     )
 }
 
+/// Generates the private top-level `_$ClassNameFromJson` helper for a class.
+///
+/// This helper handles field extraction from a JSON Map, including alias resolution,
+/// default value application, and nested model deserialization.
 fn emit_from_json_helper(
     class: &ClassIr,
-    deserializable_models: &HashSet<String>,
+    deserializable_classes: &HashSet<String>,
+    deserializable_enums: &HashSet<String>,
 ) -> Option<String> {
     let constructor = find_deserialize_constructor(class)?;
     let mut lines = Vec::new();
 
+    // Key validation if `disallowUnrecognizedKeys` is enabled.
     if class
         .serde
         .as_ref()
@@ -118,6 +214,8 @@ fn emit_from_json_helper(
     for field in &class.fields {
         let serde = field.serde.as_ref();
         let field_var = format!("{}Value", field.name);
+        
+        // Skip field if explicitly ignored for deserialization.
         if serde.is_some_and(|serde| serde.skip_deserializing) {
             let default = serde
                 .and_then(|serde| serde.default_value_source.clone())
@@ -147,12 +245,14 @@ fn emit_from_json_helper(
                 .join(" || ")
         };
 
+        // Extract the raw value from the JSON Map.
         let decoded = if aliases.is_empty() {
             decode_field_expr(
                 &format!("json['{primary_key}']"),
                 &format!("'{primary_key}'"),
                 field,
-                deserializable_models,
+                deserializable_classes,
+                deserializable_enums,
             )
         } else {
             let key_parts = std::iter::once(format!(
@@ -173,24 +273,35 @@ fn emit_from_json_helper(
                     .map(|alias| format!("json.containsKey('{alias}') ? json['{alias}']")),
             )
             .collect::<Vec<_>>();
-            let raw_name = format!("raw{}", capitalize(&field.name));
-            let raw_key_name = format!("raw{}Key", capitalize(&field.name));
+            let raw_name = format!("raw{}", AsPascalCase(&field.name));
+            let raw_key_name = format!("raw{}Key", AsPascalCase(&field.name));
             let key_expr = format!("{} : '{primary_key}'", key_parts.join(" : "));
             let raw_expr = format!("{} : null", raw_parts.join(" : "));
-            lines.push(format_prefixed_expr(
-                2,
-                &format!("final {raw_key_name} = "),
-                &key_expr,
-                ";",
-            ));
+            let decoded = decode_field_expr(
+                &raw_name,
+                &raw_key_name,
+                field,
+                deserializable_classes,
+                deserializable_enums,
+            );
+            if decoded.contains(&raw_key_name) {
+                lines.push(format_prefixed_expr(
+                    2,
+                    &format!("final {raw_key_name} = "),
+                    &key_expr,
+                    ";",
+                ));
+            }
             lines.push(format_prefixed_expr(
                 2,
                 &format!("final {raw_name} = "),
                 &raw_expr,
                 ";",
             ));
-            decode_field_expr(&raw_name, &raw_key_name, field, deserializable_models)
+            decoded
         };
+
+        // Apply default value if key is missing and default is provided.
         let value_expr = if let Some(default_value) =
             serde.and_then(|serde| serde.default_value_source.as_deref())
         {
@@ -207,6 +318,7 @@ fn emit_from_json_helper(
         values.push((field.name.as_str(), field_var));
     }
 
+    // Call the chosen constructor with the extracted values.
     let call = render_constructor_call(class, constructor, &values)?;
     lines.push(String::new());
     lines.push(format!(
@@ -250,14 +362,19 @@ fn wants_deserialize(class: &ClassIr) -> bool {
         .any(|item| item.symbol.0 == "derive_serde_annotation::Deserialize")
 }
 
-fn capitalize(source: &str) -> String {
-    let mut chars = source.chars();
-    let Some(first) = chars.next() else {
-        return String::new();
-    };
-    format!("{}{}", first.to_ascii_uppercase(), chars.as_str())
+fn wants_serialize_enum(e: &EnumIr) -> bool {
+    e.traits
+        .iter()
+        .any(|item| item.symbol.0 == "derive_serde_annotation::Serialize")
 }
 
+fn wants_deserialize_enum(e: &EnumIr) -> bool {
+    e.traits
+        .iter()
+        .any(|item| item.symbol.0 == "derive_serde_annotation::Deserialize")
+}
+
+/// Formats a multi-line expression with an indentation-aware prefix.
 fn format_prefixed_expr(indent: usize, prefix: &str, expr: &str, suffix: &str) -> String {
     let pad = " ".repeat(indent);
     let continuation = " ".repeat(indent + prefix.len());
@@ -280,6 +397,7 @@ fn format_prefixed_expr(indent: usize, prefix: &str, expr: &str, suffix: &str) -
     rendered.join("\n")
 }
 
+/// Standard shared helper functions generated into every SerDe-enabled library.
 fn render_deserialize_helpers() -> &'static str {
     r#"Never _dustJsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
 T _dustJsonAs<T>(Object? value, String key, String expected) => value is T ? value : _dustJsonTypeError(value, key, expected);

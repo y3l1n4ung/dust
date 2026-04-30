@@ -9,6 +9,7 @@ rust-version.workspace = true
 dust_ir = { path = "../dust_ir" }
 dust_plugin_api = { path = "../dust_plugin_api" }
 dust_diagnostics = { path = "../dust_diagnostics" }
+heck = { workspace = true }
 
 [dev-dependencies]
 dust_text = { path = "../dust_text" }

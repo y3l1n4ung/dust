@@ -25,6 +25,7 @@ fn sample_library() -> LibraryIr {
             traits: Vec::new(),
             serde: None,
         }],
+        enums: Vec::new(),
     }
 }
 

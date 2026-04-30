@@ -149,6 +149,7 @@ dependencies = [
  "dust_ir",
  "dust_plugin_api",
  "dust_text",
+ "heck",
 ]
 
 [[package]]

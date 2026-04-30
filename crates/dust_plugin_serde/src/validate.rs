@@ -1,13 +1,18 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::{BuiltinType, ClassIr, ClassKindIr, LibraryIr, TypeIr};
 
+/// Validates that a library and its models are compatible with SerDe generation.
+///
+/// This function performs static analysis on the IR to catch potential runtime
+/// errors early, such as unsupported field types for deserialization.
 pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
-    let known_models = library
+    let mut known_models = library
         .classes
         .iter()
         .map(|class| class.name.as_str())
         .collect::<Vec<_>>();
+    known_models.extend(library.enums.iter().map(|e| e.name.as_str()));
 
     for class in &library.classes {
         let serialize = wants_serialize(class);
@@ -16,6 +21,7 @@ pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
             continue;
         }
 
+        // Dust SerDe generation doesn't yet support mixin classes.
         if matches!(class.kind, ClassKindIr::MixinClass) {
             diagnostics.push(Diagnostic::error(format!(
                 "Dust serde generation does not support `mixin class` targets like `{}`",
@@ -24,6 +30,7 @@ pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
             continue;
         }
 
+        // Deserialize requires the class to be instantiable.
         if deserialize && class.is_abstract {
             diagnostics.push(Diagnostic::error(format!(
                 "`Deserialize` cannot target abstract class `{}`",
@@ -31,6 +38,7 @@ pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
             )));
         }
 
+        // Deserialization needs to know how to build the object.
         if deserialize
             && !class
                 .constructors
@@ -43,6 +51,7 @@ pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
             )));
         }
 
+        // Custom renames are only supported at the field level.
         if class
             .serde
             .as_ref()
@@ -57,6 +66,7 @@ pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
 
         for field in &class.fields {
             if let Some(serde) = &field.serde {
+                // Ensure default values are provided for skipped fields.
                 if serde.skip_deserializing && serde.default_value_source.is_none() {
                     diagnostics.push(Diagnostic::error(format!(
                         "field `{}` on class `{}` uses `skipDeserializing` without a `defaultValue`",
@@ -71,6 +81,7 @@ pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
                 .and_then(|serde| serde.codec_source.as_ref())
                 .is_some();
 
+            // Validate type mapping for non-codec fields.
             if serialize && !uses_codec {
                 validate_type_supported(
                     &field.ty,
@@ -97,6 +108,10 @@ pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
     diagnostics
 }
 
+/// Ensures a type can be automatically mapped from JSON.
+///
+/// We currently support built-ins, specific named types (DateTime, Uri, etc.),
+/// collections (List, Set, Map), and other models within the same library.
 fn validate_type_supported(
     ty: &TypeIr,
     known_models: &[&str],
@@ -159,9 +174,9 @@ fn validate_type_supported(
                     "`{direction}` does not yet support generic named type `{name}` on `{class_name}.{field_name}`"
                 )));
             } else if name.as_ref() == "Object" {
-                // handled by builtins in most cases, but keep as supported fallback
+                // Handled as supported fallback.
             } else if !known_models.iter().any(|item| *item == name.as_ref()) {
-                // External models are allowed; callers can provide `fromJson` / `toJson`.
+                // External models are allowed; callers can provide custom mappings.
             }
         }
     }

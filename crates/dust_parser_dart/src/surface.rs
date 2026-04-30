@@ -12,12 +12,14 @@ pub struct ParsedLibrarySurface {
     pub directives: Vec<ParsedDirective>,
     /// Top-level classes that were extracted from the source.
     pub classes: Vec<ParsedClassSurface>,
+    /// Top-level enums that were extracted from the source.
+    pub enums: Vec<ParsedEnumSurface>,
 }
 
 impl ParsedLibrarySurface {
-    /// Returns `true` if no directives and no classes were extracted.
+    /// Returns `true` if no directives , no classes and no enums were extracted.
     pub fn is_empty(&self) -> bool {
-        self.directives.is_empty() && self.classes.is_empty()
+        self.directives.is_empty() && self.classes.is_empty() && self.enums.is_empty()
     }
 }
 
@@ -95,6 +97,30 @@ pub struct ParsedClassSurface {
     /// Extracted constructors from the class body.
     pub constructors: Vec<ParsedConstructorSurface>,
     /// The source span for the whole class declaration.
+    pub span: TextRange,
+}
+
+/// A parsed enum declaration relevant to Dust generation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedEnumSurface {
+    /// The enum name
+    pub name: String,
+    /// All the metadata annotations attached to the enum.
+    pub annotations: Vec<ParsedAnnotation>,
+    /// Extracted variants from the enum body
+    pub variants: Vec<ParsedEnumVariantSurface>,
+    /// The source span for the whole enum declaration.
+    pub span: TextRange,
+}
+
+/// One enum variant extracted from an enum declaration.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedEnumVariantSurface {
+    /// The variant name.
+    pub name: String,
+    /// The metadata annotations attached to the variant.
+    pub annotations: Vec<ParsedAnnotation>,
+    /// The source span for the variant.
     pub span: TextRange,
 }
 

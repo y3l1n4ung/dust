@@ -8,7 +8,8 @@ use dust_parser_dart::{
 use dust_text::{FileId, TextRange};
 
 use crate::{
-    ResolveResult, ResolvedClass, ResolvedField, ResolvedLibrary, SymbolCatalog, SymbolKind,
+    ResolveResult, ResolvedClass, ResolvedEnum, ResolvedEnumVariant, ResolvedField,
+    ResolvedLibrary, SymbolCatalog, SymbolKind,
 };
 
 /// Resolves one parsed library against a symbol catalog.
@@ -21,7 +22,7 @@ pub fn resolve_library(
     let mut diagnostics = Vec::new();
     let output_path = expected_output_path(source_path);
     let part_uri = first_part_uri(&library.directives);
-
+    let mut enums: Vec<ResolvedEnum> = Vec::new();
     let mut classes = Vec::new();
     let mut saw_dust_symbol = false;
 
@@ -31,6 +32,13 @@ pub fn resolve_library(
             saw_dust_symbol = true;
         }
         classes.push(resolved);
+    }
+    for enum_surface in &library.enums {
+        let resolved: ResolvedEnum = resolve_enum(file_id, enum_surface, catalog, &mut diagnostics);
+        if !resolved.traits.is_empty() || !resolved.configs.is_empty() {
+            saw_dust_symbol = true;
+        }
+        enums.push(resolved);
     }
 
     if saw_dust_symbol {
@@ -59,8 +67,74 @@ pub fn resolve_library(
             directives: library.directives.clone(),
             part_uri,
             classes,
+            enums,
         },
         diagnostics,
+    }
+}
+
+fn resolve_enum(
+    file_id: FileId,
+    enum_surface: &dust_parser_dart::ParsedEnumSurface,
+    catalog: &SymbolCatalog,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> ResolvedEnum {
+    let mut traits: Vec<TraitApplicationIr> = Vec::new();
+    let mut configs: Vec<ConfigApplicationIr> = Vec::new();
+    // Resolve annotations on the enum itself
+    for annotation in &enum_surface.annotations {
+        if annotation.name == "Derive" {
+            for name in derive_member_names(annotation.arguments_source.as_deref().unwrap_or("")) {
+                match catalog.resolve(&name) {
+                    Some(resolved) => push_resolved_symbol(
+                        file_id,
+                        annotation.span,
+                        resolved.kind,
+                        resolved.symbol.clone(),
+                        None,
+                        &mut traits,
+                        &mut configs,
+                    ),
+                    None => diagnostics.push(
+                        Diagnostic::warning("unknown derive trait or config").with_label(
+                            SourceLabel::new(
+                                file_id,
+                                annotation.span,
+                                "annotation
+                             member is not owned by any registered symbol.",
+                            ),
+                        ),
+                    ),
+                }
+            }
+        } else if let Some(resolved) = catalog.resolve(&annotation.name) {
+            push_resolved_symbol(
+                file_id,
+                annotation.span,
+                resolved.kind,
+                resolved.symbol.clone(),
+                annotation.arguments_source.clone(),
+                &mut traits,
+                &mut configs,
+            );
+        }
+    }
+
+    let variants = enum_surface
+        .variants
+        .iter()
+        .map(|variant| ResolvedEnumVariant {
+            name: variant.name.clone(),
+            span: SpanIr::new(file_id, variant.span),
+        })
+        .collect();
+
+    ResolvedEnum {
+        name: enum_surface.name.clone(),
+        span: SpanIr::new(file_id, enum_surface.span),
+        variants,
+        traits,
+        configs,
     }
 }
 

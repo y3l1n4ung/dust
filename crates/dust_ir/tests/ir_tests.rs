@@ -189,6 +189,7 @@ fn workspace_ir_collects_libraries() {
             traits: Vec::new(),
             serde: None,
         }],
+        enums: Vec::new(),
     });
 
     assert_eq!(workspace.libraries.len(), 1);

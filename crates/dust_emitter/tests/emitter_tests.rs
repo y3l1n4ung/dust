@@ -74,6 +74,7 @@ fn sample_library(output_path: String) -> LibraryIr {
             Vec::new(),
             vec![constructor(None, Vec::new())],
         )],
+        enums: Vec::new(),
     }
 }
 
@@ -315,6 +316,7 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
                 serde: None,
             },
         ],
+        enums: Vec::new(),
     };
 
     let mut registry = PluginRegistry::new();

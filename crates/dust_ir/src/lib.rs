@@ -4,6 +4,7 @@
 
 mod class;
 mod constructor;
+mod enum_type;
 mod field;
 mod library;
 mod lowering;
@@ -14,6 +15,7 @@ mod workspace;
 
 pub use class::{ClassIr, ClassKindIr};
 pub use constructor::{ConstructorIr, ConstructorParamIr, ParamKind};
+pub use enum_type::{EnumIr, EnumVariantIr};
 pub use field::FieldIr;
 pub use library::{LibraryIr, SpanIr};
 pub use lowering::LoweringOutcome;

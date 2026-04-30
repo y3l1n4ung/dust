@@ -71,6 +71,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
             }],
             span: TextRange::new(85_u32, 179_u32),
         }],
+        enums: Vec::new(),
     };
 
     assert!(!library.is_empty());

@@ -41,6 +41,7 @@ mixin _$JsonSerdeOptionsDust {
   String toString() {
     return 'JsonSerdeOptions('
         'id: ${_dustSelf.id}, '
+        'e: ${_dustSelf.e}, '
         'displayName: ${_dustSelf.displayName}, '
         'tags: ${_dustSelf.tags}, '
         'serverOnly: ${_dustSelf.serverOnly}, '
@@ -55,6 +56,7 @@ mixin _$JsonSerdeOptionsDust {
       other is JsonSerdeOptions &&
           runtimeType == other.runtimeType &&
           other.id == _dustSelf.id &&
+          other.e == _dustSelf.e &&
           other.displayName == _dustSelf.displayName &&
           _dustDeepCollectionEquality.equals(other.tags, _dustSelf.tags) &&
           other.serverOnly == _dustSelf.serverOnly &&
@@ -65,6 +67,7 @@ mixin _$JsonSerdeOptionsDust {
   int get hashCode => Object.hashAll([
     runtimeType,
     _dustSelf.id,
+    _dustSelf.e,
     _dustSelf.displayName,
     _dustDeepCollectionEquality.hash(_dustSelf.tags),
     _dustSelf.serverOnly,
@@ -78,6 +81,7 @@ mixin _$JsonSerdeOptionsDust {
 Map<String, Object?> _$JsonSerdeOptionsToJson(JsonSerdeOptions instance) {
   return <String, Object?>{
     'id': instance.id,
+    'e': _$MyEnumToJson(instance.e),
     'display_name': instance.displayName,
     'tags': instance.tags.map((item) => item).toList(),
     'client_only': instance.clientOnly,
@@ -85,7 +89,7 @@ Map<String, Object?> _$JsonSerdeOptionsToJson(JsonSerdeOptions instance) {
 }
 // factory JsonSerdeOptions.fromJson(Map<String, Object?> json) => _$JsonSerdeOptionsFromJson(json);
 JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
-  const allowedKeys = <String>{'id', 'display_name', 'displayName', 'tags', 'server_only', 'client_only', 'hidden'};
+  const allowedKeys = <String>{'id', 'e', 'display_name', 'displayName', 'tags', 'server_only', 'client_only', 'hidden'};
   for (final key in json.keys) {
     if (!allowedKeys.contains(key)) {
       throw ArgumentError.value(key, 'json', 'unknown key for JsonSerdeOptions');
@@ -93,6 +97,7 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
   }
 
   final idValue = _dustJsonAs<String>(json['id'], 'id', 'String');
+  final eValue = _$MyEnumFromJson(json['e']);
   final rawDisplayNameKey = json.containsKey('display_name') ? 'display_name' : json.containsKey('displayName') ? 'displayName' : 'display_name';
   final rawDisplayName = json.containsKey('display_name') ? json['display_name'] : json.containsKey('displayName') ? json['displayName'] : null;
   final displayNameValue = _dustJsonAs<String>(rawDisplayName, rawDisplayNameKey, 'String');
@@ -104,9 +109,23 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
   return JsonSerdeOptions(
     id: idValue,
     displayName: displayNameValue,
+    e: eValue,
     tags: tagsValue,
     serverOnly: serverOnlyValue,
     clientOnly: clientOnlyValue,
     hidden: hiddenValue,
   );
+}
+Object? _$MyEnumToJson(MyEnum instance) {
+  return switch (instance) {
+    MyEnum.A => 'A',
+    MyEnum.B => 'B',
+  };
+}
+MyEnum _$MyEnumFromJson(Object? json) {
+  return switch (json) {
+    'A' => MyEnum.A,
+    'B' => MyEnum.B,
+    _ => throw ArgumentError.value(json, 'json', 'unknown value for MyEnum'),
+  };
 }

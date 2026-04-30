@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
-    BuiltinType, ClassIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, FieldIr,
-    LibraryIr, LoweringOutcome, ParamKind, SerdeClassConfigIr, SerdeFieldConfigIr,
-    SerdeRenameRuleIr, SpanIr, TypeIr,
+    BuiltinType, ClassIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, EnumIr,
+    EnumVariantIr, FieldIr, LibraryIr, LoweringOutcome, ParamKind, SerdeClassConfigIr,
+    SerdeFieldConfigIr, SerdeRenameRuleIr, SpanIr, TypeIr,
 };
 use dust_parser_dart::ParameterKind;
 use dust_resolver::{ResolvedClass, ResolvedLibrary};
@@ -22,6 +22,15 @@ pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<Librar
             outcome.value
         })
         .collect::<Vec<_>>();
+    let enums = library
+        .enums
+        .iter()
+        .map(|e| {
+            let outcome = lower_enum(e);
+            diagnostics.extend(outcome.diagnostics);
+            outcome.value
+        })
+        .collect();
 
     let index_by_name = classes
         .iter()
@@ -49,6 +58,30 @@ pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<Librar
             output_path: library.output_path.clone(),
             span: library.span,
             classes,
+            enums,
+        },
+        diagnostics,
+    }
+}
+
+fn lower_enum(e: &dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
+    let mut diagnostics: Vec<Diagnostic> = Vec::new();
+    let serde = lower_class_serde_config(&e.name, &e.configs, &mut diagnostics);
+    let variants: Vec<EnumVariantIr> = e
+        .variants
+        .iter()
+        .map(|v| EnumVariantIr {
+            name: v.name.clone(),
+            span: v.span,
+        })
+        .collect();
+    LoweringOutcome {
+        value: EnumIr {
+            name: e.name.clone(),
+            span: e.span,
+            variants,
+            traits: e.traits.clone(),
+            serde,
         },
         diagnostics,
     }

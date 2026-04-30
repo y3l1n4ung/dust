@@ -12,6 +12,6 @@ pub use options::{ParseOptions, SourceKind};
 pub use result::ParseResult;
 pub use surface::{
     ParameterKind, ParsedAnnotation, ParsedClassKind, ParsedClassSurface,
-    ParsedConstructorParamSurface, ParsedConstructorSurface, ParsedDirective, ParsedFieldSurface,
-    ParsedLibrarySurface,
+    ParsedConstructorParamSurface, ParsedConstructorSurface, ParsedDirective, ParsedEnumSurface,
+    ParsedEnumVariantSurface, ParsedFieldSurface, ParsedLibrarySurface,
 };
