@@ -1,28 +1,30 @@
+mod outcome;
+mod progress;
+
 use std::{
     path::Path,
-    sync::{
-        Arc,
-        atomic::{AtomicUsize, Ordering},
-    },
+    sync::{Arc, atomic::AtomicUsize},
     thread,
 };
 
 use dust_cache::WorkspaceCache;
-use dust_diagnostics::Diagnostic;
 use dust_text::FileId;
 use dust_workspace::SourceLibrary;
 
 use crate::{
     build::{
         process::{
-            BuildOutcome, IndexedBuildOutcome, PendingLibrary, ProcessingConfig,
+            IndexedBuildOutcome, PendingLibrary, ProcessingConfig,
             collect_workspace_copyable_types, process_pending_library,
         },
         support::{load_library_input, matches_cache},
     },
     progress::{ProgressEvent, ProgressPhase},
-    result::{BuildArtifact, CacheReport},
+    result::CacheReport,
 };
+
+use self::outcome::{build_cached_outcome, build_load_error};
+pub(crate) use self::progress::{ProgressReporter, ProgressSnapshot};
 
 pub(crate) type ProgressCallback<'a> = dyn Fn(ProgressEvent) + Send + Sync + 'a;
 
@@ -42,63 +44,14 @@ pub(crate) struct BatchConfig<'a> {
     pub(crate) progress: Option<&'a ProgressCallback<'a>>,
 }
 
-#[derive(Clone, Copy)]
-pub(crate) struct ProgressReporter<'a> {
-    progress: Option<&'a ProgressCallback<'a>>,
-    completed: &'a AtomicUsize,
-    phase: ProgressPhase,
-    total: usize,
-}
-
-pub(crate) struct ProgressSnapshot<'a> {
-    pub(crate) library: &'a SourceLibrary,
-    pub(crate) cached: bool,
-    pub(crate) written: bool,
-    pub(crate) changed: bool,
-    pub(crate) had_errors: bool,
-    pub(crate) elapsed_ms: u128,
-}
-
-impl ProgressReporter<'_> {
-    pub(crate) fn started_batch(&self) {
-        if let Some(progress) = self.progress {
-            progress(ProgressEvent::StartedBatch {
-                phase: self.phase,
-                total: self.total,
-            });
-        }
-    }
-
-    pub(crate) fn finish(&self, snapshot: ProgressSnapshot<'_>) {
-        if let Some(progress) = self.progress {
-            let completed = self.completed.fetch_add(1, Ordering::SeqCst) + 1;
-            progress(ProgressEvent::FinishedLibrary {
-                phase: self.phase,
-                completed,
-                total: self.total,
-                source_path: snapshot.library.source_path.clone(),
-                cached: snapshot.cached,
-                written: snapshot.written,
-                changed: snapshot.changed,
-                had_errors: snapshot.had_errors,
-                elapsed_ms: snapshot.elapsed_ms,
-            });
-        }
-    }
-}
-
 pub(crate) fn prepare_and_process_batch(
     config: BatchConfig<'_>,
     libraries: &[SourceLibrary],
     cache_report: &mut CacheReport,
 ) -> Vec<IndexedBuildOutcome> {
     let completed = Arc::new(AtomicUsize::new(0));
-    let reporter = ProgressReporter {
-        progress: config.progress,
-        completed: &completed,
-        phase: config.phase,
-        total: libraries.len(),
-    };
+    let reporter =
+        ProgressReporter::new(config.progress, &completed, config.phase, libraries.len());
     reporter.started_batch();
 
     let mut outcomes = Vec::new();
@@ -178,52 +131,6 @@ pub(crate) fn prepare_and_process_batch(
     outcomes.append(&mut processed);
     outcomes.sort_by_key(|outcome| outcome.index);
     outcomes
-}
-
-fn build_load_error(
-    index: usize,
-    library: &SourceLibrary,
-    diagnostic: Diagnostic,
-) -> IndexedBuildOutcome {
-    IndexedBuildOutcome {
-        index,
-        library: library.clone(),
-        source_hash: None,
-        outcome: BuildOutcome {
-            diagnostics: vec![diagnostic],
-            artifact: BuildArtifact {
-                source_path: library.source_path.clone(),
-                output_path: library.output_path.clone(),
-                changed: false,
-                written: false,
-                cached: false,
-            },
-            expected_output_hash: None,
-        },
-    }
-}
-
-fn build_cached_outcome(
-    index: usize,
-    library: &SourceLibrary,
-    output_hash: Option<u64>,
-) -> IndexedBuildOutcome {
-    IndexedBuildOutcome {
-        index,
-        library: library.clone(),
-        source_hash: None,
-        outcome: BuildOutcome {
-            diagnostics: Vec::new(),
-            artifact: BuildArtifact {
-                source_path: library.source_path.clone(),
-                output_path: library.output_path.clone(),
-                changed: false,
-                written: false,
-                cached: true,
-            },
-            expected_output_hash: output_hash,
-        },
-    }
 }
 
 fn process_pending_serial(
