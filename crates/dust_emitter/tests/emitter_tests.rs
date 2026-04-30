@@ -147,6 +147,11 @@ fn emitter_writes_sections_in_fixed_order_and_wraps_mixins() {
             && mixin < support
             && support < function
     );
+    assert!(source.contains("// coverage:ignore-file"));
+    assert!(source.contains("// ignore_for_file: type=lint"));
+    assert!(source.contains(
+        "// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark"
+    ));
     assert!(source.contains("mixin _$UserDust {"));
     assert!(source.contains("  User get _dustSelf => this as User;"));
     assert!(source.contains("  @override\n  String toString() => 'User()';"));
@@ -319,6 +324,8 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
     let written = fs::read_to_string(&output_path).unwrap();
 
     assert!(result.written);
+    assert!(written.contains("// coverage:ignore-file"));
+    assert!(written.contains("// ignore_for_file: type=lint"));
     assert!(written.contains("part of 'models.dart';"));
     assert!(written.contains("const Object _undefined = Object();"));
     assert!(written.contains("mixin _$UserDust {"));

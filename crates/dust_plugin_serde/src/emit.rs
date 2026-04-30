@@ -4,7 +4,7 @@ use dust_ir::{ClassIr, LibraryIr};
 use dust_plugin_api::PluginContribution;
 
 use crate::writer::{
-    all_allowed_keys, decode_expr, encode_expr, find_deserialize_constructor, json_key,
+    all_allowed_keys, decode_field_expr, encode_field_expr, find_deserialize_constructor, json_key,
     render_constructor_call,
 };
 
@@ -22,6 +22,12 @@ pub(crate) fn emit_library(library: &LibraryIr) -> PluginContribution {
         .filter(|class| wants_deserialize(class))
         .map(|class| class.name.clone())
         .collect::<HashSet<_>>();
+
+    if library.classes.iter().any(wants_deserialize) {
+        contribution
+            .shared_helpers
+            .push(render_deserialize_helpers().to_owned());
+    }
 
     for class in &library.classes {
         if wants_serialize(class) {
@@ -59,12 +65,12 @@ fn emit_to_json_helper(class: &ClassIr, serializable_models: &HashSet<String>) -
         }
 
         let key = json_key(class, &field.name, field.serde.as_ref());
-        let value = encode_expr(
+        let value = encode_field_expr(
             &format!("instance.{}", field.name),
-            &field.ty,
+            field,
             serializable_models,
         );
-        lines.push(format!("    '{key}': {value},"));
+        lines.push(format_prefixed_expr(4, &format!("'{key}': "), &value, ","));
     }
 
     let body = if lines.is_empty() {
@@ -116,28 +122,75 @@ fn emit_from_json_helper(
             let default = serde
                 .and_then(|serde| serde.default_value_source.clone())
                 .unwrap_or_else(|| "null".to_owned());
-            lines.push(format!("  final {field_var} = {default};"));
+            lines.push(format_prefixed_expr(
+                2,
+                &format!("final {field_var} = "),
+                &default,
+                ";",
+            ));
             values.push((field.name.as_str(), field_var.clone()));
             continue;
         }
 
         let primary_key = json_key(class, &field.name, serde);
-        let mut has_parts = vec![format!("json.containsKey('{primary_key}')")];
-        let mut raw_parts = vec![format!(
-            "json.containsKey('{primary_key}') ? json['{primary_key}']"
-        )];
-        if let Some(serde) = serde {
-            for alias in &serde.aliases {
-                has_parts.push(format!("json.containsKey('{alias}')"));
-                raw_parts.push(format!("json.containsKey('{alias}') ? json['{alias}']"));
-            }
-        }
-        let has_expr = has_parts.join(" || ");
-        let raw_expr = format!("{} : null", raw_parts.join(" : "));
-        let raw_name = format!("raw{}", capitalize(&field.name));
-        lines.push(format!("  final {raw_name} = {raw_expr};"));
+        let aliases = serde.map(|serde| serde.aliases.as_slice()).unwrap_or(&[]);
+        let has_expr = if aliases.is_empty() {
+            format!("json.containsKey('{primary_key}')")
+        } else {
+            std::iter::once(format!("json.containsKey('{primary_key}')"))
+                .chain(
+                    aliases
+                        .iter()
+                        .map(|alias| format!("json.containsKey('{alias}')")),
+                )
+                .collect::<Vec<_>>()
+                .join(" || ")
+        };
 
-        let decoded = decode_expr(&raw_name, &field.ty, deserializable_models);
+        let decoded = if aliases.is_empty() {
+            decode_field_expr(
+                &format!("json['{primary_key}']"),
+                &format!("'{primary_key}'"),
+                field,
+                deserializable_models,
+            )
+        } else {
+            let key_parts = std::iter::once(format!(
+                "json.containsKey('{primary_key}') ? '{primary_key}'"
+            ))
+            .chain(
+                aliases
+                    .iter()
+                    .map(|alias| format!("json.containsKey('{alias}') ? '{alias}'")),
+            )
+            .collect::<Vec<_>>();
+            let raw_parts = std::iter::once(format!(
+                "json.containsKey('{primary_key}') ? json['{primary_key}']"
+            ))
+            .chain(
+                aliases
+                    .iter()
+                    .map(|alias| format!("json.containsKey('{alias}') ? json['{alias}']")),
+            )
+            .collect::<Vec<_>>();
+            let raw_name = format!("raw{}", capitalize(&field.name));
+            let raw_key_name = format!("raw{}Key", capitalize(&field.name));
+            let key_expr = format!("{} : '{primary_key}'", key_parts.join(" : "));
+            let raw_expr = format!("{} : null", raw_parts.join(" : "));
+            lines.push(format_prefixed_expr(
+                2,
+                &format!("final {raw_key_name} = "),
+                &key_expr,
+                ";",
+            ));
+            lines.push(format_prefixed_expr(
+                2,
+                &format!("final {raw_name} = "),
+                &raw_expr,
+                ";",
+            ));
+            decode_field_expr(&raw_name, &raw_key_name, field, deserializable_models)
+        };
         let value_expr = if let Some(default_value) =
             serde.and_then(|serde| serde.default_value_source.as_deref())
         {
@@ -145,7 +198,12 @@ fn emit_from_json_helper(
         } else {
             decoded
         };
-        lines.push(format!("  final {field_var} = {value_expr};"));
+        lines.push(format_prefixed_expr(
+            2,
+            &format!("final {field_var} = "),
+            &value_expr,
+            ";",
+        ));
         values.push((field.name.as_str(), field_var));
     }
 
@@ -171,8 +229,8 @@ fn emit_from_json_helper(
     }
 
     Some(format!(
-        "{} _${}FromJson(Map<String, Object?> json) {{\n{}\n}}",
-        class.name,
+        "// factory {0}.fromJson(Map<String, Object?> json) => _${0}FromJson(json);\n\
+         {0} _${0}FromJson(Map<String, Object?> json) {{\n{1}\n}}",
         class.name,
         lines.join("\n")
     ))
@@ -198,4 +256,55 @@ fn capitalize(source: &str) -> String {
         return String::new();
     };
     format!("{}{}", first.to_ascii_uppercase(), chars.as_str())
+}
+
+fn format_prefixed_expr(indent: usize, prefix: &str, expr: &str, suffix: &str) -> String {
+    let pad = " ".repeat(indent);
+    let continuation = " ".repeat(indent + prefix.len());
+    let mut lines = expr.lines();
+    let Some(first) = lines.next() else {
+        return format!("{pad}{prefix}{suffix}");
+    };
+
+    let rest = lines.collect::<Vec<_>>();
+    if rest.is_empty() {
+        return format!("{pad}{prefix}{first}{suffix}");
+    }
+
+    let mut rendered = Vec::with_capacity(rest.len() + 1);
+    rendered.push(format!("{pad}{prefix}{first}"));
+    for (index, line) in rest.iter().enumerate() {
+        let tail = if index + 1 == rest.len() { suffix } else { "" };
+        rendered.push(format!("{continuation}{line}{tail}"));
+    }
+    rendered.join("\n")
+}
+
+fn render_deserialize_helpers() -> &'static str {
+    r#"Never _dustJsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
+T _dustJsonAs<T>(Object? value, String key, String expected) => value is T ? value : _dustJsonTypeError(value, key, expected);
+T _dustJsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_dustJsonAs<String>(value, key, 'String')) ?? _dustJsonTypeError(value, key, expected);
+List<Object?> _dustJsonAsList(Object? value, String key) => _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+
+Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
+  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+  try {
+    return Map<String, Object?>.from(map);
+  } on TypeError {
+    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+  }
+}
+DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _dustJsonAsUri(Object? value, String key) => _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _dustJsonAsBigInt(Object? value, String key) => _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+  if (value == null) {
+    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
+  }
+  try {
+    return codec.deserialize(value as dynamic) as T;
+  } catch (error) {
+    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
+  }
+}"#
 }

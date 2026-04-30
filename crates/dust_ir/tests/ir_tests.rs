@@ -72,6 +72,7 @@ fn serde_configs_preserve_normalized_values() {
     let field_config = SerdeFieldConfigIr {
         rename: Some("display_name".to_owned()),
         aliases: vec!["displayName".to_owned(), "display-name".to_owned()],
+        codec_source: Some("const UserIdCodec()".to_owned()),
         default_value_source: Some("const []".to_owned()),
         skip_serializing: false,
         skip_deserializing: true,
@@ -82,6 +83,10 @@ fn serde_configs_preserve_normalized_values() {
     assert!(class_config.disallow_unrecognized_keys);
     assert_eq!(field_config.rename.as_deref(), Some("display_name"));
     assert_eq!(field_config.aliases.len(), 2);
+    assert_eq!(
+        field_config.codec_source.as_deref(),
+        Some("const UserIdCodec()")
+    );
     assert_eq!(
         field_config.default_value_source.as_deref(),
         Some("const []")

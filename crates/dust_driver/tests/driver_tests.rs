@@ -150,11 +150,20 @@ fn build_writes_real_serde_outputs() {
     assert!(
         profile_output.contains("Map<String, Object?> toJson() => _$ProfileToJson(_dustSelf);")
     );
+    assert!(profile_output.contains(
+        "// factory Profile.fromJson(Map<String, Object?> json) => _$ProfileFromJson(json);"
+    ));
     assert!(profile_output.contains("Profile _$ProfileFromJson(Map<String, Object?> json)"));
+    assert!(
+        profile_output.contains("T _dustJsonAs<T>(Object? value, String key, String expected)")
+    );
     assert!(
         profile_output
             .contains("const allowedKeys = <String>{'id', 'display_name', 'displayName', 'tags'};")
     );
+    assert!(profile_output.contains(
+        "final rawDisplayNameKey = json.containsKey('display_name') ? 'display_name' : json.containsKey('displayName') ? 'displayName' : 'display_name';"
+    ));
     assert!(profile_output.contains("final tagsValue = json.containsKey('tags') ?"));
     assert!(profile_output.contains(": const ['guest'];"));
     assert!(
@@ -162,9 +171,92 @@ fn build_writes_real_serde_outputs() {
     );
     assert!(account_output.contains("'profile': instance.profile.toJson()"));
     assert!(
-        account_output.contains("Profile.fromJson(Map<String, Object?>.from(rawProfile as Map))")
+        account_output.contains("Profile.fromJson(_dustJsonAsMap(json['profile'], 'profile'))")
     );
-    assert!(account_output.contains("Map<String, Object?>.from(rawMetrics as Map).map((key, value) => MapEntry(key, (value as List<Object?>).map((item) => item as int).toList()))"));
+    assert!(account_output.contains("_dustJsonAsMap(json['metrics'], 'metrics').map((mapKey, value) => MapEntry(mapKey, _dustJsonAsList(value, 'metrics').map((item) => _dustJsonAs<int>(item, 'metrics', 'int')).toList()))"));
+}
+
+#[test]
+fn build_writes_custom_serde_codec_outputs() {
+    let workspace = make_workspace();
+    write_file(
+        &workspace.path().join("lib/audit.dart"),
+        "part 'audit.g.dart';\n\
+         final class UnixEpochDateTimeCodec implements SerDeCodec<DateTime, int> {\n\
+           const UnixEpochDateTimeCodec();\n\
+           @override\n\
+           int serialize(DateTime value) => value.millisecondsSinceEpoch;\n\
+           @override\n\
+           DateTime deserialize(int value) => DateTime.fromMillisecondsSinceEpoch(value, isUtc: true);\n\
+         }\n\
+         const unixEpochDateTimeCodec = UnixEpochDateTimeCodec();\n\
+         @Derive([Serialize(), Deserialize()])\n\
+         class Audit {\n\
+           const Audit({required this.createdAt, this.updatedAt});\n\
+           @SerDe(using: unixEpochDateTimeCodec)\n\
+           final DateTime createdAt;\n\
+           @SerDe(using: unixEpochDateTimeCodec)\n\
+           final DateTime? updatedAt;\n\
+           factory Audit.fromJson(Map<String, Object?> json) => _$AuditFromJson(json);\n\
+         }\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+    });
+
+    let output = fs::read_to_string(workspace.path().join("lib/audit.g.dart")).unwrap();
+
+    assert!(!result.has_errors(), "{:?}", result.diagnostics);
+    assert!(output.contains(
+        "// factory Audit.fromJson(Map<String, Object?> json) => _$AuditFromJson(json);"
+    ));
+    assert!(output.contains("'createdAt': unixEpochDateTimeCodec.serialize(instance.createdAt)"));
+    assert!(output.contains("'updatedAt': instance.updatedAt == null"));
+    assert!(output.contains("unixEpochDateTimeCodec.serialize(instance.updatedAt!)"));
+    assert!(output.contains(
+        "final createdAtValue = _dustJsonDecodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['createdAt'], 'createdAt');"
+    ));
+    assert!(output.contains("final updatedAtValue = json['updatedAt'] == null"));
+    assert!(output.contains(
+        "_dustJsonDecodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['updatedAt'], 'updatedAt')"
+    ));
+}
+
+#[test]
+fn build_rejects_invalid_serde_using_values() {
+    let workspace = make_workspace();
+    write_file(
+        &workspace.path().join("lib/audit.dart"),
+        "part 'audit.g.dart';\n\
+         @Derive([Serialize(), Deserialize()])\n\
+         class Audit {\n\
+           const Audit({required this.createdAt});\n\
+           @SerDe(using: DateTimeCodec)\n\
+           final DateTime createdAt;\n\
+           factory Audit.fromJson(Map<String, Object?> json) => _$AuditFromJson(json);\n\
+         }\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+    });
+
+    assert!(result.has_errors());
+    assert!(result.diagnostics.iter().any(|diagnostic| {
+        diagnostic.message.contains(
+            "field `createdAt` uses suspicious `SerDe(using: ...)` type reference `DateTimeCodec`",
+        )
+    }));
+    assert!(result.diagnostics.iter().any(|diagnostic| {
+        diagnostic.notes.iter().any(|note| {
+            note.contains("Use a codec object such as `const UnixEpochDateTimeCodec()`")
+        })
+    }));
 }
 
 #[test]

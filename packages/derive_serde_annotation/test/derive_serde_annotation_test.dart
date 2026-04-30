@@ -1,6 +1,17 @@
 import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 import 'package:test/test.dart';
 
+final class UnixEpochDateTimeCodec implements SerDeCodec<DateTime, int> {
+  const UnixEpochDateTimeCodec();
+
+  @override
+  int serialize(DateTime value) => value.millisecondsSinceEpoch;
+
+  @override
+  DateTime deserialize(int value) =>
+      DateTime.fromMillisecondsSinceEpoch(value, isUtc: true);
+}
+
 void main() {
   group('Serde derive traits', () {
     test('serde markers are derive traits', () {
@@ -29,6 +40,7 @@ void main() {
       expect(config.skipSerializing, isFalse);
       expect(config.skipDeserializing, isFalse);
       expect(config.aliases, isEmpty);
+      expect(config.using, isNull);
       expect(config.disallowUnrecognizedKeys, isFalse);
       expect(config, isA<DeriveConfig>());
     });
@@ -42,6 +54,7 @@ void main() {
         skipSerializing: true,
         skipDeserializing: false,
         aliases: ['payload_v1', 'payload_v0'],
+        using: UnixEpochDateTimeCodec(),
         disallowUnrecognizedKeys: true,
       );
 
@@ -52,6 +65,7 @@ void main() {
       expect(config.skipSerializing, isTrue);
       expect(config.skipDeserializing, isFalse);
       expect(config.aliases, ['payload_v1', 'payload_v0']);
+      expect(config.using, isA<SerDeCodec<DateTime, int>>());
       expect(config.disallowUnrecognizedKeys, isTrue);
     });
   });
@@ -81,6 +95,20 @@ void main() {
       expect(field.aliases, ['old_name']);
       expect(field.defaultValue, isA<List<String>>());
       expect(field.rename, isNull);
+    });
+  });
+
+  group('custom codec contract', () {
+    test('codecs expose typed serialize and deserialize hooks', () {
+      const codec = UnixEpochDateTimeCodec();
+      final value = DateTime.fromMillisecondsSinceEpoch(
+        1704067200000,
+        isUtc: true,
+      );
+
+      expect(codec, isA<SerDeCodec<DateTime, int>>());
+      expect(codec.serialize(value), 1704067200000);
+      expect(codec.deserialize(1704067200000), value);
     });
   });
 

@@ -65,7 +65,13 @@ pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
                 }
             }
 
-            if serialize {
+            let uses_codec = field
+                .serde
+                .as_ref()
+                .and_then(|serde| serde.codec_source.as_ref())
+                .is_some();
+
+            if serialize && !uses_codec {
                 validate_type_supported(
                     &field.ty,
                     known_models.as_slice(),
@@ -75,7 +81,7 @@ pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
                     &mut diagnostics,
                 );
             }
-            if deserialize {
+            if deserialize && !uses_codec {
                 validate_type_supported(
                     &field.ty,
                     known_models.as_slice(),

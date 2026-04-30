@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 
 use dust_ir::{
-    BuiltinType, ClassIr, ConstructorIr, ParamKind, SerdeFieldConfigIr, SerdeRenameRuleIr, TypeIr,
+    BuiltinType, ClassIr, ConstructorIr, FieldIr, ParamKind, SerdeFieldConfigIr, SerdeRenameRuleIr,
+    TypeIr,
 };
 
 pub(crate) fn find_deserialize_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
@@ -108,11 +109,27 @@ pub(crate) fn encode_expr(
 
     if ty.is_nullable() {
         let inner = non_nullable(ty);
-        let encoded = encode_non_nullable_expr(expr, &inner, serializable_models);
+        let encoded =
+            encode_non_nullable_expr(&non_null_encode_expr(expr), &inner, serializable_models);
         return format!("{expr} == null ? null : {encoded}");
     }
 
     encode_non_nullable_expr(expr, ty, serializable_models)
+}
+
+pub(crate) fn encode_field_expr(
+    expr: &str,
+    field: &FieldIr,
+    serializable_models: &HashSet<String>,
+) -> String {
+    match field
+        .serde
+        .as_ref()
+        .and_then(|serde| serde.codec_source.as_deref())
+    {
+        Some(codec) => encode_with_codec(expr, &field.ty, codec),
+        None => encode_expr(expr, &field.ty, serializable_models),
+    }
 }
 
 fn nullable_identity_encode(ty: &TypeIr) -> bool {
@@ -121,49 +138,32 @@ fn nullable_identity_encode(ty: &TypeIr) -> bool {
 
 pub(crate) fn decode_expr(
     raw: &str,
+    key: &str,
     ty: &TypeIr,
     deserializable_models: &HashSet<String>,
 ) -> String {
-    if let Some(builtin) = nullable_builtin_decode(raw, ty) {
-        return builtin;
-    }
-
     if ty.is_nullable() {
         let inner = non_nullable(ty);
-        let decoded = decode_non_nullable_expr(raw, &inner, deserializable_models);
-        return format!("{raw} == null ? null : {decoded}");
+        let decoded = decode_non_nullable_expr(raw, key, &inner, deserializable_models);
+        return format!("{raw} == null\n? null\n: {decoded}");
     }
 
-    decode_non_nullable_expr(raw, ty, deserializable_models)
+    decode_non_nullable_expr(raw, key, ty, deserializable_models)
 }
 
-fn nullable_builtin_decode(raw: &str, ty: &TypeIr) -> Option<String> {
-    match ty {
-        TypeIr::Builtin {
-            kind: BuiltinType::String,
-            nullable: true,
-        } => Some(format!("{raw} as String?")),
-        TypeIr::Builtin {
-            kind: BuiltinType::Int,
-            nullable: true,
-        } => Some(format!("{raw} as int?")),
-        TypeIr::Builtin {
-            kind: BuiltinType::Bool,
-            nullable: true,
-        } => Some(format!("{raw} as bool?")),
-        TypeIr::Builtin {
-            kind: BuiltinType::Double,
-            nullable: true,
-        } => Some(format!("({raw} as num?)?.toDouble()")),
-        TypeIr::Builtin {
-            kind: BuiltinType::Num,
-            nullable: true,
-        } => Some(format!("{raw} as num?")),
-        TypeIr::Builtin {
-            kind: BuiltinType::Object,
-            nullable: true,
-        } => Some(format!("{raw} as Object?")),
-        _ => None,
+pub(crate) fn decode_field_expr(
+    raw: &str,
+    key: &str,
+    field: &FieldIr,
+    deserializable_models: &HashSet<String>,
+) -> String {
+    match field
+        .serde
+        .as_ref()
+        .and_then(|serde| serde.codec_source.as_deref())
+    {
+        Some(codec) => decode_with_codec(raw, key, &field.ty, codec),
+        None => decode_expr(raw, key, &field.ty, deserializable_models),
     }
 }
 
@@ -175,6 +175,12 @@ fn encode_non_nullable_expr(
     match ty {
         TypeIr::Builtin { .. } | TypeIr::Dynamic | TypeIr::Unknown => expr.to_owned(),
         TypeIr::Function { .. } | TypeIr::Record { .. } => expr.to_owned(),
+        TypeIr::Named { name, .. } if name.as_ref() == "DateTime" => {
+            format!("{expr}.toIso8601String()")
+        }
+        TypeIr::Named { name, .. } if name.as_ref() == "Uri" || name.as_ref() == "BigInt" => {
+            format!("{expr}.toString()")
+        }
         TypeIr::Named { name, args, .. } if name.as_ref() == "List" => format!(
             "{expr}.map((item) => {}).toList()",
             encode_expr("item", &args[0], serializable_models)
@@ -199,40 +205,73 @@ fn encode_non_nullable_expr(
 
 fn decode_non_nullable_expr(
     raw: &str,
+    key: &str,
     ty: &TypeIr,
     deserializable_models: &HashSet<String>,
 ) -> String {
     match ty {
         TypeIr::Builtin { kind, .. } => match kind {
-            BuiltinType::String => format!("{raw} as String"),
-            BuiltinType::Int => format!("{raw} as int"),
-            BuiltinType::Bool => format!("{raw} as bool"),
-            BuiltinType::Double => format!("({raw} as num).toDouble()"),
-            BuiltinType::Num => format!("{raw} as num"),
-            BuiltinType::Object => format!("{raw} as Object"),
+            BuiltinType::String => {
+                format!("_dustJsonAs<String>({raw}, {key}, 'String')")
+            }
+            BuiltinType::Int => format!("_dustJsonAs<int>({raw}, {key}, 'int')"),
+            BuiltinType::Bool => format!("_dustJsonAs<bool>({raw}, {key}, 'bool')"),
+            BuiltinType::Double => format!("_dustJsonAs<num>({raw}, {key}, 'num').toDouble()"),
+            BuiltinType::Num => format!("_dustJsonAs<num>({raw}, {key}, 'num')"),
+            BuiltinType::Object => format!("_dustJsonAs<Object>({raw}, {key}, 'Object')"),
         },
         TypeIr::Dynamic | TypeIr::Unknown => raw.to_owned(),
         TypeIr::Function { .. } | TypeIr::Record { .. } => raw.to_owned(),
+        TypeIr::Named { name, .. } if name.as_ref() == "DateTime" => {
+            format!("_dustJsonAsDateTime({raw}, {key})")
+        }
+        TypeIr::Named { name, .. } if name.as_ref() == "Uri" => {
+            format!("_dustJsonAsUri({raw}, {key})")
+        }
+        TypeIr::Named { name, .. } if name.as_ref() == "BigInt" => {
+            format!("_dustJsonAsBigInt({raw}, {key})")
+        }
         TypeIr::Named { name, args, .. } if name.as_ref() == "List" => format!(
-            "({raw} as List<Object?>).map((item) => {}).toList()",
-            decode_expr("item", &args[0], deserializable_models)
+            "_dustJsonAsList({raw}, {key}).map((item) => {}).toList()",
+            decode_expr("item", key, &args[0], deserializable_models)
         ),
         TypeIr::Named { name, args, .. } if name.as_ref() == "Set" => format!(
-            "({raw} as List<Object?>).map((item) => {}).toSet()",
-            decode_expr("item", &args[0], deserializable_models)
+            "_dustJsonAsList({raw}, {key}).map((item) => {}).toSet()",
+            decode_expr("item", key, &args[0], deserializable_models)
         ),
         TypeIr::Named { name, args, .. } if name.as_ref() == "Map" => format!(
-            "Map<String, Object?>.from({raw} as Map).map((key, value) => MapEntry(key, {}))",
-            decode_expr("value", &args[1], deserializable_models)
+            "_dustJsonAsMap({raw}, {key}).map((mapKey, value) => MapEntry(mapKey, {}))",
+            decode_expr("value", key, &args[1], deserializable_models)
         ),
         TypeIr::Named { name, .. } => {
             if deserializable_models.contains(name.as_ref()) {
-                format!("_${name}FromJson(Map<String, Object?>.from({raw} as Map))")
+                format!("_${name}FromJson(_dustJsonAsMap({raw}, {key}))")
             } else {
-                format!("{name}.fromJson(Map<String, Object?>.from({raw} as Map))")
+                format!("{name}.fromJson(_dustJsonAsMap({raw}, {key}))")
             }
         }
     }
+}
+
+fn encode_with_codec(expr: &str, ty: &TypeIr, codec: &str) -> String {
+    let codec = access_receiver(codec);
+    if ty.is_nullable() {
+        let encoded = format!("{codec}.serialize({expr}!)");
+        return format!("{expr} == null\n? null\n: {encoded}");
+    }
+
+    format!("{codec}.serialize({expr})")
+}
+
+fn decode_with_codec(raw: &str, key: &str, ty: &TypeIr, codec: &str) -> String {
+    let codec = access_receiver(codec);
+    let value_ty = render_type(&non_nullable(ty));
+    if ty.is_nullable() {
+        let decoded = format!("_dustJsonDecodeWithCodec<{value_ty}>({codec}, {raw}, {key})");
+        return format!("{raw} == null\n? null\n: {decoded}");
+    }
+
+    format!("_dustJsonDecodeWithCodec<{value_ty}>({codec}, {raw}, {key})")
 }
 
 fn non_nullable(ty: &TypeIr) -> TypeIr {
@@ -244,6 +283,63 @@ fn non_nullable(ty: &TypeIr) -> TypeIr {
         TypeIr::Dynamic => TypeIr::dynamic(),
         TypeIr::Unknown => TypeIr::unknown(),
     }
+}
+
+fn non_null_encode_expr(expr: &str) -> String {
+    format!("({expr}!)")
+}
+
+pub(crate) fn render_type(ty: &TypeIr) -> String {
+    match ty {
+        TypeIr::Builtin { kind, nullable } => {
+            let nullable = if *nullable { "?" } else { "" };
+            format!("{}{}", kind.as_str(), nullable)
+        }
+        TypeIr::Named {
+            name,
+            args,
+            nullable,
+        } => {
+            let args = if args.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "<{}>",
+                    args.iter().map(render_type).collect::<Vec<_>>().join(", ")
+                )
+            };
+            let nullable = if *nullable { "?" } else { "" };
+            format!("{name}{args}{nullable}")
+        }
+        TypeIr::Function {
+            signature,
+            nullable,
+        } => {
+            let nullable = if *nullable { "?" } else { "" };
+            format!("{signature}{nullable}")
+        }
+        TypeIr::Record { shape, nullable } => {
+            let nullable = if *nullable { "?" } else { "" };
+            format!("{shape}{nullable}")
+        }
+        TypeIr::Dynamic => "dynamic".to_owned(),
+        TypeIr::Unknown => "Object?".to_owned(),
+    }
+}
+
+fn access_receiver(source: &str) -> String {
+    if is_simple_receiver(source) {
+        source.to_owned()
+    } else {
+        format!("({source})")
+    }
+}
+
+fn is_simple_receiver(source: &str) -> bool {
+    !source.is_empty()
+        && source
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '_' | '.'))
 }
 
 fn apply_rename_rule(source: &str, rule: SerdeRenameRuleIr) -> String {

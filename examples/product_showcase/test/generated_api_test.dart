@@ -90,7 +90,11 @@ void main() {
   });
 
   test('copyWith deep clones nested Dust models', () {
-    final price = Price(currency: 'USD', cents: 1999, tags: ['featured', 'sale']);
+    final price = Price(
+      currency: 'USD',
+      cents: 1999,
+      tags: ['featured', 'sale'],
+    );
     final category = Category(
       id: 'cat-1',
       title: 'Shoes',
@@ -331,11 +335,26 @@ void main() {
     );
 
     expect(
-      () => JsonProfile.fromJson({
-        'id': 'user-1',
-        'unknown': true,
-      }),
+      () => JsonProfile.fromJson({'id': 'user-1', 'unknown': true}),
       throwsArgumentError,
+    );
+  });
+
+  test('generated serde diagnostics include the failing key for wrong types', () {
+    expect(
+      () => JsonProfile.fromJson({
+        'id': 42,
+        'display_name': 'May',
+      }),
+      throwsA(
+        isA<ArgumentError>()
+            .having((error) => error.name, 'name', 'id')
+            .having(
+              (error) => '${error.message}',
+              'message',
+              contains('expected String'),
+            ),
+      ),
     );
   });
 
@@ -381,5 +400,173 @@ void main() {
     });
 
     expect(roundTrip, equals(account));
+  });
+
+  test('generated serde features support DateTime Uri and BigInt', () {
+    final bundle = JsonScalarBundle(
+      createdAt: DateTime.utc(2026, 4, 29, 12, 30, 45),
+      updatedAt: null,
+      website: Uri.parse('https://dust.dev/products/runner'),
+      largeNumber: BigInt.parse('900719925474099312345'),
+      endpoints: {
+        Uri.parse('https://a.dust.dev'),
+        Uri.parse('https://b.dust.dev'),
+      },
+      checkpoints: {
+        'draft': DateTime.utc(2026, 4, 1, 8, 0, 0),
+        'live': DateTime.utc(2026, 4, 29, 12, 30, 45),
+      },
+    );
+
+    expect(bundle.toJson(), {
+      'createdAt': '2026-04-29T12:30:45.000Z',
+      'updatedAt': null,
+      'website': 'https://dust.dev/products/runner',
+      'largeNumber': '900719925474099312345',
+      'endpoints': ['https://a.dust.dev', 'https://b.dust.dev'],
+      'checkpoints': {
+        'draft': '2026-04-01T08:00:00.000Z',
+        'live': '2026-04-29T12:30:45.000Z',
+      },
+    });
+
+    final roundTrip = JsonScalarBundle.fromJson({
+      'createdAt': '2026-04-29T12:30:45.000Z',
+      'updatedAt': '2026-05-01T09:15:00.000Z',
+      'website': 'https://dust.dev/products/runner',
+      'largeNumber': '900719925474099312345',
+      'endpoints': ['https://a.dust.dev', 'https://b.dust.dev'],
+      'checkpoints': {
+        'draft': '2026-04-01T08:00:00.000Z',
+        'live': '2026-04-29T12:30:45.000Z',
+      },
+    });
+
+    expect(roundTrip.createdAt, DateTime.utc(2026, 4, 29, 12, 30, 45));
+    expect(roundTrip.updatedAt, DateTime.utc(2026, 5, 1, 9, 15, 0));
+    expect(roundTrip.website, Uri.parse('https://dust.dev/products/runner'));
+    expect(roundTrip.largeNumber, BigInt.parse('900719925474099312345'));
+    expect(roundTrip.endpoints, {
+      Uri.parse('https://a.dust.dev'),
+      Uri.parse('https://b.dust.dev'),
+    });
+    expect(roundTrip.checkpoints, {
+      'draft': DateTime.utc(2026, 4, 1, 8, 0, 0),
+      'live': DateTime.utc(2026, 4, 29, 12, 30, 45),
+    });
+  });
+
+  test('generated serde diagnostics include the failing key for bad formats', () {
+    expect(
+      () => JsonScalarBundle.fromJson({
+        'createdAt': 'not-a-date',
+        'updatedAt': null,
+        'website': 'https://dust.dev/products/runner',
+        'largeNumber': '900719925474099312345',
+        'endpoints': const <String>[],
+        'checkpoints': const <String, String>{},
+      }),
+      throwsA(
+        isA<ArgumentError>()
+            .having((error) => error.name, 'name', 'createdAt')
+            .having(
+              (error) => '${error.message}',
+              'message',
+              contains('ISO-8601 DateTime string'),
+            ),
+      ),
+    );
+  });
+
+  test('generated serde features support custom SerDeCodec fields', () {
+    final bundle = JsonCodecBundle(
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        1704067200000,
+        isUtc: true,
+      ),
+      updatedAt: DateTime.fromMillisecondsSinceEpoch(
+        1706745600000,
+        isUtc: true,
+      ),
+    );
+
+    expect(bundle.toJson(), {
+      'createdAt': 1704067200000,
+      'updatedAt': 1706745600000,
+    });
+
+    final roundTrip = JsonCodecBundle.fromJson({
+      'createdAt': 1704067200000,
+      'updatedAt': 1706745600000,
+    });
+
+    expect(roundTrip, equals(bundle));
+  });
+
+  test('generated serde diagnostics include the failing key for codec fields', () {
+    expect(
+      () => JsonCodecBundle.fromJson({
+        'createdAt': null,
+        'updatedAt': 1706745600000,
+      }),
+      throwsA(
+        isA<ArgumentError>()
+            .having((error) => error.name, 'name', 'createdAt')
+            .having(
+              (error) => '${error.message}',
+              'message',
+              contains('SerDeCodec'),
+            ),
+      ),
+    );
+  });
+
+  test('generated serde features cover all supported SerDe flags', () {
+    const options = JsonSerdeOptions(
+      id: 'user-2',
+      displayName: 'May',
+      tags: ['vip'],
+      serverOnly: 'server-secret',
+      clientOnly: 'client-visible',
+      hidden: 'hidden-secret',
+    );
+
+    expect(options.toJson(), {
+      'id': 'user-2',
+      'display_name': 'May',
+      'tags': ['vip'],
+      'client_only': 'client-visible',
+    });
+
+    final fromJson = JsonSerdeOptions.fromJson({
+      'id': 'user-2',
+      'displayName': 'May',
+      'server_only': 'from-server',
+      'client_only': 'ignored-client',
+      'hidden': 'ignored-hidden',
+    });
+
+    expect(
+      fromJson,
+      equals(
+        const JsonSerdeOptions(
+          id: 'user-2',
+          displayName: 'May',
+          tags: ['guest'],
+          serverOnly: 'from-server',
+          clientOnly: 'client-default',
+          hidden: 'hidden-default',
+        ),
+      ),
+    );
+
+    expect(
+      () => JsonSerdeOptions.fromJson({
+        'id': 'user-2',
+        'display_name': 'May',
+        'unexpected': true,
+      }),
+      throwsArgumentError,
+    );
   });
 }

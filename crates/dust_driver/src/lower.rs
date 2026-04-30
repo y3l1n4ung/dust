@@ -175,7 +175,12 @@ fn lower_class_serde_config(
                         "class `{class_name}` uses a non-boolean `SerDe(disallowUnrecognizedKeys: ...)` value"
                     ))),
                 },
-                "aliases" | "defaultValue" | "skip" | "skipSerializing" | "skipDeserializing" => {
+                "aliases"
+                | "defaultValue"
+                | "skip"
+                | "skipSerializing"
+                | "skipDeserializing"
+                | "using" => {
                     diagnostics.push(Diagnostic::error(format!(
                         "class `{class_name}` does not support `SerDe({key}: ...)`"
                     )));
@@ -218,6 +223,11 @@ fn lower_field_serde_config(
                         "field `{field_name}` uses a non-string-list `SerDe(aliases: ...)` value"
                     ))),
                 },
+                "using" => {
+                    if let Some(codec_source) = parse_codec_source(field_name, value, diagnostics) {
+                        serde.codec_source = Some(codec_source);
+                    }
+                }
                 "defaultValue" => serde.default_value_source = Some(value.trim().to_owned()),
                 "skip" => match parse_bool_literal(value) {
                     Some(true) => {
@@ -431,6 +441,89 @@ fn parse_string_list(source: &str) -> Option<Vec<String>> {
         .into_iter()
         .map(parse_string_literal)
         .collect()
+}
+
+fn parse_codec_source(
+    field_name: &str,
+    source: &str,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Option<String> {
+    let source = source.trim();
+    if source.is_empty() {
+        diagnostics.push(
+            Diagnostic::error(format!(
+                "field `{field_name}` uses empty `SerDe(using: ...)` value"
+            ))
+            .with_note(codec_source_guidance()),
+        );
+        return None;
+    }
+
+    if parse_string_literal(source).is_some()
+        || parse_bool_literal(source).is_some()
+        || source == "null"
+        || looks_like_number_literal(source)
+        || looks_like_collection_literal(source)
+        || looks_like_function_literal(source)
+    {
+        diagnostics.push(
+            Diagnostic::error(format!(
+                "field `{field_name}` uses invalid `SerDe(using: ...)` value `{source}`"
+            ))
+            .with_note(codec_source_guidance()),
+        );
+        return None;
+    }
+
+    if looks_like_bare_type_reference(source) {
+        diagnostics.push(
+            Diagnostic::error(format!(
+                "field `{field_name}` uses suspicious `SerDe(using: ...)` type reference `{source}`"
+            ))
+            .with_note(codec_source_guidance()),
+        );
+        return None;
+    }
+
+    Some(source.to_owned())
+}
+
+fn codec_source_guidance() -> &'static str {
+    "Use a codec object such as `const UnixEpochDateTimeCodec()` or `unixEpochDateTimeCodec`."
+}
+
+fn looks_like_number_literal(source: &str) -> bool {
+    let source = source.trim();
+    let Some(first) = source.chars().next() else {
+        return false;
+    };
+
+    first.is_ascii_digit()
+        || ((first == '-' || first == '+')
+            && source
+                .chars()
+                .nth(1)
+                .is_some_and(|next| next.is_ascii_digit()))
+}
+
+fn looks_like_collection_literal(source: &str) -> bool {
+    let source = source.trim();
+    (source.starts_with('[') && source.ends_with(']'))
+        || (source.starts_with('{') && source.ends_with('}'))
+}
+
+fn looks_like_function_literal(source: &str) -> bool {
+    source.contains("=>")
+}
+
+fn looks_like_bare_type_reference(source: &str) -> bool {
+    let source = source.trim();
+    !source.contains('(')
+        && !source.contains('.')
+        && source
+            .chars()
+            .next()
+            .is_some_and(|first| first.is_ascii_uppercase())
 }
 
 fn parse_serde_rename_rule(source: &str) -> Option<SerdeRenameRuleIr> {
@@ -843,7 +936,7 @@ mod tests {
                 configs: vec![ConfigApplicationIr {
                     symbol: SymbolId::new("derive_serde_annotation::SerDe"),
                     arguments_source: Some(
-                        "(rename: 'full_name', aliases: ['fullName'], defaultValue: 'guest')"
+                        "(rename: 'full_name', aliases: ['fullName'], using: const NameCodec(), defaultValue: 'guest')"
                             .to_owned(),
                     ),
                     span: span(18, 30),
@@ -888,6 +981,13 @@ mod tests {
             outcome.value.fields[0]
                 .serde
                 .as_ref()
+                .and_then(|serde| serde.codec_source.as_deref()),
+            Some("const NameCodec()")
+        );
+        assert_eq!(
+            outcome.value.fields[0]
+                .serde
+                .as_ref()
                 .and_then(|serde| serde.default_value_source.as_deref()),
             Some("'guest'")
         );
@@ -916,13 +1016,15 @@ mod tests {
             traits: Vec::new(),
             configs: vec![ConfigApplicationIr {
                 symbol: SymbolId::new("derive_serde_annotation::SerDe"),
-                arguments_source: Some("(aliases: ['legacy'])".to_owned()),
+                arguments_source: Some(
+                    "(aliases: ['legacy'], using: const NameCodec())".to_owned(),
+                ),
                 span: span(1, 10),
             }],
         };
 
         let outcome = lower_class(&class);
-        assert_eq!(outcome.diagnostics.len(), 2);
+        assert_eq!(outcome.diagnostics.len(), 3);
         assert!(outcome.diagnostics.iter().any(|diagnostic| {
             diagnostic
                 .message
@@ -931,7 +1033,144 @@ mod tests {
         assert!(outcome.diagnostics.iter().any(|diagnostic| {
             diagnostic
                 .message
+                .contains("class `User` does not support `SerDe(using: ...)`")
+        }));
+        assert!(outcome.diagnostics.iter().any(|diagnostic| {
+            diagnostic
+                .message
                 .contains("field `name` does not support `SerDe(renameAll: ...)`")
+        }));
+    }
+
+    #[test]
+    fn invalid_serde_using_values_produce_lowering_diagnostics() {
+        let class = ResolvedClass {
+            kind: ClassKindIr::Class,
+            name: "User".to_owned(),
+            is_abstract: false,
+            superclass_name: None,
+            span: span(0, 100),
+            fields: vec![
+                ResolvedField {
+                    name: "emptyCodec".to_owned(),
+                    type_source: Some("DateTime".to_owned()),
+                    has_default: false,
+                    span: span(20, 30),
+                    configs: vec![ConfigApplicationIr {
+                        symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                        arguments_source: Some("(using: )".to_owned()),
+                        span: span(18, 30),
+                    }],
+                },
+                ResolvedField {
+                    name: "stringCodec".to_owned(),
+                    type_source: Some("DateTime".to_owned()),
+                    has_default: false,
+                    span: span(31, 40),
+                    configs: vec![ConfigApplicationIr {
+                        symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                        arguments_source: Some("(using: 'codec')".to_owned()),
+                        span: span(31, 40),
+                    }],
+                },
+                ResolvedField {
+                    name: "nullCodec".to_owned(),
+                    type_source: Some("DateTime".to_owned()),
+                    has_default: false,
+                    span: span(41, 50),
+                    configs: vec![ConfigApplicationIr {
+                        symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                        arguments_source: Some("(using: null)".to_owned()),
+                        span: span(41, 50),
+                    }],
+                },
+                ResolvedField {
+                    name: "lambdaCodec".to_owned(),
+                    type_source: Some("DateTime".to_owned()),
+                    has_default: false,
+                    span: span(51, 60),
+                    configs: vec![ConfigApplicationIr {
+                        symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                        arguments_source: Some("(using: () => const DateTimeCodec())".to_owned()),
+                        span: span(51, 60),
+                    }],
+                },
+                ResolvedField {
+                    name: "typeCodec".to_owned(),
+                    type_source: Some("DateTime".to_owned()),
+                    has_default: false,
+                    span: span(61, 70),
+                    configs: vec![ConfigApplicationIr {
+                        symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                        arguments_source: Some("(using: DateTimeCodec)".to_owned()),
+                        span: span(61, 70),
+                    }],
+                },
+                ResolvedField {
+                    name: "validCodec".to_owned(),
+                    type_source: Some("DateTime".to_owned()),
+                    has_default: false,
+                    span: span(71, 80),
+                    configs: vec![ConfigApplicationIr {
+                        symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                        arguments_source: Some("(using: const DateTimeCodec())".to_owned()),
+                        span: span(71, 80),
+                    }],
+                },
+            ],
+            constructors: Vec::new(),
+            traits: Vec::new(),
+            configs: Vec::new(),
+        };
+
+        let outcome = lower_class(&class);
+
+        assert_eq!(outcome.diagnostics.len(), 5);
+        assert!(outcome.diagnostics.iter().any(|diagnostic| {
+            diagnostic
+                .message
+                .contains("field `emptyCodec` uses empty `SerDe(using: ...)` value")
+        }));
+        assert!(outcome.diagnostics.iter().any(|diagnostic| {
+            diagnostic
+                .message
+                .contains("field `stringCodec` uses invalid `SerDe(using: ...)` value `'codec'`")
+        }));
+        assert!(outcome.diagnostics.iter().any(|diagnostic| {
+            diagnostic
+                .message
+                .contains("field `nullCodec` uses invalid `SerDe(using: ...)` value `null`")
+        }));
+        assert!(outcome.diagnostics.iter().any(|diagnostic| {
+            diagnostic
+                .message
+                .contains("field `lambdaCodec` uses invalid `SerDe(using: ...)` value `() => const DateTimeCodec()`")
+        }));
+        assert!(outcome.diagnostics.iter().any(|diagnostic| {
+            diagnostic
+                .message
+                .contains("field `typeCodec` uses suspicious `SerDe(using: ...)` type reference `DateTimeCodec`")
+        }));
+        assert_eq!(
+            outcome.value.fields[5]
+                .serde
+                .as_ref()
+                .and_then(|serde| serde.codec_source.as_deref()),
+            Some("const DateTimeCodec()")
+        );
+        for field in &outcome.value.fields[..5] {
+            assert_eq!(
+                field
+                    .serde
+                    .as_ref()
+                    .and_then(|serde| serde.codec_source.as_deref()),
+                None
+            );
+        }
+        assert!(outcome.diagnostics.iter().all(|diagnostic| {
+            diagnostic.notes.iter().any(|note| {
+                note.contains("Use a codec object such as `const UnixEpochDateTimeCodec()`")
+            })
         }));
     }
 }

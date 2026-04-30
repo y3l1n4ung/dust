@@ -12,6 +12,21 @@ final class Deserialize extends DeriveTrait {
   const Deserialize();
 }
 
+/// Field-level conversion contract for custom Dust serde handling.
+///
+/// Dust owns nullability around the field. Codecs only serialize and
+/// deserialize the non-null value itself.
+abstract interface class SerDeCodec<DartT, JsonT> {
+  /// Creates one codec contract object.
+  const SerDeCodec();
+
+  /// Converts one Dart value into its JSON representation.
+  JsonT serialize(DartT value);
+
+  /// Converts one JSON value into its Dart representation.
+  DartT deserialize(JsonT value);
+}
+
 /// The rename strategy used when Dust derives JSON keys automatically.
 ///
 /// These values intentionally mirror the common Rust `serde(rename_all = "...")`
@@ -49,7 +64,7 @@ enum SerDeRename {
 ///
 /// Common declaration-level options:
 /// - [renameAll]
-/// - [denyUnknownFields]
+/// - [disallowUnrecognizedKeys]
 ///
 /// Common field-level options:
 /// - [rename]
@@ -58,6 +73,7 @@ enum SerDeRename {
 /// - [skipSerializing]
 /// - [skipDeserializing]
 /// - [aliases]
+/// - [using]
 final class SerDe extends DeriveConfig {
   /// Explicit serde rename for the annotated declaration or field.
   final String? rename;
@@ -81,6 +97,11 @@ final class SerDe extends DeriveConfig {
   /// Alternate accepted input names for one field during deserialization.
   final List<String> aliases;
 
+  /// Custom field codec used instead of Dust's built-in serde mapping.
+  ///
+  /// This should usually be a const object that implements [SerDeCodec].
+  final Object? using;
+
   /// Whether generated deserialization should reject unknown JSON keys on the
   /// annotated declaration.
   final bool disallowUnrecognizedKeys;
@@ -94,6 +115,7 @@ final class SerDe extends DeriveConfig {
     this.skipSerializing = false,
     this.skipDeserializing = false,
     this.aliases = const [],
+    this.using,
     this.disallowUnrecognizedKeys = false,
   });
 }

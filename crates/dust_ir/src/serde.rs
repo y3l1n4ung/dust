@@ -44,6 +44,8 @@ pub struct SerdeFieldConfigIr {
     pub rename: Option<String>,
     /// Alternative accepted JSON keys during deserialization.
     pub aliases: Vec<String>,
+    /// Raw source expression for one custom serde codec, if one was provided.
+    pub codec_source: Option<String>,
     /// Raw source expression for a default value, if one was provided.
     pub default_value_source: Option<String>,
     /// Whether serialization should skip this field.
@@ -57,6 +59,7 @@ impl SerdeFieldConfigIr {
     pub fn is_empty(&self) -> bool {
         self.rename.is_none()
             && self.aliases.is_empty()
+            && self.codec_source.is_none()
             && self.default_value_source.is_none()
             && !self.skip_serializing
             && !self.skip_deserializing
