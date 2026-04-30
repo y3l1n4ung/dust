@@ -16,8 +16,10 @@ pub struct SourceLibrary {
 /// The discovered workspace state needed by later pipeline phases.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WorkspacePlan {
-    /// The detected workspace root.
-    pub root: PathBuf,
+    /// The detected Dart package root used for library discovery.
+    pub package_root: PathBuf,
+    /// The package-local cache root used for `.dart_tool/dust`.
+    pub cache_root: PathBuf,
     /// The loaded package configuration.
     pub package_config: PackageConfig,
     /// Candidate Dust source libraries in deterministic order.
@@ -26,12 +28,13 @@ pub struct WorkspacePlan {
 
 /// Discovers the workspace root, package configuration, and candidate source libraries.
 pub fn discover_workspace(cwd: &Path) -> Result<WorkspacePlan, Diagnostic> {
-    let root = detect_workspace_root(cwd)?;
-    let package_config = load_package_config(&root)?;
-    let libraries = discover_libraries(&root)?;
+    let package_root = detect_workspace_root(cwd)?;
+    let package_config = load_package_config(&package_root)?;
+    let libraries = discover_libraries(&package_root)?;
 
     Ok(WorkspacePlan {
-        root,
+        cache_root: package_root.clone(),
+        package_root,
         package_config,
         libraries,
     })

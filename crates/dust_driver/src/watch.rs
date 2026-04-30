@@ -53,13 +53,13 @@ fn run_watch_inner(
     let registry = default_registry();
     let catalog = build_symbol_catalog(&registry);
     let tool_hash = codegen_tool_hash();
-    let mut cache = match WorkspaceCache::load(&workspace.root) {
+    let mut cache = match WorkspaceCache::load(&workspace.cache_root) {
         Ok(cache) => cache,
         Err(error) => {
             result.diagnostics.push(Diagnostic::error(format!(
                 "failed to load Dust cache `{}`: {error}",
                 workspace
-                    .root
+                    .cache_root
                     .join(".dart_tool/dust/build_cache_v1.json")
                     .display()
             )));
@@ -82,7 +82,7 @@ fn run_watch_inner(
 
     let initial = prepare_and_process_batch(
         BatchConfig {
-            workspace_root: &workspace.root,
+            cache_root: &workspace.cache_root,
             package_config_hash,
             tool_hash,
             cache: &cache,
@@ -108,7 +108,7 @@ fn run_watch_inner(
         if let Some(expected_output_hash) = indexed_outcome.outcome.expected_output_hash {
             if let Some(source_hash) = indexed_outcome.source_hash {
                 cache.insert(
-                    &workspace.root,
+                    &workspace.cache_root,
                     &indexed_outcome.library.source_path,
                     CacheEntry {
                         source_hash,
@@ -119,7 +119,7 @@ fn run_watch_inner(
                 );
             }
         } else {
-            cache.remove(&workspace.root, &indexed_outcome.library.source_path);
+            cache.remove(&workspace.cache_root, &indexed_outcome.library.source_path);
         }
         result
             .diagnostics
@@ -192,7 +192,7 @@ fn run_watch_inner(
         watch.rebuild_batches += 1;
         let rebuilt = prepare_and_process_batch(
             BatchConfig {
-                workspace_root: &workspace.root,
+                cache_root: &workspace.cache_root,
                 package_config_hash,
                 tool_hash,
                 cache: &cache,
@@ -218,7 +218,7 @@ fn run_watch_inner(
             if let Some(expected_output_hash) = indexed_outcome.outcome.expected_output_hash {
                 if let Some(source_hash) = indexed_outcome.source_hash {
                     cache.insert(
-                        &workspace.root,
+                        &workspace.cache_root,
                         &indexed_outcome.library.source_path,
                         CacheEntry {
                             source_hash,
@@ -229,7 +229,7 @@ fn run_watch_inner(
                     );
                 }
             } else {
-                cache.remove(&workspace.root, &indexed_outcome.library.source_path);
+                cache.remove(&workspace.cache_root, &indexed_outcome.library.source_path);
             }
             result
                 .diagnostics

@@ -1,12 +1,14 @@
 name: derive_annotation
 description: Base Dust derive annotations for Dart models and future extension packages.
 version: 0.1.0
-homepage: https://github.com/yelinaung/dart_codegeneration_engine
-repository: https://github.com/yelinaung/dart_codegeneration_engine
-issue_tracker: https://github.com/yelinaung/dart_codegeneration_engine/issues
+homepage: https://github.com/y3l1n4ung/dust
+repository: https://github.com/y3l1n4ung/dust
+issue_tracker: https://github.com/y3l1n4ung/dust/issues
 
 environment:
   sdk: ^3.11.0
+
+resolution: workspace
 
 topics:
   - codegen

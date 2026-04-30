@@ -44,8 +44,10 @@ pub struct CacheReport {
 /// One workspace doctor report.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DoctorReport {
-    /// The detected workspace root.
-    pub root: PathBuf,
+    /// The detected package root used for library discovery.
+    pub package_root: PathBuf,
+    /// The resolved package configuration path.
+    pub package_config_path: PathBuf,
     /// The number of candidate libraries.
     pub library_count: usize,
     /// The registered plugin names in registration order.
@@ -57,8 +59,8 @@ pub struct DoctorReport {
 /// One clean command summary.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CleanReport {
-    /// The detected workspace root.
-    pub root: PathBuf,
+    /// The detected package root.
+    pub package_root: PathBuf,
     /// The number of generated `.g.dart` files inspected.
     pub scanned_files: usize,
     /// The number of Dust-generated outputs removed.

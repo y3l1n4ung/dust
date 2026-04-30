@@ -6,6 +6,8 @@ version: 0.1.0
 environment:
   sdk: ^3.11.0
 
+resolution: workspace
+
 dependencies:
   derive_annotation:
     path: ../../packages/derive_annotation

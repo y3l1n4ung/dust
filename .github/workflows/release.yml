@@ -62,12 +62,12 @@ jobs:
       - name: Build binary (Unix)
         if: matrix.archive_ext == 'tar.gz'
         shell: bash
-        run: cargo build --release -p dart_cli --bin dust
+        run: cargo build --release -p dust_cli --bin dust
 
       - name: Build binary (Windows)
         if: matrix.archive_ext == 'zip'
         shell: pwsh
-        run: cargo build --release -p dart_cli --bin dust
+        run: cargo build --release -p dust_cli --bin dust
 
       - name: Stage archive contents (Unix)
         if: matrix.archive_ext == 'tar.gz'

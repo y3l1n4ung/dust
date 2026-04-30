@@ -20,7 +20,7 @@ pub(crate) fn render_help() -> String {
         "  help      Show this help",
         "",
         "Options:",
-        "  --root <path>       Use a specific workspace root",
+        "  --root <path>       Use a specific package root",
         "  --fail-fast         Stop after the first error",
         "  --poll-ms <ms>      Watch poll interval in milliseconds",
         "  --max-cycles <n>    Stop watch after n cycles",
@@ -86,6 +86,8 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
                 if !doctor.plugin_names.is_empty() {
                     lines.push(format!("plugins {}", doctor.plugin_names.join(", ")));
                 }
+                lines.push(format!("package {}", doctor.package_root.display()));
+                lines.push(format!("config  {}", doctor.package_config_path.display()));
             }
         }
         CliCommand::Watch => {
@@ -150,7 +152,7 @@ mod tests {
             &CliCommand::Clean,
             &CommandResult {
                 clean: Some(CleanReport {
-                    root: PathBuf::from("/tmp/project"),
+                    package_root: PathBuf::from("/tmp/project"),
                     scanned_files: 4,
                     removed_files: 3,
                     cache_cleared: true,
@@ -163,7 +165,10 @@ mod tests {
             &CliCommand::Doctor,
             &CommandResult {
                 doctor: Some(DoctorReport {
-                    root: PathBuf::from("/tmp/project"),
+                    package_root: PathBuf::from("/tmp/project"),
+                    package_config_path: PathBuf::from(
+                        "/tmp/workspace/.dart_tool/package_config.json",
+                    ),
                     library_count: 7,
                     plugin_names: vec!["derive".to_owned(), "serde".to_owned()],
                     libraries: vec![PathBuf::from("lib/user.dart")],
@@ -176,6 +181,8 @@ mod tests {
         assert!(clean.contains("clean  scanned: 4  removed: 3  cache: cleared  time: 18ms"));
         assert!(doctor.contains("doctor  workspace: ok  libraries: 7  plugins: 2  time: 9ms"));
         assert!(doctor.contains("plugins derive, serde"));
+        assert!(doctor.contains("package /tmp/project"));
+        assert!(doctor.contains("config  /tmp/workspace/.dart_tool/package_config.json"));
     }
 
     #[test]

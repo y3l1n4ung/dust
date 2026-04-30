@@ -24,7 +24,8 @@ pub fn run_doctor(request: DoctorRequest) -> CommandResult {
 
     let registry = default_registry();
     result.doctor = Some(DoctorReport {
-        root: workspace.root,
+        package_root: workspace.package_root,
+        package_config_path: workspace.package_config.path,
         library_count: workspace.libraries.len(),
         plugin_names: registry
             .plugin_names()

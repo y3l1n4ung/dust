@@ -40,13 +40,13 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
             return result;
         }
     };
-    let mut cache = match WorkspaceCache::load(&workspace.root) {
+    let mut cache = match WorkspaceCache::load(&workspace.cache_root) {
         Ok(cache) => cache,
         Err(error) => {
             result.diagnostics.push(Diagnostic::error(format!(
                 "failed to load Dust cache `{}`: {error}",
                 workspace
-                    .root
+                    .cache_root
                     .join(".dart_tool/dust/build_cache_v1.json")
                     .display()
             )));
@@ -61,7 +61,7 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
 
     let indexed = prepare_and_process_batch(
         BatchConfig {
-            workspace_root: &workspace.root,
+            cache_root: &workspace.cache_root,
             package_config_hash,
             tool_hash,
             cache: &cache,
@@ -87,7 +87,7 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
         if let Some(expected_output_hash) = indexed_outcome.outcome.expected_output_hash {
             if let Some(source_hash) = indexed_outcome.source_hash {
                 cache.insert(
-                    &workspace.root,
+                    &workspace.cache_root,
                     &indexed_outcome.library.source_path,
                     CacheEntry {
                         source_hash,
@@ -98,7 +98,7 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
                 );
             }
         } else {
-            cache.remove(&workspace.root, &indexed_outcome.library.source_path);
+            cache.remove(&workspace.cache_root, &indexed_outcome.library.source_path);
         }
 
         result.checked_libraries.push(CheckedLibrary {

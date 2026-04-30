@@ -26,6 +26,28 @@ fn make_workspace() -> tempfile::TempDir {
     root
 }
 
+fn make_pub_workspace_member() -> (tempfile::TempDir, std::path::PathBuf) {
+    let root = tempdir().unwrap();
+    write_file(
+        &root.path().join("pubspec.yaml"),
+        "name: dust_workspace\nworkspace:\n  - examples/product_showcase\n",
+    );
+    write_file(
+        &root.path().join(".dart_tool/package_config.json"),
+        "{\"configVersion\":2,\"packages\":[]}\n",
+    );
+    let package_root = root.path().join("examples/product_showcase");
+    write_file(
+        &package_root.join("pubspec.yaml"),
+        "name: product_showcase\nresolution: workspace\n",
+    );
+    write_file(
+        &package_root.join(".dart_tool/package_graph.json"),
+        "{\"configVersion\":1,\"roots\":[\"product_showcase\"],\"packages\":[]}\n",
+    );
+    (root, package_root)
+}
+
 #[test]
 fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
     let workspace = make_workspace();
@@ -651,7 +673,11 @@ fn doctor_reports_workspace_and_registered_plugins() {
     });
     let doctor = result.doctor.unwrap();
 
-    assert_eq!(doctor.root, workspace.path());
+    assert_eq!(doctor.package_root, workspace.path());
+    assert_eq!(
+        doctor.package_config_path,
+        workspace.path().join(".dart_tool/package_config.json")
+    );
     assert_eq!(doctor.library_count, 1);
     assert_eq!(
         doctor.plugin_names,
@@ -663,6 +689,36 @@ fn doctor_reports_workspace_and_registered_plugins() {
     assert_eq!(
         doctor.libraries,
         vec![workspace.path().join("lib/user.dart")]
+    );
+}
+
+#[test]
+fn doctor_reports_member_package_root_and_shared_package_config() {
+    let (workspace, package_root) = make_pub_workspace_member();
+    write_file(
+        &package_root.join("lib/user.dart"),
+        "part 'user.g.dart';\n\
+         @ToString()\n\
+         class User {\n\
+           final String id;\n\
+           const User(this.id);\n\
+         }\n",
+    );
+
+    let result = run_doctor(DoctorRequest {
+        cwd: package_root.clone(),
+    });
+    let doctor = result.doctor.unwrap();
+
+    assert_eq!(doctor.package_root, package_root);
+    assert_eq!(
+        doctor.package_config_path,
+        workspace.path().join(".dart_tool/package_config.json")
+    );
+    assert_eq!(doctor.library_count, 1);
+    assert_eq!(
+        doctor.libraries,
+        vec![doctor.package_root.join("lib/user.dart")]
     );
 }
 
@@ -859,6 +915,155 @@ fn watch_rebuilds_all_libraries_when_package_config_changes() {
             workspace.path().join("lib/team.dart"),
             workspace.path().join("lib/user.dart"),
         ]
+    );
+}
+
+#[test]
+fn build_uses_member_cache_root_and_shared_package_config_for_pub_workspace() {
+    let (workspace, package_root) = make_pub_workspace_member();
+    write_file(
+        &package_root.join("lib/user.dart"),
+        "part 'user.g.dart';\n\
+         @ToString()\n\
+         class User {\n\
+           final String id;\n\
+           const User(this.id);\n\
+         }\n",
+    );
+
+    let first = run_build(BuildRequest {
+        cwd: package_root.clone(),
+        fail_fast: false,
+        jobs: None,
+    });
+    let second = run_build(BuildRequest {
+        cwd: package_root.clone(),
+        fail_fast: false,
+        jobs: None,
+    });
+
+    assert!(!first.has_errors(), "{:?}", first.diagnostics);
+    assert!(!second.has_errors(), "{:?}", second.diagnostics);
+    assert_eq!(
+        second.cache.as_ref().unwrap().path,
+        package_root.join(".dart_tool/dust/build_cache_v1.json")
+    );
+    assert!(
+        package_root
+            .join(".dart_tool/dust/build_cache_v1.json")
+            .exists()
+    );
+    assert!(
+        !workspace
+            .path()
+            .join(".dart_tool/dust/build_cache_v1.json")
+            .exists()
+    );
+    assert!(first.build_artifacts[0].written);
+    assert!(second.build_artifacts[0].cached);
+}
+
+#[test]
+fn watch_rebuilds_member_package_when_shared_workspace_config_changes() {
+    let (workspace, package_root) = make_pub_workspace_member();
+    write_file(
+        &package_root.join("lib/user.dart"),
+        "part 'user.g.dart';\n\
+         @ToString()\n\
+         class User {\n\
+           final String id;\n\
+           const User(this.id);\n\
+         }\n",
+    );
+    write_file(
+        &package_root.join("lib/team.dart"),
+        "part 'team.g.dart';\n\
+         @CopyWith()\n\
+         class Team {\n\
+           final String name;\n\
+           const Team(this.name);\n\
+         }\n",
+    );
+
+    let shared_package_config = workspace.path().join(".dart_tool/package_config.json");
+    let modifier = thread::spawn(move || {
+        thread::sleep(Duration::from_millis(25));
+        write_file(&shared_package_config, "{\"configVersion\":3}\n");
+    });
+
+    let result = run_watch(WatchRequest {
+        cwd: package_root.clone(),
+        fail_fast: false,
+        jobs: None,
+        poll_interval_ms: 20,
+        max_cycles: Some(3),
+    });
+    modifier.join().unwrap();
+
+    let watch = result.watch.unwrap();
+    assert_eq!(watch.rebuild_batches, 1);
+    assert_eq!(
+        watch.rebuilt_libraries,
+        vec![
+            package_root.join("lib/team.dart"),
+            package_root.join("lib/user.dart")
+        ]
+    );
+}
+
+#[test]
+fn clean_only_clears_member_package_outputs_and_cache_in_pub_workspace() {
+    let (workspace, package_root) = make_pub_workspace_member();
+    write_file(
+        &package_root.join("lib/user.dart"),
+        "part 'user.g.dart';\n\
+         @ToString()\n\
+         class User {\n\
+           final String id;\n\
+           const User(this.id);\n\
+         }\n",
+    );
+    write_file(
+        &workspace.path().join("lib/root.g.dart"),
+        "// GENERATED CODE - DO NOT MODIFY BY HAND\n\
+         // coverage:ignore-file\n\
+         // ignore_for_file: type=lint\n\
+         // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark\n\
+         // Generated by dust.\n",
+    );
+    write_file(
+        &workspace.path().join(".dart_tool/dust/build_cache_v1.json"),
+        "{}\n",
+    );
+
+    let built = run_build(BuildRequest {
+        cwd: package_root.clone(),
+        fail_fast: false,
+        jobs: None,
+    });
+    assert!(!built.has_errors());
+    assert!(
+        package_root
+            .join(".dart_tool/dust/build_cache_v1.json")
+            .exists()
+    );
+
+    let result = run_clean(CleanRequest {
+        cwd: package_root.clone(),
+    });
+
+    assert!(!result.has_errors(), "{:?}", result.diagnostics);
+    let clean = result.clean.unwrap();
+    assert_eq!(clean.package_root, package_root);
+    assert!(clean.cache_cleared);
+    assert!(!package_root.join("lib/user.g.dart").exists());
+    assert!(!package_root.join(".dart_tool/dust").exists());
+    assert!(workspace.path().join("lib/root.g.dart").exists());
+    assert!(
+        workspace
+            .path()
+            .join(".dart_tool/dust/build_cache_v1.json")
+            .exists()
     );
 }
 

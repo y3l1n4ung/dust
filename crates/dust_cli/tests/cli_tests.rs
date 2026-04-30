@@ -17,6 +17,28 @@ fn make_workspace() -> tempfile::TempDir {
     root
 }
 
+fn make_pub_workspace_member() -> (tempfile::TempDir, std::path::PathBuf) {
+    let root = tempdir().unwrap();
+    write_file(
+        &root.path().join("pubspec.yaml"),
+        "name: dust_workspace\nworkspace:\n  - examples/product_showcase\n",
+    );
+    write_file(
+        &root.path().join(".dart_tool/package_config.json"),
+        "{\"configVersion\":2,\"packages\":[]}\n",
+    );
+    let package_root = root.path().join("examples/product_showcase");
+    write_file(
+        &package_root.join("pubspec.yaml"),
+        "name: product_showcase\nresolution: workspace\n",
+    );
+    write_file(
+        &package_root.join(".dart_tool/package_graph.json"),
+        "{\"configVersion\":1,\"roots\":[\"product_showcase\"],\"packages\":[]}\n",
+    );
+    (root, package_root)
+}
+
 #[test]
 fn cli_build_writes_real_output() {
     let workspace = make_workspace();
@@ -63,6 +85,40 @@ fn cli_second_build_reports_cached_output() {
     assert!(second.stdout.contains("generated: 0"));
     assert!(second.stdout.contains("skipped: 1"));
     assert!(!second.stdout.contains("cache "));
+}
+
+#[test]
+fn cli_build_supports_pub_workspace_member_package_graph() {
+    let (workspace, package_root) = make_pub_workspace_member();
+    write_file(
+        &package_root.join("lib/user.dart"),
+        "part 'user.g.dart';\n\
+         @ToString()\n\
+         class User {\n\
+           final String id;\n\
+           const User(this.id);\n\
+         }\n",
+    );
+
+    let first = run_cli(["build", "--root", package_root.to_str().unwrap()]);
+    let second = run_cli(["build", "--root", package_root.to_str().unwrap()]);
+
+    assert_eq!(first.exit_code, 0, "{}", first.stderr);
+    assert_eq!(second.exit_code, 0, "{}", second.stderr);
+    assert!(package_root.join("lib/user.g.dart").exists());
+    assert!(
+        package_root
+            .join(".dart_tool/dust/build_cache_v1.json")
+            .exists()
+    );
+    assert!(
+        !workspace
+            .path()
+            .join(".dart_tool/dust/build_cache_v1.json")
+            .exists()
+    );
+    assert!(second.stdout.contains("generated: 0"));
+    assert!(second.stdout.contains("skipped: 1"));
 }
 
 #[test]

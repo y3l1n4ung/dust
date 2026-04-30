@@ -23,7 +23,7 @@ pub fn run_clean(request: CleanRequest) -> CommandResult {
     let started = Instant::now();
     let mut result = CommandResult::default();
 
-    let root = match detect_workspace_root(&request.cwd) {
+    let package_root = match detect_workspace_root(&request.cwd) {
         Ok(root) => root,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);
@@ -33,7 +33,9 @@ pub fn run_clean(request: CleanRequest) -> CommandResult {
     };
 
     let mut generated_files = Vec::new();
-    if let Err(diagnostic) = collect_generated_files(&root.join("lib"), &mut generated_files) {
+    if let Err(diagnostic) =
+        collect_generated_files(&package_root.join("lib"), &mut generated_files)
+    {
         result.diagnostics.push(diagnostic);
         result.elapsed_ms = started.elapsed().as_millis();
         return result;
@@ -62,12 +64,12 @@ pub fn run_clean(request: CleanRequest) -> CommandResult {
     let cache_cleared = if result.has_errors() {
         false
     } else {
-        match WorkspaceCache::delete_storage(&root) {
+        match WorkspaceCache::delete_storage(&package_root) {
             Ok(cache_cleared) => cache_cleared,
             Err(error) => {
                 result.diagnostics.push(Diagnostic::error(format!(
                     "failed to remove Dust cache storage under `{}`: {error}",
-                    root.join(".dart_tool/dust").display()
+                    package_root.join(".dart_tool/dust").display()
                 )));
                 false
             }
@@ -75,7 +77,7 @@ pub fn run_clean(request: CleanRequest) -> CommandResult {
     };
 
     result.clean = Some(CleanReport {
-        root,
+        package_root,
         scanned_files,
         removed_files,
         cache_cleared,

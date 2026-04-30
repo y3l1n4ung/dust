@@ -87,13 +87,13 @@ fn run_build_inner(
             return result;
         }
     };
-    let mut cache = match WorkspaceCache::load(&workspace.root) {
+    let mut cache = match WorkspaceCache::load(&workspace.cache_root) {
         Ok(cache) => cache,
         Err(error) => {
             result.diagnostics.push(Diagnostic::error(format!(
                 "failed to load Dust cache `{}`: {error}",
                 workspace
-                    .root
+                    .cache_root
                     .join(".dart_tool/dust/build_cache_v1.json")
                     .display()
             )));
@@ -107,7 +107,7 @@ fn run_build_inner(
     };
     let indexed = prepare_and_process_batch(
         BatchConfig {
-            workspace_root: &workspace.root,
+            cache_root: &workspace.cache_root,
             package_config_hash,
             tool_hash,
             cache: &cache,
@@ -133,7 +133,7 @@ fn run_build_inner(
         if let Some(expected_output_hash) = indexed_outcome.outcome.expected_output_hash {
             if let Some(source_hash) = indexed_outcome.source_hash {
                 cache.insert(
-                    &workspace.root,
+                    &workspace.cache_root,
                     &indexed_outcome.library.source_path,
                     CacheEntry {
                         source_hash,
@@ -144,7 +144,7 @@ fn run_build_inner(
                 );
             }
         } else {
-            cache.remove(&workspace.root, &indexed_outcome.library.source_path);
+            cache.remove(&workspace.cache_root, &indexed_outcome.library.source_path);
         }
         result
             .diagnostics
@@ -199,7 +199,7 @@ type ProgressCallback<'a> = dyn Fn(ProgressEvent) + Send + Sync + 'a;
 
 #[derive(Clone, Copy)]
 pub(crate) struct BatchConfig<'a> {
-    pub(crate) workspace_root: &'a Path,
+    pub(crate) cache_root: &'a Path,
     pub(crate) package_config_hash: u64,
     pub(crate) tool_hash: u64,
     pub(crate) cache: &'a WorkspaceCache,
@@ -326,7 +326,7 @@ pub(crate) fn prepare_and_process_batch(
 
         if matches_cache(
             config.cache,
-            config.workspace_root,
+            config.cache_root,
             library,
             &input,
             config.package_config_hash,

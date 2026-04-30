@@ -1,0 +1,11 @@
+name: dust
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+
+workspace:
+  - packages/derive_annotation
+  - packages/derive_serde_annotation
+  - examples/product_showcase
+  - examples/stress_project

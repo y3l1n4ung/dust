@@ -1,7 +1,8 @@
 use std::fs;
 
 use dust_workspace::{
-    detect_workspace_root, discover_libraries, discover_workspace, load_package_config,
+    PackageConfigKind, detect_workspace_root, discover_libraries, discover_workspace,
+    load_package_config,
 };
 use tempfile::tempdir;
 
@@ -44,6 +45,67 @@ fn load_package_config_requires_real_file() {
         config.path,
         root.path().join(".dart_tool/package_config.json")
     );
+    assert_eq!(config.kind, PackageConfigKind::Direct);
+}
+
+#[test]
+fn load_package_config_uses_shared_workspace_config_for_member_package() {
+    let root = tempdir().unwrap();
+    let workspace_root = root.path();
+    let package_root = workspace_root.join("examples/product_showcase");
+    write_file(
+        &workspace_root.join("pubspec.yaml"),
+        "name: dust_workspace\n",
+    );
+    write_file(
+        &workspace_root.join(".dart_tool/package_config.json"),
+        "{\"configVersion\":2}\n",
+    );
+    write_file(
+        &package_root.join("pubspec.yaml"),
+        "name: product_showcase\n",
+    );
+    write_file(
+        &package_root.join(".dart_tool/package_graph.json"),
+        "{\"configVersion\":1}\n",
+    );
+
+    let config = load_package_config(&package_root).unwrap();
+
+    assert_eq!(
+        config.path,
+        workspace_root.join(".dart_tool/package_config.json")
+    );
+    assert_eq!(
+        config.kind,
+        PackageConfigKind::WorkspaceShared {
+            package_graph_path: package_root.join(".dart_tool/package_graph.json"),
+        }
+    );
+}
+
+#[test]
+fn load_package_config_reports_missing_shared_workspace_config() {
+    let root = tempdir().unwrap();
+    let package_root = root.path().join("examples/product_showcase");
+    write_file(
+        &package_root.join("pubspec.yaml"),
+        "name: product_showcase\n",
+    );
+    write_file(
+        &package_root.join(".dart_tool/package_graph.json"),
+        "{\"configVersion\":1}\n",
+    );
+
+    let error = load_package_config(&package_root).unwrap_err();
+
+    assert!(error.message.contains("workspace member"));
+    assert!(
+        error
+            .message
+            .contains(package_root.to_string_lossy().as_ref())
+    );
+    assert!(error.message.contains(".dart_tool/package_config.json"));
 }
 
 #[test]
@@ -107,24 +169,51 @@ fn discover_libraries_accepts_double_quoted_part_and_direct_annotations() {
 #[test]
 fn discover_workspace_composes_root_config_and_library_scan() {
     let root = tempdir().unwrap();
-    write_file(&root.path().join("pubspec.yaml"), "name: dust_test\n");
-    write_file(&root.path().join(".dart_tool/package_config.json"), "{}\n");
+    let workspace_root = root.path();
+    let package_root = workspace_root.join("examples/product_showcase");
     write_file(
-        &root.path().join("lib/models/user.dart"),
+        &workspace_root.join("pubspec.yaml"),
+        "name: dust_workspace\n",
+    );
+    write_file(
+        &workspace_root.join(".dart_tool/package_config.json"),
+        "{\"configVersion\":2}\n",
+    );
+    write_file(
+        &workspace_root.join("lib/root.dart"),
+        "part 'root.g.dart';\n@ToString()\nclass Root {}\n",
+    );
+    write_file(
+        &package_root.join("pubspec.yaml"),
+        "name: product_showcase\n",
+    );
+    write_file(
+        &package_root.join(".dart_tool/package_graph.json"),
+        "{\"configVersion\":1}\n",
+    );
+    write_file(
+        &package_root.join("lib/models/user.dart"),
         "part 'user.g.dart';\n@Derive([ToString(), Eq()])\nclass User {}\n",
     );
 
-    let nested = root.path().join("lib/models");
+    let nested = package_root.join("lib/models");
     let plan = discover_workspace(&nested).unwrap();
 
-    assert_eq!(plan.root, root.path());
+    assert_eq!(plan.package_root, package_root);
+    assert_eq!(plan.cache_root, plan.package_root);
     assert_eq!(
         plan.package_config.path,
-        root.path().join(".dart_tool/package_config.json")
+        workspace_root.join(".dart_tool/package_config.json")
+    );
+    assert_eq!(
+        plan.package_config.kind,
+        PackageConfigKind::WorkspaceShared {
+            package_graph_path: plan.package_root.join(".dart_tool/package_graph.json"),
+        }
     );
     assert_eq!(plan.libraries.len(), 1);
     assert_eq!(
         plan.libraries[0].output_path,
-        root.path().join("lib/models/user.g.dart")
+        plan.package_root.join("lib/models/user.g.dart")
     );
 }

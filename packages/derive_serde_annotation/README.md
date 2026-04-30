@@ -14,6 +14,28 @@ It contains:
 - `SerDeRename` for automatic rename rules
 - `SerDeCodec<DartT, JsonT>` for custom field codecs
 
+## Install Dust
+
+Install the Dust CLI before using these annotations.
+
+macOS / Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.sh | bash
+```
+
+Windows (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.ps1 | iex
+```
+
+Or with Cargo:
+
+```bash
+cargo install dust_cli
+```
+
 ## Example
 
 ```dart
@@ -23,7 +45,7 @@ part 'user.g.dart';
 
 @Derive([Serialize(), Deserialize()])
 @SerDe(renameAll: SerDeRename.snakeCase)
-class User {
+class User with _$UserDust {
   @SerDe(rename: 'user_id')
   final String userId;
 
@@ -31,8 +53,19 @@ class User {
   final List<String> tags;
 
   const User(this.userId, this.tags);
+
+  factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 }
 ```
+
+Run Dust:
+
+```bash
+dust build
+```
+
+Dust writes `user.g.dart`, a generated `toJson()` mixin member, and the
+`_$UserFromJson(...)` helper used by the forwarding factory.
 
 ## Custom codec
 
