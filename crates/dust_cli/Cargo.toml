@@ -6,6 +6,7 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+clap.workspace = true
 dust_driver = { path = "../dust_driver" }
 
 [dev-dependencies]

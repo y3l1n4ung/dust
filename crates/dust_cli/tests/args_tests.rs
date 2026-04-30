@@ -38,11 +38,12 @@ fn empty_args_show_help() {
 #[test]
 fn rejects_unknown_command() {
     let error = parse_cli_args(["unknown"]).unwrap_err();
-    assert!(error.contains("unknown command"));
+    assert!(error.contains("unrecognized subcommand"));
 }
 
 #[test]
 fn rejects_missing_flag_value() {
     let error = parse_cli_args(["watch", "--poll-ms"]).unwrap_err();
-    assert!(error.contains("missing value"));
+    assert!(error.contains("--poll-ms"));
+    assert!(error.contains("required"));
 }
