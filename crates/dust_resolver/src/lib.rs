@@ -4,6 +4,7 @@
 
 mod catalog;
 mod resolve;
+mod resolve_support;
 mod result;
 
 pub use catalog::{ResolvedSymbol, SymbolCatalog, SymbolKind};

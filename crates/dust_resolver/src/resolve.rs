@@ -2,14 +2,15 @@ use std::path::Path;
 
 use dust_diagnostics::{Diagnostic, SourceLabel};
 use dust_ir::{ClassKindIr, ConfigApplicationIr, SpanIr, TraitApplicationIr};
-use dust_parser_dart::{
-    ParsedClassKind, ParsedClassSurface, ParsedDirective, ParsedFieldSurface, ParsedLibrarySurface,
-};
-use dust_text::{FileId, TextRange};
+use dust_parser_dart::{ParsedClassKind, ParsedClassSurface, ParsedLibrarySurface};
+use dust_text::FileId;
 
 use crate::{
-    ResolveResult, ResolvedClass, ResolvedEnum, ResolvedEnumVariant, ResolvedField,
-    ResolvedLibrary, SymbolCatalog, SymbolKind,
+    ResolveResult, ResolvedClass, ResolvedEnum, ResolvedEnumVariant, ResolvedLibrary,
+    SymbolCatalog,
+    resolve_support::{
+        expected_output_path, first_part_uri, resolve_declaration_annotations, resolve_field,
+    },
 };
 
 /// Resolves one parsed library against a symbol catalog.
@@ -81,44 +82,14 @@ fn resolve_enum(
 ) -> ResolvedEnum {
     let mut traits: Vec<TraitApplicationIr> = Vec::new();
     let mut configs: Vec<ConfigApplicationIr> = Vec::new();
-    // Resolve annotations on the enum itself
-    for annotation in &enum_surface.annotations {
-        if annotation.name == "Derive" {
-            for name in derive_member_names(annotation.arguments_source.as_deref().unwrap_or("")) {
-                match catalog.resolve(&name) {
-                    Some(resolved) => push_resolved_symbol(
-                        file_id,
-                        annotation.span,
-                        resolved.kind,
-                        resolved.symbol.clone(),
-                        None,
-                        &mut traits,
-                        &mut configs,
-                    ),
-                    None => diagnostics.push(
-                        Diagnostic::warning("unknown derive trait or config").with_label(
-                            SourceLabel::new(
-                                file_id,
-                                annotation.span,
-                                "annotation
-                             member is not owned by any registered symbol.",
-                            ),
-                        ),
-                    ),
-                }
-            }
-        } else if let Some(resolved) = catalog.resolve(&annotation.name) {
-            push_resolved_symbol(
-                file_id,
-                annotation.span,
-                resolved.kind,
-                resolved.symbol.clone(),
-                annotation.arguments_source.clone(),
-                &mut traits,
-                &mut configs,
-            );
-        }
-    }
+    resolve_declaration_annotations(
+        file_id,
+        &enum_surface.annotations,
+        catalog,
+        diagnostics,
+        &mut traits,
+        &mut configs,
+    );
 
     let variants = enum_surface
         .variants
@@ -183,41 +154,14 @@ fn resolve_class(
     let mut traits = Vec::new();
     let mut configs = Vec::new();
 
-    for annotation in &class.annotations {
-        if annotation.name == "Derive" {
-            for name in derive_member_names(annotation.arguments_source.as_deref().unwrap_or("")) {
-                match catalog.resolve(&name) {
-                    Some(resolved) => push_resolved_symbol(
-                        file_id,
-                        annotation.span,
-                        resolved.kind,
-                        resolved.symbol.clone(),
-                        None,
-                        &mut traits,
-                        &mut configs,
-                    ),
-                    None => diagnostics.push(
-                        Diagnostic::warning(format!("unknown derive trait or config `{name}`"))
-                            .with_label(SourceLabel::new(
-                                file_id,
-                                annotation.span,
-                                "annotation member is not owned by any registered symbol",
-                            )),
-                    ),
-                }
-            }
-        } else if let Some(resolved) = catalog.resolve(&annotation.name) {
-            push_resolved_symbol(
-                file_id,
-                annotation.span,
-                resolved.kind,
-                resolved.symbol.clone(),
-                annotation.arguments_source.clone(),
-                &mut traits,
-                &mut configs,
-            );
-        }
-    }
+    resolve_declaration_annotations(
+        file_id,
+        &class.annotations,
+        catalog,
+        diagnostics,
+        &mut traits,
+        &mut configs,
+    );
 
     let fields = class
         .fields
@@ -239,112 +183,4 @@ fn resolve_class(
         traits,
         configs,
     }
-}
-
-fn resolve_field(
-    file_id: FileId,
-    field: &ParsedFieldSurface,
-    catalog: &SymbolCatalog,
-    diagnostics: &mut Vec<Diagnostic>,
-) -> ResolvedField {
-    let mut configs = Vec::new();
-
-    for annotation in &field.annotations {
-        let Some(resolved) = catalog.resolve(&annotation.name) else {
-            continue;
-        };
-
-        match resolved.kind {
-            SymbolKind::Config => configs.push(ConfigApplicationIr {
-                symbol: resolved.symbol.clone(),
-                arguments_source: annotation.arguments_source.clone(),
-                span: SpanIr::new(file_id, annotation.span),
-            }),
-            SymbolKind::Trait => diagnostics.push(
-                Diagnostic::warning(format!(
-                    "trait annotation `{}` is not supported on fields",
-                    annotation.name
-                ))
-                .with_label(SourceLabel::new(
-                    file_id,
-                    annotation.span,
-                    "field annotations may only use Dust config symbols",
-                )),
-            ),
-        }
-    }
-
-    ResolvedField {
-        name: field.name.clone(),
-        type_source: field.type_source.clone(),
-        has_default: field.has_default,
-        span: SpanIr::new(file_id, field.span),
-        configs,
-    }
-}
-
-fn push_resolved_symbol(
-    file_id: FileId,
-    span: TextRange,
-    kind: SymbolKind,
-    symbol: dust_ir::SymbolId,
-    arguments_source: Option<String>,
-    traits: &mut Vec<TraitApplicationIr>,
-    configs: &mut Vec<ConfigApplicationIr>,
-) {
-    match kind {
-        SymbolKind::Trait => traits.push(TraitApplicationIr {
-            symbol,
-            span: SpanIr::new(file_id, span),
-        }),
-        SymbolKind::Config => configs.push(ConfigApplicationIr {
-            symbol,
-            arguments_source,
-            span: SpanIr::new(file_id, span),
-        }),
-    }
-}
-
-fn derive_member_names(arguments_source: &str) -> Vec<String> {
-    let mut names = Vec::new();
-    let mut chars = arguments_source.chars().peekable();
-
-    while let Some(ch) = chars.next() {
-        if ch == '_' || ch.is_ascii_alphabetic() {
-            let mut ident = String::from(ch);
-            while let Some(next) = chars.peek() {
-                if *next == '_' || next.is_ascii_alphanumeric() {
-                    ident.push(*next);
-                    chars.next();
-                } else {
-                    break;
-                }
-            }
-
-            if chars.peek().copied() == Some('(') {
-                names.push(ident);
-            }
-        }
-    }
-
-    names
-}
-
-fn first_part_uri(directives: &[ParsedDirective]) -> Option<String> {
-    directives.iter().find_map(|directive| match directive {
-        ParsedDirective::Part { uri, .. } => Some(uri.clone()),
-        _ => None,
-    })
-}
-
-fn expected_output_path(source_path: &str) -> String {
-    let path = Path::new(source_path);
-    let stem = path
-        .file_stem()
-        .and_then(|stem| stem.to_str())
-        .unwrap_or("file");
-    let file_name = format!("{stem}.g.dart");
-    path.with_file_name(file_name)
-        .to_string_lossy()
-        .into_owned()
 }
