@@ -106,7 +106,10 @@ fn generates_serde_for_enums() {
         vec![enum_ir(
             "Status",
             vec![enum_variant("pending"), enum_variant("active")],
-            &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+            &[
+                "derive_serde_annotation::Serialize",
+                "derive_serde_annotation::Deserialize",
+            ],
         )],
     );
 
@@ -131,7 +134,10 @@ fn supports_enum_renaming() {
     let mut e = enum_ir(
         "UserRole",
         vec![enum_variant("superAdmin"), enum_variant("guestUser")],
-        &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+        &[
+            "derive_serde_annotation::Serialize",
+            "derive_serde_annotation::Deserialize",
+        ],
     );
     e.serde = Some(SerdeClassConfigIr {
         rename_all: Some(SerdeRenameRuleIr::SnakeCase),
@@ -160,20 +166,38 @@ fn handles_enum_fields_in_classes() {
             vec![field("status", TypeIr::named("Status"))],
             vec![constructor(
                 None,
-                vec![constructor_param("status", TypeIr::named("Status"), ParamKind::Named)],
+                vec![constructor_param(
+                    "status",
+                    TypeIr::named("Status"),
+                    ParamKind::Named,
+                )],
             )],
-            &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+            &[
+                "derive_serde_annotation::Serialize",
+                "derive_serde_annotation::Deserialize",
+            ],
         )],
         vec![enum_ir(
             "Status",
             vec![enum_variant("active")],
-            &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+            &[
+                "derive_serde_annotation::Serialize",
+                "derive_serde_annotation::Deserialize",
+            ],
         )],
     );
 
     let contribution = plugin.emit(&library, &SymbolPlan::default());
-    let to_json = contribution.top_level_functions.iter().find(|f| f.contains("_$UserToJson")).unwrap();
-    let from_json = contribution.top_level_functions.iter().find(|f| f.contains("_$UserFromJson")).unwrap();
+    let to_json = contribution
+        .top_level_functions
+        .iter()
+        .find(|f| f.contains("_$UserToJson"))
+        .unwrap();
+    let from_json = contribution
+        .top_level_functions
+        .iter()
+        .find(|f| f.contains("_$UserFromJson"))
+        .unwrap();
 
     assert!(to_json.contains("'status': _$StatusToJson(instance.status),"));
     assert!(from_json.contains("final statusValue = _$StatusFromJson(json['status']);"));
@@ -188,22 +212,42 @@ fn handles_nullable_enum_fields() {
             vec![field("status", TypeIr::named("Status").nullable())],
             vec![constructor(
                 None,
-                vec![constructor_param("status", TypeIr::named("Status").nullable(), ParamKind::Named)],
+                vec![constructor_param(
+                    "status",
+                    TypeIr::named("Status").nullable(),
+                    ParamKind::Named,
+                )],
             )],
-            &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+            &[
+                "derive_serde_annotation::Serialize",
+                "derive_serde_annotation::Deserialize",
+            ],
         )],
         vec![enum_ir(
             "Status",
             vec![enum_variant("active")],
-            &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+            &[
+                "derive_serde_annotation::Serialize",
+                "derive_serde_annotation::Deserialize",
+            ],
         )],
     );
 
     let contribution = plugin.emit(&library, &SymbolPlan::default());
-    let to_json = contribution.top_level_functions.iter().find(|f| f.contains("_$UserToJson")).unwrap();
-    let from_json = contribution.top_level_functions.iter().find(|f| f.contains("_$UserFromJson")).unwrap();
+    let to_json = contribution
+        .top_level_functions
+        .iter()
+        .find(|f| f.contains("_$UserToJson"))
+        .unwrap();
+    let from_json = contribution
+        .top_level_functions
+        .iter()
+        .find(|f| f.contains("_$UserFromJson"))
+        .unwrap();
 
-    assert!(to_json.contains("'status': instance.status == null ? null : _$StatusToJson((instance.status!)),"));
+    assert!(to_json.contains(
+        "'status': instance.status == null ? null : _$StatusToJson((instance.status!)),"
+    ));
     assert!(from_json.contains("final statusValue = json['status'] == null\n                      ? null\n                      : _$StatusFromJson(json['status']);"));
 }
 
@@ -213,26 +257,47 @@ fn handles_enums_in_collections() {
     let library = library(
         vec![class(
             "Bundle",
-            vec![
-                field("roles", TypeIr::generic("List", vec![TypeIr::named("Role")])),
-            ],
+            vec![field(
+                "roles",
+                TypeIr::generic("List", vec![TypeIr::named("Role")]),
+            )],
             vec![constructor(
                 None,
-                vec![constructor_param("roles", TypeIr::generic("List", vec![TypeIr::named("Role")]), ParamKind::Named)],
+                vec![constructor_param(
+                    "roles",
+                    TypeIr::generic("List", vec![TypeIr::named("Role")]),
+                    ParamKind::Named,
+                )],
             )],
-            &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+            &[
+                "derive_serde_annotation::Serialize",
+                "derive_serde_annotation::Deserialize",
+            ],
         )],
         vec![enum_ir(
             "Role",
             vec![enum_variant("admin")],
-            &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+            &[
+                "derive_serde_annotation::Serialize",
+                "derive_serde_annotation::Deserialize",
+            ],
         )],
     );
 
     let contribution = plugin.emit(&library, &SymbolPlan::default());
-    let to_json = contribution.top_level_functions.iter().find(|f| f.contains("_$BundleToJson")).unwrap();
-    let from_json = contribution.top_level_functions.iter().find(|f| f.contains("_$BundleFromJson")).unwrap();
+    let to_json = contribution
+        .top_level_functions
+        .iter()
+        .find(|f| f.contains("_$BundleToJson"))
+        .unwrap();
+    let from_json = contribution
+        .top_level_functions
+        .iter()
+        .find(|f| f.contains("_$BundleFromJson"))
+        .unwrap();
 
-    assert!(to_json.contains("'roles': instance.roles.map((item) => _$RoleToJson(item)).toList(),"));
+    assert!(
+        to_json.contains("'roles': instance.roles.map((item) => _$RoleToJson(item)).toList(),")
+    );
     assert!(from_json.contains("final rolesValue = _dustJsonAsList(json['roles'], 'roles').map((item) => _$RoleFromJson(item)).toList();"));
 }

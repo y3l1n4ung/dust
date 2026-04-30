@@ -96,14 +96,26 @@ fn handles_scalar_builtin_types() {
                 None,
                 vec![
                     constructor_param("s", TypeIr::string(), ParamKind::Named),
-                    constructor_param("i", TypeIr::builtin(dust_ir::BuiltinType::Int), ParamKind::Named),
-                    constructor_param("b", TypeIr::builtin(dust_ir::BuiltinType::Bool), ParamKind::Named),
+                    constructor_param(
+                        "i",
+                        TypeIr::builtin(dust_ir::BuiltinType::Int),
+                        ParamKind::Named,
+                    ),
+                    constructor_param(
+                        "b",
+                        TypeIr::builtin(dust_ir::BuiltinType::Bool),
+                        ParamKind::Named,
+                    ),
                     constructor_param(
                         "d",
                         TypeIr::builtin(dust_ir::BuiltinType::Double),
                         ParamKind::Named,
                     ),
-                    constructor_param("n", TypeIr::builtin(dust_ir::BuiltinType::Num), ParamKind::Named),
+                    constructor_param(
+                        "n",
+                        TypeIr::builtin(dust_ir::BuiltinType::Num),
+                        ParamKind::Named,
+                    ),
                     constructor_param(
                         "o",
                         TypeIr::builtin(dust_ir::BuiltinType::Object),
@@ -112,7 +124,10 @@ fn handles_scalar_builtin_types() {
                     constructor_param("dyn", TypeIr::dynamic(), ParamKind::Named),
                 ],
             )],
-            &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+            &[
+                "derive_serde_annotation::Serialize",
+                "derive_serde_annotation::Deserialize",
+            ],
         )],
         vec![],
     );
@@ -132,7 +147,9 @@ fn handles_scalar_builtin_types() {
     assert!(from_json.contains("final sValue = _dustJsonAs<String>(json['s'], 's', 'String');"));
     assert!(from_json.contains("final iValue = _dustJsonAs<int>(json['i'], 'i', 'int');"));
     assert!(from_json.contains("final bValue = _dustJsonAs<bool>(json['b'], 'b', 'bool');"));
-    assert!(from_json.contains("final dValue = _dustJsonAs<num>(json['d'], 'd', 'num').toDouble();"));
+    assert!(
+        from_json.contains("final dValue = _dustJsonAs<num>(json['d'], 'd', 'num').toDouble();")
+    );
     assert!(from_json.contains("final nValue = _dustJsonAs<num>(json['n'], 'n', 'num');"));
     assert!(from_json.contains("final oValue = _dustJsonAs<Object>(json['o'], 'o', 'Object');"));
     assert!(from_json.contains("final dynValue = json['dyn'];"));
@@ -157,7 +174,10 @@ fn handles_special_builtin_types() {
                     constructor_param("bi", TypeIr::named("BigInt"), ParamKind::Named),
                 ],
             )],
-            &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+            &[
+                "derive_serde_annotation::Serialize",
+                "derive_serde_annotation::Deserialize",
+            ],
         )],
         vec![],
     );
@@ -192,8 +212,16 @@ fn handles_collection_types() {
             vec![constructor(
                 None,
                 vec![
-                    constructor_param("l", TypeIr::generic("List", vec![TypeIr::string()]), ParamKind::Named),
-                    constructor_param("s", TypeIr::generic("Set", vec![TypeIr::string()]), ParamKind::Named),
+                    constructor_param(
+                        "l",
+                        TypeIr::generic("List", vec![TypeIr::string()]),
+                        ParamKind::Named,
+                    ),
+                    constructor_param(
+                        "s",
+                        TypeIr::generic("Set", vec![TypeIr::string()]),
+                        ParamKind::Named,
+                    ),
                     constructor_param(
                         "m",
                         TypeIr::generic("Map", vec![TypeIr::string(), TypeIr::string()]),
@@ -201,7 +229,10 @@ fn handles_collection_types() {
                     ),
                 ],
             )],
-            &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+            &[
+                "derive_serde_annotation::Serialize",
+                "derive_serde_annotation::Deserialize",
+            ],
         )],
         vec![],
     );

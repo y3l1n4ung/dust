@@ -206,7 +206,11 @@ fn handles_nested_deserializable_models() {
                 vec![field("profile", TypeIr::named("Profile"))],
                 vec![constructor(
                     None,
-                    vec![constructor_param("profile", TypeIr::named("Profile"), ParamKind::Named)],
+                    vec![constructor_param(
+                        "profile",
+                        TypeIr::named("Profile"),
+                        ParamKind::Named,
+                    )],
                 )],
                 &["derive_serde_annotation::Deserialize"],
             ),
@@ -223,7 +227,9 @@ fn handles_nested_deserializable_models() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let user_from_json = &contribution.top_level_functions[0];
 
-    assert!(user_from_json.contains("final profileValue = _$ProfileFromJson(_dustJsonAsMap(json['profile'], 'profile'));"));
+    assert!(user_from_json.contains(
+        "final profileValue = _$ProfileFromJson(_dustJsonAsMap(json['profile'], 'profile'));"
+    ));
 }
 
 #[test]
@@ -243,9 +249,16 @@ fn supports_custom_json_key_renaming() {
         }],
         vec![constructor(
             None,
-            vec![constructor_param("fullName", TypeIr::string(), ParamKind::Named)],
+            vec![constructor_param(
+                "fullName",
+                TypeIr::string(),
+                ParamKind::Named,
+            )],
         )],
-        &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+        &[
+            "derive_serde_annotation::Serialize",
+            "derive_serde_annotation::Deserialize",
+        ],
     );
     user_class.serde = Some(SerdeClassConfigIr {
         rename_all: Some(SerdeRenameRuleIr::KebabCase),
@@ -259,7 +272,9 @@ fn supports_custom_json_key_renaming() {
     let from_json = &contribution.top_level_functions[1];
 
     assert!(to_json.contains("'full_name': instance.fullName,"));
-    assert!(from_json.contains("final fullNameValue = _dustJsonAs<String>(json['full_name'], 'full_name', 'String');"));
+    assert!(from_json.contains(
+        "final fullNameValue = _dustJsonAs<String>(json['full_name'], 'full_name', 'String');"
+    ));
 }
 
 #[test]
@@ -279,7 +294,11 @@ fn supports_field_aliases_during_deserialization() {
         }],
         vec![constructor(
             None,
-            vec![constructor_param("name", TypeIr::string(), ParamKind::Named)],
+            vec![constructor_param(
+                "name",
+                TypeIr::string(),
+                ParamKind::Named,
+            )],
         )],
         &["derive_serde_annotation::Deserialize"],
     );
@@ -335,9 +354,16 @@ fn supports_custom_field_codecs() {
         }],
         vec![constructor(
             None,
-            vec![constructor_param("createdAt", TypeIr::named("DateTime"), ParamKind::Named)],
+            vec![constructor_param(
+                "createdAt",
+                TypeIr::named("DateTime"),
+                ParamKind::Named,
+            )],
         )],
-        &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+        &[
+            "derive_serde_annotation::Serialize",
+            "derive_serde_annotation::Deserialize",
+        ],
     );
 
     let library = library(vec![user_class], vec![]);
@@ -346,7 +372,9 @@ fn supports_custom_field_codecs() {
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 
-    assert!(to_json.contains("'createdAt': (const UnixEpochCodec()).serialize(instance.createdAt),"));
+    assert!(
+        to_json.contains("'createdAt': (const UnixEpochCodec()).serialize(instance.createdAt),")
+    );
     assert!(from_json.contains("final createdAtValue = _dustJsonDecodeWithCodec<DateTime>((const UnixEpochCodec()), json['createdAt'], 'createdAt');"));
 }
 
@@ -367,7 +395,11 @@ fn supports_default_values_during_deserialization() {
         }],
         vec![constructor(
             None,
-            vec![constructor_param("role", TypeIr::string(), ParamKind::Named)],
+            vec![constructor_param(
+                "role",
+                TypeIr::string(),
+                ParamKind::Named,
+            )],
         )],
         &["derive_serde_annotation::Deserialize"],
     );
@@ -376,7 +408,9 @@ fn supports_default_values_during_deserialization() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let from_json = &contribution.top_level_functions[0];
 
-    assert!(from_json.contains("json.containsKey('role') ? _dustJsonAs<String>(json['role'], 'role', 'String') : 'guest'"));
+    assert!(from_json.contains(
+        "json.containsKey('role') ? _dustJsonAs<String>(json['role'], 'role', 'String') : 'guest'"
+    ));
 }
 
 #[test]
@@ -414,7 +448,10 @@ fn supports_skipping_fields() {
                 constructor_param("token", TypeIr::string(), ParamKind::Named),
             ],
         )],
-        &["derive_serde_annotation::Serialize", "derive_serde_annotation::Deserialize"],
+        &[
+            "derive_serde_annotation::Serialize",
+            "derive_serde_annotation::Deserialize",
+        ],
     );
 
     let library = library(vec![user_class], vec![]);
@@ -426,6 +463,8 @@ fn supports_skipping_fields() {
     assert!(!to_json.contains("'password'"));
     assert!(to_json.contains("'token': instance.token,"));
 
-    assert!(from_json.contains("final passwordValue = _dustJsonAs<String>(json['password'], 'password', 'String');"));
+    assert!(from_json.contains(
+        "final passwordValue = _dustJsonAs<String>(json['password'], 'password', 'String');"
+    ));
     assert!(from_json.contains("final tokenValue = '';"));
 }

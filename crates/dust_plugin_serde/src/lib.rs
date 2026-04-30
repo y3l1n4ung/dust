@@ -10,5 +10,8 @@ mod plugin;
 mod validate;
 /// Low-level helpers for generating JSON-related Dart expressions.
 pub mod writer;
+mod writer_expr;
+mod writer_model;
+mod writer_type;
 
 pub use plugin::{SerdePlugin, register_plugin};

@@ -1,6 +1,6 @@
 use dust_ir::{
-    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, FieldIr, LibraryIr, ParamKind,
-    SpanIr, SymbolId, TraitApplicationIr, TypeIr,
+    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, FieldIr, LibraryIr, ParamKind, SpanIr,
+    SymbolId, TraitApplicationIr, TypeIr,
 };
 use dust_plugin_api::{DustPlugin, SymbolPlan};
 use dust_plugin_derive::register_plugin;
