@@ -132,8 +132,8 @@ jobs:
         working-directory: examples/product_showcase
         run: dart test
 
-  stress-project-dart:
-    name: Dart / stress_project
+  stress-project-generated-dart:
+    name: Dart Smoke / stress_project
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -166,8 +166,8 @@ jobs:
         working-directory: examples/stress_project
         run: dart test
 
-  perf-stress-project:
-    name: Perf / stress_project
+  stress-project-benchmark:
+    name: Benchmark / stress_project
     runs-on: ubuntu-latest
     env:
       DUST_PERF_COLD_MAX_MS: 3500
@@ -185,4 +185,4 @@ jobs:
           rustup default stable
 
       - name: Run ignored perf test
-        run: cargo test -p dust_cli stress_project_release_build_stays_fast -- --ignored --nocapture
+        run: cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture

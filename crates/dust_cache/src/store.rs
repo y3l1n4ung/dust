@@ -33,6 +33,12 @@ struct CacheFile {
     entries: BTreeMap<String, CacheEntry>,
 }
 
+#[derive(Debug, Serialize)]
+struct CacheFileRef<'a> {
+    schema_version: u32,
+    entries: &'a BTreeMap<String, CacheEntry>,
+}
+
 /// The persistent cache for one Dart workspace.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WorkspaceCache {
@@ -98,9 +104,9 @@ impl WorkspaceCache {
             fs::create_dir_all(parent)?;
         }
 
-        let file = CacheFile {
+        let file = CacheFileRef {
             schema_version: CACHE_SCHEMA_VERSION,
-            entries: self.entries.clone(),
+            entries: &self.entries,
         };
         let json = serde_json::to_string_pretty(&file)
             .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;

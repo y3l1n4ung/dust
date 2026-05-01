@@ -72,14 +72,14 @@ cargo run -p dust_cli -- build --root examples/stress_project
 Release perf smoke test:
 
 ```bash
-cargo test -p dust_cli stress_project_release_build_stays_fast -- --ignored --nocapture
+cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture
 ```
 
 Optional thresholds:
 
 ```bash
 DUST_PERF_COLD_MAX_MS=2000 DUST_PERF_WARM_MAX_MS=800 \
-  cargo test -p dust_cli stress_project_release_build_stays_fast -- --ignored --nocapture
+  cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture
 ```
 
 When changing the build path, report both:

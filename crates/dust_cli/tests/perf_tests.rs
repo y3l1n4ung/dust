@@ -48,7 +48,7 @@ fn max_ms(name: &str, default: u64) -> u64 {
 
 #[test]
 #[ignore = "expensive release perf regression test"]
-fn stress_project_release_build_stays_fast() {
+fn stress_project_release_build_benchmark() {
     let repo = repo_root();
     let stress = stress_project_root();
     let stress_str = stress.to_string_lossy().into_owned();

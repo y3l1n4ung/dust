@@ -33,7 +33,7 @@ pub fn write_library(library: &LibraryIr, registry: &PluginRegistry) -> io::Resu
     let output_path = PathBuf::from(&library.output_path);
     let previous_output = read_previous_output(&output_path)?;
     let emitted = emit_library(library, registry, previous_output.as_deref());
-    finish_write(output_path, emitted)
+    persist_emit_result(output_path, emitted)
 }
 
 /// Emits and writes one library using an explicitly prepared symbol plan.
@@ -45,10 +45,14 @@ pub fn write_library_with_plan(
     let output_path = PathBuf::from(&library.output_path);
     let previous_output = read_previous_output(&output_path)?;
     let emitted = emit_library_with_plan(library, registry, plan, previous_output.as_deref());
-    finish_write(output_path, emitted)
+    persist_emit_result(output_path, emitted)
 }
 
-fn finish_write(output_path: PathBuf, emitted: crate::EmitResult) -> io::Result<WriteResult> {
+/// Persists one already-emitted generated source to disk.
+pub fn persist_emit_result(
+    output_path: PathBuf,
+    emitted: crate::EmitResult,
+) -> io::Result<WriteResult> {
     let has_errors = emitted
         .diagnostics
         .iter()

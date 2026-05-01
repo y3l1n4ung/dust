@@ -162,5 +162,5 @@ dart pub get
 
 cd ../..
 cargo run -p dust_cli -- build --root examples/stress_project
-cargo test -p dust_cli stress_project_release_build_stays_fast -- --ignored --nocapture
+cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture
 ```
