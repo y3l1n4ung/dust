@@ -1,9 +1,7 @@
-use crate::{
-    build::{
-        batch::ProgressReporter,
-        process::{IndexedBuildOutcome, PendingLibrary, ProcessingConfig, process_pending_library},
-        work::round_robin_groups,
-    },
+use crate::build::{
+    batch::ProgressReporter,
+    process::{IndexedBuildOutcome, PendingLibrary, ProcessingConfig, process_pending_library},
+    work::round_robin_groups,
 };
 
 pub(super) fn process_pending_serial(
