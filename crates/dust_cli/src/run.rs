@@ -8,7 +8,7 @@ use dust_driver::{
 use crate::{
     args::{CliCommand, ParsedCli, parse_cli_args},
     exit_code::ExitCode,
-    render::{render_help, render_result},
+    render::render_result,
     terminal::{ProgressHandle, create_progress_handle, finish_progress, handle_progress},
 };
 
@@ -33,22 +33,28 @@ pub fn run_from_env() -> CliRun {
 pub fn run_cli(args: impl IntoIterator<Item = impl Into<String>>) -> CliRun {
     let parsed = match parse_cli_args(args) {
         Ok(parsed) => parsed,
-        Err(message) => {
+        Err(error) => {
+            let output = ensure_trailing_newline(error.to_string());
+            let exit_code = match error.kind() {
+                clap::error::ErrorKind::DisplayHelp | clap::error::ErrorKind::DisplayVersion => {
+                    ExitCode::Success as i32
+                }
+                _ => ExitCode::Failure as i32,
+            };
+            if exit_code == ExitCode::Success as i32 {
+                return CliRun {
+                    exit_code,
+                    stdout: output,
+                    stderr: String::new(),
+                };
+            }
             return CliRun {
-                exit_code: ExitCode::Failure as i32,
+                exit_code,
                 stdout: String::new(),
-                stderr: format!("{message}\n\n{}\n", render_help()),
+                stderr: output,
             };
         }
     };
-
-    if matches!(parsed.command, CliCommand::Help) {
-        return CliRun {
-            exit_code: ExitCode::Success as i32,
-            stdout: format!("{}\n", render_help()),
-            stderr: String::new(),
-        };
-    }
 
     let command = parsed.command.clone();
     let progress = create_progress_handle(&command);
@@ -79,7 +85,7 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
             let request = BuildRequest {
                 cwd,
                 fail_fast: parsed.options.fail_fast,
-                jobs: None,
+                jobs: parsed.options.jobs,
             };
             if let Some(progress) = progress {
                 run_build_with_progress(request, |event| handle_progress(progress, event))
@@ -91,14 +97,14 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
         CliCommand::Check => run(CommandRequest::Check(CheckRequest {
             cwd,
             fail_fast: parsed.options.fail_fast,
-            jobs: None,
+            jobs: parsed.options.jobs,
         })),
         CliCommand::Doctor => run(CommandRequest::Doctor(DoctorRequest { cwd })),
         CliCommand::Watch => {
             let request = WatchRequest {
                 cwd,
                 fail_fast: parsed.options.fail_fast,
-                jobs: None,
+                jobs: parsed.options.jobs,
                 poll_interval_ms: parsed.options.poll_interval_ms,
                 max_cycles: parsed.options.max_cycles,
             };
@@ -108,7 +114,6 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
                 run(CommandRequest::Watch(request))
             }
         }
-        CliCommand::Help => unreachable!("help is handled before command dispatch"),
     }
 }
 
@@ -130,6 +135,13 @@ fn split_output(
     }
 
     (String::new(), rendered)
+}
+
+fn ensure_trailing_newline(mut text: String) -> String {
+    if !text.ends_with('\n') {
+        text.push('\n');
+    }
+    text
 }
 
 #[cfg(test)]
@@ -194,5 +206,11 @@ mod tests {
 
         assert!(stdout.is_empty());
         assert_eq!(stderr, "error output\n");
+    }
+
+    #[test]
+    fn ensure_trailing_newline_appends_once() {
+        assert_eq!(ensure_trailing_newline("hello".to_owned()), "hello\n");
+        assert_eq!(ensure_trailing_newline("hello\n".to_owned()), "hello\n");
     }
 }

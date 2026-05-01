@@ -131,11 +131,26 @@ Packages on pub.dev:
 # Generate all files once
 dust build
 
+# Check whether generated outputs are fresh
+dust check
+
 # Watch for changes and rebuild automatically
 dust watch
+
+# Inspect workspace and plugin setup
+dust doctor
+
+# Remove Dust outputs and persistent cache data
+dust clean
 ```
 
 `dust watch` monitors your `.dart` files for changes and regenerates the corresponding `.g.dart` files on save — similar to `build_runner watch` but without the Dart VM startup overhead.
+
+Useful flags:
+- `--root <path>` to run against a specific package root
+- `--fail-fast` to stop after the first error diagnostic
+- `--jobs <n>` to cap parallel build workers
+- `--poll-ms <ms>` and `--max-cycles <n>` for watch-mode control
 
 ---
 

@@ -1,32 +1,12 @@
+use dust_diagnostics::{Diagnostic, Severity, render_to_string};
 use dust_driver::CommandResult;
 
 use crate::args::CliCommand;
 
 const BANNER: &str = include_str!("../../../assets/dust-logo-cli.txt");
-const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn render_banner() -> &'static str {
     BANNER.trim_end()
-}
-
-pub(crate) fn render_help() -> String {
-    [
-        &format!("dust {VERSION}"),
-        "",
-        "Commands:",
-        "  build     Scan Dart sources and generate `.g.dart` outputs",
-        "  watch     Keep running and regenerate affected outputs",
-        "  clean     Remove Dust-generated outputs and cache",
-        "  help      Show this help",
-        "",
-        "Options:",
-        "  --root <path>       Use a specific package root",
-        "  --fail-fast         Stop after the first error",
-        "  --poll-ms <ms>      Watch poll interval in milliseconds",
-        "  --max-cycles <n>    Stop watch after n cycles",
-        "  -h, --help          Show this help",
-    ]
-    .join("\n")
 }
 
 pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> String {
@@ -109,15 +89,12 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
                 ));
             }
         }
-        CliCommand::Help => lines.push(render_help()),
     }
 
-    for diagnostic in &result.diagnostics {
-        lines.push(format!(
-            "{}: {}",
-            diagnostic.severity.as_str(),
-            diagnostic.message
-        ));
+    if !result.diagnostics.is_empty() {
+        lines.push(render_diagnostic_summary(&result.diagnostics));
+        lines.push(String::new());
+        append_diagnostic_blocks(&mut lines, &result.diagnostics);
     }
 
     if lines.is_empty() {
@@ -127,23 +104,51 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
     }
 }
 
+fn render_diagnostic_summary(diagnostics: &[Diagnostic]) -> String {
+    let errors = diagnostics
+        .iter()
+        .filter(|diagnostic| diagnostic.severity == Severity::Error)
+        .count();
+    let warnings = diagnostics
+        .iter()
+        .filter(|diagnostic| diagnostic.severity == Severity::Warning)
+        .count();
+    let notes = diagnostics
+        .iter()
+        .filter(|diagnostic| diagnostic.severity == Severity::Note)
+        .count();
+
+    format!("diagnostics  errors: {errors}  warnings: {warnings}  notes: {notes}")
+}
+
+fn append_diagnostic_blocks(lines: &mut Vec<String>, diagnostics: &[Diagnostic]) {
+    for (index, diagnostic) in diagnostics.iter().enumerate() {
+        lines.extend(render_to_string(diagnostic).lines().map(str::to_owned));
+        if index + 1 != diagnostics.len() {
+            lines.push(String::new());
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
 
-    use dust_diagnostics::Diagnostic;
+    use dust_diagnostics::{Diagnostic, SourceLabel};
     use dust_driver::{CacheReport, CleanReport, CommandResult, DoctorReport, WatchReport};
+    use dust_text::{FileId, TextRange};
 
     use super::*;
 
     #[test]
-    fn help_lists_public_commands() {
-        let help = render_help();
+    fn render_diagnostic_summary_counts_each_severity() {
+        let summary = render_diagnostic_summary(&[
+            Diagnostic::error("broken"),
+            Diagnostic::warning("suspicious"),
+            Diagnostic::note("try again"),
+        ]);
 
-        assert!(help.contains("build"));
-        assert!(help.contains("watch"));
-        assert!(help.contains("clean"));
-        assert!(help.contains("help"));
+        assert_eq!(summary, "diagnostics  errors: 1  warnings: 1  notes: 1");
     }
 
     #[test]
@@ -197,13 +202,21 @@ mod tests {
                 }),
                 cache: Some(CacheReport::default()),
                 elapsed_ms: 22,
-                diagnostics: vec![Diagnostic::warning("something happened")],
+                diagnostics: vec![Diagnostic::warning("something happened").with_label(
+                    SourceLabel::new(
+                        FileId::new(4),
+                        TextRange::new(22_u32, 27_u32),
+                        "this annotation name is not registered",
+                    ),
+                )],
                 ..CommandResult::default()
             },
         );
 
         assert!(rendered.contains("watch  scanned: 0  generated: 0  skipped: 0  time: 22ms"));
         assert!(rendered.contains("watch  cycles: 2  rebuilds: 1"));
+        assert!(rendered.contains("diagnostics  errors: 0  warnings: 1  notes: 0"));
         assert!(rendered.contains("warning: something happened"));
+        assert!(rendered.contains("file FileId(4) 22..27"));
     }
 }
