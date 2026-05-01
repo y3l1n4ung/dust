@@ -1,3 +1,4 @@
+mod apply;
 mod batch;
 mod process;
 mod support;
@@ -5,7 +6,7 @@ mod work;
 
 use std::time::Instant;
 
-use dust_cache::{CacheEntry, WorkspaceCache};
+use dust_cache::WorkspaceCache;
 use dust_diagnostics::Diagnostic;
 use dust_workspace::discover_workspace;
 
@@ -16,6 +17,7 @@ use crate::{
     result::{CacheReport, CommandResult},
 };
 
+pub(crate) use apply::{ApplyOutcomeConfig, apply_indexed_outcomes, flush_cache_into_result};
 pub(crate) use batch::BatchConfig;
 pub(crate) use batch::prepare_and_process_batch;
 pub(crate) use support::{
@@ -99,47 +101,19 @@ fn run_build_inner(
         &mut cache_report,
     );
 
-    for indexed_outcome in indexed {
-        let has_error = indexed_outcome
-            .outcome
-            .diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.is_error());
-        if let Some(expected_output_hash) = indexed_outcome.outcome.expected_output_hash {
-            if let Some(source_hash) = indexed_outcome.source_hash {
-                cache.insert(
-                    &workspace.cache_root,
-                    &indexed_outcome.library.source_path,
-                    CacheEntry {
-                        source_hash,
-                        package_config_hash,
-                        tool_hash,
-                        expected_output_hash,
-                        analysis_snapshot: indexed_outcome.outcome.analysis_snapshot,
-                    },
-                );
-            }
-        } else {
-            cache.remove(&workspace.cache_root, &indexed_outcome.library.source_path);
-        }
-        result
-            .diagnostics
-            .extend(indexed_outcome.outcome.diagnostics);
-        result
-            .build_artifacts
-            .push(indexed_outcome.outcome.artifact);
-
-        if request.fail_fast && has_error {
-            break;
-        }
-    }
-
-    if let Err(error) = cache.flush() {
-        result.diagnostics.push(Diagnostic::error(format!(
-            "failed to persist Dust cache `{}`: {error}",
-            cache.path().display()
-        )));
-    }
+    apply_indexed_outcomes(
+        indexed,
+        ApplyOutcomeConfig {
+            cache_root: &workspace.cache_root,
+            package_config_hash,
+            tool_hash,
+            fail_fast: request.fail_fast,
+        },
+        &mut cache,
+        &mut result,
+        None,
+    );
+    flush_cache_into_result(&cache, &mut result);
     result.cache = Some(cache_report);
     result.elapsed_ms = started.elapsed().as_millis();
     result

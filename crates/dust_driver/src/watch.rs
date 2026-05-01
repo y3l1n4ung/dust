@@ -5,13 +5,14 @@ use std::{
 
 mod snapshot;
 
-use dust_cache::{CacheEntry, WorkspaceCache};
+use dust_cache::WorkspaceCache;
 use dust_diagnostics::Diagnostic;
 use dust_workspace::discover_workspace;
 
 use crate::{
     build::{
-        BatchConfig, codegen_tool_hash, default_registry, prepare_and_process_batch,
+        ApplyOutcomeConfig, BatchConfig, apply_indexed_outcomes, codegen_tool_hash,
+        default_registry, flush_cache_into_result, prepare_and_process_batch,
         read_package_config_hash,
     },
     catalog::build_symbol_catalog,
@@ -100,52 +101,19 @@ fn run_watch_inner(
         &mut cache_report,
     );
 
-    for indexed_outcome in initial {
-        let has_error = indexed_outcome
-            .outcome
-            .diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.is_error());
-        if let Some(expected_output_hash) = indexed_outcome.outcome.expected_output_hash {
-            if let Some(source_hash) = indexed_outcome.source_hash {
-                cache.insert(
-                    &workspace.cache_root,
-                    &indexed_outcome.library.source_path,
-                    CacheEntry {
-                        source_hash,
-                        package_config_hash,
-                        tool_hash,
-                        expected_output_hash,
-                        analysis_snapshot: indexed_outcome.outcome.analysis_snapshot,
-                    },
-                );
-            }
-        } else {
-            cache.remove(&workspace.cache_root, &indexed_outcome.library.source_path);
-        }
-        result
-            .diagnostics
-            .extend(indexed_outcome.outcome.diagnostics);
-        result
-            .build_artifacts
-            .push(indexed_outcome.outcome.artifact);
-
-        if request.fail_fast && has_error {
-            if let Err(error) = cache.flush() {
-                result.diagnostics.push(Diagnostic::error(format!(
-                    "failed to persist Dust cache `{}`: {error}",
-                    cache.path().display()
-                )));
-            }
-            result.watch = Some(WatchReport {
-                cycles: 0,
-                rebuild_batches: 0,
-                rebuilt_libraries: Vec::new(),
-            });
-            result.cache = Some(cache_report);
-            result.elapsed_ms = started.elapsed().as_millis();
-            return result;
-        }
+    if apply_indexed_outcomes(
+        initial,
+        ApplyOutcomeConfig {
+            cache_root: &workspace.cache_root,
+            package_config_hash,
+            tool_hash,
+            fail_fast: request.fail_fast,
+        },
+        &mut cache,
+        &mut result,
+        None,
+    ) {
+        return finish_watch_result(result, &cache, cache_report, empty_watch_report(), started);
     }
 
     let mut snapshot = match build_snapshot(&request.cwd) {
@@ -211,60 +179,41 @@ fn run_watch_inner(
             &mut cache_report,
         );
 
-        for indexed_outcome in rebuilt {
-            let has_error = indexed_outcome
-                .outcome
-                .diagnostics
-                .iter()
-                .any(|diagnostic| diagnostic.is_error());
-            if let Some(expected_output_hash) = indexed_outcome.outcome.expected_output_hash {
-                if let Some(source_hash) = indexed_outcome.source_hash {
-                    cache.insert(
-                        &workspace.cache_root,
-                        &indexed_outcome.library.source_path,
-                        CacheEntry {
-                            source_hash,
-                            package_config_hash,
-                            tool_hash,
-                            expected_output_hash,
-                            analysis_snapshot: indexed_outcome.outcome.analysis_snapshot,
-                        },
-                    );
-                }
-            } else {
-                cache.remove(&workspace.cache_root, &indexed_outcome.library.source_path);
-            }
-            result
-                .diagnostics
-                .extend(indexed_outcome.outcome.diagnostics);
-            watch
-                .rebuilt_libraries
-                .push(indexed_outcome.outcome.artifact.source_path.clone());
-            result
-                .build_artifacts
-                .push(indexed_outcome.outcome.artifact);
-
-            if request.fail_fast && has_error {
-                if let Err(error) = cache.flush() {
-                    result.diagnostics.push(Diagnostic::error(format!(
-                        "failed to persist Dust cache `{}`: {error}",
-                        cache.path().display()
-                    )));
-                }
-                result.watch = Some(watch);
-                result.cache = Some(cache_report);
-                result.elapsed_ms = started.elapsed().as_millis();
-                return result;
-            }
+        if apply_indexed_outcomes(
+            rebuilt,
+            ApplyOutcomeConfig {
+                cache_root: &workspace.cache_root,
+                package_config_hash,
+                tool_hash,
+                fail_fast: request.fail_fast,
+            },
+            &mut cache,
+            &mut result,
+            Some(&mut watch.rebuilt_libraries),
+        ) {
+            return finish_watch_result(result, &cache, cache_report, watch, started);
         }
     }
 
-    if let Err(error) = cache.flush() {
-        result.diagnostics.push(Diagnostic::error(format!(
-            "failed to persist Dust cache `{}`: {error}",
-            cache.path().display()
-        )));
+    finish_watch_result(result, &cache, cache_report, watch, started)
+}
+
+fn empty_watch_report() -> WatchReport {
+    WatchReport {
+        cycles: 0,
+        rebuild_batches: 0,
+        rebuilt_libraries: Vec::new(),
     }
+}
+
+fn finish_watch_result(
+    mut result: CommandResult,
+    cache: &WorkspaceCache,
+    cache_report: CacheReport,
+    watch: WatchReport,
+    started: Instant,
+) -> CommandResult {
+    flush_cache_into_result(cache, &mut result);
     result.watch = Some(watch);
     result.cache = Some(cache_report);
     result.elapsed_ms = started.elapsed().as_millis();

@@ -13,8 +13,7 @@ use dust_workspace::SourceLibrary;
 use crate::result::BuildArtifact;
 
 pub(crate) use self::{
-    execute::process_pending_library,
-    output::emit_or_write_library,
+    execute::process_pending_library, output::emit_or_write_library,
     scan::collect_workspace_analysis,
 };
 

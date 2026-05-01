@@ -13,6 +13,7 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../check.rs"),
     include_str!("../watch.rs"),
     include_str!("../lower.rs"),
+    include_str!("apply.rs"),
     include_str!("batch.rs"),
     include_str!("batch/load.rs"),
     include_str!("batch/execute.rs"),
