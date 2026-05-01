@@ -1,9 +1,11 @@
-use std::{sync::Arc, thread};
+use std::sync::Arc;
 
 use dust_parser_dart::{ParseOptions, ParsedLibrarySurface, parse_file_with_backend};
 use dust_parser_dart_ts::TreeSitterDartBackend;
 use dust_plugin_api::{LibraryAnalysisSnapshot, PluginRegistry, WorkspaceAnalysisBuilder};
 use dust_text::SourceText;
+
+use crate::build::work::{available_worker_count, round_robin_groups};
 
 use super::PendingLibrary;
 
@@ -19,19 +21,11 @@ pub(crate) fn collect_workspace_analysis(
         return (WorkspaceAnalysisBuilder::default(), Vec::new(), Vec::new());
     }
 
-    let threads = thread::available_parallelism()
-        .map(|n| n.get())
-        .unwrap_or(1)
-        .min(pending.len())
-        .max(1);
+    let threads = available_worker_count(pending.len(), None);
+    let groups = round_robin_groups(pending.iter().enumerate(), threads);
 
-    let mut groups = (0..threads).map(|_| Vec::new()).collect::<Vec<_>>();
-    for (index, item) in pending.iter().enumerate() {
-        groups[index % threads].push((index, item));
-    }
-
-    thread::scope(|scope| {
-        let mut handles = Vec::new();
+    std::thread::scope(|scope| {
+        let mut handles = Vec::with_capacity(groups.len());
         for group in groups {
             handles.push(scope.spawn(move || {
                 let backend = TreeSitterDartBackend::new();

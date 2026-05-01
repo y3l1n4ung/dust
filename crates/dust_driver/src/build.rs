@@ -1,6 +1,7 @@
 mod batch;
 mod process;
 mod support;
+mod work;
 
 use std::time::Instant;
 

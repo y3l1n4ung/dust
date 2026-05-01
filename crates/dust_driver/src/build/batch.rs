@@ -1,31 +1,34 @@
+mod execute;
+mod load;
 mod outcome;
 mod progress;
 
 use std::{
     path::Path,
     sync::{Arc, atomic::AtomicUsize},
-    thread,
 };
 
 use dust_cache::WorkspaceCache;
-use dust_diagnostics::Diagnostic;
 use dust_text::FileId;
 use dust_workspace::SourceLibrary;
 
 use crate::{
     build::{
         process::{
-            IndexedBuildOutcome, LoadedLibraryInput, PendingLibrary, ProcessingConfig,
-            collect_workspace_analysis, process_pending_library,
+            IndexedBuildOutcome, PendingLibrary, ProcessingConfig, collect_workspace_analysis,
         },
-        support::{CacheFingerprint, load_library_input, matches_cache_metadata},
+        work::available_worker_count,
     },
     progress::{ProgressEvent, ProgressPhase},
     result::CacheReport,
 };
 
-use self::outcome::{build_cached_outcome, build_load_error};
 pub(crate) use self::progress::{ProgressReporter, ProgressSnapshot};
+use self::{
+    execute::{process_pending_parallel, process_pending_serial},
+    load::load_library_inputs,
+    outcome::{build_cached_outcome, build_load_error},
+};
 
 pub(crate) type ProgressCallback<'a> = dyn Fn(ProgressEvent) + Send + Sync + 'a;
 
@@ -55,13 +58,12 @@ pub(crate) fn prepare_and_process_batch(
         ProgressReporter::new(config.progress, &completed, config.phase, libraries.len());
     reporter.started_batch();
 
-    let mut outcomes = Vec::new();
     let loaded_results = load_library_inputs(config, libraries);
-
+    let mut outcomes = Vec::with_capacity(libraries.len());
     let mut workspace_analysis = dust_plugin_api::WorkspaceAnalysisBuilder::default();
-    let mut pending = Vec::new();
+    let mut pending = Vec::with_capacity(libraries.len());
 
-    for (index, input_result) in loaded_results {
+    for (index, input_result) in loaded_results.into_iter().enumerate() {
         let library = &libraries[index];
         let input = match input_result {
             Ok(input) => input,
@@ -80,17 +82,13 @@ pub(crate) fn prepare_and_process_batch(
         };
 
         if let Some(entry) = config.cache.get(config.cache_root, &library.source_path) {
-            if matches_cache_metadata(entry, &input, config.package_config_hash, config.tool_hash) {
-                if input.checked_output_hash != Some(Some(entry.expected_output_hash)) {
-                    cache_report.misses += 1;
-                    pending.push(PendingLibrary::new(
-                        index,
-                        FileId::new(config.file_id_base + index as u32),
-                        library.clone(),
-                        input,
-                    ));
-                    continue;
-                }
+            if crate::build::support::matches_cache_metadata(
+                entry,
+                &input,
+                config.package_config_hash,
+                config.tool_hash,
+            ) && input.checked_output_hash == Some(Some(entry.expected_output_hash))
+            {
                 cache_report.hits += 1;
                 workspace_analysis.merge_snapshot(&entry.analysis_snapshot);
                 outcomes.push(build_cached_outcome(
@@ -132,16 +130,14 @@ pub(crate) fn prepare_and_process_batch(
         pending.analysis_snapshot = analysis_snapshot;
     }
 
-    let workspace_analysis = Arc::new(workspace_analysis.build());
-
     let processing = ProcessingConfig {
         catalog: config.catalog,
         registry: config.registry,
-        workspace_analysis,
+        workspace_analysis: Arc::new(workspace_analysis.build()),
         write_output: config.write_output,
     };
 
-    let desired_jobs = config.jobs.unwrap_or_else(default_parallel_jobs).max(1);
+    let desired_jobs = available_worker_count(pending.len(), config.jobs);
     let mut processed = if config.fail_fast || desired_jobs <= 1 || pending.len() <= 1 {
         process_pending_serial(pending, config.fail_fast, &processing, &reporter)
     } else {
@@ -151,117 +147,4 @@ pub(crate) fn prepare_and_process_batch(
     outcomes.append(&mut processed);
     outcomes.sort_by_key(|outcome| outcome.index);
     outcomes
-}
-
-fn process_pending_serial(
-    pending: Vec<PendingLibrary>,
-    fail_fast: bool,
-    processing: &ProcessingConfig<'_>,
-    reporter: &ProgressReporter<'_>,
-) -> Vec<IndexedBuildOutcome> {
-    let mut processed = Vec::new();
-
-    for pending in pending {
-        let outcome = process_pending_library(pending, processing, reporter);
-        let has_error = outcome
-            .outcome
-            .diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.is_error());
-        processed.push(outcome);
-
-        if fail_fast && has_error {
-            break;
-        }
-    }
-
-    processed
-}
-
-fn process_pending_parallel(
-    pending: Vec<PendingLibrary>,
-    jobs: usize,
-    processing: &ProcessingConfig<'_>,
-    reporter: &ProgressReporter<'_>,
-) -> Vec<IndexedBuildOutcome> {
-    let threads = jobs.min(pending.len()).max(1);
-    let mut groups = (0..threads).map(|_| Vec::new()).collect::<Vec<_>>();
-    for (index, item) in pending.into_iter().enumerate() {
-        groups[index % threads].push(item);
-    }
-
-    thread::scope(|scope| {
-        let mut handles = Vec::new();
-        for group in groups {
-            handles.push(scope.spawn(move || {
-                group
-                    .into_iter()
-                    .map(|pending| process_pending_library(pending, processing, reporter))
-                    .collect::<Vec<_>>()
-            }));
-        }
-
-        let mut processed = Vec::new();
-        for handle in handles {
-            processed.extend(handle.join().expect("worker thread must not panic"));
-        }
-        processed
-    })
-}
-
-fn default_parallel_jobs() -> usize {
-    thread::available_parallelism()
-        .map(usize::from)
-        .unwrap_or(1)
-}
-
-fn load_library_inputs(
-    config: BatchConfig<'_>,
-    libraries: &[SourceLibrary],
-) -> Vec<(usize, Result<LoadedLibraryInput, Diagnostic>)> {
-    let threads = thread::available_parallelism()
-        .map(|n| n.get())
-        .unwrap_or(1)
-        .min(libraries.len())
-        .max(1);
-
-    let mut groups = (0..threads).map(|_| Vec::new()).collect::<Vec<_>>();
-    for (index, item) in libraries.iter().enumerate() {
-        groups[index % threads].push((index, item));
-    }
-
-    thread::scope(|scope| {
-        let mut handles = Vec::new();
-        for group in groups {
-            handles.push(scope.spawn(move || {
-                group
-                    .into_iter()
-                    .map(|(index, library)| {
-                        let cache_fingerprint = config
-                            .cache
-                            .get(config.cache_root, &library.source_path)
-                            .map(|entry| CacheFingerprint {
-                                source_hash: entry.source_hash,
-                                package_config_hash: entry.package_config_hash,
-                                tool_hash: entry.tool_hash,
-                            });
-                        let input = load_library_input(
-                            library,
-                            cache_fingerprint,
-                            config.package_config_hash,
-                            config.tool_hash,
-                        );
-                        (index, input)
-                    })
-                    .collect::<Vec<_>>()
-            }));
-        }
-
-        let mut results = Vec::new();
-        for handle in handles {
-            results.extend(handle.join().expect("load thread must not panic"));
-        }
-        results.sort_by_key(|(index, _)| *index);
-        results
-    })
 }
