@@ -12,12 +12,23 @@ mod syntax;
 use dust_diagnostics::Diagnostic;
 use dust_parser_dart::{ParseBackend, ParseOptions, ParseResult, ParsedLibrarySurface};
 use dust_text::SourceText;
+use std::cell::RefCell;
 use tree_sitter::Parser;
 
 use self::{
     classes::extract_classes, diagnostics::extract_diagnostics, directives::extract_directives,
     enums::extract_enums, syntax::text_range,
 };
+
+thread_local! {
+    static PARSER: RefCell<Parser> = {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_dart::LANGUAGE.into())
+            .expect("failed to load tree-sitter Dart grammar");
+        RefCell::new(parser)
+    };
+}
 
 /// A `tree-sitter-dart` implementation of Dust's parser backend contract.
 ///
@@ -40,36 +51,28 @@ impl Default for TreeSitterDartBackend {
 
 impl ParseBackend for TreeSitterDartBackend {
     fn parse_file(&self, source: &SourceText, options: ParseOptions) -> ParseResult {
-        let mut parser = Parser::new();
-        if let Err(error) = parser.set_language(&tree_sitter_dart::LANGUAGE.into()) {
-            return ParseResult {
-                library: empty_library(source),
-                diagnostics: vec![Diagnostic::error(format!(
-                    "failed to load tree-sitter Dart grammar: {error}"
-                ))],
-                options,
+        PARSER.with(|parser_cell| {
+            let mut parser = parser_cell.borrow_mut();
+            let Some(tree) = parser.parse(source.as_str(), None) else {
+                return ParseResult {
+                    library: empty_library(source),
+                    diagnostics: vec![Diagnostic::error("tree-sitter failed to parse source")],
+                    options,
+                };
             };
-        }
 
-        let Some(tree) = parser.parse(source.as_str(), None) else {
-            return ParseResult {
-                library: empty_library(source),
-                diagnostics: vec![Diagnostic::error("tree-sitter failed to parse source")],
+            let root = tree.root_node();
+            ParseResult {
+                library: ParsedLibrarySurface {
+                    span: text_range(root),
+                    directives: extract_directives(root, source),
+                    classes: extract_classes(root, source),
+                    enums: extract_enums(root, source),
+                },
+                diagnostics: extract_diagnostics(&tree, source),
                 options,
-            };
-        };
-
-        let root = tree.root_node();
-        ParseResult {
-            library: ParsedLibrarySurface {
-                span: text_range(root),
-                directives: extract_directives(root, source),
-                classes: extract_classes(root, source),
-                enums: extract_enums(root, source),
-            },
-            diagnostics: extract_diagnostics(&tree, source),
-            options,
-        }
+            }
+        })
     }
 }
 

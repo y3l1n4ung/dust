@@ -1,4 +1,5 @@
 use dust_diagnostics::Diagnostic;
+use dust_plugin_api::LibraryAnalysisSnapshot;
 use dust_workspace::SourceLibrary;
 
 use crate::{
@@ -25,6 +26,7 @@ pub(super) fn build_load_error(
                 cached: false,
             },
             expected_output_hash: None,
+            analysis_snapshot: LibraryAnalysisSnapshot::default(),
         },
     }
 }
@@ -32,7 +34,8 @@ pub(super) fn build_load_error(
 pub(super) fn build_cached_outcome(
     index: usize,
     library: &SourceLibrary,
-    output_hash: Option<u64>,
+    expected_output_hash: u64,
+    analysis_snapshot: LibraryAnalysisSnapshot,
 ) -> IndexedBuildOutcome {
     IndexedBuildOutcome {
         index,
@@ -47,7 +50,8 @@ pub(super) fn build_cached_outcome(
                 written: false,
                 cached: true,
             },
-            expected_output_hash: output_hash,
+            expected_output_hash: Some(expected_output_hash),
+            analysis_snapshot,
         },
     }
 }

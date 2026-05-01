@@ -1,6 +1,5 @@
-use std::{fs, io, path::Path};
+use std::{fs, io, path::Path, sync::Arc};
 
-use dust_cache::WorkspaceCache;
 use dust_diagnostics::Diagnostic;
 use dust_plugin_api::PluginRegistry;
 use dust_plugin_derive::register_plugin as register_derive_plugin;
@@ -17,6 +16,11 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("batch.rs"),
     include_str!("process.rs"),
     include_str!("support.rs"),
+    include_str!("../../../dust_plugin_api/src/analysis.rs"),
+    include_str!("../../../dust_plugin_api/src/plugin.rs"),
+    include_str!("../../../dust_plugin_api/src/registry.rs"),
+    include_str!("../../../dust_plugin_api/src/symbols.rs"),
+    include_str!("../../../dust_plugin_derive/src/analysis.rs"),
     include_str!("../../../dust_plugin_derive/src/plugin.rs"),
     include_str!("../../../dust_plugin_derive/src/features/debug.rs"),
     include_str!("../../../dust_plugin_derive/src/features/eq_hash.rs"),
@@ -35,8 +39,18 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_emitter/src/writer.rs"),
 );
 
+#[derive(Clone, Copy)]
+pub(crate) struct CacheFingerprint {
+    pub(crate) source_hash: u64,
+    pub(crate) package_config_hash: u64,
+    pub(crate) tool_hash: u64,
+}
+
 pub(crate) fn load_library_input(
     library: &SourceLibrary,
+    cache_fingerprint: Option<CacheFingerprint>,
+    package_config_hash: u64,
+    tool_hash: u64,
 ) -> Result<LoadedLibraryInput, Diagnostic> {
     let source = fs::read_to_string(&library.source_path).map_err(|error| {
         Diagnostic::error(format!(
@@ -44,17 +58,27 @@ pub(crate) fn load_library_input(
             library.source_path.display()
         ))
     })?;
-    let output_hash = read_optional_hash(&library.output_path).map_err(|error| {
-        Diagnostic::error(format!(
-            "failed to read `{}`: {error}",
-            library.output_path.display()
-        ))
-    })?;
+    let source_hash = hash_text(&source);
+    let checked_output_hash = cache_fingerprint
+        .filter(|entry| {
+            entry.source_hash == source_hash
+                && entry.package_config_hash == package_config_hash
+                && entry.tool_hash == tool_hash
+        })
+        .map(|_| {
+            read_optional_hash(&library.output_path).map_err(|error| {
+                Diagnostic::error(format!(
+                    "failed to read `{}`: {error}",
+                    library.output_path.display()
+                ))
+            })
+        })
+        .transpose()?;
 
     Ok(LoadedLibraryInput {
-        source_hash: hash_text(&source),
-        source,
-        output_hash,
+        source_hash,
+        source: Arc::<str>::from(source),
+        checked_output_hash,
     })
 }
 
@@ -77,22 +101,15 @@ pub(crate) fn hash_text(text: &str) -> u64 {
     hash
 }
 
-pub(crate) fn matches_cache(
-    cache: &WorkspaceCache,
-    root: &Path,
-    library: &SourceLibrary,
+pub(crate) fn matches_cache_metadata(
+    entry: &dust_cache::CacheEntry,
     input: &LoadedLibraryInput,
     package_config_hash: u64,
     tool_hash: u64,
 ) -> bool {
-    let Some(entry) = cache.get(root, &library.source_path) else {
-        return false;
-    };
-
     entry.source_hash == input.source_hash
         && entry.package_config_hash == package_config_hash
         && entry.tool_hash == tool_hash
-        && input.output_hash == Some(entry.expected_output_hash)
 }
 
 pub(crate) fn codegen_tool_hash() -> u64 {

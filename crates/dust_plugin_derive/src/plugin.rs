@@ -1,10 +1,11 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::{LibraryIr, SymbolId};
-use dust_plugin_api::{DustPlugin, PluginContribution, SymbolPlan};
+use dust_parser_dart::ParsedLibrarySurface;
+use dust_plugin_api::{DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder};
 
 use crate::{
-    emit::emit_library, features::clone_copy_with::copy_with_requires_undefined,
-    validate::validate_library,
+    analysis::collect_workspace_analysis, emit::emit_library,
+    features::clone_copy_with::copy_with_requires_undefined, validate::validate_library,
 };
 
 /// The built-in plugin that implements Dust's core derive traits.
@@ -42,6 +43,14 @@ impl DustPlugin for DerivePlugin {
         } else {
             Vec::new()
         }
+    }
+
+    fn collect_workspace_analysis(
+        &self,
+        library: &ParsedLibrarySurface,
+        analysis: &mut WorkspaceAnalysisBuilder,
+    ) {
+        collect_workspace_analysis(library, analysis);
     }
 
     fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> {

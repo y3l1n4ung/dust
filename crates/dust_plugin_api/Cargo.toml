@@ -8,6 +8,8 @@ rust-version.workspace = true
 [dependencies]
 dust_ir = { path = "../dust_ir" }
 dust_diagnostics = { path = "../dust_diagnostics" }
+dust_parser_dart = { path = "../dust_parser_dart" }
+serde = { version = "1", features = ["derive"] }
 
 [dev-dependencies]
 dust_text = { path = "../dust_text" }

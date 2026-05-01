@@ -114,6 +114,7 @@ fn run_build_inner(
                         package_config_hash,
                         tool_hash,
                         expected_output_hash,
+                        analysis_snapshot: indexed_outcome.outcome.analysis_snapshot,
                     },
                 );
             }

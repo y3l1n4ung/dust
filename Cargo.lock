@@ -139,6 +139,7 @@ checksum = "1d07550c9036bf2ae0c684c4297d503f838287c83c53686d05370d0e139ae570"
 name = "dust_cache"
 version = "0.1.0"
 dependencies = [
+ "dust_plugin_api",
  "serde",
  "serde_json",
  "tempfile",
@@ -225,7 +226,9 @@ version = "0.1.0"
 dependencies = [
  "dust_diagnostics",
  "dust_ir",
+ "dust_parser_dart",
  "dust_text",
+ "serde",
 ]
 
 [[package]]
@@ -234,6 +237,7 @@ version = "0.1.0"
 dependencies = [
  "dust_diagnostics",
  "dust_ir",
+ "dust_parser_dart",
  "dust_plugin_api",
  "dust_text",
 ]

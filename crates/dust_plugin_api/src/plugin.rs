@@ -1,7 +1,8 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::{LibraryIr, SymbolId};
+use dust_parser_dart::ParsedLibrarySurface;
 
-use crate::{PluginContribution, SymbolPlan};
+use crate::{PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder};
 
 /// The contract implemented by every Dust generation plugin.
 pub trait DustPlugin: Send + Sync {
@@ -21,6 +22,14 @@ pub trait DustPlugin: Send + Sync {
     /// Returns generated helper symbol names this plugin wants reserved.
     fn requested_symbols(&self, _library: &LibraryIr) -> Vec<String> {
         Vec::new()
+    }
+
+    /// Collects parse-only workspace facts for this plugin during the shared scan phase.
+    fn collect_workspace_analysis(
+        &self,
+        _library: &ParsedLibrarySurface,
+        _analysis: &mut WorkspaceAnalysisBuilder,
+    ) {
     }
 
     /// Validates the library from this plugin's point of view.

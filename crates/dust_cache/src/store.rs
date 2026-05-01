@@ -4,10 +4,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use dust_plugin_api::LibraryAnalysisSnapshot;
 use serde::{Deserialize, Serialize};
 
 /// The current on-disk Dust cache schema version.
-pub const CACHE_SCHEMA_VERSION: u32 = 2;
+pub const CACHE_SCHEMA_VERSION: u32 = 4;
 
 /// One cached build fingerprint for a source library.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -21,6 +22,9 @@ pub struct CacheEntry {
     pub tool_hash: u64,
     /// The expected generated output fingerprint for the current source state.
     pub expected_output_hash: u64,
+    /// The cached parse-only plugin analysis facts for this library.
+    #[serde(default)]
+    pub analysis_snapshot: LibraryAnalysisSnapshot,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -135,6 +139,7 @@ fn cache_dir_path(root: &Path) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
+    use dust_plugin_api::LibraryAnalysisSnapshot;
     use tempfile::tempdir;
 
     use super::{CacheEntry, WorkspaceCache, cache_dir_path};
@@ -177,6 +182,7 @@ mod tests {
                 package_config_hash: 2,
                 tool_hash: 3,
                 expected_output_hash: 4,
+                analysis_snapshot: LibraryAnalysisSnapshot::default(),
             },
         );
         cache.flush().unwrap();
@@ -189,6 +195,7 @@ mod tests {
                 package_config_hash: 2,
                 tool_hash: 3,
                 expected_output_hash: 4,
+                analysis_snapshot: LibraryAnalysisSnapshot::default(),
             })
         );
     }
@@ -208,6 +215,7 @@ mod tests {
                 package_config_hash: 20,
                 tool_hash: 30,
                 expected_output_hash: 40,
+                analysis_snapshot: LibraryAnalysisSnapshot::default(),
             },
         );
         cache.remove(root.path(), &source_path);
@@ -230,6 +238,7 @@ mod tests {
                 package_config_hash: 2,
                 tool_hash: 3,
                 expected_output_hash: 4,
+                analysis_snapshot: LibraryAnalysisSnapshot::default(),
             },
         );
         cache.flush().unwrap();

@@ -3,10 +3,13 @@ use std::collections::HashSet;
 use dust_ir::LibraryIr;
 use dust_plugin_api::{PluginContribution, SymbolPlan};
 
-use crate::features::{
-    clone_copy_with::emit_copy_with,
-    debug::emit_debug_mixin,
-    eq_hash::{emit_eq, emit_hash_code, emit_shared_helpers},
+use crate::{
+    analysis::COPYABLE_TYPES_ANALYSIS_KEY,
+    features::{
+        clone_copy_with::emit_copy_with,
+        debug::emit_debug_mixin,
+        eq_hash::{emit_eq, emit_hash_code, emit_shared_helpers},
+    },
 };
 
 pub(crate) fn emit_library(library: &LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
@@ -21,7 +24,13 @@ pub(crate) fn emit_library(library: &LibraryIr, _plan: &SymbolPlan) -> PluginCon
                 .any(|trait_app| trait_app.symbol.0 == "derive_annotation::CopyWith")
         })
         .map(|class| class.name.clone())
-        .chain(_plan.known_copyable_types().iter().cloned())
+        .chain(
+            _plan
+                .workspace_string_set(COPYABLE_TYPES_ANALYSIS_KEY)
+                .into_iter()
+                .flatten()
+                .cloned(),
+        )
         .collect::<HashSet<_>>();
     contribution
         .shared_helpers

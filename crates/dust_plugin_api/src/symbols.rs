@@ -1,3 +1,7 @@
+use std::sync::Arc;
+
+use crate::WorkspaceAnalysis;
+
 /// One requested generated symbol name.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestedSymbol {
@@ -16,7 +20,7 @@ impl RequestedSymbol {
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct SymbolPlan {
     reserved: Vec<RequestedSymbol>,
-    known_copyable_types: Vec<String>,
+    workspace_analysis: Arc<WorkspaceAnalysis>,
 }
 
 impl SymbolPlan {
@@ -38,32 +42,18 @@ impl SymbolPlan {
         self.reserved.iter().any(|entry| entry.name == name)
     }
 
-    /// Records one known `copyWith()`-capable Dart type name for emission decisions.
-    pub fn add_copyable_type(&mut self, name: impl Into<String>) {
-        let name = name.into();
-        if !self.known_copyable_types.iter().any(|entry| entry == &name) {
-            self.known_copyable_types.push(name);
-        }
+    /// Replaces the workspace-wide analysis facts attached to this plan.
+    pub fn set_workspace_analysis(&mut self, analysis: Arc<WorkspaceAnalysis>) {
+        self.workspace_analysis = analysis;
     }
 
-    /// Extends the plan with multiple known `copyWith()`-capable Dart type names.
-    pub fn extend_copyable_types<I>(&mut self, names: I)
-    where
-        I: IntoIterator,
-        I::Item: Into<String>,
-    {
-        for name in names {
-            self.add_copyable_type(name);
-        }
+    /// Returns the shared workspace analysis facts available to generators.
+    pub fn workspace_analysis(&self) -> &WorkspaceAnalysis {
+        self.workspace_analysis.as_ref()
     }
 
-    /// Returns the known `copyWith()`-capable Dart type names in deterministic order.
-    pub fn known_copyable_types(&self) -> &[String] {
-        &self.known_copyable_types
-    }
-
-    /// Returns `true` if the plan already knows the given copyable type name.
-    pub fn contains_copyable_type(&self, name: &str) -> bool {
-        self.known_copyable_types.iter().any(|entry| entry == name)
+    /// Returns the workspace-wide string-set values recorded for one analysis key.
+    pub fn workspace_string_set(&self, key: &str) -> Option<&[String]> {
+        self.workspace_analysis.string_set(key)
     }
 }

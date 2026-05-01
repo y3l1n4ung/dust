@@ -139,6 +139,18 @@ dust watch
 
 ---
 
+## Development
+
+- Contributor guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Internal architecture: [docs/developer.md](docs/developer.md)
+- New plugin guide: [docs/plugin-guide.md](docs/plugin-guide.md)
+- Crate index and ownership: [crates/README.md](crates/README.md)
+- Roadmap and feature plans: [docs/roadmap](docs/roadmap/README.md)
+- Real package example: [examples/product_showcase](examples/product_showcase/README.md)
+- Scale and perf fixture: [examples/stress_project](examples/stress_project/README.md)
+
+---
+
 ## Roadmap
 
 See [docs/roadmap](docs/roadmap/README.md) for generated code, serde,

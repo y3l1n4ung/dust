@@ -14,10 +14,10 @@ use dust_workspace::SourceLibrary;
 use crate::{
     build::{
         process::{
-            IndexedBuildOutcome, PendingLibrary, ProcessingConfig,
-            collect_workspace_copyable_types, process_pending_library,
+            IndexedBuildOutcome, PendingLibrary, ProcessingConfig, collect_workspace_analysis,
+            process_pending_library,
         },
-        support::{load_library_input, matches_cache},
+        support::{CacheFingerprint, load_library_input, matches_cache_metadata},
     },
     progress::{ProgressEvent, ProgressPhase},
     result::CacheReport,
@@ -55,69 +55,136 @@ pub(crate) fn prepare_and_process_batch(
     reporter.started_batch();
 
     let mut outcomes = Vec::new();
-    let mut pending = Vec::new();
-    let mut loaded_sources = Vec::new();
 
-    for (index, library) in libraries.iter().enumerate() {
-        let input = match load_library_input(library) {
+    let threads = thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(1)
+        .min(libraries.len())
+        .max(1);
+
+    let mut groups = (0..threads).map(|_| Vec::new()).collect::<Vec<_>>();
+    for (index, item) in libraries.iter().enumerate() {
+        groups[index % threads].push((index, item));
+    }
+
+    let loaded_results = thread::scope(|scope| {
+        let mut handles = Vec::new();
+        for group in groups {
+            handles.push(scope.spawn(move || {
+                group
+                    .into_iter()
+                    .map(|(index, library)| {
+                        let cache_fingerprint = config
+                            .cache
+                            .get(config.cache_root, &library.source_path)
+                            .map(|entry| CacheFingerprint {
+                                source_hash: entry.source_hash,
+                                package_config_hash: entry.package_config_hash,
+                                tool_hash: entry.tool_hash,
+                            });
+                        let input = load_library_input(
+                            library,
+                            cache_fingerprint,
+                            config.package_config_hash,
+                            config.tool_hash,
+                        );
+                        (index, library.clone(), input)
+                    })
+                    .collect::<Vec<_>>()
+            }));
+        }
+
+        let mut results = Vec::new();
+        for handle in handles {
+            results.extend(handle.join().expect("load thread must not panic"));
+        }
+        results.sort_by_key(|(index, _, _)| *index);
+        results
+    });
+
+    let mut workspace_analysis = dust_plugin_api::WorkspaceAnalysisBuilder::default();
+    let mut pending = Vec::new();
+
+    for (index, library, input_result) in loaded_results {
+        let input = match input_result {
             Ok(input) => input,
             Err(diagnostic) => {
-                outcomes.push(build_load_error(index, library, diagnostic));
+                outcomes.push(build_load_error(index, &library, diagnostic));
                 reporter.finish(ProgressSnapshot {
-                    library,
+                    library: &library,
                     cached: false,
                     written: false,
                     changed: false,
                     had_errors: true,
                     elapsed_ms: 0,
                 });
-                if config.fail_fast {
-                    break;
-                }
                 continue;
             }
         };
-        loaded_sources.push((
-            FileId::new(config.file_id_base + index as u32),
-            library.clone(),
-            input.source.clone(),
-        ));
 
-        if matches_cache(
-            config.cache,
-            config.cache_root,
-            library,
-            &input,
-            config.package_config_hash,
-            config.tool_hash,
-        ) {
-            cache_report.hits += 1;
-            outcomes.push(build_cached_outcome(index, library, input.output_hash));
-            reporter.finish(ProgressSnapshot {
-                library,
-                cached: true,
-                written: false,
-                changed: false,
-                had_errors: false,
-                elapsed_ms: 0,
-            });
-            continue;
+        if let Some(entry) = config.cache.get(config.cache_root, &library.source_path) {
+            if matches_cache_metadata(entry, &input, config.package_config_hash, config.tool_hash) {
+                if input.checked_output_hash != Some(Some(entry.expected_output_hash)) {
+                    cache_report.misses += 1;
+                    pending.push(PendingLibrary {
+                        index,
+                        file_id: FileId::new(config.file_id_base + index as u32),
+                        library,
+                        input,
+                        pre_parsed: None,
+                        analysis_snapshot: dust_plugin_api::LibraryAnalysisSnapshot::default(),
+                    });
+                    continue;
+                }
+                cache_report.hits += 1;
+                workspace_analysis.merge_snapshot(&entry.analysis_snapshot);
+                outcomes.push(build_cached_outcome(
+                    index,
+                    &library,
+                    entry.expected_output_hash,
+                    entry.analysis_snapshot.clone(),
+                ));
+                reporter.finish(ProgressSnapshot {
+                    library: &library,
+                    cached: true,
+                    written: false,
+                    changed: false,
+                    had_errors: false,
+                    elapsed_ms: 0,
+                });
+                continue;
+            }
         }
 
         cache_report.misses += 1;
         pending.push(PendingLibrary {
             index,
             file_id: FileId::new(config.file_id_base + index as u32),
-            library: library.clone(),
+            library,
             input,
+            pre_parsed: None,
+            analysis_snapshot: dust_plugin_api::LibraryAnalysisSnapshot::default(),
         });
     }
 
-    let copyable_types = collect_workspace_copyable_types(&loaded_sources, config.catalog);
+    let (pending_analysis, pre_parsed_libraries, analysis_snapshots) =
+        collect_workspace_analysis(&pending, config.registry);
+    workspace_analysis.merge(pending_analysis);
+    for ((pending, pre_parsed), analysis_snapshot) in pending
+        .iter_mut()
+        .zip(pre_parsed_libraries)
+        .zip(analysis_snapshots)
+    {
+        pending.pre_parsed = pre_parsed;
+        pending.analysis_snapshot = analysis_snapshot;
+    }
+
+    let workspace_analysis = Arc::new(workspace_analysis.build());
+
     let processing = ProcessingConfig {
         catalog: config.catalog,
         registry: config.registry,
-        copyable_types: &copyable_types,
+        workspace_analysis: &workspace_analysis,
         write_output: config.write_output,
     };
 

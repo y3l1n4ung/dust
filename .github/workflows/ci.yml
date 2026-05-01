@@ -131,3 +131,58 @@ jobs:
       - name: Test
         working-directory: examples/product_showcase
         run: dart test
+
+  stress-project-dart:
+    name: Dart / stress_project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Pub get
+        working-directory: examples/stress_project
+        run: dart pub get
+
+      - name: Generate stress fixtures
+        working-directory: examples/stress_project
+        run: ./generate.sh --count 64
+
+      - name: Build generated outputs
+        run: cargo run -p dust_cli -- build --root examples/stress_project
+
+      - name: Analyze
+        working-directory: examples/stress_project
+        run: dart analyze
+
+      - name: Test
+        working-directory: examples/stress_project
+        run: dart test
+
+  perf-stress-project:
+    name: Perf / stress_project
+    runs-on: ubuntu-latest
+    env:
+      DUST_PERF_COLD_MAX_MS: 3500
+      DUST_PERF_WARM_MAX_MS: 1500
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Run ignored perf test
+        run: cargo test -p dust_cli stress_project_release_build_stays_fast -- --ignored --nocapture

@@ -2,8 +2,9 @@ use std::collections::HashMap;
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::{LibraryIr, SymbolId};
+use dust_parser_dart::ParsedLibrarySurface;
 
-use crate::{DustPlugin, SymbolPlan};
+use crate::{DustPlugin, SymbolPlan, WorkspaceAnalysisBuilder};
 
 /// The registered set of Dust plugins plus symbol ownership checks.
 pub struct PluginRegistry {
@@ -83,6 +84,17 @@ impl PluginRegistry {
             }
         }
         plan
+    }
+
+    /// Collects parse-only workspace facts from all plugins in registration order.
+    pub fn collect_workspace_analysis(
+        &self,
+        library: &ParsedLibrarySurface,
+        analysis: &mut WorkspaceAnalysisBuilder,
+    ) {
+        for plugin in &self.plugins {
+            plugin.collect_workspace_analysis(library, analysis);
+        }
     }
 
     /// Runs validation across all registered plugins in registration order.

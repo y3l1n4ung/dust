@@ -9,3 +9,8 @@ resolution: workspace
 dependencies:
   derive_annotation:
     path: ../../packages/derive_annotation
+  derive_serde_annotation:
+    path: ../../packages/derive_serde_annotation
+
+dev_dependencies:
+  test: ^1.26.0

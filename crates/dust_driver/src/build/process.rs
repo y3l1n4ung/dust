@@ -1,9 +1,12 @@
-use std::{collections::HashSet, fs, time::Instant};
+use std::{fs, sync::Arc, time::Instant};
 
 use dust_diagnostics::Diagnostic;
 use dust_emitter::{emit_library_with_plan, write_library_with_plan};
-use dust_parser_dart::{ParseOptions, parse_file_with_backend};
+use dust_parser_dart::{ParseOptions, ParsedLibrarySurface, parse_file_with_backend};
 use dust_parser_dart_ts::TreeSitterDartBackend;
+use dust_plugin_api::{
+    LibraryAnalysisSnapshot, PluginRegistry, WorkspaceAnalysis, WorkspaceAnalysisBuilder,
+};
 use dust_text::{FileId, SourceText};
 use dust_workspace::SourceLibrary;
 
@@ -13,7 +16,7 @@ use crate::{build::support::hash_text, lower::lower_library, result::BuildArtifa
 pub(crate) struct ProcessingConfig<'a> {
     pub(crate) catalog: &'a dust_resolver::SymbolCatalog,
     pub(crate) registry: &'a dust_plugin_api::PluginRegistry,
-    pub(crate) copyable_types: &'a HashSet<String>,
+    pub(crate) workspace_analysis: &'a Arc<WorkspaceAnalysis>,
     pub(crate) write_output: bool,
 }
 
@@ -21,6 +24,7 @@ pub(crate) struct BuildOutcome {
     pub(crate) diagnostics: Vec<Diagnostic>,
     pub(crate) artifact: BuildArtifact,
     pub(crate) expected_output_hash: Option<u64>,
+    pub(crate) analysis_snapshot: LibraryAnalysisSnapshot,
 }
 
 pub(crate) struct IndexedBuildOutcome {
@@ -30,10 +34,11 @@ pub(crate) struct IndexedBuildOutcome {
     pub(crate) outcome: BuildOutcome,
 }
 
+#[derive(Clone)]
 pub(crate) struct LoadedLibraryInput {
-    pub(crate) source: String,
+    pub(crate) source: Arc<str>,
     pub(crate) source_hash: u64,
-    pub(crate) output_hash: Option<u64>,
+    pub(crate) checked_output_hash: Option<Option<u64>>,
 }
 
 pub(crate) struct PendingLibrary {
@@ -41,6 +46,8 @@ pub(crate) struct PendingLibrary {
     pub(crate) file_id: FileId,
     pub(crate) library: SourceLibrary,
     pub(crate) input: LoadedLibraryInput,
+    pub(crate) pre_parsed: Option<ParsedLibrarySurface>,
+    pub(crate) analysis_snapshot: LibraryAnalysisSnapshot,
 }
 
 pub(crate) fn process_pending_library(
@@ -48,22 +55,31 @@ pub(crate) fn process_pending_library(
     processing: &ProcessingConfig<'_>,
     reporter: &crate::build::batch::ProgressReporter<'_>,
 ) -> IndexedBuildOutcome {
+    let PendingLibrary {
+        index,
+        file_id,
+        library,
+        input,
+        pre_parsed,
+        analysis_snapshot,
+    } = pending;
+    let LoadedLibraryInput {
+        source,
+        source_hash,
+        checked_output_hash: _,
+    } = input;
     let backend = TreeSitterDartBackend::new();
     let started = Instant::now();
-    let outcome = process_library_from_source(
-        pending.file_id,
-        &pending.library,
-        pending.input.source,
-        &backend,
-        processing,
-    );
+    let mut outcome =
+        process_library_from_source(file_id, &library, source, pre_parsed, &backend, processing);
+    outcome.analysis_snapshot = analysis_snapshot;
     let elapsed_ms = started.elapsed().as_millis();
     let had_errors = outcome
         .diagnostics
         .iter()
         .any(|diagnostic| diagnostic.is_error());
     reporter.finish(crate::build::batch::ProgressSnapshot {
-        library: &pending.library,
+        library: &library,
         cached: false,
         written: outcome.artifact.written,
         changed: outcome.artifact.changed,
@@ -72,9 +88,9 @@ pub(crate) fn process_pending_library(
     });
 
     IndexedBuildOutcome {
-        index: pending.index,
-        library: pending.library,
-        source_hash: Some(pending.input.source_hash),
+        index,
+        library,
+        source_hash: Some(source_hash),
         outcome,
     }
 }
@@ -82,7 +98,8 @@ pub(crate) fn process_pending_library(
 pub(crate) fn process_library_from_source(
     file_id: FileId,
     library: &SourceLibrary,
-    source: String,
+    source: Arc<str>,
+    pre_parsed: Option<ParsedLibrarySurface>,
     backend: &TreeSitterDartBackend,
     processing: &ProcessingConfig<'_>,
 ) -> BuildOutcome {
@@ -95,18 +112,21 @@ pub(crate) fn process_library_from_source(
         cached: false,
     };
     let source_text = SourceText::new(file_id, source);
-    let parsed = parse_file_with_backend(backend, &source_text, ParseOptions::default());
-    diagnostics.extend(parsed.diagnostics.clone());
-
+    let parsed = pre_parsed.unwrap_or_else(|| {
+        let parsed = parse_file_with_backend(backend, &source_text, ParseOptions::default());
+        diagnostics.extend(parsed.diagnostics);
+        parsed.library
+    });
     let resolved = dust_resolver::resolve_library(
         file_id,
         &library.source_path.to_string_lossy(),
-        &parsed.library,
+        &parsed,
         processing.catalog,
     );
-    diagnostics.extend(resolved.diagnostics.clone());
+    diagnostics.extend(resolved.diagnostics.iter().cloned());
+    let resolved = resolved.library;
 
-    let lowered = lower_library(&resolved.library);
+    let lowered = lower_library(&resolved);
     diagnostics.extend(lowered.diagnostics.clone());
 
     if diagnostics.iter().any(|diagnostic| diagnostic.is_error()) {
@@ -114,11 +134,12 @@ pub(crate) fn process_library_from_source(
             diagnostics,
             artifact,
             expected_output_hash: None,
+            analysis_snapshot: LibraryAnalysisSnapshot::default(),
         };
     }
 
     let mut plan = processing.registry.build_symbol_plan(&lowered.value);
-    plan.extend_copyable_types(processing.copyable_types.iter().cloned());
+    plan.set_workspace_analysis(Arc::clone(processing.workspace_analysis));
 
     let output = if processing.write_output {
         match write_library_with_plan(&lowered.value, processing.registry, plan.clone()) {
@@ -132,6 +153,7 @@ pub(crate) fn process_library_from_source(
                     diagnostics,
                     artifact,
                     expected_output_hash: None,
+                    analysis_snapshot: LibraryAnalysisSnapshot::default(),
                 };
             }
         }
@@ -165,39 +187,70 @@ pub(crate) fn process_library_from_source(
             cached: false,
         },
         expected_output_hash: Some(hash_text(&output.source)),
+        analysis_snapshot: LibraryAnalysisSnapshot::default(),
     }
 }
 
-pub(crate) fn collect_workspace_copyable_types(
-    loaded_sources: &[(FileId, SourceLibrary, String)],
-    catalog: &dust_resolver::SymbolCatalog,
-) -> HashSet<String> {
-    let backend = TreeSitterDartBackend::new();
+pub(crate) fn collect_workspace_analysis(
+    pending: &[PendingLibrary],
+    registry: &PluginRegistry,
+) -> (
+    WorkspaceAnalysisBuilder,
+    Vec<Option<ParsedLibrarySurface>>,
+    Vec<LibraryAnalysisSnapshot>,
+) {
+    use std::thread;
 
-    loaded_sources
-        .iter()
-        .flat_map(|(file_id, library, source)| {
-            let source_text = SourceText::new(*file_id, source.clone());
-            let parsed = parse_file_with_backend(&backend, &source_text, ParseOptions::default());
-            let resolved = dust_resolver::resolve_library(
-                *file_id,
-                &library.source_path.to_string_lossy(),
-                &parsed.library,
-                catalog,
-            );
+    if pending.is_empty() {
+        return (WorkspaceAnalysisBuilder::default(), Vec::new(), Vec::new());
+    }
 
-            resolved
-                .library
-                .classes
-                .into_iter()
-                .filter(|class| {
-                    class
-                        .traits
-                        .iter()
-                        .any(|trait_app| trait_app.symbol.0 == "derive_annotation::CopyWith")
-                })
-                .map(|class| class.name)
-                .collect::<Vec<_>>()
-        })
-        .collect()
+    let threads = thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(1)
+        .min(pending.len())
+        .max(1);
+
+    let mut groups = (0..threads).map(|_| Vec::new()).collect::<Vec<_>>();
+    for (index, item) in pending.iter().enumerate() {
+        groups[index % threads].push((index, item));
+    }
+
+    thread::scope(|scope| {
+        let mut handles = Vec::new();
+        for group in groups {
+            handles.push(scope.spawn(move || {
+                let backend = TreeSitterDartBackend::new();
+                let mut local_analysis = WorkspaceAnalysisBuilder::default();
+                let mut local_results = Vec::new();
+
+                for (index, pending) in group {
+                    let source_text =
+                        SourceText::new(pending.file_id, Arc::clone(&pending.input.source));
+                    let parsed =
+                        parse_file_with_backend(&backend, &source_text, ParseOptions::default());
+                    let mut library_analysis = WorkspaceAnalysisBuilder::default();
+                    registry.collect_workspace_analysis(&parsed.library, &mut library_analysis);
+                    let analysis_snapshot = library_analysis.snapshot();
+                    local_analysis.merge(library_analysis);
+                    local_results.push((index, analysis_snapshot, Some(parsed.library)));
+                }
+                (local_analysis, local_results)
+            }));
+        }
+
+        let mut workspace_analysis = WorkspaceAnalysisBuilder::default();
+        let mut ordered_surfaces = vec![None; pending.len()];
+        let mut analysis_snapshots = vec![LibraryAnalysisSnapshot::default(); pending.len()];
+
+        for handle in handles {
+            let (local_analysis, local) = handle.join().expect("scan thread must not panic");
+            workspace_analysis.merge(local_analysis);
+            for (index, analysis_snapshot, parsed) in local {
+                analysis_snapshots[index] = analysis_snapshot;
+                ordered_surfaces[index] = parsed;
+            }
+        }
+        (workspace_analysis, ordered_surfaces, analysis_snapshots)
+    })
 }
