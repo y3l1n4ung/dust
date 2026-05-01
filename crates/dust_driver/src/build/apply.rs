@@ -8,6 +8,7 @@ use crate::{
     result::CommandResult,
 };
 
+#[derive(Clone, Copy)]
 pub(crate) struct ApplyOutcomeConfig<'a> {
     pub(crate) cache_root: &'a Path,
     pub(crate) package_config_hash: u64,
@@ -16,7 +17,7 @@ pub(crate) struct ApplyOutcomeConfig<'a> {
 }
 
 pub(crate) fn apply_indexed_outcomes(
-    indexed: Vec<IndexedBuildOutcome>,
+    indexed: impl IntoIterator<Item = IndexedBuildOutcome>,
     config: ApplyOutcomeConfig<'_>,
     cache: &mut WorkspaceCache,
     result: &mut CommandResult,

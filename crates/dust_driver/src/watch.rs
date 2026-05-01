@@ -6,16 +6,13 @@ use std::{
 mod snapshot;
 
 use dust_cache::WorkspaceCache;
-use dust_diagnostics::Diagnostic;
-use dust_workspace::discover_workspace;
 
 use crate::{
     build::{
-        ApplyOutcomeConfig, BatchConfig, apply_indexed_outcomes, codegen_tool_hash,
-        default_registry, flush_cache_into_result, prepare_and_process_batch,
-        read_package_config_hash,
+        ApplyOutcomeConfig, BatchConfig, apply_indexed_outcomes, flush_cache_into_result,
+        prepare_and_process_batch, read_package_config_hash,
     },
-    catalog::build_symbol_catalog,
+    context::CachedDriverContext,
     progress::{ProgressEvent, ProgressPhase},
     request::WatchRequest,
     result::{CacheReport, CommandResult, WatchReport},
@@ -43,35 +40,21 @@ fn run_watch_inner(
     let started = Instant::now();
     let mut result = CommandResult::default();
 
-    let workspace = match discover_workspace(&request.cwd) {
-        Ok(workspace) => workspace,
+    let CachedDriverContext {
+        workspace,
+        registry,
+        catalog,
+        tool_hash,
+        mut cache,
+        mut cache_report,
+        ..
+    } = match CachedDriverContext::load(&request.cwd) {
+        Ok(context) => context,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);
             result.elapsed_ms = started.elapsed().as_millis();
             return result;
         }
-    };
-
-    let registry = default_registry();
-    let catalog = build_symbol_catalog(&registry);
-    let tool_hash = codegen_tool_hash();
-    let mut cache = match WorkspaceCache::load(&workspace.cache_root) {
-        Ok(cache) => cache,
-        Err(error) => {
-            result.diagnostics.push(Diagnostic::error(format!(
-                "failed to load Dust cache `{}`: {error}",
-                workspace
-                    .cache_root
-                    .join(".dart_tool/dust/build_cache_v1.json")
-                    .display()
-            )));
-            result.elapsed_ms = started.elapsed().as_millis();
-            return result;
-        }
-    };
-    let mut cache_report = CacheReport {
-        path: cache.path().to_path_buf(),
-        ..CacheReport::default()
     };
     let mut package_config_hash = match read_package_config_hash(&workspace.package_config.path) {
         Ok(hash) => hash,

@@ -11,6 +11,7 @@ use crate::build::process::LoadedLibraryInput;
 const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../build.rs"),
     include_str!("../check.rs"),
+    include_str!("../context.rs"),
     include_str!("../watch.rs"),
     include_str!("../lower.rs"),
     include_str!("apply.rs"),

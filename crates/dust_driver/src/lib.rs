@@ -6,6 +6,7 @@ mod build;
 mod catalog;
 mod check;
 mod clean;
+mod context;
 mod doctor;
 mod lower;
 mod progress;

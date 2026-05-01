@@ -6,15 +6,11 @@ mod work;
 
 use std::time::Instant;
 
-use dust_cache::WorkspaceCache;
-use dust_diagnostics::Diagnostic;
-use dust_workspace::discover_workspace;
-
 use crate::{
-    catalog::build_symbol_catalog,
+    context::CachedDriverContext,
     progress::{ProgressEvent, ProgressPhase},
     request::BuildRequest,
-    result::{CacheReport, CommandResult},
+    result::CommandResult,
 };
 
 pub(crate) use apply::{ApplyOutcomeConfig, apply_indexed_outcomes, flush_cache_into_result};
@@ -44,43 +40,21 @@ fn run_build_inner(
     let started = Instant::now();
     let mut result = CommandResult::default();
 
-    let workspace = match discover_workspace(&request.cwd) {
-        Ok(workspace) => workspace,
+    let CachedDriverContext {
+        workspace,
+        registry,
+        catalog,
+        tool_hash,
+        package_config_hash,
+        mut cache,
+        mut cache_report,
+    } = match CachedDriverContext::load(&request.cwd) {
+        Ok(context) => context,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);
             result.elapsed_ms = started.elapsed().as_millis();
             return result;
         }
-    };
-
-    let registry = default_registry();
-    let catalog = build_symbol_catalog(&registry);
-    let tool_hash = codegen_tool_hash();
-    let package_config_hash = match read_package_config_hash(&workspace.package_config.path) {
-        Ok(hash) => hash,
-        Err(diagnostic) => {
-            result.diagnostics.push(diagnostic);
-            result.elapsed_ms = started.elapsed().as_millis();
-            return result;
-        }
-    };
-    let mut cache = match WorkspaceCache::load(&workspace.cache_root) {
-        Ok(cache) => cache,
-        Err(error) => {
-            result.diagnostics.push(Diagnostic::error(format!(
-                "failed to load Dust cache `{}`: {error}",
-                workspace
-                    .cache_root
-                    .join(".dart_tool/dust/build_cache_v1.json")
-                    .display()
-            )));
-            result.elapsed_ms = started.elapsed().as_millis();
-            return result;
-        }
-    };
-    let mut cache_report = CacheReport {
-        path: cache.path().to_path_buf(),
-        ..CacheReport::default()
     };
     let indexed = prepare_and_process_batch(
         BatchConfig {

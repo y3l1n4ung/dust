@@ -1,9 +1,7 @@
 use std::time::Instant;
 
-use dust_workspace::discover_workspace;
-
 use crate::{
-    build::default_registry,
+    context::DriverContext,
     request::DoctorRequest,
     result::{CommandResult, DoctorReport},
 };
@@ -13,16 +11,18 @@ pub fn run_doctor(request: DoctorRequest) -> CommandResult {
     let started = Instant::now();
     let mut result = CommandResult::default();
 
-    let workspace = match discover_workspace(&request.cwd) {
-        Ok(workspace) => workspace,
+    let DriverContext {
+        workspace,
+        registry,
+        ..
+    } = match DriverContext::load(&request.cwd) {
+        Ok(context) => context,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);
             result.elapsed_ms = started.elapsed().as_millis();
             return result;
         }
     };
-
-    let registry = default_registry();
     result.doctor = Some(DoctorReport {
         package_root: workspace.package_root,
         package_config_path: workspace.package_config.path,
