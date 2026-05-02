@@ -18,6 +18,7 @@ pub(super) fn build_load_error(
         source_hash: None,
         outcome: BuildOutcome {
             diagnostics: vec![diagnostic],
+            diagnostic_file: None,
             artifact: BuildArtifact {
                 source_path: library.source_path.clone(),
                 output_path: library.output_path.clone(),
@@ -43,6 +44,7 @@ pub(super) fn build_cached_outcome(
         source_hash: None,
         outcome: BuildOutcome {
             diagnostics: Vec::new(),
+            diagnostic_file: None,
             artifact: BuildArtifact {
                 source_path: library.source_path.clone(),
                 output_path: library.output_path.clone(),

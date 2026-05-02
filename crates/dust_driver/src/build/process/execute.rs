@@ -12,7 +12,9 @@ use dust_workspace::SourceLibrary;
 use crate::build::support::hash_text;
 use crate::lower::lower_library;
 
-use super::{BuildOutcome, PendingLibrary, ProcessingConfig, emit_or_write_library};
+use super::{
+    BuildOutcome, PendingLibrary, ProcessingConfig, build_diagnostic_file, emit_or_write_library,
+};
 
 pub(crate) fn process_pending_library(
     pending: PendingLibrary,
@@ -69,6 +71,7 @@ pub(crate) fn process_library_from_source(
 ) -> BuildOutcome {
     let mut diagnostics = Vec::new();
     let source_text = SourceText::new(file_id, source);
+    let diagnostic_file = build_diagnostic_file(file_id, library, source_text.line_index().clone());
     let parsed = pre_parsed.unwrap_or_else(|| {
         let parsed = parse_file_with_backend(backend, &source_text, ParseOptions::default());
         diagnostics.extend(parsed.diagnostics);
@@ -78,7 +81,7 @@ pub(crate) fn process_library_from_source(
     let lowered_library =
         match resolve_and_lower_library(file_id, library, &parsed, processing, &mut diagnostics) {
             Some(library) => library,
-            None => return BuildOutcome::failed(library, diagnostics),
+            None => return BuildOutcome::failed(library, diagnostics, Some(diagnostic_file)),
         };
 
     let output = match emit_library_output(library, &lowered_library, processing) {
@@ -88,11 +91,11 @@ pub(crate) fn process_library_from_source(
                 "failed to write `{}`: {error}",
                 library.output_path.display()
             )));
-            return BuildOutcome::failed(library, diagnostics);
+            return BuildOutcome::failed(library, diagnostics, Some(diagnostic_file));
         }
     };
 
-    finish_success(library, diagnostics, output)
+    finish_success(library, diagnostics, Some(diagnostic_file), output)
 }
 
 fn resolve_and_lower_library(
@@ -135,6 +138,7 @@ fn emit_library_output(
 fn finish_success(
     library: &SourceLibrary,
     mut diagnostics: Vec<Diagnostic>,
+    diagnostic_file: Option<crate::result::DiagnosticFile>,
     output: WriteResult,
 ) -> BuildOutcome {
     let WriteResult {
@@ -147,5 +151,12 @@ fn finish_success(
     } = output;
     diagnostics.extend(output_diagnostics);
 
-    BuildOutcome::succeeded(library, diagnostics, hash_text(&source), changed, written)
+    BuildOutcome::succeeded(
+        library,
+        diagnostics,
+        diagnostic_file,
+        hash_text(&source),
+        changed,
+        written,
+    )
 }

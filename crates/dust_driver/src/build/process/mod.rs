@@ -7,10 +7,10 @@ use std::sync::Arc;
 use dust_diagnostics::Diagnostic;
 use dust_parser_dart::ParsedLibrarySurface;
 use dust_plugin_api::{LibraryAnalysisSnapshot, WorkspaceAnalysis};
-use dust_text::FileId;
+use dust_text::{FileId, LineIndex};
 use dust_workspace::SourceLibrary;
 
-use crate::result::BuildArtifact;
+use crate::result::{BuildArtifact, DiagnosticFile};
 
 pub(crate) use self::{
     execute::process_pending_library, output::emit_or_write_library,
@@ -27,15 +27,21 @@ pub(crate) struct ProcessingConfig<'a> {
 
 pub(crate) struct BuildOutcome {
     pub(crate) diagnostics: Vec<Diagnostic>,
+    pub(crate) diagnostic_file: Option<DiagnosticFile>,
     pub(crate) artifact: BuildArtifact,
     pub(crate) expected_output_hash: Option<u64>,
     pub(crate) analysis_snapshot: LibraryAnalysisSnapshot,
 }
 
 impl BuildOutcome {
-    pub(crate) fn failed(library: &SourceLibrary, diagnostics: Vec<Diagnostic>) -> Self {
+    pub(crate) fn failed(
+        library: &SourceLibrary,
+        diagnostics: Vec<Diagnostic>,
+        diagnostic_file: Option<DiagnosticFile>,
+    ) -> Self {
         Self {
             diagnostics,
+            diagnostic_file,
             artifact: build_artifact(library, false, false, false),
             expected_output_hash: None,
             analysis_snapshot: LibraryAnalysisSnapshot::default(),
@@ -45,12 +51,14 @@ impl BuildOutcome {
     pub(crate) fn succeeded(
         library: &SourceLibrary,
         diagnostics: Vec<Diagnostic>,
+        diagnostic_file: Option<DiagnosticFile>,
         expected_output_hash: u64,
         changed: bool,
         written: bool,
     ) -> Self {
         Self {
             diagnostics,
+            diagnostic_file,
             artifact: build_artifact(library, changed, written, false),
             expected_output_hash: Some(expected_output_hash),
             analysis_snapshot: LibraryAnalysisSnapshot::default(),
@@ -97,6 +105,14 @@ impl PendingLibrary {
             analysis_snapshot: LibraryAnalysisSnapshot::default(),
         }
     }
+}
+
+pub(crate) fn build_diagnostic_file(
+    file_id: FileId,
+    library: &SourceLibrary,
+    line_index: LineIndex,
+) -> DiagnosticFile {
+    DiagnosticFile::new(file_id, library.source_path.clone(), line_index)
 }
 
 fn build_artifact(

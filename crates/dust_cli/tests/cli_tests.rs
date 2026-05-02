@@ -277,6 +277,10 @@ fn cli_build_renders_warning_details() {
         run.stdout
             .contains("warning: unknown derive trait or config `UnknownTrait`")
     );
+    assert!(run.stdout.contains(&format!(
+        "{}:2:",
+        workspace.path().join("lib/user.dart").display()
+    )));
     assert!(
         run.stdout
             .contains("annotation member is not owned by any registered symbol")

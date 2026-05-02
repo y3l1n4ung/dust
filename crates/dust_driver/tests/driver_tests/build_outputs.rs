@@ -236,3 +236,35 @@ fn build_rejects_invalid_serde_using_values() {
         })
     }));
 }
+
+#[test]
+fn build_keeps_source_context_for_labeled_diagnostics() {
+    let workspace = make_workspace();
+    write_file(
+        &workspace.path().join("lib/user.dart"),
+        "part 'user.g.dart';\n\
+         @Derive([ToString(), UnknownTrait()])\n\
+         class User {\n\
+           final String id;\n\
+           const User(this.id);\n\
+         }\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+    });
+
+    assert_eq!(result.diagnostic_files.len(), 1);
+    let file = &result.diagnostic_files[0];
+    assert_eq!(file.path, workspace.path().join("lib/user.dart"));
+    assert_eq!(file.file_id, result.diagnostics[0].labels[0].file_id);
+
+    let (start, end) = file
+        .line_cols(result.diagnostics[0].labels[0].range)
+        .expect("label range should resolve to line/column data");
+    assert_eq!((start.line, start.column), (1, 0));
+    assert_eq!(end.line, 1);
+    assert!(end.column > start.column);
+}

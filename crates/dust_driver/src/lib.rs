@@ -23,8 +23,8 @@ pub use request::{
     BuildRequest, CheckRequest, CleanRequest, CommandRequest, DoctorRequest, WatchRequest,
 };
 pub use result::{
-    BuildArtifact, CacheReport, CheckedLibrary, CleanReport, CommandResult, DoctorReport,
-    WatchReport,
+    BuildArtifact, CacheReport, CheckedLibrary, CleanReport, CommandResult, DiagnosticFile,
+    DoctorReport, WatchReport,
 };
 pub use watch::{run_watch, run_watch_with_progress};
 

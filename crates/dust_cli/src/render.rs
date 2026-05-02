@@ -1,5 +1,7 @@
-use dust_diagnostics::{Diagnostic, Severity, render_to_string};
-use dust_driver::CommandResult;
+use std::collections::HashMap;
+
+use dust_diagnostics::{Diagnostic, Severity};
+use dust_driver::{CommandResult, DiagnosticFile};
 
 use crate::args::CliCommand;
 
@@ -94,7 +96,7 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
     if !result.diagnostics.is_empty() {
         lines.push(render_diagnostic_summary(&result.diagnostics));
         lines.push(String::new());
-        append_diagnostic_blocks(&mut lines, &result.diagnostics);
+        append_diagnostic_blocks(&mut lines, result, &result.diagnostics);
     }
 
     if lines.is_empty() {
@@ -121,13 +123,77 @@ fn render_diagnostic_summary(diagnostics: &[Diagnostic]) -> String {
     format!("diagnostics  errors: {errors}  warnings: {warnings}  notes: {notes}")
 }
 
-fn append_diagnostic_blocks(lines: &mut Vec<String>, diagnostics: &[Diagnostic]) {
+fn append_diagnostic_blocks(
+    lines: &mut Vec<String>,
+    result: &CommandResult,
+    diagnostics: &[Diagnostic],
+) {
+    let files = result
+        .diagnostic_files
+        .iter()
+        .map(|file| (file.file_id.raw(), file))
+        .collect::<HashMap<_, _>>();
     for (index, diagnostic) in diagnostics.iter().enumerate() {
-        lines.extend(render_to_string(diagnostic).lines().map(str::to_owned));
+        lines.extend(
+            render_diagnostic(diagnostic, &files)
+                .lines()
+                .map(str::to_owned),
+        );
         if index + 1 != diagnostics.len() {
             lines.push(String::new());
         }
     }
+}
+
+fn render_diagnostic(diagnostic: &Diagnostic, files: &HashMap<u32, &DiagnosticFile>) -> String {
+    let mut output = format!("{}: {}", diagnostic.severity.as_str(), diagnostic.message);
+
+    for label in &diagnostic.labels {
+        output.push('\n');
+        output.push_str("  --> ");
+        output.push_str(&render_label(label, files));
+    }
+
+    for note in &diagnostic.notes {
+        output.push_str(&format!("\n  = note: {note}"));
+    }
+
+    output
+}
+
+fn render_label(
+    label: &dust_diagnostics::SourceLabel,
+    files: &HashMap<u32, &DiagnosticFile>,
+) -> String {
+    let Some(file) = files.get(&label.file_id.raw()).copied() else {
+        return format!(
+            "file {:?} {}..{}: {}",
+            label.file_id,
+            label.range.start().to_u32(),
+            label.range.end().to_u32(),
+            label.message
+        );
+    };
+
+    if let Some((start, end)) = file.line_cols(label.range) {
+        return format!(
+            "{}:{}:{}..{}:{}: {}",
+            file.path.display(),
+            start.line + 1,
+            start.column + 1,
+            end.line + 1,
+            end.column + 1,
+            label.message
+        );
+    }
+
+    format!(
+        "{} {}..{}: {}",
+        file.path.display(),
+        label.range.start().to_u32(),
+        label.range.end().to_u32(),
+        label.message
+    )
 }
 
 #[cfg(test)]
@@ -135,7 +201,9 @@ mod tests {
     use std::path::PathBuf;
 
     use dust_diagnostics::{Diagnostic, SourceLabel};
-    use dust_driver::{CacheReport, CleanReport, CommandResult, DoctorReport, WatchReport};
+    use dust_driver::{
+        CacheReport, CleanReport, CommandResult, DiagnosticFile, DoctorReport, WatchReport,
+    };
     use dust_text::{FileId, TextRange};
 
     use super::*;
@@ -201,6 +269,11 @@ mod tests {
                     rebuilt_libraries: vec![PathBuf::from("lib/user.dart")],
                 }),
                 cache: Some(CacheReport::default()),
+                diagnostic_files: vec![DiagnosticFile::new(
+                    FileId::new(4),
+                    PathBuf::from("/tmp/example/user.dart"),
+                    dust_text::LineIndex::new("@Derive([ToString(), UnknownTrait()])\n"),
+                )],
                 elapsed_ms: 22,
                 diagnostics: vec![Diagnostic::warning("something happened").with_label(
                     SourceLabel::new(
@@ -217,6 +290,6 @@ mod tests {
         assert!(rendered.contains("watch  cycles: 2  rebuilds: 1"));
         assert!(rendered.contains("diagnostics  errors: 0  warnings: 1  notes: 0"));
         assert!(rendered.contains("warning: something happened"));
-        assert!(rendered.contains("file FileId(4) 22..27"));
+        assert!(rendered.contains("/tmp/example/user.dart:1:23..1:28"));
     }
 }

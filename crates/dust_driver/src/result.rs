@@ -1,6 +1,37 @@
 use std::path::PathBuf;
 
 use dust_diagnostics::Diagnostic;
+use dust_text::{FileId, LineCol, LineIndex, TextRange};
+
+/// One source file context attached to command diagnostics.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DiagnosticFile {
+    /// The file identifier used by diagnostic labels in this command run.
+    pub file_id: FileId,
+    /// The absolute source path for the file.
+    pub path: PathBuf,
+    /// The precomputed line index used for line and column rendering.
+    pub line_index: LineIndex,
+}
+
+impl DiagnosticFile {
+    /// Creates a diagnostic file context for one source file.
+    pub fn new(file_id: FileId, path: PathBuf, line_index: LineIndex) -> Self {
+        Self {
+            file_id,
+            path,
+            line_index,
+        }
+    }
+
+    /// Converts one byte range into zero-based start and end line/column pairs.
+    pub fn line_cols(&self, range: TextRange) -> Option<(LineCol, LineCol)> {
+        Some((
+            self.line_index.line_col(range.start())?,
+            self.line_index.line_col(range.end())?,
+        ))
+    }
+}
 
 /// One generated library artifact from a build run.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -85,6 +116,8 @@ pub struct WatchReport {
 pub struct CommandResult {
     /// Diagnostics produced across all processed libraries.
     pub diagnostics: Vec<Diagnostic>,
+    /// Source file contexts for diagnostics that carry labels.
+    pub diagnostic_files: Vec<DiagnosticFile>,
     /// Written or skipped build artifacts.
     pub build_artifacts: Vec<BuildArtifact>,
     /// Freshness-check results.

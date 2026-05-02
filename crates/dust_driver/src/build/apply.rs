@@ -32,11 +32,13 @@ pub(crate) fn apply_indexed_outcomes(
         } = indexed_outcome;
         let BuildOutcome {
             diagnostics,
+            diagnostic_file,
             artifact,
             expected_output_hash,
             analysis_snapshot,
         } = outcome;
         let has_error = diagnostics.iter().any(|diagnostic| diagnostic.is_error());
+        let has_labels = diagnostics.iter().any(Diagnostic::has_labels);
 
         if let Some(expected_output_hash) = expected_output_hash {
             if let Some(source_hash) = source_hash {
@@ -57,6 +59,11 @@ pub(crate) fn apply_indexed_outcomes(
         }
 
         result.diagnostics.extend(diagnostics);
+        if has_labels {
+            if let Some(diagnostic_file) = diagnostic_file {
+                result.diagnostic_files.push(diagnostic_file);
+            }
+        }
         if let Some(paths) = rebuilt_libraries.as_deref_mut() {
             paths.push(artifact.source_path.clone());
         }
