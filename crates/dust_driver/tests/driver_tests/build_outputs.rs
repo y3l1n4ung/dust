@@ -1,5 +1,6 @@
 use std::fs;
 
+use dust_diagnostics::render_to_string_with_files;
 use dust_driver::{BuildRequest, run_build};
 
 use super::support::{make_workspace, write_file};
@@ -225,6 +226,7 @@ fn build_rejects_invalid_serde_using_values() {
     });
 
     assert!(result.has_errors());
+    assert!(result.diagnostic_files.is_empty());
     assert!(result.diagnostics.iter().any(|diagnostic| {
         diagnostic.message.contains(
             "field `createdAt` uses suspicious `SerDe(using: ...)` type reference `DateTimeCodec`",
@@ -260,11 +262,13 @@ fn build_keeps_source_context_for_labeled_diagnostics() {
     let file = &result.diagnostic_files[0];
     assert_eq!(file.path, workspace.path().join("lib/user.dart"));
     assert_eq!(file.file_id, result.diagnostics[0].labels[0].file_id);
+    assert!(
+        file.source_text()
+            .contains("@Derive([ToString(), UnknownTrait()])")
+    );
 
-    let (start, end) = file
-        .line_cols(result.diagnostics[0].labels[0].range)
-        .expect("label range should resolve to line/column data");
-    assert_eq!((start.line, start.column), (1, 0));
-    assert_eq!(end.line, 1);
-    assert!(end.column > start.column);
+    let rendered = render_to_string_with_files(&result.diagnostics[0], &[file.render_context()]);
+    assert!(rendered.contains(&format!("  --> {}:2:1", file.path.display())));
+    assert!(rendered.contains("2 | @Derive([ToString(), UnknownTrait()])"));
+    assert!(rendered.contains("annotation member is not owned by any registered symbol"));
 }

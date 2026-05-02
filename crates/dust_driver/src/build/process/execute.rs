@@ -70,8 +70,9 @@ pub(crate) fn process_library_from_source(
     processing: &ProcessingConfig<'_>,
 ) -> BuildOutcome {
     let mut diagnostics = Vec::new();
-    let source_text = SourceText::new(file_id, source);
-    let diagnostic_file = build_diagnostic_file(file_id, library, source_text.line_index().clone());
+    let source_text = SourceText::new(file_id, Arc::clone(&source));
+    let diagnostic_file =
+        build_diagnostic_file(file_id, library, source, source_text.line_index().clone());
     let parsed = pre_parsed.unwrap_or_else(|| {
         let parsed = parse_file_with_backend(backend, &source_text, ParseOptions::default());
         diagnostics.extend(parsed.diagnostics);

@@ -9,5 +9,5 @@ mod severity;
 
 pub use diagnostic::Diagnostic;
 pub use label::SourceLabel;
-pub use render::render_to_string;
+pub use render::{DiagnosticFileContext, render_to_string, render_to_string_with_files};
 pub use severity::Severity;

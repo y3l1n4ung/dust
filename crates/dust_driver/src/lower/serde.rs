@@ -2,8 +2,8 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::{ConfigApplicationIr, SerdeClassConfigIr, SerdeFieldConfigIr};
 
 use super::serde_parse::{
-    parse_bool_literal, parse_serde_arguments, parse_serde_rename_rule, parse_string_list,
-    parse_string_literal,
+    parse_bool_literal, parse_codec_source, parse_serde_arguments, parse_serde_rename_rule,
+    parse_string_list, parse_string_literal,
 };
 
 pub(crate) fn lower_class_serde_config(
@@ -131,87 +131,4 @@ pub(crate) fn lower_field_serde_config(
 
 fn is_serde_config(config: &ConfigApplicationIr) -> bool {
     config.symbol.0 == "derive_serde_annotation::SerDe"
-}
-
-fn parse_codec_source(
-    field_name: &str,
-    source: &str,
-    diagnostics: &mut Vec<Diagnostic>,
-) -> Option<String> {
-    let source = source.trim();
-    if source.is_empty() {
-        diagnostics.push(
-            Diagnostic::error(format!(
-                "field `{field_name}` uses empty `SerDe(using: ...)` value"
-            ))
-            .with_note(codec_source_guidance()),
-        );
-        return None;
-    }
-
-    if parse_string_literal(source).is_some()
-        || parse_bool_literal(source).is_some()
-        || source == "null"
-        || looks_like_number_literal(source)
-        || looks_like_collection_literal(source)
-        || looks_like_function_literal(source)
-    {
-        diagnostics.push(
-            Diagnostic::error(format!(
-                "field `{field_name}` uses invalid `SerDe(using: ...)` value `{source}`"
-            ))
-            .with_note(codec_source_guidance()),
-        );
-        return None;
-    }
-
-    if looks_like_bare_type_reference(source) {
-        diagnostics.push(
-            Diagnostic::error(format!(
-                "field `{field_name}` uses suspicious `SerDe(using: ...)` type reference `{source}`"
-            ))
-            .with_note(codec_source_guidance()),
-        );
-        return None;
-    }
-
-    Some(source.to_owned())
-}
-
-fn codec_source_guidance() -> &'static str {
-    "Use a codec object such as `const UnixEpochDateTimeCodec()` or `unixEpochDateTimeCodec`."
-}
-
-fn looks_like_number_literal(source: &str) -> bool {
-    let source = source.trim();
-    let Some(first) = source.chars().next() else {
-        return false;
-    };
-
-    first.is_ascii_digit()
-        || ((first == '-' || first == '+')
-            && source
-                .chars()
-                .nth(1)
-                .is_some_and(|next| next.is_ascii_digit()))
-}
-
-fn looks_like_collection_literal(source: &str) -> bool {
-    let source = source.trim();
-    (source.starts_with('[') && source.ends_with(']'))
-        || (source.starts_with('{') && source.ends_with('}'))
-}
-
-fn looks_like_function_literal(source: &str) -> bool {
-    source.contains("=>")
-}
-
-fn looks_like_bare_type_reference(source: &str) -> bool {
-    let source = source.trim();
-    !source.contains('(')
-        && !source.contains('.')
-        && source
-            .chars()
-            .next()
-            .is_some_and(|first| first.is_ascii_uppercase())
 }

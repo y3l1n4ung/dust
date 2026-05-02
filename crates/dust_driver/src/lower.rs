@@ -1,4 +1,5 @@
 mod inheritance;
+mod parse_support;
 mod serde;
 mod serde_parse;
 mod tests_inheritance;

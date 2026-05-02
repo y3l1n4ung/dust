@@ -197,7 +197,7 @@ fn cli_watch_reports_rebuilt_library() {
     let root = workspace.path().to_path_buf();
     let user_path = root.join("lib/user.dart");
     let modifier = thread::spawn(move || {
-        thread::sleep(Duration::from_millis(25));
+        thread::sleep(Duration::from_millis(80));
         write_file(
             &user_path,
             "part 'user.g.dart';\n\
@@ -217,7 +217,7 @@ fn cli_watch_reports_rebuilt_library() {
         "--poll-ms",
         "20",
         "--max-cycles",
-        "3",
+        "8",
     ]);
     modifier.join().unwrap();
 
@@ -283,8 +283,13 @@ fn cli_build_renders_warning_details() {
     )));
     assert!(
         run.stdout
+            .contains("2 | @Derive([ToString(), UnknownTrait()])")
+    );
+    assert!(
+        run.stdout
             .contains("annotation member is not owned by any registered symbol")
     );
+    assert!(run.stdout.contains("^^^^"));
 }
 
 #[test]

@@ -110,9 +110,10 @@ impl PendingLibrary {
 pub(crate) fn build_diagnostic_file(
     file_id: FileId,
     library: &SourceLibrary,
+    source: Arc<str>,
     line_index: LineIndex,
 ) -> DiagnosticFile {
-    DiagnosticFile::new(file_id, library.source_path.clone(), line_index)
+    DiagnosticFile::with_line_index(file_id, library.source_path.clone(), source, line_index)
 }
 
 fn build_artifact(

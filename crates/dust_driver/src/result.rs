@@ -1,6 +1,6 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
-use dust_diagnostics::Diagnostic;
+use dust_diagnostics::{Diagnostic, DiagnosticFileContext};
 use dust_text::{FileId, LineCol, LineIndex, TextRange};
 
 /// One source file context attached to command diagnostics.
@@ -10,16 +10,34 @@ pub struct DiagnosticFile {
     pub file_id: FileId,
     /// The absolute source path for the file.
     pub path: PathBuf,
+    /// The original UTF-8 source text.
+    pub source: Arc<str>,
     /// The precomputed line index used for line and column rendering.
     pub line_index: LineIndex,
 }
 
 impl DiagnosticFile {
     /// Creates a diagnostic file context for one source file.
-    pub fn new(file_id: FileId, path: PathBuf, line_index: LineIndex) -> Self {
+    pub fn new(file_id: FileId, path: PathBuf, source: impl Into<Arc<str>>) -> Self {
+        let source = source.into();
+        let line_index = LineIndex::new(&source);
+
+        Self::with_line_index(file_id, path, source, line_index)
+    }
+
+    /// Creates a diagnostic file context using a precomputed line index.
+    pub fn with_line_index(
+        file_id: FileId,
+        path: PathBuf,
+        source: impl Into<Arc<str>>,
+        line_index: LineIndex,
+    ) -> Self {
+        let source = source.into();
+
         Self {
             file_id,
             path,
+            source,
             line_index,
         }
     }
@@ -30,6 +48,21 @@ impl DiagnosticFile {
             self.line_index.line_col(range.start())?,
             self.line_index.line_col(range.end())?,
         ))
+    }
+
+    /// Returns the source text for this file.
+    pub fn source_text(&self) -> &str {
+        &self.source
+    }
+
+    /// Returns a diagnostics-crate render context for this file.
+    pub fn render_context(&self) -> DiagnosticFileContext<'_> {
+        DiagnosticFileContext::new(
+            self.file_id,
+            &self.path,
+            self.source_text(),
+            &self.line_index,
+        )
     }
 }
 

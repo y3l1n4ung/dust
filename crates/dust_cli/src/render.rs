@@ -1,7 +1,5 @@
-use std::collections::HashMap;
-
-use dust_diagnostics::{Diagnostic, Severity};
-use dust_driver::{CommandResult, DiagnosticFile};
+use dust_diagnostics::{Diagnostic, Severity, render_to_string_with_files};
+use dust_driver::CommandResult;
 
 use crate::args::CliCommand;
 
@@ -131,11 +129,11 @@ fn append_diagnostic_blocks(
     let files = result
         .diagnostic_files
         .iter()
-        .map(|file| (file.file_id.raw(), file))
-        .collect::<HashMap<_, _>>();
+        .map(|file| file.render_context())
+        .collect::<Vec<_>>();
     for (index, diagnostic) in diagnostics.iter().enumerate() {
         lines.extend(
-            render_diagnostic(diagnostic, &files)
+            render_to_string_with_files(diagnostic, &files)
                 .lines()
                 .map(str::to_owned),
         );
@@ -143,57 +141,6 @@ fn append_diagnostic_blocks(
             lines.push(String::new());
         }
     }
-}
-
-fn render_diagnostic(diagnostic: &Diagnostic, files: &HashMap<u32, &DiagnosticFile>) -> String {
-    let mut output = format!("{}: {}", diagnostic.severity.as_str(), diagnostic.message);
-
-    for label in &diagnostic.labels {
-        output.push('\n');
-        output.push_str("  --> ");
-        output.push_str(&render_label(label, files));
-    }
-
-    for note in &diagnostic.notes {
-        output.push_str(&format!("\n  = note: {note}"));
-    }
-
-    output
-}
-
-fn render_label(
-    label: &dust_diagnostics::SourceLabel,
-    files: &HashMap<u32, &DiagnosticFile>,
-) -> String {
-    let Some(file) = files.get(&label.file_id.raw()).copied() else {
-        return format!(
-            "file {:?} {}..{}: {}",
-            label.file_id,
-            label.range.start().to_u32(),
-            label.range.end().to_u32(),
-            label.message
-        );
-    };
-
-    if let Some((start, end)) = file.line_cols(label.range) {
-        return format!(
-            "{}:{}:{}..{}:{}: {}",
-            file.path.display(),
-            start.line + 1,
-            start.column + 1,
-            end.line + 1,
-            end.column + 1,
-            label.message
-        );
-    }
-
-    format!(
-        "{} {}..{}: {}",
-        file.path.display(),
-        label.range.start().to_u32(),
-        label.range.end().to_u32(),
-        label.message
-    )
 }
 
 #[cfg(test)]
@@ -272,7 +219,7 @@ mod tests {
                 diagnostic_files: vec![DiagnosticFile::new(
                     FileId::new(4),
                     PathBuf::from("/tmp/example/user.dart"),
-                    dust_text::LineIndex::new("@Derive([ToString(), UnknownTrait()])\n"),
+                    "@Derive([ToString(), UnknownTrait()])\n",
                 )],
                 elapsed_ms: 22,
                 diagnostics: vec![Diagnostic::warning("something happened").with_label(
@@ -290,6 +237,8 @@ mod tests {
         assert!(rendered.contains("watch  cycles: 2  rebuilds: 1"));
         assert!(rendered.contains("diagnostics  errors: 0  warnings: 1  notes: 0"));
         assert!(rendered.contains("warning: something happened"));
-        assert!(rendered.contains("/tmp/example/user.dart:1:23..1:28"));
+        assert!(rendered.contains("  --> /tmp/example/user.dart:1:23"));
+        assert!(rendered.contains("1 | @Derive([ToString(), UnknownTrait()])"));
+        assert!(rendered.contains("^^^^^ this annotation name is not registered"));
     }
 }
