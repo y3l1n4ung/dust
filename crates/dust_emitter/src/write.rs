@@ -24,6 +24,21 @@ pub struct WriteResult {
     pub written: bool,
     /// The resolved output path used for writing.
     pub output_path: PathBuf,
+    /// Additional generated files written for this library.
+    pub auxiliary_outputs: Vec<AuxiliaryWriteResult>,
+}
+
+/// The filesystem result of writing one auxiliary generated file.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AuxiliaryWriteResult {
+    /// The emitted auxiliary source text.
+    pub source: String,
+    /// Whether the emitted source differs from the previous file contents.
+    pub changed: bool,
+    /// Whether the auxiliary file was actually written to disk.
+    pub written: bool,
+    /// The resolved output path used for writing.
+    pub output_path: PathBuf,
 }
 
 /// Emits and writes one library to its configured output path.
@@ -57,7 +72,7 @@ pub fn persist_emit_result(
         .diagnostics
         .iter()
         .any(|diagnostic| diagnostic.is_error());
-    let written = if !has_errors && emitted.changed {
+    let primary_written = if !has_errors && emitted.changed {
         if let Some(parent) = output_path.parent() {
             fs::create_dir_all(parent)?;
         }
@@ -66,14 +81,18 @@ pub fn persist_emit_result(
     } else {
         false
     };
+    let auxiliary_outputs = persist_auxiliary_outputs(&emitted.auxiliary_outputs, has_errors)?;
+    let changed = emitted.changed || auxiliary_outputs.iter().any(|output| output.changed);
+    let written = primary_written || auxiliary_outputs.iter().any(|output| output.written);
 
     Ok(WriteResult {
         source: emitted.source,
         symbols: emitted.symbols,
         diagnostics: emitted.diagnostics,
-        changed: emitted.changed,
+        changed,
         written,
         output_path,
+        auxiliary_outputs,
     })
 }
 
@@ -83,4 +102,33 @@ fn read_previous_output(path: &Path) -> io::Result<Option<String>> {
         Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
         Err(error) => Err(error),
     }
+}
+
+fn persist_auxiliary_outputs(
+    outputs: &[crate::emit::AuxiliaryEmitOutput],
+    has_errors: bool,
+) -> io::Result<Vec<AuxiliaryWriteResult>> {
+    outputs
+        .iter()
+        .map(|output| {
+            let previous_output = read_previous_output(&output.output_path)?;
+            let changed = previous_output.as_deref() != Some(output.source.as_str());
+            let written = if !has_errors && changed {
+                if let Some(parent) = output.output_path.parent() {
+                    fs::create_dir_all(parent)?;
+                }
+                fs::write(&output.output_path, &output.source)?;
+                true
+            } else {
+                false
+            };
+
+            Ok(AuxiliaryWriteResult {
+                source: output.source.clone(),
+                changed,
+                written,
+                output_path: output.output_path.clone(),
+            })
+        })
+        .collect()
 }

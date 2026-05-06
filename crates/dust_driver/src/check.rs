@@ -65,6 +65,11 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
         result.checked_libraries.push(CheckedLibrary {
             source_path: indexed_outcome.outcome.artifact.source_path.clone(),
             output_path: indexed_outcome.outcome.artifact.output_path.clone(),
+            auxiliary_output_paths: indexed_outcome
+                .outcome
+                .artifact
+                .auxiliary_output_paths
+                .clone(),
             stale: !has_error && indexed_outcome.outcome.artifact.changed,
             cached: indexed_outcome.outcome.artifact.cached,
         });

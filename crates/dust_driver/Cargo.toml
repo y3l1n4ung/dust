@@ -17,6 +17,7 @@ dust_ir = { path = "../dust_ir" }
 dust_plugin_api = { path = "../dust_plugin_api" }
 dust_plugin_derive = { path = "../dust_plugin_derive" }
 dust_plugin_serde = { path = "../dust_plugin_serde" }
+dust_http_client_plugin = { path = "../dust_http_client_plugin" }
 dust_emitter = { path = "../dust_emitter" }
 
 [dev-dependencies]

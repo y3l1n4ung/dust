@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 /// Generated members that belong inside one emitted mixin block.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ClassMixinContribution {
@@ -5,6 +7,15 @@ pub struct ClassMixinContribution {
     pub class_name: String,
     /// The generated members to place inside the mixin.
     pub members: Vec<String>,
+}
+
+/// One auxiliary generated file emitted alongside the primary `.g.dart` output.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AuxiliaryOutputContribution {
+    /// The resolved filesystem output path for the auxiliary file.
+    pub output_path: PathBuf,
+    /// The complete generated source for the auxiliary file.
+    pub source: String,
 }
 
 /// Generated code fragments returned by one plugin for one library.
@@ -20,6 +31,8 @@ pub struct PluginContribution {
     pub support_types: Vec<String>,
     /// Top-level generated functions.
     pub top_level_functions: Vec<String>,
+    /// Additional generated files owned by this library build.
+    pub auxiliary_outputs: Vec<AuxiliaryOutputContribution>,
 }
 
 impl PluginContribution {
@@ -48,5 +61,6 @@ impl PluginContribution {
             && self.mixin_members.is_empty()
             && self.support_types.is_empty()
             && self.top_level_functions.is_empty()
+            && self.auxiliary_outputs.is_empty()
     }
 }

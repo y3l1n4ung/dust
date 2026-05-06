@@ -13,11 +13,7 @@ abstract class Entity extends CatalogNode with AuditStamp, _$EntityDust {
 
 @Derive([ToString(), Eq(), CopyWith()])
 class DetailedEntity extends Entity with _$DetailedEntityDust {
-  const DetailedEntity(
-    super.id, {
-    required this.label,
-    required this.tags,
-  });
+  const DetailedEntity(super.id, {required this.label, required this.tags});
 
   final String label;
   final List<String> tags;

@@ -1,8 +1,8 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::LibraryIr;
-use dust_plugin_api::{PluginRegistry, SymbolPlan};
+use dust_plugin_api::{AuxiliaryOutputContribution, PluginRegistry, SymbolPlan};
 
 use crate::{format::format_generated_source, merge::MergedSections, writer::DartWriter};
 
@@ -17,6 +17,17 @@ pub struct EmitResult {
     pub diagnostics: Vec<Diagnostic>,
     /// Whether the newly emitted source differs from the previous output.
     pub changed: bool,
+    /// Additional generated files emitted for this library.
+    pub auxiliary_outputs: Vec<AuxiliaryEmitOutput>,
+}
+
+/// One in-memory auxiliary output emitted alongside the primary `.g.dart` file.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AuxiliaryEmitOutput {
+    /// The resolved filesystem output path.
+    pub output_path: PathBuf,
+    /// The fully rendered source text.
+    pub source: String,
 }
 
 /// Emits one generated library without touching the filesystem.
@@ -39,6 +50,7 @@ pub fn emit_library_with_plan(
     let diagnostics = registry.validate_library(library);
     let contributions = registry.emit_contributions(library, &plan);
     let merged = MergedSections::from_contributions(&contributions);
+    let auxiliary_outputs = collect_auxiliary_outputs(&contributions);
     let source = assemble_source(library, &plan, &merged);
     let source = format_generated_source(&source);
     let changed = previous_output != Some(source.as_str());
@@ -48,7 +60,18 @@ pub fn emit_library_with_plan(
         symbols: plan,
         diagnostics,
         changed,
+        auxiliary_outputs,
     }
+}
+
+fn collect_auxiliary_outputs(
+    contributions: &[dust_plugin_api::PluginContribution],
+) -> Vec<AuxiliaryEmitOutput> {
+    contributions
+        .iter()
+        .flat_map(|contribution| contribution.auxiliary_outputs.iter())
+        .map(format_auxiliary_output)
+        .collect()
 }
 
 fn assemble_source(library: &LibraryIr, plan: &SymbolPlan, merged: &MergedSections) -> String {
@@ -112,6 +135,13 @@ fn render_reserved_helpers(plan: &SymbolPlan) -> Vec<String> {
     }
 
     helpers
+}
+
+fn format_auxiliary_output(output: &AuxiliaryOutputContribution) -> AuxiliaryEmitOutput {
+    AuxiliaryEmitOutput {
+        output_path: output.output_path.clone(),
+        source: format_generated_source(&output.source),
+    }
 }
 
 fn render_mixin_block(writer: &mut DartWriter, class_name: &str, members: &[String]) {

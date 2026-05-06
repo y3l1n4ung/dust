@@ -1,42 +1,4 @@
-use dust_ir::{ClassIr, ConstructorIr, ParamKind, TypeIr};
-
-pub(crate) fn render_type(ty: &TypeIr) -> String {
-    match ty {
-        TypeIr::Builtin { kind, nullable } => {
-            let nullable = if *nullable { "?" } else { "" };
-            format!("{}{}", kind.as_str(), nullable)
-        }
-        TypeIr::Named {
-            name,
-            args,
-            nullable,
-        } => {
-            let args = if args.is_empty() {
-                String::new()
-            } else {
-                format!(
-                    "<{}>",
-                    args.iter().map(render_type).collect::<Vec<_>>().join(", ")
-                )
-            };
-            let nullable = if *nullable { "?" } else { "" };
-            format!("{name}{args}{nullable}")
-        }
-        TypeIr::Function {
-            signature,
-            nullable,
-        } => {
-            let nullable = if *nullable { "?" } else { "" };
-            format!("{signature}{nullable}")
-        }
-        TypeIr::Record { shape, nullable } => {
-            let nullable = if *nullable { "?" } else { "" };
-            format!("{shape}{nullable}")
-        }
-        TypeIr::Dynamic => "dynamic".to_owned(),
-        TypeIr::Unknown => "Object?".to_owned(),
-    }
-}
+use dust_ir::{ClassIr, ConstructorIr, ParamKind};
 
 pub(crate) fn find_clone_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
     class.constructors.iter().find(|constructor| {

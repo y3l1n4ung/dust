@@ -14,11 +14,13 @@ fn copywith_copies_collection_fields_without_aliasing() {
         &LibraryIr {
             source_path: "lib/catalog.dart".to_owned(),
             output_path: "lib/catalog.g.dart".to_owned(),
+            imports: Vec::new(),
             span: span(0, 100),
             classes: vec![ClassIr {
                 kind: ClassKindIr::Class,
                 name: "Catalog".to_owned(),
                 is_abstract: false,
+                is_interface: false,
                 superclass_name: None,
                 span: span(10, 80),
                 fields: vec![
@@ -53,6 +55,9 @@ fn copywith_copies_collection_fields_without_aliasing() {
                 ],
                 constructors: vec![ConstructorIr {
                     name: None,
+                    is_factory: false,
+                    redirected_target_source: None,
+                    redirected_target_name: None,
                     span: span(40, 60),
                     params: vec![
                         ConstructorParamIr {
@@ -85,10 +90,12 @@ fn copywith_copies_collection_fields_without_aliasing() {
                         },
                     ],
                 }],
+                methods: Vec::new(),
                 traits: vec![TraitApplicationIr {
                     symbol: SymbolId::new("derive_annotation::CopyWith"),
                     span: span(5, 9),
                 }],
+                configs: Vec::new(),
                 serde: None,
             }],
             enums: Vec::new(),
@@ -118,12 +125,14 @@ fn copywith_clones_nested_dust_models() {
         &LibraryIr {
             source_path: "lib/product.dart".to_owned(),
             output_path: "lib/product.g.dart".to_owned(),
+            imports: Vec::new(),
             span: span(0, 120),
             classes: vec![
                 ClassIr {
                     kind: ClassKindIr::Class,
                     name: "Price".to_owned(),
                     is_abstract: false,
+                    is_interface: false,
                     superclass_name: None,
                     span: span(1, 20),
                     fields: vec![FieldIr {
@@ -135,6 +144,9 @@ fn copywith_clones_nested_dust_models() {
                     }],
                     constructors: vec![ConstructorIr {
                         name: None,
+                        is_factory: false,
+                        redirected_target_source: None,
+                        redirected_target_name: None,
                         span: span(3, 4),
                         params: vec![ConstructorParamIr {
                             name: "currency".to_owned(),
@@ -144,16 +156,19 @@ fn copywith_clones_nested_dust_models() {
                             has_default: false,
                         }],
                     }],
+                    methods: Vec::new(),
                     traits: vec![TraitApplicationIr {
                         symbol: SymbolId::new("derive_annotation::CopyWith"),
                         span: span(1, 2),
                     }],
+                    configs: Vec::new(),
                     serde: None,
                 },
                 ClassIr {
                     kind: ClassKindIr::Class,
                     name: "Product".to_owned(),
                     is_abstract: false,
+                    is_interface: false,
                     superclass_name: None,
                     span: span(20, 100),
                     fields: vec![
@@ -174,6 +189,9 @@ fn copywith_clones_nested_dust_models() {
                     ],
                     constructors: vec![ConstructorIr {
                         name: None,
+                        is_factory: false,
+                        redirected_target_source: None,
+                        redirected_target_name: None,
                         span: span(24, 25),
                         params: vec![
                             ConstructorParamIr {
@@ -192,10 +210,12 @@ fn copywith_clones_nested_dust_models() {
                             },
                         ],
                     }],
+                    methods: Vec::new(),
                     traits: vec![TraitApplicationIr {
                         symbol: SymbolId::new("derive_annotation::CopyWith"),
                         span: span(21, 22),
                     }],
+                    configs: Vec::new(),
                     serde: None,
                 },
             ],
@@ -224,11 +244,13 @@ fn copywith_copies_collection_fields() {
         &LibraryIr {
             source_path: "lib/catalog.dart".to_owned(),
             output_path: "lib/catalog.g.dart".to_owned(),
+            imports: Vec::new(),
             span: span(0, 100),
             classes: vec![ClassIr {
                 kind: ClassKindIr::Class,
                 name: "Catalog".to_owned(),
                 is_abstract: false,
+                is_interface: false,
                 superclass_name: None,
                 span: span(10, 80),
                 fields: vec![
@@ -249,6 +271,9 @@ fn copywith_copies_collection_fields() {
                 ],
                 constructors: vec![ConstructorIr {
                     name: None,
+                    is_factory: false,
+                    redirected_target_source: None,
+                    redirected_target_name: None,
                     span: span(40, 60),
                     params: vec![
                         ConstructorParamIr {
@@ -267,10 +292,12 @@ fn copywith_copies_collection_fields() {
                         },
                     ],
                 }],
+                methods: Vec::new(),
                 traits: vec![TraitApplicationIr {
                     symbol: SymbolId::new("derive_annotation::CopyWith"),
                     span: span(5, 9),
                 }],
+                configs: Vec::new(),
                 serde: None,
             }],
             enums: Vec::new(),

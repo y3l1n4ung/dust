@@ -115,6 +115,9 @@ fn constructor_knows_when_all_fields_are_constructible() {
     ];
     let constructor = ConstructorIr {
         name: None,
+        is_factory: false,
+        redirected_target_source: None,
+        redirected_target_name: None,
         span: span(30, 48),
         params: vec![ConstructorParamIr {
             name: "name".to_owned(),
@@ -148,6 +151,9 @@ fn constructor_detects_missing_required_fields() {
     ];
     let constructor = ConstructorIr {
         name: Some("partial".to_owned()),
+        is_factory: false,
+        redirected_target_source: None,
+        redirected_target_name: None,
         span: span(30, 48),
         params: vec![ConstructorParamIr {
             name: "name".to_owned(),
@@ -177,16 +183,20 @@ fn workspace_ir_collects_libraries() {
     workspace.push_library(LibraryIr {
         source_path: "lib/user.dart".to_owned(),
         output_path: "lib/user.g.dart".to_owned(),
+        imports: Vec::new(),
         span: span(0, 100),
         classes: vec![ClassIr {
             kind: ClassKindIr::Class,
             name: "User".to_owned(),
             is_abstract: false,
+            is_interface: false,
             superclass_name: None,
             span: span(10, 90),
             fields: Vec::new(),
             constructors: Vec::new(),
+            methods: Vec::new(),
             traits: Vec::new(),
+            configs: Vec::new(),
             serde: None,
         }],
         enums: Vec::new(),

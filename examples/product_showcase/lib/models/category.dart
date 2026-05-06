@@ -4,11 +4,7 @@ part 'category.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith()])
 class Category with _$CategoryDust {
-  const Category({
-    required this.id,
-    required this.title,
-    required this.labels,
-  });
+  const Category({required this.id, required this.title, required this.labels});
 
   final String id;
   final String title;

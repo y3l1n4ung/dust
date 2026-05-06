@@ -7,6 +7,7 @@ Large local Dart fixture project for Dust build/watch scale testing.
 - generate a large number of annotated Dart source files
 - exercise `ToString()`, `Eq()`, `CopyWith()`, `Serialize()`, and
   `Deserialize()` in one mixed corpus
+- exercise the `HttpClient` plugin, including auxiliary `.test.g.dart` outputs
 - keep all future annotation perf work on the same shared pipeline shape
 - benchmark `dust build` and `dust watch` on a large input set
 
@@ -60,6 +61,8 @@ dart test
   exercising shared workspace analysis, not only same-file generation
 - the generator source is split by derive vs serde patterns so future stress
   additions follow the same cleanliness rules as the Rust workspace
+- static `lib/support/http_*.dart` fixtures keep HTTP generation in the same
+  stress package without bloating the file generator
 - CI runs a smaller generated corpus for analyzer and runtime smoke coverage,
   while the ignored perf test still validates the full 5k corpus
 

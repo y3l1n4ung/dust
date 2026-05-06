@@ -1,5 +1,7 @@
 library;
 
+export 'api/json_placeholder_api.dart';
+export 'api/todo_api.dart';
 export 'models/catalog.dart';
 export 'models/category.dart';
 export 'models/entity.dart';
@@ -14,5 +16,8 @@ export 'models/json_serde_options.dart';
 export 'models/nested_bundle.dart';
 export 'models/optional_note.dart';
 export 'models/price.dart';
+export 'models/remote_comment.dart';
 export 'models/product.dart';
+export 'models/remote_post.dart';
 export 'models/tagged_value.dart';
+export 'models/todo.dart';

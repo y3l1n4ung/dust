@@ -157,6 +157,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "dust_dart_emit"
+version = "0.1.0"
+dependencies = [
+ "dust_ir",
+]
+
+[[package]]
 name = "dust_diagnostics"
 version = "0.1.0"
 dependencies = [
@@ -170,6 +177,7 @@ dependencies = [
  "dust_cache",
  "dust_diagnostics",
  "dust_emitter",
+ "dust_http_client_plugin",
  "dust_ir",
  "dust_parser_dart",
  "dust_parser_dart_ts",
@@ -192,6 +200,18 @@ dependencies = [
  "dust_plugin_derive",
  "dust_text",
  "tempfile",
+]
+
+[[package]]
+name = "dust_http_client_plugin"
+version = "0.1.0"
+dependencies = [
+ "dust_dart_emit",
+ "dust_diagnostics",
+ "dust_ir",
+ "dust_plugin_api",
+ "dust_text",
+ "heck",
 ]
 
 [[package]]
@@ -236,6 +256,7 @@ dependencies = [
 name = "dust_plugin_derive"
 version = "0.1.0"
 dependencies = [
+ "dust_dart_emit",
  "dust_diagnostics",
  "dust_ir",
  "dust_parser_dart",
@@ -247,6 +268,7 @@ dependencies = [
 name = "dust_plugin_serde"
 version = "0.1.0"
 dependencies = [
+ "dust_dart_emit",
  "dust_diagnostics",
  "dust_ir",
  "dust_plugin_api",

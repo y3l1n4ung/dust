@@ -71,7 +71,8 @@ fn doctor_reports_workspace_and_registered_plugins() {
         doctor.plugin_names,
         vec![
             "dust_plugin_derive".to_owned(),
-            "dust_plugin_serde".to_owned()
+            "dust_plugin_serde".to_owned(),
+            "HttpClient".to_owned(),
         ]
     );
     assert_eq!(

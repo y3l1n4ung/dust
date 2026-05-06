@@ -13,11 +13,13 @@ fn copywith_requires_reconstructible_constructor() {
     let broken = LibraryIr {
         source_path: "lib/user.dart".to_owned(),
         output_path: "lib/user.g.dart".to_owned(),
+        imports: Vec::new(),
         span: span(0, 100),
         classes: vec![ClassIr {
             kind: ClassKindIr::Class,
             name: "User".to_owned(),
             is_abstract: false,
+            is_interface: false,
             superclass_name: None,
             span: span(10, 80),
             fields: vec![
@@ -38,6 +40,9 @@ fn copywith_requires_reconstructible_constructor() {
             ],
             constructors: vec![ConstructorIr {
                 name: None,
+                is_factory: false,
+                redirected_target_source: None,
+                redirected_target_name: None,
                 span: span(40, 50),
                 params: vec![ConstructorParamIr {
                     name: "id".to_owned(),
@@ -47,10 +52,12 @@ fn copywith_requires_reconstructible_constructor() {
                     has_default: false,
                 }],
             }],
+            methods: Vec::new(),
             traits: vec![TraitApplicationIr {
                 symbol: SymbolId::new("derive_annotation::CopyWith"),
                 span: span(5, 9),
             }],
+            configs: Vec::new(),
             serde: None,
         }],
         enums: Vec::new(),
@@ -72,11 +79,13 @@ fn copywith_rejects_abstract_classes() {
     let abstract_library = LibraryIr {
         source_path: "lib/entity.dart".to_owned(),
         output_path: "lib/entity.g.dart".to_owned(),
+        imports: Vec::new(),
         span: span(0, 100),
         classes: vec![ClassIr {
             kind: ClassKindIr::Class,
             name: "Entity".to_owned(),
             is_abstract: true,
+            is_interface: false,
             superclass_name: None,
             span: span(10, 80),
             fields: vec![FieldIr {
@@ -88,6 +97,9 @@ fn copywith_rejects_abstract_classes() {
             }],
             constructors: vec![ConstructorIr {
                 name: None,
+                is_factory: false,
+                redirected_target_source: None,
+                redirected_target_name: None,
                 span: span(40, 50),
                 params: vec![ConstructorParamIr {
                     name: "id".to_owned(),
@@ -97,10 +109,12 @@ fn copywith_rejects_abstract_classes() {
                     has_default: false,
                 }],
             }],
+            methods: Vec::new(),
             traits: vec![TraitApplicationIr {
                 symbol: SymbolId::new("derive_annotation::CopyWith"),
                 span: span(5, 9),
             }],
+            configs: Vec::new(),
             serde: None,
         }],
         enums: Vec::new(),
@@ -122,11 +136,13 @@ fn rejects_mixin_class_targets() {
     let mixin_class_library = LibraryIr {
         source_path: "lib/mixin_target.dart".to_owned(),
         output_path: "lib/mixin_target.g.dart".to_owned(),
+        imports: Vec::new(),
         span: span(0, 100),
         classes: vec![ClassIr {
             kind: ClassKindIr::MixinClass,
             name: "MixinTarget".to_owned(),
             is_abstract: false,
+            is_interface: false,
             superclass_name: None,
             span: span(10, 80),
             fields: vec![FieldIr {
@@ -138,6 +154,9 @@ fn rejects_mixin_class_targets() {
             }],
             constructors: vec![ConstructorIr {
                 name: None,
+                is_factory: false,
+                redirected_target_source: None,
+                redirected_target_name: None,
                 span: span(40, 50),
                 params: vec![ConstructorParamIr {
                     name: "id".to_owned(),
@@ -147,10 +166,12 @@ fn rejects_mixin_class_targets() {
                     has_default: false,
                 }],
             }],
+            methods: Vec::new(),
             traits: vec![TraitApplicationIr {
                 symbol: SymbolId::new("derive_annotation::ToString"),
                 span: span(5, 9),
             }],
+            configs: Vec::new(),
             serde: None,
         }],
         enums: Vec::new(),

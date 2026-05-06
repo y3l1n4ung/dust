@@ -29,6 +29,12 @@ pub struct ConstructorParamIr {
 pub struct ConstructorIr {
     /// The named constructor suffix, if present.
     pub name: Option<String>,
+    /// Whether the constructor is declared with the `factory` modifier.
+    pub is_factory: bool,
+    /// The redirected target symbol reference, if the constructor redirects.
+    pub redirected_target_source: Option<String>,
+    /// The redirected target base name, if it could be extracted.
+    pub redirected_target_name: Option<String>,
     /// The source span for the constructor.
     pub span: SpanIr,
     /// The lowered constructor parameters.

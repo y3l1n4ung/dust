@@ -6,7 +6,7 @@ use dust_text::SourceText;
 use tree_sitter::Node;
 
 use crate::{
-    annotations::{extract_annotation, extract_member_annotations},
+    annotations::{extract_annotation, extract_descendant_annotations, extract_member_annotations},
     syntax::{
         class_header_text, find_first_descendant, find_first_descendant_by,
         find_first_descendant_text, find_last_descendant_text, first_non_annotation_named_child,
@@ -35,6 +35,7 @@ fn extract_class(node: Node<'_>, source: &SourceText) -> ParsedClassSurface {
         ParsedClassKind::Class
     };
     let is_abstract = header.split_whitespace().any(|word| word == "abstract");
+    let is_interface = header.contains("interface class");
     let class_name = node
         .child_by_field_name("name")
         .map(|name| node_text(name, source))
@@ -47,6 +48,7 @@ fn extract_class(node: Node<'_>, source: &SourceText) -> ParsedClassSurface {
     let mut annotations = Vec::new();
     let mut fields = Vec::new();
     let mut constructors = Vec::new();
+    let mut methods = Vec::new();
 
     let mut cursor = node.walk();
     for child in node.children(&mut cursor).filter(|child| child.is_named()) {
@@ -65,10 +67,21 @@ fn extract_class(node: Node<'_>, source: &SourceText) -> ParsedClassSurface {
             if let Some(declaration) = first_non_annotation_named_child(member) {
                 if has_descendant_kind(declaration, "constant_constructor_signature")
                     || has_descendant_kind(declaration, "constructor_signature")
+                    || has_descendant_kind(declaration, "factory_constructor_signature")
+                    || has_descendant_kind(declaration, "redirecting_factory_constructor_signature")
                 {
                     constructors.push(extract_constructor(declaration, source));
                 } else if has_descendant_kind(declaration, "initialized_identifier_list") {
                     fields.extend(extract_fields(declaration, &member_annotations, source));
+                } else if has_descendant_kind(declaration, "declaration")
+                    || has_descendant_kind(declaration, "method_signature")
+                    || has_descendant_kind(declaration, "function_signature")
+                {
+                    // Tree-sitter-dart uses different kinds for methods depending on if they have a body.
+                    // We'll try to extract them if they look like methods.
+                    if let Some(method) = extract_method(declaration, &member_annotations, source) {
+                        methods.push(method);
+                    }
                 }
             }
         }
@@ -78,10 +91,118 @@ fn extract_class(node: Node<'_>, source: &SourceText) -> ParsedClassSurface {
         kind,
         name: class_name,
         is_abstract,
+        is_interface,
         superclass_name,
         annotations,
         fields,
         constructors,
+        methods,
+        span: text_range(node),
+    }
+}
+
+fn extract_method(
+    node: Node<'_>,
+    annotations: &[ParsedAnnotation],
+    source: &SourceText,
+) -> Option<dust_parser_dart::ParsedMethodSurface> {
+    let signature = find_first_descendant(node, "method_signature")
+        .or_else(|| find_first_descendant(node, "function_signature"))
+        .or_else(|| find_first_descendant(node, "declaration"))?;
+
+    let name_node = signature.child_by_field_name("name")?;
+    let name = node_text(name_node, source);
+
+    let header_text = node_text(signature, source);
+    let declaration_text = node_text(node, source);
+    let is_static = header_text.contains("static");
+    let is_external = header_text.contains("external");
+
+    let return_type_source = signature
+        .child_by_field_name("type")
+        .map(|t| node_text(t, source))
+        .or_else(|| extract_parameter_type(&header_text, &name));
+
+    let params = find_first_descendant(signature, "formal_parameter_list")
+        .map(|list| extract_method_params(list, source))
+        .unwrap_or_default();
+
+    let params_node = find_first_descendant(signature, "formal_parameter_list");
+    let has_body = if let Some(params) = params_node {
+        let end_offset = params.end_byte().saturating_sub(node.start_byte());
+        let after_params = &declaration_text[end_offset.min(declaration_text.len())..];
+        after_params.contains('{') || after_params.contains("=>")
+    } else {
+        declaration_text.contains('{') || declaration_text.contains("=>")
+    };
+
+    Some(dust_parser_dart::ParsedMethodSurface {
+        name,
+        is_static,
+        is_external,
+        annotations: annotations.to_vec(),
+        return_type_source,
+        has_body,
+        params,
+        span: text_range(signature),
+    })
+}
+
+fn extract_method_params(
+    node: Node<'_>,
+    source: &SourceText,
+) -> Vec<dust_parser_dart::ParsedMethodParamSurface> {
+    let mut params = Vec::new();
+    collect_method_formal_parameters(node, source, &mut params, &mut Vec::new());
+    params
+}
+
+fn collect_method_formal_parameters(
+    node: Node<'_>,
+    source: &SourceText,
+    out: &mut Vec<dust_parser_dart::ParsedMethodParamSurface>,
+    pending_annotations: &mut Vec<ParsedAnnotation>,
+) {
+    if !node.is_named() {
+        return;
+    }
+
+    if node.kind() == "annotation" {
+        pending_annotations.push(extract_annotation(node, source));
+        return;
+    }
+
+    if node.is_named() && node.kind() == "formal_parameter" {
+        let mut param = extract_method_formal_parameter(node, source);
+        if !pending_annotations.is_empty() {
+            let mut annotations = std::mem::take(pending_annotations);
+            annotations.extend(param.annotations);
+            param.annotations = annotations;
+        }
+        out.push(param);
+        return;
+    }
+
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        collect_method_formal_parameters(child, source, out, pending_annotations);
+    }
+}
+
+fn extract_method_formal_parameter(
+    node: Node<'_>,
+    source: &SourceText,
+) -> dust_parser_dart::ParsedMethodParamSurface {
+    let text = node_text(node, source);
+    let name = find_last_descendant_text(node, source, &["identifier"]).unwrap_or_default();
+    let type_source = extract_parameter_type(&text, &name);
+
+    dust_parser_dart::ParsedMethodParamSurface {
+        name,
+        annotations: extract_descendant_annotations(node, source),
+        type_source,
+        kind: determine_parameter_kind(node, source),
+        has_default: text.contains('='),
         span: text_range(node),
     }
 }
@@ -125,15 +246,25 @@ fn extract_constructor(node: Node<'_>, source: &SourceText) -> ParsedConstructor
     let Some(signature) = find_first_descendant_by(node, |candidate| {
         matches!(
             candidate.kind(),
-            "constant_constructor_signature" | "constructor_signature"
+            "constant_constructor_signature"
+                | "constructor_signature"
+                | "factory_constructor_signature"
+                | "redirecting_factory_constructor_signature"
         )
     }) else {
         return ParsedConstructorSurface {
             name: None,
+            is_factory: false,
+            redirected_target_source: None,
+            redirected_target_name: None,
             params: Vec::new(),
             span: text_range(node),
         };
     };
+    let declaration_text = node_text(node, source);
+    let is_factory = declaration_text
+        .split_whitespace()
+        .any(|word| word == "factory");
 
     let mut identifiers = Vec::new();
     let mut cursor = signature.walk();
@@ -155,9 +286,16 @@ fn extract_constructor(node: Node<'_>, source: &SourceText) -> ParsedConstructor
     let params = find_first_descendant(signature, "formal_parameter_list")
         .map(|list| extract_constructor_params(list, source))
         .unwrap_or_default();
+    let redirected_target_source = extract_redirect_target(&declaration_text);
+    let redirected_target_name = redirected_target_source
+        .as_deref()
+        .and_then(extract_redirect_target_name);
 
     ParsedConstructorSurface {
         name,
+        is_factory,
+        redirected_target_source,
+        redirected_target_name,
         params,
         span: text_range(signature),
     }
@@ -236,7 +374,7 @@ fn extract_parameter_type(text: &str, name: &str) -> Option<String> {
 
     let end = text.rfind(name)?;
     let prefix = text.get(..end)?.trim();
-    let stripped = strip_prefix_modifiers(prefix);
+    let stripped = strip_prefix_modifiers(strip_leading_annotations(prefix));
     if stripped.is_empty() {
         None
     } else {
@@ -272,4 +410,95 @@ fn strip_prefix_modifiers(text: &str) -> &str {
             return remaining.trim();
         }
     }
+}
+
+fn strip_leading_annotations(text: &str) -> &str {
+    let mut remaining = text.trim_start();
+    while remaining.starts_with('@') {
+        remaining = &remaining[1..];
+        let mut boundary = 0;
+        for (index, ch) in remaining.char_indices() {
+            if ch == '_' || ch == '$' || ch == '.' || ch.is_ascii_alphanumeric() {
+                boundary = index + ch.len_utf8();
+            } else {
+                break;
+            }
+        }
+
+        remaining = remaining.get(boundary..).unwrap_or("").trim_start();
+        if remaining.starts_with('(') {
+            let consumed = consume_parenthesized(remaining);
+            remaining = remaining.get(consumed..).unwrap_or("").trim_start();
+        }
+    }
+    remaining
+}
+
+fn consume_parenthesized(text: &str) -> usize {
+    let mut depth = 0_u32;
+    let mut quote = None;
+    let mut escape = false;
+
+    for (index, ch) in text.char_indices() {
+        if let Some(active_quote) = quote {
+            if escape {
+                escape = false;
+                continue;
+            }
+            if ch == '\\' {
+                escape = true;
+                continue;
+            }
+            if ch == active_quote {
+                quote = None;
+            }
+            continue;
+        }
+
+        match ch {
+            '\'' | '"' => quote = Some(ch),
+            '(' => depth += 1,
+            ')' => {
+                depth = depth.saturating_sub(1);
+                if depth == 0 {
+                    return index + ch.len_utf8();
+                }
+            }
+            _ => {}
+        }
+    }
+
+    text.len()
+}
+
+fn extract_redirect_target(text: &str) -> Option<String> {
+    let (_, rhs) = text.split_once('=')?;
+    let target = rhs.trim().trim_end_matches(';').trim();
+    if target.is_empty() {
+        None
+    } else {
+        Some(target.to_owned())
+    }
+}
+
+fn extract_redirect_target_name(text: &str) -> Option<String> {
+    let mut chars = text.chars().peekable();
+    while let Some(ch) = chars.peek().copied() {
+        if ch == '_' || ch == '$' || ch.is_ascii_alphabetic() {
+            break;
+        }
+        chars.next();
+    }
+
+    let mut name = String::new();
+    while let Some(ch) = chars.peek().copied() {
+        if ch == '_' || ch == '$' || ch == '.' || ch.is_ascii_alphanumeric() {
+            name.push(ch);
+            chars.next();
+        } else {
+            break;
+        }
+    }
+
+    if name.is_empty() { None } else { Some(name) }
 }

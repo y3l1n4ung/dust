@@ -22,6 +22,7 @@ pub(super) fn build_load_error(
             artifact: BuildArtifact {
                 source_path: library.source_path.clone(),
                 output_path: library.output_path.clone(),
+                auxiliary_output_paths: Vec::new(),
                 changed: false,
                 written: false,
                 cached: false,
@@ -36,6 +37,7 @@ pub(super) fn build_cached_outcome(
     index: usize,
     library: &SourceLibrary,
     expected_output_hash: u64,
+    auxiliary_output_paths: Vec<std::path::PathBuf>,
     analysis_snapshot: LibraryAnalysisSnapshot,
 ) -> IndexedBuildOutcome {
     IndexedBuildOutcome {
@@ -48,6 +50,7 @@ pub(super) fn build_cached_outcome(
             artifact: BuildArtifact {
                 source_path: library.source_path.clone(),
                 output_path: library.output_path.clone(),
+                auxiliary_output_paths,
                 changed: false,
                 written: false,
                 cached: true,

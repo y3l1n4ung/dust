@@ -58,6 +58,12 @@ dust build
 Dust writes `user.g.dart` and the `_$UserDust` mixin members for `toString()`,
 `==`, `hashCode`, and `copyWith(...)`.
 
+## Full Usage Guide
+
+See the root usage docs for the full derive walkthrough:
+
+- [../../docs/usage/derive.md](../../docs/usage/derive.md)
+
 ## Extension packages
 
 Future packages can extend the base contract by subclassing `DeriveTrait` or

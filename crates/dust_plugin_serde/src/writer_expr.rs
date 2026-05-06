@@ -1,8 +1,9 @@
 use std::collections::HashSet;
 
+use dust_dart_emit::OBJECT_NULLABLE_TYPES;
 use dust_ir::{BuiltinType, FieldIr, TypeIr};
 
-use crate::writer_type::{access_receiver, non_null_encode_expr, non_nullable, render_type};
+use crate::writer_type::{access_receiver, non_null_encode_expr, non_nullable};
 
 pub(crate) fn encode_field_expr(
     expr: &str,
@@ -213,7 +214,7 @@ fn encode_with_codec(expr: &str, ty: &TypeIr, codec: &str) -> String {
 
 fn decode_with_codec(raw: &str, key: &str, ty: &TypeIr, codec: &str) -> String {
     let codec = access_receiver(codec);
-    let value_ty = render_type(&non_nullable(ty));
+    let value_ty = OBJECT_NULLABLE_TYPES.render(&non_nullable(ty));
     if ty.is_nullable() {
         let decoded = format!("_dustJsonDecodeWithCodec<{value_ty}>({codec}, {raw}, {key})");
         return format!("{raw} == null\n? null\n: {decoded}");

@@ -2,10 +2,85 @@ use std::path::Path;
 
 use dust_diagnostics::{Diagnostic, SourceLabel};
 use dust_ir::{ConfigApplicationIr, SpanIr, TraitApplicationIr};
-use dust_parser_dart::{ParsedAnnotation, ParsedDirective, ParsedFieldSurface};
+use dust_parser_dart::{
+    ParsedAnnotation, ParsedDirective, ParsedFieldSurface, ParsedMethodParamSurface,
+    ParsedMethodSurface,
+};
 use dust_text::{FileId, TextRange};
 
-use crate::{ResolvedField, SymbolCatalog, SymbolKind};
+use crate::{ResolvedField, ResolvedMethod, ResolvedMethodParam, SymbolCatalog, SymbolKind};
+
+pub(crate) fn resolve_method(
+    file_id: FileId,
+    method: &ParsedMethodSurface,
+    catalog: &SymbolCatalog,
+    _diagnostics: &mut Vec<Diagnostic>,
+) -> ResolvedMethod {
+    let mut traits = Vec::new();
+    let mut configs = Vec::new();
+
+    for annotation in &method.annotations {
+        let Some(resolved) = catalog.resolve(&annotation.name) else {
+            continue;
+        };
+
+        push_resolved_symbol(
+            file_id,
+            annotation.span,
+            resolved.kind,
+            resolved.symbol.clone(),
+            annotation.arguments_source.clone(),
+            &mut traits,
+            &mut configs,
+        );
+    }
+
+    let params = method
+        .params
+        .iter()
+        .map(|param| resolve_method_param(file_id, param, catalog))
+        .collect();
+
+    ResolvedMethod {
+        surface: method.clone(),
+        span: SpanIr::new(file_id, method.span),
+        traits,
+        configs,
+        params,
+    }
+}
+
+fn resolve_method_param(
+    file_id: FileId,
+    param: &ParsedMethodParamSurface,
+    catalog: &SymbolCatalog,
+) -> ResolvedMethodParam {
+    let mut traits = Vec::new();
+    let mut configs = Vec::new();
+
+    for annotation in &param.annotations {
+        let Some(resolved) = catalog.resolve(&annotation.name) else {
+            continue;
+        };
+
+        push_resolved_symbol(
+            file_id,
+            annotation.span,
+            resolved.kind,
+            resolved.symbol.clone(),
+            annotation.arguments_source.clone(),
+            &mut traits,
+            &mut configs,
+        );
+    }
+
+    ResolvedMethodParam {
+        surface: param.clone(),
+        span: SpanIr::new(file_id, param.span),
+        traits,
+        configs,
+    }
+}
 
 pub(crate) fn resolve_declaration_annotations(
     file_id: FileId,

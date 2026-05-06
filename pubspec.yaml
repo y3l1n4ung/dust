@@ -7,5 +7,6 @@ environment:
 workspace:
   - packages/derive_annotation
   - packages/derive_serde_annotation
+  - packages/dust_http_client_annotation
   - examples/product_showcase
   - examples/stress_project

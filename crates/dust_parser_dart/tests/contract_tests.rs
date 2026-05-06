@@ -21,6 +21,7 @@ impl ParseBackend for FakeBackend {
                     kind: ParsedClassKind::Class,
                     name: "User".to_owned(),
                     is_abstract: false,
+                    is_interface: false,
                     superclass_name: Some("Entity".to_owned()),
                     annotations: vec![ParsedAnnotation {
                         name: "Derive".to_owned(),
@@ -40,6 +41,9 @@ impl ParseBackend for FakeBackend {
                     }],
                     constructors: vec![ParsedConstructorSurface {
                         name: None,
+                        is_factory: false,
+                        redirected_target_source: None,
+                        redirected_target_name: None,
                         params: vec![ParsedConstructorParamSurface {
                             name: "name".to_owned(),
                             type_source: None,
@@ -49,6 +53,7 @@ impl ParseBackend for FakeBackend {
                         }],
                         span: TextRange::new(74_u32, 90_u32),
                     }],
+                    methods: Vec::new(),
                     span: TextRange::new(45_u32, 90_u32),
                 }],
                 enums: Vec::new(),
@@ -120,6 +125,7 @@ fn parsed_surface_helpers_cover_empty_and_mixin_class_cases() {
         kind: ParsedClassKind::MixinClass,
         name: "UserMixin".to_owned(),
         is_abstract: true,
+        is_interface: false,
         superclass_name: None,
         annotations: vec![ParsedAnnotation {
             name: "Derive".to_owned(),
@@ -138,6 +144,7 @@ fn parsed_surface_helpers_cover_empty_and_mixin_class_cases() {
             span: TextRange::new(21_u32, 35_u32),
         }],
         constructors: Vec::new(),
+        methods: Vec::new(),
         span: TextRange::new(0_u32, 40_u32),
     };
 

@@ -73,6 +73,8 @@ pub struct BuildArtifact {
     pub source_path: PathBuf,
     /// The generated output path.
     pub output_path: PathBuf,
+    /// Additional generated outputs owned by this source library.
+    pub auxiliary_output_paths: Vec<PathBuf>,
     /// Whether the output differed from the previous file contents.
     pub changed: bool,
     /// Whether the output was actually written to disk.
@@ -88,6 +90,8 @@ pub struct CheckedLibrary {
     pub source_path: PathBuf,
     /// The generated output path.
     pub output_path: PathBuf,
+    /// Additional generated outputs owned by this source library.
+    pub auxiliary_output_paths: Vec<PathBuf>,
     /// Whether the generated output is missing or stale.
     pub stale: bool,
     /// Whether the freshness result came from the persistent workspace cache.

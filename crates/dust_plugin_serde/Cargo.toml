@@ -6,6 +6,7 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+dust_dart_emit = { path = "../dust_dart_emit" }
 dust_ir = { path = "../dust_ir" }
 dust_plugin_api = { path = "../dust_plugin_api" }
 dust_diagnostics = { path = "../dust_diagnostics" }

@@ -17,6 +17,7 @@ fn merges_inherited_fields_before_own_fields() {
             kind: ClassKindIr::Class,
             name: "Entity".to_owned(),
             is_abstract: true,
+            is_interface: false,
             superclass_name: None,
             span: span(0, 20),
             fields: vec![FieldIr {
@@ -27,13 +28,16 @@ fn merges_inherited_fields_before_own_fields() {
                 serde: None,
             }],
             constructors: Vec::new(),
+            methods: Vec::new(),
             traits: Vec::<TraitApplicationIr>::new(),
+            configs: Vec::new(),
             serde: None,
         },
         ClassIr {
             kind: ClassKindIr::Class,
             name: "DetailedEntity".to_owned(),
             is_abstract: false,
+            is_interface: false,
             superclass_name: Some("Entity".to_owned()),
             span: span(20, 40),
             fields: vec![FieldIr {
@@ -44,7 +48,9 @@ fn merges_inherited_fields_before_own_fields() {
                 serde: None,
             }],
             constructors: Vec::new(),
+            methods: Vec::new(),
             traits: Vec::<TraitApplicationIr>::new(),
+            configs: Vec::new(),
             serde: None,
         },
     ];

@@ -23,6 +23,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
             kind: ParsedClassKind::Class,
             name: "User".to_owned(),
             is_abstract: true,
+            is_interface: false,
             superclass_name: Some("Entity".to_owned()),
             annotations: vec![ParsedAnnotation {
                 name: "Derive".to_owned(),
@@ -51,6 +52,9 @@ fn parse_surface_can_model_real_dart_library_shapes() {
             ],
             constructors: vec![ParsedConstructorSurface {
                 name: Some("named".to_owned()),
+                is_factory: false,
+                redirected_target_source: None,
+                redirected_target_name: None,
                 params: vec![
                     ParsedConstructorParamSurface {
                         name: "name".to_owned(),
@@ -69,6 +73,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
                 ],
                 span: TextRange::new(137_u32, 176_u32),
             }],
+            methods: Vec::new(),
             span: TextRange::new(85_u32, 179_u32),
         }],
         enums: Vec::new(),

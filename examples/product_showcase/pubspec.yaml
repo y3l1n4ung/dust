@@ -13,6 +13,9 @@ dependencies:
     path: ../../packages/derive_annotation
   derive_serde_annotation:
     path: ../../packages/derive_serde_annotation
+  dio: ^5.9.2
+  dust_http_client_annotation:
+    path: ../../packages/dust_http_client_annotation
 
 dev_dependencies:
   lints: ^6.0.0

@@ -13,11 +13,13 @@ fn models_real_dart_data_class_shapes() {
     let library = LibraryIr {
         source_path: "lib/user_profile.dart".to_owned(),
         output_path: "lib/user_profile.g.dart".to_owned(),
+        imports: Vec::new(),
         span: span(1, 0, 220),
         classes: vec![ClassIr {
             kind: ClassKindIr::Class,
             name: "UserProfile".to_owned(),
             is_abstract: false,
+            is_interface: false,
             superclass_name: None,
             span: span(1, 40, 210),
             fields: vec![
@@ -45,6 +47,9 @@ fn models_real_dart_data_class_shapes() {
             ],
             constructors: vec![ConstructorIr {
                 name: None,
+                is_factory: false,
+                redirected_target_source: None,
+                redirected_target_name: None,
                 span: span(1, 160, 205),
                 params: vec![
                     ConstructorParamIr {
@@ -70,6 +75,7 @@ fn models_real_dart_data_class_shapes() {
                     },
                 ],
             }],
+            methods: Vec::new(),
             traits: vec![
                 TraitApplicationIr {
                     symbol: SymbolId::new("derive_annotation::ToString"),
@@ -84,6 +90,7 @@ fn models_real_dart_data_class_shapes() {
                     span: span(1, 63, 76),
                 },
             ],
+            configs: Vec::new(),
             serde: None,
         }],
         enums: Vec::new(),

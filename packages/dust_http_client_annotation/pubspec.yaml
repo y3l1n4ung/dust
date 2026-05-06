@@ -1,0 +1,24 @@
+name: dust_http_client_annotation
+description: Production-ready HttpClient annotations for the Dust code generation engine.
+version: 0.1.0
+homepage: https://github.com/y3l1n4ung/dust
+repository: https://github.com/y3l1n4ung/dust
+issue_tracker: https://github.com/y3l1n4ung/dust/issues
+
+environment:
+  sdk: ^3.11.0
+
+resolution: workspace
+
+topics:
+  - codegen
+  - annotations
+  - dust
+  - http
+
+dependencies:
+  meta: ^1.16.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.26.0

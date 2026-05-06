@@ -2,6 +2,7 @@
 members = [
     "crates/dust_text",
     "crates/dust_diagnostics",
+    "crates/dust_dart_emit",
     "crates/dust_cache",
     "crates/dust_parser_dart",
     "crates/dust_parser_dart_ts",
@@ -14,6 +15,7 @@ members = [
     "crates/dust_workspace",
     "crates/dust_driver",
     "crates/dust_cli",
+    "crates/dust_http_client_plugin",
 ]
 resolver = "2"
 

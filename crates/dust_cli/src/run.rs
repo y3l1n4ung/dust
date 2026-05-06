@@ -173,6 +173,7 @@ mod tests {
             checked_libraries: vec![CheckedLibrary {
                 source_path: PathBuf::from("lib/user.dart"),
                 output_path: PathBuf::from("lib/user.g.dart"),
+                auxiliary_output_paths: Vec::new(),
                 stale: true,
                 cached: false,
             }],

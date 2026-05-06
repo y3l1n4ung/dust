@@ -12,9 +12,10 @@ use std::collections::HashMap;
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
     ClassIr, ConstructorIr, ConstructorParamIr, EnumIr, EnumVariantIr, FieldIr, LibraryIr,
-    LoweringOutcome, ParamKind, SpanIr,
+    LoweringOutcome, MethodIr, MethodParamIr, ParamKind, SpanIr,
 };
 use dust_parser_dart::ParameterKind;
+use dust_parser_dart::ParsedDirective;
 use dust_resolver::{ResolvedClass, ResolvedLibrary};
 
 use self::{
@@ -70,12 +71,24 @@ pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<Librar
         value: LibraryIr {
             source_path: library.source_path.clone(),
             output_path: library.output_path.clone(),
+            imports: library_imports(library),
             span: library.span,
             classes,
             enums,
         },
         diagnostics,
     }
+}
+
+fn library_imports(library: &ResolvedLibrary) -> Vec<String> {
+    library
+        .directives
+        .iter()
+        .filter_map(|directive| match directive {
+            ParsedDirective::Import { uri, .. } => Some(uri.clone()),
+            _ => None,
+        })
+        .collect()
 }
 
 fn lower_enum(e: &dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
@@ -121,6 +134,49 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
         })
         .collect::<Vec<_>>();
 
+    let methods = class
+        .methods
+        .iter()
+        .map(|method| {
+            let return_type_outcome = lower_type(method.surface.return_type_source.as_deref());
+            diagnostics.extend(return_type_outcome.diagnostics);
+
+            let params = method
+                .params
+                .iter()
+                .map(|param| {
+                    let type_outcome = lower_type(param.surface.type_source.as_deref());
+                    diagnostics.extend(type_outcome.diagnostics);
+
+                    MethodParamIr {
+                        name: param.surface.name.clone(),
+                        ty: type_outcome.value,
+                        span: param.span,
+                        kind: match param.surface.kind {
+                            ParameterKind::Positional => ParamKind::Positional,
+                            ParameterKind::Named => ParamKind::Named,
+                        },
+                        has_default: param.surface.has_default,
+                        traits: param.traits.clone(),
+                        configs: param.configs.clone(),
+                    }
+                })
+                .collect();
+
+            MethodIr {
+                name: method.surface.name.clone(),
+                is_static: method.surface.is_static,
+                is_external: method.surface.is_external,
+                return_type: return_type_outcome.value,
+                has_body: method.surface.has_body,
+                params,
+                span: method.span,
+                traits: method.traits.clone(),
+                configs: method.configs.clone(),
+            }
+        })
+        .collect();
+
     let constructors = class
         .constructors
         .iter()
@@ -150,6 +206,9 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
 
             ConstructorIr {
                 name: constructor.name.clone(),
+                is_factory: constructor.is_factory,
+                redirected_target_source: constructor.redirected_target_source.clone(),
+                redirected_target_name: constructor.redirected_target_name.clone(),
                 span: SpanIr::new(class.span.file_id, constructor.span),
                 params,
             }
@@ -161,11 +220,14 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
             kind: class.kind,
             name: class.name.clone(),
             is_abstract: class.is_abstract,
+            is_interface: class.is_interface,
             superclass_name: class.superclass_name.clone(),
             span: class.span,
             fields,
             constructors,
+            methods,
             traits: class.traits.clone(),
+            configs: class.configs.clone(),
             serde,
         },
         diagnostics,

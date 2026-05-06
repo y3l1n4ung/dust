@@ -9,7 +9,7 @@ use dust_resolver::ResolveResult;
 use dust_text::{FileId, SourceText};
 use dust_workspace::SourceLibrary;
 
-use crate::build::support::hash_text;
+use crate::build::support::hash_output_set;
 use crate::lower::lower_library;
 
 use super::{
@@ -148,15 +148,28 @@ fn finish_success(
         diagnostics: output_diagnostics,
         changed,
         written,
-        output_path: _,
+        output_path,
+        auxiliary_outputs,
     } = output;
     diagnostics.extend(output_diagnostics);
+
+    let expected_output_hash = hash_output_set(
+        std::iter::once((output_path.as_path(), source.as_str())).chain(
+            auxiliary_outputs
+                .iter()
+                .map(|output| (output.output_path.as_path(), output.source.as_str())),
+        ),
+    );
 
     BuildOutcome::succeeded(
         library,
         diagnostics,
         diagnostic_file,
-        hash_text(&source),
+        expected_output_hash,
+        auxiliary_outputs
+            .into_iter()
+            .map(|output| output.output_path)
+            .collect(),
         changed,
         written,
     )

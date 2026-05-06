@@ -14,6 +14,7 @@ pub(crate) fn class_with_traits(name: &str, traits: &[&str]) -> ClassIr {
         kind: ClassKindIr::Class,
         name: name.to_owned(),
         is_abstract: false,
+        is_interface: false,
         superclass_name: None,
         span: span(10, 80),
         fields: vec![
@@ -34,6 +35,9 @@ pub(crate) fn class_with_traits(name: &str, traits: &[&str]) -> ClassIr {
         ],
         constructors: vec![ConstructorIr {
             name: None,
+            is_factory: false,
+            redirected_target_source: None,
+            redirected_target_name: None,
             span: span(40, 60),
             params: vec![
                 ConstructorParamIr {
@@ -52,6 +56,7 @@ pub(crate) fn class_with_traits(name: &str, traits: &[&str]) -> ClassIr {
                 },
             ],
         }],
+        methods: Vec::new(),
         traits: traits
             .iter()
             .map(|symbol| TraitApplicationIr {
@@ -59,6 +64,7 @@ pub(crate) fn class_with_traits(name: &str, traits: &[&str]) -> ClassIr {
                 span: span(5, 9),
             })
             .collect(),
+        configs: Vec::new(),
         serde: None,
     }
 }
@@ -67,6 +73,7 @@ pub(crate) fn sample_library(traits: &[&str]) -> LibraryIr {
     LibraryIr {
         source_path: "lib/user.dart".to_owned(),
         output_path: "lib/user.g.dart".to_owned(),
+        imports: Vec::new(),
         span: span(0, 100),
         classes: vec![class_with_traits("User", traits)],
         enums: Vec::new(),

@@ -88,6 +88,8 @@ pub struct ParsedClassSurface {
     pub name: String,
     /// Whether the declaration is marked `abstract`.
     pub is_abstract: bool,
+    /// Whether the declaration uses Dart's `interface class` form.
+    pub is_interface: bool,
     /// The immediate superclass name, if the declaration has an `extends` clause.
     pub superclass_name: Option<String>,
     /// All metadata annotations attached to the class.
@@ -96,7 +98,47 @@ pub struct ParsedClassSurface {
     pub fields: Vec<ParsedFieldSurface>,
     /// Extracted constructors from the class body.
     pub constructors: Vec<ParsedConstructorSurface>,
+    /// Extracted methods from the class body.
+    pub methods: Vec<ParsedMethodSurface>,
     /// The source span for the whole class declaration.
+    pub span: TextRange,
+}
+
+/// One method extracted from a class.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedMethodSurface {
+    /// The method name.
+    pub name: String,
+    /// Whether the method is marked `static`.
+    pub is_static: bool,
+    /// Whether the method is marked `external`.
+    pub is_external: bool,
+    /// All metadata annotations attached to the method.
+    pub annotations: Vec<ParsedAnnotation>,
+    /// The raw return type source, if present.
+    pub return_type_source: Option<String>,
+    /// Whether the method includes an implementation body.
+    pub has_body: bool,
+    /// The method parameters.
+    pub params: Vec<ParsedMethodParamSurface>,
+    /// The source span for the method declaration.
+    pub span: TextRange,
+}
+
+/// One extracted method parameter.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedMethodParamSurface {
+    /// The parameter name.
+    pub name: String,
+    /// All metadata annotations attached to the parameter.
+    pub annotations: Vec<ParsedAnnotation>,
+    /// The raw type source, if explicitly written.
+    pub type_source: Option<String>,
+    /// The parameter kind.
+    pub kind: ParameterKind,
+    /// Whether the parameter has a default value.
+    pub has_default: bool,
+    /// The source span for the parameter.
     pub span: TextRange,
 }
 
@@ -135,6 +177,11 @@ impl ParsedClassSurface {
     /// Returns `true` when this declaration is a Dart `mixin class`.
     pub fn is_mixin_class(&self) -> bool {
         matches!(self.kind, ParsedClassKind::MixinClass)
+    }
+
+    /// Returns `true` when this declaration uses Dart's `interface class` form.
+    pub fn is_interface_class(&self) -> bool {
+        self.is_interface
     }
 }
 
@@ -187,6 +234,12 @@ pub enum ParameterKind {
 pub struct ParsedConstructorSurface {
     /// The named constructor suffix, if present.
     pub name: Option<String>,
+    /// Whether the constructor is declared with the `factory` modifier.
+    pub is_factory: bool,
+    /// The redirected target symbol reference, if the constructor redirects.
+    pub redirected_target_source: Option<String>,
+    /// The redirected target base name, if it could be extracted.
+    pub redirected_target_name: Option<String>,
     /// The constructor parameters.
     pub params: Vec<ParsedConstructorParamSurface>,
     /// The source span for the constructor declaration.

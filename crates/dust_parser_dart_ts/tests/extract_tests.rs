@@ -82,6 +82,35 @@ class UserProfile<T> {
 }
 
 #[test]
+fn extracts_annotations_for_multiple_named_method_parameters() {
+    let source = SourceText::new(
+        FileId::new(8),
+        concat!(
+            "abstract interface class TodoApi {\n",
+            "  Future<void> list({\n",
+            "    @Query('userId') int? userId,\n",
+            "    @Query('page') int? page,\n",
+            "    @Header('x-trace-id') String? traceId,\n",
+            "  });\n",
+            "}\n",
+        ),
+    );
+
+    let result = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    let class = &result.library.classes[0];
+    let method = &class.methods[0];
+    assert_eq!(method.params.len(), 3);
+    assert_eq!(method.params[0].annotations[0].name, "Query");
+    assert_eq!(method.params[0].type_source.as_deref(), Some("int?"));
+    assert_eq!(method.params[1].annotations[0].name, "Query");
+    assert_eq!(method.params[1].type_source.as_deref(), Some("int?"));
+    assert_eq!(method.params[2].annotations[0].name, "Header");
+    assert_eq!(method.params[2].type_source.as_deref(), Some("String?"));
+}
+
+#[test]
 fn extracts_field_annotations_and_argument_source() {
     let source = SourceText::new(
         FileId::new(7),
@@ -260,4 +289,40 @@ abstract mixin class MixinTarget {
     assert_eq!(result.library.classes.len(), 1);
     assert_eq!(result.library.classes[0].kind, ParsedClassKind::MixinClass);
     assert!(result.library.classes[0].is_abstract);
+}
+
+#[test]
+fn extracts_redirecting_factory_constructor_shapes() {
+    let source = SourceText::new(
+        FileId::new(8),
+        r#"
+part 'api.g.dart';
+
+abstract interface class Api {
+  factory Api(Dio dio, {String? baseUrl}) = _$Api;
+}
+"#,
+    );
+
+    let result = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    let class = &result.library.classes[0];
+    assert!(class.is_abstract);
+    assert!(class.is_interface);
+    assert_eq!(class.constructors.len(), 1);
+    assert!(class.constructors[0].is_factory);
+    assert_eq!(
+        class.constructors[0].redirected_target_name.as_deref(),
+        Some("_$Api")
+    );
+    assert_eq!(class.constructors[0].params.len(), 2);
+    assert_eq!(
+        class.constructors[0].params[0].type_source.as_deref(),
+        Some("Dio")
+    );
+    assert_eq!(
+        class.constructors[0].params[1].type_source.as_deref(),
+        Some("String?")
+    );
 }

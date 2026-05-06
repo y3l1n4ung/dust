@@ -1,6 +1,8 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassKindIr, ConfigApplicationIr, SpanIr, TraitApplicationIr};
-use dust_parser_dart::{ParsedConstructorSurface, ParsedDirective};
+use dust_parser_dart::{
+    ParsedConstructorSurface, ParsedDirective, ParsedMethodParamSurface, ParsedMethodSurface,
+};
 
 /// One resolved field plus its field-level Dust configuration.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,6 +16,34 @@ pub struct ResolvedField {
     /// The field source span.
     pub span: SpanIr,
     /// Resolved config applications attached to the field.
+    pub configs: Vec<ConfigApplicationIr>,
+}
+
+/// One resolved method plus its method-level Dust configuration.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ResolvedMethod {
+    /// The parsed method surface.
+    pub surface: ParsedMethodSurface,
+    /// The method source span.
+    pub span: SpanIr,
+    /// Resolved trait applications (if any).
+    pub traits: Vec<TraitApplicationIr>,
+    /// Resolved config applications.
+    pub configs: Vec<ConfigApplicationIr>,
+    /// Resolved method parameters in declaration order.
+    pub params: Vec<ResolvedMethodParam>,
+}
+
+/// One resolved method parameter plus its parameter-level Dust configuration.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ResolvedMethodParam {
+    /// The parsed parameter surface.
+    pub surface: ParsedMethodParamSurface,
+    /// The parameter source span.
+    pub span: SpanIr,
+    /// Resolved trait applications (if any).
+    pub traits: Vec<TraitApplicationIr>,
+    /// Resolved config applications.
     pub configs: Vec<ConfigApplicationIr>,
 }
 
@@ -49,6 +79,8 @@ pub struct ResolvedClass {
     pub name: String,
     /// Whether the declaration is marked `abstract`.
     pub is_abstract: bool,
+    /// Whether the declaration uses Dart's `interface class` form.
+    pub is_interface: bool,
     /// The immediate superclass name, if one was declared.
     pub superclass_name: Option<String>,
     /// The class source span.
@@ -57,6 +89,8 @@ pub struct ResolvedClass {
     pub fields: Vec<ResolvedField>,
     /// The parsed constructors preserved for later lowering.
     pub constructors: Vec<ParsedConstructorSurface>,
+    /// The resolved methods preserved for later lowering.
+    pub methods: Vec<ResolvedMethod>,
     /// Resolved trait applications.
     pub traits: Vec<TraitApplicationIr>,
     /// Resolved config applications.

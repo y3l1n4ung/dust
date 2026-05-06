@@ -15,6 +15,7 @@ fn lowers_serde_configs_into_ir() {
         kind: ClassKindIr::Class,
         name: "User".to_owned(),
         is_abstract: false,
+        is_interface: false,
         superclass_name: None,
         span: span(0, 100),
         fields: vec![ResolvedField {
@@ -32,6 +33,7 @@ fn lowers_serde_configs_into_ir() {
             }],
         }],
         constructors: Vec::new(),
+        methods: Vec::new(),
         traits: Vec::new(),
         configs: vec![ConfigApplicationIr {
             symbol: SymbolId::new("derive_serde_annotation::SerDe"),
@@ -88,6 +90,7 @@ fn invalid_serde_options_produce_lowering_diagnostics() {
         kind: ClassKindIr::Class,
         name: "User".to_owned(),
         is_abstract: false,
+        is_interface: false,
         superclass_name: None,
         span: span(0, 100),
         fields: vec![ResolvedField {
@@ -102,6 +105,7 @@ fn invalid_serde_options_produce_lowering_diagnostics() {
             }],
         }],
         constructors: Vec::new(),
+        methods: Vec::new(),
         traits: Vec::new(),
         configs: vec![ConfigApplicationIr {
             symbol: SymbolId::new("derive_serde_annotation::SerDe"),
@@ -135,6 +139,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
         kind: ClassKindIr::Class,
         name: "User".to_owned(),
         is_abstract: false,
+        is_interface: false,
         superclass_name: None,
         span: span(0, 100),
         fields: vec![
@@ -206,6 +211,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
             },
         ],
         constructors: Vec::new(),
+        methods: Vec::new(),
         traits: Vec::new(),
         configs: Vec::new(),
     };

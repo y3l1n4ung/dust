@@ -1,0 +1,127 @@
+use crate::plugin::emit::types::{
+    is_void_type, needs_isolate_helper, render_decode_expr, render_decode_expr_nonnull,
+    render_non_nullable_type, render_type,
+};
+use crate::plugin::model::{ClientSpec, EndpointSpec, ParseThreadMode};
+use crate::plugin::util::is_response_body_type;
+
+pub(super) fn render_response_return(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) -> String {
+    let ty = &endpoint.return_spec.ty;
+    if is_void_type(ty) {
+        if endpoint.return_spec.raw_response {
+            return "    return _dustBuildResponse<void>(_result, null);\n".to_owned();
+        }
+        return "    return;\n".to_owned();
+    }
+    if is_response_body_type(ty) {
+        if endpoint.return_spec.raw_response {
+            return "    return _result;\n".to_owned();
+        }
+        if ty.is_nullable() {
+            return "    return _result.data;\n".to_owned();
+        }
+        return "    return _result.data!;\n".to_owned();
+    }
+
+    let decode_value = if endpoint.parse_thread == ParseThreadMode::Isolate
+        && needs_isolate_helper(ty)
+    {
+        let helper_name = isolate_helper_name(spec.class_name, &endpoint.method.name);
+        if ty.is_nullable() {
+            format!(
+                "_result.data == null ? null : await Isolate.run(() => {helper_name}(_result.data))"
+            )
+        } else {
+            format!("await Isolate.run(() => {helper_name}(_result.data!))")
+        }
+    } else {
+        render_decode_expr("_result.data", ty)
+    };
+
+    if endpoint.return_spec.raw_response {
+        format!(
+            "    final _value = {};\n    return _dustBuildResponse<{}>(_result, _value);\n",
+            decode_value,
+            render_type(ty)
+        )
+    } else {
+        format!("    return {};\n", decode_value)
+    }
+}
+
+pub(crate) fn render_isolate_helpers(spec: &ClientSpec<'_>) -> Vec<String> {
+    spec.endpoints
+        .iter()
+        .filter(|endpoint| {
+            endpoint.parse_thread == ParseThreadMode::Isolate
+                && needs_isolate_helper(&endpoint.return_spec.ty)
+        })
+        .map(|endpoint| render_isolate_helper(spec.class_name, endpoint))
+        .collect()
+}
+
+pub(crate) fn render_shared_helpers() -> Vec<String> {
+    vec![
+        render_set_stream_type_helper().to_owned(),
+        render_combine_base_urls_helper().to_owned(),
+        render_response_wrapper_helper().to_owned(),
+    ]
+}
+
+fn render_isolate_helper(class_name: &str, endpoint: &EndpointSpec<'_>) -> String {
+    format!(
+        "{} {}(dynamic json) {{\n  return {};\n}}\n",
+        render_non_nullable_type(&endpoint.return_spec.ty),
+        isolate_helper_name(class_name, &endpoint.method.name),
+        render_decode_expr_nonnull("json", &endpoint.return_spec.ty)
+    )
+}
+
+fn isolate_helper_name(class_name: &str, method_name: &str) -> String {
+    format!("_${}_{}_Decode", class_name, method_name)
+}
+
+fn render_set_stream_type_helper() -> &'static str {
+    r#"RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
+  if (T != dynamic &&
+      requestOptions.responseType != ResponseType.bytes &&
+      requestOptions.responseType != ResponseType.stream) {
+    if (T == ResponseBody) {
+      requestOptions.responseType = ResponseType.stream;
+    } else if (T == String) {
+      requestOptions.responseType = ResponseType.plain;
+    } else {
+      requestOptions.responseType = ResponseType.json;
+    }
+  }
+  return requestOptions;
+}"#
+}
+
+fn render_combine_base_urls_helper() -> &'static str {
+    r#"String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
+  if (baseUrl == null || baseUrl.trim().isEmpty) {
+    return dioBaseUrl;
+  }
+  final url = Uri.parse(baseUrl);
+  if (url.isAbsolute) {
+    return url.toString();
+  }
+  return Uri.parse(dioBaseUrl).resolveUri(url).toString();
+}"#
+}
+
+fn render_response_wrapper_helper() -> &'static str {
+    r#"Response<T> _dustBuildResponse<T>(Response<dynamic> response, T data) {
+  return Response<T>(
+    data: data,
+    headers: response.headers,
+    isRedirect: response.isRedirect,
+    redirects: response.redirects,
+    requestOptions: response.requestOptions,
+    statusCode: response.statusCode,
+    statusMessage: response.statusMessage,
+    extra: response.extra,
+  );
+}"#
+}

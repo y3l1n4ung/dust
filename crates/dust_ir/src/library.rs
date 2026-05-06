@@ -25,6 +25,8 @@ pub struct LibraryIr {
     pub source_path: String,
     /// The target generated file path.
     pub output_path: String,
+    /// Imported library URIs preserved from the source library.
+    pub imports: Vec<String>,
     /// The span covering the source library.
     pub span: SpanIr,
     /// The lowered classes in this library.

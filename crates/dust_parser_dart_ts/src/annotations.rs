@@ -37,3 +37,28 @@ pub(crate) fn extract_member_annotations(
     }
     annotations
 }
+
+pub(crate) fn extract_descendant_annotations(
+    node: Node<'_>,
+    source: &SourceText,
+) -> Vec<ParsedAnnotation> {
+    let mut annotations = Vec::new();
+    collect_descendant_annotations(node, source, &mut annotations);
+    annotations
+}
+
+fn collect_descendant_annotations(
+    node: Node<'_>,
+    source: &SourceText,
+    out: &mut Vec<ParsedAnnotation>,
+) {
+    if node.is_named() && node.kind() == "annotation" {
+        out.push(extract_annotation(node, source));
+        return;
+    }
+
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor).filter(|child| child.is_named()) {
+        collect_descendant_annotations(child, source, out);
+    }
+}

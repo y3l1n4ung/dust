@@ -34,6 +34,9 @@ pub(crate) fn constructor_param(name: &str, ty: TypeIr, kind: ParamKind) -> Cons
 pub(crate) fn constructor(name: Option<&str>, params: Vec<ConstructorParamIr>) -> ConstructorIr {
     ConstructorIr {
         name: name.map(str::to_owned),
+        is_factory: false,
+        redirected_target_source: None,
+        redirected_target_name: None,
         span: span(30, 40),
         params,
     }
@@ -44,11 +47,14 @@ pub(crate) fn class(name: &str, fields: Vec<FieldIr>, constructors: Vec<Construc
         kind: ClassKindIr::Class,
         name: name.to_owned(),
         is_abstract: false,
+        is_interface: false,
         superclass_name: None,
         span: span(0, 100),
         fields,
         constructors,
+        methods: Vec::new(),
         traits: Vec::new(),
+        configs: Vec::new(),
         serde: None,
     }
 }
@@ -64,6 +70,7 @@ pub(crate) fn sample_library(output_path: String) -> LibraryIr {
     LibraryIr {
         source_path: "lib/user.dart".to_owned(),
         output_path,
+        imports: Vec::new(),
         span: span(0, 120),
         classes: vec![class(
             "User",

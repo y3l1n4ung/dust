@@ -18,7 +18,7 @@ Each roadmap document should answer the same questions:
 
 - Generated Dart must be analyzer-clean, deterministic, readable, and small.
 - Public APIs must have Dartdoc before release.
-- Features should work without `build_runner`.
+- Features should work through Dust CLI generation.
 - Rust crates stay focused: parser, IR, resolver, plugin API, plugin, emitter,
   driver, CLI.
 - Every feature needs golden Rust tests plus real Dart analyzer/tests.

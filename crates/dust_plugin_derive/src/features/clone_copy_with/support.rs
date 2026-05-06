@@ -1,6 +1,5 @@
+use dust_dart_emit::OBJECT_NULLABLE_TYPES;
 use dust_ir::{ClassIr, TypeIr};
-
-use crate::features::writer::render_type;
 
 pub(super) fn render_copy_with_params(class: &ClassIr) -> String {
     if class.fields.is_empty() {
@@ -33,7 +32,7 @@ pub(super) fn render_copy_with_params(class: &ClassIr) -> String {
 
 pub(super) fn render_copy_with_source_expr(field_name: &str, ty: &TypeIr) -> String {
     if uses_undefined_sentinel(ty) {
-        let cast = render_type(ty);
+        let cast = OBJECT_NULLABLE_TYPES.render(ty);
         format!(
             "identical({field_name}, _undefined) ? _dustSelf.{field_name} : {field_name} as {cast}"
         )
@@ -88,7 +87,7 @@ fn render_copy_with_param_type(ty: &TypeIr) -> String {
     match ty {
         TypeIr::Builtin { kind, .. } => nullable_parameter_type(kind.as_str().to_owned()),
         TypeIr::Named { .. } | TypeIr::Function { .. } | TypeIr::Record { .. } => {
-            nullable_parameter_type(render_type(ty))
+            nullable_parameter_type(OBJECT_NULLABLE_TYPES.render(ty))
         }
         TypeIr::Dynamic => "dynamic".to_owned(),
         TypeIr::Unknown => "Object?".to_owned(),

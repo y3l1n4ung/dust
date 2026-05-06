@@ -1,16 +1,32 @@
 # Product Showcase
 
-Small real Dart package used to verify Dust end to end.
+This package is the runnable reference project behind the main Dust usage docs.
 
-## What it covers
+Read the canonical guides in:
 
-- `ToString()`, `Eq()`, and `CopyWith()` generation
-- serde field options and enum support
-- codec-backed serde fields
-- analyzer-clean generated output
-- runtime JSON round-trip tests
+- [../../docs/usage/README.md](../../docs/usage/README.md)
+- [../../docs/usage/derive.md](../../docs/usage/derive.md)
+- [../../docs/usage/serde.md](../../docs/usage/serde.md)
+- [../../docs/usage/http.md](../../docs/usage/http.md)
 
-## Generate code
+## What This Package Covers
+
+- derive generation such as `ToString()`, `Eq()`, and `CopyWith()`
+- serde generation such as `Serialize()`, `Deserialize()`, rename rules, defaults, aliases, and codecs
+- generated Dio HTTP clients
+- generated request-mapping `.test.g.dart` files
+- a real fake-online API example against `https://jsonplaceholder.typicode.com`
+
+## Build
+
+Inside this package:
+
+```bash
+dart pub get
+dust build
+```
+
+From the repository root:
 
 ```bash
 cargo run -p dust_cli -- build --root examples/product_showcase
@@ -23,6 +39,22 @@ dart analyze
 dart test
 ```
 
-See [../../docs/developer.md](../../docs/developer.md) for the wider build
-pipeline and [../stress_project/README.md](../stress_project/README.md) for the
-large-scale perf fixture.
+Optional live smoke coverage:
+
+```bash
+DUST_RUN_ONLINE_HTTP_TESTS=1 dart test test/json_placeholder_api_test.dart
+```
+
+## Key Reference Files
+
+- [lib/models/price.dart](lib/models/price.dart)
+- [lib/models/json_profile.dart](lib/models/json_profile.dart)
+- [lib/models/json_codec_bundle.dart](lib/models/json_codec_bundle.dart)
+- [lib/api/json_placeholder_api.dart](lib/api/json_placeholder_api.dart)
+- [lib/api/todo_api.dart](lib/api/todo_api.dart)
+
+## Related Docs
+
+- [../../README.md](../../README.md)
+- [../../docs/developer.md](../../docs/developer.md)
+- [../stress_project/README.md](../stress_project/README.md)

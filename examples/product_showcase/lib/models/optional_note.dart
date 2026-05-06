@@ -4,11 +4,7 @@ part 'optional_note.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith()])
 class OptionalNote with _$OptionalNoteDust {
-  const OptionalNote({
-    required this.id,
-    this.note,
-    this.aliases,
-  });
+  const OptionalNote({required this.id, this.note, this.aliases});
 
   final String id;
   final String? note;

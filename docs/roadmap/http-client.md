@@ -2,9 +2,9 @@
 
 ## Goal
 
-Generate Retrofit-style, Dio-backed HTTP clients from annotated Dart
-interfaces. Dust should generate type-safe request construction, response
-decoding, and analyzer-clean client implementations without `build_runner`.
+Generate Dio-backed HTTP clients from annotated Dart interfaces. Dust should
+generate type-safe request construction, response decoding, and analyzer-clean
+client implementations through its own generation flow.
 
 ## Package Shape
 

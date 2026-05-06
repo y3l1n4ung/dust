@@ -29,6 +29,9 @@ pub(super) fn load_library_inputs(
                                 source_hash: entry.source_hash,
                                 package_config_hash: entry.package_config_hash,
                                 tool_hash: entry.tool_hash,
+                                output_paths: std::iter::once(library.output_path.clone())
+                                    .chain(entry.auxiliary_output_paths.iter().cloned())
+                                    .collect(),
                             });
                         let input = load_library_input(
                             library,

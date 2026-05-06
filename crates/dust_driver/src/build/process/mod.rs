@@ -42,7 +42,7 @@ impl BuildOutcome {
         Self {
             diagnostics,
             diagnostic_file,
-            artifact: build_artifact(library, false, false, false),
+            artifact: build_artifact(library, Vec::new(), false, false, false),
             expected_output_hash: None,
             analysis_snapshot: LibraryAnalysisSnapshot::default(),
         }
@@ -53,13 +53,14 @@ impl BuildOutcome {
         diagnostics: Vec<Diagnostic>,
         diagnostic_file: Option<DiagnosticFile>,
         expected_output_hash: u64,
+        auxiliary_output_paths: Vec<std::path::PathBuf>,
         changed: bool,
         written: bool,
     ) -> Self {
         Self {
             diagnostics,
             diagnostic_file,
-            artifact: build_artifact(library, changed, written, false),
+            artifact: build_artifact(library, auxiliary_output_paths, changed, written, false),
             expected_output_hash: Some(expected_output_hash),
             analysis_snapshot: LibraryAnalysisSnapshot::default(),
         }
@@ -118,6 +119,7 @@ pub(crate) fn build_diagnostic_file(
 
 fn build_artifact(
     library: &SourceLibrary,
+    auxiliary_output_paths: Vec<std::path::PathBuf>,
     changed: bool,
     written: bool,
     cached: bool,
@@ -125,6 +127,7 @@ fn build_artifact(
     BuildArtifact {
         source_path: library.source_path.clone(),
         output_path: library.output_path.clone(),
+        auxiliary_output_paths,
         changed,
         written,
         cached,

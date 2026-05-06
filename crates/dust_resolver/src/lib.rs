@@ -10,5 +10,6 @@ mod result;
 pub use catalog::{ResolvedSymbol, SymbolCatalog, SymbolKind};
 pub use resolve::{resolve_library, validate_generated_part_uri};
 pub use result::{
-    ResolveResult, ResolvedClass, ResolvedEnum, ResolvedEnumVariant, ResolvedField, ResolvedLibrary,
+    ResolveResult, ResolvedClass, ResolvedEnum, ResolvedEnumVariant, ResolvedField,
+    ResolvedLibrary, ResolvedMethod, ResolvedMethodParam,
 };

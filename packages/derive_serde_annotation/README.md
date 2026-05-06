@@ -103,6 +103,12 @@ class AuditLog {
 - The package only defines annotation metadata. Code generation still lives in
   Dust Rust crates.
 
+## Full Usage Guide
+
+See the root usage docs for the end-to-end serde walkthrough:
+
+- [../../docs/usage/serde.md](../../docs/usage/serde.md)
+
 ## Planned Rust integration
 
 The next Dust layers will use this package in three steps:

@@ -8,7 +8,7 @@ use dust_plugin_api::LibraryAnalysisSnapshot;
 use serde::{Deserialize, Serialize};
 
 /// The current on-disk Dust cache schema version.
-pub const CACHE_SCHEMA_VERSION: u32 = 4;
+pub const CACHE_SCHEMA_VERSION: u32 = 5;
 
 /// One cached build fingerprint for a source library.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -22,6 +22,9 @@ pub struct CacheEntry {
     pub tool_hash: u64,
     /// The expected generated output fingerprint for the current source state.
     pub expected_output_hash: u64,
+    /// Additional generated output paths owned by this library build.
+    #[serde(default)]
+    pub auxiliary_output_paths: Vec<PathBuf>,
     /// The cached parse-only plugin analysis facts for this library.
     #[serde(default)]
     pub analysis_snapshot: LibraryAnalysisSnapshot,
@@ -188,6 +191,7 @@ mod tests {
                 package_config_hash: 2,
                 tool_hash: 3,
                 expected_output_hash: 4,
+                auxiliary_output_paths: Vec::new(),
                 analysis_snapshot: LibraryAnalysisSnapshot::default(),
             },
         );
@@ -201,6 +205,7 @@ mod tests {
                 package_config_hash: 2,
                 tool_hash: 3,
                 expected_output_hash: 4,
+                auxiliary_output_paths: Vec::new(),
                 analysis_snapshot: LibraryAnalysisSnapshot::default(),
             })
         );
@@ -221,6 +226,7 @@ mod tests {
                 package_config_hash: 20,
                 tool_hash: 30,
                 expected_output_hash: 40,
+                auxiliary_output_paths: Vec::new(),
                 analysis_snapshot: LibraryAnalysisSnapshot::default(),
             },
         );
@@ -244,6 +250,7 @@ mod tests {
                 package_config_hash: 2,
                 tool_hash: 3,
                 expected_output_hash: 4,
+                auxiliary_output_paths: Vec::new(),
                 analysis_snapshot: LibraryAnalysisSnapshot::default(),
             },
         );

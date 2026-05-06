@@ -1,6 +1,7 @@
 use std::{fs, io, path::Path, sync::Arc};
 
 use dust_diagnostics::Diagnostic;
+use dust_http_client_plugin::register_plugin as register_http_client_plugin;
 use dust_plugin_api::PluginRegistry;
 use dust_plugin_derive::register_plugin as register_derive_plugin;
 use dust_plugin_serde::register_plugin as register_serde_plugin;
@@ -25,6 +26,7 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("support.rs"),
     include_str!("work.rs"),
     include_str!("../../../dust_plugin_api/src/analysis.rs"),
+    include_str!("../../../dust_plugin_api/src/contribution.rs"),
     include_str!("../../../dust_plugin_api/src/plugin.rs"),
     include_str!("../../../dust_plugin_api/src/registry.rs"),
     include_str!("../../../dust_plugin_api/src/symbols.rs"),
@@ -43,15 +45,42 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_plugin_serde/src/writer_expr.rs"),
     include_str!("../../../dust_plugin_serde/src/writer_model.rs"),
     include_str!("../../../dust_plugin_serde/src/writer_type.rs"),
+    include_str!("../../../dust_dart_emit/src/lib.rs"),
+    include_str!("../../../dust_dart_emit/src/type_render.rs"),
+    include_str!("../../../dust_http_client_plugin/src/lib.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/build.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/constants.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/model.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/util.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/parse/mod.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/parse/args.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/parse/http.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/validate/mod.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/validate/class.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/validate/endpoint.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/validate/param.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/validate/finalize.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/emit/mod.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/emit/class.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/emit/path.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/emit/request.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/emit/response.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/emit/test_file.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/emit/test_support.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/emit/types.rs"),
     include_str!("../../../dust_emitter/src/emit.rs"),
+    include_str!("../../../dust_emitter/src/merge.rs"),
+    include_str!("../../../dust_emitter/src/write.rs"),
     include_str!("../../../dust_emitter/src/writer.rs"),
 );
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(crate) struct CacheFingerprint {
     pub(crate) source_hash: u64,
     pub(crate) package_config_hash: u64,
     pub(crate) tool_hash: u64,
+    pub(crate) output_paths: Vec<std::path::PathBuf>,
 }
 
 pub(crate) fn load_library_input(
@@ -73,11 +102,11 @@ pub(crate) fn load_library_input(
                 && entry.package_config_hash == package_config_hash
                 && entry.tool_hash == tool_hash
         })
-        .map(|_| {
-            read_optional_hash(&library.output_path).map_err(|error| {
+        .map(|entry| {
+            read_optional_hashes(&entry.output_paths).map_err(|error| {
                 Diagnostic::error(format!(
-                    "failed to read `{}`: {error}",
-                    library.output_path.display()
+                    "failed to read generated outputs for `{}`: {error}",
+                    library.source_path.display()
                 ))
             })
         })
@@ -133,11 +162,40 @@ pub(crate) fn default_registry() -> PluginRegistry {
         .register(Box::new(register_serde_plugin()))
         .expect("serde plugin symbol ownership must be valid");
     registry
+        .register(Box::new(register_http_client_plugin()))
+        .expect("http client plugin symbol ownership must be valid");
+    registry
 }
 
-fn read_optional_hash(path: &Path) -> io::Result<Option<u64>> {
+pub(crate) fn hash_output_set<'a>(outputs: impl IntoIterator<Item = (&'a Path, &'a str)>) -> u64 {
+    let mut combined = String::new();
+    for (path, source) in outputs {
+        combined.push_str(&path.to_string_lossy());
+        combined.push('\0');
+        combined.push_str(source);
+        combined.push('\0');
+    }
+    hash_text(&combined)
+}
+
+fn read_optional_hashes(paths: &[std::path::PathBuf]) -> io::Result<Option<u64>> {
+    let mut sources = Vec::with_capacity(paths.len());
+    for path in paths {
+        let Some(source) = read_previous_output(path)? else {
+            return Ok(None);
+        };
+        sources.push((path.as_path(), source));
+    }
+    Ok(Some(hash_output_set(
+        sources
+            .iter()
+            .map(|(path, source)| (*path, source.as_str())),
+    )))
+}
+
+fn read_previous_output(path: &Path) -> io::Result<Option<String>> {
     match fs::read_to_string(path) {
-        Ok(source) => Ok(Some(hash_text(&source))),
+        Ok(source) => Ok(Some(source)),
         Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
         Err(error) => Err(error),
     }

@@ -34,7 +34,8 @@ final class VehicleIndexCodec implements SerDeCodec<Vehicle, int> {
   };
 }
 
-final class VehicleIndexListCodec implements SerDeCodec<List<Vehicle>, List<int>> {
+final class VehicleIndexListCodec
+    implements SerDeCodec<List<Vehicle>, List<int>> {
   const VehicleIndexListCodec();
 
   @override

@@ -10,6 +10,7 @@ use crate::{
     SymbolCatalog,
     resolve_support::{
         expected_output_path, first_part_uri, resolve_declaration_annotations, resolve_field,
+        resolve_method,
     },
 };
 
@@ -169,6 +170,12 @@ fn resolve_class(
         .map(|field| resolve_field(file_id, field, catalog, diagnostics))
         .collect();
 
+    let methods = class
+        .methods
+        .iter()
+        .map(|method| resolve_method(file_id, method, catalog, diagnostics))
+        .collect();
+
     ResolvedClass {
         kind: match class.kind {
             ParsedClassKind::Class => ClassKindIr::Class,
@@ -176,10 +183,12 @@ fn resolve_class(
         },
         name: class.name.clone(),
         is_abstract: class.is_abstract,
+        is_interface: class.is_interface,
         superclass_name: class.superclass_name.clone(),
         span: SpanIr::new(file_id, class.span),
         fields,
         constructors: class.constructors.clone(),
+        methods,
         traits,
         configs,
     }

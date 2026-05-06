@@ -1,0 +1,37 @@
+import 'package:derive_serde_annotation/derive_serde_annotation.dart';
+
+part 'remote_post.g.dart';
+
+@Derive([ToString(), CopyWith(), Serialize(), Deserialize()])
+class RemotePost with _$RemotePostDust {
+  final int userId;
+  final int id;
+  final String title;
+  final String body;
+
+  RemotePost({
+    required this.userId,
+    required this.id,
+    required this.title,
+    required this.body,
+  });
+
+  factory RemotePost.fromJson(Map<String, Object?> json) =>
+      _$RemotePostFromJson(json);
+}
+
+@Derive([ToString(), CopyWith(), Serialize(), Deserialize()])
+class RemotePostDraft with _$RemotePostDraftDust {
+  final int userId;
+  final String title;
+  final String body;
+
+  RemotePostDraft({
+    required this.userId,
+    required this.title,
+    required this.body,
+  });
+
+  factory RemotePostDraft.fromJson(Map<String, Object?> json) =>
+      _$RemotePostDraftFromJson(json);
+}

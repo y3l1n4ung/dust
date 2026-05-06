@@ -1,4 +1,7 @@
-use crate::{ConstructorIr, FieldIr, SerdeClassConfigIr, SpanIr, TraitApplicationIr};
+use crate::{
+    ConfigApplicationIr, ConstructorIr, FieldIr, MethodIr, SerdeClassConfigIr, SpanIr,
+    TraitApplicationIr,
+};
 
 /// The lowered declaration kind of a Dart class-like target.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -18,6 +21,8 @@ pub struct ClassIr {
     pub name: String,
     /// Whether the declaration is marked `abstract`.
     pub is_abstract: bool,
+    /// Whether the declaration uses Dart's `interface class` form.
+    pub is_interface: bool,
     /// The immediate superclass name, if one was declared.
     pub superclass_name: Option<String>,
     /// The source span for the class.
@@ -26,8 +31,12 @@ pub struct ClassIr {
     pub fields: Vec<FieldIr>,
     /// The lowered constructors in declaration order.
     pub constructors: Vec<ConstructorIr>,
+    /// The lowered methods in declaration order.
+    pub methods: Vec<MethodIr>,
     /// Trait applications resolved for this class.
     pub traits: Vec<TraitApplicationIr>,
+    /// Config applications resolved for this class.
+    pub configs: Vec<ConfigApplicationIr>,
     /// Normalized serde-related class configuration.
     pub serde: Option<SerdeClassConfigIr>,
 }

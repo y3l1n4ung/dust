@@ -4,6 +4,9 @@ mod support;
 #[path = "driver_tests/build_outputs.rs"]
 mod build_outputs;
 
+#[path = "driver_tests/http_client_outputs.rs"]
+mod http_client_outputs;
+
 #[path = "driver_tests/build_behavior.rs"]
 mod build_behavior;
 

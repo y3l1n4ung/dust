@@ -50,6 +50,7 @@ pub(crate) fn apply_indexed_outcomes(
                         package_config_hash: config.package_config_hash,
                         tool_hash: config.tool_hash,
                         expected_output_hash,
+                        auxiliary_output_paths: artifact.auxiliary_output_paths.clone(),
                         analysis_snapshot,
                     },
                 );

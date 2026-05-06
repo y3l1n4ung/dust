@@ -1,8 +1,7 @@
 use std::collections::HashSet;
 
+use dust_dart_emit::OBJECT_NULLABLE_TYPES;
 use dust_ir::{BuiltinType, TypeIr};
-
-use crate::features::writer::render_type;
 
 use super::support::{member_access_expr, non_null_value_expr};
 
@@ -67,7 +66,7 @@ fn render_sequence_copy(
 ) -> String {
     let item_ty = args.first();
     let item_rendered = item_ty
-        .map(render_type)
+        .map(|ty| OBJECT_NULLABLE_TYPES.render(ty))
         .unwrap_or_else(|| "Object?".to_owned());
     let source_value = if nullable {
         non_null_value_expr(value)
@@ -108,10 +107,10 @@ fn render_map_copy(
     let key_ty = args.first();
     let value_ty = args.get(1);
     let key_rendered = key_ty
-        .map(render_type)
+        .map(|ty| OBJECT_NULLABLE_TYPES.render(ty))
         .unwrap_or_else(|| "Object?".to_owned());
     let value_rendered = value_ty
-        .map(render_type)
+        .map(|ty| OBJECT_NULLABLE_TYPES.render(ty))
         .unwrap_or_else(|| "Object?".to_owned());
     let source_value = if nullable {
         non_null_value_expr(value)

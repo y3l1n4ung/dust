@@ -71,12 +71,14 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
     let library = LibraryIr {
         source_path: "lib/models.dart".to_owned(),
         output_path: output_path.display().to_string(),
+        imports: Vec::new(),
         span: span(0, 200),
         classes: vec![
             ClassIr {
                 kind: ClassKindIr::Class,
                 name: "User".to_owned(),
                 is_abstract: false,
+                is_interface: false,
                 superclass_name: None,
                 span: span(0, 80),
                 fields: vec![
@@ -90,17 +92,20 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
                         constructor_param("age", TypeIr::int().nullable(), ParamKind::Positional),
                     ],
                 )],
+                methods: Vec::new(),
                 traits: vec![
                     trait_app("derive_annotation::ToString"),
                     trait_app("derive_annotation::Eq"),
                     trait_app("derive_annotation::CopyWith"),
                 ],
+                configs: Vec::new(),
                 serde: None,
             },
             ClassIr {
                 kind: ClassKindIr::Class,
                 name: "Team".to_owned(),
                 is_abstract: false,
+                is_interface: false,
                 superclass_name: None,
                 span: span(81, 160),
                 fields: vec![field("name", TypeIr::string())],
@@ -112,7 +117,9 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
                         ParamKind::Positional,
                     )],
                 )],
+                methods: Vec::new(),
                 traits: vec![trait_app("derive_annotation::CopyWith")],
+                configs: Vec::new(),
                 serde: None,
             },
         ],
