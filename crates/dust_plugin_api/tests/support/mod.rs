@@ -11,6 +11,8 @@ pub(crate) fn span(start: u32, end: u32) -> SpanIr {
 
 pub(crate) fn sample_library() -> LibraryIr {
     LibraryIr {
+        package_root: ".".to_owned(),
+        package_name: "dust_test".to_owned(),
         source_path: "lib/user.dart".to_owned(),
         output_path: "lib/user.g.dart".to_owned(),
         imports: Vec::new(),

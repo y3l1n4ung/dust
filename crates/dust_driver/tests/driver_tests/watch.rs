@@ -144,6 +144,55 @@ fn watch_rebuilds_all_libraries_when_package_config_changes() {
 }
 
 #[test]
+fn watch_rebuilds_all_libraries_when_dust_config_changes() {
+    let workspace = make_workspace();
+    write_file(
+        &workspace.path().join("lib/user.dart"),
+        "part 'user.g.dart';\n\
+         @ToString()\n\
+         class User {\n\
+           final String id;\n\
+           const User(this.id);\n\
+         }\n",
+    );
+    write_file(
+        &workspace.path().join("lib/team.dart"),
+        "part 'team.g.dart';\n\
+         @CopyWith()\n\
+         class Team {\n\
+           final String name;\n\
+           const Team(this.name);\n\
+         }\n",
+    );
+
+    let root = workspace.path().to_path_buf();
+    let dust_config = root.join("dust.yaml");
+    let modifier = thread::spawn(move || {
+        thread::sleep(Duration::from_millis(25));
+        write_file(&dust_config, "outputs:\n  primary_suffix: .g.dart\n");
+    });
+
+    let result = run_watch(WatchRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+        poll_interval_ms: 20,
+        max_cycles: Some(3),
+    });
+    modifier.join().unwrap();
+
+    let watch = result.watch.unwrap();
+    assert_eq!(watch.rebuild_batches, 1);
+    assert_eq!(
+        watch.rebuilt_libraries,
+        vec![
+            workspace.path().join("lib/team.dart"),
+            workspace.path().join("lib/user.dart"),
+        ]
+    );
+}
+
+#[test]
 fn run_dispatches_watch_requests() {
     let workspace = make_workspace();
     let result = run(CommandRequest::Watch(WatchRequest {

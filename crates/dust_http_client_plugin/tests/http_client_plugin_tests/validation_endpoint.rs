@@ -2,7 +2,9 @@ use dust_http_client_plugin::register_plugin;
 use dust_ir::TypeIr;
 use dust_plugin_api::DustPlugin;
 
-use super::support::{config, future_of, http_client_class, library_for, library_for_with_imports, method};
+use super::support::{
+    config, future_of, http_client_class, library_for, library_for_with_imports, method,
+};
 
 #[test]
 fn rejects_methods_without_http_verbs() {

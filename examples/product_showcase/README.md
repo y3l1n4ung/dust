@@ -14,7 +14,7 @@ Read the canonical guides in:
 - derive generation such as `ToString()`, `Eq()`, and `CopyWith()`
 - serde generation such as `Serialize()`, `Deserialize()`, rename rules, defaults, aliases, and codecs
 - generated Dio HTTP clients
-- generated request-mapping `.test.g.dart` files
+- generated request-mapping tests under `test/generated/..._test.dart`
 - a real fake-online API example against `https://jsonplaceholder.typicode.com`
 
 ## Build

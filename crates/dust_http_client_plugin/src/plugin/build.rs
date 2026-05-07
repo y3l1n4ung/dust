@@ -202,9 +202,7 @@ fn is_supported_payload(ty: &TypeIr, allow_response_body: bool) -> bool {
             args.len() == 1 && is_supported_payload(&args[0], false)
         }
         TypeIr::Named { .. } if is_response_body_type(ty) => allow_response_body,
-        TypeIr::Named { .. } if type_name_is(ty, "Response") || type_name_is(ty, "Stream") => {
-            false
-        }
+        TypeIr::Named { .. } if type_name_is(ty, "Response") || type_name_is(ty, "Stream") => false,
         TypeIr::Named { .. } => true,
         TypeIr::Function { .. } | TypeIr::Record { .. } | TypeIr::Unknown => false,
     }

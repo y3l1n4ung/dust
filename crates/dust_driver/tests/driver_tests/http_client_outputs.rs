@@ -30,7 +30,7 @@ fn build_writes_http_client_auxiliary_test_output() {
     });
 
     let primary = workspace.path().join("lib/api.g.dart");
-    let auxiliary = workspace.path().join("lib/api.test.g.dart");
+    let auxiliary = workspace.path().join("test/generated/api_test.dart");
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
     assert!(primary.exists());
     assert!(auxiliary.exists(), "{:?}", result.build_artifacts);
@@ -42,6 +42,7 @@ fn build_writes_http_client_auxiliary_test_output() {
     );
     assert!(auxiliary_source.contains("void main() {"));
     assert!(auxiliary_source.contains("group('Api request mapping'"));
+    assert!(auxiliary_source.contains("package:dust_test/api.dart"));
     assert!(auxiliary_source.contains("getUser("), "{auxiliary_source}");
 }
 
@@ -71,7 +72,7 @@ fn check_marks_http_client_output_stale_when_auxiliary_file_is_missing() {
     });
     assert!(!build.has_errors(), "{:?}", build.diagnostics);
 
-    fs::remove_file(workspace.path().join("lib/api.test.g.dart")).unwrap();
+    fs::remove_file(workspace.path().join("test/generated/api_test.dart")).unwrap();
     let check = run_check(CheckRequest {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
@@ -82,7 +83,7 @@ fn check_marks_http_client_output_stale_when_auxiliary_file_is_missing() {
     assert!(check.checked_libraries[0].stale);
     assert_eq!(
         check.checked_libraries[0].auxiliary_output_paths,
-        vec![workspace.path().join("lib/api.test.g.dart")]
+        vec![workspace.path().join("test/generated/api_test.dart")]
     );
 }
 
@@ -117,6 +118,11 @@ fn clean_removes_http_client_auxiliary_test_output() {
     });
 
     assert!(!workspace.path().join("lib/api.g.dart").exists());
-    assert!(!workspace.path().join("lib/api.test.g.dart").exists());
+    assert!(
+        !workspace
+            .path()
+            .join("test/generated/api_test.dart")
+            .exists()
+    );
     assert!(result.clean.unwrap().removed_files >= 2);
 }

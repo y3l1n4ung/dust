@@ -103,7 +103,7 @@ pub(super) fn is_void_type(ty: &TypeIr) -> bool {
     ty.is_named("void")
 }
 
-fn uses_direct_body_value(ty: &TypeIr) -> bool {
+pub(super) fn uses_direct_body_value(ty: &TypeIr) -> bool {
     match ty {
         TypeIr::Dynamic | TypeIr::Unknown => true,
         TypeIr::Builtin { .. } => true,

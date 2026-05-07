@@ -1,7 +1,8 @@
 use dust_ir::{BuiltinType, TypeIr};
 
+use crate::plugin::emit::types::uses_direct_body_value;
 use crate::plugin::model::{EndpointParam, ReturnSpec};
-use crate::plugin::util::{is_response_body_type, is_string_keyed_map};
+use crate::plugin::util::is_response_body_type;
 
 pub(super) struct SampleValue {
     pub(super) expression: String,
@@ -44,34 +45,6 @@ pub(super) fn sample_response_data(return_spec: &ReturnSpec) -> &'static str {
     }
 }
 
-pub(super) fn sample_value(ty: &TypeIr) -> Option<SampleValue> {
-    match ty {
-        TypeIr::Builtin { kind, .. } => Some(match kind {
-            BuiltinType::String => SampleValue::new("'dust-id'", Some("dust-id")),
-            BuiltinType::Int => SampleValue::new("42", Some("42")),
-            BuiltinType::Bool => SampleValue::new("true", Some("true")),
-            BuiltinType::Double => SampleValue::new("3.14", Some("3.14")),
-            BuiltinType::Num => SampleValue::new("7", Some("7")),
-            BuiltinType::Object => {
-                SampleValue::new("const <String, dynamic>{'value': 'dust'}", None)
-            }
-        }),
-        TypeIr::Dynamic => Some(SampleValue::new(
-            "const <String, dynamic>{'value': 'dust'}",
-            None,
-        )),
-        TypeIr::Named { name, .. } if name.as_ref() == "String" => {
-            Some(SampleValue::new("'dust-id'", Some("dust-id")))
-        }
-        TypeIr::Named { name, args, .. } if name.as_ref() == "List" && args.len() == 1 => {
-            Some(SampleValue::new("const <dynamic>['dust']", None))
-        }
-        TypeIr::Named { args, .. } if is_string_keyed_map(ty) => map_sample_value(&args[1]),
-        TypeIr::Named { nullable: true, .. } => Some(SampleValue::new("null", Some("null"))),
-        _ => None,
-    }
-}
-
 pub(super) fn fallback_sample(binding: &EndpointParam<'_>) -> Option<SampleValue> {
     Some(match binding {
         EndpointParam::Body { .. } => return None,
@@ -89,35 +62,10 @@ pub(super) fn fallback_sample(binding: &EndpointParam<'_>) -> Option<SampleValue
     })
 }
 
-fn map_sample_value(value_ty: &TypeIr) -> Option<SampleValue> {
-    match value_ty {
-        TypeIr::Dynamic | TypeIr::Unknown => Some(SampleValue::new(
-            "const <String, dynamic>{'value': 'dust'}",
-            None,
-        )),
-        TypeIr::Builtin { kind, .. } => Some(match kind {
-            BuiltinType::String => {
-                SampleValue::new("const <String, String>{'value': 'dust'}", None)
-            }
-            BuiltinType::Int => SampleValue::new("const <String, int>{'value': 42}", None),
-            BuiltinType::Bool => SampleValue::new("const <String, bool>{'value': true}", None),
-            BuiltinType::Double => SampleValue::new("const <String, double>{'value': 3.14}", None),
-            BuiltinType::Num => SampleValue::new("const <String, num>{'value': 3.14}", None),
-            BuiltinType::Object => {
-                SampleValue::new("const <String, Object>{'value': 'dust'}", None)
-            }
-        }),
-        TypeIr::Named { name, .. } if name.as_ref() == "String" => Some(SampleValue::new(
-            "const <String, String>{'value': 'dust'}",
-            None,
-        )),
-        TypeIr::Named { nullable: true, .. } => Some(SampleValue::new(
-            "const <String, dynamic>{'value': null}",
-            None,
-        )),
-        _ => Some(SampleValue::new(
-            "const <String, dynamic>{'value': 'dust'}",
-            None,
-        )),
+pub(super) fn sample_body_assertion(ty: &TypeIr, sample: &SampleValue) -> String {
+    if uses_direct_body_value(ty) {
+        sample.assertion_expression.clone()
+    } else {
+        format!("{}.toJson()", sample.expression)
     }
 }

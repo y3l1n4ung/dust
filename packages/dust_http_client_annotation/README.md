@@ -11,7 +11,8 @@ optional request-mapping tests.
 - request binding annotations such as `@Path()`, `@Query()`, `@Body()`, and
   `@Header()`
 - content-type markers such as `@FormUrlEncoded()` and `@MultiPart()`
-- `@GenerateTest()` support for generated `.test.g.dart` request-mapping tests
+- `@GenerateTest()` support for generated `test/generated/..._test.dart`
+  request-mapping tests
 
 ## Usage
 
@@ -39,7 +40,7 @@ abstract interface class TodoApi {
 ```
 
 Dust generates `todo_api.g.dart` for the concrete Dio client and
-`todo_api.test.g.dart` when `@GenerateTest()` is present.
+`test/generated/api/todo_api_test.dart` when `@GenerateTest()` is present.
 
 ## Full Usage Guide
 

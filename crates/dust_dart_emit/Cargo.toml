@@ -4,9 +4,13 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Shared Dart code emission helpers for Dust plugins."
 
 [dependencies]
-dust_ir = { path = "../dust_ir" }
+dust_ir = { path = "../dust_ir", version = "0.1.0" }
+heck = { workspace = true }
 
 [lib]
 path = "src/lib.rs"

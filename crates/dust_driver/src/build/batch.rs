@@ -35,6 +35,8 @@ pub(crate) type ProgressCallback<'a> = dyn Fn(ProgressEvent) + Send + Sync + 'a;
 #[derive(Clone, Copy)]
 pub(crate) struct BatchConfig<'a> {
     pub(crate) cache_root: &'a Path,
+    pub(crate) package_root: &'a Path,
+    pub(crate) package_name: &'a str,
     pub(crate) package_config_hash: u64,
     pub(crate) tool_hash: u64,
     pub(crate) cache: &'a WorkspaceCache,
@@ -132,6 +134,8 @@ pub(crate) fn prepare_and_process_batch(
     }
 
     let processing = ProcessingConfig {
+        package_root: config.package_root,
+        package_name: config.package_name,
         catalog: config.catalog,
         registry: config.registry,
         workspace_analysis: Arc::new(workspace_analysis.build()),

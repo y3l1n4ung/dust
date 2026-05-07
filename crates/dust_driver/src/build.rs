@@ -17,7 +17,7 @@ pub(crate) use apply::{ApplyOutcomeConfig, apply_indexed_outcomes, flush_cache_i
 pub(crate) use batch::BatchConfig;
 pub(crate) use batch::prepare_and_process_batch;
 pub(crate) use support::{
-    codegen_tool_hash, default_registry, hash_text, read_package_config_hash,
+    codegen_tool_hash, default_registry, hash_text, read_workspace_config_hash,
 };
 
 /// Runs one writing build across the discovered workspace.
@@ -59,6 +59,8 @@ fn run_build_inner(
     let indexed = prepare_and_process_batch(
         BatchConfig {
             cache_root: &workspace.cache_root,
+            package_root: &workspace.package_root,
+            package_name: &workspace.package_name,
             package_config_hash,
             tool_hash,
             cache: &cache,

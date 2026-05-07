@@ -69,6 +69,8 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
     let temp = tempdir().unwrap();
     let output_path = temp.path().join("lib/models.g.dart");
     let library = LibraryIr {
+        package_root: ".".to_owned(),
+        package_name: "dust_test".to_owned(),
         source_path: "lib/models.dart".to_owned(),
         output_path: output_path.display().to_string(),
         imports: Vec::new(),

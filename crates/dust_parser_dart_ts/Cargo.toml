@@ -4,11 +4,14 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Tree-sitter Dart backend for Dust parsing."
 
 [dependencies]
-dust_text = { path = "../dust_text" }
-dust_diagnostics = { path = "../dust_diagnostics" }
-dust_parser_dart = { path = "../dust_parser_dart" }
+dust_text = { path = "../dust_text", version = "0.1.0" }
+dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.0" }
+dust_parser_dart = { path = "../dust_parser_dart", version = "0.1.0" }
 tree-sitter = "0.25.10"
 tree-sitter-dart = "0.1.0"
 

@@ -12,6 +12,8 @@ fn copywith_copies_collection_fields_without_aliasing() {
     let plugin = register_plugin();
     let contribution = plugin.emit(
         &LibraryIr {
+            package_root: ".".to_owned(),
+            package_name: "dust_test".to_owned(),
             source_path: "lib/catalog.dart".to_owned(),
             output_path: "lib/catalog.g.dart".to_owned(),
             imports: Vec::new(),
@@ -123,6 +125,8 @@ fn copywith_clones_nested_dust_models() {
     let plugin = register_plugin();
     let contribution = plugin.emit(
         &LibraryIr {
+            package_root: ".".to_owned(),
+            package_name: "dust_test".to_owned(),
             source_path: "lib/product.dart".to_owned(),
             output_path: "lib/product.g.dart".to_owned(),
             imports: Vec::new(),
@@ -242,6 +246,8 @@ fn copywith_copies_collection_fields() {
     let plugin = register_plugin();
     let contribution = plugin.emit(
         &LibraryIr {
+            package_root: ".".to_owned(),
+            package_name: "dust_test".to_owned(),
             source_path: "lib/catalog.dart".to_owned(),
             output_path: "lib/catalog.g.dart".to_owned(),
             imports: Vec::new(),

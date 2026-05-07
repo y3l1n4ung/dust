@@ -5,15 +5,15 @@ use std::{
 
 use dust_diagnostics::Diagnostic;
 
-use crate::SourceLibrary;
+use crate::{SourceLibrary, is_generated_primary_file, load_dust_config, primary_output_path};
 
 /// Recursively discovers candidate Dust libraries under `lib/**/*.dart`.
 ///
 /// The scan is deterministic and only keeps source files that:
-/// - are not already generated `*.g.dart` files
-/// - declare a matching `part 'x.g.dart';` or `part "x.g.dart";`
+/// - are not already generated primary output files
 /// - contain at least one annotation marker like `@Derive` or `@ToString`
 pub fn discover_libraries(root: &Path) -> Result<Vec<SourceLibrary>, Diagnostic> {
+    let dust_config = load_dust_config(root)?;
     let lib_dir = root.join("lib");
     if !lib_dir.is_dir() {
         return Ok(Vec::new());
@@ -25,13 +25,13 @@ pub fn discover_libraries(root: &Path) -> Result<Vec<SourceLibrary>, Diagnostic>
 
     let mut libraries = Vec::new();
     for source_path in dart_files {
-        if is_generated_dart_file(&source_path) {
+        if is_generated_primary_file(&source_path, &dust_config.outputs.primary_suffix) {
             continue;
         }
 
         if is_candidate_library(&source_path)? {
             libraries.push(SourceLibrary {
-                output_path: generated_output_path(&source_path),
+                output_path: primary_output_path(&source_path, &dust_config.outputs.primary_suffix),
                 source_path,
             });
         }
@@ -70,12 +70,6 @@ fn collect_dart_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), Diagnost
     Ok(())
 }
 
-fn is_generated_dart_file(path: &Path) -> bool {
-    path.file_name()
-        .and_then(|name| name.to_str())
-        .is_some_and(|name| name.ends_with(".g.dart"))
-}
-
 fn is_candidate_library(path: &Path) -> Result<bool, Diagnostic> {
     let source = fs::read_to_string(path).map_err(|error| {
         Diagnostic::error(format!(
@@ -84,17 +78,7 @@ fn is_candidate_library(path: &Path) -> Result<bool, Diagnostic> {
         ))
     })?;
 
-    let Some(stem) = path.file_stem().and_then(|stem| stem.to_str()) else {
-        return Ok(false);
-    };
-
-    let expected_single = format!("part '{stem}.g.dart';");
-    let expected_double = format!("part \"{stem}.g.dart\";");
-
-    Ok(
-        (source.contains(&expected_single) || source.contains(&expected_double))
-            && contains_annotation_marker(&source),
-    )
+    Ok(contains_annotation_marker(&source))
 }
 
 fn contains_annotation_marker(source: &str) -> bool {
@@ -119,12 +103,4 @@ fn contains_annotation_marker(source: &str) -> bool {
     }
 
     false
-}
-
-fn generated_output_path(source_path: &Path) -> PathBuf {
-    let stem = source_path
-        .file_stem()
-        .and_then(|stem| stem.to_str())
-        .unwrap_or("file");
-    source_path.with_file_name(format!("{stem}.g.dart"))
 }

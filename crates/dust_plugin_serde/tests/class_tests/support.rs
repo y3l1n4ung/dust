@@ -74,6 +74,8 @@ pub(crate) fn class(
 
 pub(crate) fn library(classes: Vec<ClassIr>, enums: Vec<EnumIr>) -> LibraryIr {
     LibraryIr {
+        package_root: ".".to_owned(),
+        package_name: "dust_test".to_owned(),
         source_path: "lib/models.dart".to_owned(),
         output_path: "lib/models.g.dart".to_owned(),
         imports: Vec::new(),

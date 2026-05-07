@@ -4,16 +4,20 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Dio HttpClient generation plugin for Dust."
 
 [dependencies]
-dust_dart_emit = { path = "../dust_dart_emit" }
-dust_ir = { path = "../dust_ir" }
-dust_plugin_api = { path = "../dust_plugin_api" }
-dust_diagnostics = { path = "../dust_diagnostics" }
+dust_dart_emit = { path = "../dust_dart_emit", version = "0.1.0" }
+dust_ir = { path = "../dust_ir", version = "0.1.0" }
+dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.0" }
+dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.0" }
+dust_workspace = { path = "../dust_workspace", version = "0.1.0" }
 heck = { workspace = true }
 
 [dev-dependencies]
-dust_text = { path = "../dust_text" }
+dust_text = { path = "../dust_text", version = "0.1.0" }
 
 [lib]
 path = "src/lib.rs"

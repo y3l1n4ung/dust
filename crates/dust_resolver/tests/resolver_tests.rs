@@ -23,7 +23,7 @@ fn symbol_catalog_registers_traits_and_configs() {
 
 #[test]
 fn validate_generated_part_uri_rejects_wrong_file_name() {
-    let diagnostic = validate_generated_part_uri("lib/user.dart", "team.g.dart").unwrap_err();
+    let diagnostic = validate_generated_part_uri("lib/user.g.dart", "team.g.dart").unwrap_err();
 
     assert!(
         diagnostic
@@ -57,7 +57,13 @@ class User {
     catalog.register_trait("Deserialize", "derive_serde_annotation::Deserialize");
     catalog.register_config("SerDe", "derive_serde_annotation::SerDe");
 
-    let resolved = resolve_library(FileId::new(1), "lib/user.dart", &parsed.library, &catalog);
+    let resolved = resolve_library(
+        FileId::new(1),
+        "lib/user.dart",
+        "lib/user.g.dart",
+        &parsed.library,
+        &catalog,
+    );
 
     assert!(
         resolved.diagnostics.is_empty(),
@@ -101,7 +107,13 @@ class User {
     let mut catalog = SymbolCatalog::new();
     catalog.register_trait("ToString", "derive_annotation::ToString");
 
-    let resolved = resolve_library(FileId::new(2), "lib/user.dart", &parsed.library, &catalog);
+    let resolved = resolve_library(
+        FileId::new(2),
+        "lib/user.dart",
+        "lib/user.g.dart",
+        &parsed.library,
+        &catalog,
+    );
 
     assert!(!resolved.diagnostics.is_empty());
     assert!(resolved.diagnostics.iter().any(|diagnostic| {
@@ -127,7 +139,13 @@ class User {}
     let mut catalog = SymbolCatalog::new();
     catalog.register_trait("ToString", "derive_annotation::ToString");
 
-    let resolved = resolve_library(FileId::new(3), "lib/user.dart", &parsed.library, &catalog);
+    let resolved = resolve_library(
+        FileId::new(3),
+        "lib/user.dart",
+        "lib/user.g.dart",
+        &parsed.library,
+        &catalog,
+    );
 
     assert_eq!(resolved.library.classes[0].traits.len(), 1);
     assert!(resolved.diagnostics.iter().any(|diagnostic| {
@@ -155,7 +173,13 @@ class User {
     let mut catalog = SymbolCatalog::new();
     catalog.register_trait("Serialize", "derive_serde_annotation::Serialize");
 
-    let resolved = resolve_library(FileId::new(4), "lib/user.dart", &parsed.library, &catalog);
+    let resolved = resolve_library(
+        FileId::new(4),
+        "lib/user.dart",
+        "lib/user.g.dart",
+        &parsed.library,
+        &catalog,
+    );
 
     assert_eq!(resolved.library.classes[0].fields.len(), 1);
     assert!(resolved.library.classes[0].fields[0].configs.is_empty());

@@ -10,7 +10,7 @@ use dust_cache::WorkspaceCache;
 use crate::{
     build::{
         ApplyOutcomeConfig, BatchConfig, apply_indexed_outcomes, flush_cache_into_result,
-        prepare_and_process_batch, read_package_config_hash,
+        prepare_and_process_batch, read_workspace_config_hash,
     },
     context::CachedDriverContext,
     progress::{ProgressEvent, ProgressPhase},
@@ -56,7 +56,10 @@ fn run_watch_inner(
             return result;
         }
     };
-    let mut package_config_hash = match read_package_config_hash(&workspace.package_config.path) {
+    let mut package_config_hash = match read_workspace_config_hash(
+        &workspace.package_config.path,
+        workspace.dust_config.path.as_deref(),
+    ) {
         Ok(hash) => hash,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);
@@ -68,6 +71,8 @@ fn run_watch_inner(
     let initial = prepare_and_process_batch(
         BatchConfig {
             cache_root: &workspace.cache_root,
+            package_root: &workspace.package_root,
+            package_name: &workspace.package_name,
             package_config_hash,
             tool_hash,
             cache: &cache,
@@ -146,6 +151,8 @@ fn run_watch_inner(
         let rebuilt = prepare_and_process_batch(
             BatchConfig {
                 cache_root: &workspace.cache_root,
+                package_root: &workspace.package_root,
+                package_name: &workspace.package_name,
                 package_config_hash,
                 tool_hash,
                 cache: &cache,

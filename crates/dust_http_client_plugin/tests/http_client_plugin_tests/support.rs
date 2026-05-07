@@ -1,6 +1,6 @@
 use dust_ir::{
-    ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, LibraryIr,
-    MethodIr, MethodParamIr, ParamKind, SpanIr, SymbolId, TypeIr,
+    ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, FieldIr,
+    LibraryIr, MethodIr, MethodParamIr, ParamKind, SpanIr, SymbolId, TypeIr,
 };
 use dust_text::{FileId, TextRange};
 
@@ -79,16 +79,29 @@ pub(crate) fn http_client_class(
 }
 
 pub(crate) fn library_for(class: ClassIr) -> LibraryIr {
-    library_for_with_imports(class, Vec::new())
+    library_with_classes(vec![class])
 }
 
 pub(crate) fn library_for_with_imports(class: ClassIr, imports: Vec<&str>) -> LibraryIr {
+    library_with_classes_and_imports(vec![class], imports)
+}
+
+pub(crate) fn library_with_classes(classes: Vec<ClassIr>) -> LibraryIr {
+    library_with_classes_and_imports(classes, Vec::new())
+}
+
+pub(crate) fn library_with_classes_and_imports(
+    classes: Vec<ClassIr>,
+    imports: Vec<&str>,
+) -> LibraryIr {
     LibraryIr {
+        package_root: ".".to_owned(),
+        package_name: "dust_test".to_owned(),
         source_path: "lib/api.dart".to_owned(),
         output_path: "lib/api.g.dart".to_owned(),
         imports: imports.into_iter().map(str::to_owned).collect(),
         span: span(0, 100),
-        classes: vec![class],
+        classes,
         enums: Vec::new(),
     }
 }
@@ -120,5 +133,66 @@ fn factory_constructor() -> ConstructorIr {
                 has_default: false,
             },
         ],
+    }
+}
+
+pub(crate) fn field(name: &str, ty: TypeIr) -> FieldIr {
+    FieldIr {
+        name: name.to_owned(),
+        ty,
+        span: span(15, 16),
+        has_default: false,
+        serde: None,
+    }
+}
+
+pub(crate) fn serde_model_class(name: &str, fields: Vec<FieldIr>) -> ClassIr {
+    let constructor_params = fields
+        .iter()
+        .map(|field| ConstructorParamIr {
+            name: field.name.clone(),
+            ty: field.ty.clone(),
+            span: span(16, 17),
+            kind: ParamKind::Named,
+            has_default: field.has_default,
+        })
+        .collect();
+
+    ClassIr {
+        kind: ClassKindIr::Class,
+        name: name.to_owned(),
+        is_abstract: false,
+        is_interface: false,
+        superclass_name: None,
+        span: span(10, 90),
+        fields,
+        constructors: vec![
+            ConstructorIr {
+                name: None,
+                is_factory: false,
+                redirected_target_source: None,
+                redirected_target_name: None,
+                span: span(12, 18),
+                params: constructor_params,
+            },
+            ConstructorIr {
+                name: Some("fromJson".to_owned()),
+                is_factory: true,
+                redirected_target_source: None,
+                redirected_target_name: None,
+                span: span(18, 24),
+                params: vec![ConstructorParamIr {
+                    name: "json".to_owned(),
+                    ty: TypeIr::map_of(TypeIr::string(), TypeIr::object().nullable()),
+                    span: span(18, 19),
+                    kind: ParamKind::Positional,
+                    has_default: false,
+                }],
+            },
+        ],
+        methods: Vec::new(),
+        traits: Vec::new(),
+        configs: Vec::new(),
+        serde: None,
     }
 }

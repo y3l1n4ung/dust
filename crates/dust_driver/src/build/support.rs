@@ -46,7 +46,15 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_plugin_serde/src/writer_model.rs"),
     include_str!("../../../dust_plugin_serde/src/writer_type.rs"),
     include_str!("../../../dust_dart_emit/src/lib.rs"),
+    include_str!("../../../dust_dart_emit/src/rename.rs"),
     include_str!("../../../dust_dart_emit/src/type_render.rs"),
+    include_str!("../../../dust_workspace/src/config.rs"),
+    include_str!("../../../dust_workspace/src/discover.rs"),
+    include_str!("../../../dust_workspace/src/output_policy.rs"),
+    include_str!("../../../dust_workspace/src/package_config.rs"),
+    include_str!("../../../dust_workspace/src/pubspec.rs"),
+    include_str!("../../../dust_workspace/src/root.rs"),
+    include_str!("../../../dust_workspace/src/workspace.rs"),
     include_str!("../../../dust_http_client_plugin/src/lib.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin/build.rs"),
@@ -63,6 +71,7 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_http_client_plugin/src/plugin/validate/finalize.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/mod.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/class.rs"),
+    include_str!("../../../dust_http_client_plugin/src/plugin/emit/fixture.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/path.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/request.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/response.rs"),
@@ -119,14 +128,33 @@ pub(crate) fn load_library_input(
     })
 }
 
-pub(crate) fn read_package_config_hash(path: &Path) -> Result<u64, Diagnostic> {
-    let source = fs::read_to_string(path).map_err(|error| {
+pub(crate) fn read_workspace_config_hash(
+    package_config_path: &Path,
+    dust_config_path: Option<&Path>,
+) -> Result<u64, Diagnostic> {
+    let package_config = fs::read_to_string(package_config_path).map_err(|error| {
         Diagnostic::error(format!(
             "failed to read package configuration `{}`: {error}",
-            path.display()
+            package_config_path.display()
         ))
     })?;
-    Ok(hash_text(&source))
+    let dust_config = match dust_config_path {
+        Some(path) => Some(fs::read_to_string(path).map_err(|error| {
+            Diagnostic::error(format!(
+                "failed to read Dust configuration `{}`: {error}",
+                path.display()
+            ))
+        })?),
+        None => None,
+    };
+
+    let mut combined = String::new();
+    combined.push_str(&package_config);
+    combined.push('\0');
+    if let Some(dust_config) = dust_config {
+        combined.push_str(&dust_config);
+    }
+    Ok(hash_text(&combined))
 }
 
 pub(crate) fn hash_text(text: &str) -> u64 {

@@ -129,7 +129,7 @@ pub struct DoctorReport {
 pub struct CleanReport {
     /// The detected package root.
     pub package_root: PathBuf,
-    /// The number of generated `.g.dart` files inspected.
+    /// The number of generated Dust-owned files inspected.
     pub scanned_files: usize,
     /// The number of Dust-generated outputs removed.
     pub removed_files: usize,

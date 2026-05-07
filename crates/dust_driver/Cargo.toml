@@ -4,21 +4,24 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Build driver and orchestration pipeline for Dust."
 
 [dependencies]
-dust_text = { path = "../dust_text" }
-dust_diagnostics = { path = "../dust_diagnostics" }
-dust_cache = { path = "../dust_cache" }
-dust_workspace = { path = "../dust_workspace" }
-dust_parser_dart = { path = "../dust_parser_dart" }
-dust_parser_dart_ts = { path = "../dust_parser_dart_ts" }
-dust_resolver = { path = "../dust_resolver" }
-dust_ir = { path = "../dust_ir" }
-dust_plugin_api = { path = "../dust_plugin_api" }
-dust_plugin_derive = { path = "../dust_plugin_derive" }
-dust_plugin_serde = { path = "../dust_plugin_serde" }
-dust_http_client_plugin = { path = "../dust_http_client_plugin" }
-dust_emitter = { path = "../dust_emitter" }
+dust_text = { path = "../dust_text", version = "0.1.0" }
+dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.0" }
+dust_cache = { path = "../dust_cache", version = "0.1.0" }
+dust_workspace = { path = "../dust_workspace", version = "0.1.0" }
+dust_parser_dart = { path = "../dust_parser_dart", version = "0.1.0" }
+dust_parser_dart_ts = { path = "../dust_parser_dart_ts", version = "0.1.0" }
+dust_resolver = { path = "../dust_resolver", version = "0.1.0" }
+dust_ir = { path = "../dust_ir", version = "0.1.0" }
+dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.0" }
+dust_plugin_derive = { path = "../dust_plugin_derive", version = "0.1.0" }
+dust_plugin_serde = { path = "../dust_plugin_serde", version = "0.1.0" }
+dust_http_client_plugin = { path = "../dust_http_client_plugin", version = "0.1.0" }
+dust_emitter = { path = "../dust_emitter", version = "0.1.0" }
 
 [dev-dependencies]
 tempfile = "3.27.0"

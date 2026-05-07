@@ -7,7 +7,7 @@ use std::{
 use dust_diagnostics::Diagnostic;
 use dust_workspace::{SourceLibrary, discover_workspace};
 
-use crate::build::{hash_text, read_package_config_hash};
+use crate::build::{hash_text, read_workspace_config_hash};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct WorkspaceSnapshot {
@@ -23,7 +23,11 @@ pub(crate) struct SnapshotEntry {
 
 pub(crate) fn build_snapshot(cwd: &Path) -> Result<WorkspaceSnapshot, Diagnostic> {
     let workspace = discover_workspace(cwd)?;
-    let package_config_hash = read_package_config_hash(&workspace.package_config.path).ok();
+    let package_config_hash = read_workspace_config_hash(
+        &workspace.package_config.path,
+        workspace.dust_config.path.as_deref(),
+    )
+    .ok();
 
     let mut libraries = BTreeMap::new();
     for library in workspace.libraries {

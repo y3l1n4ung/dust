@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use dust_diagnostics::{Diagnostic, SourceLabel};
 use dust_ir::{ConfigApplicationIr, SpanIr, TraitApplicationIr};
 use dust_parser_dart::{
@@ -174,18 +172,6 @@ pub(crate) fn first_part_uri(directives: &[ParsedDirective]) -> Option<String> {
         ParsedDirective::Part { uri, .. } => Some(uri.clone()),
         _ => None,
     })
-}
-
-pub(crate) fn expected_output_path(source_path: &str) -> String {
-    let path = Path::new(source_path);
-    let stem = path
-        .file_stem()
-        .and_then(|stem| stem.to_str())
-        .unwrap_or("file");
-    let file_name = format!("{stem}.g.dart");
-    path.with_file_name(file_name)
-        .to_string_lossy()
-        .into_owned()
 }
 
 fn push_resolved_symbol(

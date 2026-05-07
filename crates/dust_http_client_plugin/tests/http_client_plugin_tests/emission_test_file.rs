@@ -3,7 +3,8 @@ use dust_ir::TypeIr;
 use dust_plugin_api::{DustPlugin, SymbolPlan};
 
 use super::support::{
-    config, future_of, http_client_class, library_for, library_for_with_imports, method, param,
+    config, field, future_of, http_client_class, library_for, library_for_with_imports,
+    library_with_classes, method, param, serde_model_class,
 };
 
 #[test]
@@ -33,12 +34,55 @@ fn generates_map_body_request_fixtures() {
         .emit(&library, &SymbolPlan::default())
         .auxiliary_outputs[0]
         .source;
-    assert!(generated.contains("await api.createUser(const <String, dynamic>{'value': 'dust'});"));
+    assert!(generated.contains("await api.createUser({'value': 'dust'});"));
     assert!(!generated.contains("skip: 'Dust could not synthesize fixtures"));
 }
 
 #[test]
-fn skips_model_body_request_fixtures_that_need_user_data() {
+fn generates_model_body_request_fixtures_from_local_serde_models() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        http_client_class(
+            vec![
+                config("HttpClient", Some("()")),
+                config("GenerateTest", Some("()")),
+            ],
+            vec![method(
+                "createUser",
+                future_of(TypeIr::named("User")),
+                vec![config("POST", Some("('/users')"))],
+                vec![param(
+                    "payload",
+                    TypeIr::named("UserCreate"),
+                    vec![config("Body", Some("()"))],
+                )],
+            )],
+        ),
+        serde_model_class(
+            "UserCreate",
+            vec![
+                field("name", TypeIr::string()),
+                field("isAdmin", TypeIr::bool()),
+            ],
+        ),
+    ]);
+
+    let generated = &plugin
+        .emit(&library, &SymbolPlan::default())
+        .auxiliary_outputs[0]
+        .source;
+    assert!(
+        generated.contains("await api.createUser(UserCreate.fromJson(<String, Object?>{'name': 'dust', 'isAdmin': true}));")
+    );
+    assert!(
+        generated.contains(
+            "expect(request.data, equals(UserCreate.fromJson(<String, Object?>{'name': 'dust', 'isAdmin': true}).toJson()));"
+        )
+    );
+}
+
+#[test]
+fn omits_model_body_request_fixtures_without_local_model_ir() {
     let plugin = register_plugin();
     let library = library_for(http_client_class(
         vec![
@@ -57,14 +101,8 @@ fn skips_model_body_request_fixtures_that_need_user_data() {
         )],
     ));
 
-    let generated = &plugin
-        .emit(&library, &SymbolPlan::default())
-        .auxiliary_outputs[0]
-        .source;
-    assert!(
-        generated
-            .contains("test('POST createUser', () {}, skip: 'Dust could not synthesize fixtures")
-    );
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    assert!(contribution.auxiliary_outputs.is_empty());
 }
 
 #[test]

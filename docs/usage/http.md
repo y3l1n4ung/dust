@@ -45,7 +45,7 @@ dust build
 Dust generates:
 
 - `todo_api.g.dart`
-- `todo_api.test.g.dart` when `@GenerateTest()` is present
+- `test/generated/api/todo_api_test.dart` when `@GenerateTest()` is present
 
 ## Real Online Example
 
@@ -128,13 +128,24 @@ shapes are rejected during `dust build`.
 
 ## Generated Request-Mapping Tests
 
-When `@GenerateTest()` is present, Dust emits a `.test.g.dart` companion file
-with request-mapping assertions.
+When `@GenerateTest()` is present, Dust emits a generated Dart test under
+`test/generated/..._test.dart` with request-mapping assertions.
 
 Reference files:
 
-- [examples/product_showcase/lib/api/json_placeholder_api.test.g.dart](../../examples/product_showcase/lib/api/json_placeholder_api.test.g.dart)
-- [examples/product_showcase/lib/api/todo_api.test.g.dart](../../examples/product_showcase/lib/api/todo_api.test.g.dart)
+- [examples/product_showcase/test/generated/api/json_placeholder_api_test.dart](../../examples/product_showcase/test/generated/api/json_placeholder_api_test.dart)
+- [examples/product_showcase/test/generated/api/todo_api_test.dart](../../examples/product_showcase/test/generated/api/todo_api_test.dart)
+
+## Output Config
+
+You can change the primary generated suffix in `dust.yaml`:
+
+```yaml
+outputs:
+  primary_suffix: .g.dart
+```
+
+If you change the suffix, the source file `part` directive must match it.
 
 Current limitation:
 

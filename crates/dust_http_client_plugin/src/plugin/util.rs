@@ -43,7 +43,9 @@ pub(super) fn is_response_body_type(ty: &TypeIr) -> bool {
 }
 
 pub(super) fn is_list_of_int_type(ty: &TypeIr) -> bool {
-    type_name_is(ty, "List") && ty.args().len() == 1 && ty.args()[0].is_builtin(dust_ir::BuiltinType::Int)
+    type_name_is(ty, "List")
+        && ty.args().len() == 1
+        && ty.args()[0].is_builtin(dust_ir::BuiltinType::Int)
 }
 
 pub(super) fn has_import(imports: &[String], uri: &str) -> bool {

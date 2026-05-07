@@ -4,9 +4,12 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Diagnostics rendering and source labeling for Dust."
 
 [dependencies]
-dust_text = { path = "../dust_text" }
+dust_text = { path = "../dust_text", version = "0.1.0" }
 
 [lib]
 path = "src/lib.rs"

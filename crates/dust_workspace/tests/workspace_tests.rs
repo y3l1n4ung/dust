@@ -2,7 +2,7 @@ use std::fs;
 
 use dust_workspace::{
     PackageConfigKind, detect_workspace_root, discover_libraries, discover_workspace,
-    load_package_config,
+    load_dust_config, load_package_config,
 };
 use tempfile::tempdir;
 
@@ -147,6 +147,43 @@ fn discover_libraries_scans_recursively_in_stable_order() {
 }
 
 #[test]
+fn discover_libraries_uses_configured_primary_suffix() {
+    let root = tempdir().unwrap();
+    write_file(&root.path().join("pubspec.yaml"), "name: dust_test\n");
+    write_file(&root.path().join(".dart_tool/package_config.json"), "{}\n");
+    write_file(
+        &root.path().join("dust.yaml"),
+        "outputs:\n  primary_suffix: .d.dart\n",
+    );
+    write_file(
+        &root.path().join("lib/client.dart"),
+        "part 'client.d.dart';\n@Client()\nabstract class ApiClient {}\n",
+    );
+    write_file(&root.path().join("lib/client.d.dart"), "// generated\n");
+
+    let libraries = discover_libraries(root.path()).unwrap();
+
+    assert_eq!(libraries.len(), 1);
+    assert_eq!(
+        libraries[0].output_path,
+        root.path().join("lib/client.d.dart")
+    );
+}
+
+#[test]
+fn load_dust_config_rejects_invalid_suffixes() {
+    let root = tempdir().unwrap();
+    write_file(&root.path().join("pubspec.yaml"), "name: dust_test\n");
+    write_file(
+        &root.path().join("dust.yaml"),
+        "outputs:\n  primary_suffix: generated.dart\n",
+    );
+
+    let error = load_dust_config(root.path()).unwrap_err();
+    assert!(error.message.contains("outputs.primary_suffix"));
+}
+
+#[test]
 fn discover_libraries_accepts_double_quoted_part_and_direct_annotations() {
     let root = tempdir().unwrap();
     write_file(&root.path().join("pubspec.yaml"), "name: dust_test\n");
@@ -201,6 +238,7 @@ fn discover_workspace_composes_root_config_and_library_scan() {
 
     assert_eq!(plan.package_root, package_root);
     assert_eq!(plan.cache_root, plan.package_root);
+    assert_eq!(plan.package_name, "product_showcase");
     assert_eq!(
         plan.package_config.path,
         workspace_root.join(".dart_tool/package_config.json")
@@ -216,4 +254,5 @@ fn discover_workspace_composes_root_config_and_library_scan() {
         plan.libraries[0].output_path,
         plan.package_root.join("lib/models/user.g.dart")
     );
+    assert_eq!(plan.dust_config.outputs.primary_suffix, ".g.dart");
 }

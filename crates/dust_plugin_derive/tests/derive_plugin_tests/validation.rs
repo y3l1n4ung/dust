@@ -11,6 +11,8 @@ use super::support::span;
 fn copywith_requires_reconstructible_constructor() {
     let plugin = register_plugin();
     let broken = LibraryIr {
+        package_root: ".".to_owned(),
+        package_name: "dust_test".to_owned(),
         source_path: "lib/user.dart".to_owned(),
         output_path: "lib/user.g.dart".to_owned(),
         imports: Vec::new(),
@@ -77,6 +79,8 @@ fn copywith_requires_reconstructible_constructor() {
 fn copywith_rejects_abstract_classes() {
     let plugin = register_plugin();
     let abstract_library = LibraryIr {
+        package_root: ".".to_owned(),
+        package_name: "dust_test".to_owned(),
         source_path: "lib/entity.dart".to_owned(),
         output_path: "lib/entity.g.dart".to_owned(),
         imports: Vec::new(),
@@ -134,6 +138,8 @@ fn copywith_rejects_abstract_classes() {
 fn rejects_mixin_class_targets() {
     let plugin = register_plugin();
     let mixin_class_library = LibraryIr {
+        package_root: ".".to_owned(),
+        package_name: "dust_test".to_owned(),
         source_path: "lib/mixin_target.dart".to_owned(),
         output_path: "lib/mixin_target.g.dart".to_owned(),
         imports: Vec::new(),

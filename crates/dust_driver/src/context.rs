@@ -7,7 +7,7 @@ use dust_resolver::SymbolCatalog;
 use dust_workspace::{WorkspacePlan, discover_workspace};
 
 use crate::{
-    build::{codegen_tool_hash, default_registry, read_package_config_hash},
+    build::{codegen_tool_hash, default_registry, read_workspace_config_hash},
     catalog::build_symbol_catalog,
     result::CacheReport,
 };
@@ -50,7 +50,10 @@ impl CachedDriverContext {
             catalog,
         } = DriverContext::load(cwd)?;
         let tool_hash = codegen_tool_hash();
-        let package_config_hash = read_package_config_hash(&workspace.package_config.path)?;
+        let package_config_hash = read_workspace_config_hash(
+            &workspace.package_config.path,
+            workspace.dust_config.path.as_deref(),
+        )?;
         let cache = load_workspace_cache(&workspace)?;
         let cache_report = CacheReport {
             path: cache.path().to_path_buf(),

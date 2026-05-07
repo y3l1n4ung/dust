@@ -24,6 +24,8 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 rust-version = "1.85"
+repository = "https://github.com/y3l1n4ung/dust"
+homepage = "https://github.com/y3l1n4ung/dust"
 
 [workspace.dependencies]
 clap = { version = "4.5.31", features = ["derive"] }

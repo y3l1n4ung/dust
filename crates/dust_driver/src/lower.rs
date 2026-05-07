@@ -69,6 +69,8 @@ pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<Librar
 
     LoweringOutcome {
         value: LibraryIr {
+            package_root: String::new(),
+            package_name: String::new(),
             source_path: library.source_path.clone(),
             output_path: library.output_path.clone(),
             imports: library_imports(library),

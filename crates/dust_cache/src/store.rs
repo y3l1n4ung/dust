@@ -8,14 +8,14 @@ use dust_plugin_api::LibraryAnalysisSnapshot;
 use serde::{Deserialize, Serialize};
 
 /// The current on-disk Dust cache schema version.
-pub const CACHE_SCHEMA_VERSION: u32 = 5;
+pub const CACHE_SCHEMA_VERSION: u32 = 6;
 
 /// One cached build fingerprint for a source library.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CacheEntry {
     /// The current source file fingerprint.
     pub source_hash: u64,
-    /// The current package configuration fingerprint.
+    /// The current workspace configuration fingerprint.
     pub package_config_hash: u64,
     /// The current Dust code generation fingerprint.
     #[serde(default)]

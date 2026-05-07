@@ -1,6 +1,7 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::{LibraryIr, SymbolId};
 use dust_plugin_api::{AuxiliaryOutputContribution, DustPlugin, PluginContribution, SymbolPlan};
+use dust_workspace::generated_test_output_path;
 
 mod build;
 mod constants;
@@ -14,7 +15,6 @@ use self::build::build_client_spec;
 use self::constants::{GENERATE_TEST, HTTP_CLIENT, claimed_config_names};
 use self::emit::{
     render_client_class, render_isolate_helpers, render_shared_helpers, render_test_file,
-    test_output_path,
 };
 use self::parse::has_config_named;
 use self::validate::validate_client_class;
@@ -89,12 +89,18 @@ impl DustPlugin for HttpClientPlugin {
             contribution.shared_helpers.extend(render_shared_helpers());
         }
         if !generated_test_specs.is_empty() {
-            contribution
-                .auxiliary_outputs
-                .push(AuxiliaryOutputContribution {
-                    output_path: test_output_path(&library.source_path),
-                    source: render_test_file(&library.source_path, &generated_test_specs),
-                });
+            if let Some(source) = render_test_file(library, &generated_test_specs) {
+                contribution
+                    .auxiliary_outputs
+                    .push(AuxiliaryOutputContribution {
+                        output_path: generated_test_output_path(
+                            std::path::Path::new(&library.package_root),
+                            std::path::Path::new(&library.source_path),
+                        )
+                        .expect("http client test outputs must originate from lib/ sources"),
+                        source,
+                    });
+            }
         }
 
         contribution

@@ -19,6 +19,7 @@ These pages are backed by the runnable example package in
 
 - [Developer guide](./developer.md)
 - [Plugin guide](./plugin-guide.md)
+- [Release 0.1.0 runbook](./release-0.1.0.md)
 - [Roadmap](./roadmap/README.md)
 
 ## Example Packages

@@ -33,6 +33,8 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
     let indexed = prepare_and_process_batch(
         BatchConfig {
             cache_root: &workspace.cache_root,
+            package_root: &workspace.package_root,
+            package_name: &workspace.package_name,
             package_config_hash,
             tool_hash,
             cache: &cache,

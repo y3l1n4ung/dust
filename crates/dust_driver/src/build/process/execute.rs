@@ -111,17 +111,20 @@ fn resolve_and_lower_library(
         diagnostics: resolve_diagnostics,
     } = dust_resolver::resolve_library(
         file_id,
-        &library.source_path.to_string_lossy(),
+        &workspace_relative_path(processing.package_root, &library.source_path),
+        &workspace_relative_path(processing.package_root, &library.output_path),
         parsed,
         processing.catalog,
     );
     diagnostics.extend(resolve_diagnostics);
 
     let LoweringOutcome {
-        value: lowered_library,
+        value: mut lowered_library,
         diagnostics: lower_diagnostics,
     } = lower_library(&resolved_library);
     diagnostics.extend(lower_diagnostics);
+    lowered_library.package_root = processing.package_root.to_string_lossy().into_owned();
+    lowered_library.package_name = processing.package_name.to_owned();
 
     (!diagnostics.iter().any(|diagnostic| diagnostic.is_error())).then_some(lowered_library)
 }
@@ -173,4 +176,11 @@ fn finish_success(
         changed,
         written,
     )
+}
+
+fn workspace_relative_path(package_root: &std::path::Path, path: &std::path::Path) -> String {
+    path.strip_prefix(package_root)
+        .unwrap_or(path)
+        .to_string_lossy()
+        .replace('\\', "/")
 }

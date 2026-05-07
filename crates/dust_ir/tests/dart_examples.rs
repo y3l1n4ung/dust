@@ -11,6 +11,8 @@ fn span(file_id: u32, start: u32, end: u32) -> SpanIr {
 #[test]
 fn models_real_dart_data_class_shapes() {
     let library = LibraryIr {
+        package_root: ".".to_owned(),
+        package_name: "dust_test".to_owned(),
         source_path: "lib/user_profile.dart".to_owned(),
         output_path: "lib/user_profile.g.dart".to_owned(),
         imports: Vec::new(),

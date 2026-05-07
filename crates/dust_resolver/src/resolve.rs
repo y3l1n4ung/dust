@@ -9,8 +9,7 @@ use crate::{
     ResolveResult, ResolvedClass, ResolvedEnum, ResolvedEnumVariant, ResolvedLibrary,
     SymbolCatalog,
     resolve_support::{
-        expected_output_path, first_part_uri, resolve_declaration_annotations, resolve_field,
-        resolve_method,
+        first_part_uri, resolve_declaration_annotations, resolve_field, resolve_method,
     },
 };
 
@@ -18,11 +17,11 @@ use crate::{
 pub fn resolve_library(
     file_id: FileId,
     source_path: &str,
+    output_path: &str,
     library: &ParsedLibrarySurface,
     catalog: &SymbolCatalog,
 ) -> ResolveResult {
     let mut diagnostics = Vec::new();
-    let output_path = expected_output_path(source_path);
     let part_uri = first_part_uri(&library.directives);
     let mut enums: Vec<ResolvedEnum> = Vec::new();
     let mut classes = Vec::new();
@@ -46,7 +45,7 @@ pub fn resolve_library(
     if saw_dust_symbol {
         match part_uri.as_deref() {
             Some(uri) => {
-                if let Err(diagnostic) = validate_generated_part_uri(source_path, uri) {
+                if let Err(diagnostic) = validate_generated_part_uri(output_path, uri) {
                     diagnostics.push(diagnostic);
                 }
             }
@@ -55,7 +54,10 @@ pub fn resolve_library(
                     .with_label(SourceLabel::new(
                         file_id,
                         library.span,
-                        "expected a matching `part 'file.g.dart';` directive",
+                        format!(
+                            "expected a matching `part '{}';` directive",
+                            expected_part_uri(output_path)
+                        ),
                     )),
             ),
         }
@@ -64,7 +66,7 @@ pub fn resolve_library(
     ResolveResult {
         library: ResolvedLibrary {
             source_path: source_path.to_owned(),
-            output_path,
+            output_path: output_path.to_owned(),
             span: SpanIr::new(file_id, library.span),
             directives: library.directives.clone(),
             part_uri,
@@ -111,23 +113,8 @@ fn resolve_enum(
 }
 
 /// Validates that a generated part URI matches the source file name.
-pub fn validate_generated_part_uri(source_path: &str, part_uri: &str) -> Result<(), Diagnostic> {
-    let Some(stem) = Path::new(source_path)
-        .file_stem()
-        .and_then(|stem| stem.to_str())
-    else {
-        return Err(Diagnostic::error(
-            "source path must contain a valid file stem for generated output",
-        ));
-    };
-
-    let expected = format!("{stem}.g.dart");
-    if !part_uri.ends_with(".g.dart") {
-        return Err(Diagnostic::error(
-            "generated part path must end with `.g.dart`",
-        ));
-    }
-
+pub fn validate_generated_part_uri(output_path: &str, part_uri: &str) -> Result<(), Diagnostic> {
+    let expected = expected_part_uri(output_path);
     let Some(file_name) = Path::new(part_uri)
         .file_name()
         .and_then(|name| name.to_str())
@@ -144,6 +131,14 @@ pub fn validate_generated_part_uri(source_path: &str, part_uri: &str) -> Result<
     }
 
     Ok(())
+}
+
+fn expected_part_uri(output_path: &str) -> String {
+    Path::new(output_path)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("file.g.dart")
+        .to_owned()
 }
 
 fn resolve_class(

@@ -19,6 +19,8 @@ pub(crate) use self::{
 
 #[derive(Clone)]
 pub(crate) struct ProcessingConfig<'a> {
+    pub(crate) package_root: &'a std::path::Path,
+    pub(crate) package_name: &'a str,
     pub(crate) catalog: &'a dust_resolver::SymbolCatalog,
     pub(crate) registry: &'a dust_plugin_api::PluginRegistry,
     pub(crate) workspace_analysis: Arc<WorkspaceAnalysis>,

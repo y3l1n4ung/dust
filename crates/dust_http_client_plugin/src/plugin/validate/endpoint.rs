@@ -7,7 +7,11 @@ use crate::plugin::util::label;
 use crate::plugin::validate::class::validate_text_stream_import;
 use crate::plugin::validate::param::ParamState;
 
-pub(crate) fn validate_endpoint(imports: &[String], class: &ClassIr, method: &MethodIr) -> Vec<Diagnostic> {
+pub(crate) fn validate_endpoint(
+    imports: &[String],
+    class: &ClassIr,
+    method: &MethodIr,
+) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let verbs = method_verbs(method);
 

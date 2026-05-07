@@ -2,7 +2,9 @@ use dust_http_client_plugin::register_plugin;
 use dust_ir::TypeIr;
 use dust_plugin_api::{DustPlugin, SymbolPlan};
 
-use super::support::{config, future_of, http_client_class, library_for, method, param};
+use super::support::{
+    config, future_of, http_client_class, library_for, library_for_with_imports, method, param,
+};
 
 #[test]
 fn emits_dio_client_with_inherited_isolate_decode() {
@@ -66,8 +68,50 @@ fn emits_generate_test_auxiliary_file() {
     assert_eq!(contribution.auxiliary_outputs.len(), 1);
     let generated = &contribution.auxiliary_outputs[0];
 
-    assert!(generated.output_path.ends_with("api.test.g.dart"));
+    assert!(
+        generated
+            .output_path
+            .ends_with("test/generated/api_test.dart")
+    );
     assert!(generated.source.contains("void main() {"));
     assert!(generated.source.contains("group('Api request mapping'"));
     assert!(generated.source.contains("await api.getUser('dust-id');"));
+    assert!(
+        generated
+            .source
+            .contains("import 'package:dust_test/api.dart';")
+    );
+}
+
+#[test]
+fn rewrites_relative_source_imports_for_generated_tests() {
+    let plugin = register_plugin();
+    let library = library_for_with_imports(
+        http_client_class(
+            vec![
+                config("HttpClient", Some("()")),
+                config("GenerateTest", Some("()")),
+            ],
+            vec![method(
+                "getUser",
+                future_of(TypeIr::named("User")),
+                vec![config("GET", Some("('/users/{id}')"))],
+                vec![param(
+                    "id",
+                    TypeIr::string(),
+                    vec![config("Path", Some("('id')"))],
+                )],
+            )],
+        ),
+        vec!["models/user.dart"],
+    );
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let generated = &contribution.auxiliary_outputs[0];
+
+    assert!(
+        generated
+            .source
+            .contains("import 'package:dust_test/models/user.dart';")
+    );
 }

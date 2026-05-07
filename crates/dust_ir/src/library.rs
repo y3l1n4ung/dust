@@ -21,6 +21,10 @@ impl SpanIr {
 /// One lowered Dart library ready for plugin validation and emission.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LibraryIr {
+    /// The package root that owns this library.
+    pub package_root: String,
+    /// The Dart package name that owns this library.
+    pub package_name: String,
     /// The original source file path.
     pub source_path: String,
     /// The target generated file path.
