@@ -9,7 +9,7 @@ homepage.workspace = true
 description = "Workspace discovery and output policy helpers for Dust."
 
 [dependencies]
-dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.0" }
+dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_yaml = "0.9.34"
 

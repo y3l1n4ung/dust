@@ -9,14 +9,14 @@ homepage.workspace = true
 description = "Derive feature plugin for Dust Dart code generation."
 
 [dependencies]
-dust_dart_emit = { path = "../dust_dart_emit", version = "0.1.0" }
-dust_ir = { path = "../dust_ir", version = "0.1.0" }
-dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.0" }
-dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.0" }
-dust_parser_dart = { path = "../dust_parser_dart", version = "0.1.0" }
+dust_dart_emit = { path = "../dust_dart_emit", version = "0.1.1" }
+dust_ir = { path = "../dust_ir", version = "0.1.1" }
+dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.1" }
+dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
+dust_parser_dart = { path = "../dust_parser_dart", version = "0.1.1" }
 
 [dev-dependencies]
-dust_text = { path = "../dust_text", version = "0.1.0" }
+dust_text = { path = "../dust_text", version = "0.1.1" }
 
 [lib]
 path = "src/lib.rs"

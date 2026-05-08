@@ -9,15 +9,15 @@ homepage.workspace = true
 description = "Dio HttpClient generation plugin for Dust."
 
 [dependencies]
-dust_dart_emit = { path = "../dust_dart_emit", version = "0.1.0" }
-dust_ir = { path = "../dust_ir", version = "0.1.0" }
-dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.0" }
-dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.0" }
-dust_workspace = { path = "../dust_workspace", version = "0.1.0" }
+dust_dart_emit = { path = "../dust_dart_emit", version = "0.1.1" }
+dust_ir = { path = "../dust_ir", version = "0.1.1" }
+dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.1" }
+dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
+dust_workspace = { path = "../dust_workspace", version = "0.1.1" }
 heck = { workspace = true }
 
 [dev-dependencies]
-dust_text = { path = "../dust_text", version = "0.1.0" }
+dust_text = { path = "../dust_text", version = "0.1.1" }
 
 [lib]
 path = "src/lib.rs"

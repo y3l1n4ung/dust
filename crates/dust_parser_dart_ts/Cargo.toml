@@ -9,9 +9,9 @@ homepage.workspace = true
 description = "Tree-sitter Dart backend for Dust parsing."
 
 [dependencies]
-dust_text = { path = "../dust_text", version = "0.1.0" }
-dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.0" }
-dust_parser_dart = { path = "../dust_parser_dart", version = "0.1.0" }
+dust_text = { path = "../dust_text", version = "0.1.1" }
+dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
+dust_parser_dart = { path = "../dust_parser_dart", version = "0.1.1" }
 tree-sitter = "0.25.10"
 tree-sitter-dart = "0.1.0"
 

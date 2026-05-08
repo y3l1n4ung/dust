@@ -9,14 +9,14 @@ homepage.workspace = true
 description = "Primary Dart file emitter for Dust-generated outputs."
 
 [dependencies]
-dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.0" }
-dust_ir = { path = "../dust_ir", version = "0.1.0" }
-dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.0" }
+dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
+dust_ir = { path = "../dust_ir", version = "0.1.1" }
+dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.1" }
 
 [dev-dependencies]
 tempfile = "3.15.0"
-dust_text = { path = "../dust_text", version = "0.1.0" }
-dust_plugin_derive = { path = "../dust_plugin_derive", version = "0.1.0" }
+dust_text = { path = "../dust_text", version = "0.1.1" }
+dust_plugin_derive = { path = "../dust_plugin_derive", version = "0.1.1" }
 
 [lib]
 path = "src/lib.rs"

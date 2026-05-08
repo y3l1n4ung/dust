@@ -9,7 +9,7 @@ homepage.workspace = true
 description = "Shared Dart code emission helpers for Dust plugins."
 
 [dependencies]
-dust_ir = { path = "../dust_ir", version = "0.1.0" }
+dust_ir = { path = "../dust_ir", version = "0.1.1" }
 heck = { workspace = true }
 
 [lib]

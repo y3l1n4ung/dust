@@ -9,7 +9,7 @@ homepage.workspace = true
 description = "Persistent build cache storage for Dust workspaces."
 
 [dependencies]
-dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.0" }
+dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.1" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 

@@ -9,8 +9,8 @@ homepage.workspace = true
 description = "Parser facade and parsed model types for Dart libraries in Dust."
 
 [dependencies]
-dust_text = { path = "../dust_text", version = "0.1.0" }
-dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.0" }
+dust_text = { path = "../dust_text", version = "0.1.1" }
+dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
 
 [lib]
 path = "src/lib.rs"
