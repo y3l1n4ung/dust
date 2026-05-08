@@ -20,8 +20,9 @@ pub(crate) struct DriverContext {
 
 impl DriverContext {
     pub(crate) fn load(cwd: &Path) -> Result<Self, Diagnostic> {
-        let workspace = discover_workspace(cwd)?;
         let registry = default_registry();
+        let supported_annotations = registry.all_supported_annotations();
+        let workspace = discover_workspace(cwd, &supported_annotations)?;
         let catalog = build_symbol_catalog(&registry);
 
         Ok(Self {

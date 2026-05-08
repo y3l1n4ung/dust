@@ -1,0 +1,44 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:state_management_prototype/app/prototype_app.dart';
+import 'package:state_management_prototype/features/session/view_models/session_view_model.dart';
+import 'package:state_management_prototype/features/shell/view_models/shell_view_model.dart';
+import 'package:state_management_prototype/features/tasks/view_models/task_board_view_model.dart';
+import 'package:state_management_prototype/features/theme/view_models/theme_view_model.dart';
+
+import 'workspace_view_model_test.dart';
+
+void main() {
+  testWidgets('prototype renders dashboard and task search', (tester) async {
+    final repository = FakePrototypeRepository();
+
+    await tester.pumpWidget(
+      ThemeViewModelScope(
+        create: (_) => ThemeViewModel(),
+        child: ShellViewModelScope(
+          create: (_) => ShellViewModel(),
+          child: SessionViewModelScope(
+            create: (_) => SessionViewModel(repository)..initialize(),
+            child: TaskBoardViewModelScope(
+              create: (_) => TaskBoardViewModel(repository)..initialize(),
+              child: const PrototypeApp(),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dust operations cockpit'), findsOneWidget);
+    expect(find.text('Live todo coordination for Dust Labs'), findsOneWidget);
+
+    await tester.tap(find.text('Tasks'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'release');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ship release notes'), findsOneWidget);
+    expect(find.text('Audit onboarding copy'), findsNothing);
+  });
+}

@@ -52,6 +52,10 @@ impl DustPlugin for HttpClientPlugin {
             .collect()
     }
 
+    fn supported_annotations(&self) -> Vec<&'static str> {
+        claimed_config_names().to_vec()
+    }
+
     fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> {
         library
             .classes

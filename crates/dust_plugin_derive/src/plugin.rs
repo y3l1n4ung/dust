@@ -30,6 +30,10 @@ impl DustPlugin for DerivePlugin {
         ]
     }
 
+    fn supported_annotations(&self) -> Vec<&'static str> {
+        vec!["Derive", "ToString", "Debug", "Eq", "CopyWith"]
+    }
+
     fn requested_symbols(&self, library: &LibraryIr) -> Vec<String> {
         let needs_undefined = library.classes.iter().any(|class| {
             class.traits.iter().any(|trait_app| {

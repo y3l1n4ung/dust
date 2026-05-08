@@ -11,8 +11,11 @@ use crate::{SourceLibrary, is_generated_primary_file, load_dust_config, primary_
 ///
 /// The scan is deterministic and only keeps source files that:
 /// - are not already generated primary output files
-/// - contain at least one annotation marker like `@Derive` or `@ToString`
-pub fn discover_libraries(root: &Path) -> Result<Vec<SourceLibrary>, Diagnostic> {
+/// - contain at least one annotation marker from the provided `supported_annotations`
+pub fn discover_libraries(
+    root: &Path,
+    supported_annotations: &[&str],
+) -> Result<Vec<SourceLibrary>, Diagnostic> {
     let dust_config = load_dust_config(root)?;
     let lib_dir = root.join("lib");
     if !lib_dir.is_dir() {
@@ -29,7 +32,7 @@ pub fn discover_libraries(root: &Path) -> Result<Vec<SourceLibrary>, Diagnostic>
             continue;
         }
 
-        if is_candidate_library(&source_path)? {
+        if is_candidate_library(&source_path, supported_annotations)? {
             libraries.push(SourceLibrary {
                 output_path: primary_output_path(&source_path, &dust_config.outputs.primary_suffix),
                 source_path,
@@ -70,7 +73,7 @@ fn collect_dart_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), Diagnost
     Ok(())
 }
 
-fn is_candidate_library(path: &Path) -> Result<bool, Diagnostic> {
+fn is_candidate_library(path: &Path, supported_annotations: &[&str]) -> Result<bool, Diagnostic> {
     let source = fs::read_to_string(path).map_err(|error| {
         Diagnostic::error(format!(
             "failed to read library `{}`: {error}",
@@ -78,14 +81,16 @@ fn is_candidate_library(path: &Path) -> Result<bool, Diagnostic> {
         ))
     })?;
 
-    Ok(contains_annotation_marker(&source))
+    Ok(contains_annotation_marker(&source, supported_annotations))
 }
 
-fn contains_annotation_marker(source: &str) -> bool {
+fn contains_annotation_marker(source: &str, supported_annotations: &[&str]) -> bool {
     let mut chars = source.chars().peekable();
+    let mut name = String::new();
 
     while let Some(ch) = chars.next() {
         if ch == '@' {
+            name.clear();
             while let Some(next) = chars.peek() {
                 if next.is_whitespace() {
                     chars.next();
@@ -94,13 +99,24 @@ fn contains_annotation_marker(source: &str) -> bool {
                 }
             }
 
-            if let Some(next) = chars.peek() {
-                if *next == '_' || next.is_ascii_alphabetic() {
-                    return true;
+            while let Some(next) = chars.peek() {
+                if *next == '_' || next.is_ascii_alphanumeric() {
+                    name.push(*next);
+                    chars.next();
+                } else {
+                    break;
                 }
+            }
+
+            if is_dust_annotation_name(&name, supported_annotations) {
+                return true;
             }
         }
     }
 
     false
+}
+
+fn is_dust_annotation_name(name: &str, supported_annotations: &[&str]) -> bool {
+    supported_annotations.iter().any(|&supported| supported == name)
 }

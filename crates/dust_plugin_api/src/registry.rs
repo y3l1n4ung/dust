@@ -75,6 +75,18 @@ impl PluginRegistry {
             .collect()
     }
 
+    /// Returns all unique surface-level annotation names supported by registered plugins.
+    pub fn all_supported_annotations(&self) -> Vec<&'static str> {
+        let mut names: Vec<_> = self
+            .plugins
+            .iter()
+            .flat_map(|plugin| plugin.supported_annotations())
+            .collect();
+        names.sort_unstable();
+        names.dedup();
+        names
+    }
+
     /// Builds one deterministic symbol plan for a lowered library.
     pub fn build_symbol_plan(&self, library: &LibraryIr) -> SymbolPlan {
         let mut plan = SymbolPlan::default();

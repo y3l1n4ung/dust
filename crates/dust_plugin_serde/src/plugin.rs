@@ -33,6 +33,10 @@ impl DustPlugin for SerdePlugin {
         vec![SymbolId::new("derive_serde_annotation::SerDe")]
     }
 
+    fn supported_annotations(&self) -> Vec<&'static str> {
+        vec!["Serialize", "Deserialize", "SerDe"]
+    }
+
     /// Informs the resolution engine that this plugin will generate specific private
     /// helper functions for each annotated class or enum.
     ///

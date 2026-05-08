@@ -19,6 +19,14 @@ pub trait DustPlugin: Send + Sync {
         Vec::new()
     }
 
+    /// Returns the surface-level annotation names this plugin handles.
+    ///
+    /// These names are used during the fast-path discovery phase to identify
+    /// candidate libraries before full parsing or resolution.
+    fn supported_annotations(&self) -> Vec<&'static str> {
+        Vec::new()
+    }
+
     /// Returns generated helper symbol names this plugin wants reserved.
     fn requested_symbols(&self, _library: &LibraryIr) -> Vec<String> {
         Vec::new()

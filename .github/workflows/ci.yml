@@ -117,6 +117,9 @@ jobs:
           rustup toolchain install stable --profile minimal
           rustup default stable
 
+      - name: Resolve workspace packages
+        run: dart pub get
+
       - name: Pub get
         working-directory: examples/product_showcase
         run: dart pub get
@@ -146,6 +149,9 @@ jobs:
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
+
+      - name: Resolve workspace packages
+        run: dart pub get
 
       - name: Pub get
         working-directory: examples/stress_project
@@ -183,6 +189,9 @@ jobs:
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
+
+      - name: Resolve workspace packages
+        run: dart pub get
 
       - name: Run ignored perf test
         run: cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture

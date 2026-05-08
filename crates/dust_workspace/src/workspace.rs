@@ -34,12 +34,15 @@ pub struct WorkspacePlan {
 }
 
 /// Discovers the workspace root, package configuration, and candidate source libraries.
-pub fn discover_workspace(cwd: &Path) -> Result<WorkspacePlan, Diagnostic> {
+pub fn discover_workspace(
+    cwd: &Path,
+    supported_annotations: &[&str],
+) -> Result<WorkspacePlan, Diagnostic> {
     let package_root = detect_workspace_root(cwd)?;
     let package_name = load_package_name(&package_root)?;
     let package_config = load_package_config(&package_root)?;
     let dust_config = load_dust_config(&package_root)?;
-    let libraries = discover_libraries(&package_root)?;
+    let libraries = discover_libraries(&package_root, supported_annotations)?;
 
     Ok(WorkspacePlan {
         cache_root: package_root.clone(),
