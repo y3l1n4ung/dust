@@ -3,6 +3,30 @@ import 'package:test/test.dart';
 
 void main() {
   group('HttpClient Annotation Tests', () {
+    test('exports curated Dio surface', () {
+      final dio = Dio();
+      final options = Options();
+      final cancelToken = CancelToken();
+      final formData = FormData.fromMap({'value': 'dust'});
+      void callback(int sent, int total) {}
+      final requestOptions = RequestOptions(path: '/dust');
+      final responseBody = ResponseBody.fromString('dust', 200);
+      final MultipartFile? multipartFile = null;
+      final Response<String>? response = null;
+
+      expect(dio, isA<Dio>());
+      expect(options, isA<Options>());
+      expect(cancelToken, isA<CancelToken>());
+      expect(formData, isA<FormData>());
+      expect(callback, isA<ProgressCallback>());
+      expect(requestOptions, isA<RequestOptions>());
+      expect(responseBody, isA<ResponseBody>());
+      expect(ResponseType.json, isA<ResponseType>());
+      expect(multipartFile, isNull);
+      expect(response, isNull);
+      expect(utf8.decode(utf8.encode('dust')), 'dust');
+    });
+
     test('HttpClient properties', () {
       const client = HttpClient(
         baseUrl: 'https://api.example.com',

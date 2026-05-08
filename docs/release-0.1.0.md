@@ -16,58 +16,43 @@ Release `0.1.0` for:
 Run from the repository root:
 
 ```sh
-rtk cargo fmt --all --check
-rtk cargo clippy --workspace --all-targets --all-features -- -D warnings
-rtk cargo test --workspace --quiet
-rtk cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture
-rtk cargo run -q -p dust_cli -- build --root examples/product_showcase
-rtk cargo run -q -p dust_cli -- build --root examples/stress_project
+cargo fmt --all --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace --quiet
+cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture
+cargo run -q -p dust_cli -- build --root examples/product_showcase
+cargo run -q -p dust_cli -- build --root examples/stress_project
 ```
 
 Run Dart checks:
 
 ```sh
 cd examples/product_showcase
-rtk dart analyze
-rtk dart test
+dart analyze
+dart test
 
 cd ../stress_project
-rtk dart analyze
-rtk dart test
+dart analyze
+dart test
 ```
 
 Run package dry-runs:
 
 ```sh
 cd packages/derive_annotation
-rtk dart pub publish --dry-run
+dart pub publish --dry-run
 
 cd ../derive_serde_annotation
-rtk dart pub publish --dry-run
+dart pub publish --dry-run
 
 cd ../dust_http_client_annotation
-rtk dart pub publish --dry-run
+dart pub publish --dry-run
 ```
 
-Run Rust publish dry-runs in order:
+Run the Rust publish preflight:
 
 ```sh
-rtk cargo publish --dry-run -p dust_text
-rtk cargo publish --dry-run -p dust_diagnostics
-rtk cargo publish --dry-run -p dust_ir
-rtk cargo publish --dry-run -p dust_parser_dart
-rtk cargo publish --dry-run -p dust_workspace
-rtk cargo publish --dry-run -p dust_dart_emit
-rtk cargo publish --dry-run -p dust_parser_dart_ts
-rtk cargo publish --dry-run -p dust_plugin_api
-rtk cargo publish --dry-run -p dust_cache
-rtk cargo publish --dry-run -p dust_resolver
-rtk cargo publish --dry-run -p dust_plugin_derive
-rtk cargo publish --dry-run -p dust_plugin_serde
-rtk cargo publish --dry-run -p dust_http_client_plugin
-rtk cargo publish --dry-run -p dust_emitter
-rtk cargo publish --dry-run -p dust_driver
-rtk cargo publish --dry-run -p dust_cli
+python3 tmp/release_rust_crates.py
 ```
 
 ## Publish Order
@@ -91,6 +76,18 @@ Publish Rust crates to crates.io in this order:
 15. `dust_driver`
 16. `dust_cli`
 
+Run the actual Rust release with the helper:
+
+```sh
+python3 tmp/release_rust_crates.py --publish
+```
+
+If a publish succeeds and you need to resume later:
+
+```sh
+python3 tmp/release_rust_crates.py --publish --from dust_driver
+```
+
 Publish Dart packages to pub.dev in this order:
 
 1. `derive_annotation`
@@ -101,8 +98,19 @@ Publish Dart packages to pub.dev in this order:
 
 After publishes succeed:
 
-1. Create and push annotated tag `v0.1.0`.
-2. Wait for `.github/workflows/release.yml` to attach:
+1. Update the changelog and release notes manually:
+   ```sh
+   $EDITOR CHANGELOG.md
+   $EDITOR release-notes/v0.1.0.md
+   ```
+2. Commit the release state on `main`.
+3. Create and push annotated tag `v0.1.0`.
+   ```sh
+   git tag -a v0.1.0 -m "Dust v0.1.0"
+   git push origin main
+   git push origin v0.1.0
+   ```
+4. Wait for `.github/workflows/release.yml` to attach:
    - `dust-x86_64-unknown-linux-gnu.tar.gz`
    - `dust-aarch64-unknown-linux-gnu.tar.gz`
    - `dust-x86_64-apple-darwin.tar.gz`
@@ -110,4 +118,4 @@ After publishes succeed:
    - `dust-x86_64-pc-windows-msvc.zip`
    - `dust-aarch64-pc-windows-msvc.zip`
    - `SHA256SUMS.txt`
-3. Verify `install.sh` and `install.ps1` against the tagged release.
+5. Verify `install.sh` and `install.ps1` against the tagged release.

@@ -1,6 +1,3 @@
-import 'dart:convert';
-
-import 'package:dio/dio.dart' hide Headers;
 import 'package:dust_http_client_annotation/dust_http_client_annotation.dart';
 
 import '../models/remote_comment.dart';

@@ -22,7 +22,6 @@ dart pub get
 ## Minimal Client Shape
 
 ```dart
-import 'package:dio/dio.dart' hide Headers;
 import 'package:dust_http_client_annotation/dust_http_client_annotation.dart';
 
 part 'todo_api.g.dart';
@@ -35,6 +34,10 @@ abstract interface class TodoApi {
   Future<Todo> fetch(@Path() String id);
 }
 ```
+
+The annotation package re-exports `dart:convert` and a collision-safe Dio
+surface used by Dust-generated clients, so API declaration files can usually
+use that single import.
 
 Run generation:
 

@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart' hide Headers;
 import 'package:dust_http_client_annotation/dust_http_client_annotation.dart';
 
 import 'http_post.dart';

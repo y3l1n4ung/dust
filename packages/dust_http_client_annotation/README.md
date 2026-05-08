@@ -1,23 +1,30 @@
 # dust_http_client_annotation
 
-Annotation package for Dust HTTP client generation. It defines the public API
-surface used by `dust_http_client_plugin` to generate Dio-backed clients and
-optional request-mapping tests.
+Annotations for Dust HTTP client generation.
 
-## What it covers
+## Features
 
-- `@HttpClient()` class configuration
-- HTTP verb annotations such as `@GET()` and `@POST()`
+- `@HttpClient()` for client-level configuration
+- HTTP method annotations such as `@GET()` and `@POST()`
 - request binding annotations such as `@Path()`, `@Query()`, `@Body()`, and
   `@Header()`
 - content-type markers such as `@FormUrlEncoded()` and `@MultiPart()`
-- `@GenerateTest()` support for generated `test/generated/..._test.dart`
-  request-mapping tests
+- `@GenerateTest()` support for generated request-mapping tests
+
+## Getting started
+
+Install Dust by following the root README, then add this package and `dio` to
+your Dart project:
+
+```yaml
+dependencies:
+  dio: ^5.9.2
+  dust_http_client_annotation: ^0.1.0
+```
 
 ## Usage
 
 ```dart
-import 'package:dio/dio.dart';
 import 'package:dust_http_client_annotation/dust_http_client_annotation.dart';
 
 part 'todo_api.g.dart';
@@ -42,15 +49,11 @@ abstract interface class TodoApi {
 Dust generates `todo_api.g.dart` for the concrete Dio client and
 `test/generated/api/todo_api_test.dart` when `@GenerateTest()` is present.
 
-## Full Usage Guide
+## Additional information
 
-See the root usage docs for the full HttpClient guide:
-
-- [../../docs/usage/http.md](../../docs/usage/http.md)
-
-That guide covers:
-- model generation with derive and serde
-- typed and map-based `@Body()` usage
-- request binding, shared headers, and raw `Response<T>` returns
-- the real online `jsonplaceholder` demo
-- generated request-mapping tests
+- Install Dust from the repository guide:
+  [README.md](https://github.com/y3l1n4ung/dust/blob/main/README.md)
+- Full HttpClient usage guide:
+  [docs/usage/http.md](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/http.md)
+- Runnable example:
+  [examples/product_showcase](https://github.com/y3l1n4ung/dust/tree/main/examples/product_showcase)

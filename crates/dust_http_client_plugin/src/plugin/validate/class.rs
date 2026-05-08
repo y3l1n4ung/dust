@@ -58,15 +58,21 @@ pub(crate) fn validate_text_stream_import(
     mode: ReturnMode,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    if mode == ReturnMode::TextStream && !has_import(imports, "dart:convert") {
+    if mode == ReturnMode::TextStream
+        && !has_import(imports, "dart:convert")
+        && !has_import(
+            imports,
+            "package:dust_http_client_annotation/dust_http_client_annotation.dart",
+        )
+    {
         diagnostics.push(
             Diagnostic::error(format!(
-                "method `{}` on `{}` returns `Stream<String>` and requires `import 'dart:convert';`",
+                "method `{}` on `{}` returns `Stream<String>` and requires either `import 'dart:convert';` or the Dust HttpClient annotation package import",
                 method.name, class.name
             ))
             .with_label(label(
                 method.span,
-                "add `import 'dart:convert';` to use generated UTF-8 text stream decoding",
+                "import `package:dust_http_client_annotation/dust_http_client_annotation.dart` or add `import 'dart:convert';` to use generated UTF-8 text stream decoding",
             )),
         );
     }

@@ -62,26 +62,26 @@ jobs:
       - name: Build binary (Unix)
         if: matrix.archive_ext == 'tar.gz'
         shell: bash
-        run: cargo build --release -p dust_cli --bin dust
+        run: cargo build --locked --release --target ${{ matrix.target }} -p dust_cli --bin dust
 
       - name: Build binary (Windows)
         if: matrix.archive_ext == 'zip'
         shell: pwsh
-        run: cargo build --release -p dust_cli --bin dust
+        run: cargo build --locked --release --target ${{ matrix.target }} -p dust_cli --bin dust
 
       - name: Stage archive contents (Unix)
         if: matrix.archive_ext == 'tar.gz'
         shell: bash
         run: |
           mkdir -p dist/${{ matrix.target }}
-          cp target/release/${{ matrix.binary_name }} dist/${{ matrix.target }}/${{ matrix.binary_name }}
+          cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} dist/${{ matrix.target }}/${{ matrix.binary_name }}
 
       - name: Stage archive contents (Windows)
         if: matrix.archive_ext == 'zip'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "dist/${{ matrix.target }}" | Out-Null
-          Copy-Item "target/release/${{ matrix.binary_name }}" "dist/${{ matrix.target }}/${{ matrix.binary_name }}" -Force
+          Copy-Item "target/${{ matrix.target }}/release/${{ matrix.binary_name }}" "dist/${{ matrix.target }}/${{ matrix.binary_name }}" -Force
 
       - name: Create tarball
         if: matrix.archive_ext == 'tar.gz'
@@ -109,6 +109,11 @@ jobs:
     needs: build-binaries
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Download packaged binaries
         uses: actions/download-artifact@v4
         with:
@@ -124,6 +129,51 @@ jobs:
           cd upload
           sha256sum *.tar.gz *.zip > SHA256SUMS.txt
 
+      - name: Prepare release notes
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python <<'PY'
+          import os
+          from pathlib import Path
+
+          tag = os.environ["RELEASE_TAG"]
+          changelog = Path("CHANGELOG.md")
+          manual_notes = Path("release-notes") / f"{tag}.md"
+          output = Path("release-notes.md")
+
+          if manual_notes.exists():
+              output.write_text(manual_notes.read_text(encoding="utf-8"), encoding="utf-8")
+              raise SystemExit(0)
+
+          if not changelog.exists():
+              output.write_text(f"Dust release {tag}\n", encoding="utf-8")
+              raise SystemExit(0)
+
+          lines = changelog.read_text(encoding="utf-8").splitlines()
+          wanted = [f"## [{tag}]", f"## [{tag.removeprefix('v')}]"]
+
+          start = None
+          for index, line in enumerate(lines):
+              if any(line.startswith(prefix) for prefix in wanted):
+                  start = index
+                  break
+
+          if start is None:
+              output.write_text(f"Dust release {tag}\n", encoding="utf-8")
+              raise SystemExit(0)
+
+          end = len(lines)
+          for index in range(start + 1, len(lines)):
+              if lines[index].startswith("## ["):
+                  end = index
+                  break
+
+          body = "\n".join(lines[start:end]).strip() + "\n"
+          output.write_text(body, encoding="utf-8")
+          PY
+
       - name: Create or update GitHub release
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -131,7 +181,8 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           TITLE="$TAG"
           if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TITLE" --notes-file release-notes.md
             gh release upload "$TAG" upload/* --clobber
           else
-            gh release create "$TAG" upload/* --title "$TITLE" --notes "Dust release $TAG"
+            gh release create "$TAG" upload/* --title "$TITLE" --notes-file release-notes.md
           fi

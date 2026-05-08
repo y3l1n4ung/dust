@@ -203,7 +203,26 @@ fn accepts_direct_text_stream_return_types_when_dart_convert_is_imported() {
 }
 
 #[test]
-fn rejects_text_stream_return_types_without_dart_convert_import() {
+fn accepts_text_stream_return_types_when_annotation_package_is_imported() {
+    let plugin = register_plugin();
+    let diagnostics = plugin.validate(&library_for_with_imports(
+        http_client_class(
+            vec![config("HttpClient", Some("()"))],
+            vec![method(
+                "streamText",
+                TypeIr::generic("Stream", vec![TypeIr::string()]),
+                vec![config("GET", Some("('/events/text')"))],
+                Vec::new(),
+            )],
+        ),
+        vec!["package:dust_http_client_annotation/dust_http_client_annotation.dart"],
+    ));
+
+    assert!(diagnostics.is_empty(), "{diagnostics:?}");
+}
+
+#[test]
+fn rejects_text_stream_return_types_without_supported_import() {
     let plugin = register_plugin();
     let diagnostics = plugin.validate(&library_for(http_client_class(
         vec![config("HttpClient", Some("()"))],
@@ -218,6 +237,6 @@ fn rejects_text_stream_return_types_without_dart_convert_import() {
     assert!(diagnostics.iter().any(|diagnostic| {
         diagnostic
             .message
-            .contains("requires `import 'dart:convert';`")
+            .contains("requires either `import 'dart:convert';` or the Dust HttpClient annotation package import")
     }));
 }

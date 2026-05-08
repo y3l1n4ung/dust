@@ -6,7 +6,6 @@
 
 import 'package:dio/dio.dart';
 import 'package:test/test.dart';
-import 'dart:convert';
 import 'package:product_showcase/models/remote_comment.dart';
 import 'package:product_showcase/models/remote_post.dart';
 import 'package:product_showcase/api/json_placeholder_api.dart';

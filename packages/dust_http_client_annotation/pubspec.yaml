@@ -17,6 +17,7 @@ topics:
   - http
 
 dependencies:
+  dio: ^5.9.2
   meta: ^1.16.0
 
 dev_dependencies:
