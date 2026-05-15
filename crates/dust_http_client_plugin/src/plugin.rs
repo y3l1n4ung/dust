@@ -1,5 +1,5 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::{LibraryIr, SymbolId};
+use dust_ir::LibraryIr;
 use dust_plugin_api::{AuxiliaryOutputContribution, DustPlugin, PluginContribution, SymbolPlan};
 use dust_workspace::generated_test_output_path;
 
@@ -12,7 +12,7 @@ mod util;
 mod validate;
 
 use self::build::build_client_spec;
-use self::constants::{GENERATE_TEST, HTTP_CLIENT, claimed_config_names};
+use self::constants::{CLAIMED_CONFIG_SYMBOLS, GENERATE_TEST, HTTP_CLIENT, SUPPORTED_ANNOTATIONS};
 use self::emit::{
     render_client_class, render_isolate_helpers, render_shared_helpers, render_test_file,
 };
@@ -45,15 +45,12 @@ impl DustPlugin for HttpClientPlugin {
         "HttpClient"
     }
 
-    fn claimed_configs(&self) -> Vec<SymbolId> {
-        claimed_config_names()
-            .iter()
-            .map(|name| SymbolId::new(format!("{}::{name}", constants::PACKAGE)))
-            .collect()
+    fn claimed_configs(&self) -> &'static [&'static str] {
+        CLAIMED_CONFIG_SYMBOLS
     }
 
-    fn supported_annotations(&self) -> Vec<&'static str> {
-        claimed_config_names().to_vec()
+    fn supported_annotations(&self) -> &'static [&'static str] {
+        SUPPORTED_ANNOTATIONS
     }
 
     fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> {
@@ -94,16 +91,17 @@ impl DustPlugin for HttpClientPlugin {
         }
         if !generated_test_specs.is_empty() {
             if let Some(source) = render_test_file(library, &generated_test_specs) {
-                contribution
-                    .auxiliary_outputs
-                    .push(AuxiliaryOutputContribution {
-                        output_path: generated_test_output_path(
-                            std::path::Path::new(&library.package_root),
-                            std::path::Path::new(&library.source_path),
-                        )
-                        .expect("http client test outputs must originate from lib/ sources"),
-                        source,
-                    });
+                if let Ok(output_path) = generated_test_output_path(
+                    std::path::Path::new(&library.package_root),
+                    std::path::Path::new(&library.source_path),
+                ) {
+                    contribution
+                        .auxiliary_outputs
+                        .push(AuxiliaryOutputContribution {
+                            output_path,
+                            source,
+                        });
+                }
             }
         }
 

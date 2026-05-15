@@ -5,6 +5,8 @@ use std::{
 
 use clap::{Args, Parser, Subcommand};
 
+const DEFAULT_POLL_INTERVAL_MS: u64 = 250;
+
 /// One supported Dust CLI command.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CliCommand {
@@ -41,7 +43,7 @@ impl Default for CliOptions {
             root: None,
             fail_fast: false,
             jobs: None,
-            poll_interval_ms: 250,
+            poll_interval_ms: DEFAULT_POLL_INTERVAL_MS,
             max_cycles: None,
         }
     }
@@ -109,7 +111,7 @@ struct WatchOptions {
     #[command(flatten)]
     build: BuildOptions,
     /// The watch poll interval in milliseconds.
-    #[arg(long = "poll-ms", value_name = "MS", default_value = "250")]
+    #[arg(long = "poll-ms", value_name = "MS", default_value_t = default_poll_interval())]
     poll_interval_ms: NonZeroU64,
     /// The optional maximum number of watch cycles.
     #[arg(long = "max-cycles", value_name = "N")]
@@ -120,51 +122,75 @@ struct WatchOptions {
 pub fn parse_cli_args(
     args: impl IntoIterator<Item = impl Into<String>>,
 ) -> Result<ParsedCli, clap::Error> {
-    let parsed = RawCli::try_parse_from(
+    RawCli::try_parse_from(
         std::iter::once("dust".to_owned()).chain(args.into_iter().map(Into::into)),
-    )?;
-
-    Ok(match parsed.command {
-        RawCommand::Build(options) => ParsedCli {
-            command: CliCommand::Build,
-            options: build_options(options),
-        },
-        RawCommand::Clean(options) => ParsedCli {
-            command: CliCommand::Clean,
-            options: CliOptions {
-                root: options.root,
-                ..CliOptions::default()
-            },
-        },
-        RawCommand::Check(options) => ParsedCli {
-            command: CliCommand::Check,
-            options: build_options(options),
-        },
-        RawCommand::Doctor(options) => ParsedCli {
-            command: CliCommand::Doctor,
-            options: CliOptions {
-                root: options.root,
-                ..CliOptions::default()
-            },
-        },
-        RawCommand::Watch(options) => ParsedCli {
-            command: CliCommand::Watch,
-            options: CliOptions {
-                root: options.build.root.root,
-                fail_fast: options.build.fail_fast,
-                jobs: options.build.jobs.map(NonZeroUsize::get),
-                poll_interval_ms: options.poll_interval_ms.get(),
-                max_cycles: options.max_cycles.map(NonZeroU32::get),
-            },
-        },
-    })
+    )
+    .map(ParsedCli::from)
 }
 
-fn build_options(options: BuildOptions) -> CliOptions {
-    CliOptions {
-        root: options.root.root,
-        fail_fast: options.fail_fast,
-        jobs: options.jobs.map(NonZeroUsize::get),
-        ..CliOptions::default()
+/// Parses Dust CLI arguments from the current process environment.
+pub fn parse_cli_from_env() -> Result<ParsedCli, clap::Error> {
+    RawCli::try_parse().map(ParsedCli::from)
+}
+
+impl From<RawCli> for ParsedCli {
+    fn from(value: RawCli) -> Self {
+        value.command.into()
+    }
+}
+
+impl From<RawCommand> for ParsedCli {
+    fn from(value: RawCommand) -> Self {
+        match value {
+            RawCommand::Build(options) => ParsedCli::new(CliCommand::Build, options),
+            RawCommand::Clean(options) => ParsedCli::new(CliCommand::Clean, options),
+            RawCommand::Check(options) => ParsedCli::new(CliCommand::Check, options),
+            RawCommand::Doctor(options) => ParsedCli::new(CliCommand::Doctor, options),
+            RawCommand::Watch(options) => ParsedCli::new(CliCommand::Watch, options),
+        }
+    }
+}
+
+impl ParsedCli {
+    fn new(command: CliCommand, options: impl Into<CliOptions>) -> Self {
+        Self {
+            command,
+            options: options.into(),
+        }
+    }
+}
+
+fn default_poll_interval() -> NonZeroU64 {
+    NonZeroU64::new(DEFAULT_POLL_INTERVAL_MS).expect("default poll interval must be non-zero")
+}
+
+impl From<RootOptions> for CliOptions {
+    fn from(value: RootOptions) -> Self {
+        Self {
+            root: value.root,
+            ..Self::default()
+        }
+    }
+}
+
+impl From<BuildOptions> for CliOptions {
+    fn from(value: BuildOptions) -> Self {
+        Self {
+            root: value.root.root,
+            fail_fast: value.fail_fast,
+            jobs: value.jobs.map(NonZeroUsize::get),
+            ..Self::default()
+        }
+    }
+}
+
+impl From<WatchOptions> for CliOptions {
+    fn from(value: WatchOptions) -> Self {
+        let build = CliOptions::from(value.build);
+        Self {
+            poll_interval_ms: value.poll_interval_ms.get(),
+            max_cycles: value.max_cycles.map(NonZeroU32::get),
+            ..build
+        }
     }
 }

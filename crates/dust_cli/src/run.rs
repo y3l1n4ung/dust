@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, path::PathBuf};
 
 use dust_driver::{
     BuildRequest, CheckRequest, CleanRequest, CommandRequest, CommandResult, DoctorRequest,
@@ -6,7 +6,7 @@ use dust_driver::{
 };
 
 use crate::{
-    args::{CliCommand, ParsedCli, parse_cli_args},
+    args::{CliCommand, ParsedCli, parse_cli_args, parse_cli_from_env},
     exit_code::ExitCode,
     render::render_result,
     terminal::{ProgressHandle, create_progress_handle, finish_progress, handle_progress},
@@ -25,34 +25,19 @@ pub struct CliRun {
 
 /// Runs the CLI from the current process environment.
 pub fn run_from_env() -> CliRun {
-    let args = env::args().skip(1).collect::<Vec<_>>();
-    run_cli(args)
+    run_parsed_cli(parse_cli_from_env())
 }
 
 /// Runs the CLI with explicit arguments, excluding the executable name.
 pub fn run_cli(args: impl IntoIterator<Item = impl Into<String>>) -> CliRun {
-    let parsed = match parse_cli_args(args) {
+    run_parsed_cli(parse_cli_args(args))
+}
+
+fn run_parsed_cli(parsed: Result<ParsedCli, clap::Error>) -> CliRun {
+    let parsed = match parsed {
         Ok(parsed) => parsed,
         Err(error) => {
-            let output = ensure_trailing_newline(error.to_string());
-            let exit_code = match error.kind() {
-                clap::error::ErrorKind::DisplayHelp | clap::error::ErrorKind::DisplayVersion => {
-                    ExitCode::Success as i32
-                }
-                _ => ExitCode::Failure as i32,
-            };
-            if exit_code == ExitCode::Success as i32 {
-                return CliRun {
-                    exit_code,
-                    stdout: output,
-                    stderr: String::new(),
-                };
-            }
-            return CliRun {
-                exit_code,
-                stdout: String::new(),
-                stderr: output,
-            };
+            return cli_error_output(error);
         }
     };
 
@@ -65,7 +50,7 @@ pub fn run_cli(args: impl IntoIterator<Item = impl Into<String>>) -> CliRun {
     let exit_code = ExitCode::from_result(&command, &result) as i32;
     let rendered = render_result(&command, &result);
 
-    let (stdout, stderr) = split_output(exit_code, &command, &result, rendered);
+    let (stdout, stderr) = split_output(exit_code, rendered);
     CliRun {
         exit_code,
         stdout,
@@ -74,11 +59,7 @@ pub fn run_cli(args: impl IntoIterator<Item = impl Into<String>>) -> CliRun {
 }
 
 fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandResult {
-    let cwd = parsed
-        .options
-        .root
-        .clone()
-        .unwrap_or_else(|| env::current_dir().expect("current directory must be available"));
+    let cwd = command_root(&parsed);
 
     match parsed.command {
         CliCommand::Build => {
@@ -117,24 +98,36 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
     }
 }
 
-fn split_output(
-    exit_code: i32,
-    command: &CliCommand,
-    result: &CommandResult,
-    rendered: String,
-) -> (String, String) {
+fn split_output(exit_code: i32, rendered: String) -> (String, String) {
     if exit_code == ExitCode::Success as i32 {
         return (rendered, String::new());
     }
 
-    if matches!(command, CliCommand::Check)
-        && !result.has_errors()
-        && result.checked_libraries.iter().any(|library| library.stale)
-    {
-        return (String::new(), rendered);
-    }
-
     (String::new(), rendered)
+}
+
+fn command_root(parsed: &ParsedCli) -> PathBuf {
+    parsed
+        .options
+        .root
+        .clone()
+        .unwrap_or_else(|| env::current_dir().expect("current directory must be available"))
+}
+
+fn cli_error_output(error: clap::Error) -> CliRun {
+    let output = ensure_trailing_newline(error.to_string());
+    match error.kind() {
+        clap::error::ErrorKind::DisplayHelp | clap::error::ErrorKind::DisplayVersion => CliRun {
+            exit_code: ExitCode::Success as i32,
+            stdout: output,
+            stderr: String::new(),
+        },
+        _ => CliRun {
+            exit_code: ExitCode::Failure as i32,
+            stdout: String::new(),
+            stderr: output,
+        },
+    }
 }
 
 fn ensure_trailing_newline(mut text: String) -> String {
@@ -146,22 +139,15 @@ fn ensure_trailing_newline(mut text: String) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-
     use dust_diagnostics::Diagnostic;
-    use dust_driver::{CheckedLibrary, CommandResult};
+    use dust_driver::CommandResult;
 
     use super::*;
 
     #[test]
     fn split_output_keeps_success_on_stdout() {
         let rendered = "build result\n".to_owned();
-        let (stdout, stderr) = split_output(
-            ExitCode::Success as i32,
-            &CliCommand::Build,
-            &CommandResult::default(),
-            rendered.clone(),
-        );
+        let (stdout, stderr) = split_output(ExitCode::Success as i32, rendered.clone());
 
         assert_eq!(stdout, rendered);
         assert!(stderr.is_empty());
@@ -169,23 +155,7 @@ mod tests {
 
     #[test]
     fn split_output_routes_stale_check_to_stderr() {
-        let result = CommandResult {
-            checked_libraries: vec![CheckedLibrary {
-                source_path: PathBuf::from("lib/user.dart"),
-                output_path: PathBuf::from("lib/user.g.dart"),
-                auxiliary_output_paths: Vec::new(),
-                stale: true,
-                cached: false,
-            }],
-            ..CommandResult::default()
-        };
-
-        let (stdout, stderr) = split_output(
-            ExitCode::Stale as i32,
-            &CliCommand::Check,
-            &result,
-            "check stale\n".to_owned(),
-        );
+        let (stdout, stderr) = split_output(ExitCode::Stale as i32, "check stale\n".to_owned());
 
         assert!(stdout.is_empty());
         assert_eq!(stderr, "check stale\n");
@@ -198,12 +168,8 @@ mod tests {
             ..CommandResult::default()
         };
 
-        let (stdout, stderr) = split_output(
-            ExitCode::Failure as i32,
-            &CliCommand::Build,
-            &result,
-            "error output\n".to_owned(),
-        );
+        let exit_code = ExitCode::from_result(&CliCommand::Build, &result) as i32;
+        let (stdout, stderr) = split_output(exit_code, "error output\n".to_owned());
 
         assert!(stdout.is_empty());
         assert_eq!(stderr, "error output\n");

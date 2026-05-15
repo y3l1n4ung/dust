@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use dust_plugin_api::{ClassMixinContribution, PluginContribution};
 
@@ -20,24 +20,17 @@ impl MergedSections {
     pub(crate) fn from_contributions(contributions: &[PluginContribution]) -> Self {
         let mut merged = Self::default();
         let mut helper_seen = HashSet::new();
+        let mut mixin_index_by_class = HashMap::<&str, usize>::new();
 
         for contribution in contributions {
             for helper in &contribution.shared_helpers {
-                if helper_seen.insert(helper.clone()) {
+                if helper_seen.insert(helper.as_str()) {
                     merged.shared_helpers.push(helper.clone());
                 }
             }
 
             for mixin in &contribution.mixin_members {
-                if let Some(existing) = merged
-                    .mixin_members
-                    .iter_mut()
-                    .find(|entry| entry.class_name == mixin.class_name)
-                {
-                    existing.members.extend(mixin.members.iter().cloned());
-                } else {
-                    merged.mixin_members.push(mixin.clone());
-                }
+                merge_mixin_members(&mut merged, &mut mixin_index_by_class, mixin);
             }
 
             merged
@@ -59,4 +52,20 @@ impl MergedSections {
             .map(|entry| entry.members.as_slice())
             .unwrap_or(&[])
     }
+}
+
+fn merge_mixin_members<'a>(
+    merged: &mut MergedSections,
+    index_by_class: &mut HashMap<&'a str, usize>,
+    mixin: &'a ClassMixinContribution,
+) {
+    if let Some(index) = index_by_class.get(mixin.class_name.as_str()).copied() {
+        merged.mixin_members[index]
+            .members
+            .extend(mixin.members.iter().cloned());
+        return;
+    }
+
+    index_by_class.insert(&mixin.class_name, merged.mixin_members.len());
+    merged.mixin_members.push(mixin.clone());
 }

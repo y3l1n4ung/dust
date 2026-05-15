@@ -83,10 +83,10 @@ Windows (PowerShell):
 irm https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.ps1 | iex
 ```
 
-**Via Cargo (if you have Rust installed)**
+**Via Cargo from Git (if you have Rust installed)**
 
 ```bash
-cargo install dust_cli
+cargo install --git https://github.com/y3l1n4ung/dust dust_cli
 ```
 
 ### Step 2 — Add the Dart annotation packages

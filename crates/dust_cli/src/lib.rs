@@ -8,5 +8,5 @@ mod render;
 mod run;
 mod terminal;
 
-pub use args::{CliCommand, CliOptions, ParsedCli, parse_cli_args};
+pub use args::{CliCommand, CliOptions, ParsedCli, parse_cli_args, parse_cli_from_env};
 pub use run::{CliRun, run_cli, run_from_env};

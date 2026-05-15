@@ -162,6 +162,9 @@ fn is_dust_generated_file(path: &Path) -> Result<bool, std::io::Error> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
+    use std::os::unix::fs::PermissionsExt;
+
     use tempfile::tempdir;
 
     use super::*;
@@ -253,24 +256,45 @@ mod tests {
         )
         .unwrap();
 
-        let mut perms = fs::metadata(&lib_dir).unwrap().permissions();
-        perms.set_readonly(true);
-        fs::set_permissions(&lib_dir, perms).unwrap();
+        make_dir_readonly(&lib_dir);
 
         let result = run_clean(CleanRequest {
             cwd: root.to_path_buf(),
         });
 
-        let mut perms = fs::metadata(&lib_dir).unwrap().permissions();
-        #[allow(clippy::permissions_set_readonly_false)]
-        {
-            perms.set_readonly(false);
-        }
-        fs::set_permissions(&lib_dir, perms).unwrap();
+        make_dir_writable(&lib_dir);
 
         assert!(result.has_errors());
         assert!(owned.exists());
         assert!(dart_tool_dir.exists());
         assert!(!result.clean.unwrap().cache_cleared);
+    }
+
+    #[cfg(unix)]
+    fn make_dir_readonly(path: &Path) {
+        let mut perms = fs::metadata(path).unwrap().permissions();
+        perms.set_mode(0o555);
+        fs::set_permissions(path, perms).unwrap();
+    }
+
+    #[cfg(unix)]
+    fn make_dir_writable(path: &Path) {
+        let mut perms = fs::metadata(path).unwrap().permissions();
+        perms.set_mode(0o755);
+        fs::set_permissions(path, perms).unwrap();
+    }
+
+    #[cfg(windows)]
+    fn make_dir_readonly(path: &Path) {
+        let mut perms = fs::metadata(path).unwrap().permissions();
+        perms.set_readonly(true);
+        fs::set_permissions(path, perms).unwrap();
+    }
+
+    #[cfg(windows)]
+    fn make_dir_writable(path: &Path) {
+        let mut perms = fs::metadata(path).unwrap().permissions();
+        perms.set_readonly(false);
+        fs::set_permissions(path, perms).unwrap();
     }
 }

@@ -16,8 +16,8 @@ use crate::plugin::util::escape_single_quoted;
 pub(crate) fn render_test_file(library: &LibraryIr, specs: &[ClientSpec<'_>]) -> Option<String> {
     let package_root = Path::new(&library.package_root);
     let source_path = Path::new(&library.source_path);
-    let source_import = package_import_uri(&library.package_name, package_root, source_path)
-        .expect("http client generated tests require a lib source import");
+    let source_import =
+        package_import_uri(&library.package_name, package_root, source_path).ok()?;
     let fixtures = FixtureCatalog::from_library(library);
     let client_groups = specs
         .iter()

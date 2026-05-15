@@ -44,41 +44,8 @@ pub(crate) struct TerminalProgress {
 
 impl TerminalProgress {
     fn handle(&mut self, event: ProgressEvent) {
-        match event {
-            ProgressEvent::StartedBatch { phase, total } => {
-                self.active = true;
-                self.render_line(&format!(
-                    "{} {}",
-                    progress_label(phase),
-                    render_bar(0, total)
-                ));
-            }
-            ProgressEvent::FinishedLibrary {
-                phase,
-                completed,
-                total,
-                source_path,
-                written,
-                had_errors,
-                elapsed_ms,
-                ..
-            } => {
-                let status = if had_errors {
-                    "err"
-                } else if written {
-                    "gen"
-                } else {
-                    "skip"
-                };
-                self.render_line(&format!(
-                    "{} {} {status} {} {}ms",
-                    progress_label(phase),
-                    render_bar(completed, total),
-                    display_name(&source_path),
-                    elapsed_ms,
-                ));
-            }
-        }
+        self.active = true;
+        self.render_line(&render_progress_event(&event));
     }
 
     fn finish(&mut self) {
@@ -101,6 +68,41 @@ impl TerminalProgress {
         let _ = write!(stderr, "\r{line}{clear}");
         let _ = stderr.flush();
         self.last_len = line.len();
+    }
+}
+
+fn render_progress_event(event: &ProgressEvent) -> String {
+    match event {
+        ProgressEvent::StartedBatch { phase, total } => {
+            format!("{} {}", progress_label(*phase), render_bar(0, *total))
+        }
+        ProgressEvent::FinishedLibrary {
+            phase,
+            completed,
+            total,
+            source_path,
+            written,
+            had_errors,
+            elapsed_ms,
+            ..
+        } => format!(
+            "{} {} {} {} {}ms",
+            progress_label(*phase),
+            render_bar(*completed, *total),
+            progress_status(*had_errors, *written),
+            display_name(source_path),
+            elapsed_ms,
+        ),
+    }
+}
+
+fn progress_status(had_errors: bool, written: bool) -> &'static str {
+    if had_errors {
+        "err"
+    } else if written {
+        "gen"
+    } else {
+        "skip"
     }
 }
 
@@ -151,6 +153,38 @@ mod tests {
         assert_eq!(progress_label(ProgressPhase::Build), "build");
         assert_eq!(progress_label(ProgressPhase::WatchInitial), "watch:init");
         assert_eq!(progress_label(ProgressPhase::WatchRebuild), "watch:rebuild");
+    }
+
+    #[test]
+    fn progress_status_prefers_errors_over_write_state() {
+        assert_eq!(progress_status(true, true), "err");
+        assert_eq!(progress_status(false, true), "gen");
+        assert_eq!(progress_status(false, false), "skip");
+    }
+
+    #[test]
+    fn render_progress_event_formats_started_and_finished_lines() {
+        assert_eq!(
+            render_progress_event(&ProgressEvent::StartedBatch {
+                phase: ProgressPhase::Build,
+                total: 3,
+            }),
+            "build [------------------------] 0/3"
+        );
+        assert_eq!(
+            render_progress_event(&ProgressEvent::FinishedLibrary {
+                phase: ProgressPhase::WatchRebuild,
+                completed: 2,
+                total: 4,
+                source_path: PathBuf::from("/tmp/lib/user.dart"),
+                cached: false,
+                written: true,
+                changed: true,
+                had_errors: false,
+                elapsed_ms: 9,
+            }),
+            "watch:rebuild [############------------] 2/4 gen user.dart 9ms"
+        );
     }
 
     #[test]

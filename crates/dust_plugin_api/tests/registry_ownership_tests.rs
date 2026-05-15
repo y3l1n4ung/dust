@@ -1,9 +1,34 @@
-mod support;
+use dust_diagnostics::Diagnostic;
+use dust_ir::LibraryIr;
+use dust_plugin_api::{DustPlugin, PluginContribution, PluginRegistry, SymbolPlan};
 
-use dust_ir::SymbolId;
-use dust_plugin_api::PluginRegistry;
+struct FakePlugin {
+    name: &'static str,
+    traits: &'static [&'static str],
+    configs: &'static [&'static str],
+}
 
-use self::support::FakePlugin;
+impl DustPlugin for FakePlugin {
+    fn plugin_name(&self) -> &'static str {
+        self.name
+    }
+
+    fn claimed_traits(&self) -> &'static [&'static str] {
+        self.traits
+    }
+
+    fn claimed_configs(&self) -> &'static [&'static str] {
+        self.configs
+    }
+
+    fn validate(&self, _library: &LibraryIr) -> Vec<Diagnostic> {
+        Vec::new()
+    }
+
+    fn emit(&self, _library: &LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
+        PluginContribution::default()
+    }
+}
 
 #[test]
 fn registry_rejects_duplicate_trait_ownership() {
@@ -11,18 +36,16 @@ fn registry_rejects_duplicate_trait_ownership() {
     registry
         .register(Box::new(FakePlugin {
             name: "plugin_a",
-            traits: vec![SymbolId::new("derive_annotation::ToString")],
-            configs: Vec::new(),
-            requested: Vec::new(),
+            traits: &["derive_annotation::ToString"],
+            configs: &[],
         }))
         .unwrap();
 
     let error = registry
         .register(Box::new(FakePlugin {
             name: "plugin_b",
-            traits: vec![SymbolId::new("derive_annotation::ToString")],
-            configs: Vec::new(),
-            requested: Vec::new(),
+            traits: &["derive_annotation::ToString"],
+            configs: &[],
         }))
         .unwrap_err();
 
@@ -39,18 +62,16 @@ fn registry_rejects_duplicate_config_ownership() {
     registry
         .register(Box::new(FakePlugin {
             name: "plugin_a",
-            traits: Vec::new(),
-            configs: vec![SymbolId::new("derive_serde_annotation::SerDe")],
-            requested: Vec::new(),
+            traits: &[],
+            configs: &["derive_serde_annotation::SerDe"],
         }))
         .unwrap();
 
     let error = registry
         .register(Box::new(FakePlugin {
             name: "plugin_b",
-            traits: Vec::new(),
-            configs: vec![SymbolId::new("derive_serde_annotation::SerDe")],
-            requested: Vec::new(),
+            traits: &[],
+            configs: &["derive_serde_annotation::SerDe"],
         }))
         .unwrap_err();
 
@@ -67,17 +88,15 @@ fn plugin_names_follow_registration_order() {
     registry
         .register(Box::new(FakePlugin {
             name: "derive",
-            traits: Vec::new(),
-            configs: Vec::new(),
-            requested: Vec::new(),
+            traits: &[],
+            configs: &[],
         }))
         .unwrap();
     registry
         .register(Box::new(FakePlugin {
             name: "serde",
-            traits: Vec::new(),
-            configs: Vec::new(),
-            requested: Vec::new(),
+            traits: &[],
+            configs: &[],
         }))
         .unwrap();
 

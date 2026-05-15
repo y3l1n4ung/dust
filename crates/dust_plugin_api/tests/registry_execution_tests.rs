@@ -1,10 +1,11 @@
-mod support;
+#[path = "support/library.rs"]
+mod library;
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::LibraryIr;
 use dust_plugin_api::{DustPlugin, PluginContribution, PluginRegistry, SymbolPlan};
 
-use self::support::sample_library;
+use self::library::sample_library;
 
 #[test]
 fn registry_runs_validation_and_emission_in_registration_order() {

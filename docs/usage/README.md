@@ -7,6 +7,7 @@ If you are new to the project, read these pages in order:
 1. [Derive](./derive.md)
 2. [Serde](./serde.md)
 3. [HttpClient](./http.md)
+4. [State Management](./state.md)
 
 ## Package Map
 
@@ -23,12 +24,22 @@ Add these packages when you want generated Dio clients:
 - `dust_http_client_annotation`
 - `dio`
 
+Add this package for state management (integrated in prototype):
+
+- `dust_state_annotation` (Coming soon)
+
 ## Quick Start
 
 Install the CLI:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.sh | bash
+```
+
+If you have Rust installed and want to install directly from the repository:
+
+```bash
+cargo install --git https://github.com/y3l1n4ung/dust dust_cli
 ```
 
 Add the Dart packages you need:

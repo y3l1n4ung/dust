@@ -1,4 +1,5 @@
 [package]
+publish = false
 name = "dust_parser_dart"
 version.workspace = true
 edition.workspace = true

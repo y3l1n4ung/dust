@@ -4,7 +4,6 @@
 
 Release `0.1.0` for:
 
-- Rust crates in the workspace
 - `dust` CLI binary
 - Dart packages:
   - `derive_annotation`
@@ -49,44 +48,10 @@ cd ../dust_http_client_annotation
 dart pub publish --dry-run
 ```
 
-Run the Rust publish preflight:
-
-```sh
-python3 tmp/release_rust_crates.py
-```
-
 ## Publish Order
 
-Publish Rust crates to crates.io in this order:
-
-1. `dust_text`
-2. `dust_diagnostics`
-3. `dust_ir`
-4. `dust_parser_dart`
-5. `dust_workspace`
-6. `dust_dart_emit`
-7. `dust_parser_dart_ts`
-8. `dust_plugin_api`
-9. `dust_cache`
-10. `dust_resolver`
-11. `dust_plugin_derive`
-12. `dust_plugin_serde`
-13. `dust_http_client_plugin`
-14. `dust_emitter`
-15. `dust_driver`
-16. `dust_cli`
-
-Run the actual Rust release with the helper:
-
-```sh
-python3 tmp/release_rust_crates.py --publish
-```
-
-If a publish succeeds and you need to resume later:
-
-```sh
-python3 tmp/release_rust_crates.py --publish --from dust_driver
-```
+Skip crates.io for Rust crates. Release the `dust` CLI from GitHub binary
+artifacts and installers.
 
 Publish Dart packages to pub.dev in this order:
 
@@ -96,7 +61,7 @@ Publish Dart packages to pub.dev in this order:
 
 ## GitHub Release
 
-After publishes succeed:
+After Dart package publishes and Rust binary checks succeed:
 
 1. Update the changelog and release notes manually:
    ```sh
@@ -119,3 +84,21 @@ After publishes succeed:
    - `dust-aarch64-pc-windows-msvc.zip`
    - `SHA256SUMS.txt`
 5. Verify `install.sh` and `install.ps1` against the tagged release.
+
+## Install Verification
+
+Verify the release with both supported installation paths:
+
+```sh
+cargo install --git https://github.com/y3l1n4ung/dust --tag v0.1.0 dust_cli
+dust --help
+dust --version
+```
+
+Then test the binary installer against the tagged GitHub release:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/v0.1.0/install.sh | bash
+dust --help
+dust --version
+```

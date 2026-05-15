@@ -32,10 +32,7 @@ pub fn generated_test_output_path(
     package_root: &Path,
     source_path: &Path,
 ) -> Result<PathBuf, Diagnostic> {
-    let lib_relative = library_relative_path(package_root, source_path)?;
-    let package_relative = lib_relative
-        .strip_prefix("lib")
-        .expect("library_relative_path must start with lib/");
+    let package_relative = package_relative_library_path(package_root, source_path)?;
     let parent = package_relative.parent().unwrap_or_else(|| Path::new(""));
     let stem = package_relative
         .file_stem()
@@ -53,12 +50,10 @@ pub fn package_import_uri(
     package_root: &Path,
     source_path: &Path,
 ) -> Result<String, Diagnostic> {
-    let lib_relative = library_relative_path(package_root, source_path)?;
+    let package_relative = package_relative_library_path(package_root, source_path)?;
     Ok(format!(
         "package:{package_name}/{}",
-        lib_relative
-            .strip_prefix("lib")
-            .expect("library_relative_path must start with lib/")
+        package_relative
             .to_string_lossy()
             .replace('\\', "/")
             .trim_start_matches('/')
@@ -106,6 +101,14 @@ fn library_relative_path(package_root: &Path, source_path: &Path) -> Result<Path
         )));
     }
     Ok(normalized)
+}
+
+fn package_relative_library_path(
+    package_root: &Path,
+    source_path: &Path,
+) -> Result<PathBuf, Diagnostic> {
+    library_relative_path(package_root, source_path)
+        .map(|path| path.strip_prefix("lib").unwrap_or(&path).to_path_buf())
 }
 
 fn normalized_source_path(package_root: &Path, source_path: &Path) -> Result<PathBuf, Diagnostic> {

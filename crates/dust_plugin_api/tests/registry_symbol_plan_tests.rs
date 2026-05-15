@@ -1,12 +1,41 @@
-mod support;
+#[path = "support/library.rs"]
+mod library;
 
+use dust_diagnostics::Diagnostic;
+use dust_ir::LibraryIr;
 use dust_parser_dart::ParsedLibrarySurface;
 use dust_plugin_api::{
     DustPlugin, PluginContribution, PluginRegistry, SymbolPlan, WorkspaceAnalysisBuilder,
 };
 use dust_text::TextRange;
 
-use self::support::{FakePlugin, sample_library};
+use self::library::sample_library;
+
+struct SymbolPlugin {
+    name: &'static str,
+    requested: Vec<&'static str>,
+}
+
+impl DustPlugin for SymbolPlugin {
+    fn plugin_name(&self) -> &'static str {
+        self.name
+    }
+
+    fn requested_symbols(&self, _library: &LibraryIr) -> Vec<String> {
+        self.requested
+            .iter()
+            .map(|name| (*name).to_owned())
+            .collect()
+    }
+
+    fn validate(&self, _library: &LibraryIr) -> Vec<Diagnostic> {
+        Vec::new()
+    }
+
+    fn emit(&self, _library: &LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
+        PluginContribution::default()
+    }
+}
 
 fn sample_parsed_library() -> ParsedLibrarySurface {
     ParsedLibrarySurface {
@@ -22,18 +51,14 @@ fn symbol_plan_preserves_first_seen_order_and_dedupes() {
     let library = sample_library();
     let mut registry = PluginRegistry::new();
     registry
-        .register(Box::new(FakePlugin {
+        .register(Box::new(SymbolPlugin {
             name: "plugin_a",
-            traits: Vec::new(),
-            configs: Vec::new(),
             requested: vec!["_$UserToJson", "_undefined"],
         }))
         .unwrap();
     registry
-        .register(Box::new(FakePlugin {
+        .register(Box::new(SymbolPlugin {
             name: "plugin_b",
-            traits: Vec::new(),
-            configs: Vec::new(),
             requested: vec!["_undefined", "_$UserFromJson"],
         }))
         .unwrap();

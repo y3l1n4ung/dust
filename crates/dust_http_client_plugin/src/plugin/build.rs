@@ -37,11 +37,13 @@ pub(super) fn build_client_spec<'a>(
         return Err(diagnostics);
     }
 
-    let http_client = class
+    let Some(http_client) = class
         .configs
         .iter()
         .find(|config| crate::plugin::util::config_name(&config.symbol.0) == HTTP_CLIENT)
-        .expect("validated http client classes must carry @HttpClient()");
+    else {
+        return Err(diagnostics);
+    };
     let ParsedHttpClientConfig {
         base_url,
         target: _,

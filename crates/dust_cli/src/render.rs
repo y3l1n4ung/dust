@@ -3,7 +3,7 @@ use dust_driver::CommandResult;
 
 use crate::args::CliCommand;
 
-const BANNER: &str = include_str!("../../../assets/dust-logo-cli.txt");
+const BANNER: &str = include_str!("../assets/dust-logo-cli.txt");
 
 fn render_banner() -> &'static str {
     BANNER.trim_end()
@@ -16,17 +16,7 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
 
     match command {
         CliCommand::Build => {
-            let generated = result
-                .build_artifacts
-                .iter()
-                .filter(|artifact| artifact.written)
-                .count();
-            let total = result.build_artifacts.len();
-            let skipped = total.saturating_sub(generated);
-            lines.push(format!(
-                "build  scanned: {total}  generated: {generated}  skipped: {skipped}  time: {}ms",
-                result.elapsed_ms
-            ));
+            append_generation_summary(&mut lines, "build", result);
         }
         CliCommand::Clean => {
             if let Some(clean) = &result.clean {
@@ -71,17 +61,7 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
             }
         }
         CliCommand::Watch => {
-            let generated = result
-                .build_artifacts
-                .iter()
-                .filter(|artifact| artifact.written)
-                .count();
-            let total = result.build_artifacts.len();
-            let skipped = total.saturating_sub(generated);
-            lines.push(format!(
-                "watch  scanned: {total}  generated: {generated}  skipped: {skipped}  time: {}ms",
-                result.elapsed_ms
-            ));
+            append_generation_summary(&mut lines, "watch", result);
             if let Some(watch) = &result.watch {
                 lines.push(format!(
                     "watch  cycles: {}  rebuilds: {}",
@@ -104,21 +84,48 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
     }
 }
 
-fn render_diagnostic_summary(diagnostics: &[Diagnostic]) -> String {
-    let errors = diagnostics
+fn append_generation_summary(lines: &mut Vec<String>, label: &str, result: &CommandResult) {
+    let generated = result
+        .build_artifacts
         .iter()
-        .filter(|diagnostic| diagnostic.severity == Severity::Error)
+        .filter(|artifact| artifact.written)
         .count();
-    let warnings = diagnostics
-        .iter()
-        .filter(|diagnostic| diagnostic.severity == Severity::Warning)
-        .count();
-    let notes = diagnostics
-        .iter()
-        .filter(|diagnostic| diagnostic.severity == Severity::Note)
-        .count();
+    let total = result.build_artifacts.len();
+    let skipped = total.saturating_sub(generated);
+    lines.push(format!(
+        "{label}  scanned: {total}  generated: {generated}  skipped: {skipped}  time: {}ms",
+        result.elapsed_ms
+    ));
+}
 
-    format!("diagnostics  errors: {errors}  warnings: {warnings}  notes: {notes}")
+fn render_diagnostic_summary(diagnostics: &[Diagnostic]) -> String {
+    let counts = DiagnosticCounts::from_diagnostics(diagnostics);
+
+    format!(
+        "diagnostics  errors: {}  warnings: {}  notes: {}",
+        counts.errors, counts.warnings, counts.notes
+    )
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+struct DiagnosticCounts {
+    errors: usize,
+    warnings: usize,
+    notes: usize,
+}
+
+impl DiagnosticCounts {
+    fn from_diagnostics(diagnostics: &[Diagnostic]) -> Self {
+        let mut counts = Self::default();
+        for diagnostic in diagnostics {
+            match diagnostic.severity {
+                Severity::Error => counts.errors += 1,
+                Severity::Warning => counts.warnings += 1,
+                Severity::Note => counts.notes += 1,
+            }
+        }
+        counts
+    }
 }
 
 fn append_diagnostic_blocks(
@@ -157,12 +164,26 @@ mod tests {
 
     #[test]
     fn render_diagnostic_summary_counts_each_severity() {
+        let diagnostics = [
+            Diagnostic::error("broken"),
+            Diagnostic::warning("suspicious"),
+            Diagnostic::note("try again"),
+        ];
+        let counts = DiagnosticCounts::from_diagnostics(&diagnostics);
         let summary = render_diagnostic_summary(&[
             Diagnostic::error("broken"),
             Diagnostic::warning("suspicious"),
             Diagnostic::note("try again"),
         ]);
 
+        assert_eq!(
+            counts,
+            DiagnosticCounts {
+                errors: 1,
+                warnings: 1,
+                notes: 1,
+            }
+        );
         assert_eq!(summary, "diagnostics  errors: 1  warnings: 1  notes: 1");
     }
 
