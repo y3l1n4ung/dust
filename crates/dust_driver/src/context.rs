@@ -4,7 +4,7 @@ use dust_cache::WorkspaceCache;
 use dust_diagnostics::Diagnostic;
 use dust_plugin_api::PluginRegistry;
 use dust_resolver::SymbolCatalog;
-use dust_workspace::{WorkspacePlan, discover_workspace};
+use dust_workspace::{SupportedAnnotations, WorkspacePlan, discover_workspace};
 
 use crate::{
     build::{codegen_tool_hash, default_registry, read_workspace_config_hash},
@@ -21,7 +21,8 @@ pub(crate) struct DriverContext {
 impl DriverContext {
     pub(crate) fn load(cwd: &Path) -> Result<Self, Diagnostic> {
         let registry = default_registry();
-        let supported_annotations = registry.all_supported_annotations();
+        let supported_annotations: SupportedAnnotations =
+            registry.all_supported_annotations().into_iter().collect();
         let workspace = discover_workspace(cwd, &supported_annotations)?;
         let catalog = build_symbol_catalog(&registry);
 

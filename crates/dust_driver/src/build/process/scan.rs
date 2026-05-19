@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use dust_parser_dart::{ParseOptions, ParsedLibrarySurface, parse_file_with_backend};
 use dust_parser_dart_ts::TreeSitterDartBackend;
-use dust_plugin_api::{LibraryAnalysisSnapshot, PluginRegistry, WorkspaceAnalysisBuilder};
+use dust_plugin_api::{
+    LibraryAnalysisSnapshot, PluginRegistry, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
+};
 use dust_text::SourceText;
 
 use crate::build::work::{available_worker_count, round_robin_groups};
@@ -11,6 +13,8 @@ use super::PendingLibrary;
 
 pub(crate) fn collect_workspace_analysis(
     pending: &[PendingLibrary],
+    package_root: &std::path::Path,
+    package_name: &str,
     registry: &PluginRegistry,
 ) -> (
     WorkspaceAnalysisBuilder,
@@ -38,7 +42,15 @@ pub(crate) fn collect_workspace_analysis(
                     let parsed =
                         parse_file_with_backend(&backend, &source_text, ParseOptions::default());
                     let mut library_analysis = WorkspaceAnalysisBuilder::default();
-                    registry.collect_workspace_analysis(&parsed.library, &mut library_analysis);
+                    registry.collect_workspace_analysis(
+                        WorkspaceAnalysisContext {
+                            package_name,
+                            package_root,
+                            source_path: &pending.library.source_path,
+                        },
+                        &parsed.library,
+                        &mut library_analysis,
+                    );
                     let analysis_snapshot = library_analysis.snapshot();
                     local_analysis.merge(library_analysis);
                     local_results.push((index, analysis_snapshot, parsed.library));

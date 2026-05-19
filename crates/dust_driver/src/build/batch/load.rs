@@ -8,6 +8,11 @@ use crate::build::{
     work::{available_worker_count, round_robin_groups},
 };
 
+fn route_only_analysis(snapshot: &dust_plugin_api::LibraryAnalysisSnapshot) -> bool {
+    snapshot.string_set("dust_route.routes.v1").is_some()
+        && snapshot.string_set("dust_route.routers.v1").is_none()
+}
+
 pub(super) fn load_library_inputs(
     config: BatchConfig<'_>,
     libraries: &[SourceLibrary],
@@ -32,6 +37,9 @@ pub(super) fn load_library_inputs(
                                 output_paths: std::iter::once(library.output_path.clone())
                                     .chain(entry.auxiliary_output_paths.iter().cloned())
                                     .collect(),
+                                allow_missing_primary: route_only_analysis(
+                                    &entry.analysis_snapshot,
+                                ),
                             });
                         let input = load_library_input(
                             library,

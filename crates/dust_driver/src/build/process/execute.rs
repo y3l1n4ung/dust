@@ -106,15 +106,17 @@ fn resolve_and_lower_library(
     processing: &ProcessingConfig<'_>,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Option<dust_ir::LibraryIr> {
+    let partless_configs = processing.registry.all_partless_configs();
     let ResolveResult {
         library: resolved_library,
         diagnostics: resolve_diagnostics,
-    } = dust_resolver::resolve_library(
+    } = dust_resolver::resolve_library_with_partless_configs(
         file_id,
         &workspace_relative_path(processing.package_root, &library.source_path),
         &workspace_relative_path(processing.package_root, &library.output_path),
         parsed,
         processing.catalog,
+        &partless_configs,
     );
     diagnostics.extend(resolve_diagnostics);
 

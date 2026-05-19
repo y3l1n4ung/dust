@@ -49,6 +49,7 @@ impl ParseBackend for FakeBackend {
                             type_source: None,
                             kind: ParameterKind::Positional,
                             has_default: false,
+                            default_value_source: None,
                             span: TextRange::new(80_u32, 89_u32),
                         }],
                         span: TextRange::new(74_u32, 90_u32),

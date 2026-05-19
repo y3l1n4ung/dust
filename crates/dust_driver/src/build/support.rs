@@ -5,6 +5,7 @@ use dust_http_client_plugin::register_plugin as register_http_client_plugin;
 use dust_plugin_api::PluginRegistry;
 use dust_plugin_derive::register_plugin as register_derive_plugin;
 use dust_plugin_serde::register_plugin as register_serde_plugin;
+use dust_route_plugin::register_plugin as register_route_plugin;
 use dust_workspace::SourceLibrary;
 
 use crate::build::process::LoadedLibraryInput;
@@ -78,6 +79,14 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/test_file.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/test_support.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/types.rs"),
+    include_str!("../../../dust_route_plugin/src/lib.rs"),
+    include_str!("../../../dust_route_plugin/src/plugin.rs"),
+    include_str!("../../../dust_route_plugin/src/plugin/analysis.rs"),
+    include_str!("../../../dust_route_plugin/src/plugin/constants.rs"),
+    include_str!("../../../dust_route_plugin/src/plugin/model.rs"),
+    include_str!("../../../dust_route_plugin/src/plugin/parse.rs"),
+    include_str!("../../../dust_route_plugin/src/plugin/validate/mod.rs"),
+    include_str!("../../../dust_route_plugin/src/plugin/emit/mod.rs"),
     include_str!("../../../dust_emitter/src/emit.rs"),
     include_str!("../../../dust_emitter/src/merge.rs"),
     include_str!("../../../dust_emitter/src/write.rs"),
@@ -90,6 +99,7 @@ pub(crate) struct CacheFingerprint {
     pub(crate) package_config_hash: u64,
     pub(crate) tool_hash: u64,
     pub(crate) output_paths: Vec<std::path::PathBuf>,
+    pub(crate) allow_missing_primary: bool,
 }
 
 pub(crate) fn load_library_input(
@@ -112,12 +122,14 @@ pub(crate) fn load_library_input(
                 && entry.tool_hash == tool_hash
         })
         .map(|entry| {
-            read_optional_hashes(&entry.output_paths).map_err(|error| {
-                Diagnostic::error(format!(
-                    "failed to read generated outputs for `{}`: {error}",
-                    library.source_path.display()
-                ))
-            })
+            read_optional_hashes(&entry.output_paths, entry.allow_missing_primary).map_err(
+                |error| {
+                    Diagnostic::error(format!(
+                        "failed to read generated outputs for `{}`: {error}",
+                        library.source_path.display()
+                    ))
+                },
+            )
         })
         .transpose()?;
 
@@ -193,6 +205,9 @@ pub(crate) fn default_registry() -> PluginRegistry {
         .register(Box::new(register_http_client_plugin()))
         .expect("http client plugin symbol ownership must be valid");
     registry
+        .register(Box::new(register_route_plugin()))
+        .expect("route plugin symbol ownership must be valid");
+    registry
 }
 
 pub(crate) fn hash_output_set<'a>(outputs: impl IntoIterator<Item = (&'a Path, &'a str)>) -> u64 {
@@ -206,10 +221,17 @@ pub(crate) fn hash_output_set<'a>(outputs: impl IntoIterator<Item = (&'a Path, &
     hash_text(&combined)
 }
 
-fn read_optional_hashes(paths: &[std::path::PathBuf]) -> io::Result<Option<u64>> {
+fn read_optional_hashes(
+    paths: &[std::path::PathBuf],
+    allow_missing_primary: bool,
+) -> io::Result<Option<u64>> {
     let mut sources = Vec::with_capacity(paths.len());
-    for path in paths {
+    for (index, path) in paths.iter().enumerate() {
         let Some(source) = read_previous_output(path)? else {
+            if allow_missing_primary && index == 0 {
+                sources.push((path.as_path(), String::new()));
+                continue;
+            }
             return Ok(None);
         };
         sources.push((path.as_path(), source));

@@ -172,7 +172,7 @@ fn collect_method_formal_parameters(
         return;
     }
 
-    if node.is_named() && node.kind() == "formal_parameter" {
+    if node.is_named() && matches!(node.kind(), "formal_parameter" | "default_formal_parameter") {
         let mut param = extract_method_formal_parameter(node, source);
         if !pending_annotations.is_empty() {
             let mut annotations = std::mem::take(pending_annotations);
@@ -202,7 +202,9 @@ fn extract_method_formal_parameter(
         annotations: extract_descendant_annotations(node, source),
         type_source,
         kind: determine_parameter_kind(node, source),
-        has_default: text.contains('='),
+        has_default: text.contains('=') || trailing_default_value_source(node, source).is_some(),
+        default_value_source: extract_default_value_source(&text)
+            .or_else(|| trailing_default_value_source(node, source)),
         span: text_range(node),
     }
 }
@@ -315,7 +317,7 @@ fn collect_formal_parameters(
     source: &SourceText,
     out: &mut Vec<ParsedConstructorParamSurface>,
 ) {
-    if node.is_named() && node.kind() == "formal_parameter" {
+    if node.is_named() && matches!(node.kind(), "formal_parameter" | "default_formal_parameter") {
         out.push(extract_formal_parameter(node, source));
         return;
     }
@@ -335,7 +337,9 @@ fn extract_formal_parameter(node: Node<'_>, source: &SourceText) -> ParsedConstr
         name,
         type_source,
         kind: determine_parameter_kind(node, source),
-        has_default: text.contains('='),
+        has_default: text.contains('=') || trailing_default_value_source(node, source).is_some(),
+        default_value_source: extract_default_value_source(&text)
+            .or_else(|| trailing_default_value_source(node, source)),
         span: text_range(node),
     }
 }
@@ -380,6 +384,113 @@ fn extract_parameter_type(text: &str, name: &str) -> Option<String> {
     } else {
         Some(stripped.to_owned())
     }
+}
+
+fn extract_default_value_source(text: &str) -> Option<String> {
+    let equals_index = top_level_equals_index(text)?;
+    let raw_default = text.get(equals_index + '='.len_utf8()..)?;
+    let default_end = top_level_default_end(raw_default).unwrap_or(raw_default.len());
+    let default = raw_default
+        .get(..default_end)?
+        .trim()
+        .trim_end_matches(',')
+        .trim();
+    if default.is_empty() {
+        None
+    } else {
+        Some(default.to_owned())
+    }
+}
+
+fn top_level_default_end(text: &str) -> Option<usize> {
+    let mut paren_depth = 0_u32;
+    let mut bracket_depth = 0_u32;
+    let mut brace_depth = 0_u32;
+    let mut quote = None;
+    let mut escape = false;
+
+    for (index, ch) in text.char_indices() {
+        if let Some(active_quote) = quote {
+            if escape {
+                escape = false;
+                continue;
+            }
+            if ch == '\\' {
+                escape = true;
+                continue;
+            }
+            if ch == active_quote {
+                quote = None;
+            }
+            continue;
+        }
+
+        match ch {
+            '\'' | '"' => quote = Some(ch),
+            '(' => paren_depth += 1,
+            ')' if paren_depth > 0 => paren_depth -= 1,
+            '[' => bracket_depth += 1,
+            ']' if bracket_depth > 0 => bracket_depth -= 1,
+            '{' => brace_depth += 1,
+            '}' if brace_depth > 0 => brace_depth -= 1,
+            ',' | '}' | ']' | ')' if paren_depth == 0 && bracket_depth == 0 && brace_depth == 0 => {
+                return Some(index);
+            }
+            _ => {}
+        }
+    }
+
+    None
+}
+
+fn trailing_default_value_source(node: Node<'_>, source: &SourceText) -> Option<String> {
+    let parent = node.parent()?;
+    let tail = source.as_str().get(node.end_byte()..parent.end_byte())?;
+    tail.trim_start()
+        .starts_with('=')
+        .then(|| extract_default_value_source(tail))
+        .flatten()
+}
+
+fn top_level_equals_index(text: &str) -> Option<usize> {
+    let mut paren_depth = 0_u32;
+    let mut bracket_depth = 0_u32;
+    let mut brace_depth = 0_u32;
+    let mut quote = None;
+    let mut escape = false;
+
+    for (index, ch) in text.char_indices() {
+        if let Some(active_quote) = quote {
+            if escape {
+                escape = false;
+                continue;
+            }
+            if ch == '\\' {
+                escape = true;
+                continue;
+            }
+            if ch == active_quote {
+                quote = None;
+            }
+            continue;
+        }
+
+        match ch {
+            '\'' | '"' => quote = Some(ch),
+            '(' => paren_depth += 1,
+            ')' => paren_depth = paren_depth.saturating_sub(1),
+            '[' => bracket_depth += 1,
+            ']' => bracket_depth = bracket_depth.saturating_sub(1),
+            '{' => brace_depth += 1,
+            '}' => brace_depth = brace_depth.saturating_sub(1),
+            '=' if paren_depth == 0 && bracket_depth == 0 && brace_depth == 0 => {
+                return Some(index);
+            }
+            _ => {}
+        }
+    }
+
+    None
 }
 
 fn strip_prefix_modifiers(text: &str) -> &str {

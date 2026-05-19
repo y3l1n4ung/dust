@@ -61,6 +61,7 @@ pub(crate) fn prepare_and_process_batch(
     reporter.started_batch();
 
     let loaded_results = load_library_inputs(config, libraries);
+    let route_analysis_changed = route_analysis_changed(&loaded_results, libraries, &config);
     let mut outcomes = Vec::with_capacity(libraries.len());
     let mut workspace_analysis = dust_plugin_api::WorkspaceAnalysisBuilder::default();
     let mut pending = Vec::with_capacity(libraries.len());
@@ -90,6 +91,7 @@ pub(crate) fn prepare_and_process_batch(
                 config.package_config_hash,
                 config.tool_hash,
             ) && input.checked_output_hash == Some(Some(entry.expected_output_hash))
+                && !cached_router_depends_on_changed_routes(entry, route_analysis_changed)
             {
                 cache_report.hits += 1;
                 workspace_analysis.merge_snapshot(&entry.analysis_snapshot);
@@ -121,8 +123,12 @@ pub(crate) fn prepare_and_process_batch(
         ));
     }
 
-    let (pending_analysis, pre_parsed_libraries, analysis_snapshots) =
-        collect_workspace_analysis(&pending, config.registry);
+    let (pending_analysis, pre_parsed_libraries, analysis_snapshots) = collect_workspace_analysis(
+        &pending,
+        config.package_root,
+        config.package_name,
+        config.registry,
+    );
     workspace_analysis.merge(pending_analysis);
     for ((pending, pre_parsed), analysis_snapshot) in pending
         .iter_mut()
@@ -152,4 +158,48 @@ pub(crate) fn prepare_and_process_batch(
     outcomes.append(&mut processed);
     outcomes.sort_by_key(|outcome| outcome.index);
     outcomes
+}
+
+fn route_analysis_changed(
+    loaded_results: &[Result<
+        crate::build::process::LoadedLibraryInput,
+        dust_diagnostics::Diagnostic,
+    >],
+    libraries: &[SourceLibrary],
+    config: &BatchConfig<'_>,
+) -> bool {
+    loaded_results.iter().enumerate().any(|(index, input)| {
+        let Ok(input) = input else {
+            return false;
+        };
+        let library = &libraries[index];
+        let cache_hit = config
+            .cache
+            .get(config.cache_root, &library.source_path)
+            .is_some_and(|entry| {
+                crate::build::support::matches_cache_metadata(
+                    entry,
+                    input,
+                    config.package_config_hash,
+                    config.tool_hash,
+                ) && input.checked_output_hash == Some(Some(entry.expected_output_hash))
+            });
+
+        !cache_hit && contains_route_analysis_marker(&input.source)
+    })
+}
+
+fn cached_router_depends_on_changed_routes(
+    entry: &dust_cache::CacheEntry,
+    route_analysis_changed: bool,
+) -> bool {
+    route_analysis_changed
+        && entry
+            .analysis_snapshot
+            .string_set("dust_route.routers.v1")
+            .is_some()
+}
+
+fn contains_route_analysis_marker(source: &str) -> bool {
+    source.contains("@Route") || source.contains("@Router")
 }

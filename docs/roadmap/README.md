@@ -30,7 +30,7 @@ Each roadmap document should answer the same questions:
 | Generated code quality | P0 | `ToString()`, `Eq()`, `CopyWith()` output quality | [generated-code-quality.md](generated-code-quality.md) |
 | Serde | P0 | JSON encode/decode, rename rules, defaults, custom codecs | [serde.md](serde.md) |
 | HttpClient | P1 | Dio-backed API client generation | [http-client.md](http-client.md) |
-| Route annotations | P1 | Navigator 2.0 typed routing | [routing.md](routing.md) |
+| Route annotations | P1 | Navigator 2.0 typed routing | [routing.md](routing.md), [routing-rust-plugin.md](routing-rust-plugin.md), [routing-feature-checklist.md](routing-feature-checklist.md) |
 | State management | P2 | Typed state stores and action generation | [state-management.md](state-management.md) |
 
 ## Documentation Standard

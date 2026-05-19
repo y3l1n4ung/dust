@@ -2,6 +2,11 @@ use std::sync::Arc;
 
 use crate::WorkspaceAnalysis;
 
+/// Returns the short surface annotation name for a fully qualified Dust symbol.
+pub fn short_symbol_name(symbol: &str) -> &str {
+    symbol.rsplit("::").next().unwrap_or(symbol)
+}
+
 /// One requested generated symbol name.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RequestedSymbol {

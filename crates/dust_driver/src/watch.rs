@@ -18,7 +18,7 @@ use crate::{
     result::{CacheReport, CommandResult, WatchReport},
 };
 
-use self::snapshot::{build_snapshot, changed_libraries};
+use self::snapshot::{build_snapshot, changed_libraries, expand_route_rebuilds};
 
 /// Runs initial build plus repeated poll-based rebuild detection.
 pub fn run_watch(request: WatchRequest) -> CommandResult {
@@ -137,7 +137,8 @@ fn run_watch_inner(
             }
         };
 
-        let changed = changed_libraries(&snapshot, &next_snapshot);
+        let changed =
+            expand_route_rebuilds(changed_libraries(&snapshot, &next_snapshot), &next_snapshot);
         package_config_hash = next_snapshot
             .package_config_hash
             .unwrap_or(package_config_hash);

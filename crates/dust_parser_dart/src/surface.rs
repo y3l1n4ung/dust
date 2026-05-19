@@ -138,6 +138,8 @@ pub struct ParsedMethodParamSurface {
     pub kind: ParameterKind,
     /// Whether the parameter has a default value.
     pub has_default: bool,
+    /// The raw default value expression source, if explicitly written.
+    pub default_value_source: Option<String>,
     /// The source span for the parameter.
     pub span: TextRange,
 }
@@ -257,6 +259,8 @@ pub struct ParsedConstructorParamSurface {
     pub kind: ParameterKind,
     /// Whether the parameter has a default value.
     pub has_default: bool,
+    /// The raw default value expression source, if explicitly written.
+    pub default_value_source: Option<String>,
     /// The source span for the parameter.
     pub span: TextRange,
 }

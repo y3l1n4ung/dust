@@ -159,6 +159,7 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
                             ParameterKind::Named => ParamKind::Named,
                         },
                         has_default: param.surface.has_default,
+                        default_value_source: param.surface.default_value_source.clone(),
                         traits: param.traits.clone(),
                         configs: param.configs.clone(),
                     }
@@ -202,6 +203,7 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
                             ParameterKind::Named => ParamKind::Named,
                         },
                         has_default: param.has_default,
+                        default_value_source: param.default_value_source.clone(),
                     }
                 })
                 .collect();

@@ -8,6 +8,7 @@ If you are new to the project, read these pages in order:
 2. [Serde](./serde.md)
 3. [HttpClient](./http.md)
 4. [State Management](./state.md)
+5. [Routing](./routing.md)
 
 ## Package Map
 
@@ -27,6 +28,11 @@ Add these packages when you want generated Dio clients:
 Add this package for state management (integrated in prototype):
 
 - `dust_state_annotation` (Coming soon)
+
+Add this package for typed Navigator 2.0 routing (local package, planned
+generator):
+
+- `dust_router`
 
 ## Quick Start
 

@@ -6,6 +6,7 @@ use dust_ir::LibraryIr;
 use dust_parser_dart::ParsedLibrarySurface;
 use dust_plugin_api::{
     DustPlugin, PluginContribution, PluginRegistry, SymbolPlan, WorkspaceAnalysisBuilder,
+    WorkspaceAnalysisContext,
 };
 use dust_text::TextRange;
 
@@ -88,6 +89,7 @@ fn registry_collects_workspace_analysis_in_registration_order() {
 
         fn collect_workspace_analysis(
             &self,
+            _context: WorkspaceAnalysisContext<'_>,
             _library: &ParsedLibrarySurface,
             analysis: &mut WorkspaceAnalysisBuilder,
         ) {
@@ -118,7 +120,15 @@ fn registry_collects_workspace_analysis_in_registration_order() {
         .unwrap();
 
     let mut analysis = WorkspaceAnalysisBuilder::default();
-    registry.collect_workspace_analysis(&sample_parsed_library(), &mut analysis);
+    registry.collect_workspace_analysis(
+        WorkspaceAnalysisContext {
+            package_name: "test_app",
+            package_root: std::path::Path::new("."),
+            source_path: std::path::Path::new("lib/test.dart"),
+        },
+        &sample_parsed_library(),
+        &mut analysis,
+    );
     let analysis = analysis.build();
 
     assert_eq!(

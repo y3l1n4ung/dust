@@ -8,7 +8,9 @@ mod resolve_support;
 mod result;
 
 pub use catalog::{ResolvedSymbol, SymbolCatalog, SymbolKind};
-pub use resolve::{resolve_library, validate_generated_part_uri};
+pub use resolve::{
+    resolve_library, resolve_library_with_partless_configs, validate_generated_part_uri,
+};
 pub use result::{
     ResolveResult, ResolvedClass, ResolvedEnum, ResolvedEnumVariant, ResolvedField,
     ResolvedLibrary, ResolvedMethod, ResolvedMethodParam,

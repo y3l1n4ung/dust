@@ -7,6 +7,9 @@ mod build_outputs;
 #[path = "driver_tests/http_client_outputs.rs"]
 mod http_client_outputs;
 
+#[path = "driver_tests/routing_outputs.rs"]
+mod routing_outputs;
+
 #[path = "driver_tests/output_policy.rs"]
 mod output_policy;
 

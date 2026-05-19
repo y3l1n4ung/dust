@@ -1,8 +1,8 @@
 use std::fs;
 
 use dust_workspace::{
-    PackageConfigKind, detect_workspace_root, discover_libraries, discover_workspace,
-    load_dust_config, load_package_config,
+    PackageConfigKind, SupportedAnnotations, detect_workspace_root, discover_libraries,
+    discover_workspace, load_dust_config, load_package_config,
 };
 use tempfile::tempdir;
 
@@ -13,7 +13,9 @@ fn write_file(path: &std::path::Path, contents: &str) {
     fs::write(path, contents).expect("write file");
 }
 
-const TEST_ANNOTATIONS: &[&str] = &["Derive", "ToString", "Client"];
+fn test_annotations() -> SupportedAnnotations {
+    ["Derive", "ToString", "Client"].into_iter().collect()
+}
 
 #[test]
 fn detects_workspace_root_from_nested_directory_and_file_path() {
@@ -130,7 +132,8 @@ fn discover_libraries_scans_recursively_in_stable_order() {
         "part 'ignored.g.dart';\nclass Ignored {}\n",
     );
 
-    let libraries = discover_libraries(root.path(), TEST_ANNOTATIONS).unwrap();
+    let supported_annotations = test_annotations();
+    let libraries = discover_libraries(root.path(), &supported_annotations).unwrap();
 
     assert_eq!(libraries.len(), 2);
     assert_eq!(
@@ -163,7 +166,8 @@ fn discover_libraries_uses_configured_primary_suffix() {
     );
     write_file(&root.path().join("lib/client.d.dart"), "// generated\n");
 
-    let libraries = discover_libraries(root.path(), TEST_ANNOTATIONS).unwrap();
+    let supported_annotations = test_annotations();
+    let libraries = discover_libraries(root.path(), &supported_annotations).unwrap();
 
     assert_eq!(libraries.len(), 1);
     assert_eq!(
@@ -196,7 +200,8 @@ fn discover_libraries_accepts_double_quoted_part_and_direct_annotations() {
         "part \"client.g.dart\";\n@Client()\nabstract class ApiClient {}\n",
     );
 
-    let libraries = discover_libraries(root.path(), TEST_ANNOTATIONS).unwrap();
+    let supported_annotations = test_annotations();
+    let libraries = discover_libraries(root.path(), &supported_annotations).unwrap();
 
     assert_eq!(libraries.len(), 1);
     assert_eq!(
@@ -220,7 +225,8 @@ fn discover_libraries_ignores_override_and_unknown_annotations() {
         "part 'view_model.g.dart';\n@ViewModel()\nclass DemoViewModel {}\n",
     );
 
-    let libraries = discover_libraries(root.path(), TEST_ANNOTATIONS).unwrap();
+    let supported_annotations = test_annotations();
+    let libraries = discover_libraries(root.path(), &supported_annotations).unwrap();
 
     assert!(libraries.is_empty());
 }
@@ -256,7 +262,8 @@ fn discover_workspace_composes_root_config_and_library_scan() {
     );
 
     let nested = package_root.join("lib/models");
-    let plan = discover_workspace(&nested, TEST_ANNOTATIONS).unwrap();
+    let supported_annotations = test_annotations();
+    let plan = discover_workspace(&nested, &supported_annotations).unwrap();
 
     assert_eq!(plan.package_root, package_root);
     assert_eq!(plan.cache_root, plan.package_root);

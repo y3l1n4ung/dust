@@ -5,7 +5,7 @@ use std::{
 };
 
 use dust_diagnostics::Diagnostic;
-use dust_workspace::{SourceLibrary, discover_workspace};
+use dust_workspace::{SourceLibrary, SupportedAnnotations, discover_workspace};
 
 use crate::build::{default_registry, hash_text, read_workspace_config_hash};
 
@@ -19,11 +19,14 @@ pub(crate) struct WorkspaceSnapshot {
 pub(crate) struct SnapshotEntry {
     pub(crate) library: SourceLibrary,
     pub(crate) source_hash: u64,
+    pub(crate) contains_route_marker: bool,
+    pub(crate) contains_router_marker: bool,
 }
 
 pub(crate) fn build_snapshot(cwd: &Path) -> Result<WorkspaceSnapshot, Diagnostic> {
     let registry = default_registry();
-    let supported_annotations = registry.all_supported_annotations();
+    let supported_annotations: SupportedAnnotations =
+        registry.all_supported_annotations().into_iter().collect();
     let workspace = discover_workspace(cwd, &supported_annotations)?;
     let package_config_hash = read_workspace_config_hash(
         &workspace.package_config.path,
@@ -44,6 +47,8 @@ pub(crate) fn build_snapshot(cwd: &Path) -> Result<WorkspaceSnapshot, Diagnostic
             SnapshotEntry {
                 library,
                 source_hash: hash_text(&source),
+                contains_route_marker: source.contains("@Route"),
+                contains_router_marker: source.contains("@Router"),
             },
         );
     }
@@ -52,6 +57,32 @@ pub(crate) fn build_snapshot(cwd: &Path) -> Result<WorkspaceSnapshot, Diagnostic
         package_config_hash,
         libraries,
     })
+}
+
+pub(crate) fn expand_route_rebuilds(
+    changed: Vec<SourceLibrary>,
+    snapshot: &WorkspaceSnapshot,
+) -> Vec<SourceLibrary> {
+    let route_analysis_changed = changed.iter().any(|library| {
+        snapshot
+            .libraries
+            .get(&library.source_path)
+            .is_some_and(|entry| entry.contains_route_marker)
+    });
+    if !route_analysis_changed {
+        return changed;
+    }
+
+    let mut by_path = BTreeMap::new();
+    for library in changed {
+        by_path.insert(library.source_path.clone(), library);
+    }
+    for entry in snapshot.libraries.values() {
+        if entry.contains_route_marker || entry.contains_router_marker {
+            by_path.insert(entry.library.source_path.clone(), entry.library.clone());
+        }
+    }
+    by_path.into_values().collect()
 }
 
 pub(crate) fn changed_libraries(
@@ -108,6 +139,8 @@ mod tests {
                     SnapshotEntry {
                         library,
                         source_hash,
+                        contains_route_marker: false,
+                        contains_router_marker: false,
                     },
                 )
             })
@@ -151,6 +184,68 @@ mod tests {
         let changed = changed_libraries(&previous, &next);
 
         assert!(changed.is_empty());
+    }
+
+    #[test]
+    fn route_changes_also_rebuild_router_roots() {
+        let route_page = SourceLibrary {
+            source_path: PathBuf::from("lib/pages/project_page.dart"),
+            output_path: PathBuf::from("lib/pages/project_page.g.dart"),
+        };
+        let router = SourceLibrary {
+            source_path: PathBuf::from("lib/route.dart"),
+            output_path: PathBuf::from("lib/route.g.dart"),
+        };
+        let not_found_page = SourceLibrary {
+            source_path: PathBuf::from("lib/pages/not_found_page.dart"),
+            output_path: PathBuf::from("lib/pages/not_found_page.g.dart"),
+        };
+        let snapshot = WorkspaceSnapshot {
+            package_config_hash: Some(1),
+            libraries: BTreeMap::from([
+                (
+                    route_page.source_path.clone(),
+                    SnapshotEntry {
+                        library: route_page.clone(),
+                        source_hash: 2,
+                        contains_route_marker: true,
+                        contains_router_marker: false,
+                    },
+                ),
+                (
+                    not_found_page.source_path.clone(),
+                    SnapshotEntry {
+                        library: not_found_page,
+                        source_hash: 1,
+                        contains_route_marker: true,
+                        contains_router_marker: false,
+                    },
+                ),
+                (
+                    router.source_path.clone(),
+                    SnapshotEntry {
+                        library: router.clone(),
+                        source_hash: 1,
+                        contains_route_marker: false,
+                        contains_router_marker: true,
+                    },
+                ),
+            ]),
+        };
+
+        let expanded = expand_route_rebuilds(vec![route_page.clone()], &snapshot);
+
+        assert_eq!(
+            expanded
+                .into_iter()
+                .map(|library| library.source_path)
+                .collect::<Vec<_>>(),
+            vec![
+                PathBuf::from("lib/pages/not_found_page.dart"),
+                PathBuf::from("lib/pages/project_page.dart"),
+                PathBuf::from("lib/route.dart"),
+            ]
+        );
     }
 
     #[test]

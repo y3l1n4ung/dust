@@ -47,13 +47,24 @@ pub fn emit_library_with_plan(
     plan: SymbolPlan,
     previous_output: Option<&str>,
 ) -> EmitResult {
-    let diagnostics = registry.validate_library(library);
+    let mut diagnostics = registry.validate_library(library);
     let contributions = registry.emit_contributions(library, &plan);
+    diagnostics.extend(
+        contributions
+            .iter()
+            .flat_map(|contribution| contribution.diagnostics.iter().cloned()),
+    );
     let merged = MergedSections::from_contributions(&contributions);
     let auxiliary_outputs = collect_auxiliary_outputs(&contributions);
-    let source = assemble_source(library, &plan, &merged);
-    let source = format_generated_source(&source);
-    let changed = previous_output != Some(source.as_str());
+    let (source, changed) = if should_emit_primary(library, &contributions, &plan, &merged) {
+        let source = primary_source_override(&contributions)
+            .unwrap_or_else(|| assemble_source(library, &plan, &merged));
+        let source = format_generated_source(&source);
+        let changed = previous_output != Some(source.as_str());
+        (source, changed)
+    } else {
+        (previous_output.unwrap_or_default().to_owned(), false)
+    };
 
     EmitResult {
         source,
@@ -62,6 +73,49 @@ pub fn emit_library_with_plan(
         changed,
         auxiliary_outputs,
     }
+}
+
+fn should_emit_primary(
+    library: &LibraryIr,
+    contributions: &[dust_plugin_api::PluginContribution],
+    plan: &SymbolPlan,
+    merged: &MergedSections,
+) -> bool {
+    contributions
+        .iter()
+        .any(|contribution| !contribution.is_empty())
+        || !plan.reserved().is_empty()
+        || !merged.shared_helpers.is_empty()
+        || !merged.support_types.is_empty()
+        || !merged.top_level_functions.is_empty()
+        || !library_has_dust_symbols(library)
+}
+
+fn library_has_dust_symbols(library: &LibraryIr) -> bool {
+    library.classes.iter().any(|class| {
+        !class.traits.is_empty()
+            || !class.configs.is_empty()
+            || class.fields.iter().any(|field| field.serde.is_some())
+            || class.methods.iter().any(|method| {
+                !method.traits.is_empty()
+                    || !method.configs.is_empty()
+                    || method
+                        .params
+                        .iter()
+                        .any(|param| !param.traits.is_empty() || !param.configs.is_empty())
+            })
+    }) || library
+        .enums
+        .iter()
+        .any(|enum_ir| !enum_ir.traits.is_empty() || enum_ir.serde.is_some())
+}
+
+fn primary_source_override(
+    contributions: &[dust_plugin_api::PluginContribution],
+) -> Option<String> {
+    contributions
+        .iter()
+        .find_map(|contribution| contribution.primary_source.clone())
 }
 
 fn collect_auxiliary_outputs(

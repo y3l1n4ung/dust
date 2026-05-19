@@ -72,6 +72,9 @@ pub(crate) fn resolve_constructor_param_types(
 ) {
     for constructor in &mut class.constructors {
         for param in &mut constructor.params {
+            if param.name == "key" {
+                continue;
+            }
             if matches!(param.ty, TypeIr::Unknown) {
                 if let Some(field) = class.fields.iter().find(|field| field.name == param.name) {
                     param.ty = field.ty.clone();

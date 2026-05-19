@@ -4,11 +4,18 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::{LibraryIr, SymbolId};
 use dust_parser_dart::ParsedLibrarySurface;
 
-use crate::{DustPlugin, SymbolPlan, WorkspaceAnalysisBuilder};
+use crate::{DustPlugin, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
+
+struct RegisteredPlugin {
+    plugin: Box<dyn DustPlugin>,
+    trait_symbols: Vec<SymbolId>,
+    config_symbols: Vec<SymbolId>,
+    supported_annotations: &'static [&'static str],
+}
 
 /// The registered set of Dust plugins plus symbol ownership checks.
 pub struct PluginRegistry {
-    plugins: Vec<Box<dyn DustPlugin>>,
+    plugins: Vec<RegisteredPlugin>,
     trait_owners: HashMap<SymbolId, &'static str>,
     config_owners: HashMap<SymbolId, &'static str>,
 }
@@ -26,28 +33,44 @@ impl PluginRegistry {
     /// Registers one plugin, failing if it claims a symbol already owned by another plugin.
     pub fn register(&mut self, plugin: Box<dyn DustPlugin>) -> Result<(), Diagnostic> {
         let plugin_name = plugin.plugin_name();
+        let trait_symbols = plugin
+            .claimed_traits()
+            .iter()
+            .map(|symbol| SymbolId::new(*symbol))
+            .collect::<Vec<_>>();
+        let config_symbols = plugin
+            .claimed_configs()
+            .iter()
+            .map(|symbol| SymbolId::new(*symbol))
+            .collect::<Vec<_>>();
+        let supported_annotations = plugin.supported_annotations();
 
-        for symbol in plugin.claimed_traits() {
-            if let Some(owner) = self.trait_owners.get(&symbol) {
+        for symbol in &trait_symbols {
+            if let Some(owner) = self.trait_owners.get(symbol) {
                 return Err(Diagnostic::error(format!(
                     "trait symbol `{}` is already owned by plugin `{owner}`",
                     symbol.0
                 )));
             }
-            self.trait_owners.insert(symbol, plugin_name);
+            self.trait_owners.insert(symbol.clone(), plugin_name);
         }
 
-        for symbol in plugin.claimed_configs() {
-            if let Some(owner) = self.config_owners.get(&symbol) {
+        for symbol in &config_symbols {
+            if let Some(owner) = self.config_owners.get(symbol) {
                 return Err(Diagnostic::error(format!(
                     "config symbol `{}` is already owned by plugin `{owner}`",
                     symbol.0
                 )));
             }
-            self.config_owners.insert(symbol, plugin_name);
+            self.config_owners.insert(symbol.clone(), plugin_name);
         }
 
-        self.plugins.push(plugin);
+        self.plugins.push(RegisteredPlugin {
+            plugin,
+            trait_symbols,
+            config_symbols,
+            supported_annotations,
+        });
         Ok(())
     }
 
@@ -55,7 +78,7 @@ impl PluginRegistry {
     pub fn plugin_names(&self) -> Vec<&'static str> {
         self.plugins
             .iter()
-            .map(|plugin| plugin.plugin_name())
+            .map(|plugin| plugin.plugin.plugin_name())
             .collect()
     }
 
@@ -63,7 +86,7 @@ impl PluginRegistry {
     pub fn claimed_trait_symbols(&self) -> Vec<SymbolId> {
         self.plugins
             .iter()
-            .flat_map(|plugin| plugin.claimed_traits())
+            .flat_map(|plugin| plugin.trait_symbols.iter().cloned())
             .collect()
     }
 
@@ -71,7 +94,7 @@ impl PluginRegistry {
     pub fn claimed_config_symbols(&self) -> Vec<SymbolId> {
         self.plugins
             .iter()
-            .flat_map(|plugin| plugin.claimed_configs())
+            .flat_map(|plugin| plugin.config_symbols.iter().cloned())
             .collect()
     }
 
@@ -80,18 +103,30 @@ impl PluginRegistry {
         let mut names: Vec<_> = self
             .plugins
             .iter()
-            .flat_map(|plugin| plugin.supported_annotations())
+            .flat_map(|plugin| plugin.supported_annotations.iter().copied())
             .collect();
         names.sort_unstable();
         names.dedup();
         names
     }
 
+    /// Returns all config symbols that do not require a generated part directive.
+    pub fn all_partless_configs(&self) -> Vec<&'static str> {
+        let mut symbols: Vec<_> = self
+            .plugins
+            .iter()
+            .flat_map(|plugin| plugin.plugin.partless_configs().iter().copied())
+            .collect();
+        symbols.sort_unstable();
+        symbols.dedup();
+        symbols
+    }
+
     /// Builds one deterministic symbol plan for a lowered library.
     pub fn build_symbol_plan(&self, library: &LibraryIr) -> SymbolPlan {
         let mut plan = SymbolPlan::default();
         for plugin in &self.plugins {
-            for symbol in plugin.requested_symbols(library) {
+            for symbol in plugin.plugin.requested_symbols(library) {
                 plan.reserve(symbol);
             }
         }
@@ -101,11 +136,14 @@ impl PluginRegistry {
     /// Collects parse-only workspace facts from all plugins in registration order.
     pub fn collect_workspace_analysis(
         &self,
+        context: WorkspaceAnalysisContext<'_>,
         library: &ParsedLibrarySurface,
         analysis: &mut WorkspaceAnalysisBuilder,
     ) {
         for plugin in &self.plugins {
-            plugin.collect_workspace_analysis(library, analysis);
+            plugin
+                .plugin
+                .collect_workspace_analysis(context, library, analysis);
         }
     }
 
@@ -113,7 +151,7 @@ impl PluginRegistry {
     pub fn validate_library(&self, library: &LibraryIr) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
         for plugin in &self.plugins {
-            diagnostics.extend(plugin.validate(library));
+            diagnostics.extend(plugin.plugin.validate(library));
         }
         diagnostics
     }
@@ -126,7 +164,7 @@ impl PluginRegistry {
     ) -> Vec<crate::PluginContribution> {
         self.plugins
             .iter()
-            .map(|plugin| plugin.emit(library, plan))
+            .map(|plugin| plugin.plugin.emit(library, plan))
             .collect()
     }
 }

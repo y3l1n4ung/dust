@@ -11,6 +11,8 @@ Dust has two documentation tracks:
 - [Derive guide](./usage/derive.md)
 - [Serde guide](./usage/serde.md)
 - [HttpClient guide](./usage/http.md)
+- [State Management guide](./usage/state.md)
+- [Routing guide](./usage/routing.md)
 
 These pages are backed by the runnable example package in
 [../examples/product_showcase](../examples/product_showcase/README.md).

@@ -73,6 +73,7 @@ fn doctor_reports_workspace_and_registered_plugins() {
             "dust_plugin_derive".to_owned(),
             "dust_plugin_serde".to_owned(),
             "HttpClient".to_owned(),
+            "Route".to_owned(),
         ]
     );
     assert_eq!(

@@ -3,8 +3,8 @@ use std::path::{Path, PathBuf};
 use dust_diagnostics::Diagnostic;
 
 use crate::{
-    DustConfig, PackageConfig, detect_workspace_root, discover_libraries, load_dust_config,
-    load_package_config, load_package_name,
+    DustConfig, PackageConfig, SupportedAnnotations, detect_workspace_root, discover_libraries,
+    load_dust_config, load_package_config, load_package_name,
 };
 
 /// One source library selected for Dust processing.
@@ -36,7 +36,7 @@ pub struct WorkspacePlan {
 /// Discovers the workspace root, package configuration, and candidate source libraries.
 pub fn discover_workspace(
     cwd: &Path,
-    supported_annotations: &[&str],
+    supported_annotations: &SupportedAnnotations,
 ) -> Result<WorkspacePlan, Diagnostic> {
     let package_root = detect_workspace_root(cwd)?;
     let package_name = load_package_name(&package_root)?;

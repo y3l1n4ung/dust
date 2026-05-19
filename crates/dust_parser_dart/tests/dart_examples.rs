@@ -61,6 +61,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
                         type_source: None,
                         kind: ParameterKind::Named,
                         has_default: false,
+                        default_value_source: None,
                         span: TextRange::new(150_u32, 164_u32),
                     },
                     ParsedConstructorParamSurface {
@@ -68,6 +69,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
                         type_source: None,
                         kind: ParameterKind::Named,
                         has_default: false,
+                        default_value_source: None,
                         span: TextRange::new(166_u32, 174_u32),
                     },
                 ],

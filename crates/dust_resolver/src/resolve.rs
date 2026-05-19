@@ -21,6 +21,18 @@ pub fn resolve_library(
     library: &ParsedLibrarySurface,
     catalog: &SymbolCatalog,
 ) -> ResolveResult {
+    resolve_library_with_partless_configs(file_id, source_path, output_path, library, catalog, &[])
+}
+
+/// Resolves one parsed library while allowing selected config symbols to emit standalone outputs.
+pub fn resolve_library_with_partless_configs(
+    file_id: FileId,
+    source_path: &str,
+    output_path: &str,
+    library: &ParsedLibrarySurface,
+    catalog: &SymbolCatalog,
+    partless_config_symbols: &[&str],
+) -> ResolveResult {
     let mut diagnostics = Vec::new();
     let part_uri = first_part_uri(&library.directives);
     let mut enums: Vec<ResolvedEnum> = Vec::new();
@@ -42,7 +54,15 @@ pub fn resolve_library(
         enums.push(resolved);
     }
 
-    if saw_dust_symbol {
+    let needs_part = saw_dust_symbol
+        && classes
+            .iter()
+            .any(|class| class_needs_part(class, partless_config_symbols))
+        || enums
+            .iter()
+            .any(|enum_ir| enum_needs_part(enum_ir, partless_config_symbols));
+
+    if needs_part {
         match part_uri.as_deref() {
             Some(uri) => {
                 if let Err(diagnostic) = validate_generated_part_uri(output_path, uri) {
@@ -75,6 +95,41 @@ pub fn resolve_library(
         },
         diagnostics,
     }
+}
+
+fn class_needs_part(class: &ResolvedClass, partless_config_symbols: &[&str]) -> bool {
+    !class.traits.is_empty()
+        || class
+            .configs
+            .iter()
+            .any(|config| !partless_config_symbols.contains(&config.symbol.0.as_str()))
+        || class.fields.iter().any(|field| {
+            field
+                .configs
+                .iter()
+                .any(|config| !partless_config_symbols.contains(&config.symbol.0.as_str()))
+        })
+        || class.methods.iter().any(|method| {
+            !method.traits.is_empty()
+                || method
+                    .configs
+                    .iter()
+                    .any(|config| !partless_config_symbols.contains(&config.symbol.0.as_str()))
+                || method.params.iter().any(|param| {
+                    !param.traits.is_empty()
+                        || param.configs.iter().any(|config| {
+                            !partless_config_symbols.contains(&config.symbol.0.as_str())
+                        })
+                })
+        })
+}
+
+fn enum_needs_part(enum_ir: &ResolvedEnum, partless_config_symbols: &[&str]) -> bool {
+    !enum_ir.traits.is_empty()
+        || enum_ir
+            .configs
+            .iter()
+            .any(|config| !partless_config_symbols.contains(&config.symbol.0.as_str()))
 }
 
 fn resolve_enum(

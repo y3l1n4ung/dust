@@ -186,6 +186,7 @@ dependencies = [
  "dust_plugin_derive",
  "dust_plugin_serde",
  "dust_resolver",
+ "dust_route_plugin",
  "dust_text",
  "dust_workspace",
  "tempfile",
@@ -287,6 +288,19 @@ dependencies = [
  "dust_parser_dart",
  "dust_parser_dart_ts",
  "dust_text",
+]
+
+[[package]]
+name = "dust_route_plugin"
+version = "0.1.1"
+dependencies = [
+ "dust_diagnostics",
+ "dust_ir",
+ "dust_parser_dart",
+ "dust_plugin_api",
+ "dust_text",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

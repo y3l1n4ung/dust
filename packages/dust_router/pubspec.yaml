@@ -1,0 +1,29 @@
+name: dust_router
+description: Typed Flutter Navigator 2.0 router runtime and annotations for the Dust code generation engine.
+version: 0.1.0
+homepage: https://github.com/y3l1n4ung/dust
+repository: https://github.com/y3l1n4ung/dust
+issue_tracker: https://github.com/y3l1n4ung/dust/issues
+
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+topics:
+  - codegen
+  - navigator
+  - dust
+  - routing
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  lints: ^6.0.0
+  test: ^1.26.0

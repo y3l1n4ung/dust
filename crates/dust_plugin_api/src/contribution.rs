@@ -23,6 +23,11 @@ pub struct AuxiliaryOutputContribution {
 /// The emitter will later merge these sections in a fixed order.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct PluginContribution {
+    /// Diagnostics discovered while preparing emitted fragments.
+    pub diagnostics: Vec<dust_diagnostics::Diagnostic>,
+    /// Complete primary generated source override for plugins that own a
+    /// standalone output library instead of a `part of` file.
+    pub primary_source: Option<String>,
     /// Helper declarations shared across generated output.
     pub shared_helpers: Vec<String>,
     /// Class-scoped generated members grouped by target class.
@@ -57,7 +62,8 @@ impl PluginContribution {
 
     /// Returns `true` if the contribution contains no generated fragments.
     pub fn is_empty(&self) -> bool {
-        self.shared_helpers.is_empty()
+        self.primary_source.is_none()
+            && self.shared_helpers.is_empty()
             && self.mixin_members.is_empty()
             && self.support_types.is_empty()
             && self.top_level_functions.is_empty()
