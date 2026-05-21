@@ -81,6 +81,8 @@ pub struct BuildArtifact {
     pub written: bool,
     /// Whether the result came from the persistent workspace cache.
     pub cached: bool,
+    /// Whether this source contributed route metadata to a router-owned output.
+    pub routed: bool,
 }
 
 /// One checked library result from a check run.

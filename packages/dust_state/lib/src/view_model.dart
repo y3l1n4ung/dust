@@ -151,7 +151,7 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
 
   /// Runs [onInit] at most once, even under concurrent scope rebuilds.
   Future<void> init() {
-    if (_didInit) return Future<void>.value();
+    if (_isDisposed || _didInit) return Future<void>.value();
     return _initFuture ??= _runInit();
   }
 
@@ -166,7 +166,9 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
 
   @override
   void dispose() {
+    if (_isDisposed) return;
     _isDisposed = true;
+    _actionVersions.clear();
     _effects.close();
     super.dispose();
   }

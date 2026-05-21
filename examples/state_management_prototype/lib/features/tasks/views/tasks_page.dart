@@ -112,21 +112,12 @@ class _TasksPageState extends State<TasksPage> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watchTaskBoardViewModel();
-    final todos = viewModel.todos;
-    final completedCount = todos.where((todo) => todo.completed).length;
-    final completionLabel = todos.isEmpty
-        ? '0%'
-        : '${((completedCount / todos.length) * 100).round()}%';
-    final visibleTodos = _visibleTodos(
-      todos,
-      viewModel.query,
-      viewModel.filter,
-    );
+    final state = viewModel.value;
 
-    if (_queryController.text != viewModel.query) {
+    if (_queryController.text != state.query) {
       _queryController.value = TextEditingValue(
-        text: viewModel.query,
-        selection: TextSelection.collapsed(offset: viewModel.query.length),
+        text: state.query,
+        selection: TextSelection.collapsed(offset: state.query.length),
       );
     }
 
@@ -150,7 +141,7 @@ class _TasksPageState extends State<TasksPage> {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                if (completedCount > 0)
+                if (state.completedCount > 0)
                   TextButton.icon(
                     onPressed: () =>
                         context.readTaskBoardViewModel().clearCompleted(),
@@ -166,12 +157,12 @@ class _TasksPageState extends State<TasksPage> {
             ),
             const SizedBox(height: 18),
             _MetricsHeader(
-              completedCount: completedCount,
-              totalCount: todos.length,
-              completionLabel: completionLabel,
+              completedCount: state.completedCount,
+              totalCount: state.todos.length,
+              completionLabel: state.completionLabel,
             ),
             const SizedBox(height: 18),
-            if (viewModel.errorMessage != null)
+            if (state.errorMessage != null)
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.only(bottom: 14),
@@ -184,7 +175,7 @@ class _TasksPageState extends State<TasksPage> {
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Text(
-                  viewModel.errorMessage!,
+                  state.errorMessage!,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onErrorContainer,
                   ),
@@ -206,7 +197,7 @@ class _TasksPageState extends State<TasksPage> {
                   .map(
                     (filter) => ChoiceChip(
                       label: Text(_filterLabel(filter)),
-                      selected: viewModel.filter == filter,
+                      selected: state.filter == filter,
                       onSelected: (_) =>
                           context.readTaskBoardViewModel().setFilter(filter),
                     ),
@@ -217,7 +208,7 @@ class _TasksPageState extends State<TasksPage> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () => context.readTaskBoardViewModel().refresh(),
-                child: visibleTodos.isEmpty
+                child: state.visibleTodos.isEmpty
                     ? ListView(
                         children: const [
                           SizedBox(height: 120),
@@ -225,10 +216,10 @@ class _TasksPageState extends State<TasksPage> {
                         ],
                       )
                     : ListView.separated(
-                        itemCount: visibleTodos.length,
+                        itemCount: state.visibleTodos.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
-                          final todo = visibleTodos[index];
+                          final todo = state.visibleTodos[index];
                           return _TodoTile(
                             key: ValueKey(todo.id),
                             todo: todo,
@@ -255,28 +246,6 @@ String _filterLabel(TodoFilter filter) => switch (filter) {
   TodoFilter.open => 'Open',
   TodoFilter.done => 'Done',
 };
-
-List<RemoteTodo> _visibleTodos(
-  List<RemoteTodo> todos,
-  String query,
-  TodoFilter filter,
-) {
-  final normalizedQuery = query.trim().toLowerCase();
-  return todos
-      .where((todo) {
-        final matchesFilter = switch (filter) {
-          TodoFilter.all => true,
-          TodoFilter.open => !todo.completed,
-          TodoFilter.done => todo.completed,
-        };
-        final matchesQuery =
-            normalizedQuery.isEmpty ||
-            todo.title.toLowerCase().contains(normalizedQuery) ||
-            todo.lane.toLowerCase().contains(normalizedQuery);
-        return matchesFilter && matchesQuery;
-      })
-      .toList(growable: false);
-}
 
 class _MetricsHeader extends StatelessWidget {
   const _MetricsHeader({

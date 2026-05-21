@@ -38,6 +38,8 @@ pub(crate) fn process_pending_library(
     let started = Instant::now();
     let mut outcome =
         process_library_from_source(file_id, &library, source, pre_parsed, &backend, processing);
+    let routed = crate::build::support::route_only_analysis(&analysis_snapshot);
+    outcome.artifact.routed = routed;
     outcome.analysis_snapshot = analysis_snapshot;
     let elapsed_ms = started.elapsed().as_millis();
     let had_errors = outcome
@@ -47,6 +49,7 @@ pub(crate) fn process_pending_library(
     reporter.finish(crate::build::batch::ProgressSnapshot {
         library: &library,
         cached: false,
+        routed,
         written: outcome.artifact.written,
         changed: outcome.artifact.changed,
         had_errors,

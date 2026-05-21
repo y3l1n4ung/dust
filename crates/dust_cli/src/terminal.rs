@@ -81,6 +81,8 @@ fn render_progress_event(event: &ProgressEvent) -> String {
             completed,
             total,
             source_path,
+            cached,
+            routed,
             written,
             had_errors,
             elapsed_ms,
@@ -89,18 +91,22 @@ fn render_progress_event(event: &ProgressEvent) -> String {
             "{} {} {} {} {}ms",
             progress_label(*phase),
             render_bar(*completed, *total),
-            progress_status(*had_errors, *written),
+            progress_status(*had_errors, *written, *routed, *cached),
             display_name(source_path),
             elapsed_ms,
         ),
     }
 }
 
-fn progress_status(had_errors: bool, written: bool) -> &'static str {
+fn progress_status(had_errors: bool, written: bool, routed: bool, cached: bool) -> &'static str {
     if had_errors {
         "err"
     } else if written {
         "gen"
+    } else if routed {
+        "route"
+    } else if cached {
+        "cache"
     } else {
         "skip"
     }
@@ -157,9 +163,11 @@ mod tests {
 
     #[test]
     fn progress_status_prefers_errors_over_write_state() {
-        assert_eq!(progress_status(true, true), "err");
-        assert_eq!(progress_status(false, true), "gen");
-        assert_eq!(progress_status(false, false), "skip");
+        assert_eq!(progress_status(true, true, true, true), "err");
+        assert_eq!(progress_status(false, true, true, true), "gen");
+        assert_eq!(progress_status(false, false, true, true), "route");
+        assert_eq!(progress_status(false, false, false, true), "cache");
+        assert_eq!(progress_status(false, false, false, false), "skip");
     }
 
     #[test]
@@ -178,12 +186,28 @@ mod tests {
                 total: 4,
                 source_path: PathBuf::from("/tmp/lib/user.dart"),
                 cached: false,
+                routed: false,
                 written: true,
                 changed: true,
                 had_errors: false,
                 elapsed_ms: 9,
             }),
             "watch:rebuild [############------------] 2/4 gen user.dart 9ms"
+        );
+        assert_eq!(
+            render_progress_event(&ProgressEvent::FinishedLibrary {
+                phase: ProgressPhase::Build,
+                completed: 3,
+                total: 4,
+                source_path: PathBuf::from("/tmp/lib/dashboard_page.dart"),
+                cached: false,
+                routed: true,
+                written: false,
+                changed: false,
+                had_errors: false,
+                elapsed_ms: 0,
+            }),
+            "build [##################------] 3/4 route dashboard_page.dart 0ms"
         );
     }
 
@@ -214,6 +238,7 @@ mod tests {
             total: 3,
             source_path: PathBuf::from("/tmp/lib/user.dart"),
             cached: false,
+            routed: false,
             written: true,
             changed: true,
             had_errors: false,

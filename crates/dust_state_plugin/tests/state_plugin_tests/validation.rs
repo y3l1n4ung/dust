@@ -1,3 +1,4 @@
+use dust_ir::{ConstructorIr, ConstructorParamIr, FieldIr, ParamKind, TypeIr};
 use dust_plugin_api::DustPlugin;
 use dust_state_plugin::register_plugin;
 
@@ -111,6 +112,86 @@ fn accepts_enum_state_with_initial() {
         ],
         vec![enum_type("ShellTab", &["dashboard", "tasks"])],
     ));
+
+    assert!(diagnostics.is_empty(), "{diagnostics:?}");
+}
+
+#[test]
+fn rejects_state_without_default_constructor_or_initial() {
+    let plugin = register_plugin();
+    let mut state = state_class();
+    state.fields = vec![FieldIr {
+        name: "count".to_owned(),
+        ty: TypeIr::named("int"),
+        span: super::support::span(20, 30),
+        has_default: false,
+        serde: None,
+    }];
+
+    let diagnostics = plugin.validate(&library_with_classes(vec![
+        state,
+        args_class(),
+        view_model_class(
+            "TaskBoardViewModel",
+            "(state: TaskBoardState, args: TaskBoardArgs)",
+        ),
+    ]));
+
+    assert!(diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("needs `initial:` because Dust cannot prove")
+    }));
+}
+
+#[test]
+fn rejects_state_constructor_with_required_params() {
+    let plugin = register_plugin();
+    let mut state = state_class();
+    state.constructors = vec![ConstructorIr {
+        name: None,
+        is_factory: false,
+        redirected_target_source: None,
+        redirected_target_name: None,
+        span: super::support::span(20, 30),
+        params: vec![ConstructorParamIr {
+            name: "count".to_owned(),
+            ty: TypeIr::named("int"),
+            span: super::support::span(31, 40),
+            kind: ParamKind::Named,
+            has_default: false,
+            default_value_source: None,
+        }],
+    }];
+
+    let diagnostics = plugin.validate(&library_with_classes(vec![
+        state,
+        args_class(),
+        view_model_class(
+            "TaskBoardViewModel",
+            "(state: TaskBoardState, args: TaskBoardArgs)",
+        ),
+    ]));
+
+    assert!(diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("default constructor has required params")
+    }));
+}
+
+#[test]
+fn accepts_imported_state_and_args_when_library_has_imports() {
+    let plugin = register_plugin();
+    let mut library = library_with_classes(vec![view_model_class(
+        "TaskBoardViewModel",
+        "(state: ImportedState, args: ImportedArgs, initial: ImportedState.empty)",
+    )]);
+    library
+        .imports
+        .push("package:example/imported_state.dart".to_owned());
+
+    let diagnostics = plugin.validate(&library);
 
     assert!(diagnostics.is_empty(), "{diagnostics:?}");
 }

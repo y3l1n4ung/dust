@@ -17,6 +17,7 @@ pub(crate) struct ProgressReporter<'a> {
 pub(crate) struct ProgressSnapshot<'a> {
     pub(crate) library: &'a SourceLibrary,
     pub(crate) cached: bool,
+    pub(crate) routed: bool,
     pub(crate) written: bool,
     pub(crate) changed: bool,
     pub(crate) had_errors: bool,
@@ -56,6 +57,7 @@ impl<'a> ProgressReporter<'a> {
                 total: self.total,
                 source_path: snapshot.library.source_path.clone(),
                 cached: snapshot.cached,
+                routed: snapshot.routed,
                 written: snapshot.written,
                 changed: snapshot.changed,
                 had_errors: snapshot.had_errors,

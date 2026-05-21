@@ -50,12 +50,12 @@
 - [x] Add Rust crate plan: `crates/dust_state_plugin`.
 - [~] Parser supports `@ViewModel`; `@State` is not implemented.
 - [x] Workspace analysis collects ViewModel and state field facts.
-- [ ] Validation rejects missing state constructors.
+- [x] Validation rejects missing state constructors.
 - [ ] Validation rejects mutable/non-final state fields.
 - [ ] Validation rejects unsupported dependency injection types.
 - [x] Emission generates base class, scope, proxy, listener, context extensions, and state aspects.
 - [x] Generated code is stable and `dart format` clean for smoke coverage.
-- [ ] Add golden tests for generated output.
+- [~] Add golden tests for generated output; emission coverage now checks fieldless state, observer exclusion, multi-output, and scope debug names.
 - [ ] Add driver tests for stale/check/watch/clean behavior.
 
 ## Docs

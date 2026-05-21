@@ -203,6 +203,11 @@ pub(crate) fn matches_cache_metadata(
         && entry.tool_hash == tool_hash
 }
 
+pub(crate) fn route_only_analysis(snapshot: &dust_plugin_api::LibraryAnalysisSnapshot) -> bool {
+    snapshot.string_set("dust_route.routes.v1").is_some()
+        && snapshot.string_set("dust_route.routers.v1").is_none()
+}
+
 pub(crate) fn codegen_tool_hash() -> u64 {
     hash_text(CODEGEN_FINGERPRINT_INPUT)
 }

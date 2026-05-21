@@ -75,6 +75,7 @@ pub(crate) fn prepare_and_process_batch(
                 reporter.finish(ProgressSnapshot {
                     library,
                     cached: false,
+                    routed: false,
                     written: false,
                     changed: false,
                     had_errors: true,
@@ -105,6 +106,7 @@ pub(crate) fn prepare_and_process_batch(
                 reporter.finish(ProgressSnapshot {
                     library,
                     cached: true,
+                    routed: crate::build::support::route_only_analysis(&entry.analysis_snapshot),
                     written: false,
                     changed: false,
                     had_errors: false,

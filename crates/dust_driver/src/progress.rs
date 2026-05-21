@@ -33,6 +33,8 @@ pub enum ProgressEvent {
         source_path: PathBuf,
         /// Whether the result came from the persistent cache.
         cached: bool,
+        /// Whether this source contributed route metadata to router output.
+        routed: bool,
         /// Whether the output file was written.
         written: bool,
         /// Whether the output differed from the previous file contents.

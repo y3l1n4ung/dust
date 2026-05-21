@@ -133,5 +133,6 @@ fn build_artifact(
         changed,
         written,
         cached,
+        routed: false,
     }
 }

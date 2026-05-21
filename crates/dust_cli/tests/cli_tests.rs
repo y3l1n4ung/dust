@@ -64,6 +64,64 @@ fn cli_build_writes_real_output() {
 }
 
 #[test]
+fn cli_build_reports_route_contributors_separately() {
+    let workspace = make_workspace();
+    write_file(
+        &workspace.path().join("lib/route.dart"),
+        "import 'pages/dashboard_page.dart';\n\
+         import 'pages/not_found_page.dart';\n\
+         import 'route.g.dart';\n\
+         @Router(initial: DashboardPage, notFound: NotFoundPage)\n\
+         final class AppRouter extends $AppRouter {\n\
+           const AppRouter();\n\
+         }\n",
+    );
+    write_file(
+        &workspace.path().join("lib/pages/dashboard_page.dart"),
+        "@Route('/', name: 'dashboard')\n\
+         final class DashboardPage {\n\
+           const DashboardPage();\n\
+         }\n",
+    );
+    write_file(
+        &workspace.path().join("lib/pages/not_found_page.dart"),
+        "@Route('/404/:path', name: 'notFound', guards: [])\n\
+         final class NotFoundPage {\n\
+           const NotFoundPage({required this.path});\n\
+           final String path;\n\
+         }\n",
+    );
+
+    let first = run_cli(["build", "--root", workspace.path().to_str().unwrap()]);
+    let second = run_cli(["build", "--root", workspace.path().to_str().unwrap()]);
+
+    assert_eq!(first.exit_code, 0, "{}", first.stderr);
+    assert!(first.stdout.contains("scanned: 3"));
+    assert!(first.stdout.contains("generated: 1"));
+    assert!(first.stdout.contains("routed: 2"));
+    assert!(first.stdout.contains("skipped: 0"));
+    assert_eq!(second.exit_code, 0, "{}", second.stderr);
+    assert!(second.stdout.contains("scanned: 3"));
+    assert!(second.stdout.contains("generated: 0"));
+    assert!(second.stdout.contains("routed: 2"));
+    assert!(second.stdout.contains("cached: 1"));
+    assert!(second.stdout.contains("skipped: 0"));
+    assert!(workspace.path().join("lib/route.g.dart").exists());
+    assert!(
+        !workspace
+            .path()
+            .join("lib/pages/dashboard_page.g.dart")
+            .exists()
+    );
+    assert!(
+        !workspace
+            .path()
+            .join("lib/pages/not_found_page.g.dart")
+            .exists()
+    );
+}
+
+#[test]
 fn cli_second_build_reports_cached_output() {
     let workspace = make_workspace();
     write_file(
@@ -83,7 +141,8 @@ fn cli_second_build_reports_cached_output() {
     assert_eq!(second.exit_code, 0);
     assert!(second.stdout.contains("scanned: 1"));
     assert!(second.stdout.contains("generated: 0"));
-    assert!(second.stdout.contains("skipped: 1"));
+    assert!(second.stdout.contains("cached: 1"));
+    assert!(second.stdout.contains("skipped: 0"));
     assert!(!second.stdout.contains("cache "));
 }
 
@@ -118,7 +177,8 @@ fn cli_build_supports_pub_workspace_member_package_graph() {
             .exists()
     );
     assert!(second.stdout.contains("generated: 0"));
-    assert!(second.stdout.contains("skipped: 1"));
+    assert!(second.stdout.contains("cached: 1"));
+    assert!(second.stdout.contains("skipped: 0"));
 }
 
 #[test]

@@ -27,6 +27,16 @@ fn build_writes_route_output_only_from_router_root() {
     assert!(route_output.exists());
     assert!(!dashboard_output.exists());
     assert!(!not_found_output.exists());
+    assert!(result.build_artifacts.iter().any(|artifact| {
+        artifact.source_path.ends_with("dashboard_page.dart")
+            && artifact.routed
+            && !artifact.written
+    }));
+    assert!(result.build_artifacts.iter().any(|artifact| {
+        artifact.source_path.ends_with("not_found_page.dart")
+            && artifact.routed
+            && !artifact.written
+    }));
     assert!(source.contains("import 'package:dust_router/dust_router.dart';"));
     assert!(source.contains("import 'package:dust_test/pages/dashboard_page.dart';"));
     assert!(source.contains("final class DashboardRoute extends AppRoutePath"));

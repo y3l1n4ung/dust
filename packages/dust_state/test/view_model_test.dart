@@ -45,6 +45,24 @@ void main() {
     expect(vm.initCalls, 1);
   });
 
+  test('init retries after failure and then stays complete', () async {
+    final vm = CounterViewModel(const CounterArgs())..failNextInit = true;
+
+    await expectLater(vm.init(), throwsStateError);
+    await vm.init();
+    await vm.init();
+
+    expect(vm.initCalls, 2);
+  });
+
+  test('init after dispose is ignored', () async {
+    final vm = CounterViewModel(const CounterArgs())..dispose();
+
+    await vm.init();
+
+    expect(vm.initCalls, 0);
+  });
+
   test('stale async actions do not overwrite newer state', () async {
     final vm = CounterViewModel(const CounterArgs());
     final first = Completer<int>();
@@ -60,6 +78,63 @@ void main() {
 
     expect(vm.state, 2);
   });
+
+  test('cancelAction invalidates a pending token', () async {
+    final vm = CounterViewModel(const CounterArgs());
+    final request = Completer<int>();
+
+    final run = vm.loadCount(request);
+    vm.cancelLoadCount();
+    request.complete(3);
+    await run;
+
+    expect(vm.state, 0);
+  });
+
+  test('emit and effects are ignored after dispose', () async {
+    final vm = CounterViewModel(const CounterArgs())..dispose();
+
+    vm
+      ..setCount(9)
+      ..showToast('ignored')
+      ..dispose();
+
+    expect(vm.state, 0);
+  });
+
+  testWidgets(
+    'owned scope initializes once and value scope does not initialize',
+    (tester) async {
+      late CounterViewModel owned;
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: ViewModelOwner<CounterViewModel, CounterArgs>(
+            args: (_) => const CounterArgs(),
+            create: (_, args) => owned = CounterViewModel(args),
+            builder: (_, __) => const SizedBox(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(owned.initCalls, 1);
+
+      final external = CounterViewModel(const CounterArgs());
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: ViewModelOwner<CounterViewModel, CounterArgs>.value(
+            value: external,
+            builder: (_, __) => const SizedBox(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(external.initCalls, 0);
+    },
+  );
 
   testWidgets('owned scope disposes and value scope does not dispose', (
     tester,
@@ -124,10 +199,15 @@ final class CounterViewModel extends ViewModelBase<int, CounterArgs> {
 
   int initCalls = 0;
   bool disposed = false;
+  bool failNextInit = false;
 
   @override
   Future<void> onInit() async {
     initCalls += 1;
+    if (failNextInit) {
+      failNextInit = false;
+      throw StateError('init failed');
+    }
   }
 
   Future<void> loadCount(Completer<int> count) async {
@@ -135,6 +215,10 @@ final class CounterViewModel extends ViewModelBase<int, CounterArgs> {
     final next = await count.future;
     if (!isCurrentAction(token)) return;
     emit(next);
+  }
+
+  void cancelLoadCount() {
+    cancelAction(#loadCount);
   }
 
   void setCount(int count) => emit(count);

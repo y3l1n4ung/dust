@@ -90,10 +90,20 @@ fn append_generation_summary(lines: &mut Vec<String>, label: &str, result: &Comm
         .iter()
         .filter(|artifact| artifact.written)
         .count();
+    let routed = result
+        .build_artifacts
+        .iter()
+        .filter(|artifact| !artifact.written && artifact.routed)
+        .count();
+    let cached = result
+        .build_artifacts
+        .iter()
+        .filter(|artifact| !artifact.written && !artifact.routed && artifact.cached)
+        .count();
     let total = result.build_artifacts.len();
-    let skipped = total.saturating_sub(generated);
+    let skipped = total.saturating_sub(generated + routed + cached);
     lines.push(format!(
-        "{label}  scanned: {total}  generated: {generated}  skipped: {skipped}  time: {}ms",
+        "{label}  scanned: {total}  generated: {generated}  routed: {routed}  cached: {cached}  skipped: {skipped}  time: {}ms",
         result.elapsed_ms
     ));
 }
@@ -254,7 +264,9 @@ mod tests {
             },
         );
 
-        assert!(rendered.contains("watch  scanned: 0  generated: 0  skipped: 0  time: 22ms"));
+        assert!(rendered.contains(
+            "watch  scanned: 0  generated: 0  routed: 0  cached: 0  skipped: 0  time: 22ms"
+        ));
         assert!(rendered.contains("watch  cycles: 2  rebuilds: 1"));
         assert!(rendered.contains("diagnostics  errors: 0  warnings: 1  notes: 0"));
         assert!(rendered.contains("warning: something happened"));
