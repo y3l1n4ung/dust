@@ -3,7 +3,7 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 part 'remote_post.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class RemotePost with _$RemotePostDust {
+class RemotePost with _$RemotePost {
   const RemotePost({
     required this.userId,
     required this.id,

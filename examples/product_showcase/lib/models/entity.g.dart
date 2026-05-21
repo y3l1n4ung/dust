@@ -6,9 +6,10 @@
 
 part of 'entity.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
 
-mixin _$EntityDust {
+mixin _$Entity {
   Entity get _dustSelf => this as Entity;
 
   @override
@@ -26,13 +27,10 @@ mixin _$EntityDust {
           other.id == _dustSelf.id;
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.id,
-  ]);
+  int get hashCode => Object.hashAll([runtimeType, _dustSelf.id]);
 }
 
-mixin _$DetailedEntityDust {
+mixin _$DetailedEntity {
   DetailedEntity get _dustSelf => this as DetailedEntity;
 
   @override
@@ -61,11 +59,7 @@ mixin _$DetailedEntityDust {
     _dustDeepCollectionEquality.hash(_dustSelf.tags),
   ]);
 
-  DetailedEntity copyWith({
-    String? id,
-    String? label,
-    List<String>? tags,
-  }) {
+  DetailedEntity copyWith({String? id, String? label, List<String>? tags}) {
     final nextTags = List<String>.of(tags ?? _dustSelf.tags);
 
     return DetailedEntity(

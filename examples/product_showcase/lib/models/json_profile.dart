@@ -4,7 +4,7 @@ part 'json_profile.g.dart';
 
 @Derive([ToString(), Eq(), Serialize(), Deserialize()])
 @SerDe(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)
-class JsonProfile with _$JsonProfileDust {
+class JsonProfile with _$JsonProfile {
   const JsonProfile({
     required this.id,
     this.displayName,

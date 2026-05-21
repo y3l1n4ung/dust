@@ -6,12 +6,24 @@
 
 part of 'json_scalar_bundle.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();
-const DeepCollectionEquality _dustUnorderedDeepCollectionEquality = DeepCollectionEquality.unordered();
-Never _dustJsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) => value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_dustJsonAs<String>(value, key, 'String')) ?? _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) => _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
+const DeepCollectionEquality _dustUnorderedDeepCollectionEquality =
+    DeepCollectionEquality.unordered();
+Never _dustJsonTypeError(Object? value, String key, String expected) =>
+    throw ArgumentError.value(value, key, 'expected $expected');
+T _dustJsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _dustJsonTypeError(value, key, expected);
+T _dustJsonParseString<T>(
+  Object? value,
+  String key,
+  String expected,
+  T? Function(String value) parse,
+) =>
+    parse(_dustJsonAs<String>(value, key, 'String')) ??
+    _dustJsonTypeError(value, key, expected);
+List<Object?> _dustJsonAsList(Object? value, String key) =>
+    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
 Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
   final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
@@ -21,9 +33,17 @@ Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
     _dustJsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _dustJsonAsUri(Object? value, String key) => _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) => _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+
+DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
+  value,
+  key,
+  'ISO-8601 DateTime string',
+  DateTime.tryParse,
+);
+Uri _dustJsonAsUri(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _dustJsonAsBigInt(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
 T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
@@ -35,7 +55,7 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   }
 }
 
-mixin _$JsonScalarBundleDust {
+mixin _$JsonScalarBundle {
   JsonScalarBundle get _dustSelf => this as JsonScalarBundle;
 
   @override
@@ -59,8 +79,14 @@ mixin _$JsonScalarBundleDust {
           other.updatedAt == _dustSelf.updatedAt &&
           other.website == _dustSelf.website &&
           other.largeNumber == _dustSelf.largeNumber &&
-          _dustUnorderedDeepCollectionEquality.equals(other.endpoints, _dustSelf.endpoints) &&
-          _dustDeepCollectionEquality.equals(other.checkpoints, _dustSelf.checkpoints);
+          _dustUnorderedDeepCollectionEquality.equals(
+            other.endpoints,
+            _dustSelf.endpoints,
+          ) &&
+          _dustDeepCollectionEquality.equals(
+            other.checkpoints,
+            _dustSelf.checkpoints,
+          );
 
   @override
   int get hashCode => Object.hashAll([
@@ -79,23 +105,38 @@ mixin _$JsonScalarBundleDust {
 Map<String, Object?> _$JsonScalarBundleToJson(JsonScalarBundle instance) {
   return <String, Object?>{
     'createdAt': instance.createdAt.toIso8601String(),
-    'updatedAt': instance.updatedAt == null ? null : (instance.updatedAt!).toIso8601String(),
+    'updatedAt': instance.updatedAt == null
+        ? null
+        : (instance.updatedAt!).toIso8601String(),
     'website': instance.website.toString(),
     'largeNumber': instance.largeNumber.toString(),
     'endpoints': instance.endpoints.map((item) => item.toString()).toList(),
-    'checkpoints': instance.checkpoints.map((key, value) => MapEntry(key, value.toIso8601String())),
+    'checkpoints': instance.checkpoints.map(
+      (key, value) => MapEntry(key, value.toIso8601String()),
+    ),
   };
 }
+
 // factory JsonScalarBundle.fromJson(Map<String, Object?> json) => _$JsonScalarBundleFromJson(json);
 JsonScalarBundle _$JsonScalarBundleFromJson(Map<String, Object?> json) {
   final createdAtValue = _dustJsonAsDateTime(json['createdAt'], 'createdAt');
   final updatedAtValue = json['updatedAt'] == null
-                         ? null
-                         : _dustJsonAsDateTime(json['updatedAt'], 'updatedAt');
+      ? null
+      : _dustJsonAsDateTime(json['updatedAt'], 'updatedAt');
   final websiteValue = _dustJsonAsUri(json['website'], 'website');
-  final largeNumberValue = _dustJsonAsBigInt(json['largeNumber'], 'largeNumber');
-  final endpointsValue = _dustJsonAsList(json['endpoints'], 'endpoints').map((item) => _dustJsonAsUri(item, 'endpoints')).toSet();
-  final checkpointsValue = _dustJsonAsMap(json['checkpoints'], 'checkpoints').map((mapKey, value) => MapEntry(mapKey, _dustJsonAsDateTime(value, 'checkpoints')));
+  final largeNumberValue = _dustJsonAsBigInt(
+    json['largeNumber'],
+    'largeNumber',
+  );
+  final endpointsValue = _dustJsonAsList(
+    json['endpoints'],
+    'endpoints',
+  ).map((item) => _dustJsonAsUri(item, 'endpoints')).toSet();
+  final checkpointsValue = _dustJsonAsMap(json['checkpoints'], 'checkpoints')
+      .map(
+        (mapKey, value) =>
+            MapEntry(mapKey, _dustJsonAsDateTime(value, 'checkpoints')),
+      );
 
   return JsonScalarBundle(
     createdAt: createdAtValue,

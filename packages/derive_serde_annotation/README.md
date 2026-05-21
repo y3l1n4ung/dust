@@ -45,7 +45,7 @@ part 'user.g.dart';
 
 @Derive([Serialize(), Deserialize()])
 @SerDe(renameAll: SerDeRename.snakeCase)
-class User with _$UserDust {
+class User with _$User {
   @SerDe(rename: 'user_id')
   final String userId;
 

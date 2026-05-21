@@ -5,7 +5,7 @@ import '../../products/models/product.dart';
 part 'cart_item.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class CartItem with _$CartItemDust {
+class CartItem with _$CartItem {
   const CartItem({required this.product, required this.quantity});
 
   final Product product;

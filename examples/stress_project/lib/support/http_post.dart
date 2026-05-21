@@ -3,7 +3,7 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 part 'http_post.g.dart';
 
 @Derive([ToString(), CopyWith(), Serialize(), Deserialize()])
-class HttpPost with _$HttpPostDust {
+class HttpPost with _$HttpPost {
   final int userId;
   final int id;
   final String title;

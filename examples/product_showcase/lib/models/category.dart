@@ -3,7 +3,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 part 'category.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith()])
-class Category with _$CategoryDust {
+class Category with _$Category {
   const Category({required this.id, required this.title, required this.labels});
 
   final String id;

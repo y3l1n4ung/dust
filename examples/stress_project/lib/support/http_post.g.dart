@@ -6,10 +6,20 @@
 
 part of 'http_post.dart';
 
-Never _dustJsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) => value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_dustJsonAs<String>(value, key, 'String')) ?? _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) => _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+Never _dustJsonTypeError(Object? value, String key, String expected) =>
+    throw ArgumentError.value(value, key, 'expected $expected');
+T _dustJsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _dustJsonTypeError(value, key, expected);
+T _dustJsonParseString<T>(
+  Object? value,
+  String key,
+  String expected,
+  T? Function(String value) parse,
+) =>
+    parse(_dustJsonAs<String>(value, key, 'String')) ??
+    _dustJsonTypeError(value, key, expected);
+List<Object?> _dustJsonAsList(Object? value, String key) =>
+    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
 Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
   final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
@@ -19,9 +29,17 @@ Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
     _dustJsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _dustJsonAsUri(Object? value, String key) => _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) => _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+
+DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
+  value,
+  key,
+  'ISO-8601 DateTime string',
+  DateTime.tryParse,
+);
+Uri _dustJsonAsUri(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _dustJsonAsBigInt(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
 T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
@@ -33,7 +51,7 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   }
 }
 
-mixin _$HttpPostDust {
+mixin _$HttpPost {
   HttpPost get _dustSelf => this as HttpPost;
 
   @override
@@ -46,12 +64,7 @@ mixin _$HttpPostDust {
         ')';
   }
 
-  HttpPost copyWith({
-    int? userId,
-    int? id,
-    String? title,
-    String? body,
-  }) {
+  HttpPost copyWith({int? userId, int? id, String? title, String? body}) {
     return HttpPost(
       userId: userId ?? _dustSelf.userId,
       id: id ?? _dustSelf.id,
@@ -71,6 +84,7 @@ Map<String, Object?> _$HttpPostToJson(HttpPost instance) {
     'body': instance.body,
   };
 }
+
 // factory HttpPost.fromJson(Map<String, Object?> json) => _$HttpPostFromJson(json);
 HttpPost _$HttpPostFromJson(Map<String, Object?> json) {
   final userIdValue = _dustJsonAs<int>(json['userId'], 'userId', 'int');

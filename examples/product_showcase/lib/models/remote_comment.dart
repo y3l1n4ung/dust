@@ -3,7 +3,7 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 part 'remote_comment.g.dart';
 
 @Derive([ToString(), CopyWith(), Serialize(), Deserialize()])
-class RemoteComment with _$RemoteCommentDust {
+class RemoteComment with _$RemoteComment {
   final int postId;
   final int id;
   final String name;

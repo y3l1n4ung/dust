@@ -6,9 +6,10 @@
 
 part of 'product.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
 
-mixin _$ProductDust {
+mixin _$Product {
   Product get _dustSelf => this as Product;
 
   @override
@@ -31,8 +32,14 @@ mixin _$ProductDust {
           other.sku == _dustSelf.sku &&
           other.title == _dustSelf.title &&
           other.price == _dustSelf.price &&
-          _dustDeepCollectionEquality.equals(other.categories, _dustSelf.categories) &&
-          _dustDeepCollectionEquality.equals(other.attributes, _dustSelf.attributes) &&
+          _dustDeepCollectionEquality.equals(
+            other.categories,
+            _dustSelf.categories,
+          ) &&
+          _dustDeepCollectionEquality.equals(
+            other.attributes,
+            _dustSelf.attributes,
+          ) &&
           other.featured == _dustSelf.featured;
 
   @override
@@ -58,7 +65,9 @@ mixin _$ProductDust {
     final nextCategories = List<Category>.of(
       (categories ?? _dustSelf.categories).map((item_3) => item_3.copyWith()),
     );
-    final nextAttributes = Map<String, String>.of(attributes ?? _dustSelf.attributes);
+    final nextAttributes = Map<String, String>.of(
+      attributes ?? _dustSelf.attributes,
+    );
 
     return Product(
       sku: sku ?? _dustSelf.sku,

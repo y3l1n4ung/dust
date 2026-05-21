@@ -11,7 +11,7 @@ const Object _undefined = Object();
 const DeepCollectionEquality _dustDeepCollectionEquality =
     DeepCollectionEquality();
 
-mixin _$SessionStateDust {
+mixin _$SessionState {
   SessionState get _dustSelf => this as SessionState;
 
   @override

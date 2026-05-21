@@ -6,11 +6,22 @@
 
 part of 'json_profile.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();
-Never _dustJsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) => value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_dustJsonAs<String>(value, key, 'String')) ?? _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) => _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
+Never _dustJsonTypeError(Object? value, String key, String expected) =>
+    throw ArgumentError.value(value, key, 'expected $expected');
+T _dustJsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _dustJsonTypeError(value, key, expected);
+T _dustJsonParseString<T>(
+  Object? value,
+  String key,
+  String expected,
+  T? Function(String value) parse,
+) =>
+    parse(_dustJsonAs<String>(value, key, 'String')) ??
+    _dustJsonTypeError(value, key, expected);
+List<Object?> _dustJsonAsList(Object? value, String key) =>
+    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
 Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
   final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
@@ -20,9 +31,17 @@ Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
     _dustJsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _dustJsonAsUri(Object? value, String key) => _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) => _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+
+DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
+  value,
+  key,
+  'ISO-8601 DateTime string',
+  DateTime.tryParse,
+);
+Uri _dustJsonAsUri(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _dustJsonAsBigInt(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
 T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
@@ -34,7 +53,7 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   }
 }
 
-mixin _$JsonProfileDust {
+mixin _$JsonProfile {
   JsonProfile get _dustSelf => this as JsonProfile;
 
   @override
@@ -73,6 +92,7 @@ Map<String, Object?> _$JsonProfileToJson(JsonProfile instance) {
     'tags': instance.tags.map((item) => item).toList(),
   };
 }
+
 // factory JsonProfile.fromJson(Map<String, Object?> json) => _$JsonProfileFromJson(json);
 JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
   const allowedKeys = <String>{'id', 'display_name', 'displayName', 'tags'};
@@ -83,12 +103,25 @@ JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
   }
 
   final idValue = _dustJsonAs<String>(json['id'], 'id', 'String');
-  final rawDisplayNameKey = json.containsKey('display_name') ? 'display_name' : json.containsKey('displayName') ? 'displayName' : 'display_name';
-  final rawDisplayName = json.containsKey('display_name') ? json['display_name'] : json.containsKey('displayName') ? json['displayName'] : null;
+  final rawDisplayNameKey = json.containsKey('display_name')
+      ? 'display_name'
+      : json.containsKey('displayName')
+      ? 'displayName'
+      : 'display_name';
+  final rawDisplayName = json.containsKey('display_name')
+      ? json['display_name']
+      : json.containsKey('displayName')
+      ? json['displayName']
+      : null;
   final displayNameValue = rawDisplayName == null
-                           ? null
-                           : _dustJsonAs<String>(rawDisplayName, rawDisplayNameKey, 'String');
-  final tagsValue = json.containsKey('tags') ? _dustJsonAsList(json['tags'], 'tags').map((item) => _dustJsonAs<String>(item, 'tags', 'String')).toList() : ['guest'];
+      ? null
+      : _dustJsonAs<String>(rawDisplayName, rawDisplayNameKey, 'String');
+  final tagsValue = json.containsKey('tags')
+      ? _dustJsonAsList(
+          json['tags'],
+          'tags',
+        ).map((item) => _dustJsonAs<String>(item, 'tags', 'String')).toList()
+      : ['guest'];
 
   return JsonProfile(
     id: idValue,

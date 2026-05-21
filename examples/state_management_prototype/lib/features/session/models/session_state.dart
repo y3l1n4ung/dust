@@ -7,7 +7,7 @@ part 'session_state.g.dart';
 
 @immutable
 @Derive([ToString(), Eq(), CopyWith()])
-class SessionState with _$SessionStateDust {
+class SessionState with _$SessionState {
   const SessionState({
     this.owner,
     this.posts = const [],

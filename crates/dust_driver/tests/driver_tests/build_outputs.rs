@@ -54,17 +54,17 @@ fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
             .all(|artifact| artifact.written)
     );
     assert!(models_output.contains("part of 'models.dart';"));
-    assert!(models_output.contains("mixin _$UserDust {"));
+    assert!(models_output.contains("mixin _$User {"));
     assert!(models_output.contains("User get _dustSelf => this as User;"));
     assert!(models_output.contains("String toString() {\n    return 'User('"));
     assert!(models_output.contains("'id: ${_dustSelf.id}, '"));
     assert!(models_output.contains("'age: ${_dustSelf.age}'"));
-    assert!(models_output.contains("mixin _$TeamDust {"));
+    assert!(models_output.contains("mixin _$Team {"));
     assert!(models_output.contains("Team copyWith({"));
     assert!(models_output.contains("String? name,"));
     assert!(models_output.contains("name ?? _dustSelf.name,"));
     assert!(request_output.contains("part of 'request.dart';"));
-    assert!(request_output.contains("mixin _$RequestDust {"));
+    assert!(request_output.contains("mixin _$Request {"));
     assert!(request_output.contains("Request copyWith({"));
     assert!(request_output.contains("String? path,"));
     assert!(request_output.contains("Map<String, String>? headers,"));

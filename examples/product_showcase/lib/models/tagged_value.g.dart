@@ -6,9 +6,10 @@
 
 part of 'tagged_value.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
 
-mixin _$TaggedValueDust {
+mixin _$TaggedValue {
   TaggedValue get _dustSelf => this as TaggedValue;
 
   @override
@@ -34,15 +35,9 @@ mixin _$TaggedValueDust {
     _dustDeepCollectionEquality.hash(_dustSelf.aliases),
   ]);
 
-  TaggedValue copyWith({
-    String? code,
-    List<String>? aliases,
-  }) {
+  TaggedValue copyWith({String? code, List<String>? aliases}) {
     final nextAliases = List<String>.of(aliases ?? _dustSelf.aliases);
 
-    return TaggedValue(
-      code: code ?? _dustSelf.code,
-      aliases: nextAliases,
-    );
+    return TaggedValue(code: code ?? _dustSelf.code, aliases: nextAliases);
   }
 }

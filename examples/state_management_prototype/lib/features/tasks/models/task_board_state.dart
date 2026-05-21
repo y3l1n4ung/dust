@@ -8,7 +8,7 @@ enum TodoFilter { all, open, done }
 
 @immutable
 @Derive([ToString(), Eq(), CopyWith()])
-class TaskBoardState with _$TaskBoardStateDust {
+class TaskBoardState with _$TaskBoardState {
   const TaskBoardState({
     this.todos = const [],
     this.query = '',

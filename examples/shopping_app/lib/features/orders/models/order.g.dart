@@ -53,7 +53,7 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   }
 }
 
-mixin _$OrderDust {
+mixin _$Order {
   Order get _dustSelf => this as Order;
 
   @override
@@ -118,7 +118,7 @@ mixin _$OrderDust {
   Map<String, Object?> toJson() => _$OrderToJson(_dustSelf);
 }
 
-mixin _$ShippingAddressDust {
+mixin _$ShippingAddress {
   ShippingAddress get _dustSelf => this as ShippingAddress;
 
   @override

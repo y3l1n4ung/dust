@@ -69,21 +69,21 @@ mod tests {
         let mut writer = DartWriter::new();
         writer.line("// GENERATED");
         writer.blank_line();
-        writer.start_block("mixin _$UserDust on User");
+        writer.start_block("mixin _$User on User");
         writer.line("@override");
         writer.line("String toString() => 'User()';");
         writer.end_block();
 
         assert_eq!(
             writer.finish(),
-            "// GENERATED\n\nmixin _$UserDust on User {\n  @override\n  String toString() => 'User()';\n}\n"
+            "// GENERATED\n\nmixin _$User on User {\n  @override\n  String toString() => 'User()';\n}\n"
         );
     }
 
     #[test]
     fn writer_raw_block_preserves_internal_blank_lines() {
         let mut writer = DartWriter::new();
-        writer.start_block("mixin _$UserDust on User");
+        writer.start_block("mixin _$User on User");
         writer.raw_block(
             "@override\nString toString() => 'User()';\n\n@override\nint get hashCode => 1;",
         );
@@ -91,7 +91,7 @@ mod tests {
 
         assert_eq!(
             writer.finish(),
-            "mixin _$UserDust on User {\n  @override\n  String toString() => 'User()';\n\n  @override\n  int get hashCode => 1;\n}\n"
+            "mixin _$User on User {\n  @override\n  String toString() => 'User()';\n\n  @override\n  int get hashCode => 1;\n}\n"
         );
     }
 }

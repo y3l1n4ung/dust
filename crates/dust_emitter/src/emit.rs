@@ -199,7 +199,7 @@ fn format_auxiliary_output(output: &AuxiliaryOutputContribution) -> AuxiliaryEmi
 }
 
 fn render_mixin_block(writer: &mut DartWriter, class_name: &str, members: &[String]) {
-    let mixin_name = format!("_${class_name}Dust");
+    let mixin_name = format!("_${class_name}");
     writer.start_block(format!("mixin {mixin_name}"));
     writer.line(format!(
         "{class_name} get _dustSelf => this as {class_name};"

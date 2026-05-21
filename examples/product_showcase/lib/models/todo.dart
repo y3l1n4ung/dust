@@ -3,7 +3,7 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 part 'todo.g.dart';
 
 @Derive([ToString(), CopyWith(), Serialize(), Deserialize()])
-class Todo with _$TodoDust {
+class Todo with _$Todo {
   final String id;
   final String title;
   final bool isCompleted;
@@ -14,7 +14,7 @@ class Todo with _$TodoDust {
 }
 
 @Derive([ToString(), CopyWith(), Serialize(), Deserialize()])
-class TodoCreate with _$TodoCreateDust {
+class TodoCreate with _$TodoCreate {
   final String title;
   final bool isCompleted;
 
@@ -25,7 +25,7 @@ class TodoCreate with _$TodoCreateDust {
 }
 
 @Derive([ToString(), CopyWith(), Serialize(), Deserialize()])
-class TodoUpdate with _$TodoUpdateDust {
+class TodoUpdate with _$TodoUpdate {
   final String? title;
   final bool? isCompleted;
 

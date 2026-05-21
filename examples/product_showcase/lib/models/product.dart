@@ -6,7 +6,7 @@ import 'price.dart';
 part 'product.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith()])
-class Product with _$ProductDust {
+class Product with _$Product {
   const Product({
     required this.sku,
     required this.title,

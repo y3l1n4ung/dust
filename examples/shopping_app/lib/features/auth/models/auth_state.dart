@@ -6,7 +6,7 @@ part 'auth_state.g.dart';
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
 @Derive([ToString(), CopyWith(), Eq()])
-class AuthState with _$AuthStateDust {
+class AuthState with _$AuthState {
   final User? user;
   final String? token;
   final AuthStatus status;

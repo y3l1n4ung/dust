@@ -20,6 +20,7 @@ RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
   }
   return requestOptions;
 }
+
 String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   if (baseUrl == null || baseUrl.trim().isEmpty) {
     return dioBaseUrl;
@@ -30,6 +31,7 @@ String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   }
   return Uri.parse(dioBaseUrl).resolveUri(url).toString();
 }
+
 Response<T> _dustBuildResponse<T>(Response<dynamic> response, T data) {
   return Response<T>(
     data: data,
@@ -60,7 +62,12 @@ final class _$TodoApi implements TodoApi {
     if (page != null) _queryParameters['page'] = page;
     if (traceId != null) _headers['x-trace-id'] = traceId;
     final Object? _data = null;
-    final _options = Options(method: 'GET', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<List<dynamic>>(
       _setStreamType<List<Todo>>(
         _options
@@ -74,7 +81,10 @@ final class _$TodoApi implements TodoApi {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl ?? 'https://api.todos.com'),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://api.todos.com',
+              ),
             ),
       ),
     );
@@ -82,14 +92,23 @@ final class _$TodoApi implements TodoApi {
   }
 
   @override
-  Future<Response<Todo>> fetchRaw(String id, {CancelToken? cancelToken, bool? retryable}) async {
+  Future<Response<Todo>> fetchRaw(
+    String id, {
+    CancelToken? cancelToken,
+    bool? retryable,
+  }) async {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     _headers['x-api-version'] = '2026-05';
     if (retryable != null) _extra['retryable'] = retryable;
     final Object? _data = null;
-    final _options = Options(method: 'GET', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(
       _setStreamType<Todo>(
         _options
@@ -103,11 +122,16 @@ final class _$TodoApi implements TodoApi {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl ?? 'https://api.todos.com'),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://api.todos.com',
+              ),
             ),
       ),
     );
-    final _value = await Isolate.run(() => _$TodoApi_fetchRaw_Decode(_result.data!));
+    final _value = await Isolate.run(
+      () => _$TodoApi_fetchRaw_Decode(_result.data!),
+    );
     return _dustBuildResponse<Todo>(_result, _value);
   }
 
@@ -118,7 +142,12 @@ final class _$TodoApi implements TodoApi {
     final _extra = <String, dynamic>{};
     _headers['x-api-version'] = '2026-05';
     final Object? _data = request.toJson();
-    final _options = Options(method: 'POST', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'POST',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(
       _setStreamType<Todo>(
         _options
@@ -132,7 +161,10 @@ final class _$TodoApi implements TodoApi {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl ?? 'https://api.todos.com'),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://api.todos.com',
+              ),
             ),
       ),
     );
@@ -145,10 +177,13 @@ final class _$TodoApi implements TodoApi {
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     _headers['x-api-version'] = '2026-05';
-    final _data = <String, dynamic>{
-      'title': title,
-    };
-    final _options = Options(method: 'PATCH', headers: _headers, extra: _extra, contentType: 'application/x-www-form-urlencoded');
+    final _data = <String, dynamic>{'title': title};
+    final _options = Options(
+      method: 'PATCH',
+      headers: _headers,
+      extra: _extra,
+      contentType: 'application/x-www-form-urlencoded',
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(
       _setStreamType<Todo>(
         _options
@@ -162,7 +197,10 @@ final class _$TodoApi implements TodoApi {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl ?? 'https://api.todos.com'),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://api.todos.com',
+              ),
             ),
       ),
     );
@@ -170,14 +208,23 @@ final class _$TodoApi implements TodoApi {
   }
 
   @override
-  Future<Todo> update(String id, TodoUpdate request, {Map<String, String>? headers}) async {
+  Future<Todo> update(
+    String id,
+    TodoUpdate request, {
+    Map<String, String>? headers,
+  }) async {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     _headers['x-api-version'] = '2026-05';
     if (headers != null) _headers.addAll(headers);
     final Object? _data = request.toJson();
-    final _options = Options(method: 'PUT', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'PUT',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(
       _setStreamType<Todo>(
         _options
@@ -191,7 +238,10 @@ final class _$TodoApi implements TodoApi {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl ?? 'https://api.todos.com'),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://api.todos.com',
+              ),
             ),
       ),
     );
@@ -206,7 +256,12 @@ final class _$TodoApi implements TodoApi {
     _headers['x-api-version'] = '2026-05';
     if (audit != null) _queryParameters.addAll(audit);
     final Object? _data = null;
-    final _options = Options(method: 'DELETE', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'DELETE',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     await _dio.fetch<void>(
       _setStreamType<void>(
         _options
@@ -220,7 +275,10 @@ final class _$TodoApi implements TodoApi {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl ?? 'https://api.todos.com'),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://api.todos.com',
+              ),
             ),
       ),
     );
@@ -229,17 +287,23 @@ final class _$TodoApi implements TodoApi {
 }
 
 List<Todo> _$TodoApi_list_Decode(dynamic json) {
-  return (json as List<dynamic>).map((item) => Todo.fromJson(item as Map<String, dynamic>)).toList();
+  return (json as List<dynamic>)
+      .map((item) => Todo.fromJson(item as Map<String, dynamic>))
+      .toList();
 }
+
 Todo _$TodoApi_fetchRaw_Decode(dynamic json) {
   return Todo.fromJson(json as Map<String, dynamic>);
 }
+
 Todo _$TodoApi_create_Decode(dynamic json) {
   return Todo.fromJson(json as Map<String, dynamic>);
 }
+
 Todo _$TodoApi_rename_Decode(dynamic json) {
   return Todo.fromJson(json as Map<String, dynamic>);
 }
+
 Todo _$TodoApi_update_Decode(dynamic json) {
   return Todo.fromJson(json as Map<String, dynamic>);
 }

@@ -8,7 +8,7 @@ part 'order.g.dart';
 enum OrderStatus { pending, processing, shipped, delivered, cancelled }
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class Order with _$OrderDust {
+class Order with _$Order {
   const Order({
     required this.id,
     required this.items,
@@ -29,7 +29,7 @@ class Order with _$OrderDust {
 }
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class ShippingAddress with _$ShippingAddressDust {
+class ShippingAddress with _$ShippingAddress {
   const ShippingAddress({
     required this.fullName,
     required this.address,

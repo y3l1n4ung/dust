@@ -31,7 +31,7 @@ part 'user.g.dart';
   Deserialize(),
 ])
 @SerDe(renameAll: SerDeRename.snakeCase)
-class User with _$UserDust {
+class User with _$User {
   final String id;
   final String displayName;
   final List<String> tags;
@@ -122,7 +122,7 @@ Packages on pub.dev:
    import 'package:derive_annotation/derive_annotation.dart';
    part 'my_class.g.dart';
    ```
-3. Annotate your class with `@Derive([...])` and add `with _$MyClassDust`
+3. Annotate your class with `@Derive([...])` and add `with _$MyClass`
 4. Run `dust build` from your project root
 
 ---

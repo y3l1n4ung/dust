@@ -6,11 +6,22 @@
 
 part of 'json_account.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();
-Never _dustJsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) => value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_dustJsonAs<String>(value, key, 'String')) ?? _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) => _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
+Never _dustJsonTypeError(Object? value, String key, String expected) =>
+    throw ArgumentError.value(value, key, 'expected $expected');
+T _dustJsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _dustJsonTypeError(value, key, expected);
+T _dustJsonParseString<T>(
+  Object? value,
+  String key,
+  String expected,
+  T? Function(String value) parse,
+) =>
+    parse(_dustJsonAs<String>(value, key, 'String')) ??
+    _dustJsonTypeError(value, key, expected);
+List<Object?> _dustJsonAsList(Object? value, String key) =>
+    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
 Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
   final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
@@ -20,9 +31,17 @@ Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
     _dustJsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _dustJsonAsUri(Object? value, String key) => _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) => _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+
+DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
+  value,
+  key,
+  'ISO-8601 DateTime string',
+  DateTime.tryParse,
+);
+Uri _dustJsonAsUri(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _dustJsonAsBigInt(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
 T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
@@ -34,7 +53,7 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   }
 }
 
-mixin _$JsonAccountDust {
+mixin _$JsonAccount {
   JsonAccount get _dustSelf => this as JsonAccount;
 
   @override
@@ -52,7 +71,10 @@ mixin _$JsonAccountDust {
       other is JsonAccount &&
           runtimeType == other.runtimeType &&
           other.profile == _dustSelf.profile &&
-          _dustDeepCollectionEquality.equals(other.metrics, _dustSelf.metrics) &&
+          _dustDeepCollectionEquality.equals(
+            other.metrics,
+            _dustSelf.metrics,
+          ) &&
           other.archived == _dustSelf.archived;
 
   @override
@@ -87,14 +109,27 @@ mixin _$JsonAccountDust {
 Map<String, Object?> _$JsonAccountToJson(JsonAccount instance) {
   return <String, Object?>{
     'profile': instance.profile.toJson(),
-    'metrics': instance.metrics.map((key, value) => MapEntry(key, value.map((item) => item).toList())),
+    'metrics': instance.metrics.map(
+      (key, value) => MapEntry(key, value.map((item) => item).toList()),
+    ),
     'archived': instance.archived,
   };
 }
+
 // factory JsonAccount.fromJson(Map<String, Object?> json) => _$JsonAccountFromJson(json);
 JsonAccount _$JsonAccountFromJson(Map<String, Object?> json) {
-  final profileValue = JsonProfile.fromJson(_dustJsonAsMap(json['profile'], 'profile'));
-  final metricsValue = _dustJsonAsMap(json['metrics'], 'metrics').map((mapKey, value) => MapEntry(mapKey, _dustJsonAsList(value, 'metrics').map((item) => _dustJsonAs<int>(item, 'metrics', 'int')).toList()));
+  final profileValue = JsonProfile.fromJson(
+    _dustJsonAsMap(json['profile'], 'profile'),
+  );
+  final metricsValue = _dustJsonAsMap(json['metrics'], 'metrics').map(
+    (mapKey, value) => MapEntry(
+      mapKey,
+      _dustJsonAsList(
+        value,
+        'metrics',
+      ).map((item) => _dustJsonAs<int>(item, 'metrics', 'int')).toList(),
+    ),
+  );
   final archivedValue = _dustJsonAs<bool>(json['archived'], 'archived', 'bool');
 
   return JsonAccount(

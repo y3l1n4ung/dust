@@ -6,8 +6,7 @@ import 'price.dart';
 part 'featured_product.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith()])
-class FeaturedProduct extends CatalogNode
-    with AuditStamp, _$FeaturedProductDust {
+class FeaturedProduct extends CatalogNode with AuditStamp, _$FeaturedProduct {
   const FeaturedProduct({
     required this.sku,
     required this.price,

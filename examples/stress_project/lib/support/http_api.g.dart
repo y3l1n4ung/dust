@@ -20,6 +20,7 @@ RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
   }
   return requestOptions;
 }
+
 String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   if (baseUrl == null || baseUrl.trim().isEmpty) {
     return dioBaseUrl;
@@ -30,6 +31,7 @@ String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   }
   return Uri.parse(dioBaseUrl).resolveUri(url).toString();
 }
+
 Response<T> _dustBuildResponse<T>(Response<dynamic> response, T data) {
   return Response<T>(
     data: data,
@@ -58,7 +60,12 @@ final class _$StressHttpApi implements StressHttpApi {
     if (userId != null) _queryParameters['userId'] = userId;
     if (limit != null) _queryParameters['_limit'] = limit;
     final Object? _data = null;
-    final _options = Options(method: 'GET', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<List<dynamic>>(
       _setStreamType<List<HttpPost>>(
         _options
@@ -72,11 +79,16 @@ final class _$StressHttpApi implements StressHttpApi {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl ?? 'https://jsonplaceholder.typicode.com'),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://jsonplaceholder.typicode.com',
+              ),
             ),
       ),
     );
-    return (_result.data as List<dynamic>).map((item) => HttpPost.fromJson(item as Map<String, dynamic>)).toList();
+    return (_result.data as List<dynamic>)
+        .map((item) => HttpPost.fromJson(item as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -86,7 +98,12 @@ final class _$StressHttpApi implements StressHttpApi {
     final _extra = <String, dynamic>{};
     _headers['x-suite'] = 'stress';
     final Object? _data = null;
-    final _options = Options(method: 'GET', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(
       _setStreamType<HttpPost>(
         _options
@@ -100,7 +117,10 @@ final class _$StressHttpApi implements StressHttpApi {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl ?? 'https://jsonplaceholder.typicode.com'),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://jsonplaceholder.typicode.com',
+              ),
             ),
       ),
     );
@@ -115,7 +135,12 @@ final class _$StressHttpApi implements StressHttpApi {
     final _extra = <String, dynamic>{};
     _headers['x-suite'] = 'stress';
     final Object? _data = payload;
-    final _options = Options(method: 'POST', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'POST',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(
       _setStreamType<Map<String, dynamic>>(
         _options
@@ -129,7 +154,10 @@ final class _$StressHttpApi implements StressHttpApi {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl ?? 'https://jsonplaceholder.typicode.com'),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://jsonplaceholder.typicode.com',
+              ),
             ),
       ),
     );

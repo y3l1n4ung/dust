@@ -6,9 +6,10 @@
 
 part of 'category.dart';
 
-const DeepCollectionEquality _dustUnorderedDeepCollectionEquality = DeepCollectionEquality.unordered();
+const DeepCollectionEquality _dustUnorderedDeepCollectionEquality =
+    DeepCollectionEquality.unordered();
 
-mixin _$CategoryDust {
+mixin _$Category {
   Category get _dustSelf => this as Category;
 
   @override
@@ -27,7 +28,10 @@ mixin _$CategoryDust {
           runtimeType == other.runtimeType &&
           other.id == _dustSelf.id &&
           other.title == _dustSelf.title &&
-          _dustUnorderedDeepCollectionEquality.equals(other.labels, _dustSelf.labels);
+          _dustUnorderedDeepCollectionEquality.equals(
+            other.labels,
+            _dustSelf.labels,
+          );
 
   @override
   int get hashCode => Object.hashAll([
@@ -37,11 +41,7 @@ mixin _$CategoryDust {
     _dustUnorderedDeepCollectionEquality.hash(_dustSelf.labels),
   ]);
 
-  Category copyWith({
-    String? id,
-    String? title,
-    Set<String>? labels,
-  }) {
+  Category copyWith({String? id, String? title, Set<String>? labels}) {
     final nextLabels = Set<String>.of(labels ?? _dustSelf.labels);
 
     return Category(

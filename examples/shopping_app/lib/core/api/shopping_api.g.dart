@@ -90,7 +90,7 @@ Response<T> _dustBuildResponse<T>(Response<dynamic> response, T data) {
   );
 }
 
-mixin _$LoginRequestDust {
+mixin _$LoginRequest {
   LoginRequest get _dustSelf => this as LoginRequest;
 
   @override
@@ -123,7 +123,7 @@ mixin _$LoginRequestDust {
   Map<String, Object?> toJson() => _$LoginRequestToJson(_dustSelf);
 }
 
-mixin _$LoginResponseDust {
+mixin _$LoginResponse {
   LoginResponse get _dustSelf => this as LoginResponse;
 
   @override
@@ -150,7 +150,7 @@ mixin _$LoginResponseDust {
   Map<String, Object?> toJson() => _$LoginResponseToJson(_dustSelf);
 }
 
-mixin _$RegisterUserResponseDust {
+mixin _$RegisterUserResponse {
   RegisterUserResponse get _dustSelf => this as RegisterUserResponse;
 
   @override
@@ -177,7 +177,7 @@ mixin _$RegisterUserResponseDust {
   Map<String, Object?> toJson() => _$RegisterUserResponseToJson(_dustSelf);
 }
 
-mixin _$RegisterNameDust {
+mixin _$RegisterName {
   RegisterName get _dustSelf => this as RegisterName;
 
   @override
@@ -210,7 +210,7 @@ mixin _$RegisterNameDust {
   Map<String, Object?> toJson() => _$RegisterNameToJson(_dustSelf);
 }
 
-mixin _$RegisterGeolocationDust {
+mixin _$RegisterGeolocation {
   RegisterGeolocation get _dustSelf => this as RegisterGeolocation;
 
   @override
@@ -243,7 +243,7 @@ mixin _$RegisterGeolocationDust {
   Map<String, Object?> toJson() => _$RegisterGeolocationToJson(_dustSelf);
 }
 
-mixin _$RegisterAddressDust {
+mixin _$RegisterAddress {
   RegisterAddress get _dustSelf => this as RegisterAddress;
 
   @override
@@ -299,7 +299,7 @@ mixin _$RegisterAddressDust {
   Map<String, Object?> toJson() => _$RegisterAddressToJson(_dustSelf);
 }
 
-mixin _$RegisterUserRequestDust {
+mixin _$RegisterUserRequest {
   RegisterUserRequest get _dustSelf => this as RegisterUserRequest;
 
   @override

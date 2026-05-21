@@ -6,9 +6,10 @@
 
 part of 'featured_product.dart';
 
-const DeepCollectionEquality _dustUnorderedDeepCollectionEquality = DeepCollectionEquality.unordered();
+const DeepCollectionEquality _dustUnorderedDeepCollectionEquality =
+    DeepCollectionEquality.unordered();
 
-mixin _$FeaturedProductDust {
+mixin _$FeaturedProduct {
   FeaturedProduct get _dustSelf => this as FeaturedProduct;
 
   @override
@@ -28,7 +29,10 @@ mixin _$FeaturedProductDust {
           runtimeType == other.runtimeType &&
           other.sku == _dustSelf.sku &&
           other.price == _dustSelf.price &&
-          _dustUnorderedDeepCollectionEquality.equals(other.tags, _dustSelf.tags) &&
+          _dustUnorderedDeepCollectionEquality.equals(
+            other.tags,
+            _dustSelf.tags,
+          ) &&
           other.archived == _dustSelf.archived;
 
   @override

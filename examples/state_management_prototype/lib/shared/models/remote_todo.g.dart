@@ -51,7 +51,7 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   }
 }
 
-mixin _$RemoteTodoDust {
+mixin _$RemoteTodo {
   RemoteTodo get _dustSelf => this as RemoteTodo;
 
   @override

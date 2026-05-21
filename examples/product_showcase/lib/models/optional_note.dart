@@ -3,7 +3,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 part 'optional_note.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith()])
-class OptionalNote with _$OptionalNoteDust {
+class OptionalNote with _$OptionalNote {
   const OptionalNote({required this.id, this.note, this.aliases});
 
   final String id;

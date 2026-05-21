@@ -41,7 +41,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 part 'user.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith()])
-class User with _$UserDust {
+class User with _$User {
   final String id;
   final String? name;
 
@@ -55,7 +55,7 @@ Run Dust:
 dust build
 ```
 
-Dust writes `user.g.dart` and the `_$UserDust` mixin members for `toString()`,
+Dust writes `user.g.dart` and the `_$User` mixin members for `toString()`,
 `==`, `hashCode`, and `copyWith(...)`.
 
 ## Full Usage Guide

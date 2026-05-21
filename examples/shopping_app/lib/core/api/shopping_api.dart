@@ -7,7 +7,7 @@ import '../../features/products/models/product.dart';
 part 'shopping_api.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class LoginRequest with _$LoginRequestDust {
+class LoginRequest with _$LoginRequest {
   const LoginRequest({required this.username, required this.password});
 
   final String username;
@@ -18,7 +18,7 @@ class LoginRequest with _$LoginRequestDust {
 }
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class LoginResponse with _$LoginResponseDust {
+class LoginResponse with _$LoginResponse {
   const LoginResponse({required this.token});
 
   final String token;
@@ -28,7 +28,7 @@ class LoginResponse with _$LoginResponseDust {
 }
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class RegisterUserResponse with _$RegisterUserResponseDust {
+class RegisterUserResponse with _$RegisterUserResponse {
   const RegisterUserResponse({required this.id});
 
   final int id;
@@ -38,7 +38,7 @@ class RegisterUserResponse with _$RegisterUserResponseDust {
 }
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class RegisterName with _$RegisterNameDust {
+class RegisterName with _$RegisterName {
   const RegisterName({required this.firstname, required this.lastname});
 
   final String firstname;
@@ -49,7 +49,7 @@ class RegisterName with _$RegisterNameDust {
 }
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class RegisterGeolocation with _$RegisterGeolocationDust {
+class RegisterGeolocation with _$RegisterGeolocation {
   const RegisterGeolocation({required this.lat, required this.long});
 
   final String lat;
@@ -60,7 +60,7 @@ class RegisterGeolocation with _$RegisterGeolocationDust {
 }
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class RegisterAddress with _$RegisterAddressDust {
+class RegisterAddress with _$RegisterAddress {
   const RegisterAddress({
     required this.city,
     required this.street,
@@ -80,7 +80,7 @@ class RegisterAddress with _$RegisterAddressDust {
 }
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class RegisterUserRequest with _$RegisterUserRequestDust {
+class RegisterUserRequest with _$RegisterUserRequest {
   const RegisterUserRequest({
     required this.email,
     required this.username,

@@ -34,7 +34,7 @@ part 'json_profile.g.dart';
 
 @Derive([ToString(), Eq(), Serialize(), Deserialize()])
 @SerDe(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)
-class JsonProfile with _$JsonProfileDust {
+class JsonProfile with _$JsonProfile {
   const JsonProfile({
     required this.id,
     this.displayName,
@@ -115,7 +115,7 @@ final class UnixEpochDateTimeCodec implements SerDeCodec<DateTime, int> {
 const unixEpochDateTimeCodec = UnixEpochDateTimeCodec();
 
 @Derive([ToString(), Eq(), Serialize(), Deserialize()])
-class JsonCodecBundle with _$JsonCodecBundleDust {
+class JsonCodecBundle with _$JsonCodecBundle {
   const JsonCodecBundle({required this.createdAt, this.updatedAt});
 
   factory JsonCodecBundle.fromJson(Map<String, Object?> json) =>

@@ -51,7 +51,7 @@ const vehicleIndexCodec = VehicleIndexCodec();
 const vehicleIndexListCodec = VehicleIndexListCodec();
 
 @Derive([ToString(), Eq(), Serialize(), Deserialize()])
-class JsonEnhancedEnumBundle with _$JsonEnhancedEnumBundleDust {
+class JsonEnhancedEnumBundle with _$JsonEnhancedEnumBundle {
   const JsonEnhancedEnumBundle({
     required this.primaryVehicle,
     required this.fallbackVehicle,

@@ -11,7 +11,7 @@ const Object _undefined = Object();
 const DeepCollectionEquality _dustDeepCollectionEquality =
     DeepCollectionEquality();
 
-mixin _$TaskBoardStateDust {
+mixin _$TaskBoardState {
   TaskBoardState get _dustSelf => this as TaskBoardState;
 
   @override

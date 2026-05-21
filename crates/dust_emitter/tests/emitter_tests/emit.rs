@@ -33,7 +33,7 @@ fn emitter_writes_sections_in_fixed_order_and_wraps_mixins() {
     let header = source.find("// GENERATED CODE").unwrap();
     let part_of = source.find("part of 'user.dart';").unwrap();
     let helper = source.find("const Object _undefined = Object();").unwrap();
-    let mixin = source.find("mixin _$UserDust {").unwrap();
+    let mixin = source.find("mixin _$User {").unwrap();
     let support = source.find("typedef UserMap").unwrap();
     let function = source.find("_$UserFromJson").unwrap();
 
@@ -49,7 +49,7 @@ fn emitter_writes_sections_in_fixed_order_and_wraps_mixins() {
     assert!(source.contains(
         "// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark"
     ));
-    assert!(source.contains("mixin _$UserDust {"));
+    assert!(source.contains("mixin _$User {"));
     assert!(source.contains("  User get _dustSelf => this as User;"));
     assert!(source.contains("  @override\n  String toString() => 'User()';"));
 }

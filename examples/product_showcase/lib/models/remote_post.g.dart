@@ -6,10 +6,20 @@
 
 part of 'remote_post.dart';
 
-Never _dustJsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) => value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_dustJsonAs<String>(value, key, 'String')) ?? _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) => _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+Never _dustJsonTypeError(Object? value, String key, String expected) =>
+    throw ArgumentError.value(value, key, 'expected $expected');
+T _dustJsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _dustJsonTypeError(value, key, expected);
+T _dustJsonParseString<T>(
+  Object? value,
+  String key,
+  String expected,
+  T? Function(String value) parse,
+) =>
+    parse(_dustJsonAs<String>(value, key, 'String')) ??
+    _dustJsonTypeError(value, key, expected);
+List<Object?> _dustJsonAsList(Object? value, String key) =>
+    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
 Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
   final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
@@ -19,9 +29,17 @@ Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
     _dustJsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _dustJsonAsUri(Object? value, String key) => _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) => _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+
+DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
+  value,
+  key,
+  'ISO-8601 DateTime string',
+  DateTime.tryParse,
+);
+Uri _dustJsonAsUri(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _dustJsonAsBigInt(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
 T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
@@ -33,7 +51,7 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   }
 }
 
-mixin _$RemotePostDust {
+mixin _$RemotePost {
   RemotePost get _dustSelf => this as RemotePost;
 
   @override
@@ -46,12 +64,7 @@ mixin _$RemotePostDust {
         ')';
   }
 
-  RemotePost copyWith({
-    int? userId,
-    int? id,
-    String? title,
-    String? body,
-  }) {
+  RemotePost copyWith({int? userId, int? id, String? title, String? body}) {
     return RemotePost(
       userId: userId ?? _dustSelf.userId,
       id: id ?? _dustSelf.id,
@@ -63,7 +76,7 @@ mixin _$RemotePostDust {
   Map<String, Object?> toJson() => _$RemotePostToJson(_dustSelf);
 }
 
-mixin _$RemotePostDraftDust {
+mixin _$RemotePostDraft {
   RemotePostDraft get _dustSelf => this as RemotePostDraft;
 
   @override
@@ -75,11 +88,7 @@ mixin _$RemotePostDraftDust {
         ')';
   }
 
-  RemotePostDraft copyWith({
-    int? userId,
-    String? title,
-    String? body,
-  }) {
+  RemotePostDraft copyWith({int? userId, String? title, String? body}) {
     return RemotePostDraft(
       userId: userId ?? _dustSelf.userId,
       title: title ?? _dustSelf.title,
@@ -98,6 +107,7 @@ Map<String, Object?> _$RemotePostToJson(RemotePost instance) {
     'body': instance.body,
   };
 }
+
 // factory RemotePost.fromJson(Map<String, Object?> json) => _$RemotePostFromJson(json);
 RemotePost _$RemotePostFromJson(Map<String, Object?> json) {
   final userIdValue = _dustJsonAs<int>(json['userId'], 'userId', 'int');
@@ -112,6 +122,7 @@ RemotePost _$RemotePostFromJson(Map<String, Object?> json) {
     body: bodyValue,
   );
 }
+
 Map<String, Object?> _$RemotePostDraftToJson(RemotePostDraft instance) {
   return <String, Object?>{
     'userId': instance.userId,
@@ -119,6 +130,7 @@ Map<String, Object?> _$RemotePostDraftToJson(RemotePostDraft instance) {
     'body': instance.body,
   };
 }
+
 // factory RemotePostDraft.fromJson(Map<String, Object?> json) => _$RemotePostDraftFromJson(json);
 RemotePostDraft _$RemotePostDraftFromJson(Map<String, Object?> json) {
   final userIdValue = _dustJsonAs<int>(json['userId'], 'userId', 'int');

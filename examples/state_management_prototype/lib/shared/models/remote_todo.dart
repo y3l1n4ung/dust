@@ -3,7 +3,7 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 part 'remote_todo.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class RemoteTodo with _$RemoteTodoDust {
+class RemoteTodo with _$RemoteTodo {
   const RemoteTodo({
     required this.userId,
     required this.id,

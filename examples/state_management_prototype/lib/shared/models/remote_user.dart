@@ -3,7 +3,7 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 part 'remote_user.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class RemoteCompany with _$RemoteCompanyDust {
+class RemoteCompany with _$RemoteCompany {
   const RemoteCompany({required this.name, required this.catchPhrase});
 
   final String name;
@@ -14,7 +14,7 @@ class RemoteCompany with _$RemoteCompanyDust {
 }
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class RemoteUser with _$RemoteUserDust {
+class RemoteUser with _$RemoteUser {
   const RemoteUser({
     required this.id,
     required this.name,

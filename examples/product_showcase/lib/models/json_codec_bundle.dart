@@ -16,7 +16,7 @@ final class UnixEpochDateTimeCodec implements SerDeCodec<DateTime, int> {
 const unixEpochDateTimeCodec = UnixEpochDateTimeCodec();
 
 @Derive([ToString(), Eq(), Serialize(), Deserialize()])
-class JsonCodecBundle with _$JsonCodecBundleDust {
+class JsonCodecBundle with _$JsonCodecBundle {
   const JsonCodecBundle({required this.createdAt, this.updatedAt});
 
   factory JsonCodecBundle.fromJson(Map<String, Object?> json) =>

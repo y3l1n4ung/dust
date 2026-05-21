@@ -7,7 +7,7 @@ enum MyEnum { A, B }
 
 @Derive([ToString(), Eq(), Serialize(), Deserialize()])
 @SerDe(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)
-class JsonSerdeOptions with _$JsonSerdeOptionsDust {
+class JsonSerdeOptions with _$JsonSerdeOptions {
   const JsonSerdeOptions({
     required this.id,
     required this.displayName,

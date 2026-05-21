@@ -10,7 +10,7 @@ enum AccessLevel { superAdmin, guestUser, readOnly }
 enum ReviewState { pending, approved, archived }
 
 @Derive([ToString(), Eq(), Serialize(), Deserialize()])
-class JsonEnumBundle with _$JsonEnumBundleDust {
+class JsonEnumBundle with _$JsonEnumBundle {
   const JsonEnumBundle({
     required this.primaryLevel,
     required this.fallbackState,

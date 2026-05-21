@@ -30,7 +30,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 part 'price.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith()])
-class Price with _$PriceDust {
+class Price with _$Price {
   const Price({
     required this.currency,
     required this.cents,
@@ -70,7 +70,7 @@ Dust also handles deep equality for collection fields through the
 ## Required Structure
 
 - keep `part 'file_name.g.dart';` in the same file
-- add `with _$TypeNameDust` to the class declaration
+- add `with _$TypeName` to the class declaration
 - run `dust build`, `dust check`, or `dust watch` from the package root
 
 ## When To Use Derive Only

@@ -3,7 +3,7 @@ import 'package:derive_annotation/derive_annotation.dart';
 part 'price.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith()])
-class Price with _$PriceDust {
+class Price with _$Price {
   const Price({
     required this.currency,
     required this.cents,

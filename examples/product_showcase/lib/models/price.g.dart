@@ -6,9 +6,10 @@
 
 part of 'price.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
 
-mixin _$PriceDust {
+mixin _$Price {
   Price get _dustSelf => this as Price;
 
   @override
@@ -37,11 +38,7 @@ mixin _$PriceDust {
     _dustDeepCollectionEquality.hash(_dustSelf.tags),
   ]);
 
-  Price copyWith({
-    String? currency,
-    int? cents,
-    List<String>? tags,
-  }) {
+  Price copyWith({String? currency, int? cents, List<String>? tags}) {
     final nextTags = List<String>.of(tags ?? _dustSelf.tags);
 
     return Price(

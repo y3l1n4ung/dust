@@ -139,7 +139,7 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
     assert!(written.contains("// ignore_for_file: type=lint"));
     assert!(written.contains("part of 'models.dart';"));
     assert!(written.contains("const Object _undefined = Object();"));
-    assert!(written.contains("mixin _$UserDust {"));
+    assert!(written.contains("mixin _$User {"));
     assert!(written.contains("User get _dustSelf => this as User;"));
     assert!(written.contains("String toString() {\n    return 'User('"));
     assert!(written.contains("'id: ${_dustSelf.id}, '"));
@@ -151,7 +151,7 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
     assert!(!written.contains("final nextIdSource = id ?? _dustSelf.id;"));
     assert!(written.contains("id ?? _dustSelf.id,"));
     assert!(written.contains("return User("));
-    assert!(written.contains("mixin _$TeamDust {"));
+    assert!(written.contains("mixin _$Team {"));
     assert!(written.contains("Team copyWith({"));
     assert!(!written.contains("final clonedName = _dustSelf.name;"));
     assert!(written.contains("_dustSelf.name,"));

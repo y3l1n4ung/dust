@@ -6,10 +6,20 @@
 
 part of 'json_codec_bundle.dart';
 
-Never _dustJsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) => value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_dustJsonAs<String>(value, key, 'String')) ?? _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) => _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+Never _dustJsonTypeError(Object? value, String key, String expected) =>
+    throw ArgumentError.value(value, key, 'expected $expected');
+T _dustJsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _dustJsonTypeError(value, key, expected);
+T _dustJsonParseString<T>(
+  Object? value,
+  String key,
+  String expected,
+  T? Function(String value) parse,
+) =>
+    parse(_dustJsonAs<String>(value, key, 'String')) ??
+    _dustJsonTypeError(value, key, expected);
+List<Object?> _dustJsonAsList(Object? value, String key) =>
+    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
 Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
   final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
@@ -19,9 +29,17 @@ Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
     _dustJsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _dustJsonAsUri(Object? value, String key) => _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) => _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+
+DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
+  value,
+  key,
+  'ISO-8601 DateTime string',
+  DateTime.tryParse,
+);
+Uri _dustJsonAsUri(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _dustJsonAsBigInt(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
 T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
@@ -33,7 +51,7 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   }
 }
 
-mixin _$JsonCodecBundleDust {
+mixin _$JsonCodecBundle {
   JsonCodecBundle get _dustSelf => this as JsonCodecBundle;
 
   @override
@@ -53,11 +71,8 @@ mixin _$JsonCodecBundleDust {
           other.updatedAt == _dustSelf.updatedAt;
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.createdAt,
-    _dustSelf.updatedAt,
-  ]);
+  int get hashCode =>
+      Object.hashAll([runtimeType, _dustSelf.createdAt, _dustSelf.updatedAt]);
 
   Map<String, Object?> toJson() => _$JsonCodecBundleToJson(_dustSelf);
 }
@@ -66,19 +81,25 @@ Map<String, Object?> _$JsonCodecBundleToJson(JsonCodecBundle instance) {
   return <String, Object?>{
     'createdAt': unixEpochDateTimeCodec.serialize(instance.createdAt),
     'updatedAt': instance.updatedAt == null
-                 ? null
-                 : unixEpochDateTimeCodec.serialize(instance.updatedAt!),
+        ? null
+        : unixEpochDateTimeCodec.serialize(instance.updatedAt!),
   };
 }
+
 // factory JsonCodecBundle.fromJson(Map<String, Object?> json) => _$JsonCodecBundleFromJson(json);
 JsonCodecBundle _$JsonCodecBundleFromJson(Map<String, Object?> json) {
-  final createdAtValue = _dustJsonDecodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['createdAt'], 'createdAt');
-  final updatedAtValue = json['updatedAt'] == null
-                         ? null
-                         : _dustJsonDecodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['updatedAt'], 'updatedAt');
-
-  return JsonCodecBundle(
-    createdAt: createdAtValue,
-    updatedAt: updatedAtValue,
+  final createdAtValue = _dustJsonDecodeWithCodec<DateTime>(
+    unixEpochDateTimeCodec,
+    json['createdAt'],
+    'createdAt',
   );
+  final updatedAtValue = json['updatedAt'] == null
+      ? null
+      : _dustJsonDecodeWithCodec<DateTime>(
+          unixEpochDateTimeCodec,
+          json['updatedAt'],
+          'updatedAt',
+        );
+
+  return JsonCodecBundle(createdAt: createdAtValue, updatedAt: updatedAtValue);
 }

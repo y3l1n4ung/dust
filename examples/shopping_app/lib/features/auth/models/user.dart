@@ -3,7 +3,7 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 part 'user.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class User with _$UserDust {
+class User with _$User {
   const User({
     required this.id,
     required this.email,
@@ -22,7 +22,7 @@ class User with _$UserDust {
 }
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-class Name with _$NameDust {
+class Name with _$Name {
   const Name({required this.firstname, required this.lastname});
 
   final String firstname;

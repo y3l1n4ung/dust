@@ -49,7 +49,7 @@ Dust SerDe currently supports:
 ```dart
 @Derive([Serialize(), Deserialize()])
 @SerDe(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)
-class User with _$UserDust {
+class User with _$User {
   final String id;
 
   @SerDe(rename: 'display_name', aliases: ['name'])
@@ -83,7 +83,7 @@ final class UnixEpochDateTimeCodec implements SerDeCodec<DateTime, int> {
 const unixEpochDateTimeCodec = UnixEpochDateTimeCodec();
 
 @Derive([Serialize(), Deserialize()])
-class AuditLog with _$AuditLogDust {
+class AuditLog with _$AuditLog {
   @SerDe(using: unixEpochDateTimeCodec)
   final DateTime createdAt;
 

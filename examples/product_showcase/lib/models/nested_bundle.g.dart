@@ -6,9 +6,10 @@
 
 part of 'nested_bundle.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
 
-mixin _$NestedBundleDust {
+mixin _$NestedBundle {
   NestedBundle get _dustSelf => this as NestedBundle;
 
   @override
@@ -47,9 +48,6 @@ mixin _$NestedBundleDust {
       ),
     );
 
-    return NestedBundle(
-      groups: nextGroups,
-      metrics: nextMetrics,
-    );
+    return NestedBundle(groups: nextGroups, metrics: nextMetrics);
   }
 }

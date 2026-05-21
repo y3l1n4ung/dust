@@ -3,7 +3,7 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 part 'json_scalar_bundle.g.dart';
 
 @Derive([ToString(), Eq(), Serialize(), Deserialize()])
-class JsonScalarBundle with _$JsonScalarBundleDust {
+class JsonScalarBundle with _$JsonScalarBundle {
   const JsonScalarBundle({
     required this.createdAt,
     this.updatedAt,

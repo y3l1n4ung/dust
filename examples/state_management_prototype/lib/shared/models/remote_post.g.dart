@@ -51,7 +51,7 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   }
 }
 
-mixin _$RemotePostDust {
+mixin _$RemotePost {
   RemotePost get _dustSelf => this as RemotePost;
 
   @override

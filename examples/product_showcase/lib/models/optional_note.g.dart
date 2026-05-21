@@ -8,9 +8,10 @@ part of 'optional_note.dart';
 
 const Object _undefined = Object();
 
-const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
 
-mixin _$OptionalNoteDust {
+mixin _$OptionalNote {
   OptionalNote get _dustSelf => this as OptionalNote;
 
   @override
@@ -44,8 +45,12 @@ mixin _$OptionalNoteDust {
     Object? note = _undefined,
     Object? aliases = _undefined,
   }) {
-    final nextAliasesSource = identical(aliases, _undefined) ? _dustSelf.aliases : aliases as List<String>?;
-    final nextAliases = nextAliasesSource == null ? null : List<String>.of(nextAliasesSource);
+    final nextAliasesSource = identical(aliases, _undefined)
+        ? _dustSelf.aliases
+        : aliases as List<String>?;
+    final nextAliases = nextAliasesSource == null
+        ? null
+        : List<String>.of(nextAliasesSource);
 
     return OptionalNote(
       id: id ?? _dustSelf.id,

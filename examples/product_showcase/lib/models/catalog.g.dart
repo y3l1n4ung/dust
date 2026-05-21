@@ -6,10 +6,12 @@
 
 part of 'catalog.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();
-const DeepCollectionEquality _dustUnorderedDeepCollectionEquality = DeepCollectionEquality.unordered();
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
+const DeepCollectionEquality _dustUnorderedDeepCollectionEquality =
+    DeepCollectionEquality.unordered();
 
-mixin _$InventoryEntryDust {
+mixin _$InventoryEntry {
   InventoryEntry get _dustSelf => this as InventoryEntry;
 
   @override
@@ -51,7 +53,7 @@ mixin _$InventoryEntryDust {
   }
 }
 
-mixin _$CatalogDust {
+mixin _$Catalog {
   Catalog get _dustSelf => this as Catalog;
 
   @override
@@ -71,10 +73,22 @@ mixin _$CatalogDust {
       other is Catalog &&
           runtimeType == other.runtimeType &&
           other.id == _dustSelf.id &&
-          _dustDeepCollectionEquality.equals(other.products, _dustSelf.products) &&
-          _dustDeepCollectionEquality.equals(other.categoryById, _dustSelf.categoryById) &&
-          _dustUnorderedDeepCollectionEquality.equals(other.featuredSkus, _dustSelf.featuredSkus) &&
-          _dustDeepCollectionEquality.equals(other.inventory, _dustSelf.inventory);
+          _dustDeepCollectionEquality.equals(
+            other.products,
+            _dustSelf.products,
+          ) &&
+          _dustDeepCollectionEquality.equals(
+            other.categoryById,
+            _dustSelf.categoryById,
+          ) &&
+          _dustUnorderedDeepCollectionEquality.equals(
+            other.featuredSkus,
+            _dustSelf.featuredSkus,
+          ) &&
+          _dustDeepCollectionEquality.equals(
+            other.inventory,
+            _dustSelf.inventory,
+          );
 
   @override
   int get hashCode => Object.hashAll([
@@ -101,7 +115,9 @@ mixin _$CatalogDust {
         (entry_2) => MapEntry(entry_2.key, (entry_2.value).copyWith()),
       ),
     );
-    final nextFeaturedSkus = Set<String>.of(featuredSkus ?? _dustSelf.featuredSkus);
+    final nextFeaturedSkus = Set<String>.of(
+      featuredSkus ?? _dustSelf.featuredSkus,
+    );
     final nextInventory = List<InventoryEntry>.of(
       (inventory ?? _dustSelf.inventory).map((item_4) => item_4.copyWith()),
     );

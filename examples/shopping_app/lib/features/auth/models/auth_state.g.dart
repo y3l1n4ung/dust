@@ -8,7 +8,7 @@ part of 'auth_state.dart';
 
 const Object _undefined = Object();
 
-mixin _$AuthStateDust {
+mixin _$AuthState {
   AuthState get _dustSelf => this as AuthState;
 
   @override

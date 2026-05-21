@@ -57,10 +57,10 @@ fn build_supports_abstract_and_mixin_clause_shapes_without_unrelated_warnings() 
         "{:?}",
         result.diagnostics
     );
-    assert!(entity_output.contains("mixin _$EntityDust {"));
+    assert!(entity_output.contains("mixin _$Entity {"));
     assert!(entity_output.contains("Entity get _dustSelf => this as Entity;"));
     assert!(entity_output.contains("other is Entity"));
-    assert!(tagged_output.contains("mixin _$TaggedValueDust {"));
+    assert!(tagged_output.contains("mixin _$TaggedValue {"));
     assert!(tagged_output.contains("_dustDeepCollectionEquality.equals"));
     assert!(tagged_output.contains("TaggedValue copyWith({"));
     assert!(
@@ -76,12 +76,12 @@ fn build_includes_inherited_fields_for_annotated_subclasses() {
         &workspace.path().join("lib/entity.dart"),
         "part 'entity.g.dart';\n\
          @Derive([ToString(), Eq()])\n\
-         abstract class Entity with _$EntityDust {\n\
+         abstract class Entity with _$Entity {\n\
            final String id;\n\
            const Entity(this.id);\n\
          }\n\
          @Derive([ToString(), Eq(), CopyWith()])\n\
-         class DetailedEntity extends Entity with _$DetailedEntityDust {\n\
+         class DetailedEntity extends Entity with _$DetailedEntity {\n\
            final String label;\n\
            final List<String> tags;\n\
            const DetailedEntity(super.id, {required this.label, required this.tags});\n\
@@ -104,7 +104,7 @@ fn build_includes_inherited_fields_for_annotated_subclasses() {
         "{:?}",
         result.diagnostics
     );
-    assert!(output.contains("mixin _$DetailedEntityDust {"));
+    assert!(output.contains("mixin _$DetailedEntity {"));
     assert!(output.contains("DetailedEntity get _dustSelf => this as DetailedEntity;"));
     assert!(output.contains("return 'DetailedEntity('"));
     assert!(output.contains("'id: ${_dustSelf.id}, '"));

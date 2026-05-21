@@ -3,7 +3,7 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 part 'remote_post.g.dart';
 
 @Derive([ToString(), CopyWith(), Serialize(), Deserialize()])
-class RemotePost with _$RemotePostDust {
+class RemotePost with _$RemotePost {
   final int userId;
   final int id;
   final String title;
@@ -21,7 +21,7 @@ class RemotePost with _$RemotePostDust {
 }
 
 @Derive([ToString(), CopyWith(), Serialize(), Deserialize()])
-class RemotePostDraft with _$RemotePostDraftDust {
+class RemotePostDraft with _$RemotePostDraft {
   final int userId;
   final String title;
   final String body;

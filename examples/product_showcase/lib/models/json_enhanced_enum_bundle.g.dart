@@ -6,11 +6,22 @@
 
 part of 'json_enhanced_enum_bundle.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();
-Never _dustJsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) => value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_dustJsonAs<String>(value, key, 'String')) ?? _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) => _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
+Never _dustJsonTypeError(Object? value, String key, String expected) =>
+    throw ArgumentError.value(value, key, 'expected $expected');
+T _dustJsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _dustJsonTypeError(value, key, expected);
+T _dustJsonParseString<T>(
+  Object? value,
+  String key,
+  String expected,
+  T? Function(String value) parse,
+) =>
+    parse(_dustJsonAs<String>(value, key, 'String')) ??
+    _dustJsonTypeError(value, key, expected);
+List<Object?> _dustJsonAsList(Object? value, String key) =>
+    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
 Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
   final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
@@ -20,9 +31,17 @@ Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
     _dustJsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _dustJsonAsUri(Object? value, String key) => _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) => _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+
+DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
+  value,
+  key,
+  'ISO-8601 DateTime string',
+  DateTime.tryParse,
+);
+Uri _dustJsonAsUri(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _dustJsonAsBigInt(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
 T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
@@ -34,7 +53,7 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   }
 }
 
-mixin _$JsonEnhancedEnumBundleDust {
+mixin _$JsonEnhancedEnumBundle {
   JsonEnhancedEnumBundle get _dustSelf => this as JsonEnhancedEnumBundle;
 
   @override
@@ -66,22 +85,39 @@ mixin _$JsonEnhancedEnumBundleDust {
   Map<String, Object?> toJson() => _$JsonEnhancedEnumBundleToJson(_dustSelf);
 }
 
-Map<String, Object?> _$JsonEnhancedEnumBundleToJson(JsonEnhancedEnumBundle instance) {
+Map<String, Object?> _$JsonEnhancedEnumBundleToJson(
+  JsonEnhancedEnumBundle instance,
+) {
   return <String, Object?>{
     'primaryVehicle': vehicleIndexCodec.serialize(instance.primaryVehicle),
     'fallbackVehicle': instance.fallbackVehicle == null
-                       ? null
-                       : vehicleIndexCodec.serialize(instance.fallbackVehicle!),
+        ? null
+        : vehicleIndexCodec.serialize(instance.fallbackVehicle!),
     'fleet': vehicleIndexListCodec.serialize(instance.fleet),
   };
 }
+
 // factory JsonEnhancedEnumBundle.fromJson(Map<String, Object?> json) => _$JsonEnhancedEnumBundleFromJson(json);
-JsonEnhancedEnumBundle _$JsonEnhancedEnumBundleFromJson(Map<String, Object?> json) {
-  final primaryVehicleValue = _dustJsonDecodeWithCodec<Vehicle>(vehicleIndexCodec, json['primaryVehicle'], 'primaryVehicle');
+JsonEnhancedEnumBundle _$JsonEnhancedEnumBundleFromJson(
+  Map<String, Object?> json,
+) {
+  final primaryVehicleValue = _dustJsonDecodeWithCodec<Vehicle>(
+    vehicleIndexCodec,
+    json['primaryVehicle'],
+    'primaryVehicle',
+  );
   final fallbackVehicleValue = json['fallbackVehicle'] == null
-                               ? null
-                               : _dustJsonDecodeWithCodec<Vehicle>(vehicleIndexCodec, json['fallbackVehicle'], 'fallbackVehicle');
-  final fleetValue = _dustJsonDecodeWithCodec<List<Vehicle>>(vehicleIndexListCodec, json['fleet'], 'fleet');
+      ? null
+      : _dustJsonDecodeWithCodec<Vehicle>(
+          vehicleIndexCodec,
+          json['fallbackVehicle'],
+          'fallbackVehicle',
+        );
+  final fleetValue = _dustJsonDecodeWithCodec<List<Vehicle>>(
+    vehicleIndexListCodec,
+    json['fleet'],
+    'fleet',
+  );
 
   return JsonEnhancedEnumBundle(
     primaryVehicle: primaryVehicleValue,
@@ -89,6 +125,7 @@ JsonEnhancedEnumBundle _$JsonEnhancedEnumBundleFromJson(Map<String, Object?> jso
     fleet: fleetValue,
   );
 }
+
 Object? _$VehicleToJson(Vehicle instance) {
   return switch (instance) {
     Vehicle.car => 'car',
@@ -96,6 +133,7 @@ Object? _$VehicleToJson(Vehicle instance) {
     Vehicle.unicycle => 'unicycle',
   };
 }
+
 Vehicle _$VehicleFromJson(Object? json) {
   return switch (json) {
     'car' => Vehicle.car,
