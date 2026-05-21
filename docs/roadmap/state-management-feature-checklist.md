@@ -22,14 +22,14 @@
 - [x] `examples/state_management_prototype` passes `flutter build web`.
 - [x] Extract shared runtime primitives into `packages/dust_state`.
 - [x] Check generated/runtime scopes dispose owned ViewModels exactly once.
-- [~] Listener API moved to effect streams; prototype uses generated listeners, deeper rebuild tests pending.
+- [x] Listener API moved to effect streams and covered by generated listener tests.
 - [x] Check `read` never registers dependency in generated contract.
 - [x] Manual prototype uses typed aspect enums for accessed fields.
 - [x] Runtime `ViewModelBase.init()` is idempotent and tested.
-- [ ] Check errors/loading states are deterministic.
-- [ ] Check repository injection failure has clear diagnostics/runtime error.
-- [ ] Add rebuild-count tests for aspect precision.
-- [ ] Add listener side-effect tests.
+- [x] Check errors/loading states are deterministic for overlapping async refreshes.
+- [x] Check repository injection failure has clear diagnostics/runtime error.
+- [x] Add rebuild-count tests for aspect precision.
+- [x] Add listener side-effect tests.
 - [ ] Add navigation integration tests.
 
 ## Runtime Design
@@ -39,8 +39,8 @@
 - [x] Define generated scope lifecycle protocol with owned and `.value` modes.
 - [x] Define generated proxy/aspect protocol.
 - [x] Define generated listener protocol as effect-stream listener.
-- [ ] Support sync and async ViewModel actions.
-- [ ] Support cancellation/stale async protection.
+- [x] Support sync and async ViewModel actions.
+- [x] Support cancellation/stale async protection.
 - [x] Support observer hooks for logging/devtools.
 - [x] Support test-friendly deterministic initialization.
 

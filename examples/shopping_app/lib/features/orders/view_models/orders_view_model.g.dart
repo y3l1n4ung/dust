@@ -79,11 +79,13 @@ class _OrdersViewModelScopeState extends State<OrdersViewModelScope> {
     final external = widget.value;
     return external == null
         ? ViewModelOwner<OrdersViewModel, OrdersViewModelArgs>(
+            debugName: 'OrdersViewModelScope',
             args: widget.args!,
             create: widget.create!,
             builder: _buildInherited,
           )
         : ViewModelOwner<OrdersViewModel, OrdersViewModelArgs>.value(
+            debugName: 'OrdersViewModelScope.value',
             value: external,
             builder: _buildInherited,
           );

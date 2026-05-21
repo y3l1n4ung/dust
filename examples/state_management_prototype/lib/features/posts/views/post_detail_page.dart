@@ -8,9 +8,10 @@ class PostDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewModel = context.watchPostDetailViewModel();
     final state = viewModel.value;
+    final postId = context.readPostDetailViewModel().postId;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Post #${viewModel.postId}')),
+      appBar: AppBar(title: Text('Post #$postId')),
       body: _buildBody(context, state),
     );
   }

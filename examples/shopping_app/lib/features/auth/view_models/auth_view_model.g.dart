@@ -6,10 +6,16 @@
 
 part of 'auth_view_model.dart';
 
+enum _AuthViewModelAspect { user, token, status, errorMessage }
+
 abstract class $AuthViewModel
     extends ViewModelBase<AuthState, AuthViewModelArgs> {
   $AuthViewModel(super.args)
     : super(initialState: AuthState(status: AuthStatus.unauthenticated));
+  User? get user => state.user;
+  String? get token => state.token;
+  AuthStatus get status => state.status;
+  String? get errorMessage => state.errorMessage;
   ShoppingRepository get repository => args.repository;
   StorageService get storage => args.storage;
 }
@@ -23,6 +29,26 @@ class _$AuthViewModelProxy {
   AuthState get value {
     AuthViewModelScope.of(_context);
     return _vm.value;
+  }
+
+  User? get user {
+    AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.user);
+    return _vm.state.user;
+  }
+
+  String? get token {
+    AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.token);
+    return _vm.state.token;
+  }
+
+  AuthStatus get status {
+    AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.status);
+    return _vm.state.status;
+  }
+
+  String? get errorMessage {
+    AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.errorMessage);
+    return _vm.state.errorMessage;
   }
 }
 
@@ -79,11 +105,13 @@ class _AuthViewModelScopeState extends State<AuthViewModelScope> {
     final external = widget.value;
     return external == null
         ? ViewModelOwner<AuthViewModel, AuthViewModelArgs>(
+            debugName: 'AuthViewModelScope',
             args: widget.args!,
             create: widget.create!,
             builder: _buildInherited,
           )
         : ViewModelOwner<AuthViewModel, AuthViewModelArgs>.value(
+            debugName: 'AuthViewModelScope.value',
             value: external,
             builder: _buildInherited,
           );
@@ -121,6 +149,20 @@ class _AuthViewModelInherited extends InheritedModel<Object> {
     _AuthViewModelInherited oldWidget,
     Set<Object> dependencies,
   ) {
+    for (final aspect in dependencies) {
+      if (aspect == _AuthViewModelAspect.user &&
+          state.user != oldWidget.state.user)
+        return true;
+      if (aspect == _AuthViewModelAspect.token &&
+          state.token != oldWidget.state.token)
+        return true;
+      if (aspect == _AuthViewModelAspect.status &&
+          state.status != oldWidget.state.status)
+        return true;
+      if (aspect == _AuthViewModelAspect.errorMessage &&
+          state.errorMessage != oldWidget.state.errorMessage)
+        return true;
+    }
     return false;
   }
 }

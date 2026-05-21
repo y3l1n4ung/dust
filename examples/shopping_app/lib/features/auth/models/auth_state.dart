@@ -1,8 +1,12 @@
+import 'package:derive_serde_annotation/derive_serde_annotation.dart';
+
 import 'user.dart';
+part 'auth_state.g.dart';
 
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
-class AuthState {
+@Derive([ToString(), CopyWith(), Eq()])
+class AuthState with _$AuthStateDust {
   final User? user;
   final String? token;
   final AuthStatus status;
@@ -16,18 +20,4 @@ class AuthState {
   });
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
-
-  AuthState copyWith({
-    User? user,
-    String? token,
-    AuthStatus? status,
-    String? errorMessage,
-  }) {
-    return AuthState(
-      user: user ?? this.user,
-      token: token ?? this.token,
-      status: status ?? this.status,
-      errorMessage: errorMessage ?? this.errorMessage,
-    );
-  }
 }

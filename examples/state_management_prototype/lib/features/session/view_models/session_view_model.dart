@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:collection/collection.dart';
 import 'package:state_management_prototype/features/session/models/session_state.dart';
 import 'package:dust_state/dust_state.dart';
 import 'package:state_management_prototype/shared/data/prototype_repository.dart';

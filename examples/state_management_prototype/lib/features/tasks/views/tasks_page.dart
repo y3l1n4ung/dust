@@ -112,6 +112,16 @@ class _TasksPageState extends State<TasksPage> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watchTaskBoardViewModel();
+    final todos = viewModel.todos;
+    final completedCount = todos.where((todo) => todo.completed).length;
+    final completionLabel = todos.isEmpty
+        ? '0%'
+        : '${((completedCount / todos.length) * 100).round()}%';
+    final visibleTodos = _visibleTodos(
+      todos,
+      viewModel.query,
+      viewModel.filter,
+    );
 
     if (_queryController.text != viewModel.query) {
       _queryController.value = TextEditingValue(
@@ -140,7 +150,7 @@ class _TasksPageState extends State<TasksPage> {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                if (viewModel.completedCount > 0)
+                if (completedCount > 0)
                   TextButton.icon(
                     onPressed: () =>
                         context.readTaskBoardViewModel().clearCompleted(),
@@ -156,9 +166,9 @@ class _TasksPageState extends State<TasksPage> {
             ),
             const SizedBox(height: 18),
             _MetricsHeader(
-              completedCount: viewModel.completedCount,
-              totalCount: viewModel.todos.length,
-              completionLabel: viewModel.completionLabel,
+              completedCount: completedCount,
+              totalCount: todos.length,
+              completionLabel: completionLabel,
             ),
             const SizedBox(height: 18),
             if (viewModel.errorMessage != null)
@@ -207,7 +217,7 @@ class _TasksPageState extends State<TasksPage> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () => context.readTaskBoardViewModel().refresh(),
-                child: viewModel.visibleTodos.isEmpty
+                child: visibleTodos.isEmpty
                     ? ListView(
                         children: const [
                           SizedBox(height: 120),
@@ -215,10 +225,10 @@ class _TasksPageState extends State<TasksPage> {
                         ],
                       )
                     : ListView.separated(
-                        itemCount: viewModel.visibleTodos.length,
+                        itemCount: visibleTodos.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
-                          final todo = viewModel.visibleTodos[index];
+                          final todo = visibleTodos[index];
                           return _TodoTile(
                             key: ValueKey(todo.id),
                             todo: todo,
@@ -245,6 +255,28 @@ String _filterLabel(TodoFilter filter) => switch (filter) {
   TodoFilter.open => 'Open',
   TodoFilter.done => 'Done',
 };
+
+List<RemoteTodo> _visibleTodos(
+  List<RemoteTodo> todos,
+  String query,
+  TodoFilter filter,
+) {
+  final normalizedQuery = query.trim().toLowerCase();
+  return todos
+      .where((todo) {
+        final matchesFilter = switch (filter) {
+          TodoFilter.all => true,
+          TodoFilter.open => !todo.completed,
+          TodoFilter.done => todo.completed,
+        };
+        final matchesQuery =
+            normalizedQuery.isEmpty ||
+            todo.title.toLowerCase().contains(normalizedQuery) ||
+            todo.lane.toLowerCase().contains(normalizedQuery);
+        return matchesFilter && matchesQuery;
+      })
+      .toList(growable: false);
+}
 
 class _MetricsHeader extends StatelessWidget {
   const _MetricsHeader({

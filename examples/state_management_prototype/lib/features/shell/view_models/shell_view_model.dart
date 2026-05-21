@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:dust_state/dust_state.dart';
 
 part 'shell_view_model.g.dart';

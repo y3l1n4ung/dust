@@ -76,11 +76,13 @@ class _CartViewModelScopeState extends State<CartViewModelScope> {
     final external = widget.value;
     return external == null
         ? ViewModelOwner<CartViewModel, CartViewModelArgs>(
+            debugName: 'CartViewModelScope',
             args: widget.args!,
             create: widget.create!,
             builder: _buildInherited,
           )
         : ViewModelOwner<CartViewModel, CartViewModelArgs>.value(
+            debugName: 'CartViewModelScope.value',
             value: external,
             builder: _buildInherited,
           );

@@ -13,6 +13,16 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final sessionViewModel = context.watchSessionViewModel();
     final taskBoardViewModel = context.watchTaskBoardViewModel();
+    final todos = taskBoardViewModel.todos;
+    final completedCount = todos.where((todo) => todo.completed).length;
+    final pendingCount = todos.length - completedCount;
+    final completionLabel = todos.isEmpty
+        ? '0%'
+        : '${((completedCount / todos.length) * 100).round()}%';
+    final spotlightTodos = todos
+        .where((todo) => !todo.completed)
+        .take(3)
+        .toList(growable: false);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -46,18 +56,9 @@ class DashboardPage extends StatelessWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _MetricCard(
-                label: 'Total Tasks',
-                value: '${taskBoardViewModel.todos.length}',
-              ),
-              _MetricCard(
-                label: 'In Progress',
-                value: '${taskBoardViewModel.pendingCount}',
-              ),
-              _MetricCard(
-                label: 'Success Rate',
-                value: taskBoardViewModel.completionLabel,
-              ),
+              _MetricCard(label: 'Total Tasks', value: '${todos.length}'),
+              _MetricCard(label: 'In Progress', value: '$pendingCount'),
+              _MetricCard(label: 'Success Rate', value: completionLabel),
             ],
           ),
           const SizedBox(height: 24),
@@ -68,13 +69,13 @@ class DashboardPage extends StatelessWidget {
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 12),
-          if (taskBoardViewModel.spotlightTodos.isEmpty)
+          if (spotlightTodos.isEmpty)
             const _EmptyCard(
               title: 'No pending work',
               body: 'Refresh the feed or switch to tasks to reopen items.',
             )
           else
-            for (final todo in taskBoardViewModel.spotlightTodos)
+            for (final todo in spotlightTodos)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _SpotlightCard(

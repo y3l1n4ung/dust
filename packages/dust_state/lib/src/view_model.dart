@@ -62,6 +62,17 @@ final class StateEffect {
   final Object value;
 }
 
+/// Token used by view models to ignore stale async work.
+@immutable
+final class ViewModelActionToken {
+  const ViewModelActionToken._(this.key, this.version);
+
+  /// Logical action key, usually a private string or symbol.
+  final Object key;
+
+  final int version;
+}
+
 /// Base class used by generated Dust view model bases.
 abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     extends ValueNotifier<TState> {
@@ -74,6 +85,7 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
 
   final StreamController<Object> _effects =
       StreamController<Object>.broadcast();
+  final Map<Object, int> _actionVersions = <Object, int>{};
   Future<void>? _initFuture;
   bool _didInit = false;
   bool _isDisposed = false;
@@ -107,6 +119,30 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     if (_isDisposed) return;
     observer?.onEffect(this, effect);
     _effects.add(effect);
+  }
+
+  /// Starts or supersedes an async action identified by [key].
+  ///
+  /// Store the returned token before awaiting. After the await, call
+  /// [isCurrentAction] before emitting state. This prevents older async work
+  /// from overwriting newer state.
+  @protected
+  ViewModelActionToken beginAction(Object key) {
+    final version = (_actionVersions[key] ?? 0) + 1;
+    _actionVersions[key] = version;
+    return ViewModelActionToken._(key, version);
+  }
+
+  /// Returns whether [token] still belongs to the latest action for its key.
+  @protected
+  bool isCurrentAction(ViewModelActionToken token) {
+    return !_isDisposed && _actionVersions[token.key] == token.version;
+  }
+
+  /// Invalidates any pending action for [key].
+  @protected
+  void cancelAction(Object key) {
+    _actionVersions[key] = (_actionVersions[key] ?? 0) + 1;
   }
 
   /// Override for one-time initialization.
@@ -158,6 +194,7 @@ class ViewModelOwner<
   /// Creates an owner that constructs and disposes the view model.
   const ViewModelOwner({
     super.key,
+    this.debugName,
     required this.args,
     required this.create,
     required this.builder,
@@ -166,6 +203,7 @@ class ViewModelOwner<
   /// Creates a provider for an externally owned view model.
   const ViewModelOwner.value({
     super.key,
+    this.debugName,
     required TViewModel this.value,
     required this.builder,
   }) : args = null,
@@ -173,6 +211,9 @@ class ViewModelOwner<
 
   /// Args factory for the owned constructor.
   final ViewModelArgsFactory<TArgs>? args;
+
+  /// Human-readable scope name used in dependency-injection errors.
+  final String? debugName;
 
   /// View model factory for the owned constructor.
   final ViewModelFactory<TViewModel, TArgs>? create;
@@ -214,7 +255,19 @@ class _ViewModelOwnerState<
     if (argsFactory == null || create == null) {
       throw StateError('Owned ViewModelOwner requires args and create.');
     }
-    final created = create(context, argsFactory(context));
+    late final TViewModel created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      final ownerName = widget.debugName ?? 'ViewModelOwner<$TViewModel>';
+      Error.throwWithStackTrace(
+        StateError(
+          '$ownerName failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
     _owned = created;
     scheduleMicrotask(() {
       if (mounted && identical(_owned, created)) {

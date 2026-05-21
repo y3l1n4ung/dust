@@ -135,6 +135,27 @@ TaskBoardViewModelListener(
 
 ViewModels emit effects with `emitEffect(effect)`. Effects do not mutate state.
 
+## Stale Async Protection
+
+Use action tokens when multiple async calls can overlap. Only the newest action
+for a key should commit state:
+
+```dart
+Future<void> refresh() async {
+  final token = beginAction(#refresh);
+  emit(state.copyWith(isLoading: true, errorMessage: null));
+
+  try {
+    final todos = await repository.fetchTodos(userId: 1, limit: 20);
+    if (!isCurrentAction(token)) return;
+    emit(state.copyWith(todos: todos, isLoading: false));
+  } catch (_) {
+    if (!isCurrentAction(token)) return;
+    emit(state.copyWith(isLoading: false, errorMessage: 'Load failed'));
+  }
+}
+```
+
 ## Observer
 
 ```dart

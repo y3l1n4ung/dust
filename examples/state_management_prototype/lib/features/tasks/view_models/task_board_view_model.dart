@@ -14,6 +14,16 @@ final class TaskBoardViewModelArgs extends ViewModelArgs {
   final PrototypeRepository repository;
 }
 
+sealed class TaskBoardEffect {
+  const TaskBoardEffect();
+}
+
+final class TaskAddedEffect extends TaskBoardEffect {
+  const TaskAddedEffect(this.title);
+
+  final String title;
+}
+
 @ViewModel(state: TaskBoardState, args: TaskBoardViewModelArgs)
 class TaskBoardViewModel extends $TaskBoardViewModel {
   TaskBoardViewModel(super.args);
@@ -25,6 +35,7 @@ class TaskBoardViewModel extends $TaskBoardViewModel {
   }
 
   Future<void> refresh({bool showLoading = false}) async {
+    final token = beginAction(#refresh);
     emit(
       state.copyWith(
         isLoading: showLoading,
@@ -35,6 +46,7 @@ class TaskBoardViewModel extends $TaskBoardViewModel {
 
     try {
       final todos = await repository.fetchTodos(userId: 1, limit: 12);
+      if (!isCurrentAction(token)) return;
       emit(
         state.copyWith(
           todos: todos,
@@ -44,6 +56,7 @@ class TaskBoardViewModel extends $TaskBoardViewModel {
         ),
       );
     } catch (_) {
+      if (!isCurrentAction(token)) return;
       emit(
         state.copyWith(
           isLoading: false,
@@ -86,6 +99,7 @@ class TaskBoardViewModel extends $TaskBoardViewModel {
       priority: priority,
     );
     emit(state.copyWith(todos: [newTodo, ...state.todos]));
+    emitEffect(TaskAddedEffect(title));
   }
 
   void deleteTodo(int todoId) {

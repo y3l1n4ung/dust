@@ -114,7 +114,7 @@ class PrototypeShell extends StatelessWidget {
         selectedIndex: shellViewModel.value.index,
         onDestinationSelected: (index) {
           final tab = ShellTab.values[index];
-          shellViewModel.selectTab(tab);
+          context.readShellViewModel().selectTab(tab);
           NavigationViewModelScope.read(context).handleShellTab(tab);
         },
         destinations: const [

@@ -79,11 +79,13 @@ class _CheckoutViewModelScopeState extends State<CheckoutViewModelScope> {
     final external = widget.value;
     return external == null
         ? ViewModelOwner<CheckoutViewModel, CheckoutViewModelArgs>(
+            debugName: 'CheckoutViewModelScope',
             args: widget.args!,
             create: widget.create!,
             builder: _buildInherited,
           )
         : ViewModelOwner<CheckoutViewModel, CheckoutViewModelArgs>.value(
+            debugName: 'CheckoutViewModelScope.value',
             value: external,
             builder: _buildInherited,
           );

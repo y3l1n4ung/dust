@@ -29,6 +29,7 @@ fn emits_generated_base_with_args_getters() {
     ));
     assert!(source.contains("PrototypeRepository get repository => args.repository;"));
     assert!(source.contains("class TaskBoardViewModelScope extends StatefulWidget"));
+    assert!(source.contains("debugName: 'TaskBoardViewModelScope'"));
     assert!(source.contains("class TaskBoardViewModelListener extends StatefulWidget"));
     assert!(source.contains("extension TaskBoardViewModelBuildContext on BuildContext"));
 }

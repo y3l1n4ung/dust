@@ -80,11 +80,13 @@ class _ProductsViewModelScopeState extends State<ProductsViewModelScope> {
     final external = widget.value;
     return external == null
         ? ViewModelOwner<ProductsViewModel, ProductsViewModelArgs>(
+            debugName: 'ProductsViewModelScope',
             args: widget.args!,
             create: widget.create!,
             builder: _buildInherited,
           )
         : ViewModelOwner<ProductsViewModel, ProductsViewModelArgs>.value(
+            debugName: 'ProductsViewModelScope.value',
             value: external,
             builder: _buildInherited,
           );
