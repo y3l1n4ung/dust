@@ -8,6 +8,9 @@ part of 'session_state.dart';
 
 const Object _undefined = Object();
 
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
+
 mixin _$SessionStateDust {
   SessionState get _dustSelf => this as SessionState;
 
@@ -15,8 +18,11 @@ mixin _$SessionStateDust {
   String toString() {
     return 'SessionState('
         'owner: ${_dustSelf.owner}, '
+        'posts: ${_dustSelf.posts}, '
         'isLoading: ${_dustSelf.isLoading}, '
         'isRefreshing: ${_dustSelf.isRefreshing}, '
+        'isPostsLoading: ${_dustSelf.isPostsLoading}, '
+        'isInitialized: ${_dustSelf.isInitialized}, '
         'errorMessage: ${_dustSelf.errorMessage}'
         ')';
   }
@@ -27,33 +33,54 @@ mixin _$SessionStateDust {
       other is SessionState &&
           runtimeType == other.runtimeType &&
           other.owner == _dustSelf.owner &&
+          _dustDeepCollectionEquality.equals(other.posts, _dustSelf.posts) &&
           other.isLoading == _dustSelf.isLoading &&
           other.isRefreshing == _dustSelf.isRefreshing &&
+          other.isPostsLoading == _dustSelf.isPostsLoading &&
+          other.isInitialized == _dustSelf.isInitialized &&
           other.errorMessage == _dustSelf.errorMessage;
 
   @override
   int get hashCode => Object.hashAll([
     runtimeType,
     _dustSelf.owner,
+    _dustDeepCollectionEquality.hash(_dustSelf.posts),
     _dustSelf.isLoading,
     _dustSelf.isRefreshing,
+    _dustSelf.isPostsLoading,
+    _dustSelf.isInitialized,
     _dustSelf.errorMessage,
   ]);
 
   SessionState copyWith({
     Object? owner = _undefined,
+    List<RemotePost>? posts,
     bool? isLoading,
     bool? isRefreshing,
+    bool? isPostsLoading,
+    bool? isInitialized,
     Object? errorMessage = _undefined,
   }) {
-    final nextOwnerSource = identical(owner, _undefined) ? _dustSelf.owner : owner as RemoteUser?;
-    final nextOwner = nextOwnerSource == null ? null : nextOwnerSource.copyWith();
+    final nextOwnerSource = identical(owner, _undefined)
+        ? _dustSelf.owner
+        : owner as RemoteUser?;
+    final nextOwner = nextOwnerSource == null
+        ? null
+        : nextOwnerSource.copyWith();
+    final nextPosts = List<RemotePost>.of(
+      (posts ?? _dustSelf.posts).map((item_1) => item_1.copyWith()),
+    );
 
     return SessionState(
       owner: nextOwner,
+      posts: nextPosts,
       isLoading: isLoading ?? _dustSelf.isLoading,
       isRefreshing: isRefreshing ?? _dustSelf.isRefreshing,
-      errorMessage: identical(errorMessage, _undefined) ? _dustSelf.errorMessage : errorMessage as String?,
+      isPostsLoading: isPostsLoading ?? _dustSelf.isPostsLoading,
+      isInitialized: isInitialized ?? _dustSelf.isInitialized,
+      errorMessage: identical(errorMessage, _undefined)
+          ? _dustSelf.errorMessage
+          : errorMessage as String?,
     );
   }
 }

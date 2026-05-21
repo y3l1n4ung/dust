@@ -125,6 +125,7 @@ fn constructor_knows_when_all_fields_are_constructible() {
             span: span(36, 45),
             kind: ParamKind::Positional,
             has_default: false,
+            default_value_source: None,
         }],
     };
 
@@ -161,6 +162,7 @@ fn constructor_detects_missing_required_fields() {
             span: span(36, 45),
             kind: ParamKind::Positional,
             has_default: false,
+            default_value_source: None,
         }],
     };
 

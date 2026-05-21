@@ -1,0 +1,11 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - lib/*.g.dart
+    - lib/**/*.g.dart
+
+linter:
+  rules:
+    prefer_const_constructors: false
+    unnecessary_underscores: false

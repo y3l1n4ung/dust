@@ -6,10 +6,20 @@
 
 part of 'remote_user.dart';
 
-Never _dustJsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) => value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_dustJsonAs<String>(value, key, 'String')) ?? _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) => _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+Never _dustJsonTypeError(Object? value, String key, String expected) =>
+    throw ArgumentError.value(value, key, 'expected $expected');
+T _dustJsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _dustJsonTypeError(value, key, expected);
+T _dustJsonParseString<T>(
+  Object? value,
+  String key,
+  String expected,
+  T? Function(String value) parse,
+) =>
+    parse(_dustJsonAs<String>(value, key, 'String')) ??
+    _dustJsonTypeError(value, key, expected);
+List<Object?> _dustJsonAsList(Object? value, String key) =>
+    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
 Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
   final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
@@ -19,9 +29,17 @@ Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
     _dustJsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _dustJsonAsUri(Object? value, String key) => _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) => _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+
+DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
+  value,
+  key,
+  'ISO-8601 DateTime string',
+  DateTime.tryParse,
+);
+Uri _dustJsonAsUri(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _dustJsonAsBigInt(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
 T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
@@ -53,16 +71,10 @@ mixin _$RemoteCompanyDust {
           other.catchPhrase == _dustSelf.catchPhrase;
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.name,
-    _dustSelf.catchPhrase,
-  ]);
+  int get hashCode =>
+      Object.hashAll([runtimeType, _dustSelf.name, _dustSelf.catchPhrase]);
 
-  RemoteCompany copyWith({
-    String? name,
-    String? catchPhrase,
-  }) {
+  RemoteCompany copyWith({String? name, String? catchPhrase}) {
     return RemoteCompany(
       name: name ?? _dustSelf.name,
       catchPhrase: catchPhrase ?? _dustSelf.catchPhrase,
@@ -144,16 +156,19 @@ Map<String, Object?> _$RemoteCompanyToJson(RemoteCompany instance) {
     'catchPhrase': instance.catchPhrase,
   };
 }
+
 // factory RemoteCompany.fromJson(Map<String, Object?> json) => _$RemoteCompanyFromJson(json);
 RemoteCompany _$RemoteCompanyFromJson(Map<String, Object?> json) {
   final nameValue = _dustJsonAs<String>(json['name'], 'name', 'String');
-  final catchPhraseValue = _dustJsonAs<String>(json['catchPhrase'], 'catchPhrase', 'String');
-
-  return RemoteCompany(
-    name: nameValue,
-    catchPhrase: catchPhraseValue,
+  final catchPhraseValue = _dustJsonAs<String>(
+    json['catchPhrase'],
+    'catchPhrase',
+    'String',
   );
+
+  return RemoteCompany(name: nameValue, catchPhrase: catchPhraseValue);
 }
+
 Map<String, Object?> _$RemoteUserToJson(RemoteUser instance) {
   return <String, Object?>{
     'id': instance.id,
@@ -165,15 +180,26 @@ Map<String, Object?> _$RemoteUserToJson(RemoteUser instance) {
     'company': _$RemoteCompanyToJson(instance.company),
   };
 }
+
 // factory RemoteUser.fromJson(Map<String, Object?> json) => _$RemoteUserFromJson(json);
 RemoteUser _$RemoteUserFromJson(Map<String, Object?> json) {
   final idValue = _dustJsonAs<int>(json['id'], 'id', 'int');
   final nameValue = _dustJsonAs<String>(json['name'], 'name', 'String');
-  final usernameValue = _dustJsonAs<String>(json['username'], 'username', 'String');
+  final usernameValue = _dustJsonAs<String>(
+    json['username'],
+    'username',
+    'String',
+  );
   final emailValue = _dustJsonAs<String>(json['email'], 'email', 'String');
   final phoneValue = _dustJsonAs<String>(json['phone'], 'phone', 'String');
-  final websiteValue = _dustJsonAs<String>(json['website'], 'website', 'String');
-  final companyValue = _$RemoteCompanyFromJson(_dustJsonAsMap(json['company'], 'company'));
+  final websiteValue = _dustJsonAs<String>(
+    json['website'],
+    'website',
+    'String',
+  );
+  final companyValue = _$RemoteCompanyFromJson(
+    _dustJsonAsMap(json['company'], 'company'),
+  );
 
   return RemoteUser(
     id: idValue,

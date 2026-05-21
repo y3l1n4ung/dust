@@ -1,21 +1,133 @@
 part of 'session_view_model.dart';
 
+enum _SessionViewModelAspect {
+  owner,
+  posts,
+  isLoading,
+  isRefreshing,
+  isPostsLoading,
+  isInitialized,
+  errorMessage,
+}
+
+abstract class $SessionViewModel
+    extends ViewModelBase<SessionState, SessionViewModelArgs> {
+  $SessionViewModel(super.args) : super(initialState: const SessionState());
+  RemoteUser? get owner => state.owner;
+  List<RemotePost> get posts => state.posts;
+  bool get isLoading => state.isLoading;
+  bool get isRefreshing => state.isRefreshing;
+  bool get isPostsLoading => state.isPostsLoading;
+  bool get isInitialized => state.isInitialized;
+  String? get errorMessage => state.errorMessage;
+  PrototypeRepository get repository => args.repository;
+}
+
+class _$SessionViewModelProxy {
+  _$SessionViewModelProxy(this._context, this._vm);
+  final BuildContext _context;
+  final SessionViewModel _vm;
+  SessionState get value {
+    SessionViewModelScope.of(_context);
+    return _vm.value;
+  }
+
+  RemoteUser? get owner {
+    SessionViewModelScope.of(_context, aspect: _SessionViewModelAspect.owner);
+    return _vm.state.owner;
+  }
+
+  List<RemotePost> get posts {
+    SessionViewModelScope.of(_context, aspect: _SessionViewModelAspect.posts);
+    return _vm.state.posts;
+  }
+
+  bool get isLoading {
+    SessionViewModelScope.of(
+      _context,
+      aspect: _SessionViewModelAspect.isLoading,
+    );
+    return _vm.state.isLoading;
+  }
+
+  bool get isRefreshing {
+    SessionViewModelScope.of(
+      _context,
+      aspect: _SessionViewModelAspect.isRefreshing,
+    );
+    return _vm.state.isRefreshing;
+  }
+
+  bool get isPostsLoading {
+    SessionViewModelScope.of(
+      _context,
+      aspect: _SessionViewModelAspect.isPostsLoading,
+    );
+    return _vm.state.isPostsLoading;
+  }
+
+  bool get isInitialized {
+    SessionViewModelScope.of(
+      _context,
+      aspect: _SessionViewModelAspect.isInitialized,
+    );
+    return _vm.state.isInitialized;
+  }
+
+  String? get errorMessage {
+    SessionViewModelScope.of(
+      _context,
+      aspect: _SessionViewModelAspect.errorMessage,
+    );
+    return _vm.state.errorMessage;
+  }
+
+  bool get hasData => _vm.state.hasData;
+  Future<void> refresh({bool showLoading = false}) =>
+      _vm.refresh(showLoading: showLoading);
+}
+
 class SessionViewModelScope extends StatefulWidget {
   const SessionViewModelScope({
     super.key,
+    required this.args,
     required this.create,
     required this.child,
-  });
-
-  final SessionViewModel Function(BuildContext context) create;
+  }) : value = null;
+  const SessionViewModelScope.value({
+    super.key,
+    required SessionViewModel this.value,
+    required this.child,
+  }) : args = null,
+       create = null;
+  final SessionViewModelArgs Function(BuildContext context)? args;
+  final SessionViewModel Function(
+    BuildContext context,
+    SessionViewModelArgs args,
+  )?
+  create;
+  final SessionViewModel? value;
   final Widget child;
-
-  static SessionViewModel of(BuildContext context) {
+  static SessionViewModel read(BuildContext context) {
     final scope =
-        context.dependOnInheritedWidgetOfExactType<_SessionViewModelInherited>();
-    if (scope == null) {
+        context
+                .getElementForInheritedWidgetOfExactType<
+                  _SessionViewModelInherited
+                >()
+                ?.widget
+            as _SessionViewModelInherited?;
+    if (scope == null)
       throw StateError('No SessionViewModelScope found in context.');
-    }
+    return scope.viewModel;
+  }
+
+  static SessionViewModel of(BuildContext context, {Object? aspect}) {
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<_SessionViewModelInherited>(
+          aspect: aspect,
+        );
+    if (scope == null)
+      throw StateError('No SessionViewModelScope found in context.');
     return scope.viewModel;
   }
 
@@ -24,38 +136,113 @@ class SessionViewModelScope extends StatefulWidget {
 }
 
 class _SessionViewModelScopeState extends State<SessionViewModelScope> {
-  SessionViewModel? _viewModel;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _viewModel ??= widget.create(context);
-  }
-
-  @override
-  void dispose() {
-    _viewModel?.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return _SessionViewModelInherited(
-      viewModel: _viewModel!,
+    final external = widget.value;
+    return external == null
+        ? ViewModelOwner<SessionViewModel, SessionViewModelArgs>(
+            args: widget.args!,
+            create: widget.create!,
+            builder: _buildInherited,
+          )
+        : ViewModelOwner<SessionViewModel, SessionViewModelArgs>.value(
+            value: external,
+            builder: _buildInherited,
+          );
+  }
+
+  Widget _buildInherited(BuildContext context, SessionViewModel viewModel) {
+    return ListenableBuilder(
+      listenable: viewModel,
+      builder: (context, child) => _SessionViewModelInherited(
+        viewModel: viewModel,
+        state: viewModel.value,
+        child: child!,
+      ),
       child: widget.child,
     );
   }
 }
 
-class _SessionViewModelInherited extends InheritedNotifier<SessionViewModel> {
+class _SessionViewModelInherited extends InheritedModel<Object> {
   const _SessionViewModelInherited({
     required this.viewModel,
+    required this.state,
     required super.child,
-  }) : super(notifier: viewModel);
-
+  });
   final SessionViewModel viewModel;
+  final SessionState state;
+  @override
+  bool updateShouldNotify(_SessionViewModelInherited oldWidget) =>
+      state != oldWidget.state;
+  @override
+  bool updateShouldNotifyDependent(
+    _SessionViewModelInherited oldWidget,
+    Set<Object> dependencies,
+  ) {
+    for (final aspect in dependencies) {
+      if (aspect == _SessionViewModelAspect.owner &&
+          state.owner != oldWidget.state.owner)
+        return true;
+      if (aspect == _SessionViewModelAspect.posts &&
+          !DeepCollectionEquality().equals(state.posts, oldWidget.state.posts))
+        return true;
+      if (aspect == _SessionViewModelAspect.isLoading &&
+          state.isLoading != oldWidget.state.isLoading)
+        return true;
+      if (aspect == _SessionViewModelAspect.isRefreshing &&
+          state.isRefreshing != oldWidget.state.isRefreshing)
+        return true;
+      if (aspect == _SessionViewModelAspect.isPostsLoading &&
+          state.isPostsLoading != oldWidget.state.isPostsLoading)
+        return true;
+      if (aspect == _SessionViewModelAspect.isInitialized &&
+          state.isInitialized != oldWidget.state.isInitialized)
+        return true;
+      if (aspect == _SessionViewModelAspect.errorMessage &&
+          state.errorMessage != oldWidget.state.errorMessage)
+        return true;
+    }
+    return false;
+  }
+}
+
+class SessionViewModelListener extends StatefulWidget {
+  const SessionViewModelListener({
+    super.key,
+    required this.listener,
+    required this.child,
+  });
+  final void Function(BuildContext context, Object effect) listener;
+  final Widget child;
+  @override
+  State<SessionViewModelListener> createState() =>
+      _SessionViewModelListenerState();
+}
+
+class _SessionViewModelListenerState extends State<SessionViewModelListener> {
+  StreamSubscription<Object>? _sub;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _sub?.cancel();
+    _sub = SessionViewModelScope.read(context).effects.listen((effect) {
+      if (mounted) widget.listener(context, effect);
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 extension SessionViewModelBuildContext on BuildContext {
-  SessionViewModel get sessionViewModel => SessionViewModelScope.of(this);
+  _$SessionViewModelProxy watchSessionViewModel() =>
+      _$SessionViewModelProxy(this, SessionViewModelScope.read(this));
+  SessionViewModel readSessionViewModel() => SessionViewModelScope.read(this);
 }

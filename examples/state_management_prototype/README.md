@@ -1,41 +1,48 @@
 # State Management Prototype
 
-Flutter prototype showing how to build a small app around Dust-generated
-models and HTTP clients without an additional state-management package.
+This prototype is the generator contract for Dust state management. App files are normal Flutter code; `*.g.dart` files are manually written output that `crates/dust_state_plugin` must generate later.
 
-This example uses:
+## Contract
 
-- `derive_annotation` for immutable `copyWith`, equality, and debug output
-- `derive_serde_annotation` for JSON models
-- `dust_http_client_annotation` for the generated API client
-- Flutter built-ins for state wiring: `ValueNotifier`,
-  `InheritedNotifier`, and `ValueListenableBuilder`
+- Package target: `dust_state`
+- Rust target: `crates/dust_state_plugin`
+- Runtime primitives: `ValueNotifier`, `InheritedModel`, `BuildContext` extensions
+- No Riverpod, Bloc, Provider, or signals dependency
 
-The structure stays MVVM-focused:
+## Generated Shape
 
-- models: immutable Dust-generated state and transport types
-- view_models: async orchestration and user actions
-- views: Flutter widgets that bind to one view model
-- data: repository + generated API access
+For each `@ViewModel(state: StateType, args: ArgsType)`, generation must emit:
 
-## Run
+- user-owned `XxxViewModelArgs extends ViewModelArgs` support
+- `$XxxViewModel` hidden base class
+- `XxxViewModelScope`
+- smart proxy returned by `context.watchXxxViewModel()`
+- `context.readXxxViewModel()`
+- `XxxViewModelListener`
+
+## Behavior To Preserve
+
+- `watch` subscribes by accessed aspect only.
+- `read` never subscribes.
+- `listener` handles side effects without rebuilding.
+- scope resolves dependencies, creates once, initializes once, and disposes once.
+- observer sees state changes and effects.
+- async init is scheduled outside build.
+
+## Verification
 
 ```bash
-cd examples/state_management_prototype
-flutter pub get
-cargo run -p dust_cli -- build --root .
-flutter run
+flutter analyze
+flutter test
+flutter build web
 ```
 
-## Structure
+## Current Manual Fixtures
 
-- `lib/models` contains Dust-generated app and transport models
-- `lib/api` contains the generated JSONPlaceholder client
-- `lib/view_models` contains the manual MVVM view model
-- `lib/views` contains the prototype UI inspired by `external_reference`
+- `features/tasks/view_models/task_board_view_model.g.dart`
+- `features/session/view_models/session_view_model.g.dart`
+- `features/theme/view_models/theme_view_model.g.dart`
+- `features/shell/view_models/shell_view_model.g.dart`
+- `features/posts/view_models/post_detail_view_model.g.dart`
 
-## Notes
-
-- The app uses JSONPlaceholder for live data.
-- State updates stay local and immutable by copying Dust-generated models.
-- The example is intentionally small enough to read end-to-end.
+These files should become golden sources for Rust generator tests.

@@ -4,10 +4,7 @@ part 'remote_user.g.dart';
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
 class RemoteCompany with _$RemoteCompanyDust {
-  const RemoteCompany({
-    required this.name,
-    required this.catchPhrase,
-  });
+  const RemoteCompany({required this.name, required this.catchPhrase});
 
   final String name;
   final String catchPhrase;

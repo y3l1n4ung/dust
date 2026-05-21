@@ -23,6 +23,7 @@ pub(crate) fn param(name: &str, ty: TypeIr, configs: Vec<ConfigApplicationIr>) -
         span: span(20, 30),
         kind: ParamKind::Positional,
         has_default: false,
+        default_value_source: None,
         traits: Vec::new(),
         configs,
     }
@@ -124,6 +125,7 @@ fn factory_constructor() -> ConstructorIr {
                 span: span(13, 14),
                 kind: ParamKind::Positional,
                 has_default: false,
+                default_value_source: None,
             },
             ConstructorParamIr {
                 name: "baseUrl".to_owned(),
@@ -131,6 +133,7 @@ fn factory_constructor() -> ConstructorIr {
                 span: span(14, 15),
                 kind: ParamKind::Named,
                 has_default: false,
+                default_value_source: None,
             },
         ],
     }
@@ -155,6 +158,7 @@ pub(crate) fn serde_model_class(name: &str, fields: Vec<FieldIr>) -> ClassIr {
             span: span(16, 17),
             kind: ParamKind::Named,
             has_default: field.has_default,
+            default_value_source: None,
         })
         .collect();
 
@@ -187,6 +191,7 @@ pub(crate) fn serde_model_class(name: &str, fields: Vec<FieldIr>) -> ClassIr {
                     span: span(18, 19),
                     kind: ParamKind::Positional,
                     has_default: false,
+                    default_value_source: None,
                 }],
             },
         ],

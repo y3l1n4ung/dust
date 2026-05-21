@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:state_management_prototype/features/session/models/session_state.dart';
 import 'package:state_management_prototype/features/session/view_models/session_view_model.dart';
 import 'package:state_management_prototype/features/shell/view_models/shell_view_model.dart';
-import 'package:state_management_prototype/features/tasks/models/task_board_state.dart';
 import 'package:state_management_prototype/features/tasks/view_models/task_board_view_model.dart';
+import 'package:state_management_prototype/router/app_route_path.dart';
+import 'package:state_management_prototype/router/navigation_view_model_scope.dart';
 import 'package:state_management_prototype/shared/models/remote_todo.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -11,95 +11,111 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sessionViewModel = context.sessionViewModel;
-    final taskBoardViewModel = context.taskBoardViewModel;
-    final shellViewModel = context.shellViewModel;
+    final sessionViewModel = context.watchSessionViewModel();
+    final taskBoardViewModel = context.watchTaskBoardViewModel();
 
-    return ValueListenableBuilder<SessionState>(
-      valueListenable: sessionViewModel,
-      builder: (context, sessionState, child) {
-        return ValueListenableBuilder<TaskBoardState>(
-          valueListenable: taskBoardViewModel,
-          builder: (context, taskState, child) {
-            final user = sessionState.owner;
-            final spotlight = taskState.spotlightTodos;
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (sessionState.errorMessage != null)
-                    _PageBanner(message: sessionState.errorMessage!),
-                  if (taskState.errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: _PageBanner(message: taskState.errorMessage!),
-                    ),
-                  _HeroCard(
-                    title: 'Dust operations cockpit',
-                    subtitle: user == null
-                        ? 'Loading workspace owner'
-                        : 'Live todo coordination for ${user.company.name}',
-                    initials: user?.initials ?? '…',
-                    isRefreshing:
-                        sessionState.isRefreshing || taskState.isRefreshing,
-                    onRefresh: () => Future.wait([
-                      sessionViewModel.refresh(),
-                      taskBoardViewModel.refresh(),
-                    ]),
-                  ),
-                  const SizedBox(height: 20),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      _MetricCard(
-                        label: 'Tracked',
-                        value: '${taskState.todos.length}',
-                      ),
-                      _MetricCard(
-                        label: 'Open',
-                        value: '${taskState.pendingCount}',
-                      ),
-                      _MetricCard(
-                        label: 'Complete',
-                        value: taskState.completionLabel,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Focus queue',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (spotlight.isEmpty)
-                    const _EmptyCard(
-                      title: 'No pending work',
-                      body:
-                          'Refresh the feed or switch to tasks to reopen items.',
-                    )
-                  else
-                    for (final todo in spotlight)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _SpotlightCard(
-                          todo: todo,
-                          onOpen: () => taskBoardViewModel.spotlightTodo(
-                            todo,
-                            shellViewModel,
-                          ),
-                        ),
-                      ),
-                ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (sessionViewModel.errorMessage != null)
+            _PageBanner(message: sessionViewModel.errorMessage!),
+          if (taskBoardViewModel.errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: _PageBanner(message: taskBoardViewModel.errorMessage!),
+            ),
+          _HeroCard(
+            title: 'Project Dashboard',
+            subtitle: sessionViewModel.owner == null
+                ? 'Loading workspace...'
+                : 'Project coordination for ${sessionViewModel.owner!.company.name}',
+            initials: sessionViewModel.owner?.initials ?? '…',
+            lastUpdated: 'Just now',
+            isRefreshing:
+                sessionViewModel.isRefreshing ||
+                taskBoardViewModel.isRefreshing,
+            onRefresh: () => Future.wait([
+              context.readSessionViewModel().refresh(),
+              context.readTaskBoardViewModel().refresh(),
+            ]),
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _MetricCard(
+                label: 'Total Tasks',
+                value: '${taskBoardViewModel.todos.length}',
               ),
-            );
-          },
-        );
-      },
+              _MetricCard(
+                label: 'In Progress',
+                value: '${taskBoardViewModel.pendingCount}',
+              ),
+              _MetricCard(
+                label: 'Success Rate',
+                value: taskBoardViewModel.completionLabel,
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Action Required',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 12),
+          if (taskBoardViewModel.spotlightTodos.isEmpty)
+            const _EmptyCard(
+              title: 'No pending work',
+              body: 'Refresh the feed or switch to tasks to reopen items.',
+            )
+          else
+            for (final todo in taskBoardViewModel.spotlightTodos)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _SpotlightCard(
+                  todo: todo,
+                  onOpen: () => context.readTaskBoardViewModel().spotlightTodo(
+                    todo,
+                    context.readShellViewModel(),
+                  ),
+                ),
+              ),
+          const SizedBox(height: 24),
+          Text(
+            'Recent posts',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 12),
+          if (sessionViewModel.isPostsLoading)
+            const Center(child: CircularProgressIndicator())
+          else
+            for (final post in sessionViewModel.posts)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Card(
+                  child: ListTile(
+                    title: Text(post.title),
+                    subtitle: Text(
+                      post.body,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => NavigationViewModelScope.read(
+                      context,
+                    ).push(PostDetailPath(post.id)),
+                  ),
+                ),
+              ),
+        ],
+      ),
     );
   }
 }
@@ -109,6 +125,7 @@ class _HeroCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.initials,
+    required this.lastUpdated,
     required this.isRefreshing,
     required this.onRefresh,
   });
@@ -116,6 +133,7 @@ class _HeroCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String initials;
+  final String lastUpdated;
   final bool isRefreshing;
   final Future<void> Function() onRefresh;
 
@@ -142,11 +160,18 @@ class _HeroCard extends StatelessWidget {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Updated $lastUpdated',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelSmall?.copyWith(color: scheme.outline),
+                  ),
                 ],
               ),
             ),
@@ -211,8 +236,8 @@ class _MetricCard extends StatelessWidget {
               Text(
                 value,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ],
           ),
@@ -233,7 +258,10 @@ class _SpotlightCard extends StatelessWidget {
     return Card(
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        leading: Icon(Icons.radar, color: Theme.of(context).colorScheme.primary),
+        leading: Icon(
+          Icons.radar,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         title: Text(todo.title, maxLines: 2, overflow: TextOverflow.ellipsis),
         subtitle: Text('${todo.lane} lane • ${todo.priority} priority'),
         trailing: FilledButton.tonal(

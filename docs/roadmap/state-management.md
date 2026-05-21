@@ -2,57 +2,98 @@
 
 ## Goal
 
-Generate lightweight, type-safe state management code from Dart annotations
-without locking users into one ecosystem first.
+Generate Flutter-native, type-safe ViewModel code from Dart annotations without Riverpod, Bloc, Provider, or signals. Dust state uses normal Flutter primitives: `ValueNotifier`, generated scopes, `InheritedModel`, and `BuildContext` extensions.
 
 ## Package Shape
 
-- Dart annotation package: `state_annotation`
-- Rust plugin crate: `dust_plugin_state`
-- Optional adapters: Flutter `ChangeNotifier`, Riverpod, Bloc.
+- Dart package: `dust_state`
+- Rust crate: `crates/dust_state_plugin`
+- Prototype contract: `examples/state_management_prototype`
 
-## API Sketch
+`dust_state` owns annotations and the small runtime. No deprecated `*_annotation` shim is planned.
+
+## Public API
 
 ```dart
-@StateStore()
-class CounterState with _$CounterStateDust {
-  final int value;
-  final bool loading;
+final class TaskBoardArgs extends ViewModelArgs {
+  const TaskBoardArgs({
+    required this.repository,
+    super.observer,
+  });
 
-  const CounterState({required this.value, this.loading = false});
+  final PrototypeRepository repository;
 }
 
-@StateActions(forState: CounterState)
-abstract interface class CounterActions {
-  CounterState increment(CounterState state);
-  Future<CounterState> load(CounterState state);
+@ViewModel(state: TaskBoardState, args: TaskBoardArgs)
+final class TaskBoardViewModel extends $TaskBoardViewModel {
+  TaskBoardViewModel(super.args);
+
+  @override
+  Future<void> onInit() async {
+    await refresh(showLoading: true);
+  }
+
+  Future<void> refresh({bool showLoading = false}) async {
+    if (showLoading) emit(state.copyWith(isLoading: true));
+    final todos = await repository.fetchTodos(userId: 1, limit: 20);
+    emit(state.copyWith(todos: todos, isLoading: false));
+  }
 }
 ```
 
-Generated output:
+Enum/imported states use explicit constant initial values:
 
 ```dart
-final store = _$CounterStore(initialState: const CounterState(value: 0));
-store.dispatch(const Increment());
+@ViewModel(
+  state: ShellTab,
+  args: ShellViewModelArgs,
+  initial: ShellTab.dashboard,
+)
+final class ShellViewModel extends $ShellViewModel {
+  ShellViewModel(super.args);
+}
 ```
 
-## Generator Work
+Generated output owns:
 
-- Reuse `Eq()` and `CopyWith()` for immutable state models.
-- Generate action classes from methods.
-- Generate reducer dispatch with typed events.
-- Generate async effect handling with explicit loading/error states.
-- Keep core runtime plain Dart.
-- Add optional Flutter adapters after core is stable.
+- `$TaskBoardViewModel` typed base extending `ViewModelBase<TaskBoardState, TaskBoardArgs>`
+- dependency getters such as `repository => args.repository`
+- `TaskBoardViewModelScope`
+- `TaskBoardViewModelListener`
+- smart proxy returned by `context.watchTaskBoardViewModel()`
+- `context.readTaskBoardViewModel()` extension
 
-## Tests
+## Runtime Contract
 
-- Golden tests for store, actions, reducers, async effects.
-- Dart runtime tests for dispatch order and error propagation.
-- Flutter adapter tests only in Flutter example package.
+- `ViewModelBase` owns `state`, `emit`, `emitEffect`, idempotent `init`, observer hooks, and disposal safety.
+- `ViewModelArgs` is the only dependency injection path; no string map injection.
+- `watch` returns a smart proxy and registers only accessed aspects.
+- `read` returns the raw ViewModel and never registers dependencies.
+- listeners consume effect streams without rebuilding UI.
+- scopes create, initialize, and dispose owned ViewModels exactly once.
+- `.value` scopes provide externally owned ViewModels and never dispose them.
 
-## Done
+## Current Implementation Status
 
-- Core state store works without Flutter.
-- Flutter adapter is thin and optional.
-- State transitions are fully typed and analyzer-clean.
+Implemented now:
+
+- `packages/dust_state` runtime and annotation package.
+- manual prototype `.g.dart` files migrated to typed args + runtime base.
+- `crates/dust_state_plugin` parses, validates, and emits base/scope/proxy/listener/context-extension output.
+- generated aspect metadata is emitted from local and workspace state fields.
+- driver test verifies state output emission.
+
+Still open:
+- golden snapshots for generated state files.
+- driver check/watch/clean coverage for state outputs.
+- stale async cancellation helpers for racing actions.
+
+## Verified
+
+- `flutter analyze packages/dust_state`
+- `flutter test packages/dust_state`
+- `flutter analyze` in `examples/state_management_prototype`
+- `flutter test` in `examples/state_management_prototype`
+- `flutter build web` in `examples/state_management_prototype`
+- `cargo test -p dust_state_plugin`
+- `cargo test -p dust_driver --test driver_tests state_outputs`

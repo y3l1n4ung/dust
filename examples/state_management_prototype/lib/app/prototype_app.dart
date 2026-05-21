@@ -1,142 +1,140 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:state_management_prototype/features/dashboard/views/dashboard_page.dart';
-import 'package:state_management_prototype/features/profile/views/profile_page.dart';
+import 'package:state_management_prototype/features/session/view_models/session_view_model.dart';
 import 'package:state_management_prototype/features/shell/view_models/shell_view_model.dart';
-import 'package:state_management_prototype/features/tasks/views/tasks_page.dart';
+import 'package:state_management_prototype/features/tasks/view_models/task_board_view_model.dart';
 import 'package:state_management_prototype/features/theme/view_models/theme_view_model.dart';
+import 'package:state_management_prototype/router/app_router_delegate.dart';
+import 'package:state_management_prototype/router/app_route_information_parser.dart';
+import 'package:state_management_prototype/router/navigation_view_model.dart';
+import 'package:state_management_prototype/router/navigation_view_model_scope.dart';
+import 'package:state_management_prototype/shared/api/prototype_api.dart';
+import 'package:state_management_prototype/shared/data/prototype_repository.dart';
+import 'package:state_management_prototype/shared/data/repository_scope.dart';
+import 'package:state_management_prototype/shared/data/state_observer.dart';
 
 class PrototypeApp extends StatelessWidget {
-  const PrototypeApp({super.key});
+  const PrototypeApp({
+    super.key,
+    this.repository,
+    this.observer = const LoggingStateObserver(),
+  });
+
+  final PrototypeRepository? repository;
+  final StateObserver observer;
 
   @override
   Widget build(BuildContext context) {
-    final themeViewModel = context.themeViewModel;
-
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: themeViewModel,
-      builder: (context, themeMode, child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Dust State Prototype',
-          themeMode: themeMode,
-          theme: _buildTheme(Brightness.light),
-          darkTheme: _buildTheme(Brightness.dark),
-          home: const _PrototypeShell(),
-        );
-      },
+    return RepositoryScope(
+      repository: repository ?? LivePrototypeRepository(PrototypeApi(Dio())),
+      observer: observer,
+      child: SessionViewModelScope(
+        args: (context) => SessionViewModelArgs(
+          repository: context.repository,
+          observer: context.observer,
+        ),
+        create: (context, args) => SessionViewModel(args),
+        child: ThemeViewModelScope(
+          args: (context) => ThemeViewModelArgs(observer: context.observer),
+          create: (context, args) => ThemeViewModel(args),
+          child: ShellViewModelScope(
+            args: (context) => ShellViewModelArgs(observer: context.observer),
+            create: (context, args) => ShellViewModel(args),
+            child: NavigationViewModelScope(
+              navigationViewModel: NavigationViewModel(),
+              child: TaskBoardViewModelScope(
+                args: (context) => TaskBoardViewModelArgs(
+                  repository: context.repository,
+                  observer: context.observer,
+                ),
+                create: (context, args) => TaskBoardViewModel(args),
+                child: const _AppView(),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
 
-ThemeData _buildTheme(Brightness brightness) {
-  final seed = brightness == Brightness.light
-      ? const Color(0xFF0B7285)
-      : const Color(0xFF80EDC7);
-  final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+class _AppView extends StatefulWidget {
+  const _AppView();
 
-  return ThemeData(
-    useMaterial3: true,
-    colorScheme: scheme,
-    scaffoldBackgroundColor: scheme.surface,
-    appBarTheme: AppBarTheme(
-      backgroundColor: Colors.transparent,
-      foregroundColor: scheme.onSurface,
-      elevation: 0,
-    ),
-    cardTheme: CardThemeData(
-      elevation: 0,
-      color: scheme.surfaceContainerHighest.withValues(alpha: 0.75),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-    ),
-    navigationBarTheme: NavigationBarThemeData(
-      indicatorColor: scheme.primaryContainer,
-      backgroundColor: scheme.surface,
-      labelTextStyle: WidgetStateProperty.all(
-        const TextStyle(fontWeight: FontWeight.w600),
-      ),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: scheme.surfaceContainerHigh,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
-        borderSide: BorderSide.none,
-      ),
-    ),
-    chipTheme: ChipThemeData(
-      selectedColor: scheme.primaryContainer,
-      backgroundColor: scheme.surfaceContainerHigh,
-      labelStyle: TextStyle(color: scheme.onSurface),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    ),
-  );
+  @override
+  State<_AppView> createState() => _AppViewState();
 }
 
-class _PrototypeShell extends StatelessWidget {
-  const _PrototypeShell();
+class _AppViewState extends State<_AppView> {
+  late final AppRouterDelegate _routerDelegate;
+  late final AppRouteInformationParser _routeInformationParser;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final navigationViewModel = NavigationViewModelScope.read(context);
+    _routerDelegate = AppRouterDelegate(navigationViewModel);
+    _routeInformationParser = AppRouteInformationParser();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final shellViewModel = context.shellViewModel;
+    final themeViewModel = context.watchThemeViewModel();
 
-    return ValueListenableBuilder<ShellTab>(
-      valueListenable: shellViewModel,
-      builder: (context, selectedTab, child) {
-        return Scaffold(
-          body: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context)
-                      .colorScheme
-                      .primaryContainer
-                      .withValues(alpha: 0.55),
-                  Theme.of(context).colorScheme.surface,
-                  Theme.of(context)
-                      .colorScheme
-                      .tertiaryContainer
-                      .withValues(alpha: 0.35),
-                ],
-              ),
-            ),
-            child: SafeArea(
-              child: IndexedStack(
-                index: selectedTab.index,
-                children: const [
-                  DashboardPage(),
-                  TasksPage(),
-                  ProfilePage(),
-                ],
-              ),
-            ),
+    return MaterialApp.router(
+      title: 'Dust Prototype',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF0B7285),
+          brightness: themeViewModel.value == ThemeMode.dark
+              ? Brightness.dark
+              : Brightness.light,
+        ),
+      ),
+      routerDelegate: _routerDelegate,
+      routeInformationParser: _routeInformationParser,
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class PrototypeShell extends StatelessWidget {
+  const PrototypeShell({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final shellViewModel = context.watchShellViewModel();
+
+    return Scaffold(
+      body: child,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: shellViewModel.value.index,
+        onDestinationSelected: (index) {
+          final tab = ShellTab.values[index];
+          shellViewModel.selectTab(tab);
+          NavigationViewModelScope.read(context).handleShellTab(tab);
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: 'Dashboard',
           ),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: selectedTab.index,
-            onDestinationSelected: (index) =>
-                shellViewModel.selectTab(ShellTab.values[index]),
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.dashboard_outlined),
-                selectedIcon: Icon(Icons.dashboard),
-                label: 'Overview',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.checklist_rtl_outlined),
-                selectedIcon: Icon(Icons.checklist_rtl),
-                label: 'Tasks',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.person_outline),
-                selectedIcon: Icon(Icons.person),
-                label: 'Profile',
-              ),
-            ],
+          NavigationDestination(
+            icon: Icon(Icons.task_alt_outlined),
+            selectedIcon: Icon(Icons.task_alt),
+            label: 'Tasks',
           ),
-        );
-      },
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+      ),
     );
   }
 }

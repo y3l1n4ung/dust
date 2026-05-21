@@ -68,6 +68,7 @@ fn copywith_copies_collection_fields_without_aliasing() {
                             span: span(40, 41),
                             kind: ParamKind::Positional,
                             has_default: false,
+                            default_value_source: None,
                         },
                         ConstructorParamIr {
                             name: "items".to_owned(),
@@ -75,6 +76,7 @@ fn copywith_copies_collection_fields_without_aliasing() {
                             span: span(42, 44),
                             kind: ParamKind::Positional,
                             has_default: false,
+                            default_value_source: None,
                         },
                         ConstructorParamIr {
                             name: "tags".to_owned(),
@@ -82,6 +84,7 @@ fn copywith_copies_collection_fields_without_aliasing() {
                             span: span(45, 47),
                             kind: ParamKind::Positional,
                             has_default: false,
+                            default_value_source: None,
                         },
                         ConstructorParamIr {
                             name: "metrics".to_owned(),
@@ -89,6 +92,7 @@ fn copywith_copies_collection_fields_without_aliasing() {
                             span: span(48, 49),
                             kind: ParamKind::Positional,
                             has_default: false,
+                            default_value_source: None,
                         },
                     ],
                 }],
@@ -158,6 +162,7 @@ fn copywith_clones_nested_dust_models() {
                             span: span(3, 4),
                             kind: ParamKind::Positional,
                             has_default: false,
+                            default_value_source: None,
                         }],
                     }],
                     methods: Vec::new(),
@@ -204,6 +209,7 @@ fn copywith_clones_nested_dust_models() {
                                 span: span(24, 25),
                                 kind: ParamKind::Positional,
                                 has_default: false,
+                                default_value_source: None,
                             },
                             ConstructorParamIr {
                                 name: "prices".to_owned(),
@@ -211,6 +217,7 @@ fn copywith_clones_nested_dust_models() {
                                 span: span(25, 26),
                                 kind: ParamKind::Positional,
                                 has_default: false,
+                                default_value_source: None,
                             },
                         ],
                     }],
@@ -288,6 +295,7 @@ fn copywith_copies_collection_fields() {
                             span: span(40, 41),
                             kind: ParamKind::Named,
                             has_default: false,
+                            default_value_source: None,
                         },
                         ConstructorParamIr {
                             name: "metrics".to_owned(),
@@ -295,6 +303,7 @@ fn copywith_copies_collection_fields() {
                             span: span(48, 49),
                             kind: ParamKind::Named,
                             has_default: false,
+                            default_value_source: None,
                         },
                     ],
                 }],

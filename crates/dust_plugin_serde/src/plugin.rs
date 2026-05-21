@@ -1,5 +1,5 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::{LibraryIr, SymbolId};
+use dust_ir::LibraryIr;
 use dust_plugin_api::{DustPlugin, PluginContribution, SymbolPlan};
 
 use crate::{emit::emit_library, validate::validate_library};
@@ -15,26 +15,32 @@ pub fn register_plugin() -> SerdePlugin {
     SerdePlugin
 }
 
+const CLAIMED_TRAITS: &[&str] = &[
+    "derive_serde_annotation::Serialize",
+    "derive_serde_annotation::Deserialize",
+];
+
+const CLAIMED_CONFIGS: &[&str] = &["derive_serde_annotation::SerDe"];
+
+const SUPPORTED_ANNOTATIONS: &[&str] = &["Serialize", "Deserialize", "SerDe"];
+
 impl DustPlugin for SerdePlugin {
     fn plugin_name(&self) -> &'static str {
         "dust_plugin_serde"
     }
 
     /// Claims the core serde traits defined in the `derive_serde_annotation` package.
-    fn claimed_traits(&self) -> Vec<SymbolId> {
-        vec![
-            SymbolId::new("derive_serde_annotation::Serialize"),
-            SymbolId::new("derive_serde_annotation::Deserialize"),
-        ]
+    fn claimed_traits(&self) -> &'static [&'static str] {
+        CLAIMED_TRAITS
     }
 
     /// Claims the core configuration trait for customizing serialization behavior.
-    fn claimed_configs(&self) -> Vec<SymbolId> {
-        vec![SymbolId::new("derive_serde_annotation::SerDe")]
+    fn claimed_configs(&self) -> &'static [&'static str] {
+        CLAIMED_CONFIGS
     }
 
-    fn supported_annotations(&self) -> Vec<&'static str> {
-        vec!["Serialize", "Deserialize", "SerDe"]
+    fn supported_annotations(&self) -> &'static [&'static str] {
+        SUPPORTED_ANNOTATIONS
     }
 
     /// Informs the resolution engine that this plugin will generate specific private

@@ -1,80 +1,106 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:collection/collection.dart';
 import 'package:state_management_prototype/features/shell/view_models/shell_view_model.dart';
 import 'package:state_management_prototype/features/tasks/models/task_board_state.dart';
-import 'package:state_management_prototype/shared/annotations.dart';
+import 'package:dust_state/dust_state.dart';
 import 'package:state_management_prototype/shared/data/prototype_repository.dart';
 import 'package:state_management_prototype/shared/models/remote_todo.dart';
 
 part 'task_board_view_model.g.dart';
 
-@ViewModel()
-class TaskBoardViewModel extends ValueNotifier<TaskBoardState> {
-  TaskBoardViewModel(this._repository) : super(const TaskBoardState());
+final class TaskBoardViewModelArgs extends ViewModelArgs {
+  const TaskBoardViewModelArgs({required this.repository, super.observer});
 
-  final PrototypeRepository _repository;
-  bool _initializing = false;
+  final PrototypeRepository repository;
+}
 
-  TaskBoardState get state => value;
-  set state(TaskBoardState nextState) => value = nextState;
+@ViewModel(state: TaskBoardState, args: TaskBoardViewModelArgs)
+class TaskBoardViewModel extends $TaskBoardViewModel {
+  TaskBoardViewModel(super.args);
 
-  Future<void> initialize() async {
-    if (_initializing || state.todos.isNotEmpty) {
-      return;
-    }
-    _initializing = true;
-    try {
-      await refresh(showLoading: true);
-    } finally {
-      _initializing = false;
-    }
+  @override
+  Future<void> onInit() async {
+    await refresh(showLoading: true);
+    emit(state.copyWith(isInitialized: true));
   }
 
   Future<void> refresh({bool showLoading = false}) async {
-    state = state.copyWith(
-      isLoading: showLoading,
-      isRefreshing: !showLoading,
-      errorMessage: null,
+    emit(
+      state.copyWith(
+        isLoading: showLoading,
+        isRefreshing: !showLoading,
+        errorMessage: null,
+      ),
     );
 
     try {
-      final todos = await _repository.fetchTodos(userId: 1, limit: 12);
-      state = state.copyWith(
-        todos: todos,
-        isLoading: false,
-        isRefreshing: false,
-        errorMessage: null,
+      final todos = await repository.fetchTodos(userId: 1, limit: 12);
+      emit(
+        state.copyWith(
+          todos: todos,
+          isLoading: false,
+          isRefreshing: false,
+          errorMessage: null,
+        ),
       );
     } catch (_) {
-      state = state.copyWith(
-        isLoading: false,
-        isRefreshing: false,
-        errorMessage: 'Unable to load task board right now.',
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isRefreshing: false,
+          errorMessage: 'Unable to load task board right now.',
+        ),
       );
     }
   }
 
   void setQuery(String query) {
-    state = state.copyWith(query: query);
+    emit(state.copyWith(query: query));
   }
 
   void setFilter(TodoFilter filter) {
-    state = state.copyWith(filter: filter);
+    emit(state.copyWith(filter: filter));
   }
 
   void toggleTodo(int todoId) {
-    state = state.copyWith(
-      todos: [
-        for (final todo in state.todos)
-          todo.id == todoId
-              ? todo.copyWith(completed: !todo.completed)
-              : todo,
-      ],
+    emit(
+      state.copyWith(
+        todos: [
+          for (final todo in state.todos)
+            todo.id == todoId
+                ? todo.copyWith(completed: !todo.completed)
+                : todo,
+        ],
+      ),
+    );
+  }
+
+  void addTodo(String title, String lane, String priority) {
+    final nextId = (state.todos.map((e) => e.id).maxOrNull ?? 0) + 1;
+    final newTodo = RemoteTodo(
+      id: nextId,
+      userId: 1,
+      title: title,
+      completed: false,
+      lane: lane,
+      priority: priority,
+    );
+    emit(state.copyWith(todos: [newTodo, ...state.todos]));
+  }
+
+  void deleteTodo(int todoId) {
+    emit(
+      state.copyWith(
+        todos: state.todos.where((todo) => todo.id != todoId).toList(),
+      ),
     );
   }
 
   void clearCompleted() {
-    state = state.copyWith(
-      todos: state.todos.where((todo) => !todo.completed).toList(),
+    emit(
+      state.copyWith(
+        todos: state.todos.where((todo) => !todo.completed).toList(),
+      ),
     );
   }
 

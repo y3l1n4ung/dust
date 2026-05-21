@@ -1,3 +1,1 @@
-class ViewModel {
-  const ViewModel();
-}
+export 'package:dust_state/dust_state.dart' show ViewModel;

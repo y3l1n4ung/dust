@@ -27,7 +27,7 @@ Add these packages when you want generated Dio clients:
 
 Add this package for state management (integrated in prototype):
 
-- `dust_state_annotation` (Coming soon)
+- `dust_state` (planned)
 
 Add this package for typed Navigator 2.0 routing (local package, planned
 generator):

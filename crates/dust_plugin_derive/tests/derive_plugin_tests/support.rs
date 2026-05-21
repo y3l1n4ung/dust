@@ -46,6 +46,7 @@ pub(crate) fn class_with_traits(name: &str, traits: &[&str]) -> ClassIr {
                     span: span(45, 47),
                     kind: ParamKind::Positional,
                     has_default: false,
+                    default_value_source: None,
                 },
                 ConstructorParamIr {
                     name: "age".to_owned(),
@@ -53,6 +54,7 @@ pub(crate) fn class_with_traits(name: &str, traits: &[&str]) -> ClassIr {
                     span: span(49, 52),
                     kind: ParamKind::Positional,
                     has_default: false,
+                    default_value_source: None,
                 },
             ],
         }],

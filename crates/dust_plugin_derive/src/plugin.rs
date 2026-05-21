@@ -1,7 +1,9 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::{LibraryIr, SymbolId};
+use dust_ir::LibraryIr;
 use dust_parser_dart::ParsedLibrarySurface;
-use dust_plugin_api::{DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder};
+use dust_plugin_api::{
+    DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
+};
 
 use crate::{
     analysis::collect_workspace_analysis, emit::emit_library,
@@ -16,22 +18,26 @@ pub fn register_plugin() -> DerivePlugin {
     DerivePlugin
 }
 
+const CLAIMED_TRAITS: &[&str] = &[
+    "derive_annotation::ToString",
+    "derive_annotation::Debug",
+    "derive_annotation::Eq",
+    "derive_annotation::CopyWith",
+];
+
+const SUPPORTED_ANNOTATIONS: &[&str] = &["Derive", "ToString", "Debug", "Eq", "CopyWith"];
+
 impl DustPlugin for DerivePlugin {
     fn plugin_name(&self) -> &'static str {
         "dust_plugin_derive"
     }
 
-    fn claimed_traits(&self) -> Vec<SymbolId> {
-        vec![
-            SymbolId::new("derive_annotation::ToString"),
-            SymbolId::new("derive_annotation::Debug"),
-            SymbolId::new("derive_annotation::Eq"),
-            SymbolId::new("derive_annotation::CopyWith"),
-        ]
+    fn claimed_traits(&self) -> &'static [&'static str] {
+        CLAIMED_TRAITS
     }
 
-    fn supported_annotations(&self) -> Vec<&'static str> {
-        vec!["Derive", "ToString", "Debug", "Eq", "CopyWith"]
+    fn supported_annotations(&self) -> &'static [&'static str] {
+        SUPPORTED_ANNOTATIONS
     }
 
     fn requested_symbols(&self, library: &LibraryIr) -> Vec<String> {
@@ -51,6 +57,7 @@ impl DustPlugin for DerivePlugin {
 
     fn collect_workspace_analysis(
         &self,
+        _context: WorkspaceAnalysisContext<'_>,
         library: &ParsedLibrarySurface,
         analysis: &mut WorkspaceAnalysisBuilder,
     ) {

@@ -10,6 +10,13 @@ dependencies:
   flutter:
     sdk: flutter
 
+  collection: ^1.19.0
+  cupertino_icons: ^1.0.8
+  dio: ^5.8.0
+  dust_state:
+    path: ../../packages/dust_state
+  derive_annotation:
+    path: ../../packages/derive_annotation
   derive_serde_annotation:
     path: ../../packages/derive_serde_annotation
   dust_http_client_annotation:

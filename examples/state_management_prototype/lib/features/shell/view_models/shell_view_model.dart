@@ -1,18 +1,26 @@
 import 'package:flutter/widgets.dart';
-import 'package:state_management_prototype/shared/annotations.dart';
+import 'package:dust_state/dust_state.dart';
 
 part 'shell_view_model.g.dart';
 
 enum ShellTab { dashboard, tasks, profile }
 
-@ViewModel()
-class ShellViewModel extends ValueNotifier<ShellTab> {
-  ShellViewModel() : super(ShellTab.dashboard);
+final class ShellViewModelArgs extends ViewModelArgs {
+  const ShellViewModelArgs({super.observer});
+}
+
+@ViewModel(
+  state: ShellTab,
+  args: ShellViewModelArgs,
+  initial: ShellTab.dashboard,
+)
+class ShellViewModel extends $ShellViewModel {
+  ShellViewModel(super.args);
 
   void selectTab(ShellTab tab) {
-    if (value == tab) {
+    if (state == tab) {
       return;
     }
-    value = tab;
+    emit(tab);
   }
 }

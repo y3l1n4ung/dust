@@ -22,6 +22,8 @@ pub struct ConstructorParamIr {
     pub kind: ParamKind,
     /// Whether the parameter has a default value.
     pub has_default: bool,
+    /// The raw default value expression source, if explicitly written.
+    pub default_value_source: Option<String>,
 }
 
 /// One lowered constructor.

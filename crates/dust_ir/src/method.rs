@@ -36,6 +36,8 @@ pub struct MethodParamIr {
     pub kind: ParamKind,
     /// Whether the parameter has a default value or initializer.
     pub has_default: bool,
+    /// The raw default value expression source, if explicitly written.
+    pub default_value_source: Option<String>,
     /// Trait applications resolved for this parameter.
     pub traits: Vec<TraitApplicationIr>,
     /// Config applications resolved for this parameter.

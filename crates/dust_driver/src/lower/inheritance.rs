@@ -70,6 +70,7 @@ pub(crate) fn resolve_constructor_param_types(
     class: &mut ClassIr,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
+    let is_view_model = is_view_model_class(class);
     for constructor in &mut class.constructors {
         for param in &mut constructor.params {
             if param.name == "key" {
@@ -78,6 +79,8 @@ pub(crate) fn resolve_constructor_param_types(
             if matches!(param.ty, TypeIr::Unknown) {
                 if let Some(field) = class.fields.iter().find(|field| field.name == param.name) {
                     param.ty = field.ty.clone();
+                } else if param.name == "args" && is_view_model {
+                    continue;
                 } else {
                     diagnostics.push(Diagnostic::warning(format!(
                         "could not infer constructor parameter type for `{}`",
@@ -87,4 +90,11 @@ pub(crate) fn resolve_constructor_param_types(
             }
         }
     }
+}
+
+fn is_view_model_class(class: &ClassIr) -> bool {
+    class
+        .configs
+        .iter()
+        .any(|config| config.symbol.0.ends_with("::ViewModel"))
 }

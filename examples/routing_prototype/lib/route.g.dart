@@ -23,21 +23,6 @@ import 'package:routing_prototype/pages/project_page.dart';
 import 'package:routing_prototype/pages/project_settings_page.dart';
 import 'package:routing_prototype/pages/search_page.dart';
 
-class _NoTransitionBuilder extends PageTransitionsBuilder {
-  const _NoTransitionBuilder();
-
-  @override
-  Widget buildTransitions<T>(
-    PageRoute<T> route,
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    return child;
-  }
-}
-
 abstract class $AppRouter extends DustRouterBase<AppRoutePath> {
   RouterConfig<AppRoutePath> get config {
     final runtimeConfig = DustRouterConfig<AppRoutePath>(
@@ -87,6 +72,7 @@ const List<GeneratedRoute> $appRoutes = [
         ':path',
         page: NotFoundPage,
         name: 'notFound',
+        shell: AppShell,
         guards: [],
         transition: FadeUpwardsPageTransitionsBuilder(),
       ),
@@ -123,6 +109,7 @@ const List<GeneratedRoute> $appRoutes = [
         ':plan',
         page: CheckoutPage,
         name: 'checkout',
+        shell: AppShell,
         guards: [],
         transition: BottomToTopPageTransitionsBuilder(),
         fullscreenDialog: true,
@@ -133,19 +120,27 @@ const List<GeneratedRoute> $appRoutes = [
     '/forbidden',
     page: ForbiddenPage,
     name: 'forbidden',
+    shell: AppShell,
     guards: [],
     transition: FadeUpwardsPageTransitionsBuilder(),
   ),
   GeneratedRoute(
     '/invite',
     routes: [
-      GeneratedRoute(':token', page: InvitePage, name: 'invite', guards: []),
+      GeneratedRoute(
+        ':token',
+        page: InvitePage,
+        name: 'invite',
+        shell: AppShell,
+        guards: [],
+      ),
     ],
   ),
   GeneratedRoute(
     '/login',
     page: LoginPage,
     name: 'login',
+    shell: AppShell,
     guards: [],
     transition: CupertinoPageTransitionsBuilder(),
   ),
@@ -156,6 +151,7 @@ const List<GeneratedRoute> $appRoutes = [
         ':id',
         page: PostDetailPage,
         name: 'postDetail',
+        shell: AppShell,
         transition: CupertinoPageTransitionsBuilder(),
       ),
     ],
@@ -179,13 +175,7 @@ const List<GeneratedRoute> $appRoutes = [
       ),
     ],
   ),
-  GeneratedRoute(
-    '/search',
-    page: SearchPage,
-    name: 'search',
-    shell: AppShell,
-    transition: _NoTransitionBuilder(),
-  ),
+  GeneratedRoute('/search', page: SearchPage, name: 'search', shell: AppShell),
 ];
 
 typedef RouteState = DustRouteState<AppRoutePath>;
@@ -596,14 +586,14 @@ bool? _parseBool(String? value) {
 
 const Map<Type, Type?> _kAppliedShellsByPage = {
   DashboardPage: AppShell,
-  NotFoundPage: null,
+  NotFoundPage: AppShell,
   AdminPage: AppShell,
   InvoicePage: AppShell,
-  CheckoutPage: null,
-  ForbiddenPage: null,
-  InvitePage: null,
-  LoginPage: null,
-  PostDetailPage: null,
+  CheckoutPage: AppShell,
+  ForbiddenPage: AppShell,
+  InvitePage: AppShell,
+  LoginPage: AppShell,
+  PostDetailPage: AppShell,
   ProjectPage: AppShell,
   ProjectSettingsPage: AppShell,
   SearchPage: AppShell,
@@ -630,7 +620,7 @@ Page<void> buildAppRoutePage(AppRoutePath route) {
     DashboardRoute() => generatedPage(
       location: route.location,
       name: 'dashboard',
-      transition: const FadeUpwardsPageTransitionsBuilder(),
+      transition: FadeUpwardsPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
       child: AppShell(child: const DashboardPage()),
@@ -638,10 +628,10 @@ Page<void> buildAppRoutePage(AppRoutePath route) {
     NotFoundRoute(path: final path) => generatedPage(
       location: route.location,
       name: 'notFound',
-      transition: const FadeUpwardsPageTransitionsBuilder(),
+      transition: FadeUpwardsPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
-      child: NotFoundPage(path: path),
+      child: AppShell(child: NotFoundPage(path: path)),
     ),
     AdminRoute() => generatedPage(
       location: route.location,
@@ -663,41 +653,43 @@ Page<void> buildAppRoutePage(AppRoutePath route) {
     CheckoutRoute(plan: final plan, annual: final annual) => generatedPage(
       location: route.location,
       name: 'checkout',
-      transition: const BottomToTopPageTransitionsBuilder(),
+      transition: BottomToTopPageTransitionsBuilder(),
       fullscreenDialog: true,
       maintainState: true,
-      child: CheckoutPage(plan: plan, annual: annual),
+      child: AppShell(
+        child: CheckoutPage(plan: plan, annual: annual),
+      ),
     ),
     ForbiddenRoute() => generatedPage(
       location: route.location,
       name: 'forbidden',
-      transition: const FadeUpwardsPageTransitionsBuilder(),
+      transition: FadeUpwardsPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
-      child: const ForbiddenPage(),
+      child: AppShell(child: const ForbiddenPage()),
     ),
     InviteRoute(token: final token) => generatedPage(
       location: route.location,
       name: 'invite',
       fullscreenDialog: false,
       maintainState: true,
-      child: InvitePage(token: token),
+      child: AppShell(child: InvitePage(token: token)),
     ),
     LoginRoute(from: final from) => generatedPage(
       location: route.location,
       name: 'login',
-      transition: const CupertinoPageTransitionsBuilder(),
+      transition: CupertinoPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
-      child: LoginPage(from: from),
+      child: AppShell(child: LoginPage(from: from)),
     ),
     PostDetailRoute(id: final id) => generatedPage(
       location: route.location,
       name: 'postDetail',
-      transition: const CupertinoPageTransitionsBuilder(),
+      transition: CupertinoPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
-      child: PostDetailPage(id: id),
+      child: AppShell(child: PostDetailPage(id: id)),
     ),
     ProjectRoute(projectId: final projectId, tab: final tab) => generatedPage(
       location: route.location,
@@ -721,7 +713,6 @@ Page<void> buildAppRoutePage(AppRoutePath route) {
     SearchRoute(q: final q, page: final page) => generatedPage(
       location: route.location,
       name: 'search',
-      transition: const _NoTransitionBuilder(),
       fullscreenDialog: false,
       maintainState: true,
       child: AppShell(

@@ -1,4 +1,3 @@
-pub(super) const PACKAGE: &str = "dust_http_client_annotation";
 pub(super) const HTTP_CLIENT: &str = "HttpClient";
 pub(super) const GENERATE_TEST: &str = "GenerateTest";
 pub(super) const HTTP_PARSE: &str = "HttpParse";
@@ -15,7 +14,32 @@ pub(super) const FIELD: &str = "Field";
 pub(super) const PART: &str = "Part";
 pub(super) const EXTRA: &str = "Extra";
 
-const CLAIMED_CONFIGS: &[&str] = &[
+pub(super) const CLAIMED_CONFIG_SYMBOLS: &[&str] = &[
+    "dust_http_client_annotation::HttpClient",
+    "dust_http_client_annotation::GenerateTest",
+    "dust_http_client_annotation::GET",
+    "dust_http_client_annotation::POST",
+    "dust_http_client_annotation::PUT",
+    "dust_http_client_annotation::PATCH",
+    "dust_http_client_annotation::DELETE",
+    "dust_http_client_annotation::HEAD",
+    "dust_http_client_annotation::OPTIONS",
+    "dust_http_client_annotation::Path",
+    "dust_http_client_annotation::Query",
+    "dust_http_client_annotation::Queries",
+    "dust_http_client_annotation::Header",
+    "dust_http_client_annotation::Headers",
+    "dust_http_client_annotation::HeaderMap",
+    "dust_http_client_annotation::Body",
+    "dust_http_client_annotation::Field",
+    "dust_http_client_annotation::Part",
+    "dust_http_client_annotation::Extra",
+    "dust_http_client_annotation::FormUrlEncoded",
+    "dust_http_client_annotation::MultiPart",
+    "dust_http_client_annotation::HttpParse",
+];
+
+pub(super) const SUPPORTED_ANNOTATIONS: &[&str] = &[
     HTTP_CLIENT,
     GENERATE_TEST,
     "GET",
@@ -39,7 +63,3 @@ const CLAIMED_CONFIGS: &[&str] = &[
     MULTI_PART,
     HTTP_PARSE,
 ];
-
-pub(super) fn claimed_config_names() -> &'static [&'static str] {
-    CLAIMED_CONFIGS
-}

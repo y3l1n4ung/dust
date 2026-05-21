@@ -1,4 +1,5 @@
 import 'package:dust_http_client_annotation/dust_http_client_annotation.dart';
+import 'package:state_management_prototype/shared/models/remote_post.dart';
 import 'package:state_management_prototype/shared/models/remote_todo.dart';
 import 'package:state_management_prototype/shared/models/remote_user.dart';
 
@@ -19,4 +20,10 @@ abstract interface class PrototypeApi {
     @Query('userId') int? userId,
     @Query('_limit') int? limit,
   });
+
+  @GET('/posts')
+  Future<List<RemotePost>> listPosts({@Query('userId') int? userId});
+
+  @GET('/posts/{id}')
+  Future<RemotePost> fetchPost(@Path() int id);
 }

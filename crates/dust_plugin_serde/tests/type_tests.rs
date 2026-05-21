@@ -34,6 +34,7 @@ fn constructor_param(name: &str, ty: TypeIr, kind: ParamKind) -> ConstructorPara
         span: span(30, 35),
         kind,
         has_default: false,
+        default_value_source: None,
     }
 }
 

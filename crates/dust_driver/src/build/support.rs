@@ -6,6 +6,7 @@ use dust_plugin_api::PluginRegistry;
 use dust_plugin_derive::register_plugin as register_derive_plugin;
 use dust_plugin_serde::register_plugin as register_serde_plugin;
 use dust_route_plugin::register_plugin as register_route_plugin;
+use dust_state_plugin::register_plugin as register_state_plugin;
 use dust_workspace::SourceLibrary;
 
 use crate::build::process::LoadedLibraryInput;
@@ -16,6 +17,11 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../context.rs"),
     include_str!("../watch.rs"),
     include_str!("../lower.rs"),
+    include_str!("../lower/inheritance.rs"),
+    include_str!("../lower/parse_support.rs"),
+    include_str!("../lower/serde.rs"),
+    include_str!("../lower/serde_parse.rs"),
+    include_str!("../lower/type_parse.rs"),
     include_str!("apply.rs"),
     include_str!("batch.rs"),
     include_str!("batch/load.rs"),
@@ -80,6 +86,7 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/test_support.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/types.rs"),
     include_str!("../../../dust_route_plugin/src/lib.rs"),
+    include_str!("../../../dust_state_plugin/src/lib.rs"),
     include_str!("../../../dust_route_plugin/src/plugin.rs"),
     include_str!("../../../dust_route_plugin/src/plugin/analysis.rs"),
     include_str!("../../../dust_route_plugin/src/plugin/constants.rs"),
@@ -87,6 +94,13 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_route_plugin/src/plugin/parse.rs"),
     include_str!("../../../dust_route_plugin/src/plugin/validate/mod.rs"),
     include_str!("../../../dust_route_plugin/src/plugin/emit/mod.rs"),
+    include_str!("../../../dust_state_plugin/src/plugin.rs"),
+    include_str!("../../../dust_state_plugin/src/plugin/analysis.rs"),
+    include_str!("../../../dust_state_plugin/src/plugin/constants.rs"),
+    include_str!("../../../dust_state_plugin/src/plugin/emit.rs"),
+    include_str!("../../../dust_state_plugin/src/plugin/model.rs"),
+    include_str!("../../../dust_state_plugin/src/plugin/parse.rs"),
+    include_str!("../../../dust_state_plugin/src/plugin/validate.rs"),
     include_str!("../../../dust_emitter/src/emit.rs"),
     include_str!("../../../dust_emitter/src/merge.rs"),
     include_str!("../../../dust_emitter/src/write.rs"),
@@ -207,6 +221,9 @@ pub(crate) fn default_registry() -> PluginRegistry {
     registry
         .register(Box::new(register_route_plugin()))
         .expect("route plugin symbol ownership must be valid");
+    registry
+        .register(Box::new(register_state_plugin()))
+        .expect("state plugin symbol ownership must be valid");
     registry
 }
 

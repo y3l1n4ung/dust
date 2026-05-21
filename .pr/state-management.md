@@ -1,79 +1,51 @@
-# State Management Specification (Native Flutter MVVM)
+# State Management Specification (Native Flutter MVVM + Dust Optimization)
 
-## 1. Core Philosophy: "Native Flutter, Rust CLI Powered"
-The generated state management system uses standard Flutter patterns to feel like a first-party part of the framework. The Rust CLI handles the code generation for precise rebuilds (O(1) performance), while you manage your architecture using standard Flutter composition.
+## 1. Core Philosophy: "Transparent Performance"
+The generated state management system uses a "Hidden Base Class" pattern to provide standard Flutter semantics (`watch`, `read`, `listen`) while delivering optimized O(1) rebuild performance through automatic aspect registration.
 
-- **Zero-Config Smart Access**: `context.userViewModel` is the single entry point. It automatically differentiates between a **watch** (in `build`) and a **read** (in callbacks).
-- **Explicit Scoping**: Use generated `UserViewModelScope` widgets to provide ViewModels to any sub-tree. This gives you full control over lifecycle and DI.
-- **Lifecycle Managed**: `UserViewModelScope` is a `StatefulWidget` under the hood; it creates your ViewModel and ensures it is `dispose()`'d exactly when the scope is unmounted.
+- **Hidden Base Class**: Your ViewModels extend a generated `$_XxxViewModel` class. This class manages the state (`ValueNotifier`), repository injection, and effect dispatching.
+- **Smart Proxy**: When you `watch` a ViewModel, you receive a generated Proxy. This proxy intercepts property access to automatically register dependencies with an `InheritedModel`.
+- **Zero-Boilerplate Business Logic**: Your ViewModel code focuses purely on logic, with helpers like `emit()` and `state` instead of `.value`.
 
 ---
 
-## 2. End-to-End Example: Production Quality
+## 2. End-to-End Example
 
-### A. The ViewModel & State (Standard ValueNotifier)
+### A. The ViewModel (`user_view_model.dart`)
 ```dart
-import 'package:flutter/foundation.dart';
-import 'package:meta/meta.dart';
-
-part 'user_view_model.g.dart';
-
-@immutable
-class UserState {
-  final String name;
-  final bool isLoading;
-
-  const UserState({required this.name, this.isLoading = false});
-
-  UserState copyWith({String? name, bool? isLoading}) => 
-    UserState(name: name ?? this.name, isLoading: isLoading ?? this.isLoading);
-}
-
 @ViewModel()
-class UserViewModel extends ValueNotifier<UserState> {
-  final UserRepository repository;
-
-  UserViewModel(this.repository) : super(const UserState(name: 'Guest'));
+class UserViewModel extends $_UserViewModel {
+  UserViewModel(super.repository) : super(const UserState());
 
   Future<void> refresh() async {
-    value = value.copyWith(isLoading: true);
-    final newName = await repository.fetchName();
-    value = value.copyWith(name: newName, isLoading: false);
-    notifyEffect(const ProfileUpdatedEffect());
+    emit(state.copyWith(isLoading: true)); // Provided by base class
+    final user = await repository.fetchUser(id: 1);
+    emit(state.copyWith(user: user, isLoading: false));
   }
 }
 ```
 
-### B. UI Usage (Manual Scoping & Smart Access)
-Wrap your screen or component in the generated `UserViewModelScope`.
-
+### B. UI Usage (`profile_page.dart`)
 ```dart
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
-
+class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // 1. Provide the ViewModel and its dependencies
-    return UserViewModelScope(
-      create: (context) => UserViewModel(UserRepositoryImpl()),
-      child: const _ProfileBody(),
-    );
-  }
-}
+    // Returns a Smart Proxy _$UserViewModelProxy
+    final vm = context.watchUserViewModel(); 
 
-class _ProfileBody extends StatelessWidget {
-  const _ProfileBody();
-
-  @override
-  Widget build(BuildContext context) {
-    // 2. Listen for effects
-    context.userViewModel.onEffect((e) => showSnackbar(context, 'Updated!'));
-
-    return Scaffold(
-      body: Center(
-        // 3. SMART ACCESS: Automatically registers O(1) aspect rebuild for 'name'
-        child: Text('Hello, ${context.userViewModel.name}'),
-      ),
+    return Column(
+      children: [
+        // Automatically registers for the 'name' aspect only!
+        Text(vm.name), 
+        
+        // Accessing 'isLoading' registers for that aspect too.
+        if (vm.isLoading) const CircularProgressIndicator(),
+        
+        ElevatedButton(
+          onPressed: () => context.readUserViewModel().refresh(),
+          child: const Text('Refresh'),
+        ),
+      ],
     );
   }
 }
@@ -81,101 +53,76 @@ class _ProfileBody extends StatelessWidget {
 
 ---
 
-## 3. Observability: Telemetry and Logging
-Provide an optional `StateObserver` to any Scope to monitor its transitions.
+## 3. The Generated "Hidden" Layer (`user_view_model.g.dart`)
 
+### A. The Base Class (`$_UserViewModel`)
 ```dart
-UserViewModelScope(
-  create: (context) => UserViewModel(repo),
-  observer: AppLogger(), // Optional observer for this specific scope
-  child: ...,
-)
-```
-
----
-
-## 4. The Generated Logic (Internal Flutter Implementation)
-
-This is what the CLI generates to make the system feel native and performant.
-
-### A. The Public Scope Widget (`UserViewModelScope`)
-A standard `StatefulWidget` that manages the ViewModel's lifecycle.
-
-```dart
-class UserViewModelScope extends StatefulWidget {
-  final UserViewModel Function(BuildContext context) create;
-  final StateObserver? observer;
-  final Widget child;
-
-  const UserViewModelScope({
-    super.key, 
-    required this.create, 
-    this.observer,
-    required this.child,
-  });
-
-  @override
-  State<UserViewModelScope> createState() => _UserViewModelScopeState();
+abstract class $_UserViewModel extends ValueNotifier<UserState> {
+  $_UserViewModel(this.repository, super.initialValue);
   
-  /// Internal 'of' pattern used by the Proxy
-  static UserViewModel of(BuildContext context, {String? aspect}) {
-    return InheritedModel.inheritFrom<_UserViewModelInherited>(context, aspect: aspect)!.vm;
-  }
-}
-
-class _UserViewModelScopeState extends State<UserViewModelScope> {
-  late final UserViewModel vm = widget.create(context);
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.observer != null) vm.attachObserver(widget.observer!);
-  }
-
-  @override
-  void dispose() {
-    vm.dispose(); // Native Flutter lifecycle management
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _UserViewModelInherited(vm: vm, child: widget.child);
-  }
+  final UserRepository repository;
+  
+  UserState get state => value;
+  void emit(UserState next) => value = next;
+  
+  // Internal effect management...
 }
 ```
 
 ### B. The Smart Proxy (`_$UserViewModelProxy`)
-Intercepts property access for precision rebuilds.
-
 ```dart
 class _$UserViewModelProxy {
   final BuildContext _context;
   final UserViewModel _vm;
 
-  const _$UserViewModelProxy(this._context, this._vm);
+  _$UserViewModelProxy(this._context, this._vm);
 
   String get name {
-    if (_isBuilding(_context)) {
-      // Registers O(1) rebuild dependency for ONLY the 'name' property
-      UserViewModelScope.of(_context, aspect: 'name');
-    }
-    return _vm.value.name;
+    UserViewModelScope.of(_context, aspect: 'name');
+    return _vm.state.name;
   }
-  
-  void refresh() => _vm.refresh();
-  
-  void onEffect(void Function(Object) callback) => _vm.registerEffectListener(_context, callback);
+
+  bool get isLoading {
+    UserViewModelScope.of(_context, aspect: 'isLoading');
+    return _vm.state.isLoading;
+  }
 }
 ```
 
-### C. The Context Extension
+### C. The Scope Widget (`UserViewModelScope`)
+Uses `InheritedModel` to handle the granular aspects registered by the Proxy.
+
 ```dart
-extension UserViewModelX on BuildContext {
-  /// Resolves the nearest [UserViewModel] in the tree and returns a Smart Proxy.
-  _$UserViewModelProxy get userViewModel {
-    final vm = UserViewModelScope.of(this); 
-    return _$UserViewModelProxy(this, vm);
+class UserViewModelScope extends StatefulWidget {
+  // ... boilerplate ...
+  
+  static UserViewModel _getRaw(BuildContext context) {
+    return InheritedModel.inheritFrom<_UserViewModelInherited>(context)!.viewModel;
+  }
+
+  static UserViewModel of(BuildContext context, {Object? aspect}) {
+    return InheritedModel.inheritFrom<_UserViewModelInherited>(context, aspect: aspect)!.viewModel;
+  }
+}
+
+class _UserViewModelInherited extends InheritedModel<Object> {
+  final UserViewModel viewModel;
+  final UserState _state;
+
+  _UserViewModelInherited({required this.viewModel, required super.child}) 
+    : _state = viewModel.value;
+
+  @override
+  bool updateShouldNotify(_UserViewModelInherited oldWidget) => true;
+
+  @override
+  bool updateShouldNotifyDependent(_UserViewModelInherited oldWidget, Set<Object> dependencies) {
+    // Granular O(1) check: Did any of the properties accessed by the widget actually change?
+    for (final aspect in dependencies) {
+      if (aspect == 'name' && _state.name != oldWidget._state.name) return true;
+      if (aspect == 'isLoading' && _state.isLoading != oldWidget._state.isLoading) return true;
+    }
+    return false;
   }
 }
 ```

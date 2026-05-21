@@ -1,0 +1,100 @@
+import 'package:flutter/material.dart';
+import 'package:dust_state/dust_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'core/data/app_scope.dart';
+import 'core/data/shopping_repository.dart';
+import 'core/services/storage_service.dart';
+import 'features/auth/view_models/auth_view_model.dart';
+import 'features/cart/view_models/cart_view_model.dart';
+import 'features/checkout/view_models/checkout_view_model.dart';
+import 'features/orders/view_models/orders_view_model.dart';
+import 'features/products/view_models/products_view_model.dart';
+import 'route.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  runApp(ShoppingApp(storage: StorageService(prefs)));
+}
+
+class ShoppingApp extends StatelessWidget {
+  const ShoppingApp({required this.storage, this.repository, super.key});
+
+  final StorageService storage;
+  final ShoppingRepository? repository;
+
+  @override
+  Widget build(BuildContext context) {
+    final observer = const LoggingStateObserver();
+    return AppScope(
+      repository: repository ?? LiveShoppingRepository(),
+      storage: storage,
+      child: AuthViewModelScope(
+        args: (context) => AuthViewModelArgs(
+          repository: context.shoppingRepository,
+          storage: context.storage,
+          observer: observer,
+        ),
+        create: (context, args) => AuthViewModel(args),
+        child: CartViewModelScope(
+          args: (context) => CartViewModelArgs(observer: observer),
+          create: (context, args) => CartViewModel(args),
+          child: CheckoutViewModelScope(
+            args: (context) => CheckoutViewModelArgs(observer: observer),
+            create: (context, args) => CheckoutViewModel(args),
+            child: OrdersViewModelScope(
+              args: (context) => OrdersViewModelArgs(observer: observer),
+              create: (context, args) => OrdersViewModel(args),
+              child: ProductsViewModelScope(
+                args: (context) => ProductsViewModelArgs(
+                  repository: context.shoppingRepository,
+                  observer: observer,
+                ),
+                create: (context, args) => ProductsViewModel(args),
+                child: const _ShoppingRouterApp(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShoppingRouterApp extends StatefulWidget {
+  const _ShoppingRouterApp();
+
+  @override
+  State<_ShoppingRouterApp> createState() => _ShoppingRouterAppState();
+}
+
+class _ShoppingRouterAppState extends State<_ShoppingRouterApp> {
+  AppRouter? _router;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _router ??= AppRouter(auth: AuthViewModelScope.read(context));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final router = _router;
+    if (router == null) {
+      return const MaterialApp(
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
+    }
+
+    return MaterialApp.router(
+      title: 'Dust Shopping App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      routerConfig: router.config,
+    );
+  }
+}

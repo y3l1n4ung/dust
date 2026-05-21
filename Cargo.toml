@@ -17,6 +17,7 @@ members = [
     "crates/dust_cli",
     "crates/dust_http_client_plugin",
     "crates/dust_route_plugin",
+    "crates/dust_state_plugin",
 ]
 resolver = "2"
 

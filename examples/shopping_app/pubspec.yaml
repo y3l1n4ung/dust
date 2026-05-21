@@ -1,0 +1,37 @@
+name: shopping_app
+description: Dust shopping app example using Dust router, state, HTTP client, and serde.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  dio: ^5.8.0
+  shared_preferences: ^2.3.4
+  dust_router:
+    path: ../../packages/dust_router
+  dust_state:
+    path: ../../packages/dust_state
+  dust_http_client_annotation:
+    path: ../../packages/dust_http_client_annotation
+  derive_annotation:
+    path: ../../packages/derive_annotation
+  derive_serde_annotation:
+    path: ../../packages/derive_serde_annotation
+
+dependency_overrides:
+  derive_annotation:
+    path: ../../packages/derive_annotation
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

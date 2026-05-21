@@ -6,10 +6,20 @@
 
 part of 'remote_todo.dart';
 
-Never _dustJsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) => value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_dustJsonAs<String>(value, key, 'String')) ?? _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) => _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+Never _dustJsonTypeError(Object? value, String key, String expected) =>
+    throw ArgumentError.value(value, key, 'expected $expected');
+T _dustJsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _dustJsonTypeError(value, key, expected);
+T _dustJsonParseString<T>(
+  Object? value,
+  String key,
+  String expected,
+  T? Function(String value) parse,
+) =>
+    parse(_dustJsonAs<String>(value, key, 'String')) ??
+    _dustJsonTypeError(value, key, expected);
+List<Object?> _dustJsonAsList(Object? value, String key) =>
+    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
 Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
   final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
@@ -19,9 +29,17 @@ Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
     _dustJsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _dustJsonAsUri(Object? value, String key) => _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) => _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+
+DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
+  value,
+  key,
+  'ISO-8601 DateTime string',
+  DateTime.tryParse,
+);
+Uri _dustJsonAsUri(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _dustJsonAsBigInt(Object? value, String key) =>
+    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
 T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
@@ -42,7 +60,9 @@ mixin _$RemoteTodoDust {
         'userId: ${_dustSelf.userId}, '
         'id: ${_dustSelf.id}, '
         'title: ${_dustSelf.title}, '
-        'completed: ${_dustSelf.completed}'
+        'completed: ${_dustSelf.completed}, '
+        'lane: ${_dustSelf.lane}, '
+        'priority: ${_dustSelf.priority}'
         ')';
   }
 
@@ -54,7 +74,9 @@ mixin _$RemoteTodoDust {
           other.userId == _dustSelf.userId &&
           other.id == _dustSelf.id &&
           other.title == _dustSelf.title &&
-          other.completed == _dustSelf.completed;
+          other.completed == _dustSelf.completed &&
+          other.lane == _dustSelf.lane &&
+          other.priority == _dustSelf.priority;
 
   @override
   int get hashCode => Object.hashAll([
@@ -63,6 +85,8 @@ mixin _$RemoteTodoDust {
     _dustSelf.id,
     _dustSelf.title,
     _dustSelf.completed,
+    _dustSelf.lane,
+    _dustSelf.priority,
   ]);
 
   RemoteTodo copyWith({
@@ -70,12 +94,16 @@ mixin _$RemoteTodoDust {
     int? id,
     String? title,
     bool? completed,
+    String? lane,
+    String? priority,
   }) {
     return RemoteTodo(
       userId: userId ?? _dustSelf.userId,
       id: id ?? _dustSelf.id,
       title: title ?? _dustSelf.title,
       completed: completed ?? _dustSelf.completed,
+      lane: lane ?? _dustSelf.lane,
+      priority: priority ?? _dustSelf.priority,
     );
   }
 
@@ -88,19 +116,34 @@ Map<String, Object?> _$RemoteTodoToJson(RemoteTodo instance) {
     'id': instance.id,
     'title': instance.title,
     'completed': instance.completed,
+    'lane': instance.lane,
+    'priority': instance.priority,
   };
 }
+
 // factory RemoteTodo.fromJson(Map<String, Object?> json) => _$RemoteTodoFromJson(json);
 RemoteTodo _$RemoteTodoFromJson(Map<String, Object?> json) {
   final userIdValue = _dustJsonAs<int>(json['userId'], 'userId', 'int');
   final idValue = _dustJsonAs<int>(json['id'], 'id', 'int');
   final titleValue = _dustJsonAs<String>(json['title'], 'title', 'String');
-  final completedValue = _dustJsonAs<bool>(json['completed'], 'completed', 'bool');
+  final completedValue = _dustJsonAs<bool>(
+    json['completed'],
+    'completed',
+    'bool',
+  );
+  final laneValue = _dustJsonAs<String>(json['lane'], 'lane', 'String');
+  final priorityValue = _dustJsonAs<String>(
+    json['priority'],
+    'priority',
+    'String',
+  );
 
   return RemoteTodo(
     userId: userIdValue,
     id: idValue,
     title: titleValue,
     completed: completedValue,
+    lane: laneValue,
+    priority: priorityValue,
   );
 }

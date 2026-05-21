@@ -8,7 +8,8 @@ part of 'task_board_state.dart';
 
 const Object _undefined = Object();
 
-const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _dustDeepCollectionEquality =
+    DeepCollectionEquality();
 
 mixin _$TaskBoardStateDust {
   TaskBoardState get _dustSelf => this as TaskBoardState;
@@ -21,6 +22,7 @@ mixin _$TaskBoardStateDust {
         'filter: ${_dustSelf.filter}, '
         'isLoading: ${_dustSelf.isLoading}, '
         'isRefreshing: ${_dustSelf.isRefreshing}, '
+        'isInitialized: ${_dustSelf.isInitialized}, '
         'errorMessage: ${_dustSelf.errorMessage}'
         ')';
   }
@@ -35,6 +37,7 @@ mixin _$TaskBoardStateDust {
           other.filter == _dustSelf.filter &&
           other.isLoading == _dustSelf.isLoading &&
           other.isRefreshing == _dustSelf.isRefreshing &&
+          other.isInitialized == _dustSelf.isInitialized &&
           other.errorMessage == _dustSelf.errorMessage;
 
   @override
@@ -45,6 +48,7 @@ mixin _$TaskBoardStateDust {
     _dustSelf.filter,
     _dustSelf.isLoading,
     _dustSelf.isRefreshing,
+    _dustSelf.isInitialized,
     _dustSelf.errorMessage,
   ]);
 
@@ -54,6 +58,7 @@ mixin _$TaskBoardStateDust {
     TodoFilter? filter,
     bool? isLoading,
     bool? isRefreshing,
+    bool? isInitialized,
     Object? errorMessage = _undefined,
   }) {
     final nextTodos = List<RemoteTodo>.of(
@@ -66,7 +71,10 @@ mixin _$TaskBoardStateDust {
       filter: filter ?? _dustSelf.filter,
       isLoading: isLoading ?? _dustSelf.isLoading,
       isRefreshing: isRefreshing ?? _dustSelf.isRefreshing,
-      errorMessage: identical(errorMessage, _undefined) ? _dustSelf.errorMessage : errorMessage as String?,
+      isInitialized: isInitialized ?? _dustSelf.isInitialized,
+      errorMessage: identical(errorMessage, _undefined)
+          ? _dustSelf.errorMessage
+          : errorMessage as String?,
     );
   }
 }

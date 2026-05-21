@@ -1,53 +1,66 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:collection/collection.dart';
 import 'package:state_management_prototype/features/session/models/session_state.dart';
-import 'package:state_management_prototype/shared/annotations.dart';
+import 'package:dust_state/dust_state.dart';
 import 'package:state_management_prototype/shared/data/prototype_repository.dart';
+import 'package:state_management_prototype/shared/models/remote_post.dart';
+import 'package:state_management_prototype/shared/models/remote_user.dart';
 
 part 'session_view_model.g.dart';
 
-@ViewModel()
-class SessionViewModel extends ValueNotifier<SessionState> {
-  SessionViewModel(this._repository) : super(const SessionState());
+final class SessionViewModelArgs extends ViewModelArgs {
+  const SessionViewModelArgs({required this.repository, super.observer});
 
-  final PrototypeRepository _repository;
-  bool _initializing = false;
+  final PrototypeRepository repository;
+}
 
-  SessionState get state => value;
-  set state(SessionState nextState) => value = nextState;
+@ViewModel(state: SessionState, args: SessionViewModelArgs)
+class SessionViewModel extends $SessionViewModel {
+  SessionViewModel(super.args);
 
-  Future<void> initialize() async {
-    if (_initializing || state.hasData) {
-      return;
-    }
-    _initializing = true;
-    try {
-      await refresh(showLoading: true);
-    } finally {
-      _initializing = false;
-    }
+  @override
+  Future<void> onInit() async {
+    await refresh(showLoading: true);
+    emit(state.copyWith(isInitialized: true));
   }
 
   Future<void> refresh({bool showLoading = false}) async {
-    state = state.copyWith(
-      isLoading: showLoading,
-      isRefreshing: !showLoading,
-      errorMessage: null,
+    emit(
+      state.copyWith(
+        isLoading: showLoading,
+        isRefreshing: !showLoading,
+        isPostsLoading: true,
+        errorMessage: null,
+      ),
     );
 
     try {
-      final owner = await _repository.fetchOwner(userId: 1);
-      state = state.copyWith(
-        owner: owner,
-        isLoading: false,
-        isRefreshing: false,
-        errorMessage: null,
+      final owner = await repository.fetchOwner(userId: 1);
+      final posts = await repository.fetchPosts(userId: 1);
+      emit(
+        state.copyWith(
+          owner: owner,
+          posts: posts.take(3).toList(),
+          isLoading: false,
+          isRefreshing: false,
+          isPostsLoading: false,
+          errorMessage: null,
+        ),
       );
     } catch (_) {
-      state = state.copyWith(
-        isLoading: false,
-        isRefreshing: false,
-        errorMessage: 'Unable to load owner details right now.',
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isRefreshing: false,
+          isPostsLoading: false,
+          errorMessage: 'Unable to load details right now.',
+        ),
       );
     }
+  }
+
+  void updateName(String name) {
+    if (state.owner == null) return;
+    emit(state.copyWith(owner: state.owner!.copyWith(name: name)));
   }
 }

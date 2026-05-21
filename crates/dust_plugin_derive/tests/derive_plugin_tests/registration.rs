@@ -7,13 +7,8 @@ use super::support::{members_for_class, sample_library};
 fn plugin_claims_core_derive_traits() {
     let plugin = register_plugin();
     let claimed = plugin.claimed_traits();
-
-    let names = claimed
-        .iter()
-        .map(|symbol| symbol.0.as_str())
-        .collect::<Vec<_>>();
     assert_eq!(
-        names,
+        claimed,
         vec![
             "derive_annotation::ToString",
             "derive_annotation::Debug",

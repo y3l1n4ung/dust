@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:state_management_prototype/shared/annotations.dart';
+import 'package:dust_state/dust_state.dart';
 
 part 'theme_view_model.g.dart';
 
-@ViewModel()
-class ThemeViewModel extends ValueNotifier<ThemeMode> {
-  ThemeViewModel() : super(ThemeMode.dark);
+final class ThemeViewModelArgs extends ViewModelArgs {
+  const ThemeViewModelArgs({super.observer});
+}
+
+@ViewModel(state: ThemeMode, args: ThemeViewModelArgs, initial: ThemeMode.dark)
+class ThemeViewModel extends $ThemeViewModel {
+  ThemeViewModel(super.args);
 
   void toggle() {
-    value = value == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    emit(state == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark);
   }
 }

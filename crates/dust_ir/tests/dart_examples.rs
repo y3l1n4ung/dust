@@ -60,6 +60,7 @@ fn models_real_dart_data_class_shapes() {
                         span: span(1, 172, 179),
                         kind: ParamKind::Positional,
                         has_default: false,
+                        default_value_source: None,
                     },
                     ConstructorParamIr {
                         name: "displayName".to_owned(),
@@ -67,6 +68,7 @@ fn models_real_dart_data_class_shapes() {
                         span: span(1, 181, 197),
                         kind: ParamKind::Positional,
                         has_default: false,
+                        default_value_source: None,
                     },
                     ConstructorParamIr {
                         name: "tags".to_owned(),
@@ -74,6 +76,7 @@ fn models_real_dart_data_class_shapes() {
                         span: span(1, 199, 208),
                         kind: ParamKind::Positional,
                         has_default: false,
+                        default_value_source: None,
                     },
                 ],
             }],

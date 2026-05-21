@@ -1,8 +1,9 @@
 use dust_diagnostics::SourceLabel;
 use dust_ir::{SpanIr, TypeIr};
+use dust_plugin_api::short_symbol_name;
 
 pub(super) fn config_name(symbol: &str) -> &str {
-    symbol.rsplit("::").next().unwrap_or(symbol)
+    short_symbol_name(symbol)
 }
 
 pub(super) fn escape_single_quoted(source: &str) -> String {
