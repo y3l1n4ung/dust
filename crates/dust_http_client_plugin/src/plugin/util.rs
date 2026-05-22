@@ -7,7 +7,10 @@ pub(super) fn config_name(symbol: &str) -> &str {
 }
 
 pub(super) fn escape_single_quoted(source: &str) -> String {
-    source.replace('\\', "\\\\").replace('\'', "\\'")
+    source
+        .replace('\\', "\\\\")
+        .replace('\'', "\\'")
+        .replace('$', "\\$")
 }
 
 pub(super) fn label(span: SpanIr, message: impl Into<String>) -> SourceLabel {

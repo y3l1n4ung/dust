@@ -13,6 +13,7 @@ pub struct LineCol {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LineIndex {
     line_starts: Vec<TextSize>,
+    line_ends: Vec<TextSize>,
     text_len: TextSize,
 }
 
@@ -20,14 +21,26 @@ impl LineIndex {
     /// Builds an index for one source string.
     pub fn new(source: &str) -> Self {
         let mut line_starts = vec![TextSize::new(0)];
-        for (offset, byte) in source.bytes().enumerate() {
+        let mut line_ends = Vec::new();
+        let mut line_start = 0_usize;
+        let bytes = source.as_bytes();
+        for (offset, byte) in bytes.iter().copied().enumerate() {
             if byte == b'\n' {
+                let end = if offset > line_start && bytes[offset - 1] == b'\r' {
+                    offset - 1
+                } else {
+                    offset
+                };
+                line_ends.push(TextSize::from(end));
+                line_start = offset + 1;
                 line_starts.push(TextSize::from(offset + 1));
             }
         }
+        line_ends.push(TextSize::from(source.len()));
 
         Self {
             line_starts,
+            line_ends,
             text_len: TextSize::from(source.len()),
         }
     }
@@ -69,17 +82,7 @@ impl LineIndex {
     /// Returns the byte range covered by one line, excluding the trailing newline.
     pub fn line_range(&self, line: usize) -> Option<TextRange> {
         let start = *self.line_starts.get(line)?;
-        let next = self
-            .line_starts
-            .get(line + 1)
-            .copied()
-            .unwrap_or(self.text_len);
-
-        let end = if line + 1 < self.line_starts.len() {
-            next - TextSize::new(1)
-        } else {
-            next
-        };
+        let end = *self.line_ends.get(line)?;
 
         Some(TextRange::new(start, end))
     }

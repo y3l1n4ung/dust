@@ -68,7 +68,9 @@ fn render_endpoint_method(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) ->
     }
 
     for (key, value) in &endpoint.headers {
-        out.push_str(&format!("    _headers['{}'] = '{}';\n", key, value));
+        let key = crate::plugin::util::escape_single_quoted(key);
+        let value = crate::plugin::util::escape_single_quoted(value);
+        out.push_str(&format!("    _headers['{key}'] = '{value}';\n"));
     }
     for param in &endpoint.params {
         match param {

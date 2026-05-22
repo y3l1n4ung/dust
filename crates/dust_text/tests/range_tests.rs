@@ -62,6 +62,24 @@ fn line_index_reports_ranges_for_regular_and_empty_lines() {
 }
 
 #[test]
+fn line_index_excludes_carriage_return_from_crlf_ranges() {
+    let source = SourceText::new(FileId::new(1), "first\r\nsecond\r\n");
+
+    assert_eq!(
+        source.slice(source.line_index().line_range(0).unwrap()),
+        Some("first")
+    );
+    assert_eq!(
+        source.slice(source.line_index().line_range(1).unwrap()),
+        Some("second")
+    );
+    assert_eq!(
+        source.line_index().line_range(2),
+        Some(TextRange::new(15_u32, 15_u32))
+    );
+}
+
+#[test]
 fn line_index_rejects_offsets_past_end_and_accepts_end_of_file() {
     let index = LineIndex::new("abc\ndef");
 

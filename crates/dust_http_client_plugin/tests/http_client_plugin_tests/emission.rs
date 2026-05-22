@@ -45,6 +45,66 @@ fn emits_dio_client_with_inherited_isolate_decode() {
 }
 
 #[test]
+fn escapes_generated_single_quoted_literals() {
+    let plugin = register_plugin();
+    let library = library_for(http_client_class(
+        vec![config(
+            "HttpClient",
+            Some(r#"(baseUrl: 'https://api.example.com/$tenant', headers: {"x-'$": "tok'$"})"#),
+        )],
+        vec![method(
+            "ping",
+            future_of(TypeIr::named("void")),
+            vec![config("GET", Some("('/ping/$health')"))],
+            Vec::new(),
+        )],
+    ));
+
+    let emitted = plugin
+        .emit(&library, &SymbolPlan::default())
+        .support_types
+        .join("\n");
+    assert_eq!(
+        emitted,
+        r#"final class _$Api implements Api {
+  _$Api(this._dio, {String? baseUrl}) : _baseUrl = baseUrl;
+
+  final Dio _dio;
+  final String? _baseUrl;
+
+  @override
+  Future<void> ping() async {
+    final _queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _extra = <String, dynamic>{};
+    _headers['x-\'\$'] = 'tok\'\$';
+    final Object? _data = null;
+    final _options = Options(method: 'GET', headers: _headers, extra: _extra, contentType: null);
+    await _dio.fetch<void>(
+      _setStreamType<void>(
+        _options
+            .compose(
+              _dio.options,
+              '/ping/\$health',
+              queryParameters: _queryParameters,
+              data: _data,
+              cancelToken: null,
+              onSendProgress: null,
+              onReceiveProgress: null,
+            )
+            .copyWith(
+              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl ?? 'https://api.example.com/\$tenant'),
+            ),
+      ),
+    );
+    return;
+  }
+}
+"#
+    );
+}
+
+#[test]
 fn emits_generate_test_auxiliary_file() {
     let plugin = register_plugin();
     let library = library_for(http_client_class(
