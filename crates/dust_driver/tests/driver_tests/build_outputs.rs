@@ -3,7 +3,7 @@ use std::fs;
 use dust_diagnostics::render_to_string_with_files;
 use dust_driver::{BuildRequest, run_build};
 
-use super::support::{make_workspace, write_file};
+use super::support::{generated_output, make_workspace, write_file};
 
 #[test]
 fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
@@ -53,30 +53,92 @@ fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
             .iter()
             .all(|artifact| artifact.written)
     );
-    assert!(models_output.contains("part of 'models.dart';"));
-    assert!(models_output.contains("mixin _$User {"));
-    assert!(models_output.contains("User get _dustSelf => this as User;"));
-    assert!(models_output.contains("String toString() {\n    return 'User('"));
-    assert!(models_output.contains("'id: ${_dustSelf.id}, '"));
-    assert!(models_output.contains("'age: ${_dustSelf.age}'"));
-    assert!(models_output.contains("mixin _$Team {"));
-    assert!(models_output.contains("Team copyWith({"));
-    assert!(models_output.contains("String? name,"));
-    assert!(models_output.contains("name ?? _dustSelf.name,"));
-    assert!(request_output.contains("part of 'request.dart';"));
-    assert!(request_output.contains("mixin _$Request {"));
-    assert!(request_output.contains("Request copyWith({"));
-    assert!(request_output.contains("String? path,"));
-    assert!(request_output.contains("Map<String, String>? headers,"));
-    assert!(!request_output.contains("final nextPathSource = path ?? _dustSelf.path;"));
-    assert!(!request_output.contains("final nextHeadersSource = headers ?? _dustSelf.headers;"));
-    assert!(
-        request_output
-            .contains("final nextHeaders = Map<String, String>.of(headers ?? _dustSelf.headers);")
+    assert_eq!(
+        models_output,
+        generated_output(
+            r#"part of 'models.dart';
+
+const Object _undefined = Object();
+
+mixin _$User {
+  @override
+  String toString() {
+    final self = this as User;
+    return 'User('
+        'id: ${self.id}, '
+        'age: ${self.age}'
+        ')';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    final self = this as User;
+    return identical(this, other) ||
+        other is User &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id &&
+            other.age == self.age;
+  }
+
+  @override
+  int get hashCode {
+    final self = this as User;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+      self.age,
+    ]);
+  }
+
+  User copyWith({
+    String? id,
+    Object? age = _undefined,
+  }) {
+    final self = this as User;
+    return User(
+      id ?? self.id,
+      identical(age, _undefined) ? self.age : age as int?,
     );
-    assert!(request_output.contains("return Request.create("));
-    assert!(request_output.contains("path: path ?? _dustSelf.path,"));
-    assert!(request_output.contains("headers: nextHeaders,"));
+  }
+}
+
+mixin _$Team {
+  Team copyWith({
+    String? name,
+  }) {
+    final self = this as Team;
+    return Team(
+      name ?? self.name,
+    );
+  }
+}
+"#
+        )
+    );
+    assert_eq!(
+        request_output,
+        generated_output(
+            r#"part of 'request.dart';
+
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+
+mixin _$Request {
+  Request copyWith({
+    String? path,
+    Map<String, String>? headers,
+  }) {
+    final self = this as Request;
+    final nextHeaders = Map<String, String>.of(headers ?? self.headers);
+
+    return Request.create(
+      path: path ?? self.path,
+      headers: nextHeaders,
+    );
+  }
+}
+"#
+        )
+    );
 }
 
 #[test]
@@ -126,33 +188,135 @@ fn build_writes_real_serde_outputs() {
     let account_output = fs::read_to_string(workspace.path().join("lib/account.g.dart")).unwrap();
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
-    assert!(
-        profile_output.contains("Map<String, Object?> toJson() => _$ProfileToJson(_dustSelf);")
+    assert_eq!(
+        profile_output,
+        generated_output(
+            r#"part of 'profile.dart';
+
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+Never _jsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
+T _jsonAs<T>(Object? value, String key, String expected) => value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_jsonAs<String>(value, key, 'String')) ?? _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) => _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
+  try {
+    return Map<String, Object?>.from(map);
+  } on TypeError {
+    _jsonTypeError(value, key, 'Map<String, Object?>');
+  }
+}
+DateTime _jsonAsDateTime(Object? value, String key) => _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) => _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) => _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+  if (value == null) {
+    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
+  }
+  try {
+    return codec.deserialize(value as dynamic) as T;
+  } catch (error) {
+    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
+  }
+}
+
+mixin _$Profile {
+  Map<String, Object?> toJson() => _$ProfileToJson(this as Profile);
+}
+
+Map<String, Object?> _$ProfileToJson(Profile instance) {
+  return <String, Object?>{
+    'id': instance.id,
+    'display_name': instance.displayName,
+    'tags': instance.tags.map((item) => item).toList(),
+  };
+}
+// factory Profile.fromJson(Map<String, Object?> json) => _$ProfileFromJson(json);
+Profile _$ProfileFromJson(Map<String, Object?> json) {
+  const allowedKeys = <String>{'id', 'display_name', 'displayName', 'tags'};
+  for (final key in json.keys) {
+    if (!allowedKeys.contains(key)) {
+      throw ArgumentError.value(key, 'json', 'unknown key for Profile');
+    }
+  }
+
+  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
+  final rawDisplayNameKey = json.containsKey('display_name') ? 'display_name' : json.containsKey('displayName') ? 'displayName' : 'display_name';
+  final rawDisplayName = json.containsKey('display_name') ? json['display_name'] : json.containsKey('displayName') ? json['displayName'] : null;
+  final displayNameValue = rawDisplayName == null
+                           ? null
+                           : _jsonAs<String>(rawDisplayName, rawDisplayNameKey, 'String');
+  final tagsValue = json.containsKey('tags') ? _jsonAsList(json['tags'], 'tags').map((item) => _jsonAs<String>(item, 'tags', 'String')).toList() : const ['guest'];
+
+  return Profile(
+    id: idValue,
+    displayName: displayNameValue,
+    tags: tagsValue,
+  );
+}
+"#
+        )
     );
-    assert!(profile_output.contains(
-        "// factory Profile.fromJson(Map<String, Object?> json) => _$ProfileFromJson(json);"
-    ));
-    assert!(profile_output.contains("Profile _$ProfileFromJson(Map<String, Object?> json)"));
-    assert!(
-        profile_output.contains("T _dustJsonAs<T>(Object? value, String key, String expected)")
+    assert_eq!(
+        account_output,
+        generated_output(
+            r#"part of 'account.dart';
+
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+Never _jsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
+T _jsonAs<T>(Object? value, String key, String expected) => value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_jsonAs<String>(value, key, 'String')) ?? _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) => _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
+  try {
+    return Map<String, Object?>.from(map);
+  } on TypeError {
+    _jsonTypeError(value, key, 'Map<String, Object?>');
+  }
+}
+DateTime _jsonAsDateTime(Object? value, String key) => _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) => _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) => _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+  if (value == null) {
+    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
+  }
+  try {
+    return codec.deserialize(value as dynamic) as T;
+  } catch (error) {
+    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
+  }
+}
+
+mixin _$Account {
+  Map<String, Object?> toJson() => _$AccountToJson(this as Account);
+}
+
+Map<String, Object?> _$AccountToJson(Account instance) {
+  return <String, Object?>{
+    'profile': instance.profile.toJson(),
+    'metrics': instance.metrics.map((key, value) => MapEntry(key, value.map((item) => item).toList())),
+    'archived': instance.archived,
+  };
+}
+// factory Account.fromJson(Map<String, Object?> json) => _$AccountFromJson(json);
+Account _$AccountFromJson(Map<String, Object?> json) {
+  final profileValue = Profile.fromJson(_jsonAsMap(json['profile'], 'profile'));
+  final metricsValue = _jsonAsMap(json['metrics'], 'metrics').map((mapKey, value) => MapEntry(mapKey, _jsonAsList(value, 'metrics').map((item) => _jsonAs<int>(item, 'metrics', 'int')).toList()));
+  final archivedValue = _jsonAs<bool>(json['archived'], 'archived', 'bool');
+
+  return Account(
+    profile: profileValue,
+    metrics: metricsValue,
+    archived: archivedValue,
+  );
+}
+"#
+        )
     );
-    assert!(
-        profile_output
-            .contains("const allowedKeys = <String>{'id', 'display_name', 'displayName', 'tags'};")
-    );
-    assert!(profile_output.contains(
-        "final rawDisplayNameKey = json.containsKey('display_name') ? 'display_name' : json.containsKey('displayName') ? 'displayName' : 'display_name';"
-    ));
-    assert!(profile_output.contains("final tagsValue = json.containsKey('tags') ?"));
-    assert!(profile_output.contains(": const ['guest'];"));
-    assert!(
-        account_output.contains("Map<String, Object?> toJson() => _$AccountToJson(_dustSelf);")
-    );
-    assert!(account_output.contains("'profile': instance.profile.toJson()"));
-    assert!(
-        account_output.contains("Profile.fromJson(_dustJsonAsMap(json['profile'], 'profile'))")
-    );
-    assert!(account_output.contains("_dustJsonAsMap(json['metrics'], 'metrics').map((mapKey, value) => MapEntry(mapKey, _dustJsonAsList(value, 'metrics').map((item) => _dustJsonAs<int>(item, 'metrics', 'int')).toList()))"));
 }
 
 #[test]
@@ -189,19 +353,65 @@ fn build_writes_custom_serde_codec_outputs() {
     let output = fs::read_to_string(workspace.path().join("lib/audit.g.dart")).unwrap();
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
-    assert!(output.contains(
-        "// factory Audit.fromJson(Map<String, Object?> json) => _$AuditFromJson(json);"
-    ));
-    assert!(output.contains("'createdAt': unixEpochDateTimeCodec.serialize(instance.createdAt)"));
-    assert!(output.contains("'updatedAt': instance.updatedAt == null"));
-    assert!(output.contains("unixEpochDateTimeCodec.serialize(instance.updatedAt!)"));
-    assert!(output.contains(
-        "final createdAtValue = _dustJsonDecodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['createdAt'], 'createdAt');"
-    ));
-    assert!(output.contains("final updatedAtValue = json['updatedAt'] == null"));
-    assert!(output.contains(
-        "_dustJsonDecodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['updatedAt'], 'updatedAt')"
-    ));
+    assert_eq!(
+        output,
+        generated_output(
+            r#"part of 'audit.dart';
+
+Never _jsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
+T _jsonAs<T>(Object? value, String key, String expected) => value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_jsonAs<String>(value, key, 'String')) ?? _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) => _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
+  try {
+    return Map<String, Object?>.from(map);
+  } on TypeError {
+    _jsonTypeError(value, key, 'Map<String, Object?>');
+  }
+}
+DateTime _jsonAsDateTime(Object? value, String key) => _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) => _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) => _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+  if (value == null) {
+    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
+  }
+  try {
+    return codec.deserialize(value as dynamic) as T;
+  } catch (error) {
+    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
+  }
+}
+
+mixin _$Audit {
+  Map<String, Object?> toJson() => _$AuditToJson(this as Audit);
+}
+
+Map<String, Object?> _$AuditToJson(Audit instance) {
+  return <String, Object?>{
+    'createdAt': unixEpochDateTimeCodec.serialize(instance.createdAt),
+    'updatedAt': instance.updatedAt == null
+                 ? null
+                 : unixEpochDateTimeCodec.serialize(instance.updatedAt!),
+  };
+}
+// factory Audit.fromJson(Map<String, Object?> json) => _$AuditFromJson(json);
+Audit _$AuditFromJson(Map<String, Object?> json) {
+  final createdAtValue = _jsonDecodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['createdAt'], 'createdAt');
+  final updatedAtValue = json['updatedAt'] == null
+                         ? null
+                         : _jsonDecodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['updatedAt'], 'updatedAt');
+
+  return Audit(
+    createdAt: createdAtValue,
+    updatedAt: updatedAtValue,
+  );
+}
+"#
+        )
+    );
 }
 
 #[test]

@@ -32,7 +32,7 @@ String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   return Uri.parse(dioBaseUrl).resolveUri(url).toString();
 }
 
-Response<T> _dustBuildResponse<T>(Response<dynamic> response, T data) {
+Response<T> _buildResponse<T>(Response<dynamic> response, T data) {
   return Response<T>(
     data: data,
     headers: response.headers,
@@ -243,7 +243,7 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
       ),
     );
     final _value = RemotePost.fromJson(_result.data as Map<String, dynamic>);
-    return _dustBuildResponse<RemotePost>(_result, _value);
+    return _buildResponse<RemotePost>(_result, _value);
   }
 
   @override
@@ -431,6 +431,6 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
       ),
     );
     final _value = _result.data as Map<String, dynamic>;
-    return _dustBuildResponse<Map<String, dynamic>>(_result, _value);
+    return _buildResponse<Map<String, dynamic>>(_result, _value);
   }
 }

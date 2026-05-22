@@ -111,17 +111,37 @@ fn copywith_copies_collection_fields_without_aliasing() {
     let members = members_for_class(&contribution, "Catalog");
 
     assert_eq!(members.len(), 1);
-    assert!(members[0].contains("Catalog copyWith({"));
-    assert!(members[0].contains("List<List<String>>.of(\n"));
-    assert!(
-        members[0]
-            .contains("(groups ?? _dustSelf.groups).map((item_0) => List<String>.of(item_0)),")
+    assert_eq!(
+        members,
+        [r#"Catalog copyWith({
+  List<List<String>>? groups,
+  List<String>? items,
+  Object? tags = _undefined,
+  Map<String, List<int>>? metrics,
+}) {
+  final self = this as Catalog;
+  final nextGroups = List<List<String>>.of(
+    (groups ?? self.groups).map((item_0) => List<String>.of(item_0)),
+  );
+  final nextItems = List<String>.of(items ?? self.items);
+  final nextTagsSource = identical(tags, _undefined) ? self.tags : tags as Set<String>?;
+  final nextTags = nextTagsSource == null ? null : Set<String>.of(nextTagsSource);
+  final nextMetrics = Map<String, List<int>>.fromEntries(
+    (metrics ?? self.metrics).entries.map(
+      (entry_3) => MapEntry(entry_3.key, List<int>.of(entry_3.value)),
+    ),
+  );
+
+  return Catalog(
+    nextGroups,
+    nextItems,
+    nextTags,
+    nextMetrics,
+  );
+}"#
+        .to_owned()]
+        .as_slice()
     );
-    assert!(members[0].contains("List<String>.of(items ?? _dustSelf.items)"));
-    assert!(members[0].contains("nextTagsSource == null ? null : Set<String>.of(nextTagsSource)"));
-    assert!(members[0].contains("Map<String, List<int>>.fromEntries("));
-    assert!(members[0].contains("List<int>.of(entry_"));
-    assert!(members[0].contains(".value)"));
 }
 
 #[test]
@@ -237,15 +257,26 @@ fn copywith_clones_nested_dust_models() {
 
     let members = members_for_class(&contribution, "Product");
     assert_eq!(members.len(), 1);
-    assert!(members.iter().any(|fragment| {
-        fragment.contains("Product copyWith({")
-            && !fragment.contains("final nextPriceSource = price ?? _dustSelf.price;")
-            && fragment.contains("final nextPrice = (price ?? _dustSelf.price).copyWith();")
-            && fragment.contains("final nextPrices = List<Price>.of(\n")
-            && fragment.contains("(prices ?? _dustSelf.prices).map((")
-            && fragment.contains("=> item_")
-            && fragment.contains(".copyWith()),")
-    }));
+    assert_eq!(
+        members,
+        [r#"Product copyWith({
+  Price? price,
+  List<Price>? prices,
+}) {
+  final self = this as Product;
+  final nextPrice = (price ?? self.price).copyWith();
+  final nextPrices = List<Price>.of(
+    (prices ?? self.prices).map((item_1) => item_1.copyWith()),
+  );
+
+  return Product(
+    nextPrice,
+    nextPrices,
+  );
+}"#
+        .to_owned()]
+        .as_slice()
+    );
 }
 
 #[test]
@@ -322,14 +353,28 @@ fn copywith_copies_collection_fields() {
     let members = members_for_class(&contribution, "Catalog");
 
     assert_eq!(members.len(), 1);
-    assert!(members[0].contains("Catalog copyWith({"));
-    assert!(members[0].contains("List<List<String>>? groups,"));
-    assert!(!members[0].contains("final nextGroupsSource = groups ?? _dustSelf.groups;"));
-    assert!(members[0].contains("final nextGroups = List<List<String>>.of(\n"));
-    assert!(
-        members[0]
-            .contains("(groups ?? _dustSelf.groups).map((item_0) => List<String>.of(item_0)),")
+    assert_eq!(
+        members,
+        [r#"Catalog copyWith({
+  List<List<String>>? groups,
+  Map<String, List<int>>? metrics,
+}) {
+  final self = this as Catalog;
+  final nextGroups = List<List<String>>.of(
+    (groups ?? self.groups).map((item_0) => List<String>.of(item_0)),
+  );
+  final nextMetrics = Map<String, List<int>>.fromEntries(
+    (metrics ?? self.metrics).entries.map(
+      (entry_1) => MapEntry(entry_1.key, List<int>.of(entry_1.value)),
+    ),
+  );
+
+  return Catalog(
+    groups: nextGroups,
+    metrics: nextMetrics,
+  );
+}"#
+        .to_owned()]
+        .as_slice()
     );
-    assert!(members[0].contains("final nextMetrics = Map<String, List<int>>.fromEntries("));
-    assert!(members[0].contains("return Catalog("));
 }

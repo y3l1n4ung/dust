@@ -8,49 +8,52 @@ part of 'session_state.dart';
 
 const Object _undefined = Object();
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$SessionState {
-  SessionState get _dustSelf => this as SessionState;
-
   @override
   String toString() {
+    final self = this as SessionState;
     return 'SessionState('
-        'owner: ${_dustSelf.owner}, '
-        'posts: ${_dustSelf.posts}, '
-        'isLoading: ${_dustSelf.isLoading}, '
-        'isRefreshing: ${_dustSelf.isRefreshing}, '
-        'isPostsLoading: ${_dustSelf.isPostsLoading}, '
-        'isInitialized: ${_dustSelf.isInitialized}, '
-        'errorMessage: ${_dustSelf.errorMessage}'
+        'owner: ${self.owner}, '
+        'posts: ${self.posts}, '
+        'isLoading: ${self.isLoading}, '
+        'isRefreshing: ${self.isRefreshing}, '
+        'isPostsLoading: ${self.isPostsLoading}, '
+        'isInitialized: ${self.isInitialized}, '
+        'errorMessage: ${self.errorMessage}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SessionState &&
-          runtimeType == other.runtimeType &&
-          other.owner == _dustSelf.owner &&
-          _dustDeepCollectionEquality.equals(other.posts, _dustSelf.posts) &&
-          other.isLoading == _dustSelf.isLoading &&
-          other.isRefreshing == _dustSelf.isRefreshing &&
-          other.isPostsLoading == _dustSelf.isPostsLoading &&
-          other.isInitialized == _dustSelf.isInitialized &&
-          other.errorMessage == _dustSelf.errorMessage;
+  bool operator ==(Object other) {
+    final self = this as SessionState;
+    return identical(this, other) ||
+        other is SessionState &&
+            runtimeType == other.runtimeType &&
+            other.owner == self.owner &&
+            _deepCollectionEquality.equals(other.posts, self.posts) &&
+            other.isLoading == self.isLoading &&
+            other.isRefreshing == self.isRefreshing &&
+            other.isPostsLoading == self.isPostsLoading &&
+            other.isInitialized == self.isInitialized &&
+            other.errorMessage == self.errorMessage;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.owner,
-    _dustDeepCollectionEquality.hash(_dustSelf.posts),
-    _dustSelf.isLoading,
-    _dustSelf.isRefreshing,
-    _dustSelf.isPostsLoading,
-    _dustSelf.isInitialized,
-    _dustSelf.errorMessage,
-  ]);
+  int get hashCode {
+    final self = this as SessionState;
+    return Object.hashAll([
+      runtimeType,
+      self.owner,
+      _deepCollectionEquality.hash(self.posts),
+      self.isLoading,
+      self.isRefreshing,
+      self.isPostsLoading,
+      self.isInitialized,
+      self.errorMessage,
+    ]);
+  }
 
   SessionState copyWith({
     Object? owner = _undefined,
@@ -61,25 +64,26 @@ mixin _$SessionState {
     bool? isInitialized,
     Object? errorMessage = _undefined,
   }) {
+    final self = this as SessionState;
     final nextOwnerSource = identical(owner, _undefined)
-        ? _dustSelf.owner
+        ? self.owner
         : owner as RemoteUser?;
     final nextOwner = nextOwnerSource == null
         ? null
         : nextOwnerSource.copyWith();
     final nextPosts = List<RemotePost>.of(
-      (posts ?? _dustSelf.posts).map((item_1) => item_1.copyWith()),
+      (posts ?? self.posts).map((item_1) => item_1.copyWith()),
     );
 
     return SessionState(
       owner: nextOwner,
       posts: nextPosts,
-      isLoading: isLoading ?? _dustSelf.isLoading,
-      isRefreshing: isRefreshing ?? _dustSelf.isRefreshing,
-      isPostsLoading: isPostsLoading ?? _dustSelf.isPostsLoading,
-      isInitialized: isInitialized ?? _dustSelf.isInitialized,
+      isLoading: isLoading ?? self.isLoading,
+      isRefreshing: isRefreshing ?? self.isRefreshing,
+      isPostsLoading: isPostsLoading ?? self.isPostsLoading,
+      isInitialized: isInitialized ?? self.isInitialized,
       errorMessage: identical(errorMessage, _undefined)
-          ? _dustSelf.errorMessage
+          ? self.errorMessage
           : errorMessage as String?,
     );
   }

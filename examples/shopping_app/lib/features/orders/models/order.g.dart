@@ -6,43 +6,38 @@
 
 part of 'order.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
-Never _dustJsonTypeError(Object? value, String key, String expected) =>
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+Never _jsonTypeError(Object? value, String key, String expected) =>
     throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
   Object? value,
   String key,
   String expected,
   T? Function(String value) parse,
 ) =>
-    parse(_dustJsonAs<String>(value, key, 'String')) ??
-    _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) =>
-    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
 
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
-  value,
-  key,
-  'ISO-8601 DateTime string',
-  DateTime.tryParse,
-);
-Uri _dustJsonAsUri(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }
@@ -54,42 +49,46 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
 }
 
 mixin _$Order {
-  Order get _dustSelf => this as Order;
-
   @override
   String toString() {
+    final self = this as Order;
     return 'Order('
-        'id: ${_dustSelf.id}, '
-        'items: ${_dustSelf.items}, '
-        'totalAmount: ${_dustSelf.totalAmount}, '
-        'status: ${_dustSelf.status}, '
-        'createdAt: ${_dustSelf.createdAt}, '
-        'shippingAddress: ${_dustSelf.shippingAddress}'
+        'id: ${self.id}, '
+        'items: ${self.items}, '
+        'totalAmount: ${self.totalAmount}, '
+        'status: ${self.status}, '
+        'createdAt: ${self.createdAt}, '
+        'shippingAddress: ${self.shippingAddress}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Order &&
-          runtimeType == other.runtimeType &&
-          other.id == _dustSelf.id &&
-          _dustDeepCollectionEquality.equals(other.items, _dustSelf.items) &&
-          other.totalAmount == _dustSelf.totalAmount &&
-          other.status == _dustSelf.status &&
-          other.createdAt == _dustSelf.createdAt &&
-          other.shippingAddress == _dustSelf.shippingAddress;
+  bool operator ==(Object other) {
+    final self = this as Order;
+    return identical(this, other) ||
+        other is Order &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id &&
+            _deepCollectionEquality.equals(other.items, self.items) &&
+            other.totalAmount == self.totalAmount &&
+            other.status == self.status &&
+            other.createdAt == self.createdAt &&
+            other.shippingAddress == self.shippingAddress;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.id,
-    _dustDeepCollectionEquality.hash(_dustSelf.items),
-    _dustSelf.totalAmount,
-    _dustSelf.status,
-    _dustSelf.createdAt,
-    _dustSelf.shippingAddress,
-  ]);
+  int get hashCode {
+    final self = this as Order;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+      _deepCollectionEquality.hash(self.items),
+      self.totalAmount,
+      self.status,
+      self.createdAt,
+      self.shippingAddress,
+    ]);
+  }
 
   Order copyWith({
     String? id,
@@ -99,59 +98,64 @@ mixin _$Order {
     DateTime? createdAt,
     ShippingAddress? shippingAddress,
   }) {
+    final self = this as Order;
     final nextItems = List<CartItem>.of(
-      (items ?? _dustSelf.items).map((item_1) => item_1.copyWith()),
+      (items ?? self.items).map((item_1) => item_1.copyWith()),
     );
-    final nextShippingAddress = (shippingAddress ?? _dustSelf.shippingAddress)
+    final nextShippingAddress = (shippingAddress ?? self.shippingAddress)
         .copyWith();
 
     return Order(
-      id: id ?? _dustSelf.id,
+      id: id ?? self.id,
       items: nextItems,
-      totalAmount: totalAmount ?? _dustSelf.totalAmount,
-      status: status ?? _dustSelf.status,
-      createdAt: createdAt ?? _dustSelf.createdAt,
+      totalAmount: totalAmount ?? self.totalAmount,
+      status: status ?? self.status,
+      createdAt: createdAt ?? self.createdAt,
       shippingAddress: nextShippingAddress,
     );
   }
 
-  Map<String, Object?> toJson() => _$OrderToJson(_dustSelf);
+  Map<String, Object?> toJson() => _$OrderToJson(this as Order);
 }
 
 mixin _$ShippingAddress {
-  ShippingAddress get _dustSelf => this as ShippingAddress;
-
   @override
   String toString() {
+    final self = this as ShippingAddress;
     return 'ShippingAddress('
-        'fullName: ${_dustSelf.fullName}, '
-        'address: ${_dustSelf.address}, '
-        'city: ${_dustSelf.city}, '
-        'zipCode: ${_dustSelf.zipCode}, '
-        'phone: ${_dustSelf.phone}'
+        'fullName: ${self.fullName}, '
+        'address: ${self.address}, '
+        'city: ${self.city}, '
+        'zipCode: ${self.zipCode}, '
+        'phone: ${self.phone}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ShippingAddress &&
-          runtimeType == other.runtimeType &&
-          other.fullName == _dustSelf.fullName &&
-          other.address == _dustSelf.address &&
-          other.city == _dustSelf.city &&
-          other.zipCode == _dustSelf.zipCode &&
-          other.phone == _dustSelf.phone;
+  bool operator ==(Object other) {
+    final self = this as ShippingAddress;
+    return identical(this, other) ||
+        other is ShippingAddress &&
+            runtimeType == other.runtimeType &&
+            other.fullName == self.fullName &&
+            other.address == self.address &&
+            other.city == self.city &&
+            other.zipCode == self.zipCode &&
+            other.phone == self.phone;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.fullName,
-    _dustSelf.address,
-    _dustSelf.city,
-    _dustSelf.zipCode,
-    _dustSelf.phone,
-  ]);
+  int get hashCode {
+    final self = this as ShippingAddress;
+    return Object.hashAll([
+      runtimeType,
+      self.fullName,
+      self.address,
+      self.city,
+      self.zipCode,
+      self.phone,
+    ]);
+  }
 
   ShippingAddress copyWith({
     String? fullName,
@@ -160,16 +164,18 @@ mixin _$ShippingAddress {
     String? zipCode,
     String? phone,
   }) {
+    final self = this as ShippingAddress;
     return ShippingAddress(
-      fullName: fullName ?? _dustSelf.fullName,
-      address: address ?? _dustSelf.address,
-      city: city ?? _dustSelf.city,
-      zipCode: zipCode ?? _dustSelf.zipCode,
-      phone: phone ?? _dustSelf.phone,
+      fullName: fullName ?? self.fullName,
+      address: address ?? self.address,
+      city: city ?? self.city,
+      zipCode: zipCode ?? self.zipCode,
+      phone: phone ?? self.phone,
     );
   }
 
-  Map<String, Object?> toJson() => _$ShippingAddressToJson(_dustSelf);
+  Map<String, Object?> toJson() =>
+      _$ShippingAddressToJson(this as ShippingAddress);
 }
 
 Map<String, Object?> _$OrderToJson(Order instance) {
@@ -185,20 +191,20 @@ Map<String, Object?> _$OrderToJson(Order instance) {
 
 // factory Order.fromJson(Map<String, Object?> json) => _$OrderFromJson(json);
 Order _$OrderFromJson(Map<String, Object?> json) {
-  final idValue = _dustJsonAs<String>(json['id'], 'id', 'String');
-  final itemsValue = _dustJsonAsList(
+  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
+  final itemsValue = _jsonAsList(
     json['items'],
     'items',
-  ).map((item) => CartItem.fromJson(_dustJsonAsMap(item, 'items'))).toList();
-  final totalAmountValue = _dustJsonAs<num>(
+  ).map((item) => CartItem.fromJson(_jsonAsMap(item, 'items'))).toList();
+  final totalAmountValue = _jsonAs<num>(
     json['totalAmount'],
     'totalAmount',
     'num',
   ).toDouble();
   final statusValue = _$OrderStatusFromJson(json['status']);
-  final createdAtValue = _dustJsonAsDateTime(json['createdAt'], 'createdAt');
+  final createdAtValue = _jsonAsDateTime(json['createdAt'], 'createdAt');
   final shippingAddressValue = _$ShippingAddressFromJson(
-    _dustJsonAsMap(json['shippingAddress'], 'shippingAddress'),
+    _jsonAsMap(json['shippingAddress'], 'shippingAddress'),
   );
 
   return Order(
@@ -223,23 +229,11 @@ Map<String, Object?> _$ShippingAddressToJson(ShippingAddress instance) {
 
 // factory ShippingAddress.fromJson(Map<String, Object?> json) => _$ShippingAddressFromJson(json);
 ShippingAddress _$ShippingAddressFromJson(Map<String, Object?> json) {
-  final fullNameValue = _dustJsonAs<String>(
-    json['fullName'],
-    'fullName',
-    'String',
-  );
-  final addressValue = _dustJsonAs<String>(
-    json['address'],
-    'address',
-    'String',
-  );
-  final cityValue = _dustJsonAs<String>(json['city'], 'city', 'String');
-  final zipCodeValue = _dustJsonAs<String>(
-    json['zipCode'],
-    'zipCode',
-    'String',
-  );
-  final phoneValue = _dustJsonAs<String>(json['phone'], 'phone', 'String');
+  final fullNameValue = _jsonAs<String>(json['fullName'], 'fullName', 'String');
+  final addressValue = _jsonAs<String>(json['address'], 'address', 'String');
+  final cityValue = _jsonAs<String>(json['city'], 'city', 'String');
+  final zipCodeValue = _jsonAs<String>(json['zipCode'], 'zipCode', 'String');
+  final phoneValue = _jsonAs<String>(json['phone'], 'phone', 'String');
 
   return ShippingAddress(
     fullName: fullNameValue,

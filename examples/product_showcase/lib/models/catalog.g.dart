@@ -6,99 +6,101 @@
 
 part of 'catalog.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
-const DeepCollectionEquality _dustUnorderedDeepCollectionEquality =
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _unorderedDeepCollectionEquality =
     DeepCollectionEquality.unordered();
 
 mixin _$InventoryEntry {
-  InventoryEntry get _dustSelf => this as InventoryEntry;
-
   @override
   String toString() {
+    final self = this as InventoryEntry;
     return 'InventoryEntry('
-        'productSku: ${_dustSelf.productSku}, '
-        'warehouse: ${_dustSelf.warehouse}, '
-        'quantity: ${_dustSelf.quantity}'
+        'productSku: ${self.productSku}, '
+        'warehouse: ${self.warehouse}, '
+        'quantity: ${self.quantity}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is InventoryEntry &&
-          runtimeType == other.runtimeType &&
-          other.productSku == _dustSelf.productSku &&
-          other.warehouse == _dustSelf.warehouse &&
-          other.quantity == _dustSelf.quantity;
+  bool operator ==(Object other) {
+    final self = this as InventoryEntry;
+    return identical(this, other) ||
+        other is InventoryEntry &&
+            runtimeType == other.runtimeType &&
+            other.productSku == self.productSku &&
+            other.warehouse == self.warehouse &&
+            other.quantity == self.quantity;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.productSku,
-    _dustSelf.warehouse,
-    _dustSelf.quantity,
-  ]);
+  int get hashCode {
+    final self = this as InventoryEntry;
+    return Object.hashAll([
+      runtimeType,
+      self.productSku,
+      self.warehouse,
+      self.quantity,
+    ]);
+  }
 
   InventoryEntry copyWith({
     String? productSku,
     String? warehouse,
     int? quantity,
   }) {
+    final self = this as InventoryEntry;
     return InventoryEntry(
-      productSku: productSku ?? _dustSelf.productSku,
-      warehouse: warehouse ?? _dustSelf.warehouse,
-      quantity: quantity ?? _dustSelf.quantity,
+      productSku: productSku ?? self.productSku,
+      warehouse: warehouse ?? self.warehouse,
+      quantity: quantity ?? self.quantity,
     );
   }
 }
 
 mixin _$Catalog {
-  Catalog get _dustSelf => this as Catalog;
-
   @override
   String toString() {
+    final self = this as Catalog;
     return 'Catalog('
-        'id: ${_dustSelf.id}, '
-        'products: ${_dustSelf.products}, '
-        'categoryById: ${_dustSelf.categoryById}, '
-        'featuredSkus: ${_dustSelf.featuredSkus}, '
-        'inventory: ${_dustSelf.inventory}'
+        'id: ${self.id}, '
+        'products: ${self.products}, '
+        'categoryById: ${self.categoryById}, '
+        'featuredSkus: ${self.featuredSkus}, '
+        'inventory: ${self.inventory}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Catalog &&
-          runtimeType == other.runtimeType &&
-          other.id == _dustSelf.id &&
-          _dustDeepCollectionEquality.equals(
-            other.products,
-            _dustSelf.products,
-          ) &&
-          _dustDeepCollectionEquality.equals(
-            other.categoryById,
-            _dustSelf.categoryById,
-          ) &&
-          _dustUnorderedDeepCollectionEquality.equals(
-            other.featuredSkus,
-            _dustSelf.featuredSkus,
-          ) &&
-          _dustDeepCollectionEquality.equals(
-            other.inventory,
-            _dustSelf.inventory,
-          );
+  bool operator ==(Object other) {
+    final self = this as Catalog;
+    return identical(this, other) ||
+        other is Catalog &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id &&
+            _deepCollectionEquality.equals(other.products, self.products) &&
+            _deepCollectionEquality.equals(
+              other.categoryById,
+              self.categoryById,
+            ) &&
+            _unorderedDeepCollectionEquality.equals(
+              other.featuredSkus,
+              self.featuredSkus,
+            ) &&
+            _deepCollectionEquality.equals(other.inventory, self.inventory);
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.id,
-    _dustDeepCollectionEquality.hash(_dustSelf.products),
-    _dustDeepCollectionEquality.hash(_dustSelf.categoryById),
-    _dustUnorderedDeepCollectionEquality.hash(_dustSelf.featuredSkus),
-    _dustDeepCollectionEquality.hash(_dustSelf.inventory),
-  ]);
+  int get hashCode {
+    final self = this as Catalog;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+      _deepCollectionEquality.hash(self.products),
+      _deepCollectionEquality.hash(self.categoryById),
+      _unorderedDeepCollectionEquality.hash(self.featuredSkus),
+      _deepCollectionEquality.hash(self.inventory),
+    ]);
+  }
 
   Catalog copyWith({
     String? id,
@@ -107,23 +109,22 @@ mixin _$Catalog {
     Set<String>? featuredSkus,
     List<InventoryEntry>? inventory,
   }) {
+    final self = this as Catalog;
     final nextProducts = List<Product>.of(
-      (products ?? _dustSelf.products).map((item_1) => item_1.copyWith()),
+      (products ?? self.products).map((item_1) => item_1.copyWith()),
     );
     final nextCategoryById = Map<String, Category>.fromEntries(
-      (categoryById ?? _dustSelf.categoryById).entries.map(
+      (categoryById ?? self.categoryById).entries.map(
         (entry_2) => MapEntry(entry_2.key, (entry_2.value).copyWith()),
       ),
     );
-    final nextFeaturedSkus = Set<String>.of(
-      featuredSkus ?? _dustSelf.featuredSkus,
-    );
+    final nextFeaturedSkus = Set<String>.of(featuredSkus ?? self.featuredSkus);
     final nextInventory = List<InventoryEntry>.of(
-      (inventory ?? _dustSelf.inventory).map((item_4) => item_4.copyWith()),
+      (inventory ?? self.inventory).map((item_4) => item_4.copyWith()),
     );
 
     return Catalog(
-      id: id ?? _dustSelf.id,
+      id: id ?? self.id,
       products: nextProducts,
       categoryById: nextCategoryById,
       featuredSkus: nextFeaturedSkus,

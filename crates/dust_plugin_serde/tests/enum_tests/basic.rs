@@ -25,13 +25,25 @@ fn generates_serde_for_enums() {
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 
-    assert!(to_json.contains("Object? _$StatusToJson(Status instance)"));
-    assert!(to_json.contains("Status.pending => 'pending'"));
-    assert!(to_json.contains("Status.active => 'active'"));
-
-    assert!(from_json.contains("Status _$StatusFromJson(Object? json)"));
-    assert!(from_json.contains("'pending' => Status.pending"));
-    assert!(from_json.contains("'active' => Status.active"));
+    assert_eq!(
+        to_json,
+        r#"Object? _$StatusToJson(Status instance) {
+  return switch (instance) {
+    Status.pending => 'pending',
+    Status.active => 'active',
+  };
+}"#
+    );
+    assert_eq!(
+        from_json,
+        r#"Status _$StatusFromJson(Object? json) {
+  return switch (json) {
+    'pending' => Status.pending,
+    'active' => Status.active,
+    _ => throw ArgumentError.value(json, 'json', 'unknown value for Status'),
+  };
+}"#
+    );
 }
 
 #[test]
@@ -50,9 +62,23 @@ fn supports_enum_renaming() {
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 
-    assert!(to_json.contains("UserRole.superAdmin => 'super_admin'"));
-    assert!(to_json.contains("UserRole.guestUser => 'guest_user'"));
-
-    assert!(from_json.contains("'super_admin' => UserRole.superAdmin"));
-    assert!(from_json.contains("'guest_user' => UserRole.guestUser"));
+    assert_eq!(
+        to_json,
+        r#"Object? _$UserRoleToJson(UserRole instance) {
+  return switch (instance) {
+    UserRole.superAdmin => 'super_admin',
+    UserRole.guestUser => 'guest_user',
+  };
+}"#
+    );
+    assert_eq!(
+        from_json,
+        r#"UserRole _$UserRoleFromJson(Object? json) {
+  return switch (json) {
+    'super_admin' => UserRole.superAdmin,
+    'guest_user' => UserRole.guestUser,
+    _ => throw ArgumentError.value(json, 'json', 'unknown value for UserRole'),
+  };
+}"#
+    );
 }

@@ -6,38 +6,42 @@
 
 part of 'tagged_value.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$TaggedValue {
-  TaggedValue get _dustSelf => this as TaggedValue;
-
   @override
   String toString() {
+    final self = this as TaggedValue;
     return 'TaggedValue('
-        'code: ${_dustSelf.code}, '
-        'aliases: ${_dustSelf.aliases}'
+        'code: ${self.code}, '
+        'aliases: ${self.aliases}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is TaggedValue &&
-          runtimeType == other.runtimeType &&
-          other.code == _dustSelf.code &&
-          _dustDeepCollectionEquality.equals(other.aliases, _dustSelf.aliases);
+  bool operator ==(Object other) {
+    final self = this as TaggedValue;
+    return identical(this, other) ||
+        other is TaggedValue &&
+            runtimeType == other.runtimeType &&
+            other.code == self.code &&
+            _deepCollectionEquality.equals(other.aliases, self.aliases);
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.code,
-    _dustDeepCollectionEquality.hash(_dustSelf.aliases),
-  ]);
+  int get hashCode {
+    final self = this as TaggedValue;
+    return Object.hashAll([
+      runtimeType,
+      self.code,
+      _deepCollectionEquality.hash(self.aliases),
+    ]);
+  }
 
   TaggedValue copyWith({String? code, List<String>? aliases}) {
-    final nextAliases = List<String>.of(aliases ?? _dustSelf.aliases);
+    final self = this as TaggedValue;
+    final nextAliases = List<String>.of(aliases ?? self.aliases);
 
-    return TaggedValue(code: code ?? _dustSelf.code, aliases: nextAliases);
+    return TaggedValue(code: code ?? self.code, aliases: nextAliases);
   }
 }

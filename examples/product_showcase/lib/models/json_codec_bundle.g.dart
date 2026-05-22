@@ -6,41 +6,37 @@
 
 part of 'json_codec_bundle.dart';
 
-Never _dustJsonTypeError(Object? value, String key, String expected) =>
+Never _jsonTypeError(Object? value, String key, String expected) =>
     throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
   Object? value,
   String key,
   String expected,
   T? Function(String value) parse,
 ) =>
-    parse(_dustJsonAs<String>(value, key, 'String')) ??
-    _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) =>
-    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
 
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
-  value,
-  key,
-  'ISO-8601 DateTime string',
-  DateTime.tryParse,
-);
-Uri _dustJsonAsUri(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }
@@ -52,29 +48,33 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
 }
 
 mixin _$JsonCodecBundle {
-  JsonCodecBundle get _dustSelf => this as JsonCodecBundle;
-
   @override
   String toString() {
+    final self = this as JsonCodecBundle;
     return 'JsonCodecBundle('
-        'createdAt: ${_dustSelf.createdAt}, '
-        'updatedAt: ${_dustSelf.updatedAt}'
+        'createdAt: ${self.createdAt}, '
+        'updatedAt: ${self.updatedAt}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is JsonCodecBundle &&
-          runtimeType == other.runtimeType &&
-          other.createdAt == _dustSelf.createdAt &&
-          other.updatedAt == _dustSelf.updatedAt;
+  bool operator ==(Object other) {
+    final self = this as JsonCodecBundle;
+    return identical(this, other) ||
+        other is JsonCodecBundle &&
+            runtimeType == other.runtimeType &&
+            other.createdAt == self.createdAt &&
+            other.updatedAt == self.updatedAt;
+  }
 
   @override
-  int get hashCode =>
-      Object.hashAll([runtimeType, _dustSelf.createdAt, _dustSelf.updatedAt]);
+  int get hashCode {
+    final self = this as JsonCodecBundle;
+    return Object.hashAll([runtimeType, self.createdAt, self.updatedAt]);
+  }
 
-  Map<String, Object?> toJson() => _$JsonCodecBundleToJson(_dustSelf);
+  Map<String, Object?> toJson() =>
+      _$JsonCodecBundleToJson(this as JsonCodecBundle);
 }
 
 Map<String, Object?> _$JsonCodecBundleToJson(JsonCodecBundle instance) {
@@ -88,14 +88,14 @@ Map<String, Object?> _$JsonCodecBundleToJson(JsonCodecBundle instance) {
 
 // factory JsonCodecBundle.fromJson(Map<String, Object?> json) => _$JsonCodecBundleFromJson(json);
 JsonCodecBundle _$JsonCodecBundleFromJson(Map<String, Object?> json) {
-  final createdAtValue = _dustJsonDecodeWithCodec<DateTime>(
+  final createdAtValue = _jsonDecodeWithCodec<DateTime>(
     unixEpochDateTimeCodec,
     json['createdAt'],
     'createdAt',
   );
   final updatedAtValue = json['updatedAt'] == null
       ? null
-      : _dustJsonDecodeWithCodec<DateTime>(
+      : _jsonDecodeWithCodec<DateTime>(
           unixEpochDateTimeCodec,
           json['updatedAt'],
           'updatedAt',

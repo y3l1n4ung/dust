@@ -9,36 +9,40 @@ part of 'auth_state.dart';
 const Object _undefined = Object();
 
 mixin _$AuthState {
-  AuthState get _dustSelf => this as AuthState;
-
   @override
   String toString() {
+    final self = this as AuthState;
     return 'AuthState('
-        'user: ${_dustSelf.user}, '
-        'token: ${_dustSelf.token}, '
-        'status: ${_dustSelf.status}, '
-        'errorMessage: ${_dustSelf.errorMessage}'
+        'user: ${self.user}, '
+        'token: ${self.token}, '
+        'status: ${self.status}, '
+        'errorMessage: ${self.errorMessage}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is AuthState &&
-          runtimeType == other.runtimeType &&
-          other.user == _dustSelf.user &&
-          other.token == _dustSelf.token &&
-          other.status == _dustSelf.status &&
-          other.errorMessage == _dustSelf.errorMessage;
+  bool operator ==(Object other) {
+    final self = this as AuthState;
+    return identical(this, other) ||
+        other is AuthState &&
+            runtimeType == other.runtimeType &&
+            other.user == self.user &&
+            other.token == self.token &&
+            other.status == self.status &&
+            other.errorMessage == self.errorMessage;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.user,
-    _dustSelf.token,
-    _dustSelf.status,
-    _dustSelf.errorMessage,
-  ]);
+  int get hashCode {
+    final self = this as AuthState;
+    return Object.hashAll([
+      runtimeType,
+      self.user,
+      self.token,
+      self.status,
+      self.errorMessage,
+    ]);
+  }
 
   AuthState copyWith({
     Object? user = _undefined,
@@ -46,17 +50,18 @@ mixin _$AuthState {
     AuthStatus? status,
     Object? errorMessage = _undefined,
   }) {
+    final self = this as AuthState;
     final nextUserSource = identical(user, _undefined)
-        ? _dustSelf.user
+        ? self.user
         : user as User?;
     final nextUser = nextUserSource == null ? null : nextUserSource.copyWith();
 
     return AuthState(
       user: nextUser,
-      token: identical(token, _undefined) ? _dustSelf.token : token as String?,
-      status: status ?? _dustSelf.status,
+      token: identical(token, _undefined) ? self.token : token as String?,
+      status: status ?? self.status,
       errorMessage: identical(errorMessage, _undefined)
-          ? _dustSelf.errorMessage
+          ? self.errorMessage
           : errorMessage as String?,
     );
   }

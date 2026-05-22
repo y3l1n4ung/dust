@@ -142,26 +142,26 @@ fn decode_non_nullable_expr(
 ) -> String {
     match ty {
         TypeIr::Builtin { kind, .. } => match kind {
-            BuiltinType::String => format!("_dustJsonAs<String>({raw}, {key}, 'String')"),
-            BuiltinType::Int => format!("_dustJsonAs<int>({raw}, {key}, 'int')"),
-            BuiltinType::Bool => format!("_dustJsonAs<bool>({raw}, {key}, 'bool')"),
-            BuiltinType::Double => format!("_dustJsonAs<num>({raw}, {key}, 'num').toDouble()"),
-            BuiltinType::Num => format!("_dustJsonAs<num>({raw}, {key}, 'num')"),
-            BuiltinType::Object => format!("_dustJsonAs<Object>({raw}, {key}, 'Object')"),
+            BuiltinType::String => format!("_jsonAs<String>({raw}, {key}, 'String')"),
+            BuiltinType::Int => format!("_jsonAs<int>({raw}, {key}, 'int')"),
+            BuiltinType::Bool => format!("_jsonAs<bool>({raw}, {key}, 'bool')"),
+            BuiltinType::Double => format!("_jsonAs<num>({raw}, {key}, 'num').toDouble()"),
+            BuiltinType::Num => format!("_jsonAs<num>({raw}, {key}, 'num')"),
+            BuiltinType::Object => format!("_jsonAs<Object>({raw}, {key}, 'Object')"),
         },
         TypeIr::Dynamic | TypeIr::Unknown => raw.to_owned(),
         TypeIr::Function { .. } | TypeIr::Record { .. } => raw.to_owned(),
         TypeIr::Named { name, .. } if name.as_ref() == "DateTime" => {
-            format!("_dustJsonAsDateTime({raw}, {key})")
+            format!("_jsonAsDateTime({raw}, {key})")
         }
         TypeIr::Named { name, .. } if name.as_ref() == "Uri" => {
-            format!("_dustJsonAsUri({raw}, {key})")
+            format!("_jsonAsUri({raw}, {key})")
         }
         TypeIr::Named { name, .. } if name.as_ref() == "BigInt" => {
-            format!("_dustJsonAsBigInt({raw}, {key})")
+            format!("_jsonAsBigInt({raw}, {key})")
         }
         TypeIr::Named { name, args, .. } if name.as_ref() == "List" => format!(
-            "_dustJsonAsList({raw}, {key}).map((item) => {}).toList()",
+            "_jsonAsList({raw}, {key}).map((item) => {}).toList()",
             decode_expr(
                 "item",
                 key,
@@ -171,7 +171,7 @@ fn decode_non_nullable_expr(
             )
         ),
         TypeIr::Named { name, args, .. } if name.as_ref() == "Set" => format!(
-            "_dustJsonAsList({raw}, {key}).map((item) => {}).toSet()",
+            "_jsonAsList({raw}, {key}).map((item) => {}).toSet()",
             decode_expr(
                 "item",
                 key,
@@ -181,7 +181,7 @@ fn decode_non_nullable_expr(
             )
         ),
         TypeIr::Named { name, args, .. } if name.as_ref() == "Map" => format!(
-            "_dustJsonAsMap({raw}, {key}).map((mapKey, value) => MapEntry(mapKey, {}))",
+            "_jsonAsMap({raw}, {key}).map((mapKey, value) => MapEntry(mapKey, {}))",
             decode_expr(
                 "value",
                 key,
@@ -192,11 +192,11 @@ fn decode_non_nullable_expr(
         ),
         TypeIr::Named { name, .. } => {
             if deserializable_classes.contains(name.as_ref()) {
-                format!("_${name}FromJson(_dustJsonAsMap({raw}, {key}))")
+                format!("_${name}FromJson(_jsonAsMap({raw}, {key}))")
             } else if deserializable_enums.contains(name.as_ref()) {
                 format!("_${name}FromJson({raw})")
             } else {
-                format!("{name}.fromJson(_dustJsonAsMap({raw}, {key}))")
+                format!("{name}.fromJson(_jsonAsMap({raw}, {key}))")
             }
         }
     }
@@ -216,9 +216,9 @@ fn decode_with_codec(raw: &str, key: &str, ty: &TypeIr, codec: &str) -> String {
     let codec = access_receiver(codec);
     let value_ty = OBJECT_NULLABLE_TYPES.render(&non_nullable(ty));
     if ty.is_nullable() {
-        let decoded = format!("_dustJsonDecodeWithCodec<{value_ty}>({codec}, {raw}, {key})");
+        let decoded = format!("_jsonDecodeWithCodec<{value_ty}>({codec}, {raw}, {key})");
         return format!("{raw} == null\n? null\n: {decoded}");
     }
 
-    format!("_dustJsonDecodeWithCodec<{value_ty}>({codec}, {raw}, {key})")
+    format!("_jsonDecodeWithCodec<{value_ty}>({codec}, {raw}, {key})")
 }

@@ -6,45 +6,40 @@
 
 part of 'json_scalar_bundle.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
-const DeepCollectionEquality _dustUnorderedDeepCollectionEquality =
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _unorderedDeepCollectionEquality =
     DeepCollectionEquality.unordered();
-Never _dustJsonTypeError(Object? value, String key, String expected) =>
+Never _jsonTypeError(Object? value, String key, String expected) =>
     throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
   Object? value,
   String key,
   String expected,
   T? Function(String value) parse,
 ) =>
-    parse(_dustJsonAs<String>(value, key, 'String')) ??
-    _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) =>
-    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
 
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
-  value,
-  key,
-  'ISO-8601 DateTime string',
-  DateTime.tryParse,
-);
-Uri _dustJsonAsUri(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }
@@ -56,50 +51,52 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
 }
 
 mixin _$JsonScalarBundle {
-  JsonScalarBundle get _dustSelf => this as JsonScalarBundle;
-
   @override
   String toString() {
+    final self = this as JsonScalarBundle;
     return 'JsonScalarBundle('
-        'createdAt: ${_dustSelf.createdAt}, '
-        'updatedAt: ${_dustSelf.updatedAt}, '
-        'website: ${_dustSelf.website}, '
-        'largeNumber: ${_dustSelf.largeNumber}, '
-        'endpoints: ${_dustSelf.endpoints}, '
-        'checkpoints: ${_dustSelf.checkpoints}'
+        'createdAt: ${self.createdAt}, '
+        'updatedAt: ${self.updatedAt}, '
+        'website: ${self.website}, '
+        'largeNumber: ${self.largeNumber}, '
+        'endpoints: ${self.endpoints}, '
+        'checkpoints: ${self.checkpoints}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is JsonScalarBundle &&
-          runtimeType == other.runtimeType &&
-          other.createdAt == _dustSelf.createdAt &&
-          other.updatedAt == _dustSelf.updatedAt &&
-          other.website == _dustSelf.website &&
-          other.largeNumber == _dustSelf.largeNumber &&
-          _dustUnorderedDeepCollectionEquality.equals(
-            other.endpoints,
-            _dustSelf.endpoints,
-          ) &&
-          _dustDeepCollectionEquality.equals(
-            other.checkpoints,
-            _dustSelf.checkpoints,
-          );
+  bool operator ==(Object other) {
+    final self = this as JsonScalarBundle;
+    return identical(this, other) ||
+        other is JsonScalarBundle &&
+            runtimeType == other.runtimeType &&
+            other.createdAt == self.createdAt &&
+            other.updatedAt == self.updatedAt &&
+            other.website == self.website &&
+            other.largeNumber == self.largeNumber &&
+            _unorderedDeepCollectionEquality.equals(
+              other.endpoints,
+              self.endpoints,
+            ) &&
+            _deepCollectionEquality.equals(other.checkpoints, self.checkpoints);
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.createdAt,
-    _dustSelf.updatedAt,
-    _dustSelf.website,
-    _dustSelf.largeNumber,
-    _dustUnorderedDeepCollectionEquality.hash(_dustSelf.endpoints),
-    _dustDeepCollectionEquality.hash(_dustSelf.checkpoints),
-  ]);
+  int get hashCode {
+    final self = this as JsonScalarBundle;
+    return Object.hashAll([
+      runtimeType,
+      self.createdAt,
+      self.updatedAt,
+      self.website,
+      self.largeNumber,
+      _unorderedDeepCollectionEquality.hash(self.endpoints),
+      _deepCollectionEquality.hash(self.checkpoints),
+    ]);
+  }
 
-  Map<String, Object?> toJson() => _$JsonScalarBundleToJson(_dustSelf);
+  Map<String, Object?> toJson() =>
+      _$JsonScalarBundleToJson(this as JsonScalarBundle);
 }
 
 Map<String, Object?> _$JsonScalarBundleToJson(JsonScalarBundle instance) {
@@ -119,24 +116,19 @@ Map<String, Object?> _$JsonScalarBundleToJson(JsonScalarBundle instance) {
 
 // factory JsonScalarBundle.fromJson(Map<String, Object?> json) => _$JsonScalarBundleFromJson(json);
 JsonScalarBundle _$JsonScalarBundleFromJson(Map<String, Object?> json) {
-  final createdAtValue = _dustJsonAsDateTime(json['createdAt'], 'createdAt');
+  final createdAtValue = _jsonAsDateTime(json['createdAt'], 'createdAt');
   final updatedAtValue = json['updatedAt'] == null
       ? null
-      : _dustJsonAsDateTime(json['updatedAt'], 'updatedAt');
-  final websiteValue = _dustJsonAsUri(json['website'], 'website');
-  final largeNumberValue = _dustJsonAsBigInt(
-    json['largeNumber'],
-    'largeNumber',
-  );
-  final endpointsValue = _dustJsonAsList(
+      : _jsonAsDateTime(json['updatedAt'], 'updatedAt');
+  final websiteValue = _jsonAsUri(json['website'], 'website');
+  final largeNumberValue = _jsonAsBigInt(json['largeNumber'], 'largeNumber');
+  final endpointsValue = _jsonAsList(
     json['endpoints'],
     'endpoints',
-  ).map((item) => _dustJsonAsUri(item, 'endpoints')).toSet();
-  final checkpointsValue = _dustJsonAsMap(json['checkpoints'], 'checkpoints')
-      .map(
-        (mapKey, value) =>
-            MapEntry(mapKey, _dustJsonAsDateTime(value, 'checkpoints')),
-      );
+  ).map((item) => _jsonAsUri(item, 'endpoints')).toSet();
+  final checkpointsValue = _jsonAsMap(json['checkpoints'], 'checkpoints').map(
+    (mapKey, value) => MapEntry(mapKey, _jsonAsDateTime(value, 'checkpoints')),
+  );
 
   return JsonScalarBundle(
     createdAt: createdAtValue,

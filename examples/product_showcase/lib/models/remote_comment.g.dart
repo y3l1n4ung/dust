@@ -6,41 +6,37 @@
 
 part of 'remote_comment.dart';
 
-Never _dustJsonTypeError(Object? value, String key, String expected) =>
+Never _jsonTypeError(Object? value, String key, String expected) =>
     throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
   Object? value,
   String key,
   String expected,
   T? Function(String value) parse,
 ) =>
-    parse(_dustJsonAs<String>(value, key, 'String')) ??
-    _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) =>
-    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
 
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
-  value,
-  key,
-  'ISO-8601 DateTime string',
-  DateTime.tryParse,
-);
-Uri _dustJsonAsUri(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }
@@ -52,16 +48,15 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
 }
 
 mixin _$RemoteComment {
-  RemoteComment get _dustSelf => this as RemoteComment;
-
   @override
   String toString() {
+    final self = this as RemoteComment;
     return 'RemoteComment('
-        'postId: ${_dustSelf.postId}, '
-        'id: ${_dustSelf.id}, '
-        'name: ${_dustSelf.name}, '
-        'email: ${_dustSelf.email}, '
-        'body: ${_dustSelf.body}'
+        'postId: ${self.postId}, '
+        'id: ${self.id}, '
+        'name: ${self.name}, '
+        'email: ${self.email}, '
+        'body: ${self.body}'
         ')';
   }
 
@@ -72,16 +67,17 @@ mixin _$RemoteComment {
     String? email,
     String? body,
   }) {
+    final self = this as RemoteComment;
     return RemoteComment(
-      postId: postId ?? _dustSelf.postId,
-      id: id ?? _dustSelf.id,
-      name: name ?? _dustSelf.name,
-      email: email ?? _dustSelf.email,
-      body: body ?? _dustSelf.body,
+      postId: postId ?? self.postId,
+      id: id ?? self.id,
+      name: name ?? self.name,
+      email: email ?? self.email,
+      body: body ?? self.body,
     );
   }
 
-  Map<String, Object?> toJson() => _$RemoteCommentToJson(_dustSelf);
+  Map<String, Object?> toJson() => _$RemoteCommentToJson(this as RemoteComment);
 }
 
 Map<String, Object?> _$RemoteCommentToJson(RemoteComment instance) {
@@ -96,11 +92,11 @@ Map<String, Object?> _$RemoteCommentToJson(RemoteComment instance) {
 
 // factory RemoteComment.fromJson(Map<String, Object?> json) => _$RemoteCommentFromJson(json);
 RemoteComment _$RemoteCommentFromJson(Map<String, Object?> json) {
-  final postIdValue = _dustJsonAs<int>(json['postId'], 'postId', 'int');
-  final idValue = _dustJsonAs<int>(json['id'], 'id', 'int');
-  final nameValue = _dustJsonAs<String>(json['name'], 'name', 'String');
-  final emailValue = _dustJsonAs<String>(json['email'], 'email', 'String');
-  final bodyValue = _dustJsonAs<String>(json['body'], 'body', 'String');
+  final postIdValue = _jsonAs<int>(json['postId'], 'postId', 'int');
+  final idValue = _jsonAs<int>(json['id'], 'id', 'int');
+  final nameValue = _jsonAs<String>(json['name'], 'name', 'String');
+  final emailValue = _jsonAs<String>(json['email'], 'email', 'String');
+  final bodyValue = _jsonAs<String>(json['body'], 'body', 'String');
 
   return RemoteComment(
     postId: postIdValue,

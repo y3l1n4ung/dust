@@ -2,7 +2,7 @@ use std::fs;
 
 use dust_driver::{BuildRequest, run_build};
 
-use super::support::{make_workspace, write_file};
+use super::support::{generated_output, make_workspace, write_file};
 
 #[test]
 fn build_supports_abstract_and_mixin_clause_shapes_without_unrelated_warnings() {
@@ -57,15 +57,93 @@ fn build_supports_abstract_and_mixin_clause_shapes_without_unrelated_warnings() 
         "{:?}",
         result.diagnostics
     );
-    assert!(entity_output.contains("mixin _$Entity {"));
-    assert!(entity_output.contains("Entity get _dustSelf => this as Entity;"));
-    assert!(entity_output.contains("other is Entity"));
-    assert!(tagged_output.contains("mixin _$TaggedValue {"));
-    assert!(tagged_output.contains("_dustDeepCollectionEquality.equals"));
-    assert!(tagged_output.contains("TaggedValue copyWith({"));
-    assert!(
-        tagged_output
-            .contains("final nextAliases = List<String>.of(aliases ?? _dustSelf.aliases);")
+    assert_eq!(
+        entity_output,
+        generated_output(
+            r#"part of 'entity.dart';
+
+mixin _$Entity {
+  @override
+  String toString() {
+    final self = this as Entity;
+    return 'Entity('
+        'id: ${self.id}'
+        ')';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    final self = this as Entity;
+    return identical(this, other) ||
+        other is Entity &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id;
+  }
+
+  @override
+  int get hashCode {
+    final self = this as Entity;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+    ]);
+  }
+}
+"#
+        )
+    );
+    assert_eq!(
+        tagged_output,
+        generated_output(
+            r#"part of 'tagged_value.dart';
+
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+
+mixin _$TaggedValue {
+  @override
+  String toString() {
+    final self = this as TaggedValue;
+    return 'TaggedValue('
+        'code: ${self.code}, '
+        'aliases: ${self.aliases}'
+        ')';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    final self = this as TaggedValue;
+    return identical(this, other) ||
+        other is TaggedValue &&
+            runtimeType == other.runtimeType &&
+            other.code == self.code &&
+            _deepCollectionEquality.equals(other.aliases, self.aliases);
+  }
+
+  @override
+  int get hashCode {
+    final self = this as TaggedValue;
+    return Object.hashAll([
+      runtimeType,
+      self.code,
+      _deepCollectionEquality.hash(self.aliases),
+    ]);
+  }
+
+  TaggedValue copyWith({
+    String? code,
+    List<String>? aliases,
+  }) {
+    final self = this as TaggedValue;
+    final nextAliases = List<String>.of(aliases ?? self.aliases);
+
+    return TaggedValue(
+      code: code ?? self.code,
+      aliases: nextAliases,
+    );
+  }
+}
+"#
+        )
     );
 }
 
@@ -104,16 +182,92 @@ fn build_includes_inherited_fields_for_annotated_subclasses() {
         "{:?}",
         result.diagnostics
     );
-    assert!(output.contains("mixin _$DetailedEntity {"));
-    assert!(output.contains("DetailedEntity get _dustSelf => this as DetailedEntity;"));
-    assert!(output.contains("return 'DetailedEntity('"));
-    assert!(output.contains("'id: ${_dustSelf.id}, '"));
-    assert!(output.contains("'label: ${_dustSelf.label}, '"));
-    assert!(output.contains("'tags: ${_dustSelf.tags}'"));
-    assert!(output.contains("other.id == _dustSelf.id"));
-    assert!(output.contains("DetailedEntity copyWith({"));
-    assert!(output.contains("final nextTags = List<String>.of(tags ?? _dustSelf.tags);"));
-    assert!(output.contains("return DetailedEntity("));
+    assert_eq!(
+        output,
+        generated_output(
+            r#"part of 'entity.dart';
+
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+
+mixin _$Entity {
+  @override
+  String toString() {
+    final self = this as Entity;
+    return 'Entity('
+        'id: ${self.id}'
+        ')';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    final self = this as Entity;
+    return identical(this, other) ||
+        other is Entity &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id;
+  }
+
+  @override
+  int get hashCode {
+    final self = this as Entity;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+    ]);
+  }
+}
+
+mixin _$DetailedEntity {
+  @override
+  String toString() {
+    final self = this as DetailedEntity;
+    return 'DetailedEntity('
+        'id: ${self.id}, '
+        'label: ${self.label}, '
+        'tags: ${self.tags}'
+        ')';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    final self = this as DetailedEntity;
+    return identical(this, other) ||
+        other is DetailedEntity &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id &&
+            other.label == self.label &&
+            _deepCollectionEquality.equals(other.tags, self.tags);
+  }
+
+  @override
+  int get hashCode {
+    final self = this as DetailedEntity;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+      self.label,
+      _deepCollectionEquality.hash(self.tags),
+    ]);
+  }
+
+  DetailedEntity copyWith({
+    String? id,
+    String? label,
+    List<String>? tags,
+  }) {
+    final self = this as DetailedEntity;
+    final nextTags = List<String>.of(tags ?? self.tags);
+
+    return DetailedEntity(
+      id ?? self.id,
+      label: label ?? self.label,
+      tags: nextTags,
+    );
+  }
+}
+"#
+        )
+    );
 }
 
 #[test]

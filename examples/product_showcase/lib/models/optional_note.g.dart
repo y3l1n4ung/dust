@@ -8,53 +8,57 @@ part of 'optional_note.dart';
 
 const Object _undefined = Object();
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$OptionalNote {
-  OptionalNote get _dustSelf => this as OptionalNote;
-
   @override
   String toString() {
+    final self = this as OptionalNote;
     return 'OptionalNote('
-        'id: ${_dustSelf.id}, '
-        'note: ${_dustSelf.note}, '
-        'aliases: ${_dustSelf.aliases}'
+        'id: ${self.id}, '
+        'note: ${self.note}, '
+        'aliases: ${self.aliases}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is OptionalNote &&
-          runtimeType == other.runtimeType &&
-          other.id == _dustSelf.id &&
-          other.note == _dustSelf.note &&
-          _dustDeepCollectionEquality.equals(other.aliases, _dustSelf.aliases);
+  bool operator ==(Object other) {
+    final self = this as OptionalNote;
+    return identical(this, other) ||
+        other is OptionalNote &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id &&
+            other.note == self.note &&
+            _deepCollectionEquality.equals(other.aliases, self.aliases);
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.id,
-    _dustSelf.note,
-    _dustDeepCollectionEquality.hash(_dustSelf.aliases),
-  ]);
+  int get hashCode {
+    final self = this as OptionalNote;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+      self.note,
+      _deepCollectionEquality.hash(self.aliases),
+    ]);
+  }
 
   OptionalNote copyWith({
     String? id,
     Object? note = _undefined,
     Object? aliases = _undefined,
   }) {
+    final self = this as OptionalNote;
     final nextAliasesSource = identical(aliases, _undefined)
-        ? _dustSelf.aliases
+        ? self.aliases
         : aliases as List<String>?;
     final nextAliases = nextAliasesSource == null
         ? null
         : List<String>.of(nextAliasesSource);
 
     return OptionalNote(
-      id: id ?? _dustSelf.id,
-      note: identical(note, _undefined) ? _dustSelf.note : note as String?,
+      id: id ?? self.id,
+      note: identical(note, _undefined) ? self.note : note as String?,
       aliases: nextAliases,
     );
   }

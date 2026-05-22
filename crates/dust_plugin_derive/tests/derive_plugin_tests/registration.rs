@@ -48,46 +48,51 @@ fn emits_full_fragments_for_matching_traits() {
     ]);
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let members = members_for_class(&contribution, "User");
+    let expected = vec![
+        r#"@override
+String toString() {
+  final self = this as User;
+  return 'User('
+      'id: ${self.id}, '
+      'age: ${self.age}'
+      ')';
+}"#
+        .to_owned(),
+        r#"@override
+bool operator ==(Object other) {
+  final self = this as User;
+  return identical(this, other) ||
+      other is User &&
+          runtimeType == other.runtimeType &&
+          other.id == self.id &&
+          other.age == self.age;
+}"#
+        .to_owned(),
+        r#"@override
+int get hashCode {
+  final self = this as User;
+  return Object.hashAll([
+    runtimeType,
+    self.id,
+    self.age,
+  ]);
+}"#
+        .to_owned(),
+        r#"User copyWith({
+  String? id,
+  Object? age = _undefined,
+}) {
+  final self = this as User;
+  return User(
+    id ?? self.id,
+    identical(age, _undefined) ? self.age : age as int?,
+  );
+}"#
+        .to_owned(),
+    ];
 
     assert_eq!(contribution.mixin_members.len(), 1);
-    assert_eq!(members.len(), 4);
-    assert!(members.iter().any(|fragment| {
-        fragment.contains("String toString() {")
-            && fragment.contains("return 'User('")
-            && fragment.contains("'id: ${_dustSelf.id}, '")
-            && fragment.contains("'age: ${_dustSelf.age}'")
-    }));
-    assert!(
-        members
-            .iter()
-            .any(|fragment| fragment.contains("bool operator ==(Object other) =>"))
-    );
-    assert!(members.iter().any(|fragment| {
-        fragment.contains("int get hashCode => Object.hashAll([")
-            && fragment.contains("runtimeType,")
-            && fragment.contains("_dustSelf.id,")
-            && fragment.contains("_dustSelf.age,")
-    }));
-    assert!(
-        members
-            .iter()
-            .any(|fragment| fragment.contains("User copyWith({"))
-    );
-    assert!(members.iter().any(|fragment| {
-        fragment.contains("String? id,")
-            && fragment.contains("Object? age = _undefined,")
-            && !fragment.contains("final nextIdSource = id ?? _dustSelf.id;")
-            && !fragment.contains(
-                "final nextAgeSource = identical(age, _undefined) ? _dustSelf.age : age as int?;",
-            )
-            && fragment.contains("id ?? _dustSelf.id,")
-            && fragment.contains("identical(age, _undefined) ? _dustSelf.age : age as int?,")
-    }));
-    assert!(
-        members
-            .iter()
-            .any(|fragment| fragment.contains("return User("))
-    );
+    assert_eq!(members, expected.as_slice());
 }
 
 #[test]
@@ -99,10 +104,18 @@ fn legacy_debug_symbol_still_emits_tostring() {
     );
     let members = members_for_class(&contribution, "User");
 
-    assert!(
-        members
-            .iter()
-            .any(|fragment| fragment.contains("String toString() {"))
+    assert_eq!(
+        members,
+        [r#"@override
+String toString() {
+  final self = this as User;
+  return 'User('
+      'id: ${self.id}, '
+      'age: ${self.age}'
+      ')';
+}"#
+        .to_owned()]
+        .as_slice()
     );
 }
 
@@ -116,15 +129,30 @@ fn emits_eq_and_hash_fragments_when_eq_is_present() {
     let members = members_for_class(&contribution, "User");
 
     assert_eq!(contribution.mixin_members.len(), 1);
-    assert_eq!(members.len(), 2);
-    assert!(
-        members
-            .iter()
-            .any(|fragment| fragment.contains("bool operator ==(Object other) =>"))
-    );
-    assert!(
-        members
-            .iter()
-            .any(|fragment| fragment.contains("int get hashCode => Object.hashAll(["))
+    assert_eq!(
+        members,
+        [
+            r#"@override
+bool operator ==(Object other) {
+  final self = this as User;
+  return identical(this, other) ||
+      other is User &&
+          runtimeType == other.runtimeType &&
+          other.id == self.id &&
+          other.age == self.age;
+}"#
+            .to_owned(),
+            r#"@override
+int get hashCode {
+  final self = this as User;
+  return Object.hashAll([
+    runtimeType,
+    self.id,
+    self.age,
+  ]);
+}"#
+            .to_owned(),
+        ]
+        .as_slice()
     );
 }

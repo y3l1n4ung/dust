@@ -19,20 +19,30 @@ fn emits_debug_eq_and_hash_for_zero_field_class() {
     let members = members_for_class(&contribution, "Unit");
 
     assert_eq!(contribution.mixin_members.len(), 1);
-    assert_eq!(members.len(), 3);
-    assert!(
-        members
-            .iter()
-            .any(|fragment| fragment.contains("String toString() {\n  return 'Unit()';\n}"))
+    assert_eq!(
+        members,
+        [
+            r#"@override
+String toString() {
+  return 'Unit()';
+}"#
+            .to_owned(),
+            r#"@override
+bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is Unit &&
+        runtimeType == other.runtimeType;"#
+                .to_owned(),
+            r#"@override
+int get hashCode {
+  return Object.hashAll([
+    runtimeType,
+  ]);
+}"#
+            .to_owned(),
+        ]
+        .as_slice()
     );
-    assert!(
-        members
-            .iter()
-            .any(|fragment| fragment.contains("other is Unit &&"))
-    );
-    assert!(members.iter().any(|fragment| {
-        fragment.contains("int get hashCode => Object.hashAll([\n  runtimeType,\n]);")
-    }));
 }
 
 #[test]
@@ -133,14 +143,49 @@ fn emits_fragments_for_multiple_classes_in_stable_feature_order() {
     let team_members = members_for_class(&contribution, "Team");
 
     assert_eq!(contribution.mixin_members.len(), 2);
-    assert_eq!(user_members.len(), 3);
-    assert_eq!(team_members.len(), 1);
-    assert!(user_members[0].contains("String toString() {"));
-    assert!(user_members[0].contains("return 'User('"));
-    assert!(user_members[0].contains("'id: ${_dustSelf.id}'"));
-    assert!(user_members[1].contains("bool operator ==(Object other) =>"));
-    assert!(user_members[2].contains("int get hashCode => Object.hashAll(["));
-    assert!(team_members[0].contains("Team copyWith({"));
-    assert!(team_members[0].contains("String? name,"));
-    assert!(team_members[0].contains("name ?? _dustSelf.name,"));
+    assert_eq!(
+        user_members,
+        [
+            r#"@override
+String toString() {
+  final self = this as User;
+  return 'User('
+      'id: ${self.id}'
+      ')';
+}"#
+            .to_owned(),
+            r#"@override
+bool operator ==(Object other) {
+  final self = this as User;
+  return identical(this, other) ||
+      other is User &&
+          runtimeType == other.runtimeType &&
+          other.id == self.id;
+}"#
+            .to_owned(),
+            r#"@override
+int get hashCode {
+  final self = this as User;
+  return Object.hashAll([
+    runtimeType,
+    self.id,
+  ]);
+}"#
+            .to_owned(),
+        ]
+        .as_slice()
+    );
+    assert_eq!(
+        team_members,
+        [r#"Team copyWith({
+  String? name,
+}) {
+  final self = this as Team;
+  return Team(
+    name ?? self.name,
+  );
+}"#
+        .to_owned()]
+        .as_slice()
+    );
 }

@@ -6,43 +6,38 @@
 
 part of 'json_profile.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
-Never _dustJsonTypeError(Object? value, String key, String expected) =>
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+Never _jsonTypeError(Object? value, String key, String expected) =>
     throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
   Object? value,
   String key,
   String expected,
   T? Function(String value) parse,
 ) =>
-    parse(_dustJsonAs<String>(value, key, 'String')) ??
-    _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) =>
-    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
 
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
-  value,
-  key,
-  'ISO-8601 DateTime string',
-  DateTime.tryParse,
-);
-Uri _dustJsonAsUri(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }
@@ -54,35 +49,39 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
 }
 
 mixin _$JsonProfile {
-  JsonProfile get _dustSelf => this as JsonProfile;
-
   @override
   String toString() {
+    final self = this as JsonProfile;
     return 'JsonProfile('
-        'id: ${_dustSelf.id}, '
-        'displayName: ${_dustSelf.displayName}, '
-        'tags: ${_dustSelf.tags}'
+        'id: ${self.id}, '
+        'displayName: ${self.displayName}, '
+        'tags: ${self.tags}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is JsonProfile &&
-          runtimeType == other.runtimeType &&
-          other.id == _dustSelf.id &&
-          other.displayName == _dustSelf.displayName &&
-          _dustDeepCollectionEquality.equals(other.tags, _dustSelf.tags);
+  bool operator ==(Object other) {
+    final self = this as JsonProfile;
+    return identical(this, other) ||
+        other is JsonProfile &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id &&
+            other.displayName == self.displayName &&
+            _deepCollectionEquality.equals(other.tags, self.tags);
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.id,
-    _dustSelf.displayName,
-    _dustDeepCollectionEquality.hash(_dustSelf.tags),
-  ]);
+  int get hashCode {
+    final self = this as JsonProfile;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+      self.displayName,
+      _deepCollectionEquality.hash(self.tags),
+    ]);
+  }
 
-  Map<String, Object?> toJson() => _$JsonProfileToJson(_dustSelf);
+  Map<String, Object?> toJson() => _$JsonProfileToJson(this as JsonProfile);
 }
 
 Map<String, Object?> _$JsonProfileToJson(JsonProfile instance) {
@@ -102,7 +101,7 @@ JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
     }
   }
 
-  final idValue = _dustJsonAs<String>(json['id'], 'id', 'String');
+  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
   final rawDisplayNameKey = json.containsKey('display_name')
       ? 'display_name'
       : json.containsKey('displayName')
@@ -115,12 +114,12 @@ JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
       : null;
   final displayNameValue = rawDisplayName == null
       ? null
-      : _dustJsonAs<String>(rawDisplayName, rawDisplayNameKey, 'String');
+      : _jsonAs<String>(rawDisplayName, rawDisplayNameKey, 'String');
   final tagsValue = json.containsKey('tags')
-      ? _dustJsonAsList(
+      ? _jsonAsList(
           json['tags'],
           'tags',
-        ).map((item) => _dustJsonAs<String>(item, 'tags', 'String')).toList()
+        ).map((item) => _jsonAs<String>(item, 'tags', 'String')).toList()
       : ['guest'];
 
   return JsonProfile(

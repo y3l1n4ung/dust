@@ -6,44 +6,48 @@
 
 part of 'price.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$Price {
-  Price get _dustSelf => this as Price;
-
   @override
   String toString() {
+    final self = this as Price;
     return 'Price('
-        'currency: ${_dustSelf.currency}, '
-        'cents: ${_dustSelf.cents}, '
-        'tags: ${_dustSelf.tags}'
+        'currency: ${self.currency}, '
+        'cents: ${self.cents}, '
+        'tags: ${self.tags}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Price &&
-          runtimeType == other.runtimeType &&
-          other.currency == _dustSelf.currency &&
-          other.cents == _dustSelf.cents &&
-          _dustDeepCollectionEquality.equals(other.tags, _dustSelf.tags);
+  bool operator ==(Object other) {
+    final self = this as Price;
+    return identical(this, other) ||
+        other is Price &&
+            runtimeType == other.runtimeType &&
+            other.currency == self.currency &&
+            other.cents == self.cents &&
+            _deepCollectionEquality.equals(other.tags, self.tags);
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.currency,
-    _dustSelf.cents,
-    _dustDeepCollectionEquality.hash(_dustSelf.tags),
-  ]);
+  int get hashCode {
+    final self = this as Price;
+    return Object.hashAll([
+      runtimeType,
+      self.currency,
+      self.cents,
+      _deepCollectionEquality.hash(self.tags),
+    ]);
+  }
 
   Price copyWith({String? currency, int? cents, List<String>? tags}) {
-    final nextTags = List<String>.of(tags ?? _dustSelf.tags);
+    final self = this as Price;
+    final nextTags = List<String>.of(tags ?? self.tags);
 
     return Price(
-      currency: currency ?? _dustSelf.currency,
-      cents: cents ?? _dustSelf.cents,
+      currency: currency ?? self.currency,
+      cents: cents ?? self.cents,
       tags: nextTags,
     );
   }

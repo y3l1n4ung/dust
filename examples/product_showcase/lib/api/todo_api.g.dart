@@ -32,7 +32,7 @@ String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   return Uri.parse(dioBaseUrl).resolveUri(url).toString();
 }
 
-Response<T> _dustBuildResponse<T>(Response<dynamic> response, T data) {
+Response<T> _buildResponse<T>(Response<dynamic> response, T data) {
   return Response<T>(
     data: data,
     headers: response.headers,
@@ -132,7 +132,7 @@ final class _$TodoApi implements TodoApi {
     final _value = await Isolate.run(
       () => _$TodoApi_fetchRaw_Decode(_result.data!),
     );
-    return _dustBuildResponse<Todo>(_result, _value);
+    return _buildResponse<Todo>(_result, _value);
   }
 
   @override

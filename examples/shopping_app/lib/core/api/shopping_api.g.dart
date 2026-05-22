@@ -6,41 +6,37 @@
 
 part of 'shopping_api.dart';
 
-Never _dustJsonTypeError(Object? value, String key, String expected) =>
+Never _jsonTypeError(Object? value, String key, String expected) =>
     throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
   Object? value,
   String key,
   String expected,
   T? Function(String value) parse,
 ) =>
-    parse(_dustJsonAs<String>(value, key, 'String')) ??
-    _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) =>
-    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
 
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
-  value,
-  key,
-  'ISO-8601 DateTime string',
-  DateTime.tryParse,
-);
-Uri _dustJsonAsUri(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }
@@ -77,7 +73,7 @@ String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   return Uri.parse(dioBaseUrl).resolveUri(url).toString();
 }
 
-Response<T> _dustBuildResponse<T>(Response<dynamic> response, T data) {
+Response<T> _buildResponse<T>(Response<dynamic> response, T data) {
   return Response<T>(
     data: data,
     headers: response.headers,
@@ -91,192 +87,217 @@ Response<T> _dustBuildResponse<T>(Response<dynamic> response, T data) {
 }
 
 mixin _$LoginRequest {
-  LoginRequest get _dustSelf => this as LoginRequest;
-
   @override
   String toString() {
+    final self = this as LoginRequest;
     return 'LoginRequest('
-        'username: ${_dustSelf.username}, '
-        'password: ${_dustSelf.password}'
+        'username: ${self.username}, '
+        'password: ${self.password}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is LoginRequest &&
-          runtimeType == other.runtimeType &&
-          other.username == _dustSelf.username &&
-          other.password == _dustSelf.password;
+  bool operator ==(Object other) {
+    final self = this as LoginRequest;
+    return identical(this, other) ||
+        other is LoginRequest &&
+            runtimeType == other.runtimeType &&
+            other.username == self.username &&
+            other.password == self.password;
+  }
 
   @override
-  int get hashCode =>
-      Object.hashAll([runtimeType, _dustSelf.username, _dustSelf.password]);
+  int get hashCode {
+    final self = this as LoginRequest;
+    return Object.hashAll([runtimeType, self.username, self.password]);
+  }
 
   LoginRequest copyWith({String? username, String? password}) {
+    final self = this as LoginRequest;
     return LoginRequest(
-      username: username ?? _dustSelf.username,
-      password: password ?? _dustSelf.password,
+      username: username ?? self.username,
+      password: password ?? self.password,
     );
   }
 
-  Map<String, Object?> toJson() => _$LoginRequestToJson(_dustSelf);
+  Map<String, Object?> toJson() => _$LoginRequestToJson(this as LoginRequest);
 }
 
 mixin _$LoginResponse {
-  LoginResponse get _dustSelf => this as LoginResponse;
-
   @override
   String toString() {
+    final self = this as LoginResponse;
     return 'LoginResponse('
-        'token: ${_dustSelf.token}'
+        'token: ${self.token}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is LoginResponse &&
-          runtimeType == other.runtimeType &&
-          other.token == _dustSelf.token;
-
-  @override
-  int get hashCode => Object.hashAll([runtimeType, _dustSelf.token]);
-
-  LoginResponse copyWith({String? token}) {
-    return LoginResponse(token: token ?? _dustSelf.token);
+  bool operator ==(Object other) {
+    final self = this as LoginResponse;
+    return identical(this, other) ||
+        other is LoginResponse &&
+            runtimeType == other.runtimeType &&
+            other.token == self.token;
   }
 
-  Map<String, Object?> toJson() => _$LoginResponseToJson(_dustSelf);
+  @override
+  int get hashCode {
+    final self = this as LoginResponse;
+    return Object.hashAll([runtimeType, self.token]);
+  }
+
+  LoginResponse copyWith({String? token}) {
+    final self = this as LoginResponse;
+    return LoginResponse(token: token ?? self.token);
+  }
+
+  Map<String, Object?> toJson() => _$LoginResponseToJson(this as LoginResponse);
 }
 
 mixin _$RegisterUserResponse {
-  RegisterUserResponse get _dustSelf => this as RegisterUserResponse;
-
   @override
   String toString() {
+    final self = this as RegisterUserResponse;
     return 'RegisterUserResponse('
-        'id: ${_dustSelf.id}'
+        'id: ${self.id}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is RegisterUserResponse &&
-          runtimeType == other.runtimeType &&
-          other.id == _dustSelf.id;
-
-  @override
-  int get hashCode => Object.hashAll([runtimeType, _dustSelf.id]);
-
-  RegisterUserResponse copyWith({int? id}) {
-    return RegisterUserResponse(id: id ?? _dustSelf.id);
+  bool operator ==(Object other) {
+    final self = this as RegisterUserResponse;
+    return identical(this, other) ||
+        other is RegisterUserResponse &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id;
   }
 
-  Map<String, Object?> toJson() => _$RegisterUserResponseToJson(_dustSelf);
+  @override
+  int get hashCode {
+    final self = this as RegisterUserResponse;
+    return Object.hashAll([runtimeType, self.id]);
+  }
+
+  RegisterUserResponse copyWith({int? id}) {
+    final self = this as RegisterUserResponse;
+    return RegisterUserResponse(id: id ?? self.id);
+  }
+
+  Map<String, Object?> toJson() =>
+      _$RegisterUserResponseToJson(this as RegisterUserResponse);
 }
 
 mixin _$RegisterName {
-  RegisterName get _dustSelf => this as RegisterName;
-
   @override
   String toString() {
+    final self = this as RegisterName;
     return 'RegisterName('
-        'firstname: ${_dustSelf.firstname}, '
-        'lastname: ${_dustSelf.lastname}'
+        'firstname: ${self.firstname}, '
+        'lastname: ${self.lastname}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is RegisterName &&
-          runtimeType == other.runtimeType &&
-          other.firstname == _dustSelf.firstname &&
-          other.lastname == _dustSelf.lastname;
+  bool operator ==(Object other) {
+    final self = this as RegisterName;
+    return identical(this, other) ||
+        other is RegisterName &&
+            runtimeType == other.runtimeType &&
+            other.firstname == self.firstname &&
+            other.lastname == self.lastname;
+  }
 
   @override
-  int get hashCode =>
-      Object.hashAll([runtimeType, _dustSelf.firstname, _dustSelf.lastname]);
+  int get hashCode {
+    final self = this as RegisterName;
+    return Object.hashAll([runtimeType, self.firstname, self.lastname]);
+  }
 
   RegisterName copyWith({String? firstname, String? lastname}) {
+    final self = this as RegisterName;
     return RegisterName(
-      firstname: firstname ?? _dustSelf.firstname,
-      lastname: lastname ?? _dustSelf.lastname,
+      firstname: firstname ?? self.firstname,
+      lastname: lastname ?? self.lastname,
     );
   }
 
-  Map<String, Object?> toJson() => _$RegisterNameToJson(_dustSelf);
+  Map<String, Object?> toJson() => _$RegisterNameToJson(this as RegisterName);
 }
 
 mixin _$RegisterGeolocation {
-  RegisterGeolocation get _dustSelf => this as RegisterGeolocation;
-
   @override
   String toString() {
+    final self = this as RegisterGeolocation;
     return 'RegisterGeolocation('
-        'lat: ${_dustSelf.lat}, '
-        'long: ${_dustSelf.long}'
+        'lat: ${self.lat}, '
+        'long: ${self.long}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is RegisterGeolocation &&
-          runtimeType == other.runtimeType &&
-          other.lat == _dustSelf.lat &&
-          other.long == _dustSelf.long;
-
-  @override
-  int get hashCode =>
-      Object.hashAll([runtimeType, _dustSelf.lat, _dustSelf.long]);
-
-  RegisterGeolocation copyWith({String? lat, String? long}) {
-    return RegisterGeolocation(
-      lat: lat ?? _dustSelf.lat,
-      long: long ?? _dustSelf.long,
-    );
+  bool operator ==(Object other) {
+    final self = this as RegisterGeolocation;
+    return identical(this, other) ||
+        other is RegisterGeolocation &&
+            runtimeType == other.runtimeType &&
+            other.lat == self.lat &&
+            other.long == self.long;
   }
 
-  Map<String, Object?> toJson() => _$RegisterGeolocationToJson(_dustSelf);
+  @override
+  int get hashCode {
+    final self = this as RegisterGeolocation;
+    return Object.hashAll([runtimeType, self.lat, self.long]);
+  }
+
+  RegisterGeolocation copyWith({String? lat, String? long}) {
+    final self = this as RegisterGeolocation;
+    return RegisterGeolocation(lat: lat ?? self.lat, long: long ?? self.long);
+  }
+
+  Map<String, Object?> toJson() =>
+      _$RegisterGeolocationToJson(this as RegisterGeolocation);
 }
 
 mixin _$RegisterAddress {
-  RegisterAddress get _dustSelf => this as RegisterAddress;
-
   @override
   String toString() {
+    final self = this as RegisterAddress;
     return 'RegisterAddress('
-        'city: ${_dustSelf.city}, '
-        'street: ${_dustSelf.street}, '
-        'number: ${_dustSelf.number}, '
-        'zipcode: ${_dustSelf.zipcode}, '
-        'geolocation: ${_dustSelf.geolocation}'
+        'city: ${self.city}, '
+        'street: ${self.street}, '
+        'number: ${self.number}, '
+        'zipcode: ${self.zipcode}, '
+        'geolocation: ${self.geolocation}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is RegisterAddress &&
-          runtimeType == other.runtimeType &&
-          other.city == _dustSelf.city &&
-          other.street == _dustSelf.street &&
-          other.number == _dustSelf.number &&
-          other.zipcode == _dustSelf.zipcode &&
-          other.geolocation == _dustSelf.geolocation;
+  bool operator ==(Object other) {
+    final self = this as RegisterAddress;
+    return identical(this, other) ||
+        other is RegisterAddress &&
+            runtimeType == other.runtimeType &&
+            other.city == self.city &&
+            other.street == self.street &&
+            other.number == self.number &&
+            other.zipcode == self.zipcode &&
+            other.geolocation == self.geolocation;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.city,
-    _dustSelf.street,
-    _dustSelf.number,
-    _dustSelf.zipcode,
-    _dustSelf.geolocation,
-  ]);
+  int get hashCode {
+    final self = this as RegisterAddress;
+    return Object.hashAll([
+      runtimeType,
+      self.city,
+      self.street,
+      self.number,
+      self.zipcode,
+      self.geolocation,
+    ]);
+  }
 
   RegisterAddress copyWith({
     String? city,
@@ -285,57 +306,63 @@ mixin _$RegisterAddress {
     String? zipcode,
     RegisterGeolocation? geolocation,
   }) {
-    final nextGeolocation = (geolocation ?? _dustSelf.geolocation).copyWith();
+    final self = this as RegisterAddress;
+    final nextGeolocation = (geolocation ?? self.geolocation).copyWith();
 
     return RegisterAddress(
-      city: city ?? _dustSelf.city,
-      street: street ?? _dustSelf.street,
-      number: number ?? _dustSelf.number,
-      zipcode: zipcode ?? _dustSelf.zipcode,
+      city: city ?? self.city,
+      street: street ?? self.street,
+      number: number ?? self.number,
+      zipcode: zipcode ?? self.zipcode,
       geolocation: nextGeolocation,
     );
   }
 
-  Map<String, Object?> toJson() => _$RegisterAddressToJson(_dustSelf);
+  Map<String, Object?> toJson() =>
+      _$RegisterAddressToJson(this as RegisterAddress);
 }
 
 mixin _$RegisterUserRequest {
-  RegisterUserRequest get _dustSelf => this as RegisterUserRequest;
-
   @override
   String toString() {
+    final self = this as RegisterUserRequest;
     return 'RegisterUserRequest('
-        'email: ${_dustSelf.email}, '
-        'username: ${_dustSelf.username}, '
-        'password: ${_dustSelf.password}, '
-        'name: ${_dustSelf.name}, '
-        'phone: ${_dustSelf.phone}, '
-        'address: ${_dustSelf.address}'
+        'email: ${self.email}, '
+        'username: ${self.username}, '
+        'password: ${self.password}, '
+        'name: ${self.name}, '
+        'phone: ${self.phone}, '
+        'address: ${self.address}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is RegisterUserRequest &&
-          runtimeType == other.runtimeType &&
-          other.email == _dustSelf.email &&
-          other.username == _dustSelf.username &&
-          other.password == _dustSelf.password &&
-          other.name == _dustSelf.name &&
-          other.phone == _dustSelf.phone &&
-          other.address == _dustSelf.address;
+  bool operator ==(Object other) {
+    final self = this as RegisterUserRequest;
+    return identical(this, other) ||
+        other is RegisterUserRequest &&
+            runtimeType == other.runtimeType &&
+            other.email == self.email &&
+            other.username == self.username &&
+            other.password == self.password &&
+            other.name == self.name &&
+            other.phone == self.phone &&
+            other.address == self.address;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.email,
-    _dustSelf.username,
-    _dustSelf.password,
-    _dustSelf.name,
-    _dustSelf.phone,
-    _dustSelf.address,
-  ]);
+  int get hashCode {
+    final self = this as RegisterUserRequest;
+    return Object.hashAll([
+      runtimeType,
+      self.email,
+      self.username,
+      self.password,
+      self.name,
+      self.phone,
+      self.address,
+    ]);
+  }
 
   RegisterUserRequest copyWith({
     String? email,
@@ -345,20 +372,22 @@ mixin _$RegisterUserRequest {
     String? phone,
     RegisterAddress? address,
   }) {
-    final nextName = (name ?? _dustSelf.name).copyWith();
-    final nextAddress = (address ?? _dustSelf.address).copyWith();
+    final self = this as RegisterUserRequest;
+    final nextName = (name ?? self.name).copyWith();
+    final nextAddress = (address ?? self.address).copyWith();
 
     return RegisterUserRequest(
-      email: email ?? _dustSelf.email,
-      username: username ?? _dustSelf.username,
-      password: password ?? _dustSelf.password,
+      email: email ?? self.email,
+      username: username ?? self.username,
+      password: password ?? self.password,
       name: nextName,
-      phone: phone ?? _dustSelf.phone,
+      phone: phone ?? self.phone,
       address: nextAddress,
     );
   }
 
-  Map<String, Object?> toJson() => _$RegisterUserRequestToJson(_dustSelf);
+  Map<String, Object?> toJson() =>
+      _$RegisterUserRequestToJson(this as RegisterUserRequest);
 }
 
 final class _$ShoppingApi implements ShoppingApi {
@@ -599,16 +628,8 @@ Map<String, Object?> _$LoginRequestToJson(LoginRequest instance) {
 
 // factory LoginRequest.fromJson(Map<String, Object?> json) => _$LoginRequestFromJson(json);
 LoginRequest _$LoginRequestFromJson(Map<String, Object?> json) {
-  final usernameValue = _dustJsonAs<String>(
-    json['username'],
-    'username',
-    'String',
-  );
-  final passwordValue = _dustJsonAs<String>(
-    json['password'],
-    'password',
-    'String',
-  );
+  final usernameValue = _jsonAs<String>(json['username'], 'username', 'String');
+  final passwordValue = _jsonAs<String>(json['password'], 'password', 'String');
 
   return LoginRequest(username: usernameValue, password: passwordValue);
 }
@@ -619,7 +640,7 @@ Map<String, Object?> _$LoginResponseToJson(LoginResponse instance) {
 
 // factory LoginResponse.fromJson(Map<String, Object?> json) => _$LoginResponseFromJson(json);
 LoginResponse _$LoginResponseFromJson(Map<String, Object?> json) {
-  final tokenValue = _dustJsonAs<String>(json['token'], 'token', 'String');
+  final tokenValue = _jsonAs<String>(json['token'], 'token', 'String');
 
   return LoginResponse(token: tokenValue);
 }
@@ -632,7 +653,7 @@ Map<String, Object?> _$RegisterUserResponseToJson(
 
 // factory RegisterUserResponse.fromJson(Map<String, Object?> json) => _$RegisterUserResponseFromJson(json);
 RegisterUserResponse _$RegisterUserResponseFromJson(Map<String, Object?> json) {
-  final idValue = _dustJsonAs<int>(json['id'], 'id', 'int');
+  final idValue = _jsonAs<int>(json['id'], 'id', 'int');
 
   return RegisterUserResponse(id: idValue);
 }
@@ -646,16 +667,12 @@ Map<String, Object?> _$RegisterNameToJson(RegisterName instance) {
 
 // factory RegisterName.fromJson(Map<String, Object?> json) => _$RegisterNameFromJson(json);
 RegisterName _$RegisterNameFromJson(Map<String, Object?> json) {
-  final firstnameValue = _dustJsonAs<String>(
+  final firstnameValue = _jsonAs<String>(
     json['firstname'],
     'firstname',
     'String',
   );
-  final lastnameValue = _dustJsonAs<String>(
-    json['lastname'],
-    'lastname',
-    'String',
-  );
+  final lastnameValue = _jsonAs<String>(json['lastname'], 'lastname', 'String');
 
   return RegisterName(firstname: firstnameValue, lastname: lastnameValue);
 }
@@ -666,8 +683,8 @@ Map<String, Object?> _$RegisterGeolocationToJson(RegisterGeolocation instance) {
 
 // factory RegisterGeolocation.fromJson(Map<String, Object?> json) => _$RegisterGeolocationFromJson(json);
 RegisterGeolocation _$RegisterGeolocationFromJson(Map<String, Object?> json) {
-  final latValue = _dustJsonAs<String>(json['lat'], 'lat', 'String');
-  final longValue = _dustJsonAs<String>(json['long'], 'long', 'String');
+  final latValue = _jsonAs<String>(json['lat'], 'lat', 'String');
+  final longValue = _jsonAs<String>(json['long'], 'long', 'String');
 
   return RegisterGeolocation(lat: latValue, long: longValue);
 }
@@ -684,16 +701,12 @@ Map<String, Object?> _$RegisterAddressToJson(RegisterAddress instance) {
 
 // factory RegisterAddress.fromJson(Map<String, Object?> json) => _$RegisterAddressFromJson(json);
 RegisterAddress _$RegisterAddressFromJson(Map<String, Object?> json) {
-  final cityValue = _dustJsonAs<String>(json['city'], 'city', 'String');
-  final streetValue = _dustJsonAs<String>(json['street'], 'street', 'String');
-  final numberValue = _dustJsonAs<int>(json['number'], 'number', 'int');
-  final zipcodeValue = _dustJsonAs<String>(
-    json['zipcode'],
-    'zipcode',
-    'String',
-  );
+  final cityValue = _jsonAs<String>(json['city'], 'city', 'String');
+  final streetValue = _jsonAs<String>(json['street'], 'street', 'String');
+  final numberValue = _jsonAs<int>(json['number'], 'number', 'int');
+  final zipcodeValue = _jsonAs<String>(json['zipcode'], 'zipcode', 'String');
   final geolocationValue = _$RegisterGeolocationFromJson(
-    _dustJsonAsMap(json['geolocation'], 'geolocation'),
+    _jsonAsMap(json['geolocation'], 'geolocation'),
   );
 
   return RegisterAddress(
@@ -718,23 +731,13 @@ Map<String, Object?> _$RegisterUserRequestToJson(RegisterUserRequest instance) {
 
 // factory RegisterUserRequest.fromJson(Map<String, Object?> json) => _$RegisterUserRequestFromJson(json);
 RegisterUserRequest _$RegisterUserRequestFromJson(Map<String, Object?> json) {
-  final emailValue = _dustJsonAs<String>(json['email'], 'email', 'String');
-  final usernameValue = _dustJsonAs<String>(
-    json['username'],
-    'username',
-    'String',
-  );
-  final passwordValue = _dustJsonAs<String>(
-    json['password'],
-    'password',
-    'String',
-  );
-  final nameValue = _$RegisterNameFromJson(
-    _dustJsonAsMap(json['name'], 'name'),
-  );
-  final phoneValue = _dustJsonAs<String>(json['phone'], 'phone', 'String');
+  final emailValue = _jsonAs<String>(json['email'], 'email', 'String');
+  final usernameValue = _jsonAs<String>(json['username'], 'username', 'String');
+  final passwordValue = _jsonAs<String>(json['password'], 'password', 'String');
+  final nameValue = _$RegisterNameFromJson(_jsonAsMap(json['name'], 'name'));
+  final phoneValue = _jsonAs<String>(json['phone'], 'phone', 'String');
   final addressValue = _$RegisterAddressFromJson(
-    _dustJsonAsMap(json['address'], 'address'),
+    _jsonAsMap(json['address'], 'address'),
   );
 
   return RegisterUserRequest(

@@ -1,6 +1,6 @@
 use dust_plugin_api::{PluginContribution, PluginRegistry};
 
-use super::support::{FakePlugin, emit_with_registry, sample_library};
+use super::support::{FakePlugin, emit_with_registry, generated_output, sample_library};
 
 #[test]
 fn emitter_writes_sections_in_fixed_order_and_wraps_mixins() {
@@ -30,28 +30,24 @@ fn emitter_writes_sections_in_fixed_order_and_wraps_mixins() {
     );
     let source = result.source;
 
-    let header = source.find("// GENERATED CODE").unwrap();
-    let part_of = source.find("part of 'user.dart';").unwrap();
-    let helper = source.find("const Object _undefined = Object();").unwrap();
-    let mixin = source.find("mixin _$User {").unwrap();
-    let support = source.find("typedef UserMap").unwrap();
-    let function = source.find("_$UserFromJson").unwrap();
+    assert_eq!(
+        source,
+        generated_output(
+            r#"part of 'user.dart';
 
-    assert!(
-        header < part_of
-            && part_of < helper
-            && helper < mixin
-            && mixin < support
-            && support < function
+const Object _undefined = Object();
+
+mixin _$User {
+  @override
+  String toString() => 'User()';
+}
+
+typedef UserMap = Map<String, Object?>;
+
+User _$UserFromJson(Map<String, Object?> json) => User();
+"#
+        )
     );
-    assert!(source.contains("// coverage:ignore-file"));
-    assert!(source.contains("// ignore_for_file: type=lint"));
-    assert!(source.contains(
-        "// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark"
-    ));
-    assert!(source.contains("mixin _$User {"));
-    assert!(source.contains("  User get _dustSelf => this as User;"));
-    assert!(source.contains("  @override\n  String toString() => 'User()';"));
 }
 
 #[test]

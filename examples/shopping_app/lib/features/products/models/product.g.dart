@@ -6,41 +6,37 @@
 
 part of 'product.dart';
 
-Never _dustJsonTypeError(Object? value, String key, String expected) =>
+Never _jsonTypeError(Object? value, String key, String expected) =>
     throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
   Object? value,
   String key,
   String expected,
   T? Function(String value) parse,
 ) =>
-    parse(_dustJsonAs<String>(value, key, 'String')) ??
-    _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) =>
-    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
 
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
-  value,
-  key,
-  'ISO-8601 DateTime string',
-  DateTime.tryParse,
-);
-Uri _dustJsonAsUri(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }
@@ -52,45 +48,49 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
 }
 
 mixin _$Product {
-  Product get _dustSelf => this as Product;
-
   @override
   String toString() {
+    final self = this as Product;
     return 'Product('
-        'id: ${_dustSelf.id}, '
-        'title: ${_dustSelf.title}, '
-        'price: ${_dustSelf.price}, '
-        'description: ${_dustSelf.description}, '
-        'category: ${_dustSelf.category}, '
-        'image: ${_dustSelf.image}, '
-        'rating: ${_dustSelf.rating}'
+        'id: ${self.id}, '
+        'title: ${self.title}, '
+        'price: ${self.price}, '
+        'description: ${self.description}, '
+        'category: ${self.category}, '
+        'image: ${self.image}, '
+        'rating: ${self.rating}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Product &&
-          runtimeType == other.runtimeType &&
-          other.id == _dustSelf.id &&
-          other.title == _dustSelf.title &&
-          other.price == _dustSelf.price &&
-          other.description == _dustSelf.description &&
-          other.category == _dustSelf.category &&
-          other.image == _dustSelf.image &&
-          other.rating == _dustSelf.rating;
+  bool operator ==(Object other) {
+    final self = this as Product;
+    return identical(this, other) ||
+        other is Product &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id &&
+            other.title == self.title &&
+            other.price == self.price &&
+            other.description == self.description &&
+            other.category == self.category &&
+            other.image == self.image &&
+            other.rating == self.rating;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.id,
-    _dustSelf.title,
-    _dustSelf.price,
-    _dustSelf.description,
-    _dustSelf.category,
-    _dustSelf.image,
-    _dustSelf.rating,
-  ]);
+  int get hashCode {
+    final self = this as Product;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+      self.title,
+      self.price,
+      self.description,
+      self.category,
+      self.image,
+      self.rating,
+    ]);
+  }
 
   Product copyWith({
     int? id,
@@ -101,53 +101,55 @@ mixin _$Product {
     String? image,
     Rating? rating,
   }) {
-    final nextRating = (rating ?? _dustSelf.rating).copyWith();
+    final self = this as Product;
+    final nextRating = (rating ?? self.rating).copyWith();
 
     return Product(
-      id: id ?? _dustSelf.id,
-      title: title ?? _dustSelf.title,
-      price: price ?? _dustSelf.price,
-      description: description ?? _dustSelf.description,
-      category: category ?? _dustSelf.category,
-      image: image ?? _dustSelf.image,
+      id: id ?? self.id,
+      title: title ?? self.title,
+      price: price ?? self.price,
+      description: description ?? self.description,
+      category: category ?? self.category,
+      image: image ?? self.image,
       rating: nextRating,
     );
   }
 
-  Map<String, Object?> toJson() => _$ProductToJson(_dustSelf);
+  Map<String, Object?> toJson() => _$ProductToJson(this as Product);
 }
 
 mixin _$Rating {
-  Rating get _dustSelf => this as Rating;
-
   @override
   String toString() {
+    final self = this as Rating;
     return 'Rating('
-        'rate: ${_dustSelf.rate}, '
-        'count: ${_dustSelf.count}'
+        'rate: ${self.rate}, '
+        'count: ${self.count}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Rating &&
-          runtimeType == other.runtimeType &&
-          other.rate == _dustSelf.rate &&
-          other.count == _dustSelf.count;
-
-  @override
-  int get hashCode =>
-      Object.hashAll([runtimeType, _dustSelf.rate, _dustSelf.count]);
-
-  Rating copyWith({double? rate, int? count}) {
-    return Rating(
-      rate: rate ?? _dustSelf.rate,
-      count: count ?? _dustSelf.count,
-    );
+  bool operator ==(Object other) {
+    final self = this as Rating;
+    return identical(this, other) ||
+        other is Rating &&
+            runtimeType == other.runtimeType &&
+            other.rate == self.rate &&
+            other.count == self.count;
   }
 
-  Map<String, Object?> toJson() => _$RatingToJson(_dustSelf);
+  @override
+  int get hashCode {
+    final self = this as Rating;
+    return Object.hashAll([runtimeType, self.rate, self.count]);
+  }
+
+  Rating copyWith({double? rate, int? count}) {
+    final self = this as Rating;
+    return Rating(rate: rate ?? self.rate, count: count ?? self.count);
+  }
+
+  Map<String, Object?> toJson() => _$RatingToJson(this as Rating);
 }
 
 Map<String, Object?> _$ProductToJson(Product instance) {
@@ -164,23 +166,17 @@ Map<String, Object?> _$ProductToJson(Product instance) {
 
 // factory Product.fromJson(Map<String, Object?> json) => _$ProductFromJson(json);
 Product _$ProductFromJson(Map<String, Object?> json) {
-  final idValue = _dustJsonAs<int>(json['id'], 'id', 'int');
-  final titleValue = _dustJsonAs<String>(json['title'], 'title', 'String');
-  final priceValue = _dustJsonAs<num>(json['price'], 'price', 'num').toDouble();
-  final descriptionValue = _dustJsonAs<String>(
+  final idValue = _jsonAs<int>(json['id'], 'id', 'int');
+  final titleValue = _jsonAs<String>(json['title'], 'title', 'String');
+  final priceValue = _jsonAs<num>(json['price'], 'price', 'num').toDouble();
+  final descriptionValue = _jsonAs<String>(
     json['description'],
     'description',
     'String',
   );
-  final categoryValue = _dustJsonAs<String>(
-    json['category'],
-    'category',
-    'String',
-  );
-  final imageValue = _dustJsonAs<String>(json['image'], 'image', 'String');
-  final ratingValue = _$RatingFromJson(
-    _dustJsonAsMap(json['rating'], 'rating'),
-  );
+  final categoryValue = _jsonAs<String>(json['category'], 'category', 'String');
+  final imageValue = _jsonAs<String>(json['image'], 'image', 'String');
+  final ratingValue = _$RatingFromJson(_jsonAsMap(json['rating'], 'rating'));
 
   return Product(
     id: idValue,
@@ -199,8 +195,8 @@ Map<String, Object?> _$RatingToJson(Rating instance) {
 
 // factory Rating.fromJson(Map<String, Object?> json) => _$RatingFromJson(json);
 Rating _$RatingFromJson(Map<String, Object?> json) {
-  final rateValue = _dustJsonAs<num>(json['rate'], 'rate', 'num').toDouble();
-  final countValue = _dustJsonAs<int>(json['count'], 'count', 'int');
+  final rateValue = _jsonAs<num>(json['rate'], 'rate', 'num').toDouble();
+  final countValue = _jsonAs<int>(json['count'], 'count', 'int');
 
   return Rating(rate: rateValue, count: countValue);
 }

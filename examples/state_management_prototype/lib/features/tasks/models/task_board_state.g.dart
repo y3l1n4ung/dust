@@ -8,49 +8,52 @@ part of 'task_board_state.dart';
 
 const Object _undefined = Object();
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$TaskBoardState {
-  TaskBoardState get _dustSelf => this as TaskBoardState;
-
   @override
   String toString() {
+    final self = this as TaskBoardState;
     return 'TaskBoardState('
-        'todos: ${_dustSelf.todos}, '
-        'query: ${_dustSelf.query}, '
-        'filter: ${_dustSelf.filter}, '
-        'isLoading: ${_dustSelf.isLoading}, '
-        'isRefreshing: ${_dustSelf.isRefreshing}, '
-        'isInitialized: ${_dustSelf.isInitialized}, '
-        'errorMessage: ${_dustSelf.errorMessage}'
+        'todos: ${self.todos}, '
+        'query: ${self.query}, '
+        'filter: ${self.filter}, '
+        'isLoading: ${self.isLoading}, '
+        'isRefreshing: ${self.isRefreshing}, '
+        'isInitialized: ${self.isInitialized}, '
+        'errorMessage: ${self.errorMessage}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is TaskBoardState &&
-          runtimeType == other.runtimeType &&
-          _dustDeepCollectionEquality.equals(other.todos, _dustSelf.todos) &&
-          other.query == _dustSelf.query &&
-          other.filter == _dustSelf.filter &&
-          other.isLoading == _dustSelf.isLoading &&
-          other.isRefreshing == _dustSelf.isRefreshing &&
-          other.isInitialized == _dustSelf.isInitialized &&
-          other.errorMessage == _dustSelf.errorMessage;
+  bool operator ==(Object other) {
+    final self = this as TaskBoardState;
+    return identical(this, other) ||
+        other is TaskBoardState &&
+            runtimeType == other.runtimeType &&
+            _deepCollectionEquality.equals(other.todos, self.todos) &&
+            other.query == self.query &&
+            other.filter == self.filter &&
+            other.isLoading == self.isLoading &&
+            other.isRefreshing == self.isRefreshing &&
+            other.isInitialized == self.isInitialized &&
+            other.errorMessage == self.errorMessage;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustDeepCollectionEquality.hash(_dustSelf.todos),
-    _dustSelf.query,
-    _dustSelf.filter,
-    _dustSelf.isLoading,
-    _dustSelf.isRefreshing,
-    _dustSelf.isInitialized,
-    _dustSelf.errorMessage,
-  ]);
+  int get hashCode {
+    final self = this as TaskBoardState;
+    return Object.hashAll([
+      runtimeType,
+      _deepCollectionEquality.hash(self.todos),
+      self.query,
+      self.filter,
+      self.isLoading,
+      self.isRefreshing,
+      self.isInitialized,
+      self.errorMessage,
+    ]);
+  }
 
   TaskBoardState copyWith({
     List<RemoteTodo>? todos,
@@ -61,19 +64,20 @@ mixin _$TaskBoardState {
     bool? isInitialized,
     Object? errorMessage = _undefined,
   }) {
+    final self = this as TaskBoardState;
     final nextTodos = List<RemoteTodo>.of(
-      (todos ?? _dustSelf.todos).map((item_0) => item_0.copyWith()),
+      (todos ?? self.todos).map((item_0) => item_0.copyWith()),
     );
 
     return TaskBoardState(
       todos: nextTodos,
-      query: query ?? _dustSelf.query,
-      filter: filter ?? _dustSelf.filter,
-      isLoading: isLoading ?? _dustSelf.isLoading,
-      isRefreshing: isRefreshing ?? _dustSelf.isRefreshing,
-      isInitialized: isInitialized ?? _dustSelf.isInitialized,
+      query: query ?? self.query,
+      filter: filter ?? self.filter,
+      isLoading: isLoading ?? self.isLoading,
+      isRefreshing: isRefreshing ?? self.isRefreshing,
+      isInitialized: isInitialized ?? self.isInitialized,
       errorMessage: identical(errorMessage, _undefined)
-          ? _dustSelf.errorMessage
+          ? self.errorMessage
           : errorMessage as String?,
     );
   }

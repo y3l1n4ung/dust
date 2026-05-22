@@ -23,16 +23,13 @@ pub(crate) fn emit_debug_mixin(class: &ClassIr) -> Option<String> {
                 } else {
                     ", "
                 };
-                format!(
-                    "      '{}: ${{_dustSelf.{}}}{}'",
-                    field.name, field.name, suffix
-                )
+                format!("      '{}: ${{self.{}}}{}'", field.name, field.name, suffix)
             })
             .collect::<Vec<_>>()
             .join("\n");
         format!(
-            "@override\nString toString() {{\n  return '{}('\n{}\n      ')';\n}}",
-            class.name, segments
+            "@override\nString toString() {{\n  final self = this as {};\n  return '{}('\n{}\n      ')';\n}}",
+            class.name, class.name, segments
         )
     })
 }

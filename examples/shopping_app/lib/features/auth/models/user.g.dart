@@ -6,41 +6,37 @@
 
 part of 'user.dart';
 
-Never _dustJsonTypeError(Object? value, String key, String expected) =>
+Never _jsonTypeError(Object? value, String key, String expected) =>
     throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
   Object? value,
   String key,
   String expected,
   T? Function(String value) parse,
 ) =>
-    parse(_dustJsonAs<String>(value, key, 'String')) ??
-    _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) =>
-    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
 
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
-  value,
-  key,
-  'ISO-8601 DateTime string',
-  DateTime.tryParse,
-);
-Uri _dustJsonAsUri(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }
@@ -52,39 +48,43 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
 }
 
 mixin _$User {
-  User get _dustSelf => this as User;
-
   @override
   String toString() {
+    final self = this as User;
     return 'User('
-        'id: ${_dustSelf.id}, '
-        'email: ${_dustSelf.email}, '
-        'username: ${_dustSelf.username}, '
-        'name: ${_dustSelf.name}, '
-        'phone: ${_dustSelf.phone}'
+        'id: ${self.id}, '
+        'email: ${self.email}, '
+        'username: ${self.username}, '
+        'name: ${self.name}, '
+        'phone: ${self.phone}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is User &&
-          runtimeType == other.runtimeType &&
-          other.id == _dustSelf.id &&
-          other.email == _dustSelf.email &&
-          other.username == _dustSelf.username &&
-          other.name == _dustSelf.name &&
-          other.phone == _dustSelf.phone;
+  bool operator ==(Object other) {
+    final self = this as User;
+    return identical(this, other) ||
+        other is User &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id &&
+            other.email == self.email &&
+            other.username == self.username &&
+            other.name == self.name &&
+            other.phone == self.phone;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.id,
-    _dustSelf.email,
-    _dustSelf.username,
-    _dustSelf.name,
-    _dustSelf.phone,
-  ]);
+  int get hashCode {
+    final self = this as User;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+      self.email,
+      self.username,
+      self.name,
+      self.phone,
+    ]);
+  }
 
   User copyWith({
     int? id,
@@ -93,51 +93,56 @@ mixin _$User {
     Name? name,
     String? phone,
   }) {
-    final nextName = (name ?? _dustSelf.name).copyWith();
+    final self = this as User;
+    final nextName = (name ?? self.name).copyWith();
 
     return User(
-      id: id ?? _dustSelf.id,
-      email: email ?? _dustSelf.email,
-      username: username ?? _dustSelf.username,
+      id: id ?? self.id,
+      email: email ?? self.email,
+      username: username ?? self.username,
       name: nextName,
-      phone: phone ?? _dustSelf.phone,
+      phone: phone ?? self.phone,
     );
   }
 
-  Map<String, Object?> toJson() => _$UserToJson(_dustSelf);
+  Map<String, Object?> toJson() => _$UserToJson(this as User);
 }
 
 mixin _$Name {
-  Name get _dustSelf => this as Name;
-
   @override
   String toString() {
+    final self = this as Name;
     return 'Name('
-        'firstname: ${_dustSelf.firstname}, '
-        'lastname: ${_dustSelf.lastname}'
+        'firstname: ${self.firstname}, '
+        'lastname: ${self.lastname}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Name &&
-          runtimeType == other.runtimeType &&
-          other.firstname == _dustSelf.firstname &&
-          other.lastname == _dustSelf.lastname;
+  bool operator ==(Object other) {
+    final self = this as Name;
+    return identical(this, other) ||
+        other is Name &&
+            runtimeType == other.runtimeType &&
+            other.firstname == self.firstname &&
+            other.lastname == self.lastname;
+  }
 
   @override
-  int get hashCode =>
-      Object.hashAll([runtimeType, _dustSelf.firstname, _dustSelf.lastname]);
+  int get hashCode {
+    final self = this as Name;
+    return Object.hashAll([runtimeType, self.firstname, self.lastname]);
+  }
 
   Name copyWith({String? firstname, String? lastname}) {
+    final self = this as Name;
     return Name(
-      firstname: firstname ?? _dustSelf.firstname,
-      lastname: lastname ?? _dustSelf.lastname,
+      firstname: firstname ?? self.firstname,
+      lastname: lastname ?? self.lastname,
     );
   }
 
-  Map<String, Object?> toJson() => _$NameToJson(_dustSelf);
+  Map<String, Object?> toJson() => _$NameToJson(this as Name);
 }
 
 Map<String, Object?> _$UserToJson(User instance) {
@@ -152,15 +157,11 @@ Map<String, Object?> _$UserToJson(User instance) {
 
 // factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final idValue = _dustJsonAs<int>(json['id'], 'id', 'int');
-  final emailValue = _dustJsonAs<String>(json['email'], 'email', 'String');
-  final usernameValue = _dustJsonAs<String>(
-    json['username'],
-    'username',
-    'String',
-  );
-  final nameValue = _$NameFromJson(_dustJsonAsMap(json['name'], 'name'));
-  final phoneValue = _dustJsonAs<String>(json['phone'], 'phone', 'String');
+  final idValue = _jsonAs<int>(json['id'], 'id', 'int');
+  final emailValue = _jsonAs<String>(json['email'], 'email', 'String');
+  final usernameValue = _jsonAs<String>(json['username'], 'username', 'String');
+  final nameValue = _$NameFromJson(_jsonAsMap(json['name'], 'name'));
+  final phoneValue = _jsonAs<String>(json['phone'], 'phone', 'String');
 
   return User(
     id: idValue,
@@ -180,16 +181,12 @@ Map<String, Object?> _$NameToJson(Name instance) {
 
 // factory Name.fromJson(Map<String, Object?> json) => _$NameFromJson(json);
 Name _$NameFromJson(Map<String, Object?> json) {
-  final firstnameValue = _dustJsonAs<String>(
+  final firstnameValue = _jsonAs<String>(
     json['firstname'],
     'firstname',
     'String',
   );
-  final lastnameValue = _dustJsonAs<String>(
-    json['lastname'],
-    'lastname',
-    'String',
-  );
+  final lastnameValue = _jsonAs<String>(json['lastname'], 'lastname', 'String');
 
   return Name(firstname: firstnameValue, lastname: lastnameValue);
 }

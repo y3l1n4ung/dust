@@ -6,43 +6,44 @@
 
 part of 'featured_product.dart';
 
-const DeepCollectionEquality _dustUnorderedDeepCollectionEquality =
+const DeepCollectionEquality _unorderedDeepCollectionEquality =
     DeepCollectionEquality.unordered();
 
 mixin _$FeaturedProduct {
-  FeaturedProduct get _dustSelf => this as FeaturedProduct;
-
   @override
   String toString() {
+    final self = this as FeaturedProduct;
     return 'FeaturedProduct('
-        'sku: ${_dustSelf.sku}, '
-        'price: ${_dustSelf.price}, '
-        'tags: ${_dustSelf.tags}, '
-        'archived: ${_dustSelf.archived}'
+        'sku: ${self.sku}, '
+        'price: ${self.price}, '
+        'tags: ${self.tags}, '
+        'archived: ${self.archived}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is FeaturedProduct &&
-          runtimeType == other.runtimeType &&
-          other.sku == _dustSelf.sku &&
-          other.price == _dustSelf.price &&
-          _dustUnorderedDeepCollectionEquality.equals(
-            other.tags,
-            _dustSelf.tags,
-          ) &&
-          other.archived == _dustSelf.archived;
+  bool operator ==(Object other) {
+    final self = this as FeaturedProduct;
+    return identical(this, other) ||
+        other is FeaturedProduct &&
+            runtimeType == other.runtimeType &&
+            other.sku == self.sku &&
+            other.price == self.price &&
+            _unorderedDeepCollectionEquality.equals(other.tags, self.tags) &&
+            other.archived == self.archived;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.sku,
-    _dustSelf.price,
-    _dustUnorderedDeepCollectionEquality.hash(_dustSelf.tags),
-    _dustSelf.archived,
-  ]);
+  int get hashCode {
+    final self = this as FeaturedProduct;
+    return Object.hashAll([
+      runtimeType,
+      self.sku,
+      self.price,
+      _unorderedDeepCollectionEquality.hash(self.tags),
+      self.archived,
+    ]);
+  }
 
   FeaturedProduct copyWith({
     String? sku,
@@ -50,14 +51,15 @@ mixin _$FeaturedProduct {
     Set<String>? tags,
     bool? archived,
   }) {
-    final nextPrice = (price ?? _dustSelf.price).copyWith();
-    final nextTags = Set<String>.of(tags ?? _dustSelf.tags);
+    final self = this as FeaturedProduct;
+    final nextPrice = (price ?? self.price).copyWith();
+    final nextTags = Set<String>.of(tags ?? self.tags);
 
     return FeaturedProduct(
-      sku: sku ?? _dustSelf.sku,
+      sku: sku ?? self.sku,
       price: nextPrice,
       tags: nextTags,
-      archived: archived ?? _dustSelf.archived,
+      archived: archived ?? self.archived,
     );
   }
 }

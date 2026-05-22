@@ -6,41 +6,37 @@
 
 part of 'remote_post.dart';
 
-Never _dustJsonTypeError(Object? value, String key, String expected) =>
+Never _jsonTypeError(Object? value, String key, String expected) =>
     throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
   Object? value,
   String key,
   String expected,
   T? Function(String value) parse,
 ) =>
-    parse(_dustJsonAs<String>(value, key, 'String')) ??
-    _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) =>
-    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
 
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
-  value,
-  key,
-  'ISO-8601 DateTime string',
-  DateTime.tryParse,
-);
-Uri _dustJsonAsUri(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }
@@ -52,51 +48,52 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
 }
 
 mixin _$RemotePost {
-  RemotePost get _dustSelf => this as RemotePost;
-
   @override
   String toString() {
+    final self = this as RemotePost;
     return 'RemotePost('
-        'userId: ${_dustSelf.userId}, '
-        'id: ${_dustSelf.id}, '
-        'title: ${_dustSelf.title}, '
-        'body: ${_dustSelf.body}'
+        'userId: ${self.userId}, '
+        'id: ${self.id}, '
+        'title: ${self.title}, '
+        'body: ${self.body}'
         ')';
   }
 
   RemotePost copyWith({int? userId, int? id, String? title, String? body}) {
+    final self = this as RemotePost;
     return RemotePost(
-      userId: userId ?? _dustSelf.userId,
-      id: id ?? _dustSelf.id,
-      title: title ?? _dustSelf.title,
-      body: body ?? _dustSelf.body,
+      userId: userId ?? self.userId,
+      id: id ?? self.id,
+      title: title ?? self.title,
+      body: body ?? self.body,
     );
   }
 
-  Map<String, Object?> toJson() => _$RemotePostToJson(_dustSelf);
+  Map<String, Object?> toJson() => _$RemotePostToJson(this as RemotePost);
 }
 
 mixin _$RemotePostDraft {
-  RemotePostDraft get _dustSelf => this as RemotePostDraft;
-
   @override
   String toString() {
+    final self = this as RemotePostDraft;
     return 'RemotePostDraft('
-        'userId: ${_dustSelf.userId}, '
-        'title: ${_dustSelf.title}, '
-        'body: ${_dustSelf.body}'
+        'userId: ${self.userId}, '
+        'title: ${self.title}, '
+        'body: ${self.body}'
         ')';
   }
 
   RemotePostDraft copyWith({int? userId, String? title, String? body}) {
+    final self = this as RemotePostDraft;
     return RemotePostDraft(
-      userId: userId ?? _dustSelf.userId,
-      title: title ?? _dustSelf.title,
-      body: body ?? _dustSelf.body,
+      userId: userId ?? self.userId,
+      title: title ?? self.title,
+      body: body ?? self.body,
     );
   }
 
-  Map<String, Object?> toJson() => _$RemotePostDraftToJson(_dustSelf);
+  Map<String, Object?> toJson() =>
+      _$RemotePostDraftToJson(this as RemotePostDraft);
 }
 
 Map<String, Object?> _$RemotePostToJson(RemotePost instance) {
@@ -110,10 +107,10 @@ Map<String, Object?> _$RemotePostToJson(RemotePost instance) {
 
 // factory RemotePost.fromJson(Map<String, Object?> json) => _$RemotePostFromJson(json);
 RemotePost _$RemotePostFromJson(Map<String, Object?> json) {
-  final userIdValue = _dustJsonAs<int>(json['userId'], 'userId', 'int');
-  final idValue = _dustJsonAs<int>(json['id'], 'id', 'int');
-  final titleValue = _dustJsonAs<String>(json['title'], 'title', 'String');
-  final bodyValue = _dustJsonAs<String>(json['body'], 'body', 'String');
+  final userIdValue = _jsonAs<int>(json['userId'], 'userId', 'int');
+  final idValue = _jsonAs<int>(json['id'], 'id', 'int');
+  final titleValue = _jsonAs<String>(json['title'], 'title', 'String');
+  final bodyValue = _jsonAs<String>(json['body'], 'body', 'String');
 
   return RemotePost(
     userId: userIdValue,
@@ -133,9 +130,9 @@ Map<String, Object?> _$RemotePostDraftToJson(RemotePostDraft instance) {
 
 // factory RemotePostDraft.fromJson(Map<String, Object?> json) => _$RemotePostDraftFromJson(json);
 RemotePostDraft _$RemotePostDraftFromJson(Map<String, Object?> json) {
-  final userIdValue = _dustJsonAs<int>(json['userId'], 'userId', 'int');
-  final titleValue = _dustJsonAs<String>(json['title'], 'title', 'String');
-  final bodyValue = _dustJsonAs<String>(json['body'], 'body', 'String');
+  final userIdValue = _jsonAs<int>(json['userId'], 'userId', 'int');
+  final titleValue = _jsonAs<String>(json['title'], 'title', 'String');
+  final bodyValue = _jsonAs<String>(json['body'], 'body', 'String');
 
   return RemotePostDraft(
     userId: userIdValue,

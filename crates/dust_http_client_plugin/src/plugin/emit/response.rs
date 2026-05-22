@@ -9,7 +9,7 @@ pub(super) fn render_response_return(spec: &ClientSpec<'_>, endpoint: &EndpointS
     let ty = &endpoint.return_spec.ty;
     if is_void_type(ty) {
         if endpoint.return_spec.raw_response {
-            return "    return _dustBuildResponse<void>(_result, null);\n".to_owned();
+            return "    return _buildResponse<void>(_result, null);\n".to_owned();
         }
         return "    return;\n".to_owned();
     }
@@ -40,7 +40,7 @@ pub(super) fn render_response_return(spec: &ClientSpec<'_>, endpoint: &EndpointS
 
     if endpoint.return_spec.raw_response {
         format!(
-            "    final _value = {};\n    return _dustBuildResponse<{}>(_result, _value);\n",
+            "    final _value = {};\n    return _buildResponse<{}>(_result, _value);\n",
             decode_value,
             render_type(ty)
         )
@@ -112,7 +112,7 @@ fn render_combine_base_urls_helper() -> &'static str {
 }
 
 fn render_response_wrapper_helper() -> &'static str {
-    r#"Response<T> _dustBuildResponse<T>(Response<dynamic> response, T data) {
+    r#"Response<T> _buildResponse<T>(Response<dynamic> response, T data) {
   return Response<T>(
     data: data,
     headers: response.headers,

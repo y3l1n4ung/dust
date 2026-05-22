@@ -6,44 +6,48 @@
 
 part of 'nested_bundle.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$NestedBundle {
-  NestedBundle get _dustSelf => this as NestedBundle;
-
   @override
   String toString() {
+    final self = this as NestedBundle;
     return 'NestedBundle('
-        'groups: ${_dustSelf.groups}, '
-        'metrics: ${_dustSelf.metrics}'
+        'groups: ${self.groups}, '
+        'metrics: ${self.metrics}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is NestedBundle &&
-          runtimeType == other.runtimeType &&
-          _dustDeepCollectionEquality.equals(other.groups, _dustSelf.groups) &&
-          _dustDeepCollectionEquality.equals(other.metrics, _dustSelf.metrics);
+  bool operator ==(Object other) {
+    final self = this as NestedBundle;
+    return identical(this, other) ||
+        other is NestedBundle &&
+            runtimeType == other.runtimeType &&
+            _deepCollectionEquality.equals(other.groups, self.groups) &&
+            _deepCollectionEquality.equals(other.metrics, self.metrics);
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustDeepCollectionEquality.hash(_dustSelf.groups),
-    _dustDeepCollectionEquality.hash(_dustSelf.metrics),
-  ]);
+  int get hashCode {
+    final self = this as NestedBundle;
+    return Object.hashAll([
+      runtimeType,
+      _deepCollectionEquality.hash(self.groups),
+      _deepCollectionEquality.hash(self.metrics),
+    ]);
+  }
 
   NestedBundle copyWith({
     List<List<String>>? groups,
     Map<String, List<int>>? metrics,
   }) {
+    final self = this as NestedBundle;
     final nextGroups = List<List<String>>.of(
-      (groups ?? _dustSelf.groups).map((item_0) => List<String>.of(item_0)),
+      (groups ?? self.groups).map((item_0) => List<String>.of(item_0)),
     );
     final nextMetrics = Map<String, List<int>>.fromEntries(
-      (metrics ?? _dustSelf.metrics).entries.map(
+      (metrics ?? self.metrics).entries.map(
         (entry_1) => MapEntry(entry_1.key, List<int>.of(entry_1.value)),
       ),
     );

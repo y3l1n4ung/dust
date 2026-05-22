@@ -21,7 +21,10 @@ fn generates_to_json_mixin_member() {
     let members = members_for_class(&contribution, "User");
 
     assert_eq!(members.len(), 1);
-    assert!(members[0].contains("Map<String, Object?> toJson() => _$UserToJson(_dustSelf);"));
+    assert_eq!(
+        members[0],
+        "Map<String, Object?> toJson() => _$UserToJson(this as User);"
+    );
 }
 
 #[test]
@@ -43,9 +46,15 @@ fn generates_to_json_helper() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let helper = &contribution.top_level_functions[0];
 
-    assert!(helper.contains("Map<String, Object?> _$UserToJson(User instance)"));
-    assert!(helper.contains("'id': instance.id,"));
-    assert!(helper.contains("'age': instance.age,"));
+    assert_eq!(
+        helper,
+        r#"Map<String, Object?> _$UserToJson(User instance) {
+  return <String, Object?>{
+    'id': instance.id,
+    'age': instance.age,
+  };
+}"#
+    );
 }
 
 #[test]
@@ -73,8 +82,17 @@ fn generates_from_json_helper() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let helper = &contribution.top_level_functions[0];
 
-    assert!(helper.contains("User _$UserFromJson(Map<String, Object?> json)"));
-    assert!(helper.contains("final idValue = _dustJsonAs<String>(json['id'], 'id', 'String');"));
-    assert!(helper.contains("final ageValue = _dustJsonAs<int>(json['age'], 'age', 'int');"));
-    assert!(helper.contains("return User("));
+    assert_eq!(
+        helper,
+        r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
+User _$UserFromJson(Map<String, Object?> json) {
+  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
+  final ageValue = _jsonAs<int>(json['age'], 'age', 'int');
+
+  return User(
+    id: idValue,
+    age: ageValue,
+  );
+}"#
+    );
 }

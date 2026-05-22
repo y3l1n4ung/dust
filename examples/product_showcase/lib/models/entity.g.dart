@@ -6,65 +6,73 @@
 
 part of 'entity.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$Entity {
-  Entity get _dustSelf => this as Entity;
-
   @override
   String toString() {
+    final self = this as Entity;
     return 'Entity('
-        'id: ${_dustSelf.id}'
+        'id: ${self.id}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Entity &&
-          runtimeType == other.runtimeType &&
-          other.id == _dustSelf.id;
+  bool operator ==(Object other) {
+    final self = this as Entity;
+    return identical(this, other) ||
+        other is Entity &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id;
+  }
 
   @override
-  int get hashCode => Object.hashAll([runtimeType, _dustSelf.id]);
+  int get hashCode {
+    final self = this as Entity;
+    return Object.hashAll([runtimeType, self.id]);
+  }
 }
 
 mixin _$DetailedEntity {
-  DetailedEntity get _dustSelf => this as DetailedEntity;
-
   @override
   String toString() {
+    final self = this as DetailedEntity;
     return 'DetailedEntity('
-        'id: ${_dustSelf.id}, '
-        'label: ${_dustSelf.label}, '
-        'tags: ${_dustSelf.tags}'
+        'id: ${self.id}, '
+        'label: ${self.label}, '
+        'tags: ${self.tags}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is DetailedEntity &&
-          runtimeType == other.runtimeType &&
-          other.id == _dustSelf.id &&
-          other.label == _dustSelf.label &&
-          _dustDeepCollectionEquality.equals(other.tags, _dustSelf.tags);
+  bool operator ==(Object other) {
+    final self = this as DetailedEntity;
+    return identical(this, other) ||
+        other is DetailedEntity &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id &&
+            other.label == self.label &&
+            _deepCollectionEquality.equals(other.tags, self.tags);
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.id,
-    _dustSelf.label,
-    _dustDeepCollectionEquality.hash(_dustSelf.tags),
-  ]);
+  int get hashCode {
+    final self = this as DetailedEntity;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+      self.label,
+      _deepCollectionEquality.hash(self.tags),
+    ]);
+  }
 
   DetailedEntity copyWith({String? id, String? label, List<String>? tags}) {
-    final nextTags = List<String>.of(tags ?? _dustSelf.tags);
+    final self = this as DetailedEntity;
+    final nextTags = List<String>.of(tags ?? self.tags);
 
     return DetailedEntity(
-      id ?? _dustSelf.id,
-      label: label ?? _dustSelf.label,
+      id ?? self.id,
+      label: label ?? self.label,
       tags: nextTags,
     );
   }

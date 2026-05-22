@@ -13,8 +13,8 @@ use crate::{
 
 pub(crate) fn emit_to_json_mixin(class: &ClassIr) -> String {
     format!(
-        "Map<String, Object?> toJson() => _${}ToJson(_dustSelf);",
-        class.name
+        "Map<String, Object?> toJson() => _${}ToJson(this as {});",
+        class.name, class.name
     )
 }
 

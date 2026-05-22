@@ -63,6 +63,11 @@ pub(crate) fn emit_copy_with(class: &ClassIr, copyable_types: &HashSet<String>) 
     let setup = render_setup_blocks(setup);
     let return_call = render_return_statement(&call, "  ");
 
+    let self_binding = if class.fields.is_empty() {
+        String::new()
+    } else {
+        format!("  final self = this as {};\n", class.name)
+    };
     let body = if setup.is_empty() {
         return_call
     } else {
@@ -70,10 +75,10 @@ pub(crate) fn emit_copy_with(class: &ClassIr, copyable_types: &HashSet<String>) 
     };
 
     Some(format!(
-        "{name} copyWith({params}) {{\n{body}\n}}",
+        "{name} copyWith({params}) {{\n{self_binding}{body}\n}}",
         name = class.name,
         params = params,
-        body = body
+        body = body,
     ))
 }
 

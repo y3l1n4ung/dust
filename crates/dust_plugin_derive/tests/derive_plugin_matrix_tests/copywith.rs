@@ -37,19 +37,23 @@ fn copywith_uses_named_arguments_without_braces_in_constructor_calls() {
     let members = members_for_class(&contribution, "Request");
 
     assert_eq!(contribution.mixin_members.len(), 1);
-    assert!(members[0].contains("Request copyWith({"));
-    assert!(members[0].contains("String? path,"));
-    assert!(members[0].contains("Map<String, String>? headers,"));
-    assert!(!members[0].contains("final nextPathSource = path ?? _dustSelf.path;"));
-    assert!(!members[0].contains("final nextHeadersSource = headers ?? _dustSelf.headers;"));
-    assert!(
-        members[0]
-            .contains("final nextHeaders = Map<String, String>.of(headers ?? _dustSelf.headers);")
+    assert_eq!(
+        members,
+        [r#"Request copyWith({
+  String? path,
+  Map<String, String>? headers,
+}) {
+  final self = this as Request;
+  final nextHeaders = Map<String, String>.of(headers ?? self.headers);
+
+  return Request.create(
+    path: path ?? self.path,
+    headers: nextHeaders,
+  );
+}"#
+        .to_owned()]
+        .as_slice()
     );
-    assert!(members[0].contains("return Request.create("));
-    assert!(members[0].contains("path: path ?? _dustSelf.path,"));
-    assert!(members[0].contains("headers: nextHeaders,"));
-    assert!(!members[0].contains("Request.create({"));
 }
 
 #[test]
@@ -90,18 +94,29 @@ fn copywith_renders_nested_generic_and_dynamic_casts() {
         &SymbolPlan::default(),
     );
 
-    let fragment = &members_for_class(&contribution, "Payload")[0];
-    assert!(fragment.contains("Object? items = _undefined,"));
-    assert!(fragment.contains("items as List<String>?"));
-    assert!(fragment.contains("dynamic extra = _undefined,"));
-    assert!(fragment.contains("extra as dynamic"));
-    assert!(fragment.contains("void Function(String, int)? transform,"));
-    assert!(!fragment.contains("final nextTransformSource = transform ?? _dustSelf.transform;"));
-    assert!(fragment.contains("transform ?? _dustSelf.transform,"));
-    assert!(fragment.contains("(String, int)? summary,"));
-    assert!(!fragment.contains("final nextSummarySource = summary ?? _dustSelf.summary;"));
-    assert!(fragment.contains("summary ?? _dustSelf.summary,"));
-    assert!(fragment.contains("_dustSelf.items"));
+    let members = members_for_class(&contribution, "Payload");
+    assert_eq!(
+        members,
+        [r#"Payload copyWith({
+  Object? items = _undefined,
+  dynamic extra = _undefined,
+  void Function(String, int)? transform,
+  (String, int)? summary,
+}) {
+  final self = this as Payload;
+  final nextItemsSource = identical(items, _undefined) ? self.items : items as List<String>?;
+  final nextItems = nextItemsSource == null ? null : List<String>.of(nextItemsSource);
+
+  return Payload(
+    nextItems,
+    identical(extra, _undefined) ? self.extra : extra as dynamic,
+    transform ?? self.transform,
+    summary ?? self.summary,
+  );
+}"#
+        .to_owned()]
+        .as_slice()
+    );
 }
 
 #[test]
@@ -141,12 +156,32 @@ fn copywith_uses_stable_temp_bindings_for_nested_types() {
         )]),
         &SymbolPlan::default(),
     );
-    let fragment = &members_for_class(&contribution, "Complex")[0];
+    let members = members_for_class(&contribution, "Complex");
+    assert_eq!(
+        members,
+        [r#"Complex copyWith({
+  Object? left = _undefined,
+  Set<List<String>>? right,
+}) {
+  final self = this as Complex;
+  final nextLeftSource = identical(left, _undefined) ? self.left : left as Map<String, List<Node>>?;
+  final nextLeft = nextLeftSource == null ? null : Map<String, List<Node>>.fromEntries(
+    nextLeftSource.entries.map(
+      (entry_0) => MapEntry(entry_0.key, List<Node>.of(entry_0.value)),
+    ),
+  );
+  final nextRight = Set<List<String>>.of(
+    (right ?? self.right).map((item_1) => List<String>.of(item_1)),
+  );
 
-    assert!(fragment.contains("final nextLeftSource ="));
-    assert!(fragment.contains("entry_0"));
-    assert!(fragment.contains("item_1"));
-    assert!(fragment.contains("item_"));
+  return Complex(
+    nextLeft,
+    nextRight,
+  );
+}"#
+        .to_owned()]
+        .as_slice()
+    );
 }
 
 #[test]
@@ -184,9 +219,23 @@ fn copywith_handles_named_model_collections_without_aliasing() {
         &SymbolPlan::default(),
     );
 
-    let fragment = &members_for_class(&contribution, "Graph")[0];
-    assert!(fragment.contains("List<Node>.of("));
-    assert!(fragment.contains(".map((item_0) => item_0.copyWith())"));
-    assert!(!fragment.contains("nextNodesSource"));
+    let members = members_for_class(&contribution, "Graph");
+    assert_eq!(
+        members,
+        [r#"Graph copyWith({
+  List<Node>? nodes,
+}) {
+  final self = this as Graph;
+  final nextNodes = List<Node>.of(
+    (nodes ?? self.nodes).map((item_0) => item_0.copyWith()),
+  );
+
+  return Graph(
+    nextNodes,
+  );
+}"#
+        .to_owned()]
+        .as_slice()
+    );
     let _ = span(0, 0);
 }

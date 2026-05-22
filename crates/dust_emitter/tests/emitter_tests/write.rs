@@ -8,7 +8,8 @@ use dust_plugin_derive::register_plugin;
 use tempfile::tempdir;
 
 use super::support::{
-    FakePlugin, constructor, constructor_param, field, sample_library, span, trait_app,
+    FakePlugin, constructor, constructor_param, field, generated_output, sample_library, span,
+    trait_app,
 };
 
 #[test]
@@ -133,28 +134,66 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
 
     let result = write_library(&library, &registry).unwrap();
     let written = fs::read_to_string(&output_path).unwrap();
+    let expected = generated_output(
+        r#"part of 'models.dart';
+
+const Object _undefined = Object();
+
+mixin _$User {
+  @override
+  String toString() {
+    final self = this as User;
+    return 'User('
+        'id: ${self.id}, '
+        'age: ${self.age}'
+        ')';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    final self = this as User;
+    return identical(this, other) ||
+        other is User &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id &&
+            other.age == self.age;
+  }
+
+  @override
+  int get hashCode {
+    final self = this as User;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+      self.age,
+    ]);
+  }
+
+  User copyWith({
+    String? id,
+    Object? age = _undefined,
+  }) {
+    final self = this as User;
+    return User(
+      id ?? self.id,
+      identical(age, _undefined) ? self.age : age as int?,
+    );
+  }
+}
+
+mixin _$Team {
+  Team copyWith({
+    String? name,
+  }) {
+    final self = this as Team;
+    return Team(
+      name ?? self.name,
+    );
+  }
+}
+"#,
+    );
 
     assert!(result.written);
-    assert!(written.contains("// coverage:ignore-file"));
-    assert!(written.contains("// ignore_for_file: type=lint"));
-    assert!(written.contains("part of 'models.dart';"));
-    assert!(written.contains("const Object _undefined = Object();"));
-    assert!(written.contains("mixin _$User {"));
-    assert!(written.contains("User get _dustSelf => this as User;"));
-    assert!(written.contains("String toString() {\n    return 'User('"));
-    assert!(written.contains("'id: ${_dustSelf.id}, '"));
-    assert!(written.contains("'age: ${_dustSelf.age}'"));
-    assert!(written.contains(
-        "int get hashCode => Object.hashAll([\n    runtimeType,\n    _dustSelf.id,\n    _dustSelf.age,\n  ]);"
-    ));
-    assert!(written.contains("User copyWith({"));
-    assert!(!written.contains("final nextIdSource = id ?? _dustSelf.id;"));
-    assert!(written.contains("id ?? _dustSelf.id,"));
-    assert!(written.contains("return User("));
-    assert!(written.contains("mixin _$Team {"));
-    assert!(written.contains("Team copyWith({"));
-    assert!(!written.contains("final clonedName = _dustSelf.name;"));
-    assert!(written.contains("_dustSelf.name,"));
-    assert!(written.contains("return Team("));
-    assert!(!written.contains("return   "));
+    assert_eq!(written, expected);
 }

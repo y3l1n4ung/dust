@@ -6,41 +6,37 @@
 
 part of 'cart_item.dart';
 
-Never _dustJsonTypeError(Object? value, String key, String expected) =>
+Never _jsonTypeError(Object? value, String key, String expected) =>
     throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
   Object? value,
   String key,
   String expected,
   T? Function(String value) parse,
 ) =>
-    parse(_dustJsonAs<String>(value, key, 'String')) ??
-    _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) =>
-    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
 
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
-  value,
-  key,
-  'ISO-8601 DateTime string',
-  DateTime.tryParse,
-);
-Uri _dustJsonAsUri(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }
@@ -52,38 +48,39 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
 }
 
 mixin _$CartItem {
-  CartItem get _dustSelf => this as CartItem;
-
   @override
   String toString() {
+    final self = this as CartItem;
     return 'CartItem('
-        'product: ${_dustSelf.product}, '
-        'quantity: ${_dustSelf.quantity}'
+        'product: ${self.product}, '
+        'quantity: ${self.quantity}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is CartItem &&
-          runtimeType == other.runtimeType &&
-          other.product == _dustSelf.product &&
-          other.quantity == _dustSelf.quantity;
-
-  @override
-  int get hashCode =>
-      Object.hashAll([runtimeType, _dustSelf.product, _dustSelf.quantity]);
-
-  CartItem copyWith({Product? product, int? quantity}) {
-    final nextProduct = (product ?? _dustSelf.product).copyWith();
-
-    return CartItem(
-      product: nextProduct,
-      quantity: quantity ?? _dustSelf.quantity,
-    );
+  bool operator ==(Object other) {
+    final self = this as CartItem;
+    return identical(this, other) ||
+        other is CartItem &&
+            runtimeType == other.runtimeType &&
+            other.product == self.product &&
+            other.quantity == self.quantity;
   }
 
-  Map<String, Object?> toJson() => _$CartItemToJson(_dustSelf);
+  @override
+  int get hashCode {
+    final self = this as CartItem;
+    return Object.hashAll([runtimeType, self.product, self.quantity]);
+  }
+
+  CartItem copyWith({Product? product, int? quantity}) {
+    final self = this as CartItem;
+    final nextProduct = (product ?? self.product).copyWith();
+
+    return CartItem(product: nextProduct, quantity: quantity ?? self.quantity);
+  }
+
+  Map<String, Object?> toJson() => _$CartItemToJson(this as CartItem);
 }
 
 Map<String, Object?> _$CartItemToJson(CartItem instance) {
@@ -95,10 +92,8 @@ Map<String, Object?> _$CartItemToJson(CartItem instance) {
 
 // factory CartItem.fromJson(Map<String, Object?> json) => _$CartItemFromJson(json);
 CartItem _$CartItemFromJson(Map<String, Object?> json) {
-  final productValue = Product.fromJson(
-    _dustJsonAsMap(json['product'], 'product'),
-  );
-  final quantityValue = _dustJsonAs<int>(json['quantity'], 'quantity', 'int');
+  final productValue = Product.fromJson(_jsonAsMap(json['product'], 'product'));
+  final quantityValue = _jsonAs<int>(json['quantity'], 'quantity', 'int');
 
   return CartItem(product: productValue, quantity: quantityValue);
 }

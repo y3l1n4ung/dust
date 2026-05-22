@@ -43,10 +43,25 @@ fn supports_custom_json_key_renaming() {
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 
-    assert!(to_json.contains("'full_name': instance.fullName,"));
-    assert!(from_json.contains(
-        "final fullNameValue = _dustJsonAs<String>(json['full_name'], 'full_name', 'String');"
-    ));
+    assert_eq!(
+        to_json,
+        r#"Map<String, Object?> _$UserToJson(User instance) {
+  return <String, Object?>{
+    'full_name': instance.fullName,
+  };
+}"#
+    );
+    assert_eq!(
+        from_json,
+        r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
+User _$UserFromJson(Map<String, Object?> json) {
+  final fullNameValue = _jsonAs<String>(json['full_name'], 'full_name', 'String');
+
+  return User(
+    fullName: fullNameValue,
+  );
+}"#
+    );
 }
 
 #[test]
@@ -79,8 +94,19 @@ fn supports_field_aliases_during_deserialization() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let from_json = &contribution.top_level_functions[0];
 
-    assert!(from_json.contains("final rawNameKey = json.containsKey('name') ? 'name' : json.containsKey('full_name') ? 'full_name' : json.containsKey('displayName') ? 'displayName' : 'name';"));
-    assert!(from_json.contains("final rawName = json.containsKey('name') ? json['name'] : json.containsKey('full_name') ? json['full_name'] : json.containsKey('displayName') ? json['displayName'] : null;"));
+    assert_eq!(
+        from_json,
+        r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
+User _$UserFromJson(Map<String, Object?> json) {
+  final rawNameKey = json.containsKey('name') ? 'name' : json.containsKey('full_name') ? 'full_name' : json.containsKey('displayName') ? 'displayName' : 'name';
+  final rawName = json.containsKey('name') ? json['name'] : json.containsKey('full_name') ? json['full_name'] : json.containsKey('displayName') ? json['displayName'] : null;
+  final nameValue = _jsonAs<String>(rawName, rawNameKey, 'String');
+
+  return User(
+    name: nameValue,
+  );
+}"#
+    );
 }
 
 #[test]
@@ -104,9 +130,24 @@ fn generates_disallow_unrecognized_keys_check() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let from_json = &contribution.top_level_functions[0];
 
-    assert!(from_json.contains("const allowedKeys = <String>{'id'};"));
-    assert!(from_json.contains("for (final key in json.keys) {"));
-    assert!(from_json.contains("throw ArgumentError.value(key, 'json', 'unknown key for User');"));
+    assert_eq!(
+        from_json,
+        r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
+User _$UserFromJson(Map<String, Object?> json) {
+  const allowedKeys = <String>{'id'};
+  for (final key in json.keys) {
+    if (!allowedKeys.contains(key)) {
+      throw ArgumentError.value(key, 'json', 'unknown key for User');
+    }
+  }
+
+  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
+
+  return User(
+    id: idValue,
+  );
+}"#
+    );
 }
 
 #[test]
@@ -144,10 +185,25 @@ fn supports_custom_field_codecs() {
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 
-    assert!(
-        to_json.contains("'createdAt': (const UnixEpochCodec()).serialize(instance.createdAt),")
+    assert_eq!(
+        to_json,
+        r#"Map<String, Object?> _$UserToJson(User instance) {
+  return <String, Object?>{
+    'createdAt': (const UnixEpochCodec()).serialize(instance.createdAt),
+  };
+}"#
     );
-    assert!(from_json.contains("final createdAtValue = _dustJsonDecodeWithCodec<DateTime>((const UnixEpochCodec()), json['createdAt'], 'createdAt');"));
+    assert_eq!(
+        from_json,
+        r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
+User _$UserFromJson(Map<String, Object?> json) {
+  final createdAtValue = _jsonDecodeWithCodec<DateTime>((const UnixEpochCodec()), json['createdAt'], 'createdAt');
+
+  return User(
+    createdAt: createdAtValue,
+  );
+}"#
+    );
 }
 
 #[test]
@@ -180,9 +236,17 @@ fn supports_default_values_during_deserialization() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let from_json = &contribution.top_level_functions[0];
 
-    assert!(from_json.contains(
-        "json.containsKey('role') ? _dustJsonAs<String>(json['role'], 'role', 'String') : 'guest'"
-    ));
+    assert_eq!(
+        from_json,
+        r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
+User _$UserFromJson(Map<String, Object?> json) {
+  final roleValue = json.containsKey('role') ? _jsonAs<String>(json['role'], 'role', 'String') : 'guest';
+
+  return User(
+    role: roleValue,
+  );
+}"#
+    );
 }
 
 #[test]
@@ -232,11 +296,25 @@ fn supports_skipping_fields() {
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 
-    assert!(!to_json.contains("'password'"));
-    assert!(to_json.contains("'token': instance.token,"));
+    assert_eq!(
+        to_json,
+        r#"Map<String, Object?> _$UserToJson(User instance) {
+  return <String, Object?>{
+    'token': instance.token,
+  };
+}"#
+    );
+    assert_eq!(
+        from_json,
+        r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
+User _$UserFromJson(Map<String, Object?> json) {
+  final passwordValue = _jsonAs<String>(json['password'], 'password', 'String');
+  final tokenValue = '';
 
-    assert!(from_json.contains(
-        "final passwordValue = _dustJsonAs<String>(json['password'], 'password', 'String');"
-    ));
-    assert!(from_json.contains("final tokenValue = '';"));
+  return User(
+    password: passwordValue,
+    token: tokenValue,
+  );
+}"#
+    );
 }

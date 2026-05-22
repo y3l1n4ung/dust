@@ -6,43 +6,38 @@
 
 part of 'json_serde_options.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
-Never _dustJsonTypeError(Object? value, String key, String expected) =>
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+Never _jsonTypeError(Object? value, String key, String expected) =>
     throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
   Object? value,
   String key,
   String expected,
   T? Function(String value) parse,
 ) =>
-    parse(_dustJsonAs<String>(value, key, 'String')) ??
-    _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) =>
-    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
 
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
-  value,
-  key,
-  'ISO-8601 DateTime string',
-  DateTime.tryParse,
-);
-Uri _dustJsonAsUri(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }
@@ -54,47 +49,52 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
 }
 
 mixin _$JsonSerdeOptions {
-  JsonSerdeOptions get _dustSelf => this as JsonSerdeOptions;
-
   @override
   String toString() {
+    final self = this as JsonSerdeOptions;
     return 'JsonSerdeOptions('
-        'id: ${_dustSelf.id}, '
-        'e: ${_dustSelf.e}, '
-        'displayName: ${_dustSelf.displayName}, '
-        'tags: ${_dustSelf.tags}, '
-        'serverOnly: ${_dustSelf.serverOnly}, '
-        'clientOnly: ${_dustSelf.clientOnly}, '
-        'hidden: ${_dustSelf.hidden}'
+        'id: ${self.id}, '
+        'e: ${self.e}, '
+        'displayName: ${self.displayName}, '
+        'tags: ${self.tags}, '
+        'serverOnly: ${self.serverOnly}, '
+        'clientOnly: ${self.clientOnly}, '
+        'hidden: ${self.hidden}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is JsonSerdeOptions &&
-          runtimeType == other.runtimeType &&
-          other.id == _dustSelf.id &&
-          other.e == _dustSelf.e &&
-          other.displayName == _dustSelf.displayName &&
-          _dustDeepCollectionEquality.equals(other.tags, _dustSelf.tags) &&
-          other.serverOnly == _dustSelf.serverOnly &&
-          other.clientOnly == _dustSelf.clientOnly &&
-          other.hidden == _dustSelf.hidden;
+  bool operator ==(Object other) {
+    final self = this as JsonSerdeOptions;
+    return identical(this, other) ||
+        other is JsonSerdeOptions &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id &&
+            other.e == self.e &&
+            other.displayName == self.displayName &&
+            _deepCollectionEquality.equals(other.tags, self.tags) &&
+            other.serverOnly == self.serverOnly &&
+            other.clientOnly == self.clientOnly &&
+            other.hidden == self.hidden;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.id,
-    _dustSelf.e,
-    _dustSelf.displayName,
-    _dustDeepCollectionEquality.hash(_dustSelf.tags),
-    _dustSelf.serverOnly,
-    _dustSelf.clientOnly,
-    _dustSelf.hidden,
-  ]);
+  int get hashCode {
+    final self = this as JsonSerdeOptions;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+      self.e,
+      self.displayName,
+      _deepCollectionEquality.hash(self.tags),
+      self.serverOnly,
+      self.clientOnly,
+      self.hidden,
+    ]);
+  }
 
-  Map<String, Object?> toJson() => _$JsonSerdeOptionsToJson(_dustSelf);
+  Map<String, Object?> toJson() =>
+      _$JsonSerdeOptionsToJson(this as JsonSerdeOptions);
 }
 
 Map<String, Object?> _$JsonSerdeOptionsToJson(JsonSerdeOptions instance) {
@@ -129,7 +129,7 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
     }
   }
 
-  final idValue = _dustJsonAs<String>(json['id'], 'id', 'String');
+  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
   final eValue = _$MyEnumFromJson(json['e']);
   final rawDisplayNameKey = json.containsKey('display_name')
       ? 'display_name'
@@ -141,19 +141,19 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
       : json.containsKey('displayName')
       ? json['displayName']
       : null;
-  final displayNameValue = _dustJsonAs<String>(
+  final displayNameValue = _jsonAs<String>(
     rawDisplayName,
     rawDisplayNameKey,
     'String',
   );
   final tagsValue = json.containsKey('tags')
-      ? _dustJsonAsList(
+      ? _jsonAsList(
           json['tags'],
           'tags',
-        ).map((item) => _dustJsonAs<String>(item, 'tags', 'String')).toList()
+        ).map((item) => _jsonAs<String>(item, 'tags', 'String')).toList()
       : ['guest'];
   final serverOnlyValue = json.containsKey('server_only')
-      ? _dustJsonAs<String>(json['server_only'], 'server_only', 'String')
+      ? _jsonAs<String>(json['server_only'], 'server_only', 'String')
       : 'server-default';
   final clientOnlyValue = 'client-default';
   final hiddenValue = 'hidden-default';

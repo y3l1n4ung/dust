@@ -2,7 +2,7 @@ use std::{fs, thread, time::Duration};
 
 use dust_driver::{CommandRequest, WatchRequest, run, run_watch};
 
-use super::support::{make_workspace, write_file};
+use super::support::{generated_output, make_workspace, write_file};
 
 #[test]
 fn watch_runs_initial_build_for_existing_candidates() {
@@ -95,10 +95,42 @@ fn watch_rebuilds_only_the_changed_library() {
             .iter()
             .all(|path| path == &workspace.path().join("lib/user.dart"))
     );
-    assert!(user_output.contains("return 'User('"));
-    assert!(user_output.contains("'id: ${_dustSelf.id}, '"));
-    assert!(user_output.contains("'age: ${_dustSelf.age}'"));
-    assert!(team_output.contains("Team copyWith({"));
+    assert_eq!(
+        user_output,
+        generated_output(
+            r#"part of 'user.dart';
+
+mixin _$User {
+  @override
+  String toString() {
+    final self = this as User;
+    return 'User('
+        'id: ${self.id}, '
+        'age: ${self.age}'
+        ')';
+  }
+}
+"#
+        )
+    );
+    assert_eq!(
+        team_output,
+        generated_output(
+            r#"part of 'team.dart';
+
+mixin _$Team {
+  Team copyWith({
+    String? name,
+  }) {
+    final self = this as Team;
+    return Team(
+      name ?? self.name,
+    );
+  }
+}
+"#
+        )
+    );
     assert!(result.build_artifacts.len() >= 3);
 }
 

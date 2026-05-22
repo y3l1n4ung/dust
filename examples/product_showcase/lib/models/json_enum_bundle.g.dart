@@ -6,45 +6,40 @@
 
 part of 'json_enum_bundle.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
-const DeepCollectionEquality _dustUnorderedDeepCollectionEquality =
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _unorderedDeepCollectionEquality =
     DeepCollectionEquality.unordered();
-Never _dustJsonTypeError(Object? value, String key, String expected) =>
+Never _jsonTypeError(Object? value, String key, String expected) =>
     throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
   Object? value,
   String key,
   String expected,
   T? Function(String value) parse,
 ) =>
-    parse(_dustJsonAs<String>(value, key, 'String')) ??
-    _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) =>
-    _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
 
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(
-  value,
-  key,
-  'ISO-8601 DateTime string',
-  DateTime.tryParse,
-);
-Uri _dustJsonAsUri(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) =>
-    _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }
@@ -56,47 +51,49 @@ T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
 }
 
 mixin _$JsonEnumBundle {
-  JsonEnumBundle get _dustSelf => this as JsonEnumBundle;
-
   @override
   String toString() {
+    final self = this as JsonEnumBundle;
     return 'JsonEnumBundle('
-        'primaryLevel: ${_dustSelf.primaryLevel}, '
-        'fallbackState: ${_dustSelf.fallbackState}, '
-        'levels: ${_dustSelf.levels}, '
-        'stateByRegion: ${_dustSelf.stateByRegion}, '
-        'states: ${_dustSelf.states}'
+        'primaryLevel: ${self.primaryLevel}, '
+        'fallbackState: ${self.fallbackState}, '
+        'levels: ${self.levels}, '
+        'stateByRegion: ${self.stateByRegion}, '
+        'states: ${self.states}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is JsonEnumBundle &&
-          runtimeType == other.runtimeType &&
-          other.primaryLevel == _dustSelf.primaryLevel &&
-          other.fallbackState == _dustSelf.fallbackState &&
-          _dustDeepCollectionEquality.equals(other.levels, _dustSelf.levels) &&
-          _dustDeepCollectionEquality.equals(
-            other.stateByRegion,
-            _dustSelf.stateByRegion,
-          ) &&
-          _dustUnorderedDeepCollectionEquality.equals(
-            other.states,
-            _dustSelf.states,
-          );
+  bool operator ==(Object other) {
+    final self = this as JsonEnumBundle;
+    return identical(this, other) ||
+        other is JsonEnumBundle &&
+            runtimeType == other.runtimeType &&
+            other.primaryLevel == self.primaryLevel &&
+            other.fallbackState == self.fallbackState &&
+            _deepCollectionEquality.equals(other.levels, self.levels) &&
+            _deepCollectionEquality.equals(
+              other.stateByRegion,
+              self.stateByRegion,
+            ) &&
+            _unorderedDeepCollectionEquality.equals(other.states, self.states);
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.primaryLevel,
-    _dustSelf.fallbackState,
-    _dustDeepCollectionEquality.hash(_dustSelf.levels),
-    _dustDeepCollectionEquality.hash(_dustSelf.stateByRegion),
-    _dustUnorderedDeepCollectionEquality.hash(_dustSelf.states),
-  ]);
+  int get hashCode {
+    final self = this as JsonEnumBundle;
+    return Object.hashAll([
+      runtimeType,
+      self.primaryLevel,
+      self.fallbackState,
+      _deepCollectionEquality.hash(self.levels),
+      _deepCollectionEquality.hash(self.stateByRegion),
+      _unorderedDeepCollectionEquality.hash(self.states),
+    ]);
+  }
 
-  Map<String, Object?> toJson() => _$JsonEnumBundleToJson(_dustSelf);
+  Map<String, Object?> toJson() =>
+      _$JsonEnumBundleToJson(this as JsonEnumBundle);
 }
 
 Map<String, Object?> _$JsonEnumBundleToJson(JsonEnumBundle instance) {
@@ -124,15 +121,15 @@ JsonEnumBundle _$JsonEnumBundleFromJson(Map<String, Object?> json) {
   final fallbackStateValue = json['fallbackState'] == null
       ? null
       : _$ReviewStateFromJson(json['fallbackState']);
-  final levelsValue = _dustJsonAsList(
+  final levelsValue = _jsonAsList(
     json['levels'],
     'levels',
   ).map((item) => _$AccessLevelFromJson(item)).toList();
-  final stateByRegionValue = _dustJsonAsMap(
+  final stateByRegionValue = _jsonAsMap(
     json['stateByRegion'],
     'stateByRegion',
   ).map((mapKey, value) => MapEntry(mapKey, _$ReviewStateFromJson(value)));
-  final statesValue = _dustJsonAsList(
+  final statesValue = _jsonAsList(
     json['states'],
     'states',
   ).map((item) => _$ReviewStateFromJson(item)).toSet();

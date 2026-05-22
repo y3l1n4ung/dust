@@ -32,7 +32,7 @@ String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   return Uri.parse(dioBaseUrl).resolveUri(url).toString();
 }
 
-Response<T> _dustBuildResponse<T>(Response<dynamic> response, T data) {
+Response<T> _buildResponse<T>(Response<dynamic> response, T data) {
   return Response<T>(
     data: data,
     headers: response.headers,

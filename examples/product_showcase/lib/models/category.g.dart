@@ -6,47 +6,49 @@
 
 part of 'category.dart';
 
-const DeepCollectionEquality _dustUnorderedDeepCollectionEquality =
+const DeepCollectionEquality _unorderedDeepCollectionEquality =
     DeepCollectionEquality.unordered();
 
 mixin _$Category {
-  Category get _dustSelf => this as Category;
-
   @override
   String toString() {
+    final self = this as Category;
     return 'Category('
-        'id: ${_dustSelf.id}, '
-        'title: ${_dustSelf.title}, '
-        'labels: ${_dustSelf.labels}'
+        'id: ${self.id}, '
+        'title: ${self.title}, '
+        'labels: ${self.labels}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Category &&
-          runtimeType == other.runtimeType &&
-          other.id == _dustSelf.id &&
-          other.title == _dustSelf.title &&
-          _dustUnorderedDeepCollectionEquality.equals(
-            other.labels,
-            _dustSelf.labels,
-          );
+  bool operator ==(Object other) {
+    final self = this as Category;
+    return identical(this, other) ||
+        other is Category &&
+            runtimeType == other.runtimeType &&
+            other.id == self.id &&
+            other.title == self.title &&
+            _unorderedDeepCollectionEquality.equals(other.labels, self.labels);
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.id,
-    _dustSelf.title,
-    _dustUnorderedDeepCollectionEquality.hash(_dustSelf.labels),
-  ]);
+  int get hashCode {
+    final self = this as Category;
+    return Object.hashAll([
+      runtimeType,
+      self.id,
+      self.title,
+      _unorderedDeepCollectionEquality.hash(self.labels),
+    ]);
+  }
 
   Category copyWith({String? id, String? title, Set<String>? labels}) {
-    final nextLabels = Set<String>.of(labels ?? _dustSelf.labels);
+    final self = this as Category;
+    final nextLabels = Set<String>.of(labels ?? self.labels);
 
     return Category(
-      id: id ?? _dustSelf.id,
-      title: title ?? _dustSelf.title,
+      id: id ?? self.id,
+      title: title ?? self.title,
       labels: nextLabels,
     );
   }

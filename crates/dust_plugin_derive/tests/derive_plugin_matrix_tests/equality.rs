@@ -46,35 +46,43 @@ fn emits_deep_equality_and_hash_for_collection_fields() {
         &SymbolPlan::default(),
     );
 
-    assert!(
-        contribution
-            .shared_helpers
-            .iter()
-            .any(|helper| helper.contains("_dustDeepCollectionEquality"))
-    );
-    assert!(
-        contribution
-            .shared_helpers
-            .iter()
-            .any(|helper| helper.contains("_dustUnorderedDeepCollectionEquality"))
+    assert_eq!(
+        contribution.shared_helpers,
+        [
+            "const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();"
+                .to_owned(),
+            "const DeepCollectionEquality _unorderedDeepCollectionEquality = DeepCollectionEquality.unordered();"
+                .to_owned(),
+        ]
     );
 
     let members = members_for_class(&contribution, "Catalog");
-    let eq = members
-        .iter()
-        .find(|fragment| fragment.contains("bool operator =="))
-        .unwrap();
-    let hash = members
-        .iter()
-        .find(|fragment| fragment.contains("int get hashCode"))
-        .unwrap();
-
-    assert!(eq.contains("_dustDeepCollectionEquality.equals(other.products, _dustSelf.products)"));
-    assert!(eq.contains("_dustDeepCollectionEquality.equals(other.bySku, _dustSelf.bySku)"));
-    assert!(eq.contains(
-        "_dustUnorderedDeepCollectionEquality.equals(other.featuredSkus, _dustSelf.featuredSkus)"
-    ));
-    assert!(hash.contains("_dustDeepCollectionEquality.hash(_dustSelf.products)"));
-    assert!(hash.contains("_dustDeepCollectionEquality.hash(_dustSelf.bySku)"));
-    assert!(hash.contains("_dustUnorderedDeepCollectionEquality.hash(_dustSelf.featuredSkus)"));
+    assert_eq!(
+        members,
+        [
+            r#"@override
+bool operator ==(Object other) {
+  final self = this as Catalog;
+  return identical(this, other) ||
+      other is Catalog &&
+          runtimeType == other.runtimeType &&
+          _deepCollectionEquality.equals(other.products, self.products) &&
+          _deepCollectionEquality.equals(other.bySku, self.bySku) &&
+          _unorderedDeepCollectionEquality.equals(other.featuredSkus, self.featuredSkus);
+}"#
+            .to_owned(),
+            r#"@override
+int get hashCode {
+  final self = this as Catalog;
+  return Object.hashAll([
+    runtimeType,
+    _deepCollectionEquality.hash(self.products),
+    _deepCollectionEquality.hash(self.bySku),
+    _unorderedDeepCollectionEquality.hash(self.featuredSkus),
+  ]);
+}"#
+            .to_owned(),
+        ]
+        .as_slice()
+    );
 }

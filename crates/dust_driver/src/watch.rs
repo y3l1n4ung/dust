@@ -67,6 +67,19 @@ fn run_watch_inner(
             return result;
         }
     };
+    let mut snapshot = match build_snapshot(&request.cwd) {
+        Ok(snapshot) => snapshot,
+        Err(diagnostic) => {
+            result.diagnostics.push(diagnostic);
+            result.watch = Some(WatchReport {
+                cycles: 0,
+                rebuild_batches: 0,
+                rebuilt_libraries: Vec::new(),
+            });
+            result.elapsed_ms = started.elapsed().as_millis();
+            return result;
+        }
+    };
 
     let initial = prepare_and_process_batch(
         BatchConfig {
@@ -103,20 +116,6 @@ fn run_watch_inner(
     ) {
         return finish_watch_result(result, &cache, cache_report, empty_watch_report(), started);
     }
-
-    let mut snapshot = match build_snapshot(&request.cwd) {
-        Ok(snapshot) => snapshot,
-        Err(diagnostic) => {
-            result.diagnostics.push(diagnostic);
-            result.watch = Some(WatchReport {
-                cycles: 0,
-                rebuild_batches: 0,
-                rebuilt_libraries: Vec::new(),
-            });
-            result.elapsed_ms = started.elapsed().as_millis();
-            return result;
-        }
-    };
 
     let mut watch = WatchReport {
         cycles: 0,

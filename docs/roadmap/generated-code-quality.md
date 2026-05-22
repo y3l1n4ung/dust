@@ -45,17 +45,17 @@ For simple fields, emit direct constructor values:
 
 ```dart
 return Product(
-  sku: sku ?? _dustSelf.sku,
-  title: title ?? _dustSelf.title,
+  sku: sku ?? self.sku,
+  title: title ?? self.title,
 );
 ```
 
 For transformed fields, use one meaningful local:
 
 ```dart
-final nextPrice = (price ?? _dustSelf.price).copyWith();
+final nextPrice = (price ?? self.price).copyWith();
 final nextCategories = List<Category>.of(
-  (categories ?? _dustSelf.categories).map((item) => item.copyWith()),
+  (categories ?? self.categories).map((item) => item.copyWith()),
 );
 ```
 
@@ -79,9 +79,9 @@ Example target:
 @override
 String toString() {
   return 'Product('
-      'sku: ${_dustSelf.sku}, '
-      'title: ${_dustSelf.title}, '
-      'featured: ${_dustSelf.featured}'
+      'sku: ${self.sku}, '
+      'title: ${self.title}, '
+      'featured: ${self.featured}'
       ')';
 }
 ```
@@ -107,10 +107,10 @@ bool operator ==(Object other) {
   return identical(this, other) ||
       other is Product &&
           runtimeType == other.runtimeType &&
-          other.sku == _dustSelf.sku &&
-          _dustDeepCollectionEquality.equals(
+          other.sku == self.sku &&
+          _deepCollectionEquality.equals(
             other.categories,
-            _dustSelf.categories,
+            self.categories,
           );
 }
 ```
@@ -153,8 +153,8 @@ OptionalNote copyWith({
   Object? note = _undefined,
 }) {
   return OptionalNote(
-    id: id ?? _dustSelf.id,
-    note: identical(note, _undefined) ? _dustSelf.note : note as String?,
+    id: id ?? self.id,
+    note: identical(note, _undefined) ? self.note : note as String?,
   );
 }
 ```
@@ -167,13 +167,13 @@ Product copyWith({
   Price? price,
   List<Category>? categories,
 }) {
-  final nextPrice = (price ?? _dustSelf.price).copyWith();
+  final nextPrice = (price ?? self.price).copyWith();
   final nextCategories = List<Category>.of(
-    (categories ?? _dustSelf.categories).map((item) => item.copyWith()),
+    (categories ?? self.categories).map((item) => item.copyWith()),
   );
 
   return Product(
-    sku: sku ?? _dustSelf.sku,
+    sku: sku ?? self.sku,
     price: nextPrice,
     categories: nextCategories,
   );
@@ -206,8 +206,8 @@ Do not add this option until current constructor inference is fully tested.
 Emit helpers only when required:
 
 - `_undefined` only for nullable fields in `CopyWith()`.
-- `_dustDeepCollectionEquality` only for ordered collections.
-- `_dustUnorderedDeepCollectionEquality` only for sets.
+- `_deepCollectionEquality` only for ordered collections.
+- `_unorderedDeepCollectionEquality` only for sets.
 - no duplicate helper names across mixed derive and serde output.
 
 Part-file constraint:
@@ -263,6 +263,18 @@ Rust tests:
 - Helper emission with no unused helpers.
 - Diagnostic snapshots for invalid constructors and unsupported shapes.
 
+Generated-output assertion policy:
+
+- Generated Dart output tests must use exact `assert_eq!` snapshots.
+- Do not use `contains` or negative `contains` for generated source shape.
+- Keep the generated file header in one test helper per test crate.
+- Compare the body with `generated_output(r#"..."#)` so the header stays
+  single-source while the generated output remains exact.
+- Use semantic `contains` only for diagnostics, registry claims, or rendered
+  human error messages where exact source output is not under test.
+- Snapshot changed generator output in driver, emitter, derive, serde, and HTTP
+  plugin tests before updating committed examples.
+
 Dart tests:
 
 - Analyzer passes on every generated showcase file.
@@ -274,8 +286,8 @@ Dart tests:
 
 CI gates:
 
-- `cargo fmt --all --check`
-- `cargo test --workspace --quiet`
+- `cargo fmt --all -- --check`
+- `cargo test --workspace`
 - `cargo clippy --workspace --all-targets --all-features -- -D warnings`
 - `dart analyze`
 - `dart test`
@@ -299,3 +311,47 @@ CI gates:
 - Equality and hash behavior match for nested collections.
 - Generated files pass Dart analyzer, tests, and formatter gate.
 - CI blocks regressions before release.
+- Generated-output tests use exact snapshots and shared generated-header test
+  helpers.
+
+## Verification Commands
+
+Run these before merging generator changes:
+
+```sh
+cargo fmt --all -- --check
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+```
+
+Run Dart and Flutter checks for every package/example:
+
+```sh
+for dir in \
+  packages/derive_annotation \
+  packages/derive_serde_annotation \
+  packages/dust_http_client_annotation \
+  packages/dust_router \
+  packages/dust_state \
+  examples/product_showcase \
+  examples/stress_project \
+  examples/routing_prototype \
+  examples/state_management_prototype \
+  examples/shopping_app
+do
+  (cd "$dir" && flutter analyze)
+  (cd "$dir" && flutter test)
+done
+```
+
+Run web builds for Flutter examples that exercise runtime integration:
+
+```sh
+for dir in \
+  examples/routing_prototype \
+  examples/state_management_prototype \
+  examples/shopping_app
+do
+  (cd "$dir" && flutter build web --no-wasm-dry-run)
+done
+```

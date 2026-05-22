@@ -6,52 +6,49 @@
 
 part of 'product.dart';
 
-const DeepCollectionEquality _dustDeepCollectionEquality =
-    DeepCollectionEquality();
+const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$Product {
-  Product get _dustSelf => this as Product;
-
   @override
   String toString() {
+    final self = this as Product;
     return 'Product('
-        'sku: ${_dustSelf.sku}, '
-        'title: ${_dustSelf.title}, '
-        'price: ${_dustSelf.price}, '
-        'categories: ${_dustSelf.categories}, '
-        'attributes: ${_dustSelf.attributes}, '
-        'featured: ${_dustSelf.featured}'
+        'sku: ${self.sku}, '
+        'title: ${self.title}, '
+        'price: ${self.price}, '
+        'categories: ${self.categories}, '
+        'attributes: ${self.attributes}, '
+        'featured: ${self.featured}'
         ')';
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Product &&
-          runtimeType == other.runtimeType &&
-          other.sku == _dustSelf.sku &&
-          other.title == _dustSelf.title &&
-          other.price == _dustSelf.price &&
-          _dustDeepCollectionEquality.equals(
-            other.categories,
-            _dustSelf.categories,
-          ) &&
-          _dustDeepCollectionEquality.equals(
-            other.attributes,
-            _dustSelf.attributes,
-          ) &&
-          other.featured == _dustSelf.featured;
+  bool operator ==(Object other) {
+    final self = this as Product;
+    return identical(this, other) ||
+        other is Product &&
+            runtimeType == other.runtimeType &&
+            other.sku == self.sku &&
+            other.title == self.title &&
+            other.price == self.price &&
+            _deepCollectionEquality.equals(other.categories, self.categories) &&
+            _deepCollectionEquality.equals(other.attributes, self.attributes) &&
+            other.featured == self.featured;
+  }
 
   @override
-  int get hashCode => Object.hashAll([
-    runtimeType,
-    _dustSelf.sku,
-    _dustSelf.title,
-    _dustSelf.price,
-    _dustDeepCollectionEquality.hash(_dustSelf.categories),
-    _dustDeepCollectionEquality.hash(_dustSelf.attributes),
-    _dustSelf.featured,
-  ]);
+  int get hashCode {
+    final self = this as Product;
+    return Object.hashAll([
+      runtimeType,
+      self.sku,
+      self.title,
+      self.price,
+      _deepCollectionEquality.hash(self.categories),
+      _deepCollectionEquality.hash(self.attributes),
+      self.featured,
+    ]);
+  }
 
   Product copyWith({
     String? sku,
@@ -61,21 +58,22 @@ mixin _$Product {
     Map<String, String>? attributes,
     bool? featured,
   }) {
-    final nextPrice = (price ?? _dustSelf.price).copyWith();
+    final self = this as Product;
+    final nextPrice = (price ?? self.price).copyWith();
     final nextCategories = List<Category>.of(
-      (categories ?? _dustSelf.categories).map((item_3) => item_3.copyWith()),
+      (categories ?? self.categories).map((item_3) => item_3.copyWith()),
     );
     final nextAttributes = Map<String, String>.of(
-      attributes ?? _dustSelf.attributes,
+      attributes ?? self.attributes,
     );
 
     return Product(
-      sku: sku ?? _dustSelf.sku,
-      title: title ?? _dustSelf.title,
+      sku: sku ?? self.sku,
+      title: title ?? self.title,
       price: nextPrice,
       categories: nextCategories,
       attributes: nextAttributes,
-      featured: featured ?? _dustSelf.featured,
+      featured: featured ?? self.featured,
     );
   }
 }

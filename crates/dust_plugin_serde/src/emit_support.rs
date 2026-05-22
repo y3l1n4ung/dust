@@ -26,23 +26,23 @@ pub(crate) fn format_prefixed_expr(
 }
 
 pub(crate) fn render_deserialize_helpers() -> &'static str {
-    r#"Never _dustJsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _dustJsonAs<T>(Object? value, String key, String expected) => value is T ? value : _dustJsonTypeError(value, key, expected);
-T _dustJsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_dustJsonAs<String>(value, key, 'String')) ?? _dustJsonTypeError(value, key, expected);
-List<Object?> _dustJsonAsList(Object? value, String key) => _dustJsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+    r#"Never _jsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
+T _jsonAs<T>(Object? value, String key, String expected) => value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_jsonAs<String>(value, key, 'String')) ?? _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) => _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
-Map<String, Object?> _dustJsonAsMap(Object? value, String key) {
-  final map = _dustJsonAs<Map>(value, key, 'Map<String, Object?>');
+Map<String, Object?> _jsonAsMap(Object? value, String key) {
+  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
   try {
     return Map<String, Object?>.from(map);
   } on TypeError {
-    _dustJsonTypeError(value, key, 'Map<String, Object?>');
+    _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _dustJsonAsDateTime(Object? value, String key) => _dustJsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _dustJsonAsUri(Object? value, String key) => _dustJsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _dustJsonAsBigInt(Object? value, String key) => _dustJsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _dustJsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
+DateTime _jsonAsDateTime(Object? value, String key) => _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) => _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) => _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
   }

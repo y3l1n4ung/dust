@@ -28,13 +28,13 @@ pub(crate) fn emit_shared_helpers(library: &LibraryIr) -> Vec<String> {
     let mut helpers = Vec::new();
     if needs_ordered {
         helpers.push(
-            "const DeepCollectionEquality _dustDeepCollectionEquality = DeepCollectionEquality();"
+            "const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();"
                 .to_owned(),
         );
     }
     if needs_unordered {
         helpers.push(
-            "const DeepCollectionEquality _dustUnorderedDeepCollectionEquality = DeepCollectionEquality.unordered();"
+            "const DeepCollectionEquality _unorderedDeepCollectionEquality = DeepCollectionEquality.unordered();"
                 .to_owned(),
         );
     }
@@ -54,15 +54,18 @@ pub(crate) fn emit_eq(class: &ClassIr) -> Option<String> {
         .map(|field| render_equality_comparison(&field.name, &field.ty))
         .collect::<Vec<_>>();
 
-    let tail = if comparisons.is_empty() {
-        String::new()
-    } else {
-        format!(" &&\n        {}", comparisons.join(" &&\n        "))
-    };
+    if comparisons.is_empty() {
+        return Some(format!(
+            "@override\nbool operator ==(Object other) =>\n    identical(this, other) ||\n    other is {} &&\n        runtimeType == other.runtimeType;",
+            class.name
+        ));
+    }
+
+    let tail = format!(" &&\n          {}", comparisons.join(" &&\n          "));
 
     Some(format!(
-        "@override\nbool operator ==(Object other) =>\n    identical(this, other) ||\n    other is {} &&\n        runtimeType == other.runtimeType{};",
-        class.name, tail
+        "@override\nbool operator ==(Object other) {{\n  final self = this as {};\n  return identical(this, other) ||\n      other is {} &&\n          runtimeType == other.runtimeType{};\n}}",
+        class.name, class.name, tail
     ))
 }
 
@@ -82,18 +85,23 @@ pub(crate) fn emit_hash_code(class: &ClassIr) -> Option<String> {
     lines.extend(values.into_iter().map(|value| format!("{value},")));
     let list = lines
         .into_iter()
-        .map(|line| format!("  {line}"))
+        .map(|line| format!("    {line}"))
         .collect::<Vec<_>>()
         .join("\n");
 
+    let self_binding = if class.fields.is_empty() {
+        String::new()
+    } else {
+        "  final self = this as ".to_owned() + &class.name + ";\n"
+    };
     Some(format!(
-        "@override\nint get hashCode => Object.hashAll([\n{list}\n]);"
+        "@override\nint get hashCode {{\n{self_binding}  return Object.hashAll([\n{list}\n  ]);\n}}"
     ))
 }
 
 fn render_equality_comparison(field_name: &str, ty: &TypeIr) -> String {
     let left = format!("other.{field_name}");
-    let right = format!("_dustSelf.{field_name}");
+    let right = format!("self.{field_name}");
 
     match deep_helper_name(ty) {
         Some(helper) => format!("{helper}.equals({left}, {right})"),
@@ -102,7 +110,7 @@ fn render_equality_comparison(field_name: &str, ty: &TypeIr) -> String {
 }
 
 fn render_hash_value(field_name: &str, ty: &TypeIr) -> String {
-    let value = format!("_dustSelf.{field_name}");
+    let value = format!("self.{field_name}");
 
     match deep_helper_name(ty) {
         Some(helper) => format!("{helper}.hash({value})"),
@@ -112,9 +120,9 @@ fn render_hash_value(field_name: &str, ty: &TypeIr) -> String {
 
 fn deep_helper_name(ty: &TypeIr) -> Option<&'static str> {
     if needs_unordered_deep_helper(ty) {
-        Some("_dustUnorderedDeepCollectionEquality")
+        Some("_unorderedDeepCollectionEquality")
     } else if needs_ordered_deep_helper(ty) {
-        Some("_dustDeepCollectionEquality")
+        Some("_deepCollectionEquality")
     } else {
         None
     }

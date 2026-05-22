@@ -28,7 +28,14 @@ fn handles_nested_serializable_models() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let user_to_json = &contribution.top_level_functions[0];
 
-    assert!(user_to_json.contains("'profile': _$ProfileToJson(instance.profile),"));
+    assert_eq!(
+        user_to_json,
+        r#"Map<String, Object?> _$UserToJson(User instance) {
+  return <String, Object?>{
+    'profile': _$ProfileToJson(instance.profile),
+  };
+}"#
+    );
 }
 
 #[test]
@@ -62,7 +69,15 @@ fn handles_nested_deserializable_models() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let user_from_json = &contribution.top_level_functions[0];
 
-    assert!(user_from_json.contains(
-        "final profileValue = _$ProfileFromJson(_dustJsonAsMap(json['profile'], 'profile'));"
-    ));
+    assert_eq!(
+        user_from_json,
+        r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
+User _$UserFromJson(Map<String, Object?> json) {
+  final profileValue = _$ProfileFromJson(_jsonAsMap(json['profile'], 'profile'));
+
+  return User(
+    profile: profileValue,
+  );
+}"#
+    );
 }

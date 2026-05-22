@@ -146,23 +146,43 @@ fn handles_scalar_builtin_types() {
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 
-    assert!(to_json.contains("'s': instance.s,"));
-    assert!(to_json.contains("'i': instance.i,"));
-    assert!(to_json.contains("'b': instance.b,"));
-    assert!(to_json.contains("'d': instance.d,"));
-    assert!(to_json.contains("'n': instance.n,"));
-    assert!(to_json.contains("'o': instance.o,"));
-    assert!(to_json.contains("'dyn': instance.dyn,"));
-
-    assert!(from_json.contains("final sValue = _dustJsonAs<String>(json['s'], 's', 'String');"));
-    assert!(from_json.contains("final iValue = _dustJsonAs<int>(json['i'], 'i', 'int');"));
-    assert!(from_json.contains("final bValue = _dustJsonAs<bool>(json['b'], 'b', 'bool');"));
-    assert!(
-        from_json.contains("final dValue = _dustJsonAs<num>(json['d'], 'd', 'num').toDouble();")
+    assert_eq!(
+        to_json,
+        r#"Map<String, Object?> _$ScalarsToJson(Scalars instance) {
+  return <String, Object?>{
+    's': instance.s,
+    'i': instance.i,
+    'b': instance.b,
+    'd': instance.d,
+    'n': instance.n,
+    'o': instance.o,
+    'dyn': instance.dyn,
+  };
+}"#
     );
-    assert!(from_json.contains("final nValue = _dustJsonAs<num>(json['n'], 'n', 'num');"));
-    assert!(from_json.contains("final oValue = _dustJsonAs<Object>(json['o'], 'o', 'Object');"));
-    assert!(from_json.contains("final dynValue = json['dyn'];"));
+    assert_eq!(
+        from_json,
+        r#"// factory Scalars.fromJson(Map<String, Object?> json) => _$ScalarsFromJson(json);
+Scalars _$ScalarsFromJson(Map<String, Object?> json) {
+  final sValue = _jsonAs<String>(json['s'], 's', 'String');
+  final iValue = _jsonAs<int>(json['i'], 'i', 'int');
+  final bValue = _jsonAs<bool>(json['b'], 'b', 'bool');
+  final dValue = _jsonAs<num>(json['d'], 'd', 'num').toDouble();
+  final nValue = _jsonAs<num>(json['n'], 'n', 'num');
+  final oValue = _jsonAs<Object>(json['o'], 'o', 'Object');
+  final dynValue = json['dyn'];
+
+  return Scalars(
+    s: sValue,
+    i: iValue,
+    b: bValue,
+    d: dValue,
+    n: nValue,
+    o: oValue,
+    dyn: dynValue,
+  );
+}"#
+    );
 }
 
 #[test]
@@ -196,13 +216,31 @@ fn handles_special_builtin_types() {
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 
-    assert!(to_json.contains("'dt': instance.dt.toIso8601String(),"));
-    assert!(to_json.contains("'u': instance.u.toString(),"));
-    assert!(to_json.contains("'bi': instance.bi.toString(),"));
+    assert_eq!(
+        to_json,
+        r#"Map<String, Object?> _$SpecialsToJson(Specials instance) {
+  return <String, Object?>{
+    'dt': instance.dt.toIso8601String(),
+    'u': instance.u.toString(),
+    'bi': instance.bi.toString(),
+  };
+}"#
+    );
+    assert_eq!(
+        from_json,
+        r#"// factory Specials.fromJson(Map<String, Object?> json) => _$SpecialsFromJson(json);
+Specials _$SpecialsFromJson(Map<String, Object?> json) {
+  final dtValue = _jsonAsDateTime(json['dt'], 'dt');
+  final uValue = _jsonAsUri(json['u'], 'u');
+  final biValue = _jsonAsBigInt(json['bi'], 'bi');
 
-    assert!(from_json.contains("final dtValue = _dustJsonAsDateTime(json['dt'], 'dt');"));
-    assert!(from_json.contains("final uValue = _dustJsonAsUri(json['u'], 'u');"));
-    assert!(from_json.contains("final biValue = _dustJsonAsBigInt(json['bi'], 'bi');"));
+  return Specials(
+    dt: dtValue,
+    u: uValue,
+    bi: biValue,
+  );
+}"#
+    );
 }
 
 #[test]
@@ -251,11 +289,29 @@ fn handles_collection_types() {
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 
-    assert!(to_json.contains("'l': instance.l.map((item) => item).toList(),"));
-    assert!(to_json.contains("'s': instance.s.map((item) => item).toList(),"));
-    assert!(to_json.contains("'m': instance.m.map((key, value) => MapEntry(key, value)),"));
+    assert_eq!(
+        to_json,
+        r#"Map<String, Object?> _$CollectionsToJson(Collections instance) {
+  return <String, Object?>{
+    'l': instance.l.map((item) => item).toList(),
+    's': instance.s.map((item) => item).toList(),
+    'm': instance.m.map((key, value) => MapEntry(key, value)),
+  };
+}"#
+    );
+    assert_eq!(
+        from_json,
+        r#"// factory Collections.fromJson(Map<String, Object?> json) => _$CollectionsFromJson(json);
+Collections _$CollectionsFromJson(Map<String, Object?> json) {
+  final lValue = _jsonAsList(json['l'], 'l').map((item) => _jsonAs<String>(item, 'l', 'String')).toList();
+  final sValue = _jsonAsList(json['s'], 's').map((item) => _jsonAs<String>(item, 's', 'String')).toSet();
+  final mValue = _jsonAsMap(json['m'], 'm').map((mapKey, value) => MapEntry(mapKey, _jsonAs<String>(value, 'm', 'String')));
 
-    assert!(from_json.contains("final lValue = _dustJsonAsList(json['l'], 'l').map((item) => _dustJsonAs<String>(item, 'l', 'String')).toList();"));
-    assert!(from_json.contains("final sValue = _dustJsonAsList(json['s'], 's').map((item) => _dustJsonAs<String>(item, 's', 'String')).toSet();"));
-    assert!(from_json.contains("final mValue = _dustJsonAsMap(json['m'], 'm').map((mapKey, value) => MapEntry(mapKey, _dustJsonAs<String>(value, 'm', 'String')));"));
+  return Collections(
+    l: lValue,
+    s: sValue,
+    m: mValue,
+  );
+}"#
+    );
 }

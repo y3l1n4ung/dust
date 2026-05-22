@@ -37,19 +37,28 @@ fn handles_enum_fields_in_classes() {
     );
 
     let contribution = plugin.emit(&library, &SymbolPlan::default());
-    let to_json = contribution
-        .top_level_functions
-        .iter()
-        .find(|f| f.contains("_$UserToJson"))
-        .unwrap();
-    let from_json = contribution
-        .top_level_functions
-        .iter()
-        .find(|f| f.contains("_$UserFromJson"))
-        .unwrap();
+    let to_json = &contribution.top_level_functions[0];
+    let from_json = &contribution.top_level_functions[1];
 
-    assert!(to_json.contains("'status': _$StatusToJson(instance.status),"));
-    assert!(from_json.contains("final statusValue = _$StatusFromJson(json['status']);"));
+    assert_eq!(
+        to_json,
+        r#"Map<String, Object?> _$UserToJson(User instance) {
+  return <String, Object?>{
+    'status': _$StatusToJson(instance.status),
+  };
+}"#
+    );
+    assert_eq!(
+        from_json,
+        r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
+User _$UserFromJson(Map<String, Object?> json) {
+  final statusValue = _$StatusFromJson(json['status']);
+
+  return User(
+    status: statusValue,
+  );
+}"#
+    );
 }
 
 #[test]
@@ -83,23 +92,30 @@ fn handles_nullable_enum_fields() {
     );
 
     let contribution = plugin.emit(&library, &SymbolPlan::default());
-    let to_json = contribution
-        .top_level_functions
-        .iter()
-        .find(|f| f.contains("_$UserToJson"))
-        .unwrap();
-    let from_json = contribution
-        .top_level_functions
-        .iter()
-        .find(|f| f.contains("_$UserFromJson"))
-        .unwrap();
+    let to_json = &contribution.top_level_functions[0];
+    let from_json = &contribution.top_level_functions[1];
 
-    assert!(to_json.contains(
-        "'status': instance.status == null ? null : _$StatusToJson((instance.status!)),"
-    ));
-    assert!(from_json.contains(
-        "final statusValue = json['status'] == null\n                      ? null\n                      : _$StatusFromJson(json['status']);"
-    ));
+    assert_eq!(
+        to_json,
+        r#"Map<String, Object?> _$UserToJson(User instance) {
+  return <String, Object?>{
+    'status': instance.status == null ? null : _$StatusToJson((instance.status!)),
+  };
+}"#
+    );
+    assert_eq!(
+        from_json,
+        r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
+User _$UserFromJson(Map<String, Object?> json) {
+  final statusValue = json['status'] == null
+                      ? null
+                      : _$StatusFromJson(json['status']);
+
+  return User(
+    status: statusValue,
+  );
+}"#
+    );
 }
 
 #[test]
@@ -136,21 +152,26 @@ fn handles_enums_in_collections() {
     );
 
     let contribution = plugin.emit(&library, &SymbolPlan::default());
-    let to_json = contribution
-        .top_level_functions
-        .iter()
-        .find(|f| f.contains("_$BundleToJson"))
-        .unwrap();
-    let from_json = contribution
-        .top_level_functions
-        .iter()
-        .find(|f| f.contains("_$BundleFromJson"))
-        .unwrap();
+    let to_json = &contribution.top_level_functions[0];
+    let from_json = &contribution.top_level_functions[1];
 
-    assert!(
-        to_json.contains("'roles': instance.roles.map((item) => _$RoleToJson(item)).toList(),")
+    assert_eq!(
+        to_json,
+        r#"Map<String, Object?> _$BundleToJson(Bundle instance) {
+  return <String, Object?>{
+    'roles': instance.roles.map((item) => _$RoleToJson(item)).toList(),
+  };
+}"#
     );
-    assert!(from_json.contains(
-        "final rolesValue = _dustJsonAsList(json['roles'], 'roles').map((item) => _$RoleFromJson(item)).toList();"
-    ));
+    assert_eq!(
+        from_json,
+        r#"// factory Bundle.fromJson(Map<String, Object?> json) => _$BundleFromJson(json);
+Bundle _$BundleFromJson(Map<String, Object?> json) {
+  final rolesValue = _jsonAsList(json['roles'], 'roles').map((item) => _$RoleFromJson(item)).toList();
+
+  return Bundle(
+    roles: rolesValue,
+  );
+}"#
+    );
 }
