@@ -1,149 +1,178 @@
-# Serde Guide
+# JSON Serialization (Serde)
 
-Use `derive_serde_annotation` when you want Dust to generate JSON
-serialization and deserialization.
+Dust provides JSON encoding and decoding through the `derive_serde_annotation` package. It generates type-safe codecs by analyzing your class definitions and applied annotations.
 
-This package re-exports `derive_annotation`, so one import covers both the core
-derive traits and the serde traits.
+---
 
-## Install
+## Installation
 
-Add the package to `pubspec.yaml`:
+Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
   derive_serde_annotation: ^0.1.0
 ```
 
-Then fetch packages:
+> [!TIP]
+> `derive_serde_annotation` re-exports the core `derive_annotation` package, so you only need one import for both basic traits (Eq, ToString) and JSON features.
 
-```bash
-dart pub get
-```
+---
 
 ## Basic Example
 
-Reference file:
-
-- [examples/product_showcase/lib/models/json_profile.dart](../../examples/product_showcase/lib/models/json_profile.dart)
+To enable JSON support, add `Serialize()` and `Deserialize()` to your `@Derive` list.
 
 ```dart
 import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 
-part 'json_profile.g.dart';
+part 'user_profile.g.dart';
 
 @Derive([ToString(), Eq(), Serialize(), Deserialize()])
 @SerDe(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)
-class JsonProfile with _$JsonProfile {
-  const JsonProfile({
+class UserProfile with _$UserProfile {
+  const UserProfile({
     required this.id,
     this.displayName,
-    this.tags = const ['guest'],
+    this.tags = const ['new-user'],
   });
 
-  factory JsonProfile.fromJson(Map<String, Object?> json) =>
-      _$JsonProfileFromJson(json);
+  factory UserProfile.fromJson(Map<String, Object?> json) =>
+      _$UserProfileFromJson(json);
 
   final String id;
 
-  @SerDe(rename: 'display_name', aliases: ['displayName'])
+  @SerDe(rename: 'display_name', aliases: ['name', 'handle'])
   final String? displayName;
 
-  @SerDe(defaultValue: ['guest'])
+  @SerDe(defaultValue: ['new-user'])
   final List<String> tags;
 }
 ```
 
-Run generation:
+> [!IMPORTANT]
+> **Requirements for Generation:**
+> 1. You **must** include the `part 'filename.g.dart';` directive.
+> 2. You **must** add the `with _$ClassName` mixin to your class.
+> 3. For deserialization, you **must** provide a `fromJson` factory that forwards to the generated `_$ClassNameFromJson` helper.
 
-```bash
-dust build
-```
+---
 
-## What Gets Generated
+## Configuration Reference
 
-`Serialize()` generates:
+The `@SerDe` annotation can be applied to both **classes** and **individual fields**.
 
-- `toJson()`
+### Class-Level Options
 
-`Deserialize()` generates:
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `renameAll` | `SerDeRename` | Automatically renames all fields (e.g., `snakeCase`, `camelCase`). |
+| `disallowUnrecognizedKeys` | `bool` | If `true`, deserialization throws an error if the JSON contains keys not mapped to a field. |
 
-- `_$TypeFromJson(...)`
+### Field-Level Options
 
-Your class provides the forwarding factory:
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `rename` | `String` | Manually set the JSON key name for this field. |
+| `aliases` | `List<String>` | Additional JSON keys that will be accepted during deserialization. |
+| `defaultValue` | `Object` | The value used if the key is missing from the JSON input. |
+| `skip` | `bool` | Completely ignores the field for both encoding and decoding. |
+| `skipSerializing` | `bool` | Excludes the field from `toJson()`. |
+| `skipDeserializing` | `bool` | Excludes the field from `fromJson()`. |
+| `using` | `SerDeCodec` | Specifies a custom codec for this field (e.g., for Dates). |
+
+---
+
+## Naming Strategies (`SerDeRename`)
+
+When using `renameAll`, the following strategies are available:
+
+| Strategy | Output Example (`createdAt`) |
+| :--- | :--- |
+| `lowerCase` | `createdat` |
+| `upperCase` | `CREATEDAT` |
+| `pascalCase` | `CreatedAt` |
+| `camelCase` | `createdAt` |
+| `snakeCase` | `created_at` |
+| `screamingSnakeCase` | `CREATED_AT` |
+| `kebabCase` | `created-at` |
+| `screamingKebabCase` | `CREATED-AT` |
+
+---
+
+## Enums
+
+Dust supports full serialization for enums. Rename rules applied at the enum level affect all variants.
 
 ```dart
-factory JsonProfile.fromJson(Map<String, Object?> json) =>
-    _$JsonProfileFromJson(json);
+@Derive([Serialize(), Deserialize()])
+@SerDe(renameAll: SerDeRename.kebabCase)
+enum UserRole {
+  admin,      // "admin"
+  moderator,  // "moderator"
+  superUser,  // "super-user"
+}
 ```
 
-## Common Serde Features
+> [!NOTE]
+> Per-variant renames (e.g. `@SerDe(rename: '...')` on a specific enum value) are not yet supported.
 
-Class-level configuration:
+---
 
-- `renameAll`
-- `disallowUnrecognizedKeys`
+## Custom Codecs
 
-Field-level configuration:
-
-- `rename`
-- `aliases`
-- `defaultValue`
-- `using`
-
-These options let you keep stable Dart field names while handling API-specific
-JSON shapes.
-
-## Custom Codec Example
-
-Reference file:
-
-- [examples/product_showcase/lib/models/json_codec_bundle.dart](../../examples/product_showcase/lib/models/json_codec_bundle.dart)
+Use a `SerDeCodec` when the JSON representation differs from your Dart type.
 
 ```dart
-final class UnixEpochDateTimeCodec implements SerDeCodec<DateTime, int> {
-  const UnixEpochDateTimeCodec();
+final class DateTimeCodec implements SerDeCodec<DateTime, int> {
+  const DateTimeCodec();
 
   @override
   int serialize(DateTime value) => value.millisecondsSinceEpoch;
 
   @override
-  DateTime deserialize(int value) =>
-      DateTime.fromMillisecondsSinceEpoch(value, isUtc: true);
+  DateTime deserialize(int value) => DateTime.fromMillisecondsSinceEpoch(value);
 }
 
-const unixEpochDateTimeCodec = UnixEpochDateTimeCodec();
-
-@Derive([ToString(), Eq(), Serialize(), Deserialize()])
-class JsonCodecBundle with _$JsonCodecBundle {
-  const JsonCodecBundle({required this.createdAt, this.updatedAt});
-
-  factory JsonCodecBundle.fromJson(Map<String, Object?> json) =>
-      _$JsonCodecBundleFromJson(json);
-
-  @SerDe(using: unixEpochDateTimeCodec)
-  final DateTime createdAt;
-
-  @SerDe(using: unixEpochDateTimeCodec)
-  final DateTime? updatedAt;
-}
+// Usage
+@SerDe(using: DateTimeCodec())
+final DateTime createdAt;
 ```
 
-Use a codec when the wire format and the Dart type should stay separate.
+> [!TIP]
+> Custom codecs are ideal for handling legacy API formats or complex object transformations while keeping your data class clean.
 
-## When To Use Serde
+---
 
-Use serde when:
+## Generation Output
 
-- your models cross a JSON boundary
-- you need rename rules or decode defaults
-- you need strict validation for unknown keys
-- you need custom field-level codecs
+Dust generates a private mixin and a helper function. Below is a preview of the generated code structure:
 
-If you want generated HTTP clients on top of these models, continue with the
-[HttpClient guide](./http.md).
+```dart
+// user_profile.g.dart (Simplified)
+mixin _$UserProfile on UserProfile {
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'display_name': displayName,
+    'tags': tags,
+  };
+}
 
-## See Also
+UserProfile _$UserProfileFromJson(Map<String, Object?> json) => UserProfile(
+  id: json['id'] as String,
+  displayName: json['display_name'] as String?,
+  tags: (json['tags'] as List?)?.cast<String>() ?? const ['new-user'],
+);
+```
 
-- [Package README](../../packages/derive_serde_annotation/README.md)
-- [Usage overview](./README.md)
+---
+
+## Migration Guide
+
+**Coming from `json_serializable`?**
+
+| Feature | `json_serializable` | Dust |
+| :--- | :--- | :--- |
+| Annotation | `@JsonSerializable()` | `@Derive([Serialize(), Deserialize()])` |
+| Key Rename | `@JsonKey(name: '...')` | `@SerDe(rename: '...')` |
+| Defaults | `@JsonKey(defaultValue: ...)` | `@SerDe(defaultValue: ...)` |
+| Unknown Keys | `disallowUnrecognizedKeys: true` | `@SerDe(disallowUnrecognizedKeys: true)` |

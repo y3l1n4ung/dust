@@ -14,11 +14,12 @@ This track covers:
 - `@SerDe(...)` declaration-level and field-level metadata
 - key rename rules, aliases, defaults, skip rules, and unknown-key rejection
 - built-in scalar policies for `DateTime`, `Uri`, and `BigInt`
+- enum serialization and deserialization
 - custom field conversion through `SerDeCodec<DartT, JsonT>`
 
 This track does not yet cover:
 
-- enum serialization
+- variant-level enum metadata such as per-variant `rename` or `skip`
 - union/tagged enum strategies
 - type-level codecs
 - non-JSON wire formats
@@ -35,6 +36,10 @@ Dust SerDe currently supports:
 - [x] declaration-level `disallowUnrecognizedKeys`
 - [x] built-in scalar conversion for `DateTime`, `Uri`, and `BigInt`
 - [x] nested `List`, `Set`, `Map<String, T>`, and known Dust models
+- [x] enum `Serialize()` / `Deserialize()` helpers
+- [x] enum `@SerDe(renameAll: ...)` wire names
+- [x] enum values inside nullable fields, lists, sets, and maps
+- [x] unknown enum wire value diagnostics
 - [x] custom field conversion through `SerDeCodec`
 - [x] generated decode diagnostics that include the failing JSON key and
   expected Dart type for built-in conversions
@@ -91,6 +96,44 @@ class AuditLog with _$AuditLog {
 }
 ```
 
+### Enum serde
+
+```dart
+@Derive([Serialize(), Deserialize()])
+@SerDe(renameAll: SerDeRename.kebabCase)
+enum AccessLevel {
+  superAdmin,
+  guestUser,
+  readOnly,
+}
+
+@Derive([Serialize(), Deserialize()])
+enum ReviewState {
+  pending,
+  approved,
+  archived,
+}
+
+@Derive([Serialize(), Deserialize()])
+class RoleBundle with _$RoleBundle {
+  const RoleBundle({
+    required this.primaryLevel,
+    required this.states,
+  });
+
+  factory RoleBundle.fromJson(Map<String, Object?> json) =>
+      _$RoleBundleFromJson(json);
+
+  final AccessLevel primaryLevel;
+  final Set<ReviewState> states;
+}
+```
+
+`AccessLevel.superAdmin` serializes as `super-admin`. Unknown enum wire values
+throw an `ArgumentError` that names the enum type. Per-variant annotations are
+not implemented yet; enum wire names currently come from declaration-level
+`renameAll` or the variant identifier.
+
 ## Generated Output Rules
 
 Generated SerDe code should:
@@ -132,17 +175,21 @@ For codec-backed fields:
 
 ### Generator Work
 
-- [ ] support enum SerDe with rename rules and unknown-value diagnostics
+- [x] support enum SerDe with rename rules and unknown-value diagnostics
+- [ ] support variant-level enum metadata (`rename`, `skip`, aliases/defaults
+  if a clear Dart API is chosen)
 - [ ] support type-level codec registration beyond field-level `using`
 - [ ] support configurable `DateTime`, `Uri`, and `BigInt` policies beyond the
   current defaults
-- [ ] make generated SerDe output stable under `dart format` across showcase
-  models
+- [x] make generated SerDe output stable and readable directly from the emitter
+  across showcase models
 - [ ] decide whether public guidance should require `const` codec objects
 
 ### Test Work
 
 - [ ] add golden coverage for every rename rule
+- [x] add enum SerDe runtime coverage for normal enums, renamed enum values,
+  enum collections, unknown values, and codec-backed enhanced enums
 - [ ] add negative coverage for unsupported record serialization
 - [x] add negative coverage for malformed `using:` values
 
@@ -156,6 +203,8 @@ This track needs:
 - [x] runtime tests for aliases, defaults, skip rules, nested collections,
   nullable fields, unknown-key rejection, built-in scalar conversion, and
   custom `SerDeCodec` fields
+- [x] runtime tests for enum fields, enum collections, declaration-level enum
+  rename rules, unknown enum values, and codec-backed enhanced enum fields
 - [x] dedicated malformed-input tests with key-aware decode diagnostics
 - [x] negative tests for unsupported function serialization
 - [ ] negative tests for unsupported record serialization
@@ -164,8 +213,8 @@ This track needs:
 
 SerDe is in a good release state when:
 
-- [ ] common REST-style models generate cleanly without manual patching
-- [ ] generated code is stable after `dart format`
-- [ ] diagnostics are deterministic and actionable
+- [x] common REST-style models generate cleanly without manual patching
+- [x] generated code stays stable without any formatter post-process
+- [x] diagnostics are deterministic and actionable for implemented SerDe paths
 - [x] public annotation APIs have Dartdoc
-- [x] the product showcase covers real nested and codec-backed models
+- [x] the product showcase covers real nested, enum, and codec-backed models

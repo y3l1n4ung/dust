@@ -54,7 +54,7 @@
 - [ ] Validation rejects mutable/non-final state fields.
 - [ ] Validation rejects unsupported dependency injection types.
 - [x] Emission generates base class, scope, proxy, listener, context extensions, and state aspects.
-- [x] Generated code is stable and `dart format` clean for smoke coverage.
+- [x] Generated code is stable and emitter-formatted for smoke coverage.
 - [~] Add golden tests for generated output; emission coverage now checks fieldless state, observer exclusion, multi-output, and scope debug names.
 - [ ] Add driver tests for stale/check/watch/clean behavior.
 

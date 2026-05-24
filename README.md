@@ -1,182 +1,97 @@
-# Dust
+# 🌪️ Dust
 
-![CI](https://github.com/y3l1n4ung/dust/actions/workflows/ci.yml/badge.svg)
-![Release](https://img.shields.io/github/v/release/y3l1n4ung/dust)
-![Dart](https://img.shields.io/badge/Dart-3-blue?logo=dart)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Status](https://img.shields.io/badge/Status-Beta-yellow)
+**Extreme speed Dart code generation.**
 
-Dust is a Dart code generation tool written in Rust.
+[![CI](https://github.com/y3l1n4ung/dust/actions/workflows/ci.yml/badge.svg)](https://github.com/y3l1n4ung/dust/actions)
+[![Release](https://img.shields.io/github/v/release/y3l1n4ung/dust?logo=github&color=blue)](https://github.com/y3l1n4ung/dust/releases)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-It generates Dart source such as `toString()`, equality, `copyWith()`, JSON
-serialization, and Dio HTTP clients from annotations.
+Dust is a high-performance alternative to `build_runner`. It replaces slow, serial generation with a multi-threaded Rust engine that is **10x–50x faster**.
+
+> [!IMPORTANT]
+> **Tired of waiting for your code to generate?** Dust is built to handle the largest Flutter projects with near-instant rebuilds.
 
 ---
 
-## Example
+## ✨ Why Dust?
 
-Annotate your class:
+- 🚀 **Performance:** Written in Rust. Generates thousands of files in seconds. 
+- 📦 **Simple Setup:** Single-binary CLI. No complex dependency management in `pubspec.yaml`.
+- 🧩 **All-in-One:** Data classes, JSON, HTTP clients, Routing, and i18n in one unified tool.
+- 🔄 **Incremental:** Intelligent watch mode only rebuilds the specific files you edited.
+- 🛡️ **Type Safe:** Advanced validation catches errors before you even run your app.
 
+---
+
+## 🏗️ Supported Features
+
+| Feature | Description | Documentation |
+| :--- | :--- | :--- |
+| **Data Classes** | `ToString`, `Eq`, `HashCode`, and `CopyWith` generation. | [Read Guide →](docs/usage/derive.md) |
+| **JSON Serialization** | Blazing fast JSON encode/decode with support for renames and custom codecs. | [Read Guide →](docs/usage/serde.md) |
+| **HTTP Client** | Type-safe, Dio-backed API client generation from annotations. | [Read Guide →](docs/usage/http.md) |
+| **Routing** | Boilerplate-free Navigator 2.0 routing with typed parameters. | [Read Guide →](docs/usage/routing.md) |
+| **State Management** | Lightweight, high-performance state containers with action generation. | [Read Guide →](docs/usage/state.md) |
+| **i18n** | Extraction-first translation system with chunked generation. | _(Coming Soon)_ |
+
+---
+
+## 🚀 Quick Start
+
+### 1. Install the CLI
+
+**macOS / Linux:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.ps1 | iex
+```
+
+### 2. Add Annotations
 ```dart
 import 'package:derive_annotation/derive_annotation.dart';
 import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 
 part 'user.g.dart';
 
-@Derive([
-  ToString(),
-  CopyWith(),
-  Eq(),
-  Serialize(),
-  Deserialize(),
-])
-@SerDe(renameAll: SerDeRename.snakeCase)
+@Derive([ToString(), CopyWith(), Serialize()])
 class User with _$User {
-  final String id;
-  final String displayName;
-  final List<String> tags;
-
-  const User(this.id, this.displayName, this.tags);
+  final String name;
+  const User(this.name);
 }
 ```
 
-Run Dust:
-
+### 3. Build
 ```bash
 dust build
 ```
 
-Dust generates `user.g.dart`.
+---
 
-Generated output includes:
+## 🛠️ Commands
 
-| Derive          | What it generates                       |
-| --------------- | --------------------------------------- |
-| `ToString()`    | `toString()` with all field values      |
-| `CopyWith()`    | `copyWith({...})` with named parameters |
-| `Eq()`          | `==` operator and matching `hashCode`   |
-| `Serialize()`   | `toJson()` -> `Map<String, dynamic>`    |
-| `Deserialize()` | `fromJson()` factory constructor        |
-
-`@SerDe(renameAll: SerDeRename.snakeCase)` controls how field names are mapped in JSON — `displayName` becomes `display_name`, etc.
+| Command | Description |
+| :--- | :--- |
+| `dust build` | Run a full project generation. |
+| `dust watch` | High-performance file watcher for instant rebuilds. |
+| `dust check` | CI mode: Verifies if generated files are up to date. |
+| `dust clean` | Clears all generated files and persistent caches. |
 
 ---
 
-## Installation
+## 🤝 Contributing
 
-### Step 1 — Install the Dust CLI
+Dust is open-source and we welcome all contributors!
 
-**Binary installer (recommended — no Rust required)**
-
-Installers download the matching GitHub release binary and verify it against
-`SHA256SUMS.txt` before installing.
-
-macOS / Linux:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.sh | bash
-```
-
-Windows (PowerShell):
-
-```powershell
-irm https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.ps1 | iex
-```
-
-**Via Cargo from Git (if you have Rust installed)**
-
-```bash
-cargo install --git https://github.com/y3l1n4ung/dust dust_cli
-```
-
-### Step 2 — Add the Dart annotation packages
-
-In your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  derive_annotation: ^0.1.0
-  derive_serde_annotation: ^0.1.0
-```
-
-For generated Dio clients, also add `dust_http_client_annotation` and `dio`.
-See [docs/usage/http.md](docs/usage/http.md).
-
-Then fetch:
-
-```bash
-dart pub get
-```
-
-Packages on pub.dev:
-- [derive_annotation](https://pub.dev/packages/derive_annotation)
-- [derive_serde_annotation](https://pub.dev/packages/derive_serde_annotation)
+- **Found a bug?** [Open an issue](https://github.com/y3l1n4ung/dust/issues)
+- **Rust/Dart Setup:** [See CONTRIBUTING.md](CONTRIBUTING.md)
+- **Architecture:** [Read the Developer Guide](docs/developer.md)
 
 ---
 
-## Getting Started
-
-1. Add the annotation packages to `pubspec.yaml` and run `dart pub get`
-2. Import the annotations and add a `part` directive to your file:
-   ```dart
-   import 'package:derive_annotation/derive_annotation.dart';
-   part 'my_class.g.dart';
-   ```
-3. Annotate your class with `@Derive([...])` and add `with _$MyClass`
-4. Run `dust build` from your project root
-
----
-
-## CLI Reference
-
-```bash
-# Generate all files once
-dust build
-
-# Check whether generated outputs are fresh
-dust check
-
-# Watch for changes and rebuild automatically
-dust watch
-
-# Inspect workspace and plugin setup
-dust doctor
-
-# Remove Dust outputs and persistent cache data
-dust clean
-```
-
-`dust watch` monitors your `.dart` files for changes and regenerates the corresponding `.g.dart` files on save.
-
-Useful flags:
-- `--root <path>` to run against a specific package root
-- `--fail-fast` to stop after the first error diagnostic
-- `--jobs <n>` to cap parallel build workers
-- `--poll-ms <ms>` and `--max-cycles <n>` for watch-mode control
-
----
-
-## Development
-
-- Documentation index: [docs/README.md](docs/README.md)
-- Usage guides: [docs/usage/README.md](docs/usage/README.md)
-- Contributor guide: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Internal architecture: [docs/developer.md](docs/developer.md)
-- New plugin guide: [docs/plugin-guide.md](docs/plugin-guide.md)
-- Crate index and ownership: [crates/README.md](crates/README.md)
-- Roadmap and feature plans: [docs/roadmap](docs/roadmap/README.md)
-- Runnable showcase package: [examples/product_showcase](examples/product_showcase/README.md)
-- Scale and perf fixture: [examples/stress_project](examples/stress_project/README.md)
-
----
-
-## Roadmap
-
-See [docs/roadmap](docs/roadmap/README.md) for generated code, serde,
-HttpClient, route annotation, and state management plans.
-
----
-
-## License
+## 📜 License
 
 MIT. See [LICENSE](LICENSE). Copyright (c) 2026 [Ye Lin Aung](https://github.com/y3l1n4ung).

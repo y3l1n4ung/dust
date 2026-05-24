@@ -145,14 +145,14 @@ Flutter behavior are both covered.
 ## Generated Code Quality
 
 - [x] Generated `route.g.dart` has generated-code header.
-- [x] Generated code is `dart format` clean when Dart SDK is available.
-- [x] Generated code falls back to raw text if Dart formatter is unavailable.
+- [x] Generated code is formatted directly by the Rust emitter.
+- [x] Generation does not shell out to `dart format`.
 - [x] Generated output is deterministic and stable.
 - [x] Generated code has small public API surface.
 - [x] Generated imports are stable and deduplicated.
 - [x] Generated code does not expose former Rust/internal APIs.
 - [x] Add snapshot fixture for full generated production route file.
-- [x] Add CI assertion: generated prototype file is format-clean.
+- [x] Add snapshot coverage for generated prototype formatting.
 - [x] Add generated-code size/readability check for large route count.
 
 ## Driver And Cache
@@ -215,7 +215,8 @@ Flutter behavior are both covered.
 - [x] `cargo test -p dust_driver`
 - [x] `cargo clippy -p dust_driver -p dust_route_plugin --all-targets -- -D warnings`
 - [x] `cargo run -p dust_cli -- build --root examples/routing_prototype --fail-fast`
-- [x] `dart format --output=none --set-exit-if-changed examples/routing_prototype/lib/route.g.dart`
+- [x] Route emitter snapshot tests cover generated formatting without running a
+  Dart formatter.
 - [x] `cd packages/dust_router && flutter test`
 - [x] `cd examples/routing_prototype && flutter analyze`
 - [x] `cd examples/routing_prototype && flutter test`

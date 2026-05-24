@@ -1,166 +1,98 @@
-# Plugin Guide
+# Plugin Guide: Extending Dust
 
-This guide covers the concrete steps for adding a new Dust annotation plugin
-without breaking the shared pipeline rules.
+This guide covers the concrete steps for adding a new annotation plugin to the Dust engine without breaking the shared pipeline rules.
 
-## Use A New Plugin Only When
+---
 
-- the feature has its own Dart annotation surface or config contract
-- generation logic does not fit cleanly inside `dust_plugin_derive` or
-  `dust_plugin_serde`
-- the emitted helpers, validation, or shared analysis are distinct enough to
-  justify a new ownership boundary
+## Use A New Plugin Only When...
 
-If the change is only new behavior for an existing derive or serde annotation,
-extend the existing plugin crate instead.
+*   The feature has its own distinct **Dart annotation surface**.
+*   The generation logic is complex enough to require its own **ownership boundary**.
+*   The feature needs **shared workspace analysis** (Pass 2) to gather facts across files.
 
-## Files You Usually Touch
+> [!TIP]
+> If you're adding a new behavior to an existing annotation (like adding a new property to `@SerDe`), extend the existing `dust_plugin_serde` crate instead of creating a new one.
 
-1. Dart annotation package in `packages/`
-2. Rust plugin crate in `crates/`
-3. driver registration in
-   `crates/dust_driver/src/build/support.rs`
-4. example coverage in `examples/product_showcase/`
-5. stress coverage in `examples/stress_project/` when the feature changes
-   cache shape, throughput, or shared analysis
+---
 
-## Recommended Crate Shape
+## 🏗️ Recommended Crate Structure
 
-Follow the same split used by the built-in plugins.
+To maintain consistency across the engine, all plugins should follow this module split:
 
-- `plugin.rs`: `DustPlugin` implementation and registration entrypoint
-- `validate.rs`: annotation-level validation
-- `emit.rs` plus focused helpers: generated member assembly
-- `analysis.rs`: shared workspace analysis keys and parse-only collection logic
-- `README.md`: ownership, responsibilities, and edit hints
-- `tests/`: focused integration tests grouped by feature area
+| Module | Responsibility |
+| :--- | :--- |
+| `plugin.rs` | Implementation of the `DustPlugin` trait and registration entrypoint. |
+| `validate.rs` | Semantic validation (e.g., "Are these annotation arguments valid?"). |
+| `emit.rs` | Logic for generating Dart code fragments and class members. |
+| `analysis.rs` | Logic for Pass 2 workspace scanning (collecting cross-file facts). |
+| `tests/` | Focused integration tests verifying IR-to-Dart emission. |
 
-Keep large emitters or validation matrices broken into feature files instead of
-letting one module grow unchecked.
+---
 
-## Step-By-Step
+## 🚀 Step-by-Step Implementation
 
-### 1. Add the public Dart API
+### 1. Add the Public Dart API
+Create a new package under `packages/` (or extend an existing one).
+*   Define the annotation class (e.g., `@MyFeature`).
+*   Ensure it uses the standard `DeriveTrait` or `DeriveConfig` base classes.
+*   Add Dartdoc and run `dart analyze` to ensure a clean public surface.
 
-Create or extend the right package under `packages/` with:
-
-- the annotation class or config type
-- Dartdoc for every public API
-- `dart analyze` and `dart test` coverage
-
-Keep the Dart surface minimal. Resolver and plugin logic should depend on
-stable symbols, not text matching.
-
-### 2. Reserve symbol ownership
-
-In the Rust plugin crate, implement `DustPlugin` from `dust_plugin_api`.
-
-Use:
-
-- `claimed_traits()` for derive-style marker annotations
-- `claimed_configs()` for configuration annotations
-- `requested_symbols()` for helper names that must be reserved before emit
-
-`PluginRegistry` enforces exclusive ownership, so every new trait or config
-symbol must have one clear plugin owner.
-
-### 3. Keep cross-file work in shared analysis
-
-If the feature needs workspace-wide facts:
-
-- collect them from `ParsedLibrarySurface`
-- write them into `WorkspaceAnalysisBuilder`
-- read them later from `SymbolPlan::workspace_analysis()`
-
-Do not add plugin-specific scan branches to `dust_driver`. The driver already
-calls `collect_workspace_analysis()` for every registered plugin during the
-shared scan phase.
-
-### 4. Register the plugin in the default driver pipeline
-
-Wire the plugin into `crates/dust_driver/src/build/support.rs`.
-
-- add its source files to `CODEGEN_FINGERPRINT_INPUT`
-- register it in `default_registry()`
-
-If you skip the fingerprint update, cache invalidation will miss plugin source
-changes.
-
-### 5. Add real example coverage
-
-Use `examples/product_showcase/` for correctness:
-
-- analyzer-clean generated output
-- runtime tests for the public behavior
-- one or more representative models using the new annotation
-
-Use `examples/stress_project/` when the feature affects:
-
-- shared workspace analysis
-- cache metadata or cache reuse
-- build throughput
-- linked generated models across files
-
-### 6. Add focused Rust tests
-
-Cover the plugin in layers:
-
-- plugin API or registry tests for ownership and ordering behavior
-- plugin crate tests for validation and emitted members
-- driver tests only when build scheduling, cache behavior, or workspace
-  orchestration changes
-
-Prefer several small test files over one monolithic matrix.
-
-## Minimal Registration Skeleton
+### 2. Implement the `DustPlugin` Trait
+In your Rust crate, implement the core plugin contract:
 
 ```rust
-use dust_diagnostics::Diagnostic;
-use dust_ir::{LibraryIr, SymbolId};
-use dust_parser_dart::ParsedLibrarySurface;
-use dust_plugin_api::{
-    DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder,
-};
-
-pub struct MyPlugin;
-
 impl DustPlugin for MyPlugin {
-    fn plugin_name(&self) -> &'static str {
-        "dust_plugin_my_feature"
-    }
+    fn plugin_name(&self) -> &'static str { "dust_plugin_my_feature" }
 
+    // Claim your annotations so no other plugin can use them
     fn claimed_traits(&self) -> Vec<SymbolId> {
-        vec![SymbolId::new("my_annotation::MyTrait")]
+        vec![SymbolId::new("my_package::MyTrait")]
     }
 
-    fn collect_workspace_analysis(
-        &self,
-        library: &ParsedLibrarySurface,
-        analysis: &mut WorkspaceAnalysisBuilder,
-    ) {
-        let _ = (library, analysis);
-    }
+    // PASS 2: Collect facts from raw source (optional)
+    fn collect_workspace_analysis(&self, library: &ParsedLibrarySurface, analysis: &mut WorkspaceAnalysisBuilder) { ... }
 
-    fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> {
-        let _ = library;
-        Vec::new()
-    }
+    // PASS 4: Validate the lowered IR
+    fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> { ... }
 
-    fn emit(&self, library: &LibraryIr, plan: &SymbolPlan) -> PluginContribution {
-        let _ = (library, plan);
-        PluginContribution::default()
-    }
+    // PASS 4: Generate code fragments
+    fn emit(&self, library: &LibraryIr, plan: &SymbolPlan) -> PluginContribution { ... }
 }
 ```
 
-## Pre-Commit Checklist
+### 3. Register the Plugin
+Wire your new crate into the `dust_driver` orchestrator.
+*   **File:** `crates/dust_driver/src/build/support.rs`
+*   **Action:** Add your plugin to the `default_registry()` function.
 
-- `cargo test --workspace --quiet`
-- `cargo clippy --workspace --all-targets --all-features -- -D warnings`
-- package/example `dart analyze`
-- package/example `dart test`
-- update `README.md`, crate `README.md`, and roadmap docs when the public
-  surface changes
+> [!IMPORTANT]
+> **Don't Forget the Fingerprint:**
+> Update `CODEGEN_FINGERPRINT_INPUT` in the driver to include your plugin's source files. This ensures users get a fresh rebuild when you update the plugin's Rust code.
 
-For general repository rules, see [../CONTRIBUTING.md](../CONTRIBUTING.md) and
-for pipeline ownership, see [developer.md](developer.md).
+---
+
+## ⚖️ Best Practices for Plugin Authors
+
+### 🛡️ Isolation & Namespacing
+Because the `dust_emitter` merges all plugin contributions into a single file scope, you **must** namespace your private generated helpers.
+*   **Bad:** `_parseJson(json)`
+*   **Good:** `_$MyPlugin_parseJson(json)`
+
+### 🚫 Panic Safety
+Plugins run in parallel worker threads. A single `panic!()` will crash the entire build process.
+*   **Always** return a `Vec<Diagnostic>` for errors found during validation.
+*   **Never** use `.unwrap()` or `.expect()` on data derived from user source code.
+
+### 🔄 Use Shared Analysis
+If your plugin needs to know about other files (e.g., "Find all classes marked with X"), use `collect_workspace_analysis`.
+*   **Do not** perform custom file I/O or manual scanning inside `emit()`.
+*   Read the results from the `SymbolPlan` provided during the emit phase.
+
+---
+
+## ✅ Pre-Commit Checklist
+
+- [ ] `cargo test --workspace` passes.
+- [ ] `cargo clippy` is clean (no warnings).
+- [ ] New feature is used in `examples/product_showcase` and verified with `dart analyze`.
+- [ ] Documentation updated in `docs/usage/` if the public API changed.

@@ -1,182 +1,166 @@
-# State Management Guide
+# State Management
 
-Dust state lives in `dust_state`: Flutter-native state management generated from annotations. Dependencies are explicit typed args, not string maps.
+Dust provides state management generated from annotations. It uses explicit typed arguments for dependencies and optimizes rebuilds using aspect-based tracking.
 
-## Args
+---
+
+## Installation
+
+Add the state management package to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  dust_state: ^0.1.0
+```
+
+---
+
+## Basic Example
+
+### 1. Define the ViewModel
+Annotate your class with `@ViewModel` and extend the generated base class.
 
 ```dart
-final class TaskBoardArgs extends ViewModelArgs {
-  const TaskBoardArgs({
-    required this.repository,
-    super.observer,
-  });
+import 'package:dust_state/dust_state.dart';
 
-  final PrototypeRepository repository;
+part 'counter_view_model.g.dart';
+
+@ViewModel(state: CounterState)
+class CounterViewModel extends $CounterViewModel {
+  CounterViewModel(super.args);
+
+  void increment() {
+    emit(state.copyWith(count: state.count + 1));
+  }
+}
+
+class CounterState {
+  const CounterState({this.count = 0});
+  final int count;
 }
 ```
 
-`ViewModelArgs` carries shared runtime dependencies such as `observer`. App dependencies are normal final fields.
-
-## ViewModel
-
+### 2. Provide the Scope
 ```dart
-@ViewModel(state: TaskBoardState, args: TaskBoardArgs)
-final class TaskBoardViewModel extends $TaskBoardViewModel {
-  TaskBoardViewModel(super.args);
+CounterViewModelScope(
+  create: (context, args) => CounterViewModel(args),
+  child: const CounterPage(),
+)
+```
 
+### 3. Consume in UI
+```dart
+class CounterPage extends StatelessWidget {
   @override
-  Future<void> onInit() async {
-    await refresh(showLoading: true);
+  Widget build(BuildContext context) {
+    // Rebuilds only when state.count changes
+    final count = context.watchCounterViewModel().count;
+
+    return Scaffold(
+      body: Center(child: Text('Count: $count')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.readCounterViewModel().increment(),
+        child: const Icon(Icons.add),
+      ),
+    );
   }
-
-  Future<void> refresh({bool showLoading = false}) async {
-    if (showLoading) emit(state.copyWith(isLoading: true));
-    final todos = await repository.fetchTodos(userId: 1, limit: 20);
-    emit(state.copyWith(todos: todos, isLoading: false));
-  }
 }
 ```
 
-Generated base:
+---
+
+## Configuration Reference
+
+### `@ViewModel` Options
+
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `state` | `Type` | **Required.** The class used for the ViewModel's state. |
+| `args` | `Type` | Optional: A custom class (extending `ViewModelArgs`) for dependency injection. |
+| `initial` | `Object` | Optional: The initial state value. Defaults to `const State()`. |
+
+---
+
+## Dependency Injection (`ViewModelArgs`)
+
+For complex dependencies (Repositories, Services), use a custom `args` class.
 
 ```dart
-abstract class $TaskBoardViewModel
-    extends ViewModelBase<TaskBoardState, TaskBoardArgs> {
-  $TaskBoardViewModel(super.args)
-      : super(initialState: const TaskBoardState());
+final class ProfileArgs extends ViewModelArgs {
+  const ProfileArgs({required this.repository});
+  final ProfileRepository repository;
+}
 
-  PrototypeRepository get repository => args.repository;
+@ViewModel(state: ProfileState, args: ProfileArgs)
+class ProfileViewModel extends $ProfileViewModel {
+  ProfileViewModel(super.args);
+  
+  // Access dependencies via 'args' or generated getters
+  void load() => args.repository.fetch();
 }
 ```
 
+---
 
-## Initial State
+## Key Concepts
 
-For local state classes with a default `const State()` constructor, omit `initial`:
+### Aspect-Based Rebuilding
+Dust uses `InheritedModel` for granular rebuilds. When you access a field via `context.watchViewModel().field`, the widget registers a dependency **only** on that specific property. 
 
-```dart
-@ViewModel(state: TaskBoardState, args: TaskBoardArgs)
-final class TaskBoardViewModel extends $TaskBoardViewModel {
-  TaskBoardViewModel(super.args);
-}
-```
+> [!TIP]
+> This automatic optimization removes the need for `Selector` or `buildWhen` logic found in other frameworks.
 
-For enum, imported, or non-default states, pass an explicit constant initial value:
-
-```dart
-@ViewModel(
-  state: ShellTab,
-  args: ShellViewModelArgs,
-  initial: ShellTab.dashboard,
-)
-final class ShellViewModel extends $ShellViewModel {
-  ShellViewModel(super.args);
-}
-```
-
-## Scope
+### Side Effects (`ViewModelListener`)
+Use `ViewModelListener` to handle one-time events like navigation or showing snackbars.
 
 ```dart
-TaskBoardViewModelScope(
-  args: (context) => TaskBoardArgs(
-    repository: context.repository,
-    observer: context.stateObserver,
-  ),
-  create: (context, args) => TaskBoardViewModel(args),
-  child: const TasksPage(),
-)
-```
-
-Use `.value` when another owner controls disposal:
-
-```dart
-TaskBoardViewModelScope.value(
-  value: existingViewModel,
-  child: const TasksPage(),
-)
-```
-
-## Watch
-
-```dart
-Widget build(BuildContext context) {
-  final board = context.watchTaskBoardViewModel();
-  return Text('${board.pendingCount} pending');
-}
-```
-
-`watch` returns a generated smart proxy. Accessed fields register `InheritedModel` aspects, so unrelated state changes do not rebuild the widget.
-
-## Read
-
-```dart
-FilledButton(
-  onPressed: () => context.readTaskBoardViewModel().refresh(),
-  child: const Text('Refresh'),
-)
-```
-
-`read` never subscribes. Use it in callbacks and effects.
-
-## Effects
-
-```dart
-TaskBoardViewModelListener(
+CounterViewModelListener(
   listener: (context, effect) {
-    if (effect case TaskSaved(:final title)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Saved $title')),
-      );
+    if (effect is ShowCelebration) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Yay!')));
     }
   },
-  child: const TasksPage(),
+  child: const CounterPage(),
 )
 ```
 
-ViewModels emit effects with `emitEffect(effect)`. Effects do not mutate state.
+---
 
-## Stale Async Protection
+## Migration Guide
 
-Use action tokens when multiple async calls can overlap. Only the newest action
-for a key should commit state:
+**Coming from `Bloc` or `Provider`?**
+
+| Feature | `flutter_bloc` | `provider` | Dust |
+| :--- | :--- | :--- | :--- |
+| Core Logic | `Bloc` / `Cubit` | `ChangeNotifier` | `ViewModel` |
+| Scoping | `BlocProvider` | `Provider` | `ViewModelScope` |
+| UI Binding | `BlocBuilder` | `context.watch` | `context.watchViewModel()` |
+| Rebuild Optimization | `buildWhen` | `Selector` | **Automatic (Aspect-based)** |
+
+---
+
+## Generation Output
+
+Dust generates a base class (`$ClassName`) that handles the state stream and disposal.
 
 ```dart
-Future<void> refresh() async {
-  final token = beginAction(#refresh);
-  emit(state.copyWith(isLoading: true, errorMessage: null));
+// counter_view_model.g.dart (Simplified)
+abstract class $CounterViewModel extends ViewModelBase<CounterState, EmptyArgs> {
+  $CounterViewModel(super.args) : super(initialState: const CounterState());
+}
 
-  try {
-    final todos = await repository.fetchTodos(userId: 1, limit: 20);
-    if (!isCurrentAction(token)) return;
-    emit(state.copyWith(todos: todos, isLoading: false));
-  } catch (_) {
-    if (!isCurrentAction(token)) return;
-    emit(state.copyWith(isLoading: false, errorMessage: 'Load failed'));
-  }
+extension CounterViewModelX on BuildContext {
+  CounterViewModel watchCounterViewModel() => DustProvider.watch<CounterViewModel>(this);
+  CounterViewModel readCounterViewModel() => DustProvider.read<CounterViewModel>(this);
 }
 ```
 
-## Observer
+---
 
-```dart
-RepositoryScope(
-  repository: repository,
-  observer: const LoggingStateObserver(),
-  child: const PrototypeApp(),
-)
-```
+## Best Practices
 
-Observers receive state transitions and emitted effects. Use `SilentStateObserver` in tests.
-
-## Anti-Patterns
-
-- Do not call async actions from `build`.
-- Do not use `watch` in callbacks.
-- Do not mutate state lists/maps in place.
-- Do not put navigation/snackbars directly in `build`.
-- Do not use broad `value` when a narrow proxy getter is enough.
-- Do not pass dependencies through `Map<String, Type>` injection.
-
-## Prototype
-
-See `examples/state_management_prototype`. Files ending in `.g.dart` are manually written prototype output and define the full Rust generator target.
+> [!WARNING]
+> **Anti-Patterns to Avoid:**
+> - **Don't** call async actions directly in `build()`.
+> - **Don't** use `watch()` inside callbacks (use `read()` instead).
+> - **Don't** mutate state lists or maps in place (always use `copyWith`).

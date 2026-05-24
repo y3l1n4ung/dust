@@ -1,319 +1,170 @@
-# Routing
+# Typed Routing
 
-Dust routing generates a typed Flutter Navigator 2.0 router from annotations.
-It does not depend on `go_router`, `auto_route`, or another routing package.
+Dust Routing generates a type-safe Flutter Navigator 2.0 router from annotations. It creates a typed route tree that provides compile-time safety for parameters and navigation.
 
-> Routing is currently planned and prototyped. The generated shapes shown here
-> are the implementation target for the Rust routing plugin.
+---
 
-## Install
+## Installation
 
-Add the router runtime package from this repository:
+Add the router runtime package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dust_router:
-    path: ../path/to/dust/packages/dust_router
+  dust_router: ^0.1.0
 ```
 
-Generate code with Dust:
+---
 
-```bash
-dust build
-```
+## Quick Start
 
-## Router Entrypoint
-
-Create one routing entrypoint, usually `lib/route.dart`:
+### 1. Define the Router
+Create an entrypoint (usually `lib/route.dart`) and annotate it with `@Router`.
 
 ```dart
 import 'package:flutter/material.dart' hide Route, Router;
 import 'package:dust_router/dust_router.dart';
-
-import 'app_state.dart';
-import 'pages/dashboard_page.dart';
-import 'pages/not_found_page.dart';
 import 'route.g.dart';
 
 export 'route.g.dart';
-export 'package:dust_router/dust_router.dart';
 
 @Router(
-  initial: DashboardPage,
+  initial: HomePage,
   notFound: NotFoundPage,
-  refreshListenable: 'session',
 )
-final class AppRouter extends $AppRouter {
-  AppRouter({required this.session});
+final class AppRouter extends $AppRouter {}
+```
 
-  final AppSession session;
+### 2. Annotate Pages
+Annotate your widgets with `@Route`.
 
-  @override
-  AppRoutePath? redirect(RouteState state) {
-    if (!session.isLoggedIn && state.route.requiresAuth) {
-      return LoginRoute(from: state.location);
-    }
-    return null;
-  }
+```dart
+@Route('/', name: 'home')
+class HomePage extends StatelessWidget { ... }
+
+@Route('/profile/:userId', name: 'profile')
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({required this.userId});
+  final String userId;
 }
 ```
 
-The generated `route.g.dart` file imports annotated pages automatically. The app
-should not manually import every routed page into `route.dart`.
-
-## App Setup
-
-Use the generated router with Flutter's `MaterialApp.router`:
-
+### 3. Initialize MaterialApp
 ```dart
-final session = AppSession();
-
 MaterialApp.router(
-  routerConfig: AppRouter(session: session).config,
+  routerConfig: AppRouter().config,
 );
 ```
 
-## Page Routes
+---
 
-Annotate normal pages or widgets in normal `lib/` files:
+## Configuration Reference
+
+### `@Router` Options (Class Level)
+
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `initial` | `Type` | **Required.** The widget class shown when the app starts without a deep link. |
+| `notFound` | `Type` | The widget class shown when a URL doesn't match any route. |
+| `refreshListenable` | `String` | Name of a field (e.g., `authService`) to watch. Triggers redirects when it changes. |
+| `generatedBase` | `String` | Custom name for the generated base class. Defaults to `$ClassName`. |
+
+### `@Route` Options (Widget Level)
+
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `path` | `String` | **Required.** The URL template (e.g., `/users/:id`). |
+| `name` | `String` | Unique name for navigation. If omitted, derived from the class name. |
+| `shell` | `Type` | A widget class (like `MainLayout`) that wraps this page. |
+| `guards` | `List<Type>` | List of `RouteGuard` classes to run before entering. |
+| `transition` | `PageTransitionsBuilder` | Custom transition for this specific route. |
+| `fullscreenDialog` | `bool` | If `true`, the page is presented as a modal fullscreen dialog. |
+| `maintainState` | `bool` | Whether to keep the page state alive when inactive. Defaults to `true`. |
+
+---
+
+## Navigation API
+
+Dust generates type-safe extension methods on `BuildContext`.
 
 ```dart
-import 'package:flutter/material.dart' hide Route;
-import 'package:dust_router/dust_router.dart';
+// Navigate to home
+context.routes.home().go();
 
-import '../layout/app_shell.dart';
+// Navigate with typed parameters
+context.routes.profile(userId: '42').push();
 
-@Route('/', name: 'dashboard', shell: AppShell)
-final class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Text('Dashboard');
-  }
-}
+// Replace current route
+context.routes.home().replace();
 ```
 
-Path parameters come from `:param` segments:
+> [!TIP]
+> **Route Naming:** If you omit the `name` property, Dust automatically creates one by lower-camel-casing the class name and removing suffixes like `Page`, `Screen`, or `View`. (e.g., `UserProfilePage` -> `userProfile`).
+
+---
+
+## Guards and Redirects
+
+Use `RouteGuard` to protect specific routes based on app state (e.g., authentication).
 
 ```dart
-@Route('/projects/:projectId', name: 'project')
-final class ProjectPage extends StatelessWidget {
-  const ProjectPage({
-    super.key,
-    required this.projectId,
-    this.tab,
-  });
-
-  final int projectId;
-  final String? tab;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text('Project $projectId');
-  }
-}
-```
-
-`projectId` is read from the path. `tab` is a query parameter, so the generated
-location can be `/projects/42?tab=activity`.
-
-## Guards
-
-Attach route-specific guards to a page:
-
-```dart
-@Route('/admin', name: 'admin', guards: [AdminGuard], shell: AppShell)
-final class AdminPage extends StatelessWidget {
-  const AdminPage({super.key});
-}
-```
-
-Implement guards in `route.dart` or another imported file:
-
-```dart
-final class AdminGuard implements RouteGuard<AppRoutePath> {
-  const AdminGuard(this.session);
-
-  final AppSession session;
-
+final class AuthGuard implements RouteGuard<AppRoutePath> {
   @override
   Future<RouteGuardResult<AppRoutePath>> canActivate(RouteState state) async {
-    if (!session.isAdmin) {
-      return RouteGuardResult.redirect(const ForbiddenRoute());
-    }
+    if (!isAuthenticated) return RouteGuardResult.redirect(LoginRoute());
     return RouteGuardResult.allow();
   }
 }
+
+@Route('/profile', guards: [AuthGuard])
+class ProfilePage extends StatelessWidget { ... }
 ```
 
-The router-level redirect runs before route guards. Guards may allow navigation
-or return a typed redirect route.
+---
 
-## Shell Routes
+## Deep Linking
 
-Use a shell when a group of pages shares layout:
+Dust handles deep links and browser URLs automatically.
+
+| URL | Resolved Route |
+| :--- | :--- |
+| `/` | `HomeRoute()` |
+| `/profile/abc` | `ProfileRoute(userId: 'abc')` |
+| `/profile/42?tab=settings` | `ProfileRoute(userId: '42', tab: 'settings')` |
+
+> [!IMPORTANT]
+> **Web Browser Refresh:**
+> Dust preserves the navigation stack during browser refreshes by serializing the stack state into the browser history API.
+
+---
+
+## Migration Guide
+
+**Coming from `go_router` or `auto_route`?**
+
+| Feature | `go_router` | `auto_route` | Dust |
+| :--- | :--- | :--- | :--- |
+| Config | `GoRouter(...)` | `@AutoRouter(...)` | `@Router(...)` |
+| Route Def | `GoRoute(...)` | `@AdaptiveRoute(...)` | `@Route(...)` |
+| Parameters | String-based | Typed | **Typed** |
+| Build Tool | `build_runner` | `build_runner` | **Standalone Binary** |
+
+---
+
+## Generation Output
+
+Dust generates a typed `AppRoutePath` sealed class and a `RouterDelegate`. Below is a preview of the generated structure:
 
 ```dart
-@Route('/billing/invoices/:invoiceId', name: 'invoice', shell: AppShell)
-final class InvoicePage extends StatelessWidget {
-  const InvoicePage({super.key, required this.invoiceId});
-
-  final String invoiceId;
+// route.g.dart (Simplified)
+sealed class AppRoutePath {
+  String get location;
 }
-```
 
-Dust groups nested paths automatically. Users do not need to create synthetic
-parent pages for `/billing` or `/billing/invoices` unless those pages should be
-real routes.
-
-## Transitions
-
-Use Flutter `PageTransitionsBuilder` values directly. Dust has no custom
-transition registry:
-
-```dart
-@Route(
-  '/checkout/:plan',
-  name: 'checkout',
-  transition: BottomToTopPageTransitionsBuilder(),
-  fullscreenDialog: true,
-)
-final class CheckoutPage extends StatelessWidget {
-  const CheckoutPage({super.key, required this.plan, this.annual = false});
-
-  final String plan;
-  final bool annual;
-}
-```
-
-Omit `transition` to use the app-wide `PageTransitionsTheme`.
-
-```dart
-@Route('/admin', transition: ZoomPageTransitionsBuilder())
-@Route('/login', transition: CupertinoPageTransitionsBuilder())
-@Route('/dashboard')
-```
-
-## Navigation
-
-Generated helpers are available from `BuildContext`:
-
-```dart
-context.routes.project(projectId: 42, tab: 'activity').go();
-context.routes.login().push();
-context.routes.dashboard().replace();
-```
-
-Dust generates one route factory per route name. Navigation actions are shared
-on the returned object, so autocomplete stays route-name-first even when an app
-has many routes.
-
-You can also navigate with route objects:
-
-```dart
-DustRouter.of<AppRoutePath>(context).go(
-  const CheckoutRoute(plan: 'team', annual: true),
-);
-```
-
-## Deep Links And Web
-
-The generated parser handles browser URLs and direct deep links:
-
-```text
-/invite/abc
-/projects/42?tab=activity
-/billing/invoices/inv_001
-/search?q=dust&page=2
-```
-
-Unknown paths resolve to the configured not-found route.
-
-## Supported Route Parameters
-
-Route parameters are URL primitives only:
-
-- `String`
-- `int`
-- `double`
-- `bool`
-- nullable variants
-- constructor defaults
-
-Complex values are not supported as route params:
-
-- custom objects
-- lists
-- maps
-- records
-- functions
-- `dynamic`
-
-Load complex data from app state or a repository after the page is rebuilt from
-the URL:
-
-```dart
-@Route('/projects/:projectId')
-final class ProjectPage extends StatelessWidget {
-  const ProjectPage({super.key, required this.projectId});
-
-  final int projectId;
-
+final class ProfileRoute extends AppRoutePath {
+  final String userId;
+  ProfileRoute({required this.userId});
+  
   @override
-  Widget build(BuildContext context) {
-    final project = context.projects.watch(projectId);
-    return ProjectDetails(project: project);
-  }
+  String get location => '/profile/$userId';
 }
 ```
-
-## Uri Encoding Rule
-
-Generated routing code uses Dart `Uri` as the only encode/decode boundary, but
-route classes should call a generated helper instead of manually starting every
-path with an empty segment.
-
-The helper owns the absolute-path detail:
-
-```dart
-String _routePath(
-  List<String> segments, {
-  Map<String, String>? queryParameters,
-}) {
-  return Uri(
-    pathSegments: ['', ...segments],
-    queryParameters: queryParameters,
-  ).toString();
-}
-```
-
-Location builders use `_routePath(...)`:
-
-```dart
-String get location => _routePath(
-      ['projects', '$projectId'],
-      queryParameters: {
-        if (tab != null) 'tab': tab!,
-      },
-    );
-```
-
-Parsers read from `uri.pathSegments` and `uri.queryParameters`:
-
-```dart
-final projectId = int.tryParse(uri.pathSegments[1]);
-if (projectId == null) {
-  return _notFoundRoute(uri);
-}
-
-return ProjectRoute(
-  projectId: projectId,
-  tab: uri.queryParameters['tab'],
-);
-```
-
-The helper creates an absolute path like `/projects/42` while still letting
-`Uri` encode each segment. The Rust generator enforces supported param types
-before Dart emission. It must not generate JSON fallback parsing, `dynamic`
-parsing, or object codecs for route parameters.

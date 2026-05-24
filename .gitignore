@@ -1,6 +1,26 @@
+# Rust
 target/
-**/.dart_tool/
-**/.DS_Store
+Cargo.lock
+
+# Dart & Flutter
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
 **/pubspec.lock
+
+# Examples & Fixtures
 examples/stress_project/lib/generated_models/
+
+# IDEs & Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs & Temporary
 *.log
+.env
+coverage/

@@ -1,162 +1,168 @@
-# HttpClient Guide
+# HTTP Client Generation
 
-Use `dust_http_client_annotation` when you want Dust to generate a Dio-backed
-client from an abstract interface.
+Dust generates Dio-backed API clients from abstract interfaces. It automates request mapping, header injection, and JSON parsing based on annotations.
 
-## Install
+---
 
-Add the required packages to `pubspec.yaml`:
+## Installation
+
+Add the required packages to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dio: ^5.9.2
+  dio: ^5.0.0
   dust_http_client_annotation: ^0.1.0
 ```
 
-Then fetch packages:
+---
 
-```bash
-dart pub get
-```
+## Basic Example
 
-## Minimal Client Shape
+Define an `abstract interface class` and annotate it with `@HttpClient`.
 
 ```dart
 import 'package:dust_http_client_annotation/dust_http_client_annotation.dart';
 
-part 'todo_api.g.dart';
+part 'api_client.g.dart';
 
 @HttpClient(baseUrl: 'https://api.example.com')
-abstract interface class TodoApi {
-  factory TodoApi(Dio dio, {String? baseUrl}) = _$TodoApi;
+abstract interface class ApiClient {
+  factory ApiClient(Dio dio, {String? baseUrl}) = _$ApiClient;
 
-  @GET('/todos/{id}')
-  Future<Todo> fetch(@Path() String id);
+  @GET('/users/{id}')
+  Future<User> getUser(@Path() String id);
+
+  @POST('/users')
+  Future<User> createUser(@Body() User user);
 }
 ```
 
-The annotation package re-exports `dart:convert` and a collision-safe Dio
-surface used by Dust-generated clients, so API declaration files can usually
-use that single import.
+> [!IMPORTANT]
+> **Requirements for Generation:**
+> 1. You **must** include the `part 'filename.g.dart';` directive.
+> 2. You **must** provide a redirecting factory constructor: `factory ClassName(Dio dio) = _$ClassName;`.
 
-Run generation:
+---
 
-```bash
-dust build
+## Configuration Reference
+
+### `@HttpClient` (Class Level)
+
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `baseUrl` | `String` | The base URL for all methods in this client. |
+| `target` | `DustHttpTarget` | `dart` (default) or `flutter`. Use `flutter` to enable Flutter-specific optimizations. |
+| `parseThread` | `DustParseThread` | `main` (default) or `isolate`. Use `isolate` to offload JSON decoding to a background thread. |
+| `headers` | `Map<String, String>` | Static headers applied to every request from this client. |
+
+### Method Annotations
+
+| Annotation | Description |
+| :--- | :--- |
+| `@GET(path)`, `@POST(path)`, etc. | Defines the HTTP verb and relative path. |
+| `@Headers({...})` | Sets static headers for a specific method. |
+| `@FormUrlEncoded()` | Sets the content-type to `application/x-www-form-urlencoded`. |
+| `@MultiPart()` | Sets the content-type to `multipart/form-data`. |
+| `@HttpParse(thread: ...)` | Overrides the class-level `parseThread` strategy for this specific method. |
+
+### Parameter Annotations
+
+| Annotation | Description |
+| :--- | :--- |
+| `@Path([name])` | Maps a parameter to a `{name}` in the path. If name is omitted, uses the parameter name. |
+| `@Query(key)` | **Required.** Maps a parameter to a URL query key. |
+| `@Queries()` | Maps a `Map<String, dynamic>` parameter to multiple query keys. |
+| `@Body()` | Encodes the parameter as the request body (auto-serialized to JSON). |
+| `@Header(key)` | **Required.** Maps a parameter to a specific HTTP header. |
+| `@HeaderMap()` | Maps a `Map<String, String>` parameter to multiple request headers. |
+| `@Field(name)` | **Required.** Maps a parameter to a form field (requires `@FormUrlEncoded`). |
+| `@Part(name)` | **Required.** Maps a parameter to a multipart part (requires `@MultiPart`). |
+| `@Extra(key)` | **Required.** Maps a parameter to Dio's `RequestOptions.extra` map. |
+
+> [!NOTE]
+> For annotations marked **Required**, you must provide a string literal for the key/name. Only `@Path()` allows omitting the argument to fallback to the parameter name.
+
+---
+
+## Performance: Offloading JSON Parsing
+
+For large JSON payloads, you can offload the decoding process to a background Isolate to prevent UI jank.
+
+```dart
+@HttpClient(parseThread: DustParseThread.isolate)
+abstract interface class BigDataApi { ... }
 ```
 
-Dust generates:
+> [!TIP]
+> Use `HttpParse` to enable isolates only for specific heavy endpoints while keeping lightweight calls on the main thread. This provides granular control over resource usage.
 
-- `todo_api.g.dart`
-- `test/generated/api/todo_api_test.dart` when `@GenerateTest()` is present
+---
 
-## Real Online Example
+## Multipart Requests
 
-Reference file:
+To upload files or mixed data, use `@MultiPart` and `@Part`.
 
-- [examples/product_showcase/lib/api/json_placeholder_api.dart](../../examples/product_showcase/lib/api/json_placeholder_api.dart)
-
-`JsonPlaceholderApi` is the real fake-online showcase against
-`https://jsonplaceholder.typicode.com`.
-
-It demonstrates:
-
-- typed `GET` list responses
-- raw `Response<T>` reads
-- typed `@Body()` model payloads
-- raw `Map<String, dynamic>` patch payloads
-- raw `Response<Map<String, dynamic>>` delete responses
-
-Current flow:
-
-- `GET /posts`
-- `GET /posts/{id}`
-- `GET /comments`
-- `POST /posts` with `RemotePostDraft`
-- `PUT /posts/{id}` with `RemotePost`
-- `PATCH /posts/{id}` with `Map<String, dynamic>`
-- `DELETE /posts/{id}`
-
-Run the live demo from the showcase package:
-
-```bash
-dart run bin/json_placeholder_demo.dart
+```dart
+@POST('/upload')
+@MultiPart()
+Future<void> uploadFile(@Part('file') MultipartFile file, @Part('id') String id);
 ```
 
-Optional live smoke test:
+> [!WARNING]
+> When using `@MultiPart`, ensure all non-file parameters are also annotated with `@Part`. Standard `@Query` or `@Body` annotations may not behave as expected within a multipart request depending on the server implementation.
 
-```bash
-DUST_RUN_ONLINE_HTTP_TESTS=1 dart test test/json_placeholder_api_test.dart
+---
+
+## Generated Testing
+
+When `@GenerateTest()` is added to your client, Dust generates a test suite that verifies request mapping logic without requiring a real server.
+
+```dart
+@HttpClient(baseUrl: '...')
+@GenerateTest()
+abstract interface class ApiClient { ... }
 ```
 
-## Full Annotation Surface
+Dust creates `test/generated/api/api_client_test.dart` containing assertions for path segments, query parameters, headers, and body serialization.
 
-Reference file:
+---
 
-- [examples/product_showcase/lib/api/todo_api.dart](../../examples/product_showcase/lib/api/todo_api.dart)
+## Generation Output
 
-`TodoApi` covers the richer annotation matrix:
+Dust generates a concrete implementation class (`_$ClassName`) that utilizes Dio.
 
-- `@HttpClient(...)`
-- `@GenerateTest()`
-- `@Headers(...)`
-- `@GET`, `@POST`, `@PUT`, `@PATCH`, `@DELETE`
-- `@Path()`
-- `@Query()`
-- `@Queries()`
-- `@Header()`
-- `@HeaderMap()`
-- `@Body()`
-- `@Field()`
-- `@Extra()`
-- `@FormUrlEncoded()`
-- `DustParseThread.isolate`
-- Dio passthrough params such as `CancelToken`
+```dart
+// api_client.g.dart (Simplified)
+class _$ApiClient implements ApiClient {
+  _$ApiClient(this._dio, {this.baseUrl});
 
-## Supported Return Shapes
+  final Dio _dio;
+  String? baseUrl;
 
-Today the generator supports these return shapes:
-
-- `Future<T>`
-- `Future<List<T>>`
-- `Future<void>`
-- `Future<Map<String, dynamic>>`
-- `Future<Response<T>>`
-- `Future<Response<List<T>>>`
-- `Future<Response<void>>`
-- `Future<Response<Map<String, dynamic>>>`
-
-The plugin validates this contract directly. Methods outside these async return
-shapes are rejected during `dust build`.
-
-## Generated Request-Mapping Tests
-
-When `@GenerateTest()` is present, Dust emits a generated Dart test under
-`test/generated/..._test.dart` with request-mapping assertions.
-
-Reference files:
-
-- [examples/product_showcase/test/generated/api/json_placeholder_api_test.dart](../../examples/product_showcase/test/generated/api/json_placeholder_api_test.dart)
-- [examples/product_showcase/test/generated/api/todo_api_test.dart](../../examples/product_showcase/test/generated/api/todo_api_test.dart)
-
-## Output Config
-
-You can change the primary generated suffix in `dust.yaml`:
-
-```yaml
-outputs:
-  primary_suffix: .g.dart
+  @override
+  Future<User> getUser(String id) async {
+    final _result = await _dio.fetch<Map<String, dynamic>>(
+      _setStreamType<User>(Options(method: 'GET'))
+        .compose(baseUrl: baseUrl, path: '/users/$id'),
+    );
+    return User.fromJson(_result.data!);
+  }
+}
 ```
 
-If you change the suffix, the source file `part` directive must match it.
+---
 
-Current limitation:
+## Migration Guide
 
-- primitive and map-like request bodies can get generated fixtures
-- arbitrary model-body endpoints are still skipped in generated request-mapping tests
-- runtime tests in `product_showcase` cover those typed-body endpoints directly
+**Coming from `retrofit`?**
 
-## See Also
+| Feature | `retrofit` | Dust |
+| :--- | :--- | :--- |
+| Main Annotation | `@RestApi()` | `@HttpClient()` |
+| Path Param | `@Path("id")` | `@Path()` (optional arg) |
+| Query Param | `@Query("q")` | `@Query("q")` (required arg) |
+| Multithreading | Optional | Built-in via `DustParseThread.isolate` |
+| Build Tool | `build_runner` | **Standalone Binary** |
 
-- [Package README](../../packages/dust_http_client_annotation/README.md)
-- [Usage overview](./README.md)
+> [!TIP]
+> If you are migrating a large codebase, use `dust build` regularly to catch mismatched path parameters or unsupported return types early via the built-in diagnostic engine.

@@ -33,7 +33,8 @@ Generated derive code must:
 - Avoid redundant temporary variables when no transform occurs.
 - Prefer direct constructor arguments when setup is not needed.
 - Keep helper constants scoped and emitted only when used.
-- Keep generated expressions readable after `dart format`.
+- Keep generated expressions readable as emitted, without requiring an external
+  formatter pass.
 - Avoid `dynamic` unless the user source type is `dynamic`.
 - Preserve nullable-clear semantics without analyzer warnings.
 - Produce stable output across platforms.
@@ -219,7 +220,9 @@ Part-file constraint:
 
 ## Formatting Plan
 
-Generated fragments should be formatter-friendly before `dart format`.
+Generated fragments should be fully formatted by the emitter. `dart format` must
+not be part of the generation pipeline or required for committed `.g.dart`
+quality.
 
 Rules:
 
@@ -228,8 +231,8 @@ Rules:
 - Break long constructor calls across lines.
 - Break long map/list transforms across lines.
 - Keep one generated feature separated by a blank line.
-- Run generated showcase through `dart format --set-exit-if-changed` once the
-  formatter gate is added.
+- Use exact Rust snapshots and generated showcase diffs to catch formatting
+  regressions at the emitter boundary.
 
 ## Diagnostics Plan
 

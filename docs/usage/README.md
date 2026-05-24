@@ -1,83 +1,71 @@
 # Usage Guides
 
-This section is the canonical user-facing guide for Dust.
+This section provides the canonical documentation for using Dust in your Flutter and Dart projects.
 
-If you are new to the project, read these pages in order:
+---
 
-1. [Derive](./derive.md)
-2. [Serde](./serde.md)
-3. [HttpClient](./http.md)
-4. [State Management](./state.md)
-5. [Routing](./routing.md)
+## Getting Started
 
-## Package Map
+If you are new to Dust, we recommend reading these guides in order:
 
-Use this package when you want generated object helpers:
+1.  **[Data Classes (Derive)](./derive.md)**: Master `ToString`, `Eq`, and `CopyWith`.
+2.  **[JSON Serialization (Serde)](./serde.md)**: High-performance encoding and decoding.
+3.  **[HTTP Client](./http.md)**: Type-safe, Dio-backed API clients.
+4.  **[State Management](./state.md)**: Boilerplate-free reactive ViewModels.
+5.  **[Typed Routing](./routing.md)**: Safe Navigator 2.0 implementation.
 
-- `derive_annotation`
+---
 
-Add this package when you also want JSON serialization:
+## Package Installation
 
-- `derive_serde_annotation`
+Depending on the features you need, add the following packages to your `pubspec.yaml`:
 
-Add these packages when you want generated Dio clients:
+| Feature | Required Packages |
+| :--- | :--- |
+| **Basic Traits** | `derive_annotation` |
+| **JSON Support** | `derive_serde_annotation` |
+| **Networking** | `dust_http_client_annotation`, `dio` |
+| **State** | `dust_state` |
+| **Routing** | `dust_router` |
 
-- `dust_http_client_annotation`
-- `dio`
+> [!TIP]
+> `derive_serde_annotation` re-exports the core traits, so you don't need to list both if you are using JSON serialization.
 
-Add this package for state management (integrated in prototype):
-
-- `dust_state` (planned)
-
-Add this package for typed Navigator 2.0 routing (local package, planned
-generator):
-
-- `dust_router`
+---
 
 ## Quick Start
 
-Install the CLI:
-
+### 1. Install the CLI
 ```bash
 curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.sh | bash
 ```
 
-If you have Rust installed and want to install directly from the repository:
-
-```bash
-cargo install --git https://github.com/y3l1n4ung/dust dust_cli
-```
-
-Add the Dart packages you need:
+### 2. Configure Dependencies
+Add the relevant versions to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  derive_annotation: ^0.1.0
   derive_serde_annotation: ^0.1.0
   dust_http_client_annotation: ^0.1.0
-  dio: ^5.9.2
+  dio: ^5.0.0
 ```
 
-Fetch packages and generate code:
-
+### 3. Generate Code
 ```bash
 dart pub get
 dust build
 ```
 
-## Runnable Reference
+> [!NOTE]
+> Dust generates code into `.g.dart` files. Ensure you have the corresponding `part` directive in your source files.
 
-The guides in this directory point at the live example package in
-[../../examples/product_showcase](../../examples/product_showcase/README.md).
+---
 
-If you are working inside this repository, build it with:
+## Learning from Examples
 
+The guides in this directory reference real-world implementations found in the [Product Showcase Example](../../examples/product_showcase). This example includes automated tests and provides a "Golden Standard" for Dust usage.
+
+If you have the repository cloned, you can build the showcase manually:
 ```bash
 cargo run -p dust_cli -- build --root examples/product_showcase
 ```
-
-## Related Docs
-
-- [Developer guide](../developer.md)
-- [Plugin guide](../plugin-guide.md)
-- [Roadmap](../roadmap/README.md)
