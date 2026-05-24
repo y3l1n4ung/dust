@@ -7,6 +7,7 @@ import '../../../shared/widgets/snackbars/app_snackbar.dart';
 import '../../cart/view_models/cart_view_model.dart';
 import '../../orders/models/order.dart';
 import '../../orders/view_models/orders_view_model.dart';
+import '../models/checkout_quote.dart';
 import '../models/checkout_state.dart';
 import '../view_models/checkout_view_model.dart';
 
@@ -30,6 +31,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _cityController = TextEditingController();
   final _zipController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _couponController = TextEditingController();
 
   @override
   void dispose() {
@@ -38,6 +40,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _cityController.dispose();
     _zipController.dispose();
     _phoneController.dispose();
+    _couponController.dispose();
     super.dispose();
   }
 
@@ -201,6 +204,59 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       const Divider(),
                       Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _couponController,
+                              decoration: const InputDecoration(
+                                labelText: 'Coupon code',
+                                helperText: 'Try DUST10 or SHIPFREE',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          FilledButton.tonal(
+                            onPressed: checkoutState.isQuoteLoading
+                                ? null
+                                : () async {
+                                    await context
+                                        .readCheckoutViewModel()
+                                        .applyCoupon(
+                                          subtotal: cartState.totalPrice,
+                                          couponCode: _couponController.text,
+                                        );
+                                    if (context.mounted) {
+                                      final quote = context
+                                          .readCheckoutViewModel()
+                                          .state
+                                          .quote;
+                                      if (quote?.message != null) {
+                                        AppSnackbar.info(
+                                          context,
+                                          quote!.message!,
+                                        );
+                                      }
+                                    }
+                                  },
+                            child: checkoutState.isQuoteLoading
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Apply'),
+                          ),
+                        ],
+                      ),
+                      if (checkoutState.quote != null) ...[
+                        const SizedBox(height: 12),
+                        _QuoteBreakdown(quote: checkoutState.quote!),
+                        const Divider(),
+                      ] else
+                        const Divider(),
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
@@ -208,7 +264,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           Text(
-                            '\$${cartState.totalPrice.toStringAsFixed(2)}',
+                            '\$${(checkoutState.quote?.total ?? cartState.totalPrice).toStringAsFixed(2)}',
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
                                   fontWeight: FontWeight.bold,
@@ -247,6 +303,63 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _QuoteBreakdown extends StatelessWidget {
+  const _QuoteBreakdown({required this.quote});
+
+  final CheckoutQuote quote;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _QuoteRow(label: 'Subtotal', value: quote.subtotal),
+        _QuoteRow(label: 'Discount', value: -quote.discount),
+        _QuoteRow(label: 'Shipping', value: quote.shipping),
+        _QuoteRow(label: 'Tax', value: quote.tax),
+        if (quote.appliedCoupon != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Applied ${quote.appliedCoupon}',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Colors.green,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _QuoteRow extends StatelessWidget {
+  const _QuoteRow({required this.label, required this.value});
+
+  final String label;
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label),
+          Text(
+            value < 0
+                ? '-\$${(-value).toStringAsFixed(2)}'
+                : '\$${value.toStringAsFixed(2)}',
+          ),
+        ],
       ),
     );
   }

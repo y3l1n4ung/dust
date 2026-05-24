@@ -30,7 +30,7 @@ irm https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.ps1 | iex
 Or with Cargo:
 
 ```bash
-cargo install dust_cli
+cargo install --git https://github.com/y3l1n4ung/dust dust_cli
 ```
 
 ## Example

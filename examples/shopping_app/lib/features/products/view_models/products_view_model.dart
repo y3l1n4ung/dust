@@ -49,8 +49,14 @@ class ProductsViewModel extends $ProductsViewModel {
       'Filtered to category: ${category ?? 'all'}, showing ${state.filteredProducts.length} products',
     );
   }
-}
 
-extension ProductsViewModelContext on BuildContext {
-  ProductsViewModel get productsViewModel => ProductsViewModelScope.of(this);
+  void search(String query) {
+    logger.userAction('search_products', {'query': query});
+    emit(state.copyWith(searchQuery: query));
+  }
+
+  void sort(ProductSortOption option) {
+    logger.userAction('sort_products', {'option': option.name});
+    emit(state.copyWith(sortOption: option));
+  }
 }

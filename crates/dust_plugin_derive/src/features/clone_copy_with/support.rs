@@ -6,24 +6,25 @@ pub(super) fn render_copy_with_params(class: &ClassIr) -> String {
         return "{}".to_owned();
     }
 
-    let params = class
+    let rendered_params = class
         .fields
         .iter()
         .map(|field| {
             if uses_undefined_sentinel(&field.ty) {
                 format!(
-                    "  {} {} = _undefined,",
+                    "{} {} = _undefined",
                     undefined_parameter_type(&field.ty),
                     field.name
                 )
             } else {
-                format!(
-                    "  {} {},",
-                    render_copy_with_param_type(&field.ty),
-                    field.name
-                )
+                format!("{} {}", render_copy_with_param_type(&field.ty), field.name)
             }
         })
+        .collect::<Vec<_>>();
+
+    let params = rendered_params
+        .into_iter()
+        .map(|param| format!("  {param},"))
         .collect::<Vec<_>>()
         .join("\n");
 
@@ -33,7 +34,9 @@ pub(super) fn render_copy_with_params(class: &ClassIr) -> String {
 pub(super) fn render_copy_with_source_expr(field_name: &str, ty: &TypeIr) -> String {
     if uses_undefined_sentinel(ty) {
         let cast = OBJECT_NULLABLE_TYPES.render(ty);
-        format!("identical({field_name}, _undefined) ? self.{field_name} : {field_name} as {cast}")
+        format!(
+            "identical({field_name}, _undefined)\n    ? self.{field_name}\n    : {field_name} as {cast}"
+        )
     } else {
         format!("{field_name} ?? self.{field_name}")
     }

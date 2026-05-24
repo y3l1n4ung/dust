@@ -1,9 +1,4 @@
-use std::{
-    collections::BTreeSet,
-    io::Write,
-    path::Path,
-    process::{Command, Stdio},
-};
+use std::{collections::BTreeSet, path::Path};
 
 use dust_ir::{BuiltinType, LibraryIr, TypeIr};
 
@@ -57,14 +52,15 @@ pub(crate) fn render_route_generated(library: &LibraryIr, spec: &RouterSpec) -> 
     out.push_str("      requiresAuth: routeRequiresAuth,\n");
     out.push_str("      resolveGuards: (route) => routeGuards(route, this),\n");
     out.push_str("      buildPage: buildAppRoutePage,\n");
+    out.push_str("      restoreStack: restoreAppRouteStack,\n");
     out.push_str("    );\n");
     out.push_str("    final delegate = DustRouterDelegate<AppRoutePath>(runtimeConfig);\n");
     out.push_str("    return RouterConfig<AppRoutePath>(\n");
     out.push_str("      routeInformationProvider: PlatformRouteInformationProvider(\n");
     out.push_str("        initialRouteInformation: RouteInformation(\n");
-    out.push_str(
-        "          uri: Uri.parse(WidgetsBinding.instance.platformDispatcher.defaultRouteName),\n",
-    );
+    out.push_str("          uri: Uri.parse(\n");
+    out.push_str("            WidgetsBinding.instance.platformDispatcher.defaultRouteName,\n");
+    out.push_str("          ),\n");
     out.push_str("        ),\n");
     out.push_str("      ),\n");
     out.push_str("      routeInformationParser: DustRouteInformationParser<AppRoutePath>(\n");
@@ -81,10 +77,11 @@ pub(crate) fn render_route_generated(library: &LibraryIr, spec: &RouterSpec) -> 
     metadata::render_route_metadata(&mut out, &spec.routes);
     render_route_classes(&mut out, spec);
     render_helpers(&mut out, spec);
+    render_restore_stack(&mut out, spec);
     render_parser(&mut out, spec);
     render_shell_consistency_helpers(&mut out, spec);
     render_page_builder(&mut out, spec);
-    format_dart_source(&out).unwrap_or(out)
+    out
 }
 
 fn render_no_transition_builder(out: &mut String) {
@@ -113,22 +110,6 @@ fn uses_no_transition_builder(spec: &RouterSpec) -> bool {
             .as_deref()
             .is_some_and(|transition| transition.contains("_NoTransitionBuilder"))
     })
-}
-
-fn format_dart_source(source: &str) -> Option<String> {
-    let mut child = Command::new("dart")
-        .args(["format", "--output=show", "--stdin-name", "route.g.dart"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-        .ok()?;
-    child.stdin.as_mut()?.write_all(source.as_bytes()).ok()?;
-    let output = child.wait_with_output().ok()?;
-    if !output.status.success() {
-        return None;
-    }
-    String::from_utf8(output.stdout).ok()
 }
 
 fn render_guard_factories(out: &mut String, spec: &RouterSpec) {
@@ -225,9 +206,10 @@ fn render_route_classes(out: &mut String, spec: &RouterSpec) {
 
 fn render_helpers(out: &mut String, spec: &RouterSpec) {
     out.push_str("String routeLocation(AppRoutePath route) => route.location;\n\n");
-    out.push_str(
-        "String _routePath(List<String> segments, {Map<String, String>? queryParameters}) {\n",
-    );
+    out.push_str("String _routePath(\n");
+    out.push_str("  List<String> segments, {\n");
+    out.push_str("  Map<String, String>? queryParameters,\n");
+    out.push_str("}) {\n");
     out.push_str("  final query = queryParameters?.isEmpty ?? true ? null : queryParameters;\n");
     out.push_str(
         "  final text = Uri(pathSegments: segments, queryParameters: query).toString();\n",
@@ -236,9 +218,10 @@ fn render_helpers(out: &mut String, spec: &RouterSpec) {
     out.push_str("  return text.startsWith('/') ? text : '/$text';\n");
     out.push_str("}\n\n");
     out.push_str("bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;\n\n");
-    out.push_str(
-        "List<RouteGuard<AppRoutePath>> routeGuards(AppRoutePath route, $AppRouter router) {\n",
-    );
+    out.push_str("List<RouteGuard<AppRoutePath>> routeGuards(\n");
+    out.push_str("  AppRoutePath route,\n");
+    out.push_str("  $AppRouter router,\n");
+    out.push_str(") {\n");
     out.push_str("  return switch (route) {\n");
     for route in &spec.routes {
         if route.annotation.guards.is_empty() {
@@ -258,22 +241,23 @@ fn render_helpers(out: &mut String, spec: &RouterSpec) {
     out.push_str("  };\n");
     out.push_str("}\n\n");
     out.push_str("extension DustRouterContext on BuildContext {\n");
-    out.push_str(
-        "  DustRouterController<AppRoutePath> get router => DustRouter.of<AppRoutePath>(this);\n",
-    );
+    out.push_str("  DustRouterController<AppRoutePath> get router =>\n");
+    out.push_str("      DustRouter.of<AppRoutePath>(this);\n");
     out.push_str("  AppRoutesNavigation get routes => AppRoutesNavigation(router);\n");
     out.push_str("}\n\n");
     out.push_str("final class AppRoutesNavigation {\n");
     out.push_str("  const AppRoutesNavigation(this._router);\n\n");
     out.push_str("  final DustRouterController<AppRoutePath> _router;\n\n");
     for route in &spec.routes {
-        out.push_str(&format!(
-            "  RouteNavigation<AppRoutePath> {}({}) => RouteNavigation(\n    _router,\n    {}({}),\n  );\n\n",
-            route.name,
-            render_factory_params(route),
-            route.route_class,
-            render_route_args(route)
-        ));
+        let route_ctor = format!("{}({})", route.route_class, render_route_args(route));
+        let params = render_factory_params(route);
+        let factory = format!("RouteNavigation<AppRoutePath> {}({params})", route.name,);
+        let body = format!("RouteNavigation(_router, {route_ctor})");
+        if factory.len() + body.len() + 7 <= 80 {
+            out.push_str(&format!("  {factory} => {body};\n\n"));
+        } else {
+            out.push_str(&format!("  {factory} =>\n      {body};\n\n"));
+        }
     }
     out.push_str("  void pop() => _router.pop();\n");
     out.push_str("}\n\n");
@@ -282,6 +266,121 @@ fn render_helpers(out: &mut String, spec: &RouterSpec) {
     out.push_str("  final DustRouterController<T> _router;\n  final T route;\n\n");
     out.push_str("  void go() => _router.go(route);\n  void push() => _router.push(route);\n  void replace() => _router.replace(route);\n");
     out.push_str("}\n\n");
+}
+
+fn render_restore_stack(out: &mut String, spec: &RouterSpec) {
+    out.push_str("RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {\n");
+    out.push_str("  return switch (route) {\n");
+    for route in &spec.routes {
+        let bound_params = restore_stack_bound_params(route, spec);
+        out.push_str(&format!(
+            "    {} => [\n",
+            route_switch_pattern(route, Some(&bound_params))
+        ));
+        for entry in restore_stack_entries(route, spec) {
+            out.push_str(&format!("      {entry},\n"));
+        }
+        out.push_str("    ],\n");
+    }
+    out.push_str("  };\n");
+    out.push_str("}\n\n");
+}
+
+fn restore_stack_entries(route: &RouteSpec, spec: &RouterSpec) -> Vec<String> {
+    if route.route_class == spec.initial_route_class {
+        return vec!["route".to_owned()];
+    }
+
+    let mut entries = Vec::new();
+    if let Some(initial) = spec
+        .routes
+        .iter()
+        .find(|candidate| candidate.route_class == spec.initial_route_class)
+        && let Some(expr) = route_constructor_from_target(initial, route)
+    {
+        entries.push(expr);
+    }
+
+    let mut parents = spec
+        .routes
+        .iter()
+        .filter(|candidate| candidate.route_class != spec.initial_route_class)
+        .filter(|candidate| candidate.route_class != route.route_class)
+        .filter(|candidate| is_path_prefix(&candidate.path, &route.path))
+        .collect::<Vec<_>>();
+    parents.sort_by_key(|candidate| route_segments(&candidate.path).len());
+
+    for parent in parents {
+        if let Some(expr) = route_constructor_from_target(parent, route) {
+            entries.push(expr);
+        }
+    }
+
+    entries.push("route".to_owned());
+    entries
+}
+
+fn restore_stack_bound_params(route: &RouteSpec, spec: &RouterSpec) -> BTreeSet<String> {
+    let mut names = BTreeSet::new();
+    if route.route_class == spec.initial_route_class {
+        return names;
+    }
+
+    for parent in spec.routes.iter().filter(|candidate| {
+        candidate.route_class == spec.initial_route_class
+            || (candidate.route_class != route.route_class
+                && is_path_prefix(&candidate.path, &route.path))
+    }) {
+        if route_constructor_from_target(parent, route).is_some() {
+            names.extend(parent.params.iter().map(|param| param.name.clone()));
+        }
+    }
+    names
+}
+
+fn is_path_prefix(parent: &str, child: &str) -> bool {
+    let parent_segments = route_segments(parent);
+    let child_segments = route_segments(child);
+    parent_segments.len() < child_segments.len()
+        && parent_segments
+            .iter()
+            .zip(child_segments)
+            .all(|(parent, child)| {
+                parent == &child || (parent.starts_with(':') && child.starts_with(':'))
+            })
+}
+
+fn route_constructor_from_target(route: &RouteSpec, target: &RouteSpec) -> Option<String> {
+    if route.route_class == target.route_class {
+        return Some("route".to_owned());
+    }
+    if route.params.is_empty() {
+        return Some(format!("const {}()", route.route_class));
+    }
+
+    let args = route
+        .params
+        .iter()
+        .filter_map(|param| {
+            if target
+                .params
+                .iter()
+                .any(|candidate| candidate.name == param.name)
+            {
+                Some(Some(format!("{}: {}", param.name, param.name)))
+            } else if param.ty.is_nullable() || param.has_default {
+                None
+            } else {
+                Some(None)
+            }
+        })
+        .collect::<Option<Vec<_>>>()?;
+
+    if args.is_empty() {
+        Some(format!("const {}()", route.route_class))
+    } else {
+        Some(format!("{}({})", route.route_class, args.join(", ")))
+    }
 }
 
 fn render_parser(out: &mut String, spec: &RouterSpec) {
@@ -312,7 +411,18 @@ fn render_parser(out: &mut String, spec: &RouterSpec) {
         "AppRoutePath _notFoundRoute(Uri uri) => {fallback};\n\n"
     ));
     out.push_str("bool? _parseBool(String? value) {\n");
-    out.push_str("  return switch (value) {\n    'true' || '1' => true,\n    'false' || '0' => false,\n    null || '' => null,\n    _ => () {\n      assert(false, '_parseBool: unrecognised value \"$value\", treating as null');\n      return null;\n    }(),\n  };\n");
+    out.push_str("  return switch (value) {\n");
+    out.push_str("    'true' || '1' => true,\n");
+    out.push_str("    'false' || '0' => false,\n");
+    out.push_str("    null || '' => null,\n");
+    out.push_str("    _ => () {\n");
+    out.push_str("      assert(\n");
+    out.push_str("        false,\n");
+    out.push_str("        '_parseBool: unrecognised value \"$value\", treating as null',\n");
+    out.push_str("      );\n");
+    out.push_str("      return null;\n");
+    out.push_str("    }(),\n");
+    out.push_str("  };\n");
     out.push_str("}\n\n");
 }
 
@@ -346,20 +456,7 @@ fn render_page_builder(out: &mut String, spec: &RouterSpec) {
     out.push_str("  );\n");
     out.push_str("  return switch (route) {\n");
     for route in &spec.routes {
-        let pattern = if route.params.is_empty() {
-            format!("{}()", route.route_class)
-        } else {
-            format!(
-                "{}({})",
-                route.route_class,
-                route
-                    .params
-                    .iter()
-                    .map(|param| format!("{}: final {}", param.name, param.name))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            )
-        };
+        let pattern = route_switch_pattern(route, None);
         let page_args = route
             .params
             .iter()
@@ -380,14 +477,41 @@ fn render_page_builder(out: &mut String, spec: &RouterSpec) {
             .annotation
             .transition
             .as_ref()
-            .map(|transition| format!(" transition: {transition},"))
+            .map(|transition| format!("      transition: {transition},\n"))
             .unwrap_or_default();
         out.push_str(&format!(
-            "    {pattern} => generatedPage(location: route.location, name: '{}',{transition_arg} fullscreenDialog: {}, maintainState: {}, child: {child}),\n",
+            "    {pattern} => generatedPage(\n      location: route.location,\n      name: '{}',\n{transition_arg}      fullscreenDialog: {},\n      maintainState: {},\n      child: {child},\n    ),\n",
             route.name, route.annotation.fullscreen_dialog, route.annotation.maintain_state,
         ));
     }
     out.push_str("  };\n}\n");
+}
+
+fn route_switch_pattern(route: &RouteSpec, bound_params: Option<&BTreeSet<String>>) -> String {
+    if route.params.is_empty() {
+        format!("{}()", route.route_class)
+    } else {
+        format!(
+            "{}({})",
+            route.route_class,
+            route
+                .params
+                .iter()
+                .map(|param| {
+                    let should_bind = match bound_params {
+                        Some(names) => names.contains(&param.name),
+                        None => true,
+                    };
+                    if should_bind {
+                        format!("{}: final {}", param.name, param.name)
+                    } else {
+                        format!("{}: _", param.name)
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+    }
 }
 
 fn render_constructor_param(param: &RouteParamSpec) -> String {
@@ -486,18 +610,27 @@ fn render_location_body(out: &mut String, route: &RouteSpec) {
                 format!("'{segment}'")
             }
         })
-        .collect::<Vec<_>>()
-        .join(",\n      ");
+        .collect::<Vec<_>>();
+    let inline_segments = format!("[{}]", segments.join(", "));
+    let multiline_segments = format!("[\n      {},\n    ]", segments.join(",\n      "));
     if route.params.iter().any(|param| !param.is_path) {
+        let segment_expr = if inline_segments.len() <= 60 {
+            inline_segments
+        } else {
+            multiline_segments
+        };
         out.push_str(&format!(
-            "    return _routePath([\n      {segments},\n    ], queryParameters: query.isEmpty ? null : query);\n"
+            "    return _routePath({segment_expr}, queryParameters: query.isEmpty ? null : query);\n"
         ));
     } else if segments.is_empty() {
         out.push_str("    return '/';\n");
     } else {
-        out.push_str(&format!(
-            "    return _routePath([\n      {segments},\n    ]);\n"
-        ));
+        let segment_expr = if inline_segments.len() <= 60 {
+            inline_segments
+        } else {
+            multiline_segments
+        };
+        out.push_str(&format!("    return _routePath({segment_expr});\n"));
     }
 }
 

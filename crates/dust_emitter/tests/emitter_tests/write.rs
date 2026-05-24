@@ -176,7 +176,9 @@ mixin _$User {
     final self = this as User;
     return User(
       id ?? self.id,
-      identical(age, _undefined) ? self.age : age as int?,
+      identical(age, _undefined)
+          ? self.age
+          : age as int?,
     );
   }
 }

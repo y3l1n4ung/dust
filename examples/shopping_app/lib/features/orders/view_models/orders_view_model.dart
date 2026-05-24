@@ -42,7 +42,3 @@ class OrdersViewModel extends $OrdersViewModel {
     emit(state.copyWith(orders: updatedOrders));
   }
 }
-
-extension OrdersViewModelContext on BuildContext {
-  OrdersViewModel get ordersViewModel => OrdersViewModelScope.of(this);
-}

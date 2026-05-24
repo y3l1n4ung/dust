@@ -1,13 +1,17 @@
 import 'package:dust_state/dust_state.dart';
 
+import '../../../core/data/shopping_repository.dart';
 import '../../cart/models/cart_item.dart';
 import '../../orders/models/order.dart';
+import '../models/checkout_quote.dart';
 import '../models/checkout_state.dart';
 
 part 'checkout_view_model.g.dart';
 
 final class CheckoutViewModelArgs extends ViewModelArgs {
-  const CheckoutViewModelArgs({super.observer});
+  const CheckoutViewModelArgs({required this.repository, super.observer});
+
+  final ShoppingRepository repository;
 }
 
 @ViewModel(state: CheckoutState, args: CheckoutViewModelArgs)
@@ -16,6 +20,19 @@ class CheckoutViewModel extends $CheckoutViewModel {
 
   void updateShippingAddress(ShippingAddress address) {
     emit(state.copyWith(shippingAddress: address));
+  }
+
+  Future<void> applyCoupon({
+    required double subtotal,
+    required String couponCode,
+  }) async {
+    final code = couponCode.trim();
+    emit(state.copyWith(couponCode: code, isQuoteLoading: true));
+
+    final quote = await repository.quoteCheckout(
+      CheckoutQuoteRequest(subtotal: subtotal, couponCode: code),
+    );
+    emit(state.copyWith(quote: quote, isQuoteLoading: false));
   }
 
   Future<String?> processCheckout(
@@ -45,8 +62,4 @@ class CheckoutViewModel extends $CheckoutViewModel {
   void reset() {
     emit(const CheckoutState());
   }
-}
-
-extension CheckoutViewModelContext on BuildContext {
-  CheckoutViewModel get checkoutViewModel => CheckoutViewModelScope.of(this);
 }

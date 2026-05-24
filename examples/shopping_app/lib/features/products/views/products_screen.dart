@@ -10,6 +10,7 @@ import '../../../shared/widgets/loaders/product_skeleton.dart';
 import '../../../shared/widgets/snackbars/app_snackbar.dart';
 import '../../auth/view_models/auth_view_model.dart';
 import '../../cart/view_models/cart_view_model.dart';
+import '../../wishlist/view_models/wishlist_view_model.dart';
 import '../models/product.dart';
 import '../models/products_state.dart';
 import '../view_models/products_view_model.dart';
@@ -41,11 +42,30 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Shop'),
-        actions: [_CartIconButton(itemCount: cartState.itemCount)],
+        actions: [
+          IconButton(
+            tooltip: 'Wishlist',
+            icon: const Icon(Icons.favorite_border),
+            onPressed: () => context.routes.wishlist().push(),
+          ),
+          IconButton(
+            tooltip: 'Support chat',
+            icon: const Icon(Icons.support_agent),
+            onPressed: () => context.routes.supportChat().push(),
+          ),
+          _CartIconButton(itemCount: cartState.itemCount),
+        ],
       ),
       drawer: const _AppDrawer(),
       body: Column(
         children: [
+          if (state.status == ProductsStatus.success)
+            _SearchAndSortBar(
+              query: state.searchQuery,
+              sortOption: state.sortOption,
+              onSearch: context.readProductsViewModel().search,
+              onSort: context.readProductsViewModel().sort,
+            ),
           if (state.status == ProductsStatus.success)
             _CategoryFilter(
               categories: state.categories,
@@ -234,6 +254,30 @@ class _AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.favorite),
+            title: const Text('Wishlist'),
+            onTap: () {
+              Navigator.pop(context);
+              context.routes.wishlist().push();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.cloud_queue),
+            title: const Text('FakeStore Carts'),
+            onTap: () {
+              Navigator.pop(context);
+              context.routes.demoCarts().push();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.support_agent),
+            title: const Text('Support Chat'),
+            onTap: () {
+              Navigator.pop(context);
+              context.routes.supportChat().push();
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.receipt_long),
             title: const Text('Orders'),
             onTap: () {
@@ -319,6 +363,68 @@ class _CategoryFilter extends StatelessWidget {
   }
 }
 
+class _SearchAndSortBar extends StatelessWidget {
+  const _SearchAndSortBar({
+    required this.query,
+    required this.sortOption,
+    required this.onSearch,
+    required this.onSort,
+  });
+
+  final String query;
+  final ProductSortOption sortOption;
+  final ValueChanged<String> onSearch;
+  final ValueChanged<ProductSortOption> onSort;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              initialValue: query,
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Search products',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              onChanged: onSearch,
+            ),
+          ),
+          const SizedBox(width: 12),
+          DropdownButton<ProductSortOption>(
+            value: sortOption,
+            onChanged: (value) {
+              if (value != null) onSort(value);
+            },
+            items: const [
+              DropdownMenuItem(
+                value: ProductSortOption.featured,
+                child: Text('Featured'),
+              ),
+              DropdownMenuItem(
+                value: ProductSortOption.priceLow,
+                child: Text('Price ↑'),
+              ),
+              DropdownMenuItem(
+                value: ProductSortOption.priceHigh,
+                child: Text('Price ↓'),
+              ),
+              DropdownMenuItem(
+                value: ProductSortOption.ratingHigh,
+                child: Text('Rating'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ProductsGrid extends StatelessWidget {
   final List<Product> products;
 
@@ -326,6 +432,19 @@ class _ProductsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (products.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 72, color: Colors.grey),
+            SizedBox(height: 12),
+            Text('No products match your filters'),
+          ],
+        ),
+      );
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -353,6 +472,8 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSaved = context.wishlistViewModel.state.containsProduct(product.id);
+
     return AnimatedCard(
       onTap: () => context.routes.productDetail(productId: product.id).push(),
       onLongPress: () {
@@ -377,19 +498,37 @@ class _ProductCard extends StatelessWidget {
         children: [
           Expanded(
             flex: 3,
-            child: Hero(
-              tag: 'product-image-${product.id}',
-              child: Container(
-                width: double.infinity,
-                color: Colors.white,
-                padding: const EdgeInsets.all(8),
-                child: Image.network(
-                  product.image,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) =>
-                      const Icon(Icons.image_not_supported),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Hero(
+                    tag: 'product-image-${product.id}',
+                    child: Container(
+                      width: double.infinity,
+                      color: Colors.white,
+                      padding: const EdgeInsets.all(8),
+                      child: Image.network(
+                        product.image,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.image_not_supported),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: IconButton.filledTonal(
+                    tooltip: isSaved ? 'Saved' : 'Save',
+                    icon: Icon(
+                      isSaved ? Icons.favorite : Icons.favorite_border,
+                    ),
+                    onPressed: () =>
+                        context.readWishlistViewModel().toggle(product),
+                  ),
+                ),
+              ],
             ),
           ),
           Expanded(

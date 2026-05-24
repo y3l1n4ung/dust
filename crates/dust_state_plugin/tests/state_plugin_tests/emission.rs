@@ -32,7 +32,18 @@ fn emits_generated_base_with_args_getters() {
     assert!(source.contains("debugName: 'TaskBoardViewModelScope'"));
     assert!(source.contains("debugName: 'TaskBoardViewModelScope.value'"));
     assert!(source.contains("class TaskBoardViewModelListener extends StatefulWidget"));
-    assert!(source.contains("extension TaskBoardViewModelBuildContext on BuildContext"));
+    assert_eq!(
+        extract_extension(source, "extension TaskBoardViewModelBuildContext"),
+        r#"extension TaskBoardViewModelBuildContext on BuildContext {
+  TaskBoardViewModel get taskBoardViewModel => TaskBoardViewModelScope.of(this);
+
+  _$TaskBoardViewModelProxy watchTaskBoardViewModel() {
+    return _$TaskBoardViewModelProxy(this, TaskBoardViewModelScope.read(this));
+  }
+
+  TaskBoardViewModel readTaskBoardViewModel() => TaskBoardViewModelScope.read(this);
+}"#
+    );
 }
 
 #[test]
@@ -107,7 +118,18 @@ fn emits_value_only_proxy_for_fieldless_state() {
     let source = &contribution.support_types[0];
     assert!(!source.contains("enum _TaskBoardViewModelAspect"));
     assert!(source.contains("TaskBoardState get value"));
-    assert!(source.contains("TaskBoardViewModel readTaskBoardViewModel()"));
+    assert_eq!(
+        extract_extension(source, "extension TaskBoardViewModelBuildContext"),
+        r#"extension TaskBoardViewModelBuildContext on BuildContext {
+  TaskBoardViewModel get taskBoardViewModel => TaskBoardViewModelScope.of(this);
+
+  _$TaskBoardViewModelProxy watchTaskBoardViewModel() {
+    return _$TaskBoardViewModelProxy(this, TaskBoardViewModelScope.read(this));
+  }
+
+  TaskBoardViewModel readTaskBoardViewModel() => TaskBoardViewModelScope.read(this);
+}"#
+    );
 }
 
 #[test]
@@ -132,4 +154,11 @@ fn emits_single_output_per_annotated_view_model() {
     assert_eq!(contribution.support_types.len(), 2);
     assert!(contribution.support_types[0].contains("$TaskBoardViewModel"));
     assert!(contribution.support_types[1].contains("$SecondaryViewModel"));
+}
+
+fn extract_extension<'a>(source: &'a str, marker: &str) -> &'a str {
+    let start = source
+        .find(marker)
+        .unwrap_or_else(|| panic!("missing marker: {marker}"));
+    &source[start..]
 }

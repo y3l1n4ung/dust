@@ -1,6 +1,7 @@
 use dust_dart_emit::DYNAMIC_TYPES;
 use dust_ir::{ClassIr, LibraryIr, TypeIr};
 use dust_plugin_api::{PluginContribution, SymbolPlan};
+use heck::ToLowerCamelCase;
 
 use super::{
     constants::STATES_ANALYSIS_KEY,
@@ -106,6 +107,7 @@ fn render_view_model_output(
     let extension_class = format!("{}BuildContext", class.name);
     let watch_name = format!("watch{}", class.name);
     let read_name = format!("read{}", class.name);
+    let context_getter_name = class.name.to_lower_camel_case();
     let aspect_class = format!("_{}Aspect", class.name);
     let aspect_enum = render_aspect_enum(&aspect_class, state_fields);
     let initial_state = initial_source
@@ -137,7 +139,7 @@ fn render_view_model_output(
     );
     let listener = render_listener(&listener_class, &listener_state_class, &scope_class);
     let extension = format!(
-        "extension {extension_class} on BuildContext {{\n  {proxy_class} {watch_name}() => {proxy_class}(this, {scope_class}.read(this));\n  {vm} {read_name}() => {scope_class}.read(this);\n}}",
+        "extension {extension_class} on BuildContext {{\n  {vm} get {context_getter_name} => {scope_class}.of(this);\n\n  {proxy_class} {watch_name}() {{\n    return {proxy_class}(this, {scope_class}.read(this));\n  }}\n\n  {vm} {read_name}() => {scope_class}.read(this);\n}}",
         vm = class.name,
     );
 
@@ -211,7 +213,7 @@ fn render_scope(
     args_type: &str,
 ) -> String {
     format!(
-        "class {scope_class} extends StatefulWidget {{\n  const {scope_class}({{super.key, required this.args, required this.create, required this.child}}) : value = null;\n  const {scope_class}.value({{super.key, required {view_model_class} this.value, required this.child}}) : args = null, create = null;\n\n  final {args_type} Function(BuildContext context)? args;\n  final {view_model_class} Function(BuildContext context, {args_type} args)? create;\n  final {view_model_class}? value;\n  final Widget child;\n\n  static {view_model_class} read(BuildContext context) {{\n    final scope = context.getElementForInheritedWidgetOfExactType<{inherited_class}>()?.widget as {inherited_class}?;\n    if (scope == null) throw StateError('No {scope_class} found in context.');\n    return scope.viewModel;\n  }}\n\n  static {view_model_class} of(BuildContext context, {{Object? aspect}}) {{\n    final scope = context.dependOnInheritedWidgetOfExactType<{inherited_class}>(aspect: aspect);\n    if (scope == null) throw StateError('No {scope_class} found in context.');\n    return scope.viewModel;\n  }}\n\n  @override\n  State<{scope_class}> createState() => _{scope_class}State();\n}}\n\nclass _{scope_class}State extends State<{scope_class}> {{\n  @override\n  Widget build(BuildContext context) {{\n    final external = widget.value;\n    return external == null\n        ? ViewModelOwner<{view_model_class}, {args_type}>(debugName: '{scope_class}', args: widget.args!, create: widget.create!, builder: _buildInherited)\n        : ViewModelOwner<{view_model_class}, {args_type}>.value(debugName: '{scope_class}.value', value: external, builder: _buildInherited);\n  }}\n\n  Widget _buildInherited(BuildContext context, {view_model_class} viewModel) {{\n    return ListenableBuilder(\n      listenable: viewModel,\n      builder: (context, child) => {inherited_class}(viewModel: viewModel, state: viewModel.value, child: child!),\n      child: widget.child,\n    );\n  }}\n}}",
+        "class {scope_class} extends StatefulWidget {{\n  const {scope_class}({{\n    super.key,\n    required this.args,\n    required this.create,\n    required this.child,\n  }}) : value = null;\n\n  const {scope_class}.value({{\n    super.key,\n    required {view_model_class} this.value,\n    required this.child,\n  }}) : args = null,\n       create = null;\n\n  final {args_type} Function(BuildContext context)? args;\n  final {view_model_class} Function(BuildContext context, {args_type} args)? create;\n  final {view_model_class}? value;\n  final Widget child;\n\n  static {view_model_class} read(BuildContext context) {{\n    final scope = context\n        .getElementForInheritedWidgetOfExactType<{inherited_class}>()\n        ?.widget as {inherited_class}?;\n    if (scope == null) throw StateError('No {scope_class} found in context.');\n    return scope.viewModel;\n  }}\n\n  static {view_model_class} of(BuildContext context, {{Object? aspect}}) {{\n    final scope = context.dependOnInheritedWidgetOfExactType<{inherited_class}>(\n      aspect: aspect,\n    );\n    if (scope == null) throw StateError('No {scope_class} found in context.');\n    return scope.viewModel;\n  }}\n\n  @override\n  State<{scope_class}> createState() => _{scope_class}State();\n}}\n\nclass _{scope_class}State extends State<{scope_class}> {{\n  @override\n  Widget build(BuildContext context) {{\n    final external = widget.value;\n    return external == null\n        ? ViewModelOwner<{view_model_class}, {args_type}>(\n            debugName: '{scope_class}',\n            args: widget.args!,\n            create: widget.create!,\n            builder: _buildInherited,\n          )\n        : ViewModelOwner<{view_model_class}, {args_type}>.value(\n            debugName: '{scope_class}.value',\n            value: external,\n            builder: _buildInherited,\n          );\n  }}\n\n  Widget _buildInherited(BuildContext context, {view_model_class} viewModel) {{\n    return ListenableBuilder(\n      listenable: viewModel,\n      builder: (context, child) => {inherited_class}(\n        viewModel: viewModel,\n        state: viewModel.value,\n        child: child!,\n      ),\n      child: widget.child,\n    );\n  }}\n}}",
     )
 }
 
@@ -228,7 +230,7 @@ fn render_inherited(
         let mut checks = String::new();
         for field in state_fields {
             checks.push_str(&format!(
-                "      if (aspect == {aspect_class}.{name} && state.{name} != oldWidget.state.{name}) return true;\n",
+                "      if (aspect == {aspect_class}.{name} &&\n          state.{name} != oldWidget.state.{name}) {{\n        return true;\n      }}\n",
                 name = field.name,
             ));
         }

@@ -115,14 +115,14 @@ fn render_endpoint_method(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) ->
 
     if let Some(options_name) = option_param(endpoint).map(|param| param.name.as_str()) {
         out.push_str(&format!(
-            "    final _options = {0}?.copyWith(method: '{1}', headers: _headers, extra: _extra, contentType: {2}) ?? Options(method: '{1}', headers: _headers, extra: _extra, contentType: {2});\n",
+            "    final _options =\n        {0}?.copyWith(\n          method: '{1}',\n          headers: _headers,\n          extra: _extra,\n          contentType: {2},\n        ) ??\n        Options(\n          method: '{1}',\n          headers: _headers,\n          extra: _extra,\n          contentType: {2},\n        );\n",
             options_name,
             endpoint.verb.as_str(),
             content_type
         ));
     } else {
         out.push_str(&format!(
-            "    final _options = Options(method: '{}', headers: _headers, extra: _extra, contentType: {});\n",
+            "    final _options = Options(\n      method: '{}',\n      headers: _headers,\n      extra: _extra,\n      contentType: {},\n    );\n",
             endpoint.verb.as_str(),
             content_type
         ));
@@ -187,10 +187,10 @@ fn render_endpoint_method(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) ->
     ));
     out.push_str("            )\n");
     out.push_str("            .copyWith(\n");
-    out.push_str(&format!(
-        "              baseUrl: _combineBaseUrls(_dio.options.baseUrl, {}),\n",
-        base_url_expr
-    ));
+    out.push_str("              baseUrl: _combineBaseUrls(\n");
+    out.push_str("                _dio.options.baseUrl,\n");
+    out.push_str(&format!("                {},\n", base_url_expr));
+    out.push_str("              ),\n");
     out.push_str("            ),\n");
     out.push_str("      ),\n");
     out.push_str("    );\n");

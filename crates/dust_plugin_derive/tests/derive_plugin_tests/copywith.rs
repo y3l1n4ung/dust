@@ -124,7 +124,9 @@ fn copywith_copies_collection_fields_without_aliasing() {
     (groups ?? self.groups).map((item_0) => List<String>.of(item_0)),
   );
   final nextItems = List<String>.of(items ?? self.items);
-  final nextTagsSource = identical(tags, _undefined) ? self.tags : tags as Set<String>?;
+  final nextTagsSource = identical(tags, _undefined)
+      ? self.tags
+      : tags as Set<String>?;
   final nextTags = nextTagsSource == null ? null : Set<String>.of(nextTagsSource);
   final nextMetrics = Map<String, List<int>>.fromEntries(
     (metrics ?? self.metrics).entries.map(

@@ -3,6 +3,7 @@ import 'package:derive_serde_annotation/derive_serde_annotation.dart';
 
 import '../../features/auth/models/user.dart';
 import '../../features/products/models/product.dart';
+import '../models/store_cart.dart';
 
 part 'shopping_api.g.dart';
 
@@ -112,11 +113,36 @@ abstract interface class ShoppingApi {
   @GET('/products')
   Future<List<Product>> getProducts();
 
+  @GET('/products')
+  Future<List<Product>> getProductsPage({
+    @Query('limit') int? limit,
+    @Query('sort') String? sort,
+  });
+
   @GET('/products/{id}')
   Future<Product> getProduct(@Path() int id);
 
+  @GET('/products/category/{category}')
+  Future<List<Product>> getProductsByCategory(
+    @Path() String category, {
+    @Query('limit') int? limit,
+    @Query('sort') String? sort,
+  });
+
   @GET('/products/categories')
   Future<List<String>> getCategories();
+
+  @GET('/carts')
+  Future<List<StoreCart>> getCarts({
+    @Query('limit') int? limit,
+    @Query('sort') String? sort,
+  });
+
+  @GET('/carts/{id}')
+  Future<StoreCart> getCart(@Path() int id);
+
+  @GET('/carts/user/{userId}')
+  Future<List<StoreCart>> getUserCarts(@Path() int userId);
 
   @POST('/auth/login')
   @Headers({'content-type': 'application/json'})

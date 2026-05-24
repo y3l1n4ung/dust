@@ -31,14 +31,18 @@ fn emits_dio_client_with_inherited_isolate_decode() {
     let helpers = contribution.top_level_functions.join("\n");
 
     assert!(emitted.contains("final class _$Api implements Api"));
-    assert!(emitted.contains("Options(method: 'GET'"));
+    assert!(emitted.contains(
+        "final _options = Options(
+      method: 'GET',"
+    ));
     assert!(emitted.contains("_dio.fetch<Map<String, dynamic>>"));
     assert!(emitted.contains("Uri.encodeComponent(id.toString())"));
-    assert!(
-        emitted.contains(
-            "_combineBaseUrls(_dio.options.baseUrl, _baseUrl ?? 'https://api.example.com')"
-        )
-    );
+    assert!(emitted.contains(
+        "_combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://api.example.com',
+              )"
+    ));
     assert!(emitted.contains("await Isolate.run(() => _$Api_getUser_Decode(_result.data!))"));
     assert!(helpers.contains("User _$Api_getUser_Decode(dynamic json)"));
     assert!(helpers.contains("User.fromJson(json as Map<String, dynamic>)"));
@@ -79,7 +83,12 @@ fn escapes_generated_single_quoted_literals() {
     final _extra = <String, dynamic>{};
     _headers['x-\'\$'] = 'tok\'\$';
     final Object? _data = null;
-    final _options = Options(method: 'GET', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     await _dio.fetch<void>(
       _setStreamType<void>(
         _options
@@ -93,7 +102,10 @@ fn escapes_generated_single_quoted_literals() {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl ?? 'https://api.example.com/\$tenant'),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://api.example.com/\$tenant',
+              ),
             ),
       ),
     );

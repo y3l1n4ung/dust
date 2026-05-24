@@ -75,9 +75,7 @@ fn handles_nested_deserializable_models() {
 User _$UserFromJson(Map<String, Object?> json) {
   final profileValue = _$ProfileFromJson(_jsonAsMap(json['profile'], 'profile'));
 
-  return User(
-    profile: profileValue,
-  );
+  return User(profile: profileValue);
 }"#
     );
 }

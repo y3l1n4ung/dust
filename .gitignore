@@ -24,3 +24,4 @@ examples/stress_project/lib/generated_models/
 *.log
 .env
 coverage/
+.pr/

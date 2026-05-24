@@ -86,6 +86,10 @@ pub(crate) fn render_constructor_call(
     if args.is_empty() {
         return Some(format!("{ctor}()"));
     }
+    let inline = format!("{ctor}({})", args.join(", "));
+    if inline.len() <= 80 {
+        return Some(inline);
+    }
 
     let rendered_args = args
         .into_iter()

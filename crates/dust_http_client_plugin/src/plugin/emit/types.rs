@@ -44,7 +44,7 @@ pub(super) fn render_body_value(param: &MethodParamIr) -> String {
 pub(super) fn render_decode_expr(data_expr: &str, ty: &TypeIr) -> String {
     if ty.is_nullable() {
         format!(
-            "{0} == null ? null : {1}",
+            "{0} == null\n    ? null\n    : {1}",
             data_expr,
             render_decode_expr_nonnull(data_expr, ty)
         )
@@ -68,7 +68,7 @@ pub(super) fn render_decode_expr_nonnull(data_expr: &str, ty: &TypeIr) -> String
         TypeIr::Named { .. } if is_response_body_type(ty) => data_expr.to_owned(),
         TypeIr::Named { args, .. } if type_name_is(ty, "List") && args.len() == 1 => {
             format!(
-                "({0} as List<dynamic>).map((item) => {1}).toList()",
+                "({0} as List<dynamic>)\n    .map((item) => {1})\n    .toList()",
                 data_expr,
                 render_decode_expr("item", &args[0])
             )

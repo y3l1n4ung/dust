@@ -97,7 +97,9 @@ mixin _$User {
     final self = this as User;
     return User(
       id ?? self.id,
-      identical(age, _undefined) ? self.age : age as int?,
+      identical(age, _undefined)
+          ? self.age
+          : age as int?,
     );
   }
 }
@@ -194,10 +196,20 @@ fn build_writes_real_serde_outputs() {
             r#"part of 'profile.dart';
 
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-Never _jsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) => value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_jsonAs<String>(value, key, 'String')) ?? _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) => _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+Never _jsonTypeError(Object? value, String key, String expected) =>
+    throw ArgumentError.value(value, key, 'expected $expected');
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
+  Object? value,
+  String key,
+  String expected,
+  T? Function(String value) parse,
+) =>
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
 Map<String, Object?> _jsonAsMap(Object? value, String key) {
   final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
@@ -207,9 +219,13 @@ Map<String, Object?> _jsonAsMap(Object? value, String key) {
     _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _jsonAsDateTime(Object? value, String key) => _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) => _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) => _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
 T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
@@ -229,7 +245,9 @@ Map<String, Object?> _$ProfileToJson(Profile instance) {
   return <String, Object?>{
     'id': instance.id,
     'display_name': instance.displayName,
-    'tags': instance.tags.map((item) => item).toList(),
+    'tags': instance.tags
+        .map((item) => item)
+        .toList(),
   };
 }
 // factory Profile.fromJson(Map<String, Object?> json) => _$ProfileFromJson(json);
@@ -242,18 +260,24 @@ Profile _$ProfileFromJson(Map<String, Object?> json) {
   }
 
   final idValue = _jsonAs<String>(json['id'], 'id', 'String');
-  final rawDisplayNameKey = json.containsKey('display_name') ? 'display_name' : json.containsKey('displayName') ? 'displayName' : 'display_name';
-  final rawDisplayName = json.containsKey('display_name') ? json['display_name'] : json.containsKey('displayName') ? json['displayName'] : null;
+  var rawDisplayNameKey = 'display_name';
+  Object? rawDisplayName;
+  if (json.containsKey('display_name')) {
+    rawDisplayName = json['display_name'];
+  } else if (json.containsKey('displayName')) {
+    rawDisplayNameKey = 'displayName';
+    rawDisplayName = json['displayName'];
+  }
   final displayNameValue = rawDisplayName == null
-                           ? null
-                           : _jsonAs<String>(rawDisplayName, rawDisplayNameKey, 'String');
-  final tagsValue = json.containsKey('tags') ? _jsonAsList(json['tags'], 'tags').map((item) => _jsonAs<String>(item, 'tags', 'String')).toList() : const ['guest'];
+      ? null
+      : _jsonAs<String>(rawDisplayName, rawDisplayNameKey, 'String');
+  final tagsValue = json.containsKey('tags')
+      ? _jsonAsList(json['tags'], 'tags')
+      .map((item) => _jsonAs<String>(item, 'tags', 'String'))
+      .toList()
+      : const ['guest'];
 
-  return Profile(
-    id: idValue,
-    displayName: displayNameValue,
-    tags: tagsValue,
-  );
+  return Profile(id: idValue, displayName: displayNameValue, tags: tagsValue);
 }
 "#
         )
@@ -264,10 +288,20 @@ Profile _$ProfileFromJson(Map<String, Object?> json) {
             r#"part of 'account.dart';
 
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-Never _jsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) => value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_jsonAs<String>(value, key, 'String')) ?? _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) => _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+Never _jsonTypeError(Object? value, String key, String expected) =>
+    throw ArgumentError.value(value, key, 'expected $expected');
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
+  Object? value,
+  String key,
+  String expected,
+  T? Function(String value) parse,
+) =>
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
 Map<String, Object?> _jsonAsMap(Object? value, String key) {
   final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
@@ -277,9 +311,13 @@ Map<String, Object?> _jsonAsMap(Object? value, String key) {
     _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _jsonAsDateTime(Object? value, String key) => _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) => _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) => _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
 T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
@@ -298,21 +336,33 @@ mixin _$Account {
 Map<String, Object?> _$AccountToJson(Account instance) {
   return <String, Object?>{
     'profile': instance.profile.toJson(),
-    'metrics': instance.metrics.map((key, value) => MapEntry(key, value.map((item) => item).toList())),
+    'metrics': instance.metrics
+        .map(
+          (key, value) => MapEntry(
+            key,
+            value
+                .map((item) => item)
+                .toList(),
+          ),
+        ),
     'archived': instance.archived,
   };
 }
 // factory Account.fromJson(Map<String, Object?> json) => _$AccountFromJson(json);
 Account _$AccountFromJson(Map<String, Object?> json) {
   final profileValue = Profile.fromJson(_jsonAsMap(json['profile'], 'profile'));
-  final metricsValue = _jsonAsMap(json['metrics'], 'metrics').map((mapKey, value) => MapEntry(mapKey, _jsonAsList(value, 'metrics').map((item) => _jsonAs<int>(item, 'metrics', 'int')).toList()));
+  final metricsValue = _jsonAsMap(json['metrics'], 'metrics')
+      .map(
+        (mapKey, value) => MapEntry(
+          mapKey,
+          _jsonAsList(value, 'metrics')
+              .map((item) => _jsonAs<int>(item, 'metrics', 'int'))
+              .toList(),
+        ),
+      );
   final archivedValue = _jsonAs<bool>(json['archived'], 'archived', 'bool');
 
-  return Account(
-    profile: profileValue,
-    metrics: metricsValue,
-    archived: archivedValue,
-  );
+  return Account(profile: profileValue, metrics: metricsValue, archived: archivedValue);
 }
 "#
         )
@@ -358,10 +408,20 @@ fn build_writes_custom_serde_codec_outputs() {
         generated_output(
             r#"part of 'audit.dart';
 
-Never _jsonTypeError(Object? value, String key, String expected) => throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) => value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(Object? value, String key, String expected, T? Function(String value) parse) => parse(_jsonAs<String>(value, key, 'String')) ?? _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) => _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
+Never _jsonTypeError(Object? value, String key, String expected) =>
+    throw ArgumentError.value(value, key, 'expected $expected');
+T _jsonAs<T>(Object? value, String key, String expected) =>
+    value is T ? value : _jsonTypeError(value, key, expected);
+T _jsonParseString<T>(
+  Object? value,
+  String key,
+  String expected,
+  T? Function(String value) parse,
+) =>
+    parse(_jsonAs<String>(value, key, 'String')) ??
+    _jsonTypeError(value, key, expected);
+List<Object?> _jsonAsList(Object? value, String key) =>
+    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
 
 Map<String, Object?> _jsonAsMap(Object? value, String key) {
   final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
@@ -371,9 +431,13 @@ Map<String, Object?> _jsonAsMap(Object? value, String key) {
     _jsonTypeError(value, key, 'Map<String, Object?>');
   }
 }
-DateTime _jsonAsDateTime(Object? value, String key) => _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) => _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) => _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
+
+DateTime _jsonAsDateTime(Object? value, String key) =>
+    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
+Uri _jsonAsUri(Object? value, String key) =>
+    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
+BigInt _jsonAsBigInt(Object? value, String key) =>
+    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
 T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
   if (value == null) {
     throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
@@ -393,21 +457,22 @@ Map<String, Object?> _$AuditToJson(Audit instance) {
   return <String, Object?>{
     'createdAt': unixEpochDateTimeCodec.serialize(instance.createdAt),
     'updatedAt': instance.updatedAt == null
-                 ? null
-                 : unixEpochDateTimeCodec.serialize(instance.updatedAt!),
+        ? null
+        : unixEpochDateTimeCodec.serialize(instance.updatedAt!),
   };
 }
 // factory Audit.fromJson(Map<String, Object?> json) => _$AuditFromJson(json);
 Audit _$AuditFromJson(Map<String, Object?> json) {
-  final createdAtValue = _jsonDecodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['createdAt'], 'createdAt');
-  final updatedAtValue = json['updatedAt'] == null
-                         ? null
-                         : _jsonDecodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['updatedAt'], 'updatedAt');
-
-  return Audit(
-    createdAt: createdAtValue,
-    updatedAt: updatedAtValue,
+  final createdAtValue = _jsonDecodeWithCodec<DateTime>(
+    unixEpochDateTimeCodec,
+    json['createdAt'],
+    'createdAt',
   );
+  final updatedAtValue = json['updatedAt'] == null
+      ? null
+      : _jsonDecodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['updatedAt'], 'updatedAt');
+
+  return Audit(createdAt: createdAtValue, updatedAt: updatedAtValue);
 }
 "#
         )

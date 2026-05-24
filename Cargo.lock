@@ -314,6 +314,7 @@ dependencies = [
  "dust_parser_dart",
  "dust_plugin_api",
  "dust_text",
+ "heck",
  "serde",
  "serde_json",
 ]

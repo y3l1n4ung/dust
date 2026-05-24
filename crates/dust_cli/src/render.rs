@@ -85,7 +85,7 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
 }
 
 fn append_generation_summary(lines: &mut Vec<String>, label: &str, result: &CommandResult) {
-    let generated = result
+    let written = result
         .build_artifacts
         .iter()
         .filter(|artifact| artifact.written)
@@ -100,10 +100,11 @@ fn append_generation_summary(lines: &mut Vec<String>, label: &str, result: &Comm
         .iter()
         .filter(|artifact| !artifact.written && !artifact.routed && artifact.cached)
         .count();
+    let generated = written + routed;
     let total = result.build_artifacts.len();
-    let skipped = total.saturating_sub(generated + routed + cached);
+    let skipped = total.saturating_sub(generated + cached);
     lines.push(format!(
-        "{label}  scanned: {total}  generated: {generated}  routed: {routed}  cached: {cached}  skipped: {skipped}  time: {}ms",
+        "{label}  scanned: {total}  generated: {generated}  cached: {cached}  skipped: {skipped}  time: {}ms",
         result.elapsed_ms
     ));
 }
@@ -264,9 +265,9 @@ mod tests {
             },
         );
 
-        assert!(rendered.contains(
-            "watch  scanned: 0  generated: 0  routed: 0  cached: 0  skipped: 0  time: 22ms"
-        ));
+        assert!(
+            rendered.contains("watch  scanned: 0  generated: 0  cached: 0  skipped: 0  time: 22ms")
+        );
         assert!(rendered.contains("watch  cycles: 2  rebuilds: 1"));
         assert!(rendered.contains("diagnostics  errors: 0  warnings: 1  notes: 0"));
         assert!(rendered.contains("warning: something happened"));

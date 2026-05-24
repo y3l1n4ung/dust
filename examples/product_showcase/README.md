@@ -12,7 +12,7 @@ Read the canonical guides in:
 ## What This Package Covers
 
 - derive generation such as `ToString()`, `Eq()`, and `CopyWith()`
-- serde generation such as `Serialize()`, `Deserialize()`, rename rules, defaults, aliases, and codecs
+- serde generation such as `Serialize()`, `Deserialize()`, enum values, rename rules, defaults, aliases, and codecs
 - generated Dio HTTP clients
 - generated request-mapping tests under `test/generated/..._test.dart`
 - a real fake-online API example against `https://jsonplaceholder.typicode.com`
@@ -49,6 +49,7 @@ DUST_RUN_ONLINE_HTTP_TESTS=1 dart test test/json_placeholder_api_test.dart
 
 - [lib/models/price.dart](lib/models/price.dart)
 - [lib/models/json_profile.dart](lib/models/json_profile.dart)
+- [lib/models/json_enum_bundle.dart](lib/models/json_enum_bundle.dart)
 - [lib/models/json_codec_bundle.dart](lib/models/json_codec_bundle.dart)
 - [lib/api/json_placeholder_api.dart](lib/api/json_placeholder_api.dart)
 - [lib/api/todo_api.dart](lib/api/todo_api.dart)

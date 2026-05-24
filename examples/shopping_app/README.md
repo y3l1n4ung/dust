@@ -1,101 +1,82 @@
-# Ease Shopping App
+# Dust Shopping App
 
-A complete e-commerce app demonstrating real-world Ease state management.
+A Flutter commerce showcase for Dust code generation: router, state, HTTP client, and serde.
 
 ## Features
 
-- User authentication with persistence
-- Product catalog from FakeStore API
-- Shopping cart with quantity management
-- Checkout flow
-- Profile management
+- FakeStore-backed product catalog, categories, auth, users, and remote cart demo.
+- Generated app-level dependency scope with `AppViewModelScope`.
+- Product discovery with search, category filtering, and sorting.
+- Local wishlist with serde persistence.
+- Product detail reviews and recommendations from deterministic fake feature responses.
+- Checkout quote preview with fake coupon support (`DUST10`, `SHIPFREE`).
+- Order tracking route with fake timeline events.
+- Support chat over a local socket-style stream with fake responses so tests stay deterministic.
+- Path URL strategy on web, so deep links use clean paths like `/product/7`.
 
-## Running the App
+## Run
 
 ```bash
-cd apps/shopping_app
+cd examples/shopping_app
 flutter pub get
-dart run build_runner build
+cd ../..
+cargo run -p dust_cli -- build --root examples/shopping_app --fail-fast
+cd examples/shopping_app
 flutter run
 ```
 
-## Architecture
+## Verify
 
-### Feature-based Structure
-
-```
-lib/
-├── core/
-│   ├── logging/logger.dart       # App-wide logging
-│   ├── services/api_service.dart # FakeStore API client
-│   ├── services/storage_service.dart
-│   └── router/app_router.dart
-├── features/
-│   ├── auth/
-│   │   ├── models/user.dart, auth_state.dart
-│   │   ├── view_models/auth_view_model.dart
-│   │   └── views/login_screen.dart, register_screen.dart
-│   ├── products/
-│   │   ├── models/product.dart, products_state.dart
-│   │   ├── view_models/products_view_model.dart
-│   │   └── views/products_screen.dart
-│   ├── cart/
-│   │   ├── models/cart_item.dart, cart_state.dart
-│   │   ├── view_models/cart_view_model.dart
-│   │   └── views/cart_screen.dart
-│   ├── checkout/
-│   └── profile/
-└── shared/
+```bash
+cd examples/shopping_app
+flutter analyze
+flutter test
+flutter build web
 ```
 
-### State Management Patterns
+## Codegen Contract
 
-**Persisted Auth State**
-```dart
-@Ease()
-class AuthViewModel extends StateNotifier<AuthState> {
-  AuthViewModel() : super(_loadInitialState());
+- `lib/route.dart` owns `@Router`; `lib/route.g.dart` is generated.
+- Pages use `@Route` directly on normal Flutter widgets.
+- ViewModels use `@ViewModel` with typed args, for example `AppViewModelArgs(repository, storage)`.
+- Data models use `@Derive` for copy/equality/serde output.
+- `ShoppingApi` uses Dust HTTP annotations and only declares real FakeStore endpoints.
 
-  static AuthState _loadInitialState() {
-    final token = StorageService.getString(StorageService.authTokenKey);
-    if (token != null) {
-      return AuthState(token: token, status: AuthStatus.authenticated);
-    }
-    return const AuthState(status: AuthStatus.unauthenticated);
-  }
-}
-```
+## API Split
 
-**Cart with Logging**
-```dart
-@Ease()
-class CartViewModel extends StateNotifier<CartState> {
-  void addToCart(Product product) {
-    logger.userAction('add_to_cart', {'productId': product.id});
-    state = state.copyWith(items: [...state.items, CartItem(product: product)]);
-    logger.info('CART', 'Cart now has ${state.itemCount} items');
-  }
-}
-```
+Existing behavior stays live FakeStore by default through `LiveShoppingRepository`.
 
-**Computed Properties**
-```dart
-class CartState {
-  final List<CartItem> items;
+FakeStore supports:
 
-  int get itemCount => items.fold(0, (sum, item) => sum + item.quantity);
-  double get totalPrice => items.fold(0.0, (sum, item) => sum + item.totalPrice);
-  bool get isEmpty => items.isEmpty;
-}
-```
+- `/products`
+- `/products/{id}`
+- `/products/category/{category}`
+- `/products/categories`
+- `/carts`
+- `/carts/{id}`
+- `/carts/user/{userId}`
+- `/auth/login`
+- `/users/{id}`
+- `/users`
 
-## API Integration
+Fake local responses support showcase-only features that FakeStore does not provide:
 
-Uses [FakeStore API](https://fakestoreapi.com/) for:
-- Product listing
-- User authentication
-- User registration
+- reviews
+- wishlist persistence
+- checkout quote and coupons
+- order tracking
+- support chat
 
-## License
+## Main Routes
 
-MIT
+- `/` products
+- `/cart`
+- `/checkout`
+- `/wishlist`
+- `/demo-carts`
+- `/orders`
+- `/orders/:orderId`
+- `/product/:productId`
+- `/support/chat`
+
+The Flutter app calls `usePathUrlStrategy()` at startup. Configure static web hosting to serve `index.html` for unknown paths before deploying these deep links outside `flutter run`.

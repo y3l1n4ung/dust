@@ -39,7 +39,7 @@ pub(crate) fn encode_expr(
             serializable_classes,
             serializable_enums,
         );
-        return format!("{expr} == null ? null : {encoded}");
+        return format!("{expr} == null\n    ? null\n    : {encoded}");
     }
 
     encode_non_nullable_expr(expr, ty, serializable_classes, serializable_enums)
@@ -84,7 +84,7 @@ pub(crate) fn decode_expr(
             deserializable_classes,
             deserializable_enums,
         );
-        return format!("{raw} == null\n? null\n: {decoded}");
+        return format!("{raw} == null\n    ? null\n    : {decoded}");
     }
 
     decode_non_nullable_expr(raw, key, ty, deserializable_classes, deserializable_enums)
@@ -110,17 +110,25 @@ fn encode_non_nullable_expr(
             format!("{expr}.toString()")
         }
         TypeIr::Named { name, args, .. } if name.as_ref() == "List" => format!(
-            "{expr}.map((item) => {}).toList()",
+            "{expr}\n    .map((item) => {})\n    .toList()",
             encode_expr("item", &args[0], serializable_classes, serializable_enums)
         ),
         TypeIr::Named { name, args, .. } if name.as_ref() == "Set" => format!(
-            "{expr}.map((item) => {}).toList()",
+            "{expr}\n    .map((item) => {})\n    .toList()",
             encode_expr("item", &args[0], serializable_classes, serializable_enums)
         ),
-        TypeIr::Named { name, args, .. } if name.as_ref() == "Map" => format!(
-            "{expr}.map((key, value) => MapEntry(key, {}))",
-            encode_expr("value", &args[1], serializable_classes, serializable_enums)
-        ),
+        TypeIr::Named { name, args, .. } if name.as_ref() == "Map" => {
+            let value_expr =
+                encode_expr("value", &args[1], serializable_classes, serializable_enums);
+            if value_expr.contains('\n') {
+                format!(
+                    "{expr}\n    .map(\n      (key, value) => MapEntry(\n        key,\n{},\n      ),\n    )",
+                    indent_expr(&value_expr, 8)
+                )
+            } else {
+                format!("{expr}\n    .map((key, value) => MapEntry(key, {value_expr}))")
+            }
+        }
         TypeIr::Named { name, .. } => {
             if serializable_classes.contains(name.as_ref())
                 || serializable_enums.contains(name.as_ref())
@@ -161,7 +169,7 @@ fn decode_non_nullable_expr(
             format!("_jsonAsBigInt({raw}, {key})")
         }
         TypeIr::Named { name, args, .. } if name.as_ref() == "List" => format!(
-            "_jsonAsList({raw}, {key}).map((item) => {}).toList()",
+            "_jsonAsList({raw}, {key})\n    .map((item) => {})\n    .toList()",
             decode_expr(
                 "item",
                 key,
@@ -171,7 +179,7 @@ fn decode_non_nullable_expr(
             )
         ),
         TypeIr::Named { name, args, .. } if name.as_ref() == "Set" => format!(
-            "_jsonAsList({raw}, {key}).map((item) => {}).toSet()",
+            "_jsonAsList({raw}, {key})\n    .map((item) => {})\n    .toSet()",
             decode_expr(
                 "item",
                 key,
@@ -180,16 +188,25 @@ fn decode_non_nullable_expr(
                 deserializable_enums
             )
         ),
-        TypeIr::Named { name, args, .. } if name.as_ref() == "Map" => format!(
-            "_jsonAsMap({raw}, {key}).map((mapKey, value) => MapEntry(mapKey, {}))",
-            decode_expr(
+        TypeIr::Named { name, args, .. } if name.as_ref() == "Map" => {
+            let value_expr = decode_expr(
                 "value",
                 key,
                 &args[1],
                 deserializable_classes,
-                deserializable_enums
-            )
-        ),
+                deserializable_enums,
+            );
+            if value_expr.contains('\n') {
+                format!(
+                    "_jsonAsMap({raw}, {key})\n    .map(\n      (mapKey, value) => MapEntry(\n        mapKey,\n{},\n      ),\n    )",
+                    indent_expr(&value_expr, 8)
+                )
+            } else {
+                format!(
+                    "_jsonAsMap({raw}, {key})\n    .map((mapKey, value) => MapEntry(mapKey, {value_expr}))"
+                )
+            }
+        }
         TypeIr::Named { name, .. } => {
             if deserializable_classes.contains(name.as_ref()) {
                 format!("_${name}FromJson(_jsonAsMap({raw}, {key}))")
@@ -202,11 +219,19 @@ fn decode_non_nullable_expr(
     }
 }
 
+fn indent_expr(expr: &str, spaces: usize) -> String {
+    let pad = " ".repeat(spaces);
+    expr.lines()
+        .map(|line| format!("{pad}{line}"))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 fn encode_with_codec(expr: &str, ty: &TypeIr, codec: &str) -> String {
     let codec = access_receiver(codec);
     if ty.is_nullable() {
         let encoded = format!("{codec}.serialize({expr}!)");
-        return format!("{expr} == null\n? null\n: {encoded}");
+        return format!("{expr} == null\n    ? null\n    : {encoded}");
     }
 
     format!("{codec}.serialize({expr})")
@@ -217,7 +242,7 @@ fn decode_with_codec(raw: &str, key: &str, ty: &TypeIr, codec: &str) -> String {
     let value_ty = OBJECT_NULLABLE_TYPES.render(&non_nullable(ty));
     if ty.is_nullable() {
         let decoded = format!("_jsonDecodeWithCodec<{value_ty}>({codec}, {raw}, {key})");
-        return format!("{raw} == null\n? null\n: {decoded}");
+        return format!("{raw} == null\n    ? null\n    : {decoded}");
     }
 
     format!("_jsonDecodeWithCodec<{value_ty}>({codec}, {raw}, {key})")

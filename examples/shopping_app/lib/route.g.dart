@@ -14,13 +14,24 @@ import 'package:shopping_app/features/auth/views/register_screen.dart';
 import 'package:shopping_app/features/cart/models/cart_state.dart';
 import 'package:shopping_app/features/cart/view_models/cart_view_model.dart';
 import 'package:shopping_app/features/cart/views/cart_screen.dart';
+import 'package:shopping_app/features/checkout/models/checkout_quote.dart';
 import 'package:shopping_app/features/checkout/models/checkout_state.dart';
 import 'package:shopping_app/features/checkout/view_models/checkout_view_model.dart';
 import 'package:shopping_app/features/checkout/views/checkout_screen.dart';
 import 'package:shopping_app/features/checkout/views/order_confirmation_screen.dart';
+import 'package:shopping_app/features/demo_cart/models/demo_cart_state.dart';
+import 'package:shopping_app/features/demo_cart/view_models/demo_cart_api_view_model.dart';
+import 'package:shopping_app/features/demo_cart/views/demo_carts_screen.dart';
 import 'package:shopping_app/features/orders/models/order.dart';
+import 'package:shopping_app/features/orders/models/order_tracking.dart';
+import 'package:shopping_app/features/orders/models/order_tracking_state.dart';
+import 'package:shopping_app/features/orders/view_models/order_tracking_view_model.dart';
 import 'package:shopping_app/features/orders/view_models/orders_view_model.dart';
+import 'package:shopping_app/features/orders/views/order_detail_screen.dart';
 import 'package:shopping_app/features/orders/views/orders_screen.dart';
+import 'package:shopping_app/features/product_detail/models/product_detail_state.dart';
+import 'package:shopping_app/features/product_detail/models/product_review.dart';
+import 'package:shopping_app/features/product_detail/view_models/product_detail_view_model.dart';
 import 'package:shopping_app/features/product_detail/views/product_detail_screen.dart';
 import 'package:shopping_app/features/products/models/product.dart';
 import 'package:shopping_app/features/products/models/products_state.dart';
@@ -28,6 +39,13 @@ import 'package:shopping_app/features/products/view_models/products_view_model.d
 import 'package:shopping_app/features/products/views/products_screen.dart';
 import 'package:shopping_app/features/profile/views/profile_screen.dart';
 import 'package:shopping_app/features/shared/not_found_screen.dart';
+import 'package:shopping_app/features/support/models/chat_message.dart';
+import 'package:shopping_app/features/support/models/chat_state.dart';
+import 'package:shopping_app/features/support/view_models/shopping_chat_view_model.dart';
+import 'package:shopping_app/features/support/views/support_chat_screen.dart';
+import 'package:shopping_app/features/wishlist/models/wishlist_item.dart';
+import 'package:shopping_app/features/wishlist/view_models/wishlist_view_model.dart';
+import 'package:shopping_app/features/wishlist/views/wishlist_screen.dart';
 import 'package:shopping_app/shared/animations/stagger_animation.dart';
 import 'package:shopping_app/shared/widgets/bottom_sheets/product_quick_view.dart';
 import 'package:shopping_app/shared/widgets/cards/animated_card.dart';
@@ -46,6 +64,7 @@ abstract class $AppRouter extends DustRouterBase<AppRoutePath> {
       requiresAuth: routeRequiresAuth,
       resolveGuards: (route) => routeGuards(route, this),
       buildPage: buildAppRoutePage,
+      restoreStack: restoreAppRouteStack,
     );
     final delegate = DustRouterDelegate<AppRoutePath>(runtimeConfig);
     return RouterConfig<AppRoutePath>(
@@ -100,6 +119,12 @@ const List<GeneratedRoute> $appRoutes = [
     fullscreenDialog: true,
   ),
   GeneratedRoute(
+    '/demo-carts',
+    page: DemoCartsScreen,
+    name: 'demoCarts',
+    guards: [],
+  ),
+  GeneratedRoute(
     '/login',
     page: LoginScreen,
     name: 'login',
@@ -118,7 +143,18 @@ const List<GeneratedRoute> $appRoutes = [
       ),
     ],
   ),
-  GeneratedRoute('/orders', page: OrdersScreen, name: 'orders'),
+  GeneratedRoute(
+    '/orders',
+    page: OrdersScreen,
+    name: 'orders',
+    routes: [
+      GeneratedRoute(
+        ':orderId',
+        page: OrderDetailScreen,
+        name: 'orderDetail',
+      ),
+    ],
+  ),
   GeneratedRoute(
     '/product',
     routes: [
@@ -131,13 +167,34 @@ const List<GeneratedRoute> $appRoutes = [
       ),
     ],
   ),
-  GeneratedRoute('/profile', page: ProfileScreen, name: 'profile'),
+  GeneratedRoute(
+    '/profile',
+    page: ProfileScreen,
+    name: 'profile',
+  ),
   GeneratedRoute(
     '/register',
     page: RegisterScreen,
     name: 'register',
     guards: [],
     transition: CupertinoPageTransitionsBuilder(),
+  ),
+  GeneratedRoute(
+    '/support',
+    routes: [
+      GeneratedRoute(
+        'chat',
+        page: SupportChatScreen,
+        name: 'supportChat',
+        guards: [],
+      ),
+    ],
+  ),
+  GeneratedRoute(
+    '/wishlist',
+    page: WishlistScreen,
+    name: 'wishlist',
+    guards: [],
   ),
 ];
 
@@ -200,6 +257,18 @@ final class CheckoutRoute extends AppRoutePath {
   }
 }
 
+final class DemoCartsRoute extends AppRoutePath {
+  const DemoCartsRoute();
+
+  @override
+  String get location {
+    return _routePath(['demo-carts']);
+  }
+
+  @override
+  bool get requiresAuth => false;
+}
+
 final class LoginRoute extends AppRoutePath {
   const LoginRoute({this.redirectPath});
 
@@ -241,6 +310,17 @@ final class OrdersRoute extends AppRoutePath {
   }
 }
 
+final class OrderDetailRoute extends AppRoutePath {
+  const OrderDetailRoute({required this.orderId});
+
+  final String orderId;
+
+  @override
+  String get location {
+    return _routePath(['orders', orderId]);
+  }
+}
+
 final class ProductDetailRoute extends AppRoutePath {
   const ProductDetailRoute({required this.productId});
 
@@ -275,9 +355,31 @@ final class RegisterRoute extends AppRoutePath {
     if (redirectPath != null) {
       query['redirectPath'] = redirectPath!;
     }
-    return _routePath([
-      'register',
-    ], queryParameters: query.isEmpty ? null : query);
+    return _routePath(['register'], queryParameters: query.isEmpty ? null : query);
+  }
+
+  @override
+  bool get requiresAuth => false;
+}
+
+final class SupportChatRoute extends AppRoutePath {
+  const SupportChatRoute();
+
+  @override
+  String get location {
+    return _routePath(['support', 'chat']);
+  }
+
+  @override
+  bool get requiresAuth => false;
+}
+
+final class WishlistRoute extends AppRoutePath {
+  const WishlistRoute();
+
+  @override
+  String get location {
+    return _routePath(['wishlist']);
   }
 
   @override
@@ -329,6 +431,9 @@ final class AppRoutesNavigation {
   RouteNavigation<AppRoutePath> checkout() =>
       RouteNavigation(_router, CheckoutRoute());
 
+  RouteNavigation<AppRoutePath> demoCarts() =>
+      RouteNavigation(_router, DemoCartsRoute());
+
   RouteNavigation<AppRoutePath> login({String? redirectPath}) =>
       RouteNavigation(_router, LoginRoute(redirectPath: redirectPath));
 
@@ -338,6 +443,9 @@ final class AppRoutesNavigation {
   RouteNavigation<AppRoutePath> orders() =>
       RouteNavigation(_router, OrdersRoute());
 
+  RouteNavigation<AppRoutePath> orderDetail({required String orderId}) =>
+      RouteNavigation(_router, OrderDetailRoute(orderId: orderId));
+
   RouteNavigation<AppRoutePath> productDetail({required int productId}) =>
       RouteNavigation(_router, ProductDetailRoute(productId: productId));
 
@@ -346,6 +454,12 @@ final class AppRoutesNavigation {
 
   RouteNavigation<AppRoutePath> register({String? redirectPath}) =>
       RouteNavigation(_router, RegisterRoute(redirectPath: redirectPath));
+
+  RouteNavigation<AppRoutePath> supportChat() =>
+      RouteNavigation(_router, SupportChatRoute());
+
+  RouteNavigation<AppRoutePath> wishlist() =>
+      RouteNavigation(_router, WishlistRoute());
 
   void pop() => _router.pop();
 }
@@ -359,6 +473,67 @@ final class RouteNavigation<T extends Object> {
   void go() => _router.go(route);
   void push() => _router.push(route);
   void replace() => _router.replace(route);
+}
+
+RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
+  return switch (route) {
+    ProductsRoute() => [
+      route,
+    ],
+    NotFoundRoute(path: _) => [
+      const ProductsRoute(),
+      route,
+    ],
+    CartRoute() => [
+      const ProductsRoute(),
+      route,
+    ],
+    CheckoutRoute() => [
+      const ProductsRoute(),
+      route,
+    ],
+    DemoCartsRoute() => [
+      const ProductsRoute(),
+      route,
+    ],
+    LoginRoute(redirectPath: _) => [
+      const ProductsRoute(),
+      route,
+    ],
+    OrderConfirmationRoute(orderId: _) => [
+      const ProductsRoute(),
+      route,
+    ],
+    OrdersRoute() => [
+      const ProductsRoute(),
+      route,
+    ],
+    OrderDetailRoute(orderId: _) => [
+      const ProductsRoute(),
+      const OrdersRoute(),
+      route,
+    ],
+    ProductDetailRoute(productId: _) => [
+      const ProductsRoute(),
+      route,
+    ],
+    ProfileRoute() => [
+      const ProductsRoute(),
+      route,
+    ],
+    RegisterRoute(redirectPath: _) => [
+      const ProductsRoute(),
+      route,
+    ],
+    SupportChatRoute() => [
+      const ProductsRoute(),
+      route,
+    ],
+    WishlistRoute() => [
+      const ProductsRoute(),
+      route,
+    ],
+  };
 }
 
 AppRoutePath parseAppRoute(Uri uri) {
@@ -380,6 +555,10 @@ AppRoutePath parseAppRoute(Uri uri) {
     return CheckoutRoute();
   }
 
+  if (segments.length == 1 && segments[0] == 'demo-carts') {
+    return DemoCartsRoute();
+  }
+
   if (segments.length == 1 && segments[0] == 'login') {
     return LoginRoute(redirectPath: uri.queryParameters['redirectPath']);
   }
@@ -391,6 +570,11 @@ AppRoutePath parseAppRoute(Uri uri) {
 
   if (segments.length == 1 && segments[0] == 'orders') {
     return OrdersRoute();
+  }
+
+  if (segments.length == 2 && segments[0] == 'orders') {
+    final orderId = segments[1];
+    return OrderDetailRoute(orderId: orderId);
   }
 
   if (segments.length == 2 && segments[0] == 'product') {
@@ -407,6 +591,14 @@ AppRoutePath parseAppRoute(Uri uri) {
 
   if (segments.length == 1 && segments[0] == 'register') {
     return RegisterRoute(redirectPath: uri.queryParameters['redirectPath']);
+  }
+
+  if (segments.length == 2 && segments[0] == 'support' && segments[1] == 'chat') {
+    return SupportChatRoute();
+  }
+
+  if (segments.length == 1 && segments[0] == 'wishlist') {
+    return WishlistRoute();
   }
 
   return _notFoundRoute(uri);
@@ -434,12 +626,16 @@ const Map<Type, Type?> _kAppliedShellsByPage = {
   NotFoundScreen: null,
   CartScreen: null,
   CheckoutScreen: null,
+  DemoCartsScreen: null,
   LoginScreen: null,
   OrderConfirmationScreen: null,
   OrdersScreen: null,
+  OrderDetailScreen: null,
   ProductDetailScreen: null,
   ProfileScreen: null,
   RegisterScreen: null,
+  SupportChatScreen: null,
+  WishlistScreen: null,
 };
 
 bool _shellConsistencyCheck() {
@@ -450,7 +646,6 @@ bool _shellConsistencyCheck() {
     }
     return route.routes.every(visit);
   }
-
   return $appRoutes.every(visit);
 }
 
@@ -491,6 +686,13 @@ Page<void> buildAppRoutePage(AppRoutePath route) {
       maintainState: true,
       child: const CheckoutScreen(),
     ),
+    DemoCartsRoute() => generatedPage(
+      location: route.location,
+      name: 'demoCarts',
+      fullscreenDialog: false,
+      maintainState: true,
+      child: const DemoCartsScreen(),
+    ),
     LoginRoute(redirectPath: final redirectPath) => generatedPage(
       location: route.location,
       name: 'login',
@@ -514,6 +716,13 @@ Page<void> buildAppRoutePage(AppRoutePath route) {
       maintainState: true,
       child: const OrdersScreen(),
     ),
+    OrderDetailRoute(orderId: final orderId) => generatedPage(
+      location: route.location,
+      name: 'orderDetail',
+      fullscreenDialog: false,
+      maintainState: true,
+      child: OrderDetailScreen(orderId: orderId),
+    ),
     ProductDetailRoute(productId: final productId) => generatedPage(
       location: route.location,
       name: 'productDetail',
@@ -536,6 +745,20 @@ Page<void> buildAppRoutePage(AppRoutePath route) {
       fullscreenDialog: false,
       maintainState: true,
       child: RegisterScreen(redirectPath: redirectPath),
+    ),
+    SupportChatRoute() => generatedPage(
+      location: route.location,
+      name: 'supportChat',
+      fullscreenDialog: false,
+      maintainState: true,
+      child: const SupportChatScreen(),
+    ),
+    WishlistRoute() => generatedPage(
+      location: route.location,
+      name: 'wishlist',
+      fullscreenDialog: false,
+      maintainState: true,
+      child: const WishlistScreen(),
     ),
   };
 }

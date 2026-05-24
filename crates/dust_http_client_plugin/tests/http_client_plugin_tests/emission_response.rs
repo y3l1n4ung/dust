@@ -74,7 +74,12 @@ fn emits_raw_response_wrappers_for_prefixed_response_types() {
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     final Object? _data = null;
-    final _options = Options(method: 'GET', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(
       _setStreamType<User>(
         _options
@@ -88,7 +93,10 @@ fn emits_raw_response_wrappers_for_prefixed_response_types() {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl,
+              ),
             ),
       ),
     );
@@ -132,7 +140,12 @@ fn omits_result_binding_for_void_methods() {
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     final Object? _data = null;
-    final _options = Options(method: 'DELETE', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'DELETE',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     await _dio.fetch<void>(
       _setStreamType<void>(
         _options
@@ -146,7 +159,10 @@ fn omits_result_binding_for_void_methods() {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl,
+              ),
             ),
       ),
     );
@@ -191,7 +207,12 @@ fn emits_direct_map_casts_for_map_payload_responses() {
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     final Object? _data = null;
-    final _options = Options(method: 'POST', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'POST',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<Map<String, dynamic>>(
       _setStreamType<Map<String, dynamic>>(
         _options
@@ -205,7 +226,10 @@ fn emits_direct_map_casts_for_map_payload_responses() {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl,
+              ),
             ),
       ),
     );
@@ -247,7 +271,12 @@ fn emits_stream_fetches_for_response_body_payloads() {
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     final Object? _data = null;
-    final _options = Options(method: 'GET', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<ResponseBody>(
       _setStreamType<ResponseBody>(
         _options
@@ -261,7 +290,10 @@ fn emits_stream_fetches_for_response_body_payloads() {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl,
+              ),
             ),
       ),
     );
@@ -308,7 +340,12 @@ fn returns_raw_stream_response_without_rewrapping() {
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     final Object? _data = null;
-    final _options = Options(method: 'GET', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<ResponseBody>(
       _setStreamType<ResponseBody>(
         _options
@@ -322,7 +359,10 @@ fn returns_raw_stream_response_without_rewrapping() {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl,
+              ),
             ),
       ),
     );
@@ -365,7 +405,12 @@ fn emits_direct_byte_stream_methods() {
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     final Object? _data = null;
-    final _options = Options(method: 'GET', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<ResponseBody>(
       _setStreamType<ResponseBody>(
         _options
@@ -379,7 +424,10 @@ fn emits_direct_byte_stream_methods() {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl,
+              ),
             ),
       ),
     );
@@ -427,7 +475,12 @@ fn emits_direct_text_stream_methods() {
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     final Object? _data = null;
-    final _options = Options(method: 'GET', headers: _headers, extra: _extra, contentType: null);
+    final _options = Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
     final _result = await _dio.fetch<ResponseBody>(
       _setStreamType<ResponseBody>(
         _options
@@ -441,7 +494,10 @@ fn emits_direct_text_stream_methods() {
               onReceiveProgress: null,
             )
             .copyWith(
-              baseUrl: _combineBaseUrls(_dio.options.baseUrl, _baseUrl),
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl,
+              ),
             ),
       ),
     );

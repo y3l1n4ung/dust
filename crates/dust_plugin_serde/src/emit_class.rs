@@ -102,12 +102,21 @@ pub(crate) fn emit_from_json_helper(
 }
 
 fn emit_allowed_key_validation(class: &ClassIr, lines: &mut Vec<String>) {
-    let allowed_keys = all_allowed_keys(class)
-        .into_iter()
-        .map(|key| format!("'{key}'"))
-        .collect::<Vec<_>>()
-        .join(", ");
-    lines.push(format!("  const allowedKeys = <String>{{{allowed_keys}}};"));
+    let allowed_keys = all_allowed_keys(class);
+    if allowed_keys.len() <= 4 {
+        let allowed_keys = allowed_keys
+            .into_iter()
+            .map(|key| format!("'{key}'"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        lines.push(format!("  const allowedKeys = <String>{{{allowed_keys}}};"));
+    } else {
+        lines.push("  const allowedKeys = <String>{".to_owned());
+        for key in allowed_keys {
+            lines.push(format!("    '{key}',"));
+        }
+        lines.push("  };".to_owned());
+    }
     lines.push("  for (final key in json.keys) {".to_owned());
     lines.push("    if (!allowedKeys.contains(key)) {".to_owned());
     lines.push(format!(
@@ -158,7 +167,12 @@ fn emit_field_decode(
     serde
         .and_then(|serde| serde.default_value_source.as_deref())
         .map_or(decoded.clone(), |default_value| {
-            format!("{has_expr} ? {decoded} : {default_value}")
+            let inline = format!("{has_expr} ? {decoded} : {default_value}");
+            if inline.len() <= 80 {
+                inline
+            } else {
+                format!("{has_expr}\n    ? {decoded}\n    : {default_value}")
+            }
         })
 }
 
@@ -185,28 +199,8 @@ fn emit_alias_decode(
     deserializable_enums: &HashSet<String>,
     lines: &mut Vec<String>,
 ) -> String {
-    let key_parts = std::iter::once(format!(
-        "json.containsKey('{primary_key}') ? '{primary_key}'"
-    ))
-    .chain(
-        aliases
-            .iter()
-            .map(|alias| format!("json.containsKey('{alias}') ? '{alias}'")),
-    )
-    .collect::<Vec<_>>();
-    let raw_parts = std::iter::once(format!(
-        "json.containsKey('{primary_key}') ? json['{primary_key}']"
-    ))
-    .chain(
-        aliases
-            .iter()
-            .map(|alias| format!("json.containsKey('{alias}') ? json['{alias}']")),
-    )
-    .collect::<Vec<_>>();
     let raw_name = format!("raw{}", AsPascalCase(&field.name));
     let raw_key_name = format!("raw{}Key", AsPascalCase(&field.name));
-    let key_expr = format!("{} : '{primary_key}'", key_parts.join(" : "));
-    let raw_expr = format!("{} : null", raw_parts.join(" : "));
     let decoded = decode_field_expr(
         &raw_name,
         &raw_key_name,
@@ -214,20 +208,23 @@ fn emit_alias_decode(
         deserializable_classes,
         deserializable_enums,
     );
-    if decoded.contains(&raw_key_name) {
-        lines.push(format_prefixed_expr(
-            2,
-            &format!("final {raw_key_name} = "),
-            &key_expr,
-            ";",
-        ));
+    let uses_raw_key = decoded.contains(&raw_key_name);
+
+    if uses_raw_key {
+        lines.push(format!("  var {raw_key_name} = '{primary_key}';"));
     }
-    lines.push(format_prefixed_expr(
-        2,
-        &format!("final {raw_name} = "),
-        &raw_expr,
-        ";",
-    ));
+    lines.push(format!("  Object? {raw_name};"));
+    lines.push(format!("  if (json.containsKey('{primary_key}')) {{"));
+    lines.push(format!("    {raw_name} = json['{primary_key}'];"));
+    for alias in aliases {
+        lines.push(format!("  }} else if (json.containsKey('{alias}')) {{"));
+        if uses_raw_key {
+            lines.push(format!("    {raw_key_name} = '{alias}';"));
+        }
+        lines.push(format!("    {raw_name} = json['{alias}'];"));
+    }
+    lines.push("  }".to_owned());
+
     decoded
 }
 

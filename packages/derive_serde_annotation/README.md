@@ -9,7 +9,7 @@ derive surface used by Dust generation.
 It contains:
 
 - `Serialize` for generated `toJson()`
-- `Deserialize` for generated `fromJson(...)`
+- `Deserialize` for generated `_$TypeFromJson(...)` and enum decode helpers
 - `SerDe(...)` for Rust-serde-style declaration and field metadata
 - `SerDeRename` for automatic rename rules
 - `SerDeCodec<DartT, JsonT>` for custom field codecs
@@ -33,7 +33,7 @@ irm https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.ps1 | iex
 Or with Cargo:
 
 ```bash
-cargo install dust_cli
+cargo install --git https://github.com/y3l1n4ung/dust dust_cli
 ```
 
 ## Example
@@ -67,6 +67,25 @@ dust build
 Dust writes `user.g.dart`, a generated `toJson()` mixin member, and the
 `_$UserFromJson(...)` helper used by the forwarding factory.
 
+## Enum serde
+
+```dart
+@Derive([Serialize(), Deserialize()])
+@SerDe(renameAll: SerDeRename.kebabCase)
+enum AccessLevel {
+  superAdmin,
+  guestUser,
+  readOnly,
+}
+```
+
+Dust generates enum encode/decode helpers. In this example,
+`AccessLevel.superAdmin` serializes as `super-admin`, and unknown wire values
+throw an `ArgumentError`.
+
+Per-variant serde annotations are not supported yet. Use declaration-level
+`renameAll` or a field-level `SerDeCodec` for custom enum wire formats.
+
 ## Custom codec
 
 ```dart
@@ -84,11 +103,14 @@ final class UnixEpochDateTimeCodec implements SerDeCodec<DateTime, int> {
 const unixEpochDateTimeCodec = UnixEpochDateTimeCodec();
 
 @Derive([Serialize(), Deserialize()])
-class AuditLog {
+class AuditLog with _$AuditLog {
   @SerDe(using: unixEpochDateTimeCodec)
   final DateTime createdAt;
 
   const AuditLog(this.createdAt);
+
+  factory AuditLog.fromJson(Map<String, Object?> json) =>
+      _$AuditLogFromJson(json);
 }
 ```
 
@@ -109,10 +131,17 @@ See the root usage docs for the end-to-end serde walkthrough:
 
 - [../../docs/usage/serde.md](../../docs/usage/serde.md)
 
-## Planned Rust integration
+## Generator status
 
-The next Dust layers will use this package in three steps:
+Dust currently uses this package in the Rust generator:
 
-1. parser captures field annotations
-2. resolver resolves serde symbols at class and field level
-3. `dust_plugin_serde` emits `toJson()` and `fromJson(...)`
+- parser captures declaration, field, and enum annotations
+- resolver resolves serde symbols at class, enum, and field level
+- `dust_plugin_serde` emits `toJson()`, `_$TypeFromJson(...)`, and enum
+  encode/decode helpers
+
+Open work:
+
+- per-variant enum metadata
+- type-level codec registration
+- custom global scalar policies

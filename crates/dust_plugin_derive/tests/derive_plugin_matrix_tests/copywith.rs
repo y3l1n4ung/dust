@@ -104,12 +104,16 @@ fn copywith_renders_nested_generic_and_dynamic_casts() {
   (String, int)? summary,
 }) {
   final self = this as Payload;
-  final nextItemsSource = identical(items, _undefined) ? self.items : items as List<String>?;
+  final nextItemsSource = identical(items, _undefined)
+      ? self.items
+      : items as List<String>?;
   final nextItems = nextItemsSource == null ? null : List<String>.of(nextItemsSource);
 
   return Payload(
     nextItems,
-    identical(extra, _undefined) ? self.extra : extra as dynamic,
+    identical(extra, _undefined)
+        ? self.extra
+        : extra as dynamic,
     transform ?? self.transform,
     summary ?? self.summary,
   );
@@ -164,7 +168,9 @@ fn copywith_uses_stable_temp_bindings_for_nested_types() {
   Set<List<String>>? right,
 }) {
   final self = this as Complex;
-  final nextLeftSource = identical(left, _undefined) ? self.left : left as Map<String, List<Node>>?;
+  final nextLeftSource = identical(left, _undefined)
+      ? self.left
+      : left as Map<String, List<Node>>?;
   final nextLeft = nextLeftSource == null ? null : Map<String, List<Node>>.fromEntries(
     nextLeftSource.entries.map(
       (entry_0) => MapEntry(entry_0.key, List<Node>.of(entry_0.value)),

@@ -146,7 +146,3 @@ class AuthViewModel extends $AuthViewModel {
     logger.info('AUTH', 'User logged out');
   }
 }
-
-extension AuthViewModelContext on BuildContext {
-  AuthViewModel get authViewModel => AuthViewModelScope.of(this);
-}

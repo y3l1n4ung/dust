@@ -25,11 +25,26 @@ pub(crate) fn build_constructor_call_multiline(
 
     let lines = args
         .into_iter()
-        .map(|arg| format!("  {arg},"))
+        .map(|arg| render_constructor_arg(&arg))
         .collect::<Vec<_>>()
         .join("\n");
 
     Some(format!("{ctor}(\n{lines}\n)"))
+}
+
+fn render_constructor_arg(arg: &str) -> String {
+    let mut lines = arg.lines();
+    let Some(first) = lines.next() else {
+        return "  ,".to_owned();
+    };
+    let mut rendered = vec![format!("  {first}")];
+    for line in lines {
+        rendered.push(format!("      {}", line.trim_start()));
+    }
+    if let Some(last) = rendered.last_mut() {
+        last.push(',');
+    }
+    rendered.join("\n")
 }
 
 pub(crate) fn render_return_statement(call: &str, indent: &str) -> String {

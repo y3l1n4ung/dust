@@ -72,6 +72,9 @@ fn emits_multipart_requests_with_prefixed_options_types() {
         .join("\n");
     assert!(emitted.contains("final _data = FormData.fromMap(<String, dynamic>{"));
     assert!(emitted.contains("if (file != null) 'file': file"));
-    assert!(emitted.contains("options?.copyWith(method: 'POST'"));
+    assert!(emitted.contains(
+        "options?.copyWith(
+          method: 'POST',"
+    ));
     assert!(emitted.contains("contentType: 'multipart/form-data'"));
 }

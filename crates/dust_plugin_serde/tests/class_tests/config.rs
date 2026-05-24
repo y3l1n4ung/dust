@@ -55,11 +55,13 @@ fn supports_custom_json_key_renaming() {
         from_json,
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final fullNameValue = _jsonAs<String>(json['full_name'], 'full_name', 'String');
-
-  return User(
-    fullName: fullNameValue,
+  final fullNameValue = _jsonAs<String>(
+    json['full_name'],
+    'full_name',
+    'String',
   );
+
+  return User(fullName: fullNameValue);
 }"#
     );
 }
@@ -98,13 +100,20 @@ fn supports_field_aliases_during_deserialization() {
         from_json,
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final rawNameKey = json.containsKey('name') ? 'name' : json.containsKey('full_name') ? 'full_name' : json.containsKey('displayName') ? 'displayName' : 'name';
-  final rawName = json.containsKey('name') ? json['name'] : json.containsKey('full_name') ? json['full_name'] : json.containsKey('displayName') ? json['displayName'] : null;
+  var rawNameKey = 'name';
+  Object? rawName;
+  if (json.containsKey('name')) {
+    rawName = json['name'];
+  } else if (json.containsKey('full_name')) {
+    rawNameKey = 'full_name';
+    rawName = json['full_name'];
+  } else if (json.containsKey('displayName')) {
+    rawNameKey = 'displayName';
+    rawName = json['displayName'];
+  }
   final nameValue = _jsonAs<String>(rawName, rawNameKey, 'String');
 
-  return User(
-    name: nameValue,
-  );
+  return User(name: nameValue);
 }"#
     );
 }
@@ -143,9 +152,7 @@ User _$UserFromJson(Map<String, Object?> json) {
 
   final idValue = _jsonAs<String>(json['id'], 'id', 'String');
 
-  return User(
-    id: idValue,
-  );
+  return User(id: idValue);
 }"#
     );
 }
@@ -197,11 +204,13 @@ fn supports_custom_field_codecs() {
         from_json,
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final createdAtValue = _jsonDecodeWithCodec<DateTime>((const UnixEpochCodec()), json['createdAt'], 'createdAt');
-
-  return User(
-    createdAt: createdAtValue,
+  final createdAtValue = _jsonDecodeWithCodec<DateTime>(
+    (const UnixEpochCodec()),
+    json['createdAt'],
+    'createdAt',
   );
+
+  return User(createdAt: createdAtValue);
 }"#
     );
 }
@@ -240,11 +249,11 @@ fn supports_default_values_during_deserialization() {
         from_json,
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final roleValue = json.containsKey('role') ? _jsonAs<String>(json['role'], 'role', 'String') : 'guest';
+  final roleValue = json.containsKey('role')
+      ? _jsonAs<String>(json['role'], 'role', 'String')
+      : 'guest';
 
-  return User(
-    role: roleValue,
-  );
+  return User(role: roleValue);
 }"#
     );
 }
@@ -311,10 +320,7 @@ User _$UserFromJson(Map<String, Object?> json) {
   final passwordValue = _jsonAs<String>(json['password'], 'password', 'String');
   final tokenValue = '';
 
-  return User(
-    password: passwordValue,
-    token: tokenValue,
-  );
+  return User(password: passwordValue, token: tokenValue);
 }"#
     );
 }

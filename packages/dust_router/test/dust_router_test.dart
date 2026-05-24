@@ -235,6 +235,17 @@ void main() {
       expect(delegate.currentRoute, TestRoute.fast);
       delegate.dispose();
     });
+
+    test('browser deep link restores generated stack', () async {
+      final delegate = DustRouterDelegate<TestRoute>(_config(_TestRouter()));
+      await _flushAsync();
+
+      await delegate.setNewRoutePath(TestRoute.admin);
+      await _flushAsync();
+
+      expect(delegate.stack, [TestRoute.home, TestRoute.admin]);
+      delegate.dispose();
+    });
   });
 
   group('DustRouteInformationParser', () {
@@ -316,6 +327,9 @@ DustRouterConfig<TestRoute> _config(_TestRouter router) {
         : const [],
     buildPage: (route) =>
         MaterialPage<void>(name: route.name, child: const SizedBox.shrink()),
+    restoreStack: (route) => route == TestRoute.home
+        ? [TestRoute.home]
+        : [TestRoute.home, route],
   );
 }
 

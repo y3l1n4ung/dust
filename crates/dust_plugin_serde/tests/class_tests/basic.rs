@@ -89,10 +89,7 @@ User _$UserFromJson(Map<String, Object?> json) {
   final idValue = _jsonAs<String>(json['id'], 'id', 'String');
   final ageValue = _jsonAs<int>(json['age'], 'age', 'int');
 
-  return User(
-    id: idValue,
-    age: ageValue,
-  );
+  return User(id: idValue, age: ageValue);
 }"#
     );
 }

@@ -234,11 +234,7 @@ Specials _$SpecialsFromJson(Map<String, Object?> json) {
   final uValue = _jsonAsUri(json['u'], 'u');
   final biValue = _jsonAsBigInt(json['bi'], 'bi');
 
-  return Specials(
-    dt: dtValue,
-    u: uValue,
-    bi: biValue,
-  );
+  return Specials(dt: dtValue, u: uValue, bi: biValue);
 }"#
     );
 }
@@ -293,9 +289,14 @@ fn handles_collection_types() {
         to_json,
         r#"Map<String, Object?> _$CollectionsToJson(Collections instance) {
   return <String, Object?>{
-    'l': instance.l.map((item) => item).toList(),
-    's': instance.s.map((item) => item).toList(),
-    'm': instance.m.map((key, value) => MapEntry(key, value)),
+    'l': instance.l
+        .map((item) => item)
+        .toList(),
+    's': instance.s
+        .map((item) => item)
+        .toList(),
+    'm': instance.m
+        .map((key, value) => MapEntry(key, value)),
   };
 }"#
     );
@@ -303,15 +304,16 @@ fn handles_collection_types() {
         from_json,
         r#"// factory Collections.fromJson(Map<String, Object?> json) => _$CollectionsFromJson(json);
 Collections _$CollectionsFromJson(Map<String, Object?> json) {
-  final lValue = _jsonAsList(json['l'], 'l').map((item) => _jsonAs<String>(item, 'l', 'String')).toList();
-  final sValue = _jsonAsList(json['s'], 's').map((item) => _jsonAs<String>(item, 's', 'String')).toSet();
-  final mValue = _jsonAsMap(json['m'], 'm').map((mapKey, value) => MapEntry(mapKey, _jsonAs<String>(value, 'm', 'String')));
+  final lValue = _jsonAsList(json['l'], 'l')
+      .map((item) => _jsonAs<String>(item, 'l', 'String'))
+      .toList();
+  final sValue = _jsonAsList(json['s'], 's')
+      .map((item) => _jsonAs<String>(item, 's', 'String'))
+      .toSet();
+  final mValue = _jsonAsMap(json['m'], 'm')
+      .map((mapKey, value) => MapEntry(mapKey, _jsonAs<String>(value, 'm', 'String')));
 
-  return Collections(
-    l: lValue,
-    s: sValue,
-    m: mValue,
-  );
+  return Collections(l: lValue, s: sValue, m: mValue);
 }"#
     );
 }

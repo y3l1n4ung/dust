@@ -105,7 +105,3 @@ class CartViewModel extends $CartViewModel {
 
   void clearNotification() {}
 }
-
-extension CartViewModelContext on BuildContext {
-  CartViewModel get cartViewModel => CartViewModelScope.of(this);
-}

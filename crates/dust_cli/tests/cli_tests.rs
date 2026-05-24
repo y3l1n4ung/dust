@@ -97,13 +97,13 @@ fn cli_build_reports_route_contributors_separately() {
 
     assert_eq!(first.exit_code, 0, "{}", first.stderr);
     assert!(first.stdout.contains("scanned: 3"));
-    assert!(first.stdout.contains("generated: 1"));
-    assert!(first.stdout.contains("routed: 2"));
+    assert!(first.stdout.contains("generated: 3"));
+    assert!(!first.stdout.contains("routed:"));
     assert!(first.stdout.contains("skipped: 0"));
     assert_eq!(second.exit_code, 0, "{}", second.stderr);
     assert!(second.stdout.contains("scanned: 3"));
-    assert!(second.stdout.contains("generated: 0"));
-    assert!(second.stdout.contains("routed: 2"));
+    assert!(second.stdout.contains("generated: 2"));
+    assert!(!second.stdout.contains("routed:"));
     assert!(second.stdout.contains("cached: 1"));
     assert!(second.stdout.contains("skipped: 0"));
     assert!(workspace.path().join("lib/route.g.dart").exists());
