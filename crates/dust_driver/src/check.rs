@@ -21,7 +21,7 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
         package_config_hash,
         mut cache,
         mut cache_report,
-    } = match CachedDriverContext::load(&request.cwd) {
+    } = match CachedDriverContext::load(&request.cwd, request.db.into()) {
         Ok(context) => context,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);

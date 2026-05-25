@@ -128,6 +128,11 @@ fn extract_method(
         .unwrap_or_default();
 
     let params_node = find_first_descendant(signature, "formal_parameter_list");
+    let body_source = params_node.and_then(|params| {
+        let end_offset = params.end_byte().saturating_sub(node.start_byte());
+        let after_params = declaration_text[end_offset.min(declaration_text.len())..].trim();
+        (!after_params.is_empty()).then(|| after_params.to_owned())
+    });
     let has_body = if let Some(params) = params_node {
         let end_offset = params.end_byte().saturating_sub(node.start_byte());
         let after_params = &declaration_text[end_offset.min(declaration_text.len())..];
@@ -143,6 +148,7 @@ fn extract_method(
         annotations: annotations.to_vec(),
         return_type_source,
         has_body,
+        body_source,
         params,
         span: text_range(signature),
     })

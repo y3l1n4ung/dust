@@ -17,7 +17,8 @@ pub(crate) use apply::{ApplyOutcomeConfig, apply_indexed_outcomes, flush_cache_i
 pub(crate) use batch::BatchConfig;
 pub(crate) use batch::prepare_and_process_batch;
 pub(crate) use support::{
-    CodegenToolHash, codegen_tool_hash, default_registry, hash_text, read_workspace_config_hash,
+    CodegenToolHash, RegistrySelection, codegen_tool_hash, default_registry, hash_text,
+    read_workspace_config_hash, registry_for_selection,
 };
 
 /// Runs one writing build across the discovered workspace.
@@ -48,7 +49,7 @@ fn run_build_inner(
         package_config_hash,
         mut cache,
         mut cache_report,
-    } = match CachedDriverContext::load(&request.cwd) {
+    } = match CachedDriverContext::load(&request.cwd, request.db.into()) {
         Ok(context) => context,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);

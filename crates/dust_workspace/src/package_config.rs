@@ -37,24 +37,29 @@ pub fn load_package_config(package_root: &Path) -> Result<PackageConfig, Diagnos
     }
 
     let package_graph_path = package_root.join(".dart_tool/package_graph.json");
-    if !package_graph_path.is_file() {
+    let workspace_ref_path = package_root.join(".dart_tool/pub/workspace_ref.json");
+    let Some(workspace_signal_path) =
+        workspace_signal_path(&package_graph_path, &workspace_ref_path)
+    else {
         return Err(Diagnostic::error(format!(
-            "missing package configuration at `{}`",
-            path.display()
+            "missing package configuration at `{}`; workspace members may also provide `{}` or `{}`",
+            path.display(),
+            package_graph_path.display(),
+            workspace_ref_path.display()
         )));
-    }
+    };
 
-    fs::read_to_string(&package_graph_path).map_err(|error| {
+    fs::read_to_string(&workspace_signal_path).map_err(|error| {
         Diagnostic::error(format!(
             "failed to read workspace package graph `{}`: {error}",
-            package_graph_path.display()
+            workspace_signal_path.display()
         ))
     })?;
 
     let Some(mut current) = package_root.parent().map(Path::to_path_buf) else {
         return Err(missing_shared_workspace_config(
             package_root,
-            &package_graph_path,
+            &workspace_signal_path,
         ));
     };
 
@@ -63,7 +68,9 @@ pub fn load_package_config(package_root: &Path) -> Result<PackageConfig, Diagnos
         if candidate.is_file() {
             return Ok(PackageConfig {
                 path: candidate,
-                kind: PackageConfigKind::WorkspaceShared { package_graph_path },
+                kind: PackageConfigKind::WorkspaceShared {
+                    package_graph_path: workspace_signal_path,
+                },
             });
         }
 
@@ -74,8 +81,17 @@ pub fn load_package_config(package_root: &Path) -> Result<PackageConfig, Diagnos
 
     Err(missing_shared_workspace_config(
         package_root,
-        &package_graph_path,
+        &workspace_signal_path,
     ))
+}
+
+fn workspace_signal_path(package_graph_path: &Path, workspace_ref_path: &Path) -> Option<PathBuf> {
+    if package_graph_path.is_file() {
+        return Some(package_graph_path.to_path_buf());
+    }
+    workspace_ref_path
+        .is_file()
+        .then(|| workspace_ref_path.to_path_buf())
 }
 
 fn missing_shared_workspace_config(package_root: &Path, package_graph_path: &Path) -> Diagnostic {

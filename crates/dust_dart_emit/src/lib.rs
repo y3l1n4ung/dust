@@ -3,7 +3,13 @@
 #![doc = "Shared Dart rendering helpers reused by Dust plugins."]
 
 mod rename;
+mod source;
 mod type_render;
+
+pub use source::{
+    balanced_parenthesized, normalized_args, parse_bool_literal, parse_named_arguments,
+    parse_string_literal, split_top_level_items, split_top_level_once,
+};
 
 pub use type_render::{
     DYNAMIC_TYPES, DartTypeRenderer, OBJECT_NULLABLE_TYPES, UnknownTypeRendering, non_nullable,

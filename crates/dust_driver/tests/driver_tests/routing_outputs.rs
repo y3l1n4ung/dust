@@ -16,6 +16,7 @@ fn build_writes_route_output_only_from_router_root() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
 
     let route_output = workspace.path().join("lib/route.g.dart");
@@ -53,6 +54,7 @@ fn build_matches_full_route_output_snapshot() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
     let source = fs::read_to_string(workspace.path().join("lib/route.g.dart")).unwrap();
 
@@ -69,11 +71,13 @@ fn build_refreshes_router_output_when_annotated_page_changes() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
     let second = run_build(BuildRequest {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
     let second_source = fs::read_to_string(workspace.path().join("lib/route.g.dart")).unwrap();
     write_dashboard_page(workspace.path(), "home");
@@ -81,6 +85,7 @@ fn build_refreshes_router_output_when_annotated_page_changes() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
 
     let source = fs::read_to_string(workspace.path().join("lib/route.g.dart")).unwrap();
@@ -106,16 +111,19 @@ fn check_reports_stale_route_output_before_build_and_fresh_after_build() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
     let build = run_build(BuildRequest {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
     let after = run_check(CheckRequest {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
 
     assert!(!before.has_errors(), "{:?}", before.diagnostics);
@@ -143,6 +151,7 @@ fn clean_removes_route_output_only_from_router_root() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
     assert!(!build.has_errors(), "{:?}", build.diagnostics);
     assert!(workspace.path().join("lib/route.g.dart").exists());
@@ -202,6 +211,7 @@ fn route_generation_works_from_pub_workspace_member() {
         cwd: package_root.clone(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
     let source = fs::read_to_string(package_root.join("lib/route.g.dart")).unwrap();
 
@@ -254,6 +264,7 @@ fn build_reports_missing_initial_route_page() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
 
     assert!(result.has_errors());
@@ -283,6 +294,7 @@ fn build_reports_missing_not_found_route_page() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
 
     assert!(result.has_errors());
@@ -310,6 +322,7 @@ fn build_reports_route_shell_or_guard_without_visible_import() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
 
     assert!(result.has_errors());
@@ -352,6 +365,7 @@ fn multiple_router_roots_emit_separate_outputs() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
     let app_source = fs::read_to_string(workspace.path().join("lib/route.g.dart")).unwrap();
     let admin_source = fs::read_to_string(workspace.path().join("lib/admin_route.g.dart")).unwrap();

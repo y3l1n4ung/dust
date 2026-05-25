@@ -104,6 +104,7 @@ fn constructor_knows_when_all_fields_are_constructible() {
             span: span(10, 20),
             has_default: false,
             serde: None,
+            configs: Vec::new(),
         },
         FieldIr {
             name: "age".to_owned(),
@@ -111,6 +112,7 @@ fn constructor_knows_when_all_fields_are_constructible() {
             span: span(21, 29),
             has_default: true,
             serde: None,
+            configs: Vec::new(),
         },
     ];
     let constructor = ConstructorIr {
@@ -141,6 +143,7 @@ fn constructor_detects_missing_required_fields() {
             span: span(10, 20),
             has_default: false,
             serde: None,
+            configs: Vec::new(),
         },
         FieldIr {
             name: "age".to_owned(),
@@ -148,6 +151,7 @@ fn constructor_detects_missing_required_fields() {
             span: span(21, 29),
             has_default: false,
             serde: None,
+            configs: Vec::new(),
         },
     ];
     let constructor = ConstructorIr {

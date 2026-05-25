@@ -27,6 +27,7 @@ fn build_writes_http_client_auxiliary_test_output() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     let primary = workspace.path().join("lib/api.g.dart");
@@ -69,6 +70,7 @@ fn check_marks_http_client_output_stale_when_auxiliary_file_is_missing() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
     assert!(!build.has_errors(), "{:?}", build.diagnostics);
 
@@ -77,6 +79,7 @@ fn check_marks_http_client_output_stale_when_auxiliary_file_is_missing() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     assert_eq!(check.checked_libraries.len(), 1);
@@ -110,6 +113,7 @@ fn clean_removes_http_client_auxiliary_test_output() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
     assert!(!build.has_errors(), "{:?}", build.diagnostics);
 

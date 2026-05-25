@@ -13,6 +13,7 @@ fn build_writes_state_output_for_view_model_library() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
     let output = workspace.path().join("lib/task_board_view_model.g.dart");
     let source = fs::read_to_string(&output).unwrap();

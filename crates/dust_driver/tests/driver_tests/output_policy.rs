@@ -23,6 +23,7 @@ fn build_uses_configured_primary_suffix() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
@@ -51,6 +52,7 @@ fn build_reports_part_suffix_mismatches_from_dust_config() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     assert!(result.has_errors());

@@ -1,8 +1,8 @@
 use std::{env, path::PathBuf};
 
 use dust_driver::{
-    BuildRequest, CheckRequest, CleanRequest, CommandRequest, CommandResult, DoctorRequest,
-    WatchRequest, run, run_build_with_progress, run_watch_with_progress,
+    BuildRequest, CheckRequest, CleanRequest, CommandRequest, CommandResult, DbRequestOptions,
+    DoctorRequest, WatchRequest, run, run_build_with_progress, run_watch_with_progress,
 };
 
 use crate::{
@@ -67,6 +67,7 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
                 cwd,
                 fail_fast: parsed.options.fail_fast,
                 jobs: parsed.options.jobs,
+                db: db_options(&parsed),
             };
             if let Some(progress) = progress {
                 run_build_with_progress(request, |event| handle_progress(progress, event))
@@ -79,6 +80,7 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
             cwd,
             fail_fast: parsed.options.fail_fast,
             jobs: parsed.options.jobs,
+            db: db_options(&parsed),
         })),
         CliCommand::Doctor => run(CommandRequest::Doctor(DoctorRequest { cwd })),
         CliCommand::Watch => {
@@ -95,6 +97,13 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
                 run(CommandRequest::Watch(request))
             }
         }
+    }
+}
+
+fn db_options(parsed: &ParsedCli) -> DbRequestOptions {
+    DbRequestOptions {
+        only_db: parsed.options.db,
+        offline: parsed.options.db_offline,
     }
 }
 

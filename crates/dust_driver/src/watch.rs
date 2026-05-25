@@ -9,8 +9,8 @@ use dust_cache::WorkspaceCache;
 
 use crate::{
     build::{
-        ApplyOutcomeConfig, BatchConfig, apply_indexed_outcomes, flush_cache_into_result,
-        prepare_and_process_batch, read_workspace_config_hash,
+        ApplyOutcomeConfig, BatchConfig, RegistrySelection, apply_indexed_outcomes,
+        flush_cache_into_result, prepare_and_process_batch, read_workspace_config_hash,
     },
     context::CachedDriverContext,
     progress::{ProgressEvent, ProgressPhase},
@@ -48,7 +48,7 @@ fn run_watch_inner(
         mut cache,
         mut cache_report,
         ..
-    } = match CachedDriverContext::load(&request.cwd) {
+    } = match CachedDriverContext::load(&request.cwd, RegistrySelection::All) {
         Ok(context) => context,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);

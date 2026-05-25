@@ -1,0 +1,17 @@
+name: dust_db_example
+description: Dust DB sqflite repository generation example.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.11.0
+
+resolution: workspace
+
+dependencies:
+  dust_db:
+    path: ../../packages/dust_db
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.26.0

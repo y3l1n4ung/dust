@@ -1,4 +1,4 @@
-use crate::{SerdeFieldConfigIr, SpanIr, TypeIr};
+use crate::{ConfigApplicationIr, SerdeFieldConfigIr, SpanIr, TypeIr};
 
 /// One lowered field on a class.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,4 +13,6 @@ pub struct FieldIr {
     pub has_default: bool,
     /// Normalized serde-related field configuration.
     pub serde: Option<SerdeFieldConfigIr>,
+    /// Resolved field-level configuration applications.
+    pub configs: Vec<ConfigApplicationIr>,
 }

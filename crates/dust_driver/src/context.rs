@@ -7,7 +7,10 @@ use dust_resolver::SymbolCatalog;
 use dust_workspace::{SupportedAnnotations, WorkspacePlan, discover_workspace};
 
 use crate::{
-    build::{CodegenToolHash, codegen_tool_hash, default_registry, read_workspace_config_hash},
+    build::{
+        CodegenToolHash, RegistrySelection, codegen_tool_hash, read_workspace_config_hash,
+        registry_for_selection,
+    },
     catalog::build_symbol_catalog,
     result::CacheReport,
 };
@@ -19,8 +22,8 @@ pub(crate) struct DriverContext {
 }
 
 impl DriverContext {
-    pub(crate) fn load(cwd: &Path) -> Result<Self, Diagnostic> {
-        let registry = default_registry();
+    pub(crate) fn load(cwd: &Path, selection: RegistrySelection) -> Result<Self, Diagnostic> {
+        let registry = registry_for_selection(selection);
         let supported_annotations: SupportedAnnotations =
             registry.all_supported_annotations().into_iter().collect();
         let workspace = discover_workspace(cwd, &supported_annotations)?;
@@ -45,12 +48,12 @@ pub(crate) struct CachedDriverContext {
 }
 
 impl CachedDriverContext {
-    pub(crate) fn load(cwd: &Path) -> Result<Self, Diagnostic> {
+    pub(crate) fn load(cwd: &Path, selection: RegistrySelection) -> Result<Self, Diagnostic> {
         let DriverContext {
             workspace,
             registry,
             catalog,
-        } = DriverContext::load(cwd)?;
+        } = DriverContext::load(cwd, selection)?;
         let tool_hash = codegen_tool_hash();
         let package_config_hash = read_workspace_config_hash(
             &workspace.package_config.path,

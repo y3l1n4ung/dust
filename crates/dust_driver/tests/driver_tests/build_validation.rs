@@ -43,6 +43,7 @@ fn build_supports_abstract_and_mixin_clause_shapes_without_unrelated_warnings() 
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     let entity_output = fs::read_to_string(workspace.path().join("lib/entity.g.dart")).unwrap();
@@ -170,6 +171,7 @@ fn build_includes_inherited_fields_for_annotated_subclasses() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     let output = fs::read_to_string(workspace.path().join("lib/entity.g.dart")).unwrap();
@@ -287,6 +289,7 @@ fn build_rejects_mixin_class_targets_with_clear_diagnostic() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     assert!(result.has_errors());

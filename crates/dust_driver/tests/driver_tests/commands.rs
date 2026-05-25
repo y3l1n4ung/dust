@@ -24,16 +24,19 @@ fn check_reports_stale_before_build_and_fresh_after_build() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
     let build = run_build(BuildRequest {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
     let second_check = run_check(CheckRequest {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     assert_eq!(first_check.checked_libraries.len(), 1);
@@ -75,6 +78,7 @@ fn doctor_reports_workspace_and_registered_plugins() {
             "HttpClient".to_owned(),
             "Route".to_owned(),
             "ViewModel".to_owned(),
+            "DustDb".to_owned(),
         ]
     );
     assert_eq!(
@@ -143,6 +147,7 @@ fn build_emits_progress_events() {
             cwd: workspace.path().to_path_buf(),
             fail_fast: false,
             jobs: Some(2),
+            db: Default::default(),
         },
         move |event| {
             sink.lock().unwrap().push(event);

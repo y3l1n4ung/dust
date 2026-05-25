@@ -44,6 +44,23 @@ fn parses_watch_specific_options() {
 }
 
 #[test]
+fn parses_build_db_offline_flags() {
+    let parsed = parse_cli_args(["build", "--db", "--offline"]).unwrap();
+
+    assert_eq!(parsed.command, CliCommand::Build);
+    assert!(parsed.options.db);
+    assert!(parsed.options.db_offline);
+}
+
+#[test]
+fn rejects_offline_without_db() {
+    let error = parse_cli_args(["check", "--offline"]).unwrap_err();
+
+    assert_eq!(error.kind(), ErrorKind::MissingRequiredArgument);
+    assert!(error.to_string().contains("--db"));
+}
+
+#[test]
 fn empty_args_show_generated_help() {
     let error = parse_cli_args(Vec::<String>::new()).unwrap_err();
 

@@ -1,5 +1,9 @@
 use std::{fs, io, path::Path, sync::Arc};
 
+use dust_db_plugin::{
+    register_plugin as register_db_plugin,
+    register_plugin_with_options as register_db_plugin_with_options,
+};
 use dust_diagnostics::Diagnostic;
 use dust_emitter::hash_output_set;
 use dust_http_client_plugin::register_plugin as register_http_client_plugin;
@@ -11,6 +15,24 @@ use dust_state_plugin::register_plugin as register_state_plugin;
 use dust_workspace::SourceLibrary;
 
 use crate::build::process::LoadedLibraryInput;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum RegistrySelection {
+    All,
+    DbOnly { offline: bool },
+}
+
+impl From<crate::request::DbRequestOptions> for RegistrySelection {
+    fn from(value: crate::request::DbRequestOptions) -> Self {
+        if value.only_db {
+            Self::DbOnly {
+                offline: value.offline,
+            }
+        } else {
+            Self::All
+        }
+    }
+}
 
 #[derive(Clone, Copy)]
 pub(crate) struct CodegenToolHash {
@@ -134,6 +156,16 @@ const STATE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_state_plugin/src/plugin/validate.rs"),
 );
 
+const DB_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
+    include_str!("../../../dust_db_plugin/src/lib.rs"),
+    include_str!("../../../dust_db_plugin/src/plugin/mod.rs"),
+    include_str!("../../../dust_db_plugin/src/plugin/constants.rs"),
+    include_str!("../../../dust_db_plugin/src/plugin/model.rs"),
+    include_str!("../../../dust_db_plugin/src/plugin/parse.rs"),
+    include_str!("../../../dust_db_plugin/src/plugin/emit.rs"),
+    include_str!("../../../dust_db_plugin/src/plugin/validate.rs"),
+);
+
 #[derive(Clone)]
 pub(crate) struct CacheFingerprint {
     pub(crate) source_hash: u64,
@@ -247,6 +279,7 @@ pub(crate) fn codegen_tool_hash() -> CodegenToolHash {
     combined.push_str(HTTP_PLUGIN_FINGERPRINT_INPUT);
     combined.push_str(ROUTE_PLUGIN_FINGERPRINT_INPUT);
     combined.push_str(STATE_PLUGIN_FINGERPRINT_INPUT);
+    combined.push_str(DB_PLUGIN_FINGERPRINT_INPUT);
 
     CodegenToolHash {
         hash: hash_text(&combined),
@@ -254,7 +287,18 @@ pub(crate) fn codegen_tool_hash() -> CodegenToolHash {
 }
 
 pub(crate) fn default_registry() -> PluginRegistry {
+    registry_for_selection(RegistrySelection::All)
+}
+
+pub(crate) fn registry_for_selection(selection: RegistrySelection) -> PluginRegistry {
     let mut registry = PluginRegistry::new();
+    if let RegistrySelection::DbOnly { offline } = selection {
+        registry
+            .register(Box::new(register_db_plugin_with_options(offline)))
+            .expect("db plugin symbol ownership must be valid");
+        return registry;
+    }
+
     registry
         .register(Box::new(register_derive_plugin()))
         .expect("derive plugin symbol ownership must be valid");
@@ -270,6 +314,9 @@ pub(crate) fn default_registry() -> PluginRegistry {
     registry
         .register(Box::new(register_state_plugin()))
         .expect("state plugin symbol ownership must be valid");
+    registry
+        .register(Box::new(register_db_plugin()))
+        .expect("db plugin symbol ownership must be valid");
     registry
 }
 

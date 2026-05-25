@@ -31,6 +31,7 @@ fn models_real_dart_data_class_shapes() {
                     span: span(1, 80, 97),
                     has_default: false,
                     serde: None,
+                    configs: Vec::new(),
                 },
                 FieldIr {
                     name: "displayName".to_owned(),
@@ -38,6 +39,7 @@ fn models_real_dart_data_class_shapes() {
                     span: span(1, 100, 126),
                     has_default: false,
                     serde: None,
+                    configs: Vec::new(),
                 },
                 FieldIr {
                     name: "tags".to_owned(),
@@ -45,6 +47,7 @@ fn models_real_dart_data_class_shapes() {
                     span: span(1, 129, 154),
                     has_default: false,
                     serde: None,
+                    configs: Vec::new(),
                 },
             ],
             constructors: vec![ConstructorIr {

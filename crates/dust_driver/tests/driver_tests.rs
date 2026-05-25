@@ -13,6 +13,9 @@ mod routing_outputs;
 #[path = "driver_tests/state_outputs.rs"]
 mod state_outputs;
 
+#[path = "driver_tests/db_outputs.rs"]
+mod db_outputs;
+
 #[path = "driver_tests/output_policy.rs"]
 mod output_policy;
 

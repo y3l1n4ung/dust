@@ -7,7 +7,7 @@ mod tests_serde;
 mod tests_type;
 mod type_parse;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
@@ -27,10 +27,11 @@ use self::{
 /// Lowers one resolved library into semantic IR.
 pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<LibraryIr> {
     let mut diagnostics = Vec::new();
+    let required_classes = lowering_required_class_names(library);
     let mut classes = library
         .classes
         .iter()
-        .filter(|class| !class.traits.is_empty() || !class.configs.is_empty())
+        .filter(|class| required_classes.contains(class.name.as_str()))
         .map(|class| {
             let outcome = lower_class(class);
             diagnostics.extend(outcome.diagnostics);
@@ -80,6 +81,42 @@ pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<Librar
         },
         diagnostics,
     }
+}
+
+fn lowering_required_class_names(library: &ResolvedLibrary) -> HashSet<&str> {
+    let mut names = library
+        .classes
+        .iter()
+        .filter(|class| !class.traits.is_empty() || !class.configs.is_empty())
+        .map(|class| class.name.as_str())
+        .collect::<HashSet<_>>();
+
+    for class in &library.classes {
+        for field in &class.fields {
+            for config in &field.configs {
+                let Some(args) = config.arguments_source.as_deref() else {
+                    continue;
+                };
+                if let Some(converter) = try_from_converter_name(args) {
+                    names.insert(converter);
+                }
+            }
+        }
+    }
+
+    names
+}
+
+fn try_from_converter_name(args: &str) -> Option<&str> {
+    let start = args.find("tryFrom")?;
+    let after_key = args[start..].find(':').map(|index| start + index + 1)?;
+    let raw = args[after_key..].split([',', ')']).next()?.trim();
+    let value = raw.strip_prefix("const ").unwrap_or(raw).trim();
+    let before_args = value.split_once('(').map_or(value, |(name, _)| name).trim();
+    before_args
+        .rsplit('.')
+        .next()
+        .filter(|name| !name.is_empty())
 }
 
 fn library_imports(library: &ResolvedLibrary) -> Vec<String> {
@@ -132,6 +169,7 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
                 span: field.span,
                 has_default: field.has_default,
                 serde: lower_field_serde_config(&field.name, &field.configs, &mut diagnostics),
+                configs: field.configs.clone(),
             }
         })
         .collect::<Vec<_>>();
@@ -172,6 +210,7 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
                 is_external: method.surface.is_external,
                 return_type: return_type_outcome.value,
                 has_body: method.surface.has_body,
+                body_source: method.surface.body_source.clone(),
                 params,
                 span: method.span,
                 traits: method.traits.clone(),

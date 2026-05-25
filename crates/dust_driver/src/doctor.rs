@@ -1,6 +1,7 @@
 use std::time::Instant;
 
 use crate::{
+    build::RegistrySelection,
     context::DriverContext,
     request::DoctorRequest,
     result::{CommandResult, DoctorReport},
@@ -15,7 +16,7 @@ pub fn run_doctor(request: DoctorRequest) -> CommandResult {
         workspace,
         registry,
         ..
-    } = match DriverContext::load(&request.cwd) {
+    } = match DriverContext::load(&request.cwd, RegistrySelection::All) {
         Ok(context) => context,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);

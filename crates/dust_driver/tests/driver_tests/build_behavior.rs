@@ -19,11 +19,13 @@ fn second_build_uses_persistent_cache_under_dot_dart_tool() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: Some(4),
+        db: Default::default(),
     });
     let second = run_build(BuildRequest {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: Some(4),
+        db: Default::default(),
     });
 
     assert!(!first.has_errors());
@@ -58,6 +60,7 @@ fn clean_removes_dust_outputs_and_cache_but_keeps_foreign_generated_files() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
     assert!(!built.has_errors());
 
@@ -110,6 +113,7 @@ fn parallel_build_keeps_artifact_order_deterministic() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: Some(4),
+        db: Default::default(),
     });
 
     let outputs = result
@@ -154,6 +158,7 @@ fn build_skips_invalid_library_and_continues_when_fail_fast_is_false() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     assert!(result.has_errors());
@@ -193,6 +198,7 @@ fn build_stops_after_first_error_when_fail_fast_is_true() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: true,
         jobs: None,
+        db: Default::default(),
     });
 
     assert!(result.has_errors());

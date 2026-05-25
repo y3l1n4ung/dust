@@ -13,6 +13,8 @@ pub struct MethodIr {
     pub return_type: TypeIr,
     /// Whether the method includes an implementation body.
     pub has_body: bool,
+    /// The raw method body source, if available.
+    pub body_source: Option<String>,
     /// The lowered parameters in declaration order.
     pub params: Vec<MethodParamIr>,
     /// The source span for the method.

@@ -19,11 +19,13 @@ fn build_uses_member_cache_root_and_shared_package_config_for_pub_workspace() {
         cwd: package_root.clone(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
     let second = run_build(BuildRequest {
         cwd: package_root.clone(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     assert!(!first.has_errors(), "{:?}", first.diagnostics);
@@ -120,6 +122,7 @@ fn clean_only_clears_member_package_outputs_and_cache_in_pub_workspace() {
         cwd: package_root.clone(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
     assert!(!built.has_errors());
     assert!(

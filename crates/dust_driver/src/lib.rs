@@ -20,7 +20,8 @@ pub use clean::run_clean;
 pub use doctor::run_doctor;
 pub use progress::{ProgressEvent, ProgressPhase};
 pub use request::{
-    BuildRequest, CheckRequest, CleanRequest, CommandRequest, DoctorRequest, WatchRequest,
+    BuildRequest, CheckRequest, CleanRequest, CommandRequest, DbRequestOptions, DoctorRequest,
+    WatchRequest,
 };
 pub use result::{
     BuildArtifact, CacheReport, CheckedLibrary, CleanReport, CommandResult, DiagnosticFile,

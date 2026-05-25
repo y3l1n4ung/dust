@@ -89,6 +89,42 @@ fn load_package_config_uses_shared_workspace_config_for_member_package() {
 }
 
 #[test]
+fn load_package_config_uses_workspace_ref_for_newer_pub_workspaces() {
+    let root = tempdir().unwrap();
+    let workspace_root = root.path();
+    let package_root = workspace_root.join("examples/dust_db_example");
+    write_file(
+        &workspace_root.join("pubspec.yaml"),
+        "name: dust_workspace\n",
+    );
+    write_file(
+        &workspace_root.join(".dart_tool/package_config.json"),
+        "{\"configVersion\":2}\n",
+    );
+    write_file(
+        &package_root.join("pubspec.yaml"),
+        "name: dust_db_example\n",
+    );
+    write_file(
+        &package_root.join(".dart_tool/pub/workspace_ref.json"),
+        "{\"workspaceRoot\":\"../..\"}\n",
+    );
+
+    let config = load_package_config(&package_root).unwrap();
+
+    assert_eq!(
+        config.path,
+        workspace_root.join(".dart_tool/package_config.json")
+    );
+    assert_eq!(
+        config.kind,
+        PackageConfigKind::WorkspaceShared {
+            package_graph_path: package_root.join(".dart_tool/pub/workspace_ref.json"),
+        }
+    );
+}
+
+#[test]
 fn load_package_config_reports_missing_shared_workspace_config() {
     let root = tempdir().unwrap();
     let package_root = root.path().join("examples/product_showcase");

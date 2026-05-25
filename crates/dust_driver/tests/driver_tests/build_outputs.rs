@@ -38,6 +38,7 @@ fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     let models_output = fs::read_to_string(workspace.path().join("lib/models.g.dart")).unwrap();
@@ -184,6 +185,7 @@ fn build_writes_real_serde_outputs() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     let profile_output = fs::read_to_string(workspace.path().join("lib/profile.g.dart")).unwrap();
@@ -398,6 +400,7 @@ fn build_writes_custom_serde_codec_outputs() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     let output = fs::read_to_string(workspace.path().join("lib/audit.g.dart")).unwrap();
@@ -498,6 +501,7 @@ fn build_rejects_invalid_serde_using_values() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     assert!(result.has_errors());
@@ -531,6 +535,7 @@ fn build_keeps_source_context_for_labeled_diagnostics() {
         cwd: workspace.path().to_path_buf(),
         fail_fast: false,
         jobs: None,
+        db: Default::default(),
     });
 
     assert_eq!(result.diagnostic_files.len(), 1);

@@ -31,6 +31,10 @@ pub struct CliOptions {
     pub fail_fast: bool,
     /// The optional parallel worker count for build/check/watch.
     pub jobs: Option<usize>,
+    /// Whether only Dust DB generation/validation should run.
+    pub db: bool,
+    /// Whether Dust DB should use offline query metadata only.
+    pub db_offline: bool,
     /// The watch poll interval in milliseconds.
     pub poll_interval_ms: u64,
     /// The optional maximum number of watch cycles.
@@ -43,6 +47,8 @@ impl Default for CliOptions {
             root: None,
             fail_fast: false,
             jobs: None,
+            db: false,
+            db_offline: false,
             poll_interval_ms: DEFAULT_POLL_INTERVAL_MS,
             max_cycles: None,
         }
@@ -106,6 +112,12 @@ struct BuildOptions {
     /// The optional parallel worker count.
     #[arg(long, value_name = "N")]
     jobs: Option<NonZeroUsize>,
+    /// Run only Dust DB generation and SQL validation.
+    #[arg(long, default_value_t = false)]
+    db: bool,
+    /// Use Dust DB offline query metadata.
+    #[arg(long, requires = "db", default_value_t = false)]
+    offline: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Args)]
@@ -181,6 +193,8 @@ impl From<BuildOptions> for CliOptions {
             root: value.root.root,
             fail_fast: value.fail_fast,
             jobs: value.jobs.map(NonZeroUsize::get),
+            db: value.db,
+            db_offline: value.offline,
             ..Self::default()
         }
     }
