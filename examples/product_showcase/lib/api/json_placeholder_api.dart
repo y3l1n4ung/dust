@@ -38,7 +38,10 @@ abstract interface class JsonPlaceholderApi {
   });
 
   @GET('/posts/{id}')
-  Future<Response<RemotePost>> fetchPost(@Path() int id);
+  Future<Response<RemotePost>> fetchPost(
+    @Path() int id, {
+    @Header('accept_encoding') String? accept,
+  });
 
   @GET('/comments')
   Future<List<RemoteComment>> listComments({
@@ -60,4 +63,13 @@ abstract interface class JsonPlaceholderApi {
 
   @DELETE('/posts/{id}')
   Future<Response<Map<String, dynamic>>> deletePost(@Path() int id);
+
+  @POST('/posts')
+  @MultiPart()
+  Future<RemotePost> uploadPostWithFile(
+    @Part('userId') int userId,
+    @Part('title') String title,
+    @Part('body') String body,
+    @Part('file') MultipartFile file,
+  );
 }

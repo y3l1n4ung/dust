@@ -131,7 +131,7 @@ void main() {
       );
       final api = JsonPlaceholderApi(dio);
       try {
-        await api.fetchPost(42);
+        await api.fetchPost(42, accept: 'dust-id');
       } catch (_) {}
       expect(captured, isNotNull);
       final request = captured!;
@@ -139,6 +139,7 @@ void main() {
       expect(request.path, '/posts/42');
       expect(request.queryParameters, isA<Map<String, dynamic>>());
       expect(request.headers, isA<Map<String, dynamic>>());
+      expect(request.headers['accept_encoding'], equals('dust-id'));
       expect(request.headers['accept'], equals('application/json'));
     });
     test('GET listComments', () async {
@@ -209,6 +210,29 @@ void main() {
       final request = captured!;
       expect(request.method, 'DELETE');
       expect(request.path, '/posts/42');
+      expect(request.queryParameters, isA<Map<String, dynamic>>());
+      expect(request.headers, isA<Map<String, dynamic>>());
+      expect(request.headers['accept'], equals('application/json'));
+    });
+    test('POST uploadPostWithFile', () async {
+      RequestOptions? captured;
+      final dio = Dio();
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            captured = options;
+            handler.resolve(Response<dynamic>(requestOptions: options, data: const <String, dynamic>{}));
+          },
+        ),
+      );
+      final api = JsonPlaceholderApi(dio);
+      try {
+        await api.uploadPostWithFile(42, 'dust-id', 'dust-id', const <String, dynamic>{'value': 'dust'} as dynamic);
+      } catch (_) {}
+      expect(captured, isNotNull);
+      final request = captured!;
+      expect(request.method, 'POST');
+      expect(request.path, '/posts');
       expect(request.queryParameters, isA<Map<String, dynamic>>());
       expect(request.headers, isA<Map<String, dynamic>>());
       expect(request.headers['accept'], equals('application/json'));

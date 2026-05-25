@@ -1,7 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
 // ignore_for_file: type=lint
-// ignore_for_file: unused_element, deprecated_member_use
+// ignore_for_file: unused_element, unused_import, deprecated_member_use
 // ignore_for_file: deprecated_member_use_from_same_package
 // ignore_for_file: use_function_type_syntax_for_parameters
 // ignore_for_file: unnecessary_const, avoid_init_to_null

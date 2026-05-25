@@ -215,11 +215,12 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
   }
 
   @override
-  Future<Response<RemotePost>> fetchPost(int id) async {
+  Future<Response<RemotePost>> fetchPost(int id, {String? accept}) async {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     _headers['accept'] = 'application/json';
+    if (accept != null) _headers['accept_encoding'] = accept;
     final Object? _data = null;
     final _options = Options(
       method: 'GET',
@@ -434,5 +435,46 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
     );
     final _value = _result.data as Map<String, dynamic>;
     return _buildResponse<Map<String, dynamic>>(_result, _value);
+  }
+
+  @override
+  Future<RemotePost> uploadPostWithFile(int userId, String title, String body, MultipartFile file) async {
+    final _queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _extra = <String, dynamic>{};
+    _headers['accept'] = 'application/json';
+    final _data = FormData.fromMap(<String, dynamic>{
+      'userId': userId,
+      'title': title,
+      'body': body,
+      'file': file,
+    });
+    final _options = Options(
+      method: 'POST',
+      headers: _headers,
+      extra: _extra,
+      contentType: 'multipart/form-data',
+    );
+    final _result = await _dio.fetch<Map<String, dynamic>>(
+      _setStreamType<RemotePost>(
+        _options
+            .compose(
+              _dio.options,
+              '/posts',
+              queryParameters: _queryParameters,
+              data: _data,
+              cancelToken: null,
+              onSendProgress: null,
+              onReceiveProgress: null,
+            )
+            .copyWith(
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://jsonplaceholder.typicode.com',
+              ),
+            ),
+      ),
+    );
+    return RemotePost.fromJson(_result.data as Map<String, dynamic>);
   }
 }
