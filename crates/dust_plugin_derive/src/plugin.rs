@@ -6,8 +6,13 @@ use dust_plugin_api::{
 };
 
 use crate::{
-    analysis::collect_workspace_analysis, emit::emit_library,
-    features::clone_copy_with::copy_with_requires_undefined, validate::validate_library,
+    analysis::collect_workspace_analysis,
+    emit::emit_library,
+    features::{
+        COPY_WITH_SYMBOL, DEBUG_SYMBOL, EQ_SYMBOL, TO_STRING_SYMBOL,
+        clone_copy_with::copy_with_requires_undefined,
+    },
+    validate::validate_library,
 };
 
 /// The built-in plugin that implements Dust's core derive traits.
@@ -18,12 +23,7 @@ pub fn register_plugin() -> DerivePlugin {
     DerivePlugin
 }
 
-const CLAIMED_TRAITS: &[&str] = &[
-    "derive_annotation::ToString",
-    "derive_annotation::Debug",
-    "derive_annotation::Eq",
-    "derive_annotation::CopyWith",
-];
+const CLAIMED_TRAITS: &[&str] = &[TO_STRING_SYMBOL, DEBUG_SYMBOL, EQ_SYMBOL, COPY_WITH_SYMBOL];
 
 const SUPPORTED_ANNOTATIONS: &[&str] = &["Derive", "ToString", "Debug", "Eq", "CopyWith"];
 
@@ -43,8 +43,7 @@ impl DustPlugin for DerivePlugin {
     fn requested_symbols(&self, library: &LibraryIr) -> Vec<String> {
         let needs_undefined = library.classes.iter().any(|class| {
             class.traits.iter().any(|trait_app| {
-                trait_app.symbol.0 == "derive_annotation::CopyWith"
-                    && copy_with_requires_undefined(class)
+                trait_app.symbol.0 == COPY_WITH_SYMBOL && copy_with_requires_undefined(class)
             })
         });
 

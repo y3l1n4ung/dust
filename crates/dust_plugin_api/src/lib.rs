@@ -12,7 +12,7 @@ pub use analysis::{LibraryAnalysisSnapshot, WorkspaceAnalysis, WorkspaceAnalysis
 pub use contribution::{AuxiliaryOutputContribution, ClassMixinContribution, PluginContribution};
 pub use plugin::{DustPlugin, WorkspaceAnalysisContext};
 pub use registry::PluginRegistry;
-pub use symbols::{short_symbol_name, RequestedSymbol, SymbolPlan};
+pub use symbols::{RequestedSymbol, SymbolPlan, short_symbol_name};
 
 /// The unified header prepended to all Dust-generated Dart files.
 pub const GENERATED_HEADER: &str = concat!(

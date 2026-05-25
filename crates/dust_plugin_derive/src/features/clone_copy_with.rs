@@ -1,12 +1,13 @@
 mod render;
 mod support;
 
-use std::collections::HashSet;
+use std::{borrow::Cow, collections::HashSet};
 
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ClassIr, SymbolId};
+use dust_ir::ClassIr;
 
 use crate::features::{
+    COPY_WITH_SYMBOL,
     eq_hash::has_trait,
     writer::{build_constructor_call_multiline, find_clone_constructor, render_return_statement},
 };
@@ -26,36 +27,34 @@ pub(crate) fn copy_with_requires_undefined(class: &ClassIr) -> bool {
         .any(|field| uses_undefined_sentinel(&field.ty))
 }
 
-pub(crate) fn emit_copy_with(class: &ClassIr, copyable_types: &HashSet<String>) -> Option<String> {
-    let copy_with = SymbolId::new("derive_annotation::CopyWith");
-
-    if !has_trait(class, &copy_with) {
+pub(crate) fn emit_copy_with(class: &ClassIr, copyable_types: &HashSet<&str>) -> Option<String> {
+    if !has_trait(class, COPY_WITH_SYMBOL) {
         return None;
     }
 
     let constructor = find_clone_constructor(class)?;
     let params = render_copy_with_params(class);
     let mut setup = Vec::new();
-    let mut values = Vec::with_capacity(class.fields.len());
+    let mut values: Vec<(&str, Cow<'_, str>)> = Vec::with_capacity(class.fields.len());
 
     for (depth, field) in class.fields.iter().enumerate() {
         let source_expr = render_copy_with_source_expr(field.name.as_str(), &field.ty);
         let copied_expr = render_copied_value(&field.ty, &source_expr, depth, copyable_types);
 
-        if copied_expr == source_expr {
-            values.push((field.name.as_str(), source_expr));
+        if copied_expr.as_ref() == source_expr {
+            values.push((field.name.as_str(), Cow::Owned(source_expr)));
         } else if should_keep_source_local(&field.ty) {
             let source_var = temp_name("next", &field.name, "Source");
             let next_var = temp_name("next", &field.name, "");
             let copied_expr =
                 render_copied_value(&field.ty, source_var.as_str(), depth, copyable_types);
             setup.push(format!("final {source_var} = {source_expr};"));
-            setup.push(format!("final {next_var} = {copied_expr};"));
-            values.push((field.name.as_str(), next_var));
+            setup.push(format!("final {next_var} = {};", copied_expr.as_ref()));
+            values.push((field.name.as_str(), Cow::Owned(next_var)));
         } else {
             let next_var = temp_name("next", &field.name, "");
-            setup.push(format!("final {next_var} = {copied_expr};"));
-            values.push((field.name.as_str(), next_var));
+            setup.push(format!("final {next_var} = {};", copied_expr.as_ref()));
+            values.push((field.name.as_str(), Cow::Owned(next_var)));
         }
     }
 
@@ -83,9 +82,7 @@ pub(crate) fn emit_copy_with(class: &ClassIr, copyable_types: &HashSet<String>) 
 }
 
 pub(crate) fn validate_copy_with(class: &ClassIr) -> Vec<Diagnostic> {
-    let copy_with = SymbolId::new("derive_annotation::CopyWith");
-
-    if !has_trait(class, &copy_with) {
+    if !has_trait(class, COPY_WITH_SYMBOL) {
         return Vec::new();
     }
 

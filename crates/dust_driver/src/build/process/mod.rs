@@ -73,6 +73,7 @@ pub(crate) struct IndexedBuildOutcome {
     pub(crate) index: usize,
     pub(crate) library: SourceLibrary,
     pub(crate) source_hash: Option<u64>,
+    pub(crate) tool_hash: Option<u64>,
     pub(crate) outcome: BuildOutcome,
 }
 
@@ -80,7 +81,9 @@ pub(crate) struct IndexedBuildOutcome {
 pub(crate) struct LoadedLibraryInput {
     pub(crate) source: Arc<str>,
     pub(crate) source_hash: u64,
+    pub(crate) tool_hash: u64,
     pub(crate) checked_output_hash: Option<Option<u64>>,
+    pub(crate) previous_output_hash: Option<Option<u64>>,
 }
 
 pub(crate) struct PendingLibrary {

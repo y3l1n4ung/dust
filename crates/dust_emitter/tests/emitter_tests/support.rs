@@ -4,7 +4,9 @@ use dust_ir::{
     ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, FieldIr, LibraryIr, ParamKind, SpanIr,
     SymbolId, TraitApplicationIr, TypeIr,
 };
-use dust_plugin_api::{DustPlugin, PluginContribution, PluginRegistry, SymbolPlan, GENERATED_HEADER};
+use dust_plugin_api::{
+    DustPlugin, GENERATED_HEADER, PluginContribution, PluginRegistry, SymbolPlan,
+};
 use dust_text::{FileId, TextRange};
 
 pub(crate) fn generated_output(body: &str) -> String {

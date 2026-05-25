@@ -27,32 +27,37 @@ fn annotation_has_copy_with(annotation: &ParsedAnnotation) -> bool {
         return false;
     }
 
-    derive_member_names(annotation.arguments_source.as_deref().unwrap_or(""))
-        .into_iter()
-        .any(|name| name == "CopyWith")
+    derive_arguments_has_copy_with(annotation.arguments_source.as_deref().unwrap_or(""))
 }
 
-fn derive_member_names(arguments_source: &str) -> Vec<String> {
-    let mut names = Vec::new();
-    let mut chars = arguments_source.chars().peekable();
+fn derive_arguments_has_copy_with(arguments_source: &str) -> bool {
+    let bytes = arguments_source.as_bytes();
+    let mut index = 0;
 
-    while let Some(ch) = chars.next() {
-        if ch == '_' || ch.is_ascii_alphabetic() {
-            let mut ident = String::from(ch);
-            while let Some(next) = chars.peek() {
-                if *next == '_' || next.is_ascii_alphanumeric() {
-                    ident.push(*next);
-                    chars.next();
-                } else {
-                    break;
-                }
-            }
+    while index < bytes.len() {
+        if !is_ident_start(bytes[index]) {
+            index += 1;
+            continue;
+        }
 
-            if chars.peek().copied() == Some('(') {
-                names.push(ident);
-            }
+        let start = index;
+        index += 1;
+        while index < bytes.len() && is_ident_continue(bytes[index]) {
+            index += 1;
+        }
+
+        if &arguments_source[start..index] == "CopyWith" && bytes.get(index) == Some(&b'(') {
+            return true;
         }
     }
 
-    names
+    false
+}
+
+fn is_ident_start(byte: u8) -> bool {
+    byte == b'_' || byte.is_ascii_alphabetic()
+}
+
+fn is_ident_continue(byte: u8) -> bool {
+    byte == b'_' || byte.is_ascii_alphanumeric()
 }

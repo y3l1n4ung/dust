@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use dust_dart_emit::DYNAMIC_TYPES;
 use dust_ir::{ClassIr, LibraryIr, TypeIr};
 use dust_plugin_api::{PluginContribution, SymbolPlan};
@@ -17,15 +19,21 @@ struct StateFieldSpec {
 
 pub(crate) fn emit_library_state(library: &LibraryIr, plan: &SymbolPlan) -> PluginContribution {
     let mut contribution = PluginContribution::default();
+    let view_models = library
+        .classes
+        .iter()
+        .filter_map(|class| {
+            let config = view_model_config(&class.configs)?;
+            let annotation = parse_view_model_annotation(config.arguments_source.as_deref())?;
+            Some((class, annotation))
+        })
+        .collect::<Vec<_>>();
+    if view_models.is_empty() {
+        return contribution;
+    }
+
     let state_facts = state_facts(plan);
-    for class in &library.classes {
-        let Some(config) = view_model_config(&class.configs) else {
-            continue;
-        };
-        let Some(annotation) = parse_view_model_annotation(config.arguments_source.as_deref())
-        else {
-            continue;
-        };
+    for (class, annotation) in view_models {
         let args_type = annotation
             .args_type
             .clone()
@@ -45,17 +53,28 @@ pub(crate) fn emit_library_state(library: &LibraryIr, plan: &SymbolPlan) -> Plug
     contribution
 }
 
-fn state_facts(plan: &SymbolPlan) -> Vec<StateFact> {
+fn state_facts(plan: &SymbolPlan) -> HashMap<String, Vec<StateFieldSpec>> {
     plan.workspace_string_set(STATES_ANALYSIS_KEY)
         .unwrap_or_default()
         .iter()
         .filter_map(|value| serde_json::from_str::<StateFact>(value).ok())
+        .map(|fact| {
+            let fields = fact
+                .fields
+                .into_iter()
+                .map(|field| StateFieldSpec {
+                    name: field.name,
+                    type_source: field.type_source,
+                })
+                .collect::<Vec<_>>();
+            (fact.class_name, fields)
+        })
         .collect()
 }
 
 fn class_fields(
     library: &LibraryIr,
-    state_facts: &[StateFact],
+    state_facts: &HashMap<String, Vec<StateFieldSpec>>,
     class_name: &str,
 ) -> Vec<StateFieldSpec> {
     if let Some(class) = library
@@ -75,19 +94,7 @@ fn class_fields(
             return fields;
         }
     }
-    state_facts
-        .iter()
-        .find(|fact| fact.class_name == class_name)
-        .map(|fact| {
-            fact.fields
-                .iter()
-                .map(|field| StateFieldSpec {
-                    name: field.name.clone(),
-                    type_source: field.type_source.clone(),
-                })
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default()
+    state_facts.get(class_name).cloned().unwrap_or_default()
 }
 
 fn render_view_model_output(

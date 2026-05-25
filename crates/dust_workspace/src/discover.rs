@@ -12,6 +12,7 @@ use crate::{SourceLibrary, is_generated_primary_file, load_dust_config, primary_
 #[derive(Debug, Clone, Default)]
 pub struct SupportedAnnotations {
     names: HashSet<Box<str>>,
+    byte_names: Vec<Box<[u8]>>,
 }
 
 impl SupportedAnnotations {
@@ -28,6 +29,10 @@ impl SupportedAnnotations {
     pub fn contains(&self, name: &str) -> bool {
         self.names.contains(name)
     }
+
+    fn contains_bytes(&self, name: &[u8]) -> bool {
+        self.byte_names.iter().any(|supported| &**supported == name)
+    }
 }
 
 impl<S> FromIterator<S> for SupportedAnnotations
@@ -35,12 +40,14 @@ where
     S: Into<String>,
 {
     fn from_iter<T: IntoIterator<Item = S>>(iter: T) -> Self {
+        let names = iter.into_iter().map(Into::into).collect::<Vec<String>>();
+        let byte_names = names
+            .iter()
+            .map(|name| name.as_bytes().to_vec().into_boxed_slice())
+            .collect();
         Self {
-            names: iter
-                .into_iter()
-                .map(Into::into)
-                .map(String::into_boxed_str)
-                .collect(),
+            names: names.into_iter().map(String::into_boxed_str).collect(),
+            byte_names,
         }
     }
 }
@@ -82,28 +89,33 @@ pub fn discover_libraries(
 }
 
 fn collect_dart_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), Diagnostic> {
-    let mut entries = fs::read_dir(dir)
-        .map_err(|error| {
-            Diagnostic::error(format!(
-                "failed to read directory `{}`: {error}",
-                dir.display()
-            ))
-        })?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|error| {
+    let entries = fs::read_dir(dir).map_err(|error| {
+        Diagnostic::error(format!(
+            "failed to read directory `{}`: {error}",
+            dir.display()
+        ))
+    })?;
+
+    for entry in entries {
+        let entry = entry.map_err(|error| {
             Diagnostic::error(format!(
                 "failed to enumerate directory `{}`: {error}",
                 dir.display()
             ))
         })?;
-
-    entries.sort_by_key(|entry| entry.path());
-
-    for entry in entries {
         let path = entry.path();
-        if path.is_dir() {
+        let file_type = entry.file_type().map_err(|error| {
+            Diagnostic::error(format!(
+                "failed to inspect directory entry `{}`: {error}",
+                path.display()
+            ))
+        })?;
+
+        if file_type.is_dir() {
             collect_dart_files(&path, out)?;
-        } else if path.extension().and_then(|ext| ext.to_str()) == Some("dart") {
+        } else if file_type.is_file()
+            && path.extension().and_then(|ext| ext.to_str()) == Some("dart")
+        {
             out.push(path);
         }
     }
@@ -115,7 +127,7 @@ fn is_candidate_library(
     path: &Path,
     supported_annotations: &SupportedAnnotations,
 ) -> Result<bool, Diagnostic> {
-    let source = fs::read_to_string(path).map_err(|error| {
+    let source = fs::read(path).map_err(|error| {
         Diagnostic::error(format!(
             "failed to read library `{}`: {error}",
             path.display()
@@ -125,35 +137,32 @@ fn is_candidate_library(
     Ok(contains_annotation_marker(&source, supported_annotations))
 }
 
-fn contains_annotation_marker(source: &str, supported_annotations: &SupportedAnnotations) -> bool {
-    let mut chars = source.chars().peekable();
-    let mut name = String::new();
+fn contains_annotation_marker(source: &[u8], supported_annotations: &SupportedAnnotations) -> bool {
+    let mut index = 0;
+    while index < source.len() {
+        if source[index] != b'@' {
+            index += 1;
+            continue;
+        }
 
-    while let Some(ch) = chars.next() {
-        if ch == '@' {
-            name.clear();
-            while let Some(next) = chars.peek() {
-                if next.is_whitespace() {
-                    chars.next();
-                } else {
-                    break;
-                }
-            }
+        index += 1;
+        while index < source.len() && source[index].is_ascii_whitespace() {
+            index += 1;
+        }
 
-            while let Some(next) = chars.peek() {
-                if *next == '_' || next.is_ascii_alphanumeric() {
-                    name.push(*next);
-                    chars.next();
-                } else {
-                    break;
-                }
-            }
+        let start = index;
+        while index < source.len() && is_annotation_ident(source[index]) {
+            index += 1;
+        }
 
-            if supported_annotations.contains(&name) {
-                return true;
-            }
+        if start != index && supported_annotations.contains_bytes(&source[start..index]) {
+            return true;
         }
     }
 
     false
+}
+
+fn is_annotation_ident(byte: u8) -> bool {
+    byte == b'_' || byte.is_ascii_alphanumeric()
 }

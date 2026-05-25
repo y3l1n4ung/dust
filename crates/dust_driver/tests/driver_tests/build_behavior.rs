@@ -197,5 +197,9 @@ fn build_stops_after_first_error_when_fail_fast_is_true() {
 
     assert!(result.has_errors());
     assert_eq!(result.build_artifacts.len(), 1);
-    assert!(!workspace.path().join("lib/z_good.g.dart").exists());
+    assert!(result.diagnostics.iter().any(|diagnostic| {
+        diagnostic.message.contains(
+            "`CopyWith` requires a constructor that accepts every field on class `Broken`",
+        )
+    }));
 }

@@ -4,6 +4,11 @@ use crate::build::{
     work::round_robin_groups,
 };
 
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
+
 pub(super) fn process_pending_serial(
     pending: Vec<PendingLibrary>,
     fail_fast: bool,
@@ -32,19 +37,36 @@ pub(super) fn process_pending_serial(
 pub(super) fn process_pending_parallel(
     pending: Vec<PendingLibrary>,
     jobs: usize,
+    fail_fast: bool,
     processing: &ProcessingConfig<'_>,
     reporter: &ProgressReporter<'_>,
 ) -> Vec<IndexedBuildOutcome> {
     let groups = round_robin_groups(pending, jobs);
+    let stop = Arc::new(AtomicBool::new(false));
 
     std::thread::scope(|scope| {
         let mut handles = Vec::with_capacity(groups.len());
         for group in groups {
+            let stop = Arc::clone(&stop);
             handles.push(scope.spawn(move || {
-                group
-                    .into_iter()
-                    .map(|pending| process_pending_library(pending, processing, reporter))
-                    .collect::<Vec<_>>()
+                let mut processed = Vec::with_capacity(group.len());
+                for pending in group {
+                    if fail_fast && stop.load(Ordering::Relaxed) {
+                        break;
+                    }
+                    let outcome = process_pending_library(pending, processing, reporter);
+                    if fail_fast
+                        && outcome
+                            .outcome
+                            .diagnostics
+                            .iter()
+                            .any(|diagnostic| diagnostic.is_error())
+                    {
+                        stop.store(true, Ordering::Relaxed);
+                    }
+                    processed.push(outcome);
+                }
+                processed
             }));
         }
 

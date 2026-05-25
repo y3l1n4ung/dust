@@ -1,6 +1,7 @@
-use dust_ir::{ClassIr, SymbolId};
+use dust_ir::ClassIr;
+use std::fmt::Write;
 
-use crate::features::eq_hash::has_trait;
+use crate::features::{DEBUG_SYMBOL, TO_STRING_SYMBOL, eq_hash::has_trait};
 
 pub(crate) fn emit_debug_mixin(class: &ClassIr) -> Option<String> {
     if !has_to_string_trait(class) {
@@ -13,28 +14,31 @@ pub(crate) fn emit_debug_mixin(class: &ClassIr) -> Option<String> {
             class.name
         )
     } else {
-        let segments = class
-            .fields
-            .iter()
-            .enumerate()
-            .map(|(index, field)| {
-                let suffix = if index + 1 == class.fields.len() {
-                    ""
-                } else {
-                    ", "
-                };
-                format!("      '{}: ${{self.{}}}{}'", field.name, field.name, suffix)
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
-        format!(
-            "@override\nString toString() {{\n  final self = this as {};\n  return '{}('\n{}\n      ')';\n}}",
-            class.name, class.name, segments
+        let mut out = String::with_capacity(class.name.len() * 2 + class.fields.len() * 32 + 96);
+        write!(
+            &mut out,
+            "@override\nString toString() {{\n  final self = this as {};\n  return '{}('\n",
+            class.name, class.name,
         )
+        .ok()?;
+        for (index, field) in class.fields.iter().enumerate() {
+            let suffix = if index + 1 == class.fields.len() {
+                ""
+            } else {
+                ", "
+            };
+            writeln!(
+                &mut out,
+                "      '{}: ${{self.{}}}{}'",
+                field.name, field.name, suffix
+            )
+            .ok()?;
+        }
+        out.push_str("      ')';\n}");
+        out
     })
 }
 
 fn has_to_string_trait(class: &ClassIr) -> bool {
-    has_trait(class, &SymbolId::new("derive_annotation::ToString"))
-        || has_trait(class, &SymbolId::new("derive_annotation::Debug"))
+    has_trait(class, TO_STRING_SYMBOL) || has_trait(class, DEBUG_SYMBOL)
 }

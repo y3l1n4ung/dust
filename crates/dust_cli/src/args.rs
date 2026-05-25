@@ -98,7 +98,9 @@ struct RootOptions {
 struct BuildOptions {
     #[command(flatten)]
     root: RootOptions,
-    /// Whether the command should stop after the first error diagnostic.
+    /// Stop after the first observed worker error diagnostic.
+    ///
+    /// Parallel builds do not guarantee that this is the lexically first file.
     #[arg(long, default_value_t = false)]
     fail_fast: bool,
     /// The optional parallel worker count.

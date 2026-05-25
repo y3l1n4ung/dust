@@ -17,7 +17,7 @@ pub(crate) use apply::{ApplyOutcomeConfig, apply_indexed_outcomes, flush_cache_i
 pub(crate) use batch::BatchConfig;
 pub(crate) use batch::prepare_and_process_batch;
 pub(crate) use support::{
-    codegen_tool_hash, default_registry, hash_text, read_workspace_config_hash,
+    CodegenToolHash, codegen_tool_hash, default_registry, hash_text, read_workspace_config_hash,
 };
 
 /// Runs one writing build across the discovered workspace.
@@ -82,14 +82,13 @@ fn run_build_inner(
         ApplyOutcomeConfig {
             cache_root: &workspace.cache_root,
             package_config_hash,
-            tool_hash,
             fail_fast: request.fail_fast,
         },
         &mut cache,
         &mut result,
         None,
     );
-    flush_cache_into_result(&cache, &mut result);
+    flush_cache_into_result(&mut cache, &mut result);
     result.cache = Some(cache_report);
     result.elapsed_ms = started.elapsed().as_millis();
     result

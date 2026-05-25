@@ -6,7 +6,6 @@ use std::{
 
 use dust_cache::WorkspaceCache;
 use dust_diagnostics::Diagnostic;
-use dust_plugin_api::GENERATED_HEADER;
 use dust_workspace::{detect_workspace_root, load_dust_config};
 
 use crate::{CleanReport, CleanRequest, CommandResult};
@@ -151,7 +150,10 @@ fn is_generated_test_file(path: &Path) -> bool {
 fn is_dust_generated_file(path: &Path) -> Result<bool, std::io::Error> {
     let contents = fs::read_to_string(path)?;
     let has_header = contents.starts_with(DUST_HEADER_START);
-    let has_footer = contents.lines().take(20).any(|line| line.starts_with(DUST_HEADER_END));
+    let has_footer = contents
+        .lines()
+        .take(20)
+        .any(|line| line.starts_with(DUST_HEADER_END));
     Ok(has_header && has_footer)
 }
 
@@ -160,6 +162,7 @@ mod tests {
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
 
+    use dust_plugin_api::GENERATED_HEADER;
     use tempfile::tempdir;
 
     use super::*;

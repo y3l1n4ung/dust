@@ -107,14 +107,19 @@ fn run_watch_inner(
         ApplyOutcomeConfig {
             cache_root: &workspace.cache_root,
             package_config_hash,
-            tool_hash,
             fail_fast: request.fail_fast,
         },
         &mut cache,
         &mut result,
         None,
     ) {
-        return finish_watch_result(result, &cache, cache_report, empty_watch_report(), started);
+        return finish_watch_result(
+            result,
+            &mut cache,
+            cache_report,
+            empty_watch_report(),
+            started,
+        );
     }
 
     let mut watch = WatchReport {
@@ -174,18 +179,17 @@ fn run_watch_inner(
             ApplyOutcomeConfig {
                 cache_root: &workspace.cache_root,
                 package_config_hash,
-                tool_hash,
                 fail_fast: request.fail_fast,
             },
             &mut cache,
             &mut result,
             Some(&mut watch.rebuilt_libraries),
         ) {
-            return finish_watch_result(result, &cache, cache_report, watch, started);
+            return finish_watch_result(result, &mut cache, cache_report, watch, started);
         }
     }
 
-    finish_watch_result(result, &cache, cache_report, watch, started)
+    finish_watch_result(result, &mut cache, cache_report, watch, started)
 }
 
 fn empty_watch_report() -> WatchReport {
@@ -198,7 +202,7 @@ fn empty_watch_report() -> WatchReport {
 
 fn finish_watch_result(
     mut result: CommandResult,
-    cache: &WorkspaceCache,
+    cache: &mut WorkspaceCache,
     cache_report: CacheReport,
     watch: WatchReport,
     started: Instant,

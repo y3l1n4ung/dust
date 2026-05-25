@@ -54,7 +54,6 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
     let apply_config = ApplyOutcomeConfig {
         cache_root: &workspace.cache_root,
         package_config_hash,
-        tool_hash,
         fail_fast: request.fail_fast,
     };
 
@@ -87,7 +86,7 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
         }
     }
 
-    flush_cache_into_result(&cache, &mut result);
+    flush_cache_into_result(&mut cache, &mut result);
     result.cache = Some(cache_report);
     result.elapsed_ms = started.elapsed().as_millis();
     result

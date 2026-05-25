@@ -1,4 +1,4 @@
-use dust_plugin_api::{PluginContribution, PluginRegistry, GENERATED_HEADER};
+use dust_plugin_api::{PluginContribution, PluginRegistry};
 
 use super::support::{FakePlugin, emit_with_registry, generated_output, sample_library};
 

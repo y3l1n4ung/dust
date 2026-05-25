@@ -17,6 +17,7 @@ use crate::{
         process::{
             IndexedBuildOutcome, PendingLibrary, ProcessingConfig, collect_workspace_analysis,
         },
+        support::CodegenToolHash,
         work::available_worker_count,
     },
     progress::{ProgressEvent, ProgressPhase},
@@ -38,7 +39,7 @@ pub(crate) struct BatchConfig<'a> {
     pub(crate) package_root: &'a Path,
     pub(crate) package_name: &'a str,
     pub(crate) package_config_hash: u64,
-    pub(crate) tool_hash: u64,
+    pub(crate) tool_hash: CodegenToolHash,
     pub(crate) cache: &'a WorkspaceCache,
     pub(crate) catalog: &'a dust_resolver::SymbolCatalog,
     pub(crate) registry: &'a dust_plugin_api::PluginRegistry,
@@ -90,7 +91,6 @@ pub(crate) fn prepare_and_process_batch(
                 entry,
                 &input,
                 config.package_config_hash,
-                config.tool_hash,
             ) && input.checked_output_hash == Some(Some(entry.expected_output_hash))
                 && !cached_router_depends_on_changed_routes(entry, route_analysis_changed)
             {
@@ -151,10 +151,16 @@ pub(crate) fn prepare_and_process_batch(
     };
 
     let desired_jobs = available_worker_count(pending.len(), config.jobs);
-    let mut processed = if config.fail_fast || desired_jobs <= 1 || pending.len() <= 1 {
+    let mut processed = if desired_jobs <= 1 || pending.len() <= 1 {
         process_pending_serial(pending, config.fail_fast, &processing, &reporter)
     } else {
-        process_pending_parallel(pending, desired_jobs, &processing, &reporter)
+        process_pending_parallel(
+            pending,
+            desired_jobs,
+            config.fail_fast,
+            &processing,
+            &reporter,
+        )
     };
 
     outcomes.append(&mut processed);
@@ -183,7 +189,6 @@ fn route_analysis_changed(
                     entry,
                     input,
                     config.package_config_hash,
-                    config.tool_hash,
                 ) && input.checked_output_hash == Some(Some(entry.expected_output_hash))
             });
 

@@ -14,6 +14,8 @@ use crate::{emit_library, emit_library_with_plan};
 pub struct WriteResult {
     /// The emitted `.g.dart` source text.
     pub source: String,
+    /// Hash of the emitted primary and auxiliary output path/source pairs.
+    pub output_hash: u64,
     /// The reserved generated helper symbols for this file.
     pub symbols: SymbolPlan,
     /// Diagnostics emitted during validation or emission.
@@ -68,6 +70,10 @@ pub fn persist_emit_result(
     output_path: PathBuf,
     emitted: crate::EmitResult,
 ) -> io::Result<WriteResult> {
+    let emitted = emitted.with_output_hash(&output_path);
+    let output_hash = emitted
+        .output_hash
+        .expect("output hash must be attached before persisting");
     let has_errors = emitted
         .diagnostics
         .iter()
@@ -87,6 +93,7 @@ pub fn persist_emit_result(
 
     Ok(WriteResult {
         source: emitted.source,
+        output_hash,
         symbols: emitted.symbols,
         diagnostics: emitted.diagnostics,
         changed,

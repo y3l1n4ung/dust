@@ -1,6 +1,7 @@
 use std::{fs, io, path::Path, sync::Arc};
 
 use dust_diagnostics::Diagnostic;
+use dust_emitter::hash_output_set;
 use dust_http_client_plugin::register_plugin as register_http_client_plugin;
 use dust_plugin_api::PluginRegistry;
 use dust_plugin_derive::register_plugin as register_derive_plugin;
@@ -11,7 +12,18 @@ use dust_workspace::SourceLibrary;
 
 use crate::build::process::LoadedLibraryInput;
 
-const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
+#[derive(Clone, Copy)]
+pub(crate) struct CodegenToolHash {
+    hash: u64,
+}
+
+impl CodegenToolHash {
+    pub(crate) fn value(self) -> u64 {
+        self.hash
+    }
+}
+
+const CODEGEN_CORE_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../build.rs"),
     include_str!("../check.rs"),
     include_str!("../context.rs"),
@@ -37,21 +49,6 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_plugin_api/src/plugin.rs"),
     include_str!("../../../dust_plugin_api/src/registry.rs"),
     include_str!("../../../dust_plugin_api/src/symbols.rs"),
-    include_str!("../../../dust_plugin_derive/src/analysis.rs"),
-    include_str!("../../../dust_plugin_derive/src/plugin.rs"),
-    include_str!("../../../dust_plugin_derive/src/features/debug.rs"),
-    include_str!("../../../dust_plugin_derive/src/features/eq_hash.rs"),
-    include_str!("../../../dust_plugin_derive/src/features/clone_copy_with.rs"),
-    include_str!("../../../dust_plugin_serde/src/plugin.rs"),
-    include_str!("../../../dust_plugin_serde/src/validate.rs"),
-    include_str!("../../../dust_plugin_serde/src/emit.rs"),
-    include_str!("../../../dust_plugin_serde/src/emit_class.rs"),
-    include_str!("../../../dust_plugin_serde/src/emit_enum.rs"),
-    include_str!("../../../dust_plugin_serde/src/emit_support.rs"),
-    include_str!("../../../dust_plugin_serde/src/writer.rs"),
-    include_str!("../../../dust_plugin_serde/src/writer_expr.rs"),
-    include_str!("../../../dust_plugin_serde/src/writer_model.rs"),
-    include_str!("../../../dust_plugin_serde/src/writer_type.rs"),
     include_str!("../../../dust_dart_emit/src/lib.rs"),
     include_str!("../../../dust_dart_emit/src/rename.rs"),
     include_str!("../../../dust_dart_emit/src/type_render.rs"),
@@ -62,6 +59,34 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_workspace/src/pubspec.rs"),
     include_str!("../../../dust_workspace/src/root.rs"),
     include_str!("../../../dust_workspace/src/workspace.rs"),
+    include_str!("../../../dust_emitter/src/emit.rs"),
+    include_str!("../../../dust_emitter/src/merge.rs"),
+    include_str!("../../../dust_emitter/src/write.rs"),
+    include_str!("../../../dust_emitter/src/writer.rs"),
+);
+
+const DERIVE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
+    include_str!("../../../dust_plugin_derive/src/analysis.rs"),
+    include_str!("../../../dust_plugin_derive/src/plugin.rs"),
+    include_str!("../../../dust_plugin_derive/src/features/debug.rs"),
+    include_str!("../../../dust_plugin_derive/src/features/eq_hash.rs"),
+    include_str!("../../../dust_plugin_derive/src/features/clone_copy_with.rs"),
+);
+
+const SERDE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
+    include_str!("../../../dust_plugin_serde/src/plugin.rs"),
+    include_str!("../../../dust_plugin_serde/src/validate.rs"),
+    include_str!("../../../dust_plugin_serde/src/emit.rs"),
+    include_str!("../../../dust_plugin_serde/src/emit_class.rs"),
+    include_str!("../../../dust_plugin_serde/src/emit_enum.rs"),
+    include_str!("../../../dust_plugin_serde/src/emit_support.rs"),
+    include_str!("../../../dust_plugin_serde/src/writer.rs"),
+    include_str!("../../../dust_plugin_serde/src/writer_expr.rs"),
+    include_str!("../../../dust_plugin_serde/src/writer_model.rs"),
+    include_str!("../../../dust_plugin_serde/src/writer_type.rs"),
+);
+
+const HTTP_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_http_client_plugin/src/lib.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin/build.rs"),
@@ -85,8 +110,10 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/test_file.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/test_support.rs"),
     include_str!("../../../dust_http_client_plugin/src/plugin/emit/types.rs"),
+);
+
+const ROUTE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_route_plugin/src/lib.rs"),
-    include_str!("../../../dust_state_plugin/src/lib.rs"),
     include_str!("../../../dust_route_plugin/src/plugin.rs"),
     include_str!("../../../dust_route_plugin/src/plugin/analysis.rs"),
     include_str!("../../../dust_route_plugin/src/plugin/constants.rs"),
@@ -94,6 +121,10 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_route_plugin/src/plugin/parse.rs"),
     include_str!("../../../dust_route_plugin/src/plugin/validate/mod.rs"),
     include_str!("../../../dust_route_plugin/src/plugin/emit/mod.rs"),
+);
+
+const STATE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
+    include_str!("../../../dust_state_plugin/src/lib.rs"),
     include_str!("../../../dust_state_plugin/src/plugin.rs"),
     include_str!("../../../dust_state_plugin/src/plugin/analysis.rs"),
     include_str!("../../../dust_state_plugin/src/plugin/constants.rs"),
@@ -101,10 +132,6 @@ const CODEGEN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../dust_state_plugin/src/plugin/model.rs"),
     include_str!("../../../dust_state_plugin/src/plugin/parse.rs"),
     include_str!("../../../dust_state_plugin/src/plugin/validate.rs"),
-    include_str!("../../../dust_emitter/src/emit.rs"),
-    include_str!("../../../dust_emitter/src/merge.rs"),
-    include_str!("../../../dust_emitter/src/write.rs"),
-    include_str!("../../../dust_emitter/src/writer.rs"),
 );
 
 #[derive(Clone)]
@@ -120,7 +147,7 @@ pub(crate) fn load_library_input(
     library: &SourceLibrary,
     cache_fingerprint: Option<CacheFingerprint>,
     package_config_hash: u64,
-    tool_hash: u64,
+    tool_hash: CodegenToolHash,
 ) -> Result<LoadedLibraryInput, Diagnostic> {
     let source = fs::read_to_string(&library.source_path).map_err(|error| {
         Diagnostic::error(format!(
@@ -129,28 +156,25 @@ pub(crate) fn load_library_input(
         ))
     })?;
     let source_hash = hash_text(&source);
-    let checked_output_hash = cache_fingerprint
+    let tool_hash = tool_hash.value();
+    let previous_output_hash = cache_fingerprint
+        .as_ref()
         .filter(|entry| {
-            entry.source_hash == source_hash
-                && entry.package_config_hash == package_config_hash
-                && entry.tool_hash == tool_hash
+            entry.source_hash == source_hash && entry.package_config_hash == package_config_hash
         })
-        .map(|entry| {
-            read_optional_hashes(&entry.output_paths, entry.allow_missing_primary).map_err(
-                |error| {
-                    Diagnostic::error(format!(
-                        "failed to read generated outputs for `{}`: {error}",
-                        library.source_path.display()
-                    ))
-                },
-            )
-        })
+        .map(|entry| cached_output_hash(entry, &library.source_path))
         .transpose()?;
+    let checked_output_hash = cache_fingerprint
+        .as_ref()
+        .filter(|entry| entry.tool_hash == tool_hash)
+        .and(previous_output_hash);
 
     Ok(LoadedLibraryInput {
         source_hash,
+        tool_hash,
         source: Arc::<str>::from(source),
         checked_output_hash,
+        previous_output_hash,
     })
 }
 
@@ -184,23 +208,30 @@ pub(crate) fn read_workspace_config_hash(
 }
 
 pub(crate) fn hash_text(text: &str) -> u64 {
+    hash_bytes(text.as_bytes())
+}
+
+fn hash_bytes(bytes: &[u8]) -> u64 {
     let mut hash = 1469598103934665603_u64;
-    for byte in text.as_bytes() {
-        hash ^= u64::from(*byte);
-        hash = hash.wrapping_mul(1099511628211);
-    }
+    update_hash_bytes(&mut hash, bytes);
     hash
+}
+
+fn update_hash_bytes(hash: &mut u64, bytes: &[u8]) {
+    for byte in bytes {
+        *hash ^= u64::from(*byte);
+        *hash = (*hash).wrapping_mul(1099511628211);
+    }
 }
 
 pub(crate) fn matches_cache_metadata(
     entry: &dust_cache::CacheEntry,
     input: &LoadedLibraryInput,
     package_config_hash: u64,
-    tool_hash: u64,
 ) -> bool {
     entry.source_hash == input.source_hash
         && entry.package_config_hash == package_config_hash
-        && entry.tool_hash == tool_hash
+        && entry.tool_hash == input.tool_hash
 }
 
 pub(crate) fn route_only_analysis(snapshot: &dust_plugin_api::LibraryAnalysisSnapshot) -> bool {
@@ -208,8 +239,18 @@ pub(crate) fn route_only_analysis(snapshot: &dust_plugin_api::LibraryAnalysisSna
         && snapshot.string_set("dust_route.routers.v1").is_none()
 }
 
-pub(crate) fn codegen_tool_hash() -> u64 {
-    hash_text(CODEGEN_FINGERPRINT_INPUT)
+pub(crate) fn codegen_tool_hash() -> CodegenToolHash {
+    let mut combined = String::new();
+    combined.push_str(CODEGEN_CORE_FINGERPRINT_INPUT);
+    combined.push_str(DERIVE_PLUGIN_FINGERPRINT_INPUT);
+    combined.push_str(SERDE_PLUGIN_FINGERPRINT_INPUT);
+    combined.push_str(HTTP_PLUGIN_FINGERPRINT_INPUT);
+    combined.push_str(ROUTE_PLUGIN_FINGERPRINT_INPUT);
+    combined.push_str(STATE_PLUGIN_FINGERPRINT_INPUT);
+
+    CodegenToolHash {
+        hash: hash_text(&combined),
+    }
 }
 
 pub(crate) fn default_registry() -> PluginRegistry {
@@ -232,15 +273,16 @@ pub(crate) fn default_registry() -> PluginRegistry {
     registry
 }
 
-pub(crate) fn hash_output_set<'a>(outputs: impl IntoIterator<Item = (&'a Path, &'a str)>) -> u64 {
-    let mut combined = String::new();
-    for (path, source) in outputs {
-        combined.push_str(&path.to_string_lossy());
-        combined.push('\0');
-        combined.push_str(source);
-        combined.push('\0');
-    }
-    hash_text(&combined)
+fn cached_output_hash(
+    entry: &CacheFingerprint,
+    source_path: &Path,
+) -> Result<Option<u64>, Diagnostic> {
+    read_optional_hashes(&entry.output_paths, entry.allow_missing_primary).map_err(|error| {
+        Diagnostic::error(format!(
+            "failed to read generated outputs for `{}`: {error}",
+            source_path.display()
+        ))
+    })
 }
 
 fn read_optional_hashes(

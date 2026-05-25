@@ -1,47 +1,66 @@
-use std::collections::HashSet;
+use std::{borrow::Cow, collections::HashSet};
 
 use dust_dart_emit::OBJECT_NULLABLE_TYPES;
 use dust_ir::{BuiltinType, TypeIr};
 
 use super::support::{member_access_expr, non_null_value_expr};
 
-pub(super) fn render_copied_value(
+pub(super) fn render_copied_value<'a>(
     ty: &TypeIr,
-    value: &str,
+    value: &'a str,
     depth: usize,
-    copyable_types: &HashSet<String>,
-) -> String {
+    copyable_types: &HashSet<&str>,
+) -> Cow<'a, str> {
     match ty {
         TypeIr::Named {
             name,
             args,
             nullable,
-        } if name.as_ref() == "List" => {
-            render_sequence_copy("List", args, *nullable, value, depth, copyable_types)
-        }
+        } if name.as_ref() == "List" => Cow::Owned(render_sequence_copy(
+            "List",
+            args,
+            *nullable,
+            value,
+            depth,
+            copyable_types,
+        )),
         TypeIr::Named {
             name,
             args,
             nullable,
-        } if name.as_ref() == "Set" => {
-            render_sequence_copy("Set", args, *nullable, value, depth, copyable_types)
-        }
+        } if name.as_ref() == "Set" => Cow::Owned(render_sequence_copy(
+            "Set",
+            args,
+            *nullable,
+            value,
+            depth,
+            copyable_types,
+        )),
         TypeIr::Named {
             name,
             args,
             nullable,
-        } if name.as_ref() == "Map" => {
-            render_map_copy(args, *nullable, value, depth, copyable_types)
-        }
+        } if name.as_ref() == "Map" => Cow::Owned(render_map_copy(
+            args,
+            *nullable,
+            value,
+            depth,
+            copyable_types,
+        )),
         TypeIr::Named {
             name,
             args,
             nullable,
-        } if name.as_ref() == "Iterable" => {
-            render_sequence_copy("List", args, *nullable, value, depth, copyable_types)
-        }
+        } if name.as_ref() == "Iterable" => Cow::Owned(render_sequence_copy(
+            "List",
+            args,
+            *nullable,
+            value,
+            depth,
+            copyable_types,
+        )),
         TypeIr::Named { name, nullable, .. } if copyable_types.contains(name.as_ref()) => {
-            render_named_copy(*nullable, value)
+            Cow::Owned(render_named_copy(*nullable, value))
         }
         TypeIr::Builtin {
             kind: BuiltinType::Object,
@@ -52,7 +71,7 @@ pub(super) fn render_copied_value(
         | TypeIr::Builtin { .. }
         | TypeIr::Function { .. }
         | TypeIr::Record { .. }
-        | TypeIr::Named { .. } => value.to_owned(),
+        | TypeIr::Named { .. } => Cow::Borrowed(value),
     }
 }
 
@@ -62,7 +81,7 @@ fn render_sequence_copy(
     nullable: bool,
     value: &str,
     depth: usize,
-    copyable_types: &HashSet<String>,
+    copyable_types: &HashSet<&str>,
 ) -> String {
     let item_ty = args.first();
     let item_rendered = item_ty
@@ -77,18 +96,18 @@ fn render_sequence_copy(
     let mapped_value = if let Some(item_ty) = item_ty {
         let copied_item = render_copied_value(item_ty, &item_binding, depth + 1, copyable_types);
         if copied_item == item_binding {
-            source_value.clone()
+            Cow::Borrowed(source_value.as_str())
         } else {
-            format!(
+            Cow::Owned(format!(
                 "{}.map(({item_binding}) => {copied_item})",
                 member_access_expr(&source_value)
-            )
+            ))
         }
     } else {
-        source_value.clone()
+        Cow::Borrowed(source_value.as_str())
     };
 
-    let body = if mapped_value == source_value {
+    let body = if mapped_value.as_ref() == source_value {
         format!("{container}<{item_rendered}>.of({mapped_value})")
     } else {
         format!("{container}<{item_rendered}>.of(\n  {mapped_value},\n)")
@@ -102,7 +121,7 @@ fn render_map_copy(
     nullable: bool,
     value: &str,
     depth: usize,
-    copyable_types: &HashSet<String>,
+    copyable_types: &HashSet<&str>,
 ) -> String {
     let key_ty = args.first();
     let value_ty = args.get(1);
@@ -118,30 +137,16 @@ fn render_map_copy(
         value.to_owned()
     };
     let entry_binding = format!("entry_{depth}");
+    let key_binding = format!("{entry_binding}.key");
+    let value_binding = format!("{entry_binding}.value");
     let key_expr = key_ty
-        .map(|ty| {
-            render_copied_value(
-                ty,
-                &format!("{entry_binding}.key"),
-                depth + 1,
-                copyable_types,
-            )
-        })
-        .unwrap_or_else(|| format!("{entry_binding}.key"));
+        .map(|ty| render_copied_value(ty, &key_binding, depth + 1, copyable_types))
+        .unwrap_or_else(|| Cow::Borrowed(key_binding.as_str()));
     let value_expr = value_ty
-        .map(|ty| {
-            render_copied_value(
-                ty,
-                &format!("{entry_binding}.value"),
-                depth + 1,
-                copyable_types,
-            )
-        })
-        .unwrap_or_else(|| format!("{entry_binding}.value"));
+        .map(|ty| render_copied_value(ty, &value_binding, depth + 1, copyable_types))
+        .unwrap_or_else(|| Cow::Borrowed(value_binding.as_str()));
 
-    let body = if key_expr == format!("{entry_binding}.key")
-        && value_expr == format!("{entry_binding}.value")
-    {
+    let body = if key_expr.as_ref() == key_binding && value_expr.as_ref() == value_binding {
         format!("Map<{key_rendered}, {value_rendered}>.of({source_value})")
     } else {
         format!(

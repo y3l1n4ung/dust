@@ -21,15 +21,15 @@ pub(crate) fn emit_library(library: &LibraryIr, _plan: &SymbolPlan) -> PluginCon
             class
                 .traits
                 .iter()
-                .any(|trait_app| trait_app.symbol.0 == "derive_annotation::CopyWith")
+                .any(|trait_app| trait_app.symbol.0 == crate::features::COPY_WITH_SYMBOL)
         })
-        .map(|class| class.name.clone())
+        .map(|class| class.name.as_str())
         .chain(
             _plan
                 .workspace_string_set(COPYABLE_TYPES_ANALYSIS_KEY)
                 .into_iter()
                 .flatten()
-                .cloned(),
+                .map(String::as_str),
         )
         .collect::<HashSet<_>>();
     contribution

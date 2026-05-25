@@ -47,6 +47,7 @@ struct CacheFileRef<'a> {
 pub struct WorkspaceCache {
     path: PathBuf,
     entries: BTreeMap<String, CacheEntry>,
+    dirty: bool,
 }
 
 impl WorkspaceCache {
@@ -61,6 +62,7 @@ impl WorkspaceCache {
                 return Ok(Self {
                     path,
                     entries: BTreeMap::new(),
+                    dirty: false,
                 });
             }
             Err(error) => return Err(error),
@@ -72,12 +74,14 @@ impl WorkspaceCache {
             return Ok(Self {
                 path,
                 entries: BTreeMap::new(),
+                dirty: false,
             });
         }
 
         Ok(Self {
             path,
             entries: parsed.entries,
+            dirty: false,
         })
     }
 
@@ -93,16 +97,26 @@ impl WorkspaceCache {
 
     /// Inserts or replaces the cache entry for one source file.
     pub fn insert(&mut self, root: &Path, source_path: &Path, entry: CacheEntry) {
-        self.entries.insert(cache_key(root, source_path), entry);
+        let key = cache_key(root, source_path);
+        if self.entries.get(&key) != Some(&entry) {
+            self.dirty = true;
+        }
+        self.entries.insert(key, entry);
     }
 
     /// Removes the cache entry for one source file.
     pub fn remove(&mut self, root: &Path, source_path: &Path) {
-        self.entries.remove(&cache_key(root, source_path));
+        if self.entries.remove(&cache_key(root, source_path)).is_some() {
+            self.dirty = true;
+        }
     }
 
     /// Persists the current cache contents to disk.
-    pub fn flush(&self) -> io::Result<()> {
+    pub fn flush(&mut self) -> io::Result<()> {
+        if !self.dirty {
+            return Ok(());
+        }
+
         if let Some(parent) = self.path.parent() {
             fs::create_dir_all(parent)?;
         }
@@ -111,9 +125,11 @@ impl WorkspaceCache {
             schema_version: CACHE_SCHEMA_VERSION,
             entries: &self.entries,
         };
-        let json = serde_json::to_string_pretty(&file)
+        let json = serde_json::to_vec(&file)
             .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
-        fs::write(&self.path, json)
+        fs::write(&self.path, json)?;
+        self.dirty = false;
+        Ok(())
     }
 
     /// Deletes the entire Dust cache storage directory under `.dart_tool`.
@@ -174,6 +190,18 @@ mod tests {
                 .get(root.path(), &root.path().join("lib/user.dart"))
                 .is_none()
         );
+    }
+
+    #[test]
+    fn flush_skips_clean_cache() {
+        let root = tempdir().unwrap();
+        write_pubspec(root.path());
+
+        let mut cache = WorkspaceCache::load(root.path()).unwrap();
+        let cache_path = cache.path().to_path_buf();
+        cache.flush().unwrap();
+
+        assert!(!cache_path.exists());
     }
 
     #[test]

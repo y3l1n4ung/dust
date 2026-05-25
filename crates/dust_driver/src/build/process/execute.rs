@@ -9,7 +9,6 @@ use dust_resolver::ResolveResult;
 use dust_text::{FileId, SourceText};
 use dust_workspace::SourceLibrary;
 
-use crate::build::support::hash_output_set;
 use crate::lower::lower_library;
 
 use super::{
@@ -32,12 +31,21 @@ pub(crate) fn process_pending_library(
     let super::LoadedLibraryInput {
         source,
         source_hash,
+        tool_hash,
         checked_output_hash: _,
+        previous_output_hash,
     } = input;
     let backend = TreeSitterDartBackend::new();
     let started = Instant::now();
-    let mut outcome =
-        process_library_from_source(file_id, &library, source, pre_parsed, &backend, processing);
+    let mut outcome = process_library_from_source(
+        file_id,
+        &library,
+        source,
+        pre_parsed,
+        previous_output_hash,
+        &backend,
+        processing,
+    );
     let routed = crate::build::support::route_only_analysis(&analysis_snapshot);
     outcome.artifact.routed = routed;
     outcome.analysis_snapshot = analysis_snapshot;
@@ -60,6 +68,7 @@ pub(crate) fn process_pending_library(
         index,
         library,
         source_hash: Some(source_hash),
+        tool_hash: Some(tool_hash),
         outcome,
     }
 }
@@ -69,6 +78,7 @@ pub(crate) fn process_library_from_source(
     library: &SourceLibrary,
     source: Arc<str>,
     pre_parsed: Option<ParsedLibrarySurface>,
+    previous_output_hash: Option<Option<u64>>,
     backend: &TreeSitterDartBackend,
     processing: &ProcessingConfig<'_>,
 ) -> BuildOutcome {
@@ -88,16 +98,17 @@ pub(crate) fn process_library_from_source(
             None => return BuildOutcome::failed(library, diagnostics, Some(diagnostic_file)),
         };
 
-    let output = match emit_library_output(library, &lowered_library, processing) {
-        Ok(output) => output,
-        Err(error) => {
-            diagnostics.push(Diagnostic::error(format!(
-                "failed to write `{}`: {error}",
-                library.output_path.display()
-            )));
-            return BuildOutcome::failed(library, diagnostics, Some(diagnostic_file));
-        }
-    };
+    let output =
+        match emit_library_output(library, &lowered_library, previous_output_hash, processing) {
+            Ok(output) => output,
+            Err(error) => {
+                diagnostics.push(Diagnostic::error(format!(
+                    "failed to write `{}`: {error}",
+                    library.output_path.display()
+                )));
+                return BuildOutcome::failed(library, diagnostics, Some(diagnostic_file));
+            }
+        };
 
     finish_success(library, diagnostics, Some(diagnostic_file), output)
 }
@@ -137,11 +148,18 @@ fn resolve_and_lower_library(
 fn emit_library_output(
     library: &SourceLibrary,
     lowered_library: &dust_ir::LibraryIr,
+    previous_output_hash: Option<Option<u64>>,
     processing: &ProcessingConfig<'_>,
 ) -> std::io::Result<WriteResult> {
     let mut plan = processing.registry.build_symbol_plan(lowered_library);
     plan.set_workspace_analysis(Arc::clone(&processing.workspace_analysis));
-    emit_or_write_library(library, lowered_library, processing, plan)
+    emit_or_write_library(
+        library,
+        lowered_library,
+        previous_output_hash,
+        processing,
+        plan,
+    )
 }
 
 fn finish_success(
@@ -151,29 +169,22 @@ fn finish_success(
     output: WriteResult,
 ) -> BuildOutcome {
     let WriteResult {
-        source,
+        source: _,
+        output_hash,
         symbols: _,
         diagnostics: output_diagnostics,
         changed,
         written,
-        output_path,
+        output_path: _,
         auxiliary_outputs,
     } = output;
     diagnostics.extend(output_diagnostics);
-
-    let expected_output_hash = hash_output_set(
-        std::iter::once((output_path.as_path(), source.as_str())).chain(
-            auxiliary_outputs
-                .iter()
-                .map(|output| (output.output_path.as_path(), output.source.as_str())),
-        ),
-    );
 
     BuildOutcome::succeeded(
         library,
         diagnostics,
         diagnostic_file,
-        expected_output_hash,
+        output_hash,
         auxiliary_outputs
             .into_iter()
             .map(|output| output.output_path)

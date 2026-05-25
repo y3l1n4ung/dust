@@ -64,6 +64,9 @@ Never use `.unwrap()` or `.expect()` in plugin code or lowering logic. If an edg
 ### 🔄 Determinism
 The output of `dust build` must be byte-for-byte identical across different machines and runs. Always use `BTreeMap` or sorted collections when iterating over fields or symbols to maintain stable output order.
 
+### ⚡ Fail-Fast Semantics
+`--fail-fast` keeps parallel workers enabled. It stops after the first observed worker error, not necessarily the lexically first source file. Requiring strict lexical fail-fast ordering would force serial processing and keep large invalidated builds slower.
+
 ---
 
 ## 🛠️ Contribution Scenarios
@@ -93,4 +96,7 @@ cargo run -p dust_cli -- build --root examples/stress_project
 
 # 3. Verify Cache Speed
 cargo run -p dust_cli -- build --root examples/stress_project
+
+# 4. Verify Invalidated Rebuild Speed
+cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture
 ```

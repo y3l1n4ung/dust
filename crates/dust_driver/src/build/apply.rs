@@ -12,7 +12,6 @@ use crate::{
 pub(crate) struct ApplyOutcomeConfig<'a> {
     pub(crate) cache_root: &'a Path,
     pub(crate) package_config_hash: u64,
-    pub(crate) tool_hash: u64,
     pub(crate) fail_fast: bool,
 }
 
@@ -27,6 +26,7 @@ pub(crate) fn apply_indexed_outcomes(
         let IndexedBuildOutcome {
             library,
             source_hash,
+            tool_hash,
             outcome,
             ..
         } = indexed_outcome;
@@ -41,14 +41,14 @@ pub(crate) fn apply_indexed_outcomes(
         let has_labels = diagnostics.iter().any(Diagnostic::has_labels);
 
         if let Some(expected_output_hash) = expected_output_hash {
-            if let Some(source_hash) = source_hash {
+            if let (Some(source_hash), Some(tool_hash)) = (source_hash, tool_hash) {
                 cache.insert(
                     config.cache_root,
                     &library.source_path,
                     CacheEntry {
                         source_hash,
                         package_config_hash: config.package_config_hash,
-                        tool_hash: config.tool_hash,
+                        tool_hash,
                         expected_output_hash,
                         auxiliary_output_paths: artifact.auxiliary_output_paths.clone(),
                         analysis_snapshot,
@@ -78,7 +78,7 @@ pub(crate) fn apply_indexed_outcomes(
     false
 }
 
-pub(crate) fn flush_cache_into_result(cache: &WorkspaceCache, result: &mut CommandResult) {
+pub(crate) fn flush_cache_into_result(cache: &mut WorkspaceCache, result: &mut CommandResult) {
     if let Err(error) = cache.flush() {
         result.diagnostics.push(Diagnostic::error(format!(
             "failed to persist Dust cache `{}`: {error}",

@@ -7,7 +7,7 @@ use dust_resolver::SymbolCatalog;
 use dust_workspace::{SupportedAnnotations, WorkspacePlan, discover_workspace};
 
 use crate::{
-    build::{codegen_tool_hash, default_registry, read_workspace_config_hash},
+    build::{CodegenToolHash, codegen_tool_hash, default_registry, read_workspace_config_hash},
     catalog::build_symbol_catalog,
     result::CacheReport,
 };
@@ -38,7 +38,7 @@ pub(crate) struct CachedDriverContext {
     pub(crate) workspace: WorkspacePlan,
     pub(crate) registry: PluginRegistry,
     pub(crate) catalog: SymbolCatalog,
-    pub(crate) tool_hash: u64,
+    pub(crate) tool_hash: CodegenToolHash,
     pub(crate) package_config_hash: u64,
     pub(crate) cache: WorkspaceCache,
     pub(crate) cache_report: CacheReport,
