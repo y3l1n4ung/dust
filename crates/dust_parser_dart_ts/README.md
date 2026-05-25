@@ -1,19 +1,35 @@
-# dust_parser_dart_ts
+# 🛠️ dust_parser_dart_ts
 
-Tree-sitter Dart backend for Dust.
+The high-performance syntax extraction backend for Dust, powered by **Tree-sitter**. This crate is responsible for the actual parsing of `.dart` source files and extracting the data structures needed for code generation.
 
-## Owns
+## 🏗️ Architectural Role
 
-- extraction from Dart source into `dust_parser_dart` surfaces
-- support for concrete Dart syntax forms
+This is the primary implementation of the `dust_parser_dart` backend interface. It performs the "heavy lifting" of Pass 2, scanning user code and translating complex AST nodes into simple, flat "surface" structures (like `ParsedClassSurface`).
 
-## Used by
+## 🔑 Key Components
 
-- `dust_driver`
-- parser backend tests
+### `TreeSitterDartBackend`
+The main entry point that wraps the `tree-sitter-dart` grammar. It provides:
+- Multi-threaded safe parsing.
+- Error recovery (gracefully handles partially invalid Dart code).
+- Incremental parsing support (via Tree-sitter's internal mechanisms).
 
-## Edit here when
+### `extract_classes`, `extract_enums`, `extract_directives`
+Specialized modules that navigate the AST to find generation-relevant declarations. They use efficient tree-walking patterns to collect:
+- Metadata annotations (Pass 2 input).
+- Class and field names.
+- Raw type source strings.
+- Constructor signatures.
 
-- new Dart syntax must be recognized
-- extraction bugs appear in parsed classes, enums, fields, or annotations
-- tree-sitter integration behavior changes
+## 🛡️ Design Principles
+
+1. **Extraction-Only**: This crate does **not** perform semantic analysis or type checking. It only reports what is syntactically present in the file.
+2. **Resilience**: It is designed to be highly tolerant of syntax errors. If a file is unparseable, it returns a diagnostic warning rather than crashing.
+3. **Speed**: Leverages Tree-sitter's incremental parsing and Rust's safety to ensure that Pass 2 remains a sub-100ms phase for even large project sub-builds.
+
+## 🛠️ Usage
+
+This crate should generally only be used by the `dust_driver`. Other crates should depend on `dust_parser_dart` (for interfaces) or `dust_ir` (for semantic data).
+
+---
+*Note: This backend uses the `tree-sitter-dart` C grammar via Rust FFI.*

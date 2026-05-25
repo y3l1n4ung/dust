@@ -24,11 +24,6 @@ jobs:
             archive_ext: tar.gz
             asset_name: dust-x86_64-unknown-linux-gnu.tar.gz
             binary_name: dust
-          - runner: ubuntu-24.04-arm
-            target: aarch64-unknown-linux-gnu
-            archive_ext: tar.gz
-            asset_name: dust-aarch64-unknown-linux-gnu.tar.gz
-            binary_name: dust
           - runner: macos-13
             target: x86_64-apple-darwin
             archive_ext: tar.gz
@@ -43,11 +38,6 @@ jobs:
             target: x86_64-pc-windows-msvc
             archive_ext: zip
             asset_name: dust-x86_64-pc-windows-msvc.zip
-            binary_name: dust.exe
-          - runner: windows-11-arm
-            target: aarch64-pc-windows-msvc
-            archive_ext: zip
-            asset_name: dust-aarch64-pc-windows-msvc.zip
             binary_name: dust.exe
 
     steps:
