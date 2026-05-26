@@ -49,7 +49,7 @@ fn run_build_inner(
         package_config_hash,
         mut cache,
         mut cache_report,
-    } = match CachedDriverContext::load(&request.cwd, request.db.into()) {
+    } = match CachedDriverContext::load(&request.cwd, RegistrySelection::for_build(request.db)) {
         Ok(context) => context,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);

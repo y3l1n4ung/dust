@@ -99,7 +99,7 @@ dust build --db --offline
 dust check --db --offline
 ```
 
-Offline mode currently fails if query metadata cache is missing. Metadata persistence is a follow-up.
+Online `dust build --db` writes `.dart_tool/dust/db_query_cache_v1.json`. Offline mode uses that cache and fails if a required SQL/schema entry is missing or stale.
 
 ## Example
 

@@ -13,10 +13,21 @@ use self::emit::emit_db_library;
 use self::validate::validate_db_library;
 
 /// Runtime options for the Dust DB plugin.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DbPluginOptions {
     /// Whether SQL validation must use cached metadata only.
     pub offline: bool,
+    /// Whether successful online validation should update query metadata cache.
+    pub write_metadata: bool,
+}
+
+impl Default for DbPluginOptions {
+    fn default() -> Self {
+        Self {
+            offline: false,
+            write_metadata: true,
+        }
+    }
 }
 
 /// Dust plugin for SQLx-validated sqflite repository generation.
@@ -28,7 +39,10 @@ impl DbPlugin {
     /// Creates a DB plugin with default online validation behavior.
     pub const fn new() -> Self {
         Self {
-            options: DbPluginOptions { offline: false },
+            options: DbPluginOptions {
+                offline: false,
+                write_metadata: true,
+            },
         }
     }
 
@@ -50,8 +64,11 @@ pub fn register_plugin() -> DbPlugin {
 }
 
 /// Creates the Dust DB plugin with explicit options.
-pub fn register_plugin_with_options(offline: bool) -> DbPlugin {
-    DbPlugin::with_options(DbPluginOptions { offline })
+pub fn register_plugin_with_options(offline: bool, write_metadata: bool) -> DbPlugin {
+    DbPlugin::with_options(DbPluginOptions {
+        offline,
+        write_metadata,
+    })
 }
 
 impl DustPlugin for DbPlugin {

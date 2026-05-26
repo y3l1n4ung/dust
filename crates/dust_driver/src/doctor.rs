@@ -16,7 +16,12 @@ pub fn run_doctor(request: DoctorRequest) -> CommandResult {
         workspace,
         registry,
         ..
-    } = match DriverContext::load(&request.cwd, RegistrySelection::All) {
+    } = match DriverContext::load(
+        &request.cwd,
+        RegistrySelection::All {
+            write_metadata: false,
+        },
+    ) {
         Ok(context) => context,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);

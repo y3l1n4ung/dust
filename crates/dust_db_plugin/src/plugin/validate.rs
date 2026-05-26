@@ -7,6 +7,7 @@ use std::{
 use dust_diagnostics::{Diagnostic, SourceLabel};
 use dust_ir::{ClassIr, FieldIr, LibraryIr, TypeIr};
 use either::Either;
+use serde::{Deserialize, Serialize};
 use sqlx::{Column, Connection, Executor, sqlite::SqliteConnection};
 
 use super::{
@@ -250,13 +251,6 @@ fn validate_sqlx_describe(
     if queries.is_empty() {
         return;
     }
-    if options.offline {
-        diagnostics.push(Diagnostic::error(
-            "Dust DB offline query metadata cache is missing or not generated yet",
-        ));
-        return;
-    }
-
     let migrations_path = Path::new(&library.package_root).join(migrations);
     if !migrations_path.exists() {
         diagnostics.push(Diagnostic::error(format!(
@@ -266,17 +260,47 @@ fn validate_sqlx_describe(
         return;
     }
 
-    match run_sqlx_validation(&migrations_path, queries, row_columns) {
-        Ok(()) => {}
+    let schema_hash = match schema_hash(&migrations_path) {
+        Ok(hash) => hash,
+        Err(error) => {
+            diagnostics.push(Diagnostic::error(error));
+            return;
+        }
+    };
+
+    if options.offline {
+        match validate_from_query_cache(library, migrations, &schema_hash, queries, row_columns) {
+            Ok(()) => {}
+            Err(error) => diagnostics.push(Diagnostic::error(error)),
+        }
+        return;
+    }
+
+    match run_sqlx_validation(
+        &migrations_path,
+        migrations,
+        &schema_hash,
+        queries,
+        row_columns,
+    ) {
+        Ok(metadata) => {
+            if options.write_metadata {
+                if let Err(error) = write_query_cache(library, metadata) {
+                    diagnostics.push(Diagnostic::warning(error));
+                }
+            }
+        }
         Err(error) => diagnostics.push(Diagnostic::error(error)),
     }
 }
 
 fn run_sqlx_validation(
     migrations_path: &Path,
+    migrations: &str,
+    schema_hash: &str,
     queries: &[QuerySpec<'_>],
     row_columns: &HashMap<String, HashSet<String>>,
-) -> Result<(), String> {
+) -> Result<Vec<QueryCacheEntry>, String> {
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
@@ -303,6 +327,7 @@ fn run_sqlx_validation(
                 )
             })?;
         }
+        let mut metadata = Vec::new();
         for query in queries {
             let describe = conn
                 .describe(query.sql.as_str())
@@ -320,8 +345,141 @@ fn run_sqlx_validation(
                 ));
             }
             validate_described_columns(query, row_columns, &describe)?;
+            metadata.push(QueryCacheEntry {
+                migrations: migrations.to_owned(),
+                schema_hash: schema_hash.to_owned(),
+                sql_hash: stable_hash_hex(query.sql.as_bytes()),
+                sql: query.sql.clone(),
+                parameter_count,
+                columns: describe
+                    .columns()
+                    .iter()
+                    .map(|column| column.name().to_owned())
+                    .collect(),
+            });
         }
-        Ok(())
+        Ok(metadata)
+    })
+}
+
+fn validate_from_query_cache(
+    library: &LibraryIr,
+    migrations: &str,
+    schema_hash: &str,
+    queries: &[QuerySpec<'_>],
+    row_columns: &HashMap<String, HashSet<String>>,
+) -> Result<(), String> {
+    let cache_path = query_cache_path(library);
+    let cache_source = fs::read_to_string(&cache_path).map_err(|error| {
+        format!(
+            "Dust DB offline query metadata cache is missing or unreadable at `{}`: {error}",
+            cache_path.display()
+        )
+    })?;
+    let cache: QueryCache = serde_json::from_str(&cache_source).map_err(|error| {
+        format!(
+            "Dust DB offline query metadata cache `{}` is invalid: {error}",
+            cache_path.display()
+        )
+    })?;
+    if cache.version != QUERY_CACHE_VERSION {
+        return Err(format!(
+            "Dust DB offline query metadata cache `{}` uses unsupported version {}; run `dust build --db` online first",
+            cache_path.display(),
+            cache.version
+        ));
+    }
+
+    for query in queries {
+        let sql_hash = stable_hash_hex(query.sql.as_bytes());
+        let Some(entry) = cache.entries.iter().find(|entry| {
+            entry.migrations == migrations
+                && entry.schema_hash == schema_hash
+                && entry.sql_hash == sql_hash
+                && entry.sql == query.sql
+        }) else {
+            return Err(format!(
+                "Dust DB offline query metadata cache is missing entry for `{}`; run `dust build --db` online first",
+                query.method.name
+            ));
+        };
+        if entry.parameter_count != query.args.len() {
+            return Err(format!(
+                "cached SQL metadata for `{}` expects {} parameters but method binds {} args",
+                query.method.name,
+                entry.parameter_count,
+                query.args.len()
+            ));
+        }
+        validate_cached_columns(query, row_columns, &entry.columns)?;
+    }
+    Ok(())
+}
+
+fn validate_cached_columns(
+    query: &QuerySpec<'_>,
+    row_columns: &HashMap<String, HashSet<String>>,
+    returned_columns: &[String],
+) -> Result<(), String> {
+    let Some(row_type) = query_row_type(query) else {
+        return Ok(());
+    };
+    let Some(required_columns) = row_columns.get(row_type) else {
+        return Ok(());
+    };
+    let returned_columns = returned_columns.iter().collect::<HashSet<_>>();
+    if let Some(missing) = required_columns
+        .iter()
+        .find(|column| !returned_columns.contains(*column))
+    {
+        return Err(format!(
+            "cached SQL metadata for `{}` does not return required column `{missing}` for row `{row_type}`",
+            query.method.name
+        ));
+    }
+    Ok(())
+}
+
+fn write_query_cache(library: &LibraryIr, entries: Vec<QueryCacheEntry>) -> Result<(), String> {
+    if entries.is_empty() {
+        return Ok(());
+    }
+
+    let path = query_cache_path(library);
+    let mut cache = fs::read_to_string(&path)
+        .ok()
+        .and_then(|source| serde_json::from_str::<QueryCache>(&source).ok())
+        .unwrap_or_default();
+    for entry in entries {
+        cache.entries.retain(|existing| {
+            !(existing.migrations == entry.migrations
+                && existing.schema_hash == entry.schema_hash
+                && existing.sql_hash == entry.sql_hash)
+        });
+        cache.entries.push(entry);
+    }
+    cache.entries.sort_by(|left, right| {
+        left.migrations
+            .cmp(&right.migrations)
+            .then(left.schema_hash.cmp(&right.schema_hash))
+            .then(left.sql_hash.cmp(&right.sql_hash))
+    });
+
+    let source = serde_json::to_string_pretty(&cache)
+        .map_err(|error| format!("failed to encode Dust DB query cache: {error}"))?;
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|error| {
+            format!(
+                "failed to create Dust DB query cache directory `{}`: {error}",
+                parent.display()
+            )
+        })?;
+    }
+    fs::write(&path, format!("{source}\n")).map_err(|error| {
+        format!(
+            "failed to write Dust DB query cache `{}`: {error}",
+            path.display()
+        )
     })
 }
 
@@ -362,6 +520,82 @@ fn migration_files(path: &Path) -> Result<Vec<PathBuf>, String> {
         .collect::<Vec<_>>();
     files.sort();
     Ok(files)
+}
+
+fn schema_hash(migrations_path: &Path) -> Result<String, String> {
+    let mut hash = StableHash::new();
+    for migration in migration_files(migrations_path)? {
+        let relative_path = migration
+            .strip_prefix(migrations_path)
+            .unwrap_or(&migration);
+        hash.update(relative_path.to_string_lossy().as_bytes());
+        hash.update(b"\0");
+        let source = fs::read(&migration).map_err(|error| {
+            format!(
+                "failed to read migration `{}`: {error}",
+                migration.display()
+            )
+        })?;
+        hash.update(&source);
+        hash.update(b"\0");
+    }
+    Ok(hash.finish_hex())
+}
+
+fn query_cache_path(library: &LibraryIr) -> PathBuf {
+    Path::new(&library.package_root).join(".dart_tool/dust/db_query_cache_v1.json")
+}
+
+fn stable_hash_hex(bytes: &[u8]) -> String {
+    let mut hash = StableHash::new();
+    hash.update(bytes);
+    hash.finish_hex()
+}
+
+struct StableHash(u64);
+
+impl StableHash {
+    const fn new() -> Self {
+        Self(1469598103934665603)
+    }
+
+    fn update(&mut self, bytes: &[u8]) {
+        for byte in bytes {
+            self.0 ^= u64::from(*byte);
+            self.0 = self.0.wrapping_mul(1099511628211);
+        }
+    }
+
+    fn finish_hex(self) -> String {
+        format!("{:016x}", self.0)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+struct QueryCache {
+    version: u32,
+    entries: Vec<QueryCacheEntry>,
+}
+
+const QUERY_CACHE_VERSION: u32 = 1;
+
+impl Default for QueryCache {
+    fn default() -> Self {
+        Self {
+            version: QUERY_CACHE_VERSION,
+            entries: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+struct QueryCacheEntry {
+    migrations: String,
+    schema_hash: String,
+    sql_hash: String,
+    sql: String,
+    parameter_count: usize,
+    columns: Vec<String>,
 }
 
 fn row_column_map(rows: &[RowClass<'_>]) -> HashMap<String, HashSet<String>> {

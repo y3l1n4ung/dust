@@ -1,9 +1,6 @@
 use std::{fs, io, path::Path, sync::Arc};
 
-use dust_db_plugin::{
-    register_plugin as register_db_plugin,
-    register_plugin_with_options as register_db_plugin_with_options,
-};
+use dust_db_plugin::register_plugin_with_options as register_db_plugin_with_options;
 use dust_diagnostics::Diagnostic;
 use dust_emitter::hash_output_set;
 use dust_http_client_plugin::register_plugin as register_http_client_plugin;
@@ -18,19 +15,27 @@ use crate::build::process::LoadedLibraryInput;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RegistrySelection {
-    All,
-    DbOnly { offline: bool },
+    All { write_metadata: bool },
+    DbOnly { offline: bool, write_metadata: bool },
 }
 
-impl From<crate::request::DbRequestOptions> for RegistrySelection {
-    fn from(value: crate::request::DbRequestOptions) -> Self {
+impl RegistrySelection {
+    pub(crate) fn for_build(value: crate::request::DbRequestOptions) -> Self {
+        Self::from_db_request(value, true)
+    }
+
+    pub(crate) fn for_check(value: crate::request::DbRequestOptions) -> Self {
+        Self::from_db_request(value, false)
+    }
+
+    fn from_db_request(value: crate::request::DbRequestOptions, write_metadata: bool) -> Self {
         if value.only_db {
-            Self::DbOnly {
+            return Self::DbOnly {
                 offline: value.offline,
-            }
-        } else {
-            Self::All
+                write_metadata,
+            };
         }
+        Self::All { write_metadata }
     }
 }
 
@@ -287,17 +292,28 @@ pub(crate) fn codegen_tool_hash() -> CodegenToolHash {
 }
 
 pub(crate) fn default_registry() -> PluginRegistry {
-    registry_for_selection(RegistrySelection::All)
+    registry_for_selection(RegistrySelection::All {
+        write_metadata: true,
+    })
 }
 
 pub(crate) fn registry_for_selection(selection: RegistrySelection) -> PluginRegistry {
     let mut registry = PluginRegistry::new();
-    if let RegistrySelection::DbOnly { offline } = selection {
-        registry
-            .register(Box::new(register_db_plugin_with_options(offline)))
-            .expect("db plugin symbol ownership must be valid");
-        return registry;
-    }
+    let write_metadata = match selection {
+        RegistrySelection::All { write_metadata } => write_metadata,
+        RegistrySelection::DbOnly {
+            offline,
+            write_metadata,
+        } => {
+            registry
+                .register(Box::new(register_db_plugin_with_options(
+                    offline,
+                    write_metadata,
+                )))
+                .expect("db plugin symbol ownership must be valid");
+            return registry;
+        }
+    };
 
     registry
         .register(Box::new(register_derive_plugin()))
@@ -315,7 +331,10 @@ pub(crate) fn registry_for_selection(selection: RegistrySelection) -> PluginRegi
         .register(Box::new(register_state_plugin()))
         .expect("state plugin symbol ownership must be valid");
     registry
-        .register(Box::new(register_db_plugin()))
+        .register(Box::new(register_db_plugin_with_options(
+            false,
+            write_metadata,
+        )))
         .expect("db plugin symbol ownership must be valid");
     registry
 }

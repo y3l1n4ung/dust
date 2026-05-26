@@ -335,6 +335,8 @@ dependencies = [
  "dust_plugin_api",
  "dust_text",
  "either",
+ "serde",
+ "serde_json",
  "sqlx",
  "tokio",
 ]

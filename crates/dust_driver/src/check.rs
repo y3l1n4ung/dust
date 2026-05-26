@@ -1,7 +1,10 @@
 use std::time::Instant;
 
 use crate::{
-    build::{ApplyOutcomeConfig, BatchConfig, flush_cache_into_result, prepare_and_process_batch},
+    build::{
+        ApplyOutcomeConfig, BatchConfig, RegistrySelection, flush_cache_into_result,
+        prepare_and_process_batch,
+    },
     context::CachedDriverContext,
     progress::ProgressPhase,
     request::CheckRequest,
@@ -21,7 +24,7 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
         package_config_hash,
         mut cache,
         mut cache_report,
-    } = match CachedDriverContext::load(&request.cwd, request.db.into()) {
+    } = match CachedDriverContext::load(&request.cwd, RegistrySelection::for_check(request.db)) {
         Ok(context) => context,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);
