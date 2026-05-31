@@ -17,11 +17,6 @@ enum _DemoCartApiViewModelAspect { status, carts, errorMessage }
 
 abstract class $DemoCartApiViewModel extends ViewModelBase<DemoCartState, DemoCartApiViewModelArgs> {
   $DemoCartApiViewModel(super.args) : super(initialState: const DemoCartState());
-
-  DemoCartStatus get status => state.status;
-  List<Object?> get carts => state.carts;
-  String? get errorMessage => state.errorMessage;
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$DemoCartApiViewModelProxy {
@@ -31,18 +26,6 @@ class _$DemoCartApiViewModelProxy {
 
   DemoCartState get value {
     return DemoCartApiViewModelScope.of(_context).value;
-  }
-
-  DemoCartStatus get status {
-    return DemoCartApiViewModelScope.of(_context, aspect: _DemoCartApiViewModelAspect.status).state.status;
-  }
-
-  List<Object?> get carts {
-    return DemoCartApiViewModelScope.of(_context, aspect: _DemoCartApiViewModelAspect.carts).state.carts;
-  }
-
-  String? get errorMessage {
-    return DemoCartApiViewModelScope.of(_context, aspect: _DemoCartApiViewModelAspect.errorMessage).state.errorMessage;
   }
 }
 

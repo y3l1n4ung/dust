@@ -17,14 +17,6 @@ enum _ProductsViewModelAspect { products, status, errorMessage, selectedCategory
 
 abstract class $ProductsViewModel extends ViewModelBase<ProductsState, ProductsViewModelArgs> {
   $ProductsViewModel(super.args) : super(initialState: const ProductsState());
-
-  List<Object?> get products => state.products;
-  ProductsStatus get status => state.status;
-  String? get errorMessage => state.errorMessage;
-  String? get selectedCategory => state.selectedCategory;
-  String get searchQuery => state.searchQuery;
-  ProductSortOption get sortOption => state.sortOption;
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$ProductsViewModelProxy {
@@ -34,30 +26,6 @@ class _$ProductsViewModelProxy {
 
   ProductsState get value {
     return ProductsViewModelScope.of(_context).value;
-  }
-
-  List<Object?> get products {
-    return ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.products).state.products;
-  }
-
-  ProductsStatus get status {
-    return ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.status).state.status;
-  }
-
-  String? get errorMessage {
-    return ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.errorMessage).state.errorMessage;
-  }
-
-  String? get selectedCategory {
-    return ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.selectedCategory).state.selectedCategory;
-  }
-
-  String get searchQuery {
-    return ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.searchQuery).state.searchQuery;
-  }
-
-  ProductSortOption get sortOption {
-    return ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.sortOption).state.sortOption;
   }
 }
 

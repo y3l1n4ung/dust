@@ -17,11 +17,6 @@ enum _ShoppingChatViewModelAspect { messages, status, errorMessage }
 
 abstract class $ShoppingChatViewModel extends ViewModelBase<ChatState, ShoppingChatViewModelArgs> {
   $ShoppingChatViewModel(super.args) : super(initialState: const ChatState());
-
-  List<Object?> get messages => state.messages;
-  ChatStatus get status => state.status;
-  String? get errorMessage => state.errorMessage;
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$ShoppingChatViewModelProxy {
@@ -31,18 +26,6 @@ class _$ShoppingChatViewModelProxy {
 
   ChatState get value {
     return ShoppingChatViewModelScope.of(_context).value;
-  }
-
-  List<Object?> get messages {
-    return ShoppingChatViewModelScope.of(_context, aspect: _ShoppingChatViewModelAspect.messages).state.messages;
-  }
-
-  ChatStatus get status {
-    return ShoppingChatViewModelScope.of(_context, aspect: _ShoppingChatViewModelAspect.status).state.status;
-  }
-
-  String? get errorMessage {
-    return ShoppingChatViewModelScope.of(_context, aspect: _ShoppingChatViewModelAspect.errorMessage).state.errorMessage;
   }
 }
 

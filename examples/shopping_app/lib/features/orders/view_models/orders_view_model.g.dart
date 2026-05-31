@@ -17,9 +17,6 @@ enum _OrdersViewModelAspect { orders, isLoading }
 
 abstract class $OrdersViewModel extends ViewModelBase<OrdersState, OrdersViewModelArgs> {
   $OrdersViewModel(super.args) : super(initialState: const OrdersState());
-
-  List<Object?> get orders => state.orders;
-  bool get isLoading => state.isLoading;
 }
 
 class _$OrdersViewModelProxy {
@@ -29,14 +26,6 @@ class _$OrdersViewModelProxy {
 
   OrdersState get value {
     return OrdersViewModelScope.of(_context).value;
-  }
-
-  List<Object?> get orders {
-    return OrdersViewModelScope.of(_context, aspect: _OrdersViewModelAspect.orders).state.orders;
-  }
-
-  bool get isLoading {
-    return OrdersViewModelScope.of(_context, aspect: _OrdersViewModelAspect.isLoading).state.isLoading;
   }
 }
 

@@ -375,21 +375,12 @@ fn render_proxy(
     proxy_class: &str,
     scope_class: &str,
     state_type: &str,
-    aspect_class: &str,
-    state_fields: &[StateFieldSpec],
+    _aspect_class: &str,
+    _state_fields: &[StateFieldSpec],
 ) -> String {
-    let mut source = format!(
-        "class {proxy_class} {{\n  {proxy_class}(this._context);\n\n  final BuildContext _context;\n\n  {state_type} get value {{\n    return {scope_class}.of(_context).value;\n  }}\n",
-    );
-    for field in state_fields {
-        source.push_str(&format!(
-            "\n  {ty} get {name} {{\n    return {scope_class}.of(_context, aspect: {aspect_class}.{name}).state.{name};\n  }}\n",
-            ty = field.type_source,
-            name = field.name,
-        ));
-    }
-    source.push('}');
-    source
+    format!(
+        "class {proxy_class} {{\n  {proxy_class}(this._context);\n\n  final BuildContext _context;\n\n  {state_type} get value {{\n    return {scope_class}.of(_context).value;\n  }}\n}}",
+    )
 }
 
 fn render_scope(
@@ -457,30 +448,8 @@ fn render_listener(
     )
 }
 
-fn base_getters(state_fields: &[StateFieldSpec], args_fields: &[StateFieldSpec]) -> String {
-    let mut getters = Vec::new();
-    for field in state_fields {
-        getters.push(format!(
-            "  {ty} get {name} => state.{name};",
-            ty = field.type_source,
-            name = field.name,
-        ));
-    }
-    for field in args_fields {
-        if field.name == "observer" || state_fields.iter().any(|state| state.name == field.name) {
-            continue;
-        }
-        getters.push(format!(
-            "  {ty} get {name} => args.{name};",
-            ty = field.type_source,
-            name = field.name,
-        ));
-    }
-    if getters.is_empty() {
-        String::new()
-    } else {
-        format!("\n{}\n", getters.join("\n"))
-    }
+fn base_getters(_state_fields: &[StateFieldSpec], _args_fields: &[StateFieldSpec]) -> String {
+    String::new()
 }
 
 fn render_type(ty: &TypeIr) -> String {

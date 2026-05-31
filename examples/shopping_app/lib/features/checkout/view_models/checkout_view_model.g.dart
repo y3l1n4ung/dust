@@ -17,15 +17,6 @@ enum _CheckoutViewModelAspect { status, shippingAddress, errorMessage, orderId, 
 
 abstract class $CheckoutViewModel extends ViewModelBase<CheckoutState, CheckoutViewModelArgs> {
   $CheckoutViewModel(super.args) : super(initialState: const CheckoutState());
-
-  CheckoutStatus get status => state.status;
-  Object? get shippingAddress => state.shippingAddress;
-  String? get errorMessage => state.errorMessage;
-  String? get orderId => state.orderId;
-  String? get couponCode => state.couponCode;
-  Object? get quote => state.quote;
-  bool get isQuoteLoading => state.isQuoteLoading;
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$CheckoutViewModelProxy {
@@ -35,34 +26,6 @@ class _$CheckoutViewModelProxy {
 
   CheckoutState get value {
     return CheckoutViewModelScope.of(_context).value;
-  }
-
-  CheckoutStatus get status {
-    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.status).state.status;
-  }
-
-  Object? get shippingAddress {
-    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.shippingAddress).state.shippingAddress;
-  }
-
-  String? get errorMessage {
-    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.errorMessage).state.errorMessage;
-  }
-
-  String? get orderId {
-    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.orderId).state.orderId;
-  }
-
-  String? get couponCode {
-    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.couponCode).state.couponCode;
-  }
-
-  Object? get quote {
-    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.quote).state.quote;
-  }
-
-  bool get isQuoteLoading {
-    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.isQuoteLoading).state.isQuoteLoading;
   }
 }
 

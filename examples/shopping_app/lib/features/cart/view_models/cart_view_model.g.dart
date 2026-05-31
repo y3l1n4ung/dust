@@ -17,9 +17,6 @@ enum _CartViewModelAspect { items, notification }
 
 abstract class $CartViewModel extends ViewModelBase<CartState, CartViewModelArgs> {
   $CartViewModel(super.args) : super(initialState: const CartState());
-
-  List<Object?> get items => state.items;
-  CartNotification? get notification => state.notification;
 }
 
 class _$CartViewModelProxy {
@@ -29,14 +26,6 @@ class _$CartViewModelProxy {
 
   CartState get value {
     return CartViewModelScope.of(_context).value;
-  }
-
-  List<Object?> get items {
-    return CartViewModelScope.of(_context, aspect: _CartViewModelAspect.items).state.items;
-  }
-
-  CartNotification? get notification {
-    return CartViewModelScope.of(_context, aspect: _CartViewModelAspect.notification).state.notification;
   }
 }
 

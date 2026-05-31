@@ -17,12 +17,6 @@ enum _OrderTrackingViewModelAspect { orderId, status, events, errorMessage }
 
 abstract class $OrderTrackingViewModel extends ViewModelBase<OrderTrackingState, OrderTrackingViewModelArgs> {
   $OrderTrackingViewModel(super.args) : super(initialState: const OrderTrackingState());
-
-  String? get orderId => state.orderId;
-  OrderTrackingStatus get status => state.status;
-  List<Object?> get events => state.events;
-  String? get errorMessage => state.errorMessage;
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$OrderTrackingViewModelProxy {
@@ -32,22 +26,6 @@ class _$OrderTrackingViewModelProxy {
 
   OrderTrackingState get value {
     return OrderTrackingViewModelScope.of(_context).value;
-  }
-
-  String? get orderId {
-    return OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.orderId).state.orderId;
-  }
-
-  OrderTrackingStatus get status {
-    return OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.status).state.status;
-  }
-
-  List<Object?> get events {
-    return OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.events).state.events;
-  }
-
-  String? get errorMessage {
-    return OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.errorMessage).state.errorMessage;
   }
 }
 

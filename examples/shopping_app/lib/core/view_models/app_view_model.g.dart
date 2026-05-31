@@ -54,10 +54,6 @@ enum _AppViewModelAspect { backendMode }
 
 abstract class $AppViewModel extends ViewModelBase<AppState, AppViewModelArgs> {
   $AppViewModel(super.args) : super(initialState: const AppState());
-
-  AppBackendMode get backendMode => state.backendMode;
-  ShoppingRepository get repository => args.repository;
-  StorageService get storage => args.storage;
 }
 
 class _$AppViewModelProxy {
@@ -67,10 +63,6 @@ class _$AppViewModelProxy {
 
   AppState get value {
     return AppViewModelScope.of(_context).value;
-  }
-
-  AppBackendMode get backendMode {
-    return AppViewModelScope.of(_context, aspect: _AppViewModelAspect.backendMode).state.backendMode;
   }
 }
 

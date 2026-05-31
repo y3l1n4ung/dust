@@ -17,13 +17,6 @@ enum _AuthViewModelAspect { user, token, status, errorMessage }
 
 abstract class $AuthViewModel extends ViewModelBase<AuthState, AuthViewModelArgs> {
   $AuthViewModel(super.args) : super(initialState: AuthState(status: AuthStatus.unauthenticated));
-
-  Object? get user => state.user;
-  String? get token => state.token;
-  AuthStatus get status => state.status;
-  String? get errorMessage => state.errorMessage;
-  ShoppingRepository get repository => args.repository;
-  StorageService get storage => args.storage;
 }
 
 class _$AuthViewModelProxy {
@@ -33,22 +26,6 @@ class _$AuthViewModelProxy {
 
   AuthState get value {
     return AuthViewModelScope.of(_context).value;
-  }
-
-  Object? get user {
-    return AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.user).state.user;
-  }
-
-  String? get token {
-    return AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.token).state.token;
-  }
-
-  AuthStatus get status {
-    return AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.status).state.status;
-  }
-
-  String? get errorMessage {
-    return AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.errorMessage).state.errorMessage;
   }
 }
 

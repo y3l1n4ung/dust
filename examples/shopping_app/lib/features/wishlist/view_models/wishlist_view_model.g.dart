@@ -17,10 +17,6 @@ enum _WishlistViewModelAspect { items, isLoading }
 
 abstract class $WishlistViewModel extends ViewModelBase<WishlistState, WishlistViewModelArgs> {
   $WishlistViewModel(super.args) : super(initialState: const WishlistState());
-
-  List<Object?> get items => state.items;
-  bool get isLoading => state.isLoading;
-  StorageService get storage => args.storage;
 }
 
 class _$WishlistViewModelProxy {
@@ -30,14 +26,6 @@ class _$WishlistViewModelProxy {
 
   WishlistState get value {
     return WishlistViewModelScope.of(_context).value;
-  }
-
-  List<Object?> get items {
-    return WishlistViewModelScope.of(_context, aspect: _WishlistViewModelAspect.items).state.items;
-  }
-
-  bool get isLoading {
-    return WishlistViewModelScope.of(_context, aspect: _WishlistViewModelAspect.isLoading).state.isLoading;
   }
 }
 

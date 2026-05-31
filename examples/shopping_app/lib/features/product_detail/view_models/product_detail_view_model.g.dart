@@ -17,13 +17,6 @@ enum _ProductDetailViewModelAspect { productId, status, reviews, recommendations
 
 abstract class $ProductDetailViewModel extends ViewModelBase<ProductDetailState, ProductDetailViewModelArgs> {
   $ProductDetailViewModel(super.args) : super(initialState: const ProductDetailState());
-
-  int? get productId => state.productId;
-  ProductDetailStatus get status => state.status;
-  List<Object?> get reviews => state.reviews;
-  List<Object?> get recommendations => state.recommendations;
-  String? get errorMessage => state.errorMessage;
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$ProductDetailViewModelProxy {
@@ -33,26 +26,6 @@ class _$ProductDetailViewModelProxy {
 
   ProductDetailState get value {
     return ProductDetailViewModelScope.of(_context).value;
-  }
-
-  int? get productId {
-    return ProductDetailViewModelScope.of(_context, aspect: _ProductDetailViewModelAspect.productId).state.productId;
-  }
-
-  ProductDetailStatus get status {
-    return ProductDetailViewModelScope.of(_context, aspect: _ProductDetailViewModelAspect.status).state.status;
-  }
-
-  List<Object?> get reviews {
-    return ProductDetailViewModelScope.of(_context, aspect: _ProductDetailViewModelAspect.reviews).state.reviews;
-  }
-
-  List<Object?> get recommendations {
-    return ProductDetailViewModelScope.of(_context, aspect: _ProductDetailViewModelAspect.recommendations).state.recommendations;
-  }
-
-  String? get errorMessage {
-    return ProductDetailViewModelScope.of(_context, aspect: _ProductDetailViewModelAspect.errorMessage).state.errorMessage;
   }
 }
 
