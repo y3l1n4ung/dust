@@ -76,7 +76,7 @@ class ShoppingChatViewModel extends $ShoppingChatViewModel {
 
   void _connectSocket() {
     if (_socket != null) return;
-    final socket = repository.openChatSocket();
+    final socket = args.repository.openChatSocket();
     _socket = socket;
     _socketSub = socket.responses.listen(
       _handleSocketResponse,

@@ -13,6 +13,8 @@
 
 part of 'cart_view_model.dart';
 
+enum _CartViewModelAspect { items, notification }
+
 abstract class $CartViewModel extends ViewModelBase<CartState, CartViewModelArgs> {
   $CartViewModel(super.args) : super(initialState: const CartState());
 }
@@ -26,6 +28,16 @@ class _$CartViewModelProxy {
   CartState get value {
     CartViewModelScope.of(_context);
     return _vm.value;
+  }
+
+  List<CartItem> get items {
+    CartViewModelScope.of(_context, aspect: _CartViewModelAspect.items);
+    return _vm.state.items;
+  }
+
+  CartNotification? get notification {
+    CartViewModelScope.of(_context, aspect: _CartViewModelAspect.notification);
+    return _vm.state.notification;
   }
 }
 
@@ -111,6 +123,22 @@ class _CartViewModelInherited extends InheritedModel<Object> {
 
   @override
   bool updateShouldNotifyDependent(_CartViewModelInherited oldWidget, Set<Object> dependencies) {
+    for (final aspect in dependencies) {
+      switch (aspect) {
+        case _CartViewModelAspect.items:
+          if (state.items != oldWidget.state.items) {
+            return true;
+          }
+          break;
+        case _CartViewModelAspect.notification:
+          if (state.notification != oldWidget.state.notification) {
+            return true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
     return false;
   }
 }

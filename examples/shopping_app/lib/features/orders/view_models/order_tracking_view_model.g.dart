@@ -13,9 +13,10 @@
 
 part of 'order_tracking_view_model.dart';
 
+enum _OrderTrackingViewModelAspect { orderId, status, events, errorMessage }
+
 abstract class $OrderTrackingViewModel extends ViewModelBase<OrderTrackingState, OrderTrackingViewModelArgs> {
   $OrderTrackingViewModel(super.args) : super(initialState: const OrderTrackingState());
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$OrderTrackingViewModelProxy {
@@ -27,6 +28,26 @@ class _$OrderTrackingViewModelProxy {
   OrderTrackingState get value {
     OrderTrackingViewModelScope.of(_context);
     return _vm.value;
+  }
+
+  String? get orderId {
+    OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.orderId);
+    return _vm.state.orderId;
+  }
+
+  OrderTrackingStatus get status {
+    OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.status);
+    return _vm.state.status;
+  }
+
+  List<Object?> get events {
+    OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.events);
+    return _vm.state.events;
+  }
+
+  String? get errorMessage {
+    OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.errorMessage);
+    return _vm.state.errorMessage;
   }
 }
 
@@ -112,6 +133,32 @@ class _OrderTrackingViewModelInherited extends InheritedModel<Object> {
 
   @override
   bool updateShouldNotifyDependent(_OrderTrackingViewModelInherited oldWidget, Set<Object> dependencies) {
+    for (final aspect in dependencies) {
+      switch (aspect) {
+        case _OrderTrackingViewModelAspect.orderId:
+          if (state.orderId != oldWidget.state.orderId) {
+            return true;
+          }
+          break;
+        case _OrderTrackingViewModelAspect.status:
+          if (state.status != oldWidget.state.status) {
+            return true;
+          }
+          break;
+        case _OrderTrackingViewModelAspect.events:
+          if (state.events != oldWidget.state.events) {
+            return true;
+          }
+          break;
+        case _OrderTrackingViewModelAspect.errorMessage:
+          if (state.errorMessage != oldWidget.state.errorMessage) {
+            return true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
     return false;
   }
 }

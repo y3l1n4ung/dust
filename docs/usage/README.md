@@ -13,7 +13,7 @@ If you are new to Dust, we recommend reading these guides in order:
 3.  **[HTTP Client](./http.md)**: Type-safe, Dio-backed API clients.
 4.  **[State Management](./state.md)**: Boilerplate-free reactive ViewModels.
 5.  **[Typed Routing](./routing.md)**: Safe Navigator 2.0 implementation.
-6.  **[Dust DB](./db.md)**: SQLx-validated sqflite repository generation.
+6.  **[Dust DB](./db.md)**: SQLx-style sqlite3 query validation and row mapping.
 
 ---
 
@@ -28,7 +28,7 @@ Depending on the features you need, add the following packages to your `pubspec.
 | **Networking** | `dust_http_client_annotation`, `dio` |
 | **State** | `dust_state` |
 | **Routing** | `dust_router` |
-| **Database** | `dust_db` |
+| **Database** | `dust_db_annotation`, `dust_db_runtime`, `dust_db_sqlite3` |
 
 > [!TIP]
 > `derive_serde_annotation` re-exports the core traits, so you don't need to list both if you are using JSON serialization.

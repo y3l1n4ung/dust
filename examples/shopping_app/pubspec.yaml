@@ -19,6 +19,12 @@ dependencies:
     path: ../../packages/dust_router
   dust_state:
     path: ../../packages/dust_state
+  dust_db_annotation:
+    path: ../../packages/dust_db_annotation
+  dust_db_runtime:
+    path: ../../packages/dust_db_runtime
+  dust_db_sqlite3:
+    path: ../../packages/dust_db_sqlite3
   dust_http_client_annotation:
     path: ../../packages/dust_http_client_annotation
   derive_annotation:

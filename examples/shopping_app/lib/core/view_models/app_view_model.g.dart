@@ -54,9 +54,6 @@ enum _AppViewModelAspect { backendMode }
 
 abstract class $AppViewModel extends ViewModelBase<AppState, AppViewModelArgs> {
   $AppViewModel(super.args) : super(initialState: const AppState());
-  AppBackendMode get backendMode => state.backendMode;
-  ShoppingRepository get repository => args.repository;
-  StorageService get storage => args.storage;
 }
 
 class _$AppViewModelProxy {
@@ -159,9 +156,14 @@ class _AppViewModelInherited extends InheritedModel<Object> {
   @override
   bool updateShouldNotifyDependent(_AppViewModelInherited oldWidget, Set<Object> dependencies) {
     for (final aspect in dependencies) {
-      if (aspect == _AppViewModelAspect.backendMode &&
-          state.backendMode != oldWidget.state.backendMode) {
-        return true;
+      switch (aspect) {
+        case _AppViewModelAspect.backendMode:
+          if (state.backendMode != oldWidget.state.backendMode) {
+            return true;
+          }
+          break;
+        default:
+          break;
       }
     }
     return false;

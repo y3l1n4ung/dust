@@ -93,7 +93,17 @@ fn emitter_dedupes_helpers_and_symbol_reservations() {
 
 #[test]
 fn emitter_sets_changed_false_when_output_matches_previous() {
-    let registry = PluginRegistry::new();
+    let mut contribution = PluginContribution::default();
+    contribution.push_mixin_member("User", "@override\nString toString() => 'User()';");
+    let mut registry = PluginRegistry::new();
+    registry
+        .register(Box::new(FakePlugin {
+            name: "fake",
+            requested: Vec::new(),
+            diagnostics: Vec::new(),
+            contribution,
+        }))
+        .unwrap();
     let library = sample_library("lib/user.g.dart".to_owned());
 
     let first = emit_with_registry(&library, &registry, None);

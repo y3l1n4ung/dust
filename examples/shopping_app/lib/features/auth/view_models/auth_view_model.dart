@@ -36,8 +36,8 @@ class AuthViewModel extends $AuthViewModel {
 
   void _restoreSession() {
     try {
-      final token = storage.getString(StorageService.authTokenKey);
-      final userJson = storage.getString(StorageService.authUserKey);
+      final token = args.storage.getString(StorageService.authTokenKey);
+      final userJson = args.storage.getString(StorageService.authUserKey);
 
       if (token != null && userJson != null) {
         final decoded = jsonDecode(userJson) as Map<String, dynamic>;
@@ -54,16 +54,16 @@ class AuthViewModel extends $AuthViewModel {
   }
 
   Future<void> _saveSession(String token, User user) async {
-    await storage.setString(StorageService.authTokenKey, token);
-    await storage.setString(
+    await args.storage.setString(StorageService.authTokenKey, token);
+    await args.storage.setString(
       StorageService.authUserKey,
       jsonEncode(user.toJson()),
     );
   }
 
   Future<void> _clearSession() async {
-    await storage.remove(StorageService.authTokenKey);
-    await storage.remove(StorageService.authUserKey);
+    await args.storage.remove(StorageService.authTokenKey);
+    await args.storage.remove(StorageService.authUserKey);
   }
 
   Future<void> login(String username, String password) async {
@@ -71,8 +71,8 @@ class AuthViewModel extends $AuthViewModel {
     emit(state.copyWith(status: AuthStatus.loading, errorMessage: null));
 
     try {
-      final token = await repository.login(username, password);
-      final user = await repository.getUser(1);
+      final token = await args.repository.login(username, password);
+      final user = await args.repository.getUser(1);
 
       await _saveSession(token, user);
 
@@ -103,7 +103,7 @@ class AuthViewModel extends $AuthViewModel {
     emit(state.copyWith(status: AuthStatus.loading, errorMessage: null));
 
     try {
-      final userId = await repository.registerUser(
+      final userId = await args.repository.registerUser(
         email: email,
         username: username,
         password: password,

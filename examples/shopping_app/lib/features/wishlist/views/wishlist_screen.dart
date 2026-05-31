@@ -43,8 +43,14 @@ class WishlistScreen extends StatelessWidget {
                   ],
                 ),
               )
-            : ListView.builder(
+            : GridView.builder(
                 padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 400,
+                  mainAxisExtent: 100,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
                 itemCount: state.items.length,
                 itemBuilder: (context, index) =>
                     _WishlistTile(item: state.items[index]),

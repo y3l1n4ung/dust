@@ -13,9 +13,10 @@
 
 part of 'demo_cart_api_view_model.dart';
 
+enum _DemoCartApiViewModelAspect { status, carts, errorMessage }
+
 abstract class $DemoCartApiViewModel extends ViewModelBase<DemoCartState, DemoCartApiViewModelArgs> {
   $DemoCartApiViewModel(super.args) : super(initialState: const DemoCartState());
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$DemoCartApiViewModelProxy {
@@ -27,6 +28,21 @@ class _$DemoCartApiViewModelProxy {
   DemoCartState get value {
     DemoCartApiViewModelScope.of(_context);
     return _vm.value;
+  }
+
+  DemoCartStatus get status {
+    DemoCartApiViewModelScope.of(_context, aspect: _DemoCartApiViewModelAspect.status);
+    return _vm.state.status;
+  }
+
+  List<StoreCart> get carts {
+    DemoCartApiViewModelScope.of(_context, aspect: _DemoCartApiViewModelAspect.carts);
+    return _vm.state.carts;
+  }
+
+  String? get errorMessage {
+    DemoCartApiViewModelScope.of(_context, aspect: _DemoCartApiViewModelAspect.errorMessage);
+    return _vm.state.errorMessage;
   }
 }
 
@@ -112,6 +128,27 @@ class _DemoCartApiViewModelInherited extends InheritedModel<Object> {
 
   @override
   bool updateShouldNotifyDependent(_DemoCartApiViewModelInherited oldWidget, Set<Object> dependencies) {
+    for (final aspect in dependencies) {
+      switch (aspect) {
+        case _DemoCartApiViewModelAspect.status:
+          if (state.status != oldWidget.state.status) {
+            return true;
+          }
+          break;
+        case _DemoCartApiViewModelAspect.carts:
+          if (state.carts != oldWidget.state.carts) {
+            return true;
+          }
+          break;
+        case _DemoCartApiViewModelAspect.errorMessage:
+          if (state.errorMessage != oldWidget.state.errorMessage) {
+            return true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
     return false;
   }
 }

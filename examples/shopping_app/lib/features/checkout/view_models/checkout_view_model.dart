@@ -29,7 +29,7 @@ class CheckoutViewModel extends $CheckoutViewModel {
     final code = couponCode.trim();
     emit(state.copyWith(couponCode: code, isQuoteLoading: true));
 
-    final quote = await repository.quoteCheckout(
+    final quote = await args.repository.quoteCheckout(
       CheckoutQuoteRequest(subtotal: subtotal, couponCode: code),
     );
     emit(state.copyWith(quote: quote, isQuoteLoading: false));

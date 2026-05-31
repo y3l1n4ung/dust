@@ -30,8 +30,8 @@ class ProductDetailViewModel extends $ProductDetailViewModel {
     );
 
     try {
-      final reviews = await repository.getProductReviews(productId);
-      final recommendations = await repository.getRecommendations(productId);
+      final reviews = await args.repository.getProductReviews(productId);
+      final recommendations = await args.repository.getRecommendations(productId);
       emit(
         state.copyWith(
           productId: productId,

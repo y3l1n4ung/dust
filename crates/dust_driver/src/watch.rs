@@ -48,12 +48,7 @@ fn run_watch_inner(
         mut cache,
         mut cache_report,
         ..
-    } = match CachedDriverContext::load(
-        &request.cwd,
-        RegistrySelection::All {
-            write_metadata: true,
-        },
-    ) {
+    } = match CachedDriverContext::load(&request.cwd, RegistrySelection::All) {
         Ok(context) => context,
         Err(diagnostic) => {
             result.diagnostics.push(diagnostic);

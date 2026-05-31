@@ -13,9 +13,10 @@
 
 part of 'wishlist_view_model.dart';
 
+enum _WishlistViewModelAspect { items, isLoading }
+
 abstract class $WishlistViewModel extends ViewModelBase<WishlistState, WishlistViewModelArgs> {
   $WishlistViewModel(super.args) : super(initialState: const WishlistState());
-  StorageService get storage => args.storage;
 }
 
 class _$WishlistViewModelProxy {
@@ -27,6 +28,16 @@ class _$WishlistViewModelProxy {
   WishlistState get value {
     WishlistViewModelScope.of(_context);
     return _vm.value;
+  }
+
+  List<WishlistItem> get items {
+    WishlistViewModelScope.of(_context, aspect: _WishlistViewModelAspect.items);
+    return _vm.state.items;
+  }
+
+  bool get isLoading {
+    WishlistViewModelScope.of(_context, aspect: _WishlistViewModelAspect.isLoading);
+    return _vm.state.isLoading;
   }
 }
 
@@ -112,6 +123,22 @@ class _WishlistViewModelInherited extends InheritedModel<Object> {
 
   @override
   bool updateShouldNotifyDependent(_WishlistViewModelInherited oldWidget, Set<Object> dependencies) {
+    for (final aspect in dependencies) {
+      switch (aspect) {
+        case _WishlistViewModelAspect.items:
+          if (state.items != oldWidget.state.items) {
+            return true;
+          }
+          break;
+        case _WishlistViewModelAspect.isLoading:
+          if (state.isLoading != oldWidget.state.isLoading) {
+            return true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
     return false;
   }
 }

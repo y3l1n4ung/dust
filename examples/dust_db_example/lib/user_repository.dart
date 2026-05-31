@@ -1,10 +1,10 @@
-import 'dart:convert';
-
-import 'package:dust_db/dust_db.dart';
+import 'package:dust_db_annotation/dust_db_annotation.dart';
+import 'package:dust_db_runtime/dust_db_runtime.dart';
+import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 
 part 'user_repository.g.dart';
 
-@FromRow()
+@Derive([FromRow()])
 @Sqlx(renameAll: SqlxRename.snakeCase)
 final class UserProfile {
   const UserProfile({
@@ -37,7 +37,7 @@ final class UserProfile {
   final UserStatus status;
 }
 
-@FromRow()
+@Derive([FromRow()])
 final class Address {
   const Address({required this.street, required this.city});
 
@@ -72,20 +72,33 @@ final class UserStatusFromInt implements SqlxTryFrom<UserStatus, int> {
   };
 }
 
-@DustDb(driver: Driver.sqflite, migrations: 'migrations')
-abstract interface class UserRepository {
-  factory UserRepository(dynamic db) = _$UserRepository;
+@SqlxDatabase(type: SqlxDatabaseType.sqlite, migrations: './migrations')
+abstract class AppDatabase {
+  factory AppDatabase.open(String path) = _$AppDatabase.open;
 
-  @Query('SELECT id, display_name, street, city, bio, preferences, status FROM user_profiles WHERE id = ?')
-  Future<UserProfile?> findById(int id);
+  Pool get pool;
+}
 
-  @Query('SELECT id, display_name, street, city, bio, preferences, status FROM user_profiles')
-  Future<List<UserProfile>> listProfiles();
+@SqlxDao()
+abstract final class UserDao {
+  const factory UserDao(SqlxDriver db) = _$UserDao;
 
-  @Query('SELECT COUNT(*) FROM user_profiles')
-  Future<int> countProfiles();
+  @Query(r'''
+SELECT id, display_name, street, city, bio, preferences, status
+FROM user_profiles
+WHERE id = $1
+''')
+  Future<Result<UserProfile?, SqlxError>> findById(int id);
 
-  @Transaction()
-  @Query('UPDATE user_profiles SET display_name = ? WHERE id = ?')
-  Future<void> renameProfile(String name, int id);
+  @Query(r'''
+SELECT id, display_name, street, city, bio, preferences, status
+FROM user_profiles
+''')
+  Future<Result<List<UserProfile>, SqlxError>> listProfiles();
+
+  @Query(r'SELECT COUNT(*) FROM user_profiles')
+  Future<Result<int, SqlxError>> countProfiles();
+
+  @Query(r'UPDATE user_profiles SET display_name = $1 WHERE id = $2')
+  Future<Result<ExecResult, SqlxError>> renameProfile(String name, int id);
 }

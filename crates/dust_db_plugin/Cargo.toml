@@ -7,21 +7,19 @@ license.workspace = true
 rust-version.workspace = true
 repository.workspace = true
 homepage.workspace = true
-description = "Dust plugin for SQLx-validated sqflite repository generation."
+description = "Dust plugin for SQLx-validated sqlite3 database generation."
 
 [dependencies]
 dust_dart_emit = { path = "../dust_dart_emit", version = "0.1.1" }
 dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
 dust_ir = { path = "../dust_ir", version = "0.1.1" }
 dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.1" }
+dust_text = { path = "../dust_text", version = "0.1.1" }
 either = "1.15"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite", "migrate"] }
 tokio = { version = "1.0", features = ["rt", "macros"] }
-
-[dev-dependencies]
-dust_text = { path = "../dust_text", version = "0.1.1" }
 
 [lib]
 path = "src/lib.rs"

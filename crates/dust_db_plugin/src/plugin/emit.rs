@@ -1,21 +1,35 @@
+use std::{collections::HashSet, fs, path::Path};
+
 use dust_dart_emit::DYNAMIC_TYPES;
-use dust_ir::{ClassIr, ConstructorIr, LibraryIr, ParamKind, TypeIr};
+use dust_ir::{ClassIr, ConstructorIr, LibraryIr, MethodIr, ParamKind, TypeIr};
 use dust_plugin_api::PluginContribution;
 
 use super::{
-    model::{FetchKind, QuerySpec, RowField},
-    parse::{dust_db_classes, effective_column_name, row_classes, sqlx_config},
+    DbPluginOptions,
+    model::{DaoClass, DaoMethod, DatabaseClass, DbDriver, RowField},
+    parse::{dao_classes, database_classes, effective_column_name, row_classes, sqlx_config},
 };
 
-pub(crate) fn emit_db_library(library: &LibraryIr) -> PluginContribution {
+pub(crate) fn emit_db_library(library: &LibraryIr, options: DbPluginOptions) -> PluginContribution {
     let mut contribution = PluginContribution::default();
     let mut sections = Vec::new();
 
-    for row in row_classes(library) {
-        sections.push(render_from_row_extension(library, row.class, &row.config));
-    }
-    for db in dust_db_classes(library) {
-        sections.push(render_repository_class(db.class, &db.queries));
+    let rows = row_classes(library);
+    if options.databases {
+        for db in database_classes(library) {
+            sections.push(render_database_class(library, &db));
+        }
+        let row_names = rows
+            .iter()
+            .map(|row| row.class.name.as_str())
+            .collect::<HashSet<_>>();
+        for dao in dao_classes(library) {
+            sections.push(render_dao_class(&dao, &row_names));
+        }
+    } else {
+        for row in &rows {
+            sections.push(render_from_row_extension(library, row.class, &row.config));
+        }
     }
     if !sections.is_empty() {
         contribution.support_types.push(sections.join("\n\n"));
@@ -24,105 +38,183 @@ pub(crate) fn emit_db_library(library: &LibraryIr) -> PluginContribution {
     contribution
 }
 
-fn render_repository_class(class: &ClassIr, queries: &[QuerySpec<'_>]) -> String {
-    let mut out = String::new();
-    out.push_str(&format!(
-        "final class _${} implements {} {{\n",
-        class.name, class.name
-    ));
-    out.push_str("  final dynamic _db;\n\n");
-    out.push_str(&format!("  _${}(this._db);\n", class.name));
-    for query in queries {
-        out.push('\n');
-        out.push_str(&render_query_method(query));
-        out.push('\n');
-    }
-    out.push_str("}\n");
-    out
-}
-
-fn render_query_method(query: &QuerySpec<'_>) -> String {
-    let method = query.method;
-    let params = method
-        .params
+fn render_dao_class(dao: &DaoClass<'_>, row_names: &HashSet<&str>) -> String {
+    let class_name = &dao.class.name;
+    let generated_name = dao
+        .class
+        .constructors
         .iter()
-        .map(|param| {
-            let ty = DYNAMIC_TYPES.render(&param.ty);
-            match param.kind {
-                ParamKind::Named => format!("required {ty} {}", param.name),
-                ParamKind::Positional => format!("{ty} {}", param.name),
-            }
-        })
-        .collect::<Vec<_>>();
-    let signature_params = if method
-        .params
+        .find_map(|constructor| constructor.redirected_target_name.as_deref())
+        .filter(|target| target.starts_with("_$"))
+        .map_or_else(|| format!("_${class_name}"), str::to_owned);
+    let methods = dao
+        .methods
         .iter()
-        .any(|param| matches!(param.kind, ParamKind::Named))
-    {
-        format!("{{{}}}", params.join(", "))
-    } else {
-        params.join(", ")
-    };
-    let return_type = DYNAMIC_TYPES.render(&method.return_type);
-    let args = render_args(&query.args);
-    let sql = escape_dart_string(&query.sql);
-    let body = render_query_body(query, &sql, &args);
-
+        .map(|method| render_dao_method(method, row_names))
+        .collect::<Vec<_>>()
+        .join("\n\n");
     format!(
-        "  @override\n  {return_type} {name}({signature_params}) async {{\n{body}\n  }}",
-        name = method.name,
+        "final class {generated_name} implements {class_name} {{\n  const {generated_name}(this._db);\n\n  final SqlxDriver _db;\n\n{methods}\n}}"
     )
 }
 
-fn render_query_body(query: &QuerySpec<'_>, sql: &str, args: &str) -> String {
-    if query.transaction {
-        let inner = render_query_body_inner(query, "txn", sql, args)
-            .lines()
-            .map(|line| format!("      {}", line.strip_prefix("    ").unwrap_or(line)))
-            .collect::<Vec<_>>()
-            .join("\n");
-        return format!("    return _db.transaction((txn) async {{\n{inner}\n    }});");
-    }
-    render_query_body_inner(query, "_db", sql, args)
+fn render_dao_method(method: &DaoMethod<'_>, row_names: &HashSet<&str>) -> String {
+    let method_ir = method.method;
+    let return_type = DYNAMIC_TYPES.render(&method_ir.return_type);
+    let params = render_method_params(method_ir);
+    let args = method_ir
+        .params
+        .iter()
+        .map(|param| param.name.as_str())
+        .collect::<Vec<_>>()
+        .join(", ");
+    let sql = render_sql_literal(&method.sql);
+    let body = render_dao_method_body(method, row_names, &sql, &args);
+    format!(
+        "  @override\n  {return_type} {}({params}) async {{\n{body}\n  }}",
+        method_ir.name
+    )
 }
 
-fn render_query_body_inner(query: &QuerySpec<'_>, db: &str, sql: &str, args: &str) -> String {
-    match query.fetch {
-        FetchKind::One => {
-            let item_type = future_item_type(&query.method.return_type).unwrap_or("Object");
-            format!(
-                "    final rows = await {db}.rawQuery(\n      '{sql}',\n      {args},\n    );\n    if (rows.isEmpty) return null;\n    return {item_type}FromRow.fromRow(rows.first);"
-            )
-        }
-        FetchKind::All => {
-            let item_type = list_future_item_type(&query.method.return_type).unwrap_or("Object");
-            format!(
-                "    final rows = await {db}.rawQuery(\n      '{sql}',\n      {args},\n    );\n    return rows.map({item_type}FromRow.fromRow).toList();"
-            )
-        }
-        FetchKind::Scalar => {
-            let scalar_type = future_item_type(&query.method.return_type).unwrap_or("Object");
-            format!(
-                "    final rows = await {db}.rawQuery(\n      '{sql}',\n      {args},\n    );\n    return rows.first.values.first as {scalar_type};"
-            )
-        }
-        FetchKind::InsertOne => {
-            let item_type = future_item_type(&query.method.return_type).unwrap_or("Object");
-            format!(
-                "    final id = await {db}.rawInsert(\n      '{sql}',\n      {args},\n    );\n    final rows = await {db}.rawQuery(\n      'SELECT * FROM {table} WHERE id = ?',\n      <Object?>[id],\n    );\n    return {item_type}FromRow.fromRow(rows.first);",
-                table = infer_insert_table(&query.sql).unwrap_or("row")
-            )
-        }
-        FetchKind::Execute => {
-            format!("    await {db}.execute(\n      '{sql}',\n      {args},\n    );")
-        }
-        FetchKind::Stream => {
-            let item_type = stream_item_type(&query.method.return_type).unwrap_or("Object");
-            format!(
-                "    return Stream.fromFuture(\n      {db}.rawQuery(\n        '{sql}',\n        {args},\n      ),\n    ).asyncExpand(\n      (rows) => Stream.fromIterable(rows.map({item_type}FromRow.fromRow)),\n    );"
-            )
+fn render_method_params(method: &MethodIr) -> String {
+    let mut positional = Vec::new();
+    let mut named = Vec::new();
+    for param in &method.params {
+        let rendered = format!("{} {}", DYNAMIC_TYPES.render(&param.ty), param.name);
+        match param.kind {
+            ParamKind::Positional => positional.push(rendered),
+            ParamKind::Named => named.push(rendered),
         }
     }
+    if named.is_empty() {
+        positional.join(", ")
+    } else {
+        let mut parts = positional;
+        parts.push(format!("{{{}}}", named.join(", ")));
+        parts.join(", ")
+    }
+}
+
+fn render_dao_method_body(
+    method: &DaoMethod<'_>,
+    row_names: &HashSet<&str>,
+    sql: &str,
+    args: &str,
+) -> String {
+    let Some(ok_type) = method.return_ok_type.as_ref() else {
+        return format!(
+            "    return Err<dynamic, SqlxError>(\n      SqlxError.decode('DAO method `{}` must return Future<Result<T, SqlxError>>.'),\n    );",
+            method.method.name
+        );
+    };
+    if ok_type.is_named("ExecResult") || ok_type.is_named("Unit") {
+        return format!("    return _db.execute(\n      {sql},\n      [{args}],\n    );");
+    }
+    let ok_rendered = DYNAMIC_TYPES.render(ok_type);
+    let mapper = render_ok_mapper(ok_type, row_names, &method.method.name);
+    format!(
+        "    final result = await _db.fetch(\n      {sql},\n      [{args}],\n    );\n\n    return result.andThen((rows) {{\n{mapper}\n    }});",
+    )
+    .replace("{ok_rendered}", &ok_rendered)
+}
+
+fn render_ok_mapper(ok_type: &TypeIr, row_names: &HashSet<&str>, method_name: &str) -> String {
+    if ok_type.is_named("List") {
+        let Some(item) = ok_type.args().first() else {
+            return "      return Ok<List<Row>, SqlxError>(rows);".to_owned();
+        };
+        if item.is_named("Row") {
+            return "      return Ok<List<Row>, SqlxError>(rows);".to_owned();
+        }
+        let item_name = item.name().unwrap_or("Object");
+        if row_names.contains(item_name) {
+            return format!(
+                "      try {{\n        return Ok<{0}, SqlxError>([\n          for (final row in rows) {1}FromRow.fromRow(row),\n        ]);\n      }} catch (error) {{\n        return Err<{0}, SqlxError>(\n          SqlxError.decode(error.toString(), cause: error),\n        );\n      }}",
+                DYNAMIC_TYPES.render(ok_type),
+                item_name
+            );
+        }
+    }
+    if is_scalar_type(ok_type) {
+        let ok_rendered = DYNAMIC_TYPES.render(ok_type);
+        if ok_type.is_nullable() {
+            let inner = scalar_inner(ok_type);
+            return format!(
+                "      if (rows.length > 1) {{\n        return Err<{ok_rendered}, SqlxError>(\n          SqlxError.tooManyRows(expected: 1, actual: rows.length),\n        );\n      }}\n\n      try {{\n        return Ok<{ok_rendered}, SqlxError>(\n          rows.isEmpty ? null : rows.single.readIndexOrNull<{inner}>(0),\n        );\n      }} catch (error) {{\n        return Err<{ok_rendered}, SqlxError>(\n          SqlxError.decode(error.toString(), cause: error),\n        );\n      }}"
+            );
+        }
+        return format!(
+            "      if (rows.isEmpty) {{\n        return Err<{ok_rendered}, SqlxError>(\n          SqlxError.decode('Query `{method_name}` returned no rows.'),\n        );\n      }}\n\n      if (rows.length > 1) {{\n        return Err<{ok_rendered}, SqlxError>(\n          SqlxError.tooManyRows(expected: 1, actual: rows.length),\n        );\n      }}\n\n      try {{\n        return Ok<{ok_rendered}, SqlxError>(rows.single.readIndex<{ok_rendered}>(0));\n      }} catch (error) {{\n        return Err<{ok_rendered}, SqlxError>(\n          SqlxError.decode(error.toString(), cause: error),\n        );\n      }}"
+        );
+    }
+    let Some(row_name) = ok_type.name() else {
+        return format!(
+            "      return Err<{}, SqlxError>(\n        SqlxError.decode('Unsupported DAO return type.'),\n      );",
+            DYNAMIC_TYPES.render(ok_type)
+        );
+    };
+    if ok_type.is_nullable() {
+        return format!(
+            "      if (rows.isEmpty) return const Ok<{0}, SqlxError>(null);\n\n      if (rows.length > 1) {{\n        return Err<{0}, SqlxError>(\n          SqlxError.tooManyRows(expected: 1, actual: rows.length),\n        );\n      }}\n\n      try {{\n        return Ok<{0}, SqlxError>({1}FromRow.fromRow(rows.first));\n      }} catch (error) {{\n        return Err<{0}, SqlxError>(\n          SqlxError.decode(error.toString(), cause: error),\n        );\n      }}",
+            DYNAMIC_TYPES.render(ok_type),
+            row_name
+        );
+    }
+    format!(
+        "      if (rows.isEmpty) {{\n        return Err<{0}, SqlxError>(\n          SqlxError.decode('Query `{method_name}` returned no rows.'),\n        );\n      }}\n\n      if (rows.length > 1) {{\n        return Err<{0}, SqlxError>(\n          SqlxError.tooManyRows(expected: 1, actual: rows.length),\n        );\n      }}\n\n      try {{\n        return Ok<{0}, SqlxError>({1}FromRow.fromRow(rows.first));\n      }} catch (error) {{\n        return Err<{0}, SqlxError>(\n          SqlxError.decode(error.toString(), cause: error),\n        );\n      }}",
+        DYNAMIC_TYPES.render(ok_type),
+        row_name
+    )
+}
+
+fn render_database_class(library: &LibraryIr, db: &DatabaseClass<'_>) -> String {
+    let class_name = &db.class.name;
+    let generated_name = format!("_${class_name}");
+    let migrations_name = format!("_${}Migrations", lower_first(class_name));
+    let open_expr = match db.driver {
+        DbDriver::Sqlite3 => {
+            format!("SqlitePool.open(\n      path,\n      migrations: {migrations_name},\n    )")
+        }
+        DbDriver::Postgres => {
+            "throw UnsupportedError('Driver.postgres is not supported in Dust DB v1')".to_owned()
+        }
+    };
+    let migrations = render_migrations_map(library, &db.migrations, &migrations_name);
+    format!(
+        "final class {generated_name} implements {class_name} {{\n  {generated_name}._(this.pool);\n\n  factory {generated_name}.open(String path) {{\n    final pool = {open_expr};\n    return {generated_name}._(pool);\n  }}\n\n  @override\n  final Pool pool;\n}}\n\n{migrations}"
+    )
+}
+
+fn render_migrations_map(library: &LibraryIr, migrations: &str, name: &str) -> String {
+    let path = Path::new(&library.package_root).join(migrations);
+    let mut files = fs::read_dir(&path)
+        .ok()
+        .into_iter()
+        .flat_map(|entries| entries.filter_map(Result::ok))
+        .map(|entry| entry.path())
+        .filter(|path| path.extension().and_then(|ext| ext.to_str()) == Some("sql"))
+        .collect::<Vec<_>>();
+    files.sort();
+
+    let entries = files
+        .iter()
+        .filter_map(|file| {
+            let source = fs::read_to_string(file).ok()?;
+            let key = file.file_name()?.to_str()?;
+            Some(format!(
+                "  '{}': '{}',",
+                escape_dart_string(key),
+                escape_dart_string(&source)
+            ))
+        })
+        .collect::<Vec<_>>();
+    if entries.is_empty() {
+        return format!("const Map<String, String> {name} = <String, String>{{}};");
+    }
+    format!(
+        "const Map<String, String> {name} = <String, String>{{\n{}\n}};",
+        entries.join("\n")
+    )
 }
 
 fn render_from_row_extension(
@@ -145,7 +237,7 @@ fn render_from_row_extension(
         .collect::<Vec<_>>();
     let Some(constructor) = find_constructor(class) else {
         return format!(
-            "extension {0}FromRow on {0} {{\n  static {0} fromRow(Map<String, Object?> row) => throw StateError('No usable constructor found for {0}');\n}}",
+            "extension {0}FromRow on {0} {{\n  static {0} fromRow(Row row) {{\n    throw StateError('No usable constructor found for {0}');\n  }}\n}}",
             class.name
         );
     };
@@ -171,10 +263,20 @@ fn render_from_row_extension(
         })
         .collect::<Vec<_>>();
     let call = render_constructor_call(&class.name, constructor, &args);
+    let registration = format!(
+        "final bool {} = registerRowMapper<{}>({}FromRow.fromRow);",
+        row_registration_name(&class.name),
+        class.name,
+        class.name
+    );
     format!(
-        "extension {0}FromRow on {0} {{\n  static {0} fromRow(Map<String, Object?> row) => {call};\n}}",
+        "extension {0}FromRow on {0} {{\n  static {0} fromRow(Row row) {{\n    return {call};\n  }}\n}}\n\n{registration}",
         class.name,
     )
+}
+
+fn row_registration_name(class_name: &str) -> String {
+    format!("_${}FromRowRegistered", lower_first(class_name))
 }
 
 fn render_row_value(
@@ -189,45 +291,39 @@ fn render_row_value(
         let ty = DYNAMIC_TYPES.render_non_nullable(&field.field.ty);
         return format!("{ty}FromRow.fromRow(row)");
     }
-    let raw = format!("row['{}']", escape_dart_string(&field.column));
+    let column = escape_dart_string(&field.column);
     let decoded = if field.config.json {
         let ty = DYNAMIC_TYPES.render_non_nullable(&field.field.ty);
-        format!("{ty}.fromJson(\n      jsonDecode({raw} as String) as Map<String, Object?>,\n    )")
+        format!("{ty}.fromJson(decodeJsonObject(row.read<String>('{column}')))")
     } else if let Some(try_from) = &field.config.try_from_source {
         let value = try_from_decode_type(library, try_from)
             .filter(|ty| ty != "Object?" && ty != "dynamic")
-            .map_or_else(|| raw.clone(), |ty| format!("{raw} as {ty}"));
+            .map_or_else(
+                || format!("row.read<Object?>('{column}')"),
+                |ty| format!("row.read<{ty}>('{column}')"),
+            );
         format!("{try_from}.decode({value})")
     } else {
-        render_builtin_decode(&field.field.ty, &raw)
+        render_builtin_decode(&field.field.ty, &column)
     };
     match default_source {
-        Some(default) => format!(
-            "row.containsKey('{}') ? {decoded} : {default}",
-            escape_dart_string(&field.column)
-        ),
+        Some(default) => {
+            format!("row.readOrNull<Object?>('{column}') == null ? {default} : {decoded}")
+        }
         None => decoded,
     }
 }
 
-fn render_builtin_decode(ty: &TypeIr, raw: &str) -> String {
+fn render_builtin_decode(ty: &TypeIr, column: &str) -> String {
     let nullable = ty.is_nullable();
     match ty.name() {
-        Some("bool") if nullable => format!("{raw} == null ? null : ({raw} as int) == 1"),
-        Some("bool") => format!("({raw} as int) == 1"),
-        Some("DateTime") if nullable => {
-            format!("{raw} == null ? null : DateTime.parse({raw} as String)")
-        }
-        Some("DateTime") => format!("DateTime.parse({raw} as String)"),
-        Some(name @ ("int" | "double" | "num" | "String")) => {
-            let suffix = if nullable { "?" } else { "" };
-            format!("{raw} as {name}{suffix}")
-        }
-        Some(name) => {
-            let suffix = if nullable { "?" } else { "" };
-            format!("{raw} as {name}{suffix}")
-        }
-        None => raw.to_owned(),
+        Some("bool") if nullable => format!("row.readBoolOrNull('{column}')"),
+        Some("bool") => format!("row.readBool('{column}')"),
+        Some("DateTime") if nullable => format!("row.readDateTimeOrNull('{column}')"),
+        Some("DateTime") => format!("row.readDateTime('{column}')"),
+        Some(name) if nullable => format!("row.readOrNull<{name}>('{column}')"),
+        Some(name) => format!("row.read<{name}>('{column}')"),
+        None => format!("row.read<Object?>('{column}')"),
     }
 }
 
@@ -289,7 +385,7 @@ fn render_constructor_call(
     } else if args.join(", ").len() + name.len() <= 56 {
         format!("{name}({})", args.join(", "))
     } else {
-        format!("{name}(\n    {},\n  )", args.join(",\n    "))
+        format!("{name}(\n      {},\n    )", args.join(",\n      "))
     }
 }
 
@@ -300,49 +396,16 @@ fn find_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
         .find(|constructor| constructor.can_construct_all_fields(&class.fields))
 }
 
-fn render_args(args: &[String]) -> String {
-    if args.is_empty() {
-        "const <Object?>[]".to_owned()
-    } else {
-        format!("<Object?>[{}]", args.join(", "))
-    }
-}
-
-fn future_item_type(ty: &TypeIr) -> Option<&str> {
-    if ty.is_named("Future") && ty.args().len() == 1 {
-        return ty.args()[0].name();
-    }
-    None
-}
-
-fn list_future_item_type(ty: &TypeIr) -> Option<&str> {
-    if ty.is_named("Future") && ty.args().len() == 1 {
-        let list = &ty.args()[0];
-        if list.is_named("List") && list.args().len() == 1 {
-            return list.args()[0].name();
-        }
-    }
-    None
-}
-
-fn stream_item_type(ty: &TypeIr) -> Option<&str> {
-    if ty.is_named("Stream") && ty.args().len() == 1 {
-        return ty.args()[0].name();
-    }
-    None
-}
-
-fn infer_insert_table(sql: &str) -> Option<&str> {
-    let mut words = sql.split_whitespace();
-    if !words.next()?.eq_ignore_ascii_case("insert") {
-        return None;
-    }
-    if !words.next()?.eq_ignore_ascii_case("into") {
-        return None;
-    }
-    words
-        .next()
-        .map(|table| table.trim_matches(|ch: char| ch == '`' || ch == '"'))
+fn lower_first(value: &str) -> String {
+    let mut chars = value.chars();
+    let Some(first) = chars.next() else {
+        return String::new();
+    };
+    format!(
+        "{}{}",
+        first.to_ascii_lowercase(),
+        chars.collect::<String>()
+    )
 }
 
 fn escape_dart_string(source: &str) -> String {
@@ -350,6 +413,29 @@ fn escape_dart_string(source: &str) -> String {
         .replace('\\', "\\\\")
         .replace('\'', "\\'")
         .replace('$', "\\$")
+        .replace('\n', "\\n")
+        .replace('\r', "\\r")
+}
+
+fn render_sql_literal(source: &str) -> String {
+    if !source.contains("'''") {
+        return format!("r'''{source}'''");
+    }
+    format!("'{}'", escape_dart_string(source))
+}
+
+fn is_scalar_type(ty: &TypeIr) -> bool {
+    matches!(
+        ty.name(),
+        Some("String" | "int" | "double" | "num" | "bool" | "DateTime")
+    )
+}
+
+fn scalar_inner(ty: &TypeIr) -> String {
+    let rendered = DYNAMIC_TYPES.render(ty);
+    rendered
+        .strip_suffix('?')
+        .map_or(rendered.clone(), str::to_owned)
 }
 
 #[cfg(test)]
@@ -415,7 +501,13 @@ mod tests {
 
         assert_eq!(
             render_from_row_extension(&library, &class, &Default::default()),
-            "extension UserRowFromRow on UserRow {\n  static UserRow fromRow(Map<String, Object?> row) => UserRow(id: row['id'] as int);\n}"
+            r#"extension UserRowFromRow on UserRow {
+  static UserRow fromRow(Row row) {
+    return UserRow(id: row.read<int>('id'));
+  }
+}
+
+final bool _$userRowFromRowRegistered = registerRowMapper<UserRow>(UserRowFromRow.fromRow);"#
         );
     }
 }

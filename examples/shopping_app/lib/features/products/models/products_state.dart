@@ -1,10 +1,14 @@
+import 'package:derive_annotation/derive_annotation.dart';
 import 'product.dart';
+
+part 'products_state.g.dart';
 
 enum ProductsStatus { initial, loading, success, error }
 
 enum ProductSortOption { featured, priceLow, priceHigh, ratingHigh }
 
-class ProductsState {
+@Derive([ToString(), CopyWith(), Eq()])
+class ProductsState with _$ProductsState {
   final List<Product> products;
   final ProductsStatus status;
   final String? errorMessage;
@@ -53,23 +57,5 @@ class ProductsState {
     final cats = products.map((p) => p.category).toSet().toList();
     cats.sort();
     return ['all', ...cats];
-  }
-
-  ProductsState copyWith({
-    List<Product>? products,
-    ProductsStatus? status,
-    String? errorMessage,
-    String? selectedCategory,
-    String? searchQuery,
-    ProductSortOption? sortOption,
-  }) {
-    return ProductsState(
-      products: products ?? this.products,
-      status: status ?? this.status,
-      errorMessage: errorMessage ?? this.errorMessage,
-      selectedCategory: selectedCategory ?? this.selectedCategory,
-      searchQuery: searchQuery ?? this.searchQuery,
-      sortOption: sortOption ?? this.sortOption,
-    );
   }
 }

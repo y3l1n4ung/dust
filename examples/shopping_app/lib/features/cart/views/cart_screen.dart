@@ -199,7 +199,7 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    width: double.infinity,
                     decoration: BoxDecoration(
                       color: Theme.of(context).cardColor,
                       boxShadow: [
@@ -211,31 +211,42 @@ class _CartScreenState extends State<CartScreen> {
                       ],
                     ),
                     child: SafeArea(
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Center(
+                        child: Container(
+                          constraints: const BoxConstraints(maxWidth: 800),
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
                             children: [
-                              Text(
-                                'Total (${state.itemCount} items)',
-                                style: Theme.of(context).textTheme.titleMedium,
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Total (${state.itemCount} items)',
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                  Text(
+                                    '\$${state.totalPrice.toStringAsFixed(2)}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                '\$${state.totalPrice.toStringAsFixed(2)}',
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton(
+                                  onPressed: () =>
+                                      context.routes.checkout().push(),
+                                  child: const Text('Proceed to Checkout'),
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              onPressed: () => context.routes.checkout().push(),
-                              child: const Text('Proceed to Checkout'),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),

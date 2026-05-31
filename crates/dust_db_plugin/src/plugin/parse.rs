@@ -1,13 +1,19 @@
+use std::{fs, path::Path};
+
 use dust_dart_emit::{
-    apply_rename_rule, balanced_parenthesized, normalized_args, parse_bool_literal,
-    parse_named_arguments, parse_string_literal, split_top_level_items,
+    apply_rename_rule, balanced_parenthesized, parse_bool_literal, parse_named_arguments,
+    parse_string_literal, split_top_level_items,
 };
-use dust_ir::{ConfigApplicationIr, MethodIr, SerdeRenameRuleIr, SymbolId};
+use dust_ir::{ConfigApplicationIr, LibraryIr, SerdeRenameRuleIr, SpanIr, SymbolId, TypeIr};
 use dust_plugin_api::short_symbol_name;
+use dust_text::TextRange;
 
 use super::{
-    constants::{DUST_DB, FROM_ROW, QUERY, SQLX, TRANSACTION},
-    model::{DbClass, FetchKind, QuerySpec, RowClass, SqlxConfig, SqlxRenameRule},
+    constants::{DAO, DATABASE, FROM_ROW, FROM_ROW_SYMBOL, QUERY, SQLX, SQLX_DAO, SQLX_DATABASE},
+    model::{
+        DaoClass, DaoMethod, DatabaseClass, DbDriver, FetchMode, QueryFunction, QuerySpec,
+        RowClass, SqlxConfig, SqlxRenameRule,
+    },
 };
 
 pub(crate) fn config_name(symbol: &SymbolId) -> &str {
@@ -20,7 +26,7 @@ pub(crate) fn has_config(configs: &[ConfigApplicationIr], expected: &str) -> boo
         .any(|config| config_name(&config.symbol) == expected)
 }
 
-pub(crate) fn dust_db_classes(library: &dust_ir::LibraryIr) -> Vec<DbClass<'_>> {
+pub(crate) fn database_classes(library: &LibraryIr) -> Vec<DatabaseClass<'_>> {
     library
         .classes
         .iter()
@@ -28,27 +34,61 @@ pub(crate) fn dust_db_classes(library: &dust_ir::LibraryIr) -> Vec<DbClass<'_>> 
             let config = class
                 .configs
                 .iter()
-                .find(|config| config_name(&config.symbol) == DUST_DB)?;
-            let migrations = parse_dust_db_config(config)?.migrations;
-            let queries = class
-                .methods
-                .iter()
-                .filter_map(parse_query_method)
-                .collect::<Vec<_>>();
-            Some(DbClass {
+                .find(|config| is_database_config(config_name(&config.symbol)))?;
+            let parsed = parse_database_config(config)?;
+            Some(DatabaseClass {
                 class,
-                migrations,
-                queries,
+                driver: parsed.driver,
+                migrations: parsed.migrations,
             })
         })
         .collect()
 }
 
-pub(crate) fn row_classes(library: &dust_ir::LibraryIr) -> Vec<RowClass<'_>> {
+pub(crate) fn dao_classes(library: &LibraryIr) -> Vec<DaoClass<'_>> {
     library
         .classes
         .iter()
-        .filter(|class| has_config(&class.configs, FROM_ROW))
+        .filter(|class| {
+            class
+                .configs
+                .iter()
+                .any(|config| is_dao_config(config_name(&config.symbol)))
+        })
+        .map(|class| DaoClass {
+            class,
+            methods: class
+                .methods
+                .iter()
+                .filter_map(|method| {
+                    let config = method
+                        .configs
+                        .iter()
+                        .find(|config| config_name(&config.symbol) == QUERY)?;
+                    let (sql, sql_source_static) = parse_query_config(config);
+                    Some(DaoMethod {
+                        method,
+                        sql,
+                        sql_source_static,
+                        return_ok_type: result_ok_type(&method.return_type).cloned(),
+                    })
+                })
+                .collect(),
+        })
+        .collect()
+}
+
+pub(crate) fn row_classes(library: &LibraryIr) -> Vec<RowClass<'_>> {
+    library
+        .classes
+        .iter()
+        .filter(|class| {
+            class
+                .traits
+                .iter()
+                .any(|item| item.symbol.0 == FROM_ROW_SYMBOL)
+                || has_config(&class.configs, FROM_ROW)
+        })
         .map(|class| RowClass {
             class,
             config: sqlx_config(&class.configs),
@@ -56,38 +96,53 @@ pub(crate) fn row_classes(library: &dust_ir::LibraryIr) -> Vec<RowClass<'_>> {
         .collect()
 }
 
-pub(crate) fn parse_query_method(method: &MethodIr) -> Option<QuerySpec<'_>> {
-    let query_config = method
-        .configs
-        .iter()
-        .find(|config| config_name(&config.symbol) == QUERY);
-    let sql_from_config =
-        query_config.and_then(|config| parse_query_config(config.arguments_source.as_deref()));
-    let body = method.body_source.as_deref();
-    let sql_from_body = body.and_then(parse_body_query_sql);
-    let sql = sql_from_config.or(sql_from_body)?;
-    let fetch = body
-        .and_then(parse_fetch_kind)
-        .unwrap_or_else(|| infer_fetch_kind(method, &sql));
-    let args = body
-        .and_then(parse_fetch_args)
-        .filter(|args| !args.is_empty())
-        .unwrap_or_else(|| {
-            method
-                .params
-                .iter()
-                .map(|param| param.name.clone())
-                .collect()
-        });
-    let transaction = has_config(&method.configs, TRANSACTION);
+pub(crate) fn query_specs(library: &LibraryIr) -> Vec<QuerySpec> {
+    let source_path = Path::new(&library.package_root).join(&library.source_path);
+    let Ok(source) = fs::read_to_string(source_path) else {
+        return dao_query_specs(library);
+    };
+    let mut specs = parse_query_specs_from_source(library.span, &source);
+    specs.extend(dao_query_specs(library));
+    specs.sort_by_key(|spec| spec.span.range.start());
+    specs
+}
 
-    Some(QuerySpec {
-        method,
-        sql,
-        fetch,
-        args,
-        transaction,
-    })
+pub(crate) fn dao_query_specs(library: &LibraryIr) -> Vec<QuerySpec> {
+    dao_classes(library)
+        .into_iter()
+        .flat_map(|dao| {
+            dao.methods.into_iter().map(move |method| {
+                let (function, fetch, row_type, scalar_type) =
+                    query_shape_from_return(method.return_ok_type.as_ref());
+                QuerySpec {
+                    function,
+                    fetch,
+                    sql: method.sql,
+                    sql_source_static: method.sql_source_static,
+                    row_type,
+                    scalar_type,
+                    parameter_count: method.method.params.len(),
+                    params_source_is_list: true,
+                    span: method.method.span,
+                    display_name: Some(format!("{}.{}", dao.class.name, method.method.name)),
+                }
+            })
+        })
+        .collect()
+}
+
+pub(crate) fn parse_query_specs_from_source(library_span: SpanIr, source: &str) -> Vec<QuerySpec> {
+    let mut specs = Vec::new();
+    for function in [
+        ("queryAs", QueryFunction::As),
+        ("queryScalar", QueryFunction::Scalar),
+        ("queryRaw", QueryFunction::Raw),
+        ("queryExecute", QueryFunction::Execute),
+    ] {
+        collect_query_function_calls(library_span, source, function.0, function.1, &mut specs);
+    }
+    specs.sort_by_key(|spec| spec.span.range.start());
+    specs
 }
 
 pub(crate) fn sqlx_config(configs: &[ConfigApplicationIr]) -> SqlxConfig {
@@ -126,6 +181,301 @@ pub(crate) fn effective_column_name(
     }
 }
 
+fn collect_query_function_calls(
+    library_span: SpanIr,
+    source: &str,
+    name: &str,
+    function: QueryFunction,
+    out: &mut Vec<QuerySpec>,
+) {
+    let mut offset = 0;
+    while let Some(relative) = source[offset..].find(name) {
+        let start = offset + relative;
+        if !is_identifier_boundary(source, start, name.len()) {
+            offset = start + name.len();
+            continue;
+        }
+        let Some((type_arg, after_type)) = parse_optional_type_arg(source, start + name.len())
+        else {
+            offset = start + name.len();
+            continue;
+        };
+        let after_type = skip_ws(source, after_type);
+        if !source[after_type..].starts_with('(') {
+            offset = start + name.len();
+            continue;
+        }
+        let Some(call) = balanced_parenthesized(&source[after_type..]) else {
+            offset = start + name.len();
+            continue;
+        };
+        let call_end = after_type + call.len();
+        let inner = call
+            .strip_prefix('(')
+            .and_then(|s| s.strip_suffix(')'))
+            .unwrap_or("");
+        let args = split_top_level_items(inner);
+        let (sql, sql_source_static) = args
+            .first()
+            .and_then(|arg| parse_static_sql_literal(arg).map(|sql| (sql, true)))
+            .unwrap_or_else(|| (String::new(), false));
+        let params_source = args.get(1).copied().unwrap_or("const <Object?>[]");
+        let (params_source_is_list, parameter_count) = parse_list_argument_count(params_source);
+        let fetch = parse_fetch_mode(function, &source[call_end..]);
+        let (row_type, scalar_type) = match function {
+            QueryFunction::As => (type_arg.clone(), None),
+            QueryFunction::Scalar => (None, type_arg.as_deref().map(type_from_source)),
+            QueryFunction::Raw | QueryFunction::Execute => (None, None),
+        };
+        out.push(QuerySpec {
+            function,
+            fetch,
+            sql,
+            sql_source_static,
+            row_type,
+            scalar_type,
+            parameter_count,
+            params_source_is_list,
+            span: SpanIr::new(
+                library_span.file_id,
+                TextRange::new(start as u32, call_end as u32),
+            ),
+            display_name: None,
+        });
+        offset = call_end;
+    }
+}
+
+fn parse_query_config(config: &ConfigApplicationIr) -> (String, bool) {
+    let Some(args) = config.arguments_source.as_deref() else {
+        return (String::new(), false);
+    };
+    let inner = args
+        .trim()
+        .strip_prefix('(')
+        .and_then(|source| source.strip_suffix(')'))
+        .unwrap_or(args)
+        .trim();
+    if let Some(sql) = parse_static_sql_literal(inner) {
+        return (sql, true);
+    }
+    for item in split_top_level_items(inner) {
+        let Some((key, value)) = item.split_once(':') else {
+            continue;
+        };
+        if key.trim() == "sql" {
+            return parse_static_sql_literal(value)
+                .map(|sql| (sql, true))
+                .unwrap_or_else(|| (String::new(), false));
+        }
+    }
+    (String::new(), false)
+}
+
+fn query_shape_from_return(
+    ok_type: Option<&TypeIr>,
+) -> (QueryFunction, FetchMode, Option<String>, Option<TypeIr>) {
+    let Some(ok_type) = ok_type else {
+        return (QueryFunction::Raw, FetchMode::Raw, None, None);
+    };
+    if ok_type.is_named("ExecResult") || ok_type.is_named("Unit") {
+        return (QueryFunction::Execute, FetchMode::Execute, None, None);
+    }
+    if ok_type.is_named("List") {
+        let Some(item) = ok_type.args().first() else {
+            return (QueryFunction::Raw, FetchMode::Raw, None, None);
+        };
+        if item.is_named("Row") {
+            return (QueryFunction::Raw, FetchMode::Raw, None, None);
+        }
+        return (
+            QueryFunction::As,
+            FetchMode::All,
+            item.name().map(str::to_owned),
+            None,
+        );
+    }
+    if is_scalar_type(ok_type) {
+        return (
+            QueryFunction::Scalar,
+            if ok_type.is_nullable() {
+                FetchMode::Optional
+            } else {
+                FetchMode::One
+            },
+            None,
+            Some(ok_type.clone()),
+        );
+    }
+    (
+        QueryFunction::As,
+        if ok_type.is_nullable() {
+            FetchMode::Optional
+        } else {
+            FetchMode::One
+        },
+        ok_type.name().map(str::to_owned),
+        None,
+    )
+}
+
+pub(crate) fn result_ok_type(return_type: &TypeIr) -> Option<&TypeIr> {
+    let future = return_type
+        .is_named("Future")
+        .then(|| return_type.args().first())
+        .flatten()?;
+    let result = future.is_named("Result").then_some(future)?;
+    result.args().first()
+}
+
+fn is_scalar_type(ty: &TypeIr) -> bool {
+    matches!(
+        ty.name(),
+        Some("String" | "int" | "double" | "num" | "bool" | "DateTime")
+    )
+}
+
+fn parse_fetch_mode(function: QueryFunction, after_call: &str) -> FetchMode {
+    let after = after_call.trim_start();
+    if after.starts_with(".fetchOptional") {
+        return FetchMode::Optional;
+    }
+    if after.starts_with(".fetchOne") {
+        return FetchMode::One;
+    }
+    if after.starts_with(".fetchAll") {
+        return FetchMode::All;
+    }
+    if after.starts_with(".fetch") {
+        return FetchMode::Raw;
+    }
+    if after.starts_with(".execute") {
+        return FetchMode::Execute;
+    }
+    match function {
+        QueryFunction::Execute => FetchMode::Execute,
+        QueryFunction::Raw => FetchMode::Raw,
+        _ => FetchMode::One,
+    }
+}
+
+fn parse_optional_type_arg(source: &str, start: usize) -> Option<(Option<String>, usize)> {
+    let start = skip_ws(source, start);
+    if !source[start..].starts_with('<') {
+        return Some((None, start));
+    }
+    let mut depth = 0_i32;
+    for (relative, ch) in source[start..].char_indices() {
+        match ch {
+            '<' => depth += 1,
+            '>' => {
+                depth -= 1;
+                if depth == 0 {
+                    let end = start + relative;
+                    return Some((Some(source[start + 1..end].trim().to_owned()), end + 1));
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+fn parse_list_argument_count(source: &str) -> (bool, usize) {
+    let mut source = source.trim();
+    source = source.strip_prefix("const ").unwrap_or(source).trim();
+    if source.starts_with('<') {
+        let Some((_, after_type)) = parse_optional_type_arg(source, 0) else {
+            return (false, 0);
+        };
+        source = source[after_type..].trim();
+    }
+    let Some(inner) = source.strip_prefix('[').and_then(|s| s.strip_suffix(']')) else {
+        return (false, 0);
+    };
+    if inner.trim().is_empty() {
+        return (true, 0);
+    }
+    (true, split_top_level_items(inner).len())
+}
+
+fn parse_static_sql_literal(source: &str) -> Option<String> {
+    let source = source.trim();
+    let (raw, source) = match source.as_bytes() {
+        [b'r' | b'R', b'\'' | b'"', ..] => (true, &source[1..]),
+        _ => (false, source),
+    };
+    let quote = source.chars().next()?;
+    if !matches!(quote, '\'' | '"') {
+        return None;
+    }
+    let delimiter = if source.starts_with(&quote.to_string().repeat(3)) {
+        quote.to_string().repeat(3)
+    } else {
+        quote.to_string()
+    };
+    let body_start = delimiter.len();
+
+    let mut sql = String::new();
+    let mut escaped = false;
+    let mut end_offset = None;
+    for (index, ch) in source[body_start..].char_indices() {
+        let absolute = body_start + index;
+        if !raw && escaped {
+            sql.push(ch);
+            escaped = false;
+            continue;
+        }
+        if !raw && ch == '\\' {
+            escaped = true;
+            continue;
+        }
+        if !raw && ch == '$' {
+            return None;
+        }
+        if source[absolute..].starts_with(&delimiter) {
+            end_offset = Some(absolute + delimiter.len());
+            break;
+        }
+        sql.push(ch);
+    }
+
+    let end_offset = end_offset?;
+    source[end_offset..].trim().is_empty().then_some(sql)
+}
+
+fn type_from_source(source: &str) -> TypeIr {
+    match source.trim().trim_end_matches('?') {
+        "String" => TypeIr::string(),
+        "int" => TypeIr::int(),
+        "bool" => TypeIr::bool(),
+        "double" => TypeIr::double(),
+        "num" => TypeIr::num(),
+        "Object" => TypeIr::object(),
+        other => TypeIr::named(other),
+    }
+}
+
+fn is_identifier_boundary(source: &str, start: usize, len: usize) -> bool {
+    let before = source[..start].chars().next_back();
+    let after = source[start + len..].chars().next();
+    !before.is_some_and(is_identifier_char) && !after.is_some_and(is_identifier_char)
+}
+
+fn is_identifier_char(ch: char) -> bool {
+    ch.is_ascii_alphanumeric() || ch == '_' || ch == '$'
+}
+
+fn skip_ws(source: &str, mut offset: usize) -> usize {
+    while let Some(ch) = source[offset..].chars().next() {
+        if !ch.is_whitespace() {
+            break;
+        }
+        offset += ch.len_utf8();
+    }
+    offset
+}
+
 fn rename_to_serde(rule: SqlxRenameRule) -> SerdeRenameRuleIr {
     match rule {
         SqlxRenameRule::Lower => SerdeRenameRuleIr::LowerCase,
@@ -139,102 +489,59 @@ fn rename_to_serde(rule: SqlxRenameRule) -> SerdeRenameRuleIr {
     }
 }
 
-struct DustDbConfig {
+struct DatabaseConfig {
+    driver: DbDriver,
     migrations: String,
 }
 
-fn parse_dust_db_config(config: &ConfigApplicationIr) -> Option<DustDbConfig> {
-    let migrations = parse_named_arguments(config.arguments_source.as_deref())
-        .into_iter()
-        .find_map(|(key, value)| (key == "migrations").then(|| parse_string_literal(value))?)?;
-    Some(DustDbConfig { migrations })
+fn parse_database_config(config: &ConfigApplicationIr) -> Option<DatabaseConfig> {
+    let mut driver = DbDriver::Sqlite3;
+    let mut migrations = "./migrations".to_owned();
+    for (key, value) in parse_named_arguments(config.arguments_source.as_deref()) {
+        match key {
+            "driver" => {
+                if let Some(parsed) = parse_driver(value) {
+                    driver = parsed;
+                }
+            }
+            "type" => {
+                if let Some(parsed) = parse_database_type(value) {
+                    driver = parsed;
+                }
+            }
+            "migrations" => {
+                if let Some(parsed) = parse_string_literal(value) {
+                    migrations = parsed;
+                }
+            }
+            _ => {}
+        }
+    }
+    Some(DatabaseConfig { driver, migrations })
 }
 
-fn parse_query_config(args: Option<&str>) -> Option<String> {
-    let inner = normalized_args(args?)?;
-    let first = split_top_level_items(inner).into_iter().next()?;
-    parse_string_literal(first)
-}
-
-fn parse_body_query_sql(body: &str) -> Option<String> {
-    let start = body.find("@Query")?;
-    let args = annotation_args(&body[start + "@Query".len()..])?;
-    parse_query_config(Some(args))
-}
-
-fn parse_fetch_kind(body: &str) -> Option<FetchKind> {
-    let start = body.find("$fetch.")? + "$fetch.".len();
-    let method = body[start..]
-        .chars()
-        .take_while(|ch| ch.is_ascii_alphanumeric() || *ch == '_')
-        .collect::<String>();
-    match method.as_str() {
-        "one" => Some(FetchKind::One),
-        "all" => Some(FetchKind::All),
-        "scalar" => Some(FetchKind::Scalar),
-        "insertOne" => Some(FetchKind::InsertOne),
-        "execute" => Some(FetchKind::Execute),
-        "stream" => Some(FetchKind::Stream),
+fn parse_driver(source: &str) -> Option<DbDriver> {
+    match source.trim().rsplit('.').next()? {
+        "sqlite3" => Some(DbDriver::Sqlite3),
+        "postgres" => Some(DbDriver::Postgres),
         _ => None,
     }
 }
 
-fn parse_fetch_args(body: &str) -> Option<Vec<String>> {
-    let start = body.find("$fetch.")? + "$fetch.".len();
-    let after_name = body[start..].find('(').map(|index| start + index)?;
-    let args = balanced_parenthesized(&body[after_name..])?;
-    let inner = args.strip_prefix('(')?.strip_suffix(')')?.trim();
-    if inner.is_empty() {
-        return Some(Vec::new());
+fn parse_database_type(source: &str) -> Option<DbDriver> {
+    match source.trim().rsplit('.').next()? {
+        "sqlite" | "sqlite3" => Some(DbDriver::Sqlite3),
+        "postgres" => Some(DbDriver::Postgres),
+        _ => None,
     }
-    let inner = inner
-        .strip_prefix('(')
-        .and_then(|value| value.strip_suffix(')'))
-        .unwrap_or(inner)
-        .trim();
-    Some(
-        split_top_level_items(inner)
-            .into_iter()
-            .map(str::to_owned)
-            .collect(),
-    )
 }
 
-fn infer_fetch_kind(method: &MethodIr, sql: &str) -> FetchKind {
-    if method.return_type.is_named("Stream") {
-        return FetchKind::Stream;
-    }
-    if !method.return_type.is_named("Future") || method.return_type.args().len() != 1 {
-        return FetchKind::One;
-    }
-
-    let inner = &method.return_type.args()[0];
-    if inner.is_named("List") {
-        return FetchKind::All;
-    }
-    if inner.is_named("void") || inner.name() == Some("void") {
-        return FetchKind::Execute;
-    }
-    if sql
-        .split_whitespace()
-        .next()
-        .is_some_and(|keyword| keyword.eq_ignore_ascii_case("insert"))
-    {
-        return FetchKind::InsertOne;
-    }
-    if matches!(
-        inner.name(),
-        Some("int" | "double" | "num" | "String" | "bool")
-    ) {
-        return FetchKind::Scalar;
-    }
-
-    FetchKind::One
+fn is_database_config(name: &str) -> bool {
+    matches!(name, DATABASE | SQLX_DATABASE)
 }
 
-fn annotation_args(source: &str) -> Option<&str> {
-    let start = source.find('(')?;
-    balanced_parenthesized(&source[start..])
+fn is_dao_config(name: &str) -> bool {
+    matches!(name, DAO | SQLX_DAO)
 }
 
 fn parse_rename_rule(source: &str) -> Option<SqlxRenameRule> {
@@ -253,70 +560,107 @@ fn parse_rename_rule(source: &str) -> Option<SqlxRenameRule> {
 
 #[cfg(test)]
 mod tests {
-    use dust_ir::{MethodIr, SpanIr, TypeIr};
     use dust_text::{FileId, TextRange};
 
-    use super::{infer_fetch_kind, parse_body_query_sql, parse_fetch_args, parse_fetch_kind};
-    use crate::plugin::model::FetchKind;
+    use super::*;
 
-    fn method(return_type: TypeIr) -> MethodIr {
-        MethodIr {
-            name: "query".to_owned(),
-            is_static: false,
-            is_external: false,
-            return_type,
-            has_body: false,
-            body_source: None,
-            span: SpanIr::new(FileId::new(1), TextRange::new(0_u32, 1_u32)),
-            params: Vec::new(),
-            traits: Vec::new(),
-            configs: Vec::new(),
-        }
+    fn span() -> SpanIr {
+        SpanIr::new(FileId::new(1), TextRange::new(0_u32, 1_u32))
     }
 
     #[test]
-    fn parses_query_carrier_body() {
-        let body = "=> @Query('SELECT * FROM users WHERE id = ?') $fetch.one(id);";
-        assert_eq!(
-            parse_body_query_sql(body).as_deref(),
-            Some("SELECT * FROM users WHERE id = ?")
+    fn parses_query_calls_from_source() {
+        let specs = parse_query_specs_from_source(
+            span(),
+            "Future<User?> find(Pool db, int id) => queryAs<UserRow>(r'SELECT * FROM users WHERE id = $1', [id]).fetchOptional(db);",
         );
-        assert_eq!(parse_fetch_kind(body), Some(FetchKind::One));
-        assert_eq!(parse_fetch_args(body), Some(vec!["id".to_owned()]));
+
+        assert_eq!(specs.len(), 1);
+        assert_eq!(specs[0].function, QueryFunction::As);
+        assert_eq!(specs[0].fetch, FetchMode::Optional);
+        assert_eq!(specs[0].row_type.as_deref(), Some("UserRow"));
+        assert_eq!(specs[0].sql, "SELECT * FROM users WHERE id = $1");
+        assert_eq!(specs[0].parameter_count, 1);
+        assert!(specs[0].params_source_is_list);
     }
 
     #[test]
-    fn infers_fetch_kind_from_plain_query_signature() {
-        assert_eq!(
-            infer_fetch_kind(
-                &method(TypeIr::generic(
-                    "Future",
-                    vec![TypeIr::generic("List", vec![TypeIr::named("User")])]
-                )),
-                "SELECT * FROM users"
-            ),
-            FetchKind::All
+    fn rejects_non_list_query_params_during_parse() {
+        let specs = parse_query_specs_from_source(
+            span(),
+            "Future<int> count(Pool db, List<Object?> args) => queryScalar<int>('SELECT COUNT(*) FROM users', args).fetchOne(db);",
         );
-        assert_eq!(
-            infer_fetch_kind(
-                &method(TypeIr::generic("Future", vec![TypeIr::int()])),
-                "SELECT COUNT(*) FROM users"
-            ),
-            FetchKind::Scalar
+
+        assert_eq!(specs.len(), 1);
+        assert!(!specs[0].params_source_is_list);
+    }
+
+    #[test]
+    fn accepts_raw_static_sql_literal_with_placeholders() {
+        let specs = parse_query_specs_from_source(
+            span(),
+            "Future<User?> find(Pool db, int id) => queryAs<UserRow>(r'SELECT * FROM users WHERE id = $1', [id]).fetchOptional(db);",
         );
-        assert_eq!(
-            infer_fetch_kind(
-                &method(TypeIr::generic("Future", vec![TypeIr::named("User")])),
-                "INSERT INTO users(name) VALUES (?)"
-            ),
-            FetchKind::InsertOne
+
+        assert_eq!(specs.len(), 1);
+        assert!(specs[0].sql_source_static);
+        assert_eq!(specs[0].sql, "SELECT * FROM users WHERE id = $1");
+    }
+
+    #[test]
+    fn accepts_raw_multiline_static_sql_literal_with_placeholders() {
+        let specs = parse_query_specs_from_source(
+            span(),
+            "Future<List<Row>> all(Pool db, int id) => queryRaw(r'''\nSELECT *\nFROM users\nWHERE id = $1\n''', [id]).fetch(db);",
         );
-        assert_eq!(
-            infer_fetch_kind(
-                &method(TypeIr::generic("Stream", vec![TypeIr::named("User")])),
-                "SELECT * FROM users"
-            ),
-            FetchKind::Stream
+
+        assert_eq!(specs.len(), 1);
+        assert!(specs[0].sql_source_static);
+        assert_eq!(specs[0].sql, "\nSELECT *\nFROM users\nWHERE id = $1\n");
+        assert_eq!(specs[0].parameter_count, 1);
+    }
+
+    #[test]
+    fn rejects_interpolated_sql_literal() {
+        let specs = parse_query_specs_from_source(
+            span(),
+            "Future<List<Row>> all(Pool db, String table) => queryRaw('SELECT * FROM $table', []).fetch(db);",
         );
+
+        assert_eq!(specs.len(), 1);
+        assert!(!specs[0].sql_source_static);
+    }
+
+    #[test]
+    fn rejects_concatenated_sql_literals() {
+        let specs = parse_query_specs_from_source(
+            span(),
+            "Future<List<Row>> all(Pool db) => queryRaw('SELECT * ' 'FROM users', []).fetch(db);",
+        );
+
+        assert_eq!(specs.len(), 1);
+        assert!(!specs[0].sql_source_static);
+    }
+
+    #[test]
+    fn rejects_sql_variable() {
+        let specs = parse_query_specs_from_source(
+            span(),
+            "Future<List<Row>> all(Pool db, String sql) => queryRaw(sql, []).fetch(db);",
+        );
+
+        assert_eq!(specs.len(), 1);
+        assert!(!specs[0].sql_source_static);
+    }
+
+    #[test]
+    fn rejects_const_sql_variable() {
+        let specs = parse_query_specs_from_source(
+            span(),
+            "Future<List<Row>> all(Pool db) { const sql = 'SELECT * FROM users'; return queryRaw(sql, []).fetch(db); }",
+        );
+
+        assert_eq!(specs.len(), 1);
+        assert!(!specs[0].sql_source_static);
     }
 }

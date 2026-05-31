@@ -17,12 +17,6 @@ enum _AuthViewModelAspect { user, token, status, errorMessage }
 
 abstract class $AuthViewModel extends ViewModelBase<AuthState, AuthViewModelArgs> {
   $AuthViewModel(super.args) : super(initialState: AuthState(status: AuthStatus.unauthenticated));
-  User? get user => state.user;
-  String? get token => state.token;
-  AuthStatus get status => state.status;
-  String? get errorMessage => state.errorMessage;
-  ShoppingRepository get repository => args.repository;
-  StorageService get storage => args.storage;
 }
 
 class _$AuthViewModelProxy {
@@ -140,21 +134,29 @@ class _AuthViewModelInherited extends InheritedModel<Object> {
   @override
   bool updateShouldNotifyDependent(_AuthViewModelInherited oldWidget, Set<Object> dependencies) {
     for (final aspect in dependencies) {
-      if (aspect == _AuthViewModelAspect.user &&
-          state.user != oldWidget.state.user) {
-        return true;
-      }
-      if (aspect == _AuthViewModelAspect.token &&
-          state.token != oldWidget.state.token) {
-        return true;
-      }
-      if (aspect == _AuthViewModelAspect.status &&
-          state.status != oldWidget.state.status) {
-        return true;
-      }
-      if (aspect == _AuthViewModelAspect.errorMessage &&
-          state.errorMessage != oldWidget.state.errorMessage) {
-        return true;
+      switch (aspect) {
+        case _AuthViewModelAspect.user:
+          if (state.user != oldWidget.state.user) {
+            return true;
+          }
+          break;
+        case _AuthViewModelAspect.token:
+          if (state.token != oldWidget.state.token) {
+            return true;
+          }
+          break;
+        case _AuthViewModelAspect.status:
+          if (state.status != oldWidget.state.status) {
+            return true;
+          }
+          break;
+        case _AuthViewModelAspect.errorMessage:
+          if (state.errorMessage != oldWidget.state.errorMessage) {
+            return true;
+          }
+          break;
+        default:
+          break;
       }
     }
     return false;

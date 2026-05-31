@@ -13,9 +13,10 @@
 
 part of 'product_detail_view_model.dart';
 
+enum _ProductDetailViewModelAspect { productId, status, reviews, recommendations, errorMessage }
+
 abstract class $ProductDetailViewModel extends ViewModelBase<ProductDetailState, ProductDetailViewModelArgs> {
   $ProductDetailViewModel(super.args) : super(initialState: const ProductDetailState());
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$ProductDetailViewModelProxy {
@@ -27,6 +28,31 @@ class _$ProductDetailViewModelProxy {
   ProductDetailState get value {
     ProductDetailViewModelScope.of(_context);
     return _vm.value;
+  }
+
+  int? get productId {
+    ProductDetailViewModelScope.of(_context, aspect: _ProductDetailViewModelAspect.productId);
+    return _vm.state.productId;
+  }
+
+  ProductDetailStatus get status {
+    ProductDetailViewModelScope.of(_context, aspect: _ProductDetailViewModelAspect.status);
+    return _vm.state.status;
+  }
+
+  List<ProductReview> get reviews {
+    ProductDetailViewModelScope.of(_context, aspect: _ProductDetailViewModelAspect.reviews);
+    return _vm.state.reviews;
+  }
+
+  List<Product> get recommendations {
+    ProductDetailViewModelScope.of(_context, aspect: _ProductDetailViewModelAspect.recommendations);
+    return _vm.state.recommendations;
+  }
+
+  String? get errorMessage {
+    ProductDetailViewModelScope.of(_context, aspect: _ProductDetailViewModelAspect.errorMessage);
+    return _vm.state.errorMessage;
   }
 }
 
@@ -112,6 +138,37 @@ class _ProductDetailViewModelInherited extends InheritedModel<Object> {
 
   @override
   bool updateShouldNotifyDependent(_ProductDetailViewModelInherited oldWidget, Set<Object> dependencies) {
+    for (final aspect in dependencies) {
+      switch (aspect) {
+        case _ProductDetailViewModelAspect.productId:
+          if (state.productId != oldWidget.state.productId) {
+            return true;
+          }
+          break;
+        case _ProductDetailViewModelAspect.status:
+          if (state.status != oldWidget.state.status) {
+            return true;
+          }
+          break;
+        case _ProductDetailViewModelAspect.reviews:
+          if (state.reviews != oldWidget.state.reviews) {
+            return true;
+          }
+          break;
+        case _ProductDetailViewModelAspect.recommendations:
+          if (state.recommendations != oldWidget.state.recommendations) {
+            return true;
+          }
+          break;
+        case _ProductDetailViewModelAspect.errorMessage:
+          if (state.errorMessage != oldWidget.state.errorMessage) {
+            return true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
     return false;
   }
 }

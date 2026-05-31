@@ -1,5 +1,5 @@
 name: dust_db_example
-description: Dust DB sqflite repository generation example.
+description: Dust DB sqlite3 query validation example.
 publish_to: none
 version: 0.1.0
 
@@ -9,8 +9,12 @@ environment:
 resolution: workspace
 
 dependencies:
-  dust_db:
-    path: ../../packages/dust_db
+  dust_db_annotation:
+    path: ../../packages/dust_db_annotation
+  dust_db_runtime:
+    path: ../../packages/dust_db_runtime
+  dust_db_sqlite3:
+    path: ../../packages/dust_db_sqlite3
 
 dev_dependencies:
   lints: ^6.0.0

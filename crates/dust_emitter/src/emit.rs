@@ -120,30 +120,15 @@ fn should_emit_primary(
     contributions
         .iter()
         .any(|contribution| !contribution.is_empty())
-        || !plan.reserved().is_empty()
         || !merged.shared_helpers.is_empty()
         || !merged.support_types.is_empty()
         || !merged.top_level_functions.is_empty()
-        || !library_has_dust_symbols(library)
-}
-
-fn library_has_dust_symbols(library: &LibraryIr) -> bool {
-    library.classes.iter().any(|class| {
-        !class.traits.is_empty()
-            || !class.configs.is_empty()
-            || class.fields.iter().any(|field| field.serde.is_some())
-            || class.methods.iter().any(|method| {
-                !method.traits.is_empty()
-                    || !method.configs.is_empty()
-                    || method
-                        .params
-                        .iter()
-                        .any(|param| !param.traits.is_empty() || !param.configs.is_empty())
-            })
-    }) || library
-        .enums
-        .iter()
-        .any(|enum_ir| !enum_ir.traits.is_empty() || enum_ir.serde.is_some())
+        || !plan.reserved().is_empty()
+        || library.classes.iter().any(|class| {
+            !merged.members_for_class(&class.name).is_empty()
+                || class.fields.iter().any(|field| field.serde.is_some())
+        })
+        || library.enums.iter().any(|enum_ir| enum_ir.serde.is_some())
 }
 
 fn primary_source_override(

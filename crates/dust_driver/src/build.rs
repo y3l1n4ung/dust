@@ -17,8 +17,8 @@ pub(crate) use apply::{ApplyOutcomeConfig, apply_indexed_outcomes, flush_cache_i
 pub(crate) use batch::BatchConfig;
 pub(crate) use batch::prepare_and_process_batch;
 pub(crate) use support::{
-    CodegenToolHash, RegistrySelection, codegen_tool_hash, default_registry, hash_text,
-    read_workspace_config_hash, registry_for_selection,
+    CodegenToolHash, RegistrySelection, codegen_tool_hash_for_selection, default_registry,
+    hash_text, read_workspace_config_hash, registry_for_selection,
 };
 
 /// Runs one writing build across the discovered workspace.

@@ -21,9 +21,10 @@ class DemoCartApiViewModel extends $DemoCartApiViewModel {
   Future<void> loadUserCarts(int userId) async {
     emit(state.copyWith(status: DemoCartStatus.loading, errorMessage: null));
     try {
-      final carts = await repository.getUserCarts(userId);
+      final carts = await args.repository.getUserCarts(userId);
       emit(state.copyWith(status: DemoCartStatus.success, carts: carts));
     } catch (error) {
+
       emit(
         state.copyWith(
           status: DemoCartStatus.error,

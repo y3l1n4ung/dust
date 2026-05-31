@@ -32,7 +32,7 @@ class WishlistViewModel extends $WishlistViewModel {
 
   Future<void> loadWishlist() async {
     emit(state.copyWith(isLoading: true));
-    final raw = storage.getString(_storageKey);
+    final raw = args.storage.getString(_storageKey);
     if (raw == null || raw.isEmpty) {
       emit(const WishlistState());
       return;
@@ -85,6 +85,6 @@ class WishlistViewModel extends $WishlistViewModel {
 
   Future<void> _persist(List<WishlistItem> items) {
     final encoded = jsonEncode(items.map((item) => item.toJson()).toList());
-    return storage.setString(_storageKey, encoded);
+    return args.storage.setString(_storageKey, encoded);
   }
 }

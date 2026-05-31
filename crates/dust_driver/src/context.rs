@@ -8,8 +8,8 @@ use dust_workspace::{SupportedAnnotations, WorkspacePlan, discover_workspace};
 
 use crate::{
     build::{
-        CodegenToolHash, RegistrySelection, codegen_tool_hash, read_workspace_config_hash,
-        registry_for_selection,
+        CodegenToolHash, RegistrySelection, codegen_tool_hash_for_selection,
+        read_workspace_config_hash, registry_for_selection,
     },
     catalog::build_symbol_catalog,
     result::CacheReport,
@@ -54,7 +54,7 @@ impl CachedDriverContext {
             registry,
             catalog,
         } = DriverContext::load(cwd, selection)?;
-        let tool_hash = codegen_tool_hash();
+        let tool_hash = codegen_tool_hash_for_selection(selection);
         let package_config_hash = read_workspace_config_hash(
             &workspace.package_config.path,
             workspace.dust_config.path.as_deref(),

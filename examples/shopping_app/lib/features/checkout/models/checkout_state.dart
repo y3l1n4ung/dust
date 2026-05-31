@@ -1,9 +1,13 @@
+import 'package:derive_annotation/derive_annotation.dart';
 import '../../orders/models/order.dart';
 import 'checkout_quote.dart';
 
+part 'checkout_state.g.dart';
+
 enum CheckoutStatus { initial, processing, success, error }
 
-class CheckoutState {
+@Derive([ToString(), CopyWith(), Eq()])
+class CheckoutState with _$CheckoutState {
   final CheckoutStatus status;
   final ShippingAddress? shippingAddress;
   final String? errorMessage;
@@ -21,24 +25,4 @@ class CheckoutState {
     this.quote,
     this.isQuoteLoading = false,
   });
-
-  CheckoutState copyWith({
-    CheckoutStatus? status,
-    ShippingAddress? shippingAddress,
-    String? errorMessage,
-    String? orderId,
-    String? couponCode,
-    CheckoutQuote? quote,
-    bool? isQuoteLoading,
-  }) {
-    return CheckoutState(
-      status: status ?? this.status,
-      shippingAddress: shippingAddress ?? this.shippingAddress,
-      errorMessage: errorMessage ?? this.errorMessage,
-      orderId: orderId ?? this.orderId,
-      couponCode: couponCode ?? this.couponCode,
-      quote: quote ?? this.quote,
-      isQuoteLoading: isQuoteLoading ?? this.isQuoteLoading,
-    );
-  }
 }

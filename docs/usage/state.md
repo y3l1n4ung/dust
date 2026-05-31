@@ -1,6 +1,6 @@
 # State Management
 
-Dust provides state management generated from annotations. It uses explicit typed arguments for dependencies and optimizes rebuilds using aspect-based tracking.
+Dust provides state management generated from annotations. It uses explicit typed arguments for dependencies and provides convenient scoping and access via BuildContext.
 
 ---
 
@@ -30,6 +30,7 @@ class CounterViewModel extends $CounterViewModel {
   CounterViewModel(super.args);
 
   void increment() {
+    // Access state via the 'state' property
     emit(state.copyWith(count: state.count + 1));
   }
 }
@@ -37,12 +38,15 @@ class CounterViewModel extends $CounterViewModel {
 class CounterState {
   const CounterState({this.count = 0});
   final int count;
+
+  CounterState copyWith({int? count}) => CounterState(count: count ?? this.count);
 }
 ```
 
 ### 2. Provide the Scope
 ```dart
 CounterViewModelScope(
+  args: (context) => const EmptyArgs(),
   create: (context, args) => CounterViewModel(args),
   child: const CounterPage(),
 )
@@ -53,8 +57,8 @@ CounterViewModelScope(
 class CounterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // Rebuilds only when state.count changes
-    final count = context.watchCounterViewModel().count;
+    // Access state via .value
+    final count = context.watchCounterViewModel().value.count;
 
     return Scaffold(
       body: Center(child: Text('Count: $count')),
@@ -77,7 +81,7 @@ class CounterPage extends StatelessWidget {
 | :--- | :--- | :--- |
 | `state` | `Type` | **Required.** The class used for the ViewModel's state. |
 | `args` | `Type` | Optional: A custom class (extending `ViewModelArgs`) for dependency injection. |
-| `initial` | `Object` | Optional: The initial state value. Defaults to `const State()`. |
+| `initial` | `Object` | Optional: The initial state source code. Defaults to `const State()`. |
 
 ---
 
@@ -94,8 +98,8 @@ final class ProfileArgs extends ViewModelArgs {
 @ViewModel(state: ProfileState, args: ProfileArgs)
 class ProfileViewModel extends $ProfileViewModel {
   ProfileViewModel(super.args);
-  
-  // Access dependencies via 'args' or generated getters
+
+  // Access dependencies via the 'args' property
   void load() => args.repository.fetch();
 }
 ```
@@ -103,12 +107,6 @@ class ProfileViewModel extends $ProfileViewModel {
 ---
 
 ## Key Concepts
-
-### Aspect-Based Rebuilding
-Dust uses `InheritedModel` for granular rebuilds. When you access a field via `context.watchViewModel().field`, the widget registers a dependency **only** on that specific property. 
-
-> [!TIP]
-> This automatic optimization removes the need for `Selector` or `buildWhen` logic found in other frameworks.
 
 ### Side Effects (`ViewModelListener`)
 Use `ViewModelListener` to handle one-time events like navigation or showing snackbars.
@@ -124,6 +122,13 @@ CounterViewModelListener(
 )
 ```
 
+### Context Extensions
+Dust generates extensions on `BuildContext` for easy access:
+
+*   `context.watchClassName()`: Rebuilds the widget when state changes. Returns a proxy to access `.value`.
+*   `context.readClassName()`: Returns the ViewModel instance. Does not trigger rebuilds.
+*   `context.className`: Shorthand for `context.watchClassName().value`.
+
 ---
 
 ## Migration Guide
@@ -134,8 +139,9 @@ CounterViewModelListener(
 | :--- | :--- | :--- | :--- |
 | Core Logic | `Bloc` / `Cubit` | `ChangeNotifier` | `ViewModel` |
 | Scoping | `BlocProvider` | `Provider` | `ViewModelScope` |
-| UI Binding | `BlocBuilder` | `context.watch` | `context.watchViewModel()` |
-| Rebuild Optimization | `buildWhen` | `Selector` | **Automatic (Aspect-based)** |
+| UI Binding | `BlocBuilder` | `context.watch` | `context.watchViewModel().value` |
+| State Access | `state` | `this` | `state` |
+| Dependencies | `repository` | `this.repo` | `args.repo` |
 
 ---
 
@@ -147,11 +153,6 @@ Dust generates a base class (`$ClassName`) that handles the state stream and dis
 // counter_view_model.g.dart (Simplified)
 abstract class $CounterViewModel extends ViewModelBase<CounterState, EmptyArgs> {
   $CounterViewModel(super.args) : super(initialState: const CounterState());
-}
-
-extension CounterViewModelX on BuildContext {
-  CounterViewModel watchCounterViewModel() => DustProvider.watch<CounterViewModel>(this);
-  CounterViewModel readCounterViewModel() => DustProvider.read<CounterViewModel>(this);
 }
 ```
 

@@ -126,6 +126,7 @@ fn rejects_state_without_default_constructor_or_initial() {
         span: super::support::span(20, 30),
         has_default: false,
         serde: None,
+        configs: Vec::new(),
     }];
 
     let diagnostics = plugin.validate(&library_with_classes(vec![

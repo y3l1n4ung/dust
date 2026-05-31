@@ -47,6 +47,7 @@ pub(crate) fn args_class() -> ClassIr {
             span: span(20, 30),
             has_default: false,
             serde: None,
+            configs: Vec::new(),
         }],
         constructors: Vec::new(),
         methods: Vec::new(),

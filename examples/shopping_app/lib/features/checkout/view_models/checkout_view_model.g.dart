@@ -13,9 +13,10 @@
 
 part of 'checkout_view_model.dart';
 
+enum _CheckoutViewModelAspect { status, shippingAddress, errorMessage, orderId, couponCode, quote, isQuoteLoading }
+
 abstract class $CheckoutViewModel extends ViewModelBase<CheckoutState, CheckoutViewModelArgs> {
   $CheckoutViewModel(super.args) : super(initialState: const CheckoutState());
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$CheckoutViewModelProxy {
@@ -27,6 +28,41 @@ class _$CheckoutViewModelProxy {
   CheckoutState get value {
     CheckoutViewModelScope.of(_context);
     return _vm.value;
+  }
+
+  CheckoutStatus get status {
+    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.status);
+    return _vm.state.status;
+  }
+
+  ShippingAddress? get shippingAddress {
+    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.shippingAddress);
+    return _vm.state.shippingAddress;
+  }
+
+  String? get errorMessage {
+    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.errorMessage);
+    return _vm.state.errorMessage;
+  }
+
+  String? get orderId {
+    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.orderId);
+    return _vm.state.orderId;
+  }
+
+  String? get couponCode {
+    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.couponCode);
+    return _vm.state.couponCode;
+  }
+
+  CheckoutQuote? get quote {
+    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.quote);
+    return _vm.state.quote;
+  }
+
+  bool get isQuoteLoading {
+    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.isQuoteLoading);
+    return _vm.state.isQuoteLoading;
   }
 }
 
@@ -112,6 +148,47 @@ class _CheckoutViewModelInherited extends InheritedModel<Object> {
 
   @override
   bool updateShouldNotifyDependent(_CheckoutViewModelInherited oldWidget, Set<Object> dependencies) {
+    for (final aspect in dependencies) {
+      switch (aspect) {
+        case _CheckoutViewModelAspect.status:
+          if (state.status != oldWidget.state.status) {
+            return true;
+          }
+          break;
+        case _CheckoutViewModelAspect.shippingAddress:
+          if (state.shippingAddress != oldWidget.state.shippingAddress) {
+            return true;
+          }
+          break;
+        case _CheckoutViewModelAspect.errorMessage:
+          if (state.errorMessage != oldWidget.state.errorMessage) {
+            return true;
+          }
+          break;
+        case _CheckoutViewModelAspect.orderId:
+          if (state.orderId != oldWidget.state.orderId) {
+            return true;
+          }
+          break;
+        case _CheckoutViewModelAspect.couponCode:
+          if (state.couponCode != oldWidget.state.couponCode) {
+            return true;
+          }
+          break;
+        case _CheckoutViewModelAspect.quote:
+          if (state.quote != oldWidget.state.quote) {
+            return true;
+          }
+          break;
+        case _CheckoutViewModelAspect.isQuoteLoading:
+          if (state.isQuoteLoading != oldWidget.state.isQuoteLoading) {
+            return true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
     return false;
   }
 }

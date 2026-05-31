@@ -1,6 +1,10 @@
+import 'package:derive_annotation/derive_annotation.dart';
 import 'wishlist_item.dart';
 
-class WishlistState {
+part 'wishlist_state.g.dart';
+
+@Derive([ToString(), CopyWith(), Eq()])
+class WishlistState with _$WishlistState {
   const WishlistState({this.items = const [], this.isLoading = false});
 
   final List<WishlistItem> items;
@@ -8,11 +12,4 @@ class WishlistState {
 
   bool containsProduct(int productId) =>
       items.any((item) => item.product.id == productId);
-
-  WishlistState copyWith({List<WishlistItem>? items, bool? isLoading}) {
-    return WishlistState(
-      items: items ?? this.items,
-      isLoading: isLoading ?? this.isLoading,
-    );
-  }
 }

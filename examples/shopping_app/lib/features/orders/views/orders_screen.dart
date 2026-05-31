@@ -30,8 +30,14 @@ class OrdersScreen extends StatelessWidget {
                 ],
               ),
             )
-          : ListView.builder(
+          : GridView.builder(
               padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 450,
+                mainAxisExtent: 180,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
               itemCount: ordersState.orders.length,
               itemBuilder: (context, index) {
                 final order = ordersState.orders[index];
@@ -50,7 +56,7 @@ class _OrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.zero,
       child: InkWell(
         onTap: () => context.routes.orderDetail(orderId: order.id).push(),
         borderRadius: BorderRadius.circular(12),

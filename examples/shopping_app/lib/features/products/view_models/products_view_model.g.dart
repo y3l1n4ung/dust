@@ -13,9 +13,10 @@
 
 part of 'products_view_model.dart';
 
+enum _ProductsViewModelAspect { products, status, errorMessage, selectedCategory, searchQuery, sortOption }
+
 abstract class $ProductsViewModel extends ViewModelBase<ProductsState, ProductsViewModelArgs> {
   $ProductsViewModel(super.args) : super(initialState: const ProductsState());
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$ProductsViewModelProxy {
@@ -27,6 +28,36 @@ class _$ProductsViewModelProxy {
   ProductsState get value {
     ProductsViewModelScope.of(_context);
     return _vm.value;
+  }
+
+  List<Product> get products {
+    ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.products);
+    return _vm.state.products;
+  }
+
+  ProductsStatus get status {
+    ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.status);
+    return _vm.state.status;
+  }
+
+  String? get errorMessage {
+    ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.errorMessage);
+    return _vm.state.errorMessage;
+  }
+
+  String? get selectedCategory {
+    ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.selectedCategory);
+    return _vm.state.selectedCategory;
+  }
+
+  String get searchQuery {
+    ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.searchQuery);
+    return _vm.state.searchQuery;
+  }
+
+  ProductSortOption get sortOption {
+    ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.sortOption);
+    return _vm.state.sortOption;
   }
 }
 
@@ -112,6 +143,42 @@ class _ProductsViewModelInherited extends InheritedModel<Object> {
 
   @override
   bool updateShouldNotifyDependent(_ProductsViewModelInherited oldWidget, Set<Object> dependencies) {
+    for (final aspect in dependencies) {
+      switch (aspect) {
+        case _ProductsViewModelAspect.products:
+          if (state.products != oldWidget.state.products) {
+            return true;
+          }
+          break;
+        case _ProductsViewModelAspect.status:
+          if (state.status != oldWidget.state.status) {
+            return true;
+          }
+          break;
+        case _ProductsViewModelAspect.errorMessage:
+          if (state.errorMessage != oldWidget.state.errorMessage) {
+            return true;
+          }
+          break;
+        case _ProductsViewModelAspect.selectedCategory:
+          if (state.selectedCategory != oldWidget.state.selectedCategory) {
+            return true;
+          }
+          break;
+        case _ProductsViewModelAspect.searchQuery:
+          if (state.searchQuery != oldWidget.state.searchQuery) {
+            return true;
+          }
+          break;
+        case _ProductsViewModelAspect.sortOption:
+          if (state.sortOption != oldWidget.state.sortOption) {
+            return true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
     return false;
   }
 }

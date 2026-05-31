@@ -1,10 +1,13 @@
 use std::{fs, io, path::Path, sync::Arc};
 
-use dust_db_plugin::register_plugin_with_options as register_db_plugin_with_options;
+use dust_db_plugin::{
+    register_plugin_with_options as register_db_plugin_with_options,
+    register_row_plugin as register_db_row_plugin,
+};
 use dust_diagnostics::Diagnostic;
 use dust_emitter::hash_output_set;
 use dust_http_client_plugin::register_plugin as register_http_client_plugin;
-use dust_plugin_api::PluginRegistry;
+use dust_plugin_api::{DustPlugin, PluginContribution, PluginRegistry, SymbolPlan};
 use dust_plugin_derive::register_plugin as register_derive_plugin;
 use dust_plugin_serde::register_plugin as register_serde_plugin;
 use dust_route_plugin::register_plugin as register_route_plugin;
@@ -15,7 +18,7 @@ use crate::build::process::LoadedLibraryInput;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RegistrySelection {
-    All { write_metadata: bool },
+    All,
     DbOnly { offline: bool, write_metadata: bool },
 }
 
@@ -35,7 +38,29 @@ impl RegistrySelection {
                 write_metadata,
             };
         }
-        Self::All { write_metadata }
+        Self::All
+    }
+
+    pub(crate) fn cache_salt(self) -> &'static str {
+        match self {
+            Self::All => "registry:all",
+            Self::DbOnly {
+                offline: false,
+                write_metadata: true,
+            } => "registry:db-only:online:write-metadata",
+            Self::DbOnly {
+                offline: false,
+                write_metadata: false,
+            } => "registry:db-only:online:no-metadata",
+            Self::DbOnly {
+                offline: true,
+                write_metadata: true,
+            } => "registry:db-only:offline:write-metadata",
+            Self::DbOnly {
+                offline: true,
+                write_metadata: false,
+            } => "registry:db-only:offline:no-metadata",
+        }
     }
 }
 
@@ -276,8 +301,10 @@ pub(crate) fn route_only_analysis(snapshot: &dust_plugin_api::LibraryAnalysisSna
         && snapshot.string_set("dust_route.routers.v1").is_none()
 }
 
-pub(crate) fn codegen_tool_hash() -> CodegenToolHash {
+pub(crate) fn codegen_tool_hash_for_selection(selection: RegistrySelection) -> CodegenToolHash {
     let mut combined = String::new();
+    combined.push_str(selection.cache_salt());
+    combined.push('\0');
     combined.push_str(CODEGEN_CORE_FINGERPRINT_INPUT);
     combined.push_str(DERIVE_PLUGIN_FINGERPRINT_INPUT);
     combined.push_str(SERDE_PLUGIN_FINGERPRINT_INPUT);
@@ -292,19 +319,20 @@ pub(crate) fn codegen_tool_hash() -> CodegenToolHash {
 }
 
 pub(crate) fn default_registry() -> PluginRegistry {
-    registry_for_selection(RegistrySelection::All {
-        write_metadata: true,
-    })
+    registry_for_selection(RegistrySelection::All)
 }
 
 pub(crate) fn registry_for_selection(selection: RegistrySelection) -> PluginRegistry {
     let mut registry = PluginRegistry::new();
-    let write_metadata = match selection {
-        RegistrySelection::All { write_metadata } => write_metadata,
+    match selection {
+        RegistrySelection::All => {}
         RegistrySelection::DbOnly {
             offline,
             write_metadata,
         } => {
+            registry
+                .register(Box::new(DbModePassThroughPlugin))
+                .expect("db pass-through plugin symbol ownership must be valid");
             registry
                 .register(Box::new(register_db_plugin_with_options(
                     offline,
@@ -313,7 +341,7 @@ pub(crate) fn registry_for_selection(selection: RegistrySelection) -> PluginRegi
                 .expect("db plugin symbol ownership must be valid");
             return registry;
         }
-    };
+    }
 
     registry
         .register(Box::new(register_derive_plugin()))
@@ -331,12 +359,72 @@ pub(crate) fn registry_for_selection(selection: RegistrySelection) -> PluginRegi
         .register(Box::new(register_state_plugin()))
         .expect("state plugin symbol ownership must be valid");
     registry
-        .register(Box::new(register_db_plugin_with_options(
-            false,
-            write_metadata,
-        )))
+        .register(Box::new(register_db_row_plugin()))
         .expect("db plugin symbol ownership must be valid");
     registry
+}
+
+struct DbModePassThroughPlugin;
+
+const DB_MODE_PASS_THROUGH_TRAITS: &[&str] = &[
+    "derive_annotation::ToString",
+    "derive_annotation::Debug",
+    "derive_annotation::Eq",
+    "derive_annotation::CopyWith",
+    "derive_serde_annotation::Serialize",
+    "derive_serde_annotation::Deserialize",
+];
+
+const DB_MODE_PASS_THROUGH_CONFIGS: &[&str] = &[
+    "derive_serde_annotation::SerDe",
+    "dust_http_client_annotation::HttpClient",
+    "dust_http_client_annotation::GenerateTest",
+    "dust_http_client_annotation::GET",
+    "dust_http_client_annotation::POST",
+    "dust_http_client_annotation::PUT",
+    "dust_http_client_annotation::PATCH",
+    "dust_http_client_annotation::DELETE",
+    "dust_http_client_annotation::HEAD",
+    "dust_http_client_annotation::OPTIONS",
+    "dust_http_client_annotation::Path",
+    "dust_http_client_annotation::Query",
+    "dust_http_client_annotation::Queries",
+    "dust_http_client_annotation::Header",
+    "dust_http_client_annotation::Headers",
+    "dust_http_client_annotation::HeaderMap",
+    "dust_http_client_annotation::Body",
+    "dust_http_client_annotation::Field",
+    "dust_http_client_annotation::Part",
+    "dust_http_client_annotation::Extra",
+    "dust_http_client_annotation::FormUrlEncoded",
+    "dust_http_client_annotation::MultiPart",
+    "dust_http_client_annotation::HttpParse",
+    "dust_router::Router",
+    "dust_router::Route",
+    "dust_router::GeneratedRoute",
+    "dust_state::ViewModel",
+];
+
+impl DustPlugin for DbModePassThroughPlugin {
+    fn plugin_name(&self) -> &'static str {
+        "DbModePassThrough"
+    }
+
+    fn claimed_traits(&self) -> &'static [&'static str] {
+        DB_MODE_PASS_THROUGH_TRAITS
+    }
+
+    fn claimed_configs(&self) -> &'static [&'static str] {
+        DB_MODE_PASS_THROUGH_CONFIGS
+    }
+
+    fn validate(&self, _library: &dust_ir::LibraryIr) -> Vec<Diagnostic> {
+        Vec::new()
+    }
+
+    fn emit(&self, _library: &dust_ir::LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
+        PluginContribution::default()
+    }
 }
 
 fn cached_output_hash(

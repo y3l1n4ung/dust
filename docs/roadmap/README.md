@@ -33,6 +33,7 @@ Each roadmap document should answer the same questions:
 | Route annotations | P1 | Navigator 2.0 typed routing | [routing.md](routing.md), [routing-rust-plugin.md](routing-rust-plugin.md), [routing-feature-checklist.md](routing-feature-checklist.md) |
 | i18n | P1 | Multi-locale ARB extraction and generation | [i18n.md](i18n.md) |
 | State management | P2 | Typed state stores and action generation | [state-management.md](state-management.md) |
+| Dust DB | P2 | SQLx-style sqlite3 validation, DAOs, row mapping | [db.md](db.md) |
 
 ## Documentation Standard
 

@@ -1,19 +1,27 @@
+import 'package:dust_db_runtime/dust_db_runtime.dart';
 import 'package:dust_db_example/user_repository.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('generated repository maps rows with sqlx-style options', () async {
-    final db = _FakeDb({
-      'id': 7,
-      'display_name': 'Ada',
-      'street': '42 Compiler Ave',
-      'city': 'Dartmouth',
-      'preferences': '{"darkMode":true,"notifications":false}',
-      'status': 1,
+  test('sqlite database maps rows with sqlx-style options', () async {
+    final app = AppDatabase.open(':memory:');
+    addTearDown(() async {
+      await app.pool.close();
     });
-    final repository = UserRepository(db);
+    final users = UserDao(app.pool);
 
-    final profile = await repository.findById(7);
+    await users.renameProfile('unused', -1);
+    await app.pool.transaction((tx) async {
+      await UserDao(tx).renameProfile('unused', -1);
+      return const Ok<void, SqlxError>(null);
+    });
+
+    await app.pool.transaction((tx) async {
+      await tx.queryRawInsert();
+      return const Ok<void, SqlxError>(null);
+    });
+
+    final profile = await unwrap(users.findById(7));
 
     expect(profile, isNotNull);
     expect(profile!.id, 7);
@@ -27,41 +35,45 @@ void main() {
     expect(profile.status, UserStatus.active);
   });
 
-  test('generated repository supports scalar and transaction methods', () async {
-    final db = _FakeDb({'COUNT(*)': 3});
-    final repository = UserRepository(db);
+  test('sqlite database supports scalar and execute queries', () async {
+    final app = AppDatabase.open(':memory:');
+    addTearDown(() async {
+      await app.pool.close();
+    });
+    final users = UserDao(app.pool);
 
-    expect(await repository.countProfiles(), 3);
-    await repository.renameProfile('Grace', 7);
+    await app.pool.queryRawInsert();
 
-    expect(db.transactionCount, 1);
-    expect(db.executedSql.single, contains('UPDATE user_profiles'));
+    expect(await unwrap(users.countProfiles()), 1);
+    final result = await unwrap(users.renameProfile('Grace', 7));
+    expect(result.rowsAffected, 1);
+
+    final profile = await unwrap(users.findById(7));
+    expect(profile!.name, 'Grace');
   });
 }
 
-final class _FakeDb {
-  _FakeDb(this.row);
-
-  final Map<String, Object?> row;
-  final executedSql = <String>[];
-  int transactionCount = 0;
-
-  Future<List<Map<String, Object?>>> rawQuery(
-    String sql, [
-    List<Object?> args = const <Object?>[],
-  ]) async {
-    return <Map<String, Object?>>[row];
+extension _SeedQueries on SqlxDriver {
+  Future<void> queryRawInsert() async {
+    await queryExecute(
+      r'INSERT INTO user_profiles (id, display_name, street, city, bio, preferences, status) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [
+        7,
+        'Ada',
+        '42 Compiler Ave',
+        'Dartmouth',
+        '',
+        '{"darkMode":true,"notifications":false}',
+        1,
+      ],
+    ).execute(this);
   }
+}
 
-  Future<void> execute(
-    String sql, [
-    List<Object?> args = const <Object?>[],
-  ]) async {
-    executedSql.add(sql);
-  }
-
-  Future<T> transaction<T>(Future<T> Function(_FakeDb txn) action) async {
-    transactionCount += 1;
-    return action(this);
-  }
+Future<T> unwrap<T>(Future<Result<T, SqlxError>> future) async {
+  final result = await future;
+  return result.match(
+    ok: (value) => value,
+    err: (error) => throw StateError('Unexpected SQLx error: $error'),
+  );
 }

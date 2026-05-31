@@ -10,7 +10,9 @@ workspace:
   - packages/dust_http_client_annotation
   - packages/dust_router
   - packages/dust_state
-  - packages/dust_db
+  - packages/dust_db_annotation
+  - packages/dust_db_runtime
+  - packages/dust_db_sqlite3
   - examples/product_showcase
   - examples/stress_project
   - examples/dust_db_example

@@ -13,6 +13,8 @@
 
 part of 'orders_view_model.dart';
 
+enum _OrdersViewModelAspect { orders, isLoading }
+
 abstract class $OrdersViewModel extends ViewModelBase<OrdersState, OrdersViewModelArgs> {
   $OrdersViewModel(super.args) : super(initialState: const OrdersState());
 }
@@ -26,6 +28,16 @@ class _$OrdersViewModelProxy {
   OrdersState get value {
     OrdersViewModelScope.of(_context);
     return _vm.value;
+  }
+
+  List<Order> get orders {
+    OrdersViewModelScope.of(_context, aspect: _OrdersViewModelAspect.orders);
+    return _vm.state.orders;
+  }
+
+  bool get isLoading {
+    OrdersViewModelScope.of(_context, aspect: _OrdersViewModelAspect.isLoading);
+    return _vm.state.isLoading;
   }
 }
 
@@ -111,6 +123,22 @@ class _OrdersViewModelInherited extends InheritedModel<Object> {
 
   @override
   bool updateShouldNotifyDependent(_OrdersViewModelInherited oldWidget, Set<Object> dependencies) {
+    for (final aspect in dependencies) {
+      switch (aspect) {
+        case _OrdersViewModelAspect.orders:
+          if (state.orders != oldWidget.state.orders) {
+            return true;
+          }
+          break;
+        case _OrdersViewModelAspect.isLoading:
+          if (state.isLoading != oldWidget.state.isLoading) {
+            return true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
     return false;
   }
 }

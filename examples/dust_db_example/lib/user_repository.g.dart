@@ -14,65 +14,154 @@
 part of 'user_repository.dart';
 
 extension UserProfileFromRow on UserProfile {
-  static UserProfile fromRow(Map<String, Object?> row) => UserProfile(
-    id: row['id'] as int,
-    name: row['display_name'] as String,
-    address: AddressFromRow.fromRow(row),
-    bio: row.containsKey('bio') ? row['bio'] as String : '',
-    preferences: UserPreferences.fromJson(
-      jsonDecode(row['preferences'] as String) as Map<String, Object?>,
-    ),
-    status: UserStatusFromInt().decode(row['status'] as int),
-  );
+  static UserProfile fromRow(Row row) {
+    return UserProfile(
+      id: row.read<int>('id'),
+      name: row.read<String>('display_name'),
+      address: AddressFromRow.fromRow(row),
+      bio: row.readOrNull<Object?>('bio') == null ? '' : row.read<String>('bio'),
+      preferences: UserPreferences.fromJson(decodeJsonObject(row.read<String>('preferences'))),
+      status: UserStatusFromInt().decode(row.read<int>('status')),
+    );
+  }
 }
+
+final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
 
 extension AddressFromRow on Address {
-  static Address fromRow(Map<String, Object?> row) => Address(
-    street: row['street'] as String,
-    city: row['city'] as String,
-  );
+  static Address fromRow(Row row) {
+    return Address(
+      street: row.read<String>('street'),
+      city: row.read<String>('city'),
+    );
+  }
 }
 
-final class _$UserRepository implements UserRepository {
-  final dynamic _db;
+final bool _$addressFromRowRegistered = registerRowMapper<Address>(AddressFromRow.fromRow);
 
-  _$UserRepository(this._db);
+void _$registerRowMappers() {
+  _$userProfileFromRowRegistered;
+  _$addressFromRowRegistered;
+}
 
-  @override
-  Future<UserProfile?> findById(int id) async {
-    final rows = await _db.rawQuery(
-      'SELECT id, display_name, street, city, bio, preferences, status FROM user_profiles WHERE id = ?',
-      <Object?>[id],
+final class _$AppDatabase implements AppDatabase {
+  _$AppDatabase._(this.pool);
+
+  factory _$AppDatabase.open(String path) {
+    _$registerRowMappers();
+    final pool = SqlitePool.open(
+      path,
+      migrations: _$appDatabaseMigrations,
     );
-    if (rows.isEmpty) return null;
-    return UserProfileFromRow.fromRow(rows.first);
+    return _$AppDatabase._(pool);
   }
 
   @override
-  Future<List<UserProfile>> listProfiles() async {
-    final rows = await _db.rawQuery(
-      'SELECT id, display_name, street, city, bio, preferences, status FROM user_profiles',
-      const <Object?>[],
-    );
-    return rows.map(UserProfileFromRow.fromRow).toList();
-  }
+  final Pool pool;
+}
+
+const Map<String, String> _$appDatabaseMigrations = <String, String>{
+  '0001_create_user_profiles.sql': 'CREATE TABLE user_profiles (\n  id INTEGER PRIMARY KEY,\n  display_name TEXT NOT NULL,\n  street TEXT NOT NULL,\n  city TEXT NOT NULL,\n  bio TEXT NOT NULL DEFAULT \'\',\n  preferences TEXT NOT NULL,\n  status INTEGER NOT NULL\n);\n',
+};
+
+final class _$UserDao implements UserDao {
+  const _$UserDao(this._db);
+
+  final SqlxDriver _db;
 
   @override
-  Future<int> countProfiles() async {
-    final rows = await _db.rawQuery(
-      'SELECT COUNT(*) FROM user_profiles',
-      const <Object?>[],
+  Future<Result<UserProfile?, SqlxError>> findById(int id) async {
+    final result = await _db.fetch(
+      r'''
+SELECT id, display_name, street, city, bio, preferences, status
+FROM user_profiles
+WHERE id = $1
+''',
+      [id],
     );
-    return rows.first.values.first as int;
-  }
 
-  @override
-  Future<void> renameProfile(String name, int id) async {
-    return _db.transaction((txn) async {
-      await txn.execute(
-        'UPDATE user_profiles SET display_name = ? WHERE id = ?',
-        <Object?>[name, id],
-      );
+    return result.andThen((rows) {
+      if (rows.isEmpty) return const Ok<UserProfile?, SqlxError>(null);
+
+      if (rows.length > 1) {
+        return Err<UserProfile?, SqlxError>(
+          SqlxError.tooManyRows(expected: 1, actual: rows.length),
+        );
+      }
+
+      try {
+        return Ok<UserProfile?, SqlxError>(
+          UserProfileFromRow.fromRow(rows.first),
+        );
+      } catch (error) {
+        return Err<UserProfile?, SqlxError>(
+          SqlxError.decode(error.toString(), cause: error),
+        );
+      }
     });
+  }
+
+  @override
+  Future<Result<List<UserProfile>, SqlxError>> listProfiles() async {
+    final result = await _db.fetch(
+      r'''
+SELECT id, display_name, street, city, bio, preferences, status
+FROM user_profiles
+''',
+      [],
+    );
+
+    return result.andThen((rows) {
+      try {
+        return Ok<List<UserProfile>, SqlxError>([
+          for (final row in rows) UserProfileFromRow.fromRow(row),
+        ]);
+      } catch (error) {
+        return Err<List<UserProfile>, SqlxError>(
+          SqlxError.decode(error.toString(), cause: error),
+        );
+      }
+    });
+  }
+
+  @override
+  Future<Result<int, SqlxError>> countProfiles() async {
+    final result = await _db.fetch(
+      r'''SELECT COUNT(*) FROM user_profiles''',
+      [],
+    );
+
+    return result.andThen((rows) {
+      if (rows.isEmpty) {
+        return Err<int, SqlxError>(
+          SqlxError.decode('Query `countProfiles` returned no rows.'),
+        );
+      }
+
+      if (rows.length > 1) {
+        return Err<int, SqlxError>(
+          SqlxError.tooManyRows(expected: 1, actual: rows.length),
+        );
+      }
+
+      try {
+        return Ok<int, SqlxError>(rows.single.readIndex<int>(0));
+      } catch (error) {
+        return Err<int, SqlxError>(
+          SqlxError.decode(error.toString(), cause: error),
+        );
+      }
+    });
+  }
+
+  @override
+  Future<Result<ExecResult, SqlxError>> renameProfile(
+    String name,
+    int id,
+  ) {
+    return _db.execute(
+      r'''UPDATE user_profiles SET display_name = $1 WHERE id = $2''',
+      [name, id],
+    );
   }
 }

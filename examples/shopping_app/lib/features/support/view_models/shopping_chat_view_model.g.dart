@@ -13,9 +13,10 @@
 
 part of 'shopping_chat_view_model.dart';
 
+enum _ShoppingChatViewModelAspect { messages, status, errorMessage }
+
 abstract class $ShoppingChatViewModel extends ViewModelBase<ChatState, ShoppingChatViewModelArgs> {
   $ShoppingChatViewModel(super.args) : super(initialState: const ChatState());
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$ShoppingChatViewModelProxy {
@@ -27,6 +28,21 @@ class _$ShoppingChatViewModelProxy {
   ChatState get value {
     ShoppingChatViewModelScope.of(_context);
     return _vm.value;
+  }
+
+  List<Object?> get messages {
+    ShoppingChatViewModelScope.of(_context, aspect: _ShoppingChatViewModelAspect.messages);
+    return _vm.state.messages;
+  }
+
+  ChatStatus get status {
+    ShoppingChatViewModelScope.of(_context, aspect: _ShoppingChatViewModelAspect.status);
+    return _vm.state.status;
+  }
+
+  String? get errorMessage {
+    ShoppingChatViewModelScope.of(_context, aspect: _ShoppingChatViewModelAspect.errorMessage);
+    return _vm.state.errorMessage;
   }
 }
 
@@ -112,6 +128,27 @@ class _ShoppingChatViewModelInherited extends InheritedModel<Object> {
 
   @override
   bool updateShouldNotifyDependent(_ShoppingChatViewModelInherited oldWidget, Set<Object> dependencies) {
+    for (final aspect in dependencies) {
+      switch (aspect) {
+        case _ShoppingChatViewModelAspect.messages:
+          if (state.messages != oldWidget.state.messages) {
+            return true;
+          }
+          break;
+        case _ShoppingChatViewModelAspect.status:
+          if (state.status != oldWidget.state.status) {
+            return true;
+          }
+          break;
+        case _ShoppingChatViewModelAspect.errorMessage:
+          if (state.errorMessage != oldWidget.state.errorMessage) {
+            return true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
     return false;
   }
 }

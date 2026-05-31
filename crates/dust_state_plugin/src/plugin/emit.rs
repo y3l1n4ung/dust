@@ -1,4 +1,8 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use dust_dart_emit::DYNAMIC_TYPES;
 use dust_ir::{ClassIr, LibraryIr, TypeIr};
@@ -94,7 +98,172 @@ fn class_fields(
             return fields;
         }
     }
-    state_facts.get(class_name).cloned().unwrap_or_default()
+    state_facts
+        .get(class_name)
+        .filter(|fields| !fields.is_empty())
+        .cloned()
+        .or_else(|| imported_class_fields(library, class_name))
+        .unwrap_or_default()
+}
+
+fn imported_class_fields(library: &LibraryIr, class_name: &str) -> Option<Vec<StateFieldSpec>> {
+    library
+        .imports
+        .iter()
+        .filter_map(|uri| resolve_import_path(library, uri))
+        .find_map(|path| {
+            let source = fs::read_to_string(path).ok()?;
+            fields_from_source_class(&source, class_name)
+        })
+        .filter(|fields| !fields.is_empty())
+}
+
+fn resolve_import_path(library: &LibraryIr, uri: &str) -> Option<PathBuf> {
+    if uri.starts_with("dart:") || uri.starts_with("package:flutter/") {
+        return None;
+    }
+    if let Some(rest) = uri.strip_prefix("package:") {
+        let (package, path) = rest.split_once('/')?;
+        if package == library.package_name {
+            return Some(Path::new(&library.package_root).join("lib").join(path));
+        }
+        return None;
+    }
+    let source_dir = Path::new(&library.package_root)
+        .join(&library.source_path)
+        .parent()?
+        .to_path_buf();
+    Some(normalize_path(&source_dir.join(uri)))
+}
+
+fn fields_from_source_class(source: &str, class_name: &str) -> Option<Vec<StateFieldSpec>> {
+    let class_offset = source.find(&format!("class {class_name}"))?;
+    let body_start = source[class_offset..].find('{')? + class_offset;
+    let body_end = matching_brace(source, body_start)?;
+    let body = &source[body_start + 1..body_end];
+    let declared_names = declared_type_names(source);
+    let fields = body
+        .lines()
+        .filter_map(|line| field_from_line(line, &declared_names))
+        .collect::<Vec<_>>();
+    Some(fields)
+}
+
+fn field_from_line(line: &str, declared_names: &[String]) -> Option<StateFieldSpec> {
+    let mut line = line.trim();
+    if line.starts_with('@') || line.starts_with("//") || line.contains('(') || !line.ends_with(';')
+    {
+        return None;
+    }
+    line = line.trim_end_matches(';').trim();
+    let declaration = line.split('=').next().unwrap_or(line).trim();
+    let parts = declaration.split_whitespace().collect::<Vec<_>>();
+    if parts.len() < 2 {
+        return None;
+    }
+    if !parts
+        .iter()
+        .any(|part| matches!(*part, "final" | "var" | "late"))
+    {
+        return None;
+    }
+    let name = parts.last()?.trim_end_matches(';');
+    if matches!(name, "get" | "set") {
+        return None;
+    }
+    let type_parts = parts[..parts.len() - 1]
+        .iter()
+        .copied()
+        .filter(|part| !matches!(*part, "static" | "late" | "final" | "var" | "const"))
+        .collect::<Vec<_>>();
+    if type_parts.is_empty() {
+        return None;
+    }
+    Some(StateFieldSpec {
+        name: name.to_owned(),
+        type_source: sanitize_imported_type(&type_parts.join(" "), declared_names),
+    })
+}
+
+fn declared_type_names(source: &str) -> Vec<String> {
+    source
+        .lines()
+        .filter_map(|line| {
+            let line = line.trim();
+            let rest = line
+                .strip_prefix("class ")
+                .or_else(|| line.strip_prefix("final class "))
+                .or_else(|| line.strip_prefix("sealed class "))
+                .or_else(|| line.strip_prefix("enum "))?;
+            Some(
+                rest.split(|ch: char| !ch.is_ascii_alphanumeric() && ch != '_')
+                    .next()
+                    .unwrap_or_default()
+                    .to_owned(),
+            )
+        })
+        .filter(|name| !name.is_empty())
+        .collect()
+}
+
+fn sanitize_imported_type(type_source: &str, declared_names: &[String]) -> String {
+    let ty = type_source.trim();
+    if let Some(inner) = ty
+        .strip_prefix("List<")
+        .and_then(|value| value.strip_suffix('>'))
+    {
+        return if is_visible_imported_type(inner.trim(), declared_names) {
+            ty.to_owned()
+        } else {
+            "List<Object?>".to_owned()
+        };
+    }
+    if ty.contains('<') {
+        return "Object?".to_owned();
+    }
+    if is_visible_imported_type(ty.trim_end_matches('?'), declared_names) {
+        ty.to_owned()
+    } else {
+        "Object?".to_owned()
+    }
+}
+
+fn is_visible_imported_type(type_name: &str, declared_names: &[String]) -> bool {
+    matches!(
+        type_name,
+        "String" | "int" | "double" | "num" | "bool" | "DateTime" | "Object" | "dynamic" | "void"
+    ) || declared_names.iter().any(|name| name == type_name)
+}
+
+fn matching_brace(source: &str, open: usize) -> Option<usize> {
+    let mut depth = 0_i32;
+    for (offset, ch) in source[open..].char_indices() {
+        match ch {
+            '{' => depth += 1,
+            '}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(open + offset);
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+fn normalize_path(path: &Path) -> PathBuf {
+    let mut out = PathBuf::new();
+    for component in path.components() {
+        match component {
+            std::path::Component::ParentDir => {
+                out.pop();
+            }
+            std::path::Component::CurDir => {}
+            other => out.push(other.as_os_str()),
+        }
+    }
+    out
 }
 
 fn render_view_model_output(
@@ -237,11 +406,13 @@ fn render_inherited(
         let mut checks = String::new();
         for field in state_fields {
             checks.push_str(&format!(
-                "      if (aspect == {aspect_class}.{name} &&\n          state.{name} != oldWidget.state.{name}) {{\n        return true;\n      }}\n",
+                "        case {aspect_class}.{name}:\n          if (state.{name} != oldWidget.state.{name}) {{\n            return true;\n          }}\n          break;\n",
                 name = field.name,
             ));
         }
-        format!("    for (final aspect in dependencies) {{\n{checks}    }}\n    return false;\n")
+        format!(
+            "    for (final aspect in dependencies) {{\n      switch (aspect) {{\n{checks}        default:\n          break;\n      }}\n    }}\n    return false;\n"
+        )
     };
     format!(
         "class {inherited_class} extends InheritedModel<Object> {{\n  const {inherited_class}({{required this.viewModel, required this.state, required super.child}});\n\n  final {view_model_class} viewModel;\n  final {state_type} state;\n\n  @override\n  bool updateShouldNotify({inherited_class} oldWidget) => state != oldWidget.state;\n\n  @override\n  bool updateShouldNotifyDependent({inherited_class} oldWidget, Set<Object> dependencies) {{\n{dependent_body}  }}\n}}",
@@ -254,29 +425,8 @@ fn render_listener(listener_class: &str, listener_state_class: &str, scope_class
     )
 }
 
-fn base_getters(state_fields: &[StateFieldSpec], args_fields: &[StateFieldSpec]) -> String {
-    let state_getters = state_fields
-        .iter()
-        .map(|field| {
-            format!(
-                "  {ty} get {name} => state.{name};\n",
-                ty = field.type_source,
-                name = field.name
-            )
-        })
-        .collect::<String>();
-    let args_getters = args_fields
-        .iter()
-        .filter(|field| field.name != "observer")
-        .map(|field| {
-            format!(
-                "  {ty} get {name} => args.{name};\n",
-                ty = field.type_source,
-                name = field.name
-            )
-        })
-        .collect::<String>();
-    format!("{state_getters}{args_getters}")
+fn base_getters(_state_fields: &[StateFieldSpec], _args_fields: &[StateFieldSpec]) -> String {
+    String::new()
 }
 
 fn render_type(ty: &TypeIr) -> String {

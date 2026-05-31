@@ -24,6 +24,7 @@ pub(crate) fn field(name: &str, ty: TypeIr) -> FieldIr {
         span: span(10, 20),
         has_default: false,
         serde: None,
+        configs: Vec::new(),
     }
 }
 

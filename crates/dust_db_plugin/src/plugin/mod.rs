@@ -8,7 +8,10 @@ mod model;
 mod parse;
 mod validate;
 
-use self::constants::{CLAIMED_CONFIG_SYMBOLS, SUPPORTED_ANNOTATIONS};
+use self::constants::{
+    CLAIMED_DATABASE_CONFIG_SYMBOLS, CLAIMED_ROW_CONFIG_SYMBOLS, SUPPORTED_DATABASE_ANNOTATIONS,
+    SUPPORTED_ROW_ANNOTATIONS,
+};
 use self::emit::emit_db_library;
 use self::validate::validate_db_library;
 
@@ -19,6 +22,8 @@ pub struct DbPluginOptions {
     pub offline: bool,
     /// Whether successful online validation should update query metadata cache.
     pub write_metadata: bool,
+    /// Whether database generation and SQL validation are enabled.
+    pub databases: bool,
 }
 
 impl Default for DbPluginOptions {
@@ -26,11 +31,12 @@ impl Default for DbPluginOptions {
         Self {
             offline: false,
             write_metadata: true,
+            databases: true,
         }
     }
 }
 
-/// Dust plugin for SQLx-validated sqflite repository generation.
+/// Dust plugin for SQLx-validated sqlite3 database generation.
 pub struct DbPlugin {
     options: DbPluginOptions,
 }
@@ -42,6 +48,7 @@ impl DbPlugin {
             options: DbPluginOptions {
                 offline: false,
                 write_metadata: true,
+                databases: true,
             },
         }
     }
@@ -68,6 +75,16 @@ pub fn register_plugin_with_options(offline: bool, write_metadata: bool) -> DbPl
     DbPlugin::with_options(DbPluginOptions {
         offline,
         write_metadata,
+        databases: true,
+    })
+}
+
+/// Creates the Dust DB plugin in row-mapper-only mode.
+pub fn register_row_plugin() -> DbPlugin {
+    DbPlugin::with_options(DbPluginOptions {
+        offline: false,
+        write_metadata: false,
+        databases: false,
     })
 }
 
@@ -76,12 +93,24 @@ impl DustPlugin for DbPlugin {
         "DustDb"
     }
 
+    fn claimed_traits(&self) -> &'static [&'static str] {
+        self::constants::CLAIMED_TRAIT_SYMBOLS
+    }
+
     fn claimed_configs(&self) -> &'static [&'static str] {
-        CLAIMED_CONFIG_SYMBOLS
+        if self.options.databases {
+            CLAIMED_DATABASE_CONFIG_SYMBOLS
+        } else {
+            CLAIMED_ROW_CONFIG_SYMBOLS
+        }
     }
 
     fn supported_annotations(&self) -> &'static [&'static str] {
-        SUPPORTED_ANNOTATIONS
+        if self.options.databases {
+            SUPPORTED_DATABASE_ANNOTATIONS
+        } else {
+            SUPPORTED_ROW_ANNOTATIONS
+        }
     }
 
     fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> {
@@ -89,6 +118,6 @@ impl DustPlugin for DbPlugin {
     }
 
     fn emit(&self, library: &LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
-        emit_db_library(library)
+        emit_db_library(library, self.options)
     }
 }

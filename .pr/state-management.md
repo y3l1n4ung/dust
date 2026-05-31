@@ -1,5 +1,13 @@
 # State Management Specification (Native Flutter MVVM + Dust Optimization)
 
+## Implementation Status
+
+- Generated scopes use `InheritedModel<Object>` with typed aspect enums.
+- `watchXxxViewModel()` returns a smart proxy that registers dependencies when state properties are read.
+- Imported unannotated state files are inspected for `final` state fields, so normal app state classes get granular aspects without extra annotations.
+- `updateShouldNotifyDependent` now emits a switch-based dispatcher instead of a linear field chain per dependency.
+- `readXxxViewModel()` remains non-subscribing for event handlers and mutations.
+
 ## 1. Core Philosophy: "Transparent Performance"
 The generated state management system uses a "Hidden Base Class" pattern to provide standard Flutter semantics (`watch`, `read`, `listen`) while delivering optimized O(1) rebuild performance through automatic aspect registration.
 

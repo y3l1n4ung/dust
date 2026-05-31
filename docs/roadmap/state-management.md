@@ -35,7 +35,7 @@ final class TaskBoardViewModel extends $TaskBoardViewModel {
 
   Future<void> refresh({bool showLoading = false}) async {
     if (showLoading) emit(state.copyWith(isLoading: true));
-    final todos = await repository.fetchTodos(userId: 1, limit: 20);
+    final todos = await args.repository.fetchTodos(userId: 1, limit: 20);
     emit(state.copyWith(todos: todos, isLoading: false));
   }
 }

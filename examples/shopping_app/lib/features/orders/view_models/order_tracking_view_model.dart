@@ -30,7 +30,7 @@ class OrderTrackingViewModel extends $OrderTrackingViewModel {
     );
 
     try {
-      final events = await repository.getOrderTracking(orderId);
+      final events = await args.repository.getOrderTracking(orderId);
       emit(
         state.copyWith(
           orderId: orderId,

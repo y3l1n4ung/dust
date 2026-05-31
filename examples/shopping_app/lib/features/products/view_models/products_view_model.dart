@@ -24,7 +24,7 @@ class ProductsViewModel extends $ProductsViewModel {
     emit(state.copyWith(status: ProductsStatus.loading));
 
     try {
-      final products = await repository.getProducts();
+      final products = await args.repository.getProducts();
       emit(state.copyWith(products: products, status: ProductsStatus.success));
       logger.info(
         'PRODUCTS',

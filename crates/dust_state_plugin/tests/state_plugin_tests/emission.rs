@@ -1,4 +1,8 @@
-use std::sync::Arc;
+use std::{
+    fs,
+    sync::Arc,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use dust_plugin_api::{DustPlugin, SymbolPlan, WorkspaceAnalysisBuilder};
 use dust_state_plugin::register_plugin;
@@ -98,6 +102,104 @@ fn emits_state_fields_from_workspace_analysis() {
     assert!(source.contains("String? get message => state.message;"));
     assert!(source.contains("PrototypeRepository get repository => args.repository;"));
     assert!(!source.contains("StateObserver? get observer"));
+    assert_eq!(
+        extract_class(source, "class _$TaskBoardViewModelProxy"),
+        r#"class _$TaskBoardViewModelProxy {
+  _$TaskBoardViewModelProxy(this._context, this._vm);
+
+  final BuildContext _context;
+  final TaskBoardViewModel _vm;
+
+  TaskBoardState get value {
+    TaskBoardViewModelScope.of(_context);
+    return _vm.value;
+  }
+
+  int get count {
+    TaskBoardViewModelScope.of(_context, aspect: _TaskBoardViewModelAspect.count);
+    return _vm.state.count;
+  }
+
+  String? get message {
+    TaskBoardViewModelScope.of(_context, aspect: _TaskBoardViewModelAspect.message);
+    return _vm.state.message;
+  }
+}"#
+    );
+    assert_eq!(
+        extract_class(source, "class _TaskBoardViewModelInherited"),
+        r#"class _TaskBoardViewModelInherited extends InheritedModel<Object> {
+  const _TaskBoardViewModelInherited({required this.viewModel, required this.state, required super.child});
+
+  final TaskBoardViewModel viewModel;
+  final TaskBoardState state;
+
+  @override
+  bool updateShouldNotify(_TaskBoardViewModelInherited oldWidget) => state != oldWidget.state;
+
+  @override
+  bool updateShouldNotifyDependent(_TaskBoardViewModelInherited oldWidget, Set<Object> dependencies) {
+    for (final aspect in dependencies) {
+      switch (aspect) {
+        case _TaskBoardViewModelAspect.count:
+          if (state.count != oldWidget.state.count) {
+            return true;
+          }
+          break;
+        case _TaskBoardViewModelAspect.message:
+          if (state.message != oldWidget.state.message) {
+            return true;
+          }
+          break;
+        default:
+          break;
+      }
+    }
+    return false;
+  }
+}"#
+    );
+}
+
+#[test]
+fn emits_state_fields_from_imported_unannotated_state_file() {
+    let root = temp_root("imported_state_fields");
+    fs::create_dir_all(root.join("lib/models")).unwrap();
+    fs::write(
+        root.join("lib/models/products_state.dart"),
+        "enum ProductsStatus { initial, success }\n\
+         class ProductsState {\n\
+           final List<Product> products;\n\
+           final ProductsStatus status;\n\
+           final String? errorMessage;\n\
+           const ProductsState({this.products = const [], required this.status, this.errorMessage});\n\
+         }\n",
+    )
+    .unwrap();
+
+    let plugin = register_plugin();
+    let mut library = library_with_classes(vec![
+        args_class(),
+        view_model_class(
+            "ProductsViewModel",
+            "(state: ProductsState, args: TaskBoardArgs)",
+        ),
+    ]);
+    library.package_root = root.display().to_string();
+    library.source_path = "lib/view_models/products_view_model.dart".to_owned();
+    library
+        .imports
+        .push("../models/products_state.dart".to_owned());
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let source = &contribution.support_types[0];
+
+    assert!(source.contains("enum _ProductsViewModelAspect { products, status, errorMessage }"));
+    assert!(source.contains("List<Object?> get products"));
+    assert!(source.contains("ProductsStatus get status"));
+    assert!(source.contains("String? get errorMessage"));
+
+    let _ = fs::remove_dir_all(root);
 }
 
 #[test]
@@ -161,4 +263,36 @@ fn extract_extension<'a>(source: &'a str, marker: &str) -> &'a str {
         .find(marker)
         .unwrap_or_else(|| panic!("missing marker: {marker}"));
     &source[start..]
+}
+
+fn extract_class<'a>(source: &'a str, marker: &str) -> &'a str {
+    let start = source
+        .find(marker)
+        .unwrap_or_else(|| panic!("missing marker: {marker}"));
+    let mut depth = 0_i32;
+    let mut saw_body = false;
+    for (offset, ch) in source[start..].char_indices() {
+        match ch {
+            '{' => {
+                depth += 1;
+                saw_body = true;
+            }
+            '}' if saw_body => {
+                depth -= 1;
+                if depth == 0 {
+                    return &source[start..start + offset + ch.len_utf8()];
+                }
+            }
+            _ => {}
+        }
+    }
+    panic!("class body did not close: {marker}");
+}
+
+fn temp_root(name: &str) -> std::path::PathBuf {
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    std::env::temp_dir().join(format!("dust_state_plugin_{name}_{stamp}"))
 }
