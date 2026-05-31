@@ -102,8 +102,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cartState = context.cartViewModel.state;
-    final checkoutState = context.checkoutViewModel.state;
+    final cartState = context.watchCartViewModel().value;
+    final checkoutState = context.watchCheckoutViewModel().value;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Checkout')),

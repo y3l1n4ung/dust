@@ -17,27 +17,26 @@ enum _CartViewModelAspect { items, notification }
 
 abstract class $CartViewModel extends ViewModelBase<CartState, CartViewModelArgs> {
   $CartViewModel(super.args) : super(initialState: const CartState());
+
+  List<Object?> get items => state.items;
+  CartNotification? get notification => state.notification;
 }
 
 class _$CartViewModelProxy {
-  _$CartViewModelProxy(this._context, this._vm);
+  _$CartViewModelProxy(this._context);
 
   final BuildContext _context;
-  final CartViewModel _vm;
 
   CartState get value {
-    CartViewModelScope.of(_context);
-    return _vm.value;
+    return CartViewModelScope.of(_context).value;
   }
 
-  List<CartItem> get items {
-    CartViewModelScope.of(_context, aspect: _CartViewModelAspect.items);
-    return _vm.state.items;
+  List<Object?> get items {
+    return CartViewModelScope.of(_context, aspect: _CartViewModelAspect.items).state.items;
   }
 
   CartNotification? get notification {
-    CartViewModelScope.of(_context, aspect: _CartViewModelAspect.notification);
-    return _vm.state.notification;
+    return CartViewModelScope.of(_context, aspect: _CartViewModelAspect.notification).state.notification;
   }
 }
 
@@ -69,7 +68,7 @@ class CartViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static CartViewModel of(BuildContext context, {Object? aspect}) {
+  static CartViewModel of(BuildContext context, {_CartViewModelAspect? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_CartViewModelInherited>(
       aspect: aspect,
     );
@@ -82,67 +81,139 @@ class CartViewModelScope extends StatefulWidget {
 }
 
 class _CartViewModelScopeState extends State<CartViewModelScope> {
+  CartViewModel? _viewModel;
+  bool _ownsViewModel = false;
+
   @override
-  Widget build(BuildContext context) {
-    final external = widget.value;
-    return external == null
-        ? ViewModelOwner<CartViewModel, CartViewModelArgs>(
-            debugName: 'CartViewModelScope',
-            args: widget.args!,
-            create: widget.create!,
-            builder: _buildInherited,
-          )
-        : ViewModelOwner<CartViewModel, CartViewModelArgs>.value(
-            debugName: 'CartViewModelScope.value',
-            value: external,
-            builder: _buildInherited,
-          );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_viewModel == null) {
+      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    }
   }
 
-  Widget _buildInherited(BuildContext context, CartViewModel viewModel) {
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, child) => _CartViewModelInherited(
-        viewModel: viewModel,
-        state: viewModel.value,
-        child: child!,
-      ),
+  @override
+  void didUpdateWidget(CartViewModelScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false);
+    } else if (oldWidget.value != null) {
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    }
+  }
+
+  CartViewModel _resolveViewModel() {
+    return widget.value ?? _createOwnedViewModel();
+  }
+
+  CartViewModel _createOwnedViewModel() {
+    final argsFactory = widget.args;
+    final create = widget.create;
+    if (argsFactory == null || create == null) {
+      throw StateError('Owned CartViewModelScope requires args and create.');
+    }
+    late final CartViewModel created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        StateError(
+          'CartViewModelScope failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
+    return created;
+  }
+
+  void _replaceViewModel(
+    CartViewModel nextViewModel, {
+    required bool ownsViewModel,
+    bool notify = true,
+  }) {
+    final previous = _viewModel;
+    if (identical(previous, nextViewModel)) {
+      _ownsViewModel = ownsViewModel;
+      if (notify && mounted) setState(() {});
+      return;
+    }
+    previous?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) previous?.dispose();
+    _viewModel = nextViewModel;
+    _ownsViewModel = ownsViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    if (ownsViewModel) {
+      scheduleMicrotask(() {
+        if (mounted && identical(_viewModel, nextViewModel)) {
+          nextViewModel.init();
+        }
+      });
+    }
+    if (notify && mounted) setState(() {});
+  }
+
+  void _onViewModelStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    final viewModel = _viewModel;
+    viewModel?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) viewModel?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = _viewModel;
+    if (viewModel == null) {
+      throw StateError('CartViewModelScope built before its view model was initialized.');
+    }
+    return _CartViewModelInherited(
+      viewModel: viewModel,
+      state: viewModel.value,
       child: widget.child,
     );
   }
 }
 
-class _CartViewModelInherited extends InheritedModel<Object> {
+class _CartViewModelInherited extends InheritedModel<_CartViewModelAspect> {
   const _CartViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final CartViewModel viewModel;
   final CartState state;
 
+  /// Requires CartState to implement == and hashCode. Without value equality,
+  /// every emitted state is treated as changed and granular rebuilds degrade to
+  /// full dependent subtree rebuilds.
   @override
   bool updateShouldNotify(_CartViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_CartViewModelInherited oldWidget, Set<Object> dependencies) {
+  bool updateShouldNotifyDependent(_CartViewModelInherited oldWidget, Set<_CartViewModelAspect> dependencies) {
     for (final aspect in dependencies) {
       switch (aspect) {
         case _CartViewModelAspect.items:
           if (state.items != oldWidget.state.items) {
             return true;
           }
-          break;
         case _CartViewModelAspect.notification:
           if (state.notification != oldWidget.state.notification) {
             return true;
           }
-          break;
-        default:
-          break;
       }
     }
     return false;
   }
 }
 
+/// Listens to one-shot effects from CartViewModel.
+///
+/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
+/// payloads through the @ViewModel annotation.
 class CartViewModelListener extends StatefulWidget {
   const CartViewModelListener({super.key, required this.listener, required this.child});
 
@@ -155,14 +226,20 @@ class CartViewModelListener extends StatefulWidget {
 
 class _CartViewModelListenerState extends State<CartViewModelListener> {
   StreamSubscription<Object>? _sub;
+  CartViewModel? _viewModel;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final nextViewModel = CartViewModelScope.read(context);
+    if (_viewModel == nextViewModel) return;
     _sub?.cancel();
-    _sub = CartViewModelScope.read(context).effects.listen((effect) {
-      if (mounted) widget.listener(context, effect);
-    });
+    _viewModel = nextViewModel;
+    _sub = nextViewModel.effects.listen(_onEffect);
+  }
+
+  void _onEffect(Object effect) {
+    if (mounted) widget.listener(context, effect);
   }
 
   @override
@@ -176,10 +253,8 @@ class _CartViewModelListenerState extends State<CartViewModelListener> {
 }
 
 extension CartViewModelBuildContext on BuildContext {
-  CartViewModel get cartViewModel => CartViewModelScope.of(this);
-
   _$CartViewModelProxy watchCartViewModel() {
-    return _$CartViewModelProxy(this, CartViewModelScope.read(this));
+    return _$CartViewModelProxy(this);
   }
 
   CartViewModel readCartViewModel() => CartViewModelScope.read(this);

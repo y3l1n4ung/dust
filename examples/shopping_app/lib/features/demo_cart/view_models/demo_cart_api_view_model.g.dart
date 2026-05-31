@@ -17,32 +17,32 @@ enum _DemoCartApiViewModelAspect { status, carts, errorMessage }
 
 abstract class $DemoCartApiViewModel extends ViewModelBase<DemoCartState, DemoCartApiViewModelArgs> {
   $DemoCartApiViewModel(super.args) : super(initialState: const DemoCartState());
+
+  DemoCartStatus get status => state.status;
+  List<Object?> get carts => state.carts;
+  String? get errorMessage => state.errorMessage;
+  ShoppingRepository get repository => args.repository;
 }
 
 class _$DemoCartApiViewModelProxy {
-  _$DemoCartApiViewModelProxy(this._context, this._vm);
+  _$DemoCartApiViewModelProxy(this._context);
 
   final BuildContext _context;
-  final DemoCartApiViewModel _vm;
 
   DemoCartState get value {
-    DemoCartApiViewModelScope.of(_context);
-    return _vm.value;
+    return DemoCartApiViewModelScope.of(_context).value;
   }
 
   DemoCartStatus get status {
-    DemoCartApiViewModelScope.of(_context, aspect: _DemoCartApiViewModelAspect.status);
-    return _vm.state.status;
+    return DemoCartApiViewModelScope.of(_context, aspect: _DemoCartApiViewModelAspect.status).state.status;
   }
 
-  List<StoreCart> get carts {
-    DemoCartApiViewModelScope.of(_context, aspect: _DemoCartApiViewModelAspect.carts);
-    return _vm.state.carts;
+  List<Object?> get carts {
+    return DemoCartApiViewModelScope.of(_context, aspect: _DemoCartApiViewModelAspect.carts).state.carts;
   }
 
   String? get errorMessage {
-    DemoCartApiViewModelScope.of(_context, aspect: _DemoCartApiViewModelAspect.errorMessage);
-    return _vm.state.errorMessage;
+    return DemoCartApiViewModelScope.of(_context, aspect: _DemoCartApiViewModelAspect.errorMessage).state.errorMessage;
   }
 }
 
@@ -74,7 +74,7 @@ class DemoCartApiViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static DemoCartApiViewModel of(BuildContext context, {Object? aspect}) {
+  static DemoCartApiViewModel of(BuildContext context, {_DemoCartApiViewModelAspect? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_DemoCartApiViewModelInherited>(
       aspect: aspect,
     );
@@ -87,72 +87,143 @@ class DemoCartApiViewModelScope extends StatefulWidget {
 }
 
 class _DemoCartApiViewModelScopeState extends State<DemoCartApiViewModelScope> {
+  DemoCartApiViewModel? _viewModel;
+  bool _ownsViewModel = false;
+
   @override
-  Widget build(BuildContext context) {
-    final external = widget.value;
-    return external == null
-        ? ViewModelOwner<DemoCartApiViewModel, DemoCartApiViewModelArgs>(
-            debugName: 'DemoCartApiViewModelScope',
-            args: widget.args!,
-            create: widget.create!,
-            builder: _buildInherited,
-          )
-        : ViewModelOwner<DemoCartApiViewModel, DemoCartApiViewModelArgs>.value(
-            debugName: 'DemoCartApiViewModelScope.value',
-            value: external,
-            builder: _buildInherited,
-          );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_viewModel == null) {
+      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    }
   }
 
-  Widget _buildInherited(BuildContext context, DemoCartApiViewModel viewModel) {
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, child) => _DemoCartApiViewModelInherited(
-        viewModel: viewModel,
-        state: viewModel.value,
-        child: child!,
-      ),
+  @override
+  void didUpdateWidget(DemoCartApiViewModelScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false);
+    } else if (oldWidget.value != null) {
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    }
+  }
+
+  DemoCartApiViewModel _resolveViewModel() {
+    return widget.value ?? _createOwnedViewModel();
+  }
+
+  DemoCartApiViewModel _createOwnedViewModel() {
+    final argsFactory = widget.args;
+    final create = widget.create;
+    if (argsFactory == null || create == null) {
+      throw StateError('Owned DemoCartApiViewModelScope requires args and create.');
+    }
+    late final DemoCartApiViewModel created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        StateError(
+          'DemoCartApiViewModelScope failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
+    return created;
+  }
+
+  void _replaceViewModel(
+    DemoCartApiViewModel nextViewModel, {
+    required bool ownsViewModel,
+    bool notify = true,
+  }) {
+    final previous = _viewModel;
+    if (identical(previous, nextViewModel)) {
+      _ownsViewModel = ownsViewModel;
+      if (notify && mounted) setState(() {});
+      return;
+    }
+    previous?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) previous?.dispose();
+    _viewModel = nextViewModel;
+    _ownsViewModel = ownsViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    if (ownsViewModel) {
+      scheduleMicrotask(() {
+        if (mounted && identical(_viewModel, nextViewModel)) {
+          nextViewModel.init();
+        }
+      });
+    }
+    if (notify && mounted) setState(() {});
+  }
+
+  void _onViewModelStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    final viewModel = _viewModel;
+    viewModel?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) viewModel?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = _viewModel;
+    if (viewModel == null) {
+      throw StateError('DemoCartApiViewModelScope built before its view model was initialized.');
+    }
+    return _DemoCartApiViewModelInherited(
+      viewModel: viewModel,
+      state: viewModel.value,
       child: widget.child,
     );
   }
 }
 
-class _DemoCartApiViewModelInherited extends InheritedModel<Object> {
+class _DemoCartApiViewModelInherited extends InheritedModel<_DemoCartApiViewModelAspect> {
   const _DemoCartApiViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final DemoCartApiViewModel viewModel;
   final DemoCartState state;
 
+  /// Requires DemoCartState to implement == and hashCode. Without value equality,
+  /// every emitted state is treated as changed and granular rebuilds degrade to
+  /// full dependent subtree rebuilds.
   @override
   bool updateShouldNotify(_DemoCartApiViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_DemoCartApiViewModelInherited oldWidget, Set<Object> dependencies) {
+  bool updateShouldNotifyDependent(_DemoCartApiViewModelInherited oldWidget, Set<_DemoCartApiViewModelAspect> dependencies) {
     for (final aspect in dependencies) {
       switch (aspect) {
         case _DemoCartApiViewModelAspect.status:
           if (state.status != oldWidget.state.status) {
             return true;
           }
-          break;
         case _DemoCartApiViewModelAspect.carts:
           if (state.carts != oldWidget.state.carts) {
             return true;
           }
-          break;
         case _DemoCartApiViewModelAspect.errorMessage:
           if (state.errorMessage != oldWidget.state.errorMessage) {
             return true;
           }
-          break;
-        default:
-          break;
       }
     }
     return false;
   }
 }
 
+/// Listens to one-shot effects from DemoCartApiViewModel.
+///
+/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
+/// payloads through the @ViewModel annotation.
 class DemoCartApiViewModelListener extends StatefulWidget {
   const DemoCartApiViewModelListener({super.key, required this.listener, required this.child});
 
@@ -165,14 +236,20 @@ class DemoCartApiViewModelListener extends StatefulWidget {
 
 class _DemoCartApiViewModelListenerState extends State<DemoCartApiViewModelListener> {
   StreamSubscription<Object>? _sub;
+  DemoCartApiViewModel? _viewModel;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final nextViewModel = DemoCartApiViewModelScope.read(context);
+    if (_viewModel == nextViewModel) return;
     _sub?.cancel();
-    _sub = DemoCartApiViewModelScope.read(context).effects.listen((effect) {
-      if (mounted) widget.listener(context, effect);
-    });
+    _viewModel = nextViewModel;
+    _sub = nextViewModel.effects.listen(_onEffect);
+  }
+
+  void _onEffect(Object effect) {
+    if (mounted) widget.listener(context, effect);
   }
 
   @override
@@ -186,10 +263,8 @@ class _DemoCartApiViewModelListenerState extends State<DemoCartApiViewModelListe
 }
 
 extension DemoCartApiViewModelBuildContext on BuildContext {
-  DemoCartApiViewModel get demoCartApiViewModel => DemoCartApiViewModelScope.of(this);
-
   _$DemoCartApiViewModelProxy watchDemoCartApiViewModel() {
-    return _$DemoCartApiViewModelProxy(this, DemoCartApiViewModelScope.read(this));
+    return _$DemoCartApiViewModelProxy(this);
   }
 
   DemoCartApiViewModel readDemoCartApiViewModel() => DemoCartApiViewModelScope.read(this);

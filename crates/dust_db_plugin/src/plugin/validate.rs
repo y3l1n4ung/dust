@@ -15,8 +15,8 @@ use super::{
     DbPluginOptions,
     model::{DatabaseClass, DbDriver, FetchMode, QueryFunction, QuerySpec, RowClass, SqlxConfig},
     parse::{
-        dao_classes, database_classes, effective_column_name, query_specs, result_ok_type,
-        row_classes, sqlx_config,
+        dao_classes, database_classes, effective_column_name, imported_row_names, query_specs,
+        result_ok_type, row_classes, sqlx_config,
     },
 };
 
@@ -94,9 +94,11 @@ fn validate_databases(
 }
 
 fn validate_daos(library: &LibraryIr, rows: &[RowClass<'_>], diagnostics: &mut Vec<Diagnostic>) {
+    let imported_rows = imported_row_names(library);
     let row_names = rows
         .iter()
         .map(|row| row.class.name.as_str())
+        .chain(imported_rows.iter().map(String::as_str))
         .collect::<HashSet<_>>();
     for dao in dao_classes(library) {
         let expected_target = format!("_${}", dao.class.name);
@@ -238,7 +240,7 @@ fn validate_database_config(db: &DatabaseClass<'_>, diagnostics: &mut Vec<Diagno
 
 fn validate_query_shape(
     query: &QuerySpec,
-    row_columns: &HashMap<String, HashSet<String>>,
+    _row_columns: &HashMap<String, HashSet<String>>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     if !query.sql_source_static {
@@ -260,15 +262,9 @@ fn validate_query_shape(
     }
     match query.function {
         QueryFunction::As => {
-            let Some(row_type) = query.row_type.as_deref() else {
+            if query.row_type.is_none() {
                 diagnostics.push(query_error(query, "queryAs<T> must specify a row type"));
                 return;
-            };
-            if !row_columns.contains_key(row_type) {
-                diagnostics.push(query_error(
-                    query,
-                    format!("queryAs row type `{row_type}` must use @Derive([FromRow()])"),
-                ));
             }
             if !matches!(
                 query.fetch,

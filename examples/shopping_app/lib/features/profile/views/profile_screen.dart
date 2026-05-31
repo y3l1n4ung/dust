@@ -13,7 +13,7 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authState = context.authViewModel.state;
+    final authState = context.watchAuthViewModel().value;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),

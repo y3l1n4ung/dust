@@ -7,7 +7,6 @@ use std::{
 use dust_dart_emit::DYNAMIC_TYPES;
 use dust_ir::{ClassIr, LibraryIr, TypeIr};
 use dust_plugin_api::{PluginContribution, SymbolPlan};
-use heck::ToLowerCamelCase;
 
 use super::{
     constants::STATES_ANALYSIS_KEY,
@@ -98,11 +97,13 @@ fn class_fields(
             return fields;
         }
     }
+    if let Some(fields) = imported_class_fields(library, class_name) {
+        return fields;
+    }
     state_facts
         .get(class_name)
         .filter(|fields| !fields.is_empty())
         .cloned()
-        .or_else(|| imported_class_fields(library, class_name))
         .unwrap_or_default()
 }
 
@@ -283,7 +284,6 @@ fn render_view_model_output(
     let extension_class = format!("{}BuildContext", class.name);
     let watch_name = format!("watch{}", class.name);
     let read_name = format!("read{}", class.name);
-    let context_getter_name = class.name.to_lower_camel_case();
     let aspect_class = format!("_{}Aspect", class.name);
     let aspect_enum = render_aspect_enum(&aspect_class, state_fields);
     let initial_state = initial_source
@@ -300,12 +300,18 @@ fn render_view_model_output(
     let proxy = render_proxy(
         &proxy_class,
         &scope_class,
-        &class.name,
         state_type,
         &aspect_class,
         state_fields,
     );
-    let scope = render_scope(&scope_class, &inherited_class, &class.name, args_type);
+    let scope = render_scope(
+        &scope_class,
+        &inherited_class,
+        &class.name,
+        args_type,
+        &aspect_class,
+        state_fields,
+    );
     let inherited = render_inherited(
         &inherited_class,
         &class.name,
@@ -313,9 +319,14 @@ fn render_view_model_output(
         &aspect_class,
         state_fields,
     );
-    let listener = render_listener(&listener_class, &listener_state_class, &scope_class);
+    let listener = render_listener(
+        &listener_class,
+        &listener_state_class,
+        &scope_class,
+        &class.name,
+    );
     let extension = format!(
-        "extension {extension_class} on BuildContext {{\n  {vm} get {context_getter_name} => {scope_class}.of(this);\n\n  {proxy_class} {watch_name}() {{\n    return {proxy_class}(this, {scope_class}.read(this));\n  }}\n\n  {vm} {read_name}() => {scope_class}.read(this);\n}}",
+        "extension {extension_class} on BuildContext {{\n  {proxy_class} {watch_name}() {{\n    return {proxy_class}(this);\n  }}\n\n  {vm} {read_name}() => {scope_class}.read(this);\n}}",
         vm = class.name,
     );
 
@@ -363,17 +374,16 @@ fn render_base(
 fn render_proxy(
     proxy_class: &str,
     scope_class: &str,
-    view_model_class: &str,
     state_type: &str,
     aspect_class: &str,
     state_fields: &[StateFieldSpec],
 ) -> String {
     let mut source = format!(
-        "class {proxy_class} {{\n  {proxy_class}(this._context, this._vm);\n\n  final BuildContext _context;\n  final {view_model_class} _vm;\n\n  {state_type} get value {{\n    {scope_class}.of(_context);\n    return _vm.value;\n  }}\n",
+        "class {proxy_class} {{\n  {proxy_class}(this._context);\n\n  final BuildContext _context;\n\n  {state_type} get value {{\n    return {scope_class}.of(_context).value;\n  }}\n",
     );
     for field in state_fields {
         source.push_str(&format!(
-            "\n  {ty} get {name} {{\n    {scope_class}.of(_context, aspect: {aspect_class}.{name});\n    return _vm.state.{name};\n  }}\n",
+            "\n  {ty} get {name} {{\n    return {scope_class}.of(_context, aspect: {aspect_class}.{name}).state.{name};\n  }}\n",
             ty = field.type_source,
             name = field.name,
         ));
@@ -387,9 +397,16 @@ fn render_scope(
     inherited_class: &str,
     view_model_class: &str,
     args_type: &str,
+    aspect_class: &str,
+    state_fields: &[StateFieldSpec],
 ) -> String {
+    let aspect_param_type = if state_fields.is_empty() {
+        "Object?".to_owned()
+    } else {
+        format!("{aspect_class}?")
+    };
     format!(
-        "class {scope_class} extends StatefulWidget {{\n  const {scope_class}({{\n    super.key,\n    required this.args,\n    required this.create,\n    required this.child,\n  }}) : value = null;\n\n  const {scope_class}.value({{\n    super.key,\n    required {view_model_class} this.value,\n    required this.child,\n  }}) : args = null,\n       create = null;\n\n  final {args_type} Function(BuildContext context)? args;\n  final {view_model_class} Function(BuildContext context, {args_type} args)? create;\n  final {view_model_class}? value;\n  final Widget child;\n\n  static {view_model_class} read(BuildContext context) {{\n    final scope = context\n        .getElementForInheritedWidgetOfExactType<{inherited_class}>()\n        ?.widget as {inherited_class}?;\n    if (scope == null) throw StateError('No {scope_class} found in context.');\n    return scope.viewModel;\n  }}\n\n  static {view_model_class} of(BuildContext context, {{Object? aspect}}) {{\n    final scope = context.dependOnInheritedWidgetOfExactType<{inherited_class}>(\n      aspect: aspect,\n    );\n    if (scope == null) throw StateError('No {scope_class} found in context.');\n    return scope.viewModel;\n  }}\n\n  @override\n  State<{scope_class}> createState() => _{scope_class}State();\n}}\n\nclass _{scope_class}State extends State<{scope_class}> {{\n  @override\n  Widget build(BuildContext context) {{\n    final external = widget.value;\n    return external == null\n        ? ViewModelOwner<{view_model_class}, {args_type}>(\n            debugName: '{scope_class}',\n            args: widget.args!,\n            create: widget.create!,\n            builder: _buildInherited,\n          )\n        : ViewModelOwner<{view_model_class}, {args_type}>.value(\n            debugName: '{scope_class}.value',\n            value: external,\n            builder: _buildInherited,\n          );\n  }}\n\n  Widget _buildInherited(BuildContext context, {view_model_class} viewModel) {{\n    return ListenableBuilder(\n      listenable: viewModel,\n      builder: (context, child) => {inherited_class}(\n        viewModel: viewModel,\n        state: viewModel.value,\n        child: child!,\n      ),\n      child: widget.child,\n    );\n  }}\n}}",
+        "class {scope_class} extends StatefulWidget {{\n  const {scope_class}({{\n    super.key,\n    required this.args,\n    required this.create,\n    required this.child,\n  }}) : value = null;\n\n  const {scope_class}.value({{\n    super.key,\n    required {view_model_class} this.value,\n    required this.child,\n  }}) : args = null,\n       create = null;\n\n  final {args_type} Function(BuildContext context)? args;\n  final {view_model_class} Function(BuildContext context, {args_type} args)? create;\n  final {view_model_class}? value;\n  final Widget child;\n\n  static {view_model_class} read(BuildContext context) {{\n    final scope = context\n        .getElementForInheritedWidgetOfExactType<{inherited_class}>()\n        ?.widget as {inherited_class}?;\n    if (scope == null) throw StateError('No {scope_class} found in context.');\n    return scope.viewModel;\n  }}\n\n  static {view_model_class} of(BuildContext context, {{{aspect_param_type} aspect}}) {{\n    final scope = context.dependOnInheritedWidgetOfExactType<{inherited_class}>(\n      aspect: aspect,\n    );\n    if (scope == null) throw StateError('No {scope_class} found in context.');\n    return scope.viewModel;\n  }}\n\n  @override\n  State<{scope_class}> createState() => _{scope_class}State();\n}}\n\nclass _{scope_class}State extends State<{scope_class}> {{\n  {view_model_class}? _viewModel;\n  bool _ownsViewModel = false;\n\n  @override\n  void didChangeDependencies() {{\n    super.didChangeDependencies();\n    if (_viewModel == null) {{\n      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);\n    }}\n  }}\n\n  @override\n  void didUpdateWidget({scope_class} oldWidget) {{\n    super.didUpdateWidget(oldWidget);\n    final external = widget.value;\n    if (external != null) {{\n      _replaceViewModel(external, ownsViewModel: false);\n    }} else if (oldWidget.value != null) {{\n      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);\n    }}\n  }}\n\n  {view_model_class} _resolveViewModel() {{\n    return widget.value ?? _createOwnedViewModel();\n  }}\n\n  {view_model_class} _createOwnedViewModel() {{\n    final argsFactory = widget.args;\n    final create = widget.create;\n    if (argsFactory == null || create == null) {{\n      throw StateError('Owned {scope_class} requires args and create.');\n    }}\n    late final {view_model_class} created;\n    try {{\n      created = create(context, argsFactory(context));\n    }} catch (error, stackTrace) {{\n      Error.throwWithStackTrace(\n        StateError(\n          '{scope_class} failed to create its view model. Check the generated '\n          'scope args/create dependency injection. Original error: $error',\n        ),\n        stackTrace,\n      );\n    }}\n    return created;\n  }}\n\n  void _replaceViewModel(\n    {view_model_class} nextViewModel, {{\n    required bool ownsViewModel,\n    bool notify = true,\n  }}) {{\n    final previous = _viewModel;\n    if (identical(previous, nextViewModel)) {{\n      _ownsViewModel = ownsViewModel;\n      if (notify && mounted) setState(() {{}});\n      return;\n    }}\n    previous?.removeListener(_onViewModelStateChanged);\n    if (_ownsViewModel) previous?.dispose();\n    _viewModel = nextViewModel;\n    _ownsViewModel = ownsViewModel;\n    nextViewModel.addListener(_onViewModelStateChanged);\n    if (ownsViewModel) {{\n      scheduleMicrotask(() {{\n        if (mounted && identical(_viewModel, nextViewModel)) {{\n          nextViewModel.init();\n        }}\n      }});\n    }}\n    if (notify && mounted) setState(() {{}});\n  }}\n\n  void _onViewModelStateChanged() {{\n    if (mounted) setState(() {{}});\n  }}\n\n  @override\n  void dispose() {{\n    final viewModel = _viewModel;\n    viewModel?.removeListener(_onViewModelStateChanged);\n    if (_ownsViewModel) viewModel?.dispose();\n    super.dispose();\n  }}\n\n  @override\n  Widget build(BuildContext context) {{\n    final viewModel = _viewModel;\n    if (viewModel == null) {{\n      throw StateError('{scope_class} built before its view model was initialized.');\n    }}\n    return {inherited_class}(\n      viewModel: viewModel,\n      state: viewModel.value,\n      child: widget.child,\n    );\n  }}\n}}",
     )
 }
 
@@ -400,33 +417,70 @@ fn render_inherited(
     aspect_class: &str,
     state_fields: &[StateFieldSpec],
 ) -> String {
+    let inherited_base = if state_fields.is_empty() {
+        "InheritedModel<Object>".to_owned()
+    } else {
+        format!("InheritedModel<{aspect_class}>")
+    };
+    let dependency_set = if state_fields.is_empty() {
+        "Set<Object>".to_owned()
+    } else {
+        format!("Set<{aspect_class}>")
+    };
     let dependent_body = if state_fields.is_empty() {
         "    return false;\n".to_owned()
     } else {
         let mut checks = String::new();
         for field in state_fields {
             checks.push_str(&format!(
-                "        case {aspect_class}.{name}:\n          if (state.{name} != oldWidget.state.{name}) {{\n            return true;\n          }}\n          break;\n",
+                "        case {aspect_class}.{name}:\n          if (state.{name} != oldWidget.state.{name}) {{\n            return true;\n          }}\n",
                 name = field.name,
             ));
         }
         format!(
-            "    for (final aspect in dependencies) {{\n      switch (aspect) {{\n{checks}        default:\n          break;\n      }}\n    }}\n    return false;\n"
+            "    for (final aspect in dependencies) {{\n      switch (aspect) {{\n{checks}      }}\n    }}\n    return false;\n"
         )
     };
     format!(
-        "class {inherited_class} extends InheritedModel<Object> {{\n  const {inherited_class}({{required this.viewModel, required this.state, required super.child}});\n\n  final {view_model_class} viewModel;\n  final {state_type} state;\n\n  @override\n  bool updateShouldNotify({inherited_class} oldWidget) => state != oldWidget.state;\n\n  @override\n  bool updateShouldNotifyDependent({inherited_class} oldWidget, Set<Object> dependencies) {{\n{dependent_body}  }}\n}}",
+        "class {inherited_class} extends {inherited_base} {{\n  const {inherited_class}({{required this.viewModel, required this.state, required super.child}});\n\n  final {view_model_class} viewModel;\n  final {state_type} state;\n\n  /// Requires {state_type} to implement == and hashCode. Without value equality,\n  /// every emitted state is treated as changed and granular rebuilds degrade to\n  /// full dependent subtree rebuilds.\n  @override\n  bool updateShouldNotify({inherited_class} oldWidget) => state != oldWidget.state;\n\n  @override\n  bool updateShouldNotifyDependent({inherited_class} oldWidget, {dependency_set} dependencies) {{\n{dependent_body}  }}\n}}",
     )
 }
 
-fn render_listener(listener_class: &str, listener_state_class: &str, scope_class: &str) -> String {
+fn render_listener(
+    listener_class: &str,
+    listener_state_class: &str,
+    scope_class: &str,
+    view_model_class: &str,
+) -> String {
     format!(
-        "class {listener_class} extends StatefulWidget {{\n  const {listener_class}({{super.key, required this.listener, required this.child}});\n\n  final void Function(BuildContext context, Object effect) listener;\n  final Widget child;\n\n  @override\n  State<{listener_class}> createState() => {listener_state_class}();\n}}\n\nclass {listener_state_class} extends State<{listener_class}> {{\n  StreamSubscription<Object>? _sub;\n\n  @override\n  void didChangeDependencies() {{\n    super.didChangeDependencies();\n    _sub?.cancel();\n    _sub = {scope_class}.read(context).effects.listen((effect) {{\n      if (mounted) widget.listener(context, effect);\n    }});\n  }}\n\n  @override\n  void dispose() {{\n    _sub?.cancel();\n    super.dispose();\n  }}\n\n  @override\n  Widget build(BuildContext context) => widget.child;\n}}",
+        "/// Listens to one-shot effects from {view_model_class}.\n///\n/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect\n/// payloads through the @ViewModel annotation.\nclass {listener_class} extends StatefulWidget {{\n  const {listener_class}({{super.key, required this.listener, required this.child}});\n\n  final void Function(BuildContext context, Object effect) listener;\n  final Widget child;\n\n  @override\n  State<{listener_class}> createState() => {listener_state_class}();\n}}\n\nclass {listener_state_class} extends State<{listener_class}> {{\n  StreamSubscription<Object>? _sub;\n  {view_model_class}? _viewModel;\n\n  @override\n  void didChangeDependencies() {{\n    super.didChangeDependencies();\n    final nextViewModel = {scope_class}.read(context);\n    if (_viewModel == nextViewModel) return;\n    _sub?.cancel();\n    _viewModel = nextViewModel;\n    _sub = nextViewModel.effects.listen(_onEffect);\n  }}\n\n  void _onEffect(Object effect) {{\n    if (mounted) widget.listener(context, effect);\n  }}\n\n  @override\n  void dispose() {{\n    _sub?.cancel();\n    super.dispose();\n  }}\n\n  @override\n  Widget build(BuildContext context) => widget.child;\n}}",
     )
 }
 
-fn base_getters(_state_fields: &[StateFieldSpec], _args_fields: &[StateFieldSpec]) -> String {
-    String::new()
+fn base_getters(state_fields: &[StateFieldSpec], args_fields: &[StateFieldSpec]) -> String {
+    let mut getters = Vec::new();
+    for field in state_fields {
+        getters.push(format!(
+            "  {ty} get {name} => state.{name};",
+            ty = field.type_source,
+            name = field.name,
+        ));
+    }
+    for field in args_fields {
+        if field.name == "observer" || state_fields.iter().any(|state| state.name == field.name) {
+            continue;
+        }
+        getters.push(format!(
+            "  {ty} get {name} => args.{name};",
+            ty = field.type_source,
+            name = field.name,
+        ));
+    }
+    if getters.is_empty() {
+        String::new()
+    } else {
+        format!("\n{}\n", getters.join("\n"))
+    }
 }
 
 fn render_type(ty: &TypeIr) -> String {

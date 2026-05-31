@@ -1,7 +1,7 @@
 /// Typed Flutter state management runtime and annotations for Dust.
 library;
 
-export 'dart:async' show StreamSubscription;
+export 'dart:async' show scheduleMicrotask, StreamSubscription;
 export 'package:flutter/widgets.dart'
     show
         BuildContext,

@@ -1,4 +1,8 @@
-use std::{fs, path::Path};
+use std::{
+    collections::HashSet,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use dust_dart_emit::{
     apply_rename_rule, balanced_parenthesized, parse_bool_literal, parse_named_arguments,
@@ -93,6 +97,16 @@ pub(crate) fn row_classes(library: &LibraryIr) -> Vec<RowClass<'_>> {
             class,
             config: sqlx_config(&class.configs),
         })
+        .collect()
+}
+
+pub(crate) fn imported_row_names(library: &LibraryIr) -> HashSet<String> {
+    library
+        .imports
+        .iter()
+        .filter_map(|uri| resolve_import_path(library, uri))
+        .filter_map(|path| fs::read_to_string(path).ok())
+        .flat_map(|source| row_names_from_source(&source))
         .collect()
 }
 
@@ -556,6 +570,72 @@ fn parse_rename_rule(source: &str) -> Option<SqlxRenameRule> {
         "screamingKebabCase" => Some(SqlxRenameRule::ScreamingKebab),
         _ => None,
     }
+}
+
+fn resolve_import_path(library: &LibraryIr, uri: &str) -> Option<PathBuf> {
+    if uri.starts_with("dart:") || uri.starts_with("package:flutter/") {
+        return None;
+    }
+    if let Some(rest) = uri.strip_prefix("package:") {
+        let (package, path) = rest.split_once('/')?;
+        if package == library.package_name {
+            return Some(Path::new(&library.package_root).join("lib").join(path));
+        }
+        return None;
+    }
+    let source_dir = Path::new(&library.package_root)
+        .join(&library.source_path)
+        .parent()?
+        .to_path_buf();
+    Some(normalize_path(&source_dir.join(uri)))
+}
+
+fn normalize_path(path: &Path) -> PathBuf {
+    let mut out = PathBuf::new();
+    for component in path.components() {
+        match component {
+            std::path::Component::ParentDir => {
+                out.pop();
+            }
+            std::path::Component::CurDir => {}
+            other => out.push(other.as_os_str()),
+        }
+    }
+    out
+}
+
+fn row_names_from_source(source: &str) -> Vec<String> {
+    let mut names = Vec::new();
+    let mut metadata = String::new();
+    for line in source.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('@') {
+            metadata.push_str(trimmed);
+            continue;
+        }
+        if let Some(name) = class_name_from_line(trimmed) {
+            if metadata.contains("FromRow") {
+                names.push(name.to_owned());
+            }
+            metadata.clear();
+            continue;
+        }
+        if !trimmed.is_empty() && !trimmed.starts_with("//") {
+            metadata.clear();
+        }
+    }
+    names
+}
+
+fn class_name_from_line(line: &str) -> Option<&str> {
+    let rest = line
+        .strip_prefix("class ")
+        .or_else(|| line.strip_prefix("final class "))
+        .or_else(|| line.strip_prefix("abstract class "))
+        .or_else(|| line.strip_prefix("abstract final class "))?;
+    rest.split(|ch: char| !ch.is_ascii_alphanumeric() && ch != '_')
+        .next()
+        .filter(|name| !name.is_empty())
 }
 
 #[cfg(test)]

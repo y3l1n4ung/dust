@@ -17,52 +17,52 @@ enum _CheckoutViewModelAspect { status, shippingAddress, errorMessage, orderId, 
 
 abstract class $CheckoutViewModel extends ViewModelBase<CheckoutState, CheckoutViewModelArgs> {
   $CheckoutViewModel(super.args) : super(initialState: const CheckoutState());
+
+  CheckoutStatus get status => state.status;
+  Object? get shippingAddress => state.shippingAddress;
+  String? get errorMessage => state.errorMessage;
+  String? get orderId => state.orderId;
+  String? get couponCode => state.couponCode;
+  Object? get quote => state.quote;
+  bool get isQuoteLoading => state.isQuoteLoading;
+  ShoppingRepository get repository => args.repository;
 }
 
 class _$CheckoutViewModelProxy {
-  _$CheckoutViewModelProxy(this._context, this._vm);
+  _$CheckoutViewModelProxy(this._context);
 
   final BuildContext _context;
-  final CheckoutViewModel _vm;
 
   CheckoutState get value {
-    CheckoutViewModelScope.of(_context);
-    return _vm.value;
+    return CheckoutViewModelScope.of(_context).value;
   }
 
   CheckoutStatus get status {
-    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.status);
-    return _vm.state.status;
+    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.status).state.status;
   }
 
-  ShippingAddress? get shippingAddress {
-    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.shippingAddress);
-    return _vm.state.shippingAddress;
+  Object? get shippingAddress {
+    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.shippingAddress).state.shippingAddress;
   }
 
   String? get errorMessage {
-    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.errorMessage);
-    return _vm.state.errorMessage;
+    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.errorMessage).state.errorMessage;
   }
 
   String? get orderId {
-    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.orderId);
-    return _vm.state.orderId;
+    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.orderId).state.orderId;
   }
 
   String? get couponCode {
-    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.couponCode);
-    return _vm.state.couponCode;
+    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.couponCode).state.couponCode;
   }
 
-  CheckoutQuote? get quote {
-    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.quote);
-    return _vm.state.quote;
+  Object? get quote {
+    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.quote).state.quote;
   }
 
   bool get isQuoteLoading {
-    CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.isQuoteLoading);
-    return _vm.state.isQuoteLoading;
+    return CheckoutViewModelScope.of(_context, aspect: _CheckoutViewModelAspect.isQuoteLoading).state.isQuoteLoading;
   }
 }
 
@@ -94,7 +94,7 @@ class CheckoutViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static CheckoutViewModel of(BuildContext context, {Object? aspect}) {
+  static CheckoutViewModel of(BuildContext context, {_CheckoutViewModelAspect? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_CheckoutViewModelInherited>(
       aspect: aspect,
     );
@@ -107,92 +107,159 @@ class CheckoutViewModelScope extends StatefulWidget {
 }
 
 class _CheckoutViewModelScopeState extends State<CheckoutViewModelScope> {
+  CheckoutViewModel? _viewModel;
+  bool _ownsViewModel = false;
+
   @override
-  Widget build(BuildContext context) {
-    final external = widget.value;
-    return external == null
-        ? ViewModelOwner<CheckoutViewModel, CheckoutViewModelArgs>(
-            debugName: 'CheckoutViewModelScope',
-            args: widget.args!,
-            create: widget.create!,
-            builder: _buildInherited,
-          )
-        : ViewModelOwner<CheckoutViewModel, CheckoutViewModelArgs>.value(
-            debugName: 'CheckoutViewModelScope.value',
-            value: external,
-            builder: _buildInherited,
-          );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_viewModel == null) {
+      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    }
   }
 
-  Widget _buildInherited(BuildContext context, CheckoutViewModel viewModel) {
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, child) => _CheckoutViewModelInherited(
-        viewModel: viewModel,
-        state: viewModel.value,
-        child: child!,
-      ),
+  @override
+  void didUpdateWidget(CheckoutViewModelScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false);
+    } else if (oldWidget.value != null) {
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    }
+  }
+
+  CheckoutViewModel _resolveViewModel() {
+    return widget.value ?? _createOwnedViewModel();
+  }
+
+  CheckoutViewModel _createOwnedViewModel() {
+    final argsFactory = widget.args;
+    final create = widget.create;
+    if (argsFactory == null || create == null) {
+      throw StateError('Owned CheckoutViewModelScope requires args and create.');
+    }
+    late final CheckoutViewModel created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        StateError(
+          'CheckoutViewModelScope failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
+    return created;
+  }
+
+  void _replaceViewModel(
+    CheckoutViewModel nextViewModel, {
+    required bool ownsViewModel,
+    bool notify = true,
+  }) {
+    final previous = _viewModel;
+    if (identical(previous, nextViewModel)) {
+      _ownsViewModel = ownsViewModel;
+      if (notify && mounted) setState(() {});
+      return;
+    }
+    previous?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) previous?.dispose();
+    _viewModel = nextViewModel;
+    _ownsViewModel = ownsViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    if (ownsViewModel) {
+      scheduleMicrotask(() {
+        if (mounted && identical(_viewModel, nextViewModel)) {
+          nextViewModel.init();
+        }
+      });
+    }
+    if (notify && mounted) setState(() {});
+  }
+
+  void _onViewModelStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    final viewModel = _viewModel;
+    viewModel?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) viewModel?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = _viewModel;
+    if (viewModel == null) {
+      throw StateError('CheckoutViewModelScope built before its view model was initialized.');
+    }
+    return _CheckoutViewModelInherited(
+      viewModel: viewModel,
+      state: viewModel.value,
       child: widget.child,
     );
   }
 }
 
-class _CheckoutViewModelInherited extends InheritedModel<Object> {
+class _CheckoutViewModelInherited extends InheritedModel<_CheckoutViewModelAspect> {
   const _CheckoutViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final CheckoutViewModel viewModel;
   final CheckoutState state;
 
+  /// Requires CheckoutState to implement == and hashCode. Without value equality,
+  /// every emitted state is treated as changed and granular rebuilds degrade to
+  /// full dependent subtree rebuilds.
   @override
   bool updateShouldNotify(_CheckoutViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_CheckoutViewModelInherited oldWidget, Set<Object> dependencies) {
+  bool updateShouldNotifyDependent(_CheckoutViewModelInherited oldWidget, Set<_CheckoutViewModelAspect> dependencies) {
     for (final aspect in dependencies) {
       switch (aspect) {
         case _CheckoutViewModelAspect.status:
           if (state.status != oldWidget.state.status) {
             return true;
           }
-          break;
         case _CheckoutViewModelAspect.shippingAddress:
           if (state.shippingAddress != oldWidget.state.shippingAddress) {
             return true;
           }
-          break;
         case _CheckoutViewModelAspect.errorMessage:
           if (state.errorMessage != oldWidget.state.errorMessage) {
             return true;
           }
-          break;
         case _CheckoutViewModelAspect.orderId:
           if (state.orderId != oldWidget.state.orderId) {
             return true;
           }
-          break;
         case _CheckoutViewModelAspect.couponCode:
           if (state.couponCode != oldWidget.state.couponCode) {
             return true;
           }
-          break;
         case _CheckoutViewModelAspect.quote:
           if (state.quote != oldWidget.state.quote) {
             return true;
           }
-          break;
         case _CheckoutViewModelAspect.isQuoteLoading:
           if (state.isQuoteLoading != oldWidget.state.isQuoteLoading) {
             return true;
           }
-          break;
-        default:
-          break;
       }
     }
     return false;
   }
 }
 
+/// Listens to one-shot effects from CheckoutViewModel.
+///
+/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
+/// payloads through the @ViewModel annotation.
 class CheckoutViewModelListener extends StatefulWidget {
   const CheckoutViewModelListener({super.key, required this.listener, required this.child});
 
@@ -205,14 +272,20 @@ class CheckoutViewModelListener extends StatefulWidget {
 
 class _CheckoutViewModelListenerState extends State<CheckoutViewModelListener> {
   StreamSubscription<Object>? _sub;
+  CheckoutViewModel? _viewModel;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final nextViewModel = CheckoutViewModelScope.read(context);
+    if (_viewModel == nextViewModel) return;
     _sub?.cancel();
-    _sub = CheckoutViewModelScope.read(context).effects.listen((effect) {
-      if (mounted) widget.listener(context, effect);
-    });
+    _viewModel = nextViewModel;
+    _sub = nextViewModel.effects.listen(_onEffect);
+  }
+
+  void _onEffect(Object effect) {
+    if (mounted) widget.listener(context, effect);
   }
 
   @override
@@ -226,10 +299,8 @@ class _CheckoutViewModelListenerState extends State<CheckoutViewModelListener> {
 }
 
 extension CheckoutViewModelBuildContext on BuildContext {
-  CheckoutViewModel get checkoutViewModel => CheckoutViewModelScope.of(this);
-
   _$CheckoutViewModelProxy watchCheckoutViewModel() {
-    return _$CheckoutViewModelProxy(this, CheckoutViewModelScope.read(this));
+    return _$CheckoutViewModelProxy(this);
   }
 
   CheckoutViewModel readCheckoutViewModel() => CheckoutViewModelScope.read(this);

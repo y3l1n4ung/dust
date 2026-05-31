@@ -17,27 +17,27 @@ enum _WishlistViewModelAspect { items, isLoading }
 
 abstract class $WishlistViewModel extends ViewModelBase<WishlistState, WishlistViewModelArgs> {
   $WishlistViewModel(super.args) : super(initialState: const WishlistState());
+
+  List<Object?> get items => state.items;
+  bool get isLoading => state.isLoading;
+  StorageService get storage => args.storage;
 }
 
 class _$WishlistViewModelProxy {
-  _$WishlistViewModelProxy(this._context, this._vm);
+  _$WishlistViewModelProxy(this._context);
 
   final BuildContext _context;
-  final WishlistViewModel _vm;
 
   WishlistState get value {
-    WishlistViewModelScope.of(_context);
-    return _vm.value;
+    return WishlistViewModelScope.of(_context).value;
   }
 
-  List<WishlistItem> get items {
-    WishlistViewModelScope.of(_context, aspect: _WishlistViewModelAspect.items);
-    return _vm.state.items;
+  List<Object?> get items {
+    return WishlistViewModelScope.of(_context, aspect: _WishlistViewModelAspect.items).state.items;
   }
 
   bool get isLoading {
-    WishlistViewModelScope.of(_context, aspect: _WishlistViewModelAspect.isLoading);
-    return _vm.state.isLoading;
+    return WishlistViewModelScope.of(_context, aspect: _WishlistViewModelAspect.isLoading).state.isLoading;
   }
 }
 
@@ -69,7 +69,7 @@ class WishlistViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static WishlistViewModel of(BuildContext context, {Object? aspect}) {
+  static WishlistViewModel of(BuildContext context, {_WishlistViewModelAspect? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_WishlistViewModelInherited>(
       aspect: aspect,
     );
@@ -82,67 +82,139 @@ class WishlistViewModelScope extends StatefulWidget {
 }
 
 class _WishlistViewModelScopeState extends State<WishlistViewModelScope> {
+  WishlistViewModel? _viewModel;
+  bool _ownsViewModel = false;
+
   @override
-  Widget build(BuildContext context) {
-    final external = widget.value;
-    return external == null
-        ? ViewModelOwner<WishlistViewModel, WishlistViewModelArgs>(
-            debugName: 'WishlistViewModelScope',
-            args: widget.args!,
-            create: widget.create!,
-            builder: _buildInherited,
-          )
-        : ViewModelOwner<WishlistViewModel, WishlistViewModelArgs>.value(
-            debugName: 'WishlistViewModelScope.value',
-            value: external,
-            builder: _buildInherited,
-          );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_viewModel == null) {
+      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    }
   }
 
-  Widget _buildInherited(BuildContext context, WishlistViewModel viewModel) {
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, child) => _WishlistViewModelInherited(
-        viewModel: viewModel,
-        state: viewModel.value,
-        child: child!,
-      ),
+  @override
+  void didUpdateWidget(WishlistViewModelScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false);
+    } else if (oldWidget.value != null) {
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    }
+  }
+
+  WishlistViewModel _resolveViewModel() {
+    return widget.value ?? _createOwnedViewModel();
+  }
+
+  WishlistViewModel _createOwnedViewModel() {
+    final argsFactory = widget.args;
+    final create = widget.create;
+    if (argsFactory == null || create == null) {
+      throw StateError('Owned WishlistViewModelScope requires args and create.');
+    }
+    late final WishlistViewModel created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        StateError(
+          'WishlistViewModelScope failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
+    return created;
+  }
+
+  void _replaceViewModel(
+    WishlistViewModel nextViewModel, {
+    required bool ownsViewModel,
+    bool notify = true,
+  }) {
+    final previous = _viewModel;
+    if (identical(previous, nextViewModel)) {
+      _ownsViewModel = ownsViewModel;
+      if (notify && mounted) setState(() {});
+      return;
+    }
+    previous?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) previous?.dispose();
+    _viewModel = nextViewModel;
+    _ownsViewModel = ownsViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    if (ownsViewModel) {
+      scheduleMicrotask(() {
+        if (mounted && identical(_viewModel, nextViewModel)) {
+          nextViewModel.init();
+        }
+      });
+    }
+    if (notify && mounted) setState(() {});
+  }
+
+  void _onViewModelStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    final viewModel = _viewModel;
+    viewModel?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) viewModel?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = _viewModel;
+    if (viewModel == null) {
+      throw StateError('WishlistViewModelScope built before its view model was initialized.');
+    }
+    return _WishlistViewModelInherited(
+      viewModel: viewModel,
+      state: viewModel.value,
       child: widget.child,
     );
   }
 }
 
-class _WishlistViewModelInherited extends InheritedModel<Object> {
+class _WishlistViewModelInherited extends InheritedModel<_WishlistViewModelAspect> {
   const _WishlistViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final WishlistViewModel viewModel;
   final WishlistState state;
 
+  /// Requires WishlistState to implement == and hashCode. Without value equality,
+  /// every emitted state is treated as changed and granular rebuilds degrade to
+  /// full dependent subtree rebuilds.
   @override
   bool updateShouldNotify(_WishlistViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_WishlistViewModelInherited oldWidget, Set<Object> dependencies) {
+  bool updateShouldNotifyDependent(_WishlistViewModelInherited oldWidget, Set<_WishlistViewModelAspect> dependencies) {
     for (final aspect in dependencies) {
       switch (aspect) {
         case _WishlistViewModelAspect.items:
           if (state.items != oldWidget.state.items) {
             return true;
           }
-          break;
         case _WishlistViewModelAspect.isLoading:
           if (state.isLoading != oldWidget.state.isLoading) {
             return true;
           }
-          break;
-        default:
-          break;
       }
     }
     return false;
   }
 }
 
+/// Listens to one-shot effects from WishlistViewModel.
+///
+/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
+/// payloads through the @ViewModel annotation.
 class WishlistViewModelListener extends StatefulWidget {
   const WishlistViewModelListener({super.key, required this.listener, required this.child});
 
@@ -155,14 +227,20 @@ class WishlistViewModelListener extends StatefulWidget {
 
 class _WishlistViewModelListenerState extends State<WishlistViewModelListener> {
   StreamSubscription<Object>? _sub;
+  WishlistViewModel? _viewModel;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final nextViewModel = WishlistViewModelScope.read(context);
+    if (_viewModel == nextViewModel) return;
     _sub?.cancel();
-    _sub = WishlistViewModelScope.read(context).effects.listen((effect) {
-      if (mounted) widget.listener(context, effect);
-    });
+    _viewModel = nextViewModel;
+    _sub = nextViewModel.effects.listen(_onEffect);
+  }
+
+  void _onEffect(Object effect) {
+    if (mounted) widget.listener(context, effect);
   }
 
   @override
@@ -176,10 +254,8 @@ class _WishlistViewModelListenerState extends State<WishlistViewModelListener> {
 }
 
 extension WishlistViewModelBuildContext on BuildContext {
-  WishlistViewModel get wishlistViewModel => WishlistViewModelScope.of(this);
-
   _$WishlistViewModelProxy watchWishlistViewModel() {
-    return _$WishlistViewModelProxy(this, WishlistViewModelScope.read(this));
+    return _$WishlistViewModelProxy(this);
   }
 
   WishlistViewModel readWishlistViewModel() => WishlistViewModelScope.read(this);

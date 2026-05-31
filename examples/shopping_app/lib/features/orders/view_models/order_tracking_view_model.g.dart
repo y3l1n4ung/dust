@@ -17,37 +17,37 @@ enum _OrderTrackingViewModelAspect { orderId, status, events, errorMessage }
 
 abstract class $OrderTrackingViewModel extends ViewModelBase<OrderTrackingState, OrderTrackingViewModelArgs> {
   $OrderTrackingViewModel(super.args) : super(initialState: const OrderTrackingState());
+
+  String? get orderId => state.orderId;
+  OrderTrackingStatus get status => state.status;
+  List<Object?> get events => state.events;
+  String? get errorMessage => state.errorMessage;
+  ShoppingRepository get repository => args.repository;
 }
 
 class _$OrderTrackingViewModelProxy {
-  _$OrderTrackingViewModelProxy(this._context, this._vm);
+  _$OrderTrackingViewModelProxy(this._context);
 
   final BuildContext _context;
-  final OrderTrackingViewModel _vm;
 
   OrderTrackingState get value {
-    OrderTrackingViewModelScope.of(_context);
-    return _vm.value;
+    return OrderTrackingViewModelScope.of(_context).value;
   }
 
   String? get orderId {
-    OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.orderId);
-    return _vm.state.orderId;
+    return OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.orderId).state.orderId;
   }
 
   OrderTrackingStatus get status {
-    OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.status);
-    return _vm.state.status;
+    return OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.status).state.status;
   }
 
   List<Object?> get events {
-    OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.events);
-    return _vm.state.events;
+    return OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.events).state.events;
   }
 
   String? get errorMessage {
-    OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.errorMessage);
-    return _vm.state.errorMessage;
+    return OrderTrackingViewModelScope.of(_context, aspect: _OrderTrackingViewModelAspect.errorMessage).state.errorMessage;
   }
 }
 
@@ -79,7 +79,7 @@ class OrderTrackingViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static OrderTrackingViewModel of(BuildContext context, {Object? aspect}) {
+  static OrderTrackingViewModel of(BuildContext context, {_OrderTrackingViewModelAspect? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_OrderTrackingViewModelInherited>(
       aspect: aspect,
     );
@@ -92,77 +92,147 @@ class OrderTrackingViewModelScope extends StatefulWidget {
 }
 
 class _OrderTrackingViewModelScopeState extends State<OrderTrackingViewModelScope> {
+  OrderTrackingViewModel? _viewModel;
+  bool _ownsViewModel = false;
+
   @override
-  Widget build(BuildContext context) {
-    final external = widget.value;
-    return external == null
-        ? ViewModelOwner<OrderTrackingViewModel, OrderTrackingViewModelArgs>(
-            debugName: 'OrderTrackingViewModelScope',
-            args: widget.args!,
-            create: widget.create!,
-            builder: _buildInherited,
-          )
-        : ViewModelOwner<OrderTrackingViewModel, OrderTrackingViewModelArgs>.value(
-            debugName: 'OrderTrackingViewModelScope.value',
-            value: external,
-            builder: _buildInherited,
-          );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_viewModel == null) {
+      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    }
   }
 
-  Widget _buildInherited(BuildContext context, OrderTrackingViewModel viewModel) {
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, child) => _OrderTrackingViewModelInherited(
-        viewModel: viewModel,
-        state: viewModel.value,
-        child: child!,
-      ),
+  @override
+  void didUpdateWidget(OrderTrackingViewModelScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false);
+    } else if (oldWidget.value != null) {
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    }
+  }
+
+  OrderTrackingViewModel _resolveViewModel() {
+    return widget.value ?? _createOwnedViewModel();
+  }
+
+  OrderTrackingViewModel _createOwnedViewModel() {
+    final argsFactory = widget.args;
+    final create = widget.create;
+    if (argsFactory == null || create == null) {
+      throw StateError('Owned OrderTrackingViewModelScope requires args and create.');
+    }
+    late final OrderTrackingViewModel created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        StateError(
+          'OrderTrackingViewModelScope failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
+    return created;
+  }
+
+  void _replaceViewModel(
+    OrderTrackingViewModel nextViewModel, {
+    required bool ownsViewModel,
+    bool notify = true,
+  }) {
+    final previous = _viewModel;
+    if (identical(previous, nextViewModel)) {
+      _ownsViewModel = ownsViewModel;
+      if (notify && mounted) setState(() {});
+      return;
+    }
+    previous?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) previous?.dispose();
+    _viewModel = nextViewModel;
+    _ownsViewModel = ownsViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    if (ownsViewModel) {
+      scheduleMicrotask(() {
+        if (mounted && identical(_viewModel, nextViewModel)) {
+          nextViewModel.init();
+        }
+      });
+    }
+    if (notify && mounted) setState(() {});
+  }
+
+  void _onViewModelStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    final viewModel = _viewModel;
+    viewModel?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) viewModel?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = _viewModel;
+    if (viewModel == null) {
+      throw StateError('OrderTrackingViewModelScope built before its view model was initialized.');
+    }
+    return _OrderTrackingViewModelInherited(
+      viewModel: viewModel,
+      state: viewModel.value,
       child: widget.child,
     );
   }
 }
 
-class _OrderTrackingViewModelInherited extends InheritedModel<Object> {
+class _OrderTrackingViewModelInherited extends InheritedModel<_OrderTrackingViewModelAspect> {
   const _OrderTrackingViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final OrderTrackingViewModel viewModel;
   final OrderTrackingState state;
 
+  /// Requires OrderTrackingState to implement == and hashCode. Without value equality,
+  /// every emitted state is treated as changed and granular rebuilds degrade to
+  /// full dependent subtree rebuilds.
   @override
   bool updateShouldNotify(_OrderTrackingViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_OrderTrackingViewModelInherited oldWidget, Set<Object> dependencies) {
+  bool updateShouldNotifyDependent(_OrderTrackingViewModelInherited oldWidget, Set<_OrderTrackingViewModelAspect> dependencies) {
     for (final aspect in dependencies) {
       switch (aspect) {
         case _OrderTrackingViewModelAspect.orderId:
           if (state.orderId != oldWidget.state.orderId) {
             return true;
           }
-          break;
         case _OrderTrackingViewModelAspect.status:
           if (state.status != oldWidget.state.status) {
             return true;
           }
-          break;
         case _OrderTrackingViewModelAspect.events:
           if (state.events != oldWidget.state.events) {
             return true;
           }
-          break;
         case _OrderTrackingViewModelAspect.errorMessage:
           if (state.errorMessage != oldWidget.state.errorMessage) {
             return true;
           }
-          break;
-        default:
-          break;
       }
     }
     return false;
   }
 }
 
+/// Listens to one-shot effects from OrderTrackingViewModel.
+///
+/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
+/// payloads through the @ViewModel annotation.
 class OrderTrackingViewModelListener extends StatefulWidget {
   const OrderTrackingViewModelListener({super.key, required this.listener, required this.child});
 
@@ -175,14 +245,20 @@ class OrderTrackingViewModelListener extends StatefulWidget {
 
 class _OrderTrackingViewModelListenerState extends State<OrderTrackingViewModelListener> {
   StreamSubscription<Object>? _sub;
+  OrderTrackingViewModel? _viewModel;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final nextViewModel = OrderTrackingViewModelScope.read(context);
+    if (_viewModel == nextViewModel) return;
     _sub?.cancel();
-    _sub = OrderTrackingViewModelScope.read(context).effects.listen((effect) {
-      if (mounted) widget.listener(context, effect);
-    });
+    _viewModel = nextViewModel;
+    _sub = nextViewModel.effects.listen(_onEffect);
+  }
+
+  void _onEffect(Object effect) {
+    if (mounted) widget.listener(context, effect);
   }
 
   @override
@@ -196,10 +272,8 @@ class _OrderTrackingViewModelListenerState extends State<OrderTrackingViewModelL
 }
 
 extension OrderTrackingViewModelBuildContext on BuildContext {
-  OrderTrackingViewModel get orderTrackingViewModel => OrderTrackingViewModelScope.of(this);
-
   _$OrderTrackingViewModelProxy watchOrderTrackingViewModel() {
-    return _$OrderTrackingViewModelProxy(this, OrderTrackingViewModelScope.read(this));
+    return _$OrderTrackingViewModelProxy(this);
   }
 
   OrderTrackingViewModel readOrderTrackingViewModel() => OrderTrackingViewModelScope.read(this);

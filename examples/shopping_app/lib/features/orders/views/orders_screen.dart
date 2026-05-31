@@ -11,7 +11,7 @@ class OrdersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ordersState = context.ordersViewModel.state;
+    final ordersState = context.watchOrdersViewModel().value;
 
     return Scaffold(
       appBar: AppBar(title: const Text('My Orders')),

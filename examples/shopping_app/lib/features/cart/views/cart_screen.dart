@@ -36,8 +36,7 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.cartViewModel;
-    final state = viewModel.state;
+    final state = context.watchCartViewModel().value;
 
     return CartViewModelListener(
       listener: (context, effect) {

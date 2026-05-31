@@ -54,22 +54,23 @@ enum _AppViewModelAspect { backendMode }
 
 abstract class $AppViewModel extends ViewModelBase<AppState, AppViewModelArgs> {
   $AppViewModel(super.args) : super(initialState: const AppState());
+
+  AppBackendMode get backendMode => state.backendMode;
+  ShoppingRepository get repository => args.repository;
+  StorageService get storage => args.storage;
 }
 
 class _$AppViewModelProxy {
-  _$AppViewModelProxy(this._context, this._vm);
+  _$AppViewModelProxy(this._context);
 
   final BuildContext _context;
-  final AppViewModel _vm;
 
   AppState get value {
-    AppViewModelScope.of(_context);
-    return _vm.value;
+    return AppViewModelScope.of(_context).value;
   }
 
   AppBackendMode get backendMode {
-    AppViewModelScope.of(_context, aspect: _AppViewModelAspect.backendMode);
-    return _vm.state.backendMode;
+    return AppViewModelScope.of(_context, aspect: _AppViewModelAspect.backendMode).state.backendMode;
   }
 }
 
@@ -101,7 +102,7 @@ class AppViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static AppViewModel of(BuildContext context, {Object? aspect}) {
+  static AppViewModel of(BuildContext context, {_AppViewModelAspect? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_AppViewModelInherited>(
       aspect: aspect,
     );
@@ -114,62 +115,135 @@ class AppViewModelScope extends StatefulWidget {
 }
 
 class _AppViewModelScopeState extends State<AppViewModelScope> {
+  AppViewModel? _viewModel;
+  bool _ownsViewModel = false;
+
   @override
-  Widget build(BuildContext context) {
-    final external = widget.value;
-    return external == null
-        ? ViewModelOwner<AppViewModel, AppViewModelArgs>(
-            debugName: 'AppViewModelScope',
-            args: widget.args!,
-            create: widget.create!,
-            builder: _buildInherited,
-          )
-        : ViewModelOwner<AppViewModel, AppViewModelArgs>.value(
-            debugName: 'AppViewModelScope.value',
-            value: external,
-            builder: _buildInherited,
-          );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_viewModel == null) {
+      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    }
   }
 
-  Widget _buildInherited(BuildContext context, AppViewModel viewModel) {
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, child) => _AppViewModelInherited(
-        viewModel: viewModel,
-        state: viewModel.value,
-        child: child!,
-      ),
+  @override
+  void didUpdateWidget(AppViewModelScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false);
+    } else if (oldWidget.value != null) {
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    }
+  }
+
+  AppViewModel _resolveViewModel() {
+    return widget.value ?? _createOwnedViewModel();
+  }
+
+  AppViewModel _createOwnedViewModel() {
+    final argsFactory = widget.args;
+    final create = widget.create;
+    if (argsFactory == null || create == null) {
+      throw StateError('Owned AppViewModelScope requires args and create.');
+    }
+    late final AppViewModel created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        StateError(
+          'AppViewModelScope failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
+    return created;
+  }
+
+  void _replaceViewModel(
+    AppViewModel nextViewModel, {
+    required bool ownsViewModel,
+    bool notify = true,
+  }) {
+    final previous = _viewModel;
+    if (identical(previous, nextViewModel)) {
+      _ownsViewModel = ownsViewModel;
+      if (notify && mounted) setState(() {});
+      return;
+    }
+    previous?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) previous?.dispose();
+    _viewModel = nextViewModel;
+    _ownsViewModel = ownsViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    if (ownsViewModel) {
+      scheduleMicrotask(() {
+        if (mounted && identical(_viewModel, nextViewModel)) {
+          nextViewModel.init();
+        }
+      });
+    }
+    if (notify && mounted) setState(() {});
+  }
+
+  void _onViewModelStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    final viewModel = _viewModel;
+    viewModel?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) viewModel?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = _viewModel;
+    if (viewModel == null) {
+      throw StateError('AppViewModelScope built before its view model was initialized.');
+    }
+    return _AppViewModelInherited(
+      viewModel: viewModel,
+      state: viewModel.value,
       child: widget.child,
     );
   }
 }
 
-class _AppViewModelInherited extends InheritedModel<Object> {
+class _AppViewModelInherited extends InheritedModel<_AppViewModelAspect> {
   const _AppViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final AppViewModel viewModel;
   final AppState state;
 
+  /// Requires AppState to implement == and hashCode. Without value equality,
+  /// every emitted state is treated as changed and granular rebuilds degrade to
+  /// full dependent subtree rebuilds.
   @override
   bool updateShouldNotify(_AppViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_AppViewModelInherited oldWidget, Set<Object> dependencies) {
+  bool updateShouldNotifyDependent(_AppViewModelInherited oldWidget, Set<_AppViewModelAspect> dependencies) {
     for (final aspect in dependencies) {
       switch (aspect) {
         case _AppViewModelAspect.backendMode:
           if (state.backendMode != oldWidget.state.backendMode) {
             return true;
           }
-          break;
-        default:
-          break;
       }
     }
     return false;
   }
 }
 
+/// Listens to one-shot effects from AppViewModel.
+///
+/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
+/// payloads through the @ViewModel annotation.
 class AppViewModelListener extends StatefulWidget {
   const AppViewModelListener({super.key, required this.listener, required this.child});
 
@@ -182,14 +256,20 @@ class AppViewModelListener extends StatefulWidget {
 
 class _AppViewModelListenerState extends State<AppViewModelListener> {
   StreamSubscription<Object>? _sub;
+  AppViewModel? _viewModel;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final nextViewModel = AppViewModelScope.read(context);
+    if (_viewModel == nextViewModel) return;
     _sub?.cancel();
-    _sub = AppViewModelScope.read(context).effects.listen((effect) {
-      if (mounted) widget.listener(context, effect);
-    });
+    _viewModel = nextViewModel;
+    _sub = nextViewModel.effects.listen(_onEffect);
+  }
+
+  void _onEffect(Object effect) {
+    if (mounted) widget.listener(context, effect);
   }
 
   @override
@@ -203,10 +283,8 @@ class _AppViewModelListenerState extends State<AppViewModelListener> {
 }
 
 extension AppViewModelBuildContext on BuildContext {
-  AppViewModel get appViewModel => AppViewModelScope.of(this);
-
   _$AppViewModelProxy watchAppViewModel() {
-    return _$AppViewModelProxy(this, AppViewModelScope.read(this));
+    return _$AppViewModelProxy(this);
   }
 
   AppViewModel readAppViewModel() => AppViewModelScope.read(this);

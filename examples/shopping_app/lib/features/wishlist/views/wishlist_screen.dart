@@ -12,7 +12,7 @@ class WishlistScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.wishlistViewModel.state;
+    final state = context.watchWishlistViewModel().value;
 
     return WishlistViewModelListener(
       listener: (context, effect) {

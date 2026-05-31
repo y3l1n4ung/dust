@@ -17,32 +17,32 @@ enum _ShoppingChatViewModelAspect { messages, status, errorMessage }
 
 abstract class $ShoppingChatViewModel extends ViewModelBase<ChatState, ShoppingChatViewModelArgs> {
   $ShoppingChatViewModel(super.args) : super(initialState: const ChatState());
+
+  List<Object?> get messages => state.messages;
+  ChatStatus get status => state.status;
+  String? get errorMessage => state.errorMessage;
+  ShoppingRepository get repository => args.repository;
 }
 
 class _$ShoppingChatViewModelProxy {
-  _$ShoppingChatViewModelProxy(this._context, this._vm);
+  _$ShoppingChatViewModelProxy(this._context);
 
   final BuildContext _context;
-  final ShoppingChatViewModel _vm;
 
   ChatState get value {
-    ShoppingChatViewModelScope.of(_context);
-    return _vm.value;
+    return ShoppingChatViewModelScope.of(_context).value;
   }
 
   List<Object?> get messages {
-    ShoppingChatViewModelScope.of(_context, aspect: _ShoppingChatViewModelAspect.messages);
-    return _vm.state.messages;
+    return ShoppingChatViewModelScope.of(_context, aspect: _ShoppingChatViewModelAspect.messages).state.messages;
   }
 
   ChatStatus get status {
-    ShoppingChatViewModelScope.of(_context, aspect: _ShoppingChatViewModelAspect.status);
-    return _vm.state.status;
+    return ShoppingChatViewModelScope.of(_context, aspect: _ShoppingChatViewModelAspect.status).state.status;
   }
 
   String? get errorMessage {
-    ShoppingChatViewModelScope.of(_context, aspect: _ShoppingChatViewModelAspect.errorMessage);
-    return _vm.state.errorMessage;
+    return ShoppingChatViewModelScope.of(_context, aspect: _ShoppingChatViewModelAspect.errorMessage).state.errorMessage;
   }
 }
 
@@ -74,7 +74,7 @@ class ShoppingChatViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static ShoppingChatViewModel of(BuildContext context, {Object? aspect}) {
+  static ShoppingChatViewModel of(BuildContext context, {_ShoppingChatViewModelAspect? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_ShoppingChatViewModelInherited>(
       aspect: aspect,
     );
@@ -87,72 +87,143 @@ class ShoppingChatViewModelScope extends StatefulWidget {
 }
 
 class _ShoppingChatViewModelScopeState extends State<ShoppingChatViewModelScope> {
+  ShoppingChatViewModel? _viewModel;
+  bool _ownsViewModel = false;
+
   @override
-  Widget build(BuildContext context) {
-    final external = widget.value;
-    return external == null
-        ? ViewModelOwner<ShoppingChatViewModel, ShoppingChatViewModelArgs>(
-            debugName: 'ShoppingChatViewModelScope',
-            args: widget.args!,
-            create: widget.create!,
-            builder: _buildInherited,
-          )
-        : ViewModelOwner<ShoppingChatViewModel, ShoppingChatViewModelArgs>.value(
-            debugName: 'ShoppingChatViewModelScope.value',
-            value: external,
-            builder: _buildInherited,
-          );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_viewModel == null) {
+      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    }
   }
 
-  Widget _buildInherited(BuildContext context, ShoppingChatViewModel viewModel) {
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, child) => _ShoppingChatViewModelInherited(
-        viewModel: viewModel,
-        state: viewModel.value,
-        child: child!,
-      ),
+  @override
+  void didUpdateWidget(ShoppingChatViewModelScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false);
+    } else if (oldWidget.value != null) {
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    }
+  }
+
+  ShoppingChatViewModel _resolveViewModel() {
+    return widget.value ?? _createOwnedViewModel();
+  }
+
+  ShoppingChatViewModel _createOwnedViewModel() {
+    final argsFactory = widget.args;
+    final create = widget.create;
+    if (argsFactory == null || create == null) {
+      throw StateError('Owned ShoppingChatViewModelScope requires args and create.');
+    }
+    late final ShoppingChatViewModel created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        StateError(
+          'ShoppingChatViewModelScope failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
+    return created;
+  }
+
+  void _replaceViewModel(
+    ShoppingChatViewModel nextViewModel, {
+    required bool ownsViewModel,
+    bool notify = true,
+  }) {
+    final previous = _viewModel;
+    if (identical(previous, nextViewModel)) {
+      _ownsViewModel = ownsViewModel;
+      if (notify && mounted) setState(() {});
+      return;
+    }
+    previous?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) previous?.dispose();
+    _viewModel = nextViewModel;
+    _ownsViewModel = ownsViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    if (ownsViewModel) {
+      scheduleMicrotask(() {
+        if (mounted && identical(_viewModel, nextViewModel)) {
+          nextViewModel.init();
+        }
+      });
+    }
+    if (notify && mounted) setState(() {});
+  }
+
+  void _onViewModelStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    final viewModel = _viewModel;
+    viewModel?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) viewModel?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = _viewModel;
+    if (viewModel == null) {
+      throw StateError('ShoppingChatViewModelScope built before its view model was initialized.');
+    }
+    return _ShoppingChatViewModelInherited(
+      viewModel: viewModel,
+      state: viewModel.value,
       child: widget.child,
     );
   }
 }
 
-class _ShoppingChatViewModelInherited extends InheritedModel<Object> {
+class _ShoppingChatViewModelInherited extends InheritedModel<_ShoppingChatViewModelAspect> {
   const _ShoppingChatViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final ShoppingChatViewModel viewModel;
   final ChatState state;
 
+  /// Requires ChatState to implement == and hashCode. Without value equality,
+  /// every emitted state is treated as changed and granular rebuilds degrade to
+  /// full dependent subtree rebuilds.
   @override
   bool updateShouldNotify(_ShoppingChatViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_ShoppingChatViewModelInherited oldWidget, Set<Object> dependencies) {
+  bool updateShouldNotifyDependent(_ShoppingChatViewModelInherited oldWidget, Set<_ShoppingChatViewModelAspect> dependencies) {
     for (final aspect in dependencies) {
       switch (aspect) {
         case _ShoppingChatViewModelAspect.messages:
           if (state.messages != oldWidget.state.messages) {
             return true;
           }
-          break;
         case _ShoppingChatViewModelAspect.status:
           if (state.status != oldWidget.state.status) {
             return true;
           }
-          break;
         case _ShoppingChatViewModelAspect.errorMessage:
           if (state.errorMessage != oldWidget.state.errorMessage) {
             return true;
           }
-          break;
-        default:
-          break;
       }
     }
     return false;
   }
 }
 
+/// Listens to one-shot effects from ShoppingChatViewModel.
+///
+/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
+/// payloads through the @ViewModel annotation.
 class ShoppingChatViewModelListener extends StatefulWidget {
   const ShoppingChatViewModelListener({super.key, required this.listener, required this.child});
 
@@ -165,14 +236,20 @@ class ShoppingChatViewModelListener extends StatefulWidget {
 
 class _ShoppingChatViewModelListenerState extends State<ShoppingChatViewModelListener> {
   StreamSubscription<Object>? _sub;
+  ShoppingChatViewModel? _viewModel;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final nextViewModel = ShoppingChatViewModelScope.read(context);
+    if (_viewModel == nextViewModel) return;
     _sub?.cancel();
-    _sub = ShoppingChatViewModelScope.read(context).effects.listen((effect) {
-      if (mounted) widget.listener(context, effect);
-    });
+    _viewModel = nextViewModel;
+    _sub = nextViewModel.effects.listen(_onEffect);
+  }
+
+  void _onEffect(Object effect) {
+    if (mounted) widget.listener(context, effect);
   }
 
   @override
@@ -186,10 +263,8 @@ class _ShoppingChatViewModelListenerState extends State<ShoppingChatViewModelLis
 }
 
 extension ShoppingChatViewModelBuildContext on BuildContext {
-  ShoppingChatViewModel get shoppingChatViewModel => ShoppingChatViewModelScope.of(this);
-
   _$ShoppingChatViewModelProxy watchShoppingChatViewModel() {
-    return _$ShoppingChatViewModelProxy(this, ShoppingChatViewModelScope.read(this));
+    return _$ShoppingChatViewModelProxy(this);
   }
 
   ShoppingChatViewModel readShoppingChatViewModel() => ShoppingChatViewModelScope.read(this);

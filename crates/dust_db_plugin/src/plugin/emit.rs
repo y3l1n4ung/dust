@@ -7,7 +7,10 @@ use dust_plugin_api::PluginContribution;
 use super::{
     DbPluginOptions,
     model::{DaoClass, DaoMethod, DatabaseClass, DbDriver, RowField},
-    parse::{dao_classes, database_classes, effective_column_name, row_classes, sqlx_config},
+    parse::{
+        dao_classes, database_classes, effective_column_name, imported_row_names, row_classes,
+        sqlx_config,
+    },
 };
 
 pub(crate) fn emit_db_library(library: &LibraryIr, options: DbPluginOptions) -> PluginContribution {
@@ -19,9 +22,11 @@ pub(crate) fn emit_db_library(library: &LibraryIr, options: DbPluginOptions) -> 
         for db in database_classes(library) {
             sections.push(render_database_class(library, &db));
         }
+        let imported_rows = imported_row_names(library);
         let row_names = rows
             .iter()
             .map(|row| row.class.name.as_str())
+            .chain(imported_rows.iter().map(String::as_str))
             .collect::<HashSet<_>>();
         for dao in dao_classes(library) {
             sections.push(render_dao_class(&dao, &row_names));

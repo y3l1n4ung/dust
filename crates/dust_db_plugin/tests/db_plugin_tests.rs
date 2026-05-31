@@ -1,3 +1,8 @@
+use std::{
+    fs,
+    time::{SystemTime, UNIX_EPOCH},
+};
+
 use dust_db_plugin::{register_plugin, register_row_plugin};
 use dust_ir::{
     ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, FieldIr,
@@ -220,6 +225,26 @@ fn dao_class() -> ClassIr {
     }
 }
 
+fn database_class() -> ClassIr {
+    ClassIr {
+        kind: ClassKindIr::Class,
+        name: "AppDatabase".to_owned(),
+        is_abstract: true,
+        is_interface: false,
+        superclass_name: None,
+        span: span(),
+        fields: Vec::new(),
+        constructors: Vec::new(),
+        methods: Vec::new(),
+        traits: Vec::new(),
+        configs: vec![config(
+            "dust_db_annotation::SqlxDatabase",
+            "(type: SqlxDatabaseType.sqlite, migrations: './migrations')",
+        )],
+        serde: None,
+    }
+}
+
 fn library(classes: Vec<ClassIr>) -> LibraryIr {
     LibraryIr {
         package_root: String::new(),
@@ -227,6 +252,24 @@ fn library(classes: Vec<ClassIr>) -> LibraryIr {
         source_path: "lib/user.dart".to_owned(),
         output_path: "lib/user.g.dart".to_owned(),
         imports: Vec::new(),
+        span: span(),
+        classes,
+        enums: Vec::new(),
+    }
+}
+
+fn library_with_imports(
+    root: &std::path::Path,
+    source_path: &str,
+    imports: Vec<&str>,
+    classes: Vec<ClassIr>,
+) -> LibraryIr {
+    LibraryIr {
+        package_root: root.display().to_string(),
+        package_name: "example".to_owned(),
+        source_path: source_path.to_owned(),
+        output_path: "lib/user.g.dart".to_owned(),
+        imports: imports.into_iter().map(str::to_owned).collect(),
         span: span(),
         classes,
         enums: Vec::new(),
@@ -340,6 +383,47 @@ fn emits_sqlx_style_dao_redirecting_factory_impl() {
 }
 
 #[test]
+fn emits_dao_mapper_for_imported_from_row_return_type() {
+    let root = temp_root("imported_dao_rows");
+    fs::create_dir_all(root.join("lib/models")).unwrap();
+    fs::write(
+        root.join("lib/models/user_profile.dart"),
+        "@Derive([FromRow()])\nfinal class UserProfile {}\n",
+    )
+    .unwrap();
+
+    let plugin = register_plugin();
+    let contribution = plugin.emit(
+        &library_with_imports(
+            &root,
+            "lib/dao/user_dao.dart",
+            vec!["../models/user_profile.dart"],
+            vec![dao_class()],
+        ),
+        &SymbolPlan::default(),
+    );
+
+    assert!(contribution.support_types[0].contains("UserProfileFromRow.fromRow"));
+
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn rejects_unknown_custom_dao_result_type() {
+    let mut dao = dao_class();
+    dao.methods[0].return_type = result_type(TypeIr::named("NotARow"));
+
+    let diagnostics = register_plugin().validate(&library(vec![database_class(), dao]));
+
+    assert!(
+        diagnostics.iter().any(|diagnostic| diagnostic
+            .message
+            .contains("unsupported SqlxDao result type `NotARow`")),
+        "{diagnostics:?}"
+    );
+}
+
+#[test]
 fn validates_duplicate_effective_columns() {
     let mut class = row_class();
     class.fields[1].configs = Vec::new();
@@ -447,4 +531,12 @@ fn validates_unsupported_plain_row_field_type() {
             .contains("unsupported SQLx row field type")),
         "{diagnostics:?}"
     );
+}
+
+fn temp_root(name: &str) -> std::path::PathBuf {
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    std::env::temp_dir().join(format!("dust_db_plugin_{name}_{stamp}"))
 }

@@ -36,8 +36,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final order = _findOrder(context.ordersViewModel.state.orders);
-    final trackingState = context.orderTrackingViewModel.state;
+    final order = _findOrder(context.watchOrdersViewModel().value.orders);
+    final trackingState = context.watchOrderTrackingViewModel().value;
 
     return Scaffold(
       appBar: AppBar(title: Text('Order #${_shortId(widget.orderId)}')),

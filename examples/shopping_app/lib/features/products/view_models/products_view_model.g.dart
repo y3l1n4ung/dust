@@ -17,47 +17,47 @@ enum _ProductsViewModelAspect { products, status, errorMessage, selectedCategory
 
 abstract class $ProductsViewModel extends ViewModelBase<ProductsState, ProductsViewModelArgs> {
   $ProductsViewModel(super.args) : super(initialState: const ProductsState());
+
+  List<Object?> get products => state.products;
+  ProductsStatus get status => state.status;
+  String? get errorMessage => state.errorMessage;
+  String? get selectedCategory => state.selectedCategory;
+  String get searchQuery => state.searchQuery;
+  ProductSortOption get sortOption => state.sortOption;
+  ShoppingRepository get repository => args.repository;
 }
 
 class _$ProductsViewModelProxy {
-  _$ProductsViewModelProxy(this._context, this._vm);
+  _$ProductsViewModelProxy(this._context);
 
   final BuildContext _context;
-  final ProductsViewModel _vm;
 
   ProductsState get value {
-    ProductsViewModelScope.of(_context);
-    return _vm.value;
+    return ProductsViewModelScope.of(_context).value;
   }
 
-  List<Product> get products {
-    ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.products);
-    return _vm.state.products;
+  List<Object?> get products {
+    return ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.products).state.products;
   }
 
   ProductsStatus get status {
-    ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.status);
-    return _vm.state.status;
+    return ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.status).state.status;
   }
 
   String? get errorMessage {
-    ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.errorMessage);
-    return _vm.state.errorMessage;
+    return ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.errorMessage).state.errorMessage;
   }
 
   String? get selectedCategory {
-    ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.selectedCategory);
-    return _vm.state.selectedCategory;
+    return ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.selectedCategory).state.selectedCategory;
   }
 
   String get searchQuery {
-    ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.searchQuery);
-    return _vm.state.searchQuery;
+    return ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.searchQuery).state.searchQuery;
   }
 
   ProductSortOption get sortOption {
-    ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.sortOption);
-    return _vm.state.sortOption;
+    return ProductsViewModelScope.of(_context, aspect: _ProductsViewModelAspect.sortOption).state.sortOption;
   }
 }
 
@@ -89,7 +89,7 @@ class ProductsViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static ProductsViewModel of(BuildContext context, {Object? aspect}) {
+  static ProductsViewModel of(BuildContext context, {_ProductsViewModelAspect? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_ProductsViewModelInherited>(
       aspect: aspect,
     );
@@ -102,87 +102,155 @@ class ProductsViewModelScope extends StatefulWidget {
 }
 
 class _ProductsViewModelScopeState extends State<ProductsViewModelScope> {
+  ProductsViewModel? _viewModel;
+  bool _ownsViewModel = false;
+
   @override
-  Widget build(BuildContext context) {
-    final external = widget.value;
-    return external == null
-        ? ViewModelOwner<ProductsViewModel, ProductsViewModelArgs>(
-            debugName: 'ProductsViewModelScope',
-            args: widget.args!,
-            create: widget.create!,
-            builder: _buildInherited,
-          )
-        : ViewModelOwner<ProductsViewModel, ProductsViewModelArgs>.value(
-            debugName: 'ProductsViewModelScope.value',
-            value: external,
-            builder: _buildInherited,
-          );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_viewModel == null) {
+      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    }
   }
 
-  Widget _buildInherited(BuildContext context, ProductsViewModel viewModel) {
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, child) => _ProductsViewModelInherited(
-        viewModel: viewModel,
-        state: viewModel.value,
-        child: child!,
-      ),
+  @override
+  void didUpdateWidget(ProductsViewModelScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false);
+    } else if (oldWidget.value != null) {
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    }
+  }
+
+  ProductsViewModel _resolveViewModel() {
+    return widget.value ?? _createOwnedViewModel();
+  }
+
+  ProductsViewModel _createOwnedViewModel() {
+    final argsFactory = widget.args;
+    final create = widget.create;
+    if (argsFactory == null || create == null) {
+      throw StateError('Owned ProductsViewModelScope requires args and create.');
+    }
+    late final ProductsViewModel created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        StateError(
+          'ProductsViewModelScope failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
+    return created;
+  }
+
+  void _replaceViewModel(
+    ProductsViewModel nextViewModel, {
+    required bool ownsViewModel,
+    bool notify = true,
+  }) {
+    final previous = _viewModel;
+    if (identical(previous, nextViewModel)) {
+      _ownsViewModel = ownsViewModel;
+      if (notify && mounted) setState(() {});
+      return;
+    }
+    previous?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) previous?.dispose();
+    _viewModel = nextViewModel;
+    _ownsViewModel = ownsViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    if (ownsViewModel) {
+      scheduleMicrotask(() {
+        if (mounted && identical(_viewModel, nextViewModel)) {
+          nextViewModel.init();
+        }
+      });
+    }
+    if (notify && mounted) setState(() {});
+  }
+
+  void _onViewModelStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    final viewModel = _viewModel;
+    viewModel?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) viewModel?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = _viewModel;
+    if (viewModel == null) {
+      throw StateError('ProductsViewModelScope built before its view model was initialized.');
+    }
+    return _ProductsViewModelInherited(
+      viewModel: viewModel,
+      state: viewModel.value,
       child: widget.child,
     );
   }
 }
 
-class _ProductsViewModelInherited extends InheritedModel<Object> {
+class _ProductsViewModelInherited extends InheritedModel<_ProductsViewModelAspect> {
   const _ProductsViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final ProductsViewModel viewModel;
   final ProductsState state;
 
+  /// Requires ProductsState to implement == and hashCode. Without value equality,
+  /// every emitted state is treated as changed and granular rebuilds degrade to
+  /// full dependent subtree rebuilds.
   @override
   bool updateShouldNotify(_ProductsViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_ProductsViewModelInherited oldWidget, Set<Object> dependencies) {
+  bool updateShouldNotifyDependent(_ProductsViewModelInherited oldWidget, Set<_ProductsViewModelAspect> dependencies) {
     for (final aspect in dependencies) {
       switch (aspect) {
         case _ProductsViewModelAspect.products:
           if (state.products != oldWidget.state.products) {
             return true;
           }
-          break;
         case _ProductsViewModelAspect.status:
           if (state.status != oldWidget.state.status) {
             return true;
           }
-          break;
         case _ProductsViewModelAspect.errorMessage:
           if (state.errorMessage != oldWidget.state.errorMessage) {
             return true;
           }
-          break;
         case _ProductsViewModelAspect.selectedCategory:
           if (state.selectedCategory != oldWidget.state.selectedCategory) {
             return true;
           }
-          break;
         case _ProductsViewModelAspect.searchQuery:
           if (state.searchQuery != oldWidget.state.searchQuery) {
             return true;
           }
-          break;
         case _ProductsViewModelAspect.sortOption:
           if (state.sortOption != oldWidget.state.sortOption) {
             return true;
           }
-          break;
-        default:
-          break;
       }
     }
     return false;
   }
 }
 
+/// Listens to one-shot effects from ProductsViewModel.
+///
+/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
+/// payloads through the @ViewModel annotation.
 class ProductsViewModelListener extends StatefulWidget {
   const ProductsViewModelListener({super.key, required this.listener, required this.child});
 
@@ -195,14 +263,20 @@ class ProductsViewModelListener extends StatefulWidget {
 
 class _ProductsViewModelListenerState extends State<ProductsViewModelListener> {
   StreamSubscription<Object>? _sub;
+  ProductsViewModel? _viewModel;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final nextViewModel = ProductsViewModelScope.read(context);
+    if (_viewModel == nextViewModel) return;
     _sub?.cancel();
-    _sub = ProductsViewModelScope.read(context).effects.listen((effect) {
-      if (mounted) widget.listener(context, effect);
-    });
+    _viewModel = nextViewModel;
+    _sub = nextViewModel.effects.listen(_onEffect);
+  }
+
+  void _onEffect(Object effect) {
+    if (mounted) widget.listener(context, effect);
   }
 
   @override
@@ -216,10 +290,8 @@ class _ProductsViewModelListenerState extends State<ProductsViewModelListener> {
 }
 
 extension ProductsViewModelBuildContext on BuildContext {
-  ProductsViewModel get productsViewModel => ProductsViewModelScope.of(this);
-
   _$ProductsViewModelProxy watchProductsViewModel() {
-    return _$ProductsViewModelProxy(this, ProductsViewModelScope.read(this));
+    return _$ProductsViewModelProxy(this);
   }
 
   ProductsViewModel readProductsViewModel() => ProductsViewModelScope.read(this);

@@ -35,9 +35,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.productsViewModel;
-    final state = viewModel.state;
-    final cartState = context.cartViewModel.state;
+    final state = context.watchProductsViewModel().value;
+    final cartState = context.watchCartViewModel().value;
 
     return Scaffold(
       appBar: AppBar(
@@ -197,7 +196,7 @@ class _AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authState = context.authViewModel.state;
+    final authState = context.watchAuthViewModel().value;
 
     return Drawer(
       child: ListView(
@@ -472,7 +471,7 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSaved = context.wishlistViewModel.state.containsProduct(product.id);
+    final isSaved = context.watchWishlistViewModel().value.containsProduct(product.id);
 
     return AnimatedCard(
       onTap: () => context.routes.productDetail(productId: product.id).push(),

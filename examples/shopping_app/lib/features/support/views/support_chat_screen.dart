@@ -24,7 +24,7 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.shoppingChatViewModel.state;
+    final state = context.watchShoppingChatViewModel().value;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Shopping Assistant')),

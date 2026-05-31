@@ -33,16 +33,16 @@ fn emits_generated_base_with_args_getters() {
     ));
     assert!(source.contains("PrototypeRepository get repository => args.repository;"));
     assert!(source.contains("class TaskBoardViewModelScope extends StatefulWidget"));
-    assert!(source.contains("debugName: 'TaskBoardViewModelScope'"));
-    assert!(source.contains("debugName: 'TaskBoardViewModelScope.value'"));
+    assert!(source.contains("void didUpdateWidget(TaskBoardViewModelScope oldWidget)"));
+    assert!(source.contains("scheduleMicrotask(() {"));
+    assert!(!source.contains("ViewModelOwner<"));
+    assert!(!source.contains("ListenableBuilder("));
     assert!(source.contains("class TaskBoardViewModelListener extends StatefulWidget"));
     assert_eq!(
         extract_extension(source, "extension TaskBoardViewModelBuildContext"),
         r#"extension TaskBoardViewModelBuildContext on BuildContext {
-  TaskBoardViewModel get taskBoardViewModel => TaskBoardViewModelScope.of(this);
-
   _$TaskBoardViewModelProxy watchTaskBoardViewModel() {
-    return _$TaskBoardViewModelProxy(this, TaskBoardViewModelScope.read(this));
+    return _$TaskBoardViewModelProxy(this);
   }
 
   TaskBoardViewModel readTaskBoardViewModel() => TaskBoardViewModelScope.read(this);
@@ -105,54 +105,49 @@ fn emits_state_fields_from_workspace_analysis() {
     assert_eq!(
         extract_class(source, "class _$TaskBoardViewModelProxy"),
         r#"class _$TaskBoardViewModelProxy {
-  _$TaskBoardViewModelProxy(this._context, this._vm);
+  _$TaskBoardViewModelProxy(this._context);
 
   final BuildContext _context;
-  final TaskBoardViewModel _vm;
 
   TaskBoardState get value {
-    TaskBoardViewModelScope.of(_context);
-    return _vm.value;
+    return TaskBoardViewModelScope.of(_context).value;
   }
 
   int get count {
-    TaskBoardViewModelScope.of(_context, aspect: _TaskBoardViewModelAspect.count);
-    return _vm.state.count;
+    return TaskBoardViewModelScope.of(_context, aspect: _TaskBoardViewModelAspect.count).state.count;
   }
 
   String? get message {
-    TaskBoardViewModelScope.of(_context, aspect: _TaskBoardViewModelAspect.message);
-    return _vm.state.message;
+    return TaskBoardViewModelScope.of(_context, aspect: _TaskBoardViewModelAspect.message).state.message;
   }
 }"#
     );
     assert_eq!(
         extract_class(source, "class _TaskBoardViewModelInherited"),
-        r#"class _TaskBoardViewModelInherited extends InheritedModel<Object> {
+        r#"class _TaskBoardViewModelInherited extends InheritedModel<_TaskBoardViewModelAspect> {
   const _TaskBoardViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final TaskBoardViewModel viewModel;
   final TaskBoardState state;
 
+  /// Requires TaskBoardState to implement == and hashCode. Without value equality,
+  /// every emitted state is treated as changed and granular rebuilds degrade to
+  /// full dependent subtree rebuilds.
   @override
   bool updateShouldNotify(_TaskBoardViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_TaskBoardViewModelInherited oldWidget, Set<Object> dependencies) {
+  bool updateShouldNotifyDependent(_TaskBoardViewModelInherited oldWidget, Set<_TaskBoardViewModelAspect> dependencies) {
     for (final aspect in dependencies) {
       switch (aspect) {
         case _TaskBoardViewModelAspect.count:
           if (state.count != oldWidget.state.count) {
             return true;
           }
-          break;
         case _TaskBoardViewModelAspect.message:
           if (state.message != oldWidget.state.message) {
             return true;
           }
-          break;
-        default:
-          break;
       }
     }
     return false;
@@ -203,6 +198,55 @@ fn emits_state_fields_from_imported_unannotated_state_file() {
 }
 
 #[test]
+fn imported_state_source_wins_over_raw_workspace_field_facts() {
+    let root = temp_root("imported_state_precedence");
+    fs::create_dir_all(root.join("lib/models")).unwrap();
+    fs::write(
+        root.join("lib/models/products_state.dart"),
+        "import 'product.dart';\n\
+         enum ProductsStatus { initial, success }\n\
+         class ProductsState {\n\
+           final List<Product> products;\n\
+           final ProductsStatus status;\n\
+           const ProductsState({this.products = const [], required this.status});\n\
+         }\n",
+    )
+    .unwrap();
+
+    let plugin = register_plugin();
+    let mut builder = WorkspaceAnalysisBuilder::default();
+    builder.add_string_set_value(
+        "dust_state.states.v1",
+        r#"{"class_name":"ProductsState","fields":[{"name":"products","type_source":"List<Product>"},{"name":"status","type_source":"ProductsStatus"}]}"#,
+    );
+    let mut plan = SymbolPlan::default();
+    plan.set_workspace_analysis(Arc::new(builder.build()));
+
+    let mut library = library_with_classes(vec![
+        args_class(),
+        view_model_class(
+            "ProductsViewModel",
+            "(state: ProductsState, args: TaskBoardArgs)",
+        ),
+    ]);
+    library.package_root = root.display().to_string();
+    library.source_path = "lib/view_models/products_view_model.dart".to_owned();
+    library
+        .imports
+        .push("../models/products_state.dart".to_owned());
+
+    let contribution = plugin.emit(&library, &plan);
+    let source = &contribution.support_types[0];
+
+    assert!(source.contains("enum _ProductsViewModelAspect { products, status }"));
+    assert!(source.contains("List<Object?> get products"));
+    assert!(source.contains("ProductsStatus get status"));
+    assert!(!source.contains("List<Product> get products"));
+
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
 fn emits_value_only_proxy_for_fieldless_state() {
     let plugin = register_plugin();
     let contribution = plugin.emit(
@@ -223,10 +267,8 @@ fn emits_value_only_proxy_for_fieldless_state() {
     assert_eq!(
         extract_extension(source, "extension TaskBoardViewModelBuildContext"),
         r#"extension TaskBoardViewModelBuildContext on BuildContext {
-  TaskBoardViewModel get taskBoardViewModel => TaskBoardViewModelScope.of(this);
-
   _$TaskBoardViewModelProxy watchTaskBoardViewModel() {
-    return _$TaskBoardViewModelProxy(this, TaskBoardViewModelScope.read(this));
+    return _$TaskBoardViewModelProxy(this);
   }
 
   TaskBoardViewModel readTaskBoardViewModel() => TaskBoardViewModelScope.read(this);

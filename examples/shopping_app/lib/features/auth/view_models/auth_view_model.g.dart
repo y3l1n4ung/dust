@@ -17,37 +17,38 @@ enum _AuthViewModelAspect { user, token, status, errorMessage }
 
 abstract class $AuthViewModel extends ViewModelBase<AuthState, AuthViewModelArgs> {
   $AuthViewModel(super.args) : super(initialState: AuthState(status: AuthStatus.unauthenticated));
+
+  Object? get user => state.user;
+  String? get token => state.token;
+  AuthStatus get status => state.status;
+  String? get errorMessage => state.errorMessage;
+  ShoppingRepository get repository => args.repository;
+  StorageService get storage => args.storage;
 }
 
 class _$AuthViewModelProxy {
-  _$AuthViewModelProxy(this._context, this._vm);
+  _$AuthViewModelProxy(this._context);
 
   final BuildContext _context;
-  final AuthViewModel _vm;
 
   AuthState get value {
-    AuthViewModelScope.of(_context);
-    return _vm.value;
+    return AuthViewModelScope.of(_context).value;
   }
 
-  User? get user {
-    AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.user);
-    return _vm.state.user;
+  Object? get user {
+    return AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.user).state.user;
   }
 
   String? get token {
-    AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.token);
-    return _vm.state.token;
+    return AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.token).state.token;
   }
 
   AuthStatus get status {
-    AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.status);
-    return _vm.state.status;
+    return AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.status).state.status;
   }
 
   String? get errorMessage {
-    AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.errorMessage);
-    return _vm.state.errorMessage;
+    return AuthViewModelScope.of(_context, aspect: _AuthViewModelAspect.errorMessage).state.errorMessage;
   }
 }
 
@@ -79,7 +80,7 @@ class AuthViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static AuthViewModel of(BuildContext context, {Object? aspect}) {
+  static AuthViewModel of(BuildContext context, {_AuthViewModelAspect? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_AuthViewModelInherited>(
       aspect: aspect,
     );
@@ -92,77 +93,147 @@ class AuthViewModelScope extends StatefulWidget {
 }
 
 class _AuthViewModelScopeState extends State<AuthViewModelScope> {
+  AuthViewModel? _viewModel;
+  bool _ownsViewModel = false;
+
   @override
-  Widget build(BuildContext context) {
-    final external = widget.value;
-    return external == null
-        ? ViewModelOwner<AuthViewModel, AuthViewModelArgs>(
-            debugName: 'AuthViewModelScope',
-            args: widget.args!,
-            create: widget.create!,
-            builder: _buildInherited,
-          )
-        : ViewModelOwner<AuthViewModel, AuthViewModelArgs>.value(
-            debugName: 'AuthViewModelScope.value',
-            value: external,
-            builder: _buildInherited,
-          );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_viewModel == null) {
+      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    }
   }
 
-  Widget _buildInherited(BuildContext context, AuthViewModel viewModel) {
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, child) => _AuthViewModelInherited(
-        viewModel: viewModel,
-        state: viewModel.value,
-        child: child!,
-      ),
+  @override
+  void didUpdateWidget(AuthViewModelScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false);
+    } else if (oldWidget.value != null) {
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    }
+  }
+
+  AuthViewModel _resolveViewModel() {
+    return widget.value ?? _createOwnedViewModel();
+  }
+
+  AuthViewModel _createOwnedViewModel() {
+    final argsFactory = widget.args;
+    final create = widget.create;
+    if (argsFactory == null || create == null) {
+      throw StateError('Owned AuthViewModelScope requires args and create.');
+    }
+    late final AuthViewModel created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        StateError(
+          'AuthViewModelScope failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
+    return created;
+  }
+
+  void _replaceViewModel(
+    AuthViewModel nextViewModel, {
+    required bool ownsViewModel,
+    bool notify = true,
+  }) {
+    final previous = _viewModel;
+    if (identical(previous, nextViewModel)) {
+      _ownsViewModel = ownsViewModel;
+      if (notify && mounted) setState(() {});
+      return;
+    }
+    previous?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) previous?.dispose();
+    _viewModel = nextViewModel;
+    _ownsViewModel = ownsViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    if (ownsViewModel) {
+      scheduleMicrotask(() {
+        if (mounted && identical(_viewModel, nextViewModel)) {
+          nextViewModel.init();
+        }
+      });
+    }
+    if (notify && mounted) setState(() {});
+  }
+
+  void _onViewModelStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    final viewModel = _viewModel;
+    viewModel?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) viewModel?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = _viewModel;
+    if (viewModel == null) {
+      throw StateError('AuthViewModelScope built before its view model was initialized.');
+    }
+    return _AuthViewModelInherited(
+      viewModel: viewModel,
+      state: viewModel.value,
       child: widget.child,
     );
   }
 }
 
-class _AuthViewModelInherited extends InheritedModel<Object> {
+class _AuthViewModelInherited extends InheritedModel<_AuthViewModelAspect> {
   const _AuthViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final AuthViewModel viewModel;
   final AuthState state;
 
+  /// Requires AuthState to implement == and hashCode. Without value equality,
+  /// every emitted state is treated as changed and granular rebuilds degrade to
+  /// full dependent subtree rebuilds.
   @override
   bool updateShouldNotify(_AuthViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_AuthViewModelInherited oldWidget, Set<Object> dependencies) {
+  bool updateShouldNotifyDependent(_AuthViewModelInherited oldWidget, Set<_AuthViewModelAspect> dependencies) {
     for (final aspect in dependencies) {
       switch (aspect) {
         case _AuthViewModelAspect.user:
           if (state.user != oldWidget.state.user) {
             return true;
           }
-          break;
         case _AuthViewModelAspect.token:
           if (state.token != oldWidget.state.token) {
             return true;
           }
-          break;
         case _AuthViewModelAspect.status:
           if (state.status != oldWidget.state.status) {
             return true;
           }
-          break;
         case _AuthViewModelAspect.errorMessage:
           if (state.errorMessage != oldWidget.state.errorMessage) {
             return true;
           }
-          break;
-        default:
-          break;
       }
     }
     return false;
   }
 }
 
+/// Listens to one-shot effects from AuthViewModel.
+///
+/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
+/// payloads through the @ViewModel annotation.
 class AuthViewModelListener extends StatefulWidget {
   const AuthViewModelListener({super.key, required this.listener, required this.child});
 
@@ -175,14 +246,20 @@ class AuthViewModelListener extends StatefulWidget {
 
 class _AuthViewModelListenerState extends State<AuthViewModelListener> {
   StreamSubscription<Object>? _sub;
+  AuthViewModel? _viewModel;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final nextViewModel = AuthViewModelScope.read(context);
+    if (_viewModel == nextViewModel) return;
     _sub?.cancel();
-    _sub = AuthViewModelScope.read(context).effects.listen((effect) {
-      if (mounted) widget.listener(context, effect);
-    });
+    _viewModel = nextViewModel;
+    _sub = nextViewModel.effects.listen(_onEffect);
+  }
+
+  void _onEffect(Object effect) {
+    if (mounted) widget.listener(context, effect);
   }
 
   @override
@@ -196,10 +273,8 @@ class _AuthViewModelListenerState extends State<AuthViewModelListener> {
 }
 
 extension AuthViewModelBuildContext on BuildContext {
-  AuthViewModel get authViewModel => AuthViewModelScope.of(this);
-
   _$AuthViewModelProxy watchAuthViewModel() {
-    return _$AuthViewModelProxy(this, AuthViewModelScope.read(this));
+    return _$AuthViewModelProxy(this);
   }
 
   AuthViewModel readAuthViewModel() => AuthViewModelScope.read(this);

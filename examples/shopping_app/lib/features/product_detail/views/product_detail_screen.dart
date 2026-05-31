@@ -45,7 +45,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final productsState = context.productsViewModel.state;
+    final productsState = context.watchProductsViewModel().value;
     Product? product;
     for (final candidate in productsState.products) {
       if (candidate.id == widget.productId) {
@@ -81,8 +81,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     final selectedProduct = product;
-    final detailState = context.productDetailViewModel.state;
-    final wishlistState = context.wishlistViewModel.state;
+    final detailState = context.watchProductDetailViewModel().value;
+    final wishlistState = context.watchWishlistViewModel().value;
     final isSaved = wishlistState.containsProduct(selectedProduct.id);
 
     return WishlistViewModelListener(
@@ -369,7 +369,7 @@ class _AddToCartButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cartState = context.cartViewModel.state;
+    final cartState = context.watchCartViewModel().value;
     final inCart = cartState.items.any((item) => item.product.id == product.id);
 
     return FilledButton.icon(

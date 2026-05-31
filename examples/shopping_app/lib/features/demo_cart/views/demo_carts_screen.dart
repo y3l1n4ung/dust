@@ -10,7 +10,7 @@ class DemoCartsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.demoCartApiViewModel.state;
+    final state = context.watchDemoCartApiViewModel().value;
 
     return Scaffold(
       appBar: AppBar(title: const Text('FakeStore Carts')),
