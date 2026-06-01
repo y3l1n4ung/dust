@@ -310,69 +310,45 @@ fn emits_sqlx_style_dao_redirecting_factory_impl() {
 
     assert_eq!(
         contribution.support_types[0],
-        r#"final class _$UserDao implements UserDao {
+        r#"extension UserProfileFromRow on UserProfile {
+  static UserProfile fromRow(Row row) {
+    return UserProfile(
+      id: row.read<int>('id'),
+      name: row.read<String>('display_name'),
+      bio: row.readOrNull<Object?>('bio') == null ? '' : row.read<String>('bio'),
+      sessionActive: false,
+      preferences: UserPreferences.fromJson(decodeJsonObject(row.read<String>('preferences'))),
+      status: const UserStatusFromInt().decode(row.read<int>('status')),
+    );
+  }
+}
+
+final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
+
+final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
   final SqlxDriver _db;
 
   @override
-  Future<Result<UserProfile?, SqlxError>> findById(int id) async {
-    final result = await _db.fetch(
+  Future<Result<UserProfile?, SqlxError>> findById(int id) {
+    return _db.fetchOptional<UserProfile>(
       r'''SELECT id, display_name, bio FROM users WHERE id = $1''',
       [id],
+      UserProfileFromRow.fromRow,
     );
-
-    return result.andThen((rows) {
-      if (rows.isEmpty) return const Ok<UserProfile?, SqlxError>(null);
-
-      if (rows.length > 1) {
-        return Err<UserProfile?, SqlxError>(
-          SqlxError.tooManyRows(expected: 1, actual: rows.length),
-        );
-      }
-
-      try {
-        return Ok<UserProfile?, SqlxError>(UserProfileFromRow.fromRow(rows.first));
-      } catch (error) {
-        return Err<UserProfile?, SqlxError>(
-          SqlxError.decode(error.toString(), cause: error),
-        );
-      }
-    });
   }
 
   @override
-  Future<Result<int, SqlxError>> count() async {
-    final result = await _db.fetch(
+  Future<Result<int, SqlxError>> count() {
+    return _db.fetchScalar<int>(
       r'''SELECT COUNT(*) FROM users''',
       [],
     );
-
-    return result.andThen((rows) {
-      if (rows.isEmpty) {
-        return Err<int, SqlxError>(
-          SqlxError.decode('Query `count` returned no rows.'),
-        );
-      }
-
-      if (rows.length > 1) {
-        return Err<int, SqlxError>(
-          SqlxError.tooManyRows(expected: 1, actual: rows.length),
-        );
-      }
-
-      try {
-        return Ok<int, SqlxError>(rows.single.readIndex<int>(0));
-      } catch (error) {
-        return Err<int, SqlxError>(
-          SqlxError.decode(error.toString(), cause: error),
-        );
-      }
-    });
   }
 
   @override
-  Future<Result<ExecResult, SqlxError>> rename(String name, int id) async {
+  Future<Result<ExecResult, SqlxError>> rename(String name, int id) {
     return _db.execute(
       r'''UPDATE users SET display_name = $1 WHERE id = $2''',
       [name, id],

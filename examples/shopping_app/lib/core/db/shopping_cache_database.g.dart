@@ -17,7 +17,7 @@ final class _$ShoppingCacheDatabase implements ShoppingCacheDatabase {
   _$ShoppingCacheDatabase._(this.pool);
 
   factory _$ShoppingCacheDatabase.open(String path) {
-    final pool = SqlitePool.open(
+    final pool = Sqlite3Driver.open(
       path,
       migrations: _$shoppingCacheDatabaseMigrations,
     );
@@ -38,8 +38,8 @@ final class _$ShoppingCacheDao implements ShoppingCacheDao {
   final SqlxDriver _db;
 
   @override
-  Future<Result<CachedProductRow?, SqlxError>> findCachedProduct(int id) async {
-    final result = await _db.fetch(
+  Future<Result<CachedProductRow?, SqlxError>> findCachedProduct(int id) {
+    return _db.fetchOptional<CachedProductRow>(
       r'''
 SELECT id, title, price, description, category, image,
        rating_rate, rating_count, payload, source
@@ -47,30 +47,13 @@ FROM product_cache
 WHERE id = $1
 ''',
       [id],
+      CachedProductRowFromRow.fromRow,
     );
-
-    return result.andThen((rows) {
-      if (rows.isEmpty) return const Ok<CachedProductRow?, SqlxError>(null);
-
-      if (rows.length > 1) {
-        return Err<CachedProductRow?, SqlxError>(
-          SqlxError.tooManyRows(expected: 1, actual: rows.length),
-        );
-      }
-
-      try {
-        return Ok<CachedProductRow?, SqlxError>(CachedProductRowFromRow.fromRow(rows.first));
-      } catch (error) {
-        return Err<CachedProductRow?, SqlxError>(
-          SqlxError.decode(error.toString(), cause: error),
-        );
-      }
-    });
   }
 
   @override
-  Future<Result<List<CachedProductRow>, SqlxError>> listCachedProducts() async {
-    final result = await _db.fetch(
+  Future<Result<List<CachedProductRow>, SqlxError>> listCachedProducts() {
+    return _db.fetchAll<CachedProductRow>(
       r'''
 SELECT id, title, price, description, category, image,
        rating_rate, rating_count, payload, source
@@ -78,53 +61,20 @@ FROM product_cache
 ORDER BY title
 ''',
       [],
+      CachedProductRowFromRow.fromRow,
     );
-
-    return result.andThen((rows) {
-      try {
-        return Ok<List<CachedProductRow>, SqlxError>([
-          for (final row in rows) CachedProductRowFromRow.fromRow(row),
-        ]);
-      } catch (error) {
-        return Err<List<CachedProductRow>, SqlxError>(
-          SqlxError.decode(error.toString(), cause: error),
-        );
-      }
-    });
   }
 
   @override
-  Future<Result<int, SqlxError>> countCachedProducts() async {
-    final result = await _db.fetch(
+  Future<Result<int, SqlxError>> countCachedProducts() {
+    return _db.fetchScalar<int>(
       r'''SELECT COUNT(*) FROM product_cache''',
       [],
     );
-
-    return result.andThen((rows) {
-      if (rows.isEmpty) {
-        return Err<int, SqlxError>(
-          SqlxError.decode('Query `countCachedProducts` returned no rows.'),
-        );
-      }
-
-      if (rows.length > 1) {
-        return Err<int, SqlxError>(
-          SqlxError.tooManyRows(expected: 1, actual: rows.length),
-        );
-      }
-
-      try {
-        return Ok<int, SqlxError>(rows.single.readIndex<int>(0));
-      } catch (error) {
-        return Err<int, SqlxError>(
-          SqlxError.decode(error.toString(), cause: error),
-        );
-      }
-    });
   }
 
   @override
-  Future<Result<ExecResult, SqlxError>> saveProductRow(int id, String title, double price, String description, String category, String image, double ratingRate, int ratingCount, String payload, String source) async {
+  Future<Result<ExecResult, SqlxError>> saveProductRow(int id, String title, double price, String description, String category, String image, double ratingRate, int ratingCount, String payload, String source) {
     return _db.execute(
       r'''
 INSERT OR REPLACE INTO product_cache (
@@ -137,7 +87,7 @@ INSERT OR REPLACE INTO product_cache (
   }
 
   @override
-  Future<Result<ExecResult, SqlxError>> saveWishlist(int productId, String title, String savedAt) async {
+  Future<Result<ExecResult, SqlxError>> saveWishlist(int productId, String title, String savedAt) {
     return _db.execute(
       r'''
 INSERT OR REPLACE INTO wishlist_cache (product_id, title, saved_at)
@@ -148,26 +98,15 @@ VALUES ($1, $2, $3)
   }
 
   @override
-  Future<Result<List<CachedWishlistRow>, SqlxError>> listWishlist() async {
-    final result = await _db.fetch(
+  Future<Result<List<CachedWishlistRow>, SqlxError>> listWishlist() {
+    return _db.fetchAll<CachedWishlistRow>(
       r'''
 SELECT product_id, title, saved_at
 FROM wishlist_cache
 ORDER BY saved_at DESC
 ''',
       [],
+      CachedWishlistRowFromRow.fromRow,
     );
-
-    return result.andThen((rows) {
-      try {
-        return Ok<List<CachedWishlistRow>, SqlxError>([
-          for (final row in rows) CachedWishlistRowFromRow.fromRow(row),
-        ]);
-      } catch (error) {
-        return Err<List<CachedWishlistRow>, SqlxError>(
-          SqlxError.decode(error.toString(), cause: error),
-        );
-      }
-    });
   }
 }

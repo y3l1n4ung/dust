@@ -39,17 +39,11 @@ extension AddressFromRow on Address {
 
 final bool _$addressFromRowRegistered = registerRowMapper<Address>(AddressFromRow.fromRow);
 
-void _$registerRowMappers() {
-  _$userProfileFromRowRegistered;
-  _$addressFromRowRegistered;
-}
-
 final class _$AppDatabase implements AppDatabase {
   _$AppDatabase._(this.pool);
 
   factory _$AppDatabase.open(String path) {
-    _$registerRowMappers();
-    final pool = SqlitePool.open(
+    final pool = Sqlite3Driver.open(
       path,
       migrations: _$appDatabaseMigrations,
     );
@@ -70,95 +64,40 @@ final class _$UserDao implements UserDao {
   final SqlxDriver _db;
 
   @override
-  Future<Result<UserProfile?, SqlxError>> findById(int id) async {
-    final result = await _db.fetch(
+  Future<Result<UserProfile?, SqlxError>> findById(int id) {
+    return _db.fetchOptional<UserProfile>(
       r'''
 SELECT id, display_name, street, city, bio, preferences, status
 FROM user_profiles
 WHERE id = $1
 ''',
       [id],
+      UserProfileFromRow.fromRow,
     );
-
-    return result.andThen((rows) {
-      if (rows.isEmpty) return const Ok<UserProfile?, SqlxError>(null);
-
-      if (rows.length > 1) {
-        return Err<UserProfile?, SqlxError>(
-          SqlxError.tooManyRows(expected: 1, actual: rows.length),
-        );
-      }
-
-      try {
-        return Ok<UserProfile?, SqlxError>(
-          UserProfileFromRow.fromRow(rows.first),
-        );
-      } catch (error) {
-        return Err<UserProfile?, SqlxError>(
-          SqlxError.decode(error.toString(), cause: error),
-        );
-      }
-    });
   }
 
   @override
-  Future<Result<List<UserProfile>, SqlxError>> listProfiles() async {
-    final result = await _db.fetch(
+  Future<Result<List<UserProfile>, SqlxError>> listProfiles() {
+    return _db.fetchAll<UserProfile>(
       r'''
 SELECT id, display_name, street, city, bio, preferences, status
 FROM user_profiles
 ''',
       [],
+      UserProfileFromRow.fromRow,
     );
-
-    return result.andThen((rows) {
-      try {
-        return Ok<List<UserProfile>, SqlxError>([
-          for (final row in rows) UserProfileFromRow.fromRow(row),
-        ]);
-      } catch (error) {
-        return Err<List<UserProfile>, SqlxError>(
-          SqlxError.decode(error.toString(), cause: error),
-        );
-      }
-    });
   }
 
   @override
-  Future<Result<int, SqlxError>> countProfiles() async {
-    final result = await _db.fetch(
+  Future<Result<int, SqlxError>> countProfiles() {
+    return _db.fetchScalar<int>(
       r'''SELECT COUNT(*) FROM user_profiles''',
       [],
     );
-
-    return result.andThen((rows) {
-      if (rows.isEmpty) {
-        return Err<int, SqlxError>(
-          SqlxError.decode('Query `countProfiles` returned no rows.'),
-        );
-      }
-
-      if (rows.length > 1) {
-        return Err<int, SqlxError>(
-          SqlxError.tooManyRows(expected: 1, actual: rows.length),
-        );
-      }
-
-      try {
-        return Ok<int, SqlxError>(rows.single.readIndex<int>(0));
-      } catch (error) {
-        return Err<int, SqlxError>(
-          SqlxError.decode(error.toString(), cause: error),
-        );
-      }
-    });
   }
 
   @override
-  Future<Result<ExecResult, SqlxError>> renameProfile(
-    String name,
-    int id,
-  ) {
+  Future<Result<ExecResult, SqlxError>> renameProfile(String name, int id) {
     return _db.execute(
       r'''UPDATE user_profiles SET display_name = $1 WHERE id = $2''',
       [name, id],

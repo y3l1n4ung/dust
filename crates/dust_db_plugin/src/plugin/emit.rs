@@ -19,6 +19,9 @@ pub(crate) fn emit_db_library(library: &LibraryIr, options: DbPluginOptions) -> 
 
     let rows = row_classes(library);
     if options.databases {
+        for row in &rows {
+            sections.push(render_from_row_extension(library, row.class, &row.config));
+        }
         for db in database_classes(library) {
             sections.push(render_database_class(library, &db));
         }
@@ -76,7 +79,7 @@ fn render_dao_method(method: &DaoMethod<'_>, row_names: &HashSet<&str>) -> Strin
     let sql = render_sql_literal(&method.sql);
     let body = render_dao_method_body(method, row_names, &sql, &args);
     format!(
-        "  @override\n  {return_type} {}({params}) async {{\n{body}\n  }}",
+        "  @override\n  {return_type} {}({params}) {{\n{body}\n  }}",
         method_ir.name
     )
 }
@@ -112,44 +115,36 @@ fn render_dao_method_body(
             method.method.name
         );
     };
-    if ok_type.is_named("ExecResult") || ok_type.is_named("Unit") {
+    if ok_type.is_named("ExecResult") {
         return format!("    return _db.execute(\n      {sql},\n      [{args}],\n    );");
     }
-    let ok_rendered = DYNAMIC_TYPES.render(ok_type);
-    let mapper = render_ok_mapper(ok_type, row_names, &method.method.name);
-    format!(
-        "    final result = await _db.fetch(\n      {sql},\n      [{args}],\n    );\n\n    return result.andThen((rows) {{\n{mapper}\n    }});",
-    )
-    .replace("{ok_rendered}", &ok_rendered)
-}
-
-fn render_ok_mapper(ok_type: &TypeIr, row_names: &HashSet<&str>, method_name: &str) -> String {
+    if ok_type.is_named("Unit") {
+        return format!(
+            "    return _db.execute(\n      {sql},\n      [{args}],\n    ).then(\n      (result) => result.andThen<Unit>((_) => const Ok<Unit, SqlxError>(unit)),\n    );"
+        );
+    }
+    if is_scalar_type(ok_type) {
+        return format!(
+            "    return _db.fetchScalar<{}>(\n      {sql},\n      [{args}],\n    );",
+            DYNAMIC_TYPES.render(ok_type)
+        );
+    }
     if ok_type.is_named("List") {
         let Some(item) = ok_type.args().first() else {
-            return "      return Ok<List<Row>, SqlxError>(rows);".to_owned();
+            return format!("    return _db.raw.fetch(\n      {sql},\n      [{args}],\n    );");
         };
         if item.is_named("Row") {
-            return "      return Ok<List<Row>, SqlxError>(rows);".to_owned();
+            return format!("    return _db.raw.fetch(\n      {sql},\n      [{args}],\n    );");
         }
         let item_name = item.name().unwrap_or("Object");
         if row_names.contains(item_name) {
             return format!(
-                "      try {{\n        return Ok<{0}, SqlxError>([\n          for (final row in rows) {1}FromRow.fromRow(row),\n        ]);\n      }} catch (error) {{\n        return Err<{0}, SqlxError>(\n          SqlxError.decode(error.toString(), cause: error),\n        );\n      }}",
-                DYNAMIC_TYPES.render(ok_type),
-                item_name
-            );
-        }
-    }
-    if is_scalar_type(ok_type) {
-        let ok_rendered = DYNAMIC_TYPES.render(ok_type);
-        if ok_type.is_nullable() {
-            let inner = scalar_inner(ok_type);
-            return format!(
-                "      if (rows.length > 1) {{\n        return Err<{ok_rendered}, SqlxError>(\n          SqlxError.tooManyRows(expected: 1, actual: rows.length),\n        );\n      }}\n\n      try {{\n        return Ok<{ok_rendered}, SqlxError>(\n          rows.isEmpty ? null : rows.single.readIndexOrNull<{inner}>(0),\n        );\n      }} catch (error) {{\n        return Err<{ok_rendered}, SqlxError>(\n          SqlxError.decode(error.toString(), cause: error),\n        );\n      }}"
+                "    return _db.fetchAll<{item_name}>(\n      {sql},\n      [{args}],\n      {item_name}FromRow.fromRow,\n    );"
             );
         }
         return format!(
-            "      if (rows.isEmpty) {{\n        return Err<{ok_rendered}, SqlxError>(\n          SqlxError.decode('Query `{method_name}` returned no rows.'),\n        );\n      }}\n\n      if (rows.length > 1) {{\n        return Err<{ok_rendered}, SqlxError>(\n          SqlxError.tooManyRows(expected: 1, actual: rows.length),\n        );\n      }}\n\n      try {{\n        return Ok<{ok_rendered}, SqlxError>(rows.single.readIndex<{ok_rendered}>(0));\n      }} catch (error) {{\n        return Err<{ok_rendered}, SqlxError>(\n          SqlxError.decode(error.toString(), cause: error),\n        );\n      }}"
+            "    return Err<{}, SqlxError>(\n      SqlxError.decode('Unsupported DAO list item type.'),\n    );",
+            DYNAMIC_TYPES.render(ok_type)
         );
     }
     let Some(row_name) = ok_type.name() else {
@@ -160,15 +155,11 @@ fn render_ok_mapper(ok_type: &TypeIr, row_names: &HashSet<&str>, method_name: &s
     };
     if ok_type.is_nullable() {
         return format!(
-            "      if (rows.isEmpty) return const Ok<{0}, SqlxError>(null);\n\n      if (rows.length > 1) {{\n        return Err<{0}, SqlxError>(\n          SqlxError.tooManyRows(expected: 1, actual: rows.length),\n        );\n      }}\n\n      try {{\n        return Ok<{0}, SqlxError>({1}FromRow.fromRow(rows.first));\n      }} catch (error) {{\n        return Err<{0}, SqlxError>(\n          SqlxError.decode(error.toString(), cause: error),\n        );\n      }}",
-            DYNAMIC_TYPES.render(ok_type),
-            row_name
+            "    return _db.fetchOptional<{row_name}>(\n      {sql},\n      [{args}],\n      {row_name}FromRow.fromRow,\n    );"
         );
     }
     format!(
-        "      if (rows.isEmpty) {{\n        return Err<{0}, SqlxError>(\n          SqlxError.decode('Query `{method_name}` returned no rows.'),\n        );\n      }}\n\n      if (rows.length > 1) {{\n        return Err<{0}, SqlxError>(\n          SqlxError.tooManyRows(expected: 1, actual: rows.length),\n        );\n      }}\n\n      try {{\n        return Ok<{0}, SqlxError>({1}FromRow.fromRow(rows.first));\n      }} catch (error) {{\n        return Err<{0}, SqlxError>(\n          SqlxError.decode(error.toString(), cause: error),\n        );\n      }}",
-        DYNAMIC_TYPES.render(ok_type),
-        row_name
+        "    return _db.fetchOne<{row_name}>(\n      {sql},\n      [{args}],\n      {row_name}FromRow.fromRow,\n    );"
     )
 }
 
@@ -178,7 +169,7 @@ fn render_database_class(library: &LibraryIr, db: &DatabaseClass<'_>) -> String 
     let migrations_name = format!("_${}Migrations", lower_first(class_name));
     let open_expr = match db.driver {
         DbDriver::Sqlite3 => {
-            format!("SqlitePool.open(\n      path,\n      migrations: {migrations_name},\n    )")
+            format!("Sqlite3Driver.open(\n      path,\n      migrations: {migrations_name},\n    )")
         }
         DbDriver::Postgres => {
             "throw UnsupportedError('Driver.postgres is not supported in Dust DB v1')".to_owned()
@@ -434,13 +425,6 @@ fn is_scalar_type(ty: &TypeIr) -> bool {
         ty.name(),
         Some("String" | "int" | "double" | "num" | "bool" | "DateTime")
     )
-}
-
-fn scalar_inner(ty: &TypeIr) -> String {
-    let rendered = DYNAMIC_TYPES.render(ty);
-    rendered
-        .strip_suffix('?')
-        .map_or(rendered.clone(), str::to_owned)
 }
 
 #[cfg(test)]

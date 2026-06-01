@@ -69,10 +69,13 @@ const unit = Unit();
 /// Result of a SQL execute statement.
 final class ExecResult {
   /// Creates one execute result.
-  const ExecResult({required this.rowsAffected});
+  const ExecResult({required this.rowsAffected, this.lastInsertId});
 
   /// Number of rows affected by the statement.
   final int rowsAffected;
+
+  /// Last inserted row id when the driver can report it.
+  final int? lastInsertId;
 }
 
 /// Base class for Dust DB SQLx-style runtime errors.
@@ -88,6 +91,16 @@ sealed class SqlxError {
   /// Creates a decode error.
   factory SqlxError.decode(String message, {Object? cause}) {
     return SqlxDecodeError(message, cause: cause);
+  }
+
+  /// Creates a no-rows cardinality error.
+  factory SqlxError.noRows(String query) {
+    return SqlxCardinalityError(query: query, expected: '1', actual: 0);
+  }
+
+  /// Creates a null-column decode error.
+  factory SqlxError.nullColumn(String column) {
+    return SqlxDecodeError('Column `$column` is null.');
   }
 
   /// Creates a cardinality error for too many rows.
@@ -114,6 +127,9 @@ final class SqlxDriverError extends SqlxError {
 
   /// Original driver error, when available.
   final Object? cause;
+
+  @override
+  String toString() => cause == null ? message : '$message Cause: $cause';
 }
 
 /// Error produced while decoding a row into a Dart object.
@@ -126,6 +142,9 @@ final class SqlxDecodeError extends SqlxError {
 
   /// Original decode error, when available.
   final Object? cause;
+
+  @override
+  String toString() => cause == null ? message : '$message Cause: $cause';
 }
 
 /// Error produced when a query returns the wrong number of rows.
@@ -145,4 +164,10 @@ final class SqlxCardinalityError extends SqlxError {
 
   /// Actual row count.
   final int actual;
+
+  @override
+  String toString() {
+    final prefix = query.isEmpty ? 'SQL query' : 'SQL query `$query`';
+    return '$prefix expected $expected row(s), got $actual.';
+  }
 }

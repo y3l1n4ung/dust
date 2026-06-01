@@ -26,11 +26,23 @@ fn db_build_writes_database_without_from_row_mapper() {
         generated_output(
             r#"part of 'app_database.dart';
 
+extension UserProfileFromRow on UserProfile {
+  static UserProfile fromRow(Row row) {
+    return UserProfile(
+      id: row.read<int>('id'),
+      name: row.read<String>('display_name'),
+      bio: row.readOrNull<Object?>('bio') == null ? '' : row.read<String>('bio'),
+    );
+  }
+}
+
+final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
+
 final class _$AppDatabase implements AppDatabase {
   _$AppDatabase._(this.pool);
 
   factory _$AppDatabase.open(String path) {
-    final pool = SqlitePool.open(
+    final pool = Sqlite3Driver.open(
       path,
       migrations: _$appDatabaseMigrations,
     );
@@ -221,7 +233,7 @@ fn normal_build_preserves_existing_database_output() {
     assert!(!normal_build.has_errors(), "{:?}", normal_build.diagnostics);
     assert!(database_output.contains("final class _$AppDatabase"));
     assert!(database_output.contains("final class _$UserDao implements UserDao"));
-    assert!(database_output.contains("SqlitePool.open"));
+    assert!(database_output.contains("Sqlite3Driver.open"));
     assert!(row_output.contains("extension UserProfileFromRow on UserProfile"));
 }
 

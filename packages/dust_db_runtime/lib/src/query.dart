@@ -1,7 +1,6 @@
 import 'pool.dart';
-import 'row_mapper.dart';
-
 import 'result.dart';
+import 'row_mapper.dart';
 
 /// Typed row query.
 final class QueryAs<T> {
@@ -11,24 +10,15 @@ final class QueryAs<T> {
   final List<Object?> parameters;
 
   Future<T> fetchOne(SqlxDriver db) async {
-    final rows = _unwrapRows(await db.fetch(sql, parameters));
-    if (rows.length != 1) {
-      throw StateError('Expected exactly one row, got ${rows.length}.');
-    }
-    return RowMapperRegistry.map<T>(rows.single);
+    return _unwrap(await db.fetchOne<T>(sql, parameters, RowMapperRegistry.map<T>));
   }
 
   Future<T?> fetchOptional(SqlxDriver db) async {
-    final rows = _unwrapRows(await db.fetch(sql, parameters));
-    if (rows.length > 1) {
-      throw StateError('Expected zero or one row, got ${rows.length}.');
-    }
-    return rows.isEmpty ? null : RowMapperRegistry.map<T>(rows.single);
+    return _unwrap(await db.fetchOptional<T>(sql, parameters, RowMapperRegistry.map<T>));
   }
 
   Future<List<T>> fetchAll(SqlxDriver db) async {
-    final rows = _unwrapRows(await db.fetch(sql, parameters));
-    return rows.map(RowMapperRegistry.map<T>).toList();
+    return _unwrap(await db.fetchAll<T>(sql, parameters, RowMapperRegistry.map<T>));
   }
 }
 
@@ -40,19 +30,11 @@ final class QueryScalar<T> {
   final List<Object?> parameters;
 
   Future<T> fetchOne(SqlxDriver db) async {
-    final rows = _unwrapRows(await db.fetch(sql, parameters));
-    if (rows.length != 1) {
-      throw StateError('Expected exactly one row, got ${rows.length}.');
-    }
-    return rows.single.readIndex<T>(0);
+    return _unwrap(await db.fetchScalar<T>(sql, parameters));
   }
 
   Future<T?> fetchOptional(SqlxDriver db) async {
-    final rows = _unwrapRows(await db.fetch(sql, parameters));
-    if (rows.length > 1) {
-      throw StateError('Expected zero or one row, got ${rows.length}.');
-    }
-    return rows.isEmpty ? null : rows.single.readIndexOrNull<T>(0);
+    return _unwrap(await db.fetchScalar<T?>(sql, parameters));
   }
 }
 
@@ -64,7 +46,7 @@ final class QueryRaw {
   final List<Object?> parameters;
 
   Future<List<Row>> fetch(SqlxDriver db) async {
-    return _unwrapRows(await db.fetch(sql, parameters));
+    return _unwrap(await db.raw.fetch(sql, parameters));
   }
 }
 
@@ -76,7 +58,7 @@ final class QueryExecute {
   final List<Object?> parameters;
 
   Future<ExecResult> execute(SqlxDriver db) async {
-    return _unwrapExec(await db.execute(sql, parameters));
+    return _unwrap(await db.execute(sql, parameters));
   }
 }
 
@@ -96,16 +78,9 @@ QueryExecute queryExecute(String sql, List<Object?> parameters) {
   return QueryExecute(sql, parameters);
 }
 
-List<Row> _unwrapRows(Result<List<Row>, SqlxError> result) {
-  return result.match(
-    ok: (rows) => rows,
-    err: (error) => throw StateError('SQL query failed: $error'),
-  );
-}
-
-ExecResult _unwrapExec(Result<ExecResult, SqlxError> result) {
+T _unwrap<T>(Result<T, SqlxError> result) {
   return result.match(
     ok: (value) => value,
-    err: (error) => throw StateError('SQL execute failed: $error'),
+    err: (error) => throw StateError('SQL operation failed: $error'),
   );
 }

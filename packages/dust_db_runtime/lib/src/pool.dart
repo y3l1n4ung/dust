@@ -1,8 +1,9 @@
 import 'package:dust_db_annotation/dust_db_annotation.dart';
 
 import 'result.dart';
+import 'row_mapper.dart';
 
-/// Executes SQL against a database pool or transaction.
+/// Executes typed SQLx-style queries against a database pool or transaction.
 abstract interface class SqlxDriver {
   /// Database driver used by this SQLx driver.
   Driver get driver;
@@ -10,11 +11,38 @@ abstract interface class SqlxDriver {
   /// Explicit unchecked SQL access for dynamic/admin queries.
   RawSql get raw;
 
-  /// Fetches rows for a SQL query.
-  Future<Result<List<Row>, SqlxError>> fetch(String sql, List<Object?> parameters);
+  /// Runs a checked row query that returns zero or one row.
+  Future<Result<T?, SqlxError>> fetchOptional<T>(
+    String sql,
+    List<Object?> parameters,
+    RowMapper<T> mapper,
+  );
 
-  /// Runs a statement and returns the affected row count when available.
-  Future<Result<ExecResult, SqlxError>> execute(String sql, List<Object?> parameters);
+  /// Runs a checked row query that returns all rows.
+  Future<Result<List<T>, SqlxError>> fetchAll<T>(
+    String sql,
+    List<Object?> parameters,
+    RowMapper<T> mapper,
+  );
+
+  /// Runs a checked row query that must return exactly one row.
+  Future<Result<T, SqlxError>> fetchOne<T>(
+    String sql,
+    List<Object?> parameters,
+    RowMapper<T> mapper,
+  );
+
+  /// Runs a checked scalar query and reads column index zero.
+  Future<Result<T, SqlxError>> fetchScalar<T>(
+    String sql,
+    List<Object?> parameters,
+  );
+
+  /// Runs a checked statement and returns execution metadata.
+  Future<Result<ExecResult, SqlxError>> execute(
+    String sql,
+    List<Object?> parameters,
+  );
 
   /// Runs [fn] inside a database transaction.
   Future<Result<T, SqlxError>> transaction<T>(
@@ -58,7 +86,7 @@ final class RawSqlx implements RawSql {
     String sql,
     List<Object?> parameters,
   ) {
-    return _db.fetch(sql, parameters);
+    return _db.raw.fetch(sql, parameters);
   }
 
   @override
@@ -66,7 +94,7 @@ final class RawSqlx implements RawSql {
     String sql,
     List<Object?> parameters,
   ) {
-    return _db.execute(sql, parameters);
+    return _db.raw.execute(sql, parameters);
   }
 }
 
@@ -79,9 +107,15 @@ abstract interface class Row {
   T? readOrNull<T>(String column);
 
   /// Reads a non-null value by column index.
+  ///
+  /// Generated row mappers never use this. It exists for scalar fetch internals
+  /// and raw-query escape hatches.
   T readIndex<T>(int index);
 
   /// Reads a nullable value by column index.
+  ///
+  /// Generated row mappers never use this. It exists for scalar fetch internals
+  /// and raw-query escape hatches.
   T? readIndexOrNull<T>(int index);
 
   /// Reads a SQLite/Postgres boolean-compatible column.
@@ -90,9 +124,9 @@ abstract interface class Row {
   /// Reads a nullable SQLite/Postgres boolean-compatible column.
   bool? readBoolOrNull(String column);
 
-  /// Reads an ISO-8601 date/time text column.
+  /// Reads an ISO-8601 date/time text column and normalizes it to UTC.
   DateTime readDateTime(String column);
 
-  /// Reads a nullable ISO-8601 date/time text column.
+  /// Reads a nullable ISO-8601 date/time text column and normalizes it to UTC.
   DateTime? readDateTimeOrNull(String column);
 }

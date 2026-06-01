@@ -55,13 +55,52 @@ final class FakePool implements Pool {
   Driver get driver => Driver.sqlite3;
 
   @override
-  RawSql get raw => throw UnimplementedError();
+  RawSql get raw => _FakeRawSql(this);
 
   @override
-  Future<Result<List<Row>, SqlxError>> fetch(String sql, List<Object?> parameters) async {
+  Future<Result<T?, SqlxError>> fetchOptional<T>(
+    String sql,
+    List<Object?> parameters,
+    RowMapper<T> mapper,
+  ) async {
     lastSql = sql;
     lastParameters = parameters;
-    return Ok<List<Row>, SqlxError>(rows);
+    if (rows.isEmpty) return Ok<T?, SqlxError>(null);
+    return Ok<T?, SqlxError>(mapper(rows.first));
+  }
+
+  @override
+  Future<Result<List<T>, SqlxError>> fetchAll<T>(
+    String sql,
+    List<Object?> parameters,
+    RowMapper<T> mapper,
+  ) async {
+    lastSql = sql;
+    lastParameters = parameters;
+    return Ok<List<T>, SqlxError>([
+      for (final row in rows) mapper(row),
+    ]);
+  }
+
+  @override
+  Future<Result<T, SqlxError>> fetchOne<T>(
+    String sql,
+    List<Object?> parameters,
+    RowMapper<T> mapper,
+  ) async {
+    lastSql = sql;
+    lastParameters = parameters;
+    return Ok<T, SqlxError>(mapper(rows.single));
+  }
+
+  @override
+  Future<Result<T, SqlxError>> fetchScalar<T>(
+    String sql,
+    List<Object?> parameters,
+  ) async {
+    lastSql = sql;
+    lastParameters = parameters;
+    return Ok<T, SqlxError>(rows.single.readIndex<T>(0));
   }
 
   @override
@@ -80,6 +119,27 @@ final class FakePool implements Pool {
 
   @override
   Future<Result<Unit, SqlxError>> close() async => const Ok<Unit, SqlxError>(unit);
+}
+
+final class _FakeRawSql implements RawSql {
+  const _FakeRawSql(this._pool);
+
+  final FakePool _pool;
+
+  @override
+  Future<Result<List<Row>, SqlxError>> fetch(String sql, List<Object?> parameters) async {
+    _pool.lastSql = sql;
+    _pool.lastParameters = parameters;
+    return Ok<List<Row>, SqlxError>(_pool.rows);
+  }
+
+  @override
+  Future<Result<ExecResult, SqlxError>> execute(
+    String sql,
+    List<Object?> parameters,
+  ) {
+    return _pool.execute(sql, parameters);
+  }
 }
 
 void main() {
