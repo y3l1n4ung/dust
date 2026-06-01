@@ -23,9 +23,9 @@ fn build_writes_state_output_for_view_model_library() {
     assert!(output.exists());
     assert!(source.contains("abstract class $TaskBoardViewModel"));
     assert!(source.contains("extends ViewModelBase<TaskBoardState, TaskBoardArgs>"));
-    assert!(source.contains("enum _TaskBoardViewModelAspect { count, message }"));
-    assert!(source.contains("int get count"));
-    assert!(source.contains("String? get message"));
+    assert!(!source.contains("enum _TaskBoardViewModelAspect"));
+    assert!(source.contains("TaskBoardState get value"));
+    assert!(source.contains("R select<R>(R Function(TaskBoardState state) selector)"));
 }
 
 fn write_state_workspace(root: &std::path::Path) {

@@ -13,10 +13,42 @@
 
 part of 'shopping_chat_view_model.dart';
 
-enum _ShoppingChatViewModelAspect { messages, status, errorMessage }
+final class _ShoppingChatViewModelAspect<R> {
+  const _ShoppingChatViewModelAspect(this.selector);
+
+  final R Function(ChatState state) selector;
+
+  bool hasChanged(ChatState previous, ChatState next) {
+    return selector(previous) != selector(next);
+  }
+}
+
+List<Object?> _shoppingChatViewModelSelectMessages(ChatState state) => state.messages;
+final _shoppingChatViewModelMessagesAspect = _ShoppingChatViewModelAspect<List<Object?>>(
+  _shoppingChatViewModelSelectMessages,
+);
+
+ChatStatus _shoppingChatViewModelSelectStatus(ChatState state) => state.status;
+final _shoppingChatViewModelStatusAspect = _ShoppingChatViewModelAspect<ChatStatus>(
+  _shoppingChatViewModelSelectStatus,
+);
+
+String? _shoppingChatViewModelSelectErrorMessage(ChatState state) => state.errorMessage;
+final _shoppingChatViewModelErrorMessageAspect = _ShoppingChatViewModelAspect<String?>(
+  _shoppingChatViewModelSelectErrorMessage,
+);
 
 abstract class $ShoppingChatViewModel extends ViewModelBase<ChatState, ShoppingChatViewModelArgs> {
   $ShoppingChatViewModel(super.args) : super(initialState: const ChatState());
+
+
+  List<Object?> get messages => state.messages;
+
+  ChatStatus get status => state.status;
+
+  String? get errorMessage => state.errorMessage;
+
+  ShoppingRepository get repository => args.repository;
 }
 
 class _$ShoppingChatViewModelProxy {
@@ -26,6 +58,32 @@ class _$ShoppingChatViewModelProxy {
 
   ChatState get value {
     return ShoppingChatViewModelScope.of(_context).value;
+  }
+
+  List<Object?> get messages {
+    return ShoppingChatViewModelScope.of(
+      _context,
+      aspect: _shoppingChatViewModelMessagesAspect,
+    ).state.messages;
+  }
+
+  ChatStatus get status {
+    return ShoppingChatViewModelScope.of(
+      _context,
+      aspect: _shoppingChatViewModelStatusAspect,
+    ).state.status;
+  }
+
+  String? get errorMessage {
+    return ShoppingChatViewModelScope.of(
+      _context,
+      aspect: _shoppingChatViewModelErrorMessageAspect,
+    ).state.errorMessage;
+  }
+
+  R select<R>(R Function(ChatState state) selector) {
+    final aspect = _ShoppingChatViewModelAspect<R>(selector);
+    return selector(ShoppingChatViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -57,7 +115,7 @@ class ShoppingChatViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static ShoppingChatViewModel of(BuildContext context, {_ShoppingChatViewModelAspect? aspect}) {
+  static ShoppingChatViewModel of(BuildContext context, {_ShoppingChatViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_ShoppingChatViewModelInherited>(
       aspect: aspect,
     );
@@ -169,7 +227,7 @@ class _ShoppingChatViewModelScopeState extends State<ShoppingChatViewModelScope>
   }
 }
 
-class _ShoppingChatViewModelInherited extends InheritedModel<_ShoppingChatViewModelAspect> {
+class _ShoppingChatViewModelInherited extends InheritedModel<_ShoppingChatViewModelAspect<Object?>> {
   const _ShoppingChatViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final ShoppingChatViewModel viewModel;
@@ -182,21 +240,13 @@ class _ShoppingChatViewModelInherited extends InheritedModel<_ShoppingChatViewMo
   bool updateShouldNotify(_ShoppingChatViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_ShoppingChatViewModelInherited oldWidget, Set<_ShoppingChatViewModelAspect> dependencies) {
+  bool updateShouldNotifyDependent(
+    _ShoppingChatViewModelInherited oldWidget,
+    Set<_ShoppingChatViewModelAspect<Object?>> dependencies,
+  ) {
     for (final aspect in dependencies) {
-      switch (aspect) {
-        case _ShoppingChatViewModelAspect.messages:
-          if (state.messages != oldWidget.state.messages) {
-            return true;
-          }
-        case _ShoppingChatViewModelAspect.status:
-          if (state.status != oldWidget.state.status) {
-            return true;
-          }
-        case _ShoppingChatViewModelAspect.errorMessage:
-          if (state.errorMessage != oldWidget.state.errorMessage) {
-            return true;
-          }
+      if (aspect.hasChanged(oldWidget.state, state)) {
+        return true;
       }
     }
     return false;

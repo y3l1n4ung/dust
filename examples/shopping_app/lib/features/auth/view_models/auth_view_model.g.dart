@@ -13,10 +13,51 @@
 
 part of 'auth_view_model.dart';
 
-enum _AuthViewModelAspect { user, token, status, errorMessage }
+final class _AuthViewModelAspect<R> {
+  const _AuthViewModelAspect(this.selector);
+
+  final R Function(AuthState state) selector;
+
+  bool hasChanged(AuthState previous, AuthState next) {
+    return selector(previous) != selector(next);
+  }
+}
+
+Object? _authViewModelSelectUser(AuthState state) => state.user;
+final _authViewModelUserAspect = _AuthViewModelAspect<Object?>(
+  _authViewModelSelectUser,
+);
+
+String? _authViewModelSelectToken(AuthState state) => state.token;
+final _authViewModelTokenAspect = _AuthViewModelAspect<String?>(
+  _authViewModelSelectToken,
+);
+
+AuthStatus _authViewModelSelectStatus(AuthState state) => state.status;
+final _authViewModelStatusAspect = _AuthViewModelAspect<AuthStatus>(
+  _authViewModelSelectStatus,
+);
+
+String? _authViewModelSelectErrorMessage(AuthState state) => state.errorMessage;
+final _authViewModelErrorMessageAspect = _AuthViewModelAspect<String?>(
+  _authViewModelSelectErrorMessage,
+);
 
 abstract class $AuthViewModel extends ViewModelBase<AuthState, AuthViewModelArgs> {
   $AuthViewModel(super.args) : super(initialState: AuthState(status: AuthStatus.unauthenticated));
+
+
+  Object? get user => state.user;
+
+  String? get token => state.token;
+
+  AuthStatus get status => state.status;
+
+  String? get errorMessage => state.errorMessage;
+
+  ShoppingRepository get repository => args.repository;
+
+  StorageService get storage => args.storage;
 }
 
 class _$AuthViewModelProxy {
@@ -26,6 +67,39 @@ class _$AuthViewModelProxy {
 
   AuthState get value {
     return AuthViewModelScope.of(_context).value;
+  }
+
+  Object? get user {
+    return AuthViewModelScope.of(
+      _context,
+      aspect: _authViewModelUserAspect,
+    ).state.user;
+  }
+
+  String? get token {
+    return AuthViewModelScope.of(
+      _context,
+      aspect: _authViewModelTokenAspect,
+    ).state.token;
+  }
+
+  AuthStatus get status {
+    return AuthViewModelScope.of(
+      _context,
+      aspect: _authViewModelStatusAspect,
+    ).state.status;
+  }
+
+  String? get errorMessage {
+    return AuthViewModelScope.of(
+      _context,
+      aspect: _authViewModelErrorMessageAspect,
+    ).state.errorMessage;
+  }
+
+  R select<R>(R Function(AuthState state) selector) {
+    final aspect = _AuthViewModelAspect<R>(selector);
+    return selector(AuthViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -57,7 +131,7 @@ class AuthViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static AuthViewModel of(BuildContext context, {_AuthViewModelAspect? aspect}) {
+  static AuthViewModel of(BuildContext context, {_AuthViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_AuthViewModelInherited>(
       aspect: aspect,
     );
@@ -169,7 +243,7 @@ class _AuthViewModelScopeState extends State<AuthViewModelScope> {
   }
 }
 
-class _AuthViewModelInherited extends InheritedModel<_AuthViewModelAspect> {
+class _AuthViewModelInherited extends InheritedModel<_AuthViewModelAspect<Object?>> {
   const _AuthViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final AuthViewModel viewModel;
@@ -182,25 +256,13 @@ class _AuthViewModelInherited extends InheritedModel<_AuthViewModelAspect> {
   bool updateShouldNotify(_AuthViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_AuthViewModelInherited oldWidget, Set<_AuthViewModelAspect> dependencies) {
+  bool updateShouldNotifyDependent(
+    _AuthViewModelInherited oldWidget,
+    Set<_AuthViewModelAspect<Object?>> dependencies,
+  ) {
     for (final aspect in dependencies) {
-      switch (aspect) {
-        case _AuthViewModelAspect.user:
-          if (state.user != oldWidget.state.user) {
-            return true;
-          }
-        case _AuthViewModelAspect.token:
-          if (state.token != oldWidget.state.token) {
-            return true;
-          }
-        case _AuthViewModelAspect.status:
-          if (state.status != oldWidget.state.status) {
-            return true;
-          }
-        case _AuthViewModelAspect.errorMessage:
-          if (state.errorMessage != oldWidget.state.errorMessage) {
-            return true;
-          }
+      if (aspect.hasChanged(oldWidget.state, state)) {
+        return true;
       }
     }
     return false;

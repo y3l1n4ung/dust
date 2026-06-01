@@ -13,10 +13,33 @@
 
 part of 'cart_view_model.dart';
 
-enum _CartViewModelAspect { items, notification }
+final class _CartViewModelAspect<R> {
+  const _CartViewModelAspect(this.selector);
+
+  final R Function(CartState state) selector;
+
+  bool hasChanged(CartState previous, CartState next) {
+    return selector(previous) != selector(next);
+  }
+}
+
+List<Object?> _cartViewModelSelectItems(CartState state) => state.items;
+final _cartViewModelItemsAspect = _CartViewModelAspect<List<Object?>>(
+  _cartViewModelSelectItems,
+);
+
+CartNotification? _cartViewModelSelectNotification(CartState state) => state.notification;
+final _cartViewModelNotificationAspect = _CartViewModelAspect<CartNotification?>(
+  _cartViewModelSelectNotification,
+);
 
 abstract class $CartViewModel extends ViewModelBase<CartState, CartViewModelArgs> {
   $CartViewModel(super.args) : super(initialState: const CartState());
+
+
+  List<Object?> get items => state.items;
+
+  CartNotification? get notification => state.notification;
 }
 
 class _$CartViewModelProxy {
@@ -26,6 +49,25 @@ class _$CartViewModelProxy {
 
   CartState get value {
     return CartViewModelScope.of(_context).value;
+  }
+
+  List<Object?> get items {
+    return CartViewModelScope.of(
+      _context,
+      aspect: _cartViewModelItemsAspect,
+    ).state.items;
+  }
+
+  CartNotification? get notification {
+    return CartViewModelScope.of(
+      _context,
+      aspect: _cartViewModelNotificationAspect,
+    ).state.notification;
+  }
+
+  R select<R>(R Function(CartState state) selector) {
+    final aspect = _CartViewModelAspect<R>(selector);
+    return selector(CartViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -57,7 +99,7 @@ class CartViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static CartViewModel of(BuildContext context, {_CartViewModelAspect? aspect}) {
+  static CartViewModel of(BuildContext context, {_CartViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_CartViewModelInherited>(
       aspect: aspect,
     );
@@ -169,7 +211,7 @@ class _CartViewModelScopeState extends State<CartViewModelScope> {
   }
 }
 
-class _CartViewModelInherited extends InheritedModel<_CartViewModelAspect> {
+class _CartViewModelInherited extends InheritedModel<_CartViewModelAspect<Object?>> {
   const _CartViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final CartViewModel viewModel;
@@ -182,17 +224,13 @@ class _CartViewModelInherited extends InheritedModel<_CartViewModelAspect> {
   bool updateShouldNotify(_CartViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_CartViewModelInherited oldWidget, Set<_CartViewModelAspect> dependencies) {
+  bool updateShouldNotifyDependent(
+    _CartViewModelInherited oldWidget,
+    Set<_CartViewModelAspect<Object?>> dependencies,
+  ) {
     for (final aspect in dependencies) {
-      switch (aspect) {
-        case _CartViewModelAspect.items:
-          if (state.items != oldWidget.state.items) {
-            return true;
-          }
-        case _CartViewModelAspect.notification:
-          if (state.notification != oldWidget.state.notification) {
-            return true;
-          }
+      if (aspect.hasChanged(oldWidget.state, state)) {
+        return true;
       }
     }
     return false;

@@ -13,10 +13,70 @@
 
 part of 'checkout_view_model.dart';
 
-enum _CheckoutViewModelAspect { status, shippingAddress, errorMessage, orderId, couponCode, quote, isQuoteLoading }
+final class _CheckoutViewModelAspect<R> {
+  const _CheckoutViewModelAspect(this.selector);
+
+  final R Function(CheckoutState state) selector;
+
+  bool hasChanged(CheckoutState previous, CheckoutState next) {
+    return selector(previous) != selector(next);
+  }
+}
+
+CheckoutStatus _checkoutViewModelSelectStatus(CheckoutState state) => state.status;
+final _checkoutViewModelStatusAspect = _CheckoutViewModelAspect<CheckoutStatus>(
+  _checkoutViewModelSelectStatus,
+);
+
+Object? _checkoutViewModelSelectShippingAddress(CheckoutState state) => state.shippingAddress;
+final _checkoutViewModelShippingAddressAspect = _CheckoutViewModelAspect<Object?>(
+  _checkoutViewModelSelectShippingAddress,
+);
+
+String? _checkoutViewModelSelectErrorMessage(CheckoutState state) => state.errorMessage;
+final _checkoutViewModelErrorMessageAspect = _CheckoutViewModelAspect<String?>(
+  _checkoutViewModelSelectErrorMessage,
+);
+
+String? _checkoutViewModelSelectOrderId(CheckoutState state) => state.orderId;
+final _checkoutViewModelOrderIdAspect = _CheckoutViewModelAspect<String?>(
+  _checkoutViewModelSelectOrderId,
+);
+
+String? _checkoutViewModelSelectCouponCode(CheckoutState state) => state.couponCode;
+final _checkoutViewModelCouponCodeAspect = _CheckoutViewModelAspect<String?>(
+  _checkoutViewModelSelectCouponCode,
+);
+
+Object? _checkoutViewModelSelectQuote(CheckoutState state) => state.quote;
+final _checkoutViewModelQuoteAspect = _CheckoutViewModelAspect<Object?>(
+  _checkoutViewModelSelectQuote,
+);
+
+bool _checkoutViewModelSelectIsQuoteLoading(CheckoutState state) => state.isQuoteLoading;
+final _checkoutViewModelIsQuoteLoadingAspect = _CheckoutViewModelAspect<bool>(
+  _checkoutViewModelSelectIsQuoteLoading,
+);
 
 abstract class $CheckoutViewModel extends ViewModelBase<CheckoutState, CheckoutViewModelArgs> {
   $CheckoutViewModel(super.args) : super(initialState: const CheckoutState());
+
+
+  CheckoutStatus get status => state.status;
+
+  Object? get shippingAddress => state.shippingAddress;
+
+  String? get errorMessage => state.errorMessage;
+
+  String? get orderId => state.orderId;
+
+  String? get couponCode => state.couponCode;
+
+  Object? get quote => state.quote;
+
+  bool get isQuoteLoading => state.isQuoteLoading;
+
+  ShoppingRepository get repository => args.repository;
 }
 
 class _$CheckoutViewModelProxy {
@@ -26,6 +86,60 @@ class _$CheckoutViewModelProxy {
 
   CheckoutState get value {
     return CheckoutViewModelScope.of(_context).value;
+  }
+
+  CheckoutStatus get status {
+    return CheckoutViewModelScope.of(
+      _context,
+      aspect: _checkoutViewModelStatusAspect,
+    ).state.status;
+  }
+
+  Object? get shippingAddress {
+    return CheckoutViewModelScope.of(
+      _context,
+      aspect: _checkoutViewModelShippingAddressAspect,
+    ).state.shippingAddress;
+  }
+
+  String? get errorMessage {
+    return CheckoutViewModelScope.of(
+      _context,
+      aspect: _checkoutViewModelErrorMessageAspect,
+    ).state.errorMessage;
+  }
+
+  String? get orderId {
+    return CheckoutViewModelScope.of(
+      _context,
+      aspect: _checkoutViewModelOrderIdAspect,
+    ).state.orderId;
+  }
+
+  String? get couponCode {
+    return CheckoutViewModelScope.of(
+      _context,
+      aspect: _checkoutViewModelCouponCodeAspect,
+    ).state.couponCode;
+  }
+
+  Object? get quote {
+    return CheckoutViewModelScope.of(
+      _context,
+      aspect: _checkoutViewModelQuoteAspect,
+    ).state.quote;
+  }
+
+  bool get isQuoteLoading {
+    return CheckoutViewModelScope.of(
+      _context,
+      aspect: _checkoutViewModelIsQuoteLoadingAspect,
+    ).state.isQuoteLoading;
+  }
+
+  R select<R>(R Function(CheckoutState state) selector) {
+    final aspect = _CheckoutViewModelAspect<R>(selector);
+    return selector(CheckoutViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -57,7 +171,7 @@ class CheckoutViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static CheckoutViewModel of(BuildContext context, {_CheckoutViewModelAspect? aspect}) {
+  static CheckoutViewModel of(BuildContext context, {_CheckoutViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_CheckoutViewModelInherited>(
       aspect: aspect,
     );
@@ -169,7 +283,7 @@ class _CheckoutViewModelScopeState extends State<CheckoutViewModelScope> {
   }
 }
 
-class _CheckoutViewModelInherited extends InheritedModel<_CheckoutViewModelAspect> {
+class _CheckoutViewModelInherited extends InheritedModel<_CheckoutViewModelAspect<Object?>> {
   const _CheckoutViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final CheckoutViewModel viewModel;
@@ -182,37 +296,13 @@ class _CheckoutViewModelInherited extends InheritedModel<_CheckoutViewModelAspec
   bool updateShouldNotify(_CheckoutViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_CheckoutViewModelInherited oldWidget, Set<_CheckoutViewModelAspect> dependencies) {
+  bool updateShouldNotifyDependent(
+    _CheckoutViewModelInherited oldWidget,
+    Set<_CheckoutViewModelAspect<Object?>> dependencies,
+  ) {
     for (final aspect in dependencies) {
-      switch (aspect) {
-        case _CheckoutViewModelAspect.status:
-          if (state.status != oldWidget.state.status) {
-            return true;
-          }
-        case _CheckoutViewModelAspect.shippingAddress:
-          if (state.shippingAddress != oldWidget.state.shippingAddress) {
-            return true;
-          }
-        case _CheckoutViewModelAspect.errorMessage:
-          if (state.errorMessage != oldWidget.state.errorMessage) {
-            return true;
-          }
-        case _CheckoutViewModelAspect.orderId:
-          if (state.orderId != oldWidget.state.orderId) {
-            return true;
-          }
-        case _CheckoutViewModelAspect.couponCode:
-          if (state.couponCode != oldWidget.state.couponCode) {
-            return true;
-          }
-        case _CheckoutViewModelAspect.quote:
-          if (state.quote != oldWidget.state.quote) {
-            return true;
-          }
-        case _CheckoutViewModelAspect.isQuoteLoading:
-          if (state.isQuoteLoading != oldWidget.state.isQuoteLoading) {
-            return true;
-          }
+      if (aspect.hasChanged(oldWidget.state, state)) {
+        return true;
       }
     }
     return false;

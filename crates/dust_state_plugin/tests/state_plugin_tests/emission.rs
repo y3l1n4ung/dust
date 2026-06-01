@@ -97,7 +97,9 @@ fn emits_state_fields_from_workspace_analysis() {
     );
 
     let source = &contribution.support_types[0];
-    assert!(source.contains("enum _TaskBoardViewModelAspect { count, message }"));
+    assert!(source.contains("final class _TaskBoardViewModelAspect<R>"));
+    assert!(source.contains("final _taskBoardViewModelCountAspect"));
+    assert!(source.contains("final _taskBoardViewModelMessageAspect"));
     assert!(source.contains("int get count => state.count;"));
     assert!(source.contains("String? get message => state.message;"));
     assert!(source.contains("PrototypeRepository get repository => args.repository;"));
@@ -114,17 +116,28 @@ fn emits_state_fields_from_workspace_analysis() {
   }
 
   int get count {
-    return TaskBoardViewModelScope.of(_context, aspect: _TaskBoardViewModelAspect.count).state.count;
+    return TaskBoardViewModelScope.of(
+      _context,
+      aspect: _taskBoardViewModelCountAspect,
+    ).state.count;
   }
 
   String? get message {
-    return TaskBoardViewModelScope.of(_context, aspect: _TaskBoardViewModelAspect.message).state.message;
+    return TaskBoardViewModelScope.of(
+      _context,
+      aspect: _taskBoardViewModelMessageAspect,
+    ).state.message;
+  }
+
+  R select<R>(R Function(TaskBoardState state) selector) {
+    final aspect = _TaskBoardViewModelAspect<R>(selector);
+    return selector(TaskBoardViewModelScope.of(_context, aspect: aspect).value);
   }
 }"#
     );
     assert_eq!(
         extract_class(source, "class _TaskBoardViewModelInherited"),
-        r#"class _TaskBoardViewModelInherited extends InheritedModel<_TaskBoardViewModelAspect> {
+        r#"class _TaskBoardViewModelInherited extends InheritedModel<_TaskBoardViewModelAspect<Object?>> {
   const _TaskBoardViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final TaskBoardViewModel viewModel;
@@ -137,17 +150,13 @@ fn emits_state_fields_from_workspace_analysis() {
   bool updateShouldNotify(_TaskBoardViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_TaskBoardViewModelInherited oldWidget, Set<_TaskBoardViewModelAspect> dependencies) {
+  bool updateShouldNotifyDependent(
+    _TaskBoardViewModelInherited oldWidget,
+    Set<_TaskBoardViewModelAspect<Object?>> dependencies,
+  ) {
     for (final aspect in dependencies) {
-      switch (aspect) {
-        case _TaskBoardViewModelAspect.count:
-          if (state.count != oldWidget.state.count) {
-            return true;
-          }
-        case _TaskBoardViewModelAspect.message:
-          if (state.message != oldWidget.state.message) {
-            return true;
-          }
+      if (aspect.hasChanged(oldWidget.state, state)) {
+        return true;
       }
     }
     return false;
@@ -189,7 +198,10 @@ fn emits_state_fields_from_imported_unannotated_state_file() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let source = &contribution.support_types[0];
 
-    assert!(source.contains("enum _ProductsViewModelAspect { products, status, errorMessage }"));
+    assert!(source.contains("final class _ProductsViewModelAspect<R>"));
+    assert!(source.contains("final _productsViewModelProductsAspect"));
+    assert!(source.contains("final _productsViewModelStatusAspect"));
+    assert!(source.contains("final _productsViewModelErrorMessageAspect"));
     assert!(source.contains("List<Object?> get products"));
     assert!(source.contains("ProductsStatus get status"));
     assert!(source.contains("String? get errorMessage"));
@@ -238,7 +250,9 @@ fn imported_state_source_wins_over_raw_workspace_field_facts() {
     let contribution = plugin.emit(&library, &plan);
     let source = &contribution.support_types[0];
 
-    assert!(source.contains("enum _ProductsViewModelAspect { products, status }"));
+    assert!(source.contains("final class _ProductsViewModelAspect<R>"));
+    assert!(source.contains("final _productsViewModelProductsAspect"));
+    assert!(source.contains("final _productsViewModelStatusAspect"));
     assert!(source.contains("List<Object?> get products"));
     assert!(source.contains("ProductsStatus get status"));
     assert!(!source.contains("List<Product> get products"));

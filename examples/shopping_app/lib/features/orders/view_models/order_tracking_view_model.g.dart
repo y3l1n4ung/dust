@@ -13,10 +13,49 @@
 
 part of 'order_tracking_view_model.dart';
 
-enum _OrderTrackingViewModelAspect { orderId, status, events, errorMessage }
+final class _OrderTrackingViewModelAspect<R> {
+  const _OrderTrackingViewModelAspect(this.selector);
+
+  final R Function(OrderTrackingState state) selector;
+
+  bool hasChanged(OrderTrackingState previous, OrderTrackingState next) {
+    return selector(previous) != selector(next);
+  }
+}
+
+String? _orderTrackingViewModelSelectOrderId(OrderTrackingState state) => state.orderId;
+final _orderTrackingViewModelOrderIdAspect = _OrderTrackingViewModelAspect<String?>(
+  _orderTrackingViewModelSelectOrderId,
+);
+
+OrderTrackingStatus _orderTrackingViewModelSelectStatus(OrderTrackingState state) => state.status;
+final _orderTrackingViewModelStatusAspect = _OrderTrackingViewModelAspect<OrderTrackingStatus>(
+  _orderTrackingViewModelSelectStatus,
+);
+
+List<Object?> _orderTrackingViewModelSelectEvents(OrderTrackingState state) => state.events;
+final _orderTrackingViewModelEventsAspect = _OrderTrackingViewModelAspect<List<Object?>>(
+  _orderTrackingViewModelSelectEvents,
+);
+
+String? _orderTrackingViewModelSelectErrorMessage(OrderTrackingState state) => state.errorMessage;
+final _orderTrackingViewModelErrorMessageAspect = _OrderTrackingViewModelAspect<String?>(
+  _orderTrackingViewModelSelectErrorMessage,
+);
 
 abstract class $OrderTrackingViewModel extends ViewModelBase<OrderTrackingState, OrderTrackingViewModelArgs> {
   $OrderTrackingViewModel(super.args) : super(initialState: const OrderTrackingState());
+
+
+  String? get orderId => state.orderId;
+
+  OrderTrackingStatus get status => state.status;
+
+  List<Object?> get events => state.events;
+
+  String? get errorMessage => state.errorMessage;
+
+  ShoppingRepository get repository => args.repository;
 }
 
 class _$OrderTrackingViewModelProxy {
@@ -26,6 +65,39 @@ class _$OrderTrackingViewModelProxy {
 
   OrderTrackingState get value {
     return OrderTrackingViewModelScope.of(_context).value;
+  }
+
+  String? get orderId {
+    return OrderTrackingViewModelScope.of(
+      _context,
+      aspect: _orderTrackingViewModelOrderIdAspect,
+    ).state.orderId;
+  }
+
+  OrderTrackingStatus get status {
+    return OrderTrackingViewModelScope.of(
+      _context,
+      aspect: _orderTrackingViewModelStatusAspect,
+    ).state.status;
+  }
+
+  List<Object?> get events {
+    return OrderTrackingViewModelScope.of(
+      _context,
+      aspect: _orderTrackingViewModelEventsAspect,
+    ).state.events;
+  }
+
+  String? get errorMessage {
+    return OrderTrackingViewModelScope.of(
+      _context,
+      aspect: _orderTrackingViewModelErrorMessageAspect,
+    ).state.errorMessage;
+  }
+
+  R select<R>(R Function(OrderTrackingState state) selector) {
+    final aspect = _OrderTrackingViewModelAspect<R>(selector);
+    return selector(OrderTrackingViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -57,7 +129,7 @@ class OrderTrackingViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static OrderTrackingViewModel of(BuildContext context, {_OrderTrackingViewModelAspect? aspect}) {
+  static OrderTrackingViewModel of(BuildContext context, {_OrderTrackingViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_OrderTrackingViewModelInherited>(
       aspect: aspect,
     );
@@ -169,7 +241,7 @@ class _OrderTrackingViewModelScopeState extends State<OrderTrackingViewModelScop
   }
 }
 
-class _OrderTrackingViewModelInherited extends InheritedModel<_OrderTrackingViewModelAspect> {
+class _OrderTrackingViewModelInherited extends InheritedModel<_OrderTrackingViewModelAspect<Object?>> {
   const _OrderTrackingViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final OrderTrackingViewModel viewModel;
@@ -182,25 +254,13 @@ class _OrderTrackingViewModelInherited extends InheritedModel<_OrderTrackingView
   bool updateShouldNotify(_OrderTrackingViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_OrderTrackingViewModelInherited oldWidget, Set<_OrderTrackingViewModelAspect> dependencies) {
+  bool updateShouldNotifyDependent(
+    _OrderTrackingViewModelInherited oldWidget,
+    Set<_OrderTrackingViewModelAspect<Object?>> dependencies,
+  ) {
     for (final aspect in dependencies) {
-      switch (aspect) {
-        case _OrderTrackingViewModelAspect.orderId:
-          if (state.orderId != oldWidget.state.orderId) {
-            return true;
-          }
-        case _OrderTrackingViewModelAspect.status:
-          if (state.status != oldWidget.state.status) {
-            return true;
-          }
-        case _OrderTrackingViewModelAspect.events:
-          if (state.events != oldWidget.state.events) {
-            return true;
-          }
-        case _OrderTrackingViewModelAspect.errorMessage:
-          if (state.errorMessage != oldWidget.state.errorMessage) {
-            return true;
-          }
+      if (aspect.hasChanged(oldWidget.state, state)) {
+        return true;
       }
     }
     return false;

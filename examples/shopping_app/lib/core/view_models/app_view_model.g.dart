@@ -50,10 +50,30 @@ mixin _$AppState {
   }
 }
 
-enum _AppViewModelAspect { backendMode }
+final class _AppViewModelAspect<R> {
+  const _AppViewModelAspect(this.selector);
+
+  final R Function(AppState state) selector;
+
+  bool hasChanged(AppState previous, AppState next) {
+    return selector(previous) != selector(next);
+  }
+}
+
+AppBackendMode _appViewModelSelectBackendMode(AppState state) => state.backendMode;
+final _appViewModelBackendModeAspect = _AppViewModelAspect<AppBackendMode>(
+  _appViewModelSelectBackendMode,
+);
 
 abstract class $AppViewModel extends ViewModelBase<AppState, AppViewModelArgs> {
   $AppViewModel(super.args) : super(initialState: const AppState());
+
+
+  AppBackendMode get backendMode => state.backendMode;
+
+  ShoppingRepository get repository => args.repository;
+
+  StorageService get storage => args.storage;
 }
 
 class _$AppViewModelProxy {
@@ -63,6 +83,18 @@ class _$AppViewModelProxy {
 
   AppState get value {
     return AppViewModelScope.of(_context).value;
+  }
+
+  AppBackendMode get backendMode {
+    return AppViewModelScope.of(
+      _context,
+      aspect: _appViewModelBackendModeAspect,
+    ).state.backendMode;
+  }
+
+  R select<R>(R Function(AppState state) selector) {
+    final aspect = _AppViewModelAspect<R>(selector);
+    return selector(AppViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -94,7 +126,7 @@ class AppViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static AppViewModel of(BuildContext context, {_AppViewModelAspect? aspect}) {
+  static AppViewModel of(BuildContext context, {_AppViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_AppViewModelInherited>(
       aspect: aspect,
     );
@@ -206,7 +238,7 @@ class _AppViewModelScopeState extends State<AppViewModelScope> {
   }
 }
 
-class _AppViewModelInherited extends InheritedModel<_AppViewModelAspect> {
+class _AppViewModelInherited extends InheritedModel<_AppViewModelAspect<Object?>> {
   const _AppViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final AppViewModel viewModel;
@@ -219,13 +251,13 @@ class _AppViewModelInherited extends InheritedModel<_AppViewModelAspect> {
   bool updateShouldNotify(_AppViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_AppViewModelInherited oldWidget, Set<_AppViewModelAspect> dependencies) {
+  bool updateShouldNotifyDependent(
+    _AppViewModelInherited oldWidget,
+    Set<_AppViewModelAspect<Object?>> dependencies,
+  ) {
     for (final aspect in dependencies) {
-      switch (aspect) {
-        case _AppViewModelAspect.backendMode:
-          if (state.backendMode != oldWidget.state.backendMode) {
-            return true;
-          }
+      if (aspect.hasChanged(oldWidget.state, state)) {
+        return true;
       }
     }
     return false;

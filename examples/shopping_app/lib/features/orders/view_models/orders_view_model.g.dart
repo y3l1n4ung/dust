@@ -13,10 +13,33 @@
 
 part of 'orders_view_model.dart';
 
-enum _OrdersViewModelAspect { orders, isLoading }
+final class _OrdersViewModelAspect<R> {
+  const _OrdersViewModelAspect(this.selector);
+
+  final R Function(OrdersState state) selector;
+
+  bool hasChanged(OrdersState previous, OrdersState next) {
+    return selector(previous) != selector(next);
+  }
+}
+
+List<Object?> _ordersViewModelSelectOrders(OrdersState state) => state.orders;
+final _ordersViewModelOrdersAspect = _OrdersViewModelAspect<List<Object?>>(
+  _ordersViewModelSelectOrders,
+);
+
+bool _ordersViewModelSelectIsLoading(OrdersState state) => state.isLoading;
+final _ordersViewModelIsLoadingAspect = _OrdersViewModelAspect<bool>(
+  _ordersViewModelSelectIsLoading,
+);
 
 abstract class $OrdersViewModel extends ViewModelBase<OrdersState, OrdersViewModelArgs> {
   $OrdersViewModel(super.args) : super(initialState: const OrdersState());
+
+
+  List<Object?> get orders => state.orders;
+
+  bool get isLoading => state.isLoading;
 }
 
 class _$OrdersViewModelProxy {
@@ -26,6 +49,25 @@ class _$OrdersViewModelProxy {
 
   OrdersState get value {
     return OrdersViewModelScope.of(_context).value;
+  }
+
+  List<Object?> get orders {
+    return OrdersViewModelScope.of(
+      _context,
+      aspect: _ordersViewModelOrdersAspect,
+    ).state.orders;
+  }
+
+  bool get isLoading {
+    return OrdersViewModelScope.of(
+      _context,
+      aspect: _ordersViewModelIsLoadingAspect,
+    ).state.isLoading;
+  }
+
+  R select<R>(R Function(OrdersState state) selector) {
+    final aspect = _OrdersViewModelAspect<R>(selector);
+    return selector(OrdersViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -57,7 +99,7 @@ class OrdersViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static OrdersViewModel of(BuildContext context, {_OrdersViewModelAspect? aspect}) {
+  static OrdersViewModel of(BuildContext context, {_OrdersViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_OrdersViewModelInherited>(
       aspect: aspect,
     );
@@ -169,7 +211,7 @@ class _OrdersViewModelScopeState extends State<OrdersViewModelScope> {
   }
 }
 
-class _OrdersViewModelInherited extends InheritedModel<_OrdersViewModelAspect> {
+class _OrdersViewModelInherited extends InheritedModel<_OrdersViewModelAspect<Object?>> {
   const _OrdersViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final OrdersViewModel viewModel;
@@ -182,17 +224,13 @@ class _OrdersViewModelInherited extends InheritedModel<_OrdersViewModelAspect> {
   bool updateShouldNotify(_OrdersViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_OrdersViewModelInherited oldWidget, Set<_OrdersViewModelAspect> dependencies) {
+  bool updateShouldNotifyDependent(
+    _OrdersViewModelInherited oldWidget,
+    Set<_OrdersViewModelAspect<Object?>> dependencies,
+  ) {
     for (final aspect in dependencies) {
-      switch (aspect) {
-        case _OrdersViewModelAspect.orders:
-          if (state.orders != oldWidget.state.orders) {
-            return true;
-          }
-        case _OrdersViewModelAspect.isLoading:
-          if (state.isLoading != oldWidget.state.isLoading) {
-            return true;
-          }
+      if (aspect.hasChanged(oldWidget.state, state)) {
+        return true;
       }
     }
     return false;

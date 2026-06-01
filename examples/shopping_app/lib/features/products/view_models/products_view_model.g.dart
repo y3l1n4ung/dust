@@ -13,10 +13,63 @@
 
 part of 'products_view_model.dart';
 
-enum _ProductsViewModelAspect { products, status, errorMessage, selectedCategory, searchQuery, sortOption }
+final class _ProductsViewModelAspect<R> {
+  const _ProductsViewModelAspect(this.selector);
+
+  final R Function(ProductsState state) selector;
+
+  bool hasChanged(ProductsState previous, ProductsState next) {
+    return selector(previous) != selector(next);
+  }
+}
+
+List<Object?> _productsViewModelSelectProducts(ProductsState state) => state.products;
+final _productsViewModelProductsAspect = _ProductsViewModelAspect<List<Object?>>(
+  _productsViewModelSelectProducts,
+);
+
+ProductsStatus _productsViewModelSelectStatus(ProductsState state) => state.status;
+final _productsViewModelStatusAspect = _ProductsViewModelAspect<ProductsStatus>(
+  _productsViewModelSelectStatus,
+);
+
+String? _productsViewModelSelectErrorMessage(ProductsState state) => state.errorMessage;
+final _productsViewModelErrorMessageAspect = _ProductsViewModelAspect<String?>(
+  _productsViewModelSelectErrorMessage,
+);
+
+String? _productsViewModelSelectSelectedCategory(ProductsState state) => state.selectedCategory;
+final _productsViewModelSelectedCategoryAspect = _ProductsViewModelAspect<String?>(
+  _productsViewModelSelectSelectedCategory,
+);
+
+String _productsViewModelSelectSearchQuery(ProductsState state) => state.searchQuery;
+final _productsViewModelSearchQueryAspect = _ProductsViewModelAspect<String>(
+  _productsViewModelSelectSearchQuery,
+);
+
+ProductSortOption _productsViewModelSelectSortOption(ProductsState state) => state.sortOption;
+final _productsViewModelSortOptionAspect = _ProductsViewModelAspect<ProductSortOption>(
+  _productsViewModelSelectSortOption,
+);
 
 abstract class $ProductsViewModel extends ViewModelBase<ProductsState, ProductsViewModelArgs> {
   $ProductsViewModel(super.args) : super(initialState: const ProductsState());
+
+
+  List<Object?> get products => state.products;
+
+  ProductsStatus get status => state.status;
+
+  String? get errorMessage => state.errorMessage;
+
+  String? get selectedCategory => state.selectedCategory;
+
+  String get searchQuery => state.searchQuery;
+
+  ProductSortOption get sortOption => state.sortOption;
+
+  ShoppingRepository get repository => args.repository;
 }
 
 class _$ProductsViewModelProxy {
@@ -26,6 +79,53 @@ class _$ProductsViewModelProxy {
 
   ProductsState get value {
     return ProductsViewModelScope.of(_context).value;
+  }
+
+  List<Object?> get products {
+    return ProductsViewModelScope.of(
+      _context,
+      aspect: _productsViewModelProductsAspect,
+    ).state.products;
+  }
+
+  ProductsStatus get status {
+    return ProductsViewModelScope.of(
+      _context,
+      aspect: _productsViewModelStatusAspect,
+    ).state.status;
+  }
+
+  String? get errorMessage {
+    return ProductsViewModelScope.of(
+      _context,
+      aspect: _productsViewModelErrorMessageAspect,
+    ).state.errorMessage;
+  }
+
+  String? get selectedCategory {
+    return ProductsViewModelScope.of(
+      _context,
+      aspect: _productsViewModelSelectedCategoryAspect,
+    ).state.selectedCategory;
+  }
+
+  String get searchQuery {
+    return ProductsViewModelScope.of(
+      _context,
+      aspect: _productsViewModelSearchQueryAspect,
+    ).state.searchQuery;
+  }
+
+  ProductSortOption get sortOption {
+    return ProductsViewModelScope.of(
+      _context,
+      aspect: _productsViewModelSortOptionAspect,
+    ).state.sortOption;
+  }
+
+  R select<R>(R Function(ProductsState state) selector) {
+    final aspect = _ProductsViewModelAspect<R>(selector);
+    return selector(ProductsViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -57,7 +157,7 @@ class ProductsViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static ProductsViewModel of(BuildContext context, {_ProductsViewModelAspect? aspect}) {
+  static ProductsViewModel of(BuildContext context, {_ProductsViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_ProductsViewModelInherited>(
       aspect: aspect,
     );
@@ -169,7 +269,7 @@ class _ProductsViewModelScopeState extends State<ProductsViewModelScope> {
   }
 }
 
-class _ProductsViewModelInherited extends InheritedModel<_ProductsViewModelAspect> {
+class _ProductsViewModelInherited extends InheritedModel<_ProductsViewModelAspect<Object?>> {
   const _ProductsViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final ProductsViewModel viewModel;
@@ -182,33 +282,13 @@ class _ProductsViewModelInherited extends InheritedModel<_ProductsViewModelAspec
   bool updateShouldNotify(_ProductsViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_ProductsViewModelInherited oldWidget, Set<_ProductsViewModelAspect> dependencies) {
+  bool updateShouldNotifyDependent(
+    _ProductsViewModelInherited oldWidget,
+    Set<_ProductsViewModelAspect<Object?>> dependencies,
+  ) {
     for (final aspect in dependencies) {
-      switch (aspect) {
-        case _ProductsViewModelAspect.products:
-          if (state.products != oldWidget.state.products) {
-            return true;
-          }
-        case _ProductsViewModelAspect.status:
-          if (state.status != oldWidget.state.status) {
-            return true;
-          }
-        case _ProductsViewModelAspect.errorMessage:
-          if (state.errorMessage != oldWidget.state.errorMessage) {
-            return true;
-          }
-        case _ProductsViewModelAspect.selectedCategory:
-          if (state.selectedCategory != oldWidget.state.selectedCategory) {
-            return true;
-          }
-        case _ProductsViewModelAspect.searchQuery:
-          if (state.searchQuery != oldWidget.state.searchQuery) {
-            return true;
-          }
-        case _ProductsViewModelAspect.sortOption:
-          if (state.sortOption != oldWidget.state.sortOption) {
-            return true;
-          }
+      if (aspect.hasChanged(oldWidget.state, state)) {
+        return true;
       }
     }
     return false;

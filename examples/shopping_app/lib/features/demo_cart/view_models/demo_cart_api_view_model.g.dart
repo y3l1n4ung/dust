@@ -13,10 +13,42 @@
 
 part of 'demo_cart_api_view_model.dart';
 
-enum _DemoCartApiViewModelAspect { status, carts, errorMessage }
+final class _DemoCartApiViewModelAspect<R> {
+  const _DemoCartApiViewModelAspect(this.selector);
+
+  final R Function(DemoCartState state) selector;
+
+  bool hasChanged(DemoCartState previous, DemoCartState next) {
+    return selector(previous) != selector(next);
+  }
+}
+
+DemoCartStatus _demoCartApiViewModelSelectStatus(DemoCartState state) => state.status;
+final _demoCartApiViewModelStatusAspect = _DemoCartApiViewModelAspect<DemoCartStatus>(
+  _demoCartApiViewModelSelectStatus,
+);
+
+List<Object?> _demoCartApiViewModelSelectCarts(DemoCartState state) => state.carts;
+final _demoCartApiViewModelCartsAspect = _DemoCartApiViewModelAspect<List<Object?>>(
+  _demoCartApiViewModelSelectCarts,
+);
+
+String? _demoCartApiViewModelSelectErrorMessage(DemoCartState state) => state.errorMessage;
+final _demoCartApiViewModelErrorMessageAspect = _DemoCartApiViewModelAspect<String?>(
+  _demoCartApiViewModelSelectErrorMessage,
+);
 
 abstract class $DemoCartApiViewModel extends ViewModelBase<DemoCartState, DemoCartApiViewModelArgs> {
   $DemoCartApiViewModel(super.args) : super(initialState: const DemoCartState());
+
+
+  DemoCartStatus get status => state.status;
+
+  List<Object?> get carts => state.carts;
+
+  String? get errorMessage => state.errorMessage;
+
+  ShoppingRepository get repository => args.repository;
 }
 
 class _$DemoCartApiViewModelProxy {
@@ -26,6 +58,32 @@ class _$DemoCartApiViewModelProxy {
 
   DemoCartState get value {
     return DemoCartApiViewModelScope.of(_context).value;
+  }
+
+  DemoCartStatus get status {
+    return DemoCartApiViewModelScope.of(
+      _context,
+      aspect: _demoCartApiViewModelStatusAspect,
+    ).state.status;
+  }
+
+  List<Object?> get carts {
+    return DemoCartApiViewModelScope.of(
+      _context,
+      aspect: _demoCartApiViewModelCartsAspect,
+    ).state.carts;
+  }
+
+  String? get errorMessage {
+    return DemoCartApiViewModelScope.of(
+      _context,
+      aspect: _demoCartApiViewModelErrorMessageAspect,
+    ).state.errorMessage;
+  }
+
+  R select<R>(R Function(DemoCartState state) selector) {
+    final aspect = _DemoCartApiViewModelAspect<R>(selector);
+    return selector(DemoCartApiViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -57,7 +115,7 @@ class DemoCartApiViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static DemoCartApiViewModel of(BuildContext context, {_DemoCartApiViewModelAspect? aspect}) {
+  static DemoCartApiViewModel of(BuildContext context, {_DemoCartApiViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_DemoCartApiViewModelInherited>(
       aspect: aspect,
     );
@@ -169,7 +227,7 @@ class _DemoCartApiViewModelScopeState extends State<DemoCartApiViewModelScope> {
   }
 }
 
-class _DemoCartApiViewModelInherited extends InheritedModel<_DemoCartApiViewModelAspect> {
+class _DemoCartApiViewModelInherited extends InheritedModel<_DemoCartApiViewModelAspect<Object?>> {
   const _DemoCartApiViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final DemoCartApiViewModel viewModel;
@@ -182,21 +240,13 @@ class _DemoCartApiViewModelInherited extends InheritedModel<_DemoCartApiViewMode
   bool updateShouldNotify(_DemoCartApiViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_DemoCartApiViewModelInherited oldWidget, Set<_DemoCartApiViewModelAspect> dependencies) {
+  bool updateShouldNotifyDependent(
+    _DemoCartApiViewModelInherited oldWidget,
+    Set<_DemoCartApiViewModelAspect<Object?>> dependencies,
+  ) {
     for (final aspect in dependencies) {
-      switch (aspect) {
-        case _DemoCartApiViewModelAspect.status:
-          if (state.status != oldWidget.state.status) {
-            return true;
-          }
-        case _DemoCartApiViewModelAspect.carts:
-          if (state.carts != oldWidget.state.carts) {
-            return true;
-          }
-        case _DemoCartApiViewModelAspect.errorMessage:
-          if (state.errorMessage != oldWidget.state.errorMessage) {
-            return true;
-          }
+      if (aspect.hasChanged(oldWidget.state, state)) {
+        return true;
       }
     }
     return false;

@@ -13,10 +13,35 @@
 
 part of 'wishlist_view_model.dart';
 
-enum _WishlistViewModelAspect { items, isLoading }
+final class _WishlistViewModelAspect<R> {
+  const _WishlistViewModelAspect(this.selector);
+
+  final R Function(WishlistState state) selector;
+
+  bool hasChanged(WishlistState previous, WishlistState next) {
+    return selector(previous) != selector(next);
+  }
+}
+
+List<Object?> _wishlistViewModelSelectItems(WishlistState state) => state.items;
+final _wishlistViewModelItemsAspect = _WishlistViewModelAspect<List<Object?>>(
+  _wishlistViewModelSelectItems,
+);
+
+bool _wishlistViewModelSelectIsLoading(WishlistState state) => state.isLoading;
+final _wishlistViewModelIsLoadingAspect = _WishlistViewModelAspect<bool>(
+  _wishlistViewModelSelectIsLoading,
+);
 
 abstract class $WishlistViewModel extends ViewModelBase<WishlistState, WishlistViewModelArgs> {
   $WishlistViewModel(super.args) : super(initialState: const WishlistState());
+
+
+  List<Object?> get items => state.items;
+
+  bool get isLoading => state.isLoading;
+
+  StorageService get storage => args.storage;
 }
 
 class _$WishlistViewModelProxy {
@@ -26,6 +51,25 @@ class _$WishlistViewModelProxy {
 
   WishlistState get value {
     return WishlistViewModelScope.of(_context).value;
+  }
+
+  List<Object?> get items {
+    return WishlistViewModelScope.of(
+      _context,
+      aspect: _wishlistViewModelItemsAspect,
+    ).state.items;
+  }
+
+  bool get isLoading {
+    return WishlistViewModelScope.of(
+      _context,
+      aspect: _wishlistViewModelIsLoadingAspect,
+    ).state.isLoading;
+  }
+
+  R select<R>(R Function(WishlistState state) selector) {
+    final aspect = _WishlistViewModelAspect<R>(selector);
+    return selector(WishlistViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -57,7 +101,7 @@ class WishlistViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  static WishlistViewModel of(BuildContext context, {_WishlistViewModelAspect? aspect}) {
+  static WishlistViewModel of(BuildContext context, {_WishlistViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_WishlistViewModelInherited>(
       aspect: aspect,
     );
@@ -169,7 +213,7 @@ class _WishlistViewModelScopeState extends State<WishlistViewModelScope> {
   }
 }
 
-class _WishlistViewModelInherited extends InheritedModel<_WishlistViewModelAspect> {
+class _WishlistViewModelInherited extends InheritedModel<_WishlistViewModelAspect<Object?>> {
   const _WishlistViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final WishlistViewModel viewModel;
@@ -182,17 +226,13 @@ class _WishlistViewModelInherited extends InheritedModel<_WishlistViewModelAspec
   bool updateShouldNotify(_WishlistViewModelInherited oldWidget) => state != oldWidget.state;
 
   @override
-  bool updateShouldNotifyDependent(_WishlistViewModelInherited oldWidget, Set<_WishlistViewModelAspect> dependencies) {
+  bool updateShouldNotifyDependent(
+    _WishlistViewModelInherited oldWidget,
+    Set<_WishlistViewModelAspect<Object?>> dependencies,
+  ) {
     for (final aspect in dependencies) {
-      switch (aspect) {
-        case _WishlistViewModelAspect.items:
-          if (state.items != oldWidget.state.items) {
-            return true;
-          }
-        case _WishlistViewModelAspect.isLoading:
-          if (state.isLoading != oldWidget.state.isLoading) {
-            return true;
-          }
+      if (aspect.hasChanged(oldWidget.state, state)) {
+        return true;
       }
     }
     return false;
