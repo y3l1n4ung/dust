@@ -1,10 +1,7 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::{ConfigApplicationIr, SerdeClassConfigIr, SerdeFieldConfigIr};
 
-use super::serde_parse::{
-    parse_bool_literal, parse_codec_source, parse_serde_arguments, parse_serde_rename_rule,
-    parse_string_list, parse_string_literal,
-};
+use super::serde_parse::{parse_codec_source, parse_serde_rename_rule};
 
 pub(crate) fn lower_class_serde_config(
     class_name: &str,
@@ -20,21 +17,25 @@ pub(crate) fn lower_class_serde_config(
         }
         saw_serde = true;
 
-        for (key, value) in parse_serde_arguments(config.arguments_source.as_deref(), diagnostics) {
+        for (key, _) in serde_named_arguments(config, diagnostics) {
             match key {
-                "rename" => match parse_string_literal(value) {
+                "rename" => match config.named_string("rename") {
                     Some(rename) => serde.rename = Some(rename),
                     None => diagnostics.push(Diagnostic::error(format!(
                         "class `{class_name}` uses a non-string `SerDe(rename: ...)` value"
                     ))),
                 },
-                "renameAll" => match parse_serde_rename_rule(value) {
+                "renameAll" => match config
+                    .named_member("renameAll")
+                    .as_deref()
+                    .and_then(parse_serde_rename_rule)
+                {
                     Some(rule) => serde.rename_all = Some(rule),
                     None => diagnostics.push(Diagnostic::error(format!(
                         "class `{class_name}` uses an unknown `SerDe(renameAll: ...)` rule"
                     ))),
                 },
-                "disallowUnrecognizedKeys" => match parse_bool_literal(value) {
+                "disallowUnrecognizedKeys" => match config.named_bool("disallowUnrecognizedKeys") {
                     Some(flag) => serde.disallow_unrecognized_keys = flag,
                     None => diagnostics.push(Diagnostic::error(format!(
                         "class `{class_name}` uses a non-boolean `SerDe(disallowUnrecognizedKeys: ...)` value"
@@ -72,15 +73,15 @@ pub(crate) fn lower_field_serde_config(
         }
         saw_serde = true;
 
-        for (key, value) in parse_serde_arguments(config.arguments_source.as_deref(), diagnostics) {
+        for (key, value) in serde_named_arguments(config, diagnostics) {
             match key {
-                "rename" => match parse_string_literal(value) {
+                "rename" => match config.named_string("rename") {
                     Some(rename) => serde.rename = Some(rename),
                     None => diagnostics.push(Diagnostic::error(format!(
                         "field `{field_name}` uses a non-string `SerDe(rename: ...)` value"
                     ))),
                 },
-                "aliases" => match parse_string_list(value) {
+                "aliases" => match config.named_string_list("aliases") {
                     Some(aliases) => serde.aliases = aliases,
                     None => diagnostics.push(Diagnostic::error(format!(
                         "field `{field_name}` uses a non-string-list `SerDe(aliases: ...)` value"
@@ -92,7 +93,7 @@ pub(crate) fn lower_field_serde_config(
                     }
                 }
                 "defaultValue" => serde.default_value_source = Some(value.trim().to_owned()),
-                "skip" => match parse_bool_literal(value) {
+                "skip" => match config.named_bool("skip") {
                     Some(true) => {
                         serde.skip_serializing = true;
                         serde.skip_deserializing = true;
@@ -102,13 +103,13 @@ pub(crate) fn lower_field_serde_config(
                         "field `{field_name}` uses a non-boolean `SerDe(skip: ...)` value"
                     ))),
                 },
-                "skipSerializing" => match parse_bool_literal(value) {
+                "skipSerializing" => match config.named_bool("skipSerializing") {
                     Some(flag) => serde.skip_serializing = flag,
                     None => diagnostics.push(Diagnostic::error(format!(
                         "field `{field_name}` uses a non-boolean `SerDe(skipSerializing: ...)` value"
                     ))),
                 },
-                "skipDeserializing" => match parse_bool_literal(value) {
+                "skipDeserializing" => match config.named_bool("skipDeserializing") {
                     Some(flag) => serde.skip_deserializing = flag,
                     None => diagnostics.push(Diagnostic::error(format!(
                         "field `{field_name}` uses a non-boolean `SerDe(skipDeserializing: ...)` value"
@@ -131,4 +132,18 @@ pub(crate) fn lower_field_serde_config(
 
 fn is_serde_config(config: &ConfigApplicationIr) -> bool {
     config.symbol.0 == "derive_serde_annotation::SerDe"
+}
+
+fn serde_named_arguments<'a>(
+    config: &'a ConfigApplicationIr,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Vec<(&'a str, &'a str)> {
+    let items = config.argument_items();
+    let named = config.named_arguments();
+    if named.len() != items.len() {
+        diagnostics.push(Diagnostic::error(
+            "SerDe config arguments must use parenthesized named arguments",
+        ));
+    }
+    named
 }

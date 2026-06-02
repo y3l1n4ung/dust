@@ -75,19 +75,6 @@ pub(crate) fn split_top_level_args(source: &str) -> Vec<&str> {
     split_top_level_items(source)
 }
 
-pub(crate) fn split_top_level_once(source: &str, target: char) -> Option<(&str, &str)> {
-    let mut state = DelimiterState::default();
-
-    for (index, ch) in source.char_indices() {
-        if state.is_top_level() && ch == target {
-            return Some((&source[..index], &source[index + ch.len_utf8()..]));
-        }
-        state.advance(ch);
-    }
-
-    None
-}
-
 pub(crate) fn has_top_level_char(source: &str, target: char) -> bool {
     find_top_level_char(source, |_, ch| ch == target).is_some()
 }

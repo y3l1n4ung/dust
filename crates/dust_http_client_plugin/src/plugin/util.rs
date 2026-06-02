@@ -55,5 +55,3 @@ pub(super) fn is_list_of_int_type(ty: &TypeIr) -> bool {
 pub(super) fn has_import(imports: &[String], uri: &str) -> bool {
     imports.iter().any(|import| import == uri)
 }
-
-pub(super) use dust_dart_emit::{split_top_level_items, split_top_level_once};

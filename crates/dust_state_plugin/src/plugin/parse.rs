@@ -2,7 +2,9 @@ use dust_ir::{ConfigApplicationIr, SymbolId};
 use dust_parser_dart::ParsedAnnotation;
 
 #[cfg(test)]
-use dust_dart_emit::{normalized_args, parse_named_arguments, split_top_level_items};
+use dust_ir::SpanIr;
+#[cfg(test)]
+use dust_text::{FileId, TextRange};
 
 use super::{constants::VIEW_MODEL, model::ViewModelAnnotation};
 
@@ -14,30 +16,15 @@ pub(crate) fn view_model_config(configs: &[ConfigApplicationIr]) -> Option<&Conf
 
 #[cfg(test)]
 pub(crate) fn parse_view_model_annotation(args: Option<&str>) -> Option<ViewModelAnnotation> {
-    let args = args?;
-    let state_type = named_type_literal(args, "state").or_else(|| first_type_literal(args))?;
-    let args_type = named_type_literal(args, "args");
-    let initial_source = named_value_source(args, "initial").map(str::to_owned);
-    Some(ViewModelAnnotation {
-        state_type,
-        args_type,
-        initial_source,
-    })
+    parse_view_model_config(&test_config(args))
 }
 
 pub(crate) fn parse_view_model_config(config: &ConfigApplicationIr) -> Option<ViewModelAnnotation> {
     let state_type = config
-        .named_argument_source("state")
-        .and_then(parse_type_name)
-        .or_else(|| {
-            config
-                .positional_argument_source(0)
-                .and_then(parse_type_name)
-        })?;
-    let args_type = config
-        .named_argument_source("args")
-        .and_then(parse_type_name);
-    let initial_source = config.named_argument_source("initial").map(str::to_owned);
+        .named_type("state")
+        .or_else(|| config.positional_type(0))?;
+    let args_type = config.named_type("args");
+    let initial_source = config.named_expression_source("initial");
     Some(ViewModelAnnotation {
         state_type,
         args_type,
@@ -49,19 +36,10 @@ pub(crate) fn parse_view_model_surface(
     annotation: &ParsedAnnotation,
 ) -> Option<ViewModelAnnotation> {
     let state_type = annotation
-        .named_argument_source("state")
-        .and_then(parse_type_name)
-        .or_else(|| {
-            annotation
-                .positional_argument_source(0)
-                .and_then(parse_type_name)
-        })?;
-    let args_type = annotation
-        .named_argument_source("args")
-        .and_then(parse_type_name);
-    let initial_source = annotation
-        .named_argument_source("initial")
-        .map(str::to_owned);
+        .named_type("state")
+        .or_else(|| annotation.positional_type(0))?;
+    let args_type = annotation.named_type("args");
+    let initial_source = annotation.named_expression_source("initial");
     Some(ViewModelAnnotation {
         state_type,
         args_type,
@@ -74,39 +52,12 @@ fn config_name(symbol: &SymbolId) -> &str {
 }
 
 #[cfg(test)]
-fn first_type_literal(args: &str) -> Option<String> {
-    let first = split_top_level_items(normalized_args(args)?)
-        .first()
-        .copied()?;
-    if first.contains(':') {
-        return None;
+fn test_config(args: Option<&str>) -> ConfigApplicationIr {
+    ConfigApplicationIr {
+        symbol: SymbolId::new(VIEW_MODEL),
+        arguments_source: args.map(str::to_owned),
+        span: SpanIr::new(FileId::default(), TextRange::default()),
     }
-    parse_type_name(first)
-}
-
-#[cfg(test)]
-fn named_type_literal(args: &str, name: &str) -> Option<String> {
-    let value = named_value_source(args, name)?.trim();
-    parse_type_name(value)
-}
-
-fn parse_type_name(value: &str) -> Option<String> {
-    let ident = value
-        .trim()
-        .chars()
-        .take_while(|ch| ch.is_ascii_alphanumeric() || *ch == '_' || *ch == '.')
-        .collect::<String>();
-    (!ident.is_empty()).then_some(ident)
-}
-
-#[cfg(test)]
-fn named_value_source<'a>(args: &'a str, name: &str) -> Option<&'a str> {
-    for (key, value) in parse_named_arguments(Some(args)) {
-        if key.trim() == name {
-            return Some(value.trim());
-        }
-    }
-    None
 }
 
 #[cfg(test)]

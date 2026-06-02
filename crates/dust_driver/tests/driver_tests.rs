@@ -33,3 +33,6 @@ mod watch;
 
 #[path = "driver_tests/pub_workspace.rs"]
 mod pub_workspace;
+
+#[path = "driver_tests/source_audit.rs"]
+mod source_audit;

@@ -1,5 +1,3 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 pub(super) fn extract_extension<'a>(source: &'a str, marker: &str) -> &'a str {
     let start = source
         .find(marker)
@@ -29,12 +27,4 @@ pub(super) fn extract_class<'a>(source: &'a str, marker: &str) -> &'a str {
         }
     }
     panic!("class body did not close: {marker}");
-}
-
-pub(super) fn temp_root(name: &str) -> std::path::PathBuf {
-    let stamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    std::env::temp_dir().join(format!("dust_state_plugin_{name}_{stamp}"))
 }

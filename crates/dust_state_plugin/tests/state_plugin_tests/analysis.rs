@@ -1,5 +1,6 @@
 use dust_parser_dart::{
-    ParsedAnnotation, ParsedClassKind, ParsedClassSurface, ParsedFieldSurface, ParsedLibrarySurface,
+    ParsedAnnotation, ParsedClassKind, ParsedClassSurface, ParsedEnumSurface, ParsedFieldSurface,
+    ParsedLibrarySurface,
 };
 use dust_plugin_api::{DustPlugin, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 use dust_state_plugin::register_plugin;
@@ -47,12 +48,28 @@ fn class(
 }
 
 fn parsed_library(classes: Vec<ParsedClassSurface>) -> ParsedLibrarySurface {
+    parsed_library_with_enums(classes, Vec::new())
+}
+
+fn parsed_library_with_enums(
+    classes: Vec<ParsedClassSurface>,
+    enums: Vec<ParsedEnumSurface>,
+) -> ParsedLibrarySurface {
     ParsedLibrarySurface {
         span: TextRange::new(0_u32, 100_u32),
         directives: Vec::new(),
         classes,
-        enums: Vec::new(),
+        enums,
         query_calls: Vec::new(),
+    }
+}
+
+fn enum_(name: &str) -> ParsedEnumSurface {
+    ParsedEnumSurface {
+        name: name.to_owned(),
+        annotations: Vec::new(),
+        variants: Vec::new(),
+        span: span(),
     }
 }
 
@@ -105,16 +122,27 @@ fn collects_state_and_view_model_workspace_facts() {
 }
 
 #[test]
-fn state_facts_use_dynamic_for_untyped_fields_and_filesystem_import_fallback() {
+fn state_facts_sanitize_untyped_and_non_visible_imported_types() {
     let plugin = register_plugin();
-    let library = parsed_library(vec![
-        class("LooseState", Vec::new(), vec![field("payload", None)]),
-        class(
-            "LooseViewModel",
-            vec![annotation("(state: LooseState)")],
-            Vec::new(),
-        ),
-    ]);
+    let library = parsed_library_with_enums(
+        vec![
+            class(
+                "LooseState",
+                Vec::new(),
+                vec![
+                    field("payload", None),
+                    field("items", Some("List<Product>")),
+                    field("status", Some("ProductsStatus")),
+                ],
+            ),
+            class(
+                "LooseViewModel",
+                vec![annotation("(state: LooseState)")],
+                Vec::new(),
+            ),
+        ],
+        vec![enum_("ProductsStatus")],
+    );
     let mut builder = WorkspaceAnalysisBuilder::default();
 
     plugin.collect_workspace_analysis(
@@ -132,6 +160,8 @@ fn state_facts_use_dynamic_for_untyped_fields_and_filesystem_import_fallback() {
     assert!(states.iter().any(|state| {
         state.contains(r#""class_name":"LooseState""#)
             && state.contains(r#""name":"payload","type_source":"dynamic""#)
+            && state.contains(r#""name":"items","type_source":"List<Object?>""#)
+            && state.contains(r#""name":"status","type_source":"ProductsStatus""#)
     }));
     let view_models = snapshot.string_set("dust_state.view_models.v1").unwrap();
     assert!(view_models[0].contains(r#""args_type":null"#));

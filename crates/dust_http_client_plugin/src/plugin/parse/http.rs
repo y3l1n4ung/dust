@@ -7,8 +7,7 @@ use crate::plugin::constants::{
 };
 use crate::plugin::model::{HttpTargetMode, HttpVerb, ParseThreadMode, RequestMode};
 use crate::plugin::parse::{
-    parse_config_map_argument, parse_config_string_argument, parse_enum_variant,
-    parse_string_literal, parse_string_map,
+    invalid_string_map, parse_config_map_argument, parse_config_string_argument,
 };
 use crate::plugin::util::{config_name, label};
 
@@ -31,18 +30,20 @@ pub(crate) fn parse_http_client_config(
         headers: Vec::new(),
     };
 
-    for (key, value) in config.named_arguments() {
+    for (key, _) in config.named_arguments() {
         match key {
-            "baseUrl" => match parse_string_literal(value) {
+            "baseUrl" => match config.named_string("baseUrl") {
                 Some(url) => parsed.base_url = Some(url),
                 None => diagnostics.push(
                     Diagnostic::error("`HttpClient(baseUrl: ...)` expects a string literal")
                         .with_label(label(config.span, "use a quoted base URL string")),
                 ),
             },
-            "target" => match parse_enum_variant(value) {
-                Some("dart") => parsed.target = HttpTargetMode::Dart,
-                Some("flutter") => parsed.target = HttpTargetMode::Flutter,
+            "target" => match config.named_member("target").as_deref() {
+                Some("dart") | Some("DustHttpTarget.dart") => parsed.target = HttpTargetMode::Dart,
+                Some("flutter") | Some("DustHttpTarget.flutter") => {
+                    parsed.target = HttpTargetMode::Flutter;
+                }
                 _ => diagnostics.push(
                     Diagnostic::error(
                         "`HttpClient(target: ...)` must be `DustHttpTarget.dart` or `DustHttpTarget.flutter`",
@@ -50,8 +51,8 @@ pub(crate) fn parse_http_client_config(
                     .with_label(label(config.span, "pick one of the supported target enum values")),
                 ),
             },
-            "parseThread" => parsed.parse_thread = parse_thread_value(value, config, diagnostics),
-            "headers" => parsed.headers = parse_http_client_headers(value, config, diagnostics),
+            "parseThread" => parsed.parse_thread = parse_thread_config(config, diagnostics),
+            "headers" => parsed.headers = parse_http_client_headers(config, diagnostics),
             other => diagnostics.push(
                 Diagnostic::warning(format!("unknown `HttpClient` option `{other}`"))
                     .with_label(label(config.span, "remove or rename this unsupported option")),
@@ -63,11 +64,16 @@ pub(crate) fn parse_http_client_config(
 }
 
 pub(crate) fn parse_http_client_headers(
-    value: &str,
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<(String, String)> {
-    parse_string_map(value, diagnostics, config.span, "HttpClient(headers: ...)")
+    match config.named_string_map("headers") {
+        Some(values) => values,
+        None => {
+            diagnostics.push(invalid_string_map("HttpClient(headers: ...)", config.span));
+            Vec::new()
+        }
+    }
 }
 
 pub(crate) fn parse_headers_config(
@@ -106,7 +112,7 @@ pub(crate) fn parse_http_parse_config(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> ParseThreadMode {
-    for (key, value) in config.named_arguments() {
+    for (key, _) in config.named_arguments() {
         if key != "thread" {
             diagnostics.push(
                 Diagnostic::warning(format!("unknown `HttpParse` option `{key}`")).with_label(
@@ -115,7 +121,7 @@ pub(crate) fn parse_http_parse_config(
             );
             continue;
         }
-        return parse_thread_value(value, config, diagnostics);
+        return parse_thread_config(config, diagnostics);
     }
     ParseThreadMode::Main
 }
@@ -187,14 +193,16 @@ pub(crate) fn param_source_names(param: &MethodParamIr) -> Vec<&str> {
         .collect()
 }
 
-fn parse_thread_value(
-    value: &str,
+fn parse_thread_config(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> ParseThreadMode {
-    match parse_enum_variant(value) {
-        Some("main") => ParseThreadMode::Main,
-        Some("isolate") => ParseThreadMode::Isolate,
+    let thread = config
+        .named_member("parseThread")
+        .or_else(|| config.named_member("thread"));
+    match thread.as_deref() {
+        Some("main") | Some("DustParseThread.main") => ParseThreadMode::Main,
+        Some("isolate") | Some("DustParseThread.isolate") => ParseThreadMode::Isolate,
         _ => {
             diagnostics.push(
                 Diagnostic::error(

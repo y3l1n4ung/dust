@@ -1,4 +1,4 @@
-use dust_dart_emit::{apply_rename_rule, parse_bool_literal, parse_string_literal};
+use dust_dart_emit::apply_rename_rule;
 use dust_ir::{ConfigApplicationIr, SerdeRenameRuleIr, SymbolId};
 use dust_plugin_api::short_symbol_name;
 
@@ -25,12 +25,17 @@ pub(crate) fn sqlx_config(configs: &[ConfigApplicationIr]) -> SqlxConfig {
         }
         for (key, value) in config.named_arguments() {
             match key {
-                "rename" => out.rename = parse_string_literal(value),
-                "renameAll" => out.rename_all = parse_rename_rule(value),
-                "flatten" => out.flatten = parse_bool_literal(value).unwrap_or(out.flatten),
+                "rename" => out.rename = config.named_string("rename"),
+                "renameAll" => {
+                    out.rename_all = config
+                        .named_member("renameAll")
+                        .as_deref()
+                        .and_then(parse_rename_rule);
+                }
+                "flatten" => out.flatten = config.named_bool("flatten").unwrap_or(out.flatten),
                 "defaultValue" => out.default_value_source = Some(value.trim().to_owned()),
-                "skip" => out.skip = parse_bool_literal(value).unwrap_or(out.skip),
-                "json" => out.json = parse_bool_literal(value).unwrap_or(out.json),
+                "skip" => out.skip = config.named_bool("skip").unwrap_or(out.skip),
+                "json" => out.json = config.named_bool("json").unwrap_or(out.json),
                 "tryFrom" => out.try_from_source = Some(value.trim().to_owned()),
                 _ => {}
             }
@@ -62,21 +67,20 @@ pub(super) fn parse_database_config(config: &ConfigApplicationIr) -> Option<Data
     let mut driver = DbDriver::Sqlite3;
     let mut migrations = "./migrations".to_owned();
     if let Some(parsed) = config
-        .named_argument_source("driver")
+        .named_member("driver")
+        .as_deref()
         .and_then(parse_driver)
     {
         driver = parsed;
     }
     if let Some(parsed) = config
-        .named_argument_source("type")
+        .named_member("type")
+        .as_deref()
         .and_then(parse_database_type)
     {
         driver = parsed;
     }
-    if let Some(parsed) = config
-        .named_argument_source("migrations")
-        .and_then(parse_string_literal)
-    {
+    if let Some(parsed) = config.named_string("migrations") {
         migrations = parsed;
     }
     Some(DatabaseConfig { driver, migrations })

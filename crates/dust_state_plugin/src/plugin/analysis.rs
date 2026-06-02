@@ -14,8 +14,9 @@ pub(crate) fn collect_state_workspace_analysis(
     library: &ParsedLibrarySurface,
     analysis: &mut WorkspaceAnalysisBuilder,
 ) {
+    let declared_type_names = declared_type_names(library);
     for class in &library.classes {
-        collect_state_fact(class, analysis);
+        collect_state_fact(class, &declared_type_names, analysis);
         if let Some(annotation) = view_model_annotation(class) {
             let fact = ViewModelFact {
                 class_name: class.name.clone(),
@@ -32,7 +33,11 @@ pub(crate) fn collect_state_workspace_analysis(
     }
 }
 
-fn collect_state_fact(class: &ParsedClassSurface, analysis: &mut WorkspaceAnalysisBuilder) {
+fn collect_state_fact(
+    class: &ParsedClassSurface,
+    declared_type_names: &[String],
+    analysis: &mut WorkspaceAnalysisBuilder,
+) {
     let fields = class
         .fields
         .iter()
@@ -40,7 +45,8 @@ fn collect_state_fact(class: &ParsedClassSurface, analysis: &mut WorkspaceAnalys
             name: field.name.clone(),
             type_source: field
                 .type_source
-                .clone()
+                .as_deref()
+                .map(|source| sanitize_type_source(source, declared_type_names))
                 .unwrap_or_else(|| "dynamic".to_owned()),
         })
         .collect::<Vec<_>>();
@@ -59,6 +65,44 @@ fn view_model_annotation(class: &ParsedClassSurface) -> Option<super::model::Vie
         .iter()
         .find(|annotation| annotation.name == VIEW_MODEL)
         .and_then(parse_view_model_surface)
+}
+
+fn declared_type_names(library: &ParsedLibrarySurface) -> Vec<String> {
+    library
+        .classes
+        .iter()
+        .map(|class| class.name.clone())
+        .chain(library.enums.iter().map(|enum_| enum_.name.clone()))
+        .collect()
+}
+
+fn sanitize_type_source(type_source: &str, declared_type_names: &[String]) -> String {
+    let ty = type_source.trim();
+    if let Some(inner) = ty
+        .strip_prefix("List<")
+        .and_then(|value| value.strip_suffix('>'))
+    {
+        return if is_visible_type(inner.trim(), declared_type_names) {
+            ty.to_owned()
+        } else {
+            "List<Object?>".to_owned()
+        };
+    }
+    if ty.contains('<') {
+        return "Object?".to_owned();
+    }
+    if is_visible_type(ty.trim_end_matches('?'), declared_type_names) {
+        ty.to_owned()
+    } else {
+        "Object?".to_owned()
+    }
+}
+
+fn is_visible_type(type_name: &str, declared_type_names: &[String]) -> bool {
+    matches!(
+        type_name,
+        "String" | "int" | "double" | "num" | "bool" | "DateTime" | "Object" | "dynamic" | "void"
+    ) || declared_type_names.iter().any(|name| name == type_name)
 }
 
 fn import_uri(context: WorkspaceAnalysisContext<'_>) -> String {

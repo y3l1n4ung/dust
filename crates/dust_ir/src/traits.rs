@@ -46,11 +46,69 @@ impl ConfigApplicationIr {
             .nth(index)
     }
 
+    /// Returns one top-level positional string literal by index.
+    pub fn positional_string(&self, index: usize) -> Option<String> {
+        parse_string_literal(self.positional_argument_source(index)?)
+    }
+
+    /// Returns one top-level positional string map literal by index.
+    pub fn positional_string_map(&self, index: usize) -> Option<Vec<(String, String)>> {
+        parse_string_map(self.positional_argument_source(index)?)
+    }
+
     /// Returns one top-level named argument source by name.
     pub fn named_argument_source(&self, name: &str) -> Option<&str> {
         self.named_arguments()
             .into_iter()
             .find_map(|(key, value)| (key == name).then_some(value))
+    }
+
+    /// Returns one top-level named argument as expression source.
+    pub fn named_expression_source(&self, name: &str) -> Option<String> {
+        self.named_argument_source(name)
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(str::to_owned)
+    }
+
+    /// Returns one top-level named string literal.
+    pub fn named_string(&self, name: &str) -> Option<String> {
+        parse_string_literal(self.named_argument_source(name)?)
+    }
+
+    /// Returns one top-level named list of string literals.
+    pub fn named_string_list(&self, name: &str) -> Option<Vec<String>> {
+        parse_string_list(self.named_argument_source(name)?)
+    }
+
+    /// Returns one top-level named boolean literal.
+    pub fn named_bool(&self, name: &str) -> Option<bool> {
+        parse_bool_literal(self.named_argument_source(name)?)
+    }
+
+    /// Returns one top-level named member or type reference.
+    pub fn named_member(&self, name: &str) -> Option<String> {
+        parse_type_name(self.named_argument_source(name)?)
+    }
+
+    /// Returns one top-level named type reference.
+    pub fn named_type(&self, name: &str) -> Option<String> {
+        self.named_member(name)
+    }
+
+    /// Returns one top-level positional type reference.
+    pub fn positional_type(&self, index: usize) -> Option<String> {
+        parse_type_name(self.positional_argument_source(index)?)
+    }
+
+    /// Returns one top-level named list of type references.
+    pub fn named_type_list(&self, name: &str) -> Option<Vec<String>> {
+        parse_type_list(self.named_argument_source(name)?)
+    }
+
+    /// Returns one top-level named string map literal.
+    pub fn named_string_map(&self, name: &str) -> Option<Vec<(String, String)>> {
+        parse_string_map(self.named_argument_source(name)?)
     }
 
     /// Returns whether a top-level named argument is present.
@@ -75,6 +133,71 @@ impl ConfigApplicationIr {
             })
             .collect()
     }
+}
+
+fn parse_string_literal(source: &str) -> Option<String> {
+    let source = source.trim();
+    let first = source.chars().next()?;
+    let last = source.chars().next_back()?;
+    if source.len() < 2 || first != last || !matches!(first, '\'' | '"') {
+        return None;
+    }
+    Some(source[1..source.len() - 1].to_owned())
+}
+
+fn parse_string_list(source: &str) -> Option<Vec<String>> {
+    let inner = source.trim().strip_prefix('[')?.strip_suffix(']')?.trim();
+    if inner.is_empty() {
+        return Some(Vec::new());
+    }
+    split_top_level_items(inner)
+        .into_iter()
+        .map(parse_string_literal)
+        .collect()
+}
+
+fn parse_bool_literal(source: &str) -> Option<bool> {
+    match source.trim() {
+        "true" => Some(true),
+        "false" => Some(false),
+        _ => None,
+    }
+}
+
+fn parse_type_name(source: &str) -> Option<String> {
+    let ident = source
+        .trim()
+        .chars()
+        .take_while(|ch| ch.is_ascii_alphanumeric() || *ch == '_' || *ch == '.')
+        .collect::<String>();
+    (!ident.is_empty()).then_some(ident)
+}
+
+fn parse_type_list(source: &str) -> Option<Vec<String>> {
+    let inner = source.trim().strip_prefix('[')?.strip_suffix(']')?.trim();
+    Some(
+        split_top_level_items(inner)
+            .into_iter()
+            .filter_map(parse_type_name)
+            .collect(),
+    )
+}
+
+fn parse_string_map(source: &str) -> Option<Vec<(String, String)>> {
+    let inner = source.trim().strip_prefix('{')?.strip_suffix('}')?.trim();
+    if inner.is_empty() {
+        return Some(Vec::new());
+    }
+    split_top_level_items(inner)
+        .into_iter()
+        .map(|item| {
+            let (key, value) = split_top_level_once(item, ':')?;
+            Some((
+                parse_string_literal(key.trim())?,
+                parse_string_literal(value.trim())?,
+            ))
+        })
+        .collect()
 }
 
 fn normalized_arguments(source: &str) -> Option<&str> {

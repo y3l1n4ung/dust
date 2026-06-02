@@ -37,10 +37,11 @@ fn class_header_entries(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<(String, String)> {
-    config
-        .named_argument_source("headers")
-        .map(|value| parse_http_client_headers(value, config, diagnostics))
-        .unwrap_or_default()
+    if config.has_named_argument("headers") {
+        parse_http_client_headers(config, diagnostics)
+    } else {
+        Vec::new()
+    }
 }
 
 fn record_header_key(

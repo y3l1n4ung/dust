@@ -97,10 +97,10 @@ fn lowering_required_class_names(library: &ResolvedLibrary) -> HashSet<&str> {
     for class in &library.classes {
         for field in &class.fields {
             for config in &field.configs {
-                let Some(args) = config.arguments_source.as_deref() else {
-                    continue;
-                };
-                if let Some(converter) = try_from_converter_name(args) {
+                if let Some(converter) = config
+                    .named_argument_source("tryFrom")
+                    .and_then(try_from_converter_name)
+                {
                     names.insert(converter);
                 }
             }
@@ -110,11 +110,9 @@ fn lowering_required_class_names(library: &ResolvedLibrary) -> HashSet<&str> {
     names
 }
 
-fn try_from_converter_name(args: &str) -> Option<&str> {
-    let start = args.find("tryFrom")?;
-    let after_key = args[start..].find(':').map(|index| start + index + 1)?;
-    let raw = args[after_key..].split([',', ')']).next()?.trim();
-    let value = raw.strip_prefix("const ").unwrap_or(raw).trim();
+fn try_from_converter_name(source: &str) -> Option<&str> {
+    let value = source.trim();
+    let value = value.strip_prefix("const ").unwrap_or(value).trim();
     let before_args = value.split_once('(').map_or(value, |(name, _)| name).trim();
     before_args
         .rsplit('.')

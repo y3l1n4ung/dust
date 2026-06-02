@@ -14,8 +14,8 @@ pub(super) fn parse_query_config(config: &ConfigApplicationIr) -> (String, bool)
     {
         return (sql, true);
     }
-    if let Some(value) = config.named_argument_source("sql") {
-        return parse_static_sql_literal(value)
+    if let Some(value) = config.named_expression_source("sql") {
+        return parse_static_sql_literal(&value)
             .map(|sql| (sql, true))
             .unwrap_or_else(|| (String::new(), false));
     }
