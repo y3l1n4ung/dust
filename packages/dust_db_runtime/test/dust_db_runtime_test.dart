@@ -26,7 +26,8 @@ final class FakeRow implements Row {
   T? readIndexOrNull<T>(int index) => values[index] as T?;
 
   @override
-  bool readBool(String column) => read<Object?>(column) == 1 || read<Object?>(column) == true;
+  bool readBool(String column) =>
+      read<Object?>(column) == 1 || read<Object?>(column) == true;
 
   @override
   bool? readBoolOrNull(String column) {
@@ -45,9 +46,10 @@ final class FakeRow implements Row {
 }
 
 final class FakePool implements Pool {
-  FakePool(this.rows);
+  FakePool(this.rows, {this.error});
 
   final List<Row> rows;
+  final SqlxError? error;
   String? lastSql;
   List<Object?>? lastParameters;
 
@@ -65,6 +67,8 @@ final class FakePool implements Pool {
   ) async {
     lastSql = sql;
     lastParameters = parameters;
+    final error = this.error;
+    if (error != null) return Err<T?, SqlxError>(error);
     if (rows.isEmpty) return Ok<T?, SqlxError>(null);
     return Ok<T?, SqlxError>(mapper(rows.first));
   }
@@ -77,9 +81,9 @@ final class FakePool implements Pool {
   ) async {
     lastSql = sql;
     lastParameters = parameters;
-    return Ok<List<T>, SqlxError>([
-      for (final row in rows) mapper(row),
-    ]);
+    final error = this.error;
+    if (error != null) return Err<List<T>, SqlxError>(error);
+    return Ok<List<T>, SqlxError>([for (final row in rows) mapper(row)]);
   }
 
   @override
@@ -90,6 +94,8 @@ final class FakePool implements Pool {
   ) async {
     lastSql = sql;
     lastParameters = parameters;
+    final error = this.error;
+    if (error != null) return Err<T, SqlxError>(error);
     return Ok<T, SqlxError>(mapper(rows.single));
   }
 
@@ -100,13 +106,20 @@ final class FakePool implements Pool {
   ) async {
     lastSql = sql;
     lastParameters = parameters;
+    final error = this.error;
+    if (error != null) return Err<T, SqlxError>(error);
     return Ok<T, SqlxError>(rows.single.readIndex<T>(0));
   }
 
   @override
-  Future<Result<ExecResult, SqlxError>> execute(String sql, List<Object?> parameters) async {
+  Future<Result<ExecResult, SqlxError>> execute(
+    String sql,
+    List<Object?> parameters,
+  ) async {
     lastSql = sql;
     lastParameters = parameters;
+    final error = this.error;
+    if (error != null) return Err<ExecResult, SqlxError>(error);
     return const Ok<ExecResult, SqlxError>(ExecResult(rowsAffected: 2));
   }
 
@@ -118,7 +131,8 @@ final class FakePool implements Pool {
   }
 
   @override
-  Future<Result<Unit, SqlxError>> close() async => const Ok<Unit, SqlxError>(unit);
+  Future<Result<Unit, SqlxError>> close() async =>
+      const Ok<Unit, SqlxError>(unit);
 }
 
 final class _FakeRawSql implements RawSql {
@@ -127,7 +141,10 @@ final class _FakeRawSql implements RawSql {
   final FakePool _pool;
 
   @override
-  Future<Result<List<Row>, SqlxError>> fetch(String sql, List<Object?> parameters) async {
+  Future<Result<List<Row>, SqlxError>> fetch(
+    String sql,
+    List<Object?> parameters,
+  ) async {
     _pool.lastSql = sql;
     _pool.lastParameters = parameters;
     return Ok<List<Row>, SqlxError>(_pool.rows);
@@ -146,9 +163,9 @@ void main() {
   tearDown(RowMapperRegistry.resetForTest);
 
   test('result andThen chains ok and preserves err', () {
-    final ok = const Ok<int, SqlxError>(2).andThen<String>(
-      (value) => Ok<String, SqlxError>('value:$value'),
-    );
+    final ok = const Ok<int, SqlxError>(
+      2,
+    ).andThen<String>((value) => Ok<String, SqlxError>('value:$value'));
     final err = const Err<int, SqlxError>(
       SqlxDecodeError('bad'),
     ).andThen<String>((value) => Ok<String, SqlxError>('value:$value'));
@@ -162,11 +179,17 @@ void main() {
     final driver = SqlxError.driver('driver failed', cause: 'cause');
     final decode = SqlxError.decode('decode failed', cause: 'cause');
     final cardinality = SqlxError.tooManyRows(expected: 1, actual: 3);
+    final noRows = SqlxError.noRows('SELECT 1');
+    final nullColumn = SqlxError.nullColumn('name');
 
     expect(driver, isA<SqlxDriverError>());
     expect(decode, isA<SqlxDecodeError>());
     expect(cardinality, isA<SqlxCardinalityError>());
     expect((cardinality as SqlxCardinalityError).actual, 3);
+    expect(noRows.toString(), contains('expected 1 row(s), got 0'));
+    expect(nullColumn.toString(), contains('Column `name` is null'));
+    expect(driver.toString(), contains('Cause: cause'));
+    expect(decode.toString(), contains('Cause: cause'));
   });
 
   test('queryAs maps through generated registry', () async {
@@ -175,39 +198,161 @@ void main() {
       FakeRow([7], {'id': 7}),
     ]);
 
-    final row = await queryAs<UserRow>('SELECT id FROM users', []).fetchOne(pool);
+    final row = await queryAs<UserRow>(
+      'SELECT id FROM users',
+      [],
+    ).fetchOne(pool);
+    final optional = await queryAs<UserRow>(
+      'SELECT id FROM users',
+      const [],
+    ).fetchOptional(pool);
+    final rows = await queryAs<UserRow>(
+      'SELECT id FROM users',
+      const [],
+    ).fetchAll(pool);
 
     expect(row.id, 7);
+    expect(optional?.id, 7);
+    expect(rows.single.id, 7);
+    expect(pool.lastSql, 'SELECT id FROM users');
+    expect(pool.lastParameters, isEmpty);
   });
+
+  test(
+    'row mapper registry supports Row passthrough, reset, and missing mapper errors',
+    () {
+      final row = FakeRow([1], {'id': 1});
+
+      expect(RowMapperRegistry.map<Row>(row), same(row));
+      expect(
+        () => RowMapperRegistry.map<UserRow>(row),
+        throwsA(isA<StateError>()),
+      );
+
+      registerRowMapper<UserRow>((row) => UserRow(row.read<int>('id')));
+      expect(RowMapperRegistry.map<UserRow>(row).id, 1);
+
+      RowMapperRegistry.resetForTest();
+      expect(
+        () => RowMapperRegistry.map<UserRow>(row),
+        throwsA(isA<StateError>()),
+      );
+    },
+  );
 
   test('queryScalar reads first selected column', () async {
     final pool = FakePool([
       FakeRow([3], {'count': 3}),
     ]);
 
-    final count = await queryScalar<int>('SELECT COUNT(*) FROM users', []).fetchOne(pool);
+    final count = await queryScalar<int>(
+      'SELECT COUNT(*) FROM users',
+      [],
+    ).fetchOne(pool);
+    final optional = await queryScalar<int>(
+      'SELECT COUNT(*) FROM users',
+      const [],
+    ).fetchOptional(pool);
 
     expect(count, 3);
+    expect(optional, 3);
   });
 
   test('queryExecute returns affected row count', () async {
     final pool = FakePool([]);
 
-    final result = await queryExecute(r'UPDATE users SET name = $1', ['Ada']).execute(pool);
+    final result = await queryExecute(r'UPDATE users SET name = $1', [
+      'Ada',
+    ]).execute(pool);
 
     expect(result.rowsAffected, 2);
+    expect(pool.lastParameters, ['Ada']);
   });
 
-  test('sqlite placeholder rewrite duplicates repeated params and ignores SQL literals', () {
-    final prepared = rewriteOrdinalPlaceholdersForSqlite(
-      r"SELECT '$1' AS label WHERE id = $1 OR owner_id = $1 AND name = $2",
-      [7, 'Ada'],
-    );
+  test(
+    'queryRaw and RawSqlx delegate unchecked SQL to driver raw channel',
+    () async {
+      final pool = FakePool([
+        FakeRow([1], {'id': 1}),
+      ]);
 
+      final rows = await queryRaw(r'SELECT * FROM users WHERE id = $1', [
+        1,
+      ]).fetch(pool);
+      final rawRows = await RawSqlx(
+        pool,
+      ).fetch(r'SELECT * FROM users', const []);
+      final rawExec = await RawSqlx(
+        pool,
+      ).execute(r'DELETE FROM users', const []);
+
+      expect(rows.single.read<int>('id'), 1);
+      expect(
+        rawRows.match(
+          ok: (rows) => rows.single.read<int>('id'),
+          err: (_) => -1,
+        ),
+        1,
+      );
+      expect(
+        rawExec.match(ok: (result) => result.rowsAffected, err: (_) => -1),
+        2,
+      );
+    },
+  );
+
+  test(
+    'query helpers throw useful StateError when driver returns Err',
+    () async {
+      final pool = FakePool([], error: SqlxError.driver('down'));
+
+      await expectLater(
+        queryExecute('DELETE FROM users', const []).execute(pool),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.toString(),
+            'message',
+            contains('down'),
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'sqlite placeholder rewrite duplicates repeated params and ignores SQL literals',
+    () {
+      final prepared = rewriteOrdinalPlaceholdersForSqlite(
+        r"SELECT '$1' AS label WHERE id = $1 OR owner_id = $1 AND name = $2",
+        [7, 'Ada'],
+      );
+
+      expect(
+        prepared.sql,
+        r"SELECT '$1' AS label WHERE id = ? OR owner_id = ? AND name = ?",
+      );
+      expect(prepared.parameters, [7, 7, 'Ada']);
+    },
+  );
+
+  test(
+    'sqlite placeholder rewrite ignores double quotes, escaped quotes, and invalid ordinals',
+    () {
+      final prepared = rewriteOrdinalPlaceholdersForSqlite(
+        r'''SELECT "$1", 'it''s $2', $0, $3, $2''',
+        ['Ada', 42],
+      );
+
+      expect(prepared.sql, r'''SELECT "$1", 'it''s $2', $0, $3, ?''');
+      expect(prepared.parameters, [42]);
+    },
+  );
+
+  test('decodeJsonObject accepts only JSON objects', () {
+    expect(decodeJsonObject('{"name":"Ada"}'), {'name': 'Ada'});
     expect(
-      prepared.sql,
-      r"SELECT '$1' AS label WHERE id = ? OR owner_id = ? AND name = ?",
+      () => decodeJsonObject('[1, 2, 3]'),
+      throwsA(isA<FormatException>()),
     );
-    expect(prepared.parameters, [7, 7, 'Ada']);
   });
 }

@@ -35,11 +35,6 @@ final _ordersViewModelIsLoadingAspect = _OrdersViewModelAspect<bool>(
 
 abstract class $OrdersViewModel extends ViewModelBase<OrdersState, OrdersViewModelArgs> {
   $OrdersViewModel(super.args) : super(initialState: const OrdersState());
-
-
-  List<Object?> get orders => state.orders;
-
-  bool get isLoading => state.isLoading;
 }
 
 class _$OrdersViewModelProxy {

@@ -55,21 +55,6 @@ final _productsViewModelSortOptionAspect = _ProductsViewModelAspect<ProductSortO
 
 abstract class $ProductsViewModel extends ViewModelBase<ProductsState, ProductsViewModelArgs> {
   $ProductsViewModel(super.args) : super(initialState: const ProductsState());
-
-
-  List<Object?> get products => state.products;
-
-  ProductsStatus get status => state.status;
-
-  String? get errorMessage => state.errorMessage;
-
-  String? get selectedCategory => state.selectedCategory;
-
-  String get searchQuery => state.searchQuery;
-
-  ProductSortOption get sortOption => state.sortOption;
-
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$ProductsViewModelProxy {

@@ -35,13 +35,6 @@ final _wishlistViewModelIsLoadingAspect = _WishlistViewModelAspect<bool>(
 
 abstract class $WishlistViewModel extends ViewModelBase<WishlistState, WishlistViewModelArgs> {
   $WishlistViewModel(super.args) : super(initialState: const WishlistState());
-
-
-  List<Object?> get items => state.items;
-
-  bool get isLoading => state.isLoading;
-
-  StorageService get storage => args.storage;
 }
 
 class _$WishlistViewModelProxy {

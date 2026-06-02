@@ -40,15 +40,6 @@ final _shoppingChatViewModelErrorMessageAspect = _ShoppingChatViewModelAspect<St
 
 abstract class $ShoppingChatViewModel extends ViewModelBase<ChatState, ShoppingChatViewModelArgs> {
   $ShoppingChatViewModel(super.args) : super(initialState: const ChatState());
-
-
-  List<Object?> get messages => state.messages;
-
-  ChatStatus get status => state.status;
-
-  String? get errorMessage => state.errorMessage;
-
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$ShoppingChatViewModelProxy {

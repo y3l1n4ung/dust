@@ -35,11 +35,6 @@ final _cartViewModelNotificationAspect = _CartViewModelAspect<CartNotification?>
 
 abstract class $CartViewModel extends ViewModelBase<CartState, CartViewModelArgs> {
   $CartViewModel(super.args) : super(initialState: const CartState());
-
-
-  List<Object?> get items => state.items;
-
-  CartNotification? get notification => state.notification;
 }
 
 class _$CartViewModelProxy {

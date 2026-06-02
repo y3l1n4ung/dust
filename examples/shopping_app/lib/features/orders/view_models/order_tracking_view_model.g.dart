@@ -45,17 +45,6 @@ final _orderTrackingViewModelErrorMessageAspect = _OrderTrackingViewModelAspect<
 
 abstract class $OrderTrackingViewModel extends ViewModelBase<OrderTrackingState, OrderTrackingViewModelArgs> {
   $OrderTrackingViewModel(super.args) : super(initialState: const OrderTrackingState());
-
-
-  String? get orderId => state.orderId;
-
-  OrderTrackingStatus get status => state.status;
-
-  List<Object?> get events => state.events;
-
-  String? get errorMessage => state.errorMessage;
-
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$OrderTrackingViewModelProxy {

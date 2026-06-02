@@ -40,15 +40,6 @@ final _demoCartApiViewModelErrorMessageAspect = _DemoCartApiViewModelAspect<Stri
 
 abstract class $DemoCartApiViewModel extends ViewModelBase<DemoCartState, DemoCartApiViewModelArgs> {
   $DemoCartApiViewModel(super.args) : super(initialState: const DemoCartState());
-
-
-  DemoCartStatus get status => state.status;
-
-  List<Object?> get carts => state.carts;
-
-  String? get errorMessage => state.errorMessage;
-
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$DemoCartApiViewModelProxy {

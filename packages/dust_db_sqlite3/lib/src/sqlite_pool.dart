@@ -394,7 +394,13 @@ final class SqliteRow implements Row {
     if (value == null) return null;
     if (value is bool) return value;
     if (value is int) return value != 0;
-    if (value is String) return value == 'true' || value == '1';
+    if (value is String) {
+      return switch (value.toLowerCase()) {
+        'true' || '1' => true,
+        'false' || '0' => false,
+        _ => throw SqlxError.decode('Column `$column` cannot be read as bool.'),
+      };
+    }
     throw SqlxError.decode('Column `$column` cannot be read as bool.');
   }
 

@@ -60,23 +60,6 @@ final _checkoutViewModelIsQuoteLoadingAspect = _CheckoutViewModelAspect<bool>(
 
 abstract class $CheckoutViewModel extends ViewModelBase<CheckoutState, CheckoutViewModelArgs> {
   $CheckoutViewModel(super.args) : super(initialState: const CheckoutState());
-
-
-  CheckoutStatus get status => state.status;
-
-  Object? get shippingAddress => state.shippingAddress;
-
-  String? get errorMessage => state.errorMessage;
-
-  String? get orderId => state.orderId;
-
-  String? get couponCode => state.couponCode;
-
-  Object? get quote => state.quote;
-
-  bool get isQuoteLoading => state.isQuoteLoading;
-
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$CheckoutViewModelProxy {

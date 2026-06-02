@@ -50,19 +50,6 @@ final _productDetailViewModelErrorMessageAspect = _ProductDetailViewModelAspect<
 
 abstract class $ProductDetailViewModel extends ViewModelBase<ProductDetailState, ProductDetailViewModelArgs> {
   $ProductDetailViewModel(super.args) : super(initialState: const ProductDetailState());
-
-
-  int? get productId => state.productId;
-
-  ProductDetailStatus get status => state.status;
-
-  List<Object?> get reviews => state.reviews;
-
-  List<Object?> get recommendations => state.recommendations;
-
-  String? get errorMessage => state.errorMessage;
-
-  ShoppingRepository get repository => args.repository;
 }
 
 class _$ProductDetailViewModelProxy {

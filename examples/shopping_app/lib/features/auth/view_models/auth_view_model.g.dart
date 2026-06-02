@@ -45,19 +45,6 @@ final _authViewModelErrorMessageAspect = _AuthViewModelAspect<String?>(
 
 abstract class $AuthViewModel extends ViewModelBase<AuthState, AuthViewModelArgs> {
   $AuthViewModel(super.args) : super(initialState: AuthState(status: AuthStatus.unauthenticated));
-
-
-  Object? get user => state.user;
-
-  String? get token => state.token;
-
-  AuthStatus get status => state.status;
-
-  String? get errorMessage => state.errorMessage;
-
-  ShoppingRepository get repository => args.repository;
-
-  StorageService get storage => args.storage;
 }
 
 class _$AuthViewModelProxy {

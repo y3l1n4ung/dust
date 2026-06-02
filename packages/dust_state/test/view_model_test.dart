@@ -36,13 +36,56 @@ void main() {
     },
   );
 
+  test(
+    'StateEffect and SilentStateObserver preserve public no-op contracts',
+    () {
+      const effect = StateEffect('saved');
+      const observer = SilentStateObserver();
+      const logging = LoggingStateObserver();
+      const annotation = ViewModel(
+        state: CounterStateForAnnotation,
+        args: CounterArgs,
+        initial: 0,
+      );
+
+      observer.onChanged(Object(), 1, 2);
+      observer.onEffect(Object(), effect);
+      logging.onChanged(Object(), 1, 2);
+      logging.onEffect(Object(), effect);
+
+      expect(effect.value, 'saved');
+      expect(annotation.state, CounterStateForAnnotation);
+      expect(annotation.args, CounterArgs);
+      expect(annotation.initial, 0);
+    },
+  );
+
+  test('effects are broadcast to multiple listeners', () async {
+    final vm = CounterViewModel(const CounterArgs());
+    final first = <Object>[];
+    final second = <Object>[];
+    final firstSub = vm.effects.listen(first.add);
+    final secondSub = vm.effects.listen(second.add);
+
+    vm.showToast('saved');
+    await Future<void>.delayed(Duration.zero);
+
+    expect(first, ['saved']);
+    expect(second, ['saved']);
+    await firstSub.cancel();
+    await secondSub.cancel();
+  });
+
   test('init runs once', () async {
     final vm = CounterViewModel(const CounterArgs());
+    final bare = BareViewModel(const CounterArgs());
 
     await Future.wait([vm.init(), vm.init()]);
     await vm.init();
+    await bare.init();
 
     expect(vm.initCalls, 1);
+    expect(bare.state, 0);
   });
 
   test('init retries after failure and then stays complete', () async {
@@ -167,6 +210,40 @@ void main() {
     expect(external.disposed, isFalse);
   });
 
+  testWidgets(
+    'value scope can swap external view model without disposing either',
+    (tester) async {
+      final first = CounterViewModel(const CounterArgs());
+      final second = CounterViewModel(const CounterArgs());
+
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: ViewModelOwner<CounterViewModel, CounterArgs>.value(
+            value: first,
+            builder: (_, viewModel) => Text('${viewModel.state}'),
+          ),
+        ),
+      );
+      expect(find.text('0'), findsOneWidget);
+
+      second.setCount(2);
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: ViewModelOwner<CounterViewModel, CounterArgs>.value(
+            value: second,
+            builder: (_, viewModel) => Text('${viewModel.state}'),
+          ),
+        ),
+      );
+
+      expect(find.text('2'), findsOneWidget);
+      expect(first.disposed, isFalse);
+      expect(second.disposed, isFalse);
+    },
+  );
+
   testWidgets('owned scope reports dependency injection failures clearly', (
     tester,
   ) async {
@@ -188,7 +265,33 @@ void main() {
     expect(error.toString(), contains('CounterViewModelScope'));
     expect(error.toString(), contains('missing repository'));
   });
+
+  testWidgets('owned scope reports missing generated factories clearly', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: ViewModelOwner<CounterViewModel, CounterArgs>(
+          debugName: 'BrokenScope',
+          args: null,
+          create: (_, args) => CounterViewModel(args),
+          builder: (_, __) => const SizedBox(),
+        ),
+      ),
+    );
+
+    final error = tester.takeException();
+
+    expect(error, isA<StateError>());
+    expect(
+      error.toString(),
+      contains('Owned ViewModelOwner requires args and create'),
+    );
+  });
 }
+
+final class CounterStateForAnnotation {}
 
 final class CounterArgs extends ViewModelArgs {
   const CounterArgs({super.observer});
@@ -230,6 +333,10 @@ final class CounterViewModel extends ViewModelBase<int, CounterArgs> {
     disposed = true;
     super.dispose();
   }
+}
+
+final class BareViewModel extends ViewModelBase<int, CounterArgs> {
+  BareViewModel(super.args) : super(initialState: 0);
 }
 
 final class RecordingObserver implements StateObserver {

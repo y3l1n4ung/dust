@@ -67,13 +67,6 @@ final _appViewModelBackendModeAspect = _AppViewModelAspect<AppBackendMode>(
 
 abstract class $AppViewModel extends ViewModelBase<AppState, AppViewModelArgs> {
   $AppViewModel(super.args) : super(initialState: const AppState());
-
-
-  AppBackendMode get backendMode => state.backendMode;
-
-  ShoppingRepository get repository => args.repository;
-
-  StorageService get storage => args.storage;
 }
 
 class _$AppViewModelProxy {
