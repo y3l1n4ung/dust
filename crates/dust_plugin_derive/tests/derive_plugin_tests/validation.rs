@@ -31,6 +31,7 @@ fn copywith_requires_reconstructible_constructor() {
                     span: span(20, 30),
                     has_default: false,
                     serde: None,
+                    configs: Vec::new(),
                 },
                 FieldIr {
                     name: "age".to_owned(),
@@ -38,6 +39,7 @@ fn copywith_requires_reconstructible_constructor() {
                     span: span(31, 40),
                     has_default: false,
                     serde: None,
+                    configs: Vec::new(),
                 },
             ],
             constructors: vec![ConstructorIr {
@@ -64,6 +66,7 @@ fn copywith_requires_reconstructible_constructor() {
             serde: None,
         }],
         enums: Vec::new(),
+        query_calls: Vec::new(),
     };
 
     let diagnostics = plugin.validate(&broken);
@@ -99,6 +102,7 @@ fn copywith_rejects_abstract_classes() {
                 span: span(20, 30),
                 has_default: false,
                 serde: None,
+                configs: Vec::new(),
             }],
             constructors: vec![ConstructorIr {
                 name: None,
@@ -124,6 +128,7 @@ fn copywith_rejects_abstract_classes() {
             serde: None,
         }],
         enums: Vec::new(),
+        query_calls: Vec::new(),
     };
 
     let diagnostics = plugin.validate(&abstract_library);
@@ -159,6 +164,7 @@ fn rejects_mixin_class_targets() {
                 span: span(20, 30),
                 has_default: false,
                 serde: None,
+                configs: Vec::new(),
             }],
             constructors: vec![ConstructorIr {
                 name: None,
@@ -184,6 +190,7 @@ fn rejects_mixin_class_targets() {
             serde: None,
         }],
         enums: Vec::new(),
+        query_calls: Vec::new(),
     };
 
     let diagnostics = plugin.validate(&mixin_class_library);

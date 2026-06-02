@@ -7,8 +7,8 @@ use crate::plugin::constants::{
 };
 use crate::plugin::model::{HttpTargetMode, HttpVerb, ParseThreadMode, RequestMode};
 use crate::plugin::parse::{
-    parse_enum_variant, parse_named_arguments, parse_single_map_argument,
-    parse_single_string_argument, parse_string_literal, parse_string_map,
+    parse_config_map_argument, parse_config_string_argument, parse_enum_variant,
+    parse_string_literal, parse_string_map,
 };
 use crate::plugin::util::{config_name, label};
 
@@ -31,7 +31,7 @@ pub(crate) fn parse_http_client_config(
         headers: Vec::new(),
     };
 
-    for (key, value) in parse_named_arguments(config.arguments_source.as_deref(), diagnostics) {
+    for (key, value) in config.named_arguments() {
         match key {
             "baseUrl" => match parse_string_literal(value) {
                 Some(url) => parsed.base_url = Some(url),
@@ -74,12 +74,7 @@ pub(crate) fn parse_headers_config(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<(String, String)> {
-    parse_single_map_argument(
-        config.arguments_source.as_deref(),
-        diagnostics,
-        config.span,
-        "Headers",
-    )
+    parse_config_map_argument(config, diagnostics, "Headers")
 }
 
 pub(crate) fn parse_method_headers(
@@ -111,7 +106,7 @@ pub(crate) fn parse_http_parse_config(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> ParseThreadMode {
-    for (key, value) in parse_named_arguments(config.arguments_source.as_deref(), diagnostics) {
+    for (key, value) in config.named_arguments() {
         if key != "thread" {
             diagnostics.push(
                 Diagnostic::warning(format!("unknown `HttpParse` option `{key}`")).with_label(
@@ -164,12 +159,7 @@ pub(crate) fn method_path(method: &MethodIr, diagnostics: &mut Vec<Diagnostic>) 
     for config in &method.configs {
         match config_name(&config.symbol.0) {
             "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS" => {
-                return parse_single_string_argument(
-                    config.arguments_source.as_deref(),
-                    diagnostics,
-                    config.span,
-                    "HTTP verb path",
-                );
+                return parse_config_string_argument(config, diagnostics, "HTTP verb path");
             }
             _ => {}
         }

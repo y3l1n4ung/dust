@@ -88,6 +88,7 @@ pub(crate) fn sample_library(output_path: String) -> LibraryIr {
             vec![constructor(None, Vec::new())],
         )],
         enums: Vec::new(),
+        query_calls: Vec::new(),
     }
 }
 

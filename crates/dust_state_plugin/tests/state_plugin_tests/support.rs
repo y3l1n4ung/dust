@@ -84,6 +84,7 @@ pub(crate) fn library_with_classes(classes: Vec<ClassIr>) -> LibraryIr {
         span: span(0, 100),
         classes,
         enums: Vec::new(),
+        query_calls: Vec::new(),
     }
 }
 

@@ -93,6 +93,7 @@ pub(crate) fn library_with_classes(classes: Vec<ClassIr>) -> LibraryIr {
         span: span(0, 100),
         classes,
         enums: Vec::new(),
+        query_calls: Vec::new(),
     }
 }
 
@@ -116,6 +117,7 @@ pub(crate) fn parsed_library_with_annotations(
             span: TextRange::new(10_u32, 90_u32),
         }],
         enums: Vec::new(),
+        query_calls: Vec::new(),
     }
 }
 

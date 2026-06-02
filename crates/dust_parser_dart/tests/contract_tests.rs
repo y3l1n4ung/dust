@@ -58,6 +58,7 @@ impl ParseBackend for FakeBackend {
                     span: TextRange::new(45_u32, 90_u32),
                 }],
                 enums: Vec::new(),
+                query_calls: Vec::new(),
             },
             diagnostics: Vec::new(),
             options,
@@ -80,6 +81,7 @@ fn parse_result_reports_presence_of_diagnostics() {
             directives: Vec::new(),
             classes: Vec::new(),
             enums: Vec::new(),
+            query_calls: Vec::new(),
         },
         diagnostics: vec![Diagnostic::error("unexpected token")],
         options: ParseOptions::default(),
@@ -121,6 +123,7 @@ fn parsed_surface_helpers_cover_empty_and_mixin_class_cases() {
         directives: Vec::new(),
         classes: Vec::new(),
         enums: Vec::new(),
+        query_calls: Vec::new(),
     };
     let class = ParsedClassSurface {
         kind: ParsedClassKind::MixinClass,

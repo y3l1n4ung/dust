@@ -1,4 +1,8 @@
 use dust_ir::{ConfigApplicationIr, SymbolId};
+use dust_parser_dart::ParsedAnnotation;
+
+#[cfg(test)]
+use dust_dart_emit::{normalized_args, parse_named_arguments, split_top_level_items};
 
 use super::{constants::VIEW_MODEL, model::ViewModelAnnotation};
 
@@ -8,11 +12,56 @@ pub(crate) fn view_model_config(configs: &[ConfigApplicationIr]) -> Option<&Conf
         .find(|config| config_name(&config.symbol) == VIEW_MODEL)
 }
 
+#[cfg(test)]
 pub(crate) fn parse_view_model_annotation(args: Option<&str>) -> Option<ViewModelAnnotation> {
-    let args = normalize_args(args?)?;
+    let args = args?;
     let state_type = named_type_literal(args, "state").or_else(|| first_type_literal(args))?;
     let args_type = named_type_literal(args, "args");
     let initial_source = named_value_source(args, "initial").map(str::to_owned);
+    Some(ViewModelAnnotation {
+        state_type,
+        args_type,
+        initial_source,
+    })
+}
+
+pub(crate) fn parse_view_model_config(config: &ConfigApplicationIr) -> Option<ViewModelAnnotation> {
+    let state_type = config
+        .named_argument_source("state")
+        .and_then(parse_type_name)
+        .or_else(|| {
+            config
+                .positional_argument_source(0)
+                .and_then(parse_type_name)
+        })?;
+    let args_type = config
+        .named_argument_source("args")
+        .and_then(parse_type_name);
+    let initial_source = config.named_argument_source("initial").map(str::to_owned);
+    Some(ViewModelAnnotation {
+        state_type,
+        args_type,
+        initial_source,
+    })
+}
+
+pub(crate) fn parse_view_model_surface(
+    annotation: &ParsedAnnotation,
+) -> Option<ViewModelAnnotation> {
+    let state_type = annotation
+        .named_argument_source("state")
+        .and_then(parse_type_name)
+        .or_else(|| {
+            annotation
+                .positional_argument_source(0)
+                .and_then(parse_type_name)
+        })?;
+    let args_type = annotation
+        .named_argument_source("args")
+        .and_then(parse_type_name);
+    let initial_source = annotation
+        .named_argument_source("initial")
+        .map(str::to_owned);
     Some(ViewModelAnnotation {
         state_type,
         args_type,
@@ -24,22 +73,18 @@ fn config_name(symbol: &SymbolId) -> &str {
     symbol.0.rsplit("::").next().unwrap_or(symbol.0.as_str())
 }
 
-fn normalize_args(args: &str) -> Option<&str> {
-    let trimmed = args.trim();
-    trimmed
-        .strip_prefix('(')
-        .and_then(|value| value.strip_suffix(')'))
-        .map(str::trim)
-}
-
+#[cfg(test)]
 fn first_type_literal(args: &str) -> Option<String> {
-    let first = top_level_args(args).first().copied()?;
+    let first = split_top_level_items(normalized_args(args)?)
+        .first()
+        .copied()?;
     if first.contains(':') {
         return None;
     }
     parse_type_name(first)
 }
 
+#[cfg(test)]
 fn named_type_literal(args: &str, name: &str) -> Option<String> {
     let value = named_value_source(args, name)?.trim();
     parse_type_name(value)
@@ -54,53 +99,14 @@ fn parse_type_name(value: &str) -> Option<String> {
     (!ident.is_empty()).then_some(ident)
 }
 
+#[cfg(test)]
 fn named_value_source<'a>(args: &'a str, name: &str) -> Option<&'a str> {
-    for arg in top_level_args(args) {
-        let Some((key, value)) = arg.split_once(':') else {
-            continue;
-        };
+    for (key, value) in parse_named_arguments(Some(args)) {
         if key.trim() == name {
             return Some(value.trim());
         }
     }
     None
-}
-
-fn top_level_args(source: &str) -> Vec<&str> {
-    let mut args = Vec::new();
-    let mut start = 0;
-    let mut paren_depth = 0_usize;
-    let mut bracket_depth = 0_usize;
-    let mut quote = None;
-    let mut escaped = false;
-
-    for (index, ch) in source.char_indices() {
-        if let Some(active_quote) = quote {
-            if escaped {
-                escaped = false;
-            } else if ch == '\\' {
-                escaped = true;
-            } else if ch == active_quote {
-                quote = None;
-            }
-            continue;
-        }
-
-        match ch {
-            '\'' | '"' => quote = Some(ch),
-            '(' => paren_depth += 1,
-            ')' => paren_depth = paren_depth.saturating_sub(1),
-            '[' => bracket_depth += 1,
-            ']' => bracket_depth = bracket_depth.saturating_sub(1),
-            ',' if paren_depth == 0 && bracket_depth == 0 => {
-                args.push(source[start..index].trim());
-                start = index + ch.len_utf8();
-            }
-            _ => {}
-        }
-    }
-    args.push(source[start..].trim());
-    args
 }
 
 #[cfg(test)]

@@ -92,6 +92,7 @@ pub fn resolve_library_with_partless_configs(
             part_uri,
             classes,
             enums,
+            query_calls: library.query_calls.clone(),
         },
         diagnostics,
     }

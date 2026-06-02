@@ -416,6 +416,7 @@ dependencies = [
 name = "dust_parser_dart_ts"
 version = "0.1.1"
 dependencies = [
+ "dust_dart_emit",
  "dust_diagnostics",
  "dust_parser_dart",
  "dust_text",
@@ -473,6 +474,7 @@ dependencies = [
 name = "dust_route_plugin"
 version = "0.1.1"
 dependencies = [
+ "dust_dart_emit",
  "dust_diagnostics",
  "dust_ir",
  "dust_parser_dart",

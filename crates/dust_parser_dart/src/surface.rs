@@ -1,5 +1,7 @@
 use dust_text::TextRange;
 
+use crate::ParsedQueryCallSurface;
+
 /// A generation-relevant view of one parsed Dart library.
 ///
 /// This type is intentionally smaller than a full AST. It carries only the
@@ -14,12 +16,17 @@ pub struct ParsedLibrarySurface {
     pub classes: Vec<ParsedClassSurface>,
     /// Top-level enums that were extracted from the source.
     pub enums: Vec<ParsedEnumSurface>,
+    /// Dust DB query helper calls found in the source.
+    pub query_calls: Vec<ParsedQueryCallSurface>,
 }
 
 impl ParsedLibrarySurface {
-    /// Returns `true` if no directives , no classes and no enums were extracted.
+    /// Returns `true` if no generation-relevant surface facts were extracted.
     pub fn is_empty(&self) -> bool {
-        self.directives.is_empty() && self.classes.is_empty() && self.enums.is_empty()
+        self.directives.is_empty()
+            && self.classes.is_empty()
+            && self.enums.is_empty()
+            && self.query_calls.is_empty()
     }
 }
 

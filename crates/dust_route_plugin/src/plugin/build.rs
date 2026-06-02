@@ -7,7 +7,7 @@ use dust_plugin_api::SymbolPlan;
 use super::{
     constants::ROUTES_ANALYSIS_KEY,
     model::{RouteFact, RouteParamSpec, RouteSpec, RouterSpec},
-    parse::{parse_route_annotation, parse_router_annotation, route_config},
+    parse::{parse_route_config, parse_router_config, route_config},
 };
 
 pub(crate) fn build_router_spec(
@@ -27,9 +27,7 @@ pub(crate) fn build_router_spec(
         .configs
         .iter()
         .find(|config| config.symbol.0.ends_with("::Router"));
-    let router_annotation = parse_router_annotation(
-        router_config.and_then(|config| config.arguments_source.as_deref()),
-    );
+    let router_annotation = parse_router_config(router_config);
     let mut routes = library
         .classes
         .iter()
@@ -100,7 +98,7 @@ fn guard_classes(routes: &[RouteSpec]) -> Vec<String> {
 
 fn build_route_spec(class: &ClassIr) -> Option<RouteSpec> {
     let config = route_config(&class.configs)?;
-    let annotation = parse_route_annotation(config.arguments_source.as_deref())?;
+    let annotation = parse_route_config(config)?;
     let name = annotation
         .name
         .clone()

@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassIr, LibraryIr};
 
-use super::parse::{parse_view_model_annotation, view_model_config};
+use super::parse::{parse_view_model_config, view_model_config};
 
 pub(crate) fn validate_library_state(library: &LibraryIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
@@ -22,8 +22,7 @@ pub(crate) fn validate_library_state(library: &LibraryIr) -> Vec<Diagnostic> {
         let Some(config) = view_model_config(&class.configs) else {
             continue;
         };
-        let Some(annotation) = parse_view_model_annotation(config.arguments_source.as_deref())
-        else {
+        let Some(annotation) = parse_view_model_config(config) else {
             diagnostics.push(Diagnostic::error(format!(
                 "`@ViewModel` on `{}` requires `state: SomeState`",
                 class.name

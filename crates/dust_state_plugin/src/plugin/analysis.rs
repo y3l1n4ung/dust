@@ -6,7 +6,7 @@ use dust_plugin_api::{WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 use super::{
     constants::{STATES_ANALYSIS_KEY, VIEW_MODEL, VIEW_MODELS_ANALYSIS_KEY},
     model::{StateFact, StateFieldFact, ViewModelFact},
-    parse::parse_view_model_annotation,
+    parse::parse_view_model_surface,
 };
 
 pub(crate) fn collect_state_workspace_analysis(
@@ -58,7 +58,7 @@ fn view_model_annotation(class: &ParsedClassSurface) -> Option<super::model::Vie
         .annotations
         .iter()
         .find(|annotation| annotation.name == VIEW_MODEL)
-        .and_then(|annotation| parse_view_model_annotation(annotation.arguments_source.as_deref()))
+        .and_then(parse_view_model_surface)
 }
 
 fn import_uri(context: WorkspaceAnalysisContext<'_>) -> String {

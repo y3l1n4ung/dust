@@ -1,4 +1,7 @@
-use super::{RenderedField, effective_shell, write_indent};
+use super::{
+    formatting::{RenderedField, write_indent},
+    shell::effective_shell,
+};
 use crate::plugin::model::RouteSpec;
 
 pub(super) fn render_route_metadata(out: &mut String, routes: &[RouteSpec]) {

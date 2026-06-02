@@ -2,6 +2,7 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassKindIr, ConfigApplicationIr, SpanIr, TraitApplicationIr};
 use dust_parser_dart::{
     ParsedConstructorSurface, ParsedDirective, ParsedMethodParamSurface, ParsedMethodSurface,
+    ParsedQueryCallSurface,
 };
 
 /// One resolved field plus its field-level Dust configuration.
@@ -114,6 +115,8 @@ pub struct ResolvedLibrary {
     pub classes: Vec<ResolvedClass>,
     ///  The resolved enums in declaration order.
     pub enums: Vec<ResolvedEnum>,
+    /// Parsed query helper calls preserved for semantic lowering.
+    pub query_calls: Vec<ParsedQueryCallSurface>,
 }
 
 /// The result of resolving one parsed library.

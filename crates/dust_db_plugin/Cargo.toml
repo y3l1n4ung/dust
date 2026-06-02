@@ -23,3 +23,7 @@ tokio = { version = "1.0", features = ["rt", "macros"] }
 
 [lib]
 path = "src/lib.rs"
+
+[[bench]]
+name = "db_emit"
+harness = false

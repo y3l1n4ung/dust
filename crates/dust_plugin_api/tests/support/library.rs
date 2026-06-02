@@ -24,6 +24,7 @@ pub(crate) fn sample_library() -> LibraryIr {
             serde: None,
         }],
         enums: Vec::new(),
+        query_calls: Vec::new(),
     }
 }
 

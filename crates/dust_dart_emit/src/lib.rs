@@ -8,7 +8,8 @@ mod type_render;
 
 pub use source::{
     balanced_parenthesized, normalized_args, parse_bool_literal, parse_named_arguments,
-    parse_string_literal, split_top_level_items, split_top_level_once,
+    parse_static_dart_string_literal, parse_string_literal, split_top_level_items,
+    split_top_level_once,
 };
 
 pub use type_render::{

@@ -24,3 +24,7 @@ dust_text = { path = "../dust_text", version = "0.1.1" }
 
 [lib]
 path = "src/lib.rs"
+
+[[bench]]
+name = "state_emit"
+harness = false

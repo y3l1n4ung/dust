@@ -127,3 +127,67 @@ pub(crate) struct RowField<'a> {
     pub(crate) config: SqlxConfig,
     pub(crate) column: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use dust_ir::{SpanIr, TypeIr};
+    use dust_text::{FileId, TextRange};
+
+    use super::{FetchMode, QueryFunction, QuerySpec};
+
+    fn span() -> SpanIr {
+        SpanIr::new(FileId::new(1), TextRange::new(0_u32, 1_u32))
+    }
+
+    fn query(function: QueryFunction) -> QuerySpec {
+        QuerySpec {
+            function,
+            fetch: FetchMode::One,
+            sql: "SELECT 1".to_owned(),
+            sql_source_static: true,
+            row_type: None,
+            scalar_type: None,
+            parameter_count: 0,
+            params_source_is_list: true,
+            span: span(),
+            display_name: None,
+        }
+    }
+
+    #[test]
+    fn fetch_mode_names_match_cache_contract() {
+        assert_eq!(FetchMode::One.as_str(), "one");
+        assert_eq!(FetchMode::Optional.as_str(), "optional");
+        assert_eq!(FetchMode::All.as_str(), "all");
+        assert_eq!(FetchMode::Raw.as_str(), "raw");
+        assert_eq!(FetchMode::Execute.as_str(), "execute");
+    }
+
+    #[test]
+    fn query_display_name_prefers_explicit_source_name() {
+        let mut spec = query(QueryFunction::Raw);
+        spec.display_name = Some("UserDao.findById".to_owned());
+
+        assert_eq!(spec.display_name(), "UserDao.findById");
+    }
+
+    #[test]
+    fn query_display_name_renders_function_shape() {
+        let mut as_query = query(QueryFunction::As);
+        as_query.row_type = Some("UserRow".to_owned());
+        assert_eq!(as_query.display_name(), "queryAs<UserRow>");
+
+        let dynamic_as = query(QueryFunction::As);
+        assert_eq!(dynamic_as.display_name(), "queryAs<dynamic>");
+
+        let mut scalar = query(QueryFunction::Scalar);
+        scalar.scalar_type = Some(TypeIr::int());
+        assert_eq!(scalar.display_name(), "queryScalar<int>");
+
+        let dynamic_scalar = query(QueryFunction::Scalar);
+        assert_eq!(dynamic_scalar.display_name(), "queryScalar<dynamic>");
+
+        assert_eq!(query(QueryFunction::Raw).display_name(), "queryRaw");
+        assert_eq!(query(QueryFunction::Execute).display_name(), "queryExecute");
+    }
+}

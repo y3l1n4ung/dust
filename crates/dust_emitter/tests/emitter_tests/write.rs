@@ -127,6 +127,7 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
             },
         ],
         enums: Vec::new(),
+        query_calls: Vec::new(),
     };
 
     let mut registry = PluginRegistry::new();

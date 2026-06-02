@@ -83,6 +83,56 @@ pub fn parse_bool_literal(source: &str) -> Option<bool> {
     }
 }
 
+/// Parses a static Dart string literal and rejects interpolation.
+///
+/// Raw strings (`r'...'`) and triple-quoted strings are supported. Adjacent
+/// string literal concatenation is intentionally rejected so database queries
+/// can be validated from one exact source literal.
+pub fn parse_static_dart_string_literal(source: &str) -> Option<String> {
+    let source = source.trim();
+    let (raw, source) = match source.as_bytes() {
+        [b'r' | b'R', b'\'' | b'"', ..] => (true, &source[1..]),
+        _ => (false, source),
+    };
+    let quote = source.chars().next()?;
+    if !matches!(quote, '\'' | '"') {
+        return None;
+    }
+    let delimiter = if source.starts_with(&quote.to_string().repeat(3)) {
+        quote.to_string().repeat(3)
+    } else {
+        quote.to_string()
+    };
+    let body_start = delimiter.len();
+
+    let mut value = String::new();
+    let mut escaped = false;
+    let mut end_offset = None;
+    for (index, ch) in source[body_start..].char_indices() {
+        let absolute = body_start + index;
+        if !raw && escaped {
+            value.push(ch);
+            escaped = false;
+            continue;
+        }
+        if !raw && ch == '\\' {
+            escaped = true;
+            continue;
+        }
+        if !raw && ch == '$' {
+            return None;
+        }
+        if source[absolute..].starts_with(&delimiter) {
+            end_offset = Some(absolute + delimiter.len());
+            break;
+        }
+        value.push(ch);
+    }
+
+    let end_offset = end_offset?;
+    source[end_offset..].trim().is_empty().then_some(value)
+}
+
 /// Parses parenthesized named arguments into key/source pairs.
 pub fn parse_named_arguments(source: Option<&str>) -> Vec<(&str, &str)> {
     let Some(inner) = source.and_then(normalized_args) else {
@@ -151,7 +201,10 @@ impl DelimiterState {
 
 #[cfg(test)]
 mod tests {
-    use super::{balanced_parenthesized, parse_named_arguments, split_top_level_items};
+    use super::{
+        balanced_parenthesized, parse_named_arguments, parse_static_dart_string_literal,
+        split_top_level_items,
+    };
 
     #[test]
     fn splits_nested_items() {
@@ -172,5 +225,25 @@ mod tests {
     #[test]
     fn finds_balanced_parentheses() {
         assert_eq!(balanced_parenthesized("('a,b'), tail"), Some("('a,b')"));
+    }
+
+    #[test]
+    fn parses_static_dart_strings() {
+        assert_eq!(
+            parse_static_dart_string_literal(r"r'''SELECT * FROM users WHERE id = $1'''"),
+            Some("SELECT * FROM users WHERE id = $1".to_owned())
+        );
+        assert_eq!(
+            parse_static_dart_string_literal("'SELECT * FROM users'"),
+            Some("SELECT * FROM users".to_owned())
+        );
+        assert_eq!(
+            parse_static_dart_string_literal("'SELECT * FROM $table'"),
+            None
+        );
+        assert_eq!(
+            parse_static_dart_string_literal("'SELECT * ' 'FROM users'"),
+            None
+        );
     }
 }

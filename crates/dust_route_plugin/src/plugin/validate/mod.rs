@@ -5,7 +5,7 @@ use dust_ir::{BuiltinType, ClassIr, ConstructorIr, ConstructorParamIr, LibraryIr
 
 use super::{
     model::RouteAnnotation,
-    parse::{parse_route_annotation, route_config},
+    parse::{parse_route_config, route_config},
 };
 
 pub(crate) fn validate_library_routes(library: &LibraryIr) -> Vec<Diagnostic> {
@@ -22,7 +22,7 @@ pub(crate) fn validate_library_routes(library: &LibraryIr) -> Vec<Diagnostic> {
         let Some(config) = route_config(&class.configs) else {
             continue;
         };
-        let Some(route) = parse_route_annotation(config.arguments_source.as_deref()) else {
+        let Some(route) = parse_route_config(config) else {
             diagnostics.push(Diagnostic::error(format!(
                 "`@Route` on `{}` requires a string path argument",
                 class.name

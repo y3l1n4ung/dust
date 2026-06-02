@@ -2,9 +2,7 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassIr, ConfigApplicationIr, MethodIr};
 
 use crate::plugin::constants::{HEADERS, HTTP_CLIENT};
-use crate::plugin::parse::{
-    parse_headers_config, parse_http_client_headers, parse_named_arguments,
-};
+use crate::plugin::parse::{parse_headers_config, parse_http_client_headers};
 use crate::plugin::util::{config_name, label};
 use crate::plugin::validate::param::ParamState;
 
@@ -39,10 +37,9 @@ fn class_header_entries(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<(String, String)> {
-    parse_named_arguments(config.arguments_source.as_deref(), diagnostics)
-        .into_iter()
-        .find(|(name, _)| *name == "headers")
-        .map(|(_, value)| parse_http_client_headers(value, config, diagnostics))
+    config
+        .named_argument_source("headers")
+        .map(|value| parse_http_client_headers(value, config, diagnostics))
         .unwrap_or_default()
 }
 

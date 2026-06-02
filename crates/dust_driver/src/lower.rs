@@ -1,5 +1,7 @@
 mod inheritance;
 mod parse_support;
+#[path = "lower/query_calls.rs"]
+mod query_calls;
 mod serde;
 mod serde_parse;
 mod tests_inheritance;
@@ -14,12 +16,12 @@ use dust_ir::{
     ClassIr, ConstructorIr, ConstructorParamIr, EnumIr, EnumVariantIr, FieldIr, LibraryIr,
     LoweringOutcome, MethodIr, MethodParamIr, ParamKind, SpanIr,
 };
-use dust_parser_dart::ParameterKind;
-use dust_parser_dart::ParsedDirective;
+use dust_parser_dart::{ParameterKind, ParsedDirective};
 use dust_resolver::{ResolvedClass, ResolvedLibrary};
 
 use self::{
     inheritance::{infer_param_type, merged_fields_for_class, resolve_constructor_param_types},
+    query_calls::lower_query_calls,
     serde::{lower_class_serde_config, lower_field_serde_config},
     type_parse::lower_type,
 };
@@ -78,6 +80,7 @@ pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<Librar
             span: library.span,
             classes,
             enums,
+            query_calls: lower_query_calls(library, &mut diagnostics),
         },
         diagnostics,
     }

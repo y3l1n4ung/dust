@@ -6,7 +6,7 @@ use dust_plugin_api::{WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 use super::{
     constants::{ROUTE, ROUTER, ROUTERS_ANALYSIS_KEY, ROUTES_ANALYSIS_KEY},
     model::{RouteFact, RouteParamFact, RouterFact},
-    parse::{parse_route_annotation, parse_router_annotation},
+    parse::{parse_route_surface, parse_router_surface},
 };
 
 pub(crate) fn collect_route_workspace_analysis(
@@ -18,9 +18,7 @@ pub(crate) fn collect_route_workspace_analysis(
         for annotation in &class.annotations {
             match annotation.name.as_str() {
                 ROUTE => {
-                    if let Some(route) =
-                        parse_route_annotation(annotation.arguments_source.as_deref())
-                    {
+                    if let Some(route) = parse_route_surface(annotation) {
                         let fact = RouteFact {
                             class_name: class.name.clone(),
                             path: route.path.clone(),
@@ -37,7 +35,7 @@ pub(crate) fn collect_route_workspace_analysis(
                     }
                 }
                 ROUTER => {
-                    let router = parse_router_annotation(annotation.arguments_source.as_deref());
+                    let router = parse_router_surface(annotation);
                     let fact = RouterFact {
                         class_name: class.name.clone(),
                         initial: router.initial,

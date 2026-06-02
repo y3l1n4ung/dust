@@ -56,6 +56,7 @@ pub(crate) fn method(
         span: span(40, 70),
         traits: Vec::new(),
         configs,
+        body_source: None,
     }
 }
 
@@ -104,6 +105,7 @@ pub(crate) fn library_with_classes_and_imports(
         span: span(0, 100),
         classes,
         enums: Vec::new(),
+        query_calls: Vec::new(),
     }
 }
 
@@ -146,6 +148,7 @@ pub(crate) fn field(name: &str, ty: TypeIr) -> FieldIr {
         span: span(15, 16),
         has_default: false,
         serde: None,
+        configs: Vec::new(),
     }
 }
 

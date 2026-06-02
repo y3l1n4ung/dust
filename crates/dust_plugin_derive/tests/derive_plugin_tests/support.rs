@@ -24,6 +24,7 @@ pub(crate) fn class_with_traits(name: &str, traits: &[&str]) -> ClassIr {
                 span: span(20, 30),
                 has_default: false,
                 serde: None,
+                configs: Vec::new(),
             },
             FieldIr {
                 name: "age".to_owned(),
@@ -31,6 +32,7 @@ pub(crate) fn class_with_traits(name: &str, traits: &[&str]) -> ClassIr {
                 span: span(31, 40),
                 has_default: false,
                 serde: None,
+                configs: Vec::new(),
             },
         ],
         constructors: vec![ConstructorIr {
@@ -81,6 +83,7 @@ pub(crate) fn sample_library(traits: &[&str]) -> LibraryIr {
         span: span(0, 100),
         classes: vec![class_with_traits("User", traits)],
         enums: Vec::new(),
+        query_calls: Vec::new(),
     }
 }
 

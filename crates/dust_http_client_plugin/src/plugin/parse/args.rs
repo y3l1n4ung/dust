@@ -1,5 +1,5 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::{MethodParamIr, SpanIr};
+use dust_ir::{ConfigApplicationIr, MethodParamIr, SpanIr};
 
 use crate::plugin::util::{config_name, label, split_top_level_items, split_top_level_once};
 
@@ -32,86 +32,40 @@ pub(crate) fn parse_optional_string_argument(
         .configs
         .iter()
         .find(|config| config_name(&config.symbol.0) == annotation_name)?;
-    parse_single_string_argument(
-        config.arguments_source.as_deref(),
-        diagnostics,
-        config.span,
-        annotation_name,
-    )
+    parse_config_string_argument(config, diagnostics, annotation_name)
 }
 
-pub(crate) fn parse_single_string_argument(
-    source: Option<&str>,
+pub(crate) fn parse_config_string_argument(
+    config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
-    span: SpanIr,
     label_name: &str,
 ) -> Option<String> {
-    let inner = parse_parenthesized_inner(source, diagnostics, span, label_name)?;
-    if inner.trim().is_empty() {
-        return None;
-    }
+    let source = config.positional_argument_source(0)?;
 
-    match parse_string_literal(inner.trim()) {
+    match parse_string_literal(source.trim()) {
         Some(value) => Some(value),
         None => {
             diagnostics.push(
                 Diagnostic::error(format!("`{label_name}` expects a quoted string argument"))
-                    .with_label(label(span, "use a quoted string literal here")),
+                    .with_label(label(config.span, "use a quoted string literal here")),
             );
             None
         }
     }
 }
 
-pub(crate) fn parse_single_map_argument(
-    source: Option<&str>,
+pub(crate) fn parse_config_map_argument(
+    config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
-    span: SpanIr,
     label_name: &str,
 ) -> Vec<(String, String)> {
-    let Some(inner) = parse_parenthesized_inner(source, diagnostics, span, label_name) else {
+    let Some(source) = config.positional_argument_source(0) else {
         return Vec::new();
     };
-    if inner.trim().is_empty() {
+    if source.trim().is_empty() {
         return Vec::new();
     }
-    parse_string_map(inner.trim(), diagnostics, span, label_name)
-}
-
-pub(crate) fn parse_named_arguments<'a>(
-    source: Option<&'a str>,
-    diagnostics: &mut Vec<Diagnostic>,
-) -> Vec<(&'a str, &'a str)> {
-    let Some(source) = source.map(str::trim).filter(|source| !source.is_empty()) else {
-        return Vec::new();
-    };
-    let Some(inner) = source
-        .strip_prefix('(')
-        .and_then(|inner| inner.strip_suffix(')'))
-    else {
-        diagnostics.push(Diagnostic::error(
-            "annotation arguments must use parenthesized syntax",
-        ));
-        return Vec::new();
-    };
-
-    let inner = inner.trim();
-    if inner.is_empty() {
-        return Vec::new();
-    }
-
-    let mut arguments = Vec::new();
-    for item in split_top_level_items(inner) {
-        if let Some((key, value)) = split_top_level_once(item, ':') {
-            arguments.push((key.trim(), value.trim()));
-        } else {
-            diagnostics.push(Diagnostic::error(format!(
-                "could not parse annotation argument `{item}`"
-            )));
-        }
-    }
-
-    arguments
+    parse_string_map(source.trim(), diagnostics, config.span, label_name)
 }
 
 pub(crate) fn parse_string_map(
@@ -163,27 +117,6 @@ pub(crate) fn parse_string_map(
     }
 
     values
-}
-
-fn parse_parenthesized_inner<'a>(
-    source: Option<&'a str>,
-    diagnostics: &mut Vec<Diagnostic>,
-    span: SpanIr,
-    label_name: &str,
-) -> Option<&'a str> {
-    let source = source?;
-    let source = source.trim();
-    let Some(inner) = source
-        .strip_prefix('(')
-        .and_then(|inner| inner.strip_suffix(')'))
-    else {
-        diagnostics.push(
-            Diagnostic::error(format!("`{label_name}` arguments must be parenthesized"))
-                .with_label(label(span, "wrap annotation arguments in `(...)`")),
-        );
-        return None;
-    };
-    Some(inner.trim())
 }
 
 pub(crate) fn parse_string_literal(source: &str) -> Option<String> {

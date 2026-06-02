@@ -121,3 +121,92 @@ impl DustPlugin for DbPlugin {
         emit_db_library(library, self.options)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use dust_plugin_api::{DustPlugin, SymbolPlan};
+
+    use super::{
+        DbPlugin, DbPluginOptions, register_plugin, register_plugin_with_options,
+        register_row_plugin,
+    };
+
+    fn empty_library() -> dust_ir::LibraryIr {
+        dust_ir::LibraryIr {
+            package_root: ".".to_owned(),
+            package_name: "db_test".to_owned(),
+            source_path: "lib/db.dart".to_owned(),
+            output_path: "lib/db.g.dart".to_owned(),
+            imports: Vec::new(),
+            span: dust_ir::SpanIr::new(
+                dust_text::FileId::new(1),
+                dust_text::TextRange::new(0_u32, 1_u32),
+            ),
+            classes: Vec::new(),
+            enums: Vec::new(),
+            query_calls: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn plugin_options_default_to_online_database_mode() {
+        assert_eq!(
+            DbPluginOptions::default(),
+            DbPluginOptions {
+                offline: false,
+                write_metadata: true,
+                databases: true,
+            }
+        );
+    }
+
+    #[test]
+    fn database_and_row_modes_claim_different_symbols() {
+        let database = register_plugin();
+        assert_eq!(database.plugin_name(), "DustDb");
+        assert!(
+            database
+                .claimed_configs()
+                .contains(&"dust_db_annotation::SqlxDatabase")
+        );
+        assert!(
+            database
+                .claimed_configs()
+                .contains(&"dust_db_annotation::SqlxDao")
+        );
+        assert!(database.supported_annotations().contains(&"SqlxDatabase"));
+        assert!(database.supported_annotations().contains(&"SqlxDao"));
+
+        let row_only = register_row_plugin();
+        assert!(
+            !row_only
+                .claimed_configs()
+                .contains(&"dust_db_annotation::SqlxDao")
+        );
+        assert!(
+            row_only
+                .claimed_configs()
+                .contains(&"dust_db_annotation::Sqlx")
+        );
+        assert_eq!(row_only.supported_annotations(), ["FromRow"]);
+    }
+
+    #[test]
+    fn explicit_options_round_trip_through_plugin_contract() {
+        let plugin = register_plugin_with_options(true, false);
+        let library = empty_library();
+
+        assert!(plugin.validate(&library).is_empty());
+        assert_eq!(
+            plugin.emit(&library, &SymbolPlan::default()),
+            dust_plugin_api::PluginContribution::default()
+        );
+
+        let custom = DbPlugin::with_options(DbPluginOptions {
+            offline: true,
+            write_metadata: false,
+            databases: false,
+        });
+        assert_eq!(custom.supported_annotations(), ["FromRow"]);
+    }
+}

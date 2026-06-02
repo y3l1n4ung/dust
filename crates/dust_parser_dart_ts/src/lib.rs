@@ -7,6 +7,7 @@ mod classes;
 mod diagnostics;
 mod directives;
 mod enums;
+mod queries;
 mod syntax;
 
 use dust_diagnostics::Diagnostic;
@@ -17,7 +18,7 @@ use tree_sitter::Parser;
 
 use self::{
     classes::extract_classes, diagnostics::extract_diagnostics, directives::extract_directives,
-    enums::extract_enums, syntax::text_range,
+    enums::extract_enums, queries::extract_query_calls, syntax::text_range,
 };
 
 thread_local! {
@@ -68,6 +69,7 @@ impl ParseBackend for TreeSitterDartBackend {
                     directives: extract_directives(root, source),
                     classes: extract_classes(root, source),
                     enums: extract_enums(root, source),
+                    query_calls: extract_query_calls(source),
                 },
                 diagnostics: extract_diagnostics(&tree, source),
                 options,
@@ -82,5 +84,6 @@ fn empty_library(source: &SourceText) -> ParsedLibrarySurface {
         directives: Vec::new(),
         classes: Vec::new(),
         enums: Vec::new(),
+        query_calls: Vec::new(),
     }
 }

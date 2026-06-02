@@ -1,4 +1,9 @@
+use dust_dart_emit::{parse_bool_literal, parse_string_literal, split_top_level_items};
 use dust_ir::{ConfigApplicationIr, SymbolId};
+use dust_parser_dart::ParsedAnnotation;
+
+#[cfg(test)]
+use dust_dart_emit::{normalized_args, parse_named_arguments, split_top_level_once};
 
 use super::{
     constants::ROUTE,
@@ -11,8 +16,9 @@ pub(crate) fn route_config(configs: &[ConfigApplicationIr]) -> Option<&ConfigApp
         .find(|config| config_name(&config.symbol) == ROUTE)
 }
 
+#[cfg(test)]
 pub(crate) fn parse_route_annotation(args: Option<&str>) -> Option<RouteAnnotation> {
-    let args = normalize_args(args?)?;
+    let args = args?;
     let path = first_string_literal(args)?;
     let name = named_string_literal(args, "name");
     let shell = named_type_literal(args, "shell");
@@ -33,8 +39,89 @@ pub(crate) fn parse_route_annotation(args: Option<&str>) -> Option<RouteAnnotati
     })
 }
 
+pub(crate) fn parse_route_config(config: &ConfigApplicationIr) -> Option<RouteAnnotation> {
+    let path = config
+        .positional_argument_source(0)
+        .and_then(parse_string_literal)?;
+    let name = config
+        .named_argument_source("name")
+        .and_then(parse_string_literal);
+    let shell = config
+        .named_argument_source("shell")
+        .and_then(parse_type_name);
+    let guards_configured = config.has_named_argument("guards");
+    let guards = config
+        .named_argument_source("guards")
+        .map(type_list)
+        .unwrap_or_default();
+    let transition = config
+        .named_argument_source("transition")
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned);
+    let fullscreen_dialog = config
+        .named_argument_source("fullscreenDialog")
+        .and_then(parse_bool_literal)
+        .unwrap_or(false);
+    let maintain_state = config
+        .named_argument_source("maintainState")
+        .and_then(parse_bool_literal)
+        .unwrap_or(true);
+    Some(RouteAnnotation {
+        path,
+        name,
+        shell,
+        guards,
+        guards_configured,
+        transition,
+        fullscreen_dialog,
+        maintain_state,
+    })
+}
+
+pub(crate) fn parse_route_surface(annotation: &ParsedAnnotation) -> Option<RouteAnnotation> {
+    let path = annotation
+        .positional_argument_source(0)
+        .and_then(parse_string_literal)?;
+    let name = annotation
+        .named_argument_source("name")
+        .and_then(parse_string_literal);
+    let shell = annotation
+        .named_argument_source("shell")
+        .and_then(parse_type_name);
+    let guards_configured = annotation.has_named_argument("guards");
+    let guards = annotation
+        .named_argument_source("guards")
+        .map(type_list)
+        .unwrap_or_default();
+    let transition = annotation
+        .named_argument_source("transition")
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned);
+    let fullscreen_dialog = annotation
+        .named_argument_source("fullscreenDialog")
+        .and_then(parse_bool_literal)
+        .unwrap_or(false);
+    let maintain_state = annotation
+        .named_argument_source("maintainState")
+        .and_then(parse_bool_literal)
+        .unwrap_or(true);
+    Some(RouteAnnotation {
+        path,
+        name,
+        shell,
+        guards,
+        guards_configured,
+        transition,
+        fullscreen_dialog,
+        maintain_state,
+    })
+}
+
+#[cfg(test)]
 pub(crate) fn parse_router_annotation(args: Option<&str>) -> RouterAnnotation {
-    let Some(args) = args.and_then(normalize_args) else {
+    let Some(args) = args else {
         return RouterAnnotation {
             initial: None,
             not_found: None,
@@ -47,57 +134,91 @@ pub(crate) fn parse_router_annotation(args: Option<&str>) -> RouterAnnotation {
     }
 }
 
+pub(crate) fn parse_router_config(config: Option<&ConfigApplicationIr>) -> RouterAnnotation {
+    let Some(config) = config else {
+        return RouterAnnotation {
+            initial: None,
+            not_found: None,
+        };
+    };
+
+    RouterAnnotation {
+        initial: config
+            .named_argument_source("initial")
+            .and_then(parse_type_name),
+        not_found: config
+            .named_argument_source("notFound")
+            .and_then(parse_type_name),
+    }
+}
+
+pub(crate) fn parse_router_surface(annotation: &ParsedAnnotation) -> RouterAnnotation {
+    RouterAnnotation {
+        initial: annotation
+            .named_argument_source("initial")
+            .and_then(parse_type_name),
+        not_found: annotation
+            .named_argument_source("notFound")
+            .and_then(parse_type_name),
+    }
+}
+
 fn config_name(symbol: &SymbolId) -> &str {
     symbol.0.rsplit("::").next().unwrap_or(symbol.0.as_str())
 }
 
-fn normalize_args(args: &str) -> Option<&str> {
-    let trimmed = args.trim();
-    trimmed
-        .strip_prefix('(')
-        .and_then(|value| value.strip_suffix(')'))
-        .map(str::trim)
-}
-
+#[cfg(test)]
 fn first_string_literal(args: &str) -> Option<String> {
-    let args = args.trim_start();
-    parse_quoted_string(args).map(|(value, _)| value)
+    let first = split_top_level_items(normalized_args(args)?)
+        .first()
+        .copied()?;
+    if split_top_level_once(first, ':').is_some() {
+        return None;
+    }
+    parse_string_literal(first)
 }
 
+#[cfg(test)]
 fn named_string_literal(args: &str, name: &str) -> Option<String> {
-    let value = named_value_source(args, name)?;
-    parse_quoted_string(value.trim()).map(|(value, _)| value)
+    parse_string_literal(named_value_source(args, name)?)
 }
 
+#[cfg(test)]
 fn named_type_literal(args: &str, name: &str) -> Option<String> {
     let value = named_value_source(args, name)?.trim();
     parse_type_name(value)
 }
 
+#[cfg(test)]
 fn named_member_literal(args: &str, name: &str) -> Option<String> {
     let value = named_value_source(args, name)?.trim();
     (!value.is_empty()).then(|| value.to_string())
 }
 
+#[cfg(test)]
 fn named_bool_literal(args: &str, name: &str) -> Option<bool> {
-    match named_value_source(args, name)?.trim() {
-        "true" => Some(true),
-        "false" => Some(false),
-        _ => None,
-    }
+    parse_bool_literal(named_value_source(args, name)?)
 }
 
+#[cfg(test)]
 fn named_type_list(args: &str, name: &str) -> Vec<String> {
     let Some(value) = named_value_source(args, name).map(str::trim) else {
         return Vec::new();
     };
+    type_list(value)
+}
+
+fn type_list(value: &str) -> Vec<String> {
     let Some(inner) = value
         .strip_prefix('[')
         .and_then(|value| value.strip_suffix(']'))
     else {
         return Vec::new();
     };
-    inner.split(',').filter_map(parse_type_name).collect()
+    split_top_level_items(inner)
+        .into_iter()
+        .filter_map(parse_type_name)
+        .collect()
 }
 
 fn parse_type_name(value: &str) -> Option<String> {
@@ -109,73 +230,11 @@ fn parse_type_name(value: &str) -> Option<String> {
     (!ident.is_empty()).then_some(ident)
 }
 
+#[cfg(test)]
 fn named_value_source<'a>(args: &'a str, name: &str) -> Option<&'a str> {
-    for arg in top_level_args(args) {
-        let Some((key, value)) = arg.split_once(':') else {
-            continue;
-        };
+    for (key, value) in parse_named_arguments(Some(args)) {
         if key.trim() == name {
             return Some(value.trim());
-        }
-    }
-    None
-}
-
-fn top_level_args(source: &str) -> Vec<&str> {
-    let mut args = Vec::new();
-    let mut start = 0;
-    let mut bracket_depth = 0_usize;
-    let mut paren_depth = 0_usize;
-    let mut quote = None;
-    let mut escaped = false;
-
-    for (index, ch) in source.char_indices() {
-        if let Some(active_quote) = quote {
-            if escaped {
-                escaped = false;
-            } else if ch == '\\' {
-                escaped = true;
-            } else if ch == active_quote {
-                quote = None;
-            }
-            continue;
-        }
-
-        match ch {
-            '\'' | '"' => quote = Some(ch),
-            '[' => bracket_depth += 1,
-            ']' => bracket_depth = bracket_depth.saturating_sub(1),
-            '(' => paren_depth += 1,
-            ')' => paren_depth = paren_depth.saturating_sub(1),
-            ',' if bracket_depth == 0 && paren_depth == 0 => {
-                args.push(source[start..index].trim());
-                start = index + ch.len_utf8();
-            }
-            _ => {}
-        }
-    }
-    args.push(source[start..].trim());
-    args
-}
-
-fn parse_quoted_string(source: &str) -> Option<(String, &str)> {
-    let mut chars = source.char_indices();
-    let (_, quote) = chars.next()?;
-    if quote != '\'' && quote != '"' {
-        return None;
-    }
-    let mut escaped = false;
-    let mut value = String::new();
-    for (idx, ch) in chars {
-        if escaped {
-            value.push(ch);
-            escaped = false;
-            continue;
-        }
-        match ch {
-            '\\' => escaped = true,
-            found if found == quote => return Some((value, &source[idx + ch.len_utf8()..])),
-            other => value.push(other),
         }
     }
     None

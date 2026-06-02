@@ -23,6 +23,7 @@ pub(crate) fn field(name: &str, ty: TypeIr) -> FieldIr {
         span: span(10, 20),
         has_default: false,
         serde: None,
+        configs: Vec::new(),
     }
 }
 
@@ -83,6 +84,7 @@ pub(crate) fn library(classes: Vec<ClassIr>) -> LibraryIr {
         span: span(0, 200),
         classes,
         enums: Vec::new(),
+        query_calls: Vec::new(),
     }
 }
 

@@ -44,6 +44,7 @@ fn sample_parsed_library() -> ParsedLibrarySurface {
         directives: Vec::new(),
         classes: Vec::new(),
         enums: Vec::new(),
+        query_calls: Vec::new(),
     }
 }
 
