@@ -55,10 +55,7 @@ pub(crate) fn renamed_enum(
     let mut value = enum_ir(
         name,
         variants,
-        &[
-            "derive_serde_annotation::Serialize",
-            "derive_serde_annotation::Deserialize",
-        ],
+        &["dust_dart::Serialize", "dust_dart::Deserialize"],
     );
     value.serde = Some(SerdeClassConfigIr {
         rename_all: Some(rule),

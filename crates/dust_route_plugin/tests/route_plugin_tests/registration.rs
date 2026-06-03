@@ -6,8 +6,8 @@ fn registers_route_annotation_symbols() {
     let plugin = register_plugin();
 
     assert_eq!(plugin.plugin_name(), "Route");
-    assert!(plugin.claimed_configs().contains(&"dust_router::Route"));
-    assert!(plugin.claimed_configs().contains(&"dust_router::Router"));
+    assert!(plugin.claimed_configs().contains(&"dust_flutter::Route"));
+    assert!(plugin.claimed_configs().contains(&"dust_flutter::Router"));
     assert!(plugin.supported_annotations().contains(&"Route"));
     assert!(plugin.supported_annotations().contains(&"Router"));
 }

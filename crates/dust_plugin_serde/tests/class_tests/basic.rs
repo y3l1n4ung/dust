@@ -12,7 +12,7 @@ fn generates_to_json_mixin_member() {
             "User",
             Vec::new(),
             Vec::new(),
-            &["derive_serde_annotation::Serialize"],
+            &["dust_dart::Serialize"],
         )],
         vec![],
     );
@@ -38,7 +38,7 @@ fn generates_to_json_helper() {
                 field("age", TypeIr::builtin(BuiltinType::Int)),
             ],
             Vec::new(),
-            &["derive_serde_annotation::Serialize"],
+            &["dust_dart::Serialize"],
         )],
         vec![],
     );
@@ -74,7 +74,7 @@ fn generates_from_json_helper() {
                     constructor_param("age", TypeIr::builtin(BuiltinType::Int), ParamKind::Named),
                 ],
             )],
-            &["derive_serde_annotation::Deserialize"],
+            &["dust_dart::Deserialize"],
         )],
         vec![],
     );

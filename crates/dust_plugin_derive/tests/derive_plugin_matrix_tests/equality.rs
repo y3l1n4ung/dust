@@ -41,7 +41,7 @@ fn emits_deep_equality_and_hash_for_collection_fields() {
                     ),
                 ],
             )],
-            &["derive_annotation::Eq"],
+            &["dust_dart::Eq"],
         )]),
         &SymbolPlan::default(),
     );

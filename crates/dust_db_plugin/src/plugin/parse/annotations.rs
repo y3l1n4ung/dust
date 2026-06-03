@@ -161,7 +161,7 @@ mod tests {
         let config = sqlx_config(&[
             config("other::Sqlx", Some("(rename: 'ignored')")),
             config(
-                "dust_db_annotation::Sqlx",
+                "dust_dart::Sqlx",
                 Some(
                     "(rename: 'display_name', renameAll: SqlxRename.snakeCase, flatten: true, defaultValue: '', skip: true, json: true, tryFrom: const UserStatusFromInt(), unknown: true)",
                 ),
@@ -215,7 +215,7 @@ mod tests {
         assert_eq!(parse_database_type("SqlxDatabaseType.mysql"), None);
 
         let db_config = parse_database_config(&config(
-            "dust_db_annotation::SqlxDatabase",
+            "dust_dart::SqlxDatabase",
             Some("(driver: Driver.postgres, migrations: './db/migrations', ignored: true)"),
         ))
         .unwrap();

@@ -1,3 +1,4 @@
+use dust_dart_emit::{DART_LIST, DART_VOID};
 use dust_ir::{BuiltinType, TypeIr};
 
 use crate::plugin::emit::types::uses_direct_body_value;
@@ -33,8 +34,8 @@ pub(super) fn sample_response_data(return_spec: &ReturnSpec) -> &'static str {
             BuiltinType::Double | BuiltinType::Num => "1",
             BuiltinType::Object => "const <String, dynamic>{}",
         },
-        TypeIr::Named { name, .. } if name.as_ref() == "void" => "null",
-        TypeIr::Named { name, args, .. } if name.as_ref() == "List" && args.len() == 1 => {
+        TypeIr::Named { name, .. } if name.as_ref() == DART_VOID => "null",
+        TypeIr::Named { name, args, .. } if name.as_ref() == DART_LIST && args.len() == 1 => {
             "const <dynamic>[]"
         }
         TypeIr::Named { .. } if is_response_body_type(&return_spec.ty) => {

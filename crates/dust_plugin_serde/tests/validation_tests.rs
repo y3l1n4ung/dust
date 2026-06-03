@@ -109,7 +109,7 @@ fn validates_abstract_deserialize_and_unsupported_field_types() {
                 ),
             ],
         )],
-        &["derive_serde_annotation::Deserialize"],
+        &["dust_dart::Deserialize"],
     );
     target.is_abstract = true;
 
@@ -132,7 +132,7 @@ fn validates_missing_deserialize_constructor() {
         "Payload",
         vec![field("id", TypeIr::string())],
         Vec::new(),
-        &["derive_serde_annotation::Deserialize"],
+        &["dust_dart::Deserialize"],
     );
 
     let diagnostics = plugin.validate(&library(vec![target], vec![]));

@@ -1,4 +1,4 @@
-String mixinName(String className) => '_\$${className}Dust';
+String mixinName(String className) => '_\$$className';
 
 String serdeFactory(String className) =>
     "  factory $className.fromJson(Map<String, Object?> json) => _\$${className}FromJson(json);";

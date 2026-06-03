@@ -30,7 +30,7 @@ fn copywith_uses_named_arguments_without_braces_in_constructor_calls() {
                     ),
                 ],
             )],
-            &["derive_annotation::CopyWith"],
+            &["dust_dart::CopyWith"],
         )]),
         &SymbolPlan::default(),
     );
@@ -89,7 +89,7 @@ fn copywith_renders_nested_generic_and_dynamic_casts() {
                     ),
                 ],
             )],
-            &["derive_annotation::CopyWith"],
+            &["dust_dart::CopyWith"],
         )]),
         &SymbolPlan::default(),
     );
@@ -156,7 +156,7 @@ fn copywith_uses_stable_temp_bindings_for_nested_types() {
                     ),
                 ],
             )],
-            &["derive_annotation::CopyWith"],
+            &["dust_dart::CopyWith"],
         )]),
         &SymbolPlan::default(),
     );
@@ -206,7 +206,7 @@ fn copywith_handles_named_model_collections_without_aliasing() {
                         ParamKind::Positional,
                     )],
                 )],
-                &["derive_annotation::CopyWith"],
+                &["dust_dart::CopyWith"],
             ),
             class(
                 "Graph",
@@ -219,7 +219,7 @@ fn copywith_handles_named_model_collections_without_aliasing() {
                         ParamKind::Positional,
                     )],
                 )],
-                &["derive_annotation::CopyWith"],
+                &["dust_dart::CopyWith"],
             ),
         ]),
         &SymbolPlan::default(),

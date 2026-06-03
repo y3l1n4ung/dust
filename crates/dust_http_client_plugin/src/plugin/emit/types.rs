@@ -1,4 +1,7 @@
-use dust_dart_emit::DYNAMIC_TYPES;
+use dust_dart_emit::{
+    DART_BOOL, DART_DYNAMIC, DART_LIST, DART_MAP, DART_NUM, DART_OBJECT, DART_RESPONSE_BODY,
+    DART_STRING, DART_VOID, DYNAMIC_TYPES,
+};
 use dust_ir::{BuiltinType, MethodParamIr, TypeIr};
 
 use crate::plugin::util::{is_response_body_type, type_name_is};
@@ -13,23 +16,25 @@ pub(super) fn render_non_nullable_type(ty: &TypeIr) -> String {
 
 pub(super) fn render_fetch_type(ty: &TypeIr) -> String {
     if is_void_type(ty) {
-        return "void".to_owned();
+        return DART_VOID.to_owned();
     }
     if is_response_body_type(ty) {
-        return "ResponseBody".to_owned();
+        return DART_RESPONSE_BODY.to_owned();
     }
     match ty {
-        TypeIr::Dynamic => "dynamic".to_owned(),
+        TypeIr::Dynamic => DART_DYNAMIC.to_owned(),
         TypeIr::Builtin {
             kind: BuiltinType::String,
             ..
-        } => "String".to_owned(),
-        TypeIr::Builtin { .. } => "dynamic".to_owned(),
-        TypeIr::Named { args, .. } if type_name_is(ty, "List") && args.len() == 1 => {
-            "List<dynamic>".to_owned()
+        } => DART_STRING.to_owned(),
+        TypeIr::Builtin { .. } => DART_DYNAMIC.to_owned(),
+        TypeIr::Named { args, .. } if type_name_is(ty, DART_LIST) && args.len() == 1 => {
+            format!("{DART_LIST}<{DART_DYNAMIC}>")
         }
-        TypeIr::Named { .. } => "Map<String, dynamic>".to_owned(),
-        TypeIr::Function { .. } | TypeIr::Record { .. } | TypeIr::Unknown => "dynamic".to_owned(),
+        TypeIr::Named { .. } => format!("{DART_MAP}<{DART_STRING}, {DART_DYNAMIC}>"),
+        TypeIr::Function { .. } | TypeIr::Record { .. } | TypeIr::Unknown => {
+            DART_DYNAMIC.to_owned()
+        }
     }
 }
 
@@ -57,27 +62,27 @@ pub(super) fn render_decode_expr_nonnull(data_expr: &str, ty: &TypeIr) -> String
     match ty {
         TypeIr::Dynamic | TypeIr::Unknown => data_expr.to_owned(),
         TypeIr::Builtin { kind, .. } => match kind {
-            BuiltinType::String => format!("{data_expr} as String"),
-            BuiltinType::Int => format!("({data_expr} as num).toInt()"),
-            BuiltinType::Bool => format!("{data_expr} as bool"),
-            BuiltinType::Double => format!("({data_expr} as num).toDouble()"),
-            BuiltinType::Num => format!("{data_expr} as num"),
-            BuiltinType::Object => format!("{data_expr} as Object"),
+            BuiltinType::String => format!("{data_expr} as {DART_STRING}"),
+            BuiltinType::Int => format!("({data_expr} as {DART_NUM}).toInt()"),
+            BuiltinType::Bool => format!("{data_expr} as {DART_BOOL}"),
+            BuiltinType::Double => format!("({data_expr} as {DART_NUM}).toDouble()"),
+            BuiltinType::Num => format!("{data_expr} as {DART_NUM}"),
+            BuiltinType::Object => format!("{data_expr} as {DART_OBJECT}"),
         },
-        TypeIr::Named { .. } if type_name_is(ty, "void") => "null".to_owned(),
+        TypeIr::Named { .. } if type_name_is(ty, DART_VOID) => "null".to_owned(),
         TypeIr::Named { .. } if is_response_body_type(ty) => data_expr.to_owned(),
-        TypeIr::Named { args, .. } if type_name_is(ty, "List") && args.len() == 1 => {
+        TypeIr::Named { args, .. } if type_name_is(ty, DART_LIST) && args.len() == 1 => {
             format!(
-                "({0} as List<dynamic>)\n    .map((item) => {1})\n    .toList()",
+                "({0} as {DART_LIST}<{DART_DYNAMIC}>)\n    .map((item) => {1})\n    .toList()",
                 data_expr,
                 render_decode_expr("item", &args[0])
             )
         }
-        TypeIr::Named { .. } if type_name_is(ty, "Map") => {
+        TypeIr::Named { .. } if type_name_is(ty, DART_MAP) => {
             format!("{data_expr} as {}", render_non_nullable_type(ty))
         }
         TypeIr::Named { .. } => format!(
-            "{}.fromJson({} as Map<String, dynamic>)",
+            "{}.fromJson({} as {DART_MAP}<{DART_STRING}, {DART_DYNAMIC}>)",
             render_non_nullable_type(ty),
             data_expr
         ),
@@ -87,11 +92,11 @@ pub(super) fn render_decode_expr_nonnull(data_expr: &str, ty: &TypeIr) -> String
 
 pub(super) fn needs_isolate_helper(ty: &TypeIr) -> bool {
     match ty {
-        TypeIr::Named { args, .. } if type_name_is(ty, "List") && args.len() == 1 => {
+        TypeIr::Named { args, .. } if type_name_is(ty, DART_LIST) && args.len() == 1 => {
             needs_isolate_helper(&args[0])
         }
-        TypeIr::Named { .. } if type_name_is(ty, "void") => false,
-        TypeIr::Named { .. } if type_name_is(ty, "Map") => false,
+        TypeIr::Named { .. } if type_name_is(ty, DART_VOID) => false,
+        TypeIr::Named { .. } if type_name_is(ty, DART_MAP) => false,
         TypeIr::Named { .. } if is_response_body_type(ty) => false,
         TypeIr::Named { .. } => true,
         TypeIr::Builtin { .. } | TypeIr::Dynamic | TypeIr::Unknown => false,
@@ -100,15 +105,17 @@ pub(super) fn needs_isolate_helper(ty: &TypeIr) -> bool {
 }
 
 pub(super) fn is_void_type(ty: &TypeIr) -> bool {
-    ty.is_named("void")
+    ty.is_named(DART_VOID)
 }
 
 pub(super) fn uses_direct_body_value(ty: &TypeIr) -> bool {
     match ty {
         TypeIr::Dynamic | TypeIr::Unknown => true,
         TypeIr::Builtin { .. } => true,
-        TypeIr::Named { .. } if type_name_is(ty, "List") || type_name_is(ty, "Map") => true,
-        TypeIr::Named { .. } if type_name_is(ty, "Object") || type_name_is(ty, "void") => true,
+        TypeIr::Named { .. } if type_name_is(ty, DART_LIST) || type_name_is(ty, DART_MAP) => true,
+        TypeIr::Named { .. } if type_name_is(ty, DART_OBJECT) || type_name_is(ty, DART_VOID) => {
+            true
+        }
         TypeIr::Named { .. } | TypeIr::Function { .. } | TypeIr::Record { .. } => false,
     }
 }

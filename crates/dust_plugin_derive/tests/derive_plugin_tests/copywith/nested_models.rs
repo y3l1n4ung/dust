@@ -51,7 +51,7 @@ fn copywith_clones_nested_dust_models() {
                     }],
                     methods: Vec::new(),
                     traits: vec![TraitApplicationIr {
-                        symbol: SymbolId::new("derive_annotation::CopyWith"),
+                        symbol: SymbolId::new("dust_dart::CopyWith"),
                         span: span(1, 2),
                     }],
                     configs: Vec::new(),
@@ -109,7 +109,7 @@ fn copywith_clones_nested_dust_models() {
                     }],
                     methods: Vec::new(),
                     traits: vec![TraitApplicationIr {
-                        symbol: SymbolId::new("derive_annotation::CopyWith"),
+                        symbol: SymbolId::new("dust_dart::CopyWith"),
                         span: span(21, 22),
                     }],
                     configs: Vec::new(),

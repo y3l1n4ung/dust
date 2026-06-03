@@ -1,4 +1,7 @@
-use dust_dart_emit::{DYNAMIC_TYPES, render_template};
+use dust_dart_emit::{
+    DART_BOOL, DART_DATE_TIME, DART_DOUBLE, DART_DYNAMIC, DART_INT, DART_NUM, DART_OBJECT_NULLABLE,
+    DART_STRING, DYNAMIC_TYPES, render_template,
+};
 use dust_ir::{ClassIr, ConstructorIr, LibraryIr, ParamKind, TypeIr};
 use serde::Serialize;
 
@@ -107,7 +110,7 @@ fn render_row_value(
         format!("{ty}.fromJson(decodeJsonObject(row.read<String>('{column}')))")
     } else if let Some(try_from) = &field.config.try_from_source {
         let value = try_from_decode_type(library, try_from)
-            .filter(|ty| ty != "Object?" && ty != "dynamic")
+            .filter(|ty| ty != DART_OBJECT_NULLABLE && ty != DART_DYNAMIC)
             .map_or_else(
                 || format!("row.read<Object?>('{column}')"),
                 |ty| format!("row.read<{ty}>('{column}')"),
@@ -127,10 +130,10 @@ fn render_row_value(
 fn render_builtin_decode(ty: &TypeIr, column: &str) -> String {
     let nullable = ty.is_nullable();
     match ty.name() {
-        Some("bool") if nullable => format!("row.readBoolOrNull('{column}')"),
-        Some("bool") => format!("row.readBool('{column}')"),
-        Some("DateTime") if nullable => format!("row.readDateTimeOrNull('{column}')"),
-        Some("DateTime") => format!("row.readDateTime('{column}')"),
+        Some(DART_BOOL) if nullable => format!("row.readBoolOrNull('{column}')"),
+        Some(DART_BOOL) => format!("row.readBool('{column}')"),
+        Some(DART_DATE_TIME) if nullable => format!("row.readDateTimeOrNull('{column}')"),
+        Some(DART_DATE_TIME) => format!("row.readDateTime('{column}')"),
         Some(name) if nullable => format!("row.readOrNull<{name}>('{column}')"),
         Some(name) => format!("row.read<{name}>('{column}')"),
         None => format!("row.read<Object?>('{column}')"),
@@ -171,11 +174,11 @@ fn try_from_converter_name(source: &str) -> Option<&str> {
 
 fn infer_try_from_type_suffix(converter_name: &str) -> Option<String> {
     [
-        ("FromInt", "int"),
-        ("FromString", "String"),
-        ("FromBool", "bool"),
-        ("FromDouble", "double"),
-        ("FromNum", "num"),
+        ("FromInt", DART_INT),
+        ("FromString", DART_STRING),
+        ("FromBool", DART_BOOL),
+        ("FromDouble", DART_DOUBLE),
+        ("FromNum", DART_NUM),
     ]
     .into_iter()
     .find_map(|(suffix, ty)| converter_name.ends_with(suffix).then(|| ty.to_owned()))

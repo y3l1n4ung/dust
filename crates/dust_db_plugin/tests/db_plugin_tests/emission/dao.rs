@@ -122,7 +122,7 @@ fn dao_method(
         params,
         span: span(),
         traits: Vec::new(),
-        configs: vec![config("dust_db_annotation::Query", query)],
+        configs: vec![config("dust_dart::Query", query)],
     }
 }
 

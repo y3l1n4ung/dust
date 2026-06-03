@@ -19,7 +19,7 @@ fn emits_many_dao_queries_with_static_mapper_references() {
             span: span(),
             traits: Vec::new(),
             configs: vec![config(
-                "dust_db_annotation::Query",
+                "dust_dart::Query",
                 &format!("(r'SELECT id, display_name FROM users WHERE id = $1 /* {index} */')"),
             )],
         })

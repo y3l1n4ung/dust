@@ -1,3 +1,4 @@
+use dust_dart_emit::DART_DYNAMIC;
 use dust_ir::{ClassIr, FieldIr, MethodIr, SpanIr, TypeIr};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -79,14 +80,17 @@ impl QuerySpec {
         }
         match self.function {
             QueryFunction::As => {
-                format!("queryAs<{}>", self.row_type.as_deref().unwrap_or("dynamic"))
+                format!(
+                    "queryAs<{}>",
+                    self.row_type.as_deref().unwrap_or(DART_DYNAMIC)
+                )
             }
             QueryFunction::Scalar => format!(
                 "queryScalar<{}>",
                 self.scalar_type
                     .as_ref()
                     .and_then(TypeIr::name)
-                    .unwrap_or("dynamic")
+                    .unwrap_or(DART_DYNAMIC)
             ),
             QueryFunction::Raw => "queryRaw".to_owned(),
             QueryFunction::Execute => "queryExecute".to_owned(),

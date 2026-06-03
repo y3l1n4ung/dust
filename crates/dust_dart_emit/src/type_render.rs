@@ -1,5 +1,7 @@
 use dust_ir::TypeIr;
 
+use crate::{DART_DYNAMIC, DART_OBJECT, DART_OBJECT_NULLABLE};
+
 /// Controls how unresolved Dust types render into Dart output.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UnknownTypeRendering {
@@ -58,7 +60,7 @@ impl DartTypeRenderer {
                 nullable,
             } => with_nullable(signature.to_string(), *nullable),
             TypeIr::Record { shape, nullable } => with_nullable(shape.to_string(), *nullable),
-            TypeIr::Dynamic => "dynamic".to_owned(),
+            TypeIr::Dynamic => DART_DYNAMIC.to_owned(),
             TypeIr::Unknown => self.unknown.render(true).to_owned(),
         }
     }
@@ -83,7 +85,7 @@ impl DartTypeRenderer {
             }
             TypeIr::Function { signature, .. } => signature.to_string(),
             TypeIr::Record { shape, .. } => shape.to_string(),
-            TypeIr::Dynamic => "dynamic".to_owned(),
+            TypeIr::Dynamic => DART_DYNAMIC.to_owned(),
             TypeIr::Unknown => self.unknown.render(false).to_owned(),
         }
     }
@@ -92,9 +94,9 @@ impl DartTypeRenderer {
 impl UnknownTypeRendering {
     fn render(self, nullable: bool) -> &'static str {
         match self {
-            Self::Dynamic => "dynamic",
-            Self::ObjectNullable if nullable => "Object?",
-            Self::ObjectNullable => "Object",
+            Self::Dynamic => DART_DYNAMIC,
+            Self::ObjectNullable if nullable => DART_OBJECT_NULLABLE,
+            Self::ObjectNullable => DART_OBJECT,
         }
     }
 }
@@ -122,12 +124,17 @@ fn with_nullable(mut rendered: String, nullable: bool) -> String {
 mod tests {
     use dust_ir::{BuiltinType, TypeIr};
 
-    use super::{DYNAMIC_TYPES, OBJECT_NULLABLE_TYPES, non_nullable};
+    use crate::DART_MAP;
+
+    use super::{
+        DART_DYNAMIC, DART_OBJECT, DART_OBJECT_NULLABLE, DYNAMIC_TYPES, OBJECT_NULLABLE_TYPES,
+        non_nullable,
+    };
 
     #[test]
     fn renders_named_and_generic_types() {
         let ty = TypeIr::generic(
-            "Map",
+            DART_MAP,
             vec![
                 TypeIr::string(),
                 TypeIr::list_of(TypeIr::named("Todo").nullable()),
@@ -147,11 +154,14 @@ mod tests {
 
     #[test]
     fn renders_unknown_types_per_strategy() {
-        assert_eq!(DYNAMIC_TYPES.render(&TypeIr::unknown()), "dynamic");
-        assert_eq!(OBJECT_NULLABLE_TYPES.render(&TypeIr::unknown()), "Object?");
+        assert_eq!(DYNAMIC_TYPES.render(&TypeIr::unknown()), DART_DYNAMIC);
+        assert_eq!(
+            OBJECT_NULLABLE_TYPES.render(&TypeIr::unknown()),
+            DART_OBJECT_NULLABLE
+        );
         assert_eq!(
             OBJECT_NULLABLE_TYPES.render_non_nullable(&TypeIr::unknown()),
-            "Object"
+            DART_OBJECT
         );
     }
 

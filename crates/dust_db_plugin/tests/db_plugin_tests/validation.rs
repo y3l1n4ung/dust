@@ -34,10 +34,7 @@ fn rejects_invalid_dao_constructor_method_and_parameter_shapes() {
             params: Vec::new(),
             span: span(),
             traits: Vec::new(),
-            configs: vec![config(
-                "dust_db_annotation::Query",
-                "(r'DELETE FROM users')",
-            )],
+            configs: vec![config("dust_dart::Query", "(r'DELETE FROM users')")],
         },
         MethodIr {
             name: "namedParam".to_owned(),
@@ -50,7 +47,7 @@ fn rejects_invalid_dao_constructor_method_and_parameter_shapes() {
             span: span(),
             traits: Vec::new(),
             configs: vec![config(
-                "dust_db_annotation::Query",
+                "dust_dart::Query",
                 "(r'DELETE FROM users WHERE id = $1')",
             )],
         },
@@ -64,7 +61,7 @@ fn rejects_invalid_dao_constructor_method_and_parameter_shapes() {
             params: Vec::new(),
             span: span(),
             traits: Vec::new(),
-            configs: vec![config("dust_db_annotation::Query", "(sql)")],
+            configs: vec![config("dust_dart::Query", "(sql)")],
         },
         MethodIr {
             name: "badReturn".to_owned(),
@@ -76,7 +73,7 @@ fn rejects_invalid_dao_constructor_method_and_parameter_shapes() {
             params: Vec::new(),
             span: span(),
             traits: Vec::new(),
-            configs: vec![config("dust_db_annotation::Query", "(r'SELECT 1')")],
+            configs: vec![config("dust_dart::Query", "(r'SELECT 1')")],
         },
     ];
 
@@ -138,7 +135,7 @@ fn validates_skipped_field_requires_default() {
     class.fields = vec![field(
         "sessionActive",
         TypeIr::bool(),
-        vec![config("dust_db_annotation::Sqlx", "(skip: true)")],
+        vec![config("dust_dart::Sqlx", "(skip: true)")],
     )];
     class.constructors[0].params = vec![named_param("sessionActive", TypeIr::bool(), false)];
     let diagnostics = register_plugin().validate(&library(vec![class]));
@@ -157,7 +154,7 @@ fn validates_flatten_target_must_be_from_row() {
     class.fields = vec![field(
         "address",
         TypeIr::named("Address"),
-        vec![config("dust_db_annotation::Sqlx", "(flatten: true)")],
+        vec![config("dust_dart::Sqlx", "(flatten: true)")],
     )];
     class.constructors[0].params = vec![named_param("address", TypeIr::named("Address"), false)];
     let diagnostics = register_plugin().validate(&library(vec![class]));
@@ -176,10 +173,7 @@ fn validates_conflicting_sqlx_field_options() {
     json_flatten.fields = vec![field(
         "address",
         TypeIr::named("Address"),
-        vec![config(
-            "dust_db_annotation::Sqlx",
-            "(flatten: true, json: true)",
-        )],
+        vec![config("dust_dart::Sqlx", "(flatten: true, json: true)")],
     )];
     json_flatten.constructors[0].params =
         vec![named_param("address", TypeIr::named("Address"), false)];
@@ -189,7 +183,7 @@ fn validates_conflicting_sqlx_field_options() {
         "status",
         TypeIr::named("UserStatus"),
         vec![config(
-            "dust_db_annotation::Sqlx",
+            "dust_dart::Sqlx",
             "(flatten: true, tryFrom: const UserStatusFromInt())",
         )],
     )];

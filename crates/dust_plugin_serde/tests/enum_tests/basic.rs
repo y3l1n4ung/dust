@@ -12,10 +12,7 @@ fn generates_serde_for_enums() {
         vec![enum_ir(
             "Status",
             vec![enum_variant("pending"), enum_variant("active")],
-            &[
-                "derive_serde_annotation::Serialize",
-                "derive_serde_annotation::Deserialize",
-            ],
+            &["dust_dart::Serialize", "dust_dart::Deserialize"],
         )],
     );
 

@@ -1,3 +1,7 @@
+use dust_dart_emit::{
+    DART_BOOL, DART_DATE_TIME, DART_DOUBLE, DART_EXEC_RESULT, DART_FUTURE, DART_INT, DART_LIST,
+    DART_NUM, DART_RESULT, DART_ROW, DART_STRING, DART_UNIT,
+};
 use dust_ir::{ConfigApplicationIr, TypeIr};
 
 use crate::plugin::model::{FetchMode, QueryFunction};
@@ -28,14 +32,14 @@ pub(super) fn query_shape_from_return(
     let Some(ok_type) = ok_type else {
         return (QueryFunction::Raw, FetchMode::Raw, None, None);
     };
-    if ok_type.is_named("ExecResult") || ok_type.is_named("Unit") {
+    if ok_type.is_named(DART_EXEC_RESULT) || ok_type.is_named(DART_UNIT) {
         return (QueryFunction::Execute, FetchMode::Execute, None, None);
     }
-    if ok_type.is_named("List") {
+    if ok_type.is_named(DART_LIST) {
         let Some(item) = ok_type.args().first() else {
             return (QueryFunction::Raw, FetchMode::Raw, None, None);
         };
-        if item.is_named("Row") {
+        if item.is_named(DART_ROW) {
             return (QueryFunction::Raw, FetchMode::Raw, None, None);
         }
         return (
@@ -71,17 +75,17 @@ pub(super) fn query_shape_from_return(
 
 pub(crate) fn result_ok_type(return_type: &TypeIr) -> Option<&TypeIr> {
     let future = return_type
-        .is_named("Future")
+        .is_named(DART_FUTURE)
         .then(|| return_type.args().first())
         .flatten()?;
-    let result = future.is_named("Result").then_some(future)?;
+    let result = future.is_named(DART_RESULT).then_some(future)?;
     result.args().first()
 }
 
 fn is_scalar_type(ty: &TypeIr) -> bool {
     matches!(
         ty.name(),
-        Some("String" | "int" | "double" | "num" | "bool" | "DateTime")
+        Some(DART_STRING | DART_INT | DART_DOUBLE | DART_NUM | DART_BOOL | DART_DATE_TIME)
     )
 }
 

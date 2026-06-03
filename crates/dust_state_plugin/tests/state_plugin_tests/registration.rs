@@ -8,7 +8,7 @@ fn plugin_claims_view_model_config() {
     let plugin = register_plugin();
 
     assert_eq!(plugin.plugin_name(), "ViewModel");
-    assert_eq!(plugin.claimed_configs(), vec!["dust_state::ViewModel"]);
+    assert_eq!(plugin.claimed_configs(), vec!["dust_flutter::ViewModel"]);
     assert_eq!(plugin.supported_annotations(), vec!["ViewModel"]);
 }
 

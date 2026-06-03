@@ -10,7 +10,7 @@ pub(crate) fn span(start: u32, end: u32) -> SpanIr {
 
 pub(crate) fn config(name: &str, args: Option<&str>) -> ConfigApplicationIr {
     ConfigApplicationIr {
-        symbol: SymbolId::new(format!("dust_http_client_annotation::{name}")),
+        symbol: SymbolId::new(format!("dust_dart::{name}")),
         arguments_source: args.map(str::to_owned),
         span: span(1, 2),
     }

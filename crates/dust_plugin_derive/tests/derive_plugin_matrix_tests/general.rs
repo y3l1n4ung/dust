@@ -12,7 +12,7 @@ fn emits_debug_eq_and_hash_for_zero_field_class() {
             "Unit",
             Vec::new(),
             vec![constructor(None, Vec::new())],
-            &["derive_annotation::ToString", "derive_annotation::Eq"],
+            &["dust_dart::ToString", "dust_dart::Eq"],
         )]),
         &SymbolPlan::default(),
     );
@@ -59,7 +59,7 @@ fn validation_accumulates_multiple_class_errors() {
                 ParamKind::Positional,
             )],
         )],
-        &["derive_annotation::CopyWith"],
+        &["dust_dart::CopyWith"],
     )]));
 
     assert_eq!(diagnostics.len(), 1);
@@ -85,7 +85,7 @@ fn requested_symbols_are_deduped_for_multiple_copywith_classes() {
                     ParamKind::Positional,
                 )],
             )],
-            &["derive_annotation::CopyWith"],
+            &["dust_dart::CopyWith"],
         ),
         class(
             "Team",
@@ -98,7 +98,7 @@ fn requested_symbols_are_deduped_for_multiple_copywith_classes() {
                     ParamKind::Positional,
                 )],
             )],
-            &["derive_annotation::CopyWith"],
+            &["dust_dart::CopyWith"],
         ),
     ]));
 
@@ -121,7 +121,7 @@ fn emits_fragments_for_multiple_classes_in_stable_feature_order() {
                         ParamKind::Positional,
                     )],
                 )],
-                &["derive_annotation::ToString", "derive_annotation::Eq"],
+                &["dust_dart::ToString", "dust_dart::Eq"],
             ),
             class(
                 "Team",
@@ -134,7 +134,7 @@ fn emits_fragments_for_multiple_classes_in_stable_feature_order() {
                         ParamKind::Positional,
                     )],
                 )],
-                &["derive_annotation::CopyWith"],
+                &["dust_dart::CopyWith"],
             ),
         ]),
         &SymbolPlan::default(),

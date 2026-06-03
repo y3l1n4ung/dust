@@ -15,12 +15,9 @@ pub fn register_plugin() -> SerdePlugin {
     SerdePlugin
 }
 
-const CLAIMED_TRAITS: &[&str] = &[
-    "derive_serde_annotation::Serialize",
-    "derive_serde_annotation::Deserialize",
-];
+const CLAIMED_TRAITS: &[&str] = &["dust_dart::Serialize", "dust_dart::Deserialize"];
 
-const CLAIMED_CONFIGS: &[&str] = &["derive_serde_annotation::SerDe"];
+const CLAIMED_CONFIGS: &[&str] = &["dust_dart::SerDe"];
 
 const SUPPORTED_ANNOTATIONS: &[&str] = &["Serialize", "Deserialize", "SerDe"];
 
@@ -29,7 +26,7 @@ impl DustPlugin for SerdePlugin {
         "dust_plugin_serde"
     }
 
-    /// Claims the core serde traits defined in the `derive_serde_annotation` package.
+    /// Claims the core serde traits defined in the `dust_dart` package.
     fn claimed_traits(&self) -> &'static [&'static str] {
         CLAIMED_TRAITS
     }
@@ -54,14 +51,14 @@ impl DustPlugin for SerdePlugin {
             if class
                 .traits
                 .iter()
-                .any(|item| item.symbol.0 == "derive_serde_annotation::Serialize")
+                .any(|item| item.symbol.0 == "dust_dart::Serialize")
             {
                 symbols.push(format!("_${}ToJson", class.name));
             }
             if class
                 .traits
                 .iter()
-                .any(|item| item.symbol.0 == "derive_serde_annotation::Deserialize")
+                .any(|item| item.symbol.0 == "dust_dart::Deserialize")
             {
                 symbols.push(format!("_${}FromJson", class.name));
             }
@@ -69,13 +66,13 @@ impl DustPlugin for SerdePlugin {
         for e in &library.enums {
             if e.traits
                 .iter()
-                .any(|item| item.symbol.0 == "derive_serde_annotation::Serialize")
+                .any(|item| item.symbol.0 == "dust_dart::Serialize")
             {
                 symbols.push(format!("_${}ToJson", e.name));
             }
             if e.traits
                 .iter()
-                .any(|item| item.symbol.0 == "derive_serde_annotation::Deserialize")
+                .any(|item| item.symbol.0 == "dust_dart::Deserialize")
             {
                 symbols.push(format!("_${}FromJson", e.name));
             }

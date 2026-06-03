@@ -102,7 +102,7 @@ fn copywith_copies_collection_fields_without_aliasing() {
                 }],
                 methods: Vec::new(),
                 traits: vec![TraitApplicationIr {
-                    symbol: SymbolId::new("derive_annotation::CopyWith"),
+                    symbol: SymbolId::new("dust_dart::CopyWith"),
                     span: span(5, 9),
                 }],
                 configs: Vec::new(),

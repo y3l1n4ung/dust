@@ -36,7 +36,7 @@ fn registry_rejects_duplicate_trait_ownership() {
     registry
         .register(Box::new(FakePlugin {
             name: "plugin_a",
-            traits: &["derive_annotation::ToString"],
+            traits: &["dust_dart::ToString"],
             configs: &[],
         }))
         .unwrap();
@@ -44,7 +44,7 @@ fn registry_rejects_duplicate_trait_ownership() {
     let error = registry
         .register(Box::new(FakePlugin {
             name: "plugin_b",
-            traits: &["derive_annotation::ToString"],
+            traits: &["dust_dart::ToString"],
             configs: &[],
         }))
         .unwrap_err();
@@ -52,7 +52,7 @@ fn registry_rejects_duplicate_trait_ownership() {
     assert!(
         error
             .message
-            .contains("trait symbol `derive_annotation::ToString` is already owned")
+            .contains("trait symbol `dust_dart::ToString` is already owned")
     );
 }
 
@@ -63,7 +63,7 @@ fn registry_rejects_duplicate_config_ownership() {
         .register(Box::new(FakePlugin {
             name: "plugin_a",
             traits: &[],
-            configs: &["derive_serde_annotation::SerDe"],
+            configs: &["dust_dart::SerDe"],
         }))
         .unwrap();
 
@@ -71,14 +71,14 @@ fn registry_rejects_duplicate_config_ownership() {
         .register(Box::new(FakePlugin {
             name: "plugin_b",
             traits: &[],
-            configs: &["derive_serde_annotation::SerDe"],
+            configs: &["dust_dart::SerDe"],
         }))
         .unwrap_err();
 
     assert!(
         error
             .message
-            .contains("config symbol `derive_serde_annotation::SerDe` is already owned")
+            .contains("config symbol `dust_dart::SerDe` is already owned")
     );
 }
 

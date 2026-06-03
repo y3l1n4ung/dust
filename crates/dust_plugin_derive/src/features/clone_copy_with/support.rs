@@ -1,4 +1,4 @@
-use dust_dart_emit::OBJECT_NULLABLE_TYPES;
+use dust_dart_emit::{DART_DYNAMIC, DART_OBJECT_NULLABLE, OBJECT_NULLABLE_TYPES};
 use dust_ir::{ClassIr, TypeIr};
 
 pub(super) fn render_copy_with_params(class: &ClassIr) -> String {
@@ -90,16 +90,16 @@ fn render_copy_with_param_type(ty: &TypeIr) -> String {
         TypeIr::Named { .. } | TypeIr::Function { .. } | TypeIr::Record { .. } => {
             nullable_parameter_type(OBJECT_NULLABLE_TYPES.render(ty))
         }
-        TypeIr::Dynamic => "dynamic".to_owned(),
-        TypeIr::Unknown => "Object?".to_owned(),
+        TypeIr::Dynamic => DART_DYNAMIC.to_owned(),
+        TypeIr::Unknown => DART_OBJECT_NULLABLE.to_owned(),
     }
 }
 
 fn undefined_parameter_type(ty: &TypeIr) -> &'static str {
     if matches!(ty, TypeIr::Dynamic) {
-        "dynamic"
+        DART_DYNAMIC
     } else {
-        "Object?"
+        DART_OBJECT_NULLABLE
     }
 }
 

@@ -1,6 +1,8 @@
 use std::{borrow::Cow, collections::HashSet};
 
-use dust_dart_emit::OBJECT_NULLABLE_TYPES;
+use dust_dart_emit::{
+    DART_ITERABLE, DART_LIST, DART_MAP, DART_OBJECT_NULLABLE, DART_SET, OBJECT_NULLABLE_TYPES,
+};
 use dust_ir::{BuiltinType, TypeIr};
 
 use super::support::{member_access_expr, non_null_value_expr};
@@ -16,8 +18,8 @@ pub(super) fn render_copied_value<'a>(
             name,
             args,
             nullable,
-        } if name.as_ref() == "List" => Cow::Owned(render_sequence_copy(
-            "List",
+        } if name.as_ref() == DART_LIST => Cow::Owned(render_sequence_copy(
+            DART_LIST,
             args,
             *nullable,
             value,
@@ -28,8 +30,8 @@ pub(super) fn render_copied_value<'a>(
             name,
             args,
             nullable,
-        } if name.as_ref() == "Set" => Cow::Owned(render_sequence_copy(
-            "Set",
+        } if name.as_ref() == DART_SET => Cow::Owned(render_sequence_copy(
+            DART_SET,
             args,
             *nullable,
             value,
@@ -40,7 +42,7 @@ pub(super) fn render_copied_value<'a>(
             name,
             args,
             nullable,
-        } if name.as_ref() == "Map" => Cow::Owned(render_map_copy(
+        } if name.as_ref() == DART_MAP => Cow::Owned(render_map_copy(
             args,
             *nullable,
             value,
@@ -51,8 +53,8 @@ pub(super) fn render_copied_value<'a>(
             name,
             args,
             nullable,
-        } if name.as_ref() == "Iterable" => Cow::Owned(render_sequence_copy(
-            "List",
+        } if name.as_ref() == DART_ITERABLE => Cow::Owned(render_sequence_copy(
+            DART_LIST,
             args,
             *nullable,
             value,
@@ -86,7 +88,7 @@ fn render_sequence_copy(
     let item_ty = args.first();
     let item_rendered = item_ty
         .map(|ty| OBJECT_NULLABLE_TYPES.render(ty))
-        .unwrap_or_else(|| "Object?".to_owned());
+        .unwrap_or_else(|| DART_OBJECT_NULLABLE.to_owned());
     let source_value = if nullable {
         non_null_value_expr(value)
     } else {
@@ -127,10 +129,10 @@ fn render_map_copy(
     let value_ty = args.get(1);
     let key_rendered = key_ty
         .map(|ty| OBJECT_NULLABLE_TYPES.render(ty))
-        .unwrap_or_else(|| "Object?".to_owned());
+        .unwrap_or_else(|| DART_OBJECT_NULLABLE.to_owned());
     let value_rendered = value_ty
         .map(|ty| OBJECT_NULLABLE_TYPES.render(ty))
-        .unwrap_or_else(|| "Object?".to_owned());
+        .unwrap_or_else(|| DART_OBJECT_NULLABLE.to_owned());
     let source_value = if nullable {
         non_null_value_expr(value)
     } else {

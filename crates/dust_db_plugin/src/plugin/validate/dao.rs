@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use dust_dart_emit::DYNAMIC_TYPES;
+use dust_dart_emit::{DART_EXEC_RESULT, DART_LIST, DART_ROW, DART_UNIT, DYNAMIC_TYPES};
 use dust_diagnostics::{Diagnostic, SourceLabel};
 use dust_ir::TypeIr;
 
@@ -148,14 +148,14 @@ fn validate_method_params(
 }
 
 fn is_supported_dao_ok_type(ty: &TypeIr, row_names: &HashSet<&str>) -> bool {
-    if ty.is_named("ExecResult") || ty.is_named("Unit") || is_supported_scalar_type(ty) {
+    if ty.is_named(DART_EXEC_RESULT) || ty.is_named(DART_UNIT) || is_supported_scalar_type(ty) {
         return true;
     }
-    if ty.is_named("List") {
+    if ty.is_named(DART_LIST) {
         let Some(item) = ty.args().first() else {
             return false;
         };
-        return item.is_named("Row") || item.name().is_some_and(|name| row_names.contains(name));
+        return item.is_named(DART_ROW) || item.name().is_some_and(|name| row_names.contains(name));
     }
     ty.name().is_some_and(|name| row_names.contains(name))
 }

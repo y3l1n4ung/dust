@@ -1,9 +1,12 @@
+use dust_dart_emit::{
+    DART_BOOL, DART_DATE_TIME, DART_DOUBLE, DART_DYNAMIC, DART_INT, DART_NUM, DART_STRING,
+};
 use dust_ir::TypeIr;
 
 pub(super) fn is_supported_scalar_type(ty: &TypeIr) -> bool {
     matches!(
         ty.name(),
-        Some("String" | "int" | "double" | "num" | "bool" | "DateTime")
+        Some(DART_STRING | DART_INT | DART_DOUBLE | DART_NUM | DART_BOOL | DART_DATE_TIME)
     )
 }
 
@@ -22,7 +25,7 @@ pub(super) fn render_type(ty: &TypeIr) -> String {
         TypeIr::Record { shape, nullable } => {
             format!("{shape}{}", if *nullable { "?" } else { "" })
         }
-        TypeIr::Dynamic => "dynamic".to_owned(),
+        TypeIr::Dynamic => DART_DYNAMIC.to_owned(),
         TypeIr::Unknown => "unknown".to_owned(),
     }
 }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use dust_dart_emit::apply_rename_rule;
+use dust_dart_emit::{DART_LIST, DART_STRING, DART_VOID, apply_rename_rule};
 use dust_ir::{BuiltinType, ClassIr, EnumIr, LibraryIr, TypeIr};
 
 use crate::plugin::emit::test_support::SampleValue;
@@ -38,16 +38,16 @@ impl<'a> FixtureCatalog<'a> {
             TypeIr::Named { name, nullable, .. } if *nullable => {
                 Some(SampleValue::new("null", Some("null")))
             }
-            TypeIr::Named { name, .. } if name.as_ref() == "String" => {
+            TypeIr::Named { name, .. } if name.as_ref() == DART_STRING => {
                 Some(SampleValue::new("'dust-id'", Some("dust-id")))
             }
-            TypeIr::Named { name, args, .. } if name.as_ref() == "List" && args.len() == 1 => {
+            TypeIr::Named { name, args, .. } if name.as_ref() == DART_LIST && args.len() == 1 => {
                 self.sample_list_value(&args[0], stack)
             }
             TypeIr::Named { args, .. } if is_string_keyed_map(ty) => {
                 self.sample_map_value(&args[1], stack)
             }
-            TypeIr::Named { name, .. } if name.as_ref() == "void" => {
+            TypeIr::Named { name, .. } if name.as_ref() == DART_VOID => {
                 Some(SampleValue::new("null", Some("null")))
             }
             TypeIr::Named { name, .. } => self
@@ -142,8 +142,8 @@ impl<'a> FixtureCatalog<'a> {
             }),
             TypeIr::Dynamic | TypeIr::Unknown => Some("'dust'".to_owned()),
             TypeIr::Named { nullable, .. } if *nullable => Some("null".to_owned()),
-            TypeIr::Named { name, .. } if name.as_ref() == "String" => Some("'dust'".to_owned()),
-            TypeIr::Named { name, args, .. } if name.as_ref() == "List" && args.len() == 1 => {
+            TypeIr::Named { name, .. } if name.as_ref() == DART_STRING => Some("'dust'".to_owned()),
+            TypeIr::Named { name, args, .. } if name.as_ref() == DART_LIST && args.len() == 1 => {
                 let item = self.json_value_inner(&args[0], stack)?;
                 Some(format!("[{item}]"))
             }
@@ -151,7 +151,7 @@ impl<'a> FixtureCatalog<'a> {
                 let value = self.json_value_inner(&args[1], stack)?;
                 Some(format!("<String, Object?>{{'value': {value}}}"))
             }
-            TypeIr::Named { name, .. } if name.as_ref() == "void" => Some("null".to_owned()),
+            TypeIr::Named { name, .. } if name.as_ref() == DART_VOID => Some("null".to_owned()),
             TypeIr::Named { name, .. } => self
                 .sample_enum_json(name)
                 .or_else(|| self.sample_class_json(name, stack)),

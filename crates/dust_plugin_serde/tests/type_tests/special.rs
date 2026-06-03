@@ -23,10 +23,7 @@ fn handles_special_builtin_types() {
                     constructor_param("bi", TypeIr::named("BigInt"), ParamKind::Named),
                 ],
             )],
-            &[
-                "derive_serde_annotation::Serialize",
-                "derive_serde_annotation::Deserialize",
-            ],
+            &["dust_dart::Serialize", "dust_dart::Deserialize"],
         )],
         vec![],
     );

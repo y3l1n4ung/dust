@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use dust_dart_emit::{DART_DYNAMIC, DART_OBJECT_NULLABLE};
 use dust_ir::{LibraryIr, TypeIr};
 
 pub(super) fn package_import_uri(library: &LibraryIr) -> Option<String> {
@@ -28,7 +29,7 @@ pub(super) fn dart_type(ty: &TypeIr) -> String {
         TypeIr::Named { name, nullable, .. } => {
             format!("{name}{}", if *nullable { "?" } else { "" })
         }
-        TypeIr::Dynamic => "dynamic".to_owned(),
+        TypeIr::Dynamic => DART_DYNAMIC.to_owned(),
         TypeIr::Function {
             signature,
             nullable,
@@ -36,7 +37,7 @@ pub(super) fn dart_type(ty: &TypeIr) -> String {
         TypeIr::Record { shape, nullable } => {
             format!("{shape}{}", if *nullable { "?" } else { "" })
         }
-        TypeIr::Unknown => "Object?".to_owned(),
+        TypeIr::Unknown => DART_OBJECT_NULLABLE.to_owned(),
     }
 }
 

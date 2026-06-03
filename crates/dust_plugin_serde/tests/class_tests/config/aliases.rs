@@ -28,7 +28,7 @@ fn supports_field_aliases_during_deserialization() {
                 ParamKind::Named,
             )],
         )],
-        &["derive_serde_annotation::Deserialize"],
+        &["dust_dart::Deserialize"],
     );
 
     let library = library(vec![user_class], vec![]);

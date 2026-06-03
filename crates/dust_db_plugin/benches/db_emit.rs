@@ -65,7 +65,7 @@ fn main() {
         }],
         methods: Vec::new(),
         traits: vec![TraitApplicationIr {
-            symbol: SymbolId::new("dust_db_annotation::FromRow"),
+            symbol: SymbolId::new("dust_dart::FromRow"),
             span: span(),
         }],
         configs: Vec::new(),
@@ -115,13 +115,13 @@ fn main() {
                 span: span(),
                 traits: Vec::new(),
                 configs: vec![config(
-                    "dust_db_annotation::Query",
+                    "dust_dart::Query",
                     &format!("(r'SELECT id FROM bench WHERE id = $1 /* {index} */')"),
                 )],
             })
             .collect(),
         traits: Vec::new(),
-        configs: vec![config("dust_db_annotation::SqlxDao", "()")],
+        configs: vec![config("dust_dart::SqlxDao", "()")],
         serde: None,
     };
     let library = LibraryIr {

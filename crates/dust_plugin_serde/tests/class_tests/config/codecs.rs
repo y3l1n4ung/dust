@@ -28,10 +28,7 @@ fn supports_custom_field_codecs() {
                 ParamKind::Named,
             )],
         )],
-        &[
-            "derive_serde_annotation::Serialize",
-            "derive_serde_annotation::Deserialize",
-        ],
+        &["dust_dart::Serialize", "dust_dart::Deserialize"],
     );
 
     let library = library(vec![user_class], vec![]);

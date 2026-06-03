@@ -1,6 +1,7 @@
-use dust_diagnostics::Diagnostic;
 use std::collections::HashSet;
 
+use dust_dart_emit::{DART_BOOL, DART_DOUBLE, DART_INT, DART_STRING};
+use dust_diagnostics::Diagnostic;
 use dust_ir::{BuiltinType, ClassIr, ConstructorIr, LibraryIr, ParamKind, TypeIr};
 use dust_plugin_api::SymbolPlan;
 
@@ -186,10 +187,10 @@ fn parse_url_type(source: Option<&str>) -> Option<TypeIr> {
         .strip_suffix('?')
         .map_or((raw, false), |stripped| (stripped.trim(), true));
     let kind = match name {
-        "String" => BuiltinType::String,
-        "int" => BuiltinType::Int,
-        "double" => BuiltinType::Double,
-        "bool" => BuiltinType::Bool,
+        DART_STRING => BuiltinType::String,
+        DART_INT => BuiltinType::Int,
+        DART_DOUBLE => BuiltinType::Double,
+        DART_BOOL => BuiltinType::Bool,
         _ => return None,
     };
     Some(TypeIr::Builtin { kind, nullable })

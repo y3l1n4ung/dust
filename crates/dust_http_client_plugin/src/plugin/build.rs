@@ -1,3 +1,4 @@
+use dust_dart_emit::{DART_FUTURE, DART_LIST, DART_MAP, DART_RESPONSE, DART_STREAM, DART_VOID};
 use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassIr, MethodParamIr, TypeIr};
 
@@ -11,7 +12,7 @@ use crate::plugin::parse::{
     parse_method_headers, parse_optional_string_argument, parse_required_string_argument,
 };
 use crate::plugin::util::{
-    is_list_of_int_type, is_response_body_type, is_string_keyed_map, type_name_is,
+    is_list_of_int_type, is_response_body_type, is_string_keyed_map, is_string_type, type_name_is,
 };
 use crate::plugin::validate::validate_client_class;
 
@@ -163,9 +164,9 @@ pub(super) fn special_param_kind(param: &MethodParamIr) -> Option<EndpointParamK
 }
 
 pub(super) fn classify_return_type(return_type: &TypeIr) -> Option<ReturnSpec> {
-    if type_name_is(return_type, "Future") && return_type.args().len() == 1 {
+    if type_name_is(return_type, DART_FUTURE) && return_type.args().len() == 1 {
         let inner = &return_type.args()[0];
-        if type_name_is(inner, "Response") && inner.args().len() == 1 {
+        if type_name_is(inner, DART_RESPONSE) && inner.args().len() == 1 {
             let payload = &inner.args()[0];
             return is_supported_payload(payload, true).then(|| ReturnSpec {
                 mode: ReturnMode::Unary,
@@ -181,7 +182,7 @@ pub(super) fn classify_return_type(return_type: &TypeIr) -> Option<ReturnSpec> {
             });
         }
     }
-    if type_name_is(return_type, "Stream") && return_type.args().len() == 1 {
+    if type_name_is(return_type, DART_STREAM) && return_type.args().len() == 1 {
         let inner = &return_type.args()[0];
         if let Some(mode) = classify_stream_mode(inner) {
             return Some(ReturnSpec {
@@ -198,13 +199,17 @@ fn is_supported_payload(ty: &TypeIr, allow_response_body: bool) -> bool {
     match ty {
         TypeIr::Dynamic => true,
         TypeIr::Builtin { .. } => true,
-        TypeIr::Named { name, args, .. } if name.as_ref() == "void" => args.is_empty(),
-        TypeIr::Named { .. } if type_name_is(ty, "Map") => is_string_keyed_map(ty),
-        TypeIr::Named { name, args, .. } if name.rsplit('.').next() == Some("List") => {
+        TypeIr::Named { name, args, .. } if name.as_ref() == DART_VOID => args.is_empty(),
+        TypeIr::Named { .. } if type_name_is(ty, DART_MAP) => is_string_keyed_map(ty),
+        TypeIr::Named { name, args, .. } if name.rsplit('.').next() == Some(DART_LIST) => {
             args.len() == 1 && is_supported_payload(&args[0], false)
         }
         TypeIr::Named { .. } if is_response_body_type(ty) => allow_response_body,
-        TypeIr::Named { .. } if type_name_is(ty, "Response") || type_name_is(ty, "Stream") => false,
+        TypeIr::Named { .. }
+            if type_name_is(ty, DART_RESPONSE) || type_name_is(ty, DART_STREAM) =>
+        {
+            false
+        }
         TypeIr::Named { .. } => true,
         TypeIr::Function { .. } | TypeIr::Record { .. } | TypeIr::Unknown => false,
     }
@@ -214,7 +219,7 @@ fn classify_stream_mode(ty: &TypeIr) -> Option<ReturnMode> {
     if is_list_of_int_type(ty) {
         return Some(ReturnMode::ByteStream);
     }
-    if ty.is_named("String") {
+    if is_string_type(ty) {
         return Some(ReturnMode::TextStream);
     }
     None

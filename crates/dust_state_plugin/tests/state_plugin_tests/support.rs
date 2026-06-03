@@ -10,7 +10,7 @@ pub(crate) fn span(start: u32, end: u32) -> SpanIr {
 
 pub(crate) fn config(args: Option<&str>) -> ConfigApplicationIr {
     ConfigApplicationIr {
-        symbol: SymbolId::new("dust_state::ViewModel"),
+        symbol: SymbolId::new("dust_flutter::ViewModel"),
         arguments_source: args.map(str::to_owned),
         span: span(1, 2),
     }

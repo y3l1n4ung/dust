@@ -21,18 +21,12 @@ fn handles_enum_fields_in_classes() {
                     ParamKind::Named,
                 )],
             )],
-            &[
-                "derive_serde_annotation::Serialize",
-                "derive_serde_annotation::Deserialize",
-            ],
+            &["dust_dart::Serialize", "dust_dart::Deserialize"],
         )],
         vec![enum_ir(
             "Status",
             vec![enum_variant("active")],
-            &[
-                "derive_serde_annotation::Serialize",
-                "derive_serde_annotation::Deserialize",
-            ],
+            &["dust_dart::Serialize", "dust_dart::Deserialize"],
         )],
     );
 
@@ -74,18 +68,12 @@ fn handles_nullable_enum_fields() {
                     ParamKind::Named,
                 )],
             )],
-            &[
-                "derive_serde_annotation::Serialize",
-                "derive_serde_annotation::Deserialize",
-            ],
+            &["dust_dart::Serialize", "dust_dart::Deserialize"],
         )],
         vec![enum_ir(
             "Status",
             vec![enum_variant("active")],
-            &[
-                "derive_serde_annotation::Serialize",
-                "derive_serde_annotation::Deserialize",
-            ],
+            &["dust_dart::Serialize", "dust_dart::Deserialize"],
         )],
     );
 
@@ -134,18 +122,12 @@ fn handles_enums_in_collections() {
                     ParamKind::Named,
                 )],
             )],
-            &[
-                "derive_serde_annotation::Serialize",
-                "derive_serde_annotation::Deserialize",
-            ],
+            &["dust_dart::Serialize", "dust_dart::Deserialize"],
         )],
         vec![enum_ir(
             "Role",
             vec![enum_variant("admin")],
-            &[
-                "derive_serde_annotation::Serialize",
-                "derive_serde_annotation::Deserialize",
-            ],
+            &["dust_dart::Serialize", "dust_dart::Deserialize"],
         )],
     );
 

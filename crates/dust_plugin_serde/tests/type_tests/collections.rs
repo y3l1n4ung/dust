@@ -38,10 +38,7 @@ fn handles_collection_types() {
                     ),
                 ],
             )],
-            &[
-                "derive_serde_annotation::Serialize",
-                "derive_serde_annotation::Deserialize",
-            ],
+            &["dust_dart::Serialize", "dust_dart::Deserialize"],
         )],
         vec![],
     );

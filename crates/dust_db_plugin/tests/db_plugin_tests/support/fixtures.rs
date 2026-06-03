@@ -18,34 +18,31 @@ pub(crate) fn row_class() -> ClassIr {
             field(
                 "name",
                 TypeIr::string(),
-                vec![config(
-                    "dust_db_annotation::Sqlx",
-                    "(rename: 'display_name')",
-                )],
+                vec![config("dust_dart::Sqlx", "(rename: 'display_name')")],
             ),
             field(
                 "bio",
                 TypeIr::string(),
-                vec![config("dust_db_annotation::Sqlx", "(defaultValue: '')")],
+                vec![config("dust_dart::Sqlx", "(defaultValue: '')")],
             ),
             field(
                 "sessionActive",
                 TypeIr::bool(),
                 vec![config(
-                    "dust_db_annotation::Sqlx",
+                    "dust_dart::Sqlx",
                     "(skip: true, defaultValue: false)",
                 )],
             ),
             field(
                 "preferences",
                 TypeIr::named("UserPreferences"),
-                vec![config("dust_db_annotation::Sqlx", "(json: true)")],
+                vec![config("dust_dart::Sqlx", "(json: true)")],
             ),
             field(
                 "status",
                 TypeIr::named("UserStatus"),
                 vec![config(
-                    "dust_db_annotation::Sqlx",
+                    "dust_dart::Sqlx",
                     "(tryFrom: const UserStatusFromInt())",
                 )],
             ),
@@ -66,9 +63,9 @@ pub(crate) fn row_class() -> ClassIr {
             ],
         }],
         methods: Vec::new(),
-        traits: vec![trait_app("dust_db_annotation::FromRow")],
+        traits: vec![trait_app("dust_dart::FromRow")],
         configs: vec![config(
-            "dust_db_annotation::Sqlx",
+            "dust_dart::Sqlx",
             "(renameAll: SqlxRename.snakeCase)",
         )],
         serde: None,
@@ -82,10 +79,7 @@ pub(crate) fn simple_user_row_class() -> ClassIr {
             field(
                 "name",
                 TypeIr::string(),
-                vec![config(
-                    "dust_db_annotation::Sqlx",
-                    "(rename: 'display_name')",
-                )],
+                vec![config("dust_dart::Sqlx", "(rename: 'display_name')")],
             ),
         ],
         constructors: vec![ConstructorIr {
@@ -130,7 +124,7 @@ pub(crate) fn dao_class() -> ClassIr {
         }],
         methods: vec![find_by_id_method(), count_method(), rename_method()],
         traits: Vec::new(),
-        configs: vec![config("dust_db_annotation::SqlxDao", "()")],
+        configs: vec![config("dust_dart::SqlxDao", "()")],
         serde: None,
     }
 }
@@ -148,7 +142,7 @@ pub(crate) fn database_class() -> ClassIr {
         methods: Vec::new(),
         traits: Vec::new(),
         configs: vec![config(
-            "dust_db_annotation::SqlxDatabase",
+            "dust_dart::SqlxDatabase",
             "(type: SqlxDatabaseType.sqlite, migrations: './migrations')",
         )],
         serde: None,
@@ -208,7 +202,7 @@ fn find_by_id_method() -> MethodIr {
         span: span(),
         traits: Vec::new(),
         configs: vec![config(
-            "dust_db_annotation::Query",
+            "dust_dart::Query",
             "(r'SELECT id, display_name, bio FROM users WHERE id = $1')",
         )],
     }
@@ -226,7 +220,7 @@ fn count_method() -> MethodIr {
         span: span(),
         traits: Vec::new(),
         configs: vec![config(
-            "dust_db_annotation::Query",
+            "dust_dart::Query",
             "(r'SELECT COUNT(*) FROM users')",
         )],
     }
@@ -247,7 +241,7 @@ fn rename_method() -> MethodIr {
         span: span(),
         traits: Vec::new(),
         configs: vec![config(
-            "dust_db_annotation::Query",
+            "dust_dart::Query",
             "(r'UPDATE users SET display_name = $1 WHERE id = $2')",
         )],
     }

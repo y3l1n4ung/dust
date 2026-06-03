@@ -86,15 +86,15 @@ fn models_real_dart_data_class_shapes() {
             methods: Vec::new(),
             traits: vec![
                 TraitApplicationIr {
-                    symbol: SymbolId::new("derive_annotation::ToString"),
+                    symbol: SymbolId::new("dust_dart::ToString"),
                     span: span(1, 41, 48),
                 },
                 TraitApplicationIr {
-                    symbol: SymbolId::new("derive_serde_annotation::Serialize"),
+                    symbol: SymbolId::new("dust_dart::Serialize"),
                     span: span(1, 50, 61),
                 },
                 TraitApplicationIr {
-                    symbol: SymbolId::new("derive_serde_annotation::Deserialize"),
+                    symbol: SymbolId::new("dust_dart::Deserialize"),
                     span: span(1, 63, 76),
                 },
             ],

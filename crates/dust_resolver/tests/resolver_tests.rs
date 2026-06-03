@@ -7,16 +7,13 @@ use dust_text::{FileId, SourceText};
 #[test]
 fn symbol_catalog_registers_traits_and_configs() {
     let mut catalog = SymbolCatalog::new();
-    catalog.register_trait("ToString", "derive_annotation::ToString");
-    catalog.register_config("SerDe", "derive_serde_annotation::SerDe");
+    catalog.register_trait("ToString", "dust_dart::ToString");
+    catalog.register_config("SerDe", "dust_dart::SerDe");
 
     let to_string = catalog.resolve("ToString").unwrap();
     let serde = catalog.resolve("SerDe").unwrap();
 
-    assert_eq!(
-        to_string.symbol,
-        SymbolId::new("derive_annotation::ToString")
-    );
+    assert_eq!(to_string.symbol, SymbolId::new("dust_dart::ToString"));
     assert_eq!(to_string.kind, SymbolKind::Trait);
     assert_eq!(serde.kind, SymbolKind::Config);
 }
@@ -52,10 +49,10 @@ class User {
 
     let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
     let mut catalog = SymbolCatalog::new();
-    catalog.register_trait("ToString", "derive_annotation::ToString");
-    catalog.register_trait("Serialize", "derive_serde_annotation::Serialize");
-    catalog.register_trait("Deserialize", "derive_serde_annotation::Deserialize");
-    catalog.register_config("SerDe", "derive_serde_annotation::SerDe");
+    catalog.register_trait("ToString", "dust_dart::ToString");
+    catalog.register_trait("Serialize", "dust_dart::Serialize");
+    catalog.register_trait("Deserialize", "dust_dart::Deserialize");
+    catalog.register_config("SerDe", "dust_dart::SerDe");
 
     let resolved = resolve_library(
         FileId::new(1),
@@ -105,7 +102,7 @@ class User {
 
     let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
     let mut catalog = SymbolCatalog::new();
-    catalog.register_trait("ToString", "derive_annotation::ToString");
+    catalog.register_trait("ToString", "dust_dart::ToString");
 
     let resolved = resolve_library(
         FileId::new(2),
@@ -137,7 +134,7 @@ class User {}
 
     let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
     let mut catalog = SymbolCatalog::new();
-    catalog.register_trait("ToString", "derive_annotation::ToString");
+    catalog.register_trait("ToString", "dust_dart::ToString");
 
     let resolved = resolve_library(
         FileId::new(3),
@@ -171,7 +168,7 @@ class User {
 
     let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
     let mut catalog = SymbolCatalog::new();
-    catalog.register_trait("Serialize", "derive_serde_annotation::Serialize");
+    catalog.register_trait("Serialize", "dust_dart::Serialize");
 
     let resolved = resolve_library(
         FileId::new(4),

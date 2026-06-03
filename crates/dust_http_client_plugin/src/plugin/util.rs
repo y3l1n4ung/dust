@@ -1,5 +1,6 @@
+use dust_dart_emit::{DART_LIST, DART_MAP, DART_RESPONSE_BODY, DART_STRING};
 use dust_diagnostics::SourceLabel;
-use dust_ir::{SpanIr, TypeIr};
+use dust_ir::{BuiltinType, SpanIr, TypeIr};
 use dust_plugin_api::short_symbol_name;
 
 pub(super) fn config_name(symbol: &str) -> &str {
@@ -39,17 +40,19 @@ pub(super) fn type_name_is(ty: &TypeIr, expected: &str) -> bool {
 }
 
 pub(super) fn is_string_keyed_map(ty: &TypeIr) -> bool {
-    type_name_is(ty, "Map") && ty.args().len() == 2 && ty.args()[0].is_named("String")
+    type_name_is(ty, DART_MAP) && ty.args().len() == 2 && ty.args()[0].is_named(DART_STRING)
 }
 
 pub(super) fn is_response_body_type(ty: &TypeIr) -> bool {
-    type_name_is(ty, "ResponseBody")
+    type_name_is(ty, DART_RESPONSE_BODY)
 }
 
 pub(super) fn is_list_of_int_type(ty: &TypeIr) -> bool {
-    type_name_is(ty, "List")
-        && ty.args().len() == 1
-        && ty.args()[0].is_builtin(dust_ir::BuiltinType::Int)
+    type_name_is(ty, DART_LIST) && ty.args().len() == 1 && ty.args()[0].is_builtin(BuiltinType::Int)
+}
+
+pub(super) fn is_string_type(ty: &TypeIr) -> bool {
+    ty.is_named(DART_STRING)
 }
 
 pub(super) fn has_import(imports: &[String], uri: &str) -> bool {

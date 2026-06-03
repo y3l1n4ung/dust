@@ -1,6 +1,9 @@
 use std::collections::HashSet;
 
-use dust_dart_emit::OBJECT_NULLABLE_TYPES;
+use dust_dart_emit::{
+    DART_BIG_INT, DART_BOOL, DART_DATE_TIME, DART_INT, DART_LIST, DART_MAP, DART_NUM, DART_OBJECT,
+    DART_SET, DART_STRING, DART_URI, OBJECT_NULLABLE_TYPES,
+};
 use dust_ir::{BuiltinType, FieldIr, TypeIr};
 
 use crate::writer_type::{access_receiver, non_null_encode_expr, non_nullable};
@@ -103,21 +106,23 @@ fn encode_non_nullable_expr(
     match ty {
         TypeIr::Builtin { .. } | TypeIr::Dynamic | TypeIr::Unknown => expr.to_owned(),
         TypeIr::Function { .. } | TypeIr::Record { .. } => expr.to_owned(),
-        TypeIr::Named { name, .. } if name.as_ref() == "DateTime" => {
+        TypeIr::Named { name, .. } if name.as_ref() == DART_DATE_TIME => {
             format!("{expr}.toIso8601String()")
         }
-        TypeIr::Named { name, .. } if name.as_ref() == "Uri" || name.as_ref() == "BigInt" => {
+        TypeIr::Named { name, .. }
+            if name.as_ref() == DART_URI || name.as_ref() == DART_BIG_INT =>
+        {
             format!("{expr}.toString()")
         }
-        TypeIr::Named { name, args, .. } if name.as_ref() == "List" => format!(
+        TypeIr::Named { name, args, .. } if name.as_ref() == DART_LIST => format!(
             "{expr}\n    .map((item) => {})\n    .toList()",
             encode_expr("item", &args[0], serializable_classes, serializable_enums)
         ),
-        TypeIr::Named { name, args, .. } if name.as_ref() == "Set" => format!(
+        TypeIr::Named { name, args, .. } if name.as_ref() == DART_SET => format!(
             "{expr}\n    .map((item) => {})\n    .toList()",
             encode_expr("item", &args[0], serializable_classes, serializable_enums)
         ),
-        TypeIr::Named { name, args, .. } if name.as_ref() == "Map" => {
+        TypeIr::Named { name, args, .. } if name.as_ref() == DART_MAP => {
             let value_expr =
                 encode_expr("value", &args[1], serializable_classes, serializable_enums);
             if value_expr.contains('\n') {
@@ -150,25 +155,27 @@ fn decode_non_nullable_expr(
 ) -> String {
     match ty {
         TypeIr::Builtin { kind, .. } => match kind {
-            BuiltinType::String => format!("_jsonAs<String>({raw}, {key}, 'String')"),
-            BuiltinType::Int => format!("_jsonAs<int>({raw}, {key}, 'int')"),
-            BuiltinType::Bool => format!("_jsonAs<bool>({raw}, {key}, 'bool')"),
-            BuiltinType::Double => format!("_jsonAs<num>({raw}, {key}, 'num').toDouble()"),
-            BuiltinType::Num => format!("_jsonAs<num>({raw}, {key}, 'num')"),
-            BuiltinType::Object => format!("_jsonAs<Object>({raw}, {key}, 'Object')"),
+            BuiltinType::String => format!("_jsonAs<{DART_STRING}>({raw}, {key}, '{DART_STRING}')"),
+            BuiltinType::Int => format!("_jsonAs<{DART_INT}>({raw}, {key}, '{DART_INT}')"),
+            BuiltinType::Bool => format!("_jsonAs<{DART_BOOL}>({raw}, {key}, '{DART_BOOL}')"),
+            BuiltinType::Double => {
+                format!("_jsonAs<{DART_NUM}>({raw}, {key}, '{DART_NUM}').toDouble()")
+            }
+            BuiltinType::Num => format!("_jsonAs<{DART_NUM}>({raw}, {key}, '{DART_NUM}')"),
+            BuiltinType::Object => format!("_jsonAs<{DART_OBJECT}>({raw}, {key}, '{DART_OBJECT}')"),
         },
         TypeIr::Dynamic | TypeIr::Unknown => raw.to_owned(),
         TypeIr::Function { .. } | TypeIr::Record { .. } => raw.to_owned(),
-        TypeIr::Named { name, .. } if name.as_ref() == "DateTime" => {
+        TypeIr::Named { name, .. } if name.as_ref() == DART_DATE_TIME => {
             format!("_jsonAsDateTime({raw}, {key})")
         }
-        TypeIr::Named { name, .. } if name.as_ref() == "Uri" => {
+        TypeIr::Named { name, .. } if name.as_ref() == DART_URI => {
             format!("_jsonAsUri({raw}, {key})")
         }
-        TypeIr::Named { name, .. } if name.as_ref() == "BigInt" => {
+        TypeIr::Named { name, .. } if name.as_ref() == DART_BIG_INT => {
             format!("_jsonAsBigInt({raw}, {key})")
         }
-        TypeIr::Named { name, args, .. } if name.as_ref() == "List" => format!(
+        TypeIr::Named { name, args, .. } if name.as_ref() == DART_LIST => format!(
             "_jsonAsList({raw}, {key})\n    .map((item) => {})\n    .toList()",
             decode_expr(
                 "item",
@@ -178,7 +185,7 @@ fn decode_non_nullable_expr(
                 deserializable_enums
             )
         ),
-        TypeIr::Named { name, args, .. } if name.as_ref() == "Set" => format!(
+        TypeIr::Named { name, args, .. } if name.as_ref() == DART_SET => format!(
             "_jsonAsList({raw}, {key})\n    .map((item) => {})\n    .toSet()",
             decode_expr(
                 "item",
@@ -188,7 +195,7 @@ fn decode_non_nullable_expr(
                 deserializable_enums
             )
         ),
-        TypeIr::Named { name, args, .. } if name.as_ref() == "Map" => {
+        TypeIr::Named { name, args, .. } if name.as_ref() == DART_MAP => {
             let value_expr = decode_expr(
                 "value",
                 key,

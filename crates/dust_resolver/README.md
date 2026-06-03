@@ -9,7 +9,7 @@ The semantic mapping layer of the Dust engine. This crate is responsible for tak
 ## 🔑 Key Components
 
 ### `SymbolCatalog`
-The central registry of "known" symbols. It maps short, surface-level annotation names (e.g., `Serialize`) to their fully qualified, unique internal IDs (e.g., `derive_serde_annotation::Serialize`).
+The central registry of "known" symbols. It maps short, surface-level annotation names (e.g., `Serialize`) to their fully qualified, unique internal IDs (e.g., `dust_dart::Serialize`).
 - Supports **Traits**: Symbols that change class behavior (e.g., `Eq`).
 - Supports **Configs**: Symbols that provide settings (e.g., `SerDe`).
 

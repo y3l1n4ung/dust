@@ -13,7 +13,7 @@ pub(crate) fn span(start: u32, end: u32) -> SpanIr {
 
 pub(crate) fn config(name: &str, args: Option<&str>) -> ConfigApplicationIr {
     ConfigApplicationIr {
-        symbol: SymbolId::new(format!("dust_router::{name}")),
+        symbol: SymbolId::new(format!("dust_flutter::{name}")),
         arguments_source: args.map(str::to_owned),
         span: span(1, 2),
     }

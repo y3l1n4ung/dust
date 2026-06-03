@@ -1,3 +1,4 @@
+use dust_dart_emit::{DART_LIST, DART_MAP, DART_OBJECT, DART_SET};
 use dust_diagnostics::Diagnostic;
 use dust_ir::{BuiltinType, ClassIr, ClassKindIr, LibraryIr, TypeIr};
 
@@ -131,7 +132,9 @@ fn validate_type_supported(
         TypeIr::Record { .. } => diagnostics.push(Diagnostic::error(format!(
             "`{direction}` does not support record types on `{class_name}.{field_name}`"
         ))),
-        TypeIr::Named { name, args, .. } if name.as_ref() == "List" || name.as_ref() == "Set" => {
+        TypeIr::Named { name, args, .. }
+            if name.as_ref() == DART_LIST || name.as_ref() == DART_SET =>
+        {
             if let Some(item) = args.first() {
                 validate_type_supported(
                     item,
@@ -147,7 +150,7 @@ fn validate_type_supported(
                 )));
             }
         }
-        TypeIr::Named { name, args, .. } if name.as_ref() == "Map" => {
+        TypeIr::Named { name, args, .. } if name.as_ref() == DART_MAP => {
             if args.len() != 2 {
                 diagnostics.push(Diagnostic::error(format!(
                     "`{direction}` requires two type arguments for `Map` on `{class_name}.{field_name}`"
@@ -173,7 +176,7 @@ fn validate_type_supported(
                 diagnostics.push(Diagnostic::error(format!(
                     "`{direction}` does not yet support generic named type `{name}` on `{class_name}.{field_name}`"
                 )));
-            } else if name.as_ref() == "Object" {
+            } else if name.as_ref() == DART_OBJECT {
                 // Handled as supported fallback.
             } else if !known_models.iter().any(|item| *item == name.as_ref()) {
                 // External models are allowed; callers can provide custom mappings.
@@ -186,12 +189,12 @@ fn wants_serialize(class: &ClassIr) -> bool {
     class
         .traits
         .iter()
-        .any(|item| item.symbol.0 == "derive_serde_annotation::Serialize")
+        .any(|item| item.symbol.0 == "dust_dart::Serialize")
 }
 
 fn wants_deserialize(class: &ClassIr) -> bool {
     class
         .traits
         .iter()
-        .any(|item| item.symbol.0 == "derive_serde_annotation::Deserialize")
+        .any(|item| item.symbol.0 == "dust_dart::Deserialize")
 }

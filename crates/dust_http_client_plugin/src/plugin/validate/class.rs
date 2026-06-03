@@ -1,3 +1,4 @@
+use dust_dart_emit::DART_STRING;
 use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassIr, ClassKindIr, ParamKind};
 
@@ -156,7 +157,7 @@ fn validate_factory_constructor(class: &ClassIr, diagnostics: &mut Vec<Diagnosti
 
     for param in factory.params.iter().skip(1) {
         let valid_name = param.name == "baseUrl" && param.kind == ParamKind::Named;
-        let valid_type = param.ty.is_named("String") && param.ty.is_nullable();
+        let valid_type = param.ty.is_named(DART_STRING) && param.ty.is_nullable();
         let valid_default = !param.has_default;
         if !(valid_name && valid_type && valid_default) {
             diagnostics.push(

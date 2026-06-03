@@ -87,24 +87,24 @@ fn wants_serialize(class: &ClassIr) -> bool {
     class
         .traits
         .iter()
-        .any(|item| item.symbol.0 == "derive_serde_annotation::Serialize")
+        .any(|item| item.symbol.0 == "dust_dart::Serialize")
 }
 
 fn wants_deserialize(class: &ClassIr) -> bool {
     class
         .traits
         .iter()
-        .any(|item| item.symbol.0 == "derive_serde_annotation::Deserialize")
+        .any(|item| item.symbol.0 == "dust_dart::Deserialize")
 }
 
 fn wants_serialize_enum(e: &EnumIr) -> bool {
     e.traits
         .iter()
-        .any(|item| item.symbol.0 == "derive_serde_annotation::Serialize")
+        .any(|item| item.symbol.0 == "dust_dart::Serialize")
 }
 
 fn wants_deserialize_enum(e: &EnumIr) -> bool {
     e.traits
         .iter()
-        .any(|item| item.symbol.0 == "derive_serde_annotation::Deserialize")
+        .any(|item| item.symbol.0 == "dust_dart::Deserialize")
 }

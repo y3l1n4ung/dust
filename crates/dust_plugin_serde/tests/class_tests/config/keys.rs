@@ -14,7 +14,7 @@ fn generates_disallow_unrecognized_keys_check() {
             None,
             vec![constructor_param("id", TypeIr::string(), ParamKind::Named)],
         )],
-        &["derive_serde_annotation::Deserialize"],
+        &["dust_dart::Deserialize"],
     );
     user_class.serde = Some(SerdeClassConfigIr {
         disallow_unrecognized_keys: true,

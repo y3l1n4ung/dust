@@ -22,7 +22,7 @@ fn view_model(name: &str) -> ClassIr {
         methods: Vec::new(),
         traits: Vec::new(),
         configs: vec![ConfigApplicationIr {
-            symbol: SymbolId::new("dust_state::ViewModel"),
+            symbol: SymbolId::new("dust_flutter::ViewModel"),
             arguments_source: Some("(state: BenchState, args: ViewModelArgs)".to_owned()),
             span: span(),
         }],

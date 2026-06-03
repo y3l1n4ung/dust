@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 
-use dust_dart_emit::{DYNAMIC_TYPES, render_template};
+use dust_dart_emit::{
+    DART_EXEC_RESULT, DART_LIST, DART_OBJECT, DART_ROW, DART_UNIT, DYNAMIC_TYPES, render_template,
+};
 use dust_ir::{MethodIr, ParamKind};
 use serde::Serialize;
 
@@ -185,7 +187,7 @@ fn render_dao_method_body(
             },
         );
     };
-    if ok_type.is_named("ExecResult") {
+    if ok_type.is_named(DART_EXEC_RESULT) {
         return render_query_body(
             "dao_body_execute",
             "templates/dao_body_execute.jinja",
@@ -193,7 +195,7 @@ fn render_dao_method_body(
             args,
         );
     }
-    if ok_type.is_named("Unit") {
+    if ok_type.is_named(DART_UNIT) {
         return render_query_body("dao_body_unit", "templates/dao_body_unit.jinja", sql, args);
     }
     if is_scalar_type(ok_type) {
@@ -207,7 +209,7 @@ fn render_dao_method_body(
             },
         );
     }
-    if ok_type.is_named("List") {
+    if ok_type.is_named(DART_LIST) {
         return render_list_body(ok_type, row_names, sql, args);
     }
     let Some(row_name) = ok_type.name() else {
@@ -256,7 +258,7 @@ fn render_list_body(
             args,
         );
     };
-    if item.is_named("Row") {
+    if item.is_named(DART_ROW) {
         return render_query_body(
             "dao_body_raw_fetch",
             "templates/dao_body_raw_fetch.jinja",
@@ -264,7 +266,7 @@ fn render_list_body(
             args,
         );
     }
-    let item_name = item.name().unwrap_or("Object");
+    let item_name = item.name().unwrap_or(DART_OBJECT);
     if row_names.contains(item_name) {
         return render_template(
             "dao_body_fetch_all",

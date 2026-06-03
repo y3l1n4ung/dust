@@ -1,4 +1,4 @@
-use dust_dart_emit::render_template;
+use dust_dart_emit::{DART_ITERABLE, DART_LIST, DART_MAP, DART_SET, render_template};
 use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassIr, LibraryIr, TypeIr};
 use serde::Serialize;
@@ -152,9 +152,9 @@ fn deep_helper_name(ty: &TypeIr) -> Option<&'static str> {
 }
 
 fn needs_ordered_deep_helper(ty: &TypeIr) -> bool {
-    matches!(ty, TypeIr::Named { name, .. } if matches!(name.as_ref(), "List" | "Map" | "Iterable"))
+    matches!(ty, TypeIr::Named { name, .. } if matches!(name.as_ref(), DART_LIST | DART_MAP | DART_ITERABLE))
 }
 
 fn needs_unordered_deep_helper(ty: &TypeIr) -> bool {
-    matches!(ty, TypeIr::Named { name, .. } if name.as_ref() == "Set")
+    matches!(ty, TypeIr::Named { name, .. } if name.as_ref() == DART_SET)
 }

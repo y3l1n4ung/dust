@@ -16,7 +16,7 @@ Large local Dart fixture project for Dust build/watch scale testing.
 ```bash
 cd examples/stress_project
 dart pub get
-./generate.sh --count 5000
+dart tool/generate.dart --count 5000
 ```
 
 This writes the generated sources into `lib/generated_models/`.
@@ -41,7 +41,7 @@ Dust first.
 ```bash
 cd examples/stress_project
 dart pub get
-./generate.sh --count 64
+dart tool/generate.dart --count 64
 
 cd ../..
 cargo run -p dust_cli -- build --root examples/stress_project

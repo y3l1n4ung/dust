@@ -31,10 +31,7 @@ fn handles_scalar_builtin_types() {
                     constructor_param("dyn", TypeIr::dynamic(), ParamKind::Named),
                 ],
             )],
-            &[
-                "derive_serde_annotation::Serialize",
-                "derive_serde_annotation::Deserialize",
-            ],
+            &["dust_dart::Serialize", "dust_dart::Deserialize"],
         )],
         vec![],
     );

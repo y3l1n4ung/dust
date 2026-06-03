@@ -28,10 +28,7 @@ fn supports_custom_json_key_renaming() {
                 ParamKind::Named,
             )],
         )],
-        &[
-            "derive_serde_annotation::Serialize",
-            "derive_serde_annotation::Deserialize",
-        ],
+        &["dust_dart::Serialize", "dust_dart::Deserialize"],
     );
     user_class.serde = Some(SerdeClassConfigIr {
         rename_all: Some(SerdeRenameRuleIr::KebabCase),

@@ -24,7 +24,7 @@ fn lowers_serde_configs_into_ir() {
             has_default: false,
             span: span(20, 30),
             configs: vec![ConfigApplicationIr {
-                symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                symbol: SymbolId::new("dust_dart::SerDe"),
                 arguments_source: Some(
                     "(rename: 'full_name', aliases: ['fullName'], using: const NameCodec(), defaultValue: 'guest')"
                         .to_owned(),
@@ -36,7 +36,7 @@ fn lowers_serde_configs_into_ir() {
         methods: Vec::new(),
         traits: Vec::new(),
         configs: vec![ConfigApplicationIr {
-            symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+            symbol: SymbolId::new("dust_dart::SerDe"),
             arguments_source: Some(
                 "(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)".to_owned(),
             ),
@@ -99,7 +99,7 @@ fn invalid_serde_options_produce_lowering_diagnostics() {
             has_default: false,
             span: span(20, 30),
             configs: vec![ConfigApplicationIr {
-                symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                symbol: SymbolId::new("dust_dart::SerDe"),
                 arguments_source: Some("(renameAll: SerDeRename.snakeCase)".to_owned()),
                 span: span(18, 30),
             }],
@@ -108,7 +108,7 @@ fn invalid_serde_options_produce_lowering_diagnostics() {
         methods: Vec::new(),
         traits: Vec::new(),
         configs: vec![ConfigApplicationIr {
-            symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+            symbol: SymbolId::new("dust_dart::SerDe"),
             arguments_source: Some("(aliases: ['legacy'], using: const NameCodec())".to_owned()),
             span: span(1, 10),
         }],
@@ -149,7 +149,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
                 has_default: false,
                 span: span(20, 30),
                 configs: vec![ConfigApplicationIr {
-                    symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                    symbol: SymbolId::new("dust_dart::SerDe"),
                     arguments_source: Some("(using: )".to_owned()),
                     span: span(18, 30),
                 }],
@@ -160,7 +160,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
                 has_default: false,
                 span: span(31, 40),
                 configs: vec![ConfigApplicationIr {
-                    symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                    symbol: SymbolId::new("dust_dart::SerDe"),
                     arguments_source: Some("(using: 'codec')".to_owned()),
                     span: span(31, 40),
                 }],
@@ -171,7 +171,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
                 has_default: false,
                 span: span(41, 50),
                 configs: vec![ConfigApplicationIr {
-                    symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                    symbol: SymbolId::new("dust_dart::SerDe"),
                     arguments_source: Some("(using: null)".to_owned()),
                     span: span(41, 50),
                 }],
@@ -182,7 +182,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
                 has_default: false,
                 span: span(51, 60),
                 configs: vec![ConfigApplicationIr {
-                    symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                    symbol: SymbolId::new("dust_dart::SerDe"),
                     arguments_source: Some("(using: () => const DateTimeCodec())".to_owned()),
                     span: span(51, 60),
                 }],
@@ -193,7 +193,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
                 has_default: false,
                 span: span(61, 70),
                 configs: vec![ConfigApplicationIr {
-                    symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                    symbol: SymbolId::new("dust_dart::SerDe"),
                     arguments_source: Some("(using: DateTimeCodec)".to_owned()),
                     span: span(61, 70),
                 }],
@@ -204,7 +204,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
                 has_default: false,
                 span: span(71, 80),
                 configs: vec![ConfigApplicationIr {
-                    symbol: SymbolId::new("derive_serde_annotation::SerDe"),
+                    symbol: SymbolId::new("dust_dart::SerDe"),
                     arguments_source: Some("(using: const DateTimeCodec())".to_owned()),
                     span: span(71, 80),
                 }],

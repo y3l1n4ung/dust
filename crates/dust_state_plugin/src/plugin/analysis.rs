@@ -1,5 +1,9 @@
 use std::path::{Component, Path, PathBuf};
 
+use dust_dart_emit::{
+    DART_BOOL, DART_DATE_TIME, DART_DOUBLE, DART_DYNAMIC, DART_INT, DART_LIST, DART_NUM,
+    DART_OBJECT, DART_OBJECT_NULLABLE, DART_STRING, DART_VOID,
+};
 use dust_parser_dart::{ParsedClassSurface, ParsedLibrarySurface};
 use dust_plugin_api::{WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 
@@ -47,7 +51,7 @@ fn collect_state_fact(
                 .type_source
                 .as_deref()
                 .map(|source| sanitize_type_source(source, declared_type_names))
-                .unwrap_or_else(|| "dynamic".to_owned()),
+                .unwrap_or_else(|| DART_DYNAMIC.to_owned()),
         })
         .collect::<Vec<_>>();
     let fact = StateFact {
@@ -79,29 +83,37 @@ fn declared_type_names(library: &ParsedLibrarySurface) -> Vec<String> {
 fn sanitize_type_source(type_source: &str, declared_type_names: &[String]) -> String {
     let ty = type_source.trim();
     if let Some(inner) = ty
-        .strip_prefix("List<")
+        .strip_prefix(&format!("{DART_LIST}<"))
         .and_then(|value| value.strip_suffix('>'))
     {
         return if is_visible_type(inner.trim(), declared_type_names) {
             ty.to_owned()
         } else {
-            "List<Object?>".to_owned()
+            format!("{DART_LIST}<{DART_OBJECT_NULLABLE}>")
         };
     }
     if ty.contains('<') {
-        return "Object?".to_owned();
+        return DART_OBJECT_NULLABLE.to_owned();
     }
     if is_visible_type(ty.trim_end_matches('?'), declared_type_names) {
         ty.to_owned()
     } else {
-        "Object?".to_owned()
+        DART_OBJECT_NULLABLE.to_owned()
     }
 }
 
 fn is_visible_type(type_name: &str, declared_type_names: &[String]) -> bool {
     matches!(
         type_name,
-        "String" | "int" | "double" | "num" | "bool" | "DateTime" | "Object" | "dynamic" | "void"
+        DART_STRING
+            | DART_INT
+            | DART_DOUBLE
+            | DART_NUM
+            | DART_BOOL
+            | DART_DATE_TIME
+            | DART_OBJECT
+            | DART_DYNAMIC
+            | DART_VOID
     ) || declared_type_names.iter().any(|name| name == type_name)
 }
 

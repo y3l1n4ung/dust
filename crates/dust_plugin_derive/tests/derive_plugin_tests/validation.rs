@@ -59,7 +59,7 @@ fn copywith_requires_reconstructible_constructor() {
             }],
             methods: Vec::new(),
             traits: vec![TraitApplicationIr {
-                symbol: SymbolId::new("derive_annotation::CopyWith"),
+                symbol: SymbolId::new("dust_dart::CopyWith"),
                 span: span(5, 9),
             }],
             configs: Vec::new(),
@@ -121,7 +121,7 @@ fn copywith_rejects_abstract_classes() {
             }],
             methods: Vec::new(),
             traits: vec![TraitApplicationIr {
-                symbol: SymbolId::new("derive_annotation::CopyWith"),
+                symbol: SymbolId::new("dust_dart::CopyWith"),
                 span: span(5, 9),
             }],
             configs: Vec::new(),
@@ -183,7 +183,7 @@ fn rejects_mixin_class_targets() {
             }],
             methods: Vec::new(),
             traits: vec![TraitApplicationIr {
-                symbol: SymbolId::new("derive_annotation::ToString"),
+                symbol: SymbolId::new("dust_dart::ToString"),
                 span: span(5, 9),
             }],
             configs: Vec::new(),

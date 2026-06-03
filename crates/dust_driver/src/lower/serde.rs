@@ -131,7 +131,7 @@ pub(crate) fn lower_field_serde_config(
 }
 
 fn is_serde_config(config: &ConfigApplicationIr) -> bool {
-    config.symbol.0 == "derive_serde_annotation::SerDe"
+    config.symbol.0 == "dust_dart::SerDe"
 }
 
 fn serde_named_arguments<'a>(

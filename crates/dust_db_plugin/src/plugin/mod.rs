@@ -168,27 +168,15 @@ mod tests {
         assert!(
             database
                 .claimed_configs()
-                .contains(&"dust_db_annotation::SqlxDatabase")
+                .contains(&"dust_dart::SqlxDatabase")
         );
-        assert!(
-            database
-                .claimed_configs()
-                .contains(&"dust_db_annotation::SqlxDao")
-        );
+        assert!(database.claimed_configs().contains(&"dust_dart::SqlxDao"));
         assert!(database.supported_annotations().contains(&"SqlxDatabase"));
         assert!(database.supported_annotations().contains(&"SqlxDao"));
 
         let row_only = register_row_plugin();
-        assert!(
-            !row_only
-                .claimed_configs()
-                .contains(&"dust_db_annotation::SqlxDao")
-        );
-        assert!(
-            row_only
-                .claimed_configs()
-                .contains(&"dust_db_annotation::Sqlx")
-        );
+        assert!(!row_only.claimed_configs().contains(&"dust_dart::SqlxDao"));
+        assert!(row_only.claimed_configs().contains(&"dust_dart::Sqlx"));
         assert_eq!(row_only.supported_annotations(), ["FromRow"]);
     }
 
