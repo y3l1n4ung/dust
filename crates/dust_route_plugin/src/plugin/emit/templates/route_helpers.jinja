@@ -1,0 +1,47 @@
+String routeLocation(AppRoutePath route) => route.location;
+
+String _routePath(
+  List<String> segments, {
+  Map<String, String>? queryParameters,
+}) {
+  final query = queryParameters?.isEmpty ?? true ? null : queryParameters;
+  final text = Uri(pathSegments: segments, queryParameters: query).toString();
+  if (text.isEmpty) return '/';
+  return text.startsWith('/') ? text : '/$text';
+}
+
+bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
+
+List<RouteGuard<AppRoutePath>> routeGuards(
+  AppRoutePath route,
+  $AppRouter router,
+) {
+  return switch (route) {
+{{ guard_cases }}    _ => const [],
+  };
+}
+
+extension DustRouterContext on BuildContext {
+  DustRouterController<AppRoutePath> get router =>
+      DustRouter.of<AppRoutePath>(this);
+  AppRoutesNavigation get routes => AppRoutesNavigation(router);
+}
+
+final class AppRoutesNavigation {
+  const AppRoutesNavigation(this._router);
+
+  final DustRouterController<AppRoutePath> _router;
+
+{{ factories }}  void pop() => _router.pop();
+}
+
+final class RouteNavigation<T extends Object> {
+  const RouteNavigation(this._router, this.route);
+
+  final DustRouterController<T> _router;
+  final T route;
+
+  void go() => _router.go(route);
+  void push() => _router.push(route);
+  void replace() => _router.replace(route);
+}

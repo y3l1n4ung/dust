@@ -26,6 +26,44 @@ struct DaoMethodContext<'a> {
     body: String,
 }
 
+#[derive(Serialize)]
+struct InvalidReturnContext<'a> {
+    method_name: &'a str,
+}
+
+#[derive(Serialize)]
+struct QueryBodyContext<'a> {
+    sql: &'a str,
+    args: &'a str,
+}
+
+#[derive(Serialize)]
+struct ScalarBodyContext<'a> {
+    ty: String,
+    sql: &'a str,
+    args: &'a str,
+}
+
+#[derive(Serialize)]
+struct RowBodyContext<'a> {
+    row_name: &'a str,
+    sql: &'a str,
+    args: &'a str,
+}
+
+#[derive(Serialize)]
+struct ListBodyContext<'a> {
+    item_name: &'a str,
+    sql: &'a str,
+    args: &'a str,
+}
+
+#[derive(Serialize)]
+struct UnsupportedBodyContext {
+    ty: String,
+    message: &'static str,
+}
+
 pub(super) fn render_dao_class(
     dao: &DaoClass<'_>,
     row_names: &HashSet<&str>,
@@ -139,41 +177,68 @@ fn render_dao_method_body(
     args: &str,
 ) -> String {
     let Some(ok_type) = method.return_ok_type.as_ref() else {
-        return format!(
-            "    return Err<dynamic, SqlxError>(\n      SqlxError.decode('DAO method `{}` must return Future<Result<T, SqlxError>>.'),\n    );",
-            method.method.name
+        return render_template(
+            "dao_body_invalid_return",
+            include_str!("templates/dao_body_invalid_return.jinja"),
+            InvalidReturnContext {
+                method_name: &method.method.name,
+            },
         );
     };
     if ok_type.is_named("ExecResult") {
-        return format!("    return _db.execute(\n      {sql},\n      [{args}],\n    );");
-    }
-    if ok_type.is_named("Unit") {
-        return format!(
-            "    return _db.execute(\n      {sql},\n      [{args}],\n    ).then(\n      (result) => result.andThen<Unit>((_) => const Ok<Unit, SqlxError>(unit)),\n    );"
+        return render_query_body(
+            "dao_body_execute",
+            "templates/dao_body_execute.jinja",
+            sql,
+            args,
         );
     }
+    if ok_type.is_named("Unit") {
+        return render_query_body("dao_body_unit", "templates/dao_body_unit.jinja", sql, args);
+    }
     if is_scalar_type(ok_type) {
-        return format!(
-            "    return _db.fetchScalar<{}>(\n      {sql},\n      [{args}],\n    );",
-            DYNAMIC_TYPES.render(ok_type)
+        return render_template(
+            "dao_body_scalar",
+            include_str!("templates/dao_body_scalar.jinja"),
+            ScalarBodyContext {
+                ty: DYNAMIC_TYPES.render(ok_type),
+                sql,
+                args,
+            },
         );
     }
     if ok_type.is_named("List") {
         return render_list_body(ok_type, row_names, sql, args);
     }
     let Some(row_name) = ok_type.name() else {
-        return format!(
-            "      return Err<{}, SqlxError>(\n        SqlxError.decode('Unsupported DAO return type.'),\n      );",
-            DYNAMIC_TYPES.render(ok_type)
+        return render_template(
+            "dao_body_unsupported",
+            include_str!("templates/dao_body_unsupported.jinja"),
+            UnsupportedBodyContext {
+                ty: DYNAMIC_TYPES.render(ok_type),
+                message: "Unsupported DAO return type.",
+            },
         );
     };
     if ok_type.is_nullable() {
-        return format!(
-            "    return _db.fetchOptional<{row_name}>(\n      {sql},\n      [{args}],\n      {row_name}FromRow.fromRow,\n    );"
+        return render_template(
+            "dao_body_fetch_optional",
+            include_str!("templates/dao_body_fetch_optional.jinja"),
+            RowBodyContext {
+                row_name,
+                sql,
+                args,
+            },
         );
     }
-    format!(
-        "    return _db.fetchOne<{row_name}>(\n      {sql},\n      [{args}],\n      {row_name}FromRow.fromRow,\n    );"
+    render_template(
+        "dao_body_fetch_one",
+        include_str!("templates/dao_body_fetch_one.jinja"),
+        RowBodyContext {
+            row_name,
+            sql,
+            args,
+        },
     )
 }
 
@@ -184,19 +249,49 @@ fn render_list_body(
     args: &str,
 ) -> String {
     let Some(item) = ok_type.args().first() else {
-        return format!("    return _db.raw.fetch(\n      {sql},\n      [{args}],\n    );");
+        return render_query_body(
+            "dao_body_raw_fetch",
+            "templates/dao_body_raw_fetch.jinja",
+            sql,
+            args,
+        );
     };
     if item.is_named("Row") {
-        return format!("    return _db.raw.fetch(\n      {sql},\n      [{args}],\n    );");
+        return render_query_body(
+            "dao_body_raw_fetch",
+            "templates/dao_body_raw_fetch.jinja",
+            sql,
+            args,
+        );
     }
     let item_name = item.name().unwrap_or("Object");
     if row_names.contains(item_name) {
-        return format!(
-            "    return _db.fetchAll<{item_name}>(\n      {sql},\n      [{args}],\n      {item_name}FromRow.fromRow,\n    );"
+        return render_template(
+            "dao_body_fetch_all",
+            include_str!("templates/dao_body_fetch_all.jinja"),
+            ListBodyContext {
+                item_name,
+                sql,
+                args,
+            },
         );
     }
-    format!(
-        "    return Err<{}, SqlxError>(\n      SqlxError.decode('Unsupported DAO list item type.'),\n    );",
-        DYNAMIC_TYPES.render(ok_type)
+    render_template(
+        "dao_body_unsupported",
+        include_str!("templates/dao_body_unsupported.jinja"),
+        UnsupportedBodyContext {
+            ty: DYNAMIC_TYPES.render(ok_type),
+            message: "Unsupported DAO list item type.",
+        },
     )
+}
+
+fn render_query_body(name: &str, template: &'static str, sql: &str, args: &str) -> String {
+    let source = match template {
+        "templates/dao_body_execute.jinja" => include_str!("templates/dao_body_execute.jinja"),
+        "templates/dao_body_unit.jinja" => include_str!("templates/dao_body_unit.jinja"),
+        "templates/dao_body_raw_fetch.jinja" => include_str!("templates/dao_body_raw_fetch.jinja"),
+        _ => unreachable!("unknown DAO query body template"),
+    };
+    render_template(name, source, QueryBodyContext { sql, args })
 }

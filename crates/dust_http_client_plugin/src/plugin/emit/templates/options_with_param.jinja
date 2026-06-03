@@ -1,0 +1,13 @@
+    final _options =
+        {{ options_name }}?.copyWith(
+          method: '{{ verb }}',
+          headers: _headers,
+          extra: _extra,
+          contentType: {{ content_type }},
+        ) ??
+        Options(
+          method: '{{ verb }}',
+          headers: _headers,
+          extra: _extra,
+          contentType: {{ content_type }},
+        );

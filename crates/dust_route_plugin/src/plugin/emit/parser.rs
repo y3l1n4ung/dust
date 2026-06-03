@@ -1,17 +1,37 @@
+use dust_dart_emit::render_template;
 use dust_ir::{BuiltinType, TypeIr};
+use serde::Serialize;
 
 use crate::plugin::model::{RouteParamSpec, RouteSpec, RouterSpec};
 
 use super::route_classes::is_not_found_route;
 
+#[derive(Serialize)]
+struct ParserContext {
+    cases: String,
+    fallback: String,
+}
+
+#[derive(Serialize)]
+struct ParseCaseContext {
+    condition: String,
+    decoders: String,
+    null_checks: String,
+    route_instance: String,
+}
+
+#[derive(Serialize)]
+struct ParseDecoderContext<'a> {
+    name: &'a str,
+    expr: String,
+}
+
+#[derive(Serialize)]
+struct ParseNullCheckContext<'a> {
+    name: &'a str,
+}
+
 pub(super) fn render_parser(out: &mut String, spec: &RouterSpec) {
-    out.push_str("AppRoutePath parseAppRoute(Uri uri) {\n");
-    out.push_str("  final segments = uri.pathSegments;\n\n");
-    for route in &spec.routes {
-        render_parse_case(out, route);
-    }
-    out.push_str("  return _notFoundRoute(uri);\n");
-    out.push_str("}\n\n");
     let fallback = spec
         .not_found_route_class
         .as_deref()
@@ -28,24 +48,17 @@ pub(super) fn render_parser(out: &mut String, spec: &RouterSpec) {
                 })
         })
         .unwrap_or_else(|| format!("const {}()", spec.initial_route_class));
-    out.push_str(&format!(
-        "AppRoutePath _notFoundRoute(Uri uri) => {fallback};\n\n"
+    out.push_str(&render_template(
+        "route_parser",
+        include_str!("templates/route_parser.jinja"),
+        ParserContext {
+            cases: spec.routes.iter().map(render_parse_case).collect(),
+            fallback,
+        },
     ));
-    out.push_str("bool? _parseBool(String? value) {\n");
-    out.push_str("  return switch (value) {\n");
-    out.push_str("    'true' || '1' => true,\n");
-    out.push_str("    'false' || '0' => false,\n");
-    out.push_str("    null || '' => null,\n");
-    out.push_str("    _ => () {\n");
-    out.push_str("      assert(\n");
-    out.push_str("        false,\n");
-    out.push_str("        '_parseBool: unrecognised value \"$value\", treating as null',\n");
-    out.push_str("      );\n");
-    out.push_str("      return null;\n");
-    out.push_str("    }(),\n");
-    out.push_str("  };\n");
-    out.push_str("}\n\n");
+    out.push_str("\n\n");
 }
+
 fn route_constructor_with_fallback(route: &RouteSpec, fallback_expr: &str) -> String {
     if route.params.is_empty() {
         return format!("const {}()", route.route_class);
@@ -92,12 +105,13 @@ fn fallback_value_for_param(param: &RouteParamSpec, fallback_expr: &str) -> Stri
     }
 }
 
-fn render_parse_case(out: &mut String, route: &RouteSpec) {
+fn render_parse_case(route: &RouteSpec) -> String {
     if is_not_found_route(route) {
-        out.push_str("  if (segments.length == 1 && segments[0] == '404') {\n");
-        out.push_str("    return NotFoundRoute(path: uri.queryParameters['path'] ?? '');\n");
-        out.push_str("  }\n\n");
-        return;
+        return render_template(
+            "route_parse_not_found_case",
+            include_str!("templates/route_parse_not_found_case.jinja"),
+            (),
+        );
     }
 
     let path_segments = route
@@ -115,15 +129,20 @@ fn render_parse_case(out: &mut String, route: &RouteSpec) {
             conditions.push(format!("segments[{index}] == '{segment}'"));
         }
     }
-    out.push_str(&format!("  if ({}) {{\n", conditions.join(" && ")));
+    let mut decoders = Vec::new();
+    let mut null_checks = Vec::new();
     for (index, segment) in path_segments.iter().enumerate() {
         if let Some(name) = segment.strip_prefix(':') {
             let Some(param) = route.params.iter().find(|param| param.name == name) else {
                 continue;
             };
-            out.push_str(&format!(
-                "    final {name} = {};\n",
-                decode_path_expr(&param.ty, index)
+            decoders.push(render_template(
+                "route_parse_decoder",
+                include_str!("templates/route_parse_decoder.jinja"),
+                ParseDecoderContext {
+                    name,
+                    expr: decode_path_expr(&param.ty, index),
+                },
             ));
             if !matches!(
                 param.ty,
@@ -132,9 +151,11 @@ fn render_parse_case(out: &mut String, route: &RouteSpec) {
                     ..
                 }
             ) {
-                out.push_str(&format!("    if ({name} == null) {{\n"));
-                out.push_str("      return _notFoundRoute(uri);\n");
-                out.push_str("    }\n");
+                null_checks.push(render_template(
+                    "route_parse_null_check",
+                    include_str!("templates/route_parse_null_check.jinja"),
+                    ParseNullCheckContext { name },
+                ));
             }
         }
     }
@@ -146,12 +167,23 @@ fn render_parse_case(out: &mut String, route: &RouteSpec) {
             args.push(format!("{}: {}", param.name, decode_query_expr(param)));
         }
     }
-    out.push_str(&format!(
-        "    return {}({});\n",
-        route.route_class,
-        args.join(", ")
-    ));
-    out.push_str("  }\n\n");
+    render_template(
+        "route_parse_case",
+        include_str!("templates/route_parse_case.jinja"),
+        ParseCaseContext {
+            condition: conditions.join(" && "),
+            decoders: join_chunks(decoders),
+            null_checks: join_chunks(null_checks),
+            route_instance: format!("{}({})", route.route_class, args.join(", ")),
+        },
+    )
+}
+
+fn join_chunks(chunks: Vec<String>) -> String {
+    if chunks.is_empty() {
+        return String::new();
+    }
+    format!("{}\n", chunks.join("\n"))
 }
 
 pub(super) fn encode_param_expr(ty: &TypeIr, name: &str) -> String {

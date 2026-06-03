@@ -1,0 +1,6 @@
+    return _db.execute(
+      {{ sql }},
+      [{{ args }}],
+    ).then(
+      (result) => result.andThen<Unit>((_) => const Ok<Unit, SqlxError>(unit)),
+    );

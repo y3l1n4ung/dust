@@ -1,70 +1,84 @@
+use dust_dart_emit::render_template;
+use serde::Serialize;
+
 use crate::plugin::model::{RouteParamSpec, RouteSpec, RouterSpec};
 
 use super::formatting::{dart_type, upper_camel_identifier};
 
-pub(super) fn render_helpers(out: &mut String, spec: &RouterSpec) {
-    out.push_str("String routeLocation(AppRoutePath route) => route.location;\n\n");
-    out.push_str("String _routePath(\n");
-    out.push_str("  List<String> segments, {\n");
-    out.push_str("  Map<String, String>? queryParameters,\n");
-    out.push_str("}) {\n");
-    out.push_str("  final query = queryParameters?.isEmpty ?? true ? null : queryParameters;\n");
-    out.push_str(
-        "  final text = Uri(pathSegments: segments, queryParameters: query).toString();\n",
-    );
-    out.push_str("  if (text.isEmpty) return '/';\n");
-    out.push_str("  return text.startsWith('/') ? text : '/$text';\n");
-    out.push_str("}\n\n");
-    out.push_str("bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;\n\n");
-    out.push_str("List<RouteGuard<AppRoutePath>> routeGuards(\n");
-    out.push_str("  AppRoutePath route,\n");
-    out.push_str("  $AppRouter router,\n");
-    out.push_str(") {\n");
-    out.push_str("  return switch (route) {\n");
-    for route in &spec.routes {
-        if route.annotation.guards.is_empty() {
-            continue;
-        }
-        let pattern = format!("{}()", route.route_class);
-        let guards = route
-            .annotation
-            .guards
-            .iter()
-            .map(|guard| format!("router.create{}()", upper_camel_identifier(guard)))
-            .collect::<Vec<_>>()
-            .join(", ");
-        out.push_str(&format!("    {pattern} => [{guards}],\n"));
-    }
-    out.push_str("    _ => const [],\n");
-    out.push_str("  };\n");
-    out.push_str("}\n\n");
-    out.push_str("extension DustRouterContext on BuildContext {\n");
-    out.push_str("  DustRouterController<AppRoutePath> get router =>\n");
-    out.push_str("      DustRouter.of<AppRoutePath>(this);\n");
-    out.push_str("  AppRoutesNavigation get routes => AppRoutesNavigation(router);\n");
-    out.push_str("}\n\n");
-    out.push_str("final class AppRoutesNavigation {\n");
-    out.push_str("  const AppRoutesNavigation(this._router);\n\n");
-    out.push_str("  final DustRouterController<AppRoutePath> _router;\n\n");
-    for route in &spec.routes {
-        let route_ctor = format!("{}({})", route.route_class, render_route_args(route));
-        let params = render_factory_params(route);
-        let factory = format!("RouteNavigation<AppRoutePath> {}({params})", route.name,);
-        let body = format!("RouteNavigation(_router, {route_ctor})");
-        if factory.len() + body.len() + 7 <= 80 {
-            out.push_str(&format!("  {factory} => {body};\n\n"));
-        } else {
-            out.push_str(&format!("  {factory} =>\n      {body};\n\n"));
-        }
-    }
-    out.push_str("  void pop() => _router.pop();\n");
-    out.push_str("}\n\n");
-    out.push_str("final class RouteNavigation<T extends Object> {\n");
-    out.push_str("  const RouteNavigation(this._router, this.route);\n\n");
-    out.push_str("  final DustRouterController<T> _router;\n  final T route;\n\n");
-    out.push_str("  void go() => _router.go(route);\n  void push() => _router.push(route);\n  void replace() => _router.replace(route);\n");
-    out.push_str("}\n\n");
+#[derive(Serialize)]
+struct HelpersContext {
+    guard_cases: String,
+    factories: String,
 }
+
+#[derive(Serialize)]
+struct GuardCaseContext {
+    pattern: String,
+    guards: String,
+}
+
+#[derive(Serialize)]
+struct FactoryContext {
+    factory: String,
+    body: String,
+}
+
+pub(super) fn render_helpers(out: &mut String, spec: &RouterSpec) {
+    out.push_str(&render_template(
+        "route_helpers",
+        include_str!("templates/route_helpers.jinja"),
+        HelpersContext {
+            guard_cases: render_guard_cases(spec),
+            factories: spec.routes.iter().map(render_route_factory).collect(),
+        },
+    ));
+    out.push_str("\n\n");
+}
+
+fn render_guard_cases(spec: &RouterSpec) -> String {
+    spec.routes
+        .iter()
+        .filter(|route| !route.annotation.guards.is_empty())
+        .map(|route| {
+            let guards = route
+                .annotation
+                .guards
+                .iter()
+                .map(|guard| format!("router.create{}()", upper_camel_identifier(guard)))
+                .collect::<Vec<_>>()
+                .join(", ");
+            render_template(
+                "route_guard_case",
+                include_str!("templates/route_guard_case.jinja"),
+                GuardCaseContext {
+                    pattern: format!("{}()", route.route_class),
+                    guards,
+                },
+            )
+        })
+        .collect()
+}
+
+fn render_route_factory(route: &RouteSpec) -> String {
+    let route_ctor = format!("{}({})", route.route_class, render_route_args(route));
+    let params = render_factory_params(route);
+    let factory = format!("RouteNavigation<AppRoutePath> {}({params})", route.name);
+    let body = format!("RouteNavigation(_router, {route_ctor})");
+    render_template(
+        if factory.len() + body.len() + 7 <= 80 {
+            "route_factory_inline"
+        } else {
+            "route_factory_multiline"
+        },
+        if factory.len() + body.len() + 7 <= 80 {
+            include_str!("templates/route_factory_inline.jinja")
+        } else {
+            include_str!("templates/route_factory_multiline.jinja")
+        },
+        FactoryContext { factory, body },
+    )
+}
+
 fn render_factory_params(route: &RouteSpec) -> String {
     let params = route
         .params

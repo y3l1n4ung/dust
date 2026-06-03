@@ -1,0 +1,19 @@
+{{ assignment }}      _setStreamType<{{ stream_type }}>(
+        _options
+            .compose(
+              _dio.options,
+              {{ path_expr }},
+              queryParameters: _queryParameters,
+              data: _data,
+              cancelToken: {{ cancel_token }},
+              onSendProgress: {{ on_send_progress }},
+              onReceiveProgress: {{ on_receive_progress }},
+            )
+            .copyWith(
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                {{ base_url_expr }},
+              ),
+            ),
+      ),
+    );

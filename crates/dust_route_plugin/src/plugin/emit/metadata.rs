@@ -1,14 +1,51 @@
-use super::{
-    formatting::{RenderedField, write_indent},
-    shell::effective_shell,
-};
+use dust_dart_emit::render_template;
+use serde::Serialize;
+
+use super::shell::effective_shell;
 use crate::plugin::model::RouteSpec;
 
+#[derive(Serialize)]
+struct MetadataListContext {
+    nodes: String,
+}
+
+#[derive(Serialize)]
+struct MetadataEntryContext {
+    indent: String,
+    node: String,
+}
+
+#[derive(Serialize)]
+struct GeneratedGroupContext {
+    indent: String,
+    path: String,
+    children: String,
+}
+
+#[derive(Serialize)]
+struct GeneratedRouteContext {
+    indent: String,
+    fields: String,
+    children: String,
+}
+
+#[derive(Serialize)]
+struct GeneratedChildrenContext {
+    prefix: &'static str,
+    indent: String,
+    nodes: String,
+}
+
 pub(super) fn render_route_metadata(out: &mut String, routes: &[RouteSpec]) {
-    out.push_str("const List<GeneratedRoute> $appRoutes = [\n");
     let tree = MetadataTree::build(routes);
-    render_metadata_nodes(out, &tree, routes, 1, true);
-    out.push_str("];\n\n");
+    out.push_str(&render_template(
+        "route_metadata_list",
+        include_str!("templates/route_metadata_list.jinja"),
+        MetadataListContext {
+            nodes: render_metadata_nodes(&tree, routes, 1, true),
+        },
+    ));
+    out.push_str("\n\n");
 }
 
 #[derive(Debug, Default)]
@@ -64,147 +101,154 @@ impl MetadataTree {
 }
 
 fn render_metadata_nodes(
-    out: &mut String,
     node: &MetadataTree,
     routes: &[RouteSpec],
     indent: usize,
     root: bool,
-) {
+) -> String {
+    let mut entries = Vec::new();
     if let Some(index) = node.route_index {
-        write_indent(out, indent);
         let children = if root { &[] } else { node.children.as_slice() };
-        render_generated_route(
-            out,
-            routes[index].path.as_str(),
-            &routes[index],
-            children,
-            routes,
+        entries.push(render_metadata_entry(
             indent,
-        );
-        out.push_str(",\n");
+            render_generated_route(
+                routes[index].path.as_str(),
+                &routes[index],
+                children,
+                routes,
+                indent,
+            ),
+        ));
     }
     for child in &node.children {
-        write_indent(out, indent);
         let path = if root {
             format!("/{}", child.segment)
         } else {
             child.segment.clone()
         };
-        if let Some(index) = child.node.route_index {
-            render_generated_route(
-                out,
-                &path,
-                &routes[index],
-                &child.node.children,
-                routes,
-                indent,
-            );
+        let rendered = if let Some(index) = child.node.route_index {
+            render_generated_route(&path, &routes[index], &child.node.children, routes, indent)
         } else {
-            render_generated_group(out, &path, &child.node.children, routes, indent);
-        }
-        out.push_str(",\n");
+            render_generated_group(&path, &child.node.children, routes, indent)
+        };
+        entries.push(render_metadata_entry(indent, rendered));
     }
+    entries.join("")
+}
+
+fn render_metadata_entry(indent: usize, node: String) -> String {
+    render_template(
+        "route_metadata_entry",
+        include_str!("templates/route_metadata_entry.jinja"),
+        MetadataEntryContext {
+            indent: indent_str(indent),
+            node: node.trim_end().to_owned(),
+        },
+    )
 }
 
 fn render_generated_group(
-    out: &mut String,
     path: &str,
     children: &[MetadataChild],
     routes: &[RouteSpec],
     indent: usize,
-) {
-    out.push_str("GeneratedRoute(\n");
-    write_indent(out, indent + 1);
-    out.push_str(&format!("'{path}'"));
-    render_generated_children(out, children, routes, indent);
-    out.push('\n');
-    write_indent(out, indent);
-    out.push(')');
+) -> String {
+    render_template(
+        "generated_group",
+        include_str!("templates/generated_group.jinja"),
+        GeneratedGroupContext {
+            indent: indent_str(indent),
+            path: path.to_owned(),
+            children: render_generated_children_with_prefix(children, routes, indent, true),
+        },
+    )
 }
 
 fn render_generated_route(
-    out: &mut String,
     path: &str,
     route: &RouteSpec,
     children: &[MetadataChild],
     routes: &[RouteSpec],
     indent: usize,
-) {
-    out.push_str("GeneratedRoute(\n");
+) -> String {
     let mut fields = vec![
-        RenderedField::line(format!("'{path}',")),
-        RenderedField::line(format!("page: {},", route.page_class)),
-        RenderedField::inline(format!("name: '{}',", route.name)),
+        format!("{}  '{path}',\n", indent_str(indent)),
+        format!("{}  page: {},\n", indent_str(indent), route.page_class),
+        format!("{}  name: '{}',\n", indent_str(indent), route.name),
     ];
     if let Some(shell) = effective_shell(route, routes) {
-        fields.push(RenderedField::inline(format!("shell: {shell},")));
+        fields.push(format!("{}  shell: {shell},\n", indent_str(indent)));
     }
     if route.annotation.guards_configured {
-        fields.push(RenderedField::inline(format!(
-            "guards: [{}],",
+        fields.push(format!(
+            "{}  guards: [{}],\n",
+            indent_str(indent),
             route.annotation.guards.join(", ")
-        )));
+        ));
     }
     if let Some(transition) = &route.annotation.transition {
-        fields.push(RenderedField::inline(format!(
-            "transition: {},",
+        fields.push(format!(
+            "{}  transition: {},\n",
+            indent_str(indent),
             transition
                 .strip_prefix("const ")
                 .unwrap_or(transition.as_str())
-        )));
+        ));
     }
     if route.annotation.fullscreen_dialog {
-        fields.push(RenderedField::inline("fullscreenDialog: true,"));
+        fields.push(format!("{}  fullscreenDialog: true,\n", indent_str(indent)));
     }
     if !route.annotation.maintain_state {
-        fields.push(RenderedField::inline("maintainState: false,"));
+        fields.push(format!("{}  maintainState: false,\n", indent_str(indent)));
     }
-    for field in fields {
-        field.render(out, indent + 1);
-    }
-    render_generated_children(out, children, routes, indent);
-    out.push('\n');
-    write_indent(out, indent);
-    out.push(')');
+    render_template(
+        "generated_route",
+        include_str!("templates/generated_route.jinja"),
+        GeneratedRouteContext {
+            indent: indent_str(indent),
+            fields: fields.join(""),
+            children: render_generated_children_with_prefix(children, routes, indent, false),
+        },
+    )
 }
 
-fn render_generated_children(
-    out: &mut String,
+fn render_generated_children_with_prefix(
     children: &[MetadataChild],
     routes: &[RouteSpec],
     indent: usize,
-) {
+    needs_prefix_comma: bool,
+) -> String {
     if children.is_empty() {
-        return;
+        return String::new();
     }
-    if !out.ends_with(',') {
-        out.push(',');
-    }
-    out.push('\n');
-    write_indent(out, indent + 1);
-    out.push_str("routes: [\n");
-    for child in children {
-        write_indent(out, indent + 2);
-        if let Some(index) = child.node.route_index {
-            render_generated_route(
-                out,
-                &child.segment,
-                &routes[index],
-                &child.node.children,
-                routes,
-                indent + 2,
-            );
-        } else {
-            render_generated_group(
-                out,
-                &child.segment,
-                &child.node.children,
-                routes,
-                indent + 2,
-            );
-        }
-        out.push_str(",\n");
-    }
-    write_indent(out, indent + 1);
-    out.push_str("],");
+    let nodes = children
+        .iter()
+        .map(|child| {
+            let rendered = if let Some(index) = child.node.route_index {
+                render_generated_route(
+                    &child.segment,
+                    &routes[index],
+                    &child.node.children,
+                    routes,
+                    indent + 2,
+                )
+            } else {
+                render_generated_group(&child.segment, &child.node.children, routes, indent + 2)
+            };
+            render_metadata_entry(indent + 2, rendered)
+        })
+        .collect();
+    render_template(
+        "generated_children",
+        include_str!("templates/generated_children.jinja"),
+        GeneratedChildrenContext {
+            prefix: if needs_prefix_comma { ",\n" } else { "" },
+            indent: indent_str(indent),
+            nodes,
+        },
+    )
+}
+
+fn indent_str(indent: usize) -> String {
+    "  ".repeat(indent)
 }

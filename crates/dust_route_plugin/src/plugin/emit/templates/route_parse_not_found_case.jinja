@@ -1,0 +1,4 @@
+  if (segments.length == 1 && segments[0] == '404') {
+    return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
+  }
+

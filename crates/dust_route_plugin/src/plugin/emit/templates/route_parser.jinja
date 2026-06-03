@@ -1,0 +1,22 @@
+AppRoutePath parseAppRoute(Uri uri) {
+  final segments = uri.pathSegments;
+
+{{ cases }}  return _notFoundRoute(uri);
+}
+
+AppRoutePath _notFoundRoute(Uri uri) => {{ fallback }};
+
+bool? _parseBool(String? value) {
+  return switch (value) {
+    'true' || '1' => true,
+    'false' || '0' => false,
+    null || '' => null,
+    _ => () {
+      assert(
+        false,
+        '_parseBool: unrecognised value "$value", treating as null',
+      );
+      return null;
+    }(),
+  };
+}

@@ -1,5 +1,8 @@
 use std::collections::BTreeSet;
 
+use dust_dart_emit::render_template;
+use serde::Serialize;
+
 use crate::plugin::model::{RouteSpec, RouterSpec};
 
 use super::{
@@ -7,22 +10,56 @@ use super::{
     patterns::route_switch_pattern,
 };
 
+#[derive(Serialize)]
+struct RestoreStackContext {
+    cases: String,
+}
+
+#[derive(Serialize)]
+struct RestoreCaseContext {
+    pattern: String,
+    entries: String,
+}
+
+#[derive(Serialize)]
+struct RestoreEntryContext<'a> {
+    entry: &'a str,
+}
+
 pub(super) fn render_restore_stack(out: &mut String, spec: &RouterSpec) {
-    out.push_str("RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {\n");
-    out.push_str("  return switch (route) {\n");
-    for route in &spec.routes {
-        let bound_params = restore_stack_bound_params(route, spec);
-        out.push_str(&format!(
-            "    {} => [\n",
-            route_switch_pattern(route, Some(&bound_params))
-        ));
-        for entry in restore_stack_entries(route, spec) {
-            out.push_str(&format!("      {entry},\n"));
-        }
-        out.push_str("    ],\n");
-    }
-    out.push_str("  };\n");
-    out.push_str("}\n\n");
+    let cases = spec
+        .routes
+        .iter()
+        .map(|route| render_restore_case(route, spec))
+        .collect();
+    out.push_str(&render_template(
+        "restore_stack",
+        include_str!("templates/restore_stack.jinja"),
+        RestoreStackContext { cases },
+    ));
+    out.push_str("\n\n");
+}
+
+fn render_restore_case(route: &RouteSpec, spec: &RouterSpec) -> String {
+    let bound_params = restore_stack_bound_params(route, spec);
+    let entries = restore_stack_entries(route, spec)
+        .iter()
+        .map(|entry| {
+            render_template(
+                "restore_entry",
+                include_str!("templates/restore_entry.jinja"),
+                RestoreEntryContext { entry },
+            )
+        })
+        .collect();
+    render_template(
+        "restore_case",
+        include_str!("templates/restore_case.jinja"),
+        RestoreCaseContext {
+            pattern: route_switch_pattern(route, Some(&bound_params)),
+            entries,
+        },
+    )
 }
 
 fn restore_stack_entries(route: &RouteSpec, spec: &RouterSpec) -> Vec<String> {

@@ -24,6 +24,57 @@ struct EndpointMethodContext<'a> {
     body: String,
 }
 
+#[derive(Serialize)]
+struct EndpointBodyContext {
+    setup: String,
+    request_data: String,
+    options: String,
+    fetch: String,
+    completion: String,
+}
+
+#[derive(Serialize)]
+struct NameContext<'a> {
+    name: &'a str,
+}
+
+#[derive(Serialize)]
+struct MapEntryContext<'a> {
+    target: &'a str,
+    name: &'a str,
+    key: String,
+}
+
+#[derive(Serialize)]
+struct MapMergeContext<'a> {
+    target: &'a str,
+    name: &'a str,
+}
+
+#[derive(Serialize)]
+struct OptionsContext<'a> {
+    options_name: &'a str,
+    verb: &'a str,
+    content_type: &'a str,
+}
+
+#[derive(Serialize)]
+struct PlainOptionsContext<'a> {
+    verb: &'a str,
+    content_type: &'a str,
+}
+
+#[derive(Serialize)]
+struct FetchContext {
+    assignment: String,
+    stream_type: String,
+    path_expr: String,
+    cancel_token: String,
+    on_send_progress: String,
+    on_receive_progress: String,
+    base_url_expr: String,
+}
+
 pub(crate) fn render_client_class(spec: &ClientSpec<'_>) -> String {
     format!(
         "{}\n",
@@ -49,71 +100,21 @@ fn render_endpoint_method(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) ->
     } else {
         "async"
     };
-    let mut out = String::new();
-    out.push_str("    final _queryParameters = <String, dynamic>{};\n");
-    out.push_str("    final _headers = <String, dynamic>{};\n");
-    out.push_str("    final _extra = <String, dynamic>{};\n");
+    let body = render_endpoint_body(spec, endpoint);
+    render_template(
+        "endpoint_method",
+        include_str!("templates/endpoint_method.jinja"),
+        EndpointMethodContext {
+            return_type: render_type(&endpoint.method.return_type),
+            method_name: &endpoint.method.name,
+            params: render_method_parameters(&endpoint.method.params),
+            async_marker,
+            body,
+        },
+    )
+}
 
-    if let Some(options_param) = option_param(endpoint) {
-        if options_param.ty.is_nullable() {
-            out.push_str(&format!(
-                "    if ({0}?.headers != null) _headers.addAll({0}!.headers!);\n",
-                options_param.name
-            ));
-            out.push_str(&format!(
-                "    if ({0}?.extra != null) _extra.addAll({0}!.extra!);\n",
-                options_param.name
-            ));
-        } else {
-            out.push_str(&format!(
-                "    if ({0}.headers != null) _headers.addAll({0}.headers!);\n",
-                options_param.name
-            ));
-            out.push_str(&format!(
-                "    if ({0}.extra != null) _extra.addAll({0}.extra!);\n",
-                options_param.name
-            ));
-        }
-    }
-
-    for (key, value) in &endpoint.headers {
-        let key = crate::plugin::util::escape_single_quoted(key);
-        let value = crate::plugin::util::escape_single_quoted(value);
-        out.push_str(&format!("    _headers['{key}'] = '{value}';\n"));
-    }
-    for param in &endpoint.params {
-        match param {
-            EndpointParam::Query { param, key } => push_map_entry(
-                &mut out,
-                "_queryParameters",
-                &param.name,
-                key,
-                param.ty.is_nullable(),
-            ),
-            EndpointParam::Queries { param } => push_map_merge(
-                &mut out,
-                "_queryParameters",
-                &param.name,
-                param.ty.is_nullable(),
-            ),
-            EndpointParam::Header { param, key } => push_map_entry(
-                &mut out,
-                "_headers",
-                &param.name,
-                key,
-                param.ty.is_nullable(),
-            ),
-            EndpointParam::HeaderMap { param } => {
-                push_map_merge(&mut out, "_headers", &param.name, param.ty.is_nullable())
-            }
-            EndpointParam::Extra { param, key } => {
-                push_map_entry(&mut out, "_extra", &param.name, key, param.ty.is_nullable())
-            }
-            _ => {}
-        }
-    }
-
-    out.push_str(&render_request_data(endpoint));
+fn render_endpoint_body(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) -> String {
     let content_type = match endpoint.request_mode {
         crate::plugin::model::RequestMode::Standard => "null".to_owned(),
         crate::plugin::model::RequestMode::FormUrlEncoded => {
@@ -121,21 +122,6 @@ fn render_endpoint_method(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) ->
         }
         crate::plugin::model::RequestMode::MultiPart => "'multipart/form-data'".to_owned(),
     };
-
-    if let Some(options_name) = option_param(endpoint).map(|param| param.name.as_str()) {
-        out.push_str(&format!(
-            "    final _options =\n        {0}?.copyWith(\n          method: '{1}',\n          headers: _headers,\n          extra: _extra,\n          contentType: {2},\n        ) ??\n        Options(\n          method: '{1}',\n          headers: _headers,\n          extra: _extra,\n          contentType: {2},\n        );\n",
-            options_name,
-            endpoint.verb.as_str(),
-            content_type
-        ));
-    } else {
-        out.push_str(&format!(
-            "    final _options = Options(\n      method: '{}',\n      headers: _headers,\n      extra: _extra,\n      contentType: {},\n    );\n",
-            endpoint.verb.as_str(),
-            content_type
-        ));
-    }
 
     let base_url_expr = match &spec.base_url {
         Some(url) => format!(
@@ -157,68 +143,140 @@ fn render_endpoint_method(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) ->
     })
     .unwrap_or("null");
 
-    if endpoint.return_spec.is_stream() {
-        out.push_str("    final _result = await _dio.fetch<ResponseBody>(\n");
-    } else if is_void_type(&endpoint.return_spec.ty) && !endpoint.return_spec.raw_response {
-        out.push_str(&format!(
-            "    await _dio.fetch<{}>(\n",
-            render_fetch_type(&endpoint.return_spec.ty)
-        ));
-    } else {
-        out.push_str(&format!(
-            "    final _result = await _dio.fetch<{}>(\n",
-            render_fetch_type(&endpoint.return_spec.ty)
-        ));
-    }
     let stream_type = if endpoint.return_spec.is_stream() {
         "ResponseBody".to_owned()
     } else {
         render_type(&endpoint.return_spec.ty)
     };
-    out.push_str(&format!("      _setStreamType<{}>(\n", stream_type));
-    out.push_str("        _options\n");
-    out.push_str("            .compose(\n");
-    out.push_str("              _dio.options,\n");
-    out.push_str(&format!(
-        "              {},\n",
-        render_path_expression(endpoint)
-    ));
-    out.push_str("              queryParameters: _queryParameters,\n");
-    out.push_str("              data: _data,\n");
-    out.push_str(&format!("              cancelToken: {},\n", cancel_token));
-    out.push_str(&format!(
-        "              onSendProgress: {},\n",
-        on_send_progress
-    ));
-    out.push_str(&format!(
-        "              onReceiveProgress: {},\n",
-        on_receive_progress
-    ));
-    out.push_str("            )\n");
-    out.push_str("            .copyWith(\n");
-    out.push_str("              baseUrl: _combineBaseUrls(\n");
-    out.push_str("                _dio.options.baseUrl,\n");
-    out.push_str(&format!("                {},\n", base_url_expr));
-    out.push_str("              ),\n");
-    out.push_str("            ),\n");
-    out.push_str("      ),\n");
-    out.push_str("    );\n");
-    if endpoint.return_spec.is_stream() {
-        out.push_str(&render_stream_yield(endpoint));
+
+    let assignment = if endpoint.return_spec.is_stream() {
+        "    final _result = await _dio.fetch<ResponseBody>(\n".to_owned()
+    } else if is_void_type(&endpoint.return_spec.ty) && !endpoint.return_spec.raw_response {
+        format!(
+            "    await _dio.fetch<{}>(\n",
+            render_fetch_type(&endpoint.return_spec.ty)
+        )
     } else {
-        out.push_str(&render_response_return(spec, endpoint));
-    }
+        format!(
+            "    final _result = await _dio.fetch<{}>(\n",
+            render_fetch_type(&endpoint.return_spec.ty)
+        )
+    };
+
     render_template(
-        "endpoint_method",
-        include_str!("templates/endpoint_method.jinja"),
-        EndpointMethodContext {
-            return_type: render_type(&endpoint.method.return_type),
-            method_name: &endpoint.method.name,
-            params: render_method_parameters(&endpoint.method.params),
-            async_marker,
-            body: out,
+        "endpoint_body",
+        include_str!("templates/endpoint_body.jinja"),
+        EndpointBodyContext {
+            setup: render_endpoint_setup(endpoint),
+            request_data: chunk(render_request_data(endpoint)),
+            options: chunk(render_options(endpoint, &content_type)),
+            fetch: chunk(render_template(
+                "dio_fetch",
+                include_str!("templates/dio_fetch.jinja"),
+                FetchContext {
+                    assignment,
+                    stream_type,
+                    path_expr: render_path_expression(endpoint),
+                    cancel_token: cancel_token.to_owned(),
+                    on_send_progress: on_send_progress.to_owned(),
+                    on_receive_progress: on_receive_progress.to_owned(),
+                    base_url_expr,
+                },
+            )),
+            completion: if endpoint.return_spec.is_stream() {
+                chunk(render_stream_yield(endpoint))
+            } else {
+                chunk(render_response_return(spec, endpoint))
+            },
         },
     )
+}
+
+fn render_endpoint_setup(endpoint: &EndpointSpec<'_>) -> String {
+    let mut setup = Vec::new();
+    if let Some(options_param) = option_param(endpoint) {
+        setup.push(render_template(
+            if options_param.ty.is_nullable() {
+                "option_param_nullable"
+            } else {
+                "option_param_nonnullable"
+            },
+            if options_param.ty.is_nullable() {
+                include_str!("templates/option_param_nullable.jinja")
+            } else {
+                include_str!("templates/option_param_nonnullable.jinja")
+            },
+            NameContext {
+                name: &options_param.name,
+            },
+        ));
+    }
+
+    for (key, value) in &endpoint.headers {
+        setup.push(render_map_entry(
+            "_headers",
+            &format!("'{}'", crate::plugin::util::escape_single_quoted(value)),
+            key,
+            false,
+        ));
+    }
+    for param in &endpoint.params {
+        match param {
+            EndpointParam::Query { param, key } => setup.push(render_map_entry(
+                "_queryParameters",
+                &param.name,
+                key,
+                param.ty.is_nullable(),
+            )),
+            EndpointParam::Queries { param } => setup.push(render_map_merge(
+                "_queryParameters",
+                &param.name,
+                param.ty.is_nullable(),
+            )),
+            EndpointParam::Header { param, key } => setup.push(render_map_entry(
+                "_headers",
+                &param.name,
+                key,
+                param.ty.is_nullable(),
+            )),
+            EndpointParam::HeaderMap { param } => setup.push(render_map_merge(
+                "_headers",
+                &param.name,
+                param.ty.is_nullable(),
+            )),
+            EndpointParam::Extra { param, key } => setup.push(render_map_entry(
+                "_extra",
+                &param.name,
+                key,
+                param.ty.is_nullable(),
+            )),
+            _ => {}
+        }
+    }
+    join_chunks(setup)
+}
+
+fn render_options(endpoint: &EndpointSpec<'_>, content_type: &str) -> String {
+    if let Some(options_name) = option_param(endpoint).map(|param| param.name.as_str()) {
+        render_template(
+            "options_with_param",
+            include_str!("templates/options_with_param.jinja"),
+            OptionsContext {
+                options_name,
+                verb: endpoint.verb.as_str(),
+                content_type,
+            },
+        )
+    } else {
+        render_template(
+            "options_plain",
+            include_str!("templates/options_plain.jinja"),
+            PlainOptionsContext {
+                verb: endpoint.verb.as_str(),
+                content_type,
+            },
+        )
+    }
 }
 
 fn render_method_parameters(params: &[dust_ir::MethodParamIr]) -> String {
@@ -273,23 +331,53 @@ where
         })
 }
 
-fn push_map_entry(out: &mut String, target: &str, name: &str, key: &str, nullable: bool) {
-    let key = crate::plugin::util::escape_single_quoted(key);
+fn render_map_entry(target: &str, name: &str, key: &str, nullable: bool) -> String {
     if nullable {
-        out.push_str(&format!(
-            "    if ({name} != null) {target}['{key}'] = {name};\n"
-        ));
+        render_template(
+            "map_entry_nullable",
+            include_str!("templates/map_entry_nullable.jinja"),
+            MapEntryContext {
+                target,
+                name,
+                key: crate::plugin::util::escape_single_quoted(key),
+            },
+        )
     } else {
-        out.push_str(&format!("    {target}['{key}'] = {name};\n"));
+        render_template(
+            "map_entry",
+            include_str!("templates/map_entry.jinja"),
+            MapEntryContext {
+                target,
+                name,
+                key: crate::plugin::util::escape_single_quoted(key),
+            },
+        )
     }
 }
 
-fn push_map_merge(out: &mut String, target: &str, name: &str, nullable: bool) {
+fn render_map_merge(target: &str, name: &str, nullable: bool) -> String {
     if nullable {
-        out.push_str(&format!(
-            "    if ({name} != null) {target}.addAll({name});\n"
-        ));
+        render_template(
+            "map_merge_nullable",
+            include_str!("templates/map_merge_nullable.jinja"),
+            MapMergeContext { target, name },
+        )
     } else {
-        out.push_str(&format!("    {target}.addAll({name});\n"));
+        render_template(
+            "map_merge",
+            include_str!("templates/map_merge.jinja"),
+            MapMergeContext { target, name },
+        )
     }
+}
+
+fn chunk(mut value: String) -> String {
+    if !value.is_empty() && !value.ends_with('\n') {
+        value.push('\n');
+    }
+    value
+}
+
+fn join_chunks(chunks: Vec<String>) -> String {
+    chunks.into_iter().map(chunk).collect()
 }

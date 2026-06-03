@@ -20,6 +20,18 @@ struct LocationContext {
     body: String,
 }
 
+#[derive(Serialize)]
+struct LocationQueryContext {
+    name: String,
+    encode: String,
+    default_value: String,
+}
+
+#[derive(Serialize)]
+struct LocationReturnContext {
+    segments: String,
+}
+
 pub(super) fn render_route_classes(out: &mut String, spec: &RouterSpec) {
     out.push_str(&render_template(
         "app_route_base",
@@ -88,19 +100,22 @@ pub(super) fn is_not_found_route(route: &RouteSpec) -> bool {
     route.route_class == "NotFoundRoute" && route.params.iter().any(|param| param.name == "path")
 }
 fn render_location_getter(route: &RouteSpec) -> String {
-    let mut body = String::new();
-    render_location_body(&mut body, route);
     render_template(
         "location_getter",
         include_str!("templates/location_getter.jinja"),
-        LocationContext { body },
+        LocationContext {
+            body: render_location_body(route),
+        },
     )
 }
 
-fn render_location_body(out: &mut String, route: &RouteSpec) {
+fn render_location_body(route: &RouteSpec) -> String {
     if is_not_found_route(route) {
-        out.push_str("    return '/404?path=${Uri.encodeComponent(path)}';\n");
-        return;
+        return render_template(
+            "location_not_found_body",
+            include_str!("templates/location_not_found_body.jinja"),
+            (),
+        );
     }
 
     let query_params = route
@@ -108,22 +123,38 @@ fn render_location_body(out: &mut String, route: &RouteSpec) {
         .iter()
         .filter(|param| !param.is_path)
         .collect::<Vec<_>>();
+    let mut body = Vec::new();
     if !query_params.is_empty() {
-        out.push_str("    final query = <String, String>{};\n");
+        body.push(render_template(
+            "location_query_init",
+            include_str!("templates/location_query_init.jinja"),
+            (),
+        ));
         for param in query_params {
             let encode = encode_param_expr(&param.ty, &param.name);
+            let context = LocationQueryContext {
+                name: param.name.clone(),
+                encode,
+                default_value: param.default_value_source.clone().unwrap_or_default(),
+            };
             if param.ty.is_nullable() {
-                out.push_str(&format!(
-                    "    if ({0} != null) {{\n      query['{0}'] = {1};\n    }}\n",
-                    param.name, encode
+                body.push(render_template(
+                    "location_query_nullable",
+                    include_str!("templates/location_query_nullable.jinja"),
+                    context,
                 ));
-            } else if let Some(default_value) = &param.default_value_source {
-                out.push_str(&format!(
-                    "    if ({0} != {default_value}) {{\n      query['{0}'] = {1};\n    }}\n",
-                    param.name, encode
+            } else if param.default_value_source.is_some() {
+                body.push(render_template(
+                    "location_query_default",
+                    include_str!("templates/location_query_default.jinja"),
+                    context,
                 ));
             } else {
-                out.push_str(&format!("    query['{}'] = {};\n", param.name, encode));
+                body.push(render_template(
+                    "location_query_required",
+                    include_str!("templates/location_query_required.jinja"),
+                    context,
+                ));
             }
         }
     }
@@ -155,17 +186,32 @@ fn render_location_body(out: &mut String, route: &RouteSpec) {
         } else {
             multiline_segments
         };
-        out.push_str(&format!(
-            "    return _routePath({segment_expr}, queryParameters: query.isEmpty ? null : query);\n"
+        body.push(render_template(
+            "location_return_query",
+            include_str!("templates/location_return_query.jinja"),
+            LocationReturnContext {
+                segments: segment_expr,
+            },
         ));
     } else if segments.is_empty() {
-        out.push_str("    return '/';\n");
+        body.push(render_template(
+            "location_return_root",
+            include_str!("templates/location_return_root.jinja"),
+            (),
+        ));
     } else {
         let segment_expr = if inline_segments.len() <= 60 {
             inline_segments
         } else {
             multiline_segments
         };
-        out.push_str(&format!("    return _routePath({segment_expr});\n"));
+        body.push(render_template(
+            "location_return_path",
+            include_str!("templates/location_return_path.jinja"),
+            LocationReturnContext {
+                segments: segment_expr,
+            },
+        ));
     }
+    format!("{}\n", body.join("\n"))
 }

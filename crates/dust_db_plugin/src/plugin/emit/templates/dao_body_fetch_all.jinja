@@ -1,0 +1,5 @@
+    return _db.fetchAll<{{ item_name }}>(
+      {{ sql }},
+      [{{ args }}],
+      {{ item_name }}FromRow.fromRow,
+    );
