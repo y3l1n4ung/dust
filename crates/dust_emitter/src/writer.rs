@@ -36,18 +36,6 @@ impl DartWriter {
         }
     }
 
-    /// Starts one Dart block like `mixin Foo {`.
-    pub(crate) fn start_block(&mut self, header: impl AsRef<str>) {
-        self.write_indented_line(&format!("{} {{", header.as_ref()));
-        self.indent += 1;
-    }
-
-    /// Ends the current Dart block with `}`.
-    pub(crate) fn end_block(&mut self) {
-        self.indent = self.indent.saturating_sub(1);
-        self.write_indented_line("}");
-    }
-
     /// Finalizes the output buffer.
     pub(crate) fn finish(self) -> String {
         self.buffer
@@ -65,33 +53,29 @@ mod tests {
     use super::DartWriter;
 
     #[test]
-    fn writer_renders_blocks_with_stable_indentation() {
+    fn writer_renders_lines_with_stable_spacing() {
         let mut writer = DartWriter::new();
         writer.line("// GENERATED");
         writer.blank_line();
-        writer.start_block("mixin _$User on User");
         writer.line("@override");
         writer.line("String toString() => 'User()';");
-        writer.end_block();
 
         assert_eq!(
             writer.finish(),
-            "// GENERATED\n\nmixin _$User on User {\n  @override\n  String toString() => 'User()';\n}\n"
+            "// GENERATED\n\n@override\nString toString() => 'User()';\n"
         );
     }
 
     #[test]
     fn writer_raw_block_preserves_internal_blank_lines() {
         let mut writer = DartWriter::new();
-        writer.start_block("mixin _$User on User");
         writer.raw_block(
             "@override\nString toString() => 'User()';\n\n@override\nint get hashCode => 1;",
         );
-        writer.end_block();
 
         assert_eq!(
             writer.finish(),
-            "mixin _$User on User {\n  @override\n  String toString() => 'User()';\n\n  @override\n  int get hashCode => 1;\n}\n"
+            "@override\nString toString() => 'User()';\n\n@override\nint get hashCode => 1;\n"
         );
     }
 }

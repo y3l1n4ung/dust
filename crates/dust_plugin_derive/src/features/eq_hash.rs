@@ -1,9 +1,21 @@
-use std::fmt::Write;
-
+use dust_dart_emit::render_template;
 use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassIr, LibraryIr, TypeIr};
+use serde::Serialize;
 
 use crate::features::EQ_SYMBOL;
+
+#[derive(Serialize)]
+struct EqContext<'a> {
+    class_name: &'a str,
+    comparisons: String,
+}
+
+#[derive(Serialize)]
+struct HashContext {
+    self_binding: String,
+    values: String,
+}
 
 pub(crate) fn has_trait(class: &ClassIr, symbol: &str) -> bool {
     class
@@ -52,25 +64,24 @@ pub(crate) fn emit_eq(class: &ClassIr) -> Option<String> {
     }
 
     if class.fields.is_empty() {
-        return Some(format!(
-            "@override\nbool operator ==(Object other) =>\n    identical(this, other) ||\n    other is {} &&\n        runtimeType == other.runtimeType;",
-            class.name
+        return Some(render_template(
+            "eq_empty",
+            include_str!("templates/eq_empty.jinja"),
+            EqContext {
+                class_name: &class.name,
+                comparisons: String::new(),
+            },
         ));
     }
 
-    let mut out = String::with_capacity(class.name.len() * 2 + class.fields.len() * 48 + 128);
-    write!(
-        &mut out,
-        "@override\nbool operator ==(Object other) {{\n  final self = this as {};\n  return identical(this, other) ||\n      other is {} &&\n          runtimeType == other.runtimeType",
-        class.name, class.name,
-    )
-    .ok()?;
-    for field in &class.fields {
-        out.push_str(" &&\n          ");
-        render_equality_comparison(&mut out, &field.name, &field.ty);
-    }
-    out.push_str(";\n}");
-    Some(out)
+    Some(render_template(
+        "eq_fields",
+        include_str!("templates/eq_fields.jinja"),
+        EqContext {
+            class_name: &class.name,
+            comparisons: render_equality_comparisons(class),
+        },
+    ))
 }
 
 pub(crate) fn emit_hash_code(class: &ClassIr) -> Option<String> {
@@ -78,44 +89,55 @@ pub(crate) fn emit_hash_code(class: &ClassIr) -> Option<String> {
         return None;
     }
 
-    let mut out = String::with_capacity(class.name.len() + class.fields.len() * 32 + 96);
-    out.push_str("@override\nint get hashCode {\n");
-    if !class.fields.is_empty() {
-        writeln!(&mut out, "  final self = this as {};", class.name).ok()?;
-    }
-    out.push_str("  return Object.hashAll([\n    runtimeType,\n");
-    for field in &class.fields {
-        out.push_str("    ");
-        render_hash_value(&mut out, &field.name, &field.ty);
-        out.push_str(",\n");
-    }
-    out.push_str("  ]);\n}");
-    Some(out)
+    Some(render_template(
+        "hash_code",
+        include_str!("templates/hash_code.jinja"),
+        HashContext {
+            self_binding: if class.fields.is_empty() {
+                String::new()
+            } else {
+                format!("  final self = this as {};\n", class.name)
+            },
+            values: render_hash_values(class),
+        },
+    ))
 }
 
-fn render_equality_comparison(out: &mut String, field_name: &str, ty: &TypeIr) {
-    match deep_helper_name(ty) {
-        Some(helper) => {
-            write!(
-                out,
-                "{helper}.equals(other.{field_name}, self.{field_name})"
+fn render_equality_comparisons(class: &ClassIr) -> String {
+    class
+        .fields
+        .iter()
+        .map(|field| {
+            format!(
+                " &&\n          {}",
+                render_equality_comparison(&field.name, &field.ty)
             )
-            .ok();
-        }
-        None => {
-            write!(out, "other.{field_name} == self.{field_name}").ok();
-        }
+        })
+        .collect::<Vec<_>>()
+        .join("")
+}
+
+fn render_hash_values(class: &ClassIr) -> String {
+    class
+        .fields
+        .iter()
+        .map(|field| format!("    {},", render_hash_value(&field.name, &field.ty)))
+        .collect::<Vec<_>>()
+        .join("\n")
+        + if class.fields.is_empty() { "" } else { "\n" }
+}
+
+fn render_equality_comparison(field_name: &str, ty: &TypeIr) -> String {
+    match deep_helper_name(ty) {
+        Some(helper) => format!("{helper}.equals(other.{field_name}, self.{field_name})"),
+        None => format!("other.{field_name} == self.{field_name}"),
     }
 }
 
-fn render_hash_value(out: &mut String, field_name: &str, ty: &TypeIr) {
+fn render_hash_value(field_name: &str, ty: &TypeIr) -> String {
     match deep_helper_name(ty) {
-        Some(helper) => {
-            write!(out, "{helper}.hash(self.{field_name})").ok();
-        }
-        None => {
-            write!(out, "self.{field_name}").ok();
-        }
+        Some(helper) => format!("{helper}.hash(self.{field_name})"),
+        None => format!("self.{field_name}"),
     }
 }
 

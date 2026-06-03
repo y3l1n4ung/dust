@@ -1,10 +1,26 @@
 use std::{fs, path::Path};
 
+use dust_dart_emit::render_template;
 use dust_ir::LibraryIr;
+use serde::Serialize;
 
 use crate::plugin::model::{DatabaseClass, DbDriver};
 
 use super::shared::{escape_dart_string, lower_first};
+
+#[derive(Serialize)]
+struct DatabaseContext<'a> {
+    generated_name: &'a str,
+    class_name: &'a str,
+    open_expr: String,
+    migrations: String,
+}
+
+#[derive(Serialize)]
+struct MigrationsContext<'a> {
+    name: &'a str,
+    entries: String,
+}
 
 pub(super) fn render_database_class(library: &LibraryIr, db: &DatabaseClass<'_>) -> String {
     let class_name = &db.class.name;
@@ -20,8 +36,15 @@ pub(super) fn render_database_class(library: &LibraryIr, db: &DatabaseClass<'_>)
     };
     let migrations = render_migrations_map(library, &db.migrations, &migrations_name);
 
-    format!(
-        "final class {generated_name} implements {class_name} {{\n  {generated_name}._(this.pool);\n\n  factory {generated_name}.open(String path) {{\n    final pool = {open_expr};\n    return {generated_name}._(pool);\n  }}\n\n  @override\n  final Pool pool;\n}}\n\n{migrations}"
+    render_template(
+        "database_class",
+        include_str!("templates/database_class.jinja"),
+        DatabaseContext {
+            generated_name: &generated_name,
+            class_name,
+            open_expr,
+            migrations,
+        },
     )
 }
 
@@ -49,11 +72,22 @@ fn render_migrations_map(library: &LibraryIr, migrations: &str, name: &str) -> S
         })
         .collect::<Vec<_>>();
     if entries.is_empty() {
-        return format!("const Map<String, String> {name} = <String, String>{{}};");
+        return render_template(
+            "migrations_empty",
+            include_str!("templates/migrations_empty.jinja"),
+            MigrationsContext {
+                name,
+                entries: String::new(),
+            },
+        );
     }
-    format!(
-        "const Map<String, String> {name} = <String, String>{{\n{}\n}};",
-        entries.join("\n")
+    render_template(
+        "migrations_map",
+        include_str!("templates/migrations_map.jinja"),
+        MigrationsContext {
+            name,
+            entries: entries.join("\n"),
+        },
     )
 }
 

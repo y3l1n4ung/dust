@@ -1,6 +1,96 @@
+use dust_dart_emit::render_template;
 use dust_ir::ClassIr;
+use serde::Serialize;
 
 use super::StateFieldSpec;
+
+#[derive(Serialize)]
+struct ViewModelOutputContext {
+    aspect: String,
+    base: String,
+    proxy: String,
+    scope: String,
+    inherited: String,
+    listener: String,
+    extension: String,
+}
+
+#[derive(Serialize)]
+struct AspectContext<'a> {
+    aspect_class: &'a str,
+    state_type: &'a str,
+}
+
+#[derive(Serialize)]
+struct AspectSelectorContext<'a> {
+    aspect_class: &'a str,
+    state_type: &'a str,
+    vm_lower: String,
+    field_pascal: String,
+    field_name: &'a str,
+    field_type: &'a str,
+}
+
+#[derive(Serialize)]
+struct BaseContext<'a> {
+    generated_base: &'a str,
+    state_type: &'a str,
+    args_type: &'a str,
+    initial_state: &'a str,
+}
+
+#[derive(Serialize)]
+struct ProxyContext<'a> {
+    proxy_class: &'a str,
+    scope_class: &'a str,
+    state_type: &'a str,
+    aspect_class: &'a str,
+    field_getters: String,
+}
+
+#[derive(Serialize)]
+struct ProxyFieldContext<'a> {
+    scope_class: &'a str,
+    vm_lower: String,
+    field_pascal: String,
+    field_name: &'a str,
+    field_type: &'a str,
+}
+
+#[derive(Serialize)]
+struct ScopeContext<'a> {
+    scope_class: &'a str,
+    inherited_class: &'a str,
+    view_model_class: &'a str,
+    args_type: &'a str,
+    aspect_class: &'a str,
+}
+
+#[derive(Serialize)]
+struct InheritedContext<'a> {
+    inherited_class: &'a str,
+    view_model_class: &'a str,
+    state_type: &'a str,
+    aspect_class: &'a str,
+}
+
+#[derive(Serialize)]
+struct ListenerContext<'a> {
+    listener_class: &'a str,
+    listener_state_class: &'a str,
+    scope_class: &'a str,
+    view_model_class: &'a str,
+}
+
+#[derive(Serialize)]
+struct ExtensionContext<'a> {
+    extension_class: &'a str,
+    proxy_class: &'a str,
+    watch_name: &'a str,
+    view_model_class: &'a str,
+    read_name: &'a str,
+    scope_class: &'a str,
+}
 
 pub(super) fn render_view_model_output(
     class: &ClassIr,
@@ -46,16 +136,32 @@ pub(super) fn render_view_model_output(
         &scope_class,
         &class.name,
     );
-    let extension = format!(
-        "extension {extension_class} on BuildContext {{\n  {proxy_class} {watch_name}() {{\n    return {proxy_class}(this);\n  }}\n\n  {vm} {read_name}() => {scope_class}.read(this);\n}}",
-        vm = class.name,
+    let extension = render_template(
+        "context_extension",
+        include_str!("templates/context_extension.jinja"),
+        ExtensionContext {
+            extension_class: &extension_class,
+            proxy_class: &proxy_class,
+            watch_name: &watch_name,
+            view_model_class: &class.name,
+            read_name: &read_name,
+            scope_class: &scope_class,
+        },
     );
 
-    [aspect, base, proxy, scope, inherited, listener, extension]
-        .into_iter()
-        .filter(|part| !part.is_empty())
-        .collect::<Vec<_>>()
-        .join("\n\n")
+    render_template(
+        "view_model_output",
+        include_str!("templates/view_model_output.jinja"),
+        ViewModelOutputContext {
+            aspect,
+            base,
+            proxy,
+            scope,
+            inherited,
+            listener,
+            extension,
+        },
+    )
 }
 
 fn render_aspect_class(
@@ -67,23 +173,36 @@ fn render_aspect_class(
     let field_selectors = state_fields
         .iter()
         .map(|field| {
-            format!(
-                "{ty} _{vm_lower}Select{field_pascal}({state_type} state) => state.{field_name};\nfinal _{vm_lower}{field_pascal}Aspect = {aspect_class}<{ty}>(\n  _{vm_lower}Select{field_pascal},\n);",
-                ty = field.type_source,
-                vm_lower = lower_camel(view_model_class),
-                field_pascal = pascal_case(&field.name),
-                field_name = field.name,
+            render_template(
+                "aspect_selector",
+                include_str!("templates/aspect_selector.jinja"),
+                AspectSelectorContext {
+                    aspect_class,
+                    state_type,
+                    vm_lower: lower_camel(view_model_class),
+                    field_pascal: pascal_case(&field.name),
+                    field_name: &field.name,
+                    field_type: &field.type_source,
+                },
             )
         })
         .collect::<Vec<_>>()
         .join("\n\n");
-    [format!(
-        "final class {aspect_class}<R> {{\n  const {aspect_class}(this.selector);\n\n  final R Function({state_type} state) selector;\n\n  bool hasChanged({state_type} previous, {state_type} next) {{\n    return selector(previous) != selector(next);\n  }}\n}}",
-    ), field_selectors]
-        .into_iter()
-        .filter(|part| !part.is_empty())
-        .collect::<Vec<_>>()
-        .join("\n\n")
+    [
+        render_template(
+            "aspect_class",
+            include_str!("templates/aspect_class.jinja"),
+            AspectContext {
+                aspect_class,
+                state_type,
+            },
+        ),
+        field_selectors,
+    ]
+    .into_iter()
+    .filter(|part| !part.is_empty())
+    .collect::<Vec<_>>()
+    .join("\n\n")
 }
 
 fn render_base(
@@ -92,8 +211,15 @@ fn render_base(
     args_type: &str,
     initial_state: &str,
 ) -> String {
-    format!(
-        "abstract class {generated_base} extends ViewModelBase<{state_type}, {args_type}> {{\n  {generated_base}(super.args) : super(initialState: {initial_state});\n}}",
+    render_template(
+        "base_class",
+        include_str!("templates/base_class.jinja"),
+        BaseContext {
+            generated_base,
+            state_type,
+            args_type,
+            initial_state,
+        },
     )
 }
 
@@ -108,17 +234,29 @@ fn render_proxy(
     let field_getters = state_fields
         .iter()
         .map(|field| {
-            format!(
-                "\n\n  {ty} get {name} {{\n    return {scope_class}.of(\n      _context,\n      aspect: _{vm_lower}{field_pascal}Aspect,\n    ).state.{name};\n  }}",
-                ty = field.type_source,
-                name = field.name,
-                vm_lower = lower_camel(view_model_class),
-                field_pascal = pascal_case(&field.name),
+            render_template(
+                "proxy_field_getter",
+                include_str!("templates/proxy_field_getter.jinja"),
+                ProxyFieldContext {
+                    scope_class,
+                    vm_lower: lower_camel(view_model_class),
+                    field_pascal: pascal_case(&field.name),
+                    field_name: &field.name,
+                    field_type: &field.type_source,
+                },
             )
         })
         .collect::<String>();
-    format!(
-        "class {proxy_class} {{\n  {proxy_class}(this._context);\n\n  final BuildContext _context;\n\n  {state_type} get value {{\n    return {scope_class}.of(_context).value;\n  }}{field_getters}\n\n  R select<R>(R Function({state_type} state) selector) {{\n    final aspect = {aspect_class}<R>(selector);\n    return selector({scope_class}.of(_context, aspect: aspect).value);\n  }}\n}}",
+    render_template(
+        "proxy_class",
+        include_str!("templates/proxy_class.jinja"),
+        ProxyContext {
+            proxy_class,
+            scope_class,
+            state_type,
+            aspect_class,
+            field_getters,
+        },
     )
 }
 
@@ -129,8 +267,16 @@ fn render_scope(
     args_type: &str,
     aspect_class: &str,
 ) -> String {
-    format!(
-        "class {scope_class} extends StatefulWidget {{\n  const {scope_class}({{\n    super.key,\n    required this.args,\n    required this.create,\n    required this.child,\n  }}) : value = null;\n\n  const {scope_class}.value({{\n    super.key,\n    required {view_model_class} this.value,\n    required this.child,\n  }}) : args = null,\n       create = null;\n\n  final {args_type} Function(BuildContext context)? args;\n  final {view_model_class} Function(BuildContext context, {args_type} args)? create;\n  final {view_model_class}? value;\n  final Widget child;\n\n  static {view_model_class} read(BuildContext context) {{\n    final scope = context\n        .getElementForInheritedWidgetOfExactType<{inherited_class}>()\n        ?.widget as {inherited_class}?;\n    if (scope == null) throw StateError('No {scope_class} found in context.');\n    return scope.viewModel;\n  }}\n\n  static {view_model_class} of(BuildContext context, {{{aspect_class}<Object?>? aspect}}) {{\n    final scope = context.dependOnInheritedWidgetOfExactType<{inherited_class}>(\n      aspect: aspect,\n    );\n    if (scope == null) throw StateError('No {scope_class} found in context.');\n    return scope.viewModel;\n  }}\n\n  @override\n  State<{scope_class}> createState() => _{scope_class}State();\n}}\n\nclass _{scope_class}State extends State<{scope_class}> {{\n  {view_model_class}? _viewModel;\n  bool _ownsViewModel = false;\n\n  @override\n  void didChangeDependencies() {{\n    super.didChangeDependencies();\n    if (_viewModel == null) {{\n      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);\n    }}\n  }}\n\n  @override\n  void didUpdateWidget({scope_class} oldWidget) {{\n    super.didUpdateWidget(oldWidget);\n    final external = widget.value;\n    if (external != null) {{\n      _replaceViewModel(external, ownsViewModel: false);\n    }} else if (oldWidget.value != null) {{\n      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);\n    }}\n  }}\n\n  {view_model_class} _resolveViewModel() {{\n    return widget.value ?? _createOwnedViewModel();\n  }}\n\n  {view_model_class} _createOwnedViewModel() {{\n    final argsFactory = widget.args;\n    final create = widget.create;\n    if (argsFactory == null || create == null) {{\n      throw StateError('Owned {scope_class} requires args and create.');\n    }}\n    late final {view_model_class} created;\n    try {{\n      created = create(context, argsFactory(context));\n    }} catch (error, stackTrace) {{\n      Error.throwWithStackTrace(\n        StateError(\n          '{scope_class} failed to create its view model. Check the generated '\n          'scope args/create dependency injection. Original error: $error',\n        ),\n        stackTrace,\n      );\n    }}\n    return created;\n  }}\n\n  void _replaceViewModel(\n    {view_model_class} nextViewModel, {{\n    required bool ownsViewModel,\n    bool notify = true,\n  }}) {{\n    final previous = _viewModel;\n    if (identical(previous, nextViewModel)) {{\n      _ownsViewModel = ownsViewModel;\n      if (notify && mounted) setState(() {{}});\n      return;\n    }}\n    previous?.removeListener(_onViewModelStateChanged);\n    if (_ownsViewModel) previous?.dispose();\n    _viewModel = nextViewModel;\n    _ownsViewModel = ownsViewModel;\n    nextViewModel.addListener(_onViewModelStateChanged);\n    if (ownsViewModel) {{\n      scheduleMicrotask(() {{\n        if (mounted && identical(_viewModel, nextViewModel)) {{\n          nextViewModel.init();\n        }}\n      }});\n    }}\n    if (notify && mounted) setState(() {{}});\n  }}\n\n  void _onViewModelStateChanged() {{\n    if (mounted) setState(() {{}});\n  }}\n\n  @override\n  void dispose() {{\n    final viewModel = _viewModel;\n    viewModel?.removeListener(_onViewModelStateChanged);\n    if (_ownsViewModel) viewModel?.dispose();\n    super.dispose();\n  }}\n\n  @override\n  Widget build(BuildContext context) {{\n    final viewModel = _viewModel;\n    if (viewModel == null) {{\n      throw StateError('{scope_class} built before its view model was initialized.');\n    }}\n    return {inherited_class}(\n      viewModel: viewModel,\n      state: viewModel.value,\n      child: widget.child,\n    );\n  }}\n}}",
+    render_template(
+        "scope_class",
+        include_str!("templates/scope_class.jinja"),
+        ScopeContext {
+            scope_class,
+            inherited_class,
+            view_model_class,
+            args_type,
+            aspect_class,
+        },
     )
 }
 
@@ -140,8 +286,15 @@ fn render_inherited(
     state_type: &str,
     aspect_class: &str,
 ) -> String {
-    format!(
-        "class {inherited_class} extends InheritedModel<{aspect_class}<Object?>> {{\n  const {inherited_class}({{required this.viewModel, required this.state, required super.child}});\n\n  final {view_model_class} viewModel;\n  final {state_type} state;\n\n  /// Requires {state_type} to implement == and hashCode. Without value equality,\n  /// every emitted state is treated as changed and granular rebuilds degrade to\n  /// full dependent subtree rebuilds.\n  @override\n  bool updateShouldNotify({inherited_class} oldWidget) => state != oldWidget.state;\n\n  @override\n  bool updateShouldNotifyDependent(\n    {inherited_class} oldWidget,\n    Set<{aspect_class}<Object?>> dependencies,\n  ) {{\n    for (final aspect in dependencies) {{\n      if (aspect.hasChanged(oldWidget.state, state)) {{\n        return true;\n      }}\n    }}\n    return false;\n  }}\n}}",
+    render_template(
+        "inherited_class",
+        include_str!("templates/inherited_class.jinja"),
+        InheritedContext {
+            inherited_class,
+            view_model_class,
+            state_type,
+            aspect_class,
+        },
     )
 }
 
@@ -151,8 +304,15 @@ fn render_listener(
     scope_class: &str,
     view_model_class: &str,
 ) -> String {
-    format!(
-        "/// Listens to one-shot effects from {view_model_class}.\n///\n/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect\n/// payloads through the @ViewModel annotation.\nclass {listener_class} extends StatefulWidget {{\n  const {listener_class}({{super.key, required this.listener, required this.child}});\n\n  final void Function(BuildContext context, Object effect) listener;\n  final Widget child;\n\n  @override\n  State<{listener_class}> createState() => {listener_state_class}();\n}}\n\nclass {listener_state_class} extends State<{listener_class}> {{\n  StreamSubscription<Object>? _sub;\n  {view_model_class}? _viewModel;\n\n  @override\n  void didChangeDependencies() {{\n    super.didChangeDependencies();\n    final nextViewModel = {scope_class}.read(context);\n    if (_viewModel == nextViewModel) return;\n    _sub?.cancel();\n    _viewModel = nextViewModel;\n    _sub = nextViewModel.effects.listen(_onEffect);\n  }}\n\n  void _onEffect(Object effect) {{\n    if (mounted) widget.listener(context, effect);\n  }}\n\n  @override\n  void dispose() {{\n    _sub?.cancel();\n    super.dispose();\n  }}\n\n  @override\n  Widget build(BuildContext context) => widget.child;\n}}",
+    render_template(
+        "listener_class",
+        include_str!("templates/listener_class.jinja"),
+        ListenerContext {
+            listener_class,
+            listener_state_class,
+            scope_class,
+            view_model_class,
+        },
     )
 }
 

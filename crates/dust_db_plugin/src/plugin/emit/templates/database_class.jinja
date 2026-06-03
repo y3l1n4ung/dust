@@ -1,0 +1,13 @@
+final class {{ generated_name }} implements {{ class_name }} {
+  {{ generated_name }}._(this.pool);
+
+  factory {{ generated_name }}.open(String path) {
+    final pool = {{ open_expr }};
+    return {{ generated_name }}._(pool);
+  }
+
+  @override
+  final Pool pool;
+}
+
+{{ migrations }}

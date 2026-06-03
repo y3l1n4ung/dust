@@ -1,0 +1,13 @@
+const Map<Type, Type?> _kAppliedShellsByPage = {
+{{ entries }}};
+
+bool _shellConsistencyCheck() {
+  bool visit(GeneratedRoute route) {
+    final page = route.page;
+    if (page != null && _kAppliedShellsByPage[page] != route.shell) {
+      return false;
+    }
+    return route.routes.every(visit);
+  }
+  return $appRoutes.every(visit);
+}

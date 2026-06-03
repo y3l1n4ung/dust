@@ -41,8 +41,7 @@ void main() {
       expect(request.queryParameters['userId'], equals(42));
       expect(request.queryParameters['_limit'], equals(42));
       expect(request.headers['x-suite'], equals('stress'));
-    });
-    test('GET fetchPost', () async {
+    });    test('GET fetchPost', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -64,8 +63,7 @@ void main() {
       expect(request.queryParameters, isA<Map<String, dynamic>>());
       expect(request.headers, isA<Map<String, dynamic>>());
       expect(request.headers['x-suite'], equals('stress'));
-    });
-    test('POST createPost', () async {
+    });    test('POST createPost', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -88,6 +86,4 @@ void main() {
       expect(request.headers, isA<Map<String, dynamic>>());
       expect(request.data, equals({'value': 'dust'}));
       expect(request.headers['x-suite'], equals('stress'));
-    });
-  });
-}
+    });  });}

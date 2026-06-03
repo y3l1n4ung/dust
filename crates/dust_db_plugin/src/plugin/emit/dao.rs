@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 
-use dust_dart_emit::DYNAMIC_TYPES;
+use dust_dart_emit::{DYNAMIC_TYPES, render_template};
 use dust_ir::{MethodIr, ParamKind};
+use serde::Serialize;
 
 use crate::plugin::{
     model::{DaoClass, DaoMethod, DbDriver},
@@ -9,6 +10,21 @@ use crate::plugin::{
 };
 
 use super::shared::{is_scalar_type, render_sql_literal};
+
+#[derive(Serialize)]
+struct DaoClassContext<'a> {
+    generated_name: &'a str,
+    class_name: &'a str,
+    methods: String,
+}
+
+#[derive(Serialize)]
+struct DaoMethodContext<'a> {
+    return_type: String,
+    method_name: &'a str,
+    params: String,
+    body: String,
+}
 
 pub(super) fn render_dao_class(
     dao: &DaoClass<'_>,
@@ -30,8 +46,14 @@ pub(super) fn render_dao_class(
         .collect::<Vec<_>>()
         .join("\n\n");
 
-    format!(
-        "final class {generated_name} implements {class_name} {{\n  const {generated_name}(this._db);\n\n  final SqlxDriver _db;\n\n{methods}\n}}"
+    render_template(
+        "dao_class",
+        include_str!("templates/dao_class.jinja"),
+        DaoClassContext {
+            generated_name: &generated_name,
+            class_name,
+            methods,
+        },
     )
 }
 
@@ -46,9 +68,15 @@ fn render_dao_method(
     let rendered_query = render_driver_query(method, driver);
     let body = render_dao_method_body(method, row_names, &rendered_query.sql, &rendered_query.args);
 
-    format!(
-        "  @override\n  {return_type} {}({params}) {{\n{body}\n  }}",
-        method_ir.name
+    render_template(
+        "dao_method",
+        include_str!("templates/dao_method.jinja"),
+        DaoMethodContext {
+            return_type,
+            method_name: &method_ir.name,
+            params,
+            body,
+        },
     )
 }
 

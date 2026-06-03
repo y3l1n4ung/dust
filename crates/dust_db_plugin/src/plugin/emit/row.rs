@@ -1,5 +1,6 @@
-use dust_dart_emit::DYNAMIC_TYPES;
+use dust_dart_emit::{DYNAMIC_TYPES, render_template};
 use dust_ir::{ClassIr, ConstructorIr, LibraryIr, ParamKind, TypeIr};
+use serde::Serialize;
 
 use crate::plugin::{
     model::{RowField, SqlxConfig},
@@ -7,6 +8,13 @@ use crate::plugin::{
 };
 
 use super::shared::{escape_dart_string, lower_first};
+
+#[derive(Serialize)]
+struct FromRowContext<'a> {
+    class_name: &'a str,
+    call: String,
+    registration: String,
+}
 
 pub(super) fn render_from_row_extension(
     library: &LibraryIr,
@@ -27,9 +35,14 @@ pub(super) fn render_from_row_extension(
         })
         .collect::<Vec<_>>();
     let Some(constructor) = find_constructor(class) else {
-        return format!(
-            "extension {0}FromRow on {0} {{\n  static {0} fromRow(Row row) {{\n    throw StateError('No usable constructor found for {0}');\n  }}\n}}",
-            class.name
+        return render_template(
+            "from_row_missing_constructor",
+            include_str!("templates/from_row_missing_constructor.jinja"),
+            FromRowContext {
+                class_name: &class.name,
+                call: String::new(),
+                registration: String::new(),
+            },
         );
     };
     let args = constructor
@@ -61,9 +74,14 @@ pub(super) fn render_from_row_extension(
         class.name
     );
 
-    format!(
-        "extension {0}FromRow on {0} {{\n  static {0} fromRow(Row row) {{\n    return {call};\n  }}\n}}\n\n{registration}",
-        class.name,
+    render_template(
+        "from_row_extension",
+        include_str!("templates/from_row_extension.jinja"),
+        FromRowContext {
+            class_name: &class.name,
+            call,
+            registration,
+        },
     )
 }
 

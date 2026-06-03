@@ -1,0 +1,6 @@
+{{ enum_name }} _${{ enum_name }}FromJson(Object? json) {
+  return switch (json) {
+{{ cases }}
+    _ => throw ArgumentError.value(json, 'json', 'unknown value for {{ enum_name }}'),
+  };
+}

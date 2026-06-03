@@ -1,49 +1,77 @@
+use dust_dart_emit::render_template;
 use dust_ir::TypeIr;
+use serde::Serialize;
 
 use crate::plugin::model::{RouteParamSpec, RouteSpec, RouterSpec};
 
 use super::{formatting::dart_type, parser::encode_param_expr};
 
+#[derive(Serialize)]
+struct RouteClassContext<'a> {
+    route_class: &'a str,
+    constructor: String,
+    fields: String,
+    location: String,
+    requires_auth: String,
+}
+
+#[derive(Serialize)]
+struct LocationContext {
+    body: String,
+}
+
 pub(super) fn render_route_classes(out: &mut String, spec: &RouterSpec) {
-    out.push_str("typedef RouteState = DustRouteState<AppRoutePath>;\n\n");
-    out.push_str("sealed class AppRoutePath {\n  const AppRoutePath();\n\n  String get location;\n\n  /// Defaults to true. Override and return false for public routes\n  /// (login, invite, forbidden, checkout, notFound).\n  bool get requiresAuth => true;\n}\n\n");
+    out.push_str(&render_template(
+        "app_route_base",
+        include_str!("templates/app_route_base.jinja"),
+        (),
+    ));
+    out.push_str("\n\n");
 
     for route in &spec.routes {
-        out.push_str(&format!(
-            "final class {} extends AppRoutePath {{\n",
-            route.route_class
-        ));
         let constructor_params = route
             .params
             .iter()
             .map(render_constructor_param)
             .collect::<Vec<_>>()
             .join(", ");
-        if constructor_params.is_empty() {
-            out.push_str(&format!("  const {}();\n\n", route.route_class));
+        let constructor = if constructor_params.is_empty() {
+            format!("const {}();", route.route_class)
         } else {
-            out.push_str(&format!(
-                "  const {}({{{constructor_params}}});\n\n",
-                route.route_class
-            ));
-        }
-        for param in &route.params {
-            out.push_str(&format!(
-                "  final {} {};\n",
-                dart_type(&param.ty),
-                param.name
-            ));
-        }
-        if !route.params.is_empty() {
-            out.push('\n');
-        }
-        out.push_str("  @override\n  String get location {\n");
-        render_location_body(out, route);
-        out.push_str("  }\n");
-        if route.annotation.guards_configured && route.annotation.guards.is_empty() {
-            out.push_str("\n  @override\n  bool get requiresAuth => false;\n");
-        }
-        out.push_str("}\n\n");
+            format!("const {}({{{constructor_params}}});", route.route_class)
+        };
+        out.push_str(&render_template(
+            "route_class",
+            include_str!("templates/route_class.jinja"),
+            RouteClassContext {
+                route_class: &route.route_class,
+                constructor,
+                fields: render_route_fields(route),
+                location: render_location_getter(route),
+                requires_auth: if route.annotation.guards_configured
+                    && route.annotation.guards.is_empty()
+                {
+                    "\n\n  @override\n  bool get requiresAuth => false;".to_owned()
+                } else {
+                    String::new()
+                },
+            },
+        ));
+        out.push_str("\n\n");
+    }
+}
+
+fn render_route_fields(route: &RouteSpec) -> String {
+    let fields = route
+        .params
+        .iter()
+        .map(|param| format!("  final {} {};", dart_type(&param.ty), param.name))
+        .collect::<Vec<_>>()
+        .join("\n");
+    if fields.is_empty() {
+        String::new()
+    } else {
+        format!("{fields}\n\n")
     }
 }
 fn render_constructor_param(param: &RouteParamSpec) -> String {
@@ -59,6 +87,16 @@ fn render_constructor_param(param: &RouteParamSpec) -> String {
 pub(super) fn is_not_found_route(route: &RouteSpec) -> bool {
     route.route_class == "NotFoundRoute" && route.params.iter().any(|param| param.name == "path")
 }
+fn render_location_getter(route: &RouteSpec) -> String {
+    let mut body = String::new();
+    render_location_body(&mut body, route);
+    render_template(
+        "location_getter",
+        include_str!("templates/location_getter.jinja"),
+        LocationContext { body },
+    )
+}
+
 fn render_location_body(out: &mut String, route: &RouteSpec) {
     if is_not_found_route(route) {
         out.push_str("    return '/404?path=${Uri.encodeComponent(path)}';\n");

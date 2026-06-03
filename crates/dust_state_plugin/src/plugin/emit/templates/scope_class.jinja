@@ -1,0 +1,139 @@
+class {{ scope_class }} extends StatefulWidget {
+  const {{ scope_class }}({
+    super.key,
+    required this.args,
+    required this.create,
+    required this.child,
+  }) : value = null;
+
+  const {{ scope_class }}.value({
+    super.key,
+    required {{ view_model_class }} this.value,
+    required this.child,
+  }) : args = null,
+       create = null;
+
+  final {{ args_type }} Function(BuildContext context)? args;
+  final {{ view_model_class }} Function(BuildContext context, {{ args_type }} args)? create;
+  final {{ view_model_class }}? value;
+  final Widget child;
+
+  static {{ view_model_class }} read(BuildContext context) {
+    final scope = context
+        .getElementForInheritedWidgetOfExactType<{{ inherited_class }}>()
+        ?.widget as {{ inherited_class }}?;
+    if (scope == null) throw StateError('No {{ scope_class }} found in context.');
+    return scope.viewModel;
+  }
+
+  static {{ view_model_class }} of(BuildContext context, { {{- aspect_class }}<Object?>? aspect}) {
+    final scope = context.dependOnInheritedWidgetOfExactType<{{ inherited_class }}>(
+      aspect: aspect,
+    );
+    if (scope == null) throw StateError('No {{ scope_class }} found in context.');
+    return scope.viewModel;
+  }
+
+  @override
+  State<{{ scope_class }}> createState() => _{{ scope_class }}State();
+}
+
+class _{{ scope_class }}State extends State<{{ scope_class }}> {
+  {{ view_model_class }}? _viewModel;
+  bool _ownsViewModel = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_viewModel == null) {
+      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    }
+  }
+
+  @override
+  void didUpdateWidget({{ scope_class }} oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false);
+    } else if (oldWidget.value != null) {
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    }
+  }
+
+  {{ view_model_class }} _resolveViewModel() {
+    return widget.value ?? _createOwnedViewModel();
+  }
+
+  {{ view_model_class }} _createOwnedViewModel() {
+    final argsFactory = widget.args;
+    final create = widget.create;
+    if (argsFactory == null || create == null) {
+      throw StateError('Owned {{ scope_class }} requires args and create.');
+    }
+    late final {{ view_model_class }} created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        StateError(
+          '{{ scope_class }} failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
+    return created;
+  }
+
+  void _replaceViewModel(
+    {{ view_model_class }} nextViewModel, {
+    required bool ownsViewModel,
+    bool notify = true,
+  }) {
+    final previous = _viewModel;
+    if (identical(previous, nextViewModel)) {
+      _ownsViewModel = ownsViewModel;
+      if (notify && mounted) setState(() {});
+      return;
+    }
+    previous?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) previous?.dispose();
+    _viewModel = nextViewModel;
+    _ownsViewModel = ownsViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    if (ownsViewModel) {
+      scheduleMicrotask(() {
+        if (mounted && identical(_viewModel, nextViewModel)) {
+          nextViewModel.init();
+        }
+      });
+    }
+    if (notify && mounted) setState(() {});
+  }
+
+  void _onViewModelStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    final viewModel = _viewModel;
+    viewModel?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) viewModel?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = _viewModel;
+    if (viewModel == null) {
+      throw StateError('{{ scope_class }} built before its view model was initialized.');
+    }
+    return {{ inherited_class }}(
+      viewModel: viewModel,
+      state: viewModel.value,
+      child: widget.child,
+    );
+  }
+}

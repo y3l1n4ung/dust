@@ -95,7 +95,6 @@ final class _$TodoApi implements TodoApi {
     );
     return await Isolate.run(() => _$TodoApi_list_Decode(_result.data!));
   }
-
   @override
   Future<Response<Todo>> fetchRaw(String id, {CancelToken? cancelToken, bool? retryable}) async {
     final _queryParameters = <String, dynamic>{};
@@ -133,7 +132,6 @@ final class _$TodoApi implements TodoApi {
     final _value = await Isolate.run(() => _$TodoApi_fetchRaw_Decode(_result.data!));
     return _buildResponse<Todo>(_result, _value);
   }
-
   @override
   Future<Todo> create(TodoCreate request) async {
     final _queryParameters = <String, dynamic>{};
@@ -169,7 +167,6 @@ final class _$TodoApi implements TodoApi {
     );
     return await Isolate.run(() => _$TodoApi_create_Decode(_result.data!));
   }
-
   @override
   Future<Todo> rename(String id, String title) async {
     final _queryParameters = <String, dynamic>{};
@@ -207,7 +204,6 @@ final class _$TodoApi implements TodoApi {
     );
     return await Isolate.run(() => _$TodoApi_rename_Decode(_result.data!));
   }
-
   @override
   Future<Todo> update(String id, TodoUpdate request, {Map<String, String>? headers}) async {
     final _queryParameters = <String, dynamic>{};
@@ -244,7 +240,6 @@ final class _$TodoApi implements TodoApi {
     );
     return await Isolate.run(() => _$TodoApi_update_Decode(_result.data!));
   }
-
   @override
   Future<void> delete(String id, {Map<String, dynamic>? audit}) async {
     final _queryParameters = <String, dynamic>{};

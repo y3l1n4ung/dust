@@ -1,0 +1,7 @@
+extension {{ extension_class }} on BuildContext {
+  {{ proxy_class }} {{ watch_name }}() {
+    return {{ proxy_class }}(this);
+  }
+
+  {{ view_model_class }} {{ read_name }}() => {{ scope_class }}.read(this);
+}

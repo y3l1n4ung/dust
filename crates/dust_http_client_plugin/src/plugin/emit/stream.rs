@@ -1,17 +1,25 @@
+use dust_dart_emit::render_template;
+
 use crate::plugin::model::{EndpointSpec, ReturnMode};
 
 pub(crate) fn render_stream_yield(endpoint: &EndpointSpec<'_>) -> String {
     match endpoint.return_spec.mode {
-        ReturnMode::ByteStream => r#"    final _body = _result.data;
-    if (_body == null) return;
-    yield* _body.stream;
-"#
-        .to_owned(),
-        ReturnMode::TextStream => r#"    final _body = _result.data;
-    if (_body == null) return;
-    yield* utf8.decoder.bind(_body.stream);
-"#
-        .to_owned(),
+        ReturnMode::ByteStream => format!(
+            "{}\n",
+            render_template(
+                "byte_stream_yield",
+                include_str!("templates/byte_stream_yield.jinja"),
+                (),
+            )
+        ),
+        ReturnMode::TextStream => format!(
+            "{}\n",
+            render_template(
+                "text_stream_yield",
+                include_str!("templates/text_stream_yield.jinja"),
+                (),
+            )
+        ),
         ReturnMode::Unary => String::new(),
     }
 }

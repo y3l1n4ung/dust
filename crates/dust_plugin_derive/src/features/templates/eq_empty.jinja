@@ -1,0 +1,5 @@
+@override
+bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is {{ class_name }} &&
+        runtimeType == other.runtimeType;

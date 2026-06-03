@@ -1,10 +1,18 @@
 use std::path::{Path, PathBuf};
 
+use dust_dart_emit::render_template;
 use dust_diagnostics::Diagnostic;
 use dust_ir::LibraryIr;
 use dust_plugin_api::{AuxiliaryOutputContribution, GENERATED_HEADER, PluginRegistry, SymbolPlan};
+use serde::Serialize;
 
 use crate::{format::format_generated_source, merge::MergedSections, writer::DartWriter};
+
+#[derive(Serialize)]
+struct MixinBlockContext {
+    mixin_name: String,
+    members: String,
+}
 
 /// The in-memory result of emitting one generated library.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -217,16 +225,30 @@ fn format_auxiliary_output(output: &AuxiliaryOutputContribution) -> AuxiliaryEmi
 
 fn render_mixin_block(writer: &mut DartWriter, class_name: &str, members: &[String]) {
     let mixin_name = format!("_${class_name}");
-    writer.start_block(format!("mixin {mixin_name}"));
+    writer.raw_block(&render_template(
+        "mixin_block",
+        include_str!("templates/mixin_block.jinja"),
+        MixinBlockContext {
+            mixin_name,
+            members: members
+                .iter()
+                .map(|member| indent_mixin_member(member))
+                .collect::<Vec<_>>()
+                .join("\n\n"),
+        },
+    ));
+}
 
-    if !members.is_empty() {
-        for (index, member) in members.iter().enumerate() {
-            if index > 0 {
-                writer.blank_line();
+fn indent_mixin_member(member: &str) -> String {
+    member
+        .lines()
+        .map(|line| {
+            if line.is_empty() {
+                String::new()
+            } else {
+                format!("  {line}")
             }
-            writer.raw_block(member);
-        }
-    }
-
-    writer.end_block();
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
 }

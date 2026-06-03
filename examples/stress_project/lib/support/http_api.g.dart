@@ -95,7 +95,6 @@ final class _$StressHttpApi implements StressHttpApi {
     .map((item) => HttpPost.fromJson(item as Map<String, dynamic>))
     .toList();
   }
-
   @override
   Future<Response<HttpPost>> fetchPost(int id) async {
     final _queryParameters = <String, dynamic>{};
@@ -132,7 +131,6 @@ final class _$StressHttpApi implements StressHttpApi {
     final _value = HttpPost.fromJson(_result.data as Map<String, dynamic>);
     return _buildResponse<HttpPost>(_result, _value);
   }
-
   @override
   Future<Map<String, dynamic>> createPost(Map<String, dynamic> payload) async {
     final _queryParameters = <String, dynamic>{};

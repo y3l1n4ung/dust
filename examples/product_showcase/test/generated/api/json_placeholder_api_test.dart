@@ -42,8 +42,7 @@ void main() {
       expect(request.queryParameters['userId'], equals(42));
       expect(request.queryParameters['_limit'], equals(42));
       expect(request.headers['accept'], equals('application/json'));
-    });
-    test('GET streamPostsRaw', () async {
+    });    test('GET streamPostsRaw', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -67,8 +66,7 @@ void main() {
       expect(request.queryParameters['userId'], equals(42));
       expect(request.queryParameters['_limit'], equals(42));
       expect(request.headers['accept'], equals('application/json'));
-    });
-    test('GET streamPostsBytes', () async {
+    });    test('GET streamPostsBytes', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -92,8 +90,7 @@ void main() {
       expect(request.queryParameters['userId'], equals(42));
       expect(request.queryParameters['_limit'], equals(42));
       expect(request.headers['accept'], equals('application/json'));
-    });
-    test('GET streamPostsText', () async {
+    });    test('GET streamPostsText', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -117,8 +114,7 @@ void main() {
       expect(request.queryParameters['userId'], equals(42));
       expect(request.queryParameters['_limit'], equals(42));
       expect(request.headers['accept'], equals('application/json'));
-    });
-    test('GET fetchPost', () async {
+    });    test('GET fetchPost', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -141,8 +137,7 @@ void main() {
       expect(request.headers, isA<Map<String, dynamic>>());
       expect(request.headers['accept_encoding'], equals('dust-id'));
       expect(request.headers['accept'], equals('application/json'));
-    });
-    test('GET listComments', () async {
+    });    test('GET listComments', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -166,8 +161,7 @@ void main() {
       expect(request.queryParameters['postId'], equals(42));
       expect(request.queryParameters['_limit'], equals(42));
       expect(request.headers['accept'], equals('application/json'));
-    });
-    test('PATCH patchPost', () async {
+    });    test('PATCH patchPost', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -190,8 +184,7 @@ void main() {
       expect(request.headers, isA<Map<String, dynamic>>());
       expect(request.data, equals({'value': 'dust'}));
       expect(request.headers['accept'], equals('application/json'));
-    });
-    test('DELETE deletePost', () async {
+    });    test('DELETE deletePost', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -213,8 +206,7 @@ void main() {
       expect(request.queryParameters, isA<Map<String, dynamic>>());
       expect(request.headers, isA<Map<String, dynamic>>());
       expect(request.headers['accept'], equals('application/json'));
-    });
-    test('POST uploadPostWithFile', () async {
+    });    test('POST uploadPostWithFile', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -236,6 +228,4 @@ void main() {
       expect(request.queryParameters, isA<Map<String, dynamic>>());
       expect(request.headers, isA<Map<String, dynamic>>());
       expect(request.headers['accept'], equals('application/json'));
-    });
-  });
-}
+    });  });}

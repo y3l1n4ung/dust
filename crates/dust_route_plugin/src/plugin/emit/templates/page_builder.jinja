@@ -1,0 +1,8 @@
+Page<void> buildAppRoutePage(AppRoutePath route) {
+  assert(
+    _shellConsistencyCheck(),
+    'Shell mismatch between \$appRoutes and buildAppRoutePage',
+  );
+  return switch (route) {
+{{ cases }}  };
+}

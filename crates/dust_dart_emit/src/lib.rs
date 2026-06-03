@@ -4,6 +4,7 @@
 
 mod rename;
 mod source;
+mod templates;
 mod type_render;
 
 pub use source::{
@@ -11,6 +12,8 @@ pub use source::{
     parse_static_dart_string_literal, parse_string_literal, split_top_level_items,
     split_top_level_once,
 };
+
+pub use templates::render_template;
 
 pub use type_render::{
     DYNAMIC_TYPES, DartTypeRenderer, OBJECT_NULLABLE_TYPES, UnknownTypeRendering, non_nullable,

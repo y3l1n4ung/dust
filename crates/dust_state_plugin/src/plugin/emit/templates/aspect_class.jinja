@@ -1,0 +1,9 @@
+final class {{ aspect_class }}<R> {
+  const {{ aspect_class }}(this.selector);
+
+  final R Function({{ state_type }} state) selector;
+
+  bool hasChanged({{ state_type }} previous, {{ state_type }} next) {
+    return selector(previous) != selector(next);
+  }
+}

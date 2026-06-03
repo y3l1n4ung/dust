@@ -1,0 +1,14 @@
+class {{ proxy_class }} {
+  {{ proxy_class }}(this._context);
+
+  final BuildContext _context;
+
+  {{ state_type }} get value {
+    return {{ scope_class }}.of(_context).value;
+  }{{ field_getters }}
+
+  R select<R>(R Function({{ state_type }} state) selector) {
+    final aspect = {{ aspect_class }}<R>(selector);
+    return selector({{ scope_class }}.of(_context, aspect: aspect).value);
+  }
+}

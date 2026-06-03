@@ -1,0 +1,41 @@
+/// Listens to one-shot effects from {{ view_model_class }}.
+///
+/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
+/// payloads through the @ViewModel annotation.
+class {{ listener_class }} extends StatefulWidget {
+  const {{ listener_class }}({super.key, required this.listener, required this.child});
+
+  final void Function(BuildContext context, Object effect) listener;
+  final Widget child;
+
+  @override
+  State<{{ listener_class }}> createState() => {{ listener_state_class }}();
+}
+
+class {{ listener_state_class }} extends State<{{ listener_class }}> {
+  StreamSubscription<Object>? _sub;
+  {{ view_model_class }}? _viewModel;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextViewModel = {{ scope_class }}.read(context);
+    if (_viewModel == nextViewModel) return;
+    _sub?.cancel();
+    _viewModel = nextViewModel;
+    _sub = nextViewModel.effects.listen(_onEffect);
+  }
+
+  void _onEffect(Object effect) {
+    if (mounted) widget.listener(context, effect);
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}

@@ -3,8 +3,10 @@ mod support;
 
 use std::{borrow::Cow, collections::HashSet};
 
+use dust_dart_emit::render_template;
 use dust_diagnostics::Diagnostic;
 use dust_ir::ClassIr;
+use serde::Serialize;
 
 use crate::features::{
     COPY_WITH_SYMBOL,
@@ -19,6 +21,14 @@ use self::{
         should_keep_source_local, temp_name, uses_undefined_sentinel,
     },
 };
+
+#[derive(Serialize)]
+struct CopyWithContext<'a> {
+    name: &'a str,
+    params: String,
+    self_binding: String,
+    body: String,
+}
 
 pub(crate) fn copy_with_requires_undefined(class: &ClassIr) -> bool {
     class
@@ -73,11 +83,15 @@ pub(crate) fn emit_copy_with(class: &ClassIr, copyable_types: &HashSet<&str>) ->
         format!("{setup}\n\n{return_call}")
     };
 
-    Some(format!(
-        "{name} copyWith({params}) {{\n{self_binding}{body}\n}}",
-        name = class.name,
-        params = params,
-        body = body,
+    Some(render_template(
+        "copy_with",
+        include_str!("clone_copy_with/templates/copy_with.jinja"),
+        CopyWithContext {
+            name: &class.name,
+            params,
+            self_binding,
+            body,
+        },
     ))
 }
 

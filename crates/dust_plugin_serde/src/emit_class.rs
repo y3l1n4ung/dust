@@ -1,7 +1,9 @@
 use std::collections::HashSet;
 
+use dust_dart_emit::render_template;
 use dust_ir::ClassIr;
 use heck::AsPascalCase;
+use serde::Serialize;
 
 use crate::{
     emit_support::format_prefixed_expr,
@@ -11,10 +13,20 @@ use crate::{
     },
 };
 
+#[derive(Serialize)]
+struct ClassTemplateContext<'a> {
+    class_name: &'a str,
+    body: String,
+}
+
 pub(crate) fn emit_to_json_mixin(class: &ClassIr) -> String {
-    format!(
-        "Map<String, Object?> toJson() => _${}ToJson(this as {});",
-        class.name, class.name
+    render_template(
+        "to_json_mixin",
+        include_str!("templates/to_json_mixin.jinja"),
+        ClassTemplateContext {
+            class_name: &class.name,
+            body: String::new(),
+        },
     )
 }
 
@@ -49,9 +61,13 @@ pub(crate) fn emit_to_json_helper(
         format!("  return <String, Object?>{{\n{}\n  }};", lines.join("\n"))
     };
 
-    format!(
-        "Map<String, Object?> _${}ToJson({} instance) {{\n{}\n}}",
-        class.name, class.name, body
+    render_template(
+        "to_json_helper",
+        include_str!("templates/to_json_helper.jinja"),
+        ClassTemplateContext {
+            class_name: &class.name,
+            body,
+        },
     )
 }
 
@@ -93,11 +109,13 @@ pub(crate) fn emit_from_json_helper(
     let call = render_constructor_call(class, constructor, &values)?;
     append_constructor_return(&mut lines, &call);
 
-    Some(format!(
-        "// factory {0}.fromJson(Map<String, Object?> json) => _${0}FromJson(json);\n\
-         {0} _${0}FromJson(Map<String, Object?> json) {{\n{1}\n}}",
-        class.name,
-        lines.join("\n")
+    Some(render_template(
+        "from_json_helper",
+        include_str!("templates/from_json_helper.jinja"),
+        ClassTemplateContext {
+            class_name: &class.name,
+            body: lines.join("\n"),
+        },
     ))
 }
 

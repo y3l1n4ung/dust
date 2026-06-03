@@ -1,0 +1,19 @@
+    test('{{ verb }} {{ method_name }}', () async {
+      RequestOptions? captured;
+      final dio = Dio();
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            captured = options;
+            handler.resolve(Response<dynamic>(requestOptions: options, data: {{ response_data }}));
+          },
+        ),
+      );
+      final api = {{ class_name }}(dio);
+      try {
+{{ invocation }}      } catch (_) {}
+      expect(captured, isNotNull);
+      final request = captured!;
+      expect(request.method, '{{ verb }}');
+      expect(request.path, '{{ expected_path }}');
+{{ assertions }}    });

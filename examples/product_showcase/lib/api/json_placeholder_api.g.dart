@@ -95,7 +95,6 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
     .map((item) => RemotePost.fromJson(item as Map<String, dynamic>))
     .toList();
   }
-
   @override
   Future<ResponseBody> streamPostsRaw({int? userId, int? limit}) async {
     final _queryParameters = <String, dynamic>{};
@@ -133,7 +132,6 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
     );
     return _result.data!;
   }
-
   @override
   Stream<List<int>> streamPostsBytes({int? userId, int? limit}) async* {
     final _queryParameters = <String, dynamic>{};
@@ -173,7 +171,6 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
     if (_body == null) return;
     yield* _body.stream;
   }
-
   @override
   Stream<String> streamPostsText({int? userId, int? limit}) async* {
     final _queryParameters = <String, dynamic>{};
@@ -213,7 +210,6 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
     if (_body == null) return;
     yield* utf8.decoder.bind(_body.stream);
   }
-
   @override
   Future<Response<RemotePost>> fetchPost(int id, {String? accept}) async {
     final _queryParameters = <String, dynamic>{};
@@ -251,7 +247,6 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
     final _value = RemotePost.fromJson(_result.data as Map<String, dynamic>);
     return _buildResponse<RemotePost>(_result, _value);
   }
-
   @override
   Future<List<RemoteComment>> listComments({int? postId, int? limit}) async {
     final _queryParameters = <String, dynamic>{};
@@ -291,7 +286,6 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
     .map((item) => RemoteComment.fromJson(item as Map<String, dynamic>))
     .toList();
   }
-
   @override
   Future<RemotePost> createPost(RemotePostDraft payload) async {
     final _queryParameters = <String, dynamic>{};
@@ -327,7 +321,6 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
     );
     return RemotePost.fromJson(_result.data as Map<String, dynamic>);
   }
-
   @override
   Future<RemotePost> replacePost(int id, RemotePost payload) async {
     final _queryParameters = <String, dynamic>{};
@@ -363,7 +356,6 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
     );
     return RemotePost.fromJson(_result.data as Map<String, dynamic>);
   }
-
   @override
   Future<Map<String, dynamic>> patchPost(int id, Map<String, dynamic> payload) async {
     final _queryParameters = <String, dynamic>{};
@@ -399,7 +391,6 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
     );
     return _result.data as Map<String, dynamic>;
   }
-
   @override
   Future<Response<Map<String, dynamic>>> deletePost(int id) async {
     final _queryParameters = <String, dynamic>{};
@@ -436,7 +427,6 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
     final _value = _result.data as Map<String, dynamic>;
     return _buildResponse<Map<String, dynamic>>(_result, _value);
   }
-
   @override
   Future<RemotePost> uploadPostWithFile(int userId, String title, String body, MultipartFile file) async {
     final _queryParameters = <String, dynamic>{};

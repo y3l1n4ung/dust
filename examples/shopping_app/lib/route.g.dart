@@ -83,6 +83,7 @@ abstract class $AppRouter extends DustRouterBase<AppRoutePath> {
       backButtonDispatcher: RootBackButtonDispatcher(),
     );
   }
+
 }
 
 const List<GeneratedRoute> $appRoutes = [

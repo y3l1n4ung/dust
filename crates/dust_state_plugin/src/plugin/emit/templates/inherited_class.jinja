@@ -1,0 +1,25 @@
+class {{ inherited_class }} extends InheritedModel<{{ aspect_class }}<Object?>> {
+  const {{ inherited_class }}({required this.viewModel, required this.state, required super.child});
+
+  final {{ view_model_class }} viewModel;
+  final {{ state_type }} state;
+
+  /// Requires {{ state_type }} to implement == and hashCode. Without value equality,
+  /// every emitted state is treated as changed and granular rebuilds degrade to
+  /// full dependent subtree rebuilds.
+  @override
+  bool updateShouldNotify({{ inherited_class }} oldWidget) => state != oldWidget.state;
+
+  @override
+  bool updateShouldNotifyDependent(
+    {{ inherited_class }} oldWidget,
+    Set<{{ aspect_class }}<Object?>> dependencies,
+  ) {
+    for (final aspect in dependencies) {
+      if (aspect.hasChanged(oldWidget.state, state)) {
+        return true;
+      }
+    }
+    return false;
+  }
+}

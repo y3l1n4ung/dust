@@ -1,4 +1,12 @@
+use dust_dart_emit::render_template;
 use dust_ir::EnumIr;
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct EnumTemplateContext<'a> {
+    enum_name: &'a str,
+    cases: String,
+}
 
 pub(crate) fn emit_enum_from_json_helper(e: &EnumIr) -> String {
     let mut cases = Vec::new();
@@ -7,12 +15,13 @@ pub(crate) fn emit_enum_from_json_helper(e: &EnumIr) -> String {
         cases.push(format!("    '{}' => {}.{},", key, e.name, variant.name));
     }
 
-    format!(
-        "{} _${}FromJson(Object? json) {{\n  return switch (json) {{\n{}\n    _ => throw ArgumentError.value(json, 'json', 'unknown value for {}'),\n  }};\n}}",
-        e.name,
-        e.name,
-        cases.join("\n"),
-        e.name
+    render_template(
+        "enum_from_json",
+        include_str!("templates/enum_from_json.jinja"),
+        EnumTemplateContext {
+            enum_name: &e.name,
+            cases: cases.join("\n"),
+        },
     )
 }
 
@@ -23,11 +32,13 @@ pub(crate) fn emit_enum_to_json_helper(e: &EnumIr) -> String {
         cases.push(format!("    {}.{} => '{}',", e.name, variant.name, key));
     }
 
-    format!(
-        "Object? _${}ToJson({} instance) {{\n  return switch (instance) {{\n{}\n  }};\n}}",
-        e.name,
-        e.name,
-        cases.join("\n")
+    render_template(
+        "enum_to_json",
+        include_str!("templates/enum_to_json.jinja"),
+        EnumTemplateContext {
+            enum_name: &e.name,
+            cases: cases.join("\n"),
+        },
     )
 }
 

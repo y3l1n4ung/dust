@@ -1,0 +1,7 @@
+@override
+bool operator ==(Object other) {
+  final self = this as {{ class_name }};
+  return identical(this, other) ||
+      other is {{ class_name }} &&
+          runtimeType == other.runtimeType{{ comparisons }};
+}

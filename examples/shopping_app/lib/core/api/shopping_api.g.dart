@@ -471,7 +471,6 @@ final class _$ShoppingApi implements ShoppingApi {
     .map((item) => Product.fromJson(item as Map<String, dynamic>))
     .toList();
   }
-
   @override
   Future<List<Product>> getProductsPage({int? limit, String? sort}) async {
     final _queryParameters = <String, dynamic>{};
@@ -511,7 +510,6 @@ final class _$ShoppingApi implements ShoppingApi {
     .map((item) => Product.fromJson(item as Map<String, dynamic>))
     .toList();
   }
-
   @override
   Future<Product> getProduct(int id) async {
     final _queryParameters = <String, dynamic>{};
@@ -547,7 +545,6 @@ final class _$ShoppingApi implements ShoppingApi {
     );
     return Product.fromJson(_result.data as Map<String, dynamic>);
   }
-
   @override
   Future<List<Product>> getProductsByCategory(String category, {int? limit, String? sort}) async {
     final _queryParameters = <String, dynamic>{};
@@ -587,7 +584,6 @@ final class _$ShoppingApi implements ShoppingApi {
     .map((item) => Product.fromJson(item as Map<String, dynamic>))
     .toList();
   }
-
   @override
   Future<List<String>> getCategories() async {
     final _queryParameters = <String, dynamic>{};
@@ -625,7 +621,6 @@ final class _$ShoppingApi implements ShoppingApi {
     .map((item) => item as String)
     .toList();
   }
-
   @override
   Future<List<StoreCart>> getCarts({int? limit, String? sort}) async {
     final _queryParameters = <String, dynamic>{};
@@ -665,7 +660,6 @@ final class _$ShoppingApi implements ShoppingApi {
     .map((item) => StoreCart.fromJson(item as Map<String, dynamic>))
     .toList();
   }
-
   @override
   Future<StoreCart> getCart(int id) async {
     final _queryParameters = <String, dynamic>{};
@@ -701,7 +695,6 @@ final class _$ShoppingApi implements ShoppingApi {
     );
     return StoreCart.fromJson(_result.data as Map<String, dynamic>);
   }
-
   @override
   Future<List<StoreCart>> getUserCarts(int userId) async {
     final _queryParameters = <String, dynamic>{};
@@ -739,7 +732,6 @@ final class _$ShoppingApi implements ShoppingApi {
     .map((item) => StoreCart.fromJson(item as Map<String, dynamic>))
     .toList();
   }
-
   @override
   Future<LoginResponse> login(LoginRequest payload) async {
     final _queryParameters = <String, dynamic>{};
@@ -776,7 +768,6 @@ final class _$ShoppingApi implements ShoppingApi {
     );
     return LoginResponse.fromJson(_result.data as Map<String, dynamic>);
   }
-
   @override
   Future<User> getUser(int id) async {
     final _queryParameters = <String, dynamic>{};
@@ -812,7 +803,6 @@ final class _$ShoppingApi implements ShoppingApi {
     );
     return User.fromJson(_result.data as Map<String, dynamic>);
   }
-
   @override
   Future<RegisterUserResponse> registerUser(RegisterUserRequest payload) async {
     final _queryParameters = <String, dynamic>{};

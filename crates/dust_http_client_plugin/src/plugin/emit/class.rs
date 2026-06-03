@@ -1,46 +1,55 @@
-use crate::plugin::emit::request::{render_path_expression, render_request_data};
-use crate::plugin::emit::response::render_response_return;
-use crate::plugin::emit::stream::render_stream_yield;
-use crate::plugin::emit::types::{is_void_type, render_fetch_type, render_type};
+use dust_dart_emit::render_template;
+use serde::Serialize;
+
+use crate::plugin::emit::{
+    request::{render_path_expression, render_request_data},
+    response::render_response_return,
+    stream::render_stream_yield,
+    types::{is_void_type, render_fetch_type, render_type},
+};
 use crate::plugin::model::{ClientSpec, EndpointParam, EndpointSpec};
 
+#[derive(Serialize)]
+struct ClientClassContext<'a> {
+    class_name: &'a str,
+    methods: String,
+}
+
+#[derive(Serialize)]
+struct EndpointMethodContext<'a> {
+    return_type: String,
+    method_name: &'a str,
+    params: String,
+    async_marker: &'static str,
+    body: String,
+}
+
 pub(crate) fn render_client_class(spec: &ClientSpec<'_>) -> String {
-    let mut out = String::new();
-    out.push_str(&format!(
-        "final class _${} implements {} {{\n",
-        spec.class_name, spec.class_name
-    ));
-    out.push_str(&format!(
-        "  _${}(this._dio, {{String? baseUrl}}) : _baseUrl = baseUrl;\n\n",
-        spec.class_name
-    ));
-    out.push_str("  final Dio _dio;\n");
-    out.push_str("  final String? _baseUrl;\n");
-
-    for endpoint in &spec.endpoints {
-        out.push('\n');
-        out.push_str(&render_endpoint_method(spec, endpoint));
-    }
-
-    out.push_str("}\n");
-    out
+    format!(
+        "{}\n",
+        render_template(
+            "client_class",
+            include_str!("templates/client_class.jinja"),
+            ClientClassContext {
+                class_name: spec.class_name,
+                methods: spec
+                    .endpoints
+                    .iter()
+                    .map(|endpoint| format!("\n{}", render_endpoint_method(spec, endpoint)))
+                    .collect::<Vec<_>>()
+                    .join(""),
+            },
+        )
+    )
 }
 
 fn render_endpoint_method(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) -> String {
-    let mut out = String::new();
-    out.push_str("  @override\n");
     let async_marker = if endpoint.return_spec.is_stream() {
         "async*"
     } else {
         "async"
     };
-    out.push_str(&format!(
-        "  {} {}({}) {} {{\n",
-        render_type(&endpoint.method.return_type),
-        endpoint.method.name,
-        render_method_parameters(&endpoint.method.params),
-        async_marker,
-    ));
+    let mut out = String::new();
     out.push_str("    final _queryParameters = <String, dynamic>{};\n");
     out.push_str("    final _headers = <String, dynamic>{};\n");
     out.push_str("    final _extra = <String, dynamic>{};\n");
@@ -199,8 +208,17 @@ fn render_endpoint_method(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) ->
     } else {
         out.push_str(&render_response_return(spec, endpoint));
     }
-    out.push_str("  }\n");
-    out
+    render_template(
+        "endpoint_method",
+        include_str!("templates/endpoint_method.jinja"),
+        EndpointMethodContext {
+            return_type: render_type(&endpoint.method.return_type),
+            method_name: &endpoint.method.name,
+            params: render_method_parameters(&endpoint.method.params),
+            async_marker,
+            body: out,
+        },
+    )
 }
 
 fn render_method_parameters(params: &[dust_ir::MethodParamIr]) -> String {

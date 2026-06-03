@@ -44,8 +44,7 @@ void main() {
       expect(request.headers['x-trace-id'], equals('dust-id'));
       expect(request.headers['x-api-version'], equals('2026-05'));
       expect(request.headers['x-endpoint'], equals('todos'));
-    });
-    test('GET fetchRaw', () async {
+    });    test('GET fetchRaw', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -67,8 +66,7 @@ void main() {
       expect(request.queryParameters, isA<Map<String, dynamic>>());
       expect(request.headers, isA<Map<String, dynamic>>());
       expect(request.headers['x-api-version'], equals('2026-05'));
-    });
-    test('PATCH rename', () async {
+    });    test('PATCH rename', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -91,8 +89,7 @@ void main() {
       expect(request.headers, isA<Map<String, dynamic>>());
       expect((request.data as Map<String, dynamic>)['title'], equals('dust-id'));
       expect(request.headers['x-api-version'], equals('2026-05'));
-    });
-    test('DELETE delete', () async {
+    });    test('DELETE delete', () async {
       RequestOptions? captured;
       final dio = Dio();
       dio.interceptors.add(
@@ -114,6 +111,4 @@ void main() {
       expect(request.queryParameters, isA<Map<String, dynamic>>());
       expect(request.headers, isA<Map<String, dynamic>>());
       expect(request.headers['x-api-version'], equals('2026-05'));
-    });
-  });
-}
+    });  });}

@@ -16,6 +16,7 @@ dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.1" }
 dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
 dust_workspace = { path = "../dust_workspace", version = "0.1.1" }
 heck = { workspace = true }
+serde = { workspace = true }
 
 [dev-dependencies]
 dust_text = { path = "../dust_text", version = "0.1.1" }
