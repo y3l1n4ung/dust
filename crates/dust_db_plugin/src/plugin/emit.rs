@@ -27,7 +27,11 @@ pub(crate) fn emit_db_library(library: &LibraryIr, options: DbPluginOptions) -> 
     }
 
     if options.databases {
-        for db in database_classes(library) {
+        let databases = database_classes(library);
+        let driver = databases
+            .first()
+            .map_or(super::model::DbDriver::Sqlite3, |db| db.driver);
+        for db in databases {
             sections.push(render_database_class(library, &db));
         }
         let imported_rows = imported_row_names(library);
@@ -37,7 +41,7 @@ pub(crate) fn emit_db_library(library: &LibraryIr, options: DbPluginOptions) -> 
             .chain(imported_rows.iter().map(String::as_str))
             .collect::<HashSet<_>>();
         for dao in dao_classes(library) {
-            sections.push(render_dao_class(&dao, &row_names));
+            sections.push(render_dao_class(&dao, &row_names, driver));
         }
     }
 

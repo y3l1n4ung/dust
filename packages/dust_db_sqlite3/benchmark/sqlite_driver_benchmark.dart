@@ -23,7 +23,7 @@ Future<void> main() async {
     },
   );
   for (var i = 0; i < rows; i += 1) {
-    await db.execute(r'INSERT INTO users (id, name) VALUES ($1, $2)', [
+    await db.execute(r'INSERT INTO users (id, name) VALUES (?, ?)', [
       i,
       'user-$i',
     ]);

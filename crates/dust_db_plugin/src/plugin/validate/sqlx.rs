@@ -146,11 +146,11 @@ async fn describe_queries(
             Either::Left(values) => values.len(),
             Either::Right(count) => count,
         });
-        if parameter_count != rewrite.expanded_parameter_count {
+        if parameter_count != rewrite.expanded_parameter_count() {
             return Err(format!(
                 "SQLx query `{}` expects {parameter_count} expanded parameters but Dust rewrote {} placeholders",
                 query.display_name(),
-                rewrite.expanded_parameter_count
+                rewrite.expanded_parameter_count()
             ));
         }
         validate_described_columns(query, row_columns, &describe)?;
@@ -160,7 +160,7 @@ async fn describe_queries(
             sql_hash: stable_hash_hex(query.sql.as_bytes()),
             sql: query.sql.clone(),
             user_parameter_count: query.parameter_count,
-            expanded_parameter_count: rewrite.expanded_parameter_count,
+            expanded_parameter_count: rewrite.expanded_parameter_count(),
             fetch_mode: query.fetch.as_str().to_owned(),
             row_type: query.row_type.clone(),
             columns: describe

@@ -3,11 +3,18 @@ use std::collections::HashSet;
 use dust_dart_emit::DYNAMIC_TYPES;
 use dust_ir::{MethodIr, ParamKind};
 
-use crate::plugin::model::{DaoClass, DaoMethod};
+use crate::plugin::{
+    model::{DaoClass, DaoMethod, DbDriver},
+    sql::rewrite_sqlite_placeholders,
+};
 
 use super::shared::{is_scalar_type, render_sql_literal};
 
-pub(super) fn render_dao_class(dao: &DaoClass<'_>, row_names: &HashSet<&str>) -> String {
+pub(super) fn render_dao_class(
+    dao: &DaoClass<'_>,
+    row_names: &HashSet<&str>,
+    driver: DbDriver,
+) -> String {
     let class_name = &dao.class.name;
     let generated_name = dao
         .class
@@ -19,7 +26,7 @@ pub(super) fn render_dao_class(dao: &DaoClass<'_>, row_names: &HashSet<&str>) ->
     let methods = dao
         .methods
         .iter()
-        .map(|method| render_dao_method(method, row_names))
+        .map(|method| render_dao_method(method, row_names, driver))
         .collect::<Vec<_>>()
         .join("\n\n");
 
@@ -28,23 +35,54 @@ pub(super) fn render_dao_class(dao: &DaoClass<'_>, row_names: &HashSet<&str>) ->
     )
 }
 
-fn render_dao_method(method: &DaoMethod<'_>, row_names: &HashSet<&str>) -> String {
+fn render_dao_method(
+    method: &DaoMethod<'_>,
+    row_names: &HashSet<&str>,
+    driver: DbDriver,
+) -> String {
     let method_ir = method.method;
     let return_type = DYNAMIC_TYPES.render(&method_ir.return_type);
     let params = render_method_params(method_ir);
-    let args = method_ir
-        .params
-        .iter()
-        .map(|param| param.name.as_str())
-        .collect::<Vec<_>>()
-        .join(", ");
-    let sql = render_sql_literal(&method.sql);
-    let body = render_dao_method_body(method, row_names, &sql, &args);
+    let rendered_query = render_driver_query(method, driver);
+    let body = render_dao_method_body(method, row_names, &rendered_query.sql, &rendered_query.args);
 
     format!(
         "  @override\n  {return_type} {}({params}) {{\n{body}\n  }}",
         method_ir.name
     )
+}
+
+fn render_driver_query(method: &DaoMethod<'_>, driver: DbDriver) -> RenderedQuery {
+    let params = method.method.params.as_slice();
+    if matches!(driver, DbDriver::Sqlite3) {
+        if let Ok(rewrite) = rewrite_sqlite_placeholders(&method.sql, params.len()) {
+            let args = rewrite
+                .parameter_order
+                .iter()
+                .filter_map(|index| params.get(index.saturating_sub(1)))
+                .map(|param| param.name.as_str())
+                .collect::<Vec<_>>()
+                .join(", ");
+            return RenderedQuery {
+                sql: render_sql_literal(&rewrite.sql),
+                args,
+            };
+        }
+    }
+
+    RenderedQuery {
+        sql: render_sql_literal(&method.sql),
+        args: params
+            .iter()
+            .map(|param| param.name.as_str())
+            .collect::<Vec<_>>()
+            .join(", "),
+    }
+}
+
+struct RenderedQuery {
+    sql: String,
+    args: String,
 }
 
 fn render_method_params(method: &MethodIr) -> String {

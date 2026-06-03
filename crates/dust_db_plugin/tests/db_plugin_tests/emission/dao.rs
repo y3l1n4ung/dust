@@ -82,6 +82,30 @@ fn emits_dao_mapper_for_imported_from_row_return_type() {
     let _ = fs::remove_dir_all(root);
 }
 
+#[test]
+fn emits_sqlite_query_with_repeated_and_reordered_args() {
+    let mut dao = dao_class();
+    dao.methods = vec![dao_method(
+        "findForOrg",
+        result_type(TypeIr::named("UserProfile").nullable()),
+        vec![
+            method_param("id", TypeIr::int()),
+            method_param("orgId", TypeIr::int()),
+        ],
+        "(r'SELECT id, display_name FROM users WHERE org_id = $2 OR id = $1 OR backup_id = $1')",
+    )];
+
+    let contribution = register_plugin().emit(
+        &library(vec![simple_user_row_class(), dao]),
+        &SymbolPlan::default(),
+    );
+
+    assert_eq!(
+        contribution.support_types[0],
+        expected_reordered_sqlite_output()
+    );
+}
+
 fn dao_method(
     name: &str,
     return_type: TypeIr,
@@ -126,7 +150,7 @@ final class _$UserDao implements UserDao {
   @override
   Future<Result<UserProfile?, SqlxError>> findById(int id) {
     return _db.fetchOptional<UserProfile>(
-      r'''SELECT id, display_name, bio FROM users WHERE id = $1''',
+      r'''SELECT id, display_name, bio FROM users WHERE id = ?''',
       [id],
       UserProfileFromRow.fromRow,
     );
@@ -143,7 +167,7 @@ final class _$UserDao implements UserDao {
   @override
   Future<Result<ExecResult, SqlxError>> rename(String name, int id) {
     return _db.execute(
-      r'''UPDATE users SET display_name = $1 WHERE id = $2''',
+      r'''UPDATE users SET display_name = ? WHERE id = ?''',
       [name, id],
     );
   }
@@ -174,7 +198,7 @@ final class _$UserDao implements UserDao {
   @override
   Future<Result<UserProfile, SqlxError>> findRequired(int id) {
     return _db.fetchOne<UserProfile>(
-      r'''SELECT id, display_name FROM users WHERE id = $1''',
+      r'''SELECT id, display_name FROM users WHERE id = ?''',
       [id],
       UserProfileFromRow.fromRow,
     );
@@ -218,7 +242,7 @@ fn expected_imported_dao_output() -> &'static str {
   @override
   Future<Result<UserProfile?, SqlxError>> findById(int id) {
     return _db.fetchOptional<UserProfile>(
-      r'''SELECT id, display_name, bio FROM users WHERE id = $1''',
+      r'''SELECT id, display_name, bio FROM users WHERE id = ?''',
       [id],
       UserProfileFromRow.fromRow,
     );
@@ -235,8 +259,36 @@ fn expected_imported_dao_output() -> &'static str {
   @override
   Future<Result<ExecResult, SqlxError>> rename(String name, int id) {
     return _db.execute(
-      r'''UPDATE users SET display_name = $1 WHERE id = $2''',
+      r'''UPDATE users SET display_name = ? WHERE id = ?''',
       [name, id],
+    );
+  }
+}"#
+}
+
+fn expected_reordered_sqlite_output() -> &'static str {
+    r#"extension UserProfileFromRow on UserProfile {
+  static UserProfile fromRow(Row row) {
+    return UserProfile(
+      id: row.read<int>('id'),
+      name: row.read<String>('display_name'),
+    );
+  }
+}
+
+final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
+
+final class _$UserDao implements UserDao {
+  const _$UserDao(this._db);
+
+  final SqlxDriver _db;
+
+  @override
+  Future<Result<UserProfile?, SqlxError>> findForOrg(int id, int orgId) {
+    return _db.fetchOptional<UserProfile>(
+      r'''SELECT id, display_name FROM users WHERE org_id = ? OR id = ? OR backup_id = ?''',
+      [orgId, id, id],
+      UserProfileFromRow.fromRow,
     );
   }
 }"#

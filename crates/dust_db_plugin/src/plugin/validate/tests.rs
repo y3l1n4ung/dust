@@ -69,7 +69,8 @@ fn placeholder_validation_rewrites_repeated_params() {
         rewrite.sql,
         "SELECT '$1' AS label WHERE id = ? OR owner_id = ? AND name = ?"
     );
-    assert_eq!(rewrite.expanded_parameter_count, 3);
+    assert_eq!(rewrite.parameter_order, vec![1, 1, 2]);
+    assert_eq!(rewrite.expanded_parameter_count(), 3);
 }
 
 #[test]
@@ -100,7 +101,8 @@ fn placeholder_validation_handles_quotes_and_escaped_single_quotes() {
         rewrite.sql,
         "SELECT '$1', 'it''s $2', \"$3\" FROM users WHERE id = ?"
     );
-    assert_eq!(rewrite.expanded_parameter_count, 1);
+    assert_eq!(rewrite.parameter_order, vec![1]);
+    assert_eq!(rewrite.expanded_parameter_count(), 1);
 }
 
 #[test]

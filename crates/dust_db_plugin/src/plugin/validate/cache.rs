@@ -219,7 +219,7 @@ fn validate_cached_query(
             query.parameter_count
         ));
     }
-    if entry.expanded_parameter_count != rewrite.expanded_parameter_count {
+    if entry.expanded_parameter_count != rewrite.expanded_parameter_count() {
         return Err(format!(
             "cached SQL metadata for `{}` has stale placeholder expansion; run `dust build --db` online first",
             query.display_name()

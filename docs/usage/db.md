@@ -1,6 +1,6 @@
 # Dust DB
 
-Dust DB is a SQLx-style raw SQL layer for Dart and Flutter. It is not an ORM and does not provide a query builder. App code writes raw SQL in `@Query`, Dust validates it during `dust build --db`, and generated DAO code calls `SqlxDriver.fetch` or `SqlxDriver.execute` directly.
+Dust DB is a SQLx-style raw SQL layer for Dart and Flutter. It is not an ORM and does not provide a query builder. App code writes raw SQL in `@Query`, Dust validates it during `dust build --db`, and generated DAO code calls typed `SqlxDriver` fetch/execute methods directly.
 
 ## Packages
 
@@ -98,7 +98,7 @@ abstract final class UserDao {
 }
 ```
 
-Generated shape:
+Generated SQLite shape:
 
 ```dart
 final class _$UserDao implements UserDao {
@@ -107,36 +107,43 @@ final class _$UserDao implements UserDao {
   final SqlxDriver _db;
 
   @override
-  Future<Result<UserRow?, SqlxError>> findById(int id) async {
-    final result = await _db.fetch(
+  Future<Result<UserRow?, SqlxError>> findById(int id) {
+    return _db.fetchOptional<UserRow>(
       r'''
   SELECT id, email, name
   FROM users
-  WHERE id = $1
+  WHERE id = ?
   ''',
       [id],
+      UserRowFromRow.fromRow,
     );
-
-    return result.andThen((rows) {
-      if (rows.isEmpty) return const Ok<UserRow?, SqlxError>(null);
-
-      if (rows.length > 1) {
-        return Err<UserRow?, SqlxError>(
-          SqlxError.tooManyRows(expected: 1, actual: rows.length),
-        );
-      }
-
-      try {
-        return Ok<UserRow?, SqlxError>(UserRowFromRow.fromRow(rows.first));
-      } catch (error) {
-        return Err<UserRow?, SqlxError>(
-          SqlxError.decode(error.toString(), cause: error),
-        );
-      }
-    });
   }
 }
 ```
+
+Placeholder rules:
+
+- `@Query` SQL uses SQLx placeholders such as `$1` and `$2`.
+- `dust build --db` validates `@Query` SQL with Rust SQLx.
+- generated SQLite DAO code emits SQLite placeholders.
+
+```dart
+@Query(r'SELECT id FROM users WHERE id = $1 OR owner_id = $1')
+Future<Result<List<UserRow>, SqlxError>> byIdOrOwner(int id);
+```
+
+SQLite generated call:
+
+```dart
+return _db.fetchAll<UserRow>(
+  r'''SELECT id FROM users WHERE id = ? OR owner_id = ?''',
+  [id, id],
+  UserRowFromRow.fromRow,
+);
+```
+
+Future Postgres generated DAO code keeps SQLx placeholders when that driver is
+enabled.
 
 ## Complex SQL
 
@@ -180,6 +187,16 @@ final result = await db.raw.fetch(
 );
 ```
 
+Raw SQL is driver-native because Dust does not validate or rewrite it:
+
+```dart
+// SQLite raw SQL uses `?`.
+await db.raw.fetch('SELECT * FROM users WHERE id = ?', [id]);
+
+// Future Postgres raw SQL keeps `$1`.
+await postgres.raw.fetch(r'SELECT * FROM users WHERE id = $1', [id]);
+```
+
 Final rule:
 
 ```text
@@ -199,6 +216,10 @@ dust build --db
 Normal `dust build` does not run SQLx validation.
 
 Dust validates SQL syntax, migrations, table/column existence, placeholder count, result shape, nullability, `FromRow` compatibility, and `Result<T, SqlxError>` return shape.
+
+SQLite migrations are applied in sorted file-name order and recorded in
+`__dust_schema_migrations`, so reopening a Flutter app database skips already
+applied migrations and applies only new upgrade files.
 
 ## Pipeline Split
 

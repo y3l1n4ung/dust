@@ -75,7 +75,7 @@ void main() {
 extension _ShoppingSeedQueries on SqlxDriver {
   Future<void> seedProductCache() async {
     await queryExecute(
-      r'INSERT INTO product_cache (id, title, price, description, category, image, rating_rate, rating_count, payload, source) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
+      r'INSERT INTO product_cache (id, title, price, description, category, image, rating_rate, rating_count, payload, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         7,
         'Dust Runner',

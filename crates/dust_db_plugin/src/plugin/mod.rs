@@ -6,6 +6,7 @@ mod constants;
 mod emit;
 mod model;
 mod parse;
+mod sql;
 mod validate;
 
 use self::constants::{

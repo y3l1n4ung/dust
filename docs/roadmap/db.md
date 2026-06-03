@@ -8,7 +8,7 @@ Dust DB is SQL-first and SQLx-style:
 - `@SqlxDao` marks generated DAO interfaces.
 - `@Query` contains raw SQL and is checked only by `dust build --db`.
 - DAO methods return `Future<Result<T, SqlxError>>`.
-- Generated DAO classes use `SqlxDriver.fetch` and `SqlxDriver.execute`.
+- Generated DAO classes use typed `SqlxDriver` fetch/execute methods.
 - Dynamic SQL uses `RawSqlx`/`db.raw` and is runtime-only unchecked.
 
 No ORM. No query builder. No cross-dialect SQL abstraction.
@@ -137,7 +137,15 @@ Dynamic/admin SQL  -> db.raw.fetch(...)
 
 ## SQL Rules
 
-Checked SQL uses SQLx placeholders: `$1`, `$2`, `$3`.
+`@Query` SQL uses SQLx placeholders: `$1`, `$2`, `$3`.
+
+Generated DAO SQL uses target driver placeholders:
+
+- SQLite emits `?` placeholders and expands reordered/repeated parameters.
+- Future Postgres output keeps `$1`, `$2`, `$3`.
+
+Runtime raw SQL is not rewritten. `db.raw` callers must use the selected
+driver's native placeholder form.
 
 Allowed:
 
