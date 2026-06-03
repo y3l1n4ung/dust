@@ -36,7 +36,7 @@ cargo install --git https://github.com/y3l1n4ung/dust dust_cli
 ## Example
 
 ```dart
-import 'package:derive_annotation/derive_annotation.dart';
+import 'package:dust_dart/derive.dart';
 
 part 'user.g.dart';
 
@@ -70,7 +70,7 @@ Future packages can extend the base contract by subclassing `DeriveTrait` or
 `DeriveConfig`.
 
 ```dart
-import 'package:derive_annotation/derive_annotation.dart';
+import 'package:dust_dart/derive.dart';
 
 final class Serialize extends DeriveTrait {
   const Serialize();

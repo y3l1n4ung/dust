@@ -10,7 +10,7 @@ Add the core annotation package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  derive_annotation: ^0.1.0
+  dust_dart: ^0.1.0
 ```
 
 ---
@@ -20,7 +20,7 @@ dependencies:
 Add the `@Derive` annotation with the specific traits you want to generate.
 
 ```dart
-import 'package:derive_annotation/derive_annotation.dart';
+import 'package:dust_dart/derive.dart';
 
 part 'product.g.dart';
 

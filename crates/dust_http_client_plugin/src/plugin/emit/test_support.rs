@@ -2,7 +2,7 @@ use dust_ir::{BuiltinType, TypeIr};
 
 use crate::plugin::emit::types::uses_direct_body_value;
 use crate::plugin::model::{EndpointParam, ReturnSpec};
-use crate::plugin::util::is_response_body_type;
+use crate::plugin::util::{is_response_body_type, type_name_is};
 
 pub(super) struct SampleValue {
     pub(super) expression: String,
@@ -48,9 +48,16 @@ pub(super) fn sample_response_data(return_spec: &ReturnSpec) -> &'static str {
 pub(super) fn fallback_sample(binding: &EndpointParam<'_>) -> Option<SampleValue> {
     Some(match binding {
         EndpointParam::Body { .. } => return None,
-        EndpointParam::Queries { .. }
-        | EndpointParam::HeaderMap { .. }
-        | EndpointParam::Part { .. } => {
+        EndpointParam::Queries { .. } | EndpointParam::HeaderMap { .. } => {
+            SampleValue::new("const <String, dynamic>{'value': 'dust'} as dynamic", None)
+        }
+        EndpointParam::Part { param, .. } if type_name_is(&param.ty, "MultipartFile") => {
+            SampleValue::new(
+                "MultipartFile.fromBytes(<int>[1, 2, 3], filename: 'dust.txt')",
+                None,
+            )
+        }
+        EndpointParam::Part { .. } => {
             SampleValue::new("const <String, dynamic>{'value': 'dust'} as dynamic", None)
         }
         EndpointParam::CancelToken { .. } => SampleValue::new("CancelToken()", None),

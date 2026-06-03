@@ -10,7 +10,7 @@ Add the router runtime package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dust_router: ^0.1.0
+  dust_flutter: ^0.1.0
 ```
 
 ---
@@ -22,7 +22,7 @@ Create an entrypoint (usually `lib/route.dart`) and annotate it with `@Router`.
 
 ```dart
 import 'package:flutter/material.dart' hide Route, Router;
-import 'package:dust_router/dust_router.dart';
+import 'package:dust_flutter/route.dart';
 import 'route.g.dart';
 
 export 'route.g.dart';

@@ -8,7 +8,7 @@ client implementations through its own generation flow.
 
 ## Package Shape
 
-- Dart annotation package: `dust_http_client_annotation`
+- Dart package: `dust_dart`
 - Rust plugin crate: `dust_http_client_plugin`
 - Runtime dependency: generated clients use `package:dio/dio.dart` directly
 
@@ -19,7 +19,7 @@ cancel tokens, progress callbacks, multipart, and request options.
 
 ```dart
 import 'package:dio/dio.dart';
-import 'package:dust_http_client_annotation/dust_http_client_annotation.dart';
+import 'package:dust_dart/http.dart';
 
 part 'product_api.g.dart';
 

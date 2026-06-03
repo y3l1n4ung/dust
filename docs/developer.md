@@ -23,10 +23,9 @@ This document provides a deep dive into the Dust workspace layout, internal buil
 
 | Package | Responsibility |
 | :--- | :--- |
-| `derive_annotation` | Core traits like `Eq()`, `ToString()`, and `CopyWith()`. |
-| `derive_serde_annotation` | JSON serialization metadata and `SerDeCodec` contracts. |
-| `dust_http_client_annotation` | HTTP verb and parameter mapping metadata. |
-| `dust_router` | Runtime Navigator 2.0 components. |
+| `dust_dart` | Dart-only annotations and runtime: derive, serde, HTTP, and DB base APIs. |
+| `dust_flutter` | Flutter-only annotations and runtime: routing and state management. |
+| `dust_db_sqlite3` | sqlite3 driver implementation for Dust DB. |
 
 ---
 

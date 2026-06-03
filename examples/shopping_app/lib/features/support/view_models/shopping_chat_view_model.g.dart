@@ -23,21 +23,6 @@ final class _ShoppingChatViewModelAspect<R> {
   }
 }
 
-List<Object?> _shoppingChatViewModelSelectMessages(ChatState state) => state.messages;
-final _shoppingChatViewModelMessagesAspect = _ShoppingChatViewModelAspect<List<Object?>>(
-  _shoppingChatViewModelSelectMessages,
-);
-
-ChatStatus _shoppingChatViewModelSelectStatus(ChatState state) => state.status;
-final _shoppingChatViewModelStatusAspect = _ShoppingChatViewModelAspect<ChatStatus>(
-  _shoppingChatViewModelSelectStatus,
-);
-
-String? _shoppingChatViewModelSelectErrorMessage(ChatState state) => state.errorMessage;
-final _shoppingChatViewModelErrorMessageAspect = _ShoppingChatViewModelAspect<String?>(
-  _shoppingChatViewModelSelectErrorMessage,
-);
-
 abstract class $ShoppingChatViewModel extends ViewModelBase<ChatState, ShoppingChatViewModelArgs> {
   $ShoppingChatViewModel(super.args) : super(initialState: const ChatState());
 }
@@ -49,27 +34,6 @@ class _$ShoppingChatViewModelProxy {
 
   ChatState get value {
     return ShoppingChatViewModelScope.of(_context).value;
-  }
-
-  List<Object?> get messages {
-    return ShoppingChatViewModelScope.of(
-      _context,
-      aspect: _shoppingChatViewModelMessagesAspect,
-    ).state.messages;
-  }
-
-  ChatStatus get status {
-    return ShoppingChatViewModelScope.of(
-      _context,
-      aspect: _shoppingChatViewModelStatusAspect,
-    ).state.status;
-  }
-
-  String? get errorMessage {
-    return ShoppingChatViewModelScope.of(
-      _context,
-      aspect: _shoppingChatViewModelErrorMessageAspect,
-    ).state.errorMessage;
   }
 
   R select<R>(R Function(ChatState state) selector) {

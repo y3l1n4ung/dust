@@ -1,5 +1,4 @@
-import 'package:dust_db_annotation/dust_db_annotation.dart';
-import 'package:dust_db_runtime/dust_db_runtime.dart';
+import 'package:dust_dart/db.dart';
 
 import '../../features/products/models/product.dart';
 

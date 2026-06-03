@@ -1,4 +1,4 @@
-import 'package:derive_annotation/derive_annotation.dart';
+import 'package:dust_dart/derive.dart';
 import '../../../core/models/store_cart.dart';
 
 part 'demo_cart_state.g.dart';

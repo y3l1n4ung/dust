@@ -1,5 +1,4 @@
-import 'package:dust_http_client_annotation/dust_http_client_annotation.dart';
-import 'package:derive_serde_annotation/derive_serde_annotation.dart';
+import 'package:dust_dart/http.dart';
 
 import '../../features/auth/models/user.dart';
 import '../../features/products/models/product.dart';

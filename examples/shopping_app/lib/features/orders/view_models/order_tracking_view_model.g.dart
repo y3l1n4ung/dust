@@ -23,26 +23,6 @@ final class _OrderTrackingViewModelAspect<R> {
   }
 }
 
-String? _orderTrackingViewModelSelectOrderId(OrderTrackingState state) => state.orderId;
-final _orderTrackingViewModelOrderIdAspect = _OrderTrackingViewModelAspect<String?>(
-  _orderTrackingViewModelSelectOrderId,
-);
-
-OrderTrackingStatus _orderTrackingViewModelSelectStatus(OrderTrackingState state) => state.status;
-final _orderTrackingViewModelStatusAspect = _OrderTrackingViewModelAspect<OrderTrackingStatus>(
-  _orderTrackingViewModelSelectStatus,
-);
-
-List<Object?> _orderTrackingViewModelSelectEvents(OrderTrackingState state) => state.events;
-final _orderTrackingViewModelEventsAspect = _OrderTrackingViewModelAspect<List<Object?>>(
-  _orderTrackingViewModelSelectEvents,
-);
-
-String? _orderTrackingViewModelSelectErrorMessage(OrderTrackingState state) => state.errorMessage;
-final _orderTrackingViewModelErrorMessageAspect = _OrderTrackingViewModelAspect<String?>(
-  _orderTrackingViewModelSelectErrorMessage,
-);
-
 abstract class $OrderTrackingViewModel extends ViewModelBase<OrderTrackingState, OrderTrackingViewModelArgs> {
   $OrderTrackingViewModel(super.args) : super(initialState: const OrderTrackingState());
 }
@@ -54,34 +34,6 @@ class _$OrderTrackingViewModelProxy {
 
   OrderTrackingState get value {
     return OrderTrackingViewModelScope.of(_context).value;
-  }
-
-  String? get orderId {
-    return OrderTrackingViewModelScope.of(
-      _context,
-      aspect: _orderTrackingViewModelOrderIdAspect,
-    ).state.orderId;
-  }
-
-  OrderTrackingStatus get status {
-    return OrderTrackingViewModelScope.of(
-      _context,
-      aspect: _orderTrackingViewModelStatusAspect,
-    ).state.status;
-  }
-
-  List<Object?> get events {
-    return OrderTrackingViewModelScope.of(
-      _context,
-      aspect: _orderTrackingViewModelEventsAspect,
-    ).state.events;
-  }
-
-  String? get errorMessage {
-    return OrderTrackingViewModelScope.of(
-      _context,
-      aspect: _orderTrackingViewModelErrorMessageAspect,
-    ).state.errorMessage;
   }
 
   R select<R>(R Function(OrderTrackingState state) selector) {

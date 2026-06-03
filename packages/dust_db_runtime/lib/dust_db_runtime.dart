@@ -1,9 +1,34 @@
-/// Runtime contracts and query helpers for Dust DB.
+/// Compatibility wrapper for Dust DB runtime. Use `package:dust_dart/db.dart`.
 library;
 
-export 'package:dust_db_annotation/dust_db_annotation.dart' show Driver;
-export 'src/pool.dart';
-export 'src/json.dart';
-export 'src/query.dart';
-export 'src/result.dart';
-export 'src/row_mapper.dart';
+export 'package:dust_dart/db.dart'
+    show
+        Driver,
+        Err,
+        ExecResult,
+        Ok,
+        Pool,
+        QueryAs,
+        QueryExecute,
+        QueryRaw,
+        QueryScalar,
+        RawSql,
+        RawSqlx,
+        Result,
+        Row,
+        RowMapper,
+        RowMapperRegistry,
+        SqlxCardinalityError,
+        SqlxDecodeError,
+        SqlxDriver,
+        SqlxDriverError,
+        SqlxError,
+        Transaction,
+        Unit,
+        decodeJsonObject,
+        queryAs,
+        queryExecute,
+        queryRaw,
+        queryScalar,
+        registerRowMapper,
+        unit;

@@ -14,7 +14,7 @@
 import 'package:flutter/material.dart' hide Route;
 
 import 'route.dart';
-import 'package:dust_router/dust_router.dart';
+import 'package:dust_flutter/route.dart';
 import 'package:dust_test/pages/dashboard_page.dart';
 import 'package:dust_test/pages/not_found_page.dart';
 

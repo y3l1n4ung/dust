@@ -1,4 +1,4 @@
-import 'package:derive_annotation/derive_annotation.dart';
+import 'package:dust_dart/derive.dart';
 
 import 'category.dart';
 import 'product.dart';

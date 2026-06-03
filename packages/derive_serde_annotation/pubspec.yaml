@@ -1,23 +1,16 @@
 name: derive_serde_annotation
-description: Dust serde annotations for JSON serialization and deserialization.
+description: Compatibility wrapper for Dust serde annotations. Use dust_dart.
 version: 0.1.0
-homepage: https://github.com/y3l1n4ung/dust
-repository: https://github.com/y3l1n4ung/dust
-issue_tracker: https://github.com/y3l1n4ung/dust/issues
+publish_to: none
 
 environment:
   sdk: ^3.11.0
 
 resolution: workspace
 
-topics:
-  - codegen
-  - annotations
-  - serialization
-  - dust
-
 dependencies:
-  derive_annotation: ^0.1.0
+  dust_dart:
+    path: ../dust_dart
 
 dev_dependencies:
   lints: ^6.0.0

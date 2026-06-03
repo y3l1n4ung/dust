@@ -6,7 +6,7 @@ String renderSerdeScalar(int index) {
   return renderFile(
     fileName: fileNameForIndex(index),
     imports: [
-      "import 'package:derive_serde_annotation/derive_serde_annotation.dart';",
+      "import 'package:dust_dart/serde.dart';",
     ],
     declarations: [
       '''
@@ -42,7 +42,7 @@ String renderSerdeOptions(int index) {
   return renderFile(
     fileName: fileNameForIndex(index),
     imports: [
-      "import 'package:derive_serde_annotation/derive_serde_annotation.dart';",
+      "import 'package:dust_dart/serde.dart';",
     ],
     declarations: [
       '''
@@ -94,7 +94,7 @@ String renderSerdeNested(int index) {
   return renderFile(
     fileName: fileNameForIndex(index),
     imports: [
-      "import 'package:derive_serde_annotation/derive_serde_annotation.dart';",
+      "import 'package:dust_dart/serde.dart';",
     ],
     declarations: [
       '''
@@ -142,7 +142,7 @@ String renderSerdeCodec(int index) {
   return renderFile(
     fileName: fileNameForIndex(index),
     imports: [
-      "import 'package:derive_serde_annotation/derive_serde_annotation.dart';",
+      "import 'package:dust_dart/serde.dart';",
       "import '../support/common.dart';",
     ],
     declarations: [
@@ -225,7 +225,7 @@ String renderSerdeLinked(int index) {
   return renderFile(
     fileName: fileNameForIndex(index),
     imports: [
-      "import 'package:derive_serde_annotation/derive_serde_annotation.dart';",
+      "import 'package:dust_dart/serde.dart';",
       "import '$previousFile.dart';",
     ],
     declarations: [

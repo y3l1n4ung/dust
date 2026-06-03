@@ -1,4 +1,4 @@
-import 'package:dust_db_runtime/dust_db_runtime.dart';
+import 'package:dust_dart/db.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 
 part 'migrations.dart';

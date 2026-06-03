@@ -21,8 +21,8 @@ represents the generator contract:
 - `@Router` lives in `lib/route.dart`.
 - `lib/route.g.dart` is a standalone generated library, not a `part` file.
 - `lib/route.g.dart` imports discovered pages, shells, guards, and
-  `package:dust_router/dust_router.dart`.
-- `dust_router` owns the reusable Navigator 2.0 runtime behavior.
+  `package:dust_flutter/route.dart`.
+- `dust_flutter` owns the reusable Navigator 2.0 runtime behavior.
 - App code imports only `route.dart`.
 
 ## Public API
@@ -134,7 +134,7 @@ Dust emits one routing output from the router root library:
 - a private `_routePath(...)` helper backed by `Uri(pathSegments: ...)` and
   `uri.pathSegments` / `uri.queryParameters` parsers
 
-`dust_router` provides:
+`dust_flutter` provides:
 
 - `RouterConfig`
 - `RouteInformationParser`
@@ -153,7 +153,7 @@ Detailed Rust implementation plan: [routing-rust-plugin.md](routing-rust-plugin.
 Full feature and test checklist: [routing-feature-checklist.md](routing-feature-checklist.md).
 
 
-Add Flutter router runtime package `dust_router`:
+Add Flutter router runtime package `dust_flutter`:
 
 - `Router`
 - `Route`
@@ -174,7 +174,7 @@ Add Rust crate `dust_route_plugin`:
   params, unsupported param types, missing initial page, and missing not-found
   page.
 - Emit `route.g.dart` from the router root library only.
-- Reuse the runtime exported by `dust_router`; do not generate a
+- Reuse the runtime exported by `dust_flutter`; do not generate a
   local `routing_core.dart`.
 
 Suggested module shape:

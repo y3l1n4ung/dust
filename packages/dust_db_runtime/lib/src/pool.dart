@@ -1,4 +1,4 @@
-import 'package:dust_db_annotation/dust_db_annotation.dart';
+import 'package:dust_dart/db.dart';
 
 import 'result.dart';
 import 'row_mapper.dart';

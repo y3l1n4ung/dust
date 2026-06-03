@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:dust_db_runtime/dust_db_runtime.dart';
+import 'package:dust_dart/db.dart';
 import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:test/test.dart';
 

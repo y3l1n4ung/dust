@@ -1,4 +1,4 @@
-import 'package:dust_db_runtime/dust_db_runtime.dart';
+import 'package:dust_dart/db.dart';
 
 final class UserRow {
   const UserRow(this.id);

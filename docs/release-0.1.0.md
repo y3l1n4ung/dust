@@ -6,9 +6,9 @@ Release `0.1.0` for:
 
 - `dust` CLI binary
 - Dart packages:
-  - `derive_annotation`
-  - `derive_serde_annotation`
-  - `dust_http_client_annotation`
+  - `dust_dart`
+  - `dust_flutter`
+  - `dust_db_sqlite3`
 
 ## Pre-release Checks
 
@@ -38,13 +38,13 @@ dart test
 Run package dry-runs:
 
 ```sh
-cd packages/derive_annotation
+cd packages/dust_dart
 dart pub publish --dry-run
 
-cd ../derive_serde_annotation
+cd ../dust_flutter
 dart pub publish --dry-run
 
-cd ../dust_http_client_annotation
+cd ../dust_db_sqlite3
 dart pub publish --dry-run
 ```
 
@@ -55,9 +55,9 @@ artifacts and installers.
 
 Publish Dart packages to pub.dev in this order:
 
-1. `derive_annotation`
-2. `derive_serde_annotation`
-3. `dust_http_client_annotation`
+1. `dust_dart`
+2. `dust_flutter`
+3. `dust_db_sqlite3`
 
 ## GitHub Release
 

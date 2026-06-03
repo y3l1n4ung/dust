@@ -35,9 +35,7 @@ pub(crate) fn render_test_file(library: &LibraryIr, specs: &[ClientSpec<'_>]) ->
     for import in rendered_imports(library, package_root, source_path) {
         if matches!(
             import.as_str(),
-            "package:dio/dio.dart"
-                | "package:test/test.dart"
-                | "package:dust_http_client_annotation/dust_http_client_annotation.dart"
+            "package:dio/dio.dart" | "package:test/test.dart" | "package:dust_dart/http.dart"
         ) {
             continue;
         }

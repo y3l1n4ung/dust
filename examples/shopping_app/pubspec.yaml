@@ -15,26 +15,12 @@ dependencies:
   cupertino_icons: ^1.0.8
   dio: ^5.8.0
   shared_preferences: ^2.3.4
-  dust_router:
-    path: ../../packages/dust_router
-  dust_state:
-    path: ../../packages/dust_state
-  dust_db_annotation:
-    path: ../../packages/dust_db_annotation
-  dust_db_runtime:
-    path: ../../packages/dust_db_runtime
+  dust_dart:
+    path: ../../packages/dust_dart
+  dust_flutter:
+    path: ../../packages/dust_flutter
   dust_db_sqlite3:
     path: ../../packages/dust_db_sqlite3
-  dust_http_client_annotation:
-    path: ../../packages/dust_http_client_annotation
-  derive_annotation:
-    path: ../../packages/derive_annotation
-  derive_serde_annotation:
-    path: ../../packages/derive_serde_annotation
-
-dependency_overrides:
-  derive_annotation:
-    path: ../../packages/derive_annotation
 
 dev_dependencies:
   flutter_test:

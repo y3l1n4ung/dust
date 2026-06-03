@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide Route, Router;
-import 'package:dust_router/dust_router.dart' show Router;
+import 'package:dust_flutter/route.dart' show Router;
 
 import 'features/auth/models/auth_state.dart';
 import 'features/auth/view_models/auth_view_model.dart';
@@ -9,7 +9,7 @@ import 'features/shared/not_found_screen.dart';
 import 'route.g.dart';
 
 export 'route.g.dart';
-export 'package:dust_router/dust_router.dart';
+export 'package:dust_flutter/route.dart';
 
 @Router(initial: ProductsScreen, notFound: NotFoundScreen)
 final class AppRouter extends $AppRouter {

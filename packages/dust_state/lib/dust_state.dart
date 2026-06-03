@@ -1,14 +1,4 @@
-/// Typed Flutter state management runtime and annotations for Dust.
+/// Compatibility wrapper for Dust state management. Use `package:dust_flutter/state.dart`.
 library;
 
-export 'dart:async' show scheduleMicrotask, StreamSubscription;
-export 'package:flutter/widgets.dart'
-    show
-        BuildContext,
-        InheritedModel,
-        State,
-        StatefulWidget,
-        Widget;
-
-export 'src/annotations.dart';
-export 'src/view_model.dart';
+export 'package:dust_flutter/state.dart';

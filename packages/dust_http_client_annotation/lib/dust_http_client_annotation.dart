@@ -1,17 +1,4 @@
-/// Support for core HttpClient annotations.
+/// Compatibility wrapper for Dust HTTP client annotations. Use `package:dust_dart/http.dart`.
 library;
 
-export 'dart:convert';
-export 'package:dio/dio.dart'
-    show
-        CancelToken,
-        Dio,
-        FormData,
-        MultipartFile,
-        Options,
-        ProgressCallback,
-        RequestOptions,
-        Response,
-        ResponseBody,
-        ResponseType;
-export 'src/http_client_annotations.dart';
+export 'package:dust_dart/http.dart';

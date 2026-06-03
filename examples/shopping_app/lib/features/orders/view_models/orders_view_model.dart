@@ -1,4 +1,4 @@
-import 'package:dust_state/dust_state.dart';
+import 'package:dust_flutter/state.dart';
 
 import '../../cart/models/cart_item.dart';
 import '../models/order.dart';

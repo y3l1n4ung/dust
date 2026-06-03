@@ -5,6 +5,8 @@ environment:
   sdk: ^3.11.0
 
 workspace:
+  - packages/dust_dart
+  - packages/dust_flutter
   - packages/derive_annotation
   - packages/derive_serde_annotation
   - packages/dust_http_client_annotation

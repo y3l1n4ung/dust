@@ -5,7 +5,7 @@ String renderDeriveScalar(int index) {
   final className = primaryClassNameForIndex(index);
   return renderFile(
     fileName: fileNameForIndex(index),
-    imports: ["import 'package:derive_annotation/derive_annotation.dart';"],
+    imports: ["import 'package:dust_dart/derive.dart';"],
     declarations: [
       '''
 @Derive([ToString(), Eq(), CopyWith()])
@@ -33,7 +33,7 @@ String renderDeriveLinked(int index) {
   return renderFile(
     fileName: fileNameForIndex(index),
     imports: [
-      "import 'package:derive_annotation/derive_annotation.dart';",
+      "import 'package:dust_dart/derive.dart';",
       "import '$previousFile.dart';",
     ],
     declarations: [
@@ -61,7 +61,7 @@ String renderDeriveHierarchy(int index) {
   return renderFile(
     fileName: fileNameForIndex(index),
     imports: [
-      "import 'package:derive_annotation/derive_annotation.dart';",
+      "import 'package:dust_dart/derive.dart';",
       "import '../support/common.dart';",
     ],
     declarations: [

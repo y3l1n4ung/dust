@@ -1,4 +1,4 @@
-import 'package:derive_serde_annotation/derive_serde_annotation.dart';
+import 'package:dust_dart/serde.dart';
 
 part 'todo.g.dart';
 

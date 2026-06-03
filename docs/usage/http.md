@@ -11,7 +11,7 @@ Add the required packages to your `pubspec.yaml`:
 ```yaml
 dependencies:
   dio: ^5.0.0
-  dust_http_client_annotation: ^0.1.0
+  dust_dart: ^0.1.0
 ```
 
 ---
@@ -21,7 +21,7 @@ dependencies:
 Define an `abstract interface class` and annotate it with `@HttpClient`.
 
 ```dart
-import 'package:dust_http_client_annotation/dust_http_client_annotation.dart';
+import 'package:dust_dart/http.dart';
 
 part 'api_client.g.dart';
 

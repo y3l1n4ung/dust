@@ -1,5 +1,4 @@
-/// Dust serde annotations for Dart.
+/// Compatibility wrapper for Dust serde annotations. Use `package:dust_dart/serde.dart`.
 library;
 
-export 'package:derive_annotation/derive_annotation.dart';
-export 'src/serde.dart';
+export 'package:dust_dart/serde.dart';

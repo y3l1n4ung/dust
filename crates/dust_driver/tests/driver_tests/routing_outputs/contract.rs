@@ -23,7 +23,7 @@ fn build_matches_full_route_output_snapshot() {
 }
 fn assert_route_output_matches_contract(source: &str) {
     for expected in [
-        "import 'package:dust_router/dust_router.dart';",
+        "import 'package:dust_flutter/route.dart';",
         "import 'package:dust_test/pages/dashboard_page.dart';",
         "import 'package:dust_test/pages/not_found_page.dart';",
         "abstract class $AppRouter",

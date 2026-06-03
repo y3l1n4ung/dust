@@ -1,4 +1,4 @@
-import 'package:dust_http_client_annotation/dust_http_client_annotation.dart';
+import 'package:dust_dart/http.dart';
 
 import '../models/remote_comment.dart';
 import '../models/remote_post.dart';

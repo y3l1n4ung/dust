@@ -227,7 +227,7 @@ void main() {
       );
       final api = JsonPlaceholderApi(dio);
       try {
-        await api.uploadPostWithFile(42, 'dust-id', 'dust-id', const <String, dynamic>{'value': 'dust'} as dynamic);
+        await api.uploadPostWithFile(42, 'dust-id', 'dust-id', MultipartFile.fromBytes(<int>[1, 2, 3], filename: 'dust.txt'));
       } catch (_) {}
       expect(captured, isNotNull);
       final request = captured!;

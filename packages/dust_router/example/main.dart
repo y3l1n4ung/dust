@@ -1,4 +1,4 @@
-import 'package:dust_router/dust_router.dart';
+import 'package:dust_flutter/route.dart';
 
 @Router(initial: DashboardPage, notFound: NotFoundPage)
 final class AppRouter {}

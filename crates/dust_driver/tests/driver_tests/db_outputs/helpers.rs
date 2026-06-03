@@ -62,8 +62,7 @@ pub(crate) fn write_static_sql_validation_workspace(root: &std::path::Path, quer
     write_file(
         &root.join("lib/app_database.dart"),
         &format!(
-            "import 'package:dust_db_annotation/dust_db_annotation.dart';\n\
-             import 'package:dust_db_runtime/dust_db_runtime.dart';\n\
+            "import 'package:dust_dart/db.dart';\n\
              import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';\n\
              part 'app_database.g.dart';\n\
              @Database(driver: Driver.sqlite3, migrations: './migrations')\n\
@@ -88,8 +87,7 @@ pub(crate) fn write_query_validation_workspace(root: &std::path::Path, query_met
     write_file(
         &root.join("lib/app_database.dart"),
         &format!(
-            "import 'package:dust_db_annotation/dust_db_annotation.dart';\n\
-             import 'package:dust_db_runtime/dust_db_runtime.dart';\n\
+            "import 'package:dust_dart/db.dart';\n\
              import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';\n\
              part 'app_database.g.dart';\n\
              @Derive([FromRow()])\n\
@@ -123,8 +121,7 @@ pub(crate) fn write_db_workspace(root: &std::path::Path, include_derive: bool) {
     write_file(
         &root.join("lib/app_database.dart"),
         &format!(
-            "import 'package:dust_db_annotation/dust_db_annotation.dart';\n\
-             import 'package:dust_db_runtime/dust_db_runtime.dart';\n\
+            "import 'package:dust_dart/db.dart';\n\
              import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';\n\
              part 'app_database.g.dart';\n\
              {derive_source}\n\
@@ -178,8 +175,7 @@ pub(crate) fn write_dao_workspace(root: &std::path::Path) {
     );
     write_file(
         &root.join("lib/app_database.dart"),
-        "import 'package:dust_db_annotation/dust_db_annotation.dart';\n\
-         import 'package:dust_db_runtime/dust_db_runtime.dart';\n\
+        "import 'package:dust_dart/db.dart';\n\
          import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';\n\
          part 'app_database.g.dart';\n\
          @Derive([FromRow()])\n\
@@ -210,8 +206,7 @@ pub(crate) fn write_split_pipeline_workspace(root: &std::path::Path) {
     );
     write_file(
         &root.join("lib/user_profile.dart"),
-        "import 'package:dust_db_annotation/dust_db_annotation.dart';\n\
-         import 'package:dust_db_runtime/dust_db_runtime.dart';\n\
+        "import 'package:dust_dart/db.dart';\n\
          part 'user_profile.g.dart';\n\
          @Derive([FromRow()])\n\
          final class UserProfile {\n\
@@ -223,8 +218,7 @@ pub(crate) fn write_split_pipeline_workspace(root: &std::path::Path) {
     );
     write_file(
         &root.join("lib/app_database.dart"),
-        "import 'package:dust_db_annotation/dust_db_annotation.dart';\n\
-         import 'package:dust_db_runtime/dust_db_runtime.dart';\n\
+        "import 'package:dust_dart/db.dart';\n\
          import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';\n\
          part 'app_database.g.dart';\n\
          @SqlxDatabase(type: SqlxDatabaseType.sqlite, migrations: './migrations')\n\
@@ -244,8 +238,8 @@ pub(crate) fn write_split_pipeline_workspace(root: &std::path::Path) {
 pub(crate) fn write_http_query_collision_workspace(root: &std::path::Path) {
     write_file(
         &root.join("lib/shopping_api.dart"),
-        "import 'package:derive_serde_annotation/derive_serde_annotation.dart';\n\
-         import 'package:dust_http_client_annotation/dust_http_client_annotation.dart';\n\
+        "import 'package:dust_dart/serde.dart';\n\
+         import 'package:dust_dart/http.dart';\n\
          part 'shopping_api.g.dart';\n\
          @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])\n\
          class LoginRequest with _$LoginRequest {\n\
@@ -266,8 +260,7 @@ pub(crate) fn write_http_query_collision_workspace(root: &std::path::Path) {
 pub(crate) fn write_row_only_workspace(root: &std::path::Path) {
     write_file(
         &root.join("lib/user_row.dart"),
-        "import 'package:dust_db_annotation/dust_db_annotation.dart';\n\
-         import 'package:dust_db_runtime/dust_db_runtime.dart';\n\
+        "import 'package:dust_dart/db.dart';\n\
          part 'user_row.g.dart';\n\
          @Derive([FromRow()])\n\
          @Sqlx(renameAll: SqlxRename.snakeCase)\n\

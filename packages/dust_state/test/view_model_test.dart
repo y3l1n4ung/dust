@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:dust_state/dust_state.dart';
+import 'package:dust_flutter/state.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 

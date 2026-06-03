@@ -1,5 +1,5 @@
-import 'package:dust_state/dust_state.dart';
-import 'package:derive_serde_annotation/derive_serde_annotation.dart';
+import 'package:dust_flutter/state.dart';
+import 'package:dust_dart/serde.dart';
 
 import '../data/shopping_repository.dart';
 import '../services/storage_service.dart';

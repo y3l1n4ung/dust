@@ -60,10 +60,7 @@ pub(crate) fn validate_text_stream_import(
 ) {
     if mode == ReturnMode::TextStream
         && !has_import(imports, "dart:convert")
-        && !has_import(
-            imports,
-            "package:dust_http_client_annotation/dust_http_client_annotation.dart",
-        )
+        && !has_import(imports, "package:dust_dart/http.dart")
     {
         diagnostics.push(
             Diagnostic::error(format!(
@@ -72,7 +69,7 @@ pub(crate) fn validate_text_stream_import(
             ))
             .with_label(label(
                 method.span,
-                "import `package:dust_http_client_annotation/dust_http_client_annotation.dart` or add `import 'dart:convert';` to use generated UTF-8 text stream decoding",
+                "import `package:dust_dart/http.dart` or add `import 'dart:convert';` to use generated UTF-8 text stream decoding",
             )),
         );
     }

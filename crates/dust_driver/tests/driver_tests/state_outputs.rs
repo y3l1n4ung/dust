@@ -31,7 +31,7 @@ fn build_writes_state_output_for_view_model_library() {
 fn write_state_workspace(root: &std::path::Path) {
     write_file(
         &root.join("lib/task_board_view_model.dart"),
-        "import 'package:dust_state/dust_state.dart';\n\
+        "import 'package:dust_flutter/state.dart';\n\
          part 'task_board_view_model.g.dart';\n\
          final class PrototypeRepository { const PrototypeRepository(); }\n\
          final class TaskBoardState {\n\

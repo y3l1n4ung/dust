@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:dust_router/dust_router.dart';
+import 'package:dust_flutter/route.dart';
 import 'package:flutter/material.dart' hide Route, Router;
 import 'package:flutter_test/flutter_test.dart';
 

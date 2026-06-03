@@ -39,7 +39,7 @@ cargo install --git https://github.com/y3l1n4ung/dust dust_cli
 ## Example
 
 ```dart
-import 'package:derive_serde_annotation/derive_serde_annotation.dart';
+import 'package:dust_dart/serde.dart';
 
 part 'user.g.dart';
 

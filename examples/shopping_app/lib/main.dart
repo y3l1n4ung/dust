@@ -1,7 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter/material.dart';
-import 'package:dust_state/dust_state.dart';
+import 'package:dust_flutter/state.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

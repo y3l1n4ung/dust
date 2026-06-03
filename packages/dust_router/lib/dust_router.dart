@@ -1,5 +1,4 @@
-/// Typed Flutter Navigator 2.0 routing annotations for Dust.
+/// Compatibility wrapper for Dust routing. Use `package:dust_flutter/route.dart`.
 library;
 
-export 'src/route_annotations.dart';
-export 'src/routing_core.dart';
+export 'package:dust_flutter/route.dart';

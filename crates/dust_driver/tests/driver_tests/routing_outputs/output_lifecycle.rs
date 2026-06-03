@@ -39,7 +39,7 @@ fn build_writes_route_output_only_from_router_root() {
             && artifact.routed
             && !artifact.written
     }));
-    assert!(source.contains("import 'package:dust_router/dust_router.dart';"));
+    assert!(source.contains("import 'package:dust_flutter/route.dart';"));
     assert!(source.contains("import 'package:dust_test/pages/dashboard_page.dart';"));
     assert!(source.contains("final class DashboardRoute extends AppRoutePath"));
     assert!(source.contains("page: DashboardPage"));

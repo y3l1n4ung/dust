@@ -10,7 +10,7 @@ Add the state management package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dust_state: ^0.1.0
+  dust_flutter: ^0.1.0
 ```
 
 ---
@@ -21,7 +21,7 @@ dependencies:
 Annotate your class with `@ViewModel` and extend the generated base class.
 
 ```dart
-import 'package:dust_state/dust_state.dart';
+import 'package:dust_flutter/state.dart';
 
 part 'counter_view_model.g.dart';
 

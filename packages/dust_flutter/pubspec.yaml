@@ -1,0 +1,19 @@
+name: dust_flutter
+description: Unified Flutter runtime and annotations for Dust code generation.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  lints: ^6.0.0
+  test: ^1.26.0

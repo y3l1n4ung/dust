@@ -1,4 +1,4 @@
-import 'package:dust_db_annotation/dust_db_annotation.dart';
+import 'package:dust_dart/db.dart';
 import 'package:test/test.dart';
 
 final class StatusFromInt implements SqlxTryFrom<String, int> {

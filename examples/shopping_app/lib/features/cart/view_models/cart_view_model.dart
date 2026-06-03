@@ -1,4 +1,4 @@
-import 'package:dust_state/dust_state.dart';
+import 'package:dust_flutter/state.dart';
 
 import '../../../core/logging/logger.dart';
 import '../../products/models/product.dart';

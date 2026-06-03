@@ -41,7 +41,7 @@ fn emits_standalone_route_and_core_outputs() {
     let primary = contribution.primary_source.expect("primary route output");
 
     assert!(primary.contains("import 'route.dart';"));
-    assert!(primary.contains("import 'package:dust_router/dust_router.dart';"));
+    assert!(primary.contains("import 'package:dust_flutter/route.dart';"));
     assert!(primary.contains("abstract class $AppRouter extends DustRouterBase<AppRoutePath>"));
     assert!(primary.contains("final class ProjectRoute extends AppRoutePath"));
     assert!(primary.contains("/// Defaults to true. Override and return false for public routes"));

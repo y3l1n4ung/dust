@@ -1,6 +1,4 @@
-/// Base Dust derive annotations for Dart.
+/// Compatibility wrapper for Dust derive annotations. Use `package:dust_dart/derive.dart`.
 library;
 
-export 'package:collection/collection.dart';
-export 'src/base.dart';
-export 'src/traits.dart';
+export 'package:dust_dart/derive.dart';

@@ -29,7 +29,7 @@ pub(crate) fn render_route_generated(library: &LibraryIr, spec: &RouterSpec) -> 
     out.push_str("// ignore_for_file: unused_import, unnecessary_import\n\n");
     out.push_str("import 'package:flutter/material.dart' hide Route;\n\n");
     out.push_str("import 'route.dart';\n");
-    out.push_str("import 'package:dust_router/dust_router.dart';\n");
+    out.push_str("import 'package:dust_flutter/route.dart';\n");
     let current_import = package_import_uri(library);
     let imports = spec
         .routes

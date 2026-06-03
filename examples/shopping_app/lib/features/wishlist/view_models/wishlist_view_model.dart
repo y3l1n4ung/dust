@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:dust_state/dust_state.dart';
+import 'package:dust_flutter/state.dart';
 
 import '../../../core/services/storage_service.dart';
 import '../../products/models/product.dart';

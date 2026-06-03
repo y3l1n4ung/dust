@@ -1,5 +1,19 @@
-/// Dust DB annotations for sqlx-style raw SQL generation.
+/// Compatibility wrapper for Dust DB annotations. Use `package:dust_dart/db.dart`.
 library;
 
-export 'package:derive_annotation/derive_annotation.dart';
-export 'src/annotations.dart';
+export 'package:dust_dart/db.dart'
+    show
+        Dao,
+        Database,
+        Derive,
+        DeriveConfig,
+        DeriveTrait,
+        Driver,
+        FromRow,
+        Query,
+        Sqlx,
+        SqlxDao,
+        SqlxDatabase,
+        SqlxDatabaseType,
+        SqlxRename,
+        SqlxTryFrom;

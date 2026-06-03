@@ -6,7 +6,7 @@
 import 'package:flutter/material.dart' hide Route;
 
 import 'route.dart';
-import 'package:dust_router/dust_router.dart';
+import 'package:dust_flutter/route.dart';
 import 'package:shopping_app/features/auth/models/auth_state.dart';
 import 'package:shopping_app/features/auth/view_models/auth_view_model.dart';
 import 'package:shopping_app/features/auth/views/login_screen.dart';

@@ -6,11 +6,11 @@ Generate Flutter-native, type-safe ViewModel code from Dart annotations without 
 
 ## Package Shape
 
-- Dart package: `dust_state`
+- Flutter package: `dust_flutter`
 - Rust crate: `crates/dust_state_plugin`
 - Prototype contract: `examples/state_management_prototype`
 
-`dust_state` owns annotations and the small runtime. No deprecated `*_annotation` shim is planned.
+`dust_flutter` owns state annotations and the small runtime.
 
 ## Public API
 
@@ -57,7 +57,7 @@ final class ShellViewModel extends $ShellViewModel {
 Generated output owns:
 
 - `$TaskBoardViewModel` typed base extending `ViewModelBase<TaskBoardState, TaskBoardArgs>`
-- dependency getters such as `repository => args.repository`
+- no generated dependency getters; app code reads dependencies through `args.repository`, `args.storage`, and other typed args fields
 - `TaskBoardViewModelScope`
 - `TaskBoardViewModelListener`
 - smart proxy returned by `context.watchTaskBoardViewModel()`
@@ -77,7 +77,7 @@ Generated output owns:
 
 Implemented now:
 
-- `packages/dust_state` runtime and annotation package.
+- `packages/dust_flutter` state runtime and annotation package.
 - manual prototype `.g.dart` files migrated to typed args + runtime base.
 - `crates/dust_state_plugin` parses, validates, and emits base/scope/proxy/listener/context-extension output.
 - generated aspect metadata is emitted from local and workspace state fields.
@@ -90,8 +90,8 @@ Still open:
 
 ## Verified
 
-- `flutter analyze packages/dust_state`
-- `flutter test packages/dust_state`
+- `flutter analyze packages/dust_flutter`
+- `flutter test packages/dust_flutter`
 - `flutter analyze` in `examples/state_management_prototype`
 - `flutter test` in `examples/state_management_prototype`
 - `flutter build web` in `examples/state_management_prototype`

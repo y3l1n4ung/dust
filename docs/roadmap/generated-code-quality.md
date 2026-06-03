@@ -216,7 +216,7 @@ Part-file constraint:
 - Generated `.g.dart` files cannot add imports.
 - Required helper types must be available from user imports or annotation package
   re-exports.
-- `derive_annotation` re-exports `collection` for deep equality.
+- `dust_dart` re-exports `collection` for deep equality.
 
 ## Formatting Plan
 
@@ -331,11 +331,9 @@ Run Dart and Flutter checks for every package/example:
 
 ```sh
 for dir in \
-  packages/derive_annotation \
-  packages/derive_serde_annotation \
-  packages/dust_http_client_annotation \
-  packages/dust_router \
-  packages/dust_state \
+  packages/dust_dart \
+  packages/dust_flutter \
+  packages/dust_db_sqlite3 \
   examples/product_showcase \
   examples/stress_project \
   examples/routing_prototype \

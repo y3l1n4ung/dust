@@ -20,7 +20,7 @@
 - [x] `examples/state_management_prototype` passes `flutter analyze` with no warnings.
 - [x] `examples/state_management_prototype` passes `flutter test`.
 - [x] `examples/state_management_prototype` passes `flutter build web`.
-- [x] Extract shared runtime primitives into `packages/dust_state`.
+- [x] Extract shared runtime primitives into `packages/dust_flutter`.
 - [x] Check generated/runtime scopes dispose owned ViewModels exactly once.
 - [x] Listener API moved to effect streams and covered by generated listener tests.
 - [x] Check `read` never registers dependency in generated contract.

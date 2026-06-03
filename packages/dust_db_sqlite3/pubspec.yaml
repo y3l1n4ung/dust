@@ -9,8 +9,8 @@ environment:
 resolution: workspace
 
 dependencies:
-  dust_db_runtime:
-    path: ../dust_db_runtime
+  dust_dart:
+    path: ../dust_dart
   sqlite3: ^3.3.0
 
 dev_dependencies:

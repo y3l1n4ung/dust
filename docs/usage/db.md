@@ -5,8 +5,7 @@ Dust DB is a SQLx-style raw SQL layer for Dart and Flutter. It is not an ORM and
 ## Packages
 
 ```dart
-import 'package:dust_db_annotation/dust_db_annotation.dart';
-import 'package:dust_db_runtime/dust_db_runtime.dart';
+import 'package:dust_dart/db.dart';
 import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 ```
 

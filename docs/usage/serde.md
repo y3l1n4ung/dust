@@ -1,6 +1,6 @@
 # JSON Serialization (Serde)
 
-Dust provides JSON encoding and decoding through the `derive_serde_annotation` package. It generates type-safe codecs by analyzing your class definitions and applied annotations.
+Dust provides JSON encoding and decoding through `dust_dart`. It generates type-safe codecs by analyzing your class definitions and applied annotations.
 
 ---
 
@@ -10,11 +10,11 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  derive_serde_annotation: ^0.1.0
+  dust_dart: ^0.1.0
 ```
 
 > [!TIP]
-> `derive_serde_annotation` re-exports the core `derive_annotation` package, so you only need one import for both basic traits (Eq, ToString) and JSON features.
+> `package:dust_dart/serde.dart` re-exports the core derive traits, so you only need one import for both basic traits and JSON features.
 
 ---
 
@@ -23,7 +23,7 @@ dependencies:
 To enable JSON support, add `Serialize()` and `Deserialize()` to your `@Derive` list.
 
 ```dart
-import 'package:derive_serde_annotation/derive_serde_annotation.dart';
+import 'package:dust_dart/serde.dart';
 
 part 'user_profile.g.dart';
 

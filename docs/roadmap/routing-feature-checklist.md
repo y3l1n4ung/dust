@@ -17,7 +17,7 @@ Flutter behavior are both covered.
 - [x] App code imports only `route.dart` for router usage.
 - [x] `route.g.dart` is standalone generated Dart, not a `part` file.
 - [x] Generated code imports page, shell, guard, and package runtime owners.
-- [x] `dust_router` owns annotations plus Navigator 2.0 runtime.
+- [x] `dust_flutter` owns routing annotations plus Navigator 2.0 runtime.
 - [x] Generated navigation is route-name-first: `context.routes.project(...).go()`.
 - [x] Navigation actions support `go`, `push`, `replace`, and `pop`.
 - [x] Public docs describe router, route, guards, shells, params, transitions, and app setup.
@@ -190,7 +190,7 @@ Flutter behavior are both covered.
 
 ## Flutter Test Matrix
 
-- [x] `packages/dust_router`: annotation and runtime metadata tests.
+- [x] `packages/dust_flutter`: annotation and runtime metadata tests.
 - [x] Prototype `flutter analyze` passes.
 - [x] Prototype `flutter test` passes.
 - [x] Prototype `flutter build web` passes.
@@ -217,7 +217,7 @@ Flutter behavior are both covered.
 - [x] `cargo run -p dust_cli -- build --root examples/routing_prototype --fail-fast`
 - [x] Route emitter snapshot tests cover generated formatting without running a
   Dart formatter.
-- [x] `cd packages/dust_router && flutter test`
+- [x] `cd packages/dust_flutter && flutter test`
 - [x] `cd examples/routing_prototype && flutter analyze`
 - [x] `cd examples/routing_prototype && flutter test`
 - [x] `cd examples/routing_prototype && flutter build web`

@@ -1,10 +1,6 @@
 name: dust_state
-description: Typed Flutter state management runtime and annotations for the Dust code generation engine.
+description: Compatibility wrapper for Dust state management. Use dust_flutter.
 version: 0.1.0
-homepage: https://github.com/y3l1n4ung/dust
-repository: https://github.com/y3l1n4ung/dust
-issue_tracker: https://github.com/y3l1n4ung/dust/issues
-
 publish_to: none
 
 environment:
@@ -13,6 +9,8 @@ environment:
 resolution: workspace
 
 dependencies:
+  dust_flutter:
+    path: ../dust_flutter
   flutter:
     sdk: flutter
 

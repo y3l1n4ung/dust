@@ -1,4 +1,4 @@
-import 'package:derive_annotation/derive_annotation.dart';
+import 'package:dust_dart/derive.dart';
 
 /// Generates `toJson()` support for the annotated class or enum.
 final class Serialize extends DeriveTrait {

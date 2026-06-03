@@ -25,7 +25,7 @@ dependencies:
 ## Usage
 
 ```dart
-import 'package:dust_http_client_annotation/dust_http_client_annotation.dart';
+import 'package:dust_dart/http.dart';
 
 part 'todo_api.g.dart';
 

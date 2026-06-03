@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:dust_db_runtime/dust_db_runtime.dart';
+import 'package:dust_dart/db.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shopping_app/core/data/cached_shopping_repository.dart';
 import 'package:shopping_app/core/data/shopping_repository.dart';

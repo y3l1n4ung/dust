@@ -16,7 +16,7 @@ dependencies:
 ## Router Entrypoint
 
 ```dart
-import 'package:dust_router/dust_router.dart';
+import 'package:dust_flutter/route.dart';
 
 @Router(
   initial: DashboardPage,
@@ -92,7 +92,7 @@ Generated routers use these runtime types from this package:
 - `RouteGuardChain<T>`: runs route guards in declaration order and stops on first block or redirect.
 - `GeneratedRoute`: generated route tree metadata. Synthetic group nodes may omit `page`.
 
-Generated code imports `package:dust_router/dust_router.dart`; it should not generate a local `routing_core.dart`.
+Generated code imports `package:dust_flutter/route.dart`; it should not generate a local `routing_core.dart`.
 
 ## Nested Route Metadata
 

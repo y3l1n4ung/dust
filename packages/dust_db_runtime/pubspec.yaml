@@ -1,5 +1,5 @@
 name: dust_db_runtime
-description: Runtime contracts and query helpers for Dust DB.
+description: Compatibility wrapper for Dust DB runtime. Use dust_dart.
 version: 0.1.0
 publish_to: none
 
@@ -9,8 +9,8 @@ environment:
 resolution: workspace
 
 dependencies:
-  dust_db_annotation:
-    path: ../dust_db_annotation
+  dust_dart:
+    path: ../dust_dart
 
 dev_dependencies:
   lints: ^6.0.0

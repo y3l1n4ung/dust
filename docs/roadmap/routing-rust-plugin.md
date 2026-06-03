@@ -8,7 +8,7 @@ normal Dart annotations:
 - collect `@Router` and `@Route` across the Dart workspace
 - validate route metadata and constructor parameters
 - emit standalone `route.g.dart` from the router root library
-- import Navigator 2.0 runtime from `dust_router`
+- import Navigator 2.0 runtime from `dust_flutter`
 - keep generated navigation route-name-first: `context.routes.project(...).go()`
 
 ## Current Implementation Status
@@ -16,7 +16,7 @@ normal Dart annotations:
 - [x] Crate skeleton exists and is registered in the Rust workspace.
 - [x] Driver registers the route plugin.
 - [x] Codegen fingerprint includes route plugin source files.
-- [x] Plugin claims `dust_router::Router`, `Route`, and
+- [x] Plugin claims `@Router`, `@Route`, and
       `GeneratedRoute`.
 - [x] Workspace analysis collects `dust_route.routes.v1` and
       `dust_route.routers.v1` JSON facts.
@@ -25,7 +25,7 @@ normal Dart annotations:
       params.
 - [x] Emit standalone primary `route.g.dart` for route pages available in the
       router root library.
-- [x] Reuse runtime from `dust_router`; no local `routing_core.dart`
+- [x] Reuse runtime from `dust_flutter`; no local `routing_core.dart`
       output.
 - [x] Preserve constructor default value source in IR and support query
       defaults.
@@ -128,7 +128,7 @@ Only the router root library emits routing output:
 
 - be a standalone Dart library, not a `part`
 - import `route.dart`
-- import `package:dust_router/dust_router.dart`
+- import `package:dust_flutter/route.dart`
 - import all discovered pages, shells, and guard type owners with stable aliases
 - generate `$AppRouter`
 - generate the sealed route path type and one route data class per route
@@ -154,7 +154,7 @@ URL encode/decode emission must use Dart `Uri` only:
 - return the configured not-found route when path params fail to decode
 - do not emit JSON parsing, `dynamic` parsing, or object codecs for route params
 
-`dust_router` runtime must:
+`dust_flutter` runtime must:
 
 - use Flutter Navigator 2.0 only
 - provide `DustRouterBase`, `DustRouterConfig`, `DustRouterController`,

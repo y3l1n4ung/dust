@@ -215,7 +215,7 @@ fn accepts_text_stream_return_types_when_annotation_package_is_imported() {
                 Vec::new(),
             )],
         ),
-        vec!["package:dust_http_client_annotation/dust_http_client_annotation.dart"],
+        vec!["package:dust_dart/http.dart"],
     ));
 
     assert!(diagnostics.is_empty(), "{diagnostics:?}");

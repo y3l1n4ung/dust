@@ -23,15 +23,15 @@ Depending on the features you need, add the following packages to your `pubspec.
 
 | Feature | Required Packages |
 | :--- | :--- |
-| **Basic Traits** | `derive_annotation` |
-| **JSON Support** | `derive_serde_annotation` |
-| **Networking** | `dust_http_client_annotation`, `dio` |
-| **State** | `dust_state` |
-| **Routing** | `dust_router` |
-| **Database** | `dust_db_annotation`, `dust_db_runtime`, `dust_db_sqlite3` |
+| **Basic Traits** | `dust_dart` |
+| **JSON Support** | `dust_dart` |
+| **Networking** | `dust_dart`, `dio` |
+| **State** | `dust_flutter` |
+| **Routing** | `dust_flutter` |
+| **Database** | `dust_dart`, `dust_db_sqlite3` |
 
 > [!TIP]
-> `derive_serde_annotation` re-exports the core traits, so you don't need to list both if you are using JSON serialization.
+> `package:dust_dart/serde.dart` re-exports the core derive traits, so you do not need two imports when using JSON serialization.
 
 ---
 
@@ -47,8 +47,7 @@ Add the relevant versions to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  derive_serde_annotation: ^0.1.0
-  dust_http_client_annotation: ^0.1.0
+  dust_dart: ^0.1.0
   dio: ^5.0.0
 ```
 

@@ -1,4 +1,4 @@
-import 'package:derive_serde_annotation/derive_serde_annotation.dart';
+import 'package:dust_dart/serde.dart';
 import 'package:test/test.dart';
 
 final class UnixEpochDateTimeCodec implements SerDeCodec<DateTime, int> {
