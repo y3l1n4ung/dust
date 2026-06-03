@@ -38,10 +38,28 @@ final _demoCartApiViewModelErrorMessageAspect = _DemoCartApiViewModelAspect<Stri
   _demoCartApiViewModelSelectErrorMessage,
 );
 
+/// Generated base class for DemoCartApiViewModel.
+///
+/// Extend this class in the user-authored ViewModel and forward typed args:
+///
+/// ```dart
+/// final class DemoCartApiViewModel extends $DemoCartApiViewModel {
+///   DemoCartApiViewModel(super.args);
+/// }
+/// ```
 abstract class $DemoCartApiViewModel extends ViewModelBase<DemoCartState, DemoCartApiViewModelArgs> {
   $DemoCartApiViewModel(super.args) : super(initialState: const DemoCartState());
 }
 
+/// Typed state reader returned by `context.watchDemoCartApiViewModel()`.
+///
+/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
+/// when the selected value changes.
+///
+/// ```dart
+/// final state = context.watchDemoCartApiViewModel().value;
+/// final count = context.watchDemoCartApiViewModel().select((state) => state.count);
+/// ```
 class _$DemoCartApiViewModelProxy {
   _$DemoCartApiViewModelProxy(this._context);
 
@@ -78,7 +96,20 @@ class _$DemoCartApiViewModelProxy {
   }
 }
 
+/// Provides DemoCartApiViewModel to descendants and owns it by default.
+///
+/// Use the default constructor when this scope should create and dispose the
+/// ViewModel. Use `.value` only for externally owned ViewModels.
+///
+/// ```dart
+/// DemoCartApiViewModelScope(
+///   args: (context) => DemoCartApiViewModelArgs(...),
+///   create: (context, args) => DemoCartApiViewModel(args),
+///   child: const FeaturePage(),
+/// )
+/// ```
 class DemoCartApiViewModelScope extends StatefulWidget {
+  /// Creates an owned DemoCartApiViewModel from typed args.
   const DemoCartApiViewModelScope({
     super.key,
     required this.args,
@@ -86,6 +117,7 @@ class DemoCartApiViewModelScope extends StatefulWidget {
     required this.child,
   }) : value = null;
 
+  /// Provides an externally owned DemoCartApiViewModel without disposing it.
   const DemoCartApiViewModelScope.value({
     super.key,
     required DemoCartApiViewModel this.value,
@@ -98,6 +130,7 @@ class DemoCartApiViewModelScope extends StatefulWidget {
   final DemoCartApiViewModel? value;
   final Widget child;
 
+  /// Reads DemoCartApiViewModel without subscribing the caller to state changes.
   static DemoCartApiViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_DemoCartApiViewModelInherited>()
@@ -106,6 +139,7 @@ class DemoCartApiViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
+  /// Watches DemoCartApiViewModel and optionally subscribes to one generated aspect.
   static DemoCartApiViewModel of(BuildContext context, {_DemoCartApiViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_DemoCartApiViewModelInherited>(
       aspect: aspect,
@@ -246,8 +280,14 @@ class _DemoCartApiViewModelInherited extends InheritedModel<_DemoCartApiViewMode
 
 /// Listens to one-shot effects from DemoCartApiViewModel.
 ///
-/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
-/// payloads through the @ViewModel annotation.
+/// Effects are delivered without changing state and do not rebuild `child`.
+///
+/// ```dart
+/// DemoCartApiViewModelListener(
+///   listener: onEffect,
+///   child: const FeaturePage(),
+/// )
+/// ```
 class DemoCartApiViewModelListener extends StatefulWidget {
   const DemoCartApiViewModelListener({super.key, required this.listener, required this.child});
 
@@ -286,6 +326,12 @@ class _DemoCartApiViewModelListenerState extends State<DemoCartApiViewModelListe
   Widget build(BuildContext context) => widget.child;
 }
 
+/// Generated BuildContext helpers for DemoCartApiViewModel.
+///
+/// ```dart
+/// final vm = context.readDemoCartApiViewModel();
+/// final state = context.watchDemoCartApiViewModel().value;
+/// ```
 extension DemoCartApiViewModelBuildContext on BuildContext {
   _$DemoCartApiViewModelProxy watchDemoCartApiViewModel() {
     return _$DemoCartApiViewModelProxy(this);

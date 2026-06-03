@@ -33,10 +33,28 @@ final _cartViewModelNotificationAspect = _CartViewModelAspect<CartNotification?>
   _cartViewModelSelectNotification,
 );
 
+/// Generated base class for CartViewModel.
+///
+/// Extend this class in the user-authored ViewModel and forward typed args:
+///
+/// ```dart
+/// final class CartViewModel extends $CartViewModel {
+///   CartViewModel(super.args);
+/// }
+/// ```
 abstract class $CartViewModel extends ViewModelBase<CartState, CartViewModelArgs> {
   $CartViewModel(super.args) : super(initialState: const CartState());
 }
 
+/// Typed state reader returned by `context.watchCartViewModel()`.
+///
+/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
+/// when the selected value changes.
+///
+/// ```dart
+/// final state = context.watchCartViewModel().value;
+/// final count = context.watchCartViewModel().select((state) => state.count);
+/// ```
 class _$CartViewModelProxy {
   _$CartViewModelProxy(this._context);
 
@@ -66,7 +84,20 @@ class _$CartViewModelProxy {
   }
 }
 
+/// Provides CartViewModel to descendants and owns it by default.
+///
+/// Use the default constructor when this scope should create and dispose the
+/// ViewModel. Use `.value` only for externally owned ViewModels.
+///
+/// ```dart
+/// CartViewModelScope(
+///   args: (context) => CartViewModelArgs(...),
+///   create: (context, args) => CartViewModel(args),
+///   child: const FeaturePage(),
+/// )
+/// ```
 class CartViewModelScope extends StatefulWidget {
+  /// Creates an owned CartViewModel from typed args.
   const CartViewModelScope({
     super.key,
     required this.args,
@@ -74,6 +105,7 @@ class CartViewModelScope extends StatefulWidget {
     required this.child,
   }) : value = null;
 
+  /// Provides an externally owned CartViewModel without disposing it.
   const CartViewModelScope.value({
     super.key,
     required CartViewModel this.value,
@@ -86,6 +118,7 @@ class CartViewModelScope extends StatefulWidget {
   final CartViewModel? value;
   final Widget child;
 
+  /// Reads CartViewModel without subscribing the caller to state changes.
   static CartViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_CartViewModelInherited>()
@@ -94,6 +127,7 @@ class CartViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
+  /// Watches CartViewModel and optionally subscribes to one generated aspect.
   static CartViewModel of(BuildContext context, {_CartViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_CartViewModelInherited>(
       aspect: aspect,
@@ -234,8 +268,14 @@ class _CartViewModelInherited extends InheritedModel<_CartViewModelAspect<Object
 
 /// Listens to one-shot effects from CartViewModel.
 ///
-/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
-/// payloads through the @ViewModel annotation.
+/// Effects are delivered without changing state and do not rebuild `child`.
+///
+/// ```dart
+/// CartViewModelListener(
+///   listener: onEffect,
+///   child: const FeaturePage(),
+/// )
+/// ```
 class CartViewModelListener extends StatefulWidget {
   const CartViewModelListener({super.key, required this.listener, required this.child});
 
@@ -274,6 +314,12 @@ class _CartViewModelListenerState extends State<CartViewModelListener> {
   Widget build(BuildContext context) => widget.child;
 }
 
+/// Generated BuildContext helpers for CartViewModel.
+///
+/// ```dart
+/// final vm = context.readCartViewModel();
+/// final state = context.watchCartViewModel().value;
+/// ```
 extension CartViewModelBuildContext on BuildContext {
   _$CartViewModelProxy watchCartViewModel() {
     return _$CartViewModelProxy(this);

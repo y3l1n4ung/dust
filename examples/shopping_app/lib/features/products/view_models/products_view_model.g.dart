@@ -53,10 +53,28 @@ final _productsViewModelSortOptionAspect = _ProductsViewModelAspect<ProductSortO
   _productsViewModelSelectSortOption,
 );
 
+/// Generated base class for ProductsViewModel.
+///
+/// Extend this class in the user-authored ViewModel and forward typed args:
+///
+/// ```dart
+/// final class ProductsViewModel extends $ProductsViewModel {
+///   ProductsViewModel(super.args);
+/// }
+/// ```
 abstract class $ProductsViewModel extends ViewModelBase<ProductsState, ProductsViewModelArgs> {
   $ProductsViewModel(super.args) : super(initialState: const ProductsState());
 }
 
+/// Typed state reader returned by `context.watchProductsViewModel()`.
+///
+/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
+/// when the selected value changes.
+///
+/// ```dart
+/// final state = context.watchProductsViewModel().value;
+/// final count = context.watchProductsViewModel().select((state) => state.count);
+/// ```
 class _$ProductsViewModelProxy {
   _$ProductsViewModelProxy(this._context);
 
@@ -114,7 +132,20 @@ class _$ProductsViewModelProxy {
   }
 }
 
+/// Provides ProductsViewModel to descendants and owns it by default.
+///
+/// Use the default constructor when this scope should create and dispose the
+/// ViewModel. Use `.value` only for externally owned ViewModels.
+///
+/// ```dart
+/// ProductsViewModelScope(
+///   args: (context) => ProductsViewModelArgs(...),
+///   create: (context, args) => ProductsViewModel(args),
+///   child: const FeaturePage(),
+/// )
+/// ```
 class ProductsViewModelScope extends StatefulWidget {
+  /// Creates an owned ProductsViewModel from typed args.
   const ProductsViewModelScope({
     super.key,
     required this.args,
@@ -122,6 +153,7 @@ class ProductsViewModelScope extends StatefulWidget {
     required this.child,
   }) : value = null;
 
+  /// Provides an externally owned ProductsViewModel without disposing it.
   const ProductsViewModelScope.value({
     super.key,
     required ProductsViewModel this.value,
@@ -134,6 +166,7 @@ class ProductsViewModelScope extends StatefulWidget {
   final ProductsViewModel? value;
   final Widget child;
 
+  /// Reads ProductsViewModel without subscribing the caller to state changes.
   static ProductsViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_ProductsViewModelInherited>()
@@ -142,6 +175,7 @@ class ProductsViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
+  /// Watches ProductsViewModel and optionally subscribes to one generated aspect.
   static ProductsViewModel of(BuildContext context, {_ProductsViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_ProductsViewModelInherited>(
       aspect: aspect,
@@ -282,8 +316,14 @@ class _ProductsViewModelInherited extends InheritedModel<_ProductsViewModelAspec
 
 /// Listens to one-shot effects from ProductsViewModel.
 ///
-/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
-/// payloads through the @ViewModel annotation.
+/// Effects are delivered without changing state and do not rebuild `child`.
+///
+/// ```dart
+/// ProductsViewModelListener(
+///   listener: onEffect,
+///   child: const FeaturePage(),
+/// )
+/// ```
 class ProductsViewModelListener extends StatefulWidget {
   const ProductsViewModelListener({super.key, required this.listener, required this.child});
 
@@ -322,6 +362,12 @@ class _ProductsViewModelListenerState extends State<ProductsViewModelListener> {
   Widget build(BuildContext context) => widget.child;
 }
 
+/// Generated BuildContext helpers for ProductsViewModel.
+///
+/// ```dart
+/// final vm = context.readProductsViewModel();
+/// final state = context.watchProductsViewModel().value;
+/// ```
 extension ProductsViewModelBuildContext on BuildContext {
   _$ProductsViewModelProxy watchProductsViewModel() {
     return _$ProductsViewModelProxy(this);

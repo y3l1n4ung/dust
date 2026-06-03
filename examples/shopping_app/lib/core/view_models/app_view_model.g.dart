@@ -65,10 +65,28 @@ final _appViewModelBackendModeAspect = _AppViewModelAspect<AppBackendMode>(
   _appViewModelSelectBackendMode,
 );
 
+/// Generated base class for AppViewModel.
+///
+/// Extend this class in the user-authored ViewModel and forward typed args:
+///
+/// ```dart
+/// final class AppViewModel extends $AppViewModel {
+///   AppViewModel(super.args);
+/// }
+/// ```
 abstract class $AppViewModel extends ViewModelBase<AppState, AppViewModelArgs> {
   $AppViewModel(super.args) : super(initialState: const AppState());
 }
 
+/// Typed state reader returned by `context.watchAppViewModel()`.
+///
+/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
+/// when the selected value changes.
+///
+/// ```dart
+/// final state = context.watchAppViewModel().value;
+/// final count = context.watchAppViewModel().select((state) => state.count);
+/// ```
 class _$AppViewModelProxy {
   _$AppViewModelProxy(this._context);
 
@@ -91,7 +109,20 @@ class _$AppViewModelProxy {
   }
 }
 
+/// Provides AppViewModel to descendants and owns it by default.
+///
+/// Use the default constructor when this scope should create and dispose the
+/// ViewModel. Use `.value` only for externally owned ViewModels.
+///
+/// ```dart
+/// AppViewModelScope(
+///   args: (context) => AppViewModelArgs(...),
+///   create: (context, args) => AppViewModel(args),
+///   child: const FeaturePage(),
+/// )
+/// ```
 class AppViewModelScope extends StatefulWidget {
+  /// Creates an owned AppViewModel from typed args.
   const AppViewModelScope({
     super.key,
     required this.args,
@@ -99,6 +130,7 @@ class AppViewModelScope extends StatefulWidget {
     required this.child,
   }) : value = null;
 
+  /// Provides an externally owned AppViewModel without disposing it.
   const AppViewModelScope.value({
     super.key,
     required AppViewModel this.value,
@@ -111,6 +143,7 @@ class AppViewModelScope extends StatefulWidget {
   final AppViewModel? value;
   final Widget child;
 
+  /// Reads AppViewModel without subscribing the caller to state changes.
   static AppViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_AppViewModelInherited>()
@@ -119,6 +152,7 @@ class AppViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
+  /// Watches AppViewModel and optionally subscribes to one generated aspect.
   static AppViewModel of(BuildContext context, {_AppViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_AppViewModelInherited>(
       aspect: aspect,
@@ -259,8 +293,14 @@ class _AppViewModelInherited extends InheritedModel<_AppViewModelAspect<Object?>
 
 /// Listens to one-shot effects from AppViewModel.
 ///
-/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
-/// payloads through the @ViewModel annotation.
+/// Effects are delivered without changing state and do not rebuild `child`.
+///
+/// ```dart
+/// AppViewModelListener(
+///   listener: onEffect,
+///   child: const FeaturePage(),
+/// )
+/// ```
 class AppViewModelListener extends StatefulWidget {
   const AppViewModelListener({super.key, required this.listener, required this.child});
 
@@ -299,6 +339,12 @@ class _AppViewModelListenerState extends State<AppViewModelListener> {
   Widget build(BuildContext context) => widget.child;
 }
 
+/// Generated BuildContext helpers for AppViewModel.
+///
+/// ```dart
+/// final vm = context.readAppViewModel();
+/// final state = context.watchAppViewModel().value;
+/// ```
 extension AppViewModelBuildContext on BuildContext {
   _$AppViewModelProxy watchAppViewModel() {
     return _$AppViewModelProxy(this);

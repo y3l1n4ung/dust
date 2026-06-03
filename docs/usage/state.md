@@ -127,7 +127,7 @@ Dust generates extensions on `BuildContext` for easy access:
 
 *   `context.watchClassName()`: Rebuilds the widget when state changes. Returns a proxy to access `.value`.
 *   `context.readClassName()`: Returns the ViewModel instance. Does not trigger rebuilds.
-*   `context.className`: Shorthand for `context.watchClassName().value`.
+*   `context.watchClassName().select(...)`: Rebuilds only when the selected value changes.
 
 ---
 
@@ -145,14 +145,49 @@ Dust generates extensions on `BuildContext` for easy access:
 
 ---
 
-## Generation Output
+## Generated Code Preview
 
-Dust generates a base class (`$ClassName`) that handles the state stream and disposal.
+Dust generates documented public helpers in the `.g.dart` file. App code does
+not edit this file; the comments are there to make generated APIs discoverable
+in IDEs.
 
 ```dart
-// counter_view_model.g.dart (Simplified)
+// counter_view_model.g.dart (simplified)
+/// Generated base class for CounterViewModel.
+///
+/// Extend this class in the user-authored ViewModel and forward typed args:
+///
+/// ```dart
+/// final class CounterViewModel extends $CounterViewModel {
+///   CounterViewModel(super.args);
+/// }
+/// ```
 abstract class $CounterViewModel extends ViewModelBase<CounterState, EmptyArgs> {
   $CounterViewModel(super.args) : super(initialState: const CounterState());
+}
+
+/// Provides CounterViewModel to descendants and owns it by default.
+///
+/// Use the default constructor when this scope should create and dispose the
+/// ViewModel. Use `.value` only for externally owned ViewModels.
+class CounterViewModelScope extends StatefulWidget {
+  /// Creates an owned CounterViewModel from typed args.
+  const CounterViewModelScope({
+    super.key,
+    required this.args,
+    required this.create,
+    required this.child,
+  });
+
+  /// Reads CounterViewModel without subscribing the caller to state changes.
+  static CounterViewModel read(BuildContext context);
+}
+
+/// Generated BuildContext helpers for CounterViewModel.
+extension CounterViewModelBuildContext on BuildContext {
+  _$CounterViewModelProxy watchCounterViewModel();
+
+  CounterViewModel readCounterViewModel();
 }
 ```
 

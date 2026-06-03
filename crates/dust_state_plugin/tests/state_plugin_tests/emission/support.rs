@@ -5,6 +5,25 @@ pub(super) fn extract_extension<'a>(source: &'a str, marker: &str) -> &'a str {
     &source[start..]
 }
 
+pub(super) fn extract_doc_before(source: &str, marker: &str) -> String {
+    let start = source
+        .find(marker)
+        .unwrap_or_else(|| panic!("missing marker: {marker}"));
+    let mut docs = Vec::new();
+    for line in source[..start].lines().rev() {
+        if line.trim_start().starts_with("///") {
+            docs.push(line);
+            continue;
+        }
+        if line.trim().is_empty() && docs.is_empty() {
+            continue;
+        }
+        break;
+    }
+    docs.reverse();
+    docs.join("\n")
+}
+
 pub(super) fn extract_class<'a>(source: &'a str, marker: &str) -> &'a str {
     let start = source
         .find(marker)

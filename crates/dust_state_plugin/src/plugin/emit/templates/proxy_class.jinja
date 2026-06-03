@@ -1,3 +1,12 @@
+/// Typed state reader returned by `context.watch{{ view_model_class }}()`.
+///
+/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
+/// when the selected value changes.
+///
+/// ```dart
+/// final state = context.watch{{ view_model_class }}().value;
+/// final count = context.watch{{ view_model_class }}().select((state) => state.count);
+/// ```
 class {{ proxy_class }} {
   {{ proxy_class }}(this._context);
 

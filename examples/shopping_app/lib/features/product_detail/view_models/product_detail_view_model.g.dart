@@ -48,10 +48,28 @@ final _productDetailViewModelErrorMessageAspect = _ProductDetailViewModelAspect<
   _productDetailViewModelSelectErrorMessage,
 );
 
+/// Generated base class for ProductDetailViewModel.
+///
+/// Extend this class in the user-authored ViewModel and forward typed args:
+///
+/// ```dart
+/// final class ProductDetailViewModel extends $ProductDetailViewModel {
+///   ProductDetailViewModel(super.args);
+/// }
+/// ```
 abstract class $ProductDetailViewModel extends ViewModelBase<ProductDetailState, ProductDetailViewModelArgs> {
   $ProductDetailViewModel(super.args) : super(initialState: const ProductDetailState());
 }
 
+/// Typed state reader returned by `context.watchProductDetailViewModel()`.
+///
+/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
+/// when the selected value changes.
+///
+/// ```dart
+/// final state = context.watchProductDetailViewModel().value;
+/// final count = context.watchProductDetailViewModel().select((state) => state.count);
+/// ```
 class _$ProductDetailViewModelProxy {
   _$ProductDetailViewModelProxy(this._context);
 
@@ -102,7 +120,20 @@ class _$ProductDetailViewModelProxy {
   }
 }
 
+/// Provides ProductDetailViewModel to descendants and owns it by default.
+///
+/// Use the default constructor when this scope should create and dispose the
+/// ViewModel. Use `.value` only for externally owned ViewModels.
+///
+/// ```dart
+/// ProductDetailViewModelScope(
+///   args: (context) => ProductDetailViewModelArgs(...),
+///   create: (context, args) => ProductDetailViewModel(args),
+///   child: const FeaturePage(),
+/// )
+/// ```
 class ProductDetailViewModelScope extends StatefulWidget {
+  /// Creates an owned ProductDetailViewModel from typed args.
   const ProductDetailViewModelScope({
     super.key,
     required this.args,
@@ -110,6 +141,7 @@ class ProductDetailViewModelScope extends StatefulWidget {
     required this.child,
   }) : value = null;
 
+  /// Provides an externally owned ProductDetailViewModel without disposing it.
   const ProductDetailViewModelScope.value({
     super.key,
     required ProductDetailViewModel this.value,
@@ -122,6 +154,7 @@ class ProductDetailViewModelScope extends StatefulWidget {
   final ProductDetailViewModel? value;
   final Widget child;
 
+  /// Reads ProductDetailViewModel without subscribing the caller to state changes.
   static ProductDetailViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_ProductDetailViewModelInherited>()
@@ -130,6 +163,7 @@ class ProductDetailViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
+  /// Watches ProductDetailViewModel and optionally subscribes to one generated aspect.
   static ProductDetailViewModel of(BuildContext context, {_ProductDetailViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_ProductDetailViewModelInherited>(
       aspect: aspect,
@@ -270,8 +304,14 @@ class _ProductDetailViewModelInherited extends InheritedModel<_ProductDetailView
 
 /// Listens to one-shot effects from ProductDetailViewModel.
 ///
-/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
-/// payloads through the @ViewModel annotation.
+/// Effects are delivered without changing state and do not rebuild `child`.
+///
+/// ```dart
+/// ProductDetailViewModelListener(
+///   listener: onEffect,
+///   child: const FeaturePage(),
+/// )
+/// ```
 class ProductDetailViewModelListener extends StatefulWidget {
   const ProductDetailViewModelListener({super.key, required this.listener, required this.child});
 
@@ -310,6 +350,12 @@ class _ProductDetailViewModelListenerState extends State<ProductDetailViewModelL
   Widget build(BuildContext context) => widget.child;
 }
 
+/// Generated BuildContext helpers for ProductDetailViewModel.
+///
+/// ```dart
+/// final vm = context.readProductDetailViewModel();
+/// final state = context.watchProductDetailViewModel().value;
+/// ```
 extension ProductDetailViewModelBuildContext on BuildContext {
   _$ProductDetailViewModelProxy watchProductDetailViewModel() {
     return _$ProductDetailViewModelProxy(this);

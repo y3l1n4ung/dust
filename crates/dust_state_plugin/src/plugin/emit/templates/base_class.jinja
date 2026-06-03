@@ -1,3 +1,12 @@
+/// Generated base class for {{ view_model_class }}.
+///
+/// Extend this class in the user-authored ViewModel and forward typed args:
+///
+/// ```dart
+/// final class {{ view_model_class }} extends {{ generated_base }} {
+///   {{ view_model_class }}(super.args);
+/// }
+/// ```
 abstract class {{ generated_base }} extends ViewModelBase<{{ state_type }}, {{ args_type }}> {
   {{ generated_base }}(super.args) : super(initialState: {{ initial_state }});
 }

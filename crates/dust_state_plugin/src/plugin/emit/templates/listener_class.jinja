@@ -1,7 +1,13 @@
 /// Listens to one-shot effects from {{ view_model_class }}.
 ///
-/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
-/// payloads through the @ViewModel annotation.
+/// Effects are delivered without changing state and do not rebuild `child`.
+///
+/// ```dart
+/// {{ listener_class }}(
+///   listener: onEffect,
+///   child: const FeaturePage(),
+/// )
+/// ```
 class {{ listener_class }} extends StatefulWidget {
   const {{ listener_class }}({super.key, required this.listener, required this.child});
 

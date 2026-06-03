@@ -34,6 +34,7 @@ struct AspectSelectorContext<'a> {
 #[derive(Serialize)]
 struct BaseContext<'a> {
     generated_base: &'a str,
+    view_model_class: &'a str,
     state_type: &'a str,
     args_type: &'a str,
     initial_state: &'a str,
@@ -43,6 +44,7 @@ struct BaseContext<'a> {
 struct ProxyContext<'a> {
     proxy_class: &'a str,
     scope_class: &'a str,
+    view_model_class: &'a str,
     state_type: &'a str,
     aspect_class: &'a str,
     field_getters: String,
@@ -112,11 +114,18 @@ pub(super) fn render_view_model_output(
     let initial_state = initial_source
         .map(str::to_owned)
         .unwrap_or_else(|| format!("const {state_type}()"));
-    let base = render_base(&generated_base, state_type, args_type, &initial_state);
+    let base = render_base(
+        &generated_base,
+        &class.name,
+        state_type,
+        args_type,
+        &initial_state,
+    );
     let aspect = render_aspect_class(&aspect_class, &class.name, state_type, state_fields);
     let proxy = render_proxy(
         &proxy_class,
         &scope_class,
+        &class.name,
         state_type,
         &aspect_class,
         &class.name,
@@ -207,6 +216,7 @@ fn render_aspect_class(
 
 fn render_base(
     generated_base: &str,
+    view_model_class: &str,
     state_type: &str,
     args_type: &str,
     initial_state: &str,
@@ -216,6 +226,7 @@ fn render_base(
         include_str!("templates/base_class.jinja"),
         BaseContext {
             generated_base,
+            view_model_class,
             state_type,
             args_type,
             initial_state,
@@ -226,9 +237,10 @@ fn render_base(
 fn render_proxy(
     proxy_class: &str,
     scope_class: &str,
+    view_model_class: &str,
     state_type: &str,
     aspect_class: &str,
-    view_model_class: &str,
+    selector_prefix: &str,
     state_fields: &[StateFieldSpec],
 ) -> String {
     let field_getters = state_fields
@@ -239,7 +251,7 @@ fn render_proxy(
                 include_str!("templates/proxy_field_getter.jinja"),
                 ProxyFieldContext {
                     scope_class,
-                    vm_lower: lower_camel(view_model_class),
+                    vm_lower: lower_camel(selector_prefix),
                     field_pascal: pascal_case(&field.name),
                     field_name: &field.name,
                     field_type: &field.type_source,
@@ -253,6 +265,7 @@ fn render_proxy(
         ProxyContext {
             proxy_class,
             scope_class,
+            view_model_class,
             state_type,
             aspect_class,
             field_getters,

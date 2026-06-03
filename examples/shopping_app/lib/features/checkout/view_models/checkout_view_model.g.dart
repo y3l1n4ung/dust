@@ -58,10 +58,28 @@ final _checkoutViewModelIsQuoteLoadingAspect = _CheckoutViewModelAspect<bool>(
   _checkoutViewModelSelectIsQuoteLoading,
 );
 
+/// Generated base class for CheckoutViewModel.
+///
+/// Extend this class in the user-authored ViewModel and forward typed args:
+///
+/// ```dart
+/// final class CheckoutViewModel extends $CheckoutViewModel {
+///   CheckoutViewModel(super.args);
+/// }
+/// ```
 abstract class $CheckoutViewModel extends ViewModelBase<CheckoutState, CheckoutViewModelArgs> {
   $CheckoutViewModel(super.args) : super(initialState: const CheckoutState());
 }
 
+/// Typed state reader returned by `context.watchCheckoutViewModel()`.
+///
+/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
+/// when the selected value changes.
+///
+/// ```dart
+/// final state = context.watchCheckoutViewModel().value;
+/// final count = context.watchCheckoutViewModel().select((state) => state.count);
+/// ```
 class _$CheckoutViewModelProxy {
   _$CheckoutViewModelProxy(this._context);
 
@@ -126,7 +144,20 @@ class _$CheckoutViewModelProxy {
   }
 }
 
+/// Provides CheckoutViewModel to descendants and owns it by default.
+///
+/// Use the default constructor when this scope should create and dispose the
+/// ViewModel. Use `.value` only for externally owned ViewModels.
+///
+/// ```dart
+/// CheckoutViewModelScope(
+///   args: (context) => CheckoutViewModelArgs(...),
+///   create: (context, args) => CheckoutViewModel(args),
+///   child: const FeaturePage(),
+/// )
+/// ```
 class CheckoutViewModelScope extends StatefulWidget {
+  /// Creates an owned CheckoutViewModel from typed args.
   const CheckoutViewModelScope({
     super.key,
     required this.args,
@@ -134,6 +165,7 @@ class CheckoutViewModelScope extends StatefulWidget {
     required this.child,
   }) : value = null;
 
+  /// Provides an externally owned CheckoutViewModel without disposing it.
   const CheckoutViewModelScope.value({
     super.key,
     required CheckoutViewModel this.value,
@@ -146,6 +178,7 @@ class CheckoutViewModelScope extends StatefulWidget {
   final CheckoutViewModel? value;
   final Widget child;
 
+  /// Reads CheckoutViewModel without subscribing the caller to state changes.
   static CheckoutViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_CheckoutViewModelInherited>()
@@ -154,6 +187,7 @@ class CheckoutViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
+  /// Watches CheckoutViewModel and optionally subscribes to one generated aspect.
   static CheckoutViewModel of(BuildContext context, {_CheckoutViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_CheckoutViewModelInherited>(
       aspect: aspect,
@@ -294,8 +328,14 @@ class _CheckoutViewModelInherited extends InheritedModel<_CheckoutViewModelAspec
 
 /// Listens to one-shot effects from CheckoutViewModel.
 ///
-/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
-/// payloads through the @ViewModel annotation.
+/// Effects are delivered without changing state and do not rebuild `child`.
+///
+/// ```dart
+/// CheckoutViewModelListener(
+///   listener: onEffect,
+///   child: const FeaturePage(),
+/// )
+/// ```
 class CheckoutViewModelListener extends StatefulWidget {
   const CheckoutViewModelListener({super.key, required this.listener, required this.child});
 
@@ -334,6 +374,12 @@ class _CheckoutViewModelListenerState extends State<CheckoutViewModelListener> {
   Widget build(BuildContext context) => widget.child;
 }
 
+/// Generated BuildContext helpers for CheckoutViewModel.
+///
+/// ```dart
+/// final vm = context.readCheckoutViewModel();
+/// final state = context.watchCheckoutViewModel().value;
+/// ```
 extension CheckoutViewModelBuildContext on BuildContext {
   _$CheckoutViewModelProxy watchCheckoutViewModel() {
     return _$CheckoutViewModelProxy(this);

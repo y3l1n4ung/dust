@@ -1,4 +1,17 @@
+/// Provides {{ view_model_class }} to descendants and owns it by default.
+///
+/// Use the default constructor when this scope should create and dispose the
+/// ViewModel. Use `.value` only for externally owned ViewModels.
+///
+/// ```dart
+/// {{ scope_class }}(
+///   args: (context) => {{ args_type }}(...),
+///   create: (context, args) => {{ view_model_class }}(args),
+///   child: const FeaturePage(),
+/// )
+/// ```
 class {{ scope_class }} extends StatefulWidget {
+  /// Creates an owned {{ view_model_class }} from typed args.
   const {{ scope_class }}({
     super.key,
     required this.args,
@@ -6,6 +19,7 @@ class {{ scope_class }} extends StatefulWidget {
     required this.child,
   }) : value = null;
 
+  /// Provides an externally owned {{ view_model_class }} without disposing it.
   const {{ scope_class }}.value({
     super.key,
     required {{ view_model_class }} this.value,
@@ -18,6 +32,7 @@ class {{ scope_class }} extends StatefulWidget {
   final {{ view_model_class }}? value;
   final Widget child;
 
+  /// Reads {{ view_model_class }} without subscribing the caller to state changes.
   static {{ view_model_class }} read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<{{ inherited_class }}>()
@@ -26,6 +41,7 @@ class {{ scope_class }} extends StatefulWidget {
     return scope.viewModel;
   }
 
+  /// Watches {{ view_model_class }} and optionally subscribes to one generated aspect.
   static {{ view_model_class }} of(BuildContext context, { {{- aspect_class }}<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<{{ inherited_class }}>(
       aspect: aspect,

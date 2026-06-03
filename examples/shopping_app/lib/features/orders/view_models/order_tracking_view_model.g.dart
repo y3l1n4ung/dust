@@ -23,10 +23,28 @@ final class _OrderTrackingViewModelAspect<R> {
   }
 }
 
+/// Generated base class for OrderTrackingViewModel.
+///
+/// Extend this class in the user-authored ViewModel and forward typed args:
+///
+/// ```dart
+/// final class OrderTrackingViewModel extends $OrderTrackingViewModel {
+///   OrderTrackingViewModel(super.args);
+/// }
+/// ```
 abstract class $OrderTrackingViewModel extends ViewModelBase<OrderTrackingState, OrderTrackingViewModelArgs> {
   $OrderTrackingViewModel(super.args) : super(initialState: const OrderTrackingState());
 }
 
+/// Typed state reader returned by `context.watchOrderTrackingViewModel()`.
+///
+/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
+/// when the selected value changes.
+///
+/// ```dart
+/// final state = context.watchOrderTrackingViewModel().value;
+/// final count = context.watchOrderTrackingViewModel().select((state) => state.count);
+/// ```
 class _$OrderTrackingViewModelProxy {
   _$OrderTrackingViewModelProxy(this._context);
 
@@ -42,7 +60,20 @@ class _$OrderTrackingViewModelProxy {
   }
 }
 
+/// Provides OrderTrackingViewModel to descendants and owns it by default.
+///
+/// Use the default constructor when this scope should create and dispose the
+/// ViewModel. Use `.value` only for externally owned ViewModels.
+///
+/// ```dart
+/// OrderTrackingViewModelScope(
+///   args: (context) => OrderTrackingViewModelArgs(...),
+///   create: (context, args) => OrderTrackingViewModel(args),
+///   child: const FeaturePage(),
+/// )
+/// ```
 class OrderTrackingViewModelScope extends StatefulWidget {
+  /// Creates an owned OrderTrackingViewModel from typed args.
   const OrderTrackingViewModelScope({
     super.key,
     required this.args,
@@ -50,6 +81,7 @@ class OrderTrackingViewModelScope extends StatefulWidget {
     required this.child,
   }) : value = null;
 
+  /// Provides an externally owned OrderTrackingViewModel without disposing it.
   const OrderTrackingViewModelScope.value({
     super.key,
     required OrderTrackingViewModel this.value,
@@ -62,6 +94,7 @@ class OrderTrackingViewModelScope extends StatefulWidget {
   final OrderTrackingViewModel? value;
   final Widget child;
 
+  /// Reads OrderTrackingViewModel without subscribing the caller to state changes.
   static OrderTrackingViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_OrderTrackingViewModelInherited>()
@@ -70,6 +103,7 @@ class OrderTrackingViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
+  /// Watches OrderTrackingViewModel and optionally subscribes to one generated aspect.
   static OrderTrackingViewModel of(BuildContext context, {_OrderTrackingViewModelAspect<Object?>? aspect}) {
     final scope = context.dependOnInheritedWidgetOfExactType<_OrderTrackingViewModelInherited>(
       aspect: aspect,
@@ -210,8 +244,14 @@ class _OrderTrackingViewModelInherited extends InheritedModel<_OrderTrackingView
 
 /// Listens to one-shot effects from OrderTrackingViewModel.
 ///
-/// TODO: effects are Stream<Object> until ViewModelBase supports typed effect
-/// payloads through the @ViewModel annotation.
+/// Effects are delivered without changing state and do not rebuild `child`.
+///
+/// ```dart
+/// OrderTrackingViewModelListener(
+///   listener: onEffect,
+///   child: const FeaturePage(),
+/// )
+/// ```
 class OrderTrackingViewModelListener extends StatefulWidget {
   const OrderTrackingViewModelListener({super.key, required this.listener, required this.child});
 
@@ -250,6 +290,12 @@ class _OrderTrackingViewModelListenerState extends State<OrderTrackingViewModelL
   Widget build(BuildContext context) => widget.child;
 }
 
+/// Generated BuildContext helpers for OrderTrackingViewModel.
+///
+/// ```dart
+/// final vm = context.readOrderTrackingViewModel();
+/// final state = context.watchOrderTrackingViewModel().value;
+/// ```
 extension OrderTrackingViewModelBuildContext on BuildContext {
   _$OrderTrackingViewModelProxy watchOrderTrackingViewModel() {
     return _$OrderTrackingViewModelProxy(this);
