@@ -154,8 +154,7 @@ const List<GeneratedRoute> $appRoutes = [
         page: OrderDetailScreen,
         name: 'orderDetail',
       ),
-    ],
-  ),
+    ],  ),
   GeneratedRoute(
     '/product',
     routes: [
@@ -543,41 +542,32 @@ AppRoutePath parseAppRoute(Uri uri) {
   if (segments.isEmpty) {
     return ProductsRoute();
   }
-
   if (segments.length == 1 && segments[0] == '404') {
     return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
   }
-
   if (segments.length == 1 && segments[0] == 'cart') {
     return CartRoute();
   }
-
   if (segments.length == 1 && segments[0] == 'checkout') {
     return CheckoutRoute();
   }
-
   if (segments.length == 1 && segments[0] == 'demo-carts') {
     return DemoCartsRoute();
   }
-
   if (segments.length == 1 && segments[0] == 'login') {
     return LoginRoute(redirectPath: uri.queryParameters['redirectPath']);
   }
-
   if (segments.length == 2 && segments[0] == 'order-confirmation') {
     final orderId = segments[1];
     return OrderConfirmationRoute(orderId: orderId);
   }
-
   if (segments.length == 1 && segments[0] == 'orders') {
     return OrdersRoute();
   }
-
   if (segments.length == 2 && segments[0] == 'orders') {
     final orderId = segments[1];
     return OrderDetailRoute(orderId: orderId);
   }
-
   if (segments.length == 2 && segments[0] == 'product') {
     final productId = int.tryParse(segments[1]);
     if (productId == null) {
@@ -585,23 +575,18 @@ AppRoutePath parseAppRoute(Uri uri) {
     }
     return ProductDetailRoute(productId: productId);
   }
-
   if (segments.length == 1 && segments[0] == 'profile') {
     return ProfileRoute();
   }
-
   if (segments.length == 1 && segments[0] == 'register') {
     return RegisterRoute(redirectPath: uri.queryParameters['redirectPath']);
   }
-
   if (segments.length == 2 && segments[0] == 'support' && segments[1] == 'chat') {
     return SupportChatRoute();
   }
-
   if (segments.length == 1 && segments[0] == 'wishlist') {
     return WishlistRoute();
   }
-
   return _notFoundRoute(uri);
 }
 
