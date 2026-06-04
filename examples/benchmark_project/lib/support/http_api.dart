@@ -6,11 +6,11 @@ part 'http_api.g.dart';
 
 @HttpClient(
   baseUrl: 'https://jsonplaceholder.typicode.com',
-  headers: {'x-suite': 'stress'},
+  headers: {'x-suite': 'benchmark'},
 )
 @GenerateTest()
-abstract interface class StressHttpApi {
-  factory StressHttpApi(Dio dio, {String? baseUrl}) = _$StressHttpApi;
+abstract interface class BenchmarkHttpApi {
+  factory BenchmarkHttpApi(Dio dio, {String? baseUrl}) = _$BenchmarkHttpApi;
 
   @GET('/posts')
   Future<List<HttpPost>> listPosts({

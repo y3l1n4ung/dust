@@ -335,7 +335,7 @@ for dir in \
   packages/dust_flutter \
   packages/dust_db_sqlite3 \
   examples/product_showcase \
-  examples/stress_project \
+  examples/benchmark_project \
   examples/routing_prototype \
   examples/state_management_prototype \
   examples/shopping_app

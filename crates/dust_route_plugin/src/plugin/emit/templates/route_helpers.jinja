@@ -14,7 +14,7 @@ bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
 
 List<RouteGuard<AppRoutePath>> routeGuards(
   AppRoutePath route,
-  $AppRouter router,
+  {{ router_base_class }} router,
 ) {
   return switch (route) {
 {{ guard_cases }}    _ => const [],

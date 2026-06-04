@@ -55,7 +55,7 @@ The engine resolves all types and symbols against the workspace catalog. The res
 
 > [!IMPORTANT]
 > **Performance is a Requirement:**
-> All core logic must be validated against the `stress_project` (5,000+ files). We target sub-second "warm" rebuild times for any project size.
+> All core logic must be validated against the `benchmark_project` (5,000+ files). We target sub-second "warm" rebuild times for any project size.
 
 ### 🚫 No-Panic Policy
 Never use `.unwrap()` or `.expect()` in plugin code or lowering logic. If an edge case is encountered, emit a `Diagnostic::error` or `Diagnostic::warning`. This ensures a single malformed file doesn't crash the entire build process.
@@ -82,20 +82,20 @@ The output of `dust build` must be byte-for-byte identical across different mach
 
 ## 🚀 Scale Testing
 
-Before submitting changes, run the stress test suite to verify there are no performance regressions:
+Before submitting changes, run the benchmark test suite to verify there are no performance regressions:
 
 ```bash
 # 1. Generate 5,000 models
-cd examples/stress_project
+cd examples/benchmark_project
 ./generate.sh --count 5000
 
 # 2. Benchmark Cold Build
 cd ../..
-cargo run -p dust_cli -- build --root examples/stress_project
+cargo run -p dust_cli -- build --root examples/benchmark_project
 
 # 3. Verify Cache Speed
-cargo run -p dust_cli -- build --root examples/stress_project
+cargo run -p dust_cli -- build --root examples/benchmark_project
 
 # 4. Verify Invalidated Rebuild Speed
-cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture
+cargo test -p dust_cli benchmark_project_release_build_benchmark -- --ignored --nocapture
 ```

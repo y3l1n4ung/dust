@@ -9,4 +9,4 @@ workspace:
   - packages/dust_flutter
   - packages/dust_db_sqlite3
   - examples/product_showcase
-  - examples/stress_project
+  - examples/benchmark_project

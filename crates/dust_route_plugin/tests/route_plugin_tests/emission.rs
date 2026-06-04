@@ -92,6 +92,31 @@ fn emits_no_transition_builder_only_when_referenced() {
 }
 
 #[test]
+fn emits_guard_helpers_with_custom_router_base_name() {
+    let plugin = register_plugin();
+    let mut router = router_class("(initial: DashboardPage)");
+    router.name = "BenchmarkRouter".to_owned();
+    router.superclass_name = Some("$BenchmarkRouter".to_owned());
+    let library = library_with_classes(vec![
+        router,
+        route_page_class(
+            "DashboardPage",
+            "('/', name: 'dashboard', guards: [BenchmarkGuard])",
+            Vec::new(),
+        ),
+    ]);
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let primary = contribution.primary_source.expect("primary route output");
+
+    assert!(primary.contains("abstract class $BenchmarkRouter"));
+    assert!(primary.contains("BenchmarkGuard createBenchmarkGuard();"));
+    assert!(primary.contains("$BenchmarkRouter router"));
+    assert!(primary.contains("DashboardRoute() => [router.createBenchmarkGuard()],"));
+    assert!(!primary.contains("$AppRouter router"));
+}
+
+#[test]
 fn emits_workspace_page_imports_and_query_defaults() {
     let plugin = register_plugin();
     let library = library_with_classes(vec![router_class("(initial: SearchPage)")]);

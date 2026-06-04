@@ -21,7 +21,7 @@ To contribute to Dust, you'll need both the Rust and Dart toolchains installed o
    cargo test --workspace --quiet
    
    # Fetch Dart dependencies
-   dart pub get
+   flutter pub get
    ```
 
 ---
@@ -45,12 +45,12 @@ Generate the **Product Showcase**:
 cargo run -p dust_cli -- build --root examples/product_showcase
 ```
 
-Generate the **Stress Project** (Scale Testing):
+Generate the **Benchmark Project** (Scale Testing):
 ```bash
-cd examples/stress_project
+cd examples/benchmark_project
 ./generate.sh --count 5000
 cd ../..
-cargo run -p dust_cli -- build --root examples/stress_project
+cargo run -p dust_cli -- build --root examples/benchmark_project
 ```
 
 ### Verification & Testing
@@ -62,7 +62,7 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace
 
 # Dart checks (example)
-cd packages/derive_annotation && dart analyze && dart test
+cd packages/derive_annotation && flutter analyze && flutter test
 ```
 
 ---
@@ -84,7 +84,7 @@ To keep Dust fast and maintainable, please follow these core principles:
 1.  **Conventional Commits:** Use prefixes like `feat:`, `fix:`, `perf:`, or `docs:`.
 2.  **Small Scopes:** Prefer smaller, focused PRs over giant refactors.
 3.  **Include Commands:** In your PR description, list the exact commands you used to verify your changes.
-4.  **Performance Impact:** If your change affects the build path, report both **Cold** and **Warm** build times using the stress project.
+4.  **Performance Impact:** If your change affects the build path, report both **Cold** and **Warm** build times using the benchmark project.
 
 ---
 

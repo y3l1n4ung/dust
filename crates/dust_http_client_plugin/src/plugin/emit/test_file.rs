@@ -64,7 +64,7 @@ pub(crate) fn render_test_file(library: &LibraryIr, specs: &[ClientSpec<'_>]) ->
                 header: GENERATED_HEADER,
                 imports: render_imports(library, package_root, source_path),
                 source_import,
-                groups: client_groups.join(""),
+                groups: format!("{}\n", client_groups.join("\n")),
             },
         )
     ))
@@ -113,7 +113,7 @@ fn render_client_group(spec: &ClientSpec<'_>, fixtures: &FixtureCatalog<'_>) -> 
         include_str!("templates/test_group.jinja"),
         TestGroupContext {
             class_name: spec.class_name,
-            tests: endpoint_tests.join(""),
+            tests: format!("{}\n", endpoint_tests.join("\n")),
         },
     ))
 }

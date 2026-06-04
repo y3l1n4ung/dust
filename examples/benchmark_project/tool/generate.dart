@@ -14,7 +14,7 @@ void main(List<String> args) {
 
   for (var index = 0; index < count; index++) {
     final file = File('${outputDir.path}/${fileNameForIndex(index)}.dart');
-    file.writeAsStringSync(renderStressModelFile(index));
+    file.writeAsStringSync(renderBenchmarkModelFile(index));
   }
 
   stdout.writeln('generated $count source files in ${outputDir.path}');

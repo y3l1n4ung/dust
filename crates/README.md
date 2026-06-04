@@ -31,7 +31,7 @@ one-way:
   special cases.
 - Public behavior changes need Rust tests plus real Dart coverage.
 - Perf-sensitive changes should be checked against
-  `examples/stress_project`.
+  `examples/benchmark_project`.
 
 See [../docs/developer.md](../docs/developer.md) for the full pipeline and
 [../CONTRIBUTING.md](../CONTRIBUTING.md) for contributor workflow.

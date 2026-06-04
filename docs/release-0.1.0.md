@@ -18,21 +18,21 @@ Run from the repository root:
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --quiet
-cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture
+cargo test -p dust_cli benchmark_project_release_build_benchmark -- --ignored --nocapture
 cargo run -q -p dust_cli -- build --root examples/product_showcase
-cargo run -q -p dust_cli -- build --root examples/stress_project
+cargo run -q -p dust_cli -- build --root examples/benchmark_project
 ```
 
 Run Dart checks:
 
 ```sh
 cd examples/product_showcase
-dart analyze
-dart test
+flutter analyze
+flutter test
 
-cd ../stress_project
-dart analyze
-dart test
+cd ../benchmark_project
+flutter analyze
+flutter test
 ```
 
 Run package dry-runs:

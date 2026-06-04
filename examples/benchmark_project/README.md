@@ -1,10 +1,10 @@
-# Dust Stress Project
+# Dust Benchmark Project
 
-Large local Dart fixture project for Dust build/watch scale testing.
+Large local Flutter fixture project for Dust build/watch scale testing.
 
 ## What this project is for
 
-- generate a large number of annotated Dart source files
+- generate a large number of annotated Dart and Flutter source files
 - exercise `ToString()`, `Eq()`, `CopyWith()`, `Serialize()`, and
   `Deserialize()` in one mixed corpus
 - exercise the `HttpClient` plugin, including auxiliary `.test.g.dart` outputs
@@ -14,9 +14,9 @@ Large local Dart fixture project for Dust build/watch scale testing.
 ## Generate 5000 source files
 
 ```bash
-cd examples/stress_project
-dart pub get
-dart tool/generate.dart --count 5000
+cd examples/benchmark_project
+flutter pub get
+dart run tool/generate.dart --count 5000
 ```
 
 This writes the generated sources into `lib/generated_models/`.
@@ -24,13 +24,13 @@ This writes the generated sources into `lib/generated_models/`.
 ## Run Dust
 
 ```bash
-cargo run -p dust_cli -- build --root /Users/yelinaung/Projects/Coursera/RustProjects/dart_codegeneration_engine/dust/examples/stress_project
+cargo run -p dust_cli -- build --root /Users/yelinaung/Projects/Coursera/RustProjects/dart_codegeneration_engine/dust/examples/benchmark_project
 ```
 
 From the Dust repo root, the shorter equivalent is:
 
 ```bash
-cargo run -p dust_cli -- build --root examples/stress_project
+cargo run -p dust_cli -- build --root examples/benchmark_project
 ```
 
 ## Analyze And Test
@@ -39,16 +39,16 @@ The runtime tests import selected generated models, so generate sources and run
 Dust first.
 
 ```bash
-cd examples/stress_project
-dart pub get
-dart tool/generate.dart --count 64
+cd examples/benchmark_project
+flutter pub get
+dart run tool/generate.dart --count 64
 
 cd ../..
-cargo run -p dust_cli -- build --root examples/stress_project
+cargo run -p dust_cli -- build --root examples/benchmark_project
 
-cd examples/stress_project
-dart analyze
-dart test
+cd examples/benchmark_project
+flutter analyze
+flutter test
 ```
 
 ## Notes
@@ -59,10 +59,10 @@ dart test
   codec-backed, and serde-configured models
 - linked templates intentionally import earlier generated files so Dust keeps
   exercising shared workspace analysis, not only same-file generation
-- the generator source is split by derive vs serde patterns so future stress
+- the generator source is split by derive vs serde patterns so future benchmark
   additions follow the same cleanliness rules as the Rust workspace
 - static `lib/support/http_*.dart` fixtures keep HTTP generation in the same
-  stress package without bloating the file generator
+  benchmark package without bloating the file generator
 - CI runs a smaller generated corpus for analyzer and runtime smoke coverage,
   while the ignored perf test still validates the full 5k corpus
 
@@ -71,14 +71,14 @@ dart test
 Run the ignored release benchmark test:
 
 ```bash
-cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture
+cargo test -p dust_cli benchmark_project_release_build_benchmark -- --ignored --nocapture
 ```
 
 Optional thresholds:
 
 ```bash
 DUST_PERF_COLD_MAX_MS=2000 DUST_PERF_WARM_MAX_MS=800 \
-  cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture
+  cargo test -p dust_cli benchmark_project_release_build_benchmark -- --ignored --nocapture
 ```
 
 See [../../CONTRIBUTING.md](../../CONTRIBUTING.md) for the normal contributor

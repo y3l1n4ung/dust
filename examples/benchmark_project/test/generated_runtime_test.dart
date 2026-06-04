@@ -1,9 +1,9 @@
-import 'package:dust_stress_project/generated_models/model_00004.dart';
-import 'package:dust_stress_project/generated_models/model_00005.dart';
-import 'package:dust_stress_project/generated_models/model_00007.dart';
-import 'package:dust_stress_project/generated_models/model_00008.dart';
-import 'package:dust_stress_project/support/common.dart';
-import 'package:test/test.dart';
+import 'package:dust_benchmark_project/generated_models/model_00004.dart';
+import 'package:dust_benchmark_project/generated_models/model_00005.dart';
+import 'package:dust_benchmark_project/generated_models/model_00007.dart';
+import 'package:dust_benchmark_project/generated_models/model_00008.dart';
+import 'package:dust_benchmark_project/support/common.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('serde scalar models round-trip primitive adapters', () {

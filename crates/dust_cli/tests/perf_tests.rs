@@ -11,8 +11,8 @@ fn repo_root() -> PathBuf {
         .expect("resolve repo root")
 }
 
-fn stress_project_root() -> PathBuf {
-    repo_root().join("examples/stress_project")
+fn benchmark_project_root() -> PathBuf {
+    repo_root().join("examples/benchmark_project")
 }
 
 fn run(command: &mut Command) -> String {
@@ -85,24 +85,24 @@ fn invalidate_tool_hash(cache_path: &Path) {
 
 #[test]
 #[ignore = "expensive release perf regression test"]
-fn stress_project_release_build_benchmark() {
+fn benchmark_project_release_build_benchmark() {
     let repo = repo_root();
-    let stress = stress_project_root();
-    let stress_str = stress.to_string_lossy().into_owned();
+    let benchmark = benchmark_project_root();
+    let benchmark_str = benchmark.to_string_lossy().into_owned();
 
-    run(Command::new("dart")
+    run(Command::new("flutter")
         .arg("pub")
         .arg("get")
         .current_dir(&repo));
-    run(Command::new("dart")
+    run(Command::new("flutter")
         .arg("pub")
         .arg("get")
-        .current_dir(&stress));
+        .current_dir(&benchmark));
     run(Command::new("bash")
         .arg("./generate.sh")
         .arg("--count")
         .arg("5000")
-        .current_dir(&stress));
+        .current_dir(&benchmark));
     run(Command::new("cargo")
         .args([
             "run",
@@ -114,7 +114,7 @@ fn stress_project_release_build_benchmark() {
             "clean",
             "--root",
         ])
-        .arg(&stress_str)
+        .arg(&benchmark_str)
         .current_dir(&repo));
 
     let cold = run(Command::new("cargo")
@@ -128,7 +128,7 @@ fn stress_project_release_build_benchmark() {
             "build",
             "--root",
         ])
-        .arg(&stress_str)
+        .arg(&benchmark_str)
         .current_dir(&repo));
     let warm = run(Command::new("cargo")
         .args([
@@ -141,9 +141,9 @@ fn stress_project_release_build_benchmark() {
             "build",
             "--root",
         ])
-        .arg(&stress_str)
+        .arg(&benchmark_str)
         .current_dir(&repo));
-    invalidate_tool_hash(&stress.join(".dart_tool/dust/build_cache_v1.json"));
+    invalidate_tool_hash(&benchmark.join(".dart_tool/dust/build_cache_v1.json"));
     let invalidated = run(Command::new("cargo")
         .args([
             "run",
@@ -155,7 +155,7 @@ fn stress_project_release_build_benchmark() {
             "build",
             "--root",
         ])
-        .arg(&stress_str)
+        .arg(&benchmark_str)
         .arg("--fail-fast")
         .current_dir(&repo));
 

@@ -58,4 +58,4 @@ DUST_RUN_ONLINE_HTTP_TESTS=1 dart test test/json_placeholder_api_test.dart
 
 - [../../README.md](../../README.md)
 - [../../docs/developer.md](../../docs/developer.md)
-- [../stress_project/README.md](../stress_project/README.md)
+- [../benchmark_project/README.md](../benchmark_project/README.md)

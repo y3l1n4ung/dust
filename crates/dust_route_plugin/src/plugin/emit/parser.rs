@@ -52,7 +52,7 @@ pub(super) fn render_parser(out: &mut String, spec: &RouterSpec) {
         "route_parser",
         include_str!("templates/route_parser.jinja"),
         ParserContext {
-            cases: spec.routes.iter().map(render_parse_case).collect(),
+            cases: join_rendered(spec.routes.iter().map(render_parse_case).collect()),
             fallback,
         },
     ));
@@ -184,6 +184,14 @@ fn join_chunks(chunks: Vec<String>) -> String {
         return String::new();
     }
     format!("{}\n", chunks.join("\n"))
+}
+
+fn join_rendered(chunks: Vec<String>) -> String {
+    if chunks.is_empty() {
+        String::new()
+    } else {
+        format!("{}\n", chunks.join("\n"))
+    }
 }
 
 pub(super) fn encode_param_expr(ty: &TypeIr, name: &str) -> String {

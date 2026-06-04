@@ -31,7 +31,8 @@ pub(super) fn render_restore_stack(out: &mut String, spec: &RouterSpec) {
         .routes
         .iter()
         .map(|route| render_restore_case(route, spec))
-        .collect();
+        .collect::<Vec<_>>()
+        .join("\n");
     out.push_str(&render_template(
         "restore_stack",
         include_str!("templates/restore_stack.jinja"),
@@ -51,7 +52,8 @@ fn render_restore_case(route: &RouteSpec, spec: &RouterSpec) -> String {
                 RestoreEntryContext { entry },
             )
         })
-        .collect();
+        .collect::<Vec<_>>()
+        .join("\n");
     render_template(
         "restore_case",
         include_str!("templates/restore_case.jinja"),

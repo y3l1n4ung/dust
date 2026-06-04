@@ -50,8 +50,8 @@ Response<T> _buildResponse<T>(Response<dynamic> response, T data) {
   );
 }
 
-final class _$StressHttpApi implements StressHttpApi {
-  _$StressHttpApi(this._dio, {String? baseUrl}) : _baseUrl = baseUrl;
+final class _$BenchmarkHttpApi implements BenchmarkHttpApi {
+  _$BenchmarkHttpApi(this._dio, {String? baseUrl}) : _baseUrl = baseUrl;
 
   final Dio _dio;
   final String? _baseUrl;
@@ -61,7 +61,7 @@ final class _$StressHttpApi implements StressHttpApi {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
-    _headers['x-suite'] = 'stress';
+    _headers['x-suite'] = 'benchmark';
     if (userId != null) _queryParameters['userId'] = userId;
     if (limit != null) _queryParameters['_limit'] = limit;
     final Object? _data = null;
@@ -100,7 +100,7 @@ final class _$StressHttpApi implements StressHttpApi {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
-    _headers['x-suite'] = 'stress';
+    _headers['x-suite'] = 'benchmark';
     final Object? _data = null;
     final _options = Options(
       method: 'GET',
@@ -136,7 +136,7 @@ final class _$StressHttpApi implements StressHttpApi {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
-    _headers['x-suite'] = 'stress';
+    _headers['x-suite'] = 'benchmark';
     final Object? _data = payload;
     final _options = Options(
       method: 'POST',

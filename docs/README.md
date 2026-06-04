@@ -27,4 +27,4 @@ These pages are backed by the runnable example package in
 ## Example Packages
 
 - [Product showcase](../examples/product_showcase/README.md)
-- [Stress project](../examples/stress_project/README.md)
+- [Benchmark project](../examples/benchmark_project/README.md)

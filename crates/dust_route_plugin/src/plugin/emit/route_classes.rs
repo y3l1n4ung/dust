@@ -111,10 +111,13 @@ fn render_location_getter(route: &RouteSpec) -> String {
 
 fn render_location_body(route: &RouteSpec) -> String {
     if is_not_found_route(route) {
-        return render_template(
-            "location_not_found_body",
-            include_str!("templates/location_not_found_body.jinja"),
-            (),
+        return format!(
+            "{}\n",
+            render_template(
+                "location_not_found_body",
+                include_str!("templates/location_not_found_body.jinja"),
+                (),
+            )
         );
     }
 

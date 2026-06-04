@@ -11,7 +11,7 @@ build/
 **/pubspec.lock
 
 # Examples & Fixtures
-examples/stress_project/lib/generated_models/
+examples/benchmark_project/lib/generated_models/
 
 # IDEs & Editors
 .idea/

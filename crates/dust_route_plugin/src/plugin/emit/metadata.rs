@@ -133,7 +133,7 @@ fn render_metadata_nodes(
         };
         entries.push(render_metadata_entry(indent, rendered));
     }
-    entries.join("")
+    entries.join("\n")
 }
 
 fn render_metadata_entry(indent: usize, node: String) -> String {
@@ -237,7 +237,8 @@ fn render_generated_children_with_prefix(
             };
             render_metadata_entry(indent + 2, rendered)
         })
-        .collect();
+        .collect::<Vec<_>>()
+        .join("\n");
     render_template(
         "generated_children",
         include_str!("templates/generated_children.jinja"),

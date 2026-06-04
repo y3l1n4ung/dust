@@ -9,6 +9,7 @@ use super::formatting::{dart_type, upper_camel_identifier};
 struct HelpersContext {
     guard_cases: String,
     factories: String,
+    router_base_class: String,
 }
 
 #[derive(Serialize)]
@@ -29,14 +30,16 @@ pub(super) fn render_helpers(out: &mut String, spec: &RouterSpec) {
         include_str!("templates/route_helpers.jinja"),
         HelpersContext {
             guard_cases: render_guard_cases(spec),
-            factories: spec.routes.iter().map(render_route_factory).collect(),
+            factories: render_route_factories(spec),
+            router_base_class: spec.generated_base_class.clone(),
         },
     ));
     out.push_str("\n\n");
 }
 
 fn render_guard_cases(spec: &RouterSpec) -> String {
-    spec.routes
+    let cases = spec
+        .routes
         .iter()
         .filter(|route| !route.annotation.guards.is_empty())
         .map(|route| {
@@ -56,7 +59,27 @@ fn render_guard_cases(spec: &RouterSpec) -> String {
                 },
             )
         })
-        .collect()
+        .collect::<Vec<_>>()
+        .join("\n");
+    if cases.is_empty() {
+        String::new()
+    } else {
+        format!("{cases}\n")
+    }
+}
+
+fn render_route_factories(spec: &RouterSpec) -> String {
+    let factories = spec
+        .routes
+        .iter()
+        .map(render_route_factory)
+        .collect::<Vec<_>>()
+        .join("\n\n");
+    if factories.is_empty() {
+        String::new()
+    } else {
+        format!("{factories}\n\n")
+    }
 }
 
 fn render_route_factory(route: &RouteSpec) -> String {
