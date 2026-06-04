@@ -155,28 +155,36 @@ fn decode_non_nullable_expr(
 ) -> String {
     match ty {
         TypeIr::Builtin { kind, .. } => match kind {
-            BuiltinType::String => format!("_jsonAs<{DART_STRING}>({raw}, {key}, '{DART_STRING}')"),
-            BuiltinType::Int => format!("_jsonAs<{DART_INT}>({raw}, {key}, '{DART_INT}')"),
-            BuiltinType::Bool => format!("_jsonAs<{DART_BOOL}>({raw}, {key}, '{DART_BOOL}')"),
-            BuiltinType::Double => {
-                format!("_jsonAs<{DART_NUM}>({raw}, {key}, '{DART_NUM}').toDouble()")
+            BuiltinType::String => {
+                format!("JsonHelper.as<{DART_STRING}>({raw}, {key}, '{DART_STRING}')")
             }
-            BuiltinType::Num => format!("_jsonAs<{DART_NUM}>({raw}, {key}, '{DART_NUM}')"),
-            BuiltinType::Object => format!("_jsonAs<{DART_OBJECT}>({raw}, {key}, '{DART_OBJECT}')"),
+            BuiltinType::Int => format!("JsonHelper.as<{DART_INT}>({raw}, {key}, '{DART_INT}')"),
+            BuiltinType::Bool => {
+                format!("JsonHelper.as<{DART_BOOL}>({raw}, {key}, '{DART_BOOL}')")
+            }
+            BuiltinType::Double => {
+                format!("JsonHelper.as<{DART_NUM}>({raw}, {key}, '{DART_NUM}').toDouble()")
+            }
+            BuiltinType::Num => {
+                format!("JsonHelper.as<{DART_NUM}>({raw}, {key}, '{DART_NUM}')")
+            }
+            BuiltinType::Object => {
+                format!("JsonHelper.as<{DART_OBJECT}>({raw}, {key}, '{DART_OBJECT}')")
+            }
         },
         TypeIr::Dynamic | TypeIr::Unknown => raw.to_owned(),
         TypeIr::Function { .. } | TypeIr::Record { .. } => raw.to_owned(),
         TypeIr::Named { name, .. } if name.as_ref() == DART_DATE_TIME => {
-            format!("_jsonAsDateTime({raw}, {key})")
+            format!("JsonHelper.asDateTime({raw}, {key})")
         }
         TypeIr::Named { name, .. } if name.as_ref() == DART_URI => {
-            format!("_jsonAsUri({raw}, {key})")
+            format!("JsonHelper.asUri({raw}, {key})")
         }
         TypeIr::Named { name, .. } if name.as_ref() == DART_BIG_INT => {
-            format!("_jsonAsBigInt({raw}, {key})")
+            format!("JsonHelper.asBigInt({raw}, {key})")
         }
         TypeIr::Named { name, args, .. } if name.as_ref() == DART_LIST => format!(
-            "_jsonAsList({raw}, {key})\n    .map((item) => {})\n    .toList()",
+            "JsonHelper.asList({raw}, {key})\n    .map((item) => {})\n    .toList()",
             decode_expr(
                 "item",
                 key,
@@ -186,7 +194,7 @@ fn decode_non_nullable_expr(
             )
         ),
         TypeIr::Named { name, args, .. } if name.as_ref() == DART_SET => format!(
-            "_jsonAsList({raw}, {key})\n    .map((item) => {})\n    .toSet()",
+            "JsonHelper.asList({raw}, {key})\n    .map((item) => {})\n    .toSet()",
             decode_expr(
                 "item",
                 key,
@@ -205,22 +213,22 @@ fn decode_non_nullable_expr(
             );
             if value_expr.contains('\n') {
                 format!(
-                    "_jsonAsMap({raw}, {key})\n    .map(\n      (mapKey, value) => MapEntry(\n        mapKey,\n{},\n      ),\n    )",
+                    "JsonHelper.asMap({raw}, {key})\n    .map(\n      (mapKey, value) => MapEntry(\n        mapKey,\n{},\n      ),\n    )",
                     indent_expr(&value_expr, 8)
                 )
             } else {
                 format!(
-                    "_jsonAsMap({raw}, {key})\n    .map((mapKey, value) => MapEntry(mapKey, {value_expr}))"
+                    "JsonHelper.asMap({raw}, {key})\n    .map((mapKey, value) => MapEntry(mapKey, {value_expr}))"
                 )
             }
         }
         TypeIr::Named { name, .. } => {
             if deserializable_classes.contains(name.as_ref()) {
-                format!("_${name}FromJson(_jsonAsMap({raw}, {key}))")
+                format!("_${name}FromJson(JsonHelper.asMap({raw}, {key}))")
             } else if deserializable_enums.contains(name.as_ref()) {
                 format!("_${name}FromJson({raw})")
             } else {
-                format!("{name}.fromJson(_jsonAsMap({raw}, {key}))")
+                format!("{name}.fromJson(JsonHelper.asMap({raw}, {key}))")
             }
         }
     }
@@ -248,9 +256,9 @@ fn decode_with_codec(raw: &str, key: &str, ty: &TypeIr, codec: &str) -> String {
     let codec = access_receiver(codec);
     let value_ty = OBJECT_NULLABLE_TYPES.render(&non_nullable(ty));
     if ty.is_nullable() {
-        let decoded = format!("_jsonDecodeWithCodec<{value_ty}>({codec}, {raw}, {key})");
+        let decoded = format!("JsonHelper.decodeWithCodec<{value_ty}>({codec}, {raw}, {key})");
         return format!("{raw} == null\n    ? null\n    : {decoded}");
     }
 
-    format!("_jsonDecodeWithCodec<{value_ty}>({codec}, {raw}, {key})")
+    format!("JsonHelper.decodeWithCodec<{value_ty}>({codec}, {raw}, {key})")
 }

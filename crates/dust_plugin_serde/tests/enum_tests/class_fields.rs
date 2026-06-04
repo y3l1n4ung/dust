@@ -149,7 +149,7 @@ fn handles_enums_in_collections() {
         from_json,
         r#"// factory Bundle.fromJson(Map<String, Object?> json) => _$BundleFromJson(json);
 Bundle _$BundleFromJson(Map<String, Object?> json) {
-  final rolesValue = _jsonAsList(json['roles'], 'roles')
+  final rolesValue = JsonHelper.asList(json['roles'], 'roles')
       .map((item) => _$RoleFromJson(item))
       .toList();
 

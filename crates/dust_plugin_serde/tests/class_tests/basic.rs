@@ -82,12 +82,13 @@ fn generates_from_json_helper() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let helper = &contribution.top_level_functions[0];
 
+    assert_eq!(contribution.shared_helpers, Vec::<String>::new());
     assert_eq!(
         helper,
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
-  final ageValue = _jsonAs<int>(json['age'], 'age', 'int');
+  final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
+  final ageValue = JsonHelper.as<int>(json['age'], 'age', 'int');
 
   return User(id: idValue, age: ageValue);
 }"#

@@ -14,46 +14,6 @@
 part of 'order.dart';
 
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-Never _jsonTypeError(Object? value, String key, String expected) =>
-    throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(
-  Object? value,
-  String key,
-  String expected,
-  T? Function(String value) parse,
-) =>
-    parse(_jsonAs<String>(value, key, 'String')) ??
-    _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) =>
-    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
-
-Map<String, Object?> _jsonAsMap(Object? value, String key) {
-  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
-  try {
-    return Map<String, Object?>.from(map);
-  } on TypeError {
-    _jsonTypeError(value, key, 'Map<String, Object?>');
-  }
-}
-
-DateTime _jsonAsDateTime(Object? value, String key) =>
-    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) =>
-    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) =>
-    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
-  if (value == null) {
-    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
-  }
-  try {
-    return codec.deserialize(value as dynamic) as T;
-  } catch (error) {
-    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
-  }
-}
 
 mixin _$Order {
   @override
@@ -197,14 +157,14 @@ Map<String, Object?> _$OrderToJson(Order instance) {
 }
 // factory Order.fromJson(Map<String, Object?> json) => _$OrderFromJson(json);
 Order _$OrderFromJson(Map<String, Object?> json) {
-  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
-  final itemsValue = _jsonAsList(json['items'], 'items')
-      .map((item) => CartItem.fromJson(_jsonAsMap(item, 'items')))
+  final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
+  final itemsValue = JsonHelper.asList(json['items'], 'items')
+      .map((item) => CartItem.fromJson(JsonHelper.asMap(item, 'items')))
       .toList();
-  final totalAmountValue = _jsonAs<num>(json['totalAmount'], 'totalAmount', 'num').toDouble();
+  final totalAmountValue = JsonHelper.as<num>(json['totalAmount'], 'totalAmount', 'num').toDouble();
   final statusValue = _$OrderStatusFromJson(json['status']);
-  final createdAtValue = _jsonAsDateTime(json['createdAt'], 'createdAt');
-  final shippingAddressValue = _$ShippingAddressFromJson(_jsonAsMap(json['shippingAddress'], 'shippingAddress'));
+  final createdAtValue = JsonHelper.asDateTime(json['createdAt'], 'createdAt');
+  final shippingAddressValue = _$ShippingAddressFromJson(JsonHelper.asMap(json['shippingAddress'], 'shippingAddress'));
 
   return Order(
     id: idValue,
@@ -226,11 +186,23 @@ Map<String, Object?> _$ShippingAddressToJson(ShippingAddress instance) {
 }
 // factory ShippingAddress.fromJson(Map<String, Object?> json) => _$ShippingAddressFromJson(json);
 ShippingAddress _$ShippingAddressFromJson(Map<String, Object?> json) {
-  final fullNameValue = _jsonAs<String>(json['fullName'], 'fullName', 'String');
-  final addressValue = _jsonAs<String>(json['address'], 'address', 'String');
-  final cityValue = _jsonAs<String>(json['city'], 'city', 'String');
-  final zipCodeValue = _jsonAs<String>(json['zipCode'], 'zipCode', 'String');
-  final phoneValue = _jsonAs<String>(json['phone'], 'phone', 'String');
+  final fullNameValue = JsonHelper.as<String>(
+    json['fullName'],
+    'fullName',
+    'String',
+  );
+  final addressValue = JsonHelper.as<String>(
+    json['address'],
+    'address',
+    'String',
+  );
+  final cityValue = JsonHelper.as<String>(json['city'], 'city', 'String');
+  final zipCodeValue = JsonHelper.as<String>(
+    json['zipCode'],
+    'zipCode',
+    'String',
+  );
+  final phoneValue = JsonHelper.as<String>(json['phone'], 'phone', 'String');
 
   return ShippingAddress(
     fullName: fullNameValue,

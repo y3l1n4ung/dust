@@ -14,46 +14,6 @@
 part of 'json_enhanced_enum_bundle.dart';
 
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-Never _jsonTypeError(Object? value, String key, String expected) =>
-    throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(
-  Object? value,
-  String key,
-  String expected,
-  T? Function(String value) parse,
-) =>
-    parse(_jsonAs<String>(value, key, 'String')) ??
-    _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) =>
-    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
-
-Map<String, Object?> _jsonAsMap(Object? value, String key) {
-  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
-  try {
-    return Map<String, Object?>.from(map);
-  } on TypeError {
-    _jsonTypeError(value, key, 'Map<String, Object?>');
-  }
-}
-
-DateTime _jsonAsDateTime(Object? value, String key) =>
-    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) =>
-    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) =>
-    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
-  if (value == null) {
-    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
-  }
-  try {
-    return codec.deserialize(value as dynamic) as T;
-  } catch (error) {
-    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
-  }
-}
 
 mixin _$JsonEnhancedEnumBundle {
   @override
@@ -102,15 +62,15 @@ Map<String, Object?> _$JsonEnhancedEnumBundleToJson(JsonEnhancedEnumBundle insta
 }
 // factory JsonEnhancedEnumBundle.fromJson(Map<String, Object?> json) => _$JsonEnhancedEnumBundleFromJson(json);
 JsonEnhancedEnumBundle _$JsonEnhancedEnumBundleFromJson(Map<String, Object?> json) {
-  final primaryVehicleValue = _jsonDecodeWithCodec<Vehicle>(
+  final primaryVehicleValue = JsonHelper.decodeWithCodec<Vehicle>(
     vehicleIndexCodec,
     json['primaryVehicle'],
     'primaryVehicle',
   );
   final fallbackVehicleValue = json['fallbackVehicle'] == null
       ? null
-      : _jsonDecodeWithCodec<Vehicle>(vehicleIndexCodec, json['fallbackVehicle'], 'fallbackVehicle');
-  final fleetValue = _jsonDecodeWithCodec<List<Vehicle>>(
+      : JsonHelper.decodeWithCodec<Vehicle>(vehicleIndexCodec, json['fallbackVehicle'], 'fallbackVehicle');
+  final fleetValue = JsonHelper.decodeWithCodec<List<Vehicle>>(
     vehicleIndexListCodec,
     json['fleet'],
     'fleet',

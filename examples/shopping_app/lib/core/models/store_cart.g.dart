@@ -14,46 +14,6 @@
 part of 'store_cart.dart';
 
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-Never _jsonTypeError(Object? value, String key, String expected) =>
-    throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(
-  Object? value,
-  String key,
-  String expected,
-  T? Function(String value) parse,
-) =>
-    parse(_jsonAs<String>(value, key, 'String')) ??
-    _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) =>
-    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
-
-Map<String, Object?> _jsonAsMap(Object? value, String key) {
-  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
-  try {
-    return Map<String, Object?>.from(map);
-  } on TypeError {
-    _jsonTypeError(value, key, 'Map<String, Object?>');
-  }
-}
-
-DateTime _jsonAsDateTime(Object? value, String key) =>
-    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) =>
-    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) =>
-    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
-  if (value == null) {
-    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
-  }
-  try {
-    return codec.deserialize(value as dynamic) as T;
-  } catch (error) {
-    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
-  }
-}
 
 mixin _$StoreCart {
   @override
@@ -169,11 +129,11 @@ Map<String, Object?> _$StoreCartToJson(StoreCart instance) {
 }
 // factory StoreCart.fromJson(Map<String, Object?> json) => _$StoreCartFromJson(json);
 StoreCart _$StoreCartFromJson(Map<String, Object?> json) {
-  final idValue = _jsonAs<int>(json['id'], 'id', 'int');
-  final userIdValue = _jsonAs<int>(json['userId'], 'userId', 'int');
-  final dateValue = _jsonAsDateTime(json['date'], 'date');
-  final productsValue = _jsonAsList(json['products'], 'products')
-      .map((item) => _$StoreCartProductFromJson(_jsonAsMap(item, 'products')))
+  final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
+  final userIdValue = JsonHelper.as<int>(json['userId'], 'userId', 'int');
+  final dateValue = JsonHelper.asDateTime(json['date'], 'date');
+  final productsValue = JsonHelper.asList(json['products'], 'products')
+      .map((item) => _$StoreCartProductFromJson(JsonHelper.asMap(item, 'products')))
       .toList();
 
   return StoreCart(
@@ -191,8 +151,12 @@ Map<String, Object?> _$StoreCartProductToJson(StoreCartProduct instance) {
 }
 // factory StoreCartProduct.fromJson(Map<String, Object?> json) => _$StoreCartProductFromJson(json);
 StoreCartProduct _$StoreCartProductFromJson(Map<String, Object?> json) {
-  final productIdValue = _jsonAs<int>(json['productId'], 'productId', 'int');
-  final quantityValue = _jsonAs<int>(json['quantity'], 'quantity', 'int');
+  final productIdValue = JsonHelper.as<int>(
+    json['productId'],
+    'productId',
+    'int',
+  );
+  final quantityValue = JsonHelper.as<int>(json['quantity'], 'quantity', 'int');
 
   return StoreCartProduct(productId: productIdValue, quantity: quantityValue);
 }

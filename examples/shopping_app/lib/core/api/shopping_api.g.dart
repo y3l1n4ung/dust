@@ -13,46 +13,6 @@
 
 part of 'shopping_api.dart';
 
-Never _jsonTypeError(Object? value, String key, String expected) =>
-    throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(
-  Object? value,
-  String key,
-  String expected,
-  T? Function(String value) parse,
-) =>
-    parse(_jsonAs<String>(value, key, 'String')) ??
-    _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) =>
-    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
-
-Map<String, Object?> _jsonAsMap(Object? value, String key) {
-  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
-  try {
-    return Map<String, Object?>.from(map);
-  } on TypeError {
-    _jsonTypeError(value, key, 'Map<String, Object?>');
-  }
-}
-
-DateTime _jsonAsDateTime(Object? value, String key) =>
-    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) =>
-    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) =>
-    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
-  if (value == null) {
-    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
-  }
-  try {
-    return codec.deserialize(value as dynamic) as T;
-  } catch (error) {
-    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
-  }
-}
 RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
   if (T != dynamic &&
       requestOptions.responseType != ResponseType.bytes &&
@@ -849,8 +809,16 @@ Map<String, Object?> _$LoginRequestToJson(LoginRequest instance) {
 }
 // factory LoginRequest.fromJson(Map<String, Object?> json) => _$LoginRequestFromJson(json);
 LoginRequest _$LoginRequestFromJson(Map<String, Object?> json) {
-  final usernameValue = _jsonAs<String>(json['username'], 'username', 'String');
-  final passwordValue = _jsonAs<String>(json['password'], 'password', 'String');
+  final usernameValue = JsonHelper.as<String>(
+    json['username'],
+    'username',
+    'String',
+  );
+  final passwordValue = JsonHelper.as<String>(
+    json['password'],
+    'password',
+    'String',
+  );
 
   return LoginRequest(username: usernameValue, password: passwordValue);
 }
@@ -861,7 +829,7 @@ Map<String, Object?> _$LoginResponseToJson(LoginResponse instance) {
 }
 // factory LoginResponse.fromJson(Map<String, Object?> json) => _$LoginResponseFromJson(json);
 LoginResponse _$LoginResponseFromJson(Map<String, Object?> json) {
-  final tokenValue = _jsonAs<String>(json['token'], 'token', 'String');
+  final tokenValue = JsonHelper.as<String>(json['token'], 'token', 'String');
 
   return LoginResponse(token: tokenValue);
 }
@@ -872,7 +840,7 @@ Map<String, Object?> _$RegisterUserResponseToJson(RegisterUserResponse instance)
 }
 // factory RegisterUserResponse.fromJson(Map<String, Object?> json) => _$RegisterUserResponseFromJson(json);
 RegisterUserResponse _$RegisterUserResponseFromJson(Map<String, Object?> json) {
-  final idValue = _jsonAs<int>(json['id'], 'id', 'int');
+  final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
 
   return RegisterUserResponse(id: idValue);
 }
@@ -884,12 +852,16 @@ Map<String, Object?> _$RegisterNameToJson(RegisterName instance) {
 }
 // factory RegisterName.fromJson(Map<String, Object?> json) => _$RegisterNameFromJson(json);
 RegisterName _$RegisterNameFromJson(Map<String, Object?> json) {
-  final firstnameValue = _jsonAs<String>(
+  final firstnameValue = JsonHelper.as<String>(
     json['firstname'],
     'firstname',
     'String',
   );
-  final lastnameValue = _jsonAs<String>(json['lastname'], 'lastname', 'String');
+  final lastnameValue = JsonHelper.as<String>(
+    json['lastname'],
+    'lastname',
+    'String',
+  );
 
   return RegisterName(firstname: firstnameValue, lastname: lastnameValue);
 }
@@ -901,8 +873,8 @@ Map<String, Object?> _$RegisterGeolocationToJson(RegisterGeolocation instance) {
 }
 // factory RegisterGeolocation.fromJson(Map<String, Object?> json) => _$RegisterGeolocationFromJson(json);
 RegisterGeolocation _$RegisterGeolocationFromJson(Map<String, Object?> json) {
-  final latValue = _jsonAs<String>(json['lat'], 'lat', 'String');
-  final longValue = _jsonAs<String>(json['long'], 'long', 'String');
+  final latValue = JsonHelper.as<String>(json['lat'], 'lat', 'String');
+  final longValue = JsonHelper.as<String>(json['long'], 'long', 'String');
 
   return RegisterGeolocation(lat: latValue, long: longValue);
 }
@@ -917,11 +889,15 @@ Map<String, Object?> _$RegisterAddressToJson(RegisterAddress instance) {
 }
 // factory RegisterAddress.fromJson(Map<String, Object?> json) => _$RegisterAddressFromJson(json);
 RegisterAddress _$RegisterAddressFromJson(Map<String, Object?> json) {
-  final cityValue = _jsonAs<String>(json['city'], 'city', 'String');
-  final streetValue = _jsonAs<String>(json['street'], 'street', 'String');
-  final numberValue = _jsonAs<int>(json['number'], 'number', 'int');
-  final zipcodeValue = _jsonAs<String>(json['zipcode'], 'zipcode', 'String');
-  final geolocationValue = _$RegisterGeolocationFromJson(_jsonAsMap(json['geolocation'], 'geolocation'));
+  final cityValue = JsonHelper.as<String>(json['city'], 'city', 'String');
+  final streetValue = JsonHelper.as<String>(json['street'], 'street', 'String');
+  final numberValue = JsonHelper.as<int>(json['number'], 'number', 'int');
+  final zipcodeValue = JsonHelper.as<String>(
+    json['zipcode'],
+    'zipcode',
+    'String',
+  );
+  final geolocationValue = _$RegisterGeolocationFromJson(JsonHelper.asMap(json['geolocation'], 'geolocation'));
 
   return RegisterAddress(
     city: cityValue,
@@ -943,12 +919,20 @@ Map<String, Object?> _$RegisterUserRequestToJson(RegisterUserRequest instance) {
 }
 // factory RegisterUserRequest.fromJson(Map<String, Object?> json) => _$RegisterUserRequestFromJson(json);
 RegisterUserRequest _$RegisterUserRequestFromJson(Map<String, Object?> json) {
-  final emailValue = _jsonAs<String>(json['email'], 'email', 'String');
-  final usernameValue = _jsonAs<String>(json['username'], 'username', 'String');
-  final passwordValue = _jsonAs<String>(json['password'], 'password', 'String');
-  final nameValue = _$RegisterNameFromJson(_jsonAsMap(json['name'], 'name'));
-  final phoneValue = _jsonAs<String>(json['phone'], 'phone', 'String');
-  final addressValue = _$RegisterAddressFromJson(_jsonAsMap(json['address'], 'address'));
+  final emailValue = JsonHelper.as<String>(json['email'], 'email', 'String');
+  final usernameValue = JsonHelper.as<String>(
+    json['username'],
+    'username',
+    'String',
+  );
+  final passwordValue = JsonHelper.as<String>(
+    json['password'],
+    'password',
+    'String',
+  );
+  final nameValue = _$RegisterNameFromJson(JsonHelper.asMap(json['name'], 'name'));
+  final phoneValue = JsonHelper.as<String>(json['phone'], 'phone', 'String');
+  final addressValue = _$RegisterAddressFromJson(JsonHelper.asMap(json['address'], 'address'));
 
   return RegisterUserRequest(
     email: emailValue,

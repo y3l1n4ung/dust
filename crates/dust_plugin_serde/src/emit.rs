@@ -6,7 +6,6 @@ use dust_plugin_api::PluginContribution;
 use crate::{
     emit_class::{emit_from_json_helper, emit_to_json_helper, emit_to_json_mixin},
     emit_enum::{emit_enum_from_json_helper, emit_enum_to_json_helper},
-    emit_support::render_deserialize_helpers,
 };
 
 /// Orchestrates the emission of all SerDe-related code for a library.
@@ -40,13 +39,6 @@ pub(crate) fn emit_library(library: &LibraryIr) -> PluginContribution {
         .filter(|e| wants_deserialize_enum(e))
         .map(|e| e.name.clone())
         .collect::<HashSet<_>>();
-
-    // If any model needs deserialization, include the standard shared JSON helpers.
-    if !deserializable_classes.is_empty() || !deserializable_enums.is_empty() {
-        contribution
-            .shared_helpers
-            .push(render_deserialize_helpers().to_owned());
-    }
 
     // Generate class-specific code.
     for class in &library.classes {

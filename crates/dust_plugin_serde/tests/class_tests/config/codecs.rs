@@ -46,7 +46,7 @@ fn supports_custom_field_codecs() {
         &contribution.top_level_functions[1],
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final createdAtValue = _jsonDecodeWithCodec<DateTime>(
+  final createdAtValue = JsonHelper.decodeWithCodec<DateTime>(
     (const UnixEpochCodec()),
     json['createdAt'],
     'createdAt',

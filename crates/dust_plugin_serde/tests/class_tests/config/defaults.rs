@@ -39,7 +39,7 @@ fn supports_default_values_during_deserialization() {
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
   final roleValue = json.containsKey('role')
-      ? _jsonAs<String>(json['role'], 'role', 'String')
+      ? JsonHelper.as<String>(json['role'], 'role', 'String')
       : 'guest';
 
   return User(role: roleValue);

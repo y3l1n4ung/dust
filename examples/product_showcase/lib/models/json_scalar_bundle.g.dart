@@ -15,46 +15,6 @@ part of 'json_scalar_bundle.dart';
 
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 const DeepCollectionEquality _unorderedDeepCollectionEquality = DeepCollectionEquality.unordered();
-Never _jsonTypeError(Object? value, String key, String expected) =>
-    throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(
-  Object? value,
-  String key,
-  String expected,
-  T? Function(String value) parse,
-) =>
-    parse(_jsonAs<String>(value, key, 'String')) ??
-    _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) =>
-    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
-
-Map<String, Object?> _jsonAsMap(Object? value, String key) {
-  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
-  try {
-    return Map<String, Object?>.from(map);
-  } on TypeError {
-    _jsonTypeError(value, key, 'Map<String, Object?>');
-  }
-}
-
-DateTime _jsonAsDateTime(Object? value, String key) =>
-    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) =>
-    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) =>
-    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
-  if (value == null) {
-    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
-  }
-  try {
-    return codec.deserialize(value as dynamic) as T;
-  } catch (error) {
-    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
-  }
-}
 
 mixin _$JsonScalarBundle {
   @override
@@ -118,17 +78,20 @@ Map<String, Object?> _$JsonScalarBundleToJson(JsonScalarBundle instance) {
 }
 // factory JsonScalarBundle.fromJson(Map<String, Object?> json) => _$JsonScalarBundleFromJson(json);
 JsonScalarBundle _$JsonScalarBundleFromJson(Map<String, Object?> json) {
-  final createdAtValue = _jsonAsDateTime(json['createdAt'], 'createdAt');
+  final createdAtValue = JsonHelper.asDateTime(json['createdAt'], 'createdAt');
   final updatedAtValue = json['updatedAt'] == null
       ? null
-      : _jsonAsDateTime(json['updatedAt'], 'updatedAt');
-  final websiteValue = _jsonAsUri(json['website'], 'website');
-  final largeNumberValue = _jsonAsBigInt(json['largeNumber'], 'largeNumber');
-  final endpointsValue = _jsonAsList(json['endpoints'], 'endpoints')
-      .map((item) => _jsonAsUri(item, 'endpoints'))
+      : JsonHelper.asDateTime(json['updatedAt'], 'updatedAt');
+  final websiteValue = JsonHelper.asUri(json['website'], 'website');
+  final largeNumberValue = JsonHelper.asBigInt(
+    json['largeNumber'],
+    'largeNumber',
+  );
+  final endpointsValue = JsonHelper.asList(json['endpoints'], 'endpoints')
+      .map((item) => JsonHelper.asUri(item, 'endpoints'))
       .toSet();
-  final checkpointsValue = _jsonAsMap(json['checkpoints'], 'checkpoints')
-      .map((mapKey, value) => MapEntry(mapKey, _jsonAsDateTime(value, 'checkpoints')));
+  final checkpointsValue = JsonHelper.asMap(json['checkpoints'], 'checkpoints')
+      .map((mapKey, value) => MapEntry(mapKey, JsonHelper.asDateTime(value, 'checkpoints')));
 
   return JsonScalarBundle(
     createdAt: createdAtValue,

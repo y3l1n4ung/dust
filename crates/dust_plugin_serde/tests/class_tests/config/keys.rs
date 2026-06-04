@@ -35,7 +35,7 @@ User _$UserFromJson(Map<String, Object?> json) {
     }
   }
 
-  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
+  final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
 
   return User(id: idValue);
 }"#

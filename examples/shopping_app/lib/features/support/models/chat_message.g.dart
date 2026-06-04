@@ -14,46 +14,6 @@
 part of 'chat_message.dart';
 
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-Never _jsonTypeError(Object? value, String key, String expected) =>
-    throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(
-  Object? value,
-  String key,
-  String expected,
-  T? Function(String value) parse,
-) =>
-    parse(_jsonAs<String>(value, key, 'String')) ??
-    _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) =>
-    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
-
-Map<String, Object?> _jsonAsMap(Object? value, String key) {
-  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
-  try {
-    return Map<String, Object?>.from(map);
-  } on TypeError {
-    _jsonTypeError(value, key, 'Map<String, Object?>');
-  }
-}
-
-DateTime _jsonAsDateTime(Object? value, String key) =>
-    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) =>
-    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) =>
-    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
-  if (value == null) {
-    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
-  }
-  try {
-    return codec.deserialize(value as dynamic) as T;
-  } catch (error) {
-    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
-  }
-}
 
 mixin _$ChatMessage {
   @override
@@ -213,10 +173,10 @@ Map<String, Object?> _$ChatMessageToJson(ChatMessage instance) {
 }
 // factory ChatMessage.fromJson(Map<String, Object?> json) => _$ChatMessageFromJson(json);
 ChatMessage _$ChatMessageFromJson(Map<String, Object?> json) {
-  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
+  final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
   final roleValue = _$ChatRoleFromJson(json['role']);
-  final textValue = _jsonAs<String>(json['text'], 'text', 'String');
-  final createdAtValue = _jsonAsDateTime(json['createdAt'], 'createdAt');
+  final textValue = JsonHelper.as<String>(json['text'], 'text', 'String');
+  final createdAtValue = JsonHelper.asDateTime(json['createdAt'], 'createdAt');
 
   return ChatMessage(
     id: idValue,
@@ -235,9 +195,13 @@ Map<String, Object?> _$ChatRequestToJson(ChatRequest instance) {
 }
 // factory ChatRequest.fromJson(Map<String, Object?> json) => _$ChatRequestFromJson(json);
 ChatRequest _$ChatRequestFromJson(Map<String, Object?> json) {
-  final messageValue = _jsonAs<String>(json['message'], 'message', 'String');
-  final historyValue = _jsonAsList(json['history'], 'history')
-      .map((item) => _$ChatMessageFromJson(_jsonAsMap(item, 'history')))
+  final messageValue = JsonHelper.as<String>(
+    json['message'],
+    'message',
+    'String',
+  );
+  final historyValue = JsonHelper.asList(json['history'], 'history')
+      .map((item) => _$ChatMessageFromJson(JsonHelper.asMap(item, 'history')))
       .toList();
 
   return ChatRequest(message: messageValue, history: historyValue);
@@ -250,8 +214,12 @@ Map<String, Object?> _$ChatResponseToJson(ChatResponse instance) {
 }
 // factory ChatResponse.fromJson(Map<String, Object?> json) => _$ChatResponseFromJson(json);
 ChatResponse _$ChatResponseFromJson(Map<String, Object?> json) {
-  final messageValue = _$ChatMessageFromJson(_jsonAsMap(json['message'], 'message'));
-  final escalatedValue = _jsonAs<bool>(json['escalated'], 'escalated', 'bool');
+  final messageValue = _$ChatMessageFromJson(JsonHelper.asMap(json['message'], 'message'));
+  final escalatedValue = JsonHelper.as<bool>(
+    json['escalated'],
+    'escalated',
+    'bool',
+  );
 
   return ChatResponse(message: messageValue, escalated: escalatedValue);
 }

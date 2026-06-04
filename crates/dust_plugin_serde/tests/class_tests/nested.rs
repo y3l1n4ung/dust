@@ -68,7 +68,7 @@ fn handles_nested_deserializable_models() {
         user_from_json,
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final profileValue = _$ProfileFromJson(_jsonAsMap(json['profile'], 'profile'));
+  final profileValue = _$ProfileFromJson(JsonHelper.asMap(json['profile'], 'profile'));
 
   return User(profile: profileValue);
 }"#

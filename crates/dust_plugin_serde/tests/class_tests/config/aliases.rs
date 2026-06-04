@@ -49,7 +49,7 @@ User _$UserFromJson(Map<String, Object?> json) {
     rawNameKey = 'displayName';
     rawName = json['displayName'];
   }
-  final nameValue = _jsonAs<String>(rawName, rawNameKey, 'String');
+  final nameValue = JsonHelper.as<String>(rawName, rawNameKey, 'String');
 
   return User(name: nameValue);
 }"#

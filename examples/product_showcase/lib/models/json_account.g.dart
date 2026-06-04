@@ -14,46 +14,6 @@
 part of 'json_account.dart';
 
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-Never _jsonTypeError(Object? value, String key, String expected) =>
-    throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(
-  Object? value,
-  String key,
-  String expected,
-  T? Function(String value) parse,
-) =>
-    parse(_jsonAs<String>(value, key, 'String')) ??
-    _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) =>
-    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
-
-Map<String, Object?> _jsonAsMap(Object? value, String key) {
-  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
-  try {
-    return Map<String, Object?>.from(map);
-  } on TypeError {
-    _jsonTypeError(value, key, 'Map<String, Object?>');
-  }
-}
-
-DateTime _jsonAsDateTime(Object? value, String key) =>
-    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) =>
-    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) =>
-    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
-  if (value == null) {
-    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
-  }
-  try {
-    return codec.deserialize(value as dynamic) as T;
-  } catch (error) {
-    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
-  }
-}
 
 mixin _$JsonAccount {
   @override
@@ -127,17 +87,21 @@ Map<String, Object?> _$JsonAccountToJson(JsonAccount instance) {
 }
 // factory JsonAccount.fromJson(Map<String, Object?> json) => _$JsonAccountFromJson(json);
 JsonAccount _$JsonAccountFromJson(Map<String, Object?> json) {
-  final profileValue = JsonProfile.fromJson(_jsonAsMap(json['profile'], 'profile'));
-  final metricsValue = _jsonAsMap(json['metrics'], 'metrics')
+  final profileValue = JsonProfile.fromJson(JsonHelper.asMap(json['profile'], 'profile'));
+  final metricsValue = JsonHelper.asMap(json['metrics'], 'metrics')
       .map(
         (mapKey, value) => MapEntry(
           mapKey,
-          _jsonAsList(value, 'metrics')
-              .map((item) => _jsonAs<int>(item, 'metrics', 'int'))
+          JsonHelper.asList(value, 'metrics')
+              .map((item) => JsonHelper.as<int>(item, 'metrics', 'int'))
               .toList(),
         ),
       );
-  final archivedValue = _jsonAs<bool>(json['archived'], 'archived', 'bool');
+  final archivedValue = JsonHelper.as<bool>(
+    json['archived'],
+    'archived',
+    'bool',
+  );
 
   return JsonAccount(
     profile: profileValue,

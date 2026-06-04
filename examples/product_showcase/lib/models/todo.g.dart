@@ -15,47 +15,6 @@ part of 'todo.dart';
 
 const Object _undefined = Object();
 
-Never _jsonTypeError(Object? value, String key, String expected) =>
-    throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(
-  Object? value,
-  String key,
-  String expected,
-  T? Function(String value) parse,
-) =>
-    parse(_jsonAs<String>(value, key, 'String')) ??
-    _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) =>
-    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
-
-Map<String, Object?> _jsonAsMap(Object? value, String key) {
-  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
-  try {
-    return Map<String, Object?>.from(map);
-  } on TypeError {
-    _jsonTypeError(value, key, 'Map<String, Object?>');
-  }
-}
-
-DateTime _jsonAsDateTime(Object? value, String key) =>
-    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) =>
-    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) =>
-    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
-  if (value == null) {
-    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
-  }
-  try {
-    return codec.deserialize(value as dynamic) as T;
-  } catch (error) {
-    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
-  }
-}
-
 mixin _$Todo {
   @override
   String toString() {
@@ -144,9 +103,9 @@ Map<String, Object?> _$TodoToJson(Todo instance) {
 }
 // factory Todo.fromJson(Map<String, Object?> json) => _$TodoFromJson(json);
 Todo _$TodoFromJson(Map<String, Object?> json) {
-  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
-  final titleValue = _jsonAs<String>(json['title'], 'title', 'String');
-  final isCompletedValue = _jsonAs<bool>(
+  final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
+  final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
+  final isCompletedValue = JsonHelper.as<bool>(
     json['isCompleted'],
     'isCompleted',
     'bool',
@@ -162,8 +121,8 @@ Map<String, Object?> _$TodoCreateToJson(TodoCreate instance) {
 }
 // factory TodoCreate.fromJson(Map<String, Object?> json) => _$TodoCreateFromJson(json);
 TodoCreate _$TodoCreateFromJson(Map<String, Object?> json) {
-  final titleValue = _jsonAs<String>(json['title'], 'title', 'String');
-  final isCompletedValue = _jsonAs<bool>(
+  final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
+  final isCompletedValue = JsonHelper.as<bool>(
     json['isCompleted'],
     'isCompleted',
     'bool',
@@ -181,10 +140,10 @@ Map<String, Object?> _$TodoUpdateToJson(TodoUpdate instance) {
 TodoUpdate _$TodoUpdateFromJson(Map<String, Object?> json) {
   final titleValue = json['title'] == null
       ? null
-      : _jsonAs<String>(json['title'], 'title', 'String');
+      : JsonHelper.as<String>(json['title'], 'title', 'String');
   final isCompletedValue = json['isCompleted'] == null
       ? null
-      : _jsonAs<bool>(json['isCompleted'], 'isCompleted', 'bool');
+      : JsonHelper.as<bool>(json['isCompleted'], 'isCompleted', 'bool');
 
   return TodoUpdate(title: titleValue, isCompleted: isCompletedValue);
 }

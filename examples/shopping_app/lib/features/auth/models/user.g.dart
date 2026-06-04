@@ -13,47 +13,6 @@
 
 part of 'user.dart';
 
-Never _jsonTypeError(Object? value, String key, String expected) =>
-    throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(
-  Object? value,
-  String key,
-  String expected,
-  T? Function(String value) parse,
-) =>
-    parse(_jsonAs<String>(value, key, 'String')) ??
-    _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) =>
-    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
-
-Map<String, Object?> _jsonAsMap(Object? value, String key) {
-  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
-  try {
-    return Map<String, Object?>.from(map);
-  } on TypeError {
-    _jsonTypeError(value, key, 'Map<String, Object?>');
-  }
-}
-
-DateTime _jsonAsDateTime(Object? value, String key) =>
-    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) =>
-    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) =>
-    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
-  if (value == null) {
-    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
-  }
-  try {
-    return codec.deserialize(value as dynamic) as T;
-  } catch (error) {
-    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
-  }
-}
-
 mixin _$User {
   @override
   String toString() {
@@ -170,11 +129,15 @@ Map<String, Object?> _$UserToJson(User instance) {
 }
 // factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final idValue = _jsonAs<int>(json['id'], 'id', 'int');
-  final emailValue = _jsonAs<String>(json['email'], 'email', 'String');
-  final usernameValue = _jsonAs<String>(json['username'], 'username', 'String');
-  final nameValue = _$NameFromJson(_jsonAsMap(json['name'], 'name'));
-  final phoneValue = _jsonAs<String>(json['phone'], 'phone', 'String');
+  final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
+  final emailValue = JsonHelper.as<String>(json['email'], 'email', 'String');
+  final usernameValue = JsonHelper.as<String>(
+    json['username'],
+    'username',
+    'String',
+  );
+  final nameValue = _$NameFromJson(JsonHelper.asMap(json['name'], 'name'));
+  final phoneValue = JsonHelper.as<String>(json['phone'], 'phone', 'String');
 
   return User(
     id: idValue,
@@ -192,12 +155,16 @@ Map<String, Object?> _$NameToJson(Name instance) {
 }
 // factory Name.fromJson(Map<String, Object?> json) => _$NameFromJson(json);
 Name _$NameFromJson(Map<String, Object?> json) {
-  final firstnameValue = _jsonAs<String>(
+  final firstnameValue = JsonHelper.as<String>(
     json['firstname'],
     'firstname',
     'String',
   );
-  final lastnameValue = _jsonAs<String>(json['lastname'], 'lastname', 'String');
+  final lastnameValue = JsonHelper.as<String>(
+    json['lastname'],
+    'lastname',
+    'String',
+  );
 
   return Name(firstname: firstnameValue, lastname: lastnameValue);
 }

@@ -59,7 +59,11 @@ fn supports_skipping_fields() {
         &contribution.top_level_functions[1],
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final passwordValue = _jsonAs<String>(json['password'], 'password', 'String');
+  final passwordValue = JsonHelper.as<String>(
+    json['password'],
+    'password',
+    'String',
+  );
   final tokenValue = '';
 
   return User(password: passwordValue, token: tokenValue);

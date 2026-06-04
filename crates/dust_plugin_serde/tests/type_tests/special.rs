@@ -46,9 +46,9 @@ fn handles_special_builtin_types() {
         from_json,
         r#"// factory Specials.fromJson(Map<String, Object?> json) => _$SpecialsFromJson(json);
 Specials _$SpecialsFromJson(Map<String, Object?> json) {
-  final dtValue = _jsonAsDateTime(json['dt'], 'dt');
-  final uValue = _jsonAsUri(json['u'], 'u');
-  final biValue = _jsonAsBigInt(json['bi'], 'bi');
+  final dtValue = JsonHelper.asDateTime(json['dt'], 'dt');
+  final uValue = JsonHelper.asUri(json['u'], 'u');
+  final biValue = JsonHelper.asBigInt(json['bi'], 'bi');
 
   return Specials(dt: dtValue, u: uValue, bi: biValue);
 }"#

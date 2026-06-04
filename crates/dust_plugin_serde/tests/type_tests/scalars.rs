@@ -58,12 +58,12 @@ fn handles_scalar_builtin_types() {
         from_json,
         r#"// factory Scalars.fromJson(Map<String, Object?> json) => _$ScalarsFromJson(json);
 Scalars _$ScalarsFromJson(Map<String, Object?> json) {
-  final sValue = _jsonAs<String>(json['s'], 's', 'String');
-  final iValue = _jsonAs<int>(json['i'], 'i', 'int');
-  final bValue = _jsonAs<bool>(json['b'], 'b', 'bool');
-  final dValue = _jsonAs<num>(json['d'], 'd', 'num').toDouble();
-  final nValue = _jsonAs<num>(json['n'], 'n', 'num');
-  final oValue = _jsonAs<Object>(json['o'], 'o', 'Object');
+  final sValue = JsonHelper.as<String>(json['s'], 's', 'String');
+  final iValue = JsonHelper.as<int>(json['i'], 'i', 'int');
+  final bValue = JsonHelper.as<bool>(json['b'], 'b', 'bool');
+  final dValue = JsonHelper.as<num>(json['d'], 'd', 'num').toDouble();
+  final nValue = JsonHelper.as<num>(json['n'], 'n', 'num');
+  final oValue = JsonHelper.as<Object>(json['o'], 'o', 'Object');
   final dynValue = json['dyn'];
 
   return Scalars(

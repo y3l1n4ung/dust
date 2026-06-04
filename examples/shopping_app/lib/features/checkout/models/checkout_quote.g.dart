@@ -15,47 +15,6 @@ part of 'checkout_quote.dart';
 
 const Object _undefined = Object();
 
-Never _jsonTypeError(Object? value, String key, String expected) =>
-    throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(
-  Object? value,
-  String key,
-  String expected,
-  T? Function(String value) parse,
-) =>
-    parse(_jsonAs<String>(value, key, 'String')) ??
-    _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) =>
-    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
-
-Map<String, Object?> _jsonAsMap(Object? value, String key) {
-  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
-  try {
-    return Map<String, Object?>.from(map);
-  } on TypeError {
-    _jsonTypeError(value, key, 'Map<String, Object?>');
-  }
-}
-
-DateTime _jsonAsDateTime(Object? value, String key) =>
-    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) =>
-    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) =>
-    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
-  if (value == null) {
-    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
-  }
-  try {
-    return codec.deserialize(value as dynamic) as T;
-  } catch (error) {
-    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
-  }
-}
-
 mixin _$CheckoutQuoteRequest {
   @override
   String toString() {
@@ -188,10 +147,10 @@ Map<String, Object?> _$CheckoutQuoteRequestToJson(CheckoutQuoteRequest instance)
 }
 // factory CheckoutQuoteRequest.fromJson(Map<String, Object?> json) => _$CheckoutQuoteRequestFromJson(json);
 CheckoutQuoteRequest _$CheckoutQuoteRequestFromJson(Map<String, Object?> json) {
-  final subtotalValue = _jsonAs<num>(json['subtotal'], 'subtotal', 'num').toDouble();
+  final subtotalValue = JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble();
   final couponCodeValue = json['couponCode'] == null
       ? null
-      : _jsonAs<String>(json['couponCode'], 'couponCode', 'String');
+      : JsonHelper.as<String>(json['couponCode'], 'couponCode', 'String');
 
   return CheckoutQuoteRequest(subtotal: subtotalValue, couponCode: couponCodeValue);
 }
@@ -209,22 +168,22 @@ Map<String, Object?> _$CheckoutQuoteToJson(CheckoutQuote instance) {
 }
 // factory CheckoutQuote.fromJson(Map<String, Object?> json) => _$CheckoutQuoteFromJson(json);
 CheckoutQuote _$CheckoutQuoteFromJson(Map<String, Object?> json) {
-  final subtotalValue = _jsonAs<num>(json['subtotal'], 'subtotal', 'num').toDouble();
-  final discountValue = _jsonAs<num>(json['discount'], 'discount', 'num').toDouble();
-  final shippingValue = _jsonAs<num>(json['shipping'], 'shipping', 'num').toDouble();
-  final taxValue = _jsonAs<num>(json['tax'], 'tax', 'num').toDouble();
-  final totalValue = _jsonAs<num>(json['total'], 'total', 'num').toDouble();
-  final estimatedDeliveryDaysValue = _jsonAs<int>(
+  final subtotalValue = JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble();
+  final discountValue = JsonHelper.as<num>(json['discount'], 'discount', 'num').toDouble();
+  final shippingValue = JsonHelper.as<num>(json['shipping'], 'shipping', 'num').toDouble();
+  final taxValue = JsonHelper.as<num>(json['tax'], 'tax', 'num').toDouble();
+  final totalValue = JsonHelper.as<num>(json['total'], 'total', 'num').toDouble();
+  final estimatedDeliveryDaysValue = JsonHelper.as<int>(
     json['estimatedDeliveryDays'],
     'estimatedDeliveryDays',
     'int',
   );
   final appliedCouponValue = json['appliedCoupon'] == null
       ? null
-      : _jsonAs<String>(json['appliedCoupon'], 'appliedCoupon', 'String');
+      : JsonHelper.as<String>(json['appliedCoupon'], 'appliedCoupon', 'String');
   final messageValue = json['message'] == null
       ? null
-      : _jsonAs<String>(json['message'], 'message', 'String');
+      : JsonHelper.as<String>(json['message'], 'message', 'String');
 
   return CheckoutQuote(
     subtotal: subtotalValue,

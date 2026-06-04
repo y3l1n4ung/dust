@@ -50,7 +50,7 @@ fn supports_custom_json_key_renaming() {
         &contribution.top_level_functions[1],
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final fullNameValue = _jsonAs<String>(
+  final fullNameValue = JsonHelper.as<String>(
     json['full_name'],
     'full_name',
     'String',

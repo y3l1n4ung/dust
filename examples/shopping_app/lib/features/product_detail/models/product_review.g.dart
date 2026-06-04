@@ -13,47 +13,6 @@
 
 part of 'product_review.dart';
 
-Never _jsonTypeError(Object? value, String key, String expected) =>
-    throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(
-  Object? value,
-  String key,
-  String expected,
-  T? Function(String value) parse,
-) =>
-    parse(_jsonAs<String>(value, key, 'String')) ??
-    _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) =>
-    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
-
-Map<String, Object?> _jsonAsMap(Object? value, String key) {
-  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
-  try {
-    return Map<String, Object?>.from(map);
-  } on TypeError {
-    _jsonTypeError(value, key, 'Map<String, Object?>');
-  }
-}
-
-DateTime _jsonAsDateTime(Object? value, String key) =>
-    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) =>
-    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) =>
-    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
-  if (value == null) {
-    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
-  }
-  try {
-    return codec.deserialize(value as dynamic) as T;
-  } catch (error) {
-    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
-  }
-}
-
 mixin _$ProductReview {
   @override
   String toString() {
@@ -136,17 +95,25 @@ Map<String, Object?> _$ProductReviewToJson(ProductReview instance) {
 }
 // factory ProductReview.fromJson(Map<String, Object?> json) => _$ProductReviewFromJson(json);
 ProductReview _$ProductReviewFromJson(Map<String, Object?> json) {
-  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
-  final productIdValue = _jsonAs<int>(json['productId'], 'productId', 'int');
-  final authorNameValue = _jsonAs<String>(
+  final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
+  final productIdValue = JsonHelper.as<int>(
+    json['productId'],
+    'productId',
+    'int',
+  );
+  final authorNameValue = JsonHelper.as<String>(
     json['authorName'],
     'authorName',
     'String',
   );
-  final ratingValue = _jsonAs<num>(json['rating'], 'rating', 'num').toDouble();
-  final commentValue = _jsonAs<String>(json['comment'], 'comment', 'String');
-  final createdAtValue = _jsonAsDateTime(json['createdAt'], 'createdAt');
-  final verifiedPurchaseValue = _jsonAs<bool>(
+  final ratingValue = JsonHelper.as<num>(json['rating'], 'rating', 'num').toDouble();
+  final commentValue = JsonHelper.as<String>(
+    json['comment'],
+    'comment',
+    'String',
+  );
+  final createdAtValue = JsonHelper.asDateTime(json['createdAt'], 'createdAt');
+  final verifiedPurchaseValue = JsonHelper.as<bool>(
     json['verifiedPurchase'],
     'verifiedPurchase',
     'bool',

@@ -14,46 +14,6 @@
 part of 'json_profile.dart';
 
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-Never _jsonTypeError(Object? value, String key, String expected) =>
-    throw ArgumentError.value(value, key, 'expected $expected');
-T _jsonAs<T>(Object? value, String key, String expected) =>
-    value is T ? value : _jsonTypeError(value, key, expected);
-T _jsonParseString<T>(
-  Object? value,
-  String key,
-  String expected,
-  T? Function(String value) parse,
-) =>
-    parse(_jsonAs<String>(value, key, 'String')) ??
-    _jsonTypeError(value, key, expected);
-List<Object?> _jsonAsList(Object? value, String key) =>
-    _jsonAs<List>(value, key, 'List<Object?>').cast<Object?>();
-
-Map<String, Object?> _jsonAsMap(Object? value, String key) {
-  final map = _jsonAs<Map>(value, key, 'Map<String, Object?>');
-  try {
-    return Map<String, Object?>.from(map);
-  } on TypeError {
-    _jsonTypeError(value, key, 'Map<String, Object?>');
-  }
-}
-
-DateTime _jsonAsDateTime(Object? value, String key) =>
-    _jsonParseString(value, key, 'ISO-8601 DateTime string', DateTime.tryParse);
-Uri _jsonAsUri(Object? value, String key) =>
-    _jsonParseString(value, key, 'Uri string', Uri.tryParse);
-BigInt _jsonAsBigInt(Object? value, String key) =>
-    _jsonParseString(value, key, 'BigInt string', BigInt.tryParse);
-T _jsonDecodeWithCodec<T>(dynamic codec, Object? value, String key) {
-  if (value == null) {
-    throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
-  }
-  try {
-    return codec.deserialize(value as dynamic) as T;
-  } catch (error) {
-    throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
-  }
-}
 
 mixin _$JsonProfile {
   @override
@@ -109,7 +69,7 @@ JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
     }
   }
 
-  final idValue = _jsonAs<String>(json['id'], 'id', 'String');
+  final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
   var rawDisplayNameKey = 'display_name';
   Object? rawDisplayName;
   if (json.containsKey('display_name')) {
@@ -120,10 +80,10 @@ JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
   }
   final displayNameValue = rawDisplayName == null
       ? null
-      : _jsonAs<String>(rawDisplayName, rawDisplayNameKey, 'String');
+      : JsonHelper.as<String>(rawDisplayName, rawDisplayNameKey, 'String');
   final tagsValue = json.containsKey('tags')
-      ? _jsonAsList(json['tags'], 'tags')
-      .map((item) => _jsonAs<String>(item, 'tags', 'String'))
+      ? JsonHelper.asList(json['tags'], 'tags')
+      .map((item) => JsonHelper.as<String>(item, 'tags', 'String'))
       .toList()
       : ['guest'];
 
