@@ -1,7 +1,9 @@
 import 'annotations.dart';
-
-import 'result.dart';
+import '../core/result.dart';
+import '../core/unit.dart';
+import 'exec_result.dart';
 import 'row_mapper.dart';
+import 'sqlx_error.dart';
 
 /// Executes typed SQLx-style queries against a database pool or transaction.
 abstract interface class SqlxDriver {

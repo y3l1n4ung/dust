@@ -1,39 +1,38 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# dust_dart
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages). 
+Dart-only runtime and annotations for Dust generated code.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages). 
--->
+## Public surfaces
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+- `package:dust_dart/core.dart`: shared core primitives such as `Result`, `Ok`, `Err`, `Unit`, and `unit`.
+- `package:dust_dart/derive.dart`: derive annotations and marker traits.
+- `package:dust_dart/serde.dart`: JSON/serde annotations and runtime helpers.
+- `package:dust_dart/http.dart`: HTTP client annotations.
+- `package:dust_dart/db.dart`: SQLx-style DB annotations and runtime contracts.
+- `package:dust_dart/dust_dart.dart`: convenience export for all Dart-only APIs.
 
-## Features
+Dust owns its functional primitives. Do not add `fpdart`, `dartz`, or another external functional package for generated-code `Result` handling.
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
-
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+## Result
 
 ```dart
-const like = 'sample';
+import 'package:dust_dart/core.dart';
+
+Result<int, String> parseCount(String text) {
+  final value = int.tryParse(text);
+  return value == null ? const Err('invalid count') : Ok(value);
+}
+
+final label = parseCount('42').match(
+  ok: (value) => 'count=$value',
+  err: (error) => error,
+);
 ```
 
-## Additional information
+## DB compatibility
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+`package:dust_dart/db.dart` re-exports `Result`, `Ok`, `Err`, `Unit`, and `unit` so generated DAO code can use:
+
+```dart
+Future<Result<UserRow?, SqlxError>> findById(int id);
+```
