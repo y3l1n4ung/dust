@@ -18,7 +18,7 @@ Flutter behavior are both covered.
 - [x] `route.g.dart` is standalone generated Dart, not a `part` file.
 - [x] Generated code imports page, shell, guard, and package runtime owners.
 - [x] `dust_flutter` owns routing annotations plus Navigator 2.0 runtime.
-- [x] Generated navigation is route-name-first: `context.routes.project(...).go()`.
+- [x] Generated navigation is route-name-first: `context.navigator.project(...).go()`.
 - [x] Navigation actions support `go`, `push`, `replace`, and `pop`.
 - [x] Public docs describe router, route, guards, shells, params, transitions, and app setup.
 - [x] Public Dartdoc complete for annotation/runtime public API surface.
@@ -95,10 +95,9 @@ Flutter behavior are both covered.
 - [x] Router-level redirect runs before route guards.
 - [x] Route guards are declared with `guards: [GuardType]`.
 - [x] Explicit public route uses `guards: []`.
-- [x] Generated router declares guard factory hooks.
-- [x] App router can override guard factories for dependency injection.
+- [x] Generated router constructs guards from router fields by type.
 - [x] `RouteGuardChain` runs guards in declaration order.
-- [x] Guards may allow, block, or redirect with typed route.
+- [x] Guards allow with `null` or redirect with a typed route.
 - [x] Runtime cancels stale async navigation with epoch counter.
 - [x] Prototype covers auth redirect.
 - [x] Prototype covers admin guard redirect.
@@ -124,10 +123,10 @@ Flutter behavior are both covered.
 
 ## Runtime Behavior
 
-- [x] Runtime exposes `DustRouterBase`.
-- [x] Runtime exposes `DustRouterController`.
-- [x] Runtime exposes `DustRouteState`.
-- [x] Runtime exposes `RouteGuard` and `RouteGuardResult`.
+- [x] Runtime exposes `RouterBase`.
+- [x] Runtime exposes `RouterController`.
+- [x] Runtime uses typed route objects directly; no route-state wrapper is exposed.
+- [x] Runtime exposes `RouteGuard` and `AsyncRouteGuard`.
 - [x] Runtime exposes `RouteGuardChain`.
 - [x] Runtime exposes `GeneratedRoute`.
 - [x] Runtime uses Flutter Navigator 2.0 only.
@@ -136,7 +135,7 @@ Flutter behavior are both covered.
 - [x] Runtime owns `RouterDelegate`.
 - [x] Runtime syncs browser URLs.
 - [x] Runtime supports `go`, `push`, `replace`, `pop`.
-- [x] Runtime supports reactive `refreshListenable`.
+- [x] Runtime supports generated reactive refresh from one Listenable field.
 - [x] Add annotation package tests for controller stack operations.
 - [x] Add annotation package tests for refresh-triggered redirect.
 - [x] Add annotation package tests for browser parser/restore roundtrip.

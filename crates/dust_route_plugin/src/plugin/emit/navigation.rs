@@ -1,9 +1,9 @@
 use dust_dart_emit::render_template;
 use serde::Serialize;
 
-use crate::plugin::model::{RouteParamSpec, RouteSpec, RouterSpec};
+use crate::plugin::model::{GuardSpec, RouteParamSpec, RouteSpec, RouterSpec};
 
-use super::formatting::{dart_type, upper_camel_identifier};
+use super::formatting::dart_type;
 
 #[derive(Serialize)]
 struct HelpersContext {
@@ -47,7 +47,7 @@ fn render_guard_cases(spec: &RouterSpec) -> String {
                 .annotation
                 .guards
                 .iter()
-                .map(|guard| format!("router.create{}()", upper_camel_identifier(guard)))
+                .map(|guard| render_guard_instance(guard, spec))
                 .collect::<Vec<_>>()
                 .join(", ");
             render_template(
@@ -68,6 +68,39 @@ fn render_guard_cases(spec: &RouterSpec) -> String {
     }
 }
 
+fn render_guard_instance(guard: &str, spec: &RouterSpec) -> String {
+    let Some(guard_spec) = spec
+        .guard_specs
+        .iter()
+        .find(|candidate| candidate.class_name == guard)
+    else {
+        return format!("const {guard}()");
+    };
+    guard_constructor(guard_spec, &spec.router_class)
+}
+
+fn guard_constructor(guard: &GuardSpec, router_class: &str) -> String {
+    if guard.params.is_empty() {
+        return format!("const {}()", guard.class_name);
+    }
+    let args = guard
+        .params
+        .iter()
+        .filter_map(|param| {
+            param.inject_field.as_ref().map(|field| {
+                let expr = format!("(router as {router_class}).{field}");
+                if param.is_named {
+                    format!("{}: {expr}", param.name)
+                } else {
+                    expr
+                }
+            })
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!("{}({args})", guard.class_name)
+}
+
 fn render_route_factories(spec: &RouterSpec) -> String {
     let factories = spec
         .routes
@@ -85,8 +118,8 @@ fn render_route_factories(spec: &RouterSpec) -> String {
 fn render_route_factory(route: &RouteSpec) -> String {
     let route_ctor = format!("{}({})", route.route_class, render_route_args(route));
     let params = render_factory_params(route);
-    let factory = format!("RouteNavigation<AppRoutePath> {}({params})", route.name);
-    let body = format!("RouteNavigation(_router, {route_ctor})");
+    let factory = format!("RouteAction<void> {}({params})", route.name);
+    let body = format!("RouteAction(_router, {route_ctor})");
     render_template(
         if factory.len() + body.len() + 7 <= 80 {
             "route_factory_inline"

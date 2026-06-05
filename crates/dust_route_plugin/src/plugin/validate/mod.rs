@@ -136,6 +136,12 @@ fn validate_route_params(class: &ClassIr, path: &str, diagnostics: &mut Vec<Diag
         if !is_supported_url_primitive(&param.ty) {
             diagnostics.push(unsupported_param_diagnostic(&class.name, param));
         }
+        if !param.ty.is_nullable() && !param.has_default {
+            diagnostics.push(Diagnostic::error(format!(
+                "route query parameter `{}` on `{}` must be nullable or have a default value",
+                param.name, class.name
+            )));
+        }
     }
 }
 

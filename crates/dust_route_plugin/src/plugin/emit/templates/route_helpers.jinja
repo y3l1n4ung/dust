@@ -12,7 +12,7 @@ String _routePath(
 
 bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
 
-List<RouteGuard<AppRoutePath>> routeGuards(
+List<Object> routeGuards(
   AppRoutePath route,
   {{ router_base_class }} router,
 ) {
@@ -21,25 +21,25 @@ List<RouteGuard<AppRoutePath>> routeGuards(
   };
 }
 
-extension DustRouterContext on BuildContext {
-  DustRouterController<AppRoutePath> get router =>
-      DustRouter.of<AppRoutePath>(this);
-  AppRoutesNavigation get routes => AppRoutesNavigation(router);
+extension AppRouterContext on BuildContext {
+  RouterController<AppRoutePath> get _routerController =>
+      RouterController.of<AppRoutePath>(this);
+  AppRoutesNavigator get navigator => AppRoutesNavigator(_routerController);
 }
 
-final class AppRoutesNavigation {
-  const AppRoutesNavigation(this._router);
+final class AppRoutesNavigator {
+  const AppRoutesNavigator(this._router);
 
-  final DustRouterController<AppRoutePath> _router;
+  final RouterController<AppRoutePath> _router;
 
 {{ factories }}  void pop() => _router.pop();
 }
 
-final class RouteNavigation<T extends Object> {
-  const RouteNavigation(this._router, this.route);
+final class RouteAction<R> {
+  const RouteAction(this._router, this.route);
 
-  final DustRouterController<T> _router;
-  final T route;
+  final RouterController<AppRoutePath> _router;
+  final AppRoutePath<R> route;
 
   void go() => _router.go(route);
   void push() => _router.push(route);

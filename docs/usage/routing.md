@@ -1,170 +1,153 @@
 # Typed Routing
 
-Dust Routing generates a type-safe Flutter Navigator 2.0 router from annotations. It creates a typed route tree that provides compile-time safety for parameters and navigation.
+Dust Routing generates a type-safe Flutter Navigator 2.0 router from normal app
+widgets. The generated `route.g.dart` file is standalone, owns page imports, and
+is imported by the hand-written `lib/route.dart` entrypoint.
 
----
-
-## Installation
-
-Add the router runtime package to your `pubspec.yaml`:
+## Install
 
 ```yaml
 dependencies:
   dust_flutter: ^0.1.0
 ```
 
----
-
-## Quick Start
-
-### 1. Define the Router
-Create an entrypoint (usually `lib/route.dart`) and annotate it with `@Router`.
+## Router Entrypoint
 
 ```dart
-import 'package:flutter/material.dart' hide Route, Router;
 import 'package:dust_flutter/route.dart';
+import 'package:myapp/state/auth_view_model.dart';
 import 'route.g.dart';
 
 export 'route.g.dart';
+export 'package:dust_flutter/route.dart';
 
-@Router(
-  initial: HomePage,
-  notFound: NotFoundPage,
-)
-final class AppRouter extends $AppRouter {}
-```
+@Router(initial: '/', notFound: '/404')
+final class AppRouter extends $AppRouter {
+  AppRouter({required this.auth});
 
-### 2. Annotate Pages
-Annotate your widgets with `@Route`.
+  final AuthViewModel auth;
 
-```dart
-@Route('/', name: 'home')
-class HomePage extends StatelessWidget { ... }
-
-@Route('/profile/:userId', name: 'profile')
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({required this.userId});
-  final String userId;
+  @override
+  AppRoutePath? redirect(AppRoutePath route) {
+    if (!auth.isLoggedIn && route.requiresAuth) {
+      return LoginRoute(from: route.location);
+    }
+    if (auth.isLoggedIn && route is LoginRoute) {
+      return const HomeRoute();
+    }
+    return null;
+  }
 }
 ```
 
-### 3. Initialize MaterialApp
+Dust auto-discovers exactly one `Listenable`-like field on the router, such as a
+`ViewModel`, `Listenable`, `ChangeNotifier`, or `ValueNotifier`, and wires it as
+the generated refresh source. Do not pass a string field name in `@Router`.
+
+## Routes
+
+```dart
+@Route('/', name: 'home', shell: AppShell, guards: [AuthGuard])
+final class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+}
+
+@Route('/models/:id', name: 'modelDetail', shell: AppShell)
+final class ModelDetailPage extends StatelessWidget {
+  const ModelDetailPage({
+    super.key,
+    required this.id,
+    this.tab,
+    this.archived,
+  });
+
+  final int id;
+  final String? tab;
+  final bool? archived;
+}
+
+@Route('/404', name: 'notFound', guards: [])
+final class NotFoundPage extends StatelessWidget {
+  const NotFoundPage({super.key, this.path = ''});
+
+  final String path;
+}
+```
+
+Route paths are absolute. Path segments like `:id` map to required constructor
+parameters. Nullable or defaulted non-path constructor parameters become query
+parameters.
+
+## App Setup
+
 ```dart
 MaterialApp.router(
-  routerConfig: AppRouter().config,
+  routerConfig: AppRouter(auth: authViewModel).config,
 );
 ```
 
----
-
-## Configuration Reference
-
-### `@Router` Options (Class Level)
-
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `initial` | `Type` | **Required.** The widget class shown when the app starts without a deep link. |
-| `notFound` | `Type` | The widget class shown when a URL doesn't match any route. |
-| `refreshListenable` | `String` | Name of a field (e.g., `authService`) to watch. Triggers redirects when it changes. |
-| `generatedBase` | `String` | Custom name for the generated base class. Defaults to `$ClassName`. |
-
-### `@Route` Options (Widget Level)
-
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `path` | `String` | **Required.** The URL template (e.g., `/users/:id`). |
-| `name` | `String` | Unique name for navigation. If omitted, derived from the class name. |
-| `shell` | `Type` | A widget class (like `MainLayout`) that wraps this page. |
-| `guards` | `List<Type>` | List of `RouteGuard` classes to run before entering. |
-| `transition` | `PageTransitionsBuilder` | Custom transition for this specific route. |
-| `fullscreenDialog` | `bool` | If `true`, the page is presented as a modal fullscreen dialog. |
-| `maintainState` | `bool` | Whether to keep the page state alive when inactive. Defaults to `true`. |
-
----
-
-## Navigation API
-
-Dust generates type-safe extension methods on `BuildContext`.
+## Navigation
 
 ```dart
-// Navigate to home
-context.routes.home().go();
-
-// Navigate with typed parameters
-context.routes.profile(userId: '42').push();
-
-// Replace current route
-context.routes.home().replace();
+context.navigator.home().go();
+context.navigator.modelDetail(id: 42, tab: 'perf').push();
+context.navigator.login().replace();
+context.navigator.pop();
 ```
 
-> [!TIP]
-> **Route Naming:** If you omit the `name` property, Dust automatically creates one by lower-camel-casing the class name and removing suffixes like `Page`, `Screen`, or `View`. (e.g., `UserProfilePage` -> `userProfile`).
+Dust generates one method per route name. Each method returns `RouteAction<R>`
+with `go`, `push`, and `replace`.
 
----
-
-## Guards and Redirects
-
-Use `RouteGuard` to protect specific routes based on app state (e.g., authentication).
+## Guards
 
 ```dart
 final class AuthGuard implements RouteGuard<AppRoutePath> {
+  const AuthGuard(this.auth);
+
+  final AuthViewModel auth;
+
   @override
-  Future<RouteGuardResult<AppRoutePath>> canActivate(RouteState state) async {
-    if (!isAuthenticated) return RouteGuardResult.redirect(LoginRoute());
-    return RouteGuardResult.allow();
+  AppRoutePath? canActivate(AppRoutePath route) {
+    return auth.isLoggedIn ? null : LoginRoute(from: route.location);
   }
 }
-
-@Route('/profile', guards: [AuthGuard])
-class ProfilePage extends StatelessWidget { ... }
 ```
-
----
-
-## Deep Linking
-
-Dust handles deep links and browser URLs automatically.
-
-| URL | Resolved Route |
-| :--- | :--- |
-| `/` | `HomeRoute()` |
-| `/profile/abc` | `ProfileRoute(userId: 'abc')` |
-| `/profile/42?tab=settings` | `ProfileRoute(userId: '42', tab: 'settings')` |
-
-> [!IMPORTANT]
-> **Web Browser Refresh:**
-> Dust preserves the navigation stack during browser refreshes by serializing the stack state into the browser history API.
-
----
-
-## Migration Guide
-
-**Coming from `go_router` or `auto_route`?**
-
-| Feature | `go_router` | `auto_route` | Dust |
-| :--- | :--- | :--- | :--- |
-| Config | `GoRouter(...)` | `@AutoRouter(...)` | `@Router(...)` |
-| Route Def | `GoRoute(...)` | `@AdaptiveRoute(...)` | `@Route(...)` |
-| Parameters | String-based | Typed | **Typed** |
-| Build Tool | `build_runner` | `build_runner` | **Standalone Binary** |
-
----
-
-## Generation Output
-
-Dust generates a typed `AppRoutePath` sealed class and a `RouterDelegate`. Below is a preview of the generated structure:
 
 ```dart
-// route.g.dart (Simplified)
-sealed class AppRoutePath {
-  String get location;
-}
+final class PermissionGuard implements AsyncRouteGuard<AppRoutePath> {
+  const PermissionGuard(this.repo);
 
-final class ProfileRoute extends AppRoutePath {
-  final String userId;
-  ProfileRoute({required this.userId});
-  
+  final PermissionRepo repo;
+
   @override
-  String get location => '/profile/$userId';
+  Future<AppRoutePath?> canActivate(AppRoutePath route) async {
+    final allowed = await repo.canOpen(route);
+    return allowed ? null : const ForbiddenRoute();
+  }
 }
 ```
+
+A guard returns `null` to allow navigation or another route to redirect. Sync
+guards run first, async guards run second, preserving declaration order inside
+each group.
+
+## Parameters
+
+Supported route parameter types are URL primitives only:
+
+- `String`
+- `int`
+- `double`
+- `bool`
+- nullable variants
+- query-parameter defaults
+
+Unsupported route parameter types are rejected during generation.
+
+## Deep Links
+
+| URL | Resolved route |
+| :--- | :--- |
+| `/` | `HomeRoute()` |
+| `/models/42?tab=perf` | `ModelDetailRoute(id: 42, tab: 'perf')` |
+| `/404?path=%2Fbad%2Fpath` | `NotFoundRoute(path: '/bad/path')` |

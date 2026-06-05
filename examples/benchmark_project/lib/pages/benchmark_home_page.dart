@@ -33,7 +33,7 @@ class BenchmarkHomePage extends StatelessWidget {
             onTap: () {
               context.readBenchmarkViewModel().selectFeature(feature);
               context
-                  .routes
+                  .navigator
                   .modelDetail(
                     id: feature.length,
                     tab: feature,

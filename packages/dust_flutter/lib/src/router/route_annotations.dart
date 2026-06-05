@@ -2,47 +2,28 @@ import 'package:flutter/material.dart' hide Route;
 
 /// Marks the single router entrypoint for a Flutter application.
 ///
-/// The annotated class owns app-specific dependencies, redirects, guards, and
-/// refresh behavior. Dust generates the base class referenced by [generatedBase]
-/// in `route.g.dart` and exposes a `RouterConfig` for `MaterialApp.router`.
+/// [initial] and [notFound] are route paths, not page classes. Dust validates
+/// that both paths match generated `@Route` pages.
 ///
 /// Example:
 ///
 /// ```dart
-/// @Router(initial: DashboardPage, notFound: NotFoundPage)
+/// @Router(initial: '/', notFound: '/404')
 /// final class AppRouter extends $AppRouter {
-///   AppRouter({required this.session});
+///   AppRouter({required this.auth});
 ///
-///   final AppSession session;
+///   final AuthViewModel auth;
 /// }
 /// ```
 class Router {
   /// Creates a router root annotation.
-  const Router({
-    required this.initial,
-    this.notFound,
-    this.refreshListenable,
-    this.generatedBase,
-  });
+  const Router({required this.initial, required this.notFound});
 
-  /// Page class used when the app starts without an explicit deep link.
-  final Type initial;
+  /// Initial route path, for example `/`.
+  final String initial;
 
-  /// Optional page class used when no route matches a URL.
-  final Type? notFound;
-
-  /// Optional router field or getter name used as the generated refresh source.
-  ///
-  /// The value must reference a `Listenable` member on the annotated router
-  /// class. When set, the generated router reevaluates redirects and guards
-  /// after that listenable changes.
-  final String? refreshListenable;
-
-  /// Optional generated base class name.
-  ///
-  /// By default Dust derives the base name from the annotated class, for
-  /// example `AppRouter` becomes `$AppRouter`.
-  final String? generatedBase;
+  /// Not-found route path, for example `/404`.
+  final String notFound;
 }
 
 /// Marks a widget class as a typed route.
@@ -84,9 +65,6 @@ class Route {
   final String path;
 
   /// Stable route name used for generated route and navigation helper names.
-  ///
-  /// If omitted, Dust derives the name from the page class by removing the
-  /// `Page`, `Screen`, or `View` suffix and lower-camel-casing the result.
   final String? name;
 
   /// Optional layout widget type that wraps this page.
@@ -96,8 +74,6 @@ class Route {
   final List<Type> guards;
 
   /// Optional Flutter page transition builder for this route.
-  ///
-  /// When omitted, the app-level [PageTransitionsTheme] is used.
   final PageTransitionsBuilder? transition;
 
   /// Whether the generated page should behave like a fullscreen dialog.
@@ -108,9 +84,6 @@ class Route {
 }
 
 /// Generated route tree metadata.
-///
-/// Users should not write [GeneratedRoute] by hand. Dust emits it in
-/// `route.g.dart` so tests and debugging tools can inspect the generated tree.
 class GeneratedRoute {
   /// Creates generated route metadata.
   const GeneratedRoute(
@@ -163,9 +136,7 @@ class GeneratedRoute {
   /// Finds the first route with [name] in this subtree.
   GeneratedRoute? findByName(String name) {
     for (final route in depthFirst) {
-      if (route.name == name) {
-        return route;
-      }
+      if (route.name == name) return route;
     }
     return null;
   }
@@ -173,9 +144,7 @@ class GeneratedRoute {
   /// Finds the first route whose page type is [page] in this subtree.
   GeneratedRoute? findByPage(Type page) {
     for (final route in depthFirst) {
-      if (route.page == page) {
-        return route;
-      }
+      if (route.page == page) return route;
     }
     return null;
   }

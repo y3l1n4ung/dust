@@ -13,7 +13,7 @@ class BenchmarkApp extends StatelessWidget {
       create: (_, args) => BenchmarkViewModel(args),
       child: Builder(
         builder: (context) {
-          final viewModel = BenchmarkViewModelScope.read(context);
+          final viewModel = context.readBenchmarkViewModel();
           return MaterialApp.router(
             title: 'Dust Benchmark Project',
             routerConfig: BenchmarkRouter(refresh: viewModel).config,

@@ -91,7 +91,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       checkoutVM.reset();
 
       // Navigate to confirmation
-      context.routes.orderConfirmation(orderId: orderId).go();
+      context.navigator.orderConfirmation(orderId: orderId).go();
     } else if (mounted) {
       AppSnackbar.error(
         context,

@@ -7,20 +7,13 @@ import 'package:flutter/material.dart' hide Route;
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
-import 'package:dust_benchmark_project/pages/benchmark_detail_page.dart';
-import 'package:dust_benchmark_project/pages/benchmark_home_page.dart';
-import 'package:dust_benchmark_project/pages/benchmark_not_found_page.dart';
-import 'package:dust_benchmark_project/pages/benchmark_shell.dart';
-import 'package:dust_benchmark_project/state/benchmark_state.dart';
-import 'package:dust_benchmark_project/state/benchmark_view_model.dart';
 
-abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
-  @override
-  Listenable? get refreshListenable => (this as BenchmarkRouter).refresh;
+abstract class $AppRouter extends RouterBase<AppRoutePath> {
+
   RouterConfig<AppRoutePath> get config {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
-      initialRoute: const HomeRoute(),
+      initialRoute: const ReportRoute(),
       parseRoute: parseAppRoute,
       routeLocation: routeLocation,
       requiresAuth: routeRequiresAuth,
@@ -49,28 +42,38 @@ abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
 
 const List<GeneratedRoute> $appRoutes = [
   GeneratedRoute(
-    '/',
-    page: BenchmarkHomePage,
-    name: 'home',
-    shell: BenchmarkShell,
-    guards: [BenchmarkGuard],
-    transition: FadeUpwardsPageTransitionsBuilder(),
-  ),
-  GeneratedRoute(
     '/404',
-    page: BenchmarkNotFoundPage,
+    page: NotFoundPage,
     name: 'notFound',
-    shell: BenchmarkShell,
     guards: [],
   ),
   GeneratedRoute(
-    '/models',
+    '/orgs',
     routes: [
       GeneratedRoute(
-        ':id',
-        page: BenchmarkDetailPage,
-        name: 'modelDetail',
-        shell: BenchmarkShell,
+        ':orgId',
+        routes: [
+          GeneratedRoute(
+            'projects',
+            routes: [
+              GeneratedRoute(
+                ':projectId',
+                routes: [
+                  GeneratedRoute(
+                    'reports',
+                    routes: [
+                      GeneratedRoute(
+                        ':reportId',
+                        page: ReportPage,
+                        name: 'report',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   ),
@@ -84,16 +87,6 @@ sealed class AppRoutePath<R> {
   /// Defaults to true. Override and return false for public routes
   /// (login, invite, forbidden, checkout, notFound).
   bool get requiresAuth => true;
-}
-
-/// Typed route data for `HomeRoute`.
-final class HomeRoute extends AppRoutePath<void> {
-  const HomeRoute();
-
-  @override
-  String get location {
-    return '/';
-  }
 }
 
 /// Typed route data for `NotFoundRoute`.
@@ -111,27 +104,24 @@ final class NotFoundRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `ModelDetailRoute`.
-final class ModelDetailRoute extends AppRoutePath<void> {
-  const ModelDetailRoute({required this.id, this.tab, this.archived});
+/// Typed route data for `ReportRoute`.
+final class ReportRoute extends AppRoutePath<void> {
+  const ReportRoute({required this.orgId, required this.projectId, required this.reportId});
 
-  final int id;
-  final String? tab;
-  final bool? archived;
+  final int orgId;
+  final int projectId;
+  final int reportId;
 
   @override
   String get location {
-    final query = <String, String>{};
-    if (tab != null) {
-      query['tab'] = tab!;
-    }
-    if (archived != null) {
-      query['archived'] = archived!.toString();
-    }
-    return _routePath(
-      ['models', id.toString()],
-      queryParameters: query.isEmpty ? null : query,
-    );
+    return _routePath([
+      'orgs',
+      orgId.toString(),
+      'projects',
+      projectId.toString(),
+      'reports',
+      reportId.toString(),
+    ]);
   }
 }
 
@@ -151,10 +141,9 @@ bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
 
 List<Object> routeGuards(
   AppRoutePath route,
-  $BenchmarkRouter router,
+  $AppRouter router,
 ) {
   return switch (route) {
-    HomeRoute() => [const BenchmarkGuard()],
     _ => const [],
   };
 }
@@ -170,13 +159,11 @@ final class AppRoutesNavigator {
 
   final RouterController<AppRoutePath> _router;
 
-  RouteAction<void> home() => RouteAction(_router, HomeRoute());
-
   RouteAction<void> notFound({String path = ''}) =>
       RouteAction(_router, NotFoundRoute(path: path));
 
-  RouteAction<void> modelDetail({required int id, String? tab, bool? archived}) =>
-      RouteAction(_router, ModelDetailRoute(id: id, tab: tab, archived: archived));
+  RouteAction<void> report({required int orgId, required int projectId, required int reportId}) =>
+      RouteAction(_router, ReportRoute(orgId: orgId, projectId: projectId, reportId: reportId));
 
   void pop() => _router.pop();
 }
@@ -194,15 +181,10 @@ final class RouteAction<R> {
 
 RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
   return switch (route) {
-    HomeRoute() => [
-      route,
-    ],
     NotFoundRoute(path: _) => [
-      const HomeRoute(),
       route,
     ],
-    ModelDetailRoute(id: _, tab: _, archived: _) => [
-      const HomeRoute(),
+    ReportRoute(orgId: _, projectId: _, reportId: _) => [
       route,
     ],
   };
@@ -211,21 +193,31 @@ RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
 AppRoutePath parseAppRoute(Uri uri) {
   final segments = uri.pathSegments;
 
-  if (segments.isEmpty) {
-    return const HomeRoute();
-  }
   if (segments.length == 1 && segments[0] == '404') {
     return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
   }
-  if (segments.length == 2 && segments[0] == 'models') {
-    final id = int.tryParse(segments[1]);
-    if (id == null) {
+  if (
+    segments.length == 6 &&
+    segments[0] == 'orgs' &&
+    segments[2] == 'projects' &&
+    segments[4] == 'reports'
+  ) {
+    final orgId = int.tryParse(segments[1]);
+    final projectId = int.tryParse(segments[3]);
+    final reportId = int.tryParse(segments[5]);
+    if (orgId == null) {
       return _notFoundRoute(uri);
     }
-    return ModelDetailRoute(
-      id: id,
-      tab: uri.queryParameters['tab'],
-      archived: _parseBool(uri.queryParameters['archived']),
+    if (projectId == null) {
+      return _notFoundRoute(uri);
+    }
+    if (reportId == null) {
+      return _notFoundRoute(uri);
+    }
+    return ReportRoute(
+      orgId: orgId,
+      projectId: projectId,
+      reportId: reportId,
     );
   }
   return _notFoundRoute(uri);
@@ -243,9 +235,8 @@ bool? _parseBool(String? value) {
 }
 
 const Map<Type, Type?> _kAppliedShellsByPage = {
-  BenchmarkHomePage: BenchmarkShell,
-  BenchmarkNotFoundPage: BenchmarkShell,
-  BenchmarkDetailPage: BenchmarkShell,
+  NotFoundPage: null,
+  ReportPage: null,
 };
 
 bool _shellConsistencyCheck() {
@@ -265,27 +256,23 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
-    HomeRoute() => generatedPage(
-      location: route.location,
-      name: 'home',
-      transition: FadeUpwardsPageTransitionsBuilder(),
-      fullscreenDialog: false,
-      maintainState: true,
-      child: BenchmarkShell(child: const BenchmarkHomePage()),
-    ),
     NotFoundRoute(path: final path) => generatedPage(
       location: route.location,
       name: 'notFound',
       fullscreenDialog: false,
       maintainState: true,
-      child: BenchmarkShell(child: BenchmarkNotFoundPage(path: path)),
+      child: NotFoundPage(path: path),
     ),
-    ModelDetailRoute(id: final id, tab: final tab, archived: final archived) => generatedPage(
+    ReportRoute(
+      orgId: final orgId,
+      projectId: final projectId,
+      reportId: final reportId,
+    ) => generatedPage(
       location: route.location,
-      name: 'modelDetail',
+      name: 'report',
       fullscreenDialog: false,
       maintainState: true,
-      child: BenchmarkShell(child: BenchmarkDetailPage(id: id, tab: tab, archived: archived)),
+      child: ReportPage(orgId: orgId, projectId: projectId, reportId: reportId),
     ),
   };
 }

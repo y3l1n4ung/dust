@@ -34,7 +34,7 @@ fn cli_build_reports_route_contributors_separately() {
         "import 'pages/dashboard_page.dart';\n\
          import 'pages/not_found_page.dart';\n\
          import 'route.g.dart';\n\
-         @Router(initial: DashboardPage, notFound: NotFoundPage)\n\
+         @Router(initial: '/', notFound: '/404')\n\
          final class AppRouter extends $AppRouter {\n\
            const AppRouter();\n\
          }\n",
@@ -48,9 +48,9 @@ fn cli_build_reports_route_contributors_separately() {
     );
     write_file(
         &workspace.path().join("lib/pages/not_found_page.dart"),
-        "@Route('/404/:path', name: 'notFound', guards: [])\n\
+        "@Route('/404', name: 'notFound', guards: [])\n\
          final class NotFoundPage {\n\
-           const NotFoundPage({required this.path});\n\
+           const NotFoundPage({this.path = ''});\n\
            final String path;\n\
          }\n",
     );

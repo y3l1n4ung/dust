@@ -2,7 +2,7 @@ use dust_ir::TypeIr;
 use dust_plugin_api::{DustPlugin, SymbolPlan, WorkspaceAnalysisBuilder};
 use dust_route_plugin::register_plugin;
 use serde_json::json;
-use std::sync::Arc;
+use std::{fs, path::PathBuf, sync::Arc};
 
 use super::support::{constructor_param, library_with_classes, route_page_class, router_class};
 
@@ -10,7 +10,7 @@ use super::support::{constructor_param, library_with_classes, route_page_class, 
 fn emits_standalone_route_and_core_outputs() {
     let plugin = register_plugin();
     let library = library_with_classes(vec![
-        router_class("(initial: DashboardPage, notFound: NotFoundPage)"),
+        router_class("(initial: '/', notFound: '/404')"),
         route_page_class(
             "DashboardPage",
             "('/', name: 'dashboard', transition: FadeUpwardsPageTransitionsBuilder())",
@@ -30,45 +30,12 @@ fn emits_standalone_route_and_core_outputs() {
             "('/projects/:projectId/settings', name: 'projectSettings')",
             vec![constructor_param("projectId", TypeIr::int())],
         ),
-        route_page_class(
-            "NotFoundPage",
-            "('/404/:path', name: 'notFound')",
-            vec![constructor_param("path", TypeIr::string())],
-        ),
     ]);
 
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("import 'route.dart';"));
-    assert!(primary.contains("import 'package:dust_flutter/route.dart';"));
-    assert!(primary.contains("abstract class $AppRouter extends DustRouterBase<AppRoutePath>"));
-    assert!(primary.contains("final class ProjectRoute extends AppRoutePath"));
-    assert!(primary.contains("/// Defaults to true. Override and return false for public routes"));
-    assert!(primary.contains("return '/404?path=${Uri.encodeComponent(path)}';"));
-    assert!(primary.contains("segments.length == 1 && segments[0] == '404'"));
-    assert!(primary.contains("NotFoundRoute(path: uri.toString())"));
-    assert!(primary.contains("_parseBool: unrecognised value"));
-    assert!(primary.contains("bool _shellConsistencyCheck()"));
-    assert!(primary.contains("transition: FadeUpwardsPageTransitionsBuilder()"));
-    assert!(primary.contains("generatedPage("));
-    assert!(!primary.contains("pageType:"));
-    assert!(!primary.contains("_kDefaultTransition"));
-    assert!(!primary.contains("class _NoTransitionBuilder"));
-    assert!(primary.contains("'projects',"));
-    assert!(primary.contains("name: 'projectSettings'"));
-    assert!(primary.contains("ProjectSettingsPage: AppShell"));
-    assert!(primary.contains("child: AppShell(child: ProjectSettingsPage"));
-    assert!(primary.contains("projectId.toString(),"));
-    assert!(!primary.contains("Uri.decodeComponent(segments"));
-    assert!(primary.contains("int.tryParse(segments[1])"));
-    assert!(primary.contains("if (archived != null)"));
-    assert!(primary.contains("query['archived'] = archived!.toString();"));
-    assert!(primary.contains("archived: _parseBool(uri.queryParameters['archived'])"));
-    assert!(primary.contains("AppRoutesNavigation get routes"));
-    assert!(primary.contains("RouteNavigation<AppRoutePath> project"));
-    assert!(!primary.contains("part of"));
-
+    assert_snapshot("standalone_route.g.dart", &primary);
     assert!(contribution.auxiliary_outputs.is_empty());
 }
 
@@ -76,7 +43,7 @@ fn emits_standalone_route_and_core_outputs() {
 fn emits_no_transition_builder_only_when_referenced() {
     let plugin = register_plugin();
     let library = library_with_classes(vec![
-        router_class("(initial: SearchPage)"),
+        router_class("(initial: '/search', notFound: '/404')"),
         route_page_class(
             "SearchPage",
             "('/search', name: 'search', transition: _NoTransitionBuilder())",
@@ -87,14 +54,13 @@ fn emits_no_transition_builder_only_when_referenced() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("class _NoTransitionBuilder extends PageTransitionsBuilder"));
-    assert!(primary.contains("transition: _NoTransitionBuilder()"));
+    assert_snapshot("no_transition_route.g.dart", &primary);
 }
 
 #[test]
 fn emits_guard_helpers_with_custom_router_base_name() {
     let plugin = register_plugin();
-    let mut router = router_class("(initial: DashboardPage)");
+    let mut router = router_class("(initial: '/', notFound: '/404')");
     router.name = "BenchmarkRouter".to_owned();
     router.superclass_name = Some("$BenchmarkRouter".to_owned());
     let library = library_with_classes(vec![
@@ -109,17 +75,14 @@ fn emits_guard_helpers_with_custom_router_base_name() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("abstract class $BenchmarkRouter"));
-    assert!(primary.contains("BenchmarkGuard createBenchmarkGuard();"));
-    assert!(primary.contains("$BenchmarkRouter router"));
-    assert!(primary.contains("DashboardRoute() => [router.createBenchmarkGuard()],"));
-    assert!(!primary.contains("$AppRouter router"));
+    assert_snapshot("custom_router_guard_route.g.dart", &primary);
 }
 
 #[test]
 fn emits_workspace_page_imports_and_query_defaults() {
     let plugin = register_plugin();
-    let library = library_with_classes(vec![router_class("(initial: SearchPage)")]);
+    let library =
+        library_with_classes(vec![router_class("(initial: '/search', notFound: '/404')")]);
     let mut analysis = WorkspaceAnalysisBuilder::default();
     analysis.add_string_set_value(
         "dust_route.routes.v1",
@@ -158,17 +121,15 @@ fn emits_workspace_page_imports_and_query_defaults() {
     let contribution = plugin.emit(&library, &plan);
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("import 'package:route_test/pages/search_page.dart';"));
-    assert!(primary.contains("const SearchRoute({this.page = 1});"));
-    assert!(primary.contains("if (page != 1) {"));
-    assert!(primary.contains("query['page'] = page.toString();"));
-    assert!(primary.contains("page: int.tryParse(uri.queryParameters['page'] ?? '') ?? 1"));
+    assert_snapshot("workspace_default_route.g.dart", &primary);
 }
 
 #[test]
 fn emits_shell_import_from_route_page_library_imports() {
     let plugin = register_plugin();
-    let library = library_with_classes(vec![router_class("(initial: ProjectPage)")]);
+    let library = library_with_classes(vec![router_class(
+        "(initial: '/projects/:projectId', notFound: '/404')",
+    )]);
     let mut analysis = WorkspaceAnalysisBuilder::default();
     analysis.add_string_set_value(
         "dust_route.routes.v1",
@@ -207,16 +168,13 @@ fn emits_shell_import_from_route_page_library_imports() {
     let contribution = plugin.emit(&library, &plan);
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("import 'package:route_test/pages/project_page.dart';"));
-    assert!(primary.contains("import 'package:route_test/layout/app_shell.dart';"));
-    assert!(primary.contains("ProjectPage: AppShell"));
-    assert!(primary.contains("child: AppShell(child: ProjectPage"));
+    assert_snapshot("workspace_shell_route.g.dart", &primary);
 }
 
 #[test]
 fn emits_large_route_sets_without_excessive_output_growth() {
     let plugin = register_plugin();
-    let mut classes = vec![router_class("(initial: Page0)")];
+    let mut classes = vec![router_class("(initial: '/section/0', notFound: '/404')")];
     for index in 0..150 {
         classes.push(route_page_class(
             &format!("Page{index}"),
@@ -229,16 +187,16 @@ fn emits_large_route_sets_without_excessive_output_growth() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("final class Route149Route extends AppRoutePath"));
-    assert!(primary.contains("RouteNavigation<AppRoutePath> route149"));
-    assert!(primary.len() < 300_000);
+    assert_snapshot("large_route_set.g.dart", &primary);
 }
 
 #[test]
 fn emits_deep_nested_route_tree_metadata() {
     let plugin = register_plugin();
     let library = library_with_classes(vec![
-        router_class("(initial: ReportPage)"),
+        router_class(
+            "(initial: '/orgs/:orgId/projects/:projectId/reports/:reportId', notFound: '/404')",
+        ),
         route_page_class(
             "ReportPage",
             "('/orgs/:orgId/projects/:projectId/reports/:reportId', name: 'report')",
@@ -253,11 +211,21 @@ fn emits_deep_nested_route_tree_metadata() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("'/orgs',"));
-    assert!(primary.contains("':orgId',"));
-    assert!(primary.contains("'projects',"));
-    assert!(primary.contains("':projectId',"));
-    assert!(primary.contains("'reports',"));
-    assert!(primary.contains("':reportId',"));
-    assert!(primary.contains("name: 'report'"));
+    assert_snapshot("deep_nested_route.g.dart", &primary);
+}
+
+fn assert_snapshot(name: &str, actual: &str) {
+    let path = snapshot_path(name);
+    if std::env::var_os("DUST_UPDATE_ROUTE_SNAPSHOTS").is_some() {
+        fs::write(&path, actual).unwrap();
+    }
+    let expected = fs::read_to_string(&path)
+        .unwrap_or_else(|error| panic!("missing route snapshot `{}`: {error}", path.display()));
+    assert_eq!(actual, expected, "route snapshot `{name}` changed");
+}
+
+fn snapshot_path(name: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/route_plugin_tests/snapshots")
+        .join(name)
 }

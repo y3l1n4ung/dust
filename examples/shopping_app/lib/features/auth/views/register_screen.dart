@@ -323,11 +323,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     TextButton(
                       onPressed: () {
                         if (widget.redirectPath != null) {
-                          context.routes
+                          context.navigator
                               .login(redirectPath: widget.redirectPath)
                               .go();
                         } else {
-                          context.routes.login().go();
+                          context.navigator.login().go();
                         }
                       },
                       child: const Text('Sign In'),

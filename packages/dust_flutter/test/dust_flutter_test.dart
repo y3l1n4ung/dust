@@ -1,16 +1,15 @@
 import 'package:dust_flutter/dust_flutter.dart';
-import 'package:flutter/widgets.dart' as widgets;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('exports routing annotations', () {
     const route = Route('/', name: 'home');
-    const router = Router(initial: _Page, notFound: _Page);
+    const router = Router(initial: '/', notFound: '/404');
 
     expect(route.path, '/');
     expect(route.name, 'home');
-    expect(router.initial, _Page);
-    expect(router.notFound, _Page);
+    expect(router.initial, '/');
+    expect(router.notFound, '/404');
   });
 
   test('exports state annotations', () {
@@ -18,15 +17,6 @@ void main() {
     expect(annotation.state, _State);
     expect(annotation.args, _Args);
   });
-}
-
-final class _Page extends widgets.StatelessWidget {
-  const _Page();
-
-  @override
-  widgets.Widget build(widgets.BuildContext context) {
-    return const widgets.SizedBox.shrink();
-  }
 }
 
 final class _State {

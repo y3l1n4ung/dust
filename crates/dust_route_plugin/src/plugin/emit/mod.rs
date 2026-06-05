@@ -11,13 +11,14 @@ mod metadata;
 mod navigation;
 mod page_builder;
 mod parser;
+mod parser_decode;
 mod path;
 mod patterns;
 mod restore;
 mod route_classes;
 mod shell;
 
-use formatting::{package_import_uri, upper_camel_identifier};
+use formatting::package_import_uri;
 use navigation::render_helpers;
 use page_builder::{render_page_builder, render_shell_consistency_helpers};
 use parser::render_parser;
@@ -30,7 +31,7 @@ struct RouteFileContext<'a> {
     no_transition_builder: String,
     generated_base_class: &'a str,
     initial_route_class: &'a str,
-    guard_factories: String,
+    refresh_getter: String,
     body: String,
 }
 
@@ -76,7 +77,7 @@ pub(crate) fn render_route_generated(library: &LibraryIr, spec: &RouterSpec) -> 
                 },
                 generated_base_class: &spec.generated_base_class,
                 initial_route_class: &spec.initial_route_class,
-                guard_factories: render_guard_factories(spec),
+                refresh_getter: render_refresh_getter(spec),
                 body,
             },
         )
@@ -101,10 +102,14 @@ fn uses_no_transition_builder(spec: &RouterSpec) -> bool {
     })
 }
 
-fn render_guard_factories(spec: &RouterSpec) -> String {
-    spec.guard_classes
-        .iter()
-        .map(|guard| format!("\n  {guard} create{}();", upper_camel_identifier(guard)))
-        .collect::<Vec<_>>()
-        .join("\n")
+fn render_refresh_getter(spec: &RouterSpec) -> String {
+    spec.refresh_listenable
+        .as_ref()
+        .map(|field| {
+            format!(
+                "  @override\n  Listenable? get refreshListenable => (this as {}).{};",
+                spec.router_class, field
+            )
+        })
+        .unwrap_or_default()
 }

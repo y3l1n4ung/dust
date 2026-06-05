@@ -2,9 +2,9 @@ import 'package:flutter/material.dart' hide Route;
 
 import '../../route.dart';
 
-@Route('/404/:path', name: 'notFound', guards: [])
+@Route('/404', name: 'notFound', guards: [])
 class NotFoundScreen extends StatelessWidget {
-  const NotFoundScreen({required this.path, super.key});
+  const NotFoundScreen({this.path = '', super.key});
 
   final String path;
 
@@ -27,7 +27,7 @@ class NotFoundScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed: () => context.routes.products().go(),
+                onPressed: () => context.navigator.products().go(),
                 icon: const Icon(Icons.storefront),
                 label: const Text('Back to shop'),
               ),

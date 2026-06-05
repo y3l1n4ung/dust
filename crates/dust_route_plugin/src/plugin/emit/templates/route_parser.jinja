@@ -11,12 +11,6 @@ bool? _parseBool(String? value) {
     'true' || '1' => true,
     'false' || '0' => false,
     null || '' => null,
-    _ => () {
-      assert(
-        false,
-        '_parseBool: unrecognised value "$value", treating as null',
-      );
-      return null;
-    }(),
+    _ => null,
   };
 }

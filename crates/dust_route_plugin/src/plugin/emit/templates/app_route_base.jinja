@@ -1,6 +1,4 @@
-typedef RouteState = DustRouteState<AppRoutePath>;
-
-sealed class AppRoutePath {
+sealed class AppRoutePath<R> {
   const AppRoutePath();
 
   String get location;

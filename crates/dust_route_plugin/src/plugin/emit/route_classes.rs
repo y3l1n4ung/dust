@@ -4,7 +4,7 @@ use serde::Serialize;
 
 use crate::plugin::model::{RouteParamSpec, RouteSpec, RouterSpec};
 
-use super::{formatting::dart_type, parser::encode_param_expr};
+use super::{formatting::dart_type, parser_decode::encode_param_expr};
 
 #[derive(Serialize)]
 struct RouteClassContext<'a> {
@@ -62,6 +62,7 @@ pub(super) fn render_route_classes(out: &mut String, spec: &RouterSpec) {
                 location: render_location_getter(route),
                 requires_auth: if route.annotation.guards_configured
                     && route.annotation.guards.is_empty()
+                    || spec.not_found_route_class.as_deref() == Some(route.route_class.as_str())
                 {
                     "\n\n  @override\n  bool get requiresAuth => false;".to_owned()
                 } else {

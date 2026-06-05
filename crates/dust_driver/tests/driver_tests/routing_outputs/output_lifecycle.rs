@@ -5,7 +5,7 @@ use dust_driver::{
     run_watch,
 };
 
-use super::helpers::{write_dashboard_page, write_routing_workspace};
+use super::helpers::{assert_route_snapshot, write_dashboard_page, write_routing_workspace};
 use crate::support::{make_pub_workspace_member, make_workspace};
 
 #[test]
@@ -39,11 +39,7 @@ fn build_writes_route_output_only_from_router_root() {
             && artifact.routed
             && !artifact.written
     }));
-    assert!(source.contains("import 'package:dust_flutter/route.dart';"));
-    assert!(source.contains("import 'package:dust_test/pages/dashboard_page.dart';"));
-    assert!(source.contains("final class DashboardRoute extends AppRoutePath"));
-    assert!(source.contains("page: DashboardPage"));
-    assert!(source.contains("name: 'dashboard'"));
+    assert_route_snapshot("dashboard_route.g.dart", &source);
 }
 #[test]
 fn build_refreshes_router_output_when_annotated_page_changes() {
@@ -77,12 +73,8 @@ fn build_refreshes_router_output_when_annotated_page_changes() {
     assert!(!second.has_errors(), "{:?}", second.diagnostics);
     assert!(!third.has_errors(), "{:?}", third.diagnostics);
     assert_eq!(second.cache.as_ref().unwrap().misses, 0);
-    assert!(second_source.contains("page: DashboardPage"));
-    assert!(second_source.contains("name: 'dashboard'"));
-    assert!(source.contains("page: DashboardPage"));
-    assert!(source.contains("name: 'home'"));
-    assert!(source.contains("RouteNavigation<AppRoutePath> home()"));
-    assert!(!source.contains("RouteNavigation<AppRoutePath> dashboard()"));
+    assert_route_snapshot("dashboard_route.g.dart", &second_source);
+    assert_route_snapshot("home_route.g.dart", &source);
 }
 
 #[test]
@@ -180,8 +172,7 @@ fn watch_rebuilds_route_output_when_annotated_page_changes() {
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
     assert_eq!(watch.rebuild_batches, 1);
-    assert!(source.contains("page: DashboardPage"));
-    assert!(source.contains("name: 'home'"));
+    assert_route_snapshot("home_route.g.dart", &source);
 }
 #[test]
 fn route_generation_works_from_pub_workspace_member() {
@@ -197,6 +188,5 @@ fn route_generation_works_from_pub_workspace_member() {
     let source = fs::read_to_string(package_root.join("lib/route.g.dart")).unwrap();
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
-    assert!(source.contains("import 'package:product_showcase/pages/dashboard_page.dart';"));
-    assert!(source.contains("final class DashboardRoute extends AppRoutePath"));
+    assert_route_snapshot("pub_workspace_route.g.dart", &source);
 }

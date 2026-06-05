@@ -172,11 +172,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextButton(
                       onPressed: () {
                         if (widget.redirectPath != null) {
-                          context.routes
+                          context.navigator
                               .register(redirectPath: widget.redirectPath)
                               .go();
                         } else {
-                          context.routes.register().go();
+                          context.navigator.register().go();
                         }
                       },
                       child: const Text('Sign Up'),
@@ -185,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const Divider(height: 32),
                 TextButton(
-                  onPressed: () => context.routes.products().go(),
+                  onPressed: () => context.navigator.products().go(),
                   child: const Text('Continue as Guest'),
                 ),
                 const SizedBox(height: 24),

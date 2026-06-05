@@ -36,7 +36,7 @@ class WishlistScreen extends StatelessWidget {
                     const Text('No saved products yet'),
                     const SizedBox(height: 16),
                     FilledButton.icon(
-                      onPressed: () => context.routes.products().go(),
+                      onPressed: () => context.navigator.products().go(),
                       icon: const Icon(Icons.storefront),
                       label: const Text('Browse products'),
                     ),
@@ -87,7 +87,7 @@ class _WishlistTile extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
-        onTap: () => context.routes.productDetail(productId: product.id).push(),
+        onTap: () => context.navigator.productDetail(productId: product.id).push(),
         trailing: Wrap(
           spacing: 4,
           children: [

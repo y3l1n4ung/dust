@@ -4,6 +4,7 @@ pub(crate) const GENERATED_ROUTE: &str = "GeneratedRoute";
 
 pub(crate) const ROUTES_ANALYSIS_KEY: &str = "dust_route.routes.v1";
 pub(crate) const ROUTERS_ANALYSIS_KEY: &str = "dust_route.routers.v1";
+pub(crate) const GUARDS_ANALYSIS_KEY: &str = "dust_route.guards.v1";
 
 pub(crate) const CLAIMED_CONFIG_SYMBOLS: &[&str] = &[
     "dust_flutter::Router",

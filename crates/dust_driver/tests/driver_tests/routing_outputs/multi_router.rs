@@ -1,21 +1,18 @@
-use std::fs;
-
 use dust_driver::{BuildRequest, run_build};
 
 use super::helpers::write_routing_workspace;
 use crate::support::{make_workspace, write_file};
 
 #[test]
-fn multiple_router_roots_emit_separate_outputs() {
+fn multiple_router_roots_are_rejected() {
     let workspace = make_workspace();
     write_routing_workspace(workspace.path(), "dashboard");
     write_file(
         &workspace.path().join("lib/admin_route.dart"),
         "import 'pages/admin_page.dart';\n\
-         import 'pages/not_found_page.dart';\n\
          import 'admin_route.g.dart';\n\
          \n\
-         @Router(initial: AdminPage, notFound: NotFoundPage)\n\
+         @Router(initial: '/admin', notFound: '/404')\n\
          final class AdminRouter extends $AdminRouter {\n\
            const AdminRouter();\n\
          }\n",
@@ -34,13 +31,14 @@ fn multiple_router_roots_emit_separate_outputs() {
         jobs: None,
         db: Default::default(),
     });
-    let app_source = fs::read_to_string(workspace.path().join("lib/route.g.dart")).unwrap();
-    let admin_source = fs::read_to_string(workspace.path().join("lib/admin_route.g.dart")).unwrap();
 
-    assert!(!result.has_errors(), "{:?}", result.diagnostics);
-    assert!(app_source.contains("abstract class $AppRouter"));
-    assert!(app_source.contains("initialRoute: const DashboardRoute()"));
-    assert!(admin_source.contains("abstract class $AdminRouter"));
-    assert!(admin_source.contains("initialRoute: const AdminRoute()"));
-    assert!(admin_source.contains("import 'package:dust_test/pages/admin_page.dart';"));
+    assert!(result.has_errors());
+    assert_eq!(
+        result
+            .diagnostics
+            .iter()
+            .map(|diagnostic| diagnostic.message.as_str())
+            .collect::<Vec<_>>(),
+        vec!["exactly one `@Router` is allowed in a Dust route workspace"]
+    );
 }

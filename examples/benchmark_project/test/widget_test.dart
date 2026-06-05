@@ -2,7 +2,7 @@ import 'package:dust_benchmark_project/app/benchmark_app.dart';
 import 'package:dust_benchmark_project/route.dart';
 import 'package:dust_benchmark_project/state/benchmark_state.dart';
 import 'package:dust_benchmark_project/state/benchmark_view_model.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -31,18 +31,10 @@ void main() {
     expect(route.location, '/models/42?tab=serde&archived=true');
   });
 
-  test('benchmark guard allows generated guarded routes', () async {
-    final router = BenchmarkRouter(refresh: ChangeNotifier());
-    final result = await router.createBenchmarkGuard().canActivate(
-      DustRouteState<AppRoutePath>(
-        uri: Uri.parse('/'),
-        route: const HomeRoute(),
-        stack: const [HomeRoute()],
-        isInitial: true,
-      ),
-    );
+  test('benchmark guard allows generated guarded routes', () {
+    final result = const BenchmarkGuard().canActivate(const HomeRoute());
 
-    expect(result, isA<RouteGuardAllow<AppRoutePath>>());
+    expect(result, isNull);
   });
 
   testWidgets('benchmark app renders generated route and state APIs', (
@@ -54,7 +46,7 @@ void main() {
     expect(find.text('Dust benchmark: derive'), findsOneWidget);
     expect(find.text('Generated files: 5000'), findsOneWidget);
 
-    await tester.tap(find.text('serde'));
+    await tester.tap(find.widgetWithText(ListTile, 'serde'));
     await tester.pumpAndSettle();
 
     expect(find.text('Model 5'), findsOneWidget);

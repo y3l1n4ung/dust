@@ -1,28 +1,20 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' hide Route, Router;
 import 'package:dust_flutter/route.dart' show Router;
 
 import 'features/auth/models/auth_state.dart';
 import 'features/auth/view_models/auth_view_model.dart';
-import 'features/products/views/products_screen.dart';
-import 'features/shared/not_found_screen.dart';
 import 'route.g.dart';
 
 export 'route.g.dart';
 export 'package:dust_flutter/route.dart';
 
-@Router(initial: ProductsScreen, notFound: NotFoundScreen)
+@Router(initial: '/', notFound: '/404')
 final class AppRouter extends $AppRouter {
   AppRouter({required this.auth});
 
   final AuthViewModel auth;
 
   @override
-  Listenable get refreshListenable => auth;
-
-  @override
-  AppRoutePath? redirect(RouteState state) {
-    final route = state.route;
+  AppRoutePath? redirect(AppRoutePath route) {
     final status = auth.state.status;
     final isAuthenticated = auth.state.isAuthenticated;
     final isAuthRoute = route is LoginRoute || route is RegisterRoute;
@@ -32,7 +24,7 @@ final class AppRouter extends $AppRouter {
     }
 
     if (!isAuthenticated && route.requiresAuth) {
-      return LoginRoute(redirectPath: state.location);
+      return LoginRoute(redirectPath: route.location);
     }
 
     if (isAuthenticated && isAuthRoute) {

@@ -13,7 +13,7 @@ fn build_reports_missing_initial_route_page() {
          import 'pages/not_found_page.dart';\n\
          import 'route.g.dart';\n\
          \n\
-         @Router(initial: MissingPage, notFound: NotFoundPage)\n\
+         @Router(initial: '/missing', notFound: '/404')\n\
          final class AppRouter extends $AppRouter {\n\
            const AppRouter();\n\
          }\n",
@@ -27,11 +27,12 @@ fn build_reports_missing_initial_route_page() {
     });
 
     assert!(result.has_errors());
-    assert!(result.diagnostics.iter().any(|diagnostic| {
-        diagnostic
-            .message
-            .contains("initial page `MissingPage` does not match")
-    }));
+    assert_eq!(
+        diagnostic_messages(&result.diagnostics),
+        vec![
+            "router `AppRouter` initial path `/missing` does not match any discovered `@Route` path"
+        ]
+    );
 }
 
 #[test]
@@ -43,7 +44,7 @@ fn build_reports_missing_not_found_route_page() {
         "import 'pages/dashboard_page.dart';\n\
          import 'route.g.dart';\n\
          \n\
-         @Router(initial: DashboardPage, notFound: MissingPage)\n\
+         @Router(initial: '/', notFound: '/missing')\n\
          final class AppRouter extends $AppRouter {\n\
            const AppRouter();\n\
          }\n",
@@ -57,11 +58,12 @@ fn build_reports_missing_not_found_route_page() {
     });
 
     assert!(result.has_errors());
-    assert!(result.diagnostics.iter().any(|diagnostic| {
-        diagnostic
-            .message
-            .contains("notFound page `MissingPage` does not match")
-    }));
+    assert_eq!(
+        diagnostic_messages(&result.diagnostics),
+        vec![
+            "router `AppRouter` notFound path `/missing` does not match any discovered `@Route` path"
+        ]
+    );
 }
 
 #[test]
@@ -85,14 +87,18 @@ fn build_reports_route_shell_or_guard_without_visible_import() {
     });
 
     assert!(result.has_errors());
-    assert!(result.diagnostics.iter().any(|diagnostic| {
-        diagnostic
-            .message
-            .contains("route shell `AppShell` on `ProjectPage`")
-    }));
-    assert!(result.diagnostics.iter().any(|diagnostic| {
-        diagnostic
-            .message
-            .contains("route guard `ProjectGuard` on `ProjectPage`")
-    }));
+    assert_eq!(
+        diagnostic_messages(&result.diagnostics),
+        vec![
+            "route shell `AppShell` on `ProjectPage` must be declared in the same library or imported",
+            "route guard `ProjectGuard` on `ProjectPage` must be declared in the same library or imported",
+        ]
+    );
+}
+
+fn diagnostic_messages(diagnostics: &[dust_diagnostics::Diagnostic]) -> Vec<&str> {
+    diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.message.as_str())
+        .collect()
 }

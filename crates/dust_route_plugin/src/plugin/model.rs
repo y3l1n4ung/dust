@@ -30,6 +30,25 @@ pub(crate) struct RouterFact {
     pub(crate) class_name: String,
     pub(crate) initial: Option<String>,
     pub(crate) not_found: Option<String>,
+    pub(crate) source_path: String,
+}
+
+/// One guard class fact collected during workspace analysis.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub(crate) struct GuardFact {
+    pub(crate) class_name: String,
+    pub(crate) import_uri: String,
+    pub(crate) source_path: String,
+    pub(crate) params: Vec<GuardParamFact>,
+}
+
+/// One guard constructor parameter fact.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub(crate) struct GuardParamFact {
+    pub(crate) name: String,
+    pub(crate) type_source: Option<String>,
+    pub(crate) is_named: bool,
+    pub(crate) has_default: bool,
 }
 
 /// Parsed route annotation values used by validation and emission.
@@ -76,6 +95,30 @@ pub(crate) struct RouteSpec {
     pub(crate) imports: Vec<String>,
 }
 
+/// One router field available for generated refresh and guard injection.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct RouterFieldSpec {
+    pub(crate) name: String,
+    pub(crate) type_name: String,
+}
+
+/// One guard constructor dependency.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct GuardParamSpec {
+    pub(crate) name: String,
+    pub(crate) type_name: String,
+    pub(crate) is_named: bool,
+    pub(crate) has_default: bool,
+    pub(crate) inject_field: Option<String>,
+}
+
+/// One guard class available to generated guard lookup.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct GuardSpec {
+    pub(crate) class_name: String,
+    pub(crate) params: Vec<GuardParamSpec>,
+}
+
 /// One router root generation spec.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct RouterSpec {
@@ -83,6 +126,7 @@ pub(crate) struct RouterSpec {
     pub(crate) generated_base_class: String,
     pub(crate) initial_route_class: String,
     pub(crate) not_found_route_class: Option<String>,
+    pub(crate) refresh_listenable: Option<String>,
     pub(crate) routes: Vec<RouteSpec>,
-    pub(crate) guard_classes: Vec<String>,
+    pub(crate) guard_specs: Vec<GuardSpec>,
 }

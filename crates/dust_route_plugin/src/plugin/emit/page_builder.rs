@@ -66,13 +66,8 @@ fn render_page_builder_case(spec: &RouterSpec, route: &crate::plugin::model::Rou
         .params
         .iter()
         .map(|param| format!("{}: {}", param.name, param.name))
-        .collect::<Vec<_>>()
-        .join(", ");
-    let child = if page_args.is_empty() {
-        format!("const {}()", route.page_class)
-    } else {
-        format!("{}({page_args})", route.page_class)
-    };
+        .collect::<Vec<_>>();
+    let child = page_constructor_expr(&route.page_class, &page_args);
     let child = if let Some(shell) = effective_shell(route, &spec.routes) {
         format!("{shell}(child: {child})")
     } else {
@@ -95,4 +90,19 @@ fn render_page_builder_case(spec: &RouterSpec, route: &crate::plugin::model::Rou
             child,
         },
     ) + "\n"
+}
+
+fn page_constructor_expr(page_class: &str, args: &[String]) -> String {
+    if args.is_empty() {
+        return format!("const {page_class}()");
+    }
+    let inline = format!("{page_class}({})", args.join(", "));
+    if inline.len() <= 72 {
+        inline
+    } else {
+        format!(
+            "{page_class}(\n        {},\n      )",
+            args.join(",\n        ")
+        )
+    }
 }

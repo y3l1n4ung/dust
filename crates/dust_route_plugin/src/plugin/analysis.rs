@@ -4,8 +4,8 @@ use dust_parser_dart::{ParameterKind, ParsedClassSurface, ParsedDirective, Parse
 use dust_plugin_api::{WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 
 use super::{
-    constants::{ROUTE, ROUTER, ROUTERS_ANALYSIS_KEY, ROUTES_ANALYSIS_KEY},
-    model::{RouteFact, RouteParamFact, RouterFact},
+    constants::{GUARDS_ANALYSIS_KEY, ROUTE, ROUTER, ROUTERS_ANALYSIS_KEY, ROUTES_ANALYSIS_KEY},
+    model::{GuardFact, GuardParamFact, RouteFact, RouteParamFact, RouterFact},
     parse::{parse_route_surface, parse_router_surface},
 };
 
@@ -40,6 +40,7 @@ pub(crate) fn collect_route_workspace_analysis(
                         class_name: class.name.clone(),
                         initial: router.initial,
                         not_found: router.not_found,
+                        source_path: context.source_path.display().to_string(),
                     };
                     if let Ok(value) = serde_json::to_string(&fact) {
                         analysis.add_string_set_value(ROUTERS_ANALYSIS_KEY, value);
@@ -47,6 +48,15 @@ pub(crate) fn collect_route_workspace_analysis(
                 }
                 _ => {}
             }
+        }
+        let guard_fact = GuardFact {
+            class_name: class.name.clone(),
+            import_uri: import_uri(context),
+            source_path: context.source_path.display().to_string(),
+            params: guard_params(class),
+        };
+        if let Ok(value) = serde_json::to_string(&guard_fact) {
+            analysis.add_string_set_value(GUARDS_ANALYSIS_KEY, value);
         }
     }
 }
@@ -83,6 +93,30 @@ fn field_type_source(class: &ParsedClassSurface, name: &str) -> Option<String> {
         .iter()
         .find(|field| field.name == name)
         .and_then(|field| field.type_source.clone())
+}
+
+fn guard_params(class: &ParsedClassSurface) -> Vec<GuardParamFact> {
+    let Some(constructor) = class
+        .constructors
+        .iter()
+        .find(|constructor| constructor.name.is_none() && !constructor.is_factory)
+    else {
+        return Vec::new();
+    };
+
+    constructor
+        .params
+        .iter()
+        .map(|param| GuardParamFact {
+            name: param.name.clone(),
+            type_source: param
+                .type_source
+                .clone()
+                .or_else(|| field_type_source(class, &param.name)),
+            is_named: matches!(param.kind, ParameterKind::Named),
+            has_default: param.has_default,
+        })
+        .collect()
 }
 
 fn import_uri(context: WorkspaceAnalysisContext<'_>) -> String {

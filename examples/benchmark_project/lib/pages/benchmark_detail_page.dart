@@ -27,7 +27,7 @@ class BenchmarkDetailPage extends StatelessWidget {
           Text('Archived: ${archived ?? false}'),
           const SizedBox(height: 16),
           FilledButton(
-            onPressed: () => context.routes.home().replace(),
+            onPressed: () => context.navigator.home().replace(),
             child: const Text('Back to benchmark'),
           ),
         ],

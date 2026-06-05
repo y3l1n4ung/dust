@@ -70,7 +70,7 @@ class _AuthenticatedProfile extends StatelessWidget {
                 leading: const Icon(Icons.shopping_bag_outlined),
                 title: const Text('My Orders'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.routes.orders().push(),
+                onTap: () => context.navigator.orders().push(),
               ),
             ],
           ),
@@ -88,7 +88,7 @@ class _AuthenticatedProfile extends StatelessWidget {
             if (confirmed == true && context.mounted) {
               context.readAuthViewModel().logout();
               AppSnackbar.info(context, 'You have been logged out');
-              context.routes.products().go();
+              context.navigator.products().go();
             }
           },
           icon: const Icon(Icons.logout),
@@ -131,7 +131,7 @@ class _GuestProfile extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             FilledButton.icon(
-              onPressed: () => context.routes.login().go(),
+              onPressed: () => context.navigator.login().go(),
               icon: const Icon(Icons.login),
               label: const Text('Sign In'),
             ),

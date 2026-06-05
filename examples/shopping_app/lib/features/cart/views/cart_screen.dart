@@ -239,7 +239,7 @@ class _CartScreenState extends State<CartScreen> {
                                 width: double.infinity,
                                 child: FilledButton(
                                   onPressed: () =>
-                                      context.routes.checkout().push(),
+                                      context.navigator.checkout().push(),
                                   child: const Text('Proceed to Checkout'),
                                 ),
                               ),

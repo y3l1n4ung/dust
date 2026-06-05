@@ -69,7 +69,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 Text('Product #${widget.productId} was not found.'),
                 const SizedBox(height: 16),
                 FilledButton.icon(
-                  onPressed: () => context.routes.products().go(),
+                  onPressed: () => context.navigator.products().go(),
                   icon: const Icon(Icons.storefront),
                   label: const Text('Back to shop'),
                 ),
@@ -100,7 +100,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.shopping_cart),
-              onPressed: () => context.routes.cart().push(),
+              onPressed: () => context.navigator.cart().push(),
             ),
           ],
         ),
@@ -328,7 +328,7 @@ class _RecommendationsSection extends StatelessWidget {
               return SizedBox(
                 width: 140,
                 child: InkWell(
-                  onTap: () => context.routes
+                  onTap: () => context.navigator
                       .productDetail(productId: product.id)
                       .replace(),
                   child: Card(
@@ -379,7 +379,7 @@ class _AddToCartButton extends StatelessWidget {
           context,
           '${product.title} added to cart',
           actionLabel: 'View Cart',
-          onAction: () => context.routes.cart().push(),
+          onAction: () => context.navigator.cart().push(),
         );
       },
       icon: Icon(inCart ? Icons.add_shopping_cart : Icons.shopping_cart),

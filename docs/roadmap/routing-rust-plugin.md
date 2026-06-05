@@ -9,7 +9,7 @@ normal Dart annotations:
 - validate route metadata and constructor parameters
 - emit standalone `route.g.dart` from the router root library
 - import Navigator 2.0 runtime from `dust_flutter`
-- keep generated navigation route-name-first: `context.routes.project(...).go()`
+- keep generated navigation route-name-first: `context.navigator.project(...).go()`
 
 ## Current Implementation Status
 
@@ -136,9 +136,9 @@ Only the router root library emits routing output:
 - generate URL parse and restore helpers
 - generate guard resolution
 - generate page builders and transition metadata
-- generate `BuildContext.routes`
+- generate `BuildContext.navigator`
 - generate one route factory method per route name
-- return `RouteNavigation` with shared `go`, `push`, and `replace` actions
+- return `RouteAction` with shared `go`, `push`, and `replace` actions
 
 URL encode/decode emission must use Dart `Uri` only:
 
@@ -157,8 +157,8 @@ URL encode/decode emission must use Dart `Uri` only:
 `dust_flutter` runtime must:
 
 - use Flutter Navigator 2.0 only
-- provide `DustRouterBase`, `DustRouterConfig`, `DustRouterController`,
-  `DustRouteState`, `RouteGuard`, and `RouteGuardResult`
+- provide `RouterBase`, `RouterRuntimeConfig`, `RouterController`,
+  `typed route objects`, `RouteGuard`, and `route-or-null guard result`
 - implement `RouteInformationParser` and `RouterDelegate`
 - manage browser URL sync, push, replace, pop, and back/forward
 - run router redirect before route guards

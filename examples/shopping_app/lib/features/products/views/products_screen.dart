@@ -45,12 +45,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
           IconButton(
             tooltip: 'Wishlist',
             icon: const Icon(Icons.favorite_border),
-            onPressed: () => context.routes.wishlist().push(),
+            onPressed: () => context.navigator.wishlist().push(),
           ),
           IconButton(
             tooltip: 'Support chat',
             icon: const Icon(Icons.support_agent),
-            onPressed: () => context.routes.supportChat().push(),
+            onPressed: () => context.navigator.supportChat().push(),
           ),
           _CartIconButton(itemCount: cartState.itemCount),
         ],
@@ -161,7 +161,7 @@ class _CartIconButtonState extends State<_CartIconButton>
         children: [
           IconButton(
             icon: const Icon(Icons.shopping_cart),
-            onPressed: () => context.routes.cart().push(),
+            onPressed: () => context.navigator.cart().push(),
           ),
           if (widget.itemCount > 0)
             Positioned(
@@ -241,7 +241,7 @@ class _AppDrawer extends StatelessWidget {
             title: const Text('Shop'),
             onTap: () {
               Navigator.pop(context);
-              context.routes.products().go();
+              context.navigator.products().go();
             },
           ),
           ListTile(
@@ -249,7 +249,7 @@ class _AppDrawer extends StatelessWidget {
             title: const Text('Cart'),
             onTap: () {
               Navigator.pop(context);
-              context.routes.cart().push();
+              context.navigator.cart().push();
             },
           ),
           ListTile(
@@ -257,7 +257,7 @@ class _AppDrawer extends StatelessWidget {
             title: const Text('Wishlist'),
             onTap: () {
               Navigator.pop(context);
-              context.routes.wishlist().push();
+              context.navigator.wishlist().push();
             },
           ),
           ListTile(
@@ -265,7 +265,7 @@ class _AppDrawer extends StatelessWidget {
             title: const Text('FakeStore Carts'),
             onTap: () {
               Navigator.pop(context);
-              context.routes.demoCarts().push();
+              context.navigator.demoCarts().push();
             },
           ),
           ListTile(
@@ -273,7 +273,7 @@ class _AppDrawer extends StatelessWidget {
             title: const Text('Support Chat'),
             onTap: () {
               Navigator.pop(context);
-              context.routes.supportChat().push();
+              context.navigator.supportChat().push();
             },
           ),
           ListTile(
@@ -281,7 +281,7 @@ class _AppDrawer extends StatelessWidget {
             title: const Text('Orders'),
             onTap: () {
               Navigator.pop(context);
-              context.routes.orders().push();
+              context.navigator.orders().push();
             },
           ),
           ListTile(
@@ -289,7 +289,7 @@ class _AppDrawer extends StatelessWidget {
             title: const Text('Profile'),
             onTap: () {
               Navigator.pop(context);
-              context.routes.profile().push();
+              context.navigator.profile().push();
             },
           ),
           const Divider(),
@@ -317,7 +317,7 @@ class _AppDrawer extends StatelessWidget {
               title: const Text('Sign In'),
               onTap: () {
                 Navigator.pop(context);
-                context.routes.login().go();
+                context.navigator.login().go();
               },
             ),
         ],
@@ -474,7 +474,7 @@ class _ProductCard extends StatelessWidget {
     final isSaved = context.watchWishlistViewModel().value.containsProduct(product.id);
 
     return AnimatedCard(
-      onTap: () => context.routes.productDetail(productId: product.id).push(),
+      onTap: () => context.navigator.productDetail(productId: product.id).push(),
       onLongPress: () {
         ProductQuickView.show(
           context: context,
@@ -485,11 +485,11 @@ class _ProductCard extends StatelessWidget {
               context,
               '${product.title} added to cart',
               actionLabel: 'View',
-              onAction: () => context.routes.cart().push(),
+              onAction: () => context.navigator.cart().push(),
             );
           },
           onViewDetails: () =>
-              context.routes.productDetail(productId: product.id).push(),
+              context.navigator.productDetail(productId: product.id).push(),
         );
       },
       child: Column(

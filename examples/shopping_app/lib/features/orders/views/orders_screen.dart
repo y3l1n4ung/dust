@@ -58,7 +58,7 @@ class _OrderCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: InkWell(
-        onTap: () => context.routes.orderDetail(orderId: order.id).push(),
+        onTap: () => context.navigator.orderDetail(orderId: order.id).push(),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),

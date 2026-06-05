@@ -62,7 +62,7 @@ class OrderConfirmationScreen extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () =>
-                      context.routes.orderDetail(orderId: orderId).go(),
+                      context.navigator.orderDetail(orderId: orderId).go(),
                   child: const Text('Track Order'),
                 ),
               ),
@@ -70,7 +70,7 @@ class OrderConfirmationScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () => context.routes.orders().go(),
+                  onPressed: () => context.navigator.orders().go(),
                   child: const Text('View Orders'),
                 ),
               ),
@@ -78,7 +78,7 @@ class OrderConfirmationScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () => context.routes.products().go(),
+                  onPressed: () => context.navigator.products().go(),
                   child: const Text('Continue Shopping'),
                 ),
               ),

@@ -7,20 +7,13 @@ import 'package:flutter/material.dart' hide Route;
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
-import 'package:dust_benchmark_project/pages/benchmark_detail_page.dart';
-import 'package:dust_benchmark_project/pages/benchmark_home_page.dart';
-import 'package:dust_benchmark_project/pages/benchmark_not_found_page.dart';
-import 'package:dust_benchmark_project/pages/benchmark_shell.dart';
-import 'package:dust_benchmark_project/state/benchmark_state.dart';
-import 'package:dust_benchmark_project/state/benchmark_view_model.dart';
 
-abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
-  @override
-  Listenable? get refreshListenable => (this as BenchmarkRouter).refresh;
+abstract class $AppRouter extends RouterBase<AppRoutePath> {
+
   RouterConfig<AppRoutePath> get config {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
-      initialRoute: const HomeRoute(),
+      initialRoute: const DashboardRoute(),
       parseRoute: parseAppRoute,
       routeLocation: routeLocation,
       requiresAuth: routeRequiresAuth,
@@ -50,28 +43,32 @@ abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
 const List<GeneratedRoute> $appRoutes = [
   GeneratedRoute(
     '/',
-    page: BenchmarkHomePage,
-    name: 'home',
-    shell: BenchmarkShell,
-    guards: [BenchmarkGuard],
+    page: DashboardPage,
+    name: 'dashboard',
     transition: FadeUpwardsPageTransitionsBuilder(),
   ),
   GeneratedRoute(
     '/404',
-    page: BenchmarkNotFoundPage,
+    page: NotFoundPage,
     name: 'notFound',
-    shell: BenchmarkShell,
     guards: [],
   ),
   GeneratedRoute(
-    '/models',
+    '/projects',
     routes: [
       GeneratedRoute(
-        ':id',
-        page: BenchmarkDetailPage,
-        name: 'modelDetail',
-        shell: BenchmarkShell,
-      ),
+        ':projectId',
+        page: ProjectPage,
+        name: 'project',
+        shell: AppShell,
+        routes: [
+          GeneratedRoute(
+            'settings',
+            page: ProjectSettingsPage,
+            name: 'projectSettings',
+            shell: AppShell,
+          ),
+        ],      ),
     ],
   ),
 ];
@@ -86,9 +83,9 @@ sealed class AppRoutePath<R> {
   bool get requiresAuth => true;
 }
 
-/// Typed route data for `HomeRoute`.
-final class HomeRoute extends AppRoutePath<void> {
-  const HomeRoute();
+/// Typed route data for `DashboardRoute`.
+final class DashboardRoute extends AppRoutePath<void> {
+  const DashboardRoute();
 
   @override
   String get location {
@@ -111,11 +108,11 @@ final class NotFoundRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `ModelDetailRoute`.
-final class ModelDetailRoute extends AppRoutePath<void> {
-  const ModelDetailRoute({required this.id, this.tab, this.archived});
+/// Typed route data for `ProjectRoute`.
+final class ProjectRoute extends AppRoutePath<void> {
+  const ProjectRoute({required this.projectId, this.tab, this.archived});
 
-  final int id;
+  final int projectId;
   final String? tab;
   final bool? archived;
 
@@ -129,9 +126,21 @@ final class ModelDetailRoute extends AppRoutePath<void> {
       query['archived'] = archived!.toString();
     }
     return _routePath(
-      ['models', id.toString()],
+      ['projects', projectId.toString()],
       queryParameters: query.isEmpty ? null : query,
     );
+  }
+}
+
+/// Typed route data for `ProjectSettingsRoute`.
+final class ProjectSettingsRoute extends AppRoutePath<void> {
+  const ProjectSettingsRoute({required this.projectId});
+
+  final int projectId;
+
+  @override
+  String get location {
+    return _routePath(['projects', projectId.toString(), 'settings']);
   }
 }
 
@@ -151,10 +160,9 @@ bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
 
 List<Object> routeGuards(
   AppRoutePath route,
-  $BenchmarkRouter router,
+  $AppRouter router,
 ) {
   return switch (route) {
-    HomeRoute() => [const BenchmarkGuard()],
     _ => const [],
   };
 }
@@ -170,13 +178,16 @@ final class AppRoutesNavigator {
 
   final RouterController<AppRoutePath> _router;
 
-  RouteAction<void> home() => RouteAction(_router, HomeRoute());
+  RouteAction<void> dashboard() => RouteAction(_router, DashboardRoute());
 
   RouteAction<void> notFound({String path = ''}) =>
       RouteAction(_router, NotFoundRoute(path: path));
 
-  RouteAction<void> modelDetail({required int id, String? tab, bool? archived}) =>
-      RouteAction(_router, ModelDetailRoute(id: id, tab: tab, archived: archived));
+  RouteAction<void> project({required int projectId, String? tab, bool? archived}) =>
+      RouteAction(_router, ProjectRoute(projectId: projectId, tab: tab, archived: archived));
+
+  RouteAction<void> projectSettings({required int projectId}) =>
+      RouteAction(_router, ProjectSettingsRoute(projectId: projectId));
 
   void pop() => _router.pop();
 }
@@ -194,15 +205,20 @@ final class RouteAction<R> {
 
 RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
   return switch (route) {
-    HomeRoute() => [
+    DashboardRoute() => [
       route,
     ],
     NotFoundRoute(path: _) => [
-      const HomeRoute(),
+      const DashboardRoute(),
       route,
     ],
-    ModelDetailRoute(id: _, tab: _, archived: _) => [
-      const HomeRoute(),
+    ProjectRoute(projectId: _, tab: _, archived: _) => [
+      const DashboardRoute(),
+      route,
+    ],
+    ProjectSettingsRoute(projectId: final projectId) => [
+      const DashboardRoute(),
+      ProjectRoute(projectId: projectId),
       route,
     ],
   };
@@ -212,21 +228,32 @@ AppRoutePath parseAppRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
-    return const HomeRoute();
+    return const DashboardRoute();
   }
   if (segments.length == 1 && segments[0] == '404') {
     return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
   }
-  if (segments.length == 2 && segments[0] == 'models') {
-    final id = int.tryParse(segments[1]);
-    if (id == null) {
+  if (segments.length == 2 && segments[0] == 'projects') {
+    final projectId = int.tryParse(segments[1]);
+    if (projectId == null) {
       return _notFoundRoute(uri);
     }
-    return ModelDetailRoute(
-      id: id,
+    return ProjectRoute(
+      projectId: projectId,
       tab: uri.queryParameters['tab'],
       archived: _parseBool(uri.queryParameters['archived']),
     );
+  }
+  if (
+    segments.length == 3 &&
+    segments[0] == 'projects' &&
+    segments[2] == 'settings'
+  ) {
+    final projectId = int.tryParse(segments[1]);
+    if (projectId == null) {
+      return _notFoundRoute(uri);
+    }
+    return ProjectSettingsRoute(projectId: projectId);
   }
   return _notFoundRoute(uri);
 }
@@ -243,9 +270,10 @@ bool? _parseBool(String? value) {
 }
 
 const Map<Type, Type?> _kAppliedShellsByPage = {
-  BenchmarkHomePage: BenchmarkShell,
-  BenchmarkNotFoundPage: BenchmarkShell,
-  BenchmarkDetailPage: BenchmarkShell,
+  DashboardPage: null,
+  NotFoundPage: null,
+  ProjectPage: AppShell,
+  ProjectSettingsPage: AppShell,
 };
 
 bool _shellConsistencyCheck() {
@@ -265,27 +293,38 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
-    HomeRoute() => generatedPage(
+    DashboardRoute() => generatedPage(
       location: route.location,
-      name: 'home',
+      name: 'dashboard',
       transition: FadeUpwardsPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
-      child: BenchmarkShell(child: const BenchmarkHomePage()),
+      child: const DashboardPage(),
     ),
     NotFoundRoute(path: final path) => generatedPage(
       location: route.location,
       name: 'notFound',
       fullscreenDialog: false,
       maintainState: true,
-      child: BenchmarkShell(child: BenchmarkNotFoundPage(path: path)),
+      child: NotFoundPage(path: path),
     ),
-    ModelDetailRoute(id: final id, tab: final tab, archived: final archived) => generatedPage(
+    ProjectRoute(
+      projectId: final projectId,
+      tab: final tab,
+      archived: final archived,
+    ) => generatedPage(
       location: route.location,
-      name: 'modelDetail',
+      name: 'project',
       fullscreenDialog: false,
       maintainState: true,
-      child: BenchmarkShell(child: BenchmarkDetailPage(id: id, tab: tab, archived: archived)),
+      child: AppShell(child: ProjectPage(projectId: projectId, tab: tab, archived: archived)),
+    ),
+    ProjectSettingsRoute(projectId: final projectId) => generatedPage(
+      location: route.location,
+      name: 'projectSettings',
+      fullscreenDialog: false,
+      maintainState: true,
+      child: AppShell(child: ProjectSettingsPage(projectId: projectId)),
     ),
   };
 }

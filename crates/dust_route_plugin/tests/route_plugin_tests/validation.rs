@@ -45,11 +45,12 @@ fn rejects_query_param_defaults_when_default_source_is_missing() {
 
     let diagnostics = plugin.validate(&library_with_classes(vec![class]));
 
-    assert!(diagnostics.iter().any(|diagnostic| {
-        diagnostic
-            .message
-            .contains("has a constructor default that Dust could not preserve")
-    }));
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec![
+            "route query parameter `page` on `SearchPage` has a constructor default that Dust could not preserve"
+        ]
+    );
 }
 
 #[test]
@@ -59,10 +60,9 @@ fn rejects_relative_route_path() {
 
     let diagnostics = plugin.validate(&library_with_classes(vec![class]));
 
-    assert!(
-        diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.message.contains("must be absolute"))
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec!["route `LoginPage` path `login` must be absolute"]
     );
 }
 
@@ -77,11 +77,12 @@ fn rejects_missing_path_constructor_param() {
 
     let diagnostics = plugin.validate(&library_with_classes(vec![class]));
 
-    assert!(diagnostics.iter().any(|diagnostic| {
-        diagnostic
-            .message
-            .contains("has no matching constructor parameter")
-    }));
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec![
+            "route path parameter `:projectId` on `ProjectPage` has no matching constructor parameter"
+        ]
+    );
 }
 
 #[test]
@@ -95,11 +96,10 @@ fn rejects_nullable_path_param() {
 
     let diagnostics = plugin.validate(&library_with_classes(vec![class]));
 
-    assert!(diagnostics.iter().any(|diagnostic| {
-        diagnostic
-            .message
-            .contains("must be required and non-nullable")
-    }));
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec!["route path parameter `projectId` on `ProjectPage` must be required and non-nullable"]
+    );
 }
 
 #[test]
@@ -119,10 +119,12 @@ fn rejects_complex_query_param() {
 
     let diagnostics = plugin.validate(&library_with_classes(vec![class]));
 
-    assert!(
-        diagnostics
-            .iter()
-            .any(|diagnostic| { diagnostic.message.contains("must be a URL primitive") })
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec![
+            "route parameter `filters` on `ProjectPage` must be a URL primitive (`String`, `int`, `double`, or `bool`)",
+            "route query parameter `filters` on `ProjectPage` must be nullable or have a default value"
+        ]
     );
 }
 
@@ -134,14 +136,18 @@ fn rejects_duplicate_paths_and_names() {
 
     let diagnostics = plugin.validate(&library_with_classes(vec![first, second]));
 
-    assert!(
-        diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.message.contains("duplicate route path"))
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec![
+            "duplicate route path `/same`",
+            "duplicate route name `same`"
+        ]
     );
-    assert!(
-        diagnostics
-            .iter()
-            .any(|diagnostic| diagnostic.message.contains("duplicate route name"))
-    );
+}
+
+fn diagnostic_messages(diagnostics: &[dust_diagnostics::Diagnostic]) -> Vec<&str> {
+    diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.message.as_str())
+        .collect()
 }

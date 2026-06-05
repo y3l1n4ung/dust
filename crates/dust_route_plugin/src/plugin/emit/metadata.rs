@@ -201,13 +201,14 @@ fn render_generated_route(
     if !route.annotation.maintain_state {
         fields.push(format!("{}  maintainState: false,\n", indent_str(indent)));
     }
+    let children = render_generated_children_with_prefix(children, routes, indent, false);
     render_template(
         "generated_route",
         include_str!("templates/generated_route.jinja"),
         GeneratedRouteContext {
             indent: indent_str(indent),
             fields: fields.join(""),
-            children: render_generated_children_with_prefix(children, routes, indent, false),
+            children,
         },
     )
 }

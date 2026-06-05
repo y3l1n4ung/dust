@@ -40,20 +40,3 @@ pub(super) fn dart_type(ty: &TypeIr) -> String {
         TypeIr::Unknown => DART_OBJECT_NULLABLE.to_owned(),
     }
 }
-
-pub(super) fn upper_camel_identifier(value: &str) -> String {
-    value
-        .rsplit('.')
-        .next()
-        .unwrap_or(value)
-        .split(|ch: char| ch == '_' || ch == '-' || ch.is_whitespace())
-        .filter(|part| !part.is_empty())
-        .map(|part| {
-            let mut chars = part.chars();
-            match chars.next() {
-                Some(first) => first.to_uppercase().chain(chars).collect::<String>(),
-                None => String::new(),
-            }
-        })
-        .collect()
-}

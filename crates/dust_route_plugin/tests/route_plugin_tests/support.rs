@@ -83,7 +83,21 @@ pub(crate) fn defaulted_param(name: &str, ty: TypeIr) -> ConstructorParamIr {
     }
 }
 
-pub(crate) fn library_with_classes(classes: Vec<ClassIr>) -> LibraryIr {
+pub(crate) fn library_with_classes(mut classes: Vec<ClassIr>) -> LibraryIr {
+    if classes.iter().any(|class| {
+        class
+            .configs
+            .iter()
+            .any(|config| config.symbol.0.ends_with("::Router"))
+    }) && !classes.iter().any(|class| class.name == "NotFoundPage")
+    {
+        classes.push(route_page_class(
+            "NotFoundPage",
+            "('/404', name: 'notFound', guards: [])",
+            vec![string_default_param("path", "''")],
+        ));
+    }
+
     LibraryIr {
         package_root: ".".to_owned(),
         package_name: "route_test".to_owned(),
@@ -94,6 +108,14 @@ pub(crate) fn library_with_classes(classes: Vec<ClassIr>) -> LibraryIr {
         classes,
         enums: Vec::new(),
         query_calls: Vec::new(),
+    }
+}
+
+fn string_default_param(name: &str, default_value: &str) -> ConstructorParamIr {
+    ConstructorParamIr {
+        has_default: true,
+        default_value_source: Some(default_value.to_owned()),
+        ..constructor_param(name, TypeIr::string())
     }
 }
 

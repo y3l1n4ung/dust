@@ -1,5 +1,6 @@
 use dust_plugin_api::{DustPlugin, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 use dust_route_plugin::register_plugin;
+use serde_json::{Value, json};
 
 use super::support::{parsed_annotation, parsed_library_with_annotations};
 
@@ -10,7 +11,7 @@ fn collects_route_and_router_workspace_facts() {
         "DashboardPage",
         vec![
             parsed_annotation("Route", "('/', name: 'dashboard')"),
-            parsed_annotation("Router", "(initial: DashboardPage, notFound: NotFoundPage)"),
+            parsed_annotation("Router", "(initial: '/', notFound: '/404')"),
         ],
     );
     let mut builder = WorkspaceAnalysisBuilder::default();
@@ -28,11 +29,43 @@ fn collects_route_and_router_workspace_facts() {
 
     let routes = snapshot.string_set("dust_route.routes.v1").unwrap();
     assert_eq!(routes.len(), 1);
-    assert!(routes[0].contains("DashboardPage"));
-    assert!(routes[0].contains("dashboard"));
+    assert_json_eq(
+        &routes[0],
+        json!({
+            "class_name": "DashboardPage",
+            "path": "/",
+            "name": "dashboard",
+            "annotation": {
+                "path": "/",
+                "name": "dashboard",
+                "shell": null,
+                "guards": [],
+                "guards_configured": false,
+                "transition": null,
+                "fullscreen_dialog": false,
+                "maintain_state": true
+            },
+            "import_uri": "package:route_test/pages/dashboard_page.dart",
+            "source_path": "lib/pages/dashboard_page.dart",
+            "imports": [],
+            "params": []
+        }),
+    );
 
     let routers = snapshot.string_set("dust_route.routers.v1").unwrap();
     assert_eq!(routers.len(), 1);
-    assert!(routers[0].contains("DashboardPage"));
-    assert!(routers[0].contains("NotFoundPage"));
+    assert_json_eq(
+        &routers[0],
+        json!({
+            "class_name": "DashboardPage",
+            "initial": "/",
+            "not_found": "/404",
+            "source_path": "lib/pages/dashboard_page.dart"
+        }),
+    );
+}
+
+fn assert_json_eq(actual: &str, expected: Value) {
+    let actual = serde_json::from_str::<Value>(actual).unwrap();
+    assert_eq!(actual, expected);
 }

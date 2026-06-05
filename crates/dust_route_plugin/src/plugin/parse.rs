@@ -78,15 +78,15 @@ pub(crate) fn parse_router_config(config: Option<&ConfigApplicationIr>) -> Route
     };
 
     RouterAnnotation {
-        initial: config.named_type("initial"),
-        not_found: config.named_type("notFound"),
+        initial: config.named_string("initial"),
+        not_found: config.named_string("notFound"),
     }
 }
 
 pub(crate) fn parse_router_surface(annotation: &ParsedAnnotation) -> RouterAnnotation {
     RouterAnnotation {
-        initial: annotation.named_type("initial"),
-        not_found: annotation.named_type("notFound"),
+        initial: annotation.named_string("initial"),
+        not_found: annotation.named_string("notFound"),
     }
 }
 
@@ -128,10 +128,9 @@ mod tests {
 
     #[test]
     fn parses_router_initial_and_not_found() {
-        let router =
-            parse_router_annotation(Some("(initial: DashboardPage, notFound: NotFoundPage)"));
-        assert_eq!(router.initial.as_deref(), Some("DashboardPage"));
-        assert_eq!(router.not_found.as_deref(), Some("NotFoundPage"));
+        let router = parse_router_annotation(Some("(initial: '/', notFound: '/404')"));
+        assert_eq!(router.initial.as_deref(), Some("/"));
+        assert_eq!(router.not_found.as_deref(), Some("/404"));
     }
 
     #[test]

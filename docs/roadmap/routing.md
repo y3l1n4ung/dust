@@ -31,9 +31,8 @@ Router root:
 
 ```dart
 @Router(
-  initial: DashboardPage,
-  notFound: NotFoundPage,
-  refreshListenable: 'session',
+  initial: '/',
+  notFound: '/404',
 )
 final class AppRouter extends $AppRouter {
   AppRouter({required this.session});
@@ -41,12 +40,9 @@ final class AppRouter extends $AppRouter {
   final AppSession session;
 
   @override
-  Listenable get refreshListenable => session;
-
-  @override
-  AppRoutePath? redirect(RouteState state) {
-    if (!session.isLoggedIn && state.route.requiresAuth) {
-      return LoginRoute(from: state.location);
+  AppRoutePath? redirect(AppRoutePath route) {
+    if (!session.isLoggedIn && route.requiresAuth) {
+      return LoginRoute(from: route.location);
     }
     return null;
   }
@@ -85,13 +81,13 @@ MaterialApp.router(
 Generated navigation helpers are route-name-first:
 
 ```dart
-context.routes.project(projectId: 42, tab: 'activity').go();
-context.routes.login().push();
-context.routes.dashboard().replace();
+context.navigator.project(projectId: 42, tab: 'activity').go();
+context.navigator.login().push();
+context.navigator.dashboard().replace();
 ```
 
 The generator emits one factory-like method per route name and a shared
-`RouteNavigation` action object with `go`, `push`, and `replace`. It must not
+`RouteAction` action object with `go`, `push`, and `replace`. It must not
 emit separate `goProject`, `pushProject`, and `replaceProject` methods for every
 route, because large apps can have hundreds or thousands of routes.
 
@@ -141,7 +137,7 @@ Dust emits one routing output from the router root library:
 - `RouterDelegate`
 - `Navigator.pages`
 - browser URL sync
-- reactive `refreshListenable` handling
+- auto-discovered reactive Listenable handling
 - redirect and guard execution
 - stale async navigation cancellation
 - route controller access through `BuildContext`
