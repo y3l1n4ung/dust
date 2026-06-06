@@ -3,6 +3,7 @@
 #![doc = "Shared Dart rendering helpers reused by Dust plugins."]
 
 mod dart_names;
+mod literals;
 mod rename;
 mod source;
 mod templates;
@@ -14,6 +15,8 @@ pub use dart_names::{
     DART_OBJECT_NULLABLE, DART_RESPONSE, DART_RESPONSE_BODY, DART_RESULT, DART_ROW, DART_SET,
     DART_STREAM, DART_STRING, DART_UNIT, DART_URI, DART_VOID,
 };
+
+pub use literals::{dart_string_literal, escape_dart_string};
 
 pub use source::{
     balanced_parenthesized, normalized_args, parse_bool_literal, parse_named_arguments,

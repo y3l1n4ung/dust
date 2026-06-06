@@ -142,3 +142,86 @@ mixin _$Request {
         )
     );
 }
+
+#[test]
+fn build_writes_validate_output_for_form_request() {
+    let workspace = make_workspace();
+    write_file(
+        &workspace.path().join("lib/signup.dart"),
+        "part 'signup.g.dart';\n\
+         @Derive([Validate()])\n\
+         class SignupRequest with _$SignupRequest {\n\
+           const SignupRequest({required this.email, required this.age});\n\
+           @Validate(email: true)\n\
+           final String email;\n\
+           @Validate(range: Range(min: 18, max: 120), message: 'Adult only')\n\
+           final int age;\n\
+         }\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+        db: Default::default(),
+    });
+    let output = fs::read_to_string(workspace.path().join("lib/signup.g.dart")).unwrap();
+
+    assert_eq!(result.diagnostics, vec![]);
+    assert_eq!(
+        output,
+        generated_output(
+            r#"part of 'signup.dart';
+
+mixin _$SignupRequest {
+  ValidationResult validate() {
+    final self = this as SignupRequest;
+    final errors = <ValidationError>[];
+    _validateSignupRequestEmail(self.email, errors);
+    _validateSignupRequestAge(self.age, errors);
+    return errors.isEmpty ? const Valid() : Invalid(errors);
+  }
+
+  void validateOrThrow() {
+    final result = validate();
+    if (result case Invalid(:final errors)) {
+      throw ValidationException(errors);
+    }
+  }
+}
+
+void _validateSignupRequestEmail(String email, List<ValidationError> errors) {
+  if (!ValidationHelper.isEmail(email)) {
+    errors.add(ValidationError(field: 'email', message: 'Invalid email'));
+  }
+}
+
+String? validateSignupRequestEmailInput(String? value) {
+  final errors = <ValidationError>[];
+  _validateSignupRequestEmail(value ?? '', errors);
+  return errors.isEmpty ? null : errors.first.message;
+}
+
+void _validateSignupRequestAge(int age, List<ValidationError> errors) {
+  if (age < 18) {
+    errors.add(ValidationError(field: 'age', message: 'Adult only'));
+  }
+  if (age > 120) {
+    errors.add(ValidationError(field: 'age', message: 'Adult only'));
+  }
+}
+
+String? validateSignupRequestAgeInput(String? value) {
+  final errors = <ValidationError>[];
+  final age = int.tryParse(value ?? '');
+  if (age == null) {
+    errors.add(ValidationError(field: 'age', message: 'Adult only'));
+  } else {
+    _validateSignupRequestAge(age, errors);
+  }
+  return errors.isEmpty ? null : errors.first.message;
+}
+"#
+        )
+    );
+}

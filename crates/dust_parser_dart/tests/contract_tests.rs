@@ -1,8 +1,9 @@
 use dust_diagnostics::Diagnostic;
 use dust_parser_dart::{
-    ParameterKind, ParseBackend, ParseOptions, ParseResult, ParsedAnnotation, ParsedClassKind,
-    ParsedClassSurface, ParsedConstructorParamSurface, ParsedConstructorSurface, ParsedDirective,
-    ParsedFieldSurface, ParsedLibrarySurface, SourceKind, parse_file_with_backend,
+    AnnotationValue, ParameterKind, ParseBackend, ParseOptions, ParseResult, ParsedAnnotation,
+    ParsedClassKind, ParsedClassSurface, ParsedConstructorParamSurface, ParsedConstructorSurface,
+    ParsedDirective, ParsedFieldSurface, ParsedLibrarySurface, SourceKind,
+    parse_annotation_named_values, parse_file_with_backend,
 };
 use dust_text::{FileId, SourceText, TextRange};
 
@@ -156,4 +157,44 @@ fn parsed_surface_helpers_cover_empty_and_mixin_class_cases() {
     assert!(class.is_mixin_class());
     assert!(class.has_annotation("Derive"));
     assert!(class.fields[0].has_annotation("SerDe"));
+}
+
+#[test]
+fn parses_structured_annotation_values() {
+    let values = parse_annotation_named_values(
+        "(email: true, length: Length(min: 2), tags: ['a', r'b'], custom: User.check)",
+    )
+    .unwrap();
+
+    assert_eq!(
+        values,
+        vec![
+            ("email".to_owned(), AnnotationValue::Bool(true)),
+            (
+                "length".to_owned(),
+                AnnotationValue::Constructor {
+                    name: "Length".to_owned(),
+                    named: vec![("min".to_owned(), AnnotationValue::Number("2".to_owned()))],
+                },
+            ),
+            (
+                "tags".to_owned(),
+                AnnotationValue::List(vec![
+                    AnnotationValue::String("a".to_owned()),
+                    AnnotationValue::String("b".to_owned()),
+                ]),
+            ),
+            (
+                "custom".to_owned(),
+                AnnotationValue::Member("User.check".to_owned()),
+            ),
+        ]
+    );
+}
+
+#[test]
+fn rejects_non_parenthesized_annotation_values() {
+    let values = parse_annotation_named_values("email: true");
+
+    assert_eq!(values, None);
 }

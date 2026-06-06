@@ -11,9 +11,10 @@ If you are new to Dust, we recommend reading these guides in order:
 1.  **[Data Classes (Derive)](./derive.md)**: Master `ToString`, `Eq`, and `CopyWith`.
 2.  **[JSON Serialization (Serde)](./serde.md)**: High-performance encoding and decoding.
 3.  **[HTTP Client](./http.md)**: Type-safe, Dio-backed API clients.
-4.  **[State Management](./state.md)**: Boilerplate-free reactive ViewModels.
-5.  **[Typed Routing](./routing.md)**: Safe Navigator 2.0 implementation.
-6.  **[Dust DB](./db.md)**: SQLx-style sqlite3 query validation and row mapping.
+4.  **[Validation](./validation.md)**: Generated model and Flutter form validation.
+5.  **[State Management](./state.md)**: Boilerplate-free reactive ViewModels.
+6.  **[Typed Routing](./routing.md)**: Safe Navigator 2.0 implementation.
+7.  **[Dust DB](./db.md)**: SQLx-style sqlite3 query validation and row mapping.
 
 ---
 
@@ -24,6 +25,7 @@ Depending on the features you need, add the following packages to your `pubspec.
 | Feature | Required Packages |
 | :--- | :--- |
 | **Basic Traits** | `dust_dart` |
+| **Validation** | `dust_dart` |
 | **JSON Support** | `dust_dart` |
 | **Networking** | `dust_dart`, `dio` |
 | **State** | `dust_flutter` |

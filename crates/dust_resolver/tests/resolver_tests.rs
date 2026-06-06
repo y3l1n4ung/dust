@@ -19,6 +19,22 @@ fn symbol_catalog_registers_traits_and_configs() {
 }
 
 #[test]
+fn symbol_catalog_supports_same_surface_name_for_trait_and_config() {
+    let mut catalog = SymbolCatalog::new();
+    catalog.register_trait("Validate", "dust_dart::Validate");
+    catalog.register_config("Validate", "dust_dart::Validate");
+
+    assert_eq!(
+        catalog.resolve_trait("Validate").unwrap().symbol,
+        SymbolId::new("dust_dart::Validate")
+    );
+    assert_eq!(
+        catalog.resolve_config("Validate").unwrap().kind,
+        SymbolKind::Config
+    );
+}
+
+#[test]
 fn validate_generated_part_uri_rejects_wrong_file_name() {
     let diagnostic = validate_generated_part_uri("lib/user.g.dart", "team.g.dart").unwrap_err();
 
@@ -85,6 +101,46 @@ class User {
             .arguments_source
             .as_deref(),
         Some("(rename: 'full_name')")
+    );
+}
+
+#[test]
+fn resolves_validate_as_derive_trait_and_field_config() {
+    let source = SourceText::new(
+        FileId::new(5),
+        r#"
+part 'signup.g.dart';
+
+@Derive([Validate()])
+class Signup {
+  @Validate(email: true)
+  final String email;
+
+  const Signup(this.email);
+}
+"#,
+    );
+
+    let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+    let mut catalog = SymbolCatalog::new();
+    catalog.register_trait("Validate", "dust_dart::Validate");
+    catalog.register_config("Validate", "dust_dart::Validate");
+
+    let resolved = resolve_library(
+        FileId::new(5),
+        "lib/signup.dart",
+        "lib/signup.g.dart",
+        &parsed.library,
+        &catalog,
+    );
+
+    assert_eq!(resolved.diagnostics, vec![]);
+    assert_eq!(resolved.library.classes[0].traits.len(), 1);
+    assert_eq!(resolved.library.classes[0].configs.len(), 0);
+    assert_eq!(resolved.library.classes[0].fields[0].configs.len(), 1);
+    assert_eq!(
+        resolved.library.classes[0].fields[0].configs[0].symbol,
+        SymbolId::new("dust_dart::Validate")
     );
 }
 

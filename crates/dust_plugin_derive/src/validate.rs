@@ -1,7 +1,9 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassKindIr, LibraryIr};
 
-use crate::features::{clone_copy_with::validate_copy_with, eq_hash::validate_eq_hash};
+use crate::features::{
+    clone_copy_with::validate_copy_with, eq_hash::validate_eq_hash, validate::validate_validate,
+};
 
 pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
@@ -15,6 +17,7 @@ pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
         }
         diagnostics.extend(validate_eq_hash(class));
         diagnostics.extend(validate_copy_with(class));
+        diagnostics.extend(validate_validate(library, class));
     }
     diagnostics
 }

@@ -15,6 +15,7 @@ dust_ir = { path = "../dust_ir", version = "0.1.1" }
 dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.1" }
 dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
 dust_parser_dart = { path = "../dust_parser_dart", version = "0.1.1" }
+minijinja = { workspace = true }
 serde = { workspace = true }
 
 [dev-dependencies]

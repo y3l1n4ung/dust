@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
-
 import '../models/auth_state.dart';
+import '../models/register_request.dart';
 import '../view_models/auth_view_model.dart';
+import 'register_actions.dart';
+import 'register_auth_error.dart';
+import 'register_header.dart';
 
 @Route(
   '/register',
@@ -45,16 +48,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _register() {
-    if (_formKey.currentState!.validate()) {
-      context.readAuthViewModel().register(
-        email: _emailController.text,
-        username: _usernameController.text,
-        password: _passwordController.text,
-        firstName: _firstNameController.text,
-        lastName: _lastNameController.text,
-        phone: _phoneController.text,
-      );
-    }
+    if (!_formKey.currentState!.validate()) return;
+    final request = _request();
+
+    context.readAuthViewModel().register(
+      email: request.email,
+      username: request.username,
+      password: request.password,
+      firstName: request.firstName,
+      lastName: request.lastName,
+      phone: request.phone,
+    );
+  }
+
+  RegisterRequest _request() {
+    return RegisterRequest(
+      email: _emailController.text,
+      username: _usernameController.text,
+      password: _passwordController.text,
+      confirmPassword: _confirmPasswordController.text,
+      firstName: _firstNameController.text,
+      lastName: _lastNameController.text,
+      phone: _phoneController.text,
+    );
   }
 
   @override
@@ -75,27 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
-                  Icons.person_add,
-                  size: 60,
-                  color: Colors.deepPurple,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Join Us',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Create an account to start shopping',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
+                const RegisterHeader(),
                 const SizedBox(height: 32),
 
                 // Name fields
@@ -110,12 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         textInputAction: TextInputAction.next,
                         textCapitalization: TextCapitalization.words,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Required';
-                          }
-                          return null;
-                        },
+                        validator: validateRegisterRequestFirstNameInput,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -128,12 +119,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         textInputAction: TextInputAction.next,
                         textCapitalization: TextCapitalization.words,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Required';
-                          }
-                          return null;
-                        },
+                        validator: validateRegisterRequestLastNameInput,
                       ),
                     ),
                   ],
@@ -150,17 +136,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter email';
-                    }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
+                  validator: validateRegisterRequestEmailInput,
                 ),
                 const SizedBox(height: 16),
 
@@ -173,15 +149,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     border: OutlineInputBorder(),
                   ),
                   textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter username';
-                    }
-                    if (value.length < 3) {
-                      return 'Username must be at least 3 characters';
-                    }
-                    return null;
-                  },
+                  validator: validateRegisterRequestUsernameInput,
                 ),
                 const SizedBox(height: 16),
 
@@ -195,12 +163,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter phone number';
-                    }
-                    return null;
-                  },
+                  validator: validateRegisterRequestPhoneInput,
                 ),
                 const SizedBox(height: 16),
 
@@ -226,15 +189,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
+                  validator: validateRegisterRequestPasswordInput,
                 ),
                 const SizedBox(height: 16),
 
@@ -262,77 +217,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _register(),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm password';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
+                    return validateRegisterRequestConfirmPasswordInput(
+                      _request(),
+                      value,
+                    );
                   },
                 ),
 
-                if (state.status == AuthStatus.error) ...[
+                if (state.status == AuthStatus.error)
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withAlpha(25),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.error_outline, color: Colors.red),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            state.errorMessage ?? 'Registration failed',
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-
+                RegisterAuthError(state: state),
                 const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: state.status == AuthStatus.loading
-                      ? null
-                      : _register,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: state.status == AuthStatus.loading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Create Account'),
-                ),
-
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Already have an account?'),
-                    TextButton(
-                      onPressed: () {
-                        if (widget.redirectPath != null) {
-                          context.navigator
-                              .login(redirectPath: widget.redirectPath)
-                              .go();
-                        } else {
-                          context.navigator.login().go();
-                        }
-                      },
-                      child: const Text('Sign In'),
-                    ),
-                  ],
+                RegisterActions(
+                  status: state.status,
+                  redirectPath: widget.redirectPath,
+                  onRegister: _register,
                 ),
               ],
             ),

@@ -18,7 +18,10 @@ pub(crate) fn resolve_method(
     let mut configs = Vec::new();
 
     for annotation in &method.annotations {
-        let Some(resolved) = catalog.resolve(&annotation.name) else {
+        let Some(resolved) = catalog
+            .resolve_config(&annotation.name)
+            .or_else(|| catalog.resolve_trait(&annotation.name))
+        else {
             continue;
         };
 
@@ -91,7 +94,7 @@ pub(crate) fn resolve_declaration_annotations(
     for annotation in annotations {
         if annotation.name == "Derive" {
             for name in derive_member_names(annotation.arguments_source.as_deref().unwrap_or("")) {
-                match catalog.resolve(&name) {
+                match catalog.resolve_trait(&name) {
                     Some(resolved) => push_resolved_symbol(
                         file_id,
                         annotation.span,
@@ -111,7 +114,10 @@ pub(crate) fn resolve_declaration_annotations(
                     ),
                 }
             }
-        } else if let Some(resolved) = catalog.resolve(&annotation.name) {
+        } else if let Some(resolved) = catalog
+            .resolve_config(&annotation.name)
+            .or_else(|| catalog.resolve_trait(&annotation.name))
+        {
             push_resolved_symbol(
                 file_id,
                 annotation.span,
@@ -134,28 +140,28 @@ pub(crate) fn resolve_field(
     let mut configs = Vec::new();
 
     for annotation in &field.annotations {
-        let Some(resolved) = catalog.resolve(&annotation.name) else {
+        let Some(resolved) = catalog.resolve_config(&annotation.name) else {
+            if catalog.resolve_trait(&annotation.name).is_some() {
+                diagnostics.push(
+                    Diagnostic::warning(format!(
+                        "trait annotation `{}` is not supported on fields",
+                        annotation.name
+                    ))
+                    .with_label(SourceLabel::new(
+                        file_id,
+                        annotation.span,
+                        "field annotations may only use Dust config symbols",
+                    )),
+                );
+            }
             continue;
         };
 
-        match resolved.kind {
-            SymbolKind::Config => configs.push(ConfigApplicationIr {
-                symbol: resolved.symbol.clone(),
-                arguments_source: annotation.arguments_source.clone(),
-                span: SpanIr::new(file_id, annotation.span),
-            }),
-            SymbolKind::Trait => diagnostics.push(
-                Diagnostic::warning(format!(
-                    "trait annotation `{}` is not supported on fields",
-                    annotation.name
-                ))
-                .with_label(SourceLabel::new(
-                    file_id,
-                    annotation.span,
-                    "field annotations may only use Dust config symbols",
-                )),
-            ),
-        }
+        configs.push(ConfigApplicationIr {
+            symbol: resolved.symbol.clone(),
+            arguments_source: annotation.arguments_source.clone(),
+            span: SpanIr::new(file_id, annotation.span),
+        });
     }
 
     ResolvedField {

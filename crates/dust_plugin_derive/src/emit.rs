@@ -9,6 +9,7 @@ use crate::{
         clone_copy_with::emit_copy_with,
         debug::emit_debug_mixin,
         eq_hash::{emit_eq, emit_hash_code, emit_shared_helpers},
+        validate::emit_validate,
     },
 };
 
@@ -48,6 +49,10 @@ pub(crate) fn emit_library(library: &LibraryIr, _plan: &SymbolPlan) -> PluginCon
         }
         if let Some(copy_with) = emit_copy_with(class, &copyable_types) {
             contribution.push_mixin_member(&class.name, copy_with);
+        }
+        if let Some(validate) = emit_validate(library, class) {
+            contribution.push_mixin_member(&class.name, validate.mixin_member);
+            contribution.support_types.push(validate.support_type);
         }
     }
 

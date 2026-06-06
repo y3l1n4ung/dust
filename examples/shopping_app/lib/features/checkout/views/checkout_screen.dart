@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
-
 import '../../../shared/widgets/dialogs/loading_dialog.dart';
 import '../../../shared/widgets/snackbars/app_snackbar.dart';
 import '../../cart/view_models/cart_view_model.dart';
 import '../../orders/models/order.dart';
 import '../../orders/view_models/orders_view_model.dart';
-import '../models/checkout_quote.dart';
+import '../models/checkout_shipping_request.dart';
 import '../models/checkout_state.dart';
 import '../view_models/checkout_view_model.dart';
+import 'checkout_order_summary.dart';
 
 @Route(
   '/checkout',
@@ -46,6 +46,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _placeOrder() async {
     if (!_formKey.currentState!.validate()) return;
+    final request = _shippingRequest();
 
     final cartState = context.readCartViewModel().state;
     final checkoutVM = context.readCheckoutViewModel();
@@ -54,11 +55,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // Update shipping address
     checkoutVM.updateShippingAddress(
       ShippingAddress(
-        fullName: _nameController.text,
-        address: _addressController.text,
-        city: _cityController.text,
-        zipCode: _zipController.text,
-        phone: _phoneController.text,
+        fullName: request.fullName,
+        address: request.address,
+        city: request.city,
+        zipCode: request.zipCode,
+        phone: request.phone,
       ),
     );
 
@@ -100,6 +101,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  CheckoutShippingRequest _shippingRequest() {
+    return CheckoutShippingRequest(
+      fullName: _nameController.text,
+      address: _addressController.text,
+      city: _cityController.text,
+      zipCode: _zipController.text,
+      phone: _phoneController.text,
+    );
+  }
+
+  Future<void> _applyCoupon() async {
+    final subtotal = context.readCartViewModel().state.totalPrice;
+    await context.readCheckoutViewModel().applyCoupon(
+      subtotal: subtotal,
+      couponCode: _couponController.text,
+    );
+    if (!mounted) return;
+
+    final quote = context.readCheckoutViewModel().state.quote;
+    if (quote?.message != null) {
+      AppSnackbar.info(context, quote!.message!);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartState = context.watchCartViewModel().value;
@@ -125,7 +150,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   labelText: 'Full Name',
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                validator: validateCheckoutShippingRequestFullNameInput,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -134,7 +159,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   labelText: 'Address',
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                validator: validateCheckoutShippingRequestAddressInput,
               ),
               const SizedBox(height: 12),
               Row(
@@ -147,7 +172,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         labelText: 'City',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                      validator: validateCheckoutShippingRequestCityInput,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -158,7 +183,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         labelText: 'ZIP',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                      validator: validateCheckoutShippingRequestZipCodeInput,
                     ),
                   ),
                 ],
@@ -171,7 +196,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.phone,
-                validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                validator: validateCheckoutShippingRequestPhoneInput,
               ),
               const SizedBox(height: 24),
               Text(
@@ -179,103 +204,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      ...cartState.items.map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '${item.product.title} x${item.quantity}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Text('\$${item.totalPrice.toStringAsFixed(2)}'),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const Divider(),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _couponController,
-                              decoration: const InputDecoration(
-                                labelText: 'Coupon code',
-                                helperText: 'Try DUST10 or SHIPFREE',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          FilledButton.tonal(
-                            onPressed: checkoutState.isQuoteLoading
-                                ? null
-                                : () async {
-                                    await context
-                                        .readCheckoutViewModel()
-                                        .applyCoupon(
-                                          subtotal: cartState.totalPrice,
-                                          couponCode: _couponController.text,
-                                        );
-                                    if (context.mounted) {
-                                      final quote = context
-                                          .readCheckoutViewModel()
-                                          .state
-                                          .quote;
-                                      if (quote?.message != null) {
-                                        AppSnackbar.info(
-                                          context,
-                                          quote!.message!,
-                                        );
-                                      }
-                                    }
-                                  },
-                            child: checkoutState.isQuoteLoading
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Apply'),
-                          ),
-                        ],
-                      ),
-                      if (checkoutState.quote != null) ...[
-                        const SizedBox(height: 12),
-                        _QuoteBreakdown(quote: checkoutState.quote!),
-                        const Divider(),
-                      ] else
-                        const Divider(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Total',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          Text(
-                            '\$${(checkoutState.quote?.total ?? cartState.totalPrice).toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.deepPurple,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+              CheckoutOrderSummary(
+                cartState: cartState,
+                checkoutState: checkoutState,
+                couponController: _couponController,
+                onApplyCoupon: _applyCoupon,
               ),
               if (checkoutState.status == CheckoutStatus.error) ...[
                 const SizedBox(height: 16),
@@ -303,63 +236,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _QuoteBreakdown extends StatelessWidget {
-  const _QuoteBreakdown({required this.quote});
-
-  final CheckoutQuote quote;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _QuoteRow(label: 'Subtotal', value: quote.subtotal),
-        _QuoteRow(label: 'Discount', value: -quote.discount),
-        _QuoteRow(label: 'Shipping', value: quote.shipping),
-        _QuoteRow(label: 'Tax', value: quote.tax),
-        if (quote.appliedCoupon != null)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                'Applied ${quote.appliedCoupon}',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _QuoteRow extends StatelessWidget {
-  const _QuoteRow({required this.label, required this.value});
-
-  final String label;
-  final double value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label),
-          Text(
-            value < 0
-                ? '-\$${(-value).toStringAsFixed(2)}'
-                : '\$${value.toStringAsFixed(2)}',
-          ),
-        ],
       ),
     );
   }

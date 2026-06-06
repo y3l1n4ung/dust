@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'src/templates.dart';
+import 'src/validate_templates.dart';
 
 void main(List<String> args) {
   final count = _parseCount(args) ?? 5000;
@@ -16,6 +17,8 @@ void main(List<String> args) {
     final file = File('${outputDir.path}/${fileNameForIndex(index)}.dart');
     file.writeAsStringSync(renderBenchmarkModelFile(index));
   }
+  File('${outputDir.path}/$validationShowcaseFile.dart')
+      .writeAsStringSync(renderValidationShowcaseFile());
 
   stdout.writeln('generated $count source files in ${outputDir.path}');
 }

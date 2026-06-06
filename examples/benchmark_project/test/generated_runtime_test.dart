@@ -1,7 +1,9 @@
+import 'package:dust_dart/derive.dart';
 import 'package:dust_benchmark_project/generated_models/model_00004.dart';
 import 'package:dust_benchmark_project/generated_models/model_00005.dart';
 import 'package:dust_benchmark_project/generated_models/model_00007.dart';
 import 'package:dust_benchmark_project/generated_models/model_00008.dart';
+import 'package:dust_benchmark_project/generated_models/validation_showcase.dart';
 import 'package:dust_benchmark_project/support/common.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -68,5 +70,53 @@ void main() {
     expect(identical(copied.primary, linked.primary), isFalse);
     expect(identical(copied.items, linked.items), isFalse);
     expect(identical(copied.byId, linked.byId), isFalse);
+  });
+
+  test('validation showcase reports nested and field-level custom errors', () {
+    final invalid = BenchmarkSignupValidation(
+      email: 'blocked@blocked.example',
+      password: 'password',
+      confirmPassword: 'different',
+      age: 17,
+      tags: const [],
+      address: const BenchmarkAddressValidation(city: 'A', zipCode: 'abc'),
+      website: 'not-a-url',
+    ).validate();
+
+    switch (invalid) {
+      case Valid():
+        fail('expected invalid validation result');
+      case Invalid(:final errors):
+        expect(
+          errors.map((error) => '${error.field}:${error.message}').toList(),
+          orderedEquals([
+            'email:Blocked email domain',
+            'password:Password is too weak',
+            'confirmPassword:Passwords must match',
+            'age:Age is invalid',
+            'tags:Tags are invalid',
+            'address.city:City is invalid',
+            'address.zipCode:ZIP is invalid',
+            'website:Website is invalid',
+          ]),
+        );
+    }
+  });
+
+  test('validation showcase accepts valid optional URL', () {
+    final valid = BenchmarkSignupValidation(
+      email: 'valid@example.com',
+      password: 'strong-secret',
+      confirmPassword: 'strong-secret',
+      age: 42,
+      tags: const ['flutter'],
+      address: const BenchmarkAddressValidation(
+        city: 'Yangon',
+        zipCode: '11111',
+      ),
+      website: 'https://example.com',
+    ).validate();
+
+    expect(valid, isA<Valid>());
   });
 }

@@ -1,0 +1,61 @@
+{%- for field in fields %}
+{{ field.helper_signature }} {
+{%- for config in field.configs %}
+{%- if config.nullable %}
+{%- if config.required_message %}
+  if ({{ field.name }} == null) {
+    errors.add(ValidationError(field: {{ field.literal }}, message: {{ config.required_message }}));
+  } else {
+{%- for rule in config.rules %}
+{{ rule_line(field, rule, "    ") }}
+{%- endfor %}
+  }
+{%- else %}
+  if ({{ field.name }} != null) {
+{%- for rule in config.rules %}
+{{ rule_line(field, rule, "    ") }}
+{%- endfor %}
+  }
+{%- endif %}
+{%- else %}
+{%- for rule in config.rules %}
+{{ rule_line(field, rule, "  ") }}
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+}
+{%- if field.can_validate_input %}
+
+{{ field.input_signature }} {
+  final errors = <ValidationError>[];
+{%- if field.input_kind == "string" %}
+{%- if field.nullable %}
+  {{ field.helper_name }}({% if field.uses_self %}self, {% endif %}value, errors);
+{%- else %}
+  {{ field.helper_name }}({% if field.uses_self %}self, {% endif %}value ?? '', errors);
+{%- endif %}
+{%- else %}
+{%- if field.nullable %}
+  if (value == null || value.isEmpty) {
+    {{ field.helper_name }}({% if field.uses_self %}self, {% endif %}null, errors);
+  } else {
+    final {{ field.name }} = {{ field.input_kind }}.tryParse(value);
+    if ({{ field.name }} == null) {
+      errors.add(ValidationError(field: {{ field.literal }}, message: {{ field.parse_error_message }}));
+    } else {
+      {{ field.helper_name }}({% if field.uses_self %}self, {% endif %}{{ field.name }}, errors);
+    }
+  }
+{%- else %}
+  final {{ field.name }} = {{ field.input_kind }}.tryParse(value ?? '');
+  if ({{ field.name }} == null) {
+    errors.add(ValidationError(field: {{ field.literal }}, message: {{ field.parse_error_message }}));
+  } else {
+    {{ field.helper_name }}({% if field.uses_self %}self, {% endif %}{{ field.name }}, errors);
+  }
+{%- endif %}
+{%- endif %}
+  return errors.isEmpty ? null : errors.first.message;
+}
+{%- endif %}
+{% endfor %}

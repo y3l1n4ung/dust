@@ -450,6 +450,7 @@ dependencies = [
  "dust_parser_dart",
  "dust_plugin_api",
  "dust_text",
+ "minijinja",
  "serde",
 ]
 

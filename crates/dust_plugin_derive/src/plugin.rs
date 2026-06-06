@@ -9,7 +9,7 @@ use crate::{
     analysis::collect_workspace_analysis,
     emit::emit_library,
     features::{
-        COPY_WITH_SYMBOL, DEBUG_SYMBOL, EQ_SYMBOL, TO_STRING_SYMBOL,
+        COPY_WITH_SYMBOL, DEBUG_SYMBOL, EQ_SYMBOL, TO_STRING_SYMBOL, VALIDATE_SYMBOL,
         clone_copy_with::copy_with_requires_undefined,
     },
     validate::validate_library,
@@ -23,9 +23,18 @@ pub fn register_plugin() -> DerivePlugin {
     DerivePlugin
 }
 
-const CLAIMED_TRAITS: &[&str] = &[TO_STRING_SYMBOL, DEBUG_SYMBOL, EQ_SYMBOL, COPY_WITH_SYMBOL];
+const CLAIMED_TRAITS: &[&str] = &[
+    TO_STRING_SYMBOL,
+    DEBUG_SYMBOL,
+    EQ_SYMBOL,
+    COPY_WITH_SYMBOL,
+    VALIDATE_SYMBOL,
+];
 
-const SUPPORTED_ANNOTATIONS: &[&str] = &["Derive", "ToString", "Debug", "Eq", "CopyWith"];
+const CLAIMED_CONFIGS: &[&str] = &[VALIDATE_SYMBOL];
+
+const SUPPORTED_ANNOTATIONS: &[&str] =
+    &["Derive", "ToString", "Debug", "Eq", "CopyWith", "Validate"];
 
 impl DustPlugin for DerivePlugin {
     fn plugin_name(&self) -> &'static str {
@@ -34,6 +43,10 @@ impl DustPlugin for DerivePlugin {
 
     fn claimed_traits(&self) -> &'static [&'static str] {
         CLAIMED_TRAITS
+    }
+
+    fn claimed_configs(&self) -> &'static [&'static str] {
+        CLAIMED_CONFIGS
     }
 
     fn supported_annotations(&self) -> &'static [&'static str] {

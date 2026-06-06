@@ -14,7 +14,13 @@ fn plugin_claims_core_derive_traits() {
             "dust_dart::Debug",
             "dust_dart::Eq",
             "dust_dart::CopyWith",
+            "dust_dart::Validate",
         ]
+    );
+    assert_eq!(plugin.claimed_configs(), vec!["dust_dart::Validate"]);
+    assert_eq!(
+        plugin.supported_annotations(),
+        vec!["Derive", "ToString", "Debug", "Eq", "CopyWith", "Validate",]
     );
 }
 
