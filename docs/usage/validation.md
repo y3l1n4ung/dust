@@ -73,9 +73,7 @@ String? validateSignupRequestConfirmPasswordInput(
 ```
 
 `validate()` checks the typed object. `validateClassFieldInput(...)` checks raw
-text input for Flutter `TextFormField` usage. Cross-field validators take the
-current request as the first argument. App code imports the source library, for
-example `signup_request.dart`; never import `signup_request.g.dart` directly.
+text input for Flutter `TextFormField` usage.
 
 ---
 
