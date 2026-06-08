@@ -1,6 +1,17 @@
 # Usage Guides
 
-This section provides the canonical documentation for using Dust in your Flutter and Dart projects.
+You focus on product. We focus on performance.
+
+This section provides the canonical documentation for using Dust in your
+Flutter and Dart projects.
+
+## Our Promise
+
+- Stable authoring APIs for features marked stable.
+- Generated code can improve without forcing handwritten product-code churn.
+- Features marked 50% stable may still receive API refinements before
+  stabilization.
+- Performance is part of the product contract, not a best-effort optimization.
 
 ---
 
@@ -45,7 +56,7 @@ curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.sh | ba
 ```
 
 ### 2. Configure Dependencies
-Add the relevant versions to your `pubspec.yaml`:
+Add the relevant packages to your `pubspec.yaml`:
 
 ```yaml
 dependencies:

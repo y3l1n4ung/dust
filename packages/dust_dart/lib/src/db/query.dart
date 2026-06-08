@@ -11,16 +11,22 @@ final class QueryAs<T> {
   final String sql;
   final List<Object?> parameters;
 
-  Future<T> fetchOne(SqlxDriver db) async {
-    return _unwrap(await db.fetchOne<T>(sql, parameters, RowMapperRegistry.map<T>));
+  Future<T> fetchOne(Executor db) async {
+    return _unwrap(
+      await db.fetchOne<T>(sql, parameters, RowMapperRegistry.map<T>),
+    );
   }
 
-  Future<T?> fetchOptional(SqlxDriver db) async {
-    return _unwrap(await db.fetchOptional<T>(sql, parameters, RowMapperRegistry.map<T>));
+  Future<T?> fetchOptional(Executor db) async {
+    return _unwrap(
+      await db.fetchOptional<T>(sql, parameters, RowMapperRegistry.map<T>),
+    );
   }
 
-  Future<List<T>> fetchAll(SqlxDriver db) async {
-    return _unwrap(await db.fetchAll<T>(sql, parameters, RowMapperRegistry.map<T>));
+  Future<List<T>> fetchAll(Executor db) async {
+    return _unwrap(
+      await db.fetchAll<T>(sql, parameters, RowMapperRegistry.map<T>),
+    );
   }
 }
 
@@ -31,11 +37,11 @@ final class QueryScalar<T> {
   final String sql;
   final List<Object?> parameters;
 
-  Future<T> fetchOne(SqlxDriver db) async {
+  Future<T> fetchOne(Executor db) async {
     return _unwrap(await db.fetchScalar<T>(sql, parameters));
   }
 
-  Future<T?> fetchOptional(SqlxDriver db) async {
+  Future<T?> fetchOptional(Executor db) async {
     return _unwrap(await db.fetchScalar<T?>(sql, parameters));
   }
 }
@@ -47,7 +53,7 @@ final class QueryRaw {
   final String sql;
   final List<Object?> parameters;
 
-  Future<List<Row>> fetch(SqlxDriver db) async {
+  Future<List<Row>> fetch(Executor db) async {
     return _unwrap(await db.raw.fetch(sql, parameters));
   }
 }
@@ -59,7 +65,7 @@ final class QueryExecute {
   final String sql;
   final List<Object?> parameters;
 
-  Future<ExecResult> execute(SqlxDriver db) async {
+  Future<ExecResult> execute(Executor db) async {
     return _unwrap(await db.execute(sql, parameters));
   }
 }

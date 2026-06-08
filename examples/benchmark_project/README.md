@@ -7,6 +7,9 @@ Large local Flutter fixture project for Dust build/watch scale testing.
 - generate a large number of annotated Dart and Flutter source files
 - exercise `ToString()`, `Eq()`, `CopyWith()`, `Serialize()`, and
   `Deserialize()` in one mixed corpus
+- exercise `Validate()` with email, URL, length, range, contains,
+  does-not-contain, regex, must-match, nested, custom, required, nullable, and
+  form-input helper rules
 - exercise the `HttpClient` plugin, including auxiliary `.test.g.dart` outputs
 - keep all future annotation perf work on the same shared pipeline shape
 - benchmark `dust build` and `dust watch` on a large input set

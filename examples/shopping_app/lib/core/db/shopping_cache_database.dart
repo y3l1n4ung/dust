@@ -20,7 +20,7 @@ abstract class ShoppingCacheDatabase {
 
 @SqlxDao()
 abstract final class ShoppingCacheDao {
-  const factory ShoppingCacheDao(SqlxDriver db) = _$ShoppingCacheDao;
+  const factory ShoppingCacheDao(Executor db) = _$ShoppingCacheDao;
 
   @Query(r'''
 SELECT id, title, price, description, category, image,
@@ -78,7 +78,7 @@ ORDER BY saved_at DESC
   Future<Result<List<CachedWishlistRow>, SqlxError>> listWishlist();
 }
 
-extension ShoppingCacheQueries on SqlxDriver {
+extension ShoppingCacheQueries on Executor {
   Future<CachedProductRow?> findCachedProduct(int id) {
     return _unwrapSqlx(ShoppingCacheDao(this).findCachedProduct(id));
   }
@@ -111,11 +111,7 @@ extension ShoppingCacheQueries on SqlxDriver {
     );
   }
 
-  Future<ExecResult> saveWishlist(
-    int productId,
-    String title,
-    String savedAt,
-  ) {
+  Future<ExecResult> saveWishlist(int productId, String title, String savedAt) {
     return _unwrapSqlx(
       ShoppingCacheDao(this).saveWishlist(productId, title, savedAt),
     );
@@ -126,7 +122,7 @@ extension ShoppingCacheQueries on SqlxDriver {
   }
 }
 
-extension ShoppingProductCacheQueries on SqlxDriver {
+extension ShoppingProductCacheQueries on Executor {
   Future<void> replaceProductCache(List<Product> products) {
     return transaction((tx) async {
       for (final product in products) {
@@ -136,7 +132,8 @@ extension ShoppingProductCacheQueries on SqlxDriver {
     }).then(
       (result) => result.match(
         ok: (_) {},
-        err: (error) => throw StateError('Failed to replace product cache: $error'),
+        err: (error) =>
+            throw StateError('Failed to replace product cache: $error'),
       ),
     );
   }

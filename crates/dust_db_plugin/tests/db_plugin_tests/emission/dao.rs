@@ -132,7 +132,7 @@ fn expected_default_dao_output() -> &'static str {
     return UserProfile(
       id: row.read<int>('id'),
       name: row.read<String>('display_name'),
-      bio: row.readOrNull<Object?>('bio') == null ? '' : row.read<String>('bio'),
+      bio: row.readNullable<Object?>('bio') == null ? '' : row.read<String>('bio'),
       sessionActive: false,
       preferences: UserPreferences.fromJson(decodeJsonObject(row.read<String>('preferences'))),
       status: const UserStatusFromInt().decode(row.read<int>('status')),
@@ -145,7 +145,7 @@ final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserP
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final SqlxDriver _db;
+  final Executor _db;
 
   @override
   Future<Result<UserProfile?, SqlxError>> findById(int id) {
@@ -180,7 +180,7 @@ fn expected_cardinality_output() -> &'static str {
     return UserProfile(
       id: row.read<int>('id'),
       name: row.read<String>('display_name'),
-      bio: row.readOrNull<Object?>('bio') == null ? '' : row.read<String>('bio'),
+      bio: row.readNullable<Object?>('bio') == null ? '' : row.read<String>('bio'),
       sessionActive: false,
       preferences: UserPreferences.fromJson(decodeJsonObject(row.read<String>('preferences'))),
       status: const UserStatusFromInt().decode(row.read<int>('status')),
@@ -193,7 +193,7 @@ final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserP
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final SqlxDriver _db;
+  final Executor _db;
 
   @override
   Future<Result<UserProfile, SqlxError>> findRequired(int id) {
@@ -237,7 +237,7 @@ fn expected_imported_dao_output() -> &'static str {
     r#"final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final SqlxDriver _db;
+  final Executor _db;
 
   @override
   Future<Result<UserProfile?, SqlxError>> findById(int id) {
@@ -281,7 +281,7 @@ final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserP
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final SqlxDriver _db;
+  final Executor _db;
 
   @override
   Future<Result<UserProfile?, SqlxError>> findForOrg(int id, int orgId) {

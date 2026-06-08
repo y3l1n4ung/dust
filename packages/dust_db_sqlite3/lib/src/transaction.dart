@@ -1,10 +1,13 @@
 part of 'sqlite_pool.dart';
 
-final class _SingleConnectionPool implements Transaction {
+final class _SingleConnectionPool implements Transaction, Sqlite3Executor {
   _SingleConnectionPool(sqlite.Database database)
     : _driver = Sqlite3Driver._(database, ownsDatabase: false);
 
   final Sqlite3Driver _driver;
+
+  @override
+  sqlite.Database get database => _driver.database;
 
   @override
   Driver get driver => _driver.driver;
@@ -57,7 +60,7 @@ final class _SingleConnectionPool implements Transaction {
 
   @override
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(SqlxDriver tx) fn,
+    Future<Result<T, SqlxError>> Function(Executor tx) fn,
   ) {
     return fn(this);
   }

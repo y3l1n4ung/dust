@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:dust_dart/db.dart';
+import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shopping_app/core/data/cached_shopping_repository.dart';
 import 'package:shopping_app/core/data/shopping_repository.dart';
@@ -17,6 +18,13 @@ void main() {
       });
 
       await app.pool.seedProductCache();
+      expect(
+        (app.pool as Sqlite3Executor).database
+            .select('SELECT 1')
+            .single
+            .columnAt(0),
+        1,
+      );
 
       expect(await app.pool.countCachedProducts(), 1);
 
@@ -72,7 +80,7 @@ void main() {
   });
 }
 
-extension _ShoppingSeedQueries on SqlxDriver {
+extension _ShoppingSeedQueries on Executor {
   Future<void> seedProductCache() async {
     await queryExecute(
       r'INSERT INTO product_cache (id, title, price, description, category, image, rating_rate, rating_count, payload, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',

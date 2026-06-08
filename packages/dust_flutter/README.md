@@ -1,39 +1,58 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# dust_flutter
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+Flutter runtime and annotations for Dust generated routing and state code.
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
+You focus on product. We focus on performance.
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+## Our Promise
 
-## Features
+- Routing and state management APIs are 50% stable and may still be refined
+  before stabilization.
+- Generated code can improve while app widgets and product logic stay focused.
+- No external routing or state-management package is required by Dust.
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+## Public surfaces
 
-## Getting started
+- `package:dust_flutter/route.dart`: Navigator 2.0 annotations and runtime.
+- `package:dust_flutter/state.dart`: ViewModel annotations and runtime.
+- `package:dust_flutter/dust_flutter.dart`: convenience export for all
+  Flutter-only APIs.
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
-
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+## Routing
 
 ```dart
-const like = 'sample';
+import 'package:dust_flutter/route.dart';
+
+@Router(initial: '/', notFound: '/404')
+final class AppRouter extends $AppRouter {
+  AppRouter({required this.auth});
+
+  final AuthViewModel auth;
+
+  @override
+  AppRoutePath? redirect(AppRoutePath route) {
+    if (!auth.isLoggedIn && route.requiresAuth) {
+      return LoginRoute(from: route.location);
+    }
+    return null;
+  }
+}
 ```
 
-## Additional information
+## State
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+```dart
+import 'package:dust_flutter/state.dart';
+
+@ViewModel(state: CounterState)
+final class CounterViewModel extends $CounterViewModel {
+  CounterViewModel(super.args);
+
+  void increment() {
+    emit(state.copyWith(count: state.count + 1));
+  }
+}
+```
+
+See the canonical guides in `docs/usage/routing.md` and
+`docs/usage/state.md`.

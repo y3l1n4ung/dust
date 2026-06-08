@@ -1,6 +1,6 @@
 # Dust DB
 
-Dust DB is a SQLx-style raw SQL layer for Dart and Flutter. It is not an ORM and does not provide a query builder. App code writes raw SQL in `@Query`, Dust validates it during `dust build --db`, and generated DAO code calls typed `SqlxDriver` fetch/execute methods directly.
+Dust DB is a SQLx-style raw SQL layer for Dart and Flutter. It is not an ORM and does not provide a query builder. App code writes raw SQL in `@Query`, Dust validates it during `dust build --db`, and generated DAO code calls typed `Executor` fetch/execute methods directly.
 
 ## Packages
 
@@ -12,24 +12,24 @@ import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 ## Database
 
 ```dart
-@SqlxDatabase(type: SqlxDatabaseType.postgres)
+@SqlxDatabase(type: SqlxDatabaseType.sqlite)
 final class AppDatabase {
   AppDatabase._(this._db);
 
-  final SqlxDriver _db;
+  final Executor _db;
 
   late final UserDao users = UserDao(_db);
   late final RawSqlx raw = RawSqlx(_db);
 
-  static Future<AppDatabase> connect(SqlxDriver driver) async {
-    return AppDatabase._(driver);
+  static Future<AppDatabase> connect(Executor db) async {
+    return AppDatabase._(db);
   }
 
   Future<Result<T, SqlxError>> transaction<T>(
     Future<Result<T, SqlxError>> Function(AppDatabase tx) callback,
   ) {
-    return _db.transaction((txDriver) {
-      return callback(AppDatabase._(txDriver));
+    return _db.transaction((tx) {
+      return callback(AppDatabase._(tx));
     });
   }
 
@@ -73,6 +73,20 @@ extension UserRowFromRow on UserRow {
 }
 ```
 
+`Row` is a driver-agnostic interface. Driver packages own concrete adapters such as `Sqlite3Row`, while generated mappers only depend on `Row`. Generated mappers use column-name reads, matching sqlx `FromRow` behavior.
+
+Supported shared reads:
+
+```dart
+row.read<int>('id');
+row.readNullable<String>('nickname');
+row.readBool('active');
+row.readBoolNullable('verified');
+row.readDateTime('created_at');
+row.readDateTimeNullable('deleted_at');
+row.readIndex<int>(0); // scalar/raw escape hatches only
+```
+
 ## DAO Queries
 
 Every DAO uses a redirecting const factory constructor.
@@ -80,7 +94,7 @@ Every DAO uses a redirecting const factory constructor.
 ```dart
 @SqlxDao()
 abstract final class UserDao {
-  const factory UserDao(SqlxDriver db) = _$UserDao;
+  const factory UserDao(Executor db) = _$UserDao;
 
   @Query(r'''
   SELECT id, email, name
@@ -103,7 +117,7 @@ Generated SQLite shape:
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final SqlxDriver _db;
+  final Executor _db;
 
   @override
   Future<Result<UserRow?, SqlxError>> findById(int id) {
@@ -120,11 +134,18 @@ final class _$UserDao implements UserDao {
 }
 ```
 
+## SQLx API Mapping
+
+- `@QueryAs` style returns map to `fetchOptional`, `fetchAll`, or `fetchOne` based on Dart return type.
+- `@QueryScalar` style returns map to `fetchScalar` and read column index zero.
+- `@Query` statements map to `execute` and return `ExecResult`.
+- `@Derive([FromRow()])` generates a static `RowMapper<T>` reference: `UserRowFromRow.fromRow`.
+
 Placeholder rules:
 
 - `@Query` SQL uses SQLx placeholders such as `$1` and `$2`.
 - `dust build --db` validates `@Query` SQL with Rust SQLx.
-- generated SQLite DAO code emits SQLite placeholders.
+- Generated SQLite DAO code emits SQLite placeholders.
 
 ```dart
 @Query(r'SELECT id FROM users WHERE id = $1 OR owner_id = $1')
@@ -141,8 +162,26 @@ return _db.fetchAll<UserRow>(
 );
 ```
 
-Future Postgres generated DAO code keeps SQLx placeholders when that driver is
-enabled.
+Future Postgres generated DAO code keeps SQLx placeholders when that driver is enabled.
+
+## Native SQLite Access
+
+Use checked DAOs by default. For advanced SQLite operations, cast to `Sqlite3Executor` and use the native `package:sqlite3` database directly.
+
+```dart
+final sqlite = (app.pool as Sqlite3Executor).database;
+final version = sqlite.select('SELECT sqlite_version()').single[0];
+```
+
+Native access also works inside transactions:
+
+```dart
+await app.pool.transaction((tx) async {
+  final sqlite = (tx as Sqlite3Executor).database;
+  sqlite.execute('PRAGMA foreign_keys = ON');
+  return const Ok(unit);
+});
+```
 
 ## Complex SQL
 
@@ -216,9 +255,7 @@ Normal `dust build` does not run SQLx validation.
 
 Dust validates SQL syntax, migrations, table/column existence, placeholder count, result shape, nullability, `FromRow` compatibility, and `Result<T, SqlxError>` return shape.
 
-SQLite migrations are applied in sorted file-name order and recorded in
-`__dust_schema_migrations`, so reopening a Flutter app database skips already
-applied migrations and applies only new upgrade files.
+SQLite migrations are applied in sorted file-name order and recorded in `__dust_schema_migrations`, so reopening a Flutter app database skips already applied migrations and applies only new upgrade files.
 
 ## Pipeline Split
 

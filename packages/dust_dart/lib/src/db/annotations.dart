@@ -114,9 +114,6 @@ final class Sqlx {
 
 /// Converts one database value into a Dart value during generated row mapping.
 abstract interface class SqlxTryFrom<DartT, DbT> {
-  /// Creates a const converter object.
-  const SqlxTryFrom();
-
   /// Decodes a database value.
   DartT decode(DbT value);
 }

@@ -15,7 +15,7 @@ fn emits_sqlx_style_from_row_mapper() {
     return UserProfile(
       id: row.read<int>('id'),
       name: row.read<String>('display_name'),
-      bio: row.readOrNull<Object?>('bio') == null ? '' : row.read<String>('bio'),
+      bio: row.readNullable<Object?>('bio') == null ? '' : row.read<String>('bio'),
       sessionActive: false,
       preferences: UserPreferences.fromJson(decodeJsonObject(row.read<String>('preferences'))),
       status: const UserStatusFromInt().decode(row.read<int>('status')),

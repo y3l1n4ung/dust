@@ -24,48 +24,70 @@ void main() {
     expect(rows, isEmpty);
   });
 
-  test('sqlite transaction exposes full driver API inside nested scope', () async {
-    final pool = _userPool();
-    addTearDown(() async {
-      await pool.close();
-    });
+  test(
+    'sqlite transaction exposes full driver API inside nested scope',
+    () async {
+      final pool = _userPool();
+      addTearDown(() async {
+        await pool.close();
+      });
 
-    final result = await pool.transaction((tx) async {
-      expect(tx.driver, Driver.sqlite3);
-      await tx.execute(r'INSERT INTO users (id, name) VALUES (?, ?)', [
-        1,
-        'Ada',
-      ]);
-      final optional = await tx.fetchOptional<UserName>(
-        r'SELECT id, name FROM users WHERE id = ?',
-        [1],
-        UserName.fromRow,
-      );
-      final one = await tx.fetchOne<UserName>(
-        r'SELECT id, name FROM users WHERE id = ?',
-        [1],
-        UserName.fromRow,
-      );
-      final all = await tx.fetchAll<UserName>(
-        r'SELECT id, name FROM users',
-        const [],
-        UserName.fromRow,
-      );
-      final count = await tx.fetchScalar<int>('SELECT COUNT(*) FROM users', const []);
-      final rawRows = await tx.raw.fetch('SELECT id, name FROM users', const []);
-      final nested = await tx.transaction((nestedTx) => nestedTx.close());
+      final result = await pool.transaction((tx) async {
+        expect(tx.driver, Driver.sqlite3);
+        expect(
+          (tx as Sqlite3Executor).database
+              .select('SELECT 1')
+              .single
+              .columnAt(0),
+          1,
+        );
+        await tx.execute(r'INSERT INTO users (id, name) VALUES (?, ?)', [
+          1,
+          'Ada',
+        ]);
+        final optional = await tx.fetchOptional<UserName>(
+          r'SELECT id, name FROM users WHERE id = ?',
+          [1],
+          UserName.fromRow,
+        );
+        final one = await tx.fetchOne<UserName>(
+          r'SELECT id, name FROM users WHERE id = ?',
+          [1],
+          UserName.fromRow,
+        );
+        final all = await tx.fetchAll<UserName>(
+          r'SELECT id, name FROM users',
+          const [],
+          UserName.fromRow,
+        );
+        final count = await tx.fetchScalar<int>(
+          'SELECT COUNT(*) FROM users',
+          const [],
+        );
+        final rawRows = await tx.raw.fetch(
+          'SELECT id, name FROM users',
+          const [],
+        );
+        final nested = await tx.transaction((nestedTx) => nestedTx.close());
 
-      expect(optional.match(ok: (value) => value?.name, err: (_) => 'err'), 'Ada');
-      expect(one.match(ok: (value) => value.name, err: (_) => 'err'), 'Ada');
-      expect(all.match(ok: (value) => value.length, err: (_) => -1), 1);
-      expect(count.match(ok: (value) => value, err: (_) => -1), 1);
-      expect(rawRows.match(ok: (rows) => rows.length, err: (_) => -1), 1);
-      expect(nested, isA<Ok<Unit, SqlxError>>());
-      return const Ok<String, SqlxError>('committed');
-    });
+        expect(
+          optional.match(ok: (value) => value?.name, err: (_) => 'err'),
+          'Ada',
+        );
+        expect(one.match(ok: (value) => value.name, err: (_) => 'err'), 'Ada');
+        expect(all.match(ok: (value) => value.length, err: (_) => -1), 1);
+        expect(count.match(ok: (value) => value, err: (_) => -1), 1);
+        expect(rawRows.match(ok: (rows) => rows.length, err: (_) => -1), 1);
+        expect(nested, isA<Ok<Unit, SqlxError>>());
+        return const Ok<String, SqlxError>('committed');
+      });
 
-    expect(result.match(ok: (value) => value, err: (_) => 'err'), 'committed');
-  });
+      expect(
+        result.match(ok: (value) => value, err: (_) => 'err'),
+        'committed',
+      );
+    },
+  );
 
   test('sqlite transaction rolls back when callback returns Err', () async {
     final pool = _userPool();
@@ -104,8 +126,11 @@ void main() {
 }
 
 SqlitePool _userPool() {
-  return SqlitePool.open(':memory:', migrations: const <String, String>{
-    '0001.sql':
-        'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL);',
-  });
+  return SqlitePool.open(
+    ':memory:',
+    migrations: const <String, String>{
+      '0001.sql':
+          'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL);',
+    },
+  );
 }

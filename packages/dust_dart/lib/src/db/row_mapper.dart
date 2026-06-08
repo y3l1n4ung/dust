@@ -4,10 +4,9 @@ import 'pool.dart';
 typedef RowMapper<T> = T Function(Row row);
 
 /// Process-wide row mapper registry populated by generated `FromRow` code.
-final class RowMapperRegistry {
-  RowMapperRegistry._();
-
-  static final Map<Type, RowMapper<Object?>> _mappers = <Type, RowMapper<Object?>>{};
+abstract final class RowMapperRegistry {
+  static final Map<Type, RowMapper<Object?>> _mappers =
+      <Type, RowMapper<Object?>>{};
 
   /// Registers a generated mapper for [T].
   static bool register<T>(RowMapper<T> mapper) {

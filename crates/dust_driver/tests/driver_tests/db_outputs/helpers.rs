@@ -192,7 +192,7 @@ pub(crate) fn write_dao_workspace(root: &std::path::Path) {
          }\n\
          @SqlxDao()\n\
          abstract final class UserDao {\n\
-           const factory UserDao(SqlxDriver db) = _$UserDao;\n\
+           const factory UserDao(Executor db) = _$UserDao;\n\
            @Query(r'SELECT id, display_name FROM users WHERE id = $1')\n\
            Future<Result<UserProfile?, SqlxError>> findById(int id);\n\
          }\n",
@@ -228,7 +228,7 @@ pub(crate) fn write_split_pipeline_workspace(root: &std::path::Path) {
          }\n\
          @SqlxDao()\n\
          abstract final class UserDao {\n\
-           const factory UserDao(SqlxDriver db) = _$UserDao;\n\
+           const factory UserDao(Executor db) = _$UserDao;\n\
            @Query(r'SELECT COUNT(*) FROM users')\n\
            Future<Result<int, SqlxError>> count();\n\
          }\n",

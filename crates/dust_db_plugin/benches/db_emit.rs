@@ -87,7 +87,7 @@ fn main() {
             span: span(),
             params: vec![ConstructorParamIr {
                 name: "db".to_owned(),
-                ty: TypeIr::named("SqlxDriver"),
+                ty: TypeIr::named("Executor"),
                 span: span(),
                 kind: ParamKind::Positional,
                 has_default: false,

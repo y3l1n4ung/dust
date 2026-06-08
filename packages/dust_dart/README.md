@@ -2,6 +2,17 @@
 
 Dart-only runtime and annotations for Dust generated code.
 
+You focus on product. We focus on performance.
+
+## Our Promise
+
+- Stable Dart authoring APIs for data classes, JSON, validation, and HTTP
+  client generation.
+- DB APIs are 50% stable and may still be refined before stabilization.
+- Generated code and runtime helpers can improve without forcing app-code
+  rewrites.
+- No external functional dependency for core generated-code contracts.
+
 ## Public surfaces
 
 - `package:dust_dart/core.dart`: shared core primitives such as `Result`, `Ok`, `Err`, `Unit`, and `unit`.
@@ -36,3 +47,21 @@ final label = parseCount('42').match(
 ```dart
 Future<Result<UserRow?, SqlxError>> findById(int id);
 ```
+
+`Executor` is the SQLx-style execution contract used by generated DAO code.
+`Pool`, `Connection`, and `Transaction` implementations can all be passed to
+DAO factories and query helpers.
+
+`Row` is a driver-agnostic interface. Driver packages own concrete adapters
+such as `Sqlite3Row`, while generated `FromRow` mappers stay driver-blind:
+
+```dart
+extension UserRowFromRow on UserRow {
+  static UserRow fromRow(Row row) {
+    return UserRow(id: row.read<int>('id'));
+  }
+}
+```
+
+Use driver-specific escape hatches only when needed, for example
+`Sqlite3Executor.database` from `package:dust_db_sqlite3`.

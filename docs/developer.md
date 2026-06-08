@@ -53,6 +53,15 @@ The engine resolves all types and symbols against the workspace catalog. The res
 
 ## ⚖️ Engineering Standards
 
+### Product Promise
+
+You focus on product. We focus on performance.
+
+App-facing APIs marked stable should not change. When possible, improvements
+belong in generated code, runtime internals, or the Rust engine rather than in
+migration work for handwritten product code. Features marked 50% stable can
+still refine app-facing APIs before stabilization.
+
 > [!IMPORTANT]
 > **Performance is a Requirement:**
 > All core logic must be validated against the `benchmark_project` (5,000+ files). We target sub-second "warm" rebuild times for any project size.

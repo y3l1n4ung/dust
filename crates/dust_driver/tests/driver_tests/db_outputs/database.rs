@@ -32,7 +32,7 @@ extension UserProfileFromRow on UserProfile {
     return UserProfile(
       id: row.read<int>('id'),
       name: row.read<String>('display_name'),
-      bio: row.readOrNull<Object?>('bio') == null ? '' : row.read<String>('bio'),
+      bio: row.readNullable<Object?>('bio') == null ? '' : row.read<String>('bio'),
     );
   }
 }

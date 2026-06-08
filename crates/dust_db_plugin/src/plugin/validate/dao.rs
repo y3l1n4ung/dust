@@ -39,13 +39,14 @@ fn validate_dao_constructor(
         constructor.is_factory
             && constructor.redirected_target_name.as_deref() == Some(expected_target.as_str())
             && constructor.params.len() == 1
-            && constructor.params[0].ty.is_named("SqlxDriver")
+            && (constructor.params[0].ty.is_named("Executor")
+                || constructor.params[0].ty.is_named("SqlxDriver"))
             && matches!(constructor.params[0].kind, dust_ir::ParamKind::Positional)
     });
     if !has_redirecting_factory {
         diagnostics.push(
             Diagnostic::error(format!(
-                "SqlxDao `{}` must declare `const factory {}(SqlxDriver db) = _${}`",
+                "SqlxDao `{}` must declare `const factory {}(Executor db) = _${}`",
                 dao.class.name, dao.class.name, dao.class.name
             ))
             .with_label(SourceLabel::new(

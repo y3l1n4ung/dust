@@ -8,7 +8,7 @@ Dust DB is SQL-first and SQLx-style:
 - `@SqlxDao` marks generated DAO interfaces.
 - `@Query` contains raw SQL and is checked only by `dust build --db`.
 - DAO methods return `Future<Result<T, SqlxError>>`.
-- Generated DAO classes use typed `SqlxDriver` fetch/execute methods.
+- Generated DAO classes use typed `Executor` fetch/execute methods.
 - Dynamic SQL uses `RawSqlx`/`db.raw` and is runtime-only unchecked.
 
 No ORM. No query builder. No cross-dialect SQL abstraction.
@@ -16,7 +16,7 @@ No ORM. No query builder. No cross-dialect SQL abstraction.
 ## Runtime API
 
 ```dart
-abstract interface class SqlxDriver {
+abstract interface class Executor {
   Driver get driver;
   RawSql get raw;
 
@@ -31,7 +31,7 @@ abstract interface class SqlxDriver {
   );
 
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(SqlxDriver tx) fn,
+    Future<Result<T, SqlxError>> Function(Executor tx) fn,
   );
 
   Future<Result<Unit, SqlxError>> close();
@@ -43,7 +43,7 @@ abstract interface class SqlxDriver {
 ```dart
 @SqlxDao()
 abstract final class UserDao {
-  const factory UserDao(SqlxDriver db) = _$UserDao;
+  const factory UserDao(Executor db) = _$UserDao;
 
   @Query(r'''
   SELECT id, email, name
@@ -60,7 +60,7 @@ Generated:
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final SqlxDriver _db;
+  final Executor _db;
 
   @override
   Future<Result<UserRow?, SqlxError>> findById(int id) async {
@@ -95,9 +95,9 @@ final class _$UserDao implements UserDao {
 ## Database Shape
 
 ```dart
-@SqlxDatabase(type: SqlxDatabaseType.postgres)
+@SqlxDatabase(type: SqlxDatabaseType.sqlite)
 final class AppDatabase {
-  final SqlxDriver _db;
+  final Executor _db;
 
   late final UserDao users = UserDao(_db);
   late final ProductDao products = ProductDao(_db);
@@ -105,7 +105,7 @@ final class AppDatabase {
 
   AppDatabase._(this._db);
 
-  static Future<AppDatabase> connect(SqlxDriver driver) async {
+  static Future<AppDatabase> connect(Executor driver) async {
     return AppDatabase._(driver);
   }
 

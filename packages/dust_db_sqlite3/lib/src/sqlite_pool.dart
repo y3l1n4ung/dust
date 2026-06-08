@@ -6,8 +6,14 @@ part 'raw_sql.dart';
 part 'row.dart';
 part 'transaction.dart';
 
+/// SQLite-backed executor with access to the underlying native database.
+abstract interface class Sqlite3Executor implements Executor {
+  /// Native `package:sqlite3` database used by this executor.
+  sqlite.Database get database;
+}
+
 /// SQLite driver backed by one `package:sqlite3` database connection.
-final class Sqlite3Driver implements Pool {
+final class Sqlite3Driver implements Pool, Sqlite3Executor {
   Sqlite3Driver._(this._database, {required bool ownsDatabase})
     : _ownsDatabase = ownsDatabase;
 
@@ -29,6 +35,9 @@ final class Sqlite3Driver implements Pool {
   final sqlite.Database _database;
   final bool _ownsDatabase;
   var _closed = false;
+
+  @override
+  sqlite.Database get database => _database;
 
   @override
   Driver get driver => Driver.sqlite3;
@@ -62,9 +71,7 @@ final class Sqlite3Driver implements Pool {
     return rows.match(
       ok: (rows) {
         try {
-          return Ok<List<T>, SqlxError>([
-            for (final row in rows) mapper(row),
-          ]);
+          return Ok<List<T>, SqlxError>([for (final row in rows) mapper(row)]);
         } on SqlxError catch (error) {
           return Err<List<T>, SqlxError>(error);
         } catch (error) {
@@ -118,7 +125,7 @@ final class Sqlite3Driver implements Pool {
         try {
           if (null is T) {
             return Ok<T, SqlxError>(
-              rows.single.readIndexOrNull<Object?>(0) as T,
+              rows.single.readIndexNullable<Object?>(0) as T,
             );
           }
           return Ok<T, SqlxError>(rows.single.readIndex<T>(0));
@@ -144,7 +151,7 @@ final class Sqlite3Driver implements Pool {
 
   @override
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(SqlxDriver tx) fn,
+    Future<Result<T, SqlxError>> Function(Executor tx) fn,
   ) async {
     _checkOpen();
     if (!_ownsDatabase) return fn(this);
@@ -174,14 +181,8 @@ final class Sqlite3Driver implements Pool {
   Future<Result<Unit, SqlxError>> close() async {
     if (!_ownsDatabase || _closed) return const Ok<Unit, SqlxError>(unit);
     _closed = true;
-    try {
-      _database.close();
-      return const Ok<Unit, SqlxError>(unit);
-    } catch (error) {
-      return Err<Unit, SqlxError>(
-        SqlxError.driver('SQLite close failed.', cause: error),
-      );
-    }
+    _database.close();
+    return const Ok<Unit, SqlxError>(unit);
   }
 
   Result<List<Row>, SqlxError> _queryResult(
@@ -190,8 +191,6 @@ final class Sqlite3Driver implements Pool {
   ) {
     try {
       return Ok<List<Row>, SqlxError>(_queryUnchecked(sql, parameters));
-    } on SqlxError catch (error) {
-      return Err<List<Row>, SqlxError>(error);
     } catch (error) {
       return Err<List<Row>, SqlxError>(
         SqlxError.driver('SQLite query failed.', cause: error),
@@ -205,8 +204,6 @@ final class Sqlite3Driver implements Pool {
   ) {
     try {
       return Ok<ExecResult, SqlxError>(_executeUnchecked(sql, parameters));
-    } on SqlxError catch (error) {
-      return Err<ExecResult, SqlxError>(error);
     } catch (error) {
       return Err<ExecResult, SqlxError>(
         SqlxError.driver('SQLite execute failed.', cause: error),
@@ -235,9 +232,7 @@ final class Sqlite3Driver implements Pool {
   List<Row> _queryUnchecked(String sql, List<Object?> parameters) {
     _checkOpen();
     final result = _database.select(sql, parameters);
-    return <Row>[
-      for (final row in result) SqliteRow(row),
-    ];
+    return <Row>[for (final row in result) Sqlite3Row(row)];
   }
 
   ExecResult _executeUnchecked(String sql, List<Object?> parameters) {

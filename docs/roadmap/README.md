@@ -16,6 +16,11 @@ Each roadmap document should answer the same questions:
 
 ## Principles
 
+- You focus on product. We focus on performance.
+- Stable app-facing APIs are the target. Prefer changing generated code,
+  runtime internals, or engine internals before requiring app-code migration.
+- Features marked 50% stable can still refine app-facing APIs before they
+  graduate to stable.
 - Generated Dart must be analyzer-clean, deterministic, readable, and small.
 - Public APIs must have Dartdoc before release.
 - Features should work through Dust CLI generation.

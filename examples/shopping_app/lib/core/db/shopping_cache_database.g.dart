@@ -35,7 +35,7 @@ const Map<String, String> _$shoppingCacheDatabaseMigrations = <String, String>{
 final class _$ShoppingCacheDao implements ShoppingCacheDao {
   const _$ShoppingCacheDao(this._db);
 
-  final SqlxDriver _db;
+  final Executor _db;
 
   @override
   Future<Result<CachedProductRow?, SqlxError>> findCachedProduct(int id) {

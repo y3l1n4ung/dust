@@ -1,5 +1,7 @@
 # Release 0.1.0
 
+You focus on product. We focus on performance.
+
 ## Scope
 
 Release `0.1.0` for:
@@ -35,33 +37,33 @@ flutter analyze
 flutter test
 ```
 
-Run package dry-runs:
+Run package checks:
 
 ```sh
 cd packages/dust_dart
-dart pub publish --dry-run
+dart analyze
+dart test
 
 cd ../dust_flutter
-dart pub publish --dry-run
+flutter analyze
+flutter test
 
 cd ../dust_db_sqlite3
-dart pub publish --dry-run
+dart analyze
+dart test
 ```
 
-## Publish Order
+## Publish Policy
 
 Skip crates.io for Rust crates. Release the `dust` CLI from GitHub binary
 artifacts and installers.
 
-Publish Dart packages to pub.dev in this order:
-
-1. `dust_dart`
-2. `dust_flutter`
-3. `dust_db_sqlite3`
+Dart packages currently use `publish_to: none`; keep package validation in the
+release gate, but do not publish to pub.dev unless the package policy changes.
 
 ## GitHub Release
 
-After Dart package publishes and Rust binary checks succeed:
+After Dart package validation and Rust binary checks succeed:
 
 1. Update the changelog and release notes manually:
    ```sh

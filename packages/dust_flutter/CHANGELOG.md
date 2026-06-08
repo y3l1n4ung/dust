@@ -1,3 +1,3 @@
-## 0.0.1
+## 0.1.0
 
-* TODO: Describe initial release.
+- Initial workspace package for Dust Flutter routing and state runtime APIs.
