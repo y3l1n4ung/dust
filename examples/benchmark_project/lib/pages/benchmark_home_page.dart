@@ -32,8 +32,7 @@ class BenchmarkHomePage extends StatelessWidget {
             selected: feature == state.activeFeature,
             onTap: () {
               context.readBenchmarkViewModel().selectFeature(feature);
-              context
-                  .navigator
+              context.navigator
                   .modelDetail(
                     id: feature.length,
                     tab: feature,
@@ -44,9 +43,9 @@ class BenchmarkHomePage extends StatelessWidget {
           ),
         const SizedBox(height: 16),
         FilledButton(
-          onPressed: () => context
-              .readBenchmarkViewModel()
-              .recordBuild(BenchmarkMode.invalidated),
+          onPressed: () => context.readBenchmarkViewModel().recordBuild(
+            BenchmarkMode.invalidated,
+          ),
           child: const Text('Record invalidated build'),
         ),
       ],

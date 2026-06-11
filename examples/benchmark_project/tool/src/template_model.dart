@@ -14,7 +14,8 @@ String fileNameForIndex(int index) =>
 
 String primaryClassNameForIndex(int index) {
   final number = index + 1;
-  return switch (BenchmarkPattern.values[index % BenchmarkPattern.values.length]) {
+  return switch (BenchmarkPattern.values[index %
+      BenchmarkPattern.values.length]) {
     BenchmarkPattern.deriveScalar => 'ScalarModel$number',
     BenchmarkPattern.deriveLinked => 'LinkedModel$number',
     BenchmarkPattern.deriveHierarchy => 'EntityView$number',

@@ -7,10 +7,9 @@ Result<int, String> parseCount(String text) {
 
 void main() {
   const derive = Derive([ToString()]);
-  final label = parseCount('42').match(
-    ok: (value) => 'count=$value',
-    err: (error) => error,
-  );
+  final label = parseCount(
+    '42',
+  ).match(ok: (value) => 'count=$value', err: (error) => error);
 
   print('${derive.traits.length} $label');
 }

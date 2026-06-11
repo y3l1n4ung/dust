@@ -44,7 +44,10 @@ final class CachedShoppingRepository implements ShoppingRepository {
       await _database.pool.saveProduct(product);
       return product;
     } catch (error) {
-      logger.warning('DB', 'Using cached product #$id after API failure: $error');
+      logger.warning(
+        'DB',
+        'Using cached product #$id after API failure: $error',
+      );
       final row = await _database.pool.findCachedProduct(id);
       if (row == null) rethrow;
       return row.toProduct();
@@ -77,7 +80,8 @@ final class CachedShoppingRepository implements ShoppingRepository {
   Future<StoreCart> getCart(int id) => _remote.getCart(id);
 
   @override
-  Future<List<StoreCart>> getUserCarts(int userId) => _remote.getUserCarts(userId);
+  Future<List<StoreCart>> getUserCarts(int userId) =>
+      _remote.getUserCarts(userId);
 
   @override
   Future<String> login(String username, String password) {

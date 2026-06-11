@@ -18,11 +18,7 @@ run_dart_pub_get() {
 
   if [[ -f "$dir/pubspec.yaml" ]]; then
     echo "==> Dart pub get: $dir"
-    if has_cmd flutter; then
-      (cd "$dir" && run flutter pub get)
-    else
-      (cd "$dir" && run dart pub get)
-    fi
+    (cd "$dir" && run dart pub get)
   fi
 }
 
@@ -40,11 +36,7 @@ run_dart_test() {
 
   if [[ -f "$dir/pubspec.yaml" ]]; then
     echo "==> Dart test: $dir"
-    if has_cmd flutter; then
-      (cd "$dir" && run flutter test)
-    else
-      (cd "$dir" && run dart test)
-    fi
+    (cd "$dir" && run dart test)
   fi
 }
 
@@ -55,6 +47,14 @@ run_flutter_test() {
     echo "==> Flutter test: $dir"
     (cd "$dir" && run flutter test)
   fi
+}
+
+run_dust_check() {
+  local root="$1"
+  shift || true
+
+  echo "==> Dust check: $root $*"
+  run cargo run --quiet -p dust_cli -- check --root "$root" "$@"
 }
 
 DART_TEST_PACKAGES=(
@@ -75,18 +75,18 @@ if ! has_cmd cargo; then
 fi
 
 echo "==> Rust tests"
-run cargo test --workspace
+run cargo test --workspace --quiet
 
 if ! has_cmd dart; then
   echo "warning: dart not found; skipping Dart/Flutter tests" >&2
   exit 0
 fi
 
-echo "==> Dust build: examples"
-run cargo run -p dust_cli -- build --root examples/product_showcase
-(cd examples/benchmark_project && run ./generate.sh --count 10)
-run cargo run -p dust_cli -- build --root examples/benchmark_project
-run cargo run -p dust_cli -- build --root examples/shopping_app
+echo "==> Dust freshness checks"
+run_dust_check "examples/product_showcase"
+run_dust_check "examples/benchmark_project"
+run_dust_check "examples/shopping_app"
+run_dust_check "examples/shopping_app" --db
 
 for package in "${DART_TEST_PACKAGES[@]}"; do
   run_dart_pub_get "$package"

@@ -68,11 +68,7 @@ abstract final class JsonHelper {
     try {
       return codec.deserialize(value as dynamic) as T;
     } catch (error) {
-      throw ArgumentError.value(
-        value,
-        key,
-        'failed SerDeCodec decode: $error',
-      );
+      throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
     }
   }
 }

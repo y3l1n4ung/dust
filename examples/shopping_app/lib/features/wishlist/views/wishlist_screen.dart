@@ -87,7 +87,8 @@ class _WishlistTile extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
-        onTap: () => context.navigator.productDetail(productId: product.id).push(),
+        onTap: () =>
+            context.navigator.productDetail(productId: product.id).push(),
         trailing: Wrap(
           spacing: 4,
           children: [

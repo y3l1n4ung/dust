@@ -41,7 +41,10 @@ void main() {
     );
     expect(result.unwrapOr(7), 7);
     expect(result.unwrapOrElse((error) => error.length), 3);
-    expect(result.match(ok: (value) => value + 1, err: (error) => error.length), 3);
+    expect(
+      result.match(ok: (value) => value + 1, err: (error) => error.length),
+      3,
+    );
     expect(result.toString(), 'Err(bad)');
   });
 

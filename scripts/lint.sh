@@ -5,7 +5,6 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 run() {
-  echo "+ $*"
   "$@"
 }
 
@@ -18,11 +17,7 @@ run_dart_pub_get() {
 
   if [[ -f "$dir/pubspec.yaml" ]]; then
     echo "==> Dart pub get: $dir"
-    if has_cmd flutter; then
-      (cd "$dir" && run flutter pub get)
-    else
-      (cd "$dir" && run dart pub get)
-    fi
+    (cd "$dir" && run dart pub get >/dev/null)
   fi
 }
 
@@ -31,7 +26,7 @@ run_flutter_pub_get() {
 
   if [[ -f "$dir/pubspec.yaml" ]]; then
     echo "==> Flutter pub get: $dir"
-    (cd "$dir" && run flutter pub get)
+    (cd "$dir" && run flutter pub get >/dev/null)
   fi
 }
 
@@ -40,11 +35,7 @@ run_dart_analyze() {
 
   if [[ -f "$dir/pubspec.yaml" ]]; then
     echo "==> Dart analyze: $dir"
-    if has_cmd flutter; then
-      (cd "$dir" && run flutter analyze)
-    else
-      (cd "$dir" && run dart analyze)
-    fi
+    (cd "$dir" && run dart analyze --fatal-infos)
   fi
 }
 
@@ -53,8 +44,16 @@ run_flutter_analyze() {
 
   if [[ -f "$dir/pubspec.yaml" ]]; then
     echo "==> Flutter analyze: $dir"
-    (cd "$dir" && run flutter analyze)
+    (cd "$dir" && run flutter analyze --no-pub)
   fi
+}
+
+run_dust_check() {
+  local root="$1"
+  shift || true
+
+  echo "==> Dust check: $root $*"
+  run cargo run --quiet -p dust_cli -- check --root "$root" "$@"
 }
 
 DART_PACKAGES=(
@@ -84,11 +83,11 @@ if ! has_cmd dart; then
   exit 0
 fi
 
-echo "==> Dust build: examples"
-run cargo run -p dust_cli -- build --root examples/product_showcase
-(cd examples/benchmark_project && run ./generate.sh --count 10)
-run cargo run -p dust_cli -- build --root examples/benchmark_project
-run cargo run -p dust_cli -- build --root examples/shopping_app
+echo "==> Dust freshness checks"
+run_dust_check "examples/product_showcase"
+run_dust_check "examples/benchmark_project"
+run_dust_check "examples/shopping_app"
+run_dust_check "examples/shopping_app" --db
 
 for package in "${DART_PACKAGES[@]}"; do
   run_dart_pub_get "$package"

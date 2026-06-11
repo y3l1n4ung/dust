@@ -78,7 +78,7 @@ final class SerDe extends DeriveConfig {
   /// Explicit serde rename for the annotated declaration or field.
   final String? rename;
 
-/// Automatic rename rule applied to child fields or enum variants.
+  /// Automatic rename rule applied to child fields or enum variants.
   final SerDeRename? renameAll;
 
   /// Fallback value used when deserialization omits the annotated field.

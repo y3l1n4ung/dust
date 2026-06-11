@@ -22,7 +22,9 @@ void main() {
   });
 
   test('generated typed routes parse and format benchmark paths', () {
-    final route = parseAppRoute(Uri.parse('/models/42?tab=serde&archived=true'));
+    final route = parseAppRoute(
+      Uri.parse('/models/42?tab=serde&archived=true'),
+    );
 
     expect(route, isA<ModelDetailRoute>());
     expect((route as ModelDetailRoute).id, 42);

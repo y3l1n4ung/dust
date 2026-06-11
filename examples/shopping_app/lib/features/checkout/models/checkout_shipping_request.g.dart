@@ -33,7 +33,6 @@ mixin _$CheckoutShippingRequest {
   }
 }
 
-
 void _validateCheckoutShippingRequestFullName(String fullName, List<ValidationError> errors) {
   if (fullName.length < 1) {
     errors.add(ValidationError(field: 'fullName', message: 'Required'));

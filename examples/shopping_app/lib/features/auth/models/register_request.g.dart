@@ -35,7 +35,6 @@ mixin _$RegisterRequest {
   }
 }
 
-
 void _validateRegisterRequestEmail(String email, List<ValidationError> errors) {
   if (email.length < 1) {
     errors.add(ValidationError(field: 'email', message: 'Please enter email'));

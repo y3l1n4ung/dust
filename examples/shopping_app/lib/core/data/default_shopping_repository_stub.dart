@@ -4,4 +4,6 @@ ShoppingRepository createDefaultShoppingRepository() {
   return LiveShoppingRepository();
 }
 
-Future<void> closeDefaultShoppingRepository(ShoppingRepository repository) async {}
+Future<void> closeDefaultShoppingRepository(
+  ShoppingRepository repository,
+) async {}

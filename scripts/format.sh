@@ -16,7 +16,6 @@ case "${1:-}" in
 esac
 
 run() {
-  echo "+ $*"
   "$@"
 }
 
@@ -44,7 +43,7 @@ run_dart_format() {
         ! -name "*.freezed.dart" \
         ! -path "*/generated/*" \
         ! -path "*/generated_models/*" \
-        -exec dart format --set-exit-if-changed {} +
+        -exec dart format --output=none --set-exit-if-changed {} +
     else
       run find . -name "*.dart" \
         ! -path "*/.dart_tool/*" \

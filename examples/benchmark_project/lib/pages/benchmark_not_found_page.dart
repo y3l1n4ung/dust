@@ -10,8 +10,6 @@ class BenchmarkNotFoundPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(child: Text('No benchmark route for $path')),
-    );
+    return Scaffold(body: Center(child: Text('No benchmark route for $path')));
   }
 }

@@ -7,17 +7,13 @@ class RegisterHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Icon(
-          Icons.person_add,
-          size: 60,
-          color: Colors.deepPurple,
-        ),
+        const Icon(Icons.person_add, size: 60, color: Colors.deepPurple),
         const SizedBox(height: 16),
         Text(
           'Join Us',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),

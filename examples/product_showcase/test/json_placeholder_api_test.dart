@@ -61,8 +61,14 @@ void main() {
 
       expect(posts.single.title, 'Dust keeps HTTP clients honest');
       expect(streamedText, contains('Dust keeps HTTP clients honest'));
-      expect(utf8.decode(streamedBytes), contains('Dust keeps HTTP clients honest'));
-      expect(streamedTextChunks.join(), contains('Dust keeps HTTP clients honest'));
+      expect(
+        utf8.decode(streamedBytes),
+        contains('Dust keeps HTTP clients honest'),
+      );
+      expect(
+        streamedTextChunks.join(),
+        contains('Dust keeps HTTP clients honest'),
+      );
       expect(raw.statusCode, 200);
       expect(raw.data?.id, 1);
       expect(comments.map((comment) => comment.id), [1, 2]);

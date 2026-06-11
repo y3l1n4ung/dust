@@ -222,8 +222,9 @@ class _CartScreenState extends State<CartScreen> {
                                 children: [
                                   Text(
                                     'Total (${state.itemCount} items)',
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
                                   ),
                                   Text(
                                     '\$${state.totalPrice.toStringAsFixed(2)}',

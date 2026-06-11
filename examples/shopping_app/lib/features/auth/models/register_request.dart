@@ -19,11 +19,17 @@ class RegisterRequest with _$RegisterRequest {
   final String email;
 
   @Validate(length: Length(min: 1), message: 'Please enter username')
-  @Validate(length: Length(min: 3), message: 'Username must be at least 3 characters')
+  @Validate(
+    length: Length(min: 3),
+    message: 'Username must be at least 3 characters',
+  )
   final String username;
 
   @Validate(length: Length(min: 1), message: 'Please enter password')
-  @Validate(length: Length(min: 6), message: 'Password must be at least 6 characters')
+  @Validate(
+    length: Length(min: 6),
+    message: 'Password must be at least 6 characters',
+  )
   final String password;
 
   @Validate(length: Length(min: 1), message: 'Please confirm password')
