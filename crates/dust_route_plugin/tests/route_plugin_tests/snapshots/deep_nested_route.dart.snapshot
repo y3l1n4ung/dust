@@ -4,18 +4,17 @@
 // ignore_for_file: unused_import, unnecessary_import
 
 import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/cupertino.dart' hide Route;
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
-import 'package:product_showcase/pages/dashboard_page.dart';
-import 'package:product_showcase/pages/not_found_page.dart';
 
 abstract class $AppRouter extends RouterBase<AppRoutePath> {
 
   RouterConfig<AppRoutePath> get config {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
-      initialRoute: const DashboardRoute(),
+      initialRoute: const ReportRoute(),
       parseRoute: parseAppRoute,
       routeLocation: routeLocation,
       requiresAuth: routeRequiresAuth,
@@ -44,15 +43,40 @@ abstract class $AppRouter extends RouterBase<AppRoutePath> {
 
 const List<GeneratedRoute> $appRoutes = [
   GeneratedRoute(
-    '/',
-    page: DashboardPage,
-    name: 'dashboard',
-  ),
-  GeneratedRoute(
     '/404',
     page: NotFoundPage,
     name: 'notFound',
     guards: [],
+  ),
+  GeneratedRoute(
+    '/orgs',
+    routes: [
+      GeneratedRoute(
+        ':orgId',
+        routes: [
+          GeneratedRoute(
+            'projects',
+            routes: [
+              GeneratedRoute(
+                ':projectId',
+                routes: [
+                  GeneratedRoute(
+                    'reports',
+                    routes: [
+                      GeneratedRoute(
+                        ':reportId',
+                        page: ReportPage,
+                        name: 'report',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
   ),
 ];
 
@@ -64,16 +88,6 @@ sealed class AppRoutePath<R> {
   /// Defaults to true. Override and return false for public routes
   /// (login, invite, forbidden, checkout, notFound).
   bool get requiresAuth => true;
-}
-
-/// Typed route data for `DashboardRoute`.
-final class DashboardRoute extends AppRoutePath<void> {
-  const DashboardRoute();
-
-  @override
-  String get location {
-    return '/';
-  }
 }
 
 /// Typed route data for `NotFoundRoute`.
@@ -89,6 +103,27 @@ final class NotFoundRoute extends AppRoutePath<void> {
 
   @override
   bool get requiresAuth => false;
+}
+
+/// Typed route data for `ReportRoute`.
+final class ReportRoute extends AppRoutePath<void> {
+  const ReportRoute({required this.orgId, required this.projectId, required this.reportId});
+
+  final int orgId;
+  final int projectId;
+  final int reportId;
+
+  @override
+  String get location {
+    return _routePath([
+      'orgs',
+      orgId.toString(),
+      'projects',
+      projectId.toString(),
+      'reports',
+      reportId.toString(),
+    ]);
+  }
 }
 
 String routeLocation(AppRoutePath route) => route.location;
@@ -125,10 +160,11 @@ final class AppRoutesNavigator {
 
   final RouterController<AppRoutePath> _router;
 
-  RouteAction<void> dashboard() => RouteAction(_router, DashboardRoute());
-
   RouteAction<void> notFound({String path = ''}) =>
       RouteAction(_router, NotFoundRoute(path: path));
+
+  RouteAction<void> report({required int orgId, required int projectId, required int reportId}) =>
+      RouteAction(_router, ReportRoute(orgId: orgId, projectId: projectId, reportId: reportId));
 
   void pop() => _router.pop();
 }
@@ -146,11 +182,10 @@ final class RouteAction<R> {
 
 RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
   return switch (route) {
-    DashboardRoute() => [
+    NotFoundRoute(path: _) => [
       route,
     ],
-    NotFoundRoute(path: _) => [
-      const DashboardRoute(),
+    ReportRoute(orgId: _, projectId: _, reportId: _) => [
       route,
     ],
   };
@@ -159,11 +194,32 @@ RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
 AppRoutePath parseAppRoute(Uri uri) {
   final segments = uri.pathSegments;
 
-  if (segments.isEmpty) {
-    return const DashboardRoute();
-  }
   if (segments.length == 1 && segments[0] == '404') {
     return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
+  }
+  if (
+    segments.length == 6 &&
+    segments[0] == 'orgs' &&
+    segments[2] == 'projects' &&
+    segments[4] == 'reports'
+  ) {
+    final orgId = int.tryParse(segments[1]);
+    final projectId = int.tryParse(segments[3]);
+    final reportId = int.tryParse(segments[5]);
+    if (orgId == null) {
+      return _notFoundRoute(uri);
+    }
+    if (projectId == null) {
+      return _notFoundRoute(uri);
+    }
+    if (reportId == null) {
+      return _notFoundRoute(uri);
+    }
+    return ReportRoute(
+      orgId: orgId,
+      projectId: projectId,
+      reportId: reportId,
+    );
   }
   return _notFoundRoute(uri);
 }
@@ -180,8 +236,8 @@ bool? _parseBool(String? value) {
 }
 
 const Map<Type, Type?> _kAppliedShellsByPage = {
-  DashboardPage: null,
   NotFoundPage: null,
+  ReportPage: null,
 };
 
 bool _shellConsistencyCheck() {
@@ -201,19 +257,23 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
-    DashboardRoute() => generatedPage(
-      location: route.location,
-      name: 'dashboard',
-      fullscreenDialog: false,
-      maintainState: true,
-      child: const DashboardPage(),
-    ),
     NotFoundRoute(path: final path) => generatedPage(
       location: route.location,
       name: 'notFound',
       fullscreenDialog: false,
       maintainState: true,
       child: NotFoundPage(path: path),
+    ),
+    ReportRoute(
+      orgId: final orgId,
+      projectId: final projectId,
+      reportId: final reportId,
+    ) => generatedPage(
+      location: route.location,
+      name: 'report',
+      fullscreenDialog: false,
+      maintainState: true,
+      child: ReportPage(orgId: orgId, projectId: projectId, reportId: reportId),
     ),
   };
 }

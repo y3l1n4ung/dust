@@ -86,17 +86,38 @@ void main() {
 
     expect(validateBenchmarkRulesValidationEmailInput('bad'), 'Email rule');
     expect(validateBenchmarkRulesValidationUrlInput('bad-url'), 'URL rule');
-    expect(validateBenchmarkRulesValidationCodeInput('AB'), 'Exact length rule');
-    expect(validateBenchmarkRulesValidationLowScoreInput('abc'), 'Min range rule');
-    expect(validateBenchmarkRulesValidationHighScoreInput('11'), 'Max range rule');
-    expect(validateBenchmarkRulesValidationContainsDustInput('clean'), 'Contains rule');
-    expect(validateBenchmarkRulesValidationCleanTextInput('bad value'), 'Does-not-contain rule');
+    expect(
+      validateBenchmarkRulesValidationCodeInput('AB'),
+      'Exact length rule',
+    );
+    expect(
+      validateBenchmarkRulesValidationLowScoreInput('abc'),
+      'Min range rule',
+    );
+    expect(
+      validateBenchmarkRulesValidationHighScoreInput('11'),
+      'Max range rule',
+    );
+    expect(
+      validateBenchmarkRulesValidationContainsDustInput('clean'),
+      'Contains rule',
+    );
+    expect(
+      validateBenchmarkRulesValidationCleanTextInput('bad value'),
+      'Does-not-contain rule',
+    );
     expect(validateBenchmarkRulesValidationPatternInput('bad'), 'Regex rule');
     expect(
-      validateBenchmarkRulesValidationConfirmPasswordInput(request, 'different'),
+      validateBenchmarkRulesValidationConfirmPasswordInput(
+        request,
+        'different',
+      ),
       'Must-match rule',
     );
-    expect(validateBenchmarkRulesValidationRequiredTokenInput(null), 'Required rule');
+    expect(
+      validateBenchmarkRulesValidationRequiredTokenInput(null),
+      'Required rule',
+    );
     expect(validateBenchmarkRulesValidationOptionalWebsiteInput(null), isNull);
   });
 }

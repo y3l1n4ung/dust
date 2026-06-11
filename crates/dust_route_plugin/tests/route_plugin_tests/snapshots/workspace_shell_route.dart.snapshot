@@ -4,18 +4,19 @@
 // ignore_for_file: unused_import, unnecessary_import
 
 import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/cupertino.dart' hide Route;
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
 import 'package:route_test/layout/app_shell.dart';
-import 'package:route_test/pages/search_page.dart';
+import 'package:route_test/pages/project_page.dart';
 
 abstract class $AppRouter extends RouterBase<AppRoutePath> {
 
   RouterConfig<AppRoutePath> get config {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
-      initialRoute: const SearchRoute(),
+      initialRoute: const ProjectRoute(),
       parseRoute: parseAppRoute,
       routeLocation: routeLocation,
       requiresAuth: routeRequiresAuth,
@@ -50,9 +51,15 @@ const List<GeneratedRoute> $appRoutes = [
     guards: [],
   ),
   GeneratedRoute(
-    '/search',
-    page: SearchPage,
-    name: 'search',
+    '/projects',
+    routes: [
+      GeneratedRoute(
+        ':projectId',
+        page: ProjectPage,
+        name: 'project',
+        shell: AppShell,
+      ),
+    ],
   ),
 ];
 
@@ -81,22 +88,15 @@ final class NotFoundRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `SearchRoute`.
-final class SearchRoute extends AppRoutePath<void> {
-  const SearchRoute({this.page = 1});
+/// Typed route data for `ProjectRoute`.
+final class ProjectRoute extends AppRoutePath<void> {
+  const ProjectRoute({required this.projectId});
 
-  final int page;
+  final int projectId;
 
   @override
   String get location {
-    final query = <String, String>{};
-    if (page != 1) {
-      query['page'] = page.toString();
-    }
-    return _routePath(
-      ['search'],
-      queryParameters: query.isEmpty ? null : query,
-    );
+    return _routePath(['projects', projectId.toString()]);
   }
 }
 
@@ -137,8 +137,8 @@ final class AppRoutesNavigator {
   RouteAction<void> notFound({String path = ''}) =>
       RouteAction(_router, NotFoundRoute(path: path));
 
-  RouteAction<void> search({int page = 1}) =>
-      RouteAction(_router, SearchRoute(page: page));
+  RouteAction<void> project({required int projectId}) =>
+      RouteAction(_router, ProjectRoute(projectId: projectId));
 
   void pop() => _router.pop();
 }
@@ -157,10 +157,9 @@ final class RouteAction<R> {
 RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
   return switch (route) {
     NotFoundRoute(path: _) => [
-      const SearchRoute(),
       route,
     ],
-    SearchRoute(page: _) => [
+    ProjectRoute(projectId: _) => [
       route,
     ],
   };
@@ -172,10 +171,12 @@ AppRoutePath parseAppRoute(Uri uri) {
   if (segments.length == 1 && segments[0] == '404') {
     return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
   }
-  if (segments.length == 1 && segments[0] == 'search') {
-    return SearchRoute(
-      page: int.tryParse(uri.queryParameters['page'] ?? '') ?? 1,
-    );
+  if (segments.length == 2 && segments[0] == 'projects') {
+    final projectId = int.tryParse(segments[1]);
+    if (projectId == null) {
+      return _notFoundRoute(uri);
+    }
+    return ProjectRoute(projectId: projectId);
   }
   return _notFoundRoute(uri);
 }
@@ -193,7 +194,7 @@ bool? _parseBool(String? value) {
 
 const Map<Type, Type?> _kAppliedShellsByPage = {
   NotFoundPage: null,
-  SearchPage: null,
+  ProjectPage: AppShell,
 };
 
 bool _shellConsistencyCheck() {
@@ -220,12 +221,12 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       maintainState: true,
       child: NotFoundPage(path: path),
     ),
-    SearchRoute(page: final page) => generatedPage(
+    ProjectRoute(projectId: final projectId) => generatedPage(
       location: route.location,
-      name: 'search',
+      name: 'project',
       fullscreenDialog: false,
       maintainState: true,
-      child: SearchPage(page: page),
+      child: AppShell(child: ProjectPage(projectId: projectId)),
     ),
   };
 }

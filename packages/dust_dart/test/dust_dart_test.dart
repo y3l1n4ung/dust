@@ -18,13 +18,16 @@ void main() {
     expect(query.sql, 'SELECT 1');
   });
 
-  test('keeps DB and HTTP Query annotations available through scoped libraries', () {
-    const sqlQuery = db.Query('SELECT 1');
-    const httpQuery = http.Query('search');
+  test(
+    'keeps DB and HTTP Query annotations available through scoped libraries',
+    () {
+      const sqlQuery = db.Query('SELECT 1');
+      const httpQuery = http.Query('search');
 
-    expect(sqlQuery.sql, 'SELECT 1');
-    expect(httpQuery.name, 'search');
-  });
+      expect(sqlQuery.sql, 'SELECT 1');
+      expect(httpQuery.name, 'search');
+    },
+  );
 
   test('exports runtime Result API', () {
     const result = Ok<int, SqlxError>(1);

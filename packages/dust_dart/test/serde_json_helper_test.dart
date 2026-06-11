@@ -49,7 +49,10 @@ void main() {
         JsonHelper.asDateTime('2026-06-04T00:00:00Z', 'createdAt'),
         DateTime.parse('2026-06-04T00:00:00Z'),
       );
-      expect(JsonHelper.asUri('https://example.com', 'url').host, 'example.com');
+      expect(
+        JsonHelper.asUri('https://example.com', 'url').host,
+        'example.com',
+      );
       expect(
         JsonHelper.asBigInt('9007199254740993', 'id'),
         BigInt.parse('9007199254740993'),
@@ -57,7 +60,10 @@ void main() {
     });
 
     test('decodes with serde codec', () {
-      expect(JsonHelper.decodeWithCodec<int>(const _IntCodec(), '42', 'id'), 42);
+      expect(
+        JsonHelper.decodeWithCodec<int>(const _IntCodec(), '42', 'id'),
+        42,
+      );
     });
 
     test('wraps serde codec failures', () {

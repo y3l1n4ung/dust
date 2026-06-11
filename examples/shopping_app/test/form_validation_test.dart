@@ -39,7 +39,10 @@ void main() {
       find.widgetWithText(TextFormField, 'First Name'),
       'Dust',
     );
-    await tester.enterText(find.widgetWithText(TextFormField, 'Last Name'), 'Dev');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Last Name'),
+      'Dev',
+    );
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Email'),
       'dust@example.com',

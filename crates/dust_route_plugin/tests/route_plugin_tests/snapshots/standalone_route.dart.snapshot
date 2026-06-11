@@ -4,11 +4,12 @@
 // ignore_for_file: unused_import, unnecessary_import
 
 import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/cupertino.dart' hide Route;
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
 
-abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
+abstract class $AppRouter extends RouterBase<AppRoutePath> {
 
   RouterConfig<AppRoutePath> get config {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
@@ -45,13 +46,31 @@ const List<GeneratedRoute> $appRoutes = [
     '/',
     page: DashboardPage,
     name: 'dashboard',
-    guards: [BenchmarkGuard],
+    transition: FadeUpwardsPageTransitionsBuilder(),
   ),
   GeneratedRoute(
     '/404',
     page: NotFoundPage,
     name: 'notFound',
     guards: [],
+  ),
+  GeneratedRoute(
+    '/projects',
+    routes: [
+      GeneratedRoute(
+        ':projectId',
+        page: ProjectPage,
+        name: 'project',
+        shell: AppShell,
+        routes: [
+          GeneratedRoute(
+            'settings',
+            page: ProjectSettingsPage,
+            name: 'projectSettings',
+            shell: AppShell,
+          ),
+        ],      ),
+    ],
   ),
 ];
 
@@ -90,6 +109,42 @@ final class NotFoundRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
+/// Typed route data for `ProjectRoute`.
+final class ProjectRoute extends AppRoutePath<void> {
+  const ProjectRoute({required this.projectId, this.tab, this.archived});
+
+  final int projectId;
+  final String? tab;
+  final bool? archived;
+
+  @override
+  String get location {
+    final query = <String, String>{};
+    if (tab != null) {
+      query['tab'] = tab!;
+    }
+    if (archived != null) {
+      query['archived'] = archived!.toString();
+    }
+    return _routePath(
+      ['projects', projectId.toString()],
+      queryParameters: query.isEmpty ? null : query,
+    );
+  }
+}
+
+/// Typed route data for `ProjectSettingsRoute`.
+final class ProjectSettingsRoute extends AppRoutePath<void> {
+  const ProjectSettingsRoute({required this.projectId});
+
+  final int projectId;
+
+  @override
+  String get location {
+    return _routePath(['projects', projectId.toString(), 'settings']);
+  }
+}
+
 String routeLocation(AppRoutePath route) => route.location;
 
 String _routePath(
@@ -106,10 +161,9 @@ bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
 
 List<Object> routeGuards(
   AppRoutePath route,
-  $BenchmarkRouter router,
+  $AppRouter router,
 ) {
   return switch (route) {
-    DashboardRoute() => [const BenchmarkGuard()],
     _ => const [],
   };
 }
@@ -129,6 +183,12 @@ final class AppRoutesNavigator {
 
   RouteAction<void> notFound({String path = ''}) =>
       RouteAction(_router, NotFoundRoute(path: path));
+
+  RouteAction<void> project({required int projectId, String? tab, bool? archived}) =>
+      RouteAction(_router, ProjectRoute(projectId: projectId, tab: tab, archived: archived));
+
+  RouteAction<void> projectSettings({required int projectId}) =>
+      RouteAction(_router, ProjectSettingsRoute(projectId: projectId));
 
   void pop() => _router.pop();
 }
@@ -153,6 +213,15 @@ RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
       const DashboardRoute(),
       route,
     ],
+    ProjectRoute(projectId: _, tab: _, archived: _) => [
+      const DashboardRoute(),
+      route,
+    ],
+    ProjectSettingsRoute(projectId: final projectId) => [
+      const DashboardRoute(),
+      ProjectRoute(projectId: projectId),
+      route,
+    ],
   };
 }
 
@@ -164,6 +233,28 @@ AppRoutePath parseAppRoute(Uri uri) {
   }
   if (segments.length == 1 && segments[0] == '404') {
     return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
+  }
+  if (segments.length == 2 && segments[0] == 'projects') {
+    final projectId = int.tryParse(segments[1]);
+    if (projectId == null) {
+      return _notFoundRoute(uri);
+    }
+    return ProjectRoute(
+      projectId: projectId,
+      tab: uri.queryParameters['tab'],
+      archived: _parseBool(uri.queryParameters['archived']),
+    );
+  }
+  if (
+    segments.length == 3 &&
+    segments[0] == 'projects' &&
+    segments[2] == 'settings'
+  ) {
+    final projectId = int.tryParse(segments[1]);
+    if (projectId == null) {
+      return _notFoundRoute(uri);
+    }
+    return ProjectSettingsRoute(projectId: projectId);
   }
   return _notFoundRoute(uri);
 }
@@ -182,6 +273,8 @@ bool? _parseBool(String? value) {
 const Map<Type, Type?> _kAppliedShellsByPage = {
   DashboardPage: null,
   NotFoundPage: null,
+  ProjectPage: AppShell,
+  ProjectSettingsPage: AppShell,
 };
 
 bool _shellConsistencyCheck() {
@@ -204,6 +297,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
     DashboardRoute() => generatedPage(
       location: route.location,
       name: 'dashboard',
+      transition: FadeUpwardsPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
       child: const DashboardPage(),
@@ -214,6 +308,24 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       fullscreenDialog: false,
       maintainState: true,
       child: NotFoundPage(path: path),
+    ),
+    ProjectRoute(
+      projectId: final projectId,
+      tab: final tab,
+      archived: final archived,
+    ) => generatedPage(
+      location: route.location,
+      name: 'project',
+      fullscreenDialog: false,
+      maintainState: true,
+      child: AppShell(child: ProjectPage(projectId: projectId, tab: tab, archived: archived)),
+    ),
+    ProjectSettingsRoute(projectId: final projectId) => generatedPage(
+      location: route.location,
+      name: 'projectSettings',
+      fullscreenDialog: false,
+      maintainState: true,
+      child: AppShell(child: ProjectSettingsPage(projectId: projectId)),
     ),
   };
 }

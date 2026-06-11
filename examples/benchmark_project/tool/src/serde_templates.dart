@@ -5,9 +5,7 @@ String renderSerdeScalar(int index) {
   final className = primaryClassNameForIndex(index);
   return renderFile(
     fileName: fileNameForIndex(index),
-    imports: [
-      "import 'package:dust_dart/serde.dart';",
-    ],
+    imports: ["import 'package:dust_dart/serde.dart';"],
     declarations: [
       '''
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
@@ -41,9 +39,7 @@ String renderSerdeOptions(int index) {
   final className = primaryClassNameForIndex(index);
   return renderFile(
     fileName: fileNameForIndex(index),
-    imports: [
-      "import 'package:dust_dart/serde.dart';",
-    ],
+    imports: ["import 'package:dust_dart/serde.dart';"],
     declarations: [
       '''
 @Derive([Serialize(), Deserialize()])
@@ -93,9 +89,7 @@ String renderSerdeNested(int index) {
   final className = primaryClassNameForIndex(index);
   return renderFile(
     fileName: fileNameForIndex(index),
-    imports: [
-      "import 'package:dust_dart/serde.dart';",
-    ],
+    imports: ["import 'package:dust_dart/serde.dart';"],
     declarations: [
       '''
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])

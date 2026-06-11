@@ -5,7 +5,8 @@ import 'template_model.dart';
 export 'template_model.dart' show fileNameForIndex;
 
 String renderBenchmarkModelFile(int index) {
-  final pattern = BenchmarkPattern.values[index % BenchmarkPattern.values.length];
+  final pattern =
+      BenchmarkPattern.values[index % BenchmarkPattern.values.length];
   return switch (pattern) {
     BenchmarkPattern.deriveScalar => renderDeriveScalar(index),
     BenchmarkPattern.deriveLinked => renderDeriveLinked(index),

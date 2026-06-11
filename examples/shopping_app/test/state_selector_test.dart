@@ -60,9 +60,7 @@ void main() {
     expect(selectRebuilds, 1);
     expect(fieldRebuilds, 1);
 
-    viewModel.emitForTest(
-      viewModel.state.copyWith(searchQuery: 'backpack'),
-    );
+    viewModel.emitForTest(viewModel.state.copyWith(searchQuery: 'backpack'));
     await tester.pump();
 
     expect(selectRebuilds, 1);

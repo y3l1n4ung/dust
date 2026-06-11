@@ -471,10 +471,13 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSaved = context.watchWishlistViewModel().value.containsProduct(product.id);
+    final isSaved = context.watchWishlistViewModel().value.containsProduct(
+      product.id,
+    );
 
     return AnimatedCard(
-      onTap: () => context.navigator.productDetail(productId: product.id).push(),
+      onTap: () =>
+          context.navigator.productDetail(productId: product.id).push(),
       onLongPress: () {
         ProductQuickView.show(
           context: context,

@@ -17,8 +17,9 @@ void main(List<String> args) {
     final file = File('${outputDir.path}/${fileNameForIndex(index)}.dart');
     file.writeAsStringSync(renderBenchmarkModelFile(index));
   }
-  File('${outputDir.path}/$validationShowcaseFile.dart')
-      .writeAsStringSync(renderValidationShowcaseFile());
+  File(
+    '${outputDir.path}/$validationShowcaseFile.dart',
+  ).writeAsStringSync(renderValidationShowcaseFile());
 
   stdout.writeln('generated $count source files in ${outputDir.path}');
 }

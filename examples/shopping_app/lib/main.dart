@@ -104,13 +104,19 @@ class _ShoppingAppState extends State<ShoppingApp> {
                         create: (context, args) => WishlistViewModel(args),
                         child: DemoCartApiViewModelScope(
                           args: (context) => DemoCartApiViewModelArgs(
-                            repository: context.readAppViewModel().args.repository,
+                            repository: context
+                                .readAppViewModel()
+                                .args
+                                .repository,
                             observer: observer,
                           ),
                           create: (context, args) => DemoCartApiViewModel(args),
                           child: ShoppingChatViewModelScope(
                             args: (context) => ShoppingChatViewModelArgs(
-                              repository: context.readAppViewModel().args.repository,
+                              repository: context
+                                  .readAppViewModel()
+                                  .args
+                                  .repository,
                               observer: observer,
                             ),
                             create: (context, args) =>

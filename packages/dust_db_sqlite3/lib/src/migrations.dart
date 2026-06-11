@@ -39,9 +39,7 @@ Set<String> _appliedMigrations(sqlite.Database database) {
   final rows = database.select(
     'SELECT name FROM $_schemaMigrationsTable ORDER BY name',
   );
-  return <String>{
-    for (final row in rows) row['name'] as String,
-  };
+  return <String>{for (final row in rows) row['name'] as String};
 }
 
 void _recordMigration(sqlite.Database database, String name) {

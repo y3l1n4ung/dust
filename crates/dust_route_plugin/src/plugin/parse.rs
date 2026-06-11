@@ -28,7 +28,9 @@ pub(crate) fn parse_route_config(config: &ConfigApplicationIr) -> Option<RouteAn
     let shell = config.named_type("shell");
     let guards_configured = config.has_named_argument("guards");
     let guards = config.named_type_list("guards").unwrap_or_default();
-    let transition = config.named_expression_source("transition");
+    let transition = config
+        .named_expression_source("transition")
+        .map(normalize_transition_source);
     let fullscreen_dialog = config.named_bool("fullscreenDialog").unwrap_or(false);
     let maintain_state = config.named_bool("maintainState").unwrap_or(true);
     Some(RouteAnnotation {
@@ -49,7 +51,9 @@ pub(crate) fn parse_route_surface(annotation: &ParsedAnnotation) -> Option<Route
     let shell = annotation.named_type("shell");
     let guards_configured = annotation.has_named_argument("guards");
     let guards = annotation.named_type_list("guards").unwrap_or_default();
-    let transition = annotation.named_expression_source("transition");
+    let transition = annotation
+        .named_expression_source("transition")
+        .map(normalize_transition_source);
     let fullscreen_dialog = annotation.named_bool("fullscreenDialog").unwrap_or(false);
     let maintain_state = annotation.named_bool("maintainState").unwrap_or(true);
     Some(RouteAnnotation {
@@ -92,6 +96,19 @@ pub(crate) fn parse_router_surface(annotation: &ParsedAnnotation) -> RouterAnnot
 
 fn config_name(symbol: &SymbolId) -> &str {
     symbol.0.rsplit("::").next().unwrap_or(symbol.0.as_str())
+}
+
+fn normalize_transition_source(source: String) -> String {
+    let source = source
+        .trim()
+        .strip_prefix("const ")
+        .unwrap_or(source.trim());
+    for prefix in ["cupertino.", "material."] {
+        if let Some(stripped) = source.strip_prefix(prefix) {
+            return stripped.to_owned();
+        }
+    }
+    source.to_owned()
 }
 
 #[cfg(test)]
@@ -148,6 +165,18 @@ mod tests {
         assert_eq!(
             route.guards,
             vec!["AuthGuard".to_string(), "BillingGuard".to_string()]
+        );
+    }
+
+    #[test]
+    fn normalizes_known_flutter_transition_prefixes() {
+        let route = parse_route_annotation(Some(
+            "('/login', transition: const cupertino.CupertinoPageTransitionsBuilder())",
+        ))
+        .unwrap();
+        assert_eq!(
+            route.transition.as_deref(),
+            Some("CupertinoPageTransitionsBuilder()")
         );
     }
 }

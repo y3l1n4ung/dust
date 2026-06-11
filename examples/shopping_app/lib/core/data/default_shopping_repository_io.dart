@@ -9,7 +9,9 @@ ShoppingRepository createDefaultShoppingRepository() {
   );
 }
 
-Future<void> closeDefaultShoppingRepository(ShoppingRepository repository) async {
+Future<void> closeDefaultShoppingRepository(
+  ShoppingRepository repository,
+) async {
   if (repository is CachedShoppingRepository) {
     await repository.close();
   }

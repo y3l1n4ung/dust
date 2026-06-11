@@ -98,7 +98,8 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
 
   void push(T route) => unawaited(_applyRoute(route, NavigationMode.push));
 
-  void replace(T route) => unawaited(_applyRoute(route, NavigationMode.replace));
+  void replace(T route) =>
+      unawaited(_applyRoute(route, NavigationMode.replace));
 
   @override
   void dispose() {
@@ -138,7 +139,9 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
 
     final guards = config.resolveGuards(candidate);
     if (guards.isNotEmpty) {
-      final redirected = await RouteGuardChain<T>(guards).canActivate(candidate);
+      final redirected = await RouteGuardChain<T>(
+        guards,
+      ).canActivate(candidate);
       if (epoch != _navigationEpoch) return;
       if (redirected != null) {
         await _applyRoute(redirected, mode);
@@ -167,7 +170,9 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
         final restored = config.restoreStack?.call(route);
         stack
           ..clear()
-          ..addAll(restored == null || restored.isEmpty ? <T>[route] : restored);
+          ..addAll(
+            restored == null || restored.isEmpty ? <T>[route] : restored,
+          );
     }
     _rebuildPageKeyMap();
     notifyListeners();

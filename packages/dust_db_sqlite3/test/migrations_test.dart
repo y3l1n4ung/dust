@@ -12,30 +12,36 @@ void main() {
     });
     final path = '${directory.path}/app.db';
 
-    final first = SqlitePool.open(path, migrations: const <String, String>{
-      '0001_create.sql': '''
+    final first = SqlitePool.open(
+      path,
+      migrations: const <String, String>{
+        '0001_create.sql': '''
 CREATE TABLE users (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL
 );
 INSERT INTO users (id, name) VALUES (1, 'Ada');
 ''',
-    });
+      },
+    );
     await first.close();
 
-    final upgraded = SqlitePool.open(path, migrations: const <String, String>{
-      '0001_create.sql': '''
+    final upgraded = SqlitePool.open(
+      path,
+      migrations: const <String, String>{
+        '0001_create.sql': '''
 CREATE TABLE users (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL
 );
 INSERT INTO users (id, name) VALUES (1, 'Ada');
 ''',
-      '0002_upgrade.sql': '''
+        '0002_upgrade.sql': '''
 ALTER TABLE users ADD COLUMN active INTEGER NOT NULL DEFAULT 1;
 INSERT INTO users (id, name, active) VALUES (2, 'Grace', 0);
 ''',
-    });
+      },
+    );
     addTearDown(() async {
       await upgraded.close();
     });
@@ -54,10 +60,10 @@ INSERT INTO users (id, name, active) VALUES (2, 'Grace', 0);
       'SELECT name FROM __dust_schema_migrations ORDER BY name',
       const [],
     ).fetch(upgraded);
-    expect(
-      migrations.map((row) => row.read<String>('name')),
-      <String>['0001_create.sql', '0002_upgrade.sql'],
-    );
+    expect(migrations.map((row) => row.read<String>('name')), <String>[
+      '0001_create.sql',
+      '0002_upgrade.sql',
+    ]);
   });
 
   test('sqlite migration failure rolls back the open transaction', () async {
@@ -68,16 +74,22 @@ INSERT INTO users (id, name, active) VALUES (2, 'Grace', 0);
     final path = '${directory.path}/app.db';
 
     expect(
-      () => SqlitePool.open(path, migrations: const <String, String>{
-        '0001_create.sql': 'CREATE TABLE users (id INTEGER PRIMARY KEY);',
-        '0002_broken.sql': 'INSERT INTO missing_table (id) VALUES (1);',
-      }),
+      () => SqlitePool.open(
+        path,
+        migrations: const <String, String>{
+          '0001_create.sql': 'CREATE TABLE users (id INTEGER PRIMARY KEY);',
+          '0002_broken.sql': 'INSERT INTO missing_table (id) VALUES (1);',
+        },
+      ),
       throwsA(isA<Exception>()),
     );
 
-    final reopened = SqlitePool.open(path, migrations: const <String, String>{
-      '0001_create.sql': 'CREATE TABLE users (id INTEGER PRIMARY KEY);',
-    });
+    final reopened = SqlitePool.open(
+      path,
+      migrations: const <String, String>{
+        '0001_create.sql': 'CREATE TABLE users (id INTEGER PRIMARY KEY);',
+      },
+    );
     addTearDown(() async {
       await reopened.close();
     });
@@ -86,9 +98,8 @@ INSERT INTO users (id, name, active) VALUES (2, 'Grace', 0);
       'SELECT name FROM __dust_schema_migrations ORDER BY name',
       const [],
     ).fetch(reopened);
-    expect(
-      migrations.map((row) => row.read<String>('name')),
-      <String>['0001_create.sql'],
-    );
+    expect(migrations.map((row) => row.read<String>('name')), <String>[
+      '0001_create.sql',
+    ]);
   });
 }

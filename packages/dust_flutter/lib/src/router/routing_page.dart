@@ -56,8 +56,10 @@ class BottomToTopPageTransitionsBuilder extends PageTransitionsBuilder {
   ) {
     if (MediaQuery.of(context).disableAnimations) return child;
     return SlideTransition(
-      position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
-          .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+      position: Tween<Offset>(
+        begin: const Offset(0, 1),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
       child: child,
     );
   }

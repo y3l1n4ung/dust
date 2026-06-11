@@ -5,12 +5,7 @@ import '../../../route.dart';
 import '../models/auth_state.dart';
 import '../view_models/auth_view_model.dart';
 
-@Route(
-  '/login',
-  name: 'login',
-  guards: [],
-  transition: CupertinoPageTransitionsBuilder(),
-)
+@Route('/login', name: 'login', guards: [])
 class LoginScreen extends StatefulWidget {
   final String? redirectPath;
 

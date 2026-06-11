@@ -50,7 +50,7 @@ jobs:
           rustup default stable
 
       - name: Format check
-        run: cargo fmt --all --check
+        run: cargo fmt --all -- --check
 
       - name: Test
         run: cargo test --workspace --quiet
@@ -58,140 +58,140 @@ jobs:
       - name: Clippy
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
-  derive-annotation:
-    name: Dart / derive_annotation
+  dart-packages:
+    name: Dart / ${{ matrix.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: dust_dart
+            path: packages/dust_dart
+            dust_check: ''
+          - name: dust_db_sqlite3
+            path: packages/dust_db_sqlite3
+            dust_check: ''
+          - name: product_showcase
+            path: examples/product_showcase
+            dust_check: examples/product_showcase
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
-
-      - name: Pub get
-        working-directory: packages/derive_annotation
-        run: dart pub get
-
-      - name: Analyze
-        working-directory: packages/derive_annotation
-        run: dart analyze
-
-      - name: Test
-        working-directory: packages/derive_annotation
-        run: dart test
-
-  derive-serde-annotation:
-    name: Dart / derive_serde_annotation
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
-
-      - name: Pub get
-        working-directory: packages/derive_serde_annotation
-        run: dart pub get
-
-      - name: Analyze
-        working-directory: packages/derive_serde_annotation
-        run: dart analyze
-
-      - name: Test
-        working-directory: packages/derive_serde_annotation
-        run: dart test
-
-  product-showcase:
-    name: Dart / product_showcase
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
+      - name: Setup Flutter SDK for mixed workspace resolution
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
 
       - name: Install Rust toolchain
+        if: matrix.dust_check != ''
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
 
-      - name: Resolve workspace packages
-        run: dart pub get
-
       - name: Pub get
-        working-directory: examples/product_showcase
+        working-directory: ${{ matrix.path }}
         run: dart pub get
 
-      - name: Build generated outputs
-        run: cargo run -p dust_cli -- build --root examples/product_showcase
+      - name: Dust freshness check
+        if: matrix.dust_check != ''
+        run: cargo run --quiet -p dust_cli -- check --root ${{ matrix.dust_check }}
 
       - name: Analyze
-        working-directory: examples/product_showcase
-        run: dart analyze
+        working-directory: ${{ matrix.path }}
+        run: dart analyze --fatal-infos
 
       - name: Test
-        working-directory: examples/product_showcase
+        working-directory: ${{ matrix.path }}
         run: dart test
 
-  stress-project-generated-dart:
-    name: Dart Smoke / stress_project
+  flutter-packages:
+    name: Flutter / ${{ matrix.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: dust_flutter
+            path: packages/dust_flutter
+            dust_check: ''
+            db_check: false
+          - name: benchmark_project
+            path: examples/benchmark_project
+            dust_check: examples/benchmark_project
+            db_check: false
+          - name: shopping_app
+            path: examples/shopping_app
+            dust_check: examples/shopping_app
+            db_check: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
 
       - name: Install Rust toolchain
+        if: matrix.dust_check != '' || matrix.db_check
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
 
-      - name: Resolve workspace packages
-        run: dart pub get
-
       - name: Pub get
-        working-directory: examples/stress_project
-        run: dart pub get
+        working-directory: ${{ matrix.path }}
+        run: flutter pub get
 
-      - name: Generate stress fixtures
-        working-directory: examples/stress_project
-        run: ./generate.sh --count 64
+      - name: Generate benchmark fixtures
+        if: matrix.path == 'examples/benchmark_project'
+        working-directory: examples/benchmark_project
+        run: dart tool/generate.dart --count 10
 
-      - name: Build generated outputs
-        run: cargo run -p dust_cli -- build --root examples/stress_project
+      - name: Build benchmark generated outputs
+        if: matrix.path == 'examples/benchmark_project'
+        run: cargo run --quiet -p dust_cli -- build --root examples/benchmark_project
+
+      - name: Dust freshness check
+        if: matrix.dust_check != '' && matrix.path != 'examples/benchmark_project'
+        run: cargo run --quiet -p dust_cli -- check --root ${{ matrix.dust_check }}
+
+      - name: Dust DB freshness check
+        if: matrix.db_check
+        run: cargo run --quiet -p dust_cli -- check --root ${{ matrix.path }} --db
 
       - name: Analyze
-        working-directory: examples/stress_project
-        run: dart analyze
+        working-directory: ${{ matrix.path }}
+        run: flutter analyze --no-pub
 
       - name: Test
-        working-directory: examples/stress_project
-        run: dart test
+        working-directory: ${{ matrix.path }}
+        run: flutter test
 
-  stress-project-benchmark:
-    name: Benchmark / stress_project
+  benchmark:
+    name: Benchmark / benchmark_project
     runs-on: ubuntu-latest
     env:
       DUST_PERF_COLD_MAX_MS: 3500
       DUST_PERF_WARM_MAX_MS: 1500
+      DUST_PERF_INVALIDATED_MAX_MS: 2500
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Dart
-        uses: dart-lang/setup-dart@v1
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
 
       - name: Install Rust toolchain
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
 
-      - name: Resolve workspace packages
-        run: dart pub get
+      - name: Pub get
+        working-directory: examples/benchmark_project
+        run: flutter pub get
 
       - name: Run ignored perf test
-        run: cargo test -p dust_cli stress_project_release_build_benchmark -- --ignored --nocapture
+        run: cargo test -p dust_cli benchmark_project_release_build_benchmark -- --ignored --nocapture
