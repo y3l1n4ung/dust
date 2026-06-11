@@ -8,12 +8,7 @@ import 'register_actions.dart';
 import 'register_auth_error.dart';
 import 'register_header.dart';
 
-@Route(
-  '/register',
-  name: 'register',
-  guards: [],
-  transition: CupertinoPageTransitionsBuilder(),
-)
+@Route('/register', name: 'register', guards: [])
 class RegisterScreen extends StatefulWidget {
   final String? redirectPath;
 

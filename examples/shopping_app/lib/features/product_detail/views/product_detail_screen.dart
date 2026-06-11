@@ -11,12 +11,7 @@ import '../models/product_detail_state.dart';
 import '../models/product_review.dart';
 import '../view_models/product_detail_view_model.dart';
 
-@Route(
-  '/product/:productId',
-  name: 'productDetail',
-  guards: [],
-  transition: CupertinoPageTransitionsBuilder(),
-)
+@Route('/product/:productId', name: 'productDetail', guards: [])
 class ProductDetailScreen extends StatefulWidget {
   final int productId;
 

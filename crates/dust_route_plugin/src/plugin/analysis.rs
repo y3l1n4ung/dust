@@ -157,7 +157,10 @@ fn library_imports(
 }
 
 fn normalize_import_uri(context: WorkspaceAnalysisContext<'_>, uri: &str) -> Option<String> {
-    if uri == "package:flutter/material.dart" {
+    if matches!(
+        uri,
+        "package:flutter/material.dart" | "package:flutter/cupertino.dart"
+    ) {
         return None;
     }
     if uri.starts_with("dart:") || uri.starts_with("package:") {

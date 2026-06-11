@@ -4,18 +4,17 @@
 // ignore_for_file: unused_import, unnecessary_import
 
 import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/cupertino.dart' hide Route;
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
-import 'package:dust_test/pages/dashboard_page.dart';
-import 'package:dust_test/pages/not_found_page.dart';
 
-abstract class $AppRouter extends RouterBase<AppRoutePath> {
+abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
 
   RouterConfig<AppRoutePath> get config {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
-      initialRoute: const HomeRoute(),
+      initialRoute: const DashboardRoute(),
       parseRoute: parseAppRoute,
       routeLocation: routeLocation,
       requiresAuth: routeRequiresAuth,
@@ -46,7 +45,8 @@ const List<GeneratedRoute> $appRoutes = [
   GeneratedRoute(
     '/',
     page: DashboardPage,
-    name: 'home',
+    name: 'dashboard',
+    guards: [BenchmarkGuard],
   ),
   GeneratedRoute(
     '/404',
@@ -66,9 +66,9 @@ sealed class AppRoutePath<R> {
   bool get requiresAuth => true;
 }
 
-/// Typed route data for `HomeRoute`.
-final class HomeRoute extends AppRoutePath<void> {
-  const HomeRoute();
+/// Typed route data for `DashboardRoute`.
+final class DashboardRoute extends AppRoutePath<void> {
+  const DashboardRoute();
 
   @override
   String get location {
@@ -107,9 +107,10 @@ bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
 
 List<Object> routeGuards(
   AppRoutePath route,
-  $AppRouter router,
+  $BenchmarkRouter router,
 ) {
   return switch (route) {
+    DashboardRoute() => [const BenchmarkGuard()],
     _ => const [],
   };
 }
@@ -125,7 +126,7 @@ final class AppRoutesNavigator {
 
   final RouterController<AppRoutePath> _router;
 
-  RouteAction<void> home() => RouteAction(_router, HomeRoute());
+  RouteAction<void> dashboard() => RouteAction(_router, DashboardRoute());
 
   RouteAction<void> notFound({String path = ''}) =>
       RouteAction(_router, NotFoundRoute(path: path));
@@ -146,11 +147,11 @@ final class RouteAction<R> {
 
 RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
   return switch (route) {
-    HomeRoute() => [
+    DashboardRoute() => [
       route,
     ],
     NotFoundRoute(path: _) => [
-      const HomeRoute(),
+      const DashboardRoute(),
       route,
     ],
   };
@@ -160,7 +161,7 @@ AppRoutePath parseAppRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
-    return const HomeRoute();
+    return const DashboardRoute();
   }
   if (segments.length == 1 && segments[0] == '404') {
     return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
@@ -201,9 +202,9 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
-    HomeRoute() => generatedPage(
+    DashboardRoute() => generatedPage(
       location: route.location,
-      name: 'home',
+      name: 'dashboard',
       fullscreenDialog: false,
       maintainState: true,
       child: const DashboardPage(),

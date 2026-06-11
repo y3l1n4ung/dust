@@ -35,7 +35,7 @@ fn emits_standalone_route_and_core_outputs() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert_snapshot("standalone_route.g.dart", &primary);
+    assert_snapshot("standalone_route.dart.snapshot", &primary);
     assert!(contribution.auxiliary_outputs.is_empty());
 }
 
@@ -54,7 +54,7 @@ fn emits_no_transition_builder_only_when_referenced() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert_snapshot("no_transition_route.g.dart", &primary);
+    assert_snapshot("no_transition_route.dart.snapshot", &primary);
 }
 
 #[test]
@@ -75,7 +75,7 @@ fn emits_guard_helpers_with_custom_router_base_name() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert_snapshot("custom_router_guard_route.g.dart", &primary);
+    assert_snapshot("custom_router_guard_route.dart.snapshot", &primary);
 }
 
 #[test]
@@ -121,7 +121,7 @@ fn emits_workspace_page_imports_and_query_defaults() {
     let contribution = plugin.emit(&library, &plan);
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert_snapshot("workspace_default_route.g.dart", &primary);
+    assert_snapshot("workspace_default_route.dart.snapshot", &primary);
 }
 
 #[test]
@@ -168,7 +168,7 @@ fn emits_shell_import_from_route_page_library_imports() {
     let contribution = plugin.emit(&library, &plan);
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert_snapshot("workspace_shell_route.g.dart", &primary);
+    assert_snapshot("workspace_shell_route.dart.snapshot", &primary);
 }
 
 #[test]
@@ -187,7 +187,7 @@ fn emits_large_route_sets_without_excessive_output_growth() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert_snapshot("large_route_set.g.dart", &primary);
+    assert_snapshot("large_route_set.dart.snapshot", &primary);
 }
 
 #[test]
@@ -211,7 +211,7 @@ fn emits_deep_nested_route_tree_metadata() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert_snapshot("deep_nested_route.g.dart", &primary);
+    assert_snapshot("deep_nested_route.dart.snapshot", &primary);
 }
 
 fn assert_snapshot(name: &str, actual: &str) {

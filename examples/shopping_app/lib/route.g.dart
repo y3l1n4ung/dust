@@ -4,6 +4,7 @@
 // ignore_for_file: unused_import, unnecessary_import
 
 import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/cupertino.dart' hide Route;
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
@@ -131,7 +132,6 @@ const List<GeneratedRoute> $appRoutes = [
     page: LoginScreen,
     name: 'login',
     guards: [],
-    transition: CupertinoPageTransitionsBuilder(),
   ),
   GeneratedRoute(
     '/order-confirmation',
@@ -164,7 +164,6 @@ const List<GeneratedRoute> $appRoutes = [
         page: ProductDetailScreen,
         name: 'productDetail',
         guards: [],
-        transition: CupertinoPageTransitionsBuilder(),
       ),
     ],
   ),
@@ -178,7 +177,6 @@ const List<GeneratedRoute> $appRoutes = [
     page: RegisterScreen,
     name: 'register',
     guards: [],
-    transition: CupertinoPageTransitionsBuilder(),
   ),
   GeneratedRoute(
     '/support',
@@ -692,7 +690,6 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
     LoginRoute(redirectPath: final redirectPath) => generatedPage(
       location: route.location,
       name: 'login',
-      transition: CupertinoPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
       child: LoginScreen(redirectPath: redirectPath),
@@ -722,7 +719,6 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
     ProductDetailRoute(productId: final productId) => generatedPage(
       location: route.location,
       name: 'productDetail',
-      transition: CupertinoPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
       child: ProductDetailScreen(productId: productId),
@@ -737,7 +733,6 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
     RegisterRoute(redirectPath: final redirectPath) => generatedPage(
       location: route.location,
       name: 'register',
-      transition: CupertinoPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
       child: RegisterScreen(redirectPath: redirectPath),

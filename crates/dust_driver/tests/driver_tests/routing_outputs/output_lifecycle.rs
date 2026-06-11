@@ -39,7 +39,7 @@ fn build_writes_route_output_only_from_router_root() {
             && artifact.routed
             && !artifact.written
     }));
-    assert_route_snapshot("dashboard_route.g.dart", &source);
+    assert_route_snapshot("dashboard_route.dart.snapshot", &source);
 }
 #[test]
 fn build_refreshes_router_output_when_annotated_page_changes() {
@@ -73,8 +73,8 @@ fn build_refreshes_router_output_when_annotated_page_changes() {
     assert!(!second.has_errors(), "{:?}", second.diagnostics);
     assert!(!third.has_errors(), "{:?}", third.diagnostics);
     assert_eq!(second.cache.as_ref().unwrap().misses, 0);
-    assert_route_snapshot("dashboard_route.g.dart", &second_source);
-    assert_route_snapshot("home_route.g.dart", &source);
+    assert_route_snapshot("dashboard_route.dart.snapshot", &second_source);
+    assert_route_snapshot("home_route.dart.snapshot", &source);
 }
 
 #[test]
@@ -172,7 +172,7 @@ fn watch_rebuilds_route_output_when_annotated_page_changes() {
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
     assert_eq!(watch.rebuild_batches, 1);
-    assert_route_snapshot("home_route.g.dart", &source);
+    assert_route_snapshot("home_route.dart.snapshot", &source);
 }
 #[test]
 fn route_generation_works_from_pub_workspace_member() {
@@ -188,5 +188,5 @@ fn route_generation_works_from_pub_workspace_member() {
     let source = fs::read_to_string(package_root.join("lib/route.g.dart")).unwrap();
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
-    assert_route_snapshot("pub_workspace_route.g.dart", &source);
+    assert_route_snapshot("pub_workspace_route.dart.snapshot", &source);
 }

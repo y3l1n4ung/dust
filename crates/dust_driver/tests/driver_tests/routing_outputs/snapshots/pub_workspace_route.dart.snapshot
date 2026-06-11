@@ -4,11 +4,12 @@
 // ignore_for_file: unused_import, unnecessary_import
 
 import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/cupertino.dart' hide Route;
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
-import 'package:dust_test/pages/dashboard_page.dart';
-import 'package:dust_test/pages/not_found_page.dart';
+import 'package:product_showcase/pages/dashboard_page.dart';
+import 'package:product_showcase/pages/not_found_page.dart';
 
 abstract class $AppRouter extends RouterBase<AppRoutePath> {
 

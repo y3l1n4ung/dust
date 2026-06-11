@@ -4,24 +4,14 @@
 // ignore_for_file: unused_import, unnecessary_import
 
 import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/cupertino.dart' hide Route;
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
+import 'package:route_test/layout/app_shell.dart';
+import 'package:route_test/pages/search_page.dart';
 
-class _NoTransitionBuilder extends PageTransitionsBuilder {
-  const _NoTransitionBuilder();
-
-  @override
-  Widget buildTransitions<T>(
-    PageRoute<T> route,
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    return child;
-  }
-}abstract class $AppRouter extends RouterBase<AppRoutePath> {
+abstract class $AppRouter extends RouterBase<AppRoutePath> {
 
   RouterConfig<AppRoutePath> get config {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
@@ -64,7 +54,6 @@ const List<GeneratedRoute> $appRoutes = [
     '/search',
     page: SearchPage,
     name: 'search',
-    transition: _NoTransitionBuilder(),
   ),
 ];
 
@@ -95,11 +84,20 @@ final class NotFoundRoute extends AppRoutePath<void> {
 
 /// Typed route data for `SearchRoute`.
 final class SearchRoute extends AppRoutePath<void> {
-  const SearchRoute();
+  const SearchRoute({this.page = 1});
+
+  final int page;
 
   @override
   String get location {
-    return _routePath(['search']);
+    final query = <String, String>{};
+    if (page != 1) {
+      query['page'] = page.toString();
+    }
+    return _routePath(
+      ['search'],
+      queryParameters: query.isEmpty ? null : query,
+    );
   }
 }
 
@@ -140,7 +138,8 @@ final class AppRoutesNavigator {
   RouteAction<void> notFound({String path = ''}) =>
       RouteAction(_router, NotFoundRoute(path: path));
 
-  RouteAction<void> search() => RouteAction(_router, SearchRoute());
+  RouteAction<void> search({int page = 1}) =>
+      RouteAction(_router, SearchRoute(page: page));
 
   void pop() => _router.pop();
 }
@@ -162,7 +161,7 @@ RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
       const SearchRoute(),
       route,
     ],
-    SearchRoute() => [
+    SearchRoute(page: _) => [
       route,
     ],
   };
@@ -175,7 +174,9 @@ AppRoutePath parseAppRoute(Uri uri) {
     return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
   }
   if (segments.length == 1 && segments[0] == 'search') {
-    return const SearchRoute();
+    return SearchRoute(
+      page: int.tryParse(uri.queryParameters['page'] ?? '') ?? 1,
+    );
   }
   return _notFoundRoute(uri);
 }
@@ -220,13 +221,12 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       maintainState: true,
       child: NotFoundPage(path: path),
     ),
-    SearchRoute() => generatedPage(
+    SearchRoute(page: final page) => generatedPage(
       location: route.location,
       name: 'search',
-      transition: _NoTransitionBuilder(),
       fullscreenDialog: false,
       maintainState: true,
-      child: const SearchPage(),
+      child: SearchPage(page: page),
     ),
   };
 }

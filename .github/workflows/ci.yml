@@ -143,8 +143,17 @@ jobs:
         working-directory: ${{ matrix.path }}
         run: flutter pub get
 
+      - name: Generate benchmark fixtures
+        if: matrix.path == 'examples/benchmark_project'
+        working-directory: examples/benchmark_project
+        run: dart tool/generate.dart --count 10
+
+      - name: Build benchmark generated outputs
+        if: matrix.path == 'examples/benchmark_project'
+        run: cargo run --quiet -p dust_cli -- build --root examples/benchmark_project
+
       - name: Dust freshness check
-        if: matrix.dust_check != ''
+        if: matrix.dust_check != '' && matrix.path != 'examples/benchmark_project'
         run: cargo run --quiet -p dust_cli -- check --root ${{ matrix.dust_check }}
 
       - name: Dust DB freshness check
