@@ -8,6 +8,8 @@ Cargo.lock
 .flutter-plugins
 .flutter-plugins-dependencies
 build/
+!crates/**/src/**/build/
+!crates/**/src/**/build/**
 **/pubspec.lock
 
 # Examples & Fixtures
