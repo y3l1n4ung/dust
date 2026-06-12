@@ -56,7 +56,10 @@ pub(super) fn extract_constructor(node: Node<'_>, source: &SourceText) -> Parsed
     let params = find_first_descendant(signature, "formal_parameter_list")
         .map(|list| extract_constructor_params(list, source))
         .unwrap_or_default();
-    let redirected_target_source = extract_redirect_target(&declaration_text);
+    let redirected_target_source = (signature.kind()
+        == "redirecting_factory_constructor_signature")
+        .then(|| extract_redirect_target(&declaration_text))
+        .flatten();
     let redirected_target_name = redirected_target_source
         .as_deref()
         .and_then(extract_redirect_target_name);
