@@ -27,6 +27,7 @@ pub(crate) fn extract_classes(root: Node<'_>, source: &SourceText) -> Vec<Parsed
         }
     }
 
+    classes.sort_by_key(|class| class.span.start());
     classes
 }
 

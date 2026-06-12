@@ -1,15 +1,69 @@
 use dust_text::{TextRange, TextSize};
 
 pub(super) fn find_keyword(text: &str, keyword: &str, from: usize) -> Option<usize> {
-    let mut search_from = from;
-    while let Some(relative) = text.get(search_from..)?.find(keyword) {
-        let index = search_from + relative;
-        if is_start_boundary(text, index) && is_end_boundary(text, index + keyword.len()) {
+    let mut index = from;
+    while index < text.len() {
+        if let Some(next) = skip_ignored_region(text, index) {
+            index = next;
+            continue;
+        }
+        if text.get(index..)?.starts_with(keyword)
+            && is_start_boundary(text, index)
+            && is_end_boundary(text, index + keyword.len())
+        {
             return Some(index);
         }
-        search_from = index + keyword.len();
+        index += text[index..].chars().next()?.len_utf8();
     }
     None
+}
+
+fn skip_ignored_region(text: &str, index: usize) -> Option<usize> {
+    let tail = text.get(index..)?;
+    if tail.starts_with("//") {
+        return Some(index + tail.find('\n').unwrap_or(tail.len()));
+    }
+    if tail.starts_with("/*") {
+        return Some(index + tail.find("*/").map_or(tail.len(), |end| end + 2));
+    }
+    let quote = tail.chars().next()?;
+    matches!(quote, '\'' | '"' | '`').then(|| skip_quoted(text, index, quote))
+}
+
+fn skip_quoted(text: &str, index: usize, quote: char) -> usize {
+    let triple = text
+        .get(index..)
+        .is_some_and(|tail| tail.starts_with(&quote.to_string().repeat(3)));
+    let quote_len = if triple {
+        quote.len_utf8() * 3
+    } else {
+        quote.len_utf8()
+    };
+    let mut cursor = index + quote_len;
+    let mut escape = false;
+    while cursor < text.len() {
+        let Some(tail) = text.get(cursor..) else {
+            return text.len();
+        };
+        if triple && tail.starts_with(&quote.to_string().repeat(3)) {
+            return cursor + quote_len;
+        }
+        let Some(ch) = tail.chars().next() else {
+            return text.len();
+        };
+        cursor += ch.len_utf8();
+        if triple {
+            continue;
+        }
+        if escape {
+            escape = false;
+        } else if ch == '\\' {
+            escape = true;
+        } else if ch == quote {
+            return cursor;
+        }
+    }
+    text.len()
 }
 
 fn is_start_boundary(text: &str, index: usize) -> bool {
@@ -91,8 +145,26 @@ pub(super) fn split_top_level(text: &str, delimiter: char) -> Vec<(usize, usize)
     let mut parts = Vec::new();
     let mut start = 0;
     let mut depth = 0_i32;
+    let mut quote = None;
+    let mut escape = false;
     for (index, ch) in text.char_indices() {
+        if let Some(active_quote) = quote {
+            if escape {
+                escape = false;
+                continue;
+            }
+            if ch == '\\' {
+                escape = true;
+                continue;
+            }
+            if ch == active_quote {
+                quote = None;
+            }
+            continue;
+        }
+
         match ch {
+            '\'' | '"' | '`' => quote = Some(ch),
             '(' | '[' | '{' | '<' => depth += 1,
             ')' | ']' | '}' | '>' => depth -= 1,
             current if current == delimiter && depth == 0 => {

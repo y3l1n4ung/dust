@@ -94,7 +94,7 @@ fn diagnostic_overlaps_ranges(diagnostic: &Diagnostic, ranges: &[dust_text::Text
     diagnostic.labels.iter().any(|label| {
         ranges
             .iter()
-            .any(|range| label.range.start() < range.end() && range.start() <= label.range.end())
+            .any(|range| label.range.start() < range.end() && range.start() < label.range.end())
     })
 }
 

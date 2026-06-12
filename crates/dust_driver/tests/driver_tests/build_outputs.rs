@@ -9,3 +9,6 @@ mod diagnostics;
 
 #[path = "build_outputs/serde.rs"]
 mod serde;
+
+#[path = "build_outputs/primary_constructors.rs"]
+mod primary_constructors;

@@ -103,22 +103,48 @@ struct PrimaryParam {
 fn parse_params(text: &str, base: usize) -> Vec<PrimaryParam> {
     split_top_level(text, ',')
         .into_iter()
-        .filter_map(|(start, end)| parse_param(text.get(start..end)?, base + start))
+        .flat_map(|(start, end)| parse_param_part(text, start, end, base))
         .collect()
 }
 
-fn parse_param(raw: &str, absolute_start: usize) -> Option<PrimaryParam> {
+fn parse_param_part(text: &str, start: usize, end: usize, base: usize) -> Vec<PrimaryParam> {
+    let Some(raw) = text.get(start..end) else {
+        return Vec::new();
+    };
+    let trimmed = raw.trim();
+    if trimmed.starts_with('{') && trimmed.ends_with('}') {
+        let leading_ws = raw.len() - raw.trim_start().len();
+        let inner_start = start + leading_ws + 1;
+        let inner_end = end.saturating_sub(raw.len() - raw.trim_end().len() + 1);
+        return split_top_level(text.get(inner_start..inner_end).unwrap_or_default(), ',')
+            .into_iter()
+            .filter_map(|(part_start, part_end)| {
+                parse_param(
+                    text.get(inner_start + part_start..inner_start + part_end)?,
+                    base + inner_start + part_start,
+                    ParameterKind::Named,
+                )
+            })
+            .collect();
+    }
+
+    parse_param(raw, base + start, ParameterKind::Positional)
+        .into_iter()
+        .collect()
+}
+
+fn parse_param(
+    raw: &str,
+    absolute_start: usize,
+    fallback_kind: ParameterKind,
+) -> Option<PrimaryParam> {
     let trimmed_start = raw.len() - raw.trim_start().len();
     let trimmed = raw.trim();
     if trimmed.is_empty() {
         return None;
     }
 
-    let (kind, inner) = match (trimmed.strip_prefix('{'), trimmed.strip_suffix('}')) {
-        (Some(open), Some(_)) => (ParameterKind::Named, open.trim_end_matches('}').trim()),
-        _ => (ParameterKind::Positional, trimmed),
-    };
-    parse_param_inner(inner, absolute_start + trimmed_start, kind)
+    parse_param_inner(trimmed, absolute_start + trimmed_start, fallback_kind)
 }
 
 fn parse_param_inner(
@@ -197,10 +223,9 @@ fn parse_annotation_line(line: &str, line_start: usize) -> Option<ParsedAnnotati
         .map_or(source.len(), |(index, _)| index);
     let name = source.get(..name_end)?.rsplit('.').next()?.to_owned();
     let arguments_source = source
-        .get(name_end..)?
-        .trim()
-        .strip_prefix('(')
-        .and_then(|rest| rest.strip_suffix(')'))
+        .get(name_end..)
+        .map(str::trim)
+        .filter(|arguments| arguments.starts_with('(') && arguments.ends_with(')'))
         .map(str::to_owned);
     Some(ParsedAnnotation {
         name,
