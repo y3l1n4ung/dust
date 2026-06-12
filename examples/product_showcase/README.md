@@ -13,6 +13,9 @@ Read the canonical guides in:
 
 - derive generation such as `ToString()`, `Eq()`, and `CopyWith()`
 - serde generation such as `Serialize()`, `Deserialize()`, enum values, rename rules, defaults, aliases, and codecs
+- validation generation such as `Validate()`, `Length`, `Range`, and generated form-field validator functions
+- DB row mapping generation through DB-owned `FromRow()`
+- latest Dart-style source syntax that keeps generated code behavior unchanged, including final classes, records, switch expressions, and pattern matching
 - generated Dio HTTP clients
 - generated request-mapping tests under `test/generated/..._test.dart`
 - a real fake-online API example against `https://jsonplaceholder.typicode.com`
@@ -51,8 +54,27 @@ DUST_RUN_ONLINE_HTTP_TESTS=1 dart test test/json_placeholder_api_test.dart
 - [lib/models/json_profile.dart](lib/models/json_profile.dart)
 - [lib/models/json_enum_bundle.dart](lib/models/json_enum_bundle.dart)
 - [lib/models/json_codec_bundle.dart](lib/models/json_codec_bundle.dart)
+- [lib/models/latest_dart_derive_showcase.dart](lib/models/latest_dart_derive_showcase.dart)
 - [lib/api/json_placeholder_api.dart](lib/api/json_placeholder_api.dart)
 - [lib/api/todo_api.dart](lib/api/todo_api.dart)
+
+## Latest Dart Derive Showcase
+
+`lib/models/latest_dart_derive_showcase.dart` proves the current generated code
+style works with newer Dart source syntax while using all public derive surfaces:
+
+- `ToString()`
+- `Eq()` with generated `hashCode`
+- `CopyWith()`
+- `Serialize()`
+- `Deserialize()`
+- `Validate()`
+- DB-owned `FromRow()`
+
+The showcase intentionally does not change generated code style. Primary
+constructor syntax is tracked separately because the local Puro `3.44.1`
+environment currently reports Dart `3.12.1`; primary constructors require later
+Dart language support.
 
 ## Related Docs
 
