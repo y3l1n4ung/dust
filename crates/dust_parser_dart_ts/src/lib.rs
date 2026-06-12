@@ -17,8 +17,12 @@ use std::cell::RefCell;
 use tree_sitter::Parser;
 
 use self::{
-    classes::extract_classes, diagnostics::extract_diagnostics, directives::extract_directives,
-    enums::extract_enums, queries::extract_query_calls, syntax::text_range,
+    classes::{extract_classes, extract_primary_constructor_classes},
+    diagnostics::extract_diagnostics,
+    directives::extract_directives,
+    enums::extract_enums,
+    queries::extract_query_calls,
+    syntax::text_range,
 };
 
 thread_local! {
@@ -63,6 +67,11 @@ impl ParseBackend for TreeSitterDartBackend {
             };
 
             let root = tree.root_node();
+            let primary_classes = extract_primary_constructor_classes(source);
+            let primary_ranges = primary_classes
+                .iter()
+                .map(|class| class.span)
+                .collect::<Vec<_>>();
             ParseResult {
                 library: ParsedLibrarySurface {
                     span: text_range(root),
@@ -71,11 +80,22 @@ impl ParseBackend for TreeSitterDartBackend {
                     enums: extract_enums(root, source),
                     query_calls: extract_query_calls(source),
                 },
-                diagnostics: extract_diagnostics(&tree, source),
+                diagnostics: extract_diagnostics(&tree, source)
+                    .into_iter()
+                    .filter(|diagnostic| !diagnostic_overlaps_ranges(diagnostic, &primary_ranges))
+                    .collect(),
                 options,
             }
         })
     }
+}
+
+fn diagnostic_overlaps_ranges(diagnostic: &Diagnostic, ranges: &[dust_text::TextRange]) -> bool {
+    diagnostic.labels.iter().any(|label| {
+        ranges
+            .iter()
+            .any(|range| label.range.start() < range.end() && range.start() < label.range.end())
+    })
 }
 
 fn empty_library(source: &SourceText) -> ParsedLibrarySurface {

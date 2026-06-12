@@ -10,3 +10,6 @@ mod fields;
 mod library_surface;
 #[path = "extract_tests/support.rs"]
 mod support;
+
+#[path = "extract_tests/primary_constructors.rs"]
+mod primary_constructors;
