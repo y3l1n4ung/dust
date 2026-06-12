@@ -10,6 +10,7 @@ homepage.workspace = true
 description = "Dust plugin for SQLx-validated sqlite3 database generation."
 
 [dependencies]
+dust_dart_syntax = { path = "../dust_dart_syntax", version = "0.1.1" }
 dust_dart_emit = { path = "../dust_dart_emit", version = "0.1.1" }
 dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
 dust_ir = { path = "../dust_ir", version = "0.1.1" }

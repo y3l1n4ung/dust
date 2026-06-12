@@ -1,7 +1,7 @@
 use dust_ir::{BuiltinType, LoweringOutcome, TypeIr};
 
-pub(crate) use super::parse_support::split_top_level_args;
 use super::parse_support::{find_top_level_char, has_top_level_char};
+pub(crate) use dust_dart_syntax::split_top_level_items as split_top_level_args;
 
 pub(crate) fn lower_type(source: Option<&str>) -> LoweringOutcome<TypeIr> {
     let Some(source) = source.map(str::trim).filter(|source| !source.is_empty()) else {

@@ -31,6 +31,30 @@ fn production_code_uses_shared_annotation_accessors() {
     );
 }
 
+#[test]
+fn dart_source_parsing_helpers_are_centralized() {
+    let root = workspace_root();
+    let mut violations = Vec::new();
+
+    for entry in fs::read_dir(root.join("crates")).expect("crates directory exists") {
+        let path = entry.expect("crate entry is readable").path();
+        if path.file_name().and_then(|name| name.to_str()) == Some("dust_dart_syntax") {
+            continue;
+        }
+        scan_dir(
+            &path.join("src"),
+            &dart_source_parser_patterns(),
+            &mut violations,
+        );
+    }
+
+    assert!(
+        violations.is_empty(),
+        "Dart source parsing helpers must live in dust_dart_syntax:\n{}",
+        violations.join("\n")
+    );
+}
+
 fn workspace_root() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -54,6 +78,16 @@ fn driver_forbidden_patterns() -> Vec<&'static str> {
         "arguments_source.as_deref",
         "source.find(\"@",
         "parse_serde_arguments",
+    ]
+}
+
+fn dart_source_parser_patterns() -> Vec<&'static str> {
+    vec![
+        "struct DelimiterState",
+        "fn split_top_level_items",
+        "fn split_top_level_once",
+        "fn parse_string_literal",
+        "fn parse_bool_literal",
     ]
 }
 

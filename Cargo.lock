@@ -321,6 +321,7 @@ dependencies = [
 name = "dust_dart_emit"
 version = "0.1.1"
 dependencies = [
+ "dust_dart_syntax",
  "dust_ir",
  "heck",
  "minijinja",
@@ -328,10 +329,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "dust_dart_syntax"
+version = "0.1.1"
+
+[[package]]
 name = "dust_db_plugin"
 version = "0.1.1"
 dependencies = [
  "dust_dart_emit",
+ "dust_dart_syntax",
  "dust_diagnostics",
  "dust_ir",
  "dust_plugin_api",
@@ -355,6 +361,7 @@ name = "dust_driver"
 version = "0.1.1"
 dependencies = [
  "dust_cache",
+ "dust_dart_syntax",
  "dust_db_plugin",
  "dust_diagnostics",
  "dust_emitter",
@@ -405,6 +412,7 @@ dependencies = [
 name = "dust_ir"
 version = "0.1.1"
 dependencies = [
+ "dust_dart_syntax",
  "dust_diagnostics",
  "dust_text",
 ]
@@ -413,6 +421,7 @@ dependencies = [
 name = "dust_parser_dart"
 version = "0.1.1"
 dependencies = [
+ "dust_dart_syntax",
  "dust_diagnostics",
  "dust_text",
 ]
@@ -421,7 +430,7 @@ dependencies = [
 name = "dust_parser_dart_ts"
 version = "0.1.1"
 dependencies = [
- "dust_dart_emit",
+ "dust_dart_syntax",
  "dust_diagnostics",
  "dust_parser_dart",
  "dust_text",
@@ -459,6 +468,7 @@ name = "dust_plugin_serde"
 version = "0.1.1"
 dependencies = [
  "dust_dart_emit",
+ "dust_dart_syntax",
  "dust_diagnostics",
  "dust_ir",
  "dust_plugin_api",

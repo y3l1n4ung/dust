@@ -1,4 +1,4 @@
-use dust_dart_emit::{
+use dust_dart_syntax::{
     balanced_parenthesized, parse_static_dart_string_literal, split_top_level_items,
 };
 use dust_parser_dart::{ParsedQueryCallSurface, ParsedQueryFunction};
