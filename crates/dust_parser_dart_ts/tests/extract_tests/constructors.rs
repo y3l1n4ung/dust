@@ -100,3 +100,109 @@ abstract interface class Api {
         Some("String?")
     );
 }
+
+#[test]
+fn extracts_current_and_legacy_constructor_forms() {
+    let result = parse(
+        21,
+        r#"
+class Parent {
+  const Parent({required this.id, this.enabled = false});
+  final int id;
+  final bool enabled;
+}
+
+final class Child extends Parent {
+  const Child({required super.id, required this.title, super.enabled = true});
+  Child.legacy(int id, [String title = 'legacy']) : this(id: id, title: title);
+  factory Child.fromJson(Map<String, Object?> json) {
+    return Child(id: json['id'] as int, title: json['title'] as String);
+  }
+
+  final String title;
+}
+
+abstract final class ChildDao {
+  const factory ChildDao(Executor db) = _$ChildDao;
+}
+"#,
+    );
+
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    let child = &result.library.classes[1];
+    let dao = &result.library.classes[2];
+    let child_summaries: Vec<_> = child
+        .constructors
+        .iter()
+        .map(|constructor| {
+            (
+                constructor.name.as_deref(),
+                constructor.is_factory,
+                constructor.redirected_target_name.as_deref(),
+                constructor
+                    .params
+                    .iter()
+                    .map(|param| {
+                        (
+                            param.name.as_str(),
+                            param.type_source.as_deref(),
+                            param.kind,
+                            param.has_default,
+                            param.default_value_source.as_deref(),
+                        )
+                    })
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .collect();
+
+    assert_eq!(
+        child_summaries,
+        vec![
+            (
+                None,
+                false,
+                None,
+                vec![
+                    ("id", None, ParameterKind::Named, false, None),
+                    ("title", None, ParameterKind::Named, false, None),
+                    ("enabled", None, ParameterKind::Named, true, Some("true")),
+                ],
+            ),
+            (
+                Some("legacy"),
+                false,
+                None,
+                vec![
+                    ("id", Some("int"), ParameterKind::Positional, false, None),
+                    (
+                        "title",
+                        Some("String"),
+                        ParameterKind::Positional,
+                        true,
+                        Some("'legacy'"),
+                    ),
+                ],
+            ),
+            (
+                Some("fromJson"),
+                true,
+                None,
+                vec![(
+                    "json",
+                    Some("Map<String, Object?>"),
+                    ParameterKind::Positional,
+                    false,
+                    None,
+                )],
+            ),
+        ]
+    );
+    assert_eq!(dao.constructors.len(), 1);
+    assert_eq!(dao.constructors[0].name, None);
+    assert!(dao.constructors[0].is_factory);
+    assert_eq!(
+        dao.constructors[0].redirected_target_name.as_deref(),
+        Some("_$ChildDao")
+    );
+}
