@@ -14,6 +14,7 @@ fn annotation(args: &str) -> ParsedAnnotation {
     ParsedAnnotation {
         name: "ViewModel".to_owned(),
         arguments_source: Some(args.to_owned()),
+        parsed_arguments: None,
         span: span(),
     }
 }
@@ -23,6 +24,7 @@ fn field(name: &str, type_source: Option<&str>) -> ParsedFieldSurface {
         name: name.to_owned(),
         annotations: Vec::new(),
         type_source: type_source.map(str::to_owned),
+        parsed_type: None,
         has_default: false,
         span: span(),
     }
@@ -60,6 +62,12 @@ fn parsed_library_with_enums(
         directives: Vec::new(),
         classes,
         enums,
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         query_calls: Vec::new(),
     }
 }

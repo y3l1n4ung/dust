@@ -1,5 +1,5 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::LibraryIr;
+use dust_ir::DartFileIr;
 
 use super::{
     DbPluginOptions,
@@ -15,7 +15,7 @@ mod sqlx;
 mod types;
 
 pub(crate) fn validate_db_library(
-    library: &LibraryIr,
+    library: &DartFileIr,
     options: DbPluginOptions,
 ) -> Vec<Diagnostic> {
     if !options.databases && !database_classes(library).is_empty() {
@@ -32,7 +32,7 @@ pub(crate) fn validate_db_library(
 }
 
 fn validate_databases(
-    library: &LibraryIr,
+    library: &DartFileIr,
     options: DbPluginOptions,
     rows: &[RowClass<'_>],
     diagnostics: &mut Vec<Diagnostic>,

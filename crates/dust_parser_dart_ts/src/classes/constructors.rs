@@ -2,15 +2,10 @@ use dust_parser_dart::{ParsedConstructorParamSurface, ParsedConstructorSurface};
 use dust_text::SourceText;
 use tree_sitter::Node;
 
-use crate::syntax::{
-    find_first_descendant, find_first_descendant_by, find_last_descendant_text, node_text,
-    text_range,
-};
+use crate::syntax::{find_first_descendant, find_first_descendant_by, node_text, text_range};
+use crate::types::extract_type_before;
 
-use super::parse_text::{
-    determine_parameter_kind, extract_default_value_source, extract_parameter_type,
-    extract_redirect_target, extract_redirect_target_name, trailing_default_value_source,
-};
+use super::parse_text::{default_value_source, determine_parameter_kind, parameter_name_node};
 
 pub(super) fn extract_constructor(node: Node<'_>, source: &SourceText) -> ParsedConstructorSurface {
     let Some(signature) = find_first_descendant_by(node, |candidate| {
@@ -31,38 +26,17 @@ pub(super) fn extract_constructor(node: Node<'_>, source: &SourceText) -> Parsed
             span: text_range(node),
         };
     };
-    let declaration_text = node_text(node, source);
-    let is_factory = declaration_text
-        .split_whitespace()
-        .any(|word| word == "factory");
-
-    let mut identifiers = Vec::new();
-    let mut cursor = signature.walk();
-    for child in signature
-        .children(&mut cursor)
-        .filter(|child| child.is_named())
-    {
-        if child.kind() == "identifier" {
-            identifiers.push(node_text(child, source));
-        }
-    }
-
-    let name = if identifiers.len() > 1 {
-        identifiers.get(1).cloned()
-    } else {
-        None
-    };
+    let is_factory = matches!(
+        signature.kind(),
+        "factory_constructor_signature" | "redirecting_factory_constructor_signature"
+    );
+    let name = constructor_name(signature, source);
 
     let params = find_first_descendant(signature, "formal_parameter_list")
         .map(|list| extract_constructor_params(list, source))
         .unwrap_or_default();
-    let redirected_target_source = (signature.kind()
-        == "redirecting_factory_constructor_signature")
-        .then(|| extract_redirect_target(&declaration_text))
-        .flatten();
-    let redirected_target_name = redirected_target_source
-        .as_deref()
-        .and_then(extract_redirect_target_name);
+    let (redirected_target_source, redirected_target_name) =
+        redirecting_factory_target(signature, source);
 
     ParsedConstructorSurface {
         name,
@@ -72,6 +46,50 @@ pub(super) fn extract_constructor(node: Node<'_>, source: &SourceText) -> Parsed
         params,
         span: text_range(signature),
     }
+}
+
+fn constructor_name(signature: Node<'_>, source: &SourceText) -> Option<String> {
+    let mut cursor = signature.walk();
+    let identifiers = signature
+        .children_by_field_name("name", &mut cursor)
+        .filter(|child| child.is_named() && child.kind() == "identifier")
+        .map(|identifier| node_text(identifier, source))
+        .collect::<Vec<_>>();
+    identifiers.get(1).cloned()
+}
+
+fn redirecting_factory_target(
+    signature: Node<'_>,
+    source: &SourceText,
+) -> (Option<String>, Option<String>) {
+    if signature.kind() != "redirecting_factory_constructor_signature" {
+        return (None, None);
+    }
+
+    let mut cursor = signature.walk();
+    let target_nodes = signature
+        .children_by_field_name("target", &mut cursor)
+        .collect::<Vec<_>>();
+    let Some(first_target) = target_nodes.first() else {
+        return (None, None);
+    };
+    let Some(last_target) = target_nodes.last() else {
+        return (None, None);
+    };
+
+    let target_end = signature
+        .child_by_field_name("target_constructor")
+        .map(|constructor| constructor.end_byte())
+        .unwrap_or_else(|| last_target.end_byte());
+    let target_source = source
+        .as_str()
+        .get(first_target.start_byte()..target_end)
+        .map(str::trim)
+        .filter(|target| !target.is_empty())
+        .map(ToOwned::to_owned);
+
+    let target_name = target_source.clone();
+    (target_source, target_name)
 }
 
 fn extract_constructor_params(
@@ -100,17 +118,22 @@ fn collect_formal_parameters(
 }
 
 fn extract_formal_parameter(node: Node<'_>, source: &SourceText) -> ParsedConstructorParamSurface {
-    let text = node_text(node, source);
-    let name = find_last_descendant_text(node, source, &["identifier"]).unwrap_or_default();
-    let type_source = extract_parameter_type(&text, &name);
+    let name_node = parameter_name_node(node);
+    let name = name_node
+        .map(|node| node_text(node, source))
+        .unwrap_or_default();
+    let parsed_type =
+        name_node.and_then(|name| extract_type_before(node, name.start_byte(), source));
+    let type_source = parsed_type.as_ref().map(|ty| ty.source.clone());
+    let default_value_source = default_value_source(node, source);
 
     ParsedConstructorParamSurface {
         name,
         type_source,
+        parsed_type,
         kind: determine_parameter_kind(node, source),
-        has_default: text.contains('=') || trailing_default_value_source(node, source).is_some(),
-        default_value_source: extract_default_value_source(&text)
-            .or_else(|| trailing_default_value_source(node, source)),
+        has_default: default_value_source.is_some(),
+        default_value_source,
         span: text_range(node),
     }
 }

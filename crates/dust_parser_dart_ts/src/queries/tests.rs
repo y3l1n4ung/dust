@@ -1,15 +1,14 @@
+use dust_parser_dart::ParsedQueryCallSurface;
 use dust_text::{FileId, SourceText};
+use tree_sitter::Parser;
 
 use super::{ParsedQueryFunction, extract_query_calls};
 
 #[test]
 fn extracts_query_calls() {
-    let source = SourceText::new(
-        FileId::new(1),
+    let calls = calls_for(
         "queryAs<UserRow>(r'SELECT * FROM users WHERE id = $1', [id]).fetchOptional(db);",
     );
-
-    let calls = extract_query_calls(&source);
 
     assert_eq!(calls.len(), 1);
     assert_eq!(calls[0].function, ParsedQueryFunction::As);
@@ -23,12 +22,7 @@ fn extracts_query_calls() {
 
 #[test]
 fn rejects_dynamic_sql_and_non_list_params() {
-    let source = SourceText::new(
-        FileId::new(1),
-        "queryRaw('SELECT * FROM $table', args).fetch(db);",
-    );
-
-    let calls = extract_query_calls(&source);
+    let calls = calls_for("queryRaw('SELECT * FROM $table', args).fetch(db);");
 
     assert_eq!(calls.len(), 1);
     assert!(!calls[0].sql_source_static);
@@ -37,24 +31,17 @@ fn rejects_dynamic_sql_and_non_list_params() {
 
 #[test]
 fn ignores_strings_comments_and_prefixes() {
-    let source = SourceText::new(
-        FileId::new(1),
+    let calls = calls_for(
         "final text = 'queryRaw(r\"SELECT 1\", [])'; // queryRaw(r'SELECT 1', [])\nmyqueryRaw(r'SELECT 1', []);",
     );
-
-    let calls = extract_query_calls(&source);
 
     assert_eq!(calls.len(), 0);
 }
 
 #[test]
 fn extracts_multiline_raw_sql() {
-    let source = SourceText::new(
-        FileId::new(1),
-        "queryRaw(r'''\nSELECT *\nFROM users\nWHERE id = $1\n''', [id]).fetch(db);",
-    );
-
-    let calls = extract_query_calls(&source);
+    let calls =
+        calls_for("queryRaw(r'''\nSELECT *\nFROM users\nWHERE id = $1\n''', [id]).fetch(db);");
 
     assert_eq!(calls.len(), 1);
     assert_eq!(calls[0].function, ParsedQueryFunction::Raw);
@@ -65,12 +52,8 @@ fn extracts_multiline_raw_sql() {
 
 #[test]
 fn rejects_concatenated_and_variable_sql() {
-    let source = SourceText::new(
-        FileId::new(1),
-        "queryRaw('SELECT * ' 'FROM users', []).fetch(db); queryRaw(sql, []).fetch(db);",
-    );
-
-    let calls = extract_query_calls(&source);
+    let calls =
+        calls_for("queryRaw('SELECT * ' 'FROM users', []).fetch(db); queryRaw(sql, []).fetch(db);");
 
     assert_eq!(calls.len(), 2);
     assert!(!calls[0].sql_source_static);
@@ -79,8 +62,7 @@ fn rejects_concatenated_and_variable_sql() {
 
 #[test]
 fn extracts_fetch_modes_and_default_params() {
-    let source = SourceText::new(
-        FileId::new(1),
+    let calls = calls_for(
         r#"
 queryScalar<int>(r'SELECT COUNT(*) FROM users', const <Object?>[]).fetchOptional(db);
 queryRaw(r'SELECT * FROM users').fetch(db);
@@ -88,8 +70,6 @@ queryExecute(r'DELETE FROM users').execute(db);
 queryAs<List<UserRow>>(r'SELECT * FROM users', [orgId]).fetchAll(db);
 "#,
     );
-
-    let calls = extract_query_calls(&source);
 
     assert_eq!(calls.len(), 4);
     assert_eq!(calls[0].function, ParsedQueryFunction::Scalar);
@@ -108,12 +88,26 @@ queryAs<List<UserRow>>(r'SELECT * FROM users', [orgId]).fetchAll(db);
 
 #[test]
 fn ignores_unbalanced_query_calls() {
-    let source = SourceText::new(
-        FileId::new(1),
-        "queryRaw <Row r'SELECT 1'; queryRaw(r'SELECT 1', []",
-    );
-
-    let calls = extract_query_calls(&source);
+    let calls = calls_for("queryRaw <Row r'SELECT 1'; queryRaw(r'SELECT 1', []");
 
     assert_eq!(calls.len(), 0);
+}
+
+#[test]
+fn requires_exact_fetch_method_property() {
+    let calls = calls_for("queryRaw(r'SELECT 1', []).fetching(db);");
+
+    assert_eq!(calls.len(), 1);
+    assert_eq!(calls[0].fetch_method, None);
+}
+
+fn calls_for(source: &str) -> Vec<ParsedQueryCallSurface> {
+    let source = SourceText::new(FileId::new(1), format!("void main() {{\n{source}\n}}"));
+    let mut parser = Parser::new();
+    parser
+        .set_language(&tree_sitter_dart::LANGUAGE.into())
+        .expect("tree-sitter Dart grammar loads");
+    let tree = parser.parse(source.as_str(), None).expect("source parses");
+
+    extract_query_calls(tree.root_node(), &source)
 }

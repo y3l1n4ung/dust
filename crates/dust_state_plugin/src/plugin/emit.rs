@@ -1,4 +1,4 @@
-use dust_ir::LibraryIr;
+use dust_ir::DartFileIr;
 use dust_plugin_api::{PluginContribution, SymbolPlan};
 
 use super::parse::{parse_view_model_config, view_model_config};
@@ -14,7 +14,7 @@ pub(super) struct StateFieldSpec {
     pub(super) type_source: String,
 }
 
-pub(crate) fn emit_library_state(library: &LibraryIr, plan: &SymbolPlan) -> PluginContribution {
+pub(crate) fn emit_library_state(library: &DartFileIr, plan: &SymbolPlan) -> PluginContribution {
     let mut contribution = PluginContribution::default();
     let view_models = library
         .classes

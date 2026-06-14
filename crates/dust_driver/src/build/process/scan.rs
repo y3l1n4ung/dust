@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use dust_parser_dart::{ParseOptions, ParsedLibrarySurface, parse_file_with_backend};
+use dust_parser_dart::{ParseOptions, ParsedDartFileSurface, parse_file_with_backend};
 use dust_parser_dart_ts::TreeSitterDartBackend;
 use dust_plugin_api::{
     LibraryAnalysisSnapshot, PluginRegistry, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
@@ -18,7 +18,7 @@ pub(crate) fn collect_workspace_analysis(
     registry: &PluginRegistry,
 ) -> (
     WorkspaceAnalysisBuilder,
-    Vec<Option<ParsedLibrarySurface>>,
+    Vec<Option<ParsedDartFileSurface>>,
     Vec<LibraryAnalysisSnapshot>,
 ) {
     if pending.is_empty() {

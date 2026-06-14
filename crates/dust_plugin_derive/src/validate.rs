@@ -1,11 +1,11 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ClassKindIr, LibraryIr};
+use dust_ir::{ClassKindIr, DartFileIr};
 
 use crate::features::{
     clone_copy_with::validate_copy_with, eq_hash::validate_eq_hash, validate::validate_validate,
 };
 
-pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
+pub(crate) fn validate_library(library: &DartFileIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     for class in &library.classes {
         if matches!(class.kind, ClassKindIr::MixinClass) {

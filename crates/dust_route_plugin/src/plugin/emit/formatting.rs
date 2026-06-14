@@ -1,9 +1,9 @@
 use std::path::Path;
 
 use dust_dart_emit::{DART_DYNAMIC, DART_OBJECT_NULLABLE};
-use dust_ir::{LibraryIr, TypeIr};
+use dust_ir::{DartFileIr, TypeIr};
 
-pub(super) fn package_import_uri(library: &LibraryIr) -> Option<String> {
+pub(super) fn package_import_uri(library: &DartFileIr) -> Option<String> {
     let source = Path::new(&library.source_path);
     let relative = source
         .strip_prefix(&library.package_root)

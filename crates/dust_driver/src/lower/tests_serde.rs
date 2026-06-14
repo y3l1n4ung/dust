@@ -9,6 +9,14 @@ fn span(start: u32, end: u32) -> SpanIr {
     SpanIr::new(FileId::new(99), TextRange::new(start, end))
 }
 
+fn serde_config(args: &str, start: u32, end: u32) -> ConfigApplicationIr {
+    ConfigApplicationIr::new(
+        SymbolId::new("dust_dart::SerDe"),
+        Some(args.to_owned()),
+        span(start, end),
+    )
+}
+
 #[test]
 fn lowers_serde_configs_into_ir() {
     let class = ResolvedClass {
@@ -21,27 +29,23 @@ fn lowers_serde_configs_into_ir() {
         fields: vec![ResolvedField {
             name: "name".to_owned(),
             type_source: Some("String".to_owned()),
+            parsed_type: None,
             has_default: false,
             span: span(20, 30),
-            configs: vec![ConfigApplicationIr {
-                symbol: SymbolId::new("dust_dart::SerDe"),
-                arguments_source: Some(
-                    "(rename: 'full_name', aliases: ['fullName'], using: const NameCodec(), defaultValue: 'guest')"
-                        .to_owned(),
-                ),
-                span: span(18, 30),
-            }],
+            configs: vec![serde_config(
+                "(rename: 'full_name', aliases: ['fullName'], using: const NameCodec(), defaultValue: 'guest')",
+                18,
+                30,
+            )],
         }],
         constructors: Vec::new(),
         methods: Vec::new(),
         traits: Vec::new(),
-        configs: vec![ConfigApplicationIr {
-            symbol: SymbolId::new("dust_dart::SerDe"),
-            arguments_source: Some(
-                "(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)".to_owned(),
-            ),
-            span: span(1, 10),
-        }],
+        configs: vec![serde_config(
+            "(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)",
+            1,
+            10,
+        )],
     };
 
     let outcome = lower_class(&class);
@@ -96,22 +100,19 @@ fn invalid_serde_options_produce_lowering_diagnostics() {
         fields: vec![ResolvedField {
             name: "name".to_owned(),
             type_source: Some("String".to_owned()),
+            parsed_type: None,
             has_default: false,
             span: span(20, 30),
-            configs: vec![ConfigApplicationIr {
-                symbol: SymbolId::new("dust_dart::SerDe"),
-                arguments_source: Some("(renameAll: SerDeRename.snakeCase)".to_owned()),
-                span: span(18, 30),
-            }],
+            configs: vec![serde_config("(renameAll: SerDeRename.snakeCase)", 18, 30)],
         }],
         constructors: Vec::new(),
         methods: Vec::new(),
         traits: Vec::new(),
-        configs: vec![ConfigApplicationIr {
-            symbol: SymbolId::new("dust_dart::SerDe"),
-            arguments_source: Some("(aliases: ['legacy'], using: const NameCodec())".to_owned()),
-            span: span(1, 10),
-        }],
+        configs: vec![serde_config(
+            "(aliases: ['legacy'], using: const NameCodec())",
+            1,
+            10,
+        )],
     };
 
     let outcome = lower_class(&class);
@@ -146,68 +147,50 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
             ResolvedField {
                 name: "emptyCodec".to_owned(),
                 type_source: Some("DateTime".to_owned()),
+                parsed_type: None,
                 has_default: false,
                 span: span(20, 30),
-                configs: vec![ConfigApplicationIr {
-                    symbol: SymbolId::new("dust_dart::SerDe"),
-                    arguments_source: Some("(using: )".to_owned()),
-                    span: span(18, 30),
-                }],
+                configs: vec![serde_config("(using: )", 18, 30)],
             },
             ResolvedField {
                 name: "stringCodec".to_owned(),
                 type_source: Some("DateTime".to_owned()),
+                parsed_type: None,
                 has_default: false,
                 span: span(31, 40),
-                configs: vec![ConfigApplicationIr {
-                    symbol: SymbolId::new("dust_dart::SerDe"),
-                    arguments_source: Some("(using: 'codec')".to_owned()),
-                    span: span(31, 40),
-                }],
+                configs: vec![serde_config("(using: 'codec')", 31, 40)],
             },
             ResolvedField {
                 name: "nullCodec".to_owned(),
                 type_source: Some("DateTime".to_owned()),
+                parsed_type: None,
                 has_default: false,
                 span: span(41, 50),
-                configs: vec![ConfigApplicationIr {
-                    symbol: SymbolId::new("dust_dart::SerDe"),
-                    arguments_source: Some("(using: null)".to_owned()),
-                    span: span(41, 50),
-                }],
+                configs: vec![serde_config("(using: null)", 41, 50)],
             },
             ResolvedField {
                 name: "lambdaCodec".to_owned(),
                 type_source: Some("DateTime".to_owned()),
+                parsed_type: None,
                 has_default: false,
                 span: span(51, 60),
-                configs: vec![ConfigApplicationIr {
-                    symbol: SymbolId::new("dust_dart::SerDe"),
-                    arguments_source: Some("(using: () => const DateTimeCodec())".to_owned()),
-                    span: span(51, 60),
-                }],
+                configs: vec![serde_config("(using: () => const DateTimeCodec())", 51, 60)],
             },
             ResolvedField {
                 name: "typeCodec".to_owned(),
                 type_source: Some("DateTime".to_owned()),
+                parsed_type: None,
                 has_default: false,
                 span: span(61, 70),
-                configs: vec![ConfigApplicationIr {
-                    symbol: SymbolId::new("dust_dart::SerDe"),
-                    arguments_source: Some("(using: DateTimeCodec)".to_owned()),
-                    span: span(61, 70),
-                }],
+                configs: vec![serde_config("(using: DateTimeCodec)", 61, 70)],
             },
             ResolvedField {
                 name: "validCodec".to_owned(),
                 type_source: Some("DateTime".to_owned()),
+                parsed_type: None,
                 has_default: false,
                 span: span(71, 80),
-                configs: vec![ConfigApplicationIr {
-                    symbol: SymbolId::new("dust_dart::SerDe"),
-                    arguments_source: Some("(using: const DateTimeCodec())".to_owned()),
-                    span: span(71, 80),
-                }],
+                configs: vec![serde_config("(using: const DateTimeCodec())", 71, 80)],
             },
         ],
         constructors: Vec::new(),

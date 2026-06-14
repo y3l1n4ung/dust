@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use dust_ir::LibraryIr;
+use dust_ir::DartFileIr;
 use dust_plugin_api::PluginContribution;
 
 use super::{
@@ -17,7 +17,10 @@ use self::{
     dao::render_dao_class, database::render_database_class, row::render_from_row_extension,
 };
 
-pub(crate) fn emit_db_library(library: &LibraryIr, options: DbPluginOptions) -> PluginContribution {
+pub(crate) fn emit_db_library(
+    library: &DartFileIr,
+    options: DbPluginOptions,
+) -> PluginContribution {
     let mut contribution = PluginContribution::default();
     let mut sections = Vec::new();
     let rows = row_classes(library);

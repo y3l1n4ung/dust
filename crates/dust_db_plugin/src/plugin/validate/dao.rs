@@ -12,7 +12,7 @@ use crate::plugin::{
 use super::types::is_supported_scalar_type;
 
 pub(super) fn validate_daos(
-    library: &dust_ir::LibraryIr,
+    library: &dust_ir::DartFileIr,
     rows: &[RowClass<'_>],
     diagnostics: &mut Vec<Diagnostic>,
 ) {

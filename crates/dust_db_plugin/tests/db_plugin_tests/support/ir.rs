@@ -9,11 +9,7 @@ pub(crate) fn span() -> SpanIr {
 }
 
 pub(crate) fn config(symbol: &str, args: &str) -> ConfigApplicationIr {
-    ConfigApplicationIr {
-        symbol: SymbolId::new(symbol),
-        arguments_source: Some(args.to_owned()),
-        span: span(),
-    }
+    ConfigApplicationIr::new(SymbolId::new(symbol), Some(args.to_owned()), span())
 }
 
 pub(crate) fn trait_app(symbol: &str) -> TraitApplicationIr {

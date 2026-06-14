@@ -5,22 +5,21 @@ use tree_sitter::Node;
 use crate::{
     annotations::{extract_annotation, extract_member_annotations},
     syntax::{
-        class_header_text, find_first_descendant_text, first_non_annotation_named_child,
-        has_descendant_kind, node_text, text_range,
+        find_first_descendant_text, first_non_annotation_named_child, has_descendant_kind,
+        has_direct_child_kind, node_text, text_range,
     },
 };
 
 use super::{constructors::extract_constructor, fields::extract_fields, methods::extract_method};
 
 pub(super) fn extract_class(node: Node<'_>, source: &SourceText) -> ParsedClassSurface {
-    let header = class_header_text(node, source);
-    let kind = if header.contains("mixin class") {
+    let kind = if has_direct_child_kind(node, "mixin") {
         ParsedClassKind::MixinClass
     } else {
         ParsedClassKind::Class
     };
-    let is_abstract = header.split_whitespace().any(|word| word == "abstract");
-    let is_interface = header.contains("interface class");
+    let is_abstract = has_direct_child_kind(node, "abstract");
+    let is_interface = has_direct_child_kind(node, "interface");
     let class_name = node
         .child_by_field_name("name")
         .map(|name| node_text(name, source))

@@ -1,24 +1,6 @@
+use dust_dart_syntax::{parse_bool_literal, parse_string_literal};
 use dust_diagnostics::Diagnostic;
 use dust_ir::SerdeRenameRuleIr;
-
-pub(crate) fn parse_string_literal(source: &str) -> Option<String> {
-    let source = source.trim();
-    let first = source.chars().next()?;
-    let last = source.chars().next_back()?;
-    if source.len() < 2 || first != last || !matches!(first, '\'' | '"') {
-        return None;
-    }
-
-    Some(source[1..source.len() - 1].to_owned())
-}
-
-pub(crate) fn parse_bool_literal(source: &str) -> Option<bool> {
-    match source.trim() {
-        "true" => Some(true),
-        "false" => Some(false),
-        _ => None,
-    }
-}
 
 pub(crate) fn parse_serde_rename_rule(source: &str) -> Option<SerdeRenameRuleIr> {
     match source.trim().rsplit('.').next()? {

@@ -1,3 +1,8 @@
+use dust_dart_syntax::{
+    normalized_args, parse_member_ref, parse_string_literal, split_top_level_items,
+    split_top_level_once,
+};
+
 /// A structured constant annotation value.
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnnotationValue {
@@ -26,7 +31,7 @@ pub enum AnnotationValue {
 
 /// Parses top-level named annotation arguments into structured values.
 pub fn parse_annotation_named_values(source: &str) -> Option<Vec<(String, AnnotationValue)>> {
-    let inner = normalized_arguments(source)?;
+    let inner = normalized_args(source)?;
     split_top_level_items(inner)
         .into_iter()
         .map(|item| {
@@ -59,8 +64,8 @@ fn parse_annotation_value(source: &str) -> AnnotationValue {
     if let Some((name, named)) = parse_constructor(source) {
         return AnnotationValue::Constructor { name, named };
     }
-    if is_member_ref(source) {
-        return AnnotationValue::Member(source.to_owned());
+    if let Some(member) = parse_member_ref(source) {
+        return AnnotationValue::Member(member);
     }
     AnnotationValue::Expression(source.to_owned())
 }
@@ -96,9 +101,7 @@ fn parse_constructor(source: &str) -> Option<(String, Vec<(String, AnnotationVal
     let source = source.strip_prefix("const ").unwrap_or(source).trim();
     let open = source.find('(')?;
     let name = source[..open].trim();
-    if !is_member_ref(name) {
-        return None;
-    }
+    parse_member_ref(name)?;
     let inner = source[open + 1..].strip_suffix(')')?.trim();
     if inner.is_empty() {
         return Some((name.to_owned(), Vec::new()));
@@ -113,20 +116,6 @@ fn parse_constructor(source: &str) -> Option<(String, Vec<(String, AnnotationVal
     Some((name.to_owned(), named))
 }
 
-fn parse_string_literal(source: &str) -> Option<String> {
-    let source = source.trim();
-    let source = source
-        .strip_prefix('r')
-        .or_else(|| source.strip_prefix('R'))
-        .unwrap_or(source);
-    let first = source.chars().next()?;
-    let last = source.chars().next_back()?;
-    if source.len() < 2 || first != last || !matches!(first, '\'' | '"') {
-        return None;
-    }
-    Some(source[1..source.len() - 1].to_owned())
-}
-
 fn is_number_literal(source: &str) -> bool {
     let source = source.strip_prefix('-').unwrap_or(source);
     let mut saw_digit = false;
@@ -139,99 +128,4 @@ fn is_number_literal(source: &str) -> bool {
         }
     }
     saw_digit
-}
-
-fn is_member_ref(source: &str) -> bool {
-    let mut chars = source.chars();
-    let Some(first) = chars.next() else {
-        return false;
-    };
-    (first == '_' || first.is_ascii_alphabetic())
-        && chars.all(|ch| ch == '_' || ch == '.' || ch.is_ascii_alphanumeric())
-}
-
-fn normalized_arguments(source: &str) -> Option<&str> {
-    source
-        .trim()
-        .strip_prefix('(')?
-        .strip_suffix(')')
-        .map(str::trim)
-}
-
-fn split_top_level_items(source: &str) -> Vec<&str> {
-    let mut items = Vec::new();
-    let mut state = DelimiterState::default();
-    let mut start = 0_usize;
-    for (index, ch) in source.char_indices() {
-        if state.is_top_level() && ch == ',' {
-            let item = source[start..index].trim();
-            if !item.is_empty() {
-                items.push(item);
-            }
-            start = index + ch.len_utf8();
-        }
-        state.advance(ch);
-    }
-    let tail = source[start..].trim();
-    if !tail.is_empty() {
-        items.push(tail);
-    }
-    items
-}
-
-fn split_top_level_once(source: &str, target: char) -> Option<(&str, &str)> {
-    let mut state = DelimiterState::default();
-    for (index, ch) in source.char_indices() {
-        if state.is_top_level() && ch == target {
-            return Some((&source[..index], &source[index + ch.len_utf8()..]));
-        }
-        state.advance(ch);
-    }
-    None
-}
-
-#[derive(Default)]
-struct DelimiterState {
-    paren: u32,
-    bracket: u32,
-    brace: u32,
-    angle: u32,
-    quote: Option<char>,
-    escaped: bool,
-}
-
-impl DelimiterState {
-    fn is_top_level(&self) -> bool {
-        self.paren == 0
-            && self.bracket == 0
-            && self.brace == 0
-            && self.angle == 0
-            && self.quote.is_none()
-    }
-
-    fn advance(&mut self, ch: char) {
-        if let Some(active) = self.quote {
-            if self.escaped {
-                self.escaped = false;
-            } else if ch == '\\' {
-                self.escaped = true;
-            } else if ch == active {
-                self.quote = None;
-            }
-            return;
-        }
-
-        match ch {
-            '\'' | '"' => self.quote = Some(ch),
-            '<' => self.angle += 1,
-            '>' => self.angle = self.angle.saturating_sub(1),
-            '(' => self.paren += 1,
-            ')' => self.paren = self.paren.saturating_sub(1),
-            '{' => self.brace += 1,
-            '}' => self.brace = self.brace.saturating_sub(1),
-            '[' => self.bracket += 1,
-            ']' => self.bracket = self.bracket.saturating_sub(1),
-            _ => {}
-        }
-    }
 }

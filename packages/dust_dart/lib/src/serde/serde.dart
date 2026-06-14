@@ -18,7 +18,7 @@ final class Deserialize extends DeriveTrait {
 /// deserialize the non-null value itself.
 abstract interface class SerDeCodec<DartT, JsonT> {
   /// Creates one codec contract object.
-  const SerDeCodec();
+  const SerDeCodec(); // coverage:ignore-line
 
   /// Converts one Dart value into its JSON representation.
   JsonT serialize(DartT value);

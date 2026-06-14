@@ -1,12 +1,12 @@
 use dust_dart_emit::{DART_LIST, DART_MAP, DART_OBJECT, DART_SET};
 use dust_diagnostics::Diagnostic;
-use dust_ir::{BuiltinType, ClassIr, ClassKindIr, LibraryIr, TypeIr};
+use dust_ir::{BuiltinType, ClassIr, ClassKindIr, DartFileIr, TypeIr};
 
 /// Validates that a library and its models are compatible with SerDe generation.
 ///
 /// This function performs static analysis on the IR to catch potential runtime
 /// errors early, such as unsupported field types for deserialization.
-pub(crate) fn validate_library(library: &LibraryIr) -> Vec<Diagnostic> {
+pub(crate) fn validate_library(library: &DartFileIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let mut known_models = library
         .classes

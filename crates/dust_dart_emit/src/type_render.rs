@@ -127,8 +127,8 @@ mod tests {
     use crate::DART_MAP;
 
     use super::{
-        DART_DYNAMIC, DART_OBJECT, DART_OBJECT_NULLABLE, DYNAMIC_TYPES, OBJECT_NULLABLE_TYPES,
-        non_nullable,
+        DART_DYNAMIC, DART_OBJECT, DART_OBJECT_NULLABLE, DYNAMIC_TYPES, DartTypeRenderer,
+        OBJECT_NULLABLE_TYPES, UnknownTypeRendering, non_nullable,
     };
 
     #[test]
@@ -171,7 +171,66 @@ mod tests {
             kind: BuiltinType::String,
             nullable: true,
         };
+        let named = TypeIr::named("User").nullable();
 
         assert_eq!(non_nullable(&ty), TypeIr::string());
+        assert_eq!(non_nullable(&named), TypeIr::named("User"));
+    }
+
+    #[test]
+    fn creates_renderer_with_selected_unknown_strategy() {
+        let renderer = DartTypeRenderer::new(UnknownTypeRendering::ObjectNullable);
+
+        assert_eq!(
+            renderer.render_non_nullable(&TypeIr::unknown()),
+            DART_OBJECT
+        );
+        assert_eq!(
+            renderer.render_non_nullable(&TypeIr::bool().nullable()),
+            "bool"
+        );
+    }
+
+    #[test]
+    fn renders_all_non_named_shapes() {
+        let function = TypeIr::function("String Function(int)").nullable();
+        let record = TypeIr::record("(String, int)").nullable();
+
+        assert_eq!(
+            OBJECT_NULLABLE_TYPES.render(&TypeIr::dynamic()),
+            DART_DYNAMIC
+        );
+        assert_eq!(
+            OBJECT_NULLABLE_TYPES.render(&function),
+            "String Function(int)?"
+        );
+        assert_eq!(OBJECT_NULLABLE_TYPES.render(&record), "(String, int)?");
+        assert_eq!(
+            OBJECT_NULLABLE_TYPES.render_non_nullable(&function),
+            "String Function(int)"
+        );
+        assert_eq!(
+            OBJECT_NULLABLE_TYPES.render_non_nullable(&record),
+            "(String, int)"
+        );
+        assert_eq!(
+            OBJECT_NULLABLE_TYPES.render_non_nullable(&TypeIr::dynamic()),
+            DART_DYNAMIC
+        );
+        assert_eq!(
+            non_nullable(&function),
+            TypeIr::function("String Function(int)")
+        );
+        assert_eq!(non_nullable(&record), TypeIr::record("(String, int)"));
+        assert_eq!(non_nullable(&TypeIr::dynamic()), TypeIr::dynamic());
+        assert_eq!(non_nullable(&TypeIr::unknown()), TypeIr::unknown());
+    }
+
+    #[test]
+    fn renders_named_types_without_generic_arguments() {
+        let ty = TypeIr::named("User").nullable();
+
+        assert_eq!(OBJECT_NULLABLE_TYPES.render(&ty), "User?");
+        assert_eq!(OBJECT_NULLABLE_TYPES.render_non_nullable(&ty), "User");
     }
 }

@@ -13,9 +13,12 @@ The foundational contract and integration layer for Dust plugins. This crate def
 
 ### `DustPlugin` Trait
 The primary interface for all features. It defines three distinct phases:
-- `validate`: Static analysis of the IR before any code is generated.
-- `collect_workspace_analysis`: (Pass 2) Global fact gathering across the entire project.
-- `emit`: (Pass 3) Rendering IR into Dart code fragments based on a finalized `SymbolPlan`.
+- `collect_workspace_analysis`: global fact gathering from parser/IR-backed file data.
+- `validate`: static analysis of `DartFileIr` before any code is generated.
+- `generate`: rendering `DartFileIr` into generated units using `PluginContext`.
+
+`emit` remains as a compatibility adapter while existing plugins migrate to
+`generate`.
 
 ### `WorkspaceAnalysis`
 A multi-threaded, append-only collection system.
@@ -23,17 +26,20 @@ A multi-threaded, append-only collection system.
 - **Snapshot**: A serialized, per-file subset used for incremental build caching.
 - **Immutable Analysis**: The final set of global facts provided to plugins during emission.
 
-### `PluginContribution`
-The unit of generated output. Instead of writing full files, plugins return "contributions" (mixins, top-level functions, support types) which the `dust_emitter` merges into the final `.g.dart` file.
+### `GeneratedUnit`
+The future unit of generated output. Today this is a compatibility alias for
+`PluginContribution`; plugins still return fragments that the `dust_emitter`
+merges into the final `.g.dart` file.
 
 ### `SymbolPlan`
 A deterministic registry of reserved names (e.g., `_$User`, `_undefined`). It ensures that multiple plugins can safely generate code into the same scope without clobbering each other.
 
 ## 🛠️ Implementation Rules
 
-- **Deterministic**: Plugins must be pure functions of `(IR, SymbolPlan)`. No side effects or non-deterministic string generation.
-- **Lazy**: Heavy computation should happen during `emit`, not `validate`.
+- **Deterministic**: Plugins must be pure functions of `(DartFileIr, PluginContext)`. No side effects or non-deterministic string generation.
+- **Lazy**: Heavy computation should happen during `generate`, not `validate`.
 - **Surgical**: Plugins should only generate code for classes/enums they "own" (i.e., those carrying their specific annotations).
+- **Parse-Free**: Plugins should use normalized IR/config data, not parser surfaces or raw Dart source scanning.
 
 ---
 *For a step-by-step guide on creating new plugins, see [../../docs/plugin-guide.md](../../docs/plugin-guide.md).*

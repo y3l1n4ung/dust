@@ -4,21 +4,24 @@
 
 mod annotations;
 mod classes;
+mod declarations;
 mod diagnostics;
 mod directives;
 mod enums;
 mod queries;
 mod syntax;
+mod types;
 
 use dust_diagnostics::Diagnostic;
-use dust_parser_dart::{ParseBackend, ParseOptions, ParseResult, ParsedLibrarySurface};
+use dust_parser_dart::{ParseBackend, ParseOptions, ParseResult, ParsedDartFileSurface};
 use dust_text::SourceText;
 use std::cell::RefCell;
 use tree_sitter::Parser;
 
 use self::{
-    classes::extract_classes, diagnostics::extract_diagnostics, directives::extract_directives,
-    enums::extract_enums, queries::extract_query_calls, syntax::text_range,
+    classes::extract_classes, declarations::extract_top_level_declarations,
+    diagnostics::extract_diagnostics, directives::extract_directives, enums::extract_enums,
+    queries::extract_query_calls, syntax::text_range,
 };
 
 thread_local! {
@@ -63,13 +66,20 @@ impl ParseBackend for TreeSitterDartBackend {
             };
 
             let root = tree.root_node();
+            let declarations = extract_top_level_declarations(root, source);
             ParseResult {
-                library: ParsedLibrarySurface {
+                library: ParsedDartFileSurface {
                     span: text_range(root),
                     directives: extract_directives(root, source),
                     classes: extract_classes(root, source),
                     enums: extract_enums(root, source),
-                    query_calls: extract_query_calls(source),
+                    mixins: declarations.mixins,
+                    extensions: declarations.extensions,
+                    extension_types: declarations.extension_types,
+                    functions: declarations.functions,
+                    variables: declarations.variables,
+                    typedefs: declarations.typedefs,
+                    query_calls: extract_query_calls(root, source),
                 },
                 diagnostics: extract_diagnostics(&tree, source),
                 options,
@@ -78,12 +88,18 @@ impl ParseBackend for TreeSitterDartBackend {
     }
 }
 
-fn empty_library(source: &SourceText) -> ParsedLibrarySurface {
-    ParsedLibrarySurface {
+fn empty_library(source: &SourceText) -> ParsedDartFileSurface {
+    ParsedDartFileSurface {
         span: source.full_range(),
         directives: Vec::new(),
         classes: Vec::new(),
         enums: Vec::new(),
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         query_calls: Vec::new(),
     }
 }

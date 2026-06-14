@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ClassIr, LibraryIr};
+use dust_ir::{ClassIr, DartFileIr};
 use dust_plugin_api::SymbolPlan;
 
 use super::{
@@ -17,7 +17,7 @@ use guards::build_guard_specs;
 use routes::{build_route_spec, workspace_route_specs};
 
 pub(crate) fn build_router_spec(
-    library: &LibraryIr,
+    library: &DartFileIr,
     plan: &SymbolPlan,
 ) -> Result<Option<RouterSpec>, Vec<Diagnostic>> {
     let router_classes = router_classes(library);
@@ -75,7 +75,7 @@ pub(crate) fn build_router_spec(
     }))
 }
 
-fn router_classes(library: &LibraryIr) -> Vec<&ClassIr> {
+fn router_classes(library: &DartFileIr) -> Vec<&ClassIr> {
     library
         .classes
         .iter()
@@ -88,7 +88,7 @@ fn router_classes(library: &LibraryIr) -> Vec<&ClassIr> {
         .collect()
 }
 
-fn local_and_workspace_routes(library: &LibraryIr, plan: &SymbolPlan) -> Vec<RouteSpec> {
+fn local_and_workspace_routes(library: &DartFileIr, plan: &SymbolPlan) -> Vec<RouteSpec> {
     let mut routes = library
         .classes
         .iter()

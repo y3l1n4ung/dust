@@ -6,20 +6,17 @@ use dust_ir::{ConfigApplicationIr, TypeIr};
 
 use crate::plugin::model::{FetchMode, QueryFunction};
 
-#[path = "query_source/literal.rs"]
-mod literal;
-
-use literal::parse_static_sql_literal;
+use dust_dart_syntax::parse_static_dart_string_literal;
 
 pub(super) fn parse_query_config(config: &ConfigApplicationIr) -> (String, bool) {
     if let Some(sql) = config
         .positional_argument_source(0)
-        .and_then(parse_static_sql_literal)
+        .and_then(parse_static_dart_string_literal)
     {
         return (sql, true);
     }
     if let Some(value) = config.named_expression_source("sql") {
-        return parse_static_sql_literal(&value)
+        return parse_static_dart_string_literal(&value)
             .map(|sql| (sql, true))
             .unwrap_or_else(|| (String::new(), false));
     }

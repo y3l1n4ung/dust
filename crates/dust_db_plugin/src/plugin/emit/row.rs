@@ -2,7 +2,7 @@ use dust_dart_emit::{
     DART_BOOL, DART_DATE_TIME, DART_DOUBLE, DART_DYNAMIC, DART_INT, DART_NUM, DART_OBJECT_NULLABLE,
     DART_STRING, DYNAMIC_TYPES, render_template,
 };
-use dust_ir::{ClassIr, ConstructorIr, LibraryIr, ParamKind, TypeIr};
+use dust_ir::{ClassIr, ConstructorIr, DartFileIr, ParamKind, TypeIr};
 use serde::Serialize;
 
 use crate::plugin::{
@@ -20,7 +20,7 @@ struct FromRowContext<'a> {
 }
 
 pub(super) fn render_from_row_extension(
-    library: &LibraryIr,
+    library: &DartFileIr,
     class: &ClassIr,
     class_config: &SqlxConfig,
 ) -> String {
@@ -93,7 +93,7 @@ fn row_registration_name(class_name: &str) -> String {
 }
 
 fn render_row_value(
-    library: &LibraryIr,
+    library: &DartFileIr,
     field: &RowField<'_>,
     default_source: Option<&str>,
 ) -> String {
@@ -140,7 +140,7 @@ fn render_builtin_decode(ty: &TypeIr, column: &str) -> String {
     }
 }
 
-fn try_from_decode_type(library: &LibraryIr, source: &str) -> Option<String> {
+fn try_from_decode_type(library: &DartFileIr, source: &str) -> Option<String> {
     let converter_name = try_from_converter_name(source)?;
     library
         .classes

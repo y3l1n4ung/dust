@@ -5,7 +5,7 @@ mod scan;
 use std::sync::Arc;
 
 use dust_diagnostics::Diagnostic;
-use dust_parser_dart::ParsedLibrarySurface;
+use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{LibraryAnalysisSnapshot, WorkspaceAnalysis};
 use dust_text::{FileId, LineIndex};
 use dust_workspace::SourceLibrary;
@@ -91,7 +91,7 @@ pub(crate) struct PendingLibrary {
     pub(crate) file_id: FileId,
     pub(crate) library: SourceLibrary,
     pub(crate) input: LoadedLibraryInput,
-    pub(crate) pre_parsed: Option<ParsedLibrarySurface>,
+    pub(crate) pre_parsed: Option<ParsedDartFileSurface>,
     pub(crate) analysis_snapshot: LibraryAnalysisSnapshot,
 }
 

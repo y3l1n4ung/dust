@@ -1,5 +1,5 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::LibraryIr;
+use dust_ir::DartFileIr;
 use dust_plugin_api::{DustPlugin, PluginContribution, SymbolPlan};
 
 use crate::{emit::emit_library, validate::validate_library};
@@ -45,7 +45,7 @@ impl DustPlugin for SerdePlugin {
     ///
     /// This allows other plugins or the lowerer to recognize these symbols as "future"
     /// declarations that will be provided during the emission phase.
-    fn requested_symbols(&self, library: &LibraryIr) -> Vec<String> {
+    fn requested_symbols(&self, library: &DartFileIr) -> Vec<String> {
         let mut symbols = Vec::new();
         for class in &library.classes {
             if class
@@ -85,7 +85,7 @@ impl DustPlugin for SerdePlugin {
     /// This includes checking for abstract classes that want deserialization,
     /// unsupported field types (like function types), and ensuring appropriate
     /// constructors exist.
-    fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> {
+    fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
         validate_library(library)
     }
 
@@ -93,7 +93,7 @@ impl DustPlugin for SerdePlugin {
     ///
     /// The plugin contributes mixins for `toJson` and top-level private helpers
     /// for the actual JSON mapping logic.
-    fn emit(&self, library: &LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
+    fn emit(&self, library: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
         emit_library(library)
     }
 }

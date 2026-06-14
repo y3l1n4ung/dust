@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use dust_dart_emit::render_template;
 use dust_diagnostics::Diagnostic;
-use dust_ir::LibraryIr;
+use dust_ir::DartFileIr;
 use dust_plugin_api::{AuxiliaryOutputContribution, GENERATED_HEADER, PluginRegistry, SymbolPlan};
 use serde::Serialize;
 
@@ -42,7 +42,7 @@ pub struct AuxiliaryEmitOutput {
 
 /// Emits one generated library without touching the filesystem.
 pub fn emit_library(
-    library: &LibraryIr,
+    library: &DartFileIr,
     registry: &PluginRegistry,
     previous_output: Option<&str>,
 ) -> EmitResult {
@@ -52,7 +52,7 @@ pub fn emit_library(
 
 /// Emits one generated library with an explicitly prepared symbol plan.
 pub fn emit_library_with_plan(
-    library: &LibraryIr,
+    library: &DartFileIr,
     registry: &PluginRegistry,
     plan: SymbolPlan,
     previous_output: Option<&str>,
@@ -120,7 +120,7 @@ fn update_hash_bytes(hash: &mut u64, bytes: &[u8]) {
 }
 
 fn should_emit_primary(
-    library: &LibraryIr,
+    library: &DartFileIr,
     contributions: &[dust_plugin_api::PluginContribution],
     plan: &SymbolPlan,
     merged: &MergedSections,
@@ -157,7 +157,7 @@ fn collect_auxiliary_outputs(
         .collect()
 }
 
-fn assemble_source(library: &LibraryIr, plan: &SymbolPlan, merged: &MergedSections) -> String {
+fn assemble_source(library: &DartFileIr, plan: &SymbolPlan, merged: &MergedSections) -> String {
     let source_name = Path::new(&library.source_path)
         .file_name()
         .and_then(|name| name.to_str())

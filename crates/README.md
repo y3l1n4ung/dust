@@ -14,6 +14,8 @@ one-way:
 | `dust_cache` | persistent `.dart_tool/dust` cache entries | cache schema or persisted fingerprints change |
 | `dust_parser_dart` | backend-neutral parse contracts and surfaces | parse surface contracts change |
 | `dust_parser_dart_ts` | tree-sitter extraction backend | Dart syntax extraction changes |
+| `dust_dart_syntax` | shared Dart snippet parsing helpers | parser/resolver/plugin code needs a reused Dart expression helper |
+| `dust_dart_emit` | shared Dart rendering helpers | plugins need common type/name/literal/template rendering |
 | `dust_ir` | lowered Dust IR | generator features need new IR shape |
 | `dust_resolver` | annotation, type, and constructor resolution | parsed data needs semantic interpretation |
 | `dust_plugin_api` | plugin interfaces and shared workspace analysis | new plugin hooks or shared analysis rules |

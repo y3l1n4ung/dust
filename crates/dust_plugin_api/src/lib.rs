@@ -10,7 +10,7 @@ mod symbols;
 
 pub use analysis::{LibraryAnalysisSnapshot, WorkspaceAnalysis, WorkspaceAnalysisBuilder};
 pub use contribution::{AuxiliaryOutputContribution, ClassMixinContribution, PluginContribution};
-pub use plugin::{DustPlugin, WorkspaceAnalysisContext};
+pub use plugin::{DustPlugin, GeneratedUnit, PluginContext, WorkspaceAnalysisContext};
 pub use registry::PluginRegistry;
 pub use symbols::{RequestedSymbol, SymbolPlan, short_symbol_name};
 

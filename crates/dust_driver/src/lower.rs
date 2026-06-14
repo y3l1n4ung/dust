@@ -4,6 +4,8 @@ mod parse_support;
 mod query_calls;
 mod serde;
 mod serde_parse;
+mod tests_declarations;
+mod tests_directives;
 mod tests_inheritance;
 mod tests_serde;
 mod tests_type;
@@ -13,10 +15,14 @@ use std::collections::{HashMap, HashSet};
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
-    ClassIr, ConstructorIr, ConstructorParamIr, EnumIr, EnumVariantIr, FieldIr, LibraryIr,
-    LoweringOutcome, MethodIr, MethodParamIr, ParamKind, SpanIr,
+    AnnotationIr, ClassIr, ConstructorIr, ConstructorParamIr, DartFileIr, EnumIr, EnumVariantIr,
+    ExportIr, ExprSourceIr, ExtensionIr, ExtensionTypeIr, FieldIr, FunctionIr, ImportIr,
+    LibraryDeclIr, LoweringOutcome, MethodIr, MethodParamIr, MixinIr, NameIr, ParamKind, PartIr,
+    PartOfIr, SpanIr, TopLevelVariableIr, TypedefIr,
 };
-use dust_parser_dart::{ParameterKind, ParsedDirective};
+use dust_parser_dart::{
+    ParameterKind, ParsedAnnotation, ParsedDirective, ParsedFieldSurface, ParsedMethodParamSurface,
+};
 use dust_resolver::{ResolvedClass, ResolvedLibrary};
 
 use self::{
@@ -27,7 +33,7 @@ use self::{
 };
 
 /// Lowers one resolved library into semantic IR.
-pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<LibraryIr> {
+pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<DartFileIr> {
     let mut diagnostics = Vec::new();
     let required_classes = lowering_required_class_names(library);
     let mut classes = library
@@ -71,14 +77,26 @@ pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<Librar
     }
 
     LoweringOutcome {
-        value: LibraryIr {
+        value: DartFileIr {
             package_root: String::new(),
             package_name: String::new(),
             source_path: library.source_path.clone(),
             output_path: library.output_path.clone(),
             imports: library_imports(library),
+            library: lower_library_directive(library),
+            library_annotations: lower_library_annotations(library),
+            import_directives: lower_import_directives(library),
+            export_directives: lower_export_directives(library),
+            part_directives: lower_part_directives(library),
+            part_of: lower_part_of_directive(library),
             span: library.span,
             classes,
+            mixins: lower_mixins(library, &mut diagnostics),
+            extensions: lower_extensions(library, &mut diagnostics),
+            extension_types: lower_extension_types(library, &mut diagnostics),
+            functions: lower_functions(library, &mut diagnostics),
+            variables: lower_variables(library, &mut diagnostics),
+            typedefs: lower_typedefs(library, &mut diagnostics),
             enums,
             query_calls: lower_query_calls(library, &mut diagnostics),
         },
@@ -131,6 +149,358 @@ fn library_imports(library: &ResolvedLibrary) -> Vec<String> {
         .collect()
 }
 
+fn lower_library_directive(library: &ResolvedLibrary) -> Option<LibraryDeclIr> {
+    let file_id = library.span.file_id;
+    library
+        .directives
+        .iter()
+        .find_map(|directive| match directive {
+            ParsedDirective::Library { name, span, .. } => Some(LibraryDeclIr {
+                name: name
+                    .as_deref()
+                    .map(|name| lower_name_ir(file_id, name, *span)),
+                span: SpanIr::new(file_id, *span),
+            }),
+            _ => None,
+        })
+}
+
+fn lower_library_annotations(library: &ResolvedLibrary) -> Vec<AnnotationIr> {
+    let file_id = library.span.file_id;
+    library
+        .directives
+        .iter()
+        .find_map(|directive| match directive {
+            ParsedDirective::Library { annotations, .. } => Some(annotations),
+            _ => None,
+        })
+        .into_iter()
+        .flatten()
+        .map(|annotation| lower_annotation_ir(file_id, annotation))
+        .collect()
+}
+
+fn lower_import_directives(library: &ResolvedLibrary) -> Vec<ImportIr> {
+    let file_id = library.span.file_id;
+    library
+        .directives
+        .iter()
+        .filter_map(|directive| match directive {
+            ParsedDirective::Import { uri, prefix, span } => Some(ImportIr {
+                uri: uri.clone(),
+                prefix: prefix.clone(),
+                span: SpanIr::new(file_id, *span),
+            }),
+            _ => None,
+        })
+        .collect()
+}
+
+fn lower_export_directives(library: &ResolvedLibrary) -> Vec<ExportIr> {
+    let file_id = library.span.file_id;
+    library
+        .directives
+        .iter()
+        .filter_map(|directive| match directive {
+            ParsedDirective::Export { uri, span } => Some(ExportIr {
+                uri: uri.clone(),
+                span: SpanIr::new(file_id, *span),
+            }),
+            _ => None,
+        })
+        .collect()
+}
+
+fn lower_part_directives(library: &ResolvedLibrary) -> Vec<PartIr> {
+    let file_id = library.span.file_id;
+    library
+        .directives
+        .iter()
+        .filter_map(|directive| match directive {
+            ParsedDirective::Part { uri, span } => Some(PartIr {
+                uri: uri.clone(),
+                span: SpanIr::new(file_id, *span),
+            }),
+            _ => None,
+        })
+        .collect()
+}
+
+fn lower_part_of_directive(library: &ResolvedLibrary) -> Option<PartOfIr> {
+    let file_id = library.span.file_id;
+    library
+        .directives
+        .iter()
+        .find_map(|directive| match directive {
+            ParsedDirective::PartOf {
+                library_name,
+                uri,
+                span,
+            } => Some(PartOfIr {
+                library_name: library_name
+                    .as_deref()
+                    .map(|name| lower_name_ir(file_id, name, *span)),
+                uri: uri.clone(),
+                span: SpanIr::new(file_id, *span),
+            }),
+            _ => None,
+        })
+}
+
+fn lower_mixins(library: &ResolvedLibrary, diagnostics: &mut Vec<Diagnostic>) -> Vec<MixinIr> {
+    let file_id = library.span.file_id;
+    library
+        .mixins
+        .iter()
+        .map(|mixin| MixinIr {
+            name: lower_name_ir(file_id, &mixin.name, mixin.span),
+            annotations: mixin
+                .annotations
+                .iter()
+                .map(|annotation| lower_annotation_ir(file_id, annotation))
+                .collect(),
+            fields: mixin
+                .fields
+                .iter()
+                .map(|field| lower_unresolved_field(file_id, field, diagnostics))
+                .collect(),
+            span: SpanIr::new(file_id, mixin.span),
+        })
+        .collect()
+}
+
+fn lower_extensions(
+    library: &ResolvedLibrary,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Vec<ExtensionIr> {
+    let file_id = library.span.file_id;
+    library
+        .extensions
+        .iter()
+        .map(|extension| {
+            let on_type = lower_type(
+                extension.parsed_on_type.as_ref(),
+                extension.on_type_source.as_deref(),
+            );
+            diagnostics.extend(on_type.diagnostics);
+
+            ExtensionIr {
+                name: extension
+                    .name
+                    .as_deref()
+                    .map(|name| lower_name_ir(file_id, name, extension.span)),
+                on_type: on_type.value,
+                annotations: extension
+                    .annotations
+                    .iter()
+                    .map(|annotation| lower_annotation_ir(file_id, annotation))
+                    .collect(),
+                span: SpanIr::new(file_id, extension.span),
+            }
+        })
+        .collect()
+}
+
+fn lower_extension_types(
+    library: &ResolvedLibrary,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Vec<ExtensionTypeIr> {
+    let file_id = library.span.file_id;
+    library
+        .extension_types
+        .iter()
+        .map(|extension_type| {
+            let representation_type = lower_type(
+                extension_type.parsed_representation_type.as_ref(),
+                extension_type.representation_type_source.as_deref(),
+            );
+            diagnostics.extend(representation_type.diagnostics);
+
+            ExtensionTypeIr {
+                name: lower_name_ir(file_id, &extension_type.name, extension_type.span),
+                annotations: extension_type
+                    .annotations
+                    .iter()
+                    .map(|annotation| lower_annotation_ir(file_id, annotation))
+                    .collect(),
+                representation: FieldIr {
+                    name: extension_type.representation_name.clone(),
+                    ty: representation_type.value,
+                    span: SpanIr::new(file_id, extension_type.span),
+                    has_default: false,
+                    serde: None,
+                    configs: Vec::new(),
+                },
+                span: SpanIr::new(file_id, extension_type.span),
+            }
+        })
+        .collect()
+}
+
+fn lower_functions(
+    library: &ResolvedLibrary,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Vec<FunctionIr> {
+    let file_id = library.span.file_id;
+    library
+        .functions
+        .iter()
+        .map(|function| {
+            let return_type = lower_type(
+                function.parsed_return_type.as_ref(),
+                function.return_type_source.as_deref(),
+            );
+            diagnostics.extend(return_type.diagnostics);
+
+            FunctionIr {
+                name: lower_name_ir(file_id, &function.name, function.span),
+                return_type: return_type.value,
+                params: lower_unresolved_method_params(file_id, &function.params, diagnostics),
+                annotations: function
+                    .annotations
+                    .iter()
+                    .map(|annotation| lower_annotation_ir(file_id, annotation))
+                    .collect(),
+                span: SpanIr::new(file_id, function.span),
+            }
+        })
+        .collect()
+}
+
+fn lower_variables(
+    library: &ResolvedLibrary,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Vec<TopLevelVariableIr> {
+    let file_id = library.span.file_id;
+    library
+        .variables
+        .iter()
+        .map(|variable| {
+            let ty = lower_type(
+                variable.parsed_type.as_ref(),
+                variable.type_source.as_deref(),
+            );
+            diagnostics.extend(ty.diagnostics);
+
+            TopLevelVariableIr {
+                name: lower_name_ir(file_id, &variable.name, variable.span),
+                ty: ty.value,
+                initializer: variable
+                    .initializer_source
+                    .as_ref()
+                    .map(|source| ExprSourceIr {
+                        source: source.clone(),
+                        span: SpanIr::new(
+                            file_id,
+                            variable.initializer_span.unwrap_or(variable.span),
+                        ),
+                    }),
+                annotations: variable
+                    .annotations
+                    .iter()
+                    .map(|annotation| lower_annotation_ir(file_id, annotation))
+                    .collect(),
+                span: SpanIr::new(file_id, variable.span),
+            }
+        })
+        .collect()
+}
+
+fn lower_typedefs(library: &ResolvedLibrary, diagnostics: &mut Vec<Diagnostic>) -> Vec<TypedefIr> {
+    let file_id = library.span.file_id;
+    library
+        .typedefs
+        .iter()
+        .map(|typedef| {
+            let aliased_type = lower_type(
+                typedef.parsed_aliased_type.as_ref(),
+                typedef.aliased_type_source.as_deref(),
+            );
+            diagnostics.extend(aliased_type.diagnostics);
+
+            TypedefIr {
+                name: lower_name_ir(file_id, &typedef.name, typedef.span),
+                aliased_type: aliased_type.value,
+                annotations: typedef
+                    .annotations
+                    .iter()
+                    .map(|annotation| lower_annotation_ir(file_id, annotation))
+                    .collect(),
+                span: SpanIr::new(file_id, typedef.span),
+            }
+        })
+        .collect()
+}
+
+fn lower_unresolved_field(
+    file_id: dust_text::FileId,
+    field: &ParsedFieldSurface,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> FieldIr {
+    let ty = lower_type(field.parsed_type.as_ref(), field.type_source.as_deref());
+    diagnostics.extend(ty.diagnostics);
+
+    FieldIr {
+        name: field.name.clone(),
+        ty: ty.value,
+        span: SpanIr::new(file_id, field.span),
+        has_default: field.has_default,
+        serde: None,
+        configs: Vec::new(),
+    }
+}
+
+fn lower_unresolved_method_params(
+    file_id: dust_text::FileId,
+    params: &[ParsedMethodParamSurface],
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Vec<MethodParamIr> {
+    params
+        .iter()
+        .map(|param| {
+            let ty = lower_type(param.parsed_type.as_ref(), param.type_source.as_deref());
+            diagnostics.extend(ty.diagnostics);
+
+            MethodParamIr {
+                name: param.name.clone(),
+                ty: ty.value,
+                span: SpanIr::new(file_id, param.span),
+                kind: lower_parameter_kind(param.kind),
+                has_default: param.has_default,
+                default_value_source: param.default_value_source.clone(),
+                traits: Vec::new(),
+                configs: Vec::new(),
+            }
+        })
+        .collect()
+}
+
+fn lower_parameter_kind(kind: ParameterKind) -> ParamKind {
+    match kind {
+        ParameterKind::Positional => ParamKind::Positional,
+        ParameterKind::Named => ParamKind::Named,
+    }
+}
+
+fn lower_annotation_ir(file_id: dust_text::FileId, annotation: &ParsedAnnotation) -> AnnotationIr {
+    dust_resolver::annotation_ir_from_parsed(file_id, annotation, None)
+}
+
+fn lower_name_ir(file_id: dust_text::FileId, source: &str, span: dust_text::TextRange) -> NameIr {
+    let source = source.trim().to_owned();
+    let (prefix, short) = source
+        .rsplit_once('.')
+        .map(|(prefix, short)| (Some(prefix.to_owned()), short.to_owned()))
+        .unwrap_or_else(|| (None, source.clone()));
+
+    NameIr {
+        source,
+        short,
+        prefix,
+        span: SpanIr::new(file_id, span),
+    }
+}
+
 fn lower_enum(e: &dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
     let mut diagnostics: Vec<Diagnostic> = Vec::new();
     let serde = lower_class_serde_config(&e.name, &e.configs, &mut diagnostics);
@@ -162,7 +532,7 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
         .fields
         .iter()
         .map(|field| {
-            let outcome = lower_type(field.type_source.as_deref());
+            let outcome = lower_type(field.parsed_type.as_ref(), field.type_source.as_deref());
             diagnostics.extend(outcome.diagnostics);
             FieldIr {
                 name: field.name.clone(),
@@ -179,14 +549,20 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
         .methods
         .iter()
         .map(|method| {
-            let return_type_outcome = lower_type(method.surface.return_type_source.as_deref());
+            let return_type_outcome = lower_type(
+                method.surface.parsed_return_type.as_ref(),
+                method.surface.return_type_source.as_deref(),
+            );
             diagnostics.extend(return_type_outcome.diagnostics);
 
             let params = method
                 .params
                 .iter()
                 .map(|param| {
-                    let type_outcome = lower_type(param.surface.type_source.as_deref());
+                    let type_outcome = lower_type(
+                        param.surface.parsed_type.as_ref(),
+                        param.surface.type_source.as_deref(),
+                    );
                     diagnostics.extend(type_outcome.diagnostics);
 
                     MethodParamIr {
@@ -231,7 +607,7 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
                     let outcome = param
                         .type_source
                         .as_deref()
-                        .map(|source| lower_type(Some(source)))
+                        .map(|source| lower_type(param.parsed_type.as_ref(), Some(source)))
                         .unwrap_or_else(|| infer_param_type(param.name.as_str(), &fields));
                     diagnostics.extend(outcome.diagnostics);
                     ConstructorParamIr {

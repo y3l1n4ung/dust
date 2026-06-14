@@ -1,4 +1,4 @@
-use dust_ir::SymbolId;
+use dust_ir::{AnnotationValueIr, SymbolId};
 use dust_parser_dart::{ParseBackend, ParseOptions};
 use dust_parser_dart_ts::TreeSitterDartBackend;
 use dust_resolver::{SymbolCatalog, SymbolKind, resolve_library, validate_generated_part_uri};
@@ -94,6 +94,11 @@ class User {
             .as_deref(),
         Some("(renameAll: SerDeRename.snakeCase)")
     );
+    assert_named_expression(
+        &resolved.library.classes[0].configs[0],
+        "renameAll",
+        "SerDeRename.snakeCase",
+    );
     assert_eq!(resolved.library.classes[0].fields.len(), 1);
     assert_eq!(resolved.library.classes[0].fields[0].configs.len(), 1);
     assert_eq!(
@@ -102,6 +107,22 @@ class User {
             .as_deref(),
         Some("(rename: 'full_name')")
     );
+    assert_named_expression(
+        &resolved.library.classes[0].fields[0].configs[0],
+        "rename",
+        "'full_name'",
+    );
+}
+
+fn assert_named_expression(
+    config: &dust_ir::ConfigApplicationIr,
+    name: &str,
+    expected_source: &str,
+) {
+    let Some(AnnotationValueIr::Expression(source)) = config.named_argument_value(name) else {
+        panic!("expected named expression argument `{name}` in {config:?}");
+    };
+    assert_eq!(source.source, expected_source);
 }
 
 #[test]

@@ -2,6 +2,7 @@
 members = [
     "crates/dust_text",
     "crates/dust_diagnostics",
+    "crates/dust_dart_syntax",
     "crates/dust_dart_emit",
     "crates/dust_cache",
     "crates/dust_parser_dart",

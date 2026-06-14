@@ -12,11 +12,11 @@ pub(crate) fn span(start: u32, end: u32) -> SpanIr {
 }
 
 pub(crate) fn config(name: &str, args: Option<&str>) -> ConfigApplicationIr {
-    ConfigApplicationIr {
-        symbol: SymbolId::new(format!("dust_flutter::{name}")),
-        arguments_source: args.map(str::to_owned),
-        span: span(1, 2),
-    }
+    ConfigApplicationIr::new(
+        SymbolId::new(format!("dust_flutter::{name}")),
+        args.map(str::to_owned),
+        span(1, 2),
+    )
 }
 
 pub(crate) fn route_page_class(
@@ -104,8 +104,20 @@ pub(crate) fn library_with_classes(mut classes: Vec<ClassIr>) -> LibraryIr {
         source_path: "lib/route.dart".to_owned(),
         output_path: "lib/route.g.dart".to_owned(),
         imports: Vec::new(),
+        library: None,
+        library_annotations: Vec::new(),
+        import_directives: Vec::new(),
+        export_directives: Vec::new(),
+        part_directives: Vec::new(),
+        part_of: None,
         span: span(0, 100),
         classes,
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         enums: Vec::new(),
         query_calls: Vec::new(),
     }
@@ -139,6 +151,12 @@ pub(crate) fn parsed_library_with_annotations(
             span: TextRange::new(10_u32, 90_u32),
         }],
         enums: Vec::new(),
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         query_calls: Vec::new(),
     }
 }
@@ -147,6 +165,7 @@ pub(crate) fn parsed_annotation(name: &str, args: &str) -> ParsedAnnotation {
     ParsedAnnotation {
         name: name.to_owned(),
         arguments_source: Some(args.to_owned()),
+        parsed_arguments: None,
         span: TextRange::new(1_u32, 2_u32),
     }
 }

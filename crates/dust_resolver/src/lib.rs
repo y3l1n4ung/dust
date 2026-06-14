@@ -2,11 +2,13 @@
 #![deny(missing_docs)]
 #![doc = "Resolution helpers that map parsed Dust-relevant syntax into symbol-aware semantic data."]
 
+mod annotations;
 mod catalog;
 mod resolve;
 mod resolve_support;
 mod result;
 
+pub use annotations::annotation_ir_from_parsed;
 pub use catalog::{ResolvedSymbol, SymbolCatalog, SymbolKind};
 pub use resolve::{
     resolve_library, resolve_library_with_partless_configs, validate_generated_part_uri,
