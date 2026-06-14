@@ -65,3 +65,29 @@ extension UserRowFromRow on UserRow {
 
 Use driver-specific escape hatches only when needed, for example
 `Sqlite3Executor.database` from `package:dust_db_sqlite3`.
+
+## Validation
+
+This package keeps its public runtime surface analyzer-clean, fully documented,
+and fully covered. The package analysis options enable
+`public_member_api_docs`, so every public annotation, runtime type, constructor,
+field, and method needs Dartdoc.
+
+Run the package gate after changing runtime code or annotations:
+
+```bash
+dart format --set-exit-if-changed packages/dust_dart/lib packages/dust_dart/test
+dart analyze packages/dust_dart
+dart --enable-asserts test --coverage=packages/dust_dart/coverage packages/dust_dart/test
+dart run coverage:format_coverage --check-ignore \
+  --packages=.dart_tool/package_config.json \
+  --report-on=packages/dust_dart/lib \
+  --in=packages/dust_dart/coverage \
+  --out=packages/dust_dart/coverage/lcov.info \
+  --lcov
+awk 'BEGIN{lf=lh=0} /^LF:/{v=$0; sub("LF:","",v); lf+=v} /^LH:/{v=$0; sub("LH:","",v); lh+=v} END{printf("TOTAL LH=%d LF=%d %.2f%%\n", lh, lf, (lf?100*lh/lf:100)); exit(lh==lf && lf>0 ? 0 : 1)}' packages/dust_dart/coverage/lcov.info
+```
+
+The `SerDeCodec` abstract interface constructor is excluded with
+`coverage:ignore-line` because package users can implement the interface but
+cannot extend it from outside the defining library.

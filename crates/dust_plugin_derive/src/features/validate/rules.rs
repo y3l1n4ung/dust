@@ -1,15 +1,18 @@
 use dust_dart_emit::{DART_DOUBLE, DART_INT, DART_NUM, DART_STRING};
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ClassIr, ConfigApplicationIr, FieldIr, LibraryIr, TypeIr};
-use dust_parser_dart::{AnnotationValue, parse_annotation_named_values};
+use dust_ir::{ClassIr, ConfigApplicationIr, DartFileIr, FieldIr, TypeIr};
+use dust_parser_dart::AnnotationValue;
 
 use super::{
-    model::{ValidateConfig, field_validations, has_validate_trait, parse_validate_config},
+    model::{
+        ValidateConfig, field_validations, has_validate_trait, parse_config_named_values,
+        parse_validate_config,
+    },
     type_source::supports_length,
 };
 use crate::features::VALIDATE_SYMBOL;
 
-pub(crate) fn validate_validate(library: &LibraryIr, class: &ClassIr) -> Vec<Diagnostic> {
+pub(crate) fn validate_validate(library: &DartFileIr, class: &ClassIr) -> Vec<Diagnostic> {
     if !has_validate_trait(class) {
         return Vec::new();
     }
@@ -33,7 +36,7 @@ pub(crate) fn validate_validate(library: &LibraryIr, class: &ClassIr) -> Vec<Dia
 }
 
 fn validate_field_config(
-    library: &LibraryIr,
+    library: &DartFileIr,
     class: &ClassIr,
     field: &FieldIr,
     config: &ValidateConfig,
@@ -73,11 +76,7 @@ fn validate_field_config(
 }
 
 fn validate_config_shape(config: &ConfigApplicationIr, diagnostics: &mut Vec<Diagnostic>) {
-    let Some(values) = config
-        .arguments_source
-        .as_deref()
-        .and_then(parse_annotation_named_values)
-    else {
+    let Some(values) = parse_config_named_values(config) else {
         diagnostics.push(Diagnostic::error("invalid `@Validate(...)` arguments"));
         return;
     };
@@ -273,7 +272,7 @@ fn validate_must_match(
     }
 }
 
-fn validate_nested(library: &LibraryIr, field: &FieldIr, diagnostics: &mut Vec<Diagnostic>) {
+fn validate_nested(library: &DartFileIr, field: &FieldIr, diagnostics: &mut Vec<Diagnostic>) {
     let Some(name) = field.ty.name() else {
         diagnostics.push(Diagnostic::error(format!(
             "`@Validate(nested: true)` on `{}` requires a named type",

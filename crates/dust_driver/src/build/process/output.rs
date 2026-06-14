@@ -9,7 +9,7 @@ use super::ProcessingConfig;
 
 pub(crate) fn emit_or_write_library(
     library: &SourceLibrary,
-    lowered_library: &dust_ir::LibraryIr,
+    lowered_library: &dust_ir::DartFileIr,
     previous_output_hash: Option<Option<u64>>,
     processing: &ProcessingConfig<'_>,
     plan: dust_plugin_api::SymbolPlan,

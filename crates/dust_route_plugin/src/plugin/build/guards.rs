@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ClassIr, LibraryIr, ParamKind};
+use dust_ir::{ClassIr, DartFileIr, ParamKind};
 use dust_plugin_api::SymbolPlan;
 
 use crate::plugin::{
@@ -12,7 +12,7 @@ use crate::plugin::{
 use super::routes::{parse_type_name, route_constructor};
 
 pub(super) fn build_guard_specs(
-    library: &LibraryIr,
+    library: &DartFileIr,
     plan: &SymbolPlan,
     routes: &[RouteSpec],
     router_fields: &[RouterFieldSpec],
@@ -87,7 +87,7 @@ fn guard_classes(routes: &[RouteSpec]) -> Vec<String> {
     guards
 }
 
-fn local_guard_specs(library: &LibraryIr) -> HashMap<String, GuardSpec> {
+fn local_guard_specs(library: &DartFileIr) -> HashMap<String, GuardSpec> {
     library
         .classes
         .iter()

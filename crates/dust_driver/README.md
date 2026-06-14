@@ -4,11 +4,11 @@ The core build engine and orchestration layer for Dust. This crate manages the l
 
 ## 🏗️ Architectural Role
 
-`dust_driver` is the **conductor** of the engine. It implements the high-level 4-pass pipeline:
+`dust_driver` is the **conductor** of the engine. It implements the high-level pipeline:
 1. **Pass 1: Scan**: Discover all relevant `.dart` files in the workspace.
-2. **Pass 2: Analyze**: Multi-threaded parsing and global fact collection.
-3. **Pass 3: Emit**: Plugin-based code generation based on aggregated analysis.
-4. **Pass 4: Write**: Atomic filesystem updates and cache synchronization.
+2. **Pass 2: Parse and Analyze**: Multi-threaded tree-sitter parsing into Dust-owned facts plus global fact collection.
+3. **Pass 3: Resolve and Lower**: Enrich canonical `DartFileIr` with symbols, types, imports, and normalized feature config.
+4. **Pass 4: Generate and Write**: Plugin-based generation, deterministic assembly, atomic filesystem updates, and cache synchronization.
 
 ## 🔑 Key Modules
 
@@ -19,10 +19,14 @@ The heart of the generation process.
 - **Dependency Tracking**: Special logic for Routing and State management to re-trigger builds if global facts change.
 
 ### `lower`
-The bridge from `ResolvedLibrary` (syntax-heavy) to `LibraryIr` (intent-heavy). It handles:
+The transitional bridge from resolver output to canonical `DartFileIr`. It handles:
 - **Type Inference**: Deducing field types for constructor parameters.
 - **Inheritance Merging**: Collecting fields from base classes into generated subclasses.
-- **Annotation Parsing**: Lowering raw Dart arguments into structured Rust types.
+- **Config Normalization**: Moving Dust feature config into structured Rust types.
+
+Issue [#43](https://github.com/y3l1n4ung/dust/issues/43) tracks the migration
+that removes the long-lived second model and makes parser/resolver output feed
+`DartFileIr` directly.
 
 ### `clean`, `watch`, `check`
 Secondary engine modes:

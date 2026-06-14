@@ -1,14 +1,14 @@
 use std::collections::HashSet;
 
 use dust_diagnostics::Diagnostic;
-use dust_ir::{BuiltinType, ClassIr, ConstructorIr, ConstructorParamIr, LibraryIr, TypeIr};
+use dust_ir::{BuiltinType, ClassIr, ConstructorIr, ConstructorParamIr, DartFileIr, TypeIr};
 
 use super::{
     model::RouteAnnotation,
     parse::{parse_route_config, route_config},
 };
 
-pub(crate) fn validate_library_routes(library: &LibraryIr) -> Vec<Diagnostic> {
+pub(crate) fn validate_library_routes(library: &DartFileIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let mut paths = HashSet::new();
     let mut names = HashSet::new();
@@ -56,7 +56,7 @@ pub(crate) fn validate_library_routes(library: &LibraryIr) -> Vec<Diagnostic> {
 }
 
 fn validate_visible_route_types(
-    library: &LibraryIr,
+    library: &DartFileIr,
     class: &ClassIr,
     route: &RouteAnnotation,
     local_classes: &HashSet<&str>,
@@ -80,7 +80,7 @@ fn validate_visible_route_types(
     }
 }
 
-fn is_visible_type(library: &LibraryIr, local_classes: &HashSet<&str>, name: &str) -> bool {
+fn is_visible_type(library: &DartFileIr, local_classes: &HashSet<&str>, name: &str) -> bool {
     local_classes.contains(name) || !library.imports.is_empty()
 }
 

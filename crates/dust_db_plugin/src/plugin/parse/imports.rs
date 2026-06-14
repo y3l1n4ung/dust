@@ -4,9 +4,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use dust_ir::LibraryIr;
+use dust_ir::DartFileIr;
 
-pub(crate) fn imported_row_names(library: &LibraryIr) -> HashSet<String> {
+pub(crate) fn imported_row_names(library: &DartFileIr) -> HashSet<String> {
     library
         .imports
         .iter()
@@ -16,7 +16,7 @@ pub(crate) fn imported_row_names(library: &LibraryIr) -> HashSet<String> {
         .collect()
 }
 
-fn resolve_import_path(library: &LibraryIr, uri: &str) -> Option<PathBuf> {
+fn resolve_import_path(library: &DartFileIr, uri: &str) -> Option<PathBuf> {
     if uri.starts_with("dart:") || uri.starts_with("package:flutter/") {
         return None;
     }
@@ -89,7 +89,7 @@ mod tests {
         time::{SystemTime, UNIX_EPOCH},
     };
 
-    use dust_ir::{LibraryIr, SpanIr};
+    use dust_ir::{DartFileIr, SpanIr};
     use dust_text::{FileId, TextRange};
 
     use super::*;
@@ -121,7 +121,7 @@ mod tests {
             "@FromRow()\nabstract final class TeamRow {}\n",
         )
         .unwrap();
-        let library = LibraryIr {
+        let library = DartFileIr {
             package_root: root.display().to_string(),
             package_name: "example".to_owned(),
             source_path: "lib/dao/user_dao.dart".to_owned(),
@@ -133,8 +133,20 @@ mod tests {
                 "dart:async".to_owned(),
                 "package:flutter/widgets.dart".to_owned(),
             ],
+            library: None,
+            library_annotations: Vec::new(),
+            import_directives: Vec::new(),
+            export_directives: Vec::new(),
+            part_directives: Vec::new(),
+            part_of: None,
             span: span(),
             classes: Vec::new(),
+            mixins: Vec::new(),
+            extensions: Vec::new(),
+            extension_types: Vec::new(),
+            functions: Vec::new(),
+            variables: Vec::new(),
+            typedefs: Vec::new(),
             enums: Vec::new(),
             query_calls: Vec::new(),
         };

@@ -1,6 +1,6 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::LibraryIr;
-use dust_parser_dart::ParsedLibrarySurface;
+use dust_ir::DartFileIr;
+use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{
     DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
 };
@@ -60,17 +60,17 @@ impl DustPlugin for RoutePlugin {
     fn collect_workspace_analysis(
         &self,
         context: WorkspaceAnalysisContext<'_>,
-        library: &ParsedLibrarySurface,
+        library: &ParsedDartFileSurface,
         analysis: &mut WorkspaceAnalysisBuilder,
     ) {
         collect_route_workspace_analysis(context, library, analysis);
     }
 
-    fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> {
+    fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
         validate_library_routes(library)
     }
 
-    fn emit(&self, library: &LibraryIr, plan: &SymbolPlan) -> PluginContribution {
+    fn emit(&self, library: &DartFileIr, plan: &SymbolPlan) -> PluginContribution {
         let spec = match build_router_spec(library, plan) {
             Ok(Some(spec)) => spec,
             Ok(None) => return PluginContribution::default(),

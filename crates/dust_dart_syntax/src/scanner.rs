@@ -145,7 +145,10 @@ impl DelimiterState {
 
 #[cfg(test)]
 mod tests {
-    use super::{balanced_parenthesized, parse_named_arguments, split_top_level_items};
+    use super::{
+        balanced_parenthesized, find_top_level_char, has_top_level_char, normalized_args,
+        parse_named_arguments, split_top_level_items, split_top_level_once,
+    };
 
     #[test]
     fn splits_nested_items() {
@@ -153,6 +156,11 @@ mod tests {
             split_top_level_items("a, const Codec<int>(), ['x,y'], ({String name})"),
             vec!["a", "const Codec<int>()", "['x,y']", "({String name})"]
         );
+        assert_eq!(
+            split_top_level_items(r#"'a\',b', c"#),
+            vec![r#"'a\',b'"#, "c"]
+        );
+        assert_eq!(split_top_level_items(" , a, , b, "), vec!["a", "b"]);
     }
 
     #[test]
@@ -161,10 +169,38 @@ mod tests {
             parse_named_arguments(Some("(rename: 'x', tryFrom: const Codec())")),
             vec![("rename", "'x'"), ("tryFrom", "const Codec()")]
         );
+        assert!(parse_named_arguments(None).is_empty());
+        assert!(parse_named_arguments(Some("rename: 'x'")).is_empty());
     }
 
     #[test]
     fn finds_balanced_parentheses() {
         assert_eq!(balanced_parenthesized("('a,b'), tail"), Some("('a,b')"));
+        assert_eq!(balanced_parenthesized("((a)), tail"), Some("((a))"));
+        assert_eq!(
+            balanced_parenthesized(r#"("a\"b"), tail"#),
+            Some(r#"("a\"b")"#)
+        );
+        assert_eq!(balanced_parenthesized("('a'"), None);
+        assert_eq!(balanced_parenthesized("plain text"), None);
+    }
+
+    #[test]
+    fn finds_top_level_characters_only() {
+        assert_eq!(
+            split_top_level_once("left: const Value(':')", ':'),
+            Some(("left", " const Value(':')"))
+        );
+        assert_eq!(split_top_level_once("const Value(':')", ':'), None);
+        assert!(has_top_level_char("a, b", ','));
+        assert!(!has_top_level_char("fn(a, b)", ','));
+        assert_eq!(find_top_level_char("fn(a), b", |_, ch| ch == ','), Some(5));
+        assert_eq!(find_top_level_char("fn(a)", |_, ch| ch == ','), None);
+    }
+
+    #[test]
+    fn normalizes_parenthesized_args() {
+        assert_eq!(normalized_args(" ( a: 1 ) "), Some("a: 1"));
+        assert_eq!(normalized_args("a: 1"), None);
     }
 }

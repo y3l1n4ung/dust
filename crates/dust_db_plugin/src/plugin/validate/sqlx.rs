@@ -22,7 +22,7 @@ use super::{
 };
 
 pub(super) fn validate_sqlx_describe(
-    library: &dust_ir::LibraryIr,
+    library: &dust_ir::DartFileIr,
     db: &DatabaseClass<'_>,
     queries: &[QuerySpec],
     row_columns: &HashMap<String, HashSet<String>>,

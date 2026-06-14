@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use dust_dart_emit::render_template;
-use dust_ir::LibraryIr;
+use dust_ir::DartFileIr;
 use serde::Serialize;
 
 use crate::plugin::model::{DatabaseClass, DbDriver};
@@ -22,7 +22,7 @@ struct MigrationsContext<'a> {
     entries: String,
 }
 
-pub(super) fn render_database_class(library: &LibraryIr, db: &DatabaseClass<'_>) -> String {
+pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>) -> String {
     let class_name = &db.class.name;
     let generated_name = format!("_${class_name}");
     let migrations_name = format!("_${}Migrations", lower_first(class_name));
@@ -48,7 +48,7 @@ pub(super) fn render_database_class(library: &LibraryIr, db: &DatabaseClass<'_>)
     )
 }
 
-fn render_migrations_map(library: &LibraryIr, migrations: &str, name: &str) -> String {
+fn render_migrations_map(library: &DartFileIr, migrations: &str, name: &str) -> String {
     let path = Path::new(&library.package_root).join(migrations);
     let mut files = fs::read_dir(&path)
         .ok()
@@ -98,7 +98,7 @@ mod tests {
         time::{SystemTime, UNIX_EPOCH},
     };
 
-    use dust_ir::{ClassIr, ClassKindIr, LibraryIr, SpanIr};
+    use dust_ir::{ClassIr, ClassKindIr, DartFileIr, SpanIr};
     use dust_text::{FileId, TextRange};
 
     use super::*;
@@ -124,15 +124,27 @@ mod tests {
         }
     }
 
-    fn library(root: &std::path::Path, classes: Vec<ClassIr>) -> LibraryIr {
-        LibraryIr {
+    fn library(root: &std::path::Path, classes: Vec<ClassIr>) -> DartFileIr {
+        DartFileIr {
             package_root: root.display().to_string(),
             package_name: "emit_test".to_owned(),
             source_path: "lib/db.dart".to_owned(),
             output_path: "lib/db.g.dart".to_owned(),
             imports: Vec::new(),
+            library: None,
+            library_annotations: Vec::new(),
+            import_directives: Vec::new(),
+            export_directives: Vec::new(),
+            part_directives: Vec::new(),
+            part_of: None,
             span: span(),
             classes,
+            mixins: Vec::new(),
+            extensions: Vec::new(),
+            extension_types: Vec::new(),
+            functions: Vec::new(),
+            variables: Vec::new(),
+            typedefs: Vec::new(),
             enums: Vec::new(),
             query_calls: Vec::new(),
         }

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use dust_dart_emit::{DART_LIST, DART_STRING, DART_VOID, apply_rename_rule};
-use dust_ir::{BuiltinType, ClassIr, EnumIr, LibraryIr, TypeIr};
+use dust_ir::{BuiltinType, ClassIr, DartFileIr, EnumIr, TypeIr};
 
 use crate::plugin::emit::test_support::SampleValue;
 use crate::plugin::util::is_string_keyed_map;
@@ -12,7 +12,7 @@ pub(super) struct FixtureCatalog<'a> {
 }
 
 impl<'a> FixtureCatalog<'a> {
-    pub(super) fn from_library(library: &'a LibraryIr) -> Self {
+    pub(super) fn from_library(library: &'a DartFileIr) -> Self {
         Self {
             classes: library
                 .classes

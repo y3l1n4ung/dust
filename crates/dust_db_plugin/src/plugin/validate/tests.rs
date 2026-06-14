@@ -4,7 +4,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use dust_ir::{LibraryIr, SpanIr, TypeIr};
+use dust_ir::{DartFileIr, SpanIr, TypeIr};
 use dust_text::{FileId, TextRange};
 
 use super::{
@@ -43,15 +43,27 @@ fn temp_root(name: &str) -> std::path::PathBuf {
     std::env::temp_dir().join(format!("dust_db_validate_{name}_{stamp}"))
 }
 
-fn library(root: &std::path::Path) -> LibraryIr {
-    LibraryIr {
+fn library(root: &std::path::Path) -> DartFileIr {
+    DartFileIr {
         package_root: root.display().to_string(),
         package_name: "example".to_owned(),
         source_path: "lib/db.dart".to_owned(),
         output_path: "lib/db.g.dart".to_owned(),
         imports: Vec::new(),
+        library: None,
+        library_annotations: Vec::new(),
+        import_directives: Vec::new(),
+        export_directives: Vec::new(),
+        part_directives: Vec::new(),
+        part_of: None,
         span: span(),
         classes: Vec::new(),
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         enums: Vec::new(),
         query_calls: Vec::new(),
     }

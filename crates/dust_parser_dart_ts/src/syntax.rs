@@ -1,18 +1,6 @@
 use dust_text::{SourceText, TextRange, TextSize};
 use tree_sitter::Node;
 
-pub(crate) fn class_header_text(node: Node<'_>, source: &SourceText) -> String {
-    let body_start = node
-        .child_by_field_name("body")
-        .map(|body| body.start_byte())
-        .unwrap_or_else(|| node.end_byte());
-    let range = TextRange::new(
-        TextSize::new(node.start_byte() as u32),
-        TextSize::new(body_start as u32),
-    );
-    source.slice(range).unwrap_or_default().to_owned()
-}
-
 pub(crate) fn text_range(node: Node<'_>) -> TextRange {
     TextRange::new(
         TextSize::new(node.start_byte() as u32),
@@ -31,6 +19,17 @@ pub(crate) fn first_non_annotation_named_child<'tree>(node: Node<'tree>) -> Opti
     let mut cursor = node.walk();
     node.children(&mut cursor)
         .find(|child| child.is_named() && child.kind() != "annotation")
+}
+
+pub(crate) fn direct_named_child<'tree>(node: Node<'tree>, kind: &str) -> Option<Node<'tree>> {
+    let mut cursor = node.walk();
+    node.children(&mut cursor)
+        .find(|child| child.is_named() && child.kind() == kind)
+}
+
+pub(crate) fn has_direct_child_kind(node: Node<'_>, kind: &str) -> bool {
+    let mut cursor = node.walk();
+    node.children(&mut cursor).any(|child| child.kind() == kind)
 }
 
 pub(crate) fn find_first_descendant<'tree>(node: Node<'tree>, kind: &str) -> Option<Node<'tree>> {
@@ -78,32 +77,6 @@ pub(crate) fn find_first_descendant_text(
     None
 }
 
-pub(crate) fn find_last_descendant_text(
-    node: Node<'_>,
-    source: &SourceText,
-    kinds: &[&str],
-) -> Option<String> {
-    let mut values = Vec::new();
-    collect_descendant_texts(node, source, kinds, &mut values);
-    values.pop()
-}
-
 pub(crate) fn unquote(text: String) -> String {
     text.trim().trim_matches('\'').trim_matches('"').to_owned()
-}
-
-fn collect_descendant_texts(
-    node: Node<'_>,
-    source: &SourceText,
-    kinds: &[&str],
-    out: &mut Vec<String>,
-) {
-    if node.is_named() && kinds.iter().any(|kind| node.kind() == *kind) {
-        out.push(node_text(node, source));
-    }
-
-    let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
-        collect_descendant_texts(child, source, kinds, out);
-    }
 }

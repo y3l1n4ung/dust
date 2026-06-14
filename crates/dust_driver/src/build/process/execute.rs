@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Instant};
 use dust_diagnostics::Diagnostic;
 use dust_emitter::WriteResult;
 use dust_ir::LoweringOutcome;
-use dust_parser_dart::{ParseOptions, ParsedLibrarySurface, parse_file_with_backend};
+use dust_parser_dart::{ParseOptions, ParsedDartFileSurface, parse_file_with_backend};
 use dust_parser_dart_ts::TreeSitterDartBackend;
 use dust_resolver::ResolveResult;
 use dust_text::{FileId, SourceText};
@@ -77,7 +77,7 @@ pub(crate) fn process_library_from_source(
     file_id: FileId,
     library: &SourceLibrary,
     source: Arc<str>,
-    pre_parsed: Option<ParsedLibrarySurface>,
+    pre_parsed: Option<ParsedDartFileSurface>,
     previous_output_hash: Option<Option<u64>>,
     backend: &TreeSitterDartBackend,
     processing: &ProcessingConfig<'_>,
@@ -116,10 +116,10 @@ pub(crate) fn process_library_from_source(
 fn resolve_and_lower_library(
     file_id: FileId,
     library: &SourceLibrary,
-    parsed: &ParsedLibrarySurface,
+    parsed: &ParsedDartFileSurface,
     processing: &ProcessingConfig<'_>,
     diagnostics: &mut Vec<Diagnostic>,
-) -> Option<dust_ir::LibraryIr> {
+) -> Option<dust_ir::DartFileIr> {
     let partless_configs = processing.registry.all_partless_configs();
     let ResolveResult {
         library: resolved_library,
@@ -147,7 +147,7 @@ fn resolve_and_lower_library(
 
 fn emit_library_output(
     library: &SourceLibrary,
-    lowered_library: &dust_ir::LibraryIr,
+    lowered_library: &dust_ir::DartFileIr,
     previous_output_hash: Option<Option<u64>>,
     processing: &ProcessingConfig<'_>,
 ) -> std::io::Result<WriteResult> {

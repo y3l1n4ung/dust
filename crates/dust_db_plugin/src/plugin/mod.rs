@@ -1,5 +1,5 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::LibraryIr;
+use dust_ir::DartFileIr;
 use dust_plugin_api::{DustPlugin, PluginContribution, SymbolPlan};
 
 mod constants;
@@ -114,11 +114,11 @@ impl DustPlugin for DbPlugin {
         }
     }
 
-    fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> {
+    fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
         validate_db_library(library, self.options)
     }
 
-    fn emit(&self, library: &LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
+    fn emit(&self, library: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
         emit_db_library(library, self.options)
     }
 }
@@ -132,18 +132,30 @@ mod tests {
         register_row_plugin,
     };
 
-    fn empty_library() -> dust_ir::LibraryIr {
-        dust_ir::LibraryIr {
+    fn empty_library() -> dust_ir::DartFileIr {
+        dust_ir::DartFileIr {
             package_root: ".".to_owned(),
             package_name: "db_test".to_owned(),
             source_path: "lib/db.dart".to_owned(),
             output_path: "lib/db.g.dart".to_owned(),
             imports: Vec::new(),
+            library: None,
+            library_annotations: Vec::new(),
+            import_directives: Vec::new(),
+            export_directives: Vec::new(),
+            part_directives: Vec::new(),
+            part_of: None,
             span: dust_ir::SpanIr::new(
                 dust_text::FileId::new(1),
                 dust_text::TextRange::new(0_u32, 1_u32),
             ),
             classes: Vec::new(),
+            mixins: Vec::new(),
+            extensions: Vec::new(),
+            extension_types: Vec::new(),
+            functions: Vec::new(),
+            variables: Vec::new(),
+            typedefs: Vec::new(),
             enums: Vec::new(),
             query_calls: Vec::new(),
         }

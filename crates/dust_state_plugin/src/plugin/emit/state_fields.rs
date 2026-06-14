@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use dust_dart_emit::DYNAMIC_TYPES;
-use dust_ir::{LibraryIr, TypeIr};
+use dust_ir::{DartFileIr, TypeIr};
 use dust_plugin_api::SymbolPlan;
 
 use crate::plugin::{constants::STATES_ANALYSIS_KEY, model::StateFact};
@@ -28,7 +28,7 @@ pub(super) fn state_facts(plan: &SymbolPlan) -> HashMap<String, Vec<StateFieldSp
 }
 
 pub(super) fn class_fields(
-    library: &LibraryIr,
+    library: &DartFileIr,
     state_facts: &HashMap<String, Vec<StateFieldSpec>>,
     class_name: &str,
 ) -> Vec<StateFieldSpec> {

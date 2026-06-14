@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use dust_ir::{ClassIr, EnumIr, LibraryIr};
+use dust_ir::{ClassIr, DartFileIr, EnumIr};
 use dust_plugin_api::PluginContribution;
 
 use crate::{
@@ -12,7 +12,7 @@ use crate::{
 ///
 /// This function identifies which models (classes and enums) have requested
 /// serialization or deserialization and generates the corresponding Dart code.
-pub(crate) fn emit_library(library: &LibraryIr) -> PluginContribution {
+pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
     let mut contribution = PluginContribution::default();
     let serializable_classes = library
         .classes

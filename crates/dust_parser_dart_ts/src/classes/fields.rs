@@ -2,11 +2,10 @@ use dust_parser_dart::{ParsedAnnotation, ParsedFieldSurface};
 use dust_text::SourceText;
 use tree_sitter::Node;
 
-use crate::syntax::{find_first_descendant, find_last_descendant_text, node_text, text_range};
+use crate::syntax::{find_first_descendant, node_text, text_range};
+use crate::types::extract_type_before;
 
-use super::parse_text::extract_type_prefix;
-
-pub(super) fn extract_fields(
+pub(crate) fn extract_fields(
     node: Node<'_>,
     annotations: &[ParsedAnnotation],
     source: &SourceText,
@@ -15,11 +14,8 @@ pub(super) fn extract_fields(
         return Vec::new();
     };
 
-    let declaration_text = node_text(node, source);
-    let relative_type_end = identifier_list
-        .start_byte()
-        .saturating_sub(node.start_byte());
-    let type_source = extract_type_prefix(&declaration_text, relative_type_end);
+    let parsed_type = extract_type_before(node, identifier_list.start_byte(), source);
+    let type_source = parsed_type.as_ref().map(|ty| ty.source.clone());
 
     let mut fields = Vec::new();
     let mut cursor = identifier_list.walk();
@@ -27,13 +23,16 @@ pub(super) fn extract_fields(
         .children(&mut cursor)
         .filter(|child| child.is_named() && child.kind() == "initialized_identifier")
     {
-        let name =
-            find_last_descendant_text(initialized, source, &["identifier"]).unwrap_or_default();
+        let name = initialized
+            .child_by_field_name("name")
+            .map(|name| node_text(name, source))
+            .unwrap_or_default();
         fields.push(ParsedFieldSurface {
             name,
             annotations: annotations.to_vec(),
             type_source: type_source.clone(),
-            has_default: node_text(initialized, source).contains('='),
+            parsed_type: parsed_type.clone(),
+            has_default: initialized.child_by_field_name("value").is_some(),
             span: text_range(initialized),
         });
     }

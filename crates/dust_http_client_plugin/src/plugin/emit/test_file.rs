@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use dust_dart_emit::render_template;
-use dust_ir::LibraryIr;
+use dust_ir::DartFileIr;
 use dust_ir::ParamKind;
 use dust_plugin_api::GENERATED_HEADER;
 use dust_workspace::{package_import_uri, rewrite_library_import_uri};
@@ -41,7 +41,7 @@ struct EndpointTestContext<'a> {
     assertions: String,
 }
 
-pub(crate) fn render_test_file(library: &LibraryIr, specs: &[ClientSpec<'_>]) -> Option<String> {
+pub(crate) fn render_test_file(library: &DartFileIr, specs: &[ClientSpec<'_>]) -> Option<String> {
     let package_root = Path::new(&library.package_root);
     let source_path = Path::new(&library.source_path);
     let source_import =
@@ -70,7 +70,7 @@ pub(crate) fn render_test_file(library: &LibraryIr, specs: &[ClientSpec<'_>]) ->
     ))
 }
 
-fn render_imports(library: &LibraryIr, package_root: &Path, source_path: &Path) -> String {
+fn render_imports(library: &DartFileIr, package_root: &Path, source_path: &Path) -> String {
     rendered_imports(library, package_root, source_path)
         .into_iter()
         .filter(|import| {
@@ -84,7 +84,7 @@ fn render_imports(library: &LibraryIr, package_root: &Path, source_path: &Path) 
 }
 
 fn rendered_imports(
-    library: &LibraryIr,
+    library: &DartFileIr,
     package_root: &Path,
     source_path: &Path,
 ) -> BTreeSet<String> {

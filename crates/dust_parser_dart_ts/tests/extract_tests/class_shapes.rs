@@ -20,11 +20,13 @@ class ProductNode extends CatalogNode with AuditStamp {
 
   const ProductNode(this.sku);
 }
+
+abstract interface class ApiContract {}
 "#,
     );
 
     assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
-    assert_eq!(result.library.classes.len(), 2);
+    assert_eq!(result.library.classes.len(), 3);
     assert!(result.library.classes[0].is_abstract);
     assert_eq!(
         result.library.classes[0].superclass_name.as_deref(),
@@ -41,6 +43,9 @@ class ProductNode extends CatalogNode with AuditStamp {
     assert_eq!(result.library.classes[1].name, "ProductNode");
     assert_eq!(result.library.classes[1].fields.len(), 1);
     assert_eq!(result.library.classes[1].fields[0].name, "sku");
+    assert_eq!(result.library.classes[2].name, "ApiContract");
+    assert!(result.library.classes[2].is_abstract);
+    assert!(result.library.classes[2].is_interface);
 }
 
 #[test]

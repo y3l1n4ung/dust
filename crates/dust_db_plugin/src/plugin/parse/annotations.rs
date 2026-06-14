@@ -149,11 +149,7 @@ mod tests {
     }
 
     fn config(symbol: &str, args: Option<&str>) -> ConfigApplicationIr {
-        ConfigApplicationIr {
-            symbol: SymbolId::new(symbol),
-            arguments_source: args.map(str::to_owned),
-            span: span(),
-        }
+        ConfigApplicationIr::new(SymbolId::new(symbol), args.map(str::to_owned), span())
     }
 
     #[test]

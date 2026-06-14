@@ -113,11 +113,11 @@ fn normalize_transition_source(source: String) -> String {
 
 #[cfg(test)]
 fn test_config(name: &str, args: Option<&str>) -> ConfigApplicationIr {
-    ConfigApplicationIr {
-        symbol: SymbolId::new(name),
-        arguments_source: args.map(str::to_owned),
-        span: SpanIr::new(FileId::default(), TextRange::default()),
-    }
+    ConfigApplicationIr::new(
+        SymbolId::new(name),
+        args.map(str::to_owned),
+        SpanIr::new(FileId::default(), TextRange::default()),
+    )
 }
 
 #[cfg(test)]

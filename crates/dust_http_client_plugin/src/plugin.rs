@@ -1,5 +1,5 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::LibraryIr;
+use dust_ir::DartFileIr;
 use dust_plugin_api::{AuxiliaryOutputContribution, DustPlugin, PluginContribution, SymbolPlan};
 use dust_workspace::generated_test_output_path;
 
@@ -53,7 +53,7 @@ impl DustPlugin for HttpClientPlugin {
         SUPPORTED_ANNOTATIONS
     }
 
-    fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> {
+    fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
         library
             .classes
             .iter()
@@ -61,7 +61,7 @@ impl DustPlugin for HttpClientPlugin {
             .collect()
     }
 
-    fn emit(&self, library: &LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
+    fn emit(&self, library: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
         let mut contribution = PluginContribution::default();
         let mut generated_any = false;
         let mut generated_test_specs = Vec::new();

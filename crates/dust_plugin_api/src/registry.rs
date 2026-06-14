@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use dust_diagnostics::Diagnostic;
-use dust_ir::{LibraryIr, SymbolId};
-use dust_parser_dart::ParsedLibrarySurface;
+use dust_ir::{DartFileIr, SymbolId};
+use dust_parser_dart::ParsedDartFileSurface;
 
 use crate::{DustPlugin, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 
@@ -123,10 +123,10 @@ impl PluginRegistry {
     }
 
     /// Builds one deterministic symbol plan for a lowered library.
-    pub fn build_symbol_plan(&self, library: &LibraryIr) -> SymbolPlan {
+    pub fn build_symbol_plan(&self, file: &DartFileIr) -> SymbolPlan {
         let mut plan = SymbolPlan::default();
         for plugin in &self.plugins {
-            for symbol in plugin.plugin.requested_symbols(library) {
+            for symbol in plugin.plugin.requested_symbols(file) {
                 plan.reserve(symbol);
             }
         }
@@ -137,21 +137,21 @@ impl PluginRegistry {
     pub fn collect_workspace_analysis(
         &self,
         context: WorkspaceAnalysisContext<'_>,
-        library: &ParsedLibrarySurface,
+        file: &ParsedDartFileSurface,
         analysis: &mut WorkspaceAnalysisBuilder,
     ) {
         for plugin in &self.plugins {
             plugin
                 .plugin
-                .collect_workspace_analysis(context, library, analysis);
+                .collect_workspace_analysis(context, file, analysis);
         }
     }
 
     /// Runs validation across all registered plugins in registration order.
-    pub fn validate_library(&self, library: &LibraryIr) -> Vec<Diagnostic> {
+    pub fn validate_library(&self, file: &DartFileIr) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
         for plugin in &self.plugins {
-            diagnostics.extend(plugin.plugin.validate(library));
+            diagnostics.extend(plugin.plugin.validate(file));
         }
         diagnostics
     }
@@ -159,12 +159,12 @@ impl PluginRegistry {
     /// Collects plugin contributions in registration order using one shared symbol plan.
     pub fn emit_contributions(
         &self,
-        library: &LibraryIr,
+        file: &DartFileIr,
         plan: &SymbolPlan,
     ) -> Vec<crate::PluginContribution> {
         self.plugins
             .iter()
-            .map(|plugin| plugin.plugin.emit(library, plan))
+            .map(|plugin| plugin.plugin.emit(file, plan))
             .collect()
     }
 }

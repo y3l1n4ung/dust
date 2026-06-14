@@ -1,6 +1,6 @@
 use std::path::{Component, Path, PathBuf};
 
-use dust_parser_dart::{ParameterKind, ParsedClassSurface, ParsedDirective, ParsedLibrarySurface};
+use dust_parser_dart::{ParameterKind, ParsedClassSurface, ParsedDartFileSurface, ParsedDirective};
 use dust_plugin_api::{WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 
 use super::{
@@ -11,7 +11,7 @@ use super::{
 
 pub(crate) fn collect_route_workspace_analysis(
     context: WorkspaceAnalysisContext<'_>,
-    library: &ParsedLibrarySurface,
+    library: &ParsedDartFileSurface,
     analysis: &mut WorkspaceAnalysisBuilder,
 ) {
     for class in &library.classes {
@@ -141,7 +141,7 @@ fn import_uri(context: WorkspaceAnalysisContext<'_>) -> String {
 
 fn library_imports(
     context: WorkspaceAnalysisContext<'_>,
-    library: &ParsedLibrarySurface,
+    library: &ParsedDartFileSurface,
 ) -> Vec<String> {
     let mut imports = library
         .directives

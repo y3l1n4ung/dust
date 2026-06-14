@@ -53,11 +53,11 @@ fn config_name(symbol: &SymbolId) -> &str {
 
 #[cfg(test)]
 fn test_config(args: Option<&str>) -> ConfigApplicationIr {
-    ConfigApplicationIr {
-        symbol: SymbolId::new(VIEW_MODEL),
-        arguments_source: args.map(str::to_owned),
-        span: SpanIr::new(FileId::default(), TextRange::default()),
-    }
+    ConfigApplicationIr::new(
+        SymbolId::new(VIEW_MODEL),
+        args.map(str::to_owned),
+        SpanIr::new(FileId::default(), TextRange::default()),
+    )
 }
 
 #[cfg(test)]

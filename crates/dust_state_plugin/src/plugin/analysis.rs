@@ -4,7 +4,7 @@ use dust_dart_emit::{
     DART_BOOL, DART_DATE_TIME, DART_DOUBLE, DART_DYNAMIC, DART_INT, DART_LIST, DART_NUM,
     DART_OBJECT, DART_OBJECT_NULLABLE, DART_STRING, DART_VOID,
 };
-use dust_parser_dart::{ParsedClassSurface, ParsedLibrarySurface};
+use dust_parser_dart::{ParsedClassSurface, ParsedDartFileSurface};
 use dust_plugin_api::{WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 
 use super::{
@@ -15,7 +15,7 @@ use super::{
 
 pub(crate) fn collect_state_workspace_analysis(
     context: WorkspaceAnalysisContext<'_>,
-    library: &ParsedLibrarySurface,
+    library: &ParsedDartFileSurface,
     analysis: &mut WorkspaceAnalysisBuilder,
 ) {
     let declared_type_names = declared_type_names(library);
@@ -71,7 +71,7 @@ fn view_model_annotation(class: &ParsedClassSurface) -> Option<super::model::Vie
         .and_then(parse_view_model_surface)
 }
 
-fn declared_type_names(library: &ParsedLibrarySurface) -> Vec<String> {
+fn declared_type_names(library: &ParsedDartFileSurface) -> Vec<String> {
     library
         .classes
         .iter()

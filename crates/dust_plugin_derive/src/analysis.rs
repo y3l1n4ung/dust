@@ -1,10 +1,10 @@
-use dust_parser_dart::{ParsedAnnotation, ParsedClassSurface, ParsedLibrarySurface};
+use dust_parser_dart::{ParsedAnnotation, ParsedClassSurface, ParsedDartFileSurface};
 use dust_plugin_api::WorkspaceAnalysisBuilder;
 
 pub(crate) const COPYABLE_TYPES_ANALYSIS_KEY: &str = "dust_plugin_derive.copyable_types";
 
 pub(crate) fn collect_workspace_analysis(
-    library: &ParsedLibrarySurface,
+    library: &ParsedDartFileSurface,
     analysis: &mut WorkspaceAnalysisBuilder,
 ) {
     for class in &library.classes {
@@ -27,37 +27,8 @@ fn annotation_has_copy_with(annotation: &ParsedAnnotation) -> bool {
         return false;
     }
 
-    derive_arguments_has_copy_with(annotation.arguments_source.as_deref().unwrap_or(""))
-}
-
-fn derive_arguments_has_copy_with(arguments_source: &str) -> bool {
-    let bytes = arguments_source.as_bytes();
-    let mut index = 0;
-
-    while index < bytes.len() {
-        if !is_ident_start(bytes[index]) {
-            index += 1;
-            continue;
-        }
-
-        let start = index;
-        index += 1;
-        while index < bytes.len() && is_ident_continue(bytes[index]) {
-            index += 1;
-        }
-
-        if &arguments_source[start..index] == "CopyWith" && bytes.get(index) == Some(&b'(') {
-            return true;
-        }
-    }
-
-    false
-}
-
-fn is_ident_start(byte: u8) -> bool {
-    byte == b'_' || byte.is_ascii_alphabetic()
-}
-
-fn is_ident_continue(byte: u8) -> bool {
-    byte == b'_' || byte.is_ascii_alphanumeric()
+    annotation
+        .positional_constructor_names()
+        .iter()
+        .any(|name| name == "CopyWith")
 }

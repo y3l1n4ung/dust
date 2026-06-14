@@ -1,7 +1,9 @@
 #![cfg(test)]
 
-use super::type_parse::{parse_type, split_top_level_args};
+use super::type_parse::{lower_type, parse_type, split_top_level_args};
 use dust_ir::BuiltinType;
+use dust_parser_dart::ParsedTypeSurface;
+use dust_text::TextRange;
 
 #[test]
 fn parses_builtin_and_nullable_types() {
@@ -44,4 +46,19 @@ fn splits_top_level_args_without_breaking_nested_generics() {
             "({String name, int age})"
         ]
     );
+}
+
+#[test]
+fn lowers_parser_owned_type_surface_before_raw_source_fallback() {
+    let parsed =
+        ParsedTypeSurface::parse("Map<String, List<int?>>", TextRange::new(0_u32, 23_u32)).unwrap();
+
+    let outcome = lower_type(Some(&parsed), Some("Object"));
+
+    assert!(outcome.diagnostics.is_empty());
+    assert!(outcome.value.is_named("Map"));
+    assert_eq!(outcome.value.args().len(), 2);
+    assert!(outcome.value.args()[1].is_named("List"));
+    assert!(outcome.value.args()[1].args()[0].is_builtin(BuiltinType::Int));
+    assert!(outcome.value.args()[1].args()[0].is_nullable());
 }

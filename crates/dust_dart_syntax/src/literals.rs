@@ -5,9 +5,13 @@ pub fn parse_string_literal(source: &str) -> Option<String> {
         .strip_prefix('r')
         .or_else(|| source.strip_prefix('R'))
         .unwrap_or(source);
-    let first = source.chars().next()?;
-    let last = source.chars().next_back()?;
-    if source.len() < 2 || first != last || !matches!(first, '\'' | '"') {
+    let bytes = source.as_bytes();
+    if bytes.is_empty() {
+        return None;
+    }
+    let first = bytes[0];
+    let last = bytes[bytes.len() - 1];
+    if source.len() < 2 || first != last || !matches!(first, b'\'' | b'"') {
         return None;
     }
     Some(source[1..source.len() - 1].to_owned())
@@ -74,7 +78,30 @@ pub fn parse_static_dart_string_literal(source: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_static_dart_string_literal;
+    use super::{parse_bool_literal, parse_static_dart_string_literal, parse_string_literal};
+
+    #[test]
+    fn parses_simple_literals() {
+        assert_eq!(parse_string_literal(" 'hello' "), Some("hello".to_owned()));
+        assert_eq!(
+            parse_string_literal(r#"R"hello""#),
+            Some("hello".to_owned())
+        );
+        assert_eq!(parse_string_literal("''"), Some(String::new()));
+        assert_eq!(parse_bool_literal(" true "), Some(true));
+        assert_eq!(parse_bool_literal("false"), Some(false));
+        assert_eq!(parse_bool_literal("yes"), None);
+    }
+
+    #[test]
+    fn rejects_invalid_string_literals() {
+        assert_eq!(parse_string_literal(""), None);
+        assert_eq!(parse_string_literal("'"), None);
+        assert_eq!(parse_string_literal("'unterminated"), None);
+        assert_eq!(parse_string_literal("'mismatch\""), None);
+        assert_eq!(parse_string_literal("aa"), None);
+        assert_eq!(parse_string_literal("identifier"), None);
+    }
 
     #[test]
     fn parses_static_dart_strings() {
@@ -94,5 +121,17 @@ mod tests {
             parse_static_dart_string_literal("'SELECT * ' 'FROM users'"),
             None
         );
+        assert_eq!(
+            parse_static_dart_string_literal(r#""escaped \" quote""#),
+            Some("escaped \" quote".to_owned())
+        );
+        assert_eq!(
+            parse_static_dart_string_literal(r#"R"$raw""#),
+            Some("$raw".to_owned())
+        );
+        assert_eq!(parse_static_dart_string_literal(""), None);
+        assert_eq!(parse_static_dart_string_literal("identifier"), None);
+        assert_eq!(parse_static_dart_string_literal("'unterminated"), None);
+        assert_eq!(parse_static_dart_string_literal(r#""dangling\"#), None);
     }
 }

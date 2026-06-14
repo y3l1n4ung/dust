@@ -1,6 +1,6 @@
 use dust_ir::{
-    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, FieldIr, LibraryIr, ParamKind, SpanIr,
-    TypeIr,
+    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, DartFileIr, FieldIr, ParamKind,
+    SpanIr, TypeIr,
 };
 use dust_text::{FileId, TextRange};
 
@@ -10,15 +10,27 @@ fn span() -> SpanIr {
     SpanIr::new(FileId::new(1), TextRange::new(0_u32, 1_u32))
 }
 
-fn library(classes: Vec<ClassIr>) -> LibraryIr {
-    LibraryIr {
+fn library(classes: Vec<ClassIr>) -> DartFileIr {
+    DartFileIr {
         package_root: String::new(),
         package_name: String::new(),
         source_path: "user.dart".to_owned(),
         output_path: "user.g.dart".to_owned(),
         imports: Vec::new(),
+        library: None,
+        library_annotations: Vec::new(),
+        import_directives: Vec::new(),
+        export_directives: Vec::new(),
+        part_directives: Vec::new(),
+        part_of: None,
         span: span(),
         classes,
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         enums: Vec::new(),
         query_calls: Vec::new(),
     }

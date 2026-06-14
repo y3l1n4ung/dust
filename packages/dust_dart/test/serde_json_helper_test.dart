@@ -57,12 +57,31 @@ void main() {
         JsonHelper.asBigInt('9007199254740993', 'id'),
         BigInt.parse('9007199254740993'),
       );
+      expect(
+        () => JsonHelper.asDateTime('not-a-date', 'createdAt'),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => JsonHelper.asUri('http://[', 'url'),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => JsonHelper.asBigInt('nan', 'id'),
+        throwsA(isA<ArgumentError>()),
+      );
     });
 
     test('decodes with serde codec', () {
+      const codec = _IntCodec();
+
+      expect(codec.serialize(42), '42');
+      expect(JsonHelper.decodeWithCodec<int>(codec, '42', 'id'), 42);
+    });
+
+    test('rejects null codec values', () {
       expect(
-        JsonHelper.decodeWithCodec<int>(const _IntCodec(), '42', 'id'),
-        42,
+        () => JsonHelper.decodeWithCodec<int>(const _IntCodec(), null, 'id'),
+        throwsA(isA<ArgumentError>()),
       );
     });
 

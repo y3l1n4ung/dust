@@ -1,4 +1,6 @@
-use crate::SpanIr;
+use std::collections::BTreeMap;
+
+use crate::{AnnotationValueIr, SpanIr};
 use dust_dart_syntax::{
     normalized_args, parse_bool_literal, parse_string_list, parse_string_literal, parse_string_map,
     parse_type_list, parse_type_name, split_top_level_items, split_top_level_once,
@@ -32,11 +34,53 @@ pub struct ConfigApplicationIr {
     /// The raw annotation argument source, if the config was written with
     /// parentheses and arguments.
     pub arguments_source: Option<String>,
+    /// Positional annotation argument values preserved from parser-owned facts.
+    pub positional_args: Vec<AnnotationValueIr>,
+    /// Named annotation argument values preserved from parser-owned facts.
+    pub named_args: BTreeMap<String, AnnotationValueIr>,
     /// The source span of the config annotation.
     pub span: SpanIr,
 }
 
 impl ConfigApplicationIr {
+    /// Creates a config application with compatibility raw argument source only.
+    pub fn new(symbol: SymbolId, arguments_source: Option<String>, span: SpanIr) -> Self {
+        Self {
+            symbol,
+            arguments_source,
+            positional_args: Vec::new(),
+            named_args: BTreeMap::new(),
+            span,
+        }
+    }
+
+    /// Creates a config application with parser-owned structured arguments.
+    pub fn with_arguments(
+        symbol: SymbolId,
+        arguments_source: Option<String>,
+        positional_args: Vec<AnnotationValueIr>,
+        named_args: BTreeMap<String, AnnotationValueIr>,
+        span: SpanIr,
+    ) -> Self {
+        Self {
+            symbol,
+            arguments_source,
+            positional_args,
+            named_args,
+            span,
+        }
+    }
+
+    /// Returns one positional argument value by index.
+    pub fn positional_argument_value(&self, index: usize) -> Option<&AnnotationValueIr> {
+        self.positional_args.get(index)
+    }
+
+    /// Returns one named argument value by name.
+    pub fn named_argument_value(&self, name: &str) -> Option<&AnnotationValueIr> {
+        self.named_args.get(name)
+    }
+
     /// Returns the annotation argument list without the outer parentheses.
     pub fn normalized_arguments(&self) -> Option<&str> {
         normalized_args(self.arguments_source.as_deref()?)
@@ -44,6 +88,13 @@ impl ConfigApplicationIr {
 
     /// Returns one top-level positional argument source by index.
     pub fn positional_argument_source(&self, index: usize) -> Option<&str> {
+        if let Some(source) = self
+            .positional_argument_value(index)
+            .and_then(annotation_value_source)
+        {
+            return Some(source);
+        }
+
         self.argument_items()
             .into_iter()
             .filter(|item| split_top_level_once(item, ':').is_none())
@@ -62,6 +113,13 @@ impl ConfigApplicationIr {
 
     /// Returns one top-level named argument source by name.
     pub fn named_argument_source(&self, name: &str) -> Option<&str> {
+        if let Some(source) = self
+            .named_argument_value(name)
+            .and_then(annotation_value_source)
+        {
+            return Some(source);
+        }
+
         self.named_arguments()
             .into_iter()
             .find_map(|(key, value)| (key == name).then_some(value))
@@ -136,5 +194,18 @@ impl ConfigApplicationIr {
                 Some((key.trim(), value.trim()))
             })
             .collect()
+    }
+}
+
+fn annotation_value_source(value: &AnnotationValueIr) -> Option<&str> {
+    match value {
+        AnnotationValueIr::Number(source) => Some(source),
+        AnnotationValueIr::Member(name) => Some(name.source.as_str()),
+        AnnotationValueIr::Expression(source) => Some(source.source.as_str()),
+        AnnotationValueIr::Bool(_)
+        | AnnotationValueIr::String(_)
+        | AnnotationValueIr::List(_)
+        | AnnotationValueIr::Record(_)
+        | AnnotationValueIr::Constructor { .. } => None,
     }
 }

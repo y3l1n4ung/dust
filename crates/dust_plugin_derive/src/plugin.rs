@@ -1,6 +1,6 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::LibraryIr;
-use dust_parser_dart::ParsedLibrarySurface;
+use dust_ir::DartFileIr;
+use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{
     DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
 };
@@ -53,7 +53,7 @@ impl DustPlugin for DerivePlugin {
         SUPPORTED_ANNOTATIONS
     }
 
-    fn requested_symbols(&self, library: &LibraryIr) -> Vec<String> {
+    fn requested_symbols(&self, library: &DartFileIr) -> Vec<String> {
         let needs_undefined = library.classes.iter().any(|class| {
             class.traits.iter().any(|trait_app| {
                 trait_app.symbol.0 == COPY_WITH_SYMBOL && copy_with_requires_undefined(class)
@@ -70,17 +70,17 @@ impl DustPlugin for DerivePlugin {
     fn collect_workspace_analysis(
         &self,
         _context: WorkspaceAnalysisContext<'_>,
-        library: &ParsedLibrarySurface,
+        library: &ParsedDartFileSurface,
         analysis: &mut WorkspaceAnalysisBuilder,
     ) {
         collect_workspace_analysis(library, analysis);
     }
 
-    fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> {
+    fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
         validate_library(library)
     }
 
-    fn emit(&self, library: &LibraryIr, plan: &SymbolPlan) -> PluginContribution {
+    fn emit(&self, library: &DartFileIr, plan: &SymbolPlan) -> PluginContribution {
         emit_library(library, plan)
     }
 }

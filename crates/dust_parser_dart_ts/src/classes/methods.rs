@@ -4,13 +4,13 @@ use tree_sitter::Node;
 
 use crate::{
     annotations::{extract_annotation, extract_descendant_annotations},
-    syntax::{find_first_descendant, find_last_descendant_text, node_text, text_range},
+    syntax::{
+        direct_named_child, find_first_descendant, has_direct_child_kind, node_text, text_range,
+    },
+    types::extract_type_before,
 };
 
-use super::parse_text::{
-    determine_parameter_kind, extract_default_value_source, extract_parameter_type,
-    trailing_default_value_source,
-};
+use super::parse_text::{default_value_source, determine_parameter_kind, parameter_name_node};
 
 pub(super) fn extract_method(
     node: Node<'_>,
@@ -20,37 +20,26 @@ pub(super) fn extract_method(
     let signature = find_first_descendant(node, "method_signature")
         .or_else(|| find_first_descendant(node, "function_signature"))
         .or_else(|| find_first_descendant(node, "declaration"))?;
+    let callable_signature = callable_signature(signature);
 
-    let name_node = signature.child_by_field_name("name")?;
+    let name_node = callable_signature.child_by_field_name("name")?;
     let name = node_text(name_node, source);
 
-    let header_text = node_text(signature, source);
-    let declaration_text = node_text(node, source);
-    let is_static = header_text.contains("static");
-    let is_external = header_text.contains("external");
+    let is_static =
+        has_direct_child_kind(node, "static") || has_direct_child_kind(signature, "static");
+    let is_external =
+        has_direct_child_kind(node, "external") || has_direct_child_kind(signature, "external");
 
-    let return_type_source = signature
-        .child_by_field_name("type")
-        .map(|t| node_text(t, source))
-        .or_else(|| extract_parameter_type(&header_text, &name));
+    let parsed_return_type =
+        extract_type_before(callable_signature, name_node.start_byte(), source);
+    let return_type_source = parsed_return_type.as_ref().map(|ty| ty.source.clone());
 
-    let params = find_first_descendant(signature, "formal_parameter_list")
+    let params = find_first_descendant(callable_signature, "formal_parameter_list")
         .map(|list| extract_method_params(list, source))
         .unwrap_or_default();
 
-    let params_node = find_first_descendant(signature, "formal_parameter_list");
-    let body_source = params_node.and_then(|params| {
-        let end_offset = params.end_byte().saturating_sub(node.start_byte());
-        let after_params = declaration_text[end_offset.min(declaration_text.len())..].trim();
-        (!after_params.is_empty()).then(|| after_params.to_owned())
-    });
-    let has_body = if let Some(params) = params_node {
-        let end_offset = params.end_byte().saturating_sub(node.start_byte());
-        let after_params = &declaration_text[end_offset.min(declaration_text.len())..];
-        after_params.contains('{') || after_params.contains("=>")
-    } else {
-        declaration_text.contains('{') || declaration_text.contains("=>")
-    };
+    let body_source = method_body_node(node, signature).map(|body| node_text(body, source));
+    let has_body = body_source.is_some();
 
     Some(dust_parser_dart::ParsedMethodSurface {
         name,
@@ -58,6 +47,7 @@ pub(super) fn extract_method(
         is_external,
         annotations: annotations.to_vec(),
         return_type_source,
+        parsed_return_type,
         has_body,
         body_source,
         params,
@@ -65,7 +55,30 @@ pub(super) fn extract_method(
     })
 }
 
-fn extract_method_params(node: Node<'_>, source: &SourceText) -> Vec<ParsedMethodParamSurface> {
+fn callable_signature(node: Node<'_>) -> Node<'_> {
+    if node.kind() != "method_signature" {
+        return node;
+    }
+
+    direct_named_child(node, "function_signature")
+        .or_else(|| direct_named_child(node, "getter_signature"))
+        .or_else(|| direct_named_child(node, "setter_signature"))
+        .or_else(|| direct_named_child(node, "operator_signature"))
+        .unwrap_or(node)
+}
+
+fn method_body_node<'tree>(node: Node<'tree>, signature: Node<'tree>) -> Option<Node<'tree>> {
+    direct_named_child(node, "function_body").or_else(|| {
+        signature
+            .parent()
+            .and_then(|parent| direct_named_child(parent, "function_body"))
+    })
+}
+
+pub(crate) fn extract_method_params(
+    node: Node<'_>,
+    source: &SourceText,
+) -> Vec<ParsedMethodParamSurface> {
     let mut params = Vec::new();
     collect_method_formal_parameters(node, source, &mut params, &mut Vec::new());
     params
@@ -107,18 +120,23 @@ fn extract_method_formal_parameter(
     node: Node<'_>,
     source: &SourceText,
 ) -> ParsedMethodParamSurface {
-    let text = node_text(node, source);
-    let name = find_last_descendant_text(node, source, &["identifier"]).unwrap_or_default();
-    let type_source = extract_parameter_type(&text, &name);
+    let name_node = parameter_name_node(node);
+    let name = name_node
+        .map(|node| node_text(node, source))
+        .unwrap_or_default();
+    let parsed_type =
+        name_node.and_then(|name| extract_type_before(node, name.start_byte(), source));
+    let type_source = parsed_type.as_ref().map(|ty| ty.source.clone());
+    let default_value_source = default_value_source(node, source);
 
     ParsedMethodParamSurface {
         name,
         annotations: extract_descendant_annotations(node, source),
         type_source,
+        parsed_type,
         kind: determine_parameter_kind(node, source),
-        has_default: text.contains('=') || trailing_default_value_source(node, source).is_some(),
-        default_value_source: extract_default_value_source(&text)
-            .or_else(|| trailing_default_value_source(node, source)),
+        has_default: default_value_source.is_some(),
+        default_value_source,
         span: text_range(node),
     }
 }
