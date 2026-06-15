@@ -10,10 +10,23 @@ pub(crate) fn extract_query_calls(
     root: Node<'_>,
     source: &SourceText,
 ) -> Vec<ParsedQueryCallSurface> {
+    // Fast coarse gate for the common case: most Dart files do not contain DB
+    // helper names. Actual query discovery below still uses tree-sitter nodes.
+    if !might_contain_query_helper(source.as_str()) {
+        return Vec::new();
+    }
+
     let mut calls = Vec::new();
     collect_calls(root, source, &mut calls);
     calls.sort_by_key(|call| call.span.start());
     calls
+}
+
+fn might_contain_query_helper(source: &str) -> bool {
+    source.contains("queryAs")
+        || source.contains("queryScalar")
+        || source.contains("queryRaw")
+        || source.contains("queryExecute")
 }
 
 fn collect_calls(node: Node<'_>, source: &SourceText, out: &mut Vec<ParsedQueryCallSurface>) {
@@ -22,12 +35,14 @@ fn collect_calls(node: Node<'_>, source: &SourceText, out: &mut Vec<ParsedQueryC
     {
         out.push(call);
     }
-    if let Some(call) = lower_selector_query_chain(node, source) {
+    if node.kind() != "call_expression"
+        && let Some(call) = lower_selector_query_chain(node, source)
+    {
         out.push(call);
     }
 
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
+    for child in node.children(&mut cursor).filter(|child| child.is_named()) {
         collect_calls(child, source, out);
     }
 }
@@ -52,35 +67,36 @@ fn lower_selector_query_chain(
     node: Node<'_>,
     source: &SourceText,
 ) -> Option<ParsedQueryCallSurface> {
+    if node.child_count() < 2 || !has_direct_query_identifier(node, source) {
+        return None;
+    }
+
     let children = named_children(node);
-    for (index, child) in children.iter().copied().enumerate() {
+    for (index, child) in children.iter().enumerate() {
         if child.kind() != "identifier" {
             continue;
         }
-        let Some(function) = query_function_name(&node_text(child, source)) else {
+        let Some(function) = query_function_node(*child, source) else {
             continue;
         };
 
         let mut selector_index = index + 1;
         let type_arg_source = children
             .get(selector_index)
-            .copied()
             .filter(|selector| selector.kind() == "selector")
-            .and_then(|selector| selector_type_arguments_source(selector, source));
+            .and_then(|selector| selector_type_arguments_source(*selector, source));
         if type_arg_source.is_some() {
             selector_index += 1;
         }
 
         let query_args_selector = children
             .get(selector_index)
-            .copied()
             .filter(|selector| selector.kind() == "selector")?;
-        let args = selector_argument_sources(query_args_selector, source)?;
+        let args = selector_argument_sources(*query_args_selector, source)?;
         let fetch_method = children
             .get(selector_index + 1)
-            .copied()
             .filter(|selector| selector.kind() == "selector")
-            .and_then(|selector| selector_property_name(selector, source))
+            .and_then(|selector| selector_property_name(*selector, source))
             .filter(|method| is_fetch_method(method));
         let span = TextRange::new(
             child.start_byte() as u32,
@@ -97,6 +113,15 @@ fn lower_selector_query_chain(
     }
 
     None
+}
+
+fn has_direct_query_identifier(node: Node<'_>, source: &SourceText) -> bool {
+    let mut cursor = node.walk();
+    node.children(&mut cursor).any(|child| {
+        child.is_named()
+            && child.kind() == "identifier"
+            && query_function_node(child, source).is_some()
+    })
 }
 
 fn query_call_surface(
@@ -133,13 +158,13 @@ fn query_function(
     source: &SourceText,
 ) -> Option<(ParsedQueryFunction, Option<String>)> {
     match function_node.kind() {
-        "identifier" => query_function_name(&node_text(function_node, source)).map(|function| {
+        "identifier" => query_function_node(function_node, source).map(|function| {
             let type_arg_source = None;
             (function, type_arg_source)
         }),
         "instantiation_expression" => {
             let identifier = function_node.child_by_field_name("function")?;
-            let function = query_function_name(&node_text(identifier, source))?;
+            let function = query_function_node(identifier, source)?;
             let type_arg_source = function_node
                 .child_by_field_name("type_arguments")
                 .and_then(|type_args| type_arguments_source(type_args, source));
@@ -147,6 +172,11 @@ fn query_function(
         }
         _ => None,
     }
+}
+
+fn query_function_node(node: Node<'_>, source: &SourceText) -> Option<ParsedQueryFunction> {
+    let name = source.as_str().get(node.start_byte()..node.end_byte())?;
+    query_function_name(name)
 }
 
 fn query_function_name(name: &str) -> Option<ParsedQueryFunction> {

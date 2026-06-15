@@ -143,7 +143,11 @@ Map<String, Object?> _$ProductToJson(Product instance) {
 Product _$ProductFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
   final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
-  final priceValue = JsonHelper.as<num>(json['price'], 'price', 'num').toDouble();
+  final priceValue = JsonHelper.as<num>(
+    json['price'],
+    'price',
+    'num').toDouble(,
+  );
   final descriptionValue = JsonHelper.as<String>(
     json['description'],
     'description',

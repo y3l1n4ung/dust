@@ -161,7 +161,11 @@ Order _$OrderFromJson(Map<String, Object?> json) {
   final itemsValue = JsonHelper.asList(json['items'], 'items')
       .map((item) => CartItem.fromJson(JsonHelper.asMap(item, 'items')))
       .toList();
-  final totalAmountValue = JsonHelper.as<num>(json['totalAmount'], 'totalAmount', 'num').toDouble();
+  final totalAmountValue = JsonHelper.as<num>(
+    json['totalAmount'],
+    'totalAmount',
+    'num').toDouble(,
+  );
   final statusValue = _$OrderStatusFromJson(json['status']);
   final createdAtValue = JsonHelper.asDateTime(json['createdAt'], 'createdAt');
   final shippingAddressValue = _$ShippingAddressFromJson(JsonHelper.asMap(json['shippingAddress'], 'shippingAddress'));

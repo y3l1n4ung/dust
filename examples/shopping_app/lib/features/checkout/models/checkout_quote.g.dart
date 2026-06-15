@@ -147,7 +147,11 @@ Map<String, Object?> _$CheckoutQuoteRequestToJson(CheckoutQuoteRequest instance)
 }
 // factory CheckoutQuoteRequest.fromJson(Map<String, Object?> json) => _$CheckoutQuoteRequestFromJson(json);
 CheckoutQuoteRequest _$CheckoutQuoteRequestFromJson(Map<String, Object?> json) {
-  final subtotalValue = JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble();
+  final subtotalValue = JsonHelper.as<num>(
+    json['subtotal'],
+    'subtotal',
+    'num').toDouble(,
+  );
   final couponCodeValue = json['couponCode'] == null
       ? null
       : JsonHelper.as<String>(json['couponCode'], 'couponCode', 'String');
@@ -168,11 +172,27 @@ Map<String, Object?> _$CheckoutQuoteToJson(CheckoutQuote instance) {
 }
 // factory CheckoutQuote.fromJson(Map<String, Object?> json) => _$CheckoutQuoteFromJson(json);
 CheckoutQuote _$CheckoutQuoteFromJson(Map<String, Object?> json) {
-  final subtotalValue = JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble();
-  final discountValue = JsonHelper.as<num>(json['discount'], 'discount', 'num').toDouble();
-  final shippingValue = JsonHelper.as<num>(json['shipping'], 'shipping', 'num').toDouble();
+  final subtotalValue = JsonHelper.as<num>(
+    json['subtotal'],
+    'subtotal',
+    'num').toDouble(,
+  );
+  final discountValue = JsonHelper.as<num>(
+    json['discount'],
+    'discount',
+    'num').toDouble(,
+  );
+  final shippingValue = JsonHelper.as<num>(
+    json['shipping'],
+    'shipping',
+    'num').toDouble(,
+  );
   final taxValue = JsonHelper.as<num>(json['tax'], 'tax', 'num').toDouble();
-  final totalValue = JsonHelper.as<num>(json['total'], 'total', 'num').toDouble();
+  final totalValue = JsonHelper.as<num>(
+    json['total'],
+    'total',
+    'num').toDouble(,
+  );
   final estimatedDeliveryDaysValue = JsonHelper.as<int>(
     json['estimatedDeliveryDays'],
     'estimatedDeliveryDays',

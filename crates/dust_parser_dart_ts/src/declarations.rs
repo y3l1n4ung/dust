@@ -45,8 +45,7 @@ pub(crate) fn extract_top_level_declarations(
     let mut current_type = None;
 
     let mut cursor = root.walk();
-    let children = root.children(&mut cursor).collect::<Vec<_>>();
-    for child in children {
+    for child in root.children(&mut cursor) {
         if child.kind() == ";" {
             pending_annotations.clear();
             current_type = None;
