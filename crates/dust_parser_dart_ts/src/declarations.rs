@@ -131,6 +131,25 @@ pub(crate) fn extract_top_level_declarations(
     declarations
 }
 
+pub(crate) fn has_extractable_top_level_declarations(root: Node<'_>) -> bool {
+    let mut cursor = root.walk();
+    root.children(&mut cursor)
+        .filter(|child| child.is_named())
+        .any(|child| {
+            matches!(
+                child.kind(),
+                "mixin_declaration"
+                    | "extension_declaration"
+                    | "extension_type_declaration"
+                    | "function_signature"
+                    | "initialized_identifier_list"
+                    | "static_final_declaration_list"
+                    | "identifier_list"
+                    | "type_alias"
+            )
+        })
+}
+
 fn extract_mixin(node: Node<'_>, source: &SourceText) -> ParsedMixinSurface {
     let name = node
         .child_by_field_name("name")

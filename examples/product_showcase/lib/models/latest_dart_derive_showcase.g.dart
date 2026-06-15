@@ -264,11 +264,7 @@ LatestDartProductCard _$LatestDartProductCardFromJson(Map<String, Object?> json)
     'price_cents',
     'int',
   );
-  final ratingValue = JsonHelper.as<num>(
-    json['rating'],
-    'rating',
-    'num').toDouble(,
-  );
+  final ratingValue = JsonHelper.as<num>(json['rating'], 'rating', 'num').toDouble();
   final stockCountValue = JsonHelper.as<int>(
     json['stock_count'],
     'stock_count',

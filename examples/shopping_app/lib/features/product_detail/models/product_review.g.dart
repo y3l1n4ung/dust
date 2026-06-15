@@ -106,11 +106,7 @@ ProductReview _$ProductReviewFromJson(Map<String, Object?> json) {
     'authorName',
     'String',
   );
-  final ratingValue = JsonHelper.as<num>(
-    json['rating'],
-    'rating',
-    'num').toDouble(,
-  );
+  final ratingValue = JsonHelper.as<num>(json['rating'], 'rating', 'num').toDouble();
   final commentValue = JsonHelper.as<String>(
     json['comment'],
     'comment',

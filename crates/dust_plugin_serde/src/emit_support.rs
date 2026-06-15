@@ -1,4 +1,4 @@
-use dust_dart_syntax::split_top_level_items;
+use dust_dart_syntax::{balanced_parenthesized, split_top_level_items};
 
 pub(crate) fn format_prefixed_expr(
     indent: usize,
@@ -45,12 +45,12 @@ pub(crate) fn format_prefixed_expr(
 
 fn wrap_call_expr(expr: &str, indent: usize, prefix: &str, suffix: &str) -> Option<String> {
     let open = expr.find('(')?;
-    let close = expr.rfind(')')?;
-    if close + 1 != expr.len() {
+    let args_source = balanced_parenthesized(&expr[open..])?;
+    if open + args_source.len() != expr.len() {
         return None;
     }
     let callee = &expr[..open];
-    let args = split_top_level_items(&expr[open + 1..close]);
+    let args = split_top_level_items(&args_source[1..args_source.len() - 1]);
     if args.len() <= 1 {
         return None;
     }
@@ -61,4 +61,19 @@ fn wrap_call_expr(expr: &str, indent: usize, prefix: &str, suffix: &str) -> Opti
     rendered.extend(args.into_iter().map(|arg| format!("{arg_pad}{arg},")));
     rendered.push(format!("{pad}){suffix}"));
     Some(rendered.join("\n"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_prefixed_expr;
+
+    #[test]
+    fn leaves_chained_call_expressions_unwrapped() {
+        let expr = "JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble()";
+
+        assert_eq!(
+            format_prefixed_expr(2, "final subtotalValue = ", expr, ";"),
+            "  final subtotalValue = JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble();"
+        );
+    }
 }

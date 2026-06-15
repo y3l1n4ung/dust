@@ -19,9 +19,13 @@ use std::cell::RefCell;
 use tree_sitter::Parser;
 
 use self::{
-    classes::extract_classes, declarations::extract_top_level_declarations,
-    diagnostics::extract_diagnostics, directives::extract_directives, enums::extract_enums,
-    queries::extract_query_calls, syntax::text_range,
+    classes::extract_classes,
+    declarations::{ParsedTopLevelDeclarations, extract_top_level_declarations},
+    diagnostics::extract_diagnostics,
+    directives::extract_directives,
+    enums::extract_enums,
+    queries::extract_query_calls,
+    syntax::text_range,
 };
 
 thread_local! {
@@ -66,7 +70,11 @@ impl ParseBackend for TreeSitterDartBackend {
             };
 
             let root = tree.root_node();
-            let declarations = extract_top_level_declarations(root, source);
+            let declarations = if declarations::has_extractable_top_level_declarations(root) {
+                extract_top_level_declarations(root, source)
+            } else {
+                ParsedTopLevelDeclarations::empty()
+            };
             ParseResult {
                 library: ParsedDartFileSurface {
                     span: text_range(root),
