@@ -55,6 +55,10 @@ pub fn find_top_level_char(
 
 /// Returns the first balanced parenthesized source segment from `source`.
 pub fn balanced_parenthesized(source: &str) -> Option<&str> {
+    if !source.starts_with('(') {
+        return None;
+    }
+
     let mut depth = 0_u32;
     let mut quote = None;
     let mut escaped = false;
@@ -73,7 +77,10 @@ pub fn balanced_parenthesized(source: &str) -> Option<&str> {
             '\'' | '"' => quote = Some(ch),
             '(' => depth += 1,
             ')' => {
-                depth = depth.saturating_sub(1);
+                if depth == 0 {
+                    return None;
+                }
+                depth -= 1;
                 if depth == 0 {
                     return Some(&source[..=index]);
                 }
@@ -105,17 +112,25 @@ pub fn normalized_args(source: &str) -> Option<&str> {
         .map(str::trim)
 }
 
+/// Nesting and string state used while scanning lightweight Dart source.
 #[derive(Default)]
 struct DelimiterState {
+    /// Nested parenthesis depth.
     paren: u32,
+    /// Nested square-bracket depth.
     bracket: u32,
+    /// Nested brace depth.
     brace: u32,
+    /// Nested angle-bracket depth for generic type arguments.
     angle: u32,
+    /// Currently active quote delimiter, if scanning inside a string literal.
     quote: Option<char>,
+    /// Whether the previous character was a backslash inside a string literal.
     escaped: bool,
 }
 
 impl DelimiterState {
+    /// Returns whether the scanner is outside all tracked delimiters and strings.
     fn is_top_level(&self) -> bool {
         self.paren == 0
             && self.bracket == 0
@@ -124,6 +139,7 @@ impl DelimiterState {
             && self.quote.is_none()
     }
 
+    /// Advances delimiter and string-literal state by one character.
     fn advance(&mut self, ch: char) {
         if let Some(active) = self.quote {
             if self.escaped {
@@ -188,6 +204,8 @@ mod tests {
             balanced_parenthesized(r#"("a\"b"), tail"#),
             Some(r#"("a\"b")"#)
         );
+        assert_eq!(balanced_parenthesized(")"), None);
+        assert_eq!(balanced_parenthesized("plain(text)"), None);
         assert_eq!(balanced_parenthesized("('a'"), None);
         assert_eq!(balanced_parenthesized("plain text"), None);
     }

@@ -1,8 +1,11 @@
 #![deny(missing_docs)]
 #![doc = "Shared Dart source parsing helpers for Dust parser, IR, and plugins."]
 
+/// Literal-value parsing helpers.
 mod literals;
+/// Top-level source scanning helpers.
 mod scanner;
+/// Annotation value parsing helpers.
 mod values;
 
 pub use literals::{parse_bool_literal, parse_static_dart_string_literal, parse_string_literal};
