@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use dust_ir::LibraryIr;
+use dust_ir::DartFileIr;
 use dust_plugin_api::{PluginContribution, SymbolPlan};
 
 use crate::{
@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-pub(crate) fn emit_library(library: &LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
+pub(crate) fn emit_library(library: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
     let mut contribution = PluginContribution::default();
     let copyable_types = library
         .classes

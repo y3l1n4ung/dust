@@ -1,12 +1,12 @@
 use dust_diagnostics::Diagnostic;
 
-use crate::{ParseOptions, ParsedLibrarySurface};
+use crate::{ParseOptions, ParsedDartFileSurface};
 
 /// The backend-neutral result of parsing one Dart source file.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseResult {
     /// The extracted library surface.
-    pub library: ParsedLibrarySurface,
+    pub library: ParsedDartFileSurface,
     /// Diagnostics emitted during parsing.
     pub diagnostics: Vec<Diagnostic>,
     /// The options used for this parse.

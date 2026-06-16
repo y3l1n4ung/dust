@@ -45,3 +45,55 @@ class User {
     assert_eq!(class.constructors[0].name, None);
     assert_eq!(class.constructors[0].params.len(), 2);
 }
+
+#[test]
+fn extracts_library_and_prefixed_directives() {
+    let result = parse(
+        1,
+        r#"
+@Deprecated('legacy')
+library models.user;
+
+import 'package:app/src/user.dart' as user;
+export 'src/public.dart';
+part 'user.g.dart';
+part of models.user;
+"#,
+    );
+
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    assert_eq!(result.library.directives.len(), 5);
+
+    match &result.library.directives[0] {
+        ParsedDirective::Library {
+            name, annotations, ..
+        } => {
+            assert_eq!(name.as_deref(), Some("models.user"));
+            assert_eq!(annotations.len(), 1);
+            assert_eq!(annotations[0].name, "Deprecated");
+            assert_eq!(
+                annotations[0].positional_argument_source(0),
+                Some("'legacy'")
+            );
+        }
+        other => panic!("expected library directive, got {other:?}"),
+    }
+
+    match &result.library.directives[1] {
+        ParsedDirective::Import { uri, prefix, .. } => {
+            assert_eq!(uri, "package:app/src/user.dart");
+            assert_eq!(prefix.as_deref(), Some("user"));
+        }
+        other => panic!("expected import directive, got {other:?}"),
+    }
+
+    match &result.library.directives[4] {
+        ParsedDirective::PartOf {
+            library_name, uri, ..
+        } => {
+            assert_eq!(library_name.as_deref(), Some("models.user"));
+            assert_eq!(uri, &None);
+        }
+        other => panic!("expected part-of directive, got {other:?}"),
+    }
+}

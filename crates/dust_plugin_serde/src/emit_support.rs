@@ -1,3 +1,5 @@
+use dust_dart_syntax::{balanced_parenthesized, split_top_level_items};
+
 pub(crate) fn format_prefixed_expr(
     indent: usize,
     prefix: &str,
@@ -43,12 +45,12 @@ pub(crate) fn format_prefixed_expr(
 
 fn wrap_call_expr(expr: &str, indent: usize, prefix: &str, suffix: &str) -> Option<String> {
     let open = expr.find('(')?;
-    let close = expr.rfind(')')?;
-    if close + 1 != expr.len() {
+    let args_source = balanced_parenthesized(&expr[open..])?;
+    if open + args_source.len() != expr.len() {
         return None;
     }
     let callee = &expr[..open];
-    let args = split_top_level_args(&expr[open + 1..close])?;
+    let args = split_top_level_items(&args_source[1..args_source.len() - 1]);
     if args.len() <= 1 {
         return None;
     }
@@ -61,43 +63,17 @@ fn wrap_call_expr(expr: &str, indent: usize, prefix: &str, suffix: &str) -> Opti
     Some(rendered.join("\n"))
 }
 
-fn split_top_level_args(source: &str) -> Option<Vec<&str>> {
-    let mut args = Vec::new();
-    let mut start = 0;
-    let mut depth = 0i32;
-    let mut quote = None;
-    let mut escaped = false;
+#[cfg(test)]
+mod tests {
+    use super::format_prefixed_expr;
 
-    for (index, ch) in source.char_indices() {
-        if let Some(active_quote) = quote {
-            if escaped {
-                escaped = false;
-            } else if ch == '\\' {
-                escaped = true;
-            } else if ch == active_quote {
-                quote = None;
-            }
-            continue;
-        }
+    #[test]
+    fn leaves_chained_call_expressions_unwrapped() {
+        let expr = "JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble()";
 
-        match ch {
-            '\'' | '"' => quote = Some(ch),
-            '(' | '[' | '{' => depth += 1,
-            ')' | ']' | '}' => depth -= 1,
-            ',' if depth == 0 => {
-                args.push(source[start..index].trim());
-                start = index + ch.len_utf8();
-            }
-            _ => {}
-        }
-        if depth < 0 {
-            return None;
-        }
+        assert_eq!(
+            format_prefixed_expr(2, "final subtotalValue = ", expr, ";"),
+            "  final subtotalValue = JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble();"
+        );
     }
-
-    if quote.is_some() || depth != 0 {
-        return None;
-    }
-    args.push(source[start..].trim());
-    Some(args.into_iter().filter(|arg| !arg.is_empty()).collect())
 }

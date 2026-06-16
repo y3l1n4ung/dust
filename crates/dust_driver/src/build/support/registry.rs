@@ -156,11 +156,11 @@ impl DustPlugin for DbModePassThroughPlugin {
         DB_MODE_PASS_THROUGH_CONFIGS
     }
 
-    fn validate(&self, _library: &dust_ir::LibraryIr) -> Vec<Diagnostic> {
+    fn validate(&self, _library: &dust_ir::DartFileIr) -> Vec<Diagnostic> {
         Vec::new()
     }
 
-    fn emit(&self, _library: &dust_ir::LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
+    fn emit(&self, _library: &dust_ir::DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
         PluginContribution::default()
     }
 }

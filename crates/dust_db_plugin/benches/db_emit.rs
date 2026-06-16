@@ -13,11 +13,7 @@ fn span() -> SpanIr {
 }
 
 fn config(symbol: &str, args: &str) -> ConfigApplicationIr {
-    ConfigApplicationIr {
-        symbol: SymbolId::new(symbol),
-        arguments_source: Some(args.to_owned()),
-        span: span(),
-    }
+    ConfigApplicationIr::new(SymbolId::new(symbol), Some(args.to_owned()), span())
 }
 
 fn result_type(ok: TypeIr) -> TypeIr {
@@ -130,8 +126,20 @@ fn main() {
         source_path: "lib/bench.dart".to_owned(),
         output_path: "lib/bench.g.dart".to_owned(),
         imports: Vec::new(),
+        library: None,
+        library_annotations: Vec::new(),
+        import_directives: Vec::new(),
+        export_directives: Vec::new(),
+        part_directives: Vec::new(),
+        part_of: None,
         span: span(),
         classes: vec![row, dao],
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         enums: Vec::new(),
         query_calls: Vec::new(),
     };

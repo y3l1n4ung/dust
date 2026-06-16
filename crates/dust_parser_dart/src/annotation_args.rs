@@ -1,13 +1,25 @@
 use crate::surface::ParsedAnnotation;
+use dust_dart_syntax::{
+    normalized_args, parse_bool_literal, parse_constructor_list, parse_constructor_name,
+    parse_string_list, parse_string_literal, parse_string_map, parse_type_list, parse_type_name,
+    split_top_level_items, split_top_level_once,
+};
 
 impl ParsedAnnotation {
     /// Returns the annotation argument list without the outer parentheses.
     pub fn normalized_arguments(&self) -> Option<&str> {
-        normalized_arguments(self.arguments_source.as_deref()?)
+        normalized_args(self.arguments_source.as_deref()?)
     }
 
     /// Returns one top-level positional argument source by index.
     pub fn positional_argument_source(&self, index: usize) -> Option<&str> {
+        if let Some(arguments) = &self.parsed_arguments {
+            return arguments
+                .positional
+                .get(index)
+                .map(|argument| argument.source.as_str());
+        }
+
         self.argument_items()
             .into_iter()
             .filter(|item| split_top_level_once(item, ':').is_none())
@@ -26,6 +38,12 @@ impl ParsedAnnotation {
 
     /// Returns one top-level named argument source by name.
     pub fn named_argument_source(&self, name: &str) -> Option<&str> {
+        if let Some(arguments) = &self.parsed_arguments {
+            return arguments.named.iter().find_map(|argument| {
+                (argument.name == name).then_some(argument.value_source.as_str())
+            });
+        }
+
         self.named_arguments()
             .into_iter()
             .find_map(|(key, value)| (key == name).then_some(value))
@@ -69,6 +87,14 @@ impl ParsedAnnotation {
         parse_type_name(self.positional_argument_source(index)?)
     }
 
+    /// Returns constructor names from positional annotation argument expressions.
+    pub fn positional_constructor_names(&self) -> Vec<String> {
+        self.positional_argument_sources()
+            .into_iter()
+            .flat_map(constructor_names_from_argument)
+            .collect()
+    }
+
     /// Returns one top-level named list of type references.
     pub fn named_type_list(&self, name: &str) -> Option<Vec<String>> {
         parse_type_list(self.named_argument_source(name)?)
@@ -86,6 +112,20 @@ impl ParsedAnnotation {
 
     /// Returns all top-level annotation argument items.
     pub fn argument_items(&self) -> Vec<&str> {
+        if let Some(arguments) = &self.parsed_arguments {
+            return arguments
+                .positional
+                .iter()
+                .map(|argument| argument.source.as_str())
+                .chain(
+                    arguments
+                        .named
+                        .iter()
+                        .map(|argument| argument.source.as_str()),
+                )
+                .collect();
+        }
+
         self.normalized_arguments()
             .map(split_top_level_items)
             .unwrap_or_default()
@@ -93,6 +133,14 @@ impl ParsedAnnotation {
 
     /// Returns all top-level named annotation arguments as key/source pairs.
     pub fn named_arguments(&self) -> Vec<(&str, &str)> {
+        if let Some(arguments) = &self.parsed_arguments {
+            return arguments
+                .named
+                .iter()
+                .map(|argument| (argument.name.as_str(), argument.value_source.as_str()))
+                .collect();
+        }
+
         self.argument_items()
             .into_iter()
             .filter_map(|item| {
@@ -101,155 +149,76 @@ impl ParsedAnnotation {
             })
             .collect()
     }
-}
 
-fn parse_string_literal(source: &str) -> Option<String> {
-    let source = source.trim();
-    let first = source.chars().next()?;
-    let last = source.chars().next_back()?;
-    if source.len() < 2 || first != last || !matches!(first, '\'' | '"') {
-        return None;
-    }
-    Some(source[1..source.len() - 1].to_owned())
-}
+    fn positional_argument_sources(&self) -> Vec<&str> {
+        if let Some(arguments) = &self.parsed_arguments {
+            return arguments
+                .positional
+                .iter()
+                .map(|argument| argument.source.as_str())
+                .collect();
+        }
 
-fn parse_string_list(source: &str) -> Option<Vec<String>> {
-    let inner = source.trim().strip_prefix('[')?.strip_suffix(']')?.trim();
-    if inner.is_empty() {
-        return Some(Vec::new());
-    }
-    split_top_level_items(inner)
-        .into_iter()
-        .map(parse_string_literal)
-        .collect()
-}
-
-fn parse_bool_literal(source: &str) -> Option<bool> {
-    match source.trim() {
-        "true" => Some(true),
-        "false" => Some(false),
-        _ => None,
-    }
-}
-
-fn parse_type_name(source: &str) -> Option<String> {
-    let ident = source
-        .trim()
-        .chars()
-        .take_while(|ch| ch.is_ascii_alphanumeric() || *ch == '_' || *ch == '.')
-        .collect::<String>();
-    (!ident.is_empty()).then_some(ident)
-}
-
-fn parse_type_list(source: &str) -> Option<Vec<String>> {
-    let inner = source.trim().strip_prefix('[')?.strip_suffix(']')?.trim();
-    Some(
-        split_top_level_items(inner)
+        self.argument_items()
             .into_iter()
-            .filter_map(parse_type_name)
-            .collect(),
-    )
-}
-
-fn parse_string_map(source: &str) -> Option<Vec<(String, String)>> {
-    let inner = source.trim().strip_prefix('{')?.strip_suffix('}')?.trim();
-    if inner.is_empty() {
-        return Some(Vec::new());
+            .filter(|item| split_top_level_once(item, ':').is_none())
+            .collect()
     }
-    split_top_level_items(inner)
-        .into_iter()
-        .map(|item| {
-            let (key, value) = split_top_level_once(item, ':')?;
-            Some((
-                parse_string_literal(key.trim())?,
-                parse_string_literal(value.trim())?,
-            ))
-        })
-        .collect()
 }
 
-fn normalized_arguments(source: &str) -> Option<&str> {
-    source
-        .trim()
-        .strip_prefix('(')?
-        .strip_suffix(')')
-        .map(str::trim)
+fn constructor_names_from_argument(source: &str) -> Vec<String> {
+    parse_constructor_list(source)
+        .or_else(|| parse_constructor_name(source).map(|name| vec![name]))
+        .unwrap_or_default()
 }
 
-fn split_top_level_items(source: &str) -> Vec<&str> {
-    let mut items = Vec::new();
-    let mut state = DelimiterState::default();
-    let mut start = 0_usize;
-    for (index, ch) in source.char_indices() {
-        if state.is_top_level() && ch == ',' {
-            let item = source[start..index].trim();
-            if !item.is_empty() {
-                items.push(item);
-            }
-            start = index + ch.len_utf8();
-        }
-        state.advance(ch);
-    }
-    let tail = source[start..].trim();
-    if !tail.is_empty() {
-        items.push(tail);
-    }
-    items
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        ParsedAnnotationArgument, ParsedAnnotationArguments, ParsedAnnotationNamedArgument,
+    };
+    use dust_text::TextRange;
 
-fn split_top_level_once(source: &str, target: char) -> Option<(&str, &str)> {
-    let mut state = DelimiterState::default();
-    for (index, ch) in source.char_indices() {
-        if state.is_top_level() && ch == target {
-            return Some((&source[..index], &source[index + ch.len_utf8()..]));
-        }
-        state.advance(ch);
-    }
-    None
-}
+    #[test]
+    fn constructor_names_prefer_structured_positional_arguments() {
+        let annotation = ParsedAnnotation {
+            name: "Derive".to_owned(),
+            arguments_source: Some("(ignored: Unknown())".to_owned()),
+            parsed_arguments: Some(ParsedAnnotationArguments {
+                positional: vec![ParsedAnnotationArgument {
+                    source: "[ToString(), const prefix.CopyWith<User>()]".to_owned(),
+                    span: TextRange::new(0_u32, 42_u32),
+                }],
+                named: vec![ParsedAnnotationNamedArgument {
+                    name: "ignored".to_owned(),
+                    source: "ignored: Unknown()".to_owned(),
+                    value_source: "Unknown()".to_owned(),
+                    span: TextRange::new(44_u32, 62_u32),
+                    value_span: TextRange::new(53_u32, 62_u32),
+                }],
+            }),
+            span: TextRange::new(0_u32, 64_u32),
+        };
 
-#[derive(Default)]
-struct DelimiterState {
-    paren: u32,
-    bracket: u32,
-    brace: u32,
-    angle: u32,
-    quote: Option<char>,
-    escaped: bool,
-}
-
-impl DelimiterState {
-    fn is_top_level(&self) -> bool {
-        self.paren == 0
-            && self.bracket == 0
-            && self.brace == 0
-            && self.angle == 0
-            && self.quote.is_none()
+        assert_eq!(
+            annotation.positional_constructor_names(),
+            vec!["ToString".to_owned(), "CopyWith".to_owned()]
+        );
     }
 
-    fn advance(&mut self, ch: char) {
-        if let Some(active) = self.quote {
-            if self.escaped {
-                self.escaped = false;
-            } else if ch == '\\' {
-                self.escaped = true;
-            } else if ch == active {
-                self.quote = None;
-            }
-            return;
-        }
+    #[test]
+    fn constructor_names_fall_back_to_raw_positional_arguments() {
+        let annotation = ParsedAnnotation {
+            name: "Derive".to_owned(),
+            arguments_source: Some("([ToString(), Eq()])".to_owned()),
+            parsed_arguments: None,
+            span: TextRange::new(0_u32, 24_u32),
+        };
 
-        match ch {
-            '\'' | '"' => self.quote = Some(ch),
-            '<' => self.angle += 1,
-            '>' => self.angle = self.angle.saturating_sub(1),
-            '(' => self.paren += 1,
-            ')' => self.paren = self.paren.saturating_sub(1),
-            '{' => self.brace += 1,
-            '}' => self.brace = self.brace.saturating_sub(1),
-            '[' => self.bracket += 1,
-            ']' => self.bracket = self.bracket.saturating_sub(1),
-            _ => {}
-        }
+        assert_eq!(
+            annotation.positional_constructor_names(),
+            vec!["ToString".to_owned(), "Eq".to_owned()]
+        );
     }
 }

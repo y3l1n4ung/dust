@@ -1,7 +1,7 @@
 mod class_decl;
 mod constructors;
-mod fields;
-mod methods;
+pub(crate) mod fields;
+pub(crate) mod methods;
 mod parse_text;
 
 use dust_parser_dart::ParsedClassSurface;

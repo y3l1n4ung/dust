@@ -1,6 +1,6 @@
 use dust_dart_emit::{DART_ITERABLE, DART_LIST, DART_MAP, DART_SET, render_template};
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ClassIr, LibraryIr, TypeIr};
+use dust_ir::{ClassIr, DartFileIr, TypeIr};
 use serde::Serialize;
 
 use crate::features::EQ_SYMBOL;
@@ -29,7 +29,7 @@ pub(crate) fn validate_eq_hash(class: &ClassIr) -> Vec<Diagnostic> {
     Vec::new()
 }
 
-pub(crate) fn emit_shared_helpers(library: &LibraryIr) -> Vec<String> {
+pub(crate) fn emit_shared_helpers(library: &DartFileIr) -> Vec<String> {
     let needs_ordered = library
         .classes
         .iter()

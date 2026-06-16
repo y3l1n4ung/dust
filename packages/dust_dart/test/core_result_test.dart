@@ -21,6 +21,8 @@ void main() {
     expect(result.unwrapOr(0), 2);
     expect(result.unwrapOrElse((error) => error.length), 2);
     expect(result.match(ok: (value) => value + 1, err: (_) => 0), 3);
+    expect(result.hashCode, const Ok<int, String>(2).hashCode);
+    expect(result == const Ok<int, String>(3), isFalse);
     expect(result.toString(), 'Ok(2)');
   });
 
@@ -45,6 +47,8 @@ void main() {
       result.match(ok: (value) => value + 1, err: (error) => error.length),
       3,
     );
+    expect(result.hashCode, const Err<int, String>('bad').hashCode);
+    expect(result == const Err<int, String>('other'), isFalse);
     expect(result.toString(), 'Err(bad)');
   });
 

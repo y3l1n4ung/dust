@@ -47,6 +47,29 @@ void main() {
     expect(invalid == const Invalid([_nameRequiredError]), isFalse);
   });
 
+  test('derive trait marker constructors are stable', () {
+    // ignore: deprecated_member_use_from_same_package
+    const debug = Debug();
+
+    expect(const ToString(), isA<DeriveTrait>());
+    // ignore: deprecated_member_use_from_same_package
+    expect(debug, isA<DeriveTrait>());
+    expect(const CopyWith(), isA<DeriveTrait>());
+    expect(const Eq(), isA<DeriveTrait>());
+  });
+
+  test('validation option value objects compare by value', () {
+    const length = Length(min: 1, max: 4, exact: 2);
+    const range = Range(min: 1, max: 9);
+
+    expect(length, const Length(min: 1, max: 4, exact: 2));
+    expect(length == const Length(min: 1), isFalse);
+    expect(length.hashCode, const Length(min: 1, max: 4, exact: 2).hashCode);
+    expect(range, const Range(min: 1, max: 9));
+    expect(range == const Range(min: 1), isFalse);
+    expect(range.hashCode, const Range(min: 1, max: 9).hashCode);
+  });
+
   test('ValidationError converts to json-compatible shape', () {
     const error = ValidationError(field: 'age', message: 'Must be at least 18');
 
@@ -60,6 +83,10 @@ void main() {
         field: 'age',
         message: 'Must be at least 18',
       ).hashCode,
+    );
+    expect(
+      error == const ValidationError(field: 'age', message: 'Required'),
+      isFalse,
     );
   });
 

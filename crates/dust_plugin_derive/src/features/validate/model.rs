@@ -59,7 +59,7 @@ pub(crate) fn field_validations(class: &ClassIr) -> Vec<FieldValidation<'_>> {
 }
 
 pub(crate) fn parse_validate_config(config: &ConfigApplicationIr) -> Option<ValidateConfig> {
-    let values = parse_annotation_named_values(config.arguments_source.as_deref()?)?;
+    let values = parse_config_named_values(config)?;
     let mut parsed = ValidateConfig::default();
     for (name, value) in values {
         match (name.as_str(), value) {
@@ -87,6 +87,13 @@ pub(crate) fn parse_validate_config(config: &ConfigApplicationIr) -> Option<Vali
         }
     }
     Some(parsed)
+}
+
+pub(crate) fn parse_config_named_values(
+    config: &ConfigApplicationIr,
+) -> Option<Vec<(String, AnnotationValue)>> {
+    let source = format!("({})", config.normalized_arguments()?);
+    parse_annotation_named_values(&source)
 }
 
 fn is_named(value: &str, expected: &str) -> bool {

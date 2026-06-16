@@ -75,6 +75,12 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
         source_path: "lib/models.dart".to_owned(),
         output_path: output_path.display().to_string(),
         imports: Vec::new(),
+        library: None,
+        library_annotations: Vec::new(),
+        import_directives: Vec::new(),
+        export_directives: Vec::new(),
+        part_directives: Vec::new(),
+        part_of: None,
         span: span(0, 200),
         classes: vec![
             ClassIr {
@@ -126,6 +132,12 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
                 serde: None,
             },
         ],
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         enums: Vec::new(),
         query_calls: Vec::new(),
     };

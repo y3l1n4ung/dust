@@ -1,14 +1,51 @@
 use dust_ir::{BuiltinType, LoweringOutcome, TypeIr};
+use dust_parser_dart::{ParsedTypeKind, ParsedTypeSurface};
 
-pub(crate) use super::parse_support::split_top_level_args;
 use super::parse_support::{find_top_level_char, has_top_level_char};
+pub(crate) use dust_dart_syntax::split_top_level_items as split_top_level_args;
 
-pub(crate) fn lower_type(source: Option<&str>) -> LoweringOutcome<TypeIr> {
+pub(crate) fn lower_type(
+    parsed: Option<&ParsedTypeSurface>,
+    source: Option<&str>,
+) -> LoweringOutcome<TypeIr> {
+    if let Some(parsed) = parsed {
+        return LoweringOutcome::new(type_from_parsed_surface(parsed));
+    }
+
     let Some(source) = source.map(str::trim).filter(|source| !source.is_empty()) else {
         return LoweringOutcome::new(TypeIr::unknown());
     };
 
     LoweringOutcome::new(parse_type(source))
+}
+
+fn type_from_parsed_surface(parsed: &ParsedTypeSurface) -> TypeIr {
+    let ty = match &parsed.kind {
+        ParsedTypeKind::Builtin(name) => parse_builtin(name)
+            .map(TypeIr::builtin)
+            .unwrap_or_else(|| TypeIr::named(name.as_str())),
+        ParsedTypeKind::Named { name, args } => {
+            let args = args
+                .iter()
+                .map(type_from_parsed_surface)
+                .collect::<Vec<_>>();
+            if args.is_empty() {
+                TypeIr::named(name.as_str())
+            } else {
+                TypeIr::generic(name.as_str(), args)
+            }
+        }
+        ParsedTypeKind::Function => TypeIr::function(non_nullable_source(parsed)),
+        ParsedTypeKind::Record => TypeIr::record(non_nullable_source(parsed)),
+        ParsedTypeKind::Dynamic => TypeIr::dynamic(),
+        ParsedTypeKind::Unknown => return TypeIr::unknown(),
+    };
+
+    if parsed.nullable { ty.nullable() } else { ty }
+}
+
+fn non_nullable_source(parsed: &ParsedTypeSurface) -> &str {
+    parsed.source.strip_suffix('?').unwrap_or(&parsed.source)
 }
 
 pub(crate) fn parse_type(source: &str) -> TypeIr {

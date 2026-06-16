@@ -1,5 +1,5 @@
 use dust_dart_emit::dart_string_literal;
-use dust_ir::{ClassIr, FieldIr, LibraryIr};
+use dust_ir::{ClassIr, DartFileIr, FieldIr};
 use minijinja::Environment;
 use serde::Serialize;
 
@@ -54,7 +54,7 @@ pub(crate) struct ValidateEmission {
     pub(crate) support_type: String,
 }
 
-pub(crate) fn emit_validate(_library: &LibraryIr, class: &ClassIr) -> Option<ValidateEmission> {
+pub(crate) fn emit_validate(_library: &DartFileIr, class: &ClassIr) -> Option<ValidateEmission> {
     if !has_validate_trait(class) {
         return None;
     }

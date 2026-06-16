@@ -1,8 +1,9 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassKindIr, ConfigApplicationIr, SpanIr, TraitApplicationIr};
 use dust_parser_dart::{
-    ParsedConstructorSurface, ParsedDirective, ParsedMethodParamSurface, ParsedMethodSurface,
-    ParsedQueryCallSurface,
+    ParsedConstructorSurface, ParsedDirective, ParsedExtensionSurface, ParsedExtensionTypeSurface,
+    ParsedFunctionSurface, ParsedMethodParamSurface, ParsedMethodSurface, ParsedMixinSurface,
+    ParsedQueryCallSurface, ParsedTopLevelVariableSurface, ParsedTypeSurface, ParsedTypedefSurface,
 };
 
 /// One resolved field plus its field-level Dust configuration.
@@ -12,6 +13,8 @@ pub struct ResolvedField {
     pub name: String,
     /// The raw type source, if one was declared.
     pub type_source: Option<String>,
+    /// Parsed type facts, when provided by the parser backend.
+    pub parsed_type: Option<ParsedTypeSurface>,
     /// Whether the field has a default initializer in the declaration.
     pub has_default: bool,
     /// The field source span.
@@ -115,6 +118,18 @@ pub struct ResolvedLibrary {
     pub classes: Vec<ResolvedClass>,
     ///  The resolved enums in declaration order.
     pub enums: Vec<ResolvedEnum>,
+    /// Parsed mixins preserved for semantic lowering.
+    pub mixins: Vec<ParsedMixinSurface>,
+    /// Parsed extensions preserved for semantic lowering.
+    pub extensions: Vec<ParsedExtensionSurface>,
+    /// Parsed extension types preserved for semantic lowering.
+    pub extension_types: Vec<ParsedExtensionTypeSurface>,
+    /// Parsed top-level functions preserved for semantic lowering.
+    pub functions: Vec<ParsedFunctionSurface>,
+    /// Parsed top-level variables preserved for semantic lowering.
+    pub variables: Vec<ParsedTopLevelVariableSurface>,
+    /// Parsed typedefs preserved for semantic lowering.
+    pub typedefs: Vec<ParsedTypedefSurface>,
     /// Parsed query helper calls preserved for semantic lowering.
     pub query_calls: Vec<ParsedQueryCallSurface>,
 }

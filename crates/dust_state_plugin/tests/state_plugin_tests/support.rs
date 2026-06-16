@@ -9,11 +9,11 @@ pub(crate) fn span(start: u32, end: u32) -> SpanIr {
 }
 
 pub(crate) fn config(args: Option<&str>) -> ConfigApplicationIr {
-    ConfigApplicationIr {
-        symbol: SymbolId::new("dust_flutter::ViewModel"),
-        arguments_source: args.map(str::to_owned),
-        span: span(1, 2),
-    }
+    ConfigApplicationIr::new(
+        SymbolId::new("dust_flutter::ViewModel"),
+        args.map(str::to_owned),
+        span(1, 2),
+    )
 }
 
 pub(crate) fn view_model_class(name: &str, args: &str) -> ClassIr {
@@ -81,8 +81,20 @@ pub(crate) fn library_with_classes(classes: Vec<ClassIr>) -> LibraryIr {
         source_path: "lib/task_board_view_model.dart".to_owned(),
         output_path: "lib/task_board_view_model.g.dart".to_owned(),
         imports: Vec::new(),
+        library: None,
+        library_annotations: Vec::new(),
+        import_directives: Vec::new(),
+        export_directives: Vec::new(),
+        part_directives: Vec::new(),
+        part_of: None,
         span: span(0, 100),
         classes,
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         enums: Vec::new(),
         query_calls: Vec::new(),
     }

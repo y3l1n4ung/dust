@@ -8,12 +8,16 @@ The Semantic Intermediate Representation for Dust. This crate defines the "sourc
 
 ## 🔑 Key Concepts
 
-### `LibraryIr`
-The root container for a single `.dart` file. It carries:
+### `DartFileIr`
+The canonical root container for a single `.dart` file. It carries:
 - Normalized classes and enums.
 - Package metadata (name, root).
 - Resolved imports.
+- Parser-owned directives, annotations, query calls, and declaration containers.
 - Source spans for high-quality diagnostics.
+
+`LibraryIr` is a temporary compatibility alias for older tests and external
+callers; production crates should use `DartFileIr`.
 
 ### `TypeIr`
 A powerful, recursive representation of Dart types. It handles:
@@ -22,8 +26,10 @@ A powerful, recursive representation of Dart types. It handles:
 - **Nullability**: Deep tracking of nullable vs. non-nullable types.
 - **Functional/Records**: Advanced Dart syntax normalized into simple shapes.
 
-### `Serde` & `Derive` Metadata
-Normalization of plugin-specific configurations. Instead of plugins parsing raw annotation strings, the `dust_driver` lowers those arguments into specialized IR structures (e.g., `SerdeFieldConfigIr`).
+### Annotation, Type, and Feature Metadata
+Parser-owned annotation/type facts are normalized into IR before plugins run.
+Instead of plugins parsing raw annotation strings, resolver/lowering fills
+specialized IR structures such as `SerdeFieldConfigIr`.
 
 ## 🛡️ Design Goals
 
@@ -33,7 +39,10 @@ Normalization of plugin-specific configurations. Instead of plugins parsing raw 
 
 ## 🛠️ Usage
 
-This crate is **read-only** for plugins. Plugins receive a reference to `LibraryIr` and should treat it as immutable. Modifications to the IR should only occur in the `dust_driver::lower` module.
+This crate is **read-only** for plugins. Plugins receive a reference to
+`DartFileIr` and should treat it as immutable. During the refactor, resolver and
+driver lowering are responsible for enriching the model before plugin
+validation/generation.
 
 ---
 *For details on how syntax is converted to IR, see the `dust_driver` documentation.*

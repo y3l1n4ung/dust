@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ClassIr, LibraryIr};
+use dust_ir::{ClassIr, DartFileIr};
 
 use super::parse::{parse_view_model_config, view_model_config};
 
-pub(crate) fn validate_library_state(library: &LibraryIr) -> Vec<Diagnostic> {
+pub(crate) fn validate_library_state(library: &DartFileIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let local_classes = library
         .classes
@@ -115,7 +115,7 @@ fn validate_default_initial_state(
 }
 
 fn validate_args_type(
-    library: &LibraryIr,
+    library: &DartFileIr,
     class: &ClassIr,
     args_type: &str,
     diagnostics: &mut Vec<Diagnostic>,
@@ -141,6 +141,6 @@ fn validate_args_type(
     }
 }
 
-fn has_imports(library: &LibraryIr) -> bool {
+fn has_imports(library: &DartFileIr) -> bool {
     !library.imports.is_empty()
 }

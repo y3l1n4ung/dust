@@ -1,6 +1,6 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::LibraryIr;
-use dust_parser_dart::ParsedLibrarySurface;
+use dust_ir::DartFileIr;
+use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{
     DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
 };
@@ -54,17 +54,17 @@ impl DustPlugin for StatePlugin {
     fn collect_workspace_analysis(
         &self,
         context: WorkspaceAnalysisContext<'_>,
-        library: &ParsedLibrarySurface,
+        library: &ParsedDartFileSurface,
         analysis: &mut WorkspaceAnalysisBuilder,
     ) {
         collect_state_workspace_analysis(context, library, analysis);
     }
 
-    fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> {
+    fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
         validate_library_state(library)
     }
 
-    fn emit(&self, library: &LibraryIr, plan: &SymbolPlan) -> PluginContribution {
+    fn emit(&self, library: &DartFileIr, plan: &SymbolPlan) -> PluginContribution {
         emit_library_state(library, plan)
     }
 }

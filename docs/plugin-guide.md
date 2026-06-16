@@ -24,7 +24,7 @@ To maintain consistency across the engine, all plugins should follow this module
 | `plugin.rs` | Implementation of the `DustPlugin` trait and registration entrypoint. |
 | `validate.rs` | Semantic validation (e.g., "Are these annotation arguments valid?"). |
 | `emit.rs` | Logic for generating Dart code fragments and class members. |
-| `analysis.rs` | Logic for Pass 2 workspace scanning (collecting cross-file facts). |
+| `analysis.rs` | Logic for Pass 2 workspace facts collected from parser/IR data. |
 | `tests/` | Focused integration tests verifying IR-to-Dart emission. |
 
 ---
@@ -45,20 +45,30 @@ impl DustPlugin for MyPlugin {
     fn plugin_name(&self) -> &'static str { "dust_plugin_my_feature" }
 
     // Claim your annotations so no other plugin can use them
-    fn claimed_traits(&self) -> Vec<SymbolId> {
-        vec![SymbolId::new("my_package::MyTrait")]
+    fn claimed_traits(&self) -> &'static [&'static str] {
+        &["my_package::MyTrait"]
     }
 
-    // PASS 2: Collect facts from raw source (optional)
-    fn collect_workspace_analysis(&self, library: &ParsedLibrarySurface, analysis: &mut WorkspaceAnalysisBuilder) { ... }
+    // PASS 2: Collect parser/IR-backed workspace facts (optional)
+    fn collect_workspace_analysis(
+        &self,
+        context: WorkspaceAnalysisContext<'_>,
+        file: &ParsedDartFileSurface,
+        analysis: &mut WorkspaceAnalysisBuilder,
+    ) { ... }
 
-    // PASS 4: Validate the lowered IR
-    fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic> { ... }
+    // PASS 4: Validate canonical file IR
+    fn validate(&self, file: &DartFileIr) -> Vec<Diagnostic> { ... }
 
-    // PASS 4: Generate code fragments
-    fn emit(&self, library: &LibraryIr, plan: &SymbolPlan) -> PluginContribution { ... }
+    // PASS 4: Generate code from canonical file IR
+    fn generate(&self, file: &DartFileIr, context: &PluginContext<'_>) -> Vec<GeneratedUnit> { ... }
 }
 ```
+
+`LibraryIr`, `ParsedLibrarySurface`, and `emit` remain available only as
+temporary compatibility shims during the parser architecture refactor tracked in
+[Issue #43](https://github.com/y3l1n4ung/dust/issues/43). New plugin work
+should target `DartFileIr`, `ParsedDartFileSurface`, and `generate`.
 
 ### 3. Register the Plugin
 Wire your new crate into the `dust_driver` orchestrator.
@@ -85,14 +95,15 @@ Plugins run in parallel worker threads. A single `panic!()` will crash the entir
 
 ### 🔄 Use Shared Analysis
 If your plugin needs to know about other files (e.g., "Find all classes marked with X"), use `collect_workspace_analysis`.
-*   **Do not** perform custom file I/O or manual scanning inside `emit()`.
-*   Read the results from the `SymbolPlan` provided during the emit phase.
+*   **Do not** perform custom file I/O or manual Dart source scanning inside `emit()` or `generate()`.
+*   Read normalized parser/IR facts and the deterministic plan/context provided by the driver.
 
 ---
 
 ## ✅ Pre-Commit Checklist
 
-- [ ] `cargo test --workspace` passes.
-- [ ] `cargo clippy` is clean (no warnings).
+- [ ] `cargo fmt --all -- --check` passes.
+- [ ] Targeted `cargo test -p ...` runs pass for affected crates.
+- [ ] `cargo clippy --workspace --all-targets -- -D warnings` is clean.
 - [ ] New feature is used in `examples/product_showcase` and verified with `dart analyze`.
 - [ ] Documentation updated in `docs/usage/` if the public API changed.

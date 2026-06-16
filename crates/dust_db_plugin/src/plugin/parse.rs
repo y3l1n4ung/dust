@@ -1,4 +1,4 @@
-use dust_ir::{LibraryIr, QueryCallIr, QueryFunctionIr};
+use dust_ir::{DartFileIr, QueryCallIr, QueryFunctionIr};
 
 use super::{
     constants::{FROM_ROW, FROM_ROW_SYMBOL, QUERY},
@@ -16,7 +16,7 @@ pub(crate) use query_source::result_ok_type;
 use annotations::{is_dao_config, is_database_config, parse_database_config};
 use query_source::{parse_fetch_method, parse_query_config, query_shape_from_return};
 
-pub(crate) fn database_classes(library: &LibraryIr) -> Vec<DatabaseClass<'_>> {
+pub(crate) fn database_classes(library: &DartFileIr) -> Vec<DatabaseClass<'_>> {
     library
         .classes
         .iter()
@@ -35,7 +35,7 @@ pub(crate) fn database_classes(library: &LibraryIr) -> Vec<DatabaseClass<'_>> {
         .collect()
 }
 
-pub(crate) fn dao_classes(library: &LibraryIr) -> Vec<DaoClass<'_>> {
+pub(crate) fn dao_classes(library: &DartFileIr) -> Vec<DaoClass<'_>> {
     library
         .classes
         .iter()
@@ -68,7 +68,7 @@ pub(crate) fn dao_classes(library: &LibraryIr) -> Vec<DaoClass<'_>> {
         .collect()
 }
 
-pub(crate) fn row_classes(library: &LibraryIr) -> Vec<RowClass<'_>> {
+pub(crate) fn row_classes(library: &DartFileIr) -> Vec<RowClass<'_>> {
     library
         .classes
         .iter()
@@ -86,14 +86,14 @@ pub(crate) fn row_classes(library: &LibraryIr) -> Vec<RowClass<'_>> {
         .collect()
 }
 
-pub(crate) fn query_specs(library: &LibraryIr) -> Vec<QuerySpec> {
+pub(crate) fn query_specs(library: &DartFileIr) -> Vec<QuerySpec> {
     let mut specs = standalone_query_specs(library);
     specs.extend(dao_query_specs(library));
     specs.sort_by_key(|spec| spec.span.range.start());
     specs
 }
 
-fn standalone_query_specs(library: &LibraryIr) -> Vec<QuerySpec> {
+fn standalone_query_specs(library: &DartFileIr) -> Vec<QuerySpec> {
     library
         .query_calls
         .iter()
@@ -126,7 +126,7 @@ fn query_spec_from_call(call: &QueryCallIr) -> QuerySpec {
     }
 }
 
-pub(crate) fn dao_query_specs(library: &LibraryIr) -> Vec<QuerySpec> {
+pub(crate) fn dao_query_specs(library: &DartFileIr) -> Vec<QuerySpec> {
     dao_classes(library)
         .into_iter()
         .flat_map(|dao| {

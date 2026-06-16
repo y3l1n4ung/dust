@@ -1,10 +1,20 @@
 use std::path::Path;
 
 use dust_diagnostics::Diagnostic;
-use dust_ir::LibraryIr;
-use dust_parser_dart::ParsedLibrarySurface;
+use dust_ir::DartFileIr;
+use dust_parser_dart::ParsedDartFileSurface;
 
 use crate::{PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder};
+
+/// Context available to future generated-unit based plugin APIs.
+#[derive(Debug, Clone, Copy)]
+pub struct PluginContext<'a> {
+    /// The deterministic symbol plan for the current file.
+    pub symbol_plan: &'a SymbolPlan,
+}
+
+/// Compatibility generated-unit type while plugins still return one merged contribution.
+pub type GeneratedUnit = PluginContribution;
 
 /// Source context available while collecting parse-only workspace facts.
 #[derive(Debug, Clone, Copy)]
@@ -46,7 +56,7 @@ pub trait DustPlugin: Send + Sync {
     }
 
     /// Returns generated helper symbol names this plugin wants reserved.
-    fn requested_symbols(&self, _library: &LibraryIr) -> Vec<String> {
+    fn requested_symbols(&self, _file: &DartFileIr) -> Vec<String> {
         Vec::new()
     }
 
@@ -54,14 +64,19 @@ pub trait DustPlugin: Send + Sync {
     fn collect_workspace_analysis(
         &self,
         _context: WorkspaceAnalysisContext<'_>,
-        _library: &ParsedLibrarySurface,
+        _file: &ParsedDartFileSurface,
         _analysis: &mut WorkspaceAnalysisBuilder,
     ) {
     }
 
-    /// Validates the library from this plugin's point of view.
-    fn validate(&self, library: &LibraryIr) -> Vec<Diagnostic>;
+    /// Validates the Dart file from this plugin's point of view.
+    fn validate(&self, file: &DartFileIr) -> Vec<Diagnostic>;
 
     /// Produces generated fragments for this plugin.
-    fn emit(&self, library: &LibraryIr, plan: &SymbolPlan) -> PluginContribution;
+    fn emit(&self, file: &DartFileIr, plan: &SymbolPlan) -> PluginContribution;
+
+    /// Produces generated units for the future plugin API.
+    fn generate(&self, file: &DartFileIr, context: &PluginContext<'_>) -> Vec<GeneratedUnit> {
+        vec![self.emit(file, context.symbol_plan)]
+    }
 }

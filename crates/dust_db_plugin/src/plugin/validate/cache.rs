@@ -41,7 +41,7 @@ pub(super) struct QueryCacheEntry {
 }
 
 pub(super) fn validate_from_query_cache(
-    library: &dust_ir::LibraryIr,
+    library: &dust_ir::DartFileIr,
     migrations: &str,
     schema_hash: &str,
     queries: &[QuerySpec],
@@ -75,7 +75,7 @@ pub(super) fn validate_from_query_cache(
 }
 
 pub(super) fn write_query_cache(
-    library: &dust_ir::LibraryIr,
+    library: &dust_ir::DartFileIr,
     entries: Vec<QueryCacheEntry>,
 ) -> Result<(), String> {
     if entries.is_empty() {
@@ -185,7 +185,7 @@ pub(super) fn stable_hash_hex(bytes: &[u8]) -> String {
     hash.finish_hex()
 }
 
-pub(super) fn query_cache_path(library: &dust_ir::LibraryIr) -> PathBuf {
+pub(super) fn query_cache_path(library: &dust_ir::DartFileIr) -> PathBuf {
     Path::new(&library.package_root).join(".dart_tool/dust/db_query_cache_v2.json")
 }
 

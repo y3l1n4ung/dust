@@ -36,3 +36,62 @@ use dust_ir::SerdeRenameRuleIr;
 pub fn apply_rename_rule(source: &str, rule: SerdeRenameRuleIr) -> String {
     rename::apply_rename_rule_impl(source, rule)
 }
+
+#[cfg(test)]
+mod tests {
+    use dust_ir::SerdeRenameRuleIr;
+
+    use super::{apply_rename_rule, render_template};
+
+    #[derive(serde::Serialize)]
+    struct TemplateContext<'a> {
+        name: &'a str,
+    }
+
+    #[test]
+    fn public_facade_applies_every_rename_rule() {
+        assert_eq!(
+            apply_rename_rule("displayName", SerdeRenameRuleIr::LowerCase),
+            "displayname"
+        );
+        assert_eq!(
+            apply_rename_rule("displayName", SerdeRenameRuleIr::UpperCase),
+            "DISPLAYNAME"
+        );
+        assert_eq!(
+            apply_rename_rule("display_name", SerdeRenameRuleIr::PascalCase),
+            "DisplayName"
+        );
+        assert_eq!(
+            apply_rename_rule("display_name", SerdeRenameRuleIr::CamelCase),
+            "displayName"
+        );
+        assert_eq!(
+            apply_rename_rule("displayName", SerdeRenameRuleIr::SnakeCase),
+            "display_name"
+        );
+        assert_eq!(
+            apply_rename_rule("displayName", SerdeRenameRuleIr::ScreamingSnakeCase),
+            "DISPLAY_NAME"
+        );
+        assert_eq!(
+            apply_rename_rule("displayName", SerdeRenameRuleIr::KebabCase),
+            "display-name"
+        );
+        assert_eq!(
+            apply_rename_rule("displayName", SerdeRenameRuleIr::ScreamingKebabCase),
+            "DISPLAY-NAME"
+        );
+    }
+
+    #[test]
+    fn public_facade_renders_templates_without_trailing_newline() {
+        let rendered = render_template(
+            "greeting",
+            "hello {{ name }}\n",
+            TemplateContext { name: "Dust" },
+        );
+
+        assert_eq!(rendered, "hello Dust");
+    }
+}

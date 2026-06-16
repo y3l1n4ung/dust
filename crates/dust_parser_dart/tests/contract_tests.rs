@@ -27,6 +27,7 @@ impl ParseBackend for FakeBackend {
                     annotations: vec![ParsedAnnotation {
                         name: "Derive".to_owned(),
                         arguments_source: Some("[ToString(), Eq()]".to_owned()),
+                        parsed_arguments: None,
                         span: TextRange::new(20_u32, 44_u32),
                     }],
                     fields: vec![ParsedFieldSurface {
@@ -34,9 +35,11 @@ impl ParseBackend for FakeBackend {
                         annotations: vec![ParsedAnnotation {
                             name: "SerDe".to_owned(),
                             arguments_source: Some("rename: 'full_name'".to_owned()),
+                            parsed_arguments: None,
                             span: TextRange::new(45_u32, 70_u32),
                         }],
                         type_source: Some("String".to_owned()),
+                        parsed_type: None,
                         has_default: false,
                         span: TextRange::new(55_u32, 72_u32),
                     }],
@@ -48,6 +51,7 @@ impl ParseBackend for FakeBackend {
                         params: vec![ParsedConstructorParamSurface {
                             name: "name".to_owned(),
                             type_source: None,
+                            parsed_type: None,
                             kind: ParameterKind::Positional,
                             has_default: false,
                             default_value_source: None,
@@ -59,6 +63,12 @@ impl ParseBackend for FakeBackend {
                     span: TextRange::new(45_u32, 90_u32),
                 }],
                 enums: Vec::new(),
+                mixins: Vec::new(),
+                extensions: Vec::new(),
+                extension_types: Vec::new(),
+                functions: Vec::new(),
+                variables: Vec::new(),
+                typedefs: Vec::new(),
                 query_calls: Vec::new(),
             },
             diagnostics: Vec::new(),
@@ -82,6 +92,12 @@ fn parse_result_reports_presence_of_diagnostics() {
             directives: Vec::new(),
             classes: Vec::new(),
             enums: Vec::new(),
+            mixins: Vec::new(),
+            extensions: Vec::new(),
+            extension_types: Vec::new(),
+            functions: Vec::new(),
+            variables: Vec::new(),
+            typedefs: Vec::new(),
             query_calls: Vec::new(),
         },
         diagnostics: vec![Diagnostic::error("unexpected token")],
@@ -111,6 +127,7 @@ fn parse_file_dispatches_through_injected_backend() {
 fn directive_span_accessor_returns_stored_span() {
     let directive = ParsedDirective::Import {
         uri: "dart:convert".to_owned(),
+        prefix: None,
         span: TextRange::new(0_u32, 22_u32),
     };
 
@@ -124,6 +141,12 @@ fn parsed_surface_helpers_cover_empty_and_mixin_class_cases() {
         directives: Vec::new(),
         classes: Vec::new(),
         enums: Vec::new(),
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         query_calls: Vec::new(),
     };
     let class = ParsedClassSurface {
@@ -135,6 +158,7 @@ fn parsed_surface_helpers_cover_empty_and_mixin_class_cases() {
         annotations: vec![ParsedAnnotation {
             name: "Derive".to_owned(),
             arguments_source: None,
+            parsed_arguments: None,
             span: TextRange::new(1_u32, 8_u32),
         }],
         fields: vec![ParsedFieldSurface {
@@ -142,9 +166,11 @@ fn parsed_surface_helpers_cover_empty_and_mixin_class_cases() {
             annotations: vec![ParsedAnnotation {
                 name: "SerDe".to_owned(),
                 arguments_source: Some("rename: 'user_id'".to_owned()),
+                parsed_arguments: None,
                 span: TextRange::new(9_u32, 20_u32),
             }],
             type_source: Some("String".to_owned()),
+            parsed_type: None,
             has_default: true,
             span: TextRange::new(21_u32, 35_u32),
         }],

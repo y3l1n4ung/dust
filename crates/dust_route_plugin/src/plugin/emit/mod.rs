@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
 use dust_dart_emit::render_template;
-use dust_ir::LibraryIr;
+use dust_ir::DartFileIr;
 use serde::Serialize;
 
 use super::model::RouterSpec;
@@ -35,7 +35,7 @@ struct RouteFileContext<'a> {
     body: String,
 }
 
-pub(crate) fn render_route_generated(library: &LibraryIr, spec: &RouterSpec) -> String {
+pub(crate) fn render_route_generated(library: &DartFileIr, spec: &RouterSpec) -> String {
     let current_import = package_import_uri(library);
     let imports = spec
         .routes

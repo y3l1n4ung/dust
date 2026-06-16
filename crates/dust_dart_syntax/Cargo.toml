@@ -1,0 +1,16 @@
+[package]
+publish = false
+name = "dust_dart_syntax"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Shared Dart source parsing helpers for Dust."
+
+[lib]
+path = "src/lib.rs"
+
+[lints]
+workspace = true

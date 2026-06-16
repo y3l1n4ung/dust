@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ClassIr, LibraryIr, ParamKind};
+use dust_ir::{ClassIr, DartFileIr, ParamKind};
 use dust_plugin_api::SymbolPlan;
 
 use crate::plugin::{
@@ -9,10 +9,10 @@ use crate::plugin::{
     model::{GuardFact, GuardParamSpec, GuardSpec, RouteSpec, RouterFieldSpec},
 };
 
-use super::routes::{parse_type_name, route_constructor};
+use super::routes::{parse_route_type_name, route_constructor};
 
 pub(super) fn build_guard_specs(
-    library: &LibraryIr,
+    library: &DartFileIr,
     plan: &SymbolPlan,
     routes: &[RouteSpec],
     router_fields: &[RouterFieldSpec],
@@ -87,7 +87,7 @@ fn guard_classes(routes: &[RouteSpec]) -> Vec<String> {
     guards
 }
 
-fn local_guard_specs(library: &LibraryIr) -> HashMap<String, GuardSpec> {
+fn local_guard_specs(library: &DartFileIr) -> HashMap<String, GuardSpec> {
     library
         .classes
         .iter()
@@ -136,7 +136,7 @@ fn guard_spec_from_fact(fact: GuardFact) -> Option<GuardSpec> {
         .map(|param| {
             Some(GuardParamSpec {
                 name: param.name.clone(),
-                type_name: parse_type_name(param.type_source.as_deref())?,
+                type_name: parse_route_type_name(param.type_source.as_deref())?,
                 is_named: param.is_named,
                 has_default: param.has_default,
                 inject_field: None,

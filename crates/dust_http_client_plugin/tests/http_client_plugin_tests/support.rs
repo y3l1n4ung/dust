@@ -9,11 +9,11 @@ pub(crate) fn span(start: u32, end: u32) -> SpanIr {
 }
 
 pub(crate) fn config(name: &str, args: Option<&str>) -> ConfigApplicationIr {
-    ConfigApplicationIr {
-        symbol: SymbolId::new(format!("dust_dart::{name}")),
-        arguments_source: args.map(str::to_owned),
-        span: span(1, 2),
-    }
+    ConfigApplicationIr::new(
+        SymbolId::new(format!("dust_dart::{name}")),
+        args.map(str::to_owned),
+        span(1, 2),
+    )
 }
 
 pub(crate) fn param(name: &str, ty: TypeIr, configs: Vec<ConfigApplicationIr>) -> MethodParamIr {
@@ -102,8 +102,20 @@ pub(crate) fn library_with_classes_and_imports(
         source_path: "lib/api.dart".to_owned(),
         output_path: "lib/api.g.dart".to_owned(),
         imports: imports.into_iter().map(str::to_owned).collect(),
+        library: None,
+        library_annotations: Vec::new(),
+        import_directives: Vec::new(),
+        export_directives: Vec::new(),
+        part_directives: Vec::new(),
+        part_of: None,
         span: span(0, 100),
         classes,
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         enums: Vec::new(),
         query_calls: Vec::new(),
     }

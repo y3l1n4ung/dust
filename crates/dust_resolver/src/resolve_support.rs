@@ -1,12 +1,27 @@
+use std::collections::BTreeMap;
+
 use dust_diagnostics::{Diagnostic, SourceLabel};
-use dust_ir::{ConfigApplicationIr, SpanIr, TraitApplicationIr};
+use dust_ir::{AnnotationValueIr, ConfigApplicationIr, SpanIr, SymbolId, TraitApplicationIr};
 use dust_parser_dart::{
     ParsedAnnotation, ParsedDirective, ParsedFieldSurface, ParsedMethodParamSurface,
     ParsedMethodSurface,
 };
 use dust_text::{FileId, TextRange};
 
-use crate::{ResolvedField, ResolvedMethod, ResolvedMethodParam, SymbolCatalog, SymbolKind};
+use crate::{
+    ResolvedField, ResolvedMethod, ResolvedMethodParam, SymbolCatalog, SymbolKind,
+    annotations::annotation_argument_values,
+};
+
+type AnnotationArguments = (Vec<AnnotationValueIr>, BTreeMap<String, AnnotationValueIr>);
+
+struct ResolvedAnnotationSymbol {
+    span: TextRange,
+    kind: SymbolKind,
+    symbol: SymbolId,
+    arguments_source: Option<String>,
+    arguments: AnnotationArguments,
+}
 
 pub(crate) fn resolve_method(
     file_id: FileId,
@@ -27,10 +42,13 @@ pub(crate) fn resolve_method(
 
         push_resolved_symbol(
             file_id,
-            annotation.span,
-            resolved.kind,
-            resolved.symbol.clone(),
-            annotation.arguments_source.clone(),
+            ResolvedAnnotationSymbol {
+                span: annotation.span,
+                kind: resolved.kind,
+                symbol: resolved.symbol.clone(),
+                arguments_source: annotation.arguments_source.clone(),
+                arguments: annotation_argument_values(file_id, annotation),
+            },
             &mut traits,
             &mut configs,
         );
@@ -66,10 +84,13 @@ fn resolve_method_param(
 
         push_resolved_symbol(
             file_id,
-            annotation.span,
-            resolved.kind,
-            resolved.symbol.clone(),
-            annotation.arguments_source.clone(),
+            ResolvedAnnotationSymbol {
+                span: annotation.span,
+                kind: resolved.kind,
+                symbol: resolved.symbol.clone(),
+                arguments_source: annotation.arguments_source.clone(),
+                arguments: annotation_argument_values(file_id, annotation),
+            },
             &mut traits,
             &mut configs,
         );
@@ -93,14 +114,17 @@ pub(crate) fn resolve_declaration_annotations(
 ) {
     for annotation in annotations {
         if annotation.name == "Derive" {
-            for name in derive_member_names(annotation.arguments_source.as_deref().unwrap_or("")) {
+            for name in annotation.positional_constructor_names() {
                 match catalog.resolve_trait(&name) {
                     Some(resolved) => push_resolved_symbol(
                         file_id,
-                        annotation.span,
-                        resolved.kind,
-                        resolved.symbol.clone(),
-                        None,
+                        ResolvedAnnotationSymbol {
+                            span: annotation.span,
+                            kind: resolved.kind,
+                            symbol: resolved.symbol.clone(),
+                            arguments_source: None,
+                            arguments: (Vec::new(), BTreeMap::new()),
+                        },
                         traits,
                         configs,
                     ),
@@ -120,10 +144,13 @@ pub(crate) fn resolve_declaration_annotations(
         {
             push_resolved_symbol(
                 file_id,
-                annotation.span,
-                resolved.kind,
-                resolved.symbol.clone(),
-                annotation.arguments_source.clone(),
+                ResolvedAnnotationSymbol {
+                    span: annotation.span,
+                    kind: resolved.kind,
+                    symbol: resolved.symbol.clone(),
+                    arguments_source: annotation.arguments_source.clone(),
+                    arguments: annotation_argument_values(file_id, annotation),
+                },
                 traits,
                 configs,
             );
@@ -157,16 +184,20 @@ pub(crate) fn resolve_field(
             continue;
         };
 
-        configs.push(ConfigApplicationIr {
-            symbol: resolved.symbol.clone(),
-            arguments_source: annotation.arguments_source.clone(),
-            span: SpanIr::new(file_id, annotation.span),
-        });
+        let (positional_args, named_args) = annotation_argument_values(file_id, annotation);
+        configs.push(ConfigApplicationIr::with_arguments(
+            resolved.symbol.clone(),
+            annotation.arguments_source.clone(),
+            positional_args,
+            named_args,
+            SpanIr::new(file_id, annotation.span),
+        ));
     }
 
     ResolvedField {
         name: field.name.clone(),
         type_source: field.type_source.clone(),
+        parsed_type: field.parsed_type.clone(),
         has_default: field.has_default,
         span: SpanIr::new(file_id, field.span),
         configs,
@@ -182,47 +213,24 @@ pub(crate) fn first_part_uri(directives: &[ParsedDirective]) -> Option<String> {
 
 fn push_resolved_symbol(
     file_id: FileId,
-    span: TextRange,
-    kind: SymbolKind,
-    symbol: dust_ir::SymbolId,
-    arguments_source: Option<String>,
+    application: ResolvedAnnotationSymbol,
     traits: &mut Vec<TraitApplicationIr>,
     configs: &mut Vec<ConfigApplicationIr>,
 ) {
-    match kind {
+    match application.kind {
         SymbolKind::Trait => traits.push(TraitApplicationIr {
-            symbol,
-            span: SpanIr::new(file_id, span),
+            symbol: application.symbol,
+            span: SpanIr::new(file_id, application.span),
         }),
-        SymbolKind::Config => configs.push(ConfigApplicationIr {
-            symbol,
-            arguments_source,
-            span: SpanIr::new(file_id, span),
-        }),
-    }
-}
-
-fn derive_member_names(arguments_source: &str) -> Vec<String> {
-    let mut names = Vec::new();
-    let mut chars = arguments_source.chars().peekable();
-
-    while let Some(ch) = chars.next() {
-        if ch == '_' || ch.is_ascii_alphabetic() {
-            let mut ident = String::from(ch);
-            while let Some(next) = chars.peek() {
-                if *next == '_' || next.is_ascii_alphanumeric() {
-                    ident.push(*next);
-                    chars.next();
-                } else {
-                    break;
-                }
-            }
-
-            if chars.peek().copied() == Some('(') {
-                names.push(ident);
-            }
+        SymbolKind::Config => {
+            let (positional_args, named_args) = application.arguments;
+            configs.push(ConfigApplicationIr::with_arguments(
+                application.symbol,
+                application.arguments_source,
+                positional_args,
+                named_args,
+                SpanIr::new(file_id, application.span),
+            ));
         }
     }
-
-    names
 }

@@ -12,6 +12,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
         directives: vec![
             ParsedDirective::Import {
                 uri: "dart:convert".to_owned(),
+                prefix: None,
                 span: TextRange::new(0_u32, 22_u32),
             },
             ParsedDirective::Part {
@@ -28,6 +29,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
             annotations: vec![ParsedAnnotation {
                 name: "Derive".to_owned(),
                 arguments_source: Some("[ToString(), Serialize(), Deserialize()]".to_owned()),
+                parsed_arguments: None,
                 span: TextRange::new(44_u32, 84_u32),
             }],
             fields: vec![
@@ -36,9 +38,11 @@ fn parse_surface_can_model_real_dart_library_shapes() {
                     annotations: vec![ParsedAnnotation {
                         name: "SerDe".to_owned(),
                         arguments_source: Some("rename: 'full_name'".to_owned()),
+                        parsed_arguments: None,
                         span: TextRange::new(95_u32, 121_u32),
                     }],
                     type_source: Some("String".to_owned()),
+                    parsed_type: None,
                     has_default: false,
                     span: TextRange::new(100_u32, 118_u32),
                 },
@@ -46,6 +50,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
                     name: "age".to_owned(),
                     annotations: Vec::new(),
                     type_source: Some("int?".to_owned()),
+                    parsed_type: None,
                     has_default: false,
                     span: TextRange::new(121_u32, 136_u32),
                 },
@@ -59,6 +64,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
                     ParsedConstructorParamSurface {
                         name: "name".to_owned(),
                         type_source: None,
+                        parsed_type: None,
                         kind: ParameterKind::Named,
                         has_default: false,
                         default_value_source: None,
@@ -67,6 +73,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
                     ParsedConstructorParamSurface {
                         name: "age".to_owned(),
                         type_source: None,
+                        parsed_type: None,
                         kind: ParameterKind::Named,
                         has_default: false,
                         default_value_source: None,
@@ -79,6 +86,12 @@ fn parse_surface_can_model_real_dart_library_shapes() {
             span: TextRange::new(85_u32, 179_u32),
         }],
         enums: Vec::new(),
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         query_calls: Vec::new(),
     };
 

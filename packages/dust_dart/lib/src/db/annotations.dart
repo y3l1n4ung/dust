@@ -61,13 +61,28 @@ final class Query {
 
 /// sqlx-style field/class rename strategies.
 enum SqlxRename {
+  /// Keep column names lowercased.
   lowerCase,
+
+  /// Keep column names uppercased.
   upperCase,
+
+  /// Convert field names to `PascalCase`.
   pascalCase,
+
+  /// Convert field names to `camelCase`.
   camelCase,
+
+  /// Convert field names to `snake_case`.
   snakeCase,
+
+  /// Convert field names to `SCREAMING_SNAKE_CASE`.
   screamingSnakeCase,
+
+  /// Convert field names to `kebab-case`.
   kebabCase,
+
+  /// Convert field names to `SCREAMING-KEBAB-CASE`.
   screamingKebabCase,
 }
 

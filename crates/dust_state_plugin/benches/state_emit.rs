@@ -21,11 +21,11 @@ fn view_model(name: &str) -> ClassIr {
         constructors: Vec::new(),
         methods: Vec::new(),
         traits: Vec::new(),
-        configs: vec![ConfigApplicationIr {
-            symbol: SymbolId::new("dust_flutter::ViewModel"),
-            arguments_source: Some("(state: BenchState, args: ViewModelArgs)".to_owned()),
-            span: span(),
-        }],
+        configs: vec![ConfigApplicationIr::new(
+            SymbolId::new("dust_flutter::ViewModel"),
+            Some("(state: BenchState, args: ViewModelArgs)".to_owned()),
+            span(),
+        )],
         serde: None,
     }
 }
@@ -52,10 +52,22 @@ fn main() {
         source_path: "lib/bench.dart".to_owned(),
         output_path: "lib/bench.g.dart".to_owned(),
         imports: Vec::new(),
+        library: None,
+        library_annotations: Vec::new(),
+        import_directives: Vec::new(),
+        export_directives: Vec::new(),
+        part_directives: Vec::new(),
+        part_of: None,
         span: span(),
         classes: (0..VIEW_MODELS)
             .map(|index| view_model(&format!("Bench{index}ViewModel")))
             .collect(),
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
         enums: Vec::new(),
         query_calls: Vec::new(),
     };

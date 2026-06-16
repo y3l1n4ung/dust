@@ -2,7 +2,7 @@ use std::path::Path;
 
 use dust_diagnostics::{Diagnostic, SourceLabel};
 use dust_ir::{ClassKindIr, ConfigApplicationIr, SpanIr, TraitApplicationIr};
-use dust_parser_dart::{ParsedClassKind, ParsedClassSurface, ParsedLibrarySurface};
+use dust_parser_dart::{ParsedClassKind, ParsedClassSurface, ParsedDartFileSurface};
 use dust_text::FileId;
 
 use crate::{
@@ -18,7 +18,7 @@ pub fn resolve_library(
     file_id: FileId,
     source_path: &str,
     output_path: &str,
-    library: &ParsedLibrarySurface,
+    library: &ParsedDartFileSurface,
     catalog: &SymbolCatalog,
 ) -> ResolveResult {
     resolve_library_with_partless_configs(file_id, source_path, output_path, library, catalog, &[])
@@ -29,7 +29,7 @@ pub fn resolve_library_with_partless_configs(
     file_id: FileId,
     source_path: &str,
     output_path: &str,
-    library: &ParsedLibrarySurface,
+    library: &ParsedDartFileSurface,
     catalog: &SymbolCatalog,
     partless_config_symbols: &[&str],
 ) -> ResolveResult {
@@ -92,6 +92,12 @@ pub fn resolve_library_with_partless_configs(
             part_uri,
             classes,
             enums,
+            mixins: library.mixins.clone(),
+            extensions: library.extensions.clone(),
+            extension_types: library.extension_types.clone(),
+            functions: library.functions.clone(),
+            variables: library.variables.clone(),
+            typedefs: library.typedefs.clone(),
             query_calls: library.query_calls.clone(),
         },
         diagnostics,

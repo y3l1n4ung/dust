@@ -1,14 +1,14 @@
 use dust_text::TextRange;
 
-use crate::ParsedQueryCallSurface;
+use crate::{ParsedQueryCallSurface, ParsedTypeSurface};
 
-/// A generation-relevant view of one parsed Dart library.
+/// A generation-relevant view of one parsed Dart file.
 ///
 /// This type is intentionally smaller than a full AST. It carries only the
-/// library surface that Dust needs for resolution and lowering.
+/// file surface that Dust needs for resolution and lowering.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ParsedLibrarySurface {
-    /// The full source span for the parsed library.
+pub struct ParsedDartFileSurface {
+    /// The full source span for the parsed file.
     pub span: TextRange,
     /// Top-level directives such as imports and parts.
     pub directives: Vec<ParsedDirective>,
@@ -16,27 +16,59 @@ pub struct ParsedLibrarySurface {
     pub classes: Vec<ParsedClassSurface>,
     /// Top-level enums that were extracted from the source.
     pub enums: Vec<ParsedEnumSurface>,
+    /// Top-level mixins that were extracted from the source.
+    pub mixins: Vec<ParsedMixinSurface>,
+    /// Top-level extensions that were extracted from the source.
+    pub extensions: Vec<ParsedExtensionSurface>,
+    /// Top-level extension types that were extracted from the source.
+    pub extension_types: Vec<ParsedExtensionTypeSurface>,
+    /// Top-level functions that were extracted from the source.
+    pub functions: Vec<ParsedFunctionSurface>,
+    /// Top-level variables that were extracted from the source.
+    pub variables: Vec<ParsedTopLevelVariableSurface>,
+    /// Top-level typedefs that were extracted from the source.
+    pub typedefs: Vec<ParsedTypedefSurface>,
     /// Dust DB query helper calls found in the source.
     pub query_calls: Vec<ParsedQueryCallSurface>,
 }
 
-impl ParsedLibrarySurface {
+impl ParsedDartFileSurface {
     /// Returns `true` if no generation-relevant surface facts were extracted.
     pub fn is_empty(&self) -> bool {
         self.directives.is_empty()
             && self.classes.is_empty()
             && self.enums.is_empty()
+            && self.mixins.is_empty()
+            && self.extensions.is_empty()
+            && self.extension_types.is_empty()
+            && self.functions.is_empty()
+            && self.variables.is_empty()
+            && self.typedefs.is_empty()
             && self.query_calls.is_empty()
     }
 }
 
+/// Compatibility alias while parser callers migrate to `ParsedDartFileSurface`.
+pub type ParsedLibrarySurface = ParsedDartFileSurface;
+
 /// One top-level Dart directive extracted from a library.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParsedDirective {
+    /// A `library` directive.
+    Library {
+        /// The declared dotted library name, if present.
+        name: Option<String>,
+        /// Metadata annotations attached to the library directive.
+        annotations: Vec<ParsedAnnotation>,
+        /// The source span of the full directive.
+        span: TextRange,
+    },
     /// An `import` directive.
     Import {
         /// The imported URI text without quotes.
         uri: String,
+        /// The optional import prefix after `as`.
+        prefix: Option<String>,
         /// The source span of the full directive.
         span: TextRange,
     },
@@ -69,7 +101,8 @@ impl ParsedDirective {
     /// Returns the source span of this directive.
     pub fn span(&self) -> TextRange {
         match self {
-            Self::Import { span, .. }
+            Self::Library { span, .. }
+            | Self::Import { span, .. }
             | Self::Export { span, .. }
             | Self::Part { span, .. }
             | Self::PartOf { span, .. } => *span,
@@ -124,6 +157,8 @@ pub struct ParsedMethodSurface {
     pub annotations: Vec<ParsedAnnotation>,
     /// The raw return type source, if present.
     pub return_type_source: Option<String>,
+    /// Parsed return type facts, when provided by the parser backend.
+    pub parsed_return_type: Option<ParsedTypeSurface>,
     /// Whether the method includes an implementation body.
     pub has_body: bool,
     /// The raw method body source, if available.
@@ -143,6 +178,8 @@ pub struct ParsedMethodParamSurface {
     pub annotations: Vec<ParsedAnnotation>,
     /// The raw type source, if explicitly written.
     pub type_source: Option<String>,
+    /// Parsed type facts, when provided by the parser backend.
+    pub parsed_type: Option<ParsedTypeSurface>,
     /// The parameter kind.
     pub kind: ParameterKind,
     /// Whether the parameter has a default value.
@@ -177,6 +214,102 @@ pub struct ParsedEnumVariantSurface {
     pub span: TextRange,
 }
 
+/// One parsed mixin declaration relevant to Dust generation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedMixinSurface {
+    /// The mixin name.
+    pub name: String,
+    /// Metadata annotations attached to the mixin.
+    pub annotations: Vec<ParsedAnnotation>,
+    /// Extracted fields from the mixin body.
+    pub fields: Vec<ParsedFieldSurface>,
+    /// The source span for the mixin declaration.
+    pub span: TextRange,
+}
+
+/// One parsed extension declaration relevant to Dust generation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedExtensionSurface {
+    /// The optional extension name.
+    pub name: Option<String>,
+    /// The raw `on` type source, if present.
+    pub on_type_source: Option<String>,
+    /// Parsed `on` type facts, when provided by the parser backend.
+    pub parsed_on_type: Option<ParsedTypeSurface>,
+    /// Metadata annotations attached to the extension.
+    pub annotations: Vec<ParsedAnnotation>,
+    /// The source span for the extension declaration.
+    pub span: TextRange,
+}
+
+/// One parsed extension type declaration relevant to Dust generation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedExtensionTypeSurface {
+    /// The extension type name.
+    pub name: String,
+    /// The representation field name.
+    pub representation_name: String,
+    /// The raw representation field type source, if present.
+    pub representation_type_source: Option<String>,
+    /// Parsed representation type facts, when provided by the parser backend.
+    pub parsed_representation_type: Option<ParsedTypeSurface>,
+    /// Metadata annotations attached to the extension type.
+    pub annotations: Vec<ParsedAnnotation>,
+    /// The source span for the extension type declaration.
+    pub span: TextRange,
+}
+
+/// One parsed top-level function declaration.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedFunctionSurface {
+    /// The function name.
+    pub name: String,
+    /// The raw return type source, if present.
+    pub return_type_source: Option<String>,
+    /// Parsed return type facts, when provided by the parser backend.
+    pub parsed_return_type: Option<ParsedTypeSurface>,
+    /// The function parameters.
+    pub params: Vec<ParsedMethodParamSurface>,
+    /// Metadata annotations attached to the function.
+    pub annotations: Vec<ParsedAnnotation>,
+    /// The source span for the function signature.
+    pub span: TextRange,
+}
+
+/// One parsed top-level variable declaration.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedTopLevelVariableSurface {
+    /// The variable name.
+    pub name: String,
+    /// The raw declared type source, if present.
+    pub type_source: Option<String>,
+    /// Parsed type facts, when provided by the parser backend.
+    pub parsed_type: Option<ParsedTypeSurface>,
+    /// The raw initializer expression source, if present.
+    pub initializer_source: Option<String>,
+    /// The initializer expression span, if present.
+    pub initializer_span: Option<TextRange>,
+    /// Metadata annotations attached to the variable declaration.
+    pub annotations: Vec<ParsedAnnotation>,
+    /// The source span for the variable.
+    pub span: TextRange,
+}
+
+/// One parsed typedef declaration.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedTypedefSurface {
+    /// The typedef name.
+    pub name: String,
+    /// The raw aliased type or function signature source, if present.
+    pub aliased_type_source: Option<String>,
+    /// Parsed aliased type facts, when provided by the parser backend.
+    pub parsed_aliased_type: Option<ParsedTypeSurface>,
+    /// Metadata annotations attached to the typedef.
+    pub annotations: Vec<ParsedAnnotation>,
+    /// The source span for the typedef declaration.
+    pub span: TextRange,
+}
+
 impl ParsedClassSurface {
     /// Returns `true` if the class has at least one annotation with this name.
     pub fn has_annotation(&self, annotation_name: &str) -> bool {
@@ -203,8 +336,43 @@ pub struct ParsedAnnotation {
     pub name: String,
     /// The raw argument source, if present.
     pub arguments_source: Option<String>,
+    /// Parsed argument facts, when provided by the parser backend.
+    pub parsed_arguments: Option<ParsedAnnotationArguments>,
     /// The source span for the full annotation.
     pub span: TextRange,
+}
+
+/// Parsed annotation argument facts.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ParsedAnnotationArguments {
+    /// Positional annotation arguments.
+    pub positional: Vec<ParsedAnnotationArgument>,
+    /// Named annotation arguments.
+    pub named: Vec<ParsedAnnotationNamedArgument>,
+}
+
+/// One positional annotation argument.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedAnnotationArgument {
+    /// The raw argument expression source.
+    pub source: String,
+    /// The source span for this argument expression.
+    pub span: TextRange,
+}
+
+/// One named annotation argument.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedAnnotationNamedArgument {
+    /// The argument name before `:`.
+    pub name: String,
+    /// The full named argument source, including `name:`.
+    pub source: String,
+    /// The raw value expression source.
+    pub value_source: String,
+    /// The source span for the full named argument.
+    pub span: TextRange,
+    /// The source span for the value expression.
+    pub value_span: TextRange,
 }
 
 /// One field declaration extracted from a class.
@@ -216,6 +384,8 @@ pub struct ParsedFieldSurface {
     pub annotations: Vec<ParsedAnnotation>,
     /// The raw type source, if the declaration had one.
     pub type_source: Option<String>,
+    /// Parsed type facts, when provided by the parser backend.
+    pub parsed_type: Option<ParsedTypeSurface>,
     /// Whether the field declaration contains an initializer.
     pub has_default: bool,
     /// The source span for the field.
@@ -264,6 +434,8 @@ pub struct ParsedConstructorParamSurface {
     pub name: String,
     /// The raw type source, if explicitly written.
     pub type_source: Option<String>,
+    /// Parsed type facts, when provided by the parser backend.
+    pub parsed_type: Option<ParsedTypeSurface>,
     /// The parameter kind.
     pub kind: ParameterKind,
     /// Whether the parameter has a default value.
