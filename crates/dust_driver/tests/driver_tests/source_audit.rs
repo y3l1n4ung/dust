@@ -337,10 +337,23 @@ fn driver_forbidden_patterns() -> Vec<&'static str> {
 fn dart_source_parser_patterns() -> Vec<&'static str> {
     vec![
         "struct DelimiterState",
+        "fn balanced_parenthesized",
+        "fn find_top_level_char",
+        "fn has_top_level_char",
         "fn split_top_level_items",
         "fn split_top_level_once",
+        "fn normalized_args",
+        "fn parse_named_arguments",
         "fn parse_string_literal",
         "fn parse_bool_literal",
+        "fn parse_static_dart_string_literal",
+        "fn parse_member_ref",
+        "fn parse_type_name",
+        "fn parse_string_list",
+        "fn parse_type_list",
+        "fn parse_constructor_name",
+        "fn parse_constructor_list",
+        "fn parse_string_map",
     ]
 }
 

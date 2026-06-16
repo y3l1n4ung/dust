@@ -36,12 +36,13 @@ pub fn parse_string_list(source: &str) -> Option<Vec<String>> {
 /// Parses a Dart list literal containing type/member references.
 pub fn parse_type_list(source: &str) -> Option<Vec<String>> {
     let inner = source.trim().strip_prefix('[')?.strip_suffix(']')?.trim();
-    Some(
-        split_top_level_items(inner)
-            .into_iter()
-            .filter_map(parse_type_name)
-            .collect(),
-    )
+    if inner.is_empty() {
+        return Some(Vec::new());
+    }
+    split_top_level_items(inner)
+        .into_iter()
+        .map(parse_type_name)
+        .collect()
 }
 
 /// Parses a Dart constructor invocation and returns its unprefixed name.
@@ -125,9 +126,11 @@ mod tests {
         assert_eq!(parse_string_list("['a'"), None);
         assert_eq!(parse_string_list("['a', bad]"), None);
         assert_eq!(
-            parse_type_list("[User, prefix.Value, 1bad]"),
+            parse_type_list("[User, prefix.Value]"),
             Some(vec!["User".to_owned(), "prefix.Value".to_owned()])
         );
+        assert_eq!(parse_type_list("[]"), Some(Vec::new()));
+        assert_eq!(parse_type_list("[User, 1bad]"), None);
         assert_eq!(parse_type_list("User]"), None);
         assert_eq!(parse_type_list("[User"), None);
         assert_eq!(parse_type_list("User"), None);

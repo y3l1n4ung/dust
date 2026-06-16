@@ -11,3 +11,6 @@ description = "Shared Dart source parsing helpers for Dust."
 
 [lib]
 path = "src/lib.rs"
+
+[lints]
+workspace = true

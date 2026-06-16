@@ -1,3 +1,10 @@
+//! Lightweight Dart source scanners for annotation and generated-code helpers.
+//!
+//! These routines track angle brackets as generic delimiters without lexing
+//! Dart operators. A comparison expression such as `a < b, c > d` can therefore
+//! hide a comma from top-level splitting; callers should use these helpers for
+//! annotation-style argument sources, not arbitrary Dart expression parsing.
+
 /// Splits a Dart argument/list source string at top-level commas.
 pub fn split_top_level_items(source: &str) -> Vec<&str> {
     let mut items = Vec::new();

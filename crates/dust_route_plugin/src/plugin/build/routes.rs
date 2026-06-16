@@ -70,7 +70,7 @@ pub(super) fn route_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
         .find(|constructor| constructor.name.is_none() && !constructor.is_factory)
 }
 
-pub(super) fn parse_type_name(source: Option<&str>) -> Option<String> {
+pub(super) fn parse_route_type_name(source: Option<&str>) -> Option<String> {
     let raw = source?.trim().trim_end_matches('?').trim();
     let base = raw.split('<').next().unwrap_or(raw).trim();
     if base.is_empty() {

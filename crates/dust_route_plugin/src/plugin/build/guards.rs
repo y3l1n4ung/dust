@@ -9,7 +9,7 @@ use crate::plugin::{
     model::{GuardFact, GuardParamSpec, GuardSpec, RouteSpec, RouterFieldSpec},
 };
 
-use super::routes::{parse_type_name, route_constructor};
+use super::routes::{parse_route_type_name, route_constructor};
 
 pub(super) fn build_guard_specs(
     library: &DartFileIr,
@@ -136,7 +136,7 @@ fn guard_spec_from_fact(fact: GuardFact) -> Option<GuardSpec> {
         .map(|param| {
             Some(GuardParamSpec {
                 name: param.name.clone(),
-                type_name: parse_type_name(param.type_source.as_deref())?,
+                type_name: parse_route_type_name(param.type_source.as_deref())?,
                 is_named: param.is_named,
                 has_default: param.has_default,
                 inject_field: None,

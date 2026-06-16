@@ -54,7 +54,19 @@ pub fn parse_static_dart_string_literal(source: &str) -> Option<String> {
     for (index, ch) in source[body_start..].char_indices() {
         let absolute = body_start + index;
         if !raw && escaped {
-            value.push(ch);
+            value.push(match ch {
+                'n' => '\n',
+                'r' => '\r',
+                't' => '\t',
+                'b' => '\u{0008}',
+                'f' => '\u{000C}',
+                'v' => '\u{000B}',
+                '\\' => '\\',
+                '\'' => '\'',
+                '"' => '"',
+                '$' => '$',
+                _ => ch,
+            });
             escaped = false;
             continue;
         }
@@ -124,6 +136,14 @@ mod tests {
         assert_eq!(
             parse_static_dart_string_literal(r#""escaped \" quote""#),
             Some("escaped \" quote".to_owned())
+        );
+        assert_eq!(
+            parse_static_dart_string_literal(r#""line\nnext\t\"quote\"\\path\$1""#),
+            Some("line\nnext\t\"quote\"\\path$1".to_owned())
+        );
+        assert_eq!(
+            parse_static_dart_string_literal(r#""\r\b\f\v""#),
+            Some("\r\u{0008}\u{000C}\u{000B}".to_owned())
         );
         assert_eq!(
             parse_static_dart_string_literal(r#"R"$raw""#),

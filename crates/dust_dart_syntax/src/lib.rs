@@ -1,4 +1,3 @@
-#![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![doc = "Shared Dart source parsing helpers for Dust parser, IR, and plugins."]
 
