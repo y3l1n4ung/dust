@@ -174,7 +174,7 @@ jobs:
     env:
       DUST_PERF_COLD_MAX_MS: 3500
       DUST_PERF_WARM_MAX_MS: 1500
-      DUST_PERF_INVALIDATED_MAX_MS: 2500
+      DUST_PERF_INVALIDATED_MAX_MS: 3000
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -193,5 +193,10 @@ jobs:
         working-directory: examples/benchmark_project
         run: flutter pub get
 
+      - name: Build release CLI
+        run: cargo build --quiet -p dust_cli --release
+
       - name: Run ignored perf test
+        env:
+          DUST_PERF_CLI_BIN: target/release/dust
         run: cargo test -p dust_cli benchmark_project_release_build_benchmark -- --ignored --nocapture

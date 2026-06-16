@@ -15,6 +15,25 @@ fn benchmark_project_root() -> PathBuf {
     repo_root().join("examples/benchmark_project")
 }
 
+fn release_dust_binary(repo: &Path) -> PathBuf {
+    if let Some(configured) = env::var_os("DUST_PERF_CLI_BIN") {
+        let path = PathBuf::from(configured);
+        return if path.is_absolute() {
+            path
+        } else {
+            repo.join(path)
+        };
+    }
+
+    run(Command::new("cargo")
+        .args(["build", "-q", "-p", "dust_cli", "--release"])
+        .current_dir(repo));
+
+    repo.join("target")
+        .join("release")
+        .join(format!("dust{}", env::consts::EXE_SUFFIX))
+}
+
 fn run(command: &mut Command) -> String {
     let output = command.output().expect("run command");
     let stdout = String::from_utf8_lossy(&output.stdout).into_owned();
@@ -89,6 +108,7 @@ fn benchmark_project_release_build_benchmark() {
     let repo = repo_root();
     let benchmark = benchmark_project_root();
     let benchmark_str = benchmark.to_string_lossy().into_owned();
+    let dust = release_dust_binary(&repo);
 
     run(Command::new("flutter")
         .arg("pub")
@@ -103,58 +123,22 @@ fn benchmark_project_release_build_benchmark() {
         .arg("--count")
         .arg("5000")
         .current_dir(&benchmark));
-    run(Command::new("cargo")
-        .args([
-            "run",
-            "-q",
-            "-p",
-            "dust_cli",
-            "--release",
-            "--",
-            "clean",
-            "--root",
-        ])
+    run(Command::new(&dust)
+        .args(["clean", "--root"])
         .arg(&benchmark_str)
         .current_dir(&repo));
 
-    let cold = run(Command::new("cargo")
-        .args([
-            "run",
-            "-q",
-            "-p",
-            "dust_cli",
-            "--release",
-            "--",
-            "build",
-            "--root",
-        ])
+    let cold = run(Command::new(&dust)
+        .args(["build", "--root"])
         .arg(&benchmark_str)
         .current_dir(&repo));
-    let warm = run(Command::new("cargo")
-        .args([
-            "run",
-            "-q",
-            "-p",
-            "dust_cli",
-            "--release",
-            "--",
-            "build",
-            "--root",
-        ])
+    let warm = run(Command::new(&dust)
+        .args(["build", "--root"])
         .arg(&benchmark_str)
         .current_dir(&repo));
     invalidate_tool_hash(&benchmark.join(".dart_tool/dust/build_cache_v1.json"));
-    let invalidated = run(Command::new("cargo")
-        .args([
-            "run",
-            "-q",
-            "-p",
-            "dust_cli",
-            "--release",
-            "--",
-            "build",
-            "--root",
-        ])
+    let invalidated = run(Command::new(&dust)
+        .args(["build", "--root"])
         .arg(&benchmark_str)
         .arg("--fail-fast")
         .current_dir(&repo));
