@@ -13,8 +13,6 @@
 
 part of 'demo_cart_state.dart';
 
-const Object _undefined = Object();
-
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$DemoCartState {
@@ -53,19 +51,21 @@ mixin _$DemoCartState {
   DemoCartState copyWith({
     DemoCartStatus? status,
     List<StoreCart>? carts,
-    Object? errorMessage = _undefined,
+    Option<String?> errorMessage = const None(),
   }) {
     final self = this as DemoCartState;
     final nextCarts = List<StoreCart>.of(
       (carts ?? self.carts).map((item_1) => item_1.copyWith()),
     );
+    final nextErrorMessage = switch (errorMessage) {
+      None<String?>() => self.errorMessage,
+      Some<String?>(:final value) => value,
+    };
 
     return DemoCartState(
       status: status ?? self.status,
       carts: nextCarts,
-      errorMessage: identical(errorMessage, _undefined)
-          ? self.errorMessage
-          : errorMessage as String?,
+      errorMessage: nextErrorMessage,
     );
   }
 }

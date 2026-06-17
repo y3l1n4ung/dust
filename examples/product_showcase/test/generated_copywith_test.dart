@@ -1,3 +1,4 @@
+import 'package:dust_dart/fp.dart';
 import 'package:test/test.dart';
 
 import 'package:product_showcase/product_showcase.dart';
@@ -74,11 +75,14 @@ void main() {
     expect(renamed.note, 'seasonal');
     expect(renamed.aliases, ['sale', 'featured']);
 
-    final replaced = original.copyWith(aliases: ['clearance']);
+    final replaced = original.copyWith(aliases: const Some(['clearance']));
     expect(replaced.aliases, ['clearance']);
     expect(replaced.aliases, isNot(same(original.aliases)));
 
-    final cleared = original.copyWith(note: null, aliases: null);
+    final cleared = original.copyWith(
+      note: const Some(null),
+      aliases: const Some(null),
+    );
     expect(cleared.note, isNull);
     expect(cleared.aliases, isNull);
 

@@ -13,8 +13,6 @@
 
 part of 'products_state.dart';
 
-const Object _undefined = Object();
-
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$ProductsState {
@@ -62,8 +60,8 @@ mixin _$ProductsState {
   ProductsState copyWith({
     List<Product>? products,
     ProductsStatus? status,
-    Object? errorMessage = _undefined,
-    Object? selectedCategory = _undefined,
+    Option<String?> errorMessage = const None(),
+    Option<String?> selectedCategory = const None(),
     String? searchQuery,
     ProductSortOption? sortOption,
   }) {
@@ -71,16 +69,20 @@ mixin _$ProductsState {
     final nextProducts = List<Product>.of(
       (products ?? self.products).map((item_0) => item_0.copyWith()),
     );
+    final nextErrorMessage = switch (errorMessage) {
+      None<String?>() => self.errorMessage,
+      Some<String?>(:final value) => value,
+    };
+    final nextSelectedCategory = switch (selectedCategory) {
+      None<String?>() => self.selectedCategory,
+      Some<String?>(:final value) => value,
+    };
 
     return ProductsState(
       products: nextProducts,
       status: status ?? self.status,
-      errorMessage: identical(errorMessage, _undefined)
-          ? self.errorMessage
-          : errorMessage as String?,
-      selectedCategory: identical(selectedCategory, _undefined)
-          ? self.selectedCategory
-          : selectedCategory as String?,
+      errorMessage: nextErrorMessage,
+      selectedCategory: nextSelectedCategory,
       searchQuery: searchQuery ?? self.searchQuery,
       sortOption: sortOption ?? self.sortOption,
     );

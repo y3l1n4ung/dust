@@ -13,8 +13,6 @@
 
 part of 'optional_note.dart';
 
-const Object _undefined = Object();
-
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$OptionalNote {
@@ -52,20 +50,23 @@ mixin _$OptionalNote {
 
   OptionalNote copyWith({
     String? id,
-    Object? note = _undefined,
-    Object? aliases = _undefined,
+    Option<String?> note = const None(),
+    Option<List<String>?> aliases = const None(),
   }) {
     final self = this as OptionalNote;
-    final nextAliasesSource = identical(aliases, _undefined)
-        ? self.aliases
-        : aliases as List<String>?;
+    final nextNote = switch (note) {
+      None<String?>() => self.note,
+      Some<String?>(:final value) => value,
+    };
+    final nextAliasesSource = switch (aliases) {
+      None<List<String>?>() => self.aliases,
+      Some<List<String>?>(:final value) => value,
+    };
     final nextAliases = nextAliasesSource == null ? null : List<String>.of(nextAliasesSource);
 
     return OptionalNote(
       id: id ?? self.id,
-      note: identical(note, _undefined)
-          ? self.note
-          : note as String?,
+      note: nextNote,
       aliases: nextAliases,
     );
   }

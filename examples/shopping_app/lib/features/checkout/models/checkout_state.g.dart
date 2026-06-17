@@ -13,8 +13,6 @@
 
 part of 'checkout_state.dart';
 
-const Object _undefined = Object();
-
 mixin _$CheckoutState {
   @override
   String toString() {
@@ -62,35 +60,43 @@ mixin _$CheckoutState {
 
   CheckoutState copyWith({
     CheckoutStatus? status,
-    Object? shippingAddress = _undefined,
-    Object? errorMessage = _undefined,
-    Object? orderId = _undefined,
-    Object? couponCode = _undefined,
-    Object? quote = _undefined,
+    Option<ShippingAddress?> shippingAddress = const None(),
+    Option<String?> errorMessage = const None(),
+    Option<String?> orderId = const None(),
+    Option<String?> couponCode = const None(),
+    Option<CheckoutQuote?> quote = const None(),
     bool? isQuoteLoading,
   }) {
     final self = this as CheckoutState;
-    final nextShippingAddressSource = identical(shippingAddress, _undefined)
-        ? self.shippingAddress
-        : shippingAddress as ShippingAddress?;
+    final nextShippingAddressSource = switch (shippingAddress) {
+      None<ShippingAddress?>() => self.shippingAddress,
+      Some<ShippingAddress?>(:final value) => value,
+    };
     final nextShippingAddress = nextShippingAddressSource == null ? null : nextShippingAddressSource.copyWith();
-    final nextQuoteSource = identical(quote, _undefined)
-        ? self.quote
-        : quote as CheckoutQuote?;
+    final nextErrorMessage = switch (errorMessage) {
+      None<String?>() => self.errorMessage,
+      Some<String?>(:final value) => value,
+    };
+    final nextOrderId = switch (orderId) {
+      None<String?>() => self.orderId,
+      Some<String?>(:final value) => value,
+    };
+    final nextCouponCode = switch (couponCode) {
+      None<String?>() => self.couponCode,
+      Some<String?>(:final value) => value,
+    };
+    final nextQuoteSource = switch (quote) {
+      None<CheckoutQuote?>() => self.quote,
+      Some<CheckoutQuote?>(:final value) => value,
+    };
     final nextQuote = nextQuoteSource == null ? null : nextQuoteSource.copyWith();
 
     return CheckoutState(
       status: status ?? self.status,
       shippingAddress: nextShippingAddress,
-      errorMessage: identical(errorMessage, _undefined)
-          ? self.errorMessage
-          : errorMessage as String?,
-      orderId: identical(orderId, _undefined)
-          ? self.orderId
-          : orderId as String?,
-      couponCode: identical(couponCode, _undefined)
-          ? self.couponCode
-          : couponCode as String?,
+      errorMessage: nextErrorMessage,
+      orderId: nextOrderId,
+      couponCode: nextCouponCode,
       quote: nextQuote,
       isQuoteLoading: isQuoteLoading ?? self.isQuoteLoading,
     );

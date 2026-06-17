@@ -3,7 +3,7 @@ import 'package:dust_dart/fp.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('None keeps the current value', () {
+  test('None represents an absent value', () {
     const Option<String?> option = None<String?>();
 
     expect(option, isA<None<String?>>());

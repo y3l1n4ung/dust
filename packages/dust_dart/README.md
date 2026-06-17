@@ -27,6 +27,10 @@ Dust owns its functional primitives. Do not add `fpdart`, `dartz`, or another ex
 
 ## Option
 
+`Option<T>` is Rust-style: `None()` means no value, and `Some(value)` means a
+value is present. Generated nullable `copyWith` methods use an outer `Option`
+as a typed update envelope.
+
 ```dart
 import 'package:dust_dart/fp.dart';
 
@@ -46,8 +50,29 @@ Use the three states explicitly:
 
 ```dart
 user.copyWith(); // keep old nullable values
+user.copyWith(nickname: const None()); // keep old nullable value
 user.copyWith(nickname: const Some('Ye')); // set value
 user.copyWith(nickname: const Some(null)); // clear value
+```
+
+If the field itself is an `Option<String>`, generated `copyWith` uses a nested
+envelope:
+
+```dart
+Profile copyWith({
+  Option<Option<String>> nickname = const None(),
+}) {
+  return Profile(
+    nickname: switch (nickname) {
+      None<Option<String>>() => this.nickname,
+      Some<Option<String>>(:final value) => value,
+    },
+  );
+}
+
+profile.copyWith(); // keep old Option field
+profile.copyWith(nickname: const Some<Option<String>>(None<String>()));
+profile.copyWith(nickname: const Some<Option<String>>(Some<String>('Ye')));
 ```
 
 ## Result

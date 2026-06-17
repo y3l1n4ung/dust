@@ -1,3 +1,4 @@
+import 'package:dust_dart/fp.dart';
 import 'package:dust_flutter/state.dart';
 
 import '../../../core/data/shopping_repository.dart';
@@ -19,7 +20,12 @@ class DemoCartApiViewModel extends $DemoCartApiViewModel {
   Future<void> onInit() => loadUserCarts(1);
 
   Future<void> loadUserCarts(int userId) async {
-    emit(state.copyWith(status: DemoCartStatus.loading, errorMessage: null));
+    emit(
+      state.copyWith(
+        status: DemoCartStatus.loading,
+        errorMessage: const Some(null),
+      ),
+    );
     try {
       final carts = await args.repository.getUserCarts(userId);
       emit(state.copyWith(status: DemoCartStatus.success, carts: carts));
@@ -27,7 +33,7 @@ class DemoCartApiViewModel extends $DemoCartApiViewModel {
       emit(
         state.copyWith(
           status: DemoCartStatus.error,
-          errorMessage: error.toString(),
+          errorMessage: Some(error.toString()),
         ),
       );
     }

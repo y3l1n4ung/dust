@@ -13,8 +13,6 @@
 
 part of 'product_detail_state.dart';
 
-const Object _undefined = Object();
-
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$ProductDetailState {
@@ -57,30 +55,34 @@ mixin _$ProductDetailState {
   }
 
   ProductDetailState copyWith({
-    Object? productId = _undefined,
+    Option<int?> productId = const None(),
     ProductDetailStatus? status,
     List<ProductReview>? reviews,
     List<Product>? recommendations,
-    Object? errorMessage = _undefined,
+    Option<String?> errorMessage = const None(),
   }) {
     final self = this as ProductDetailState;
+    final nextProductId = switch (productId) {
+      None<int?>() => self.productId,
+      Some<int?>(:final value) => value,
+    };
     final nextReviews = List<ProductReview>.of(
       (reviews ?? self.reviews).map((item_2) => item_2.copyWith()),
     );
     final nextRecommendations = List<Product>.of(
       (recommendations ?? self.recommendations).map((item_3) => item_3.copyWith()),
     );
+    final nextErrorMessage = switch (errorMessage) {
+      None<String?>() => self.errorMessage,
+      Some<String?>(:final value) => value,
+    };
 
     return ProductDetailState(
-      productId: identical(productId, _undefined)
-          ? self.productId
-          : productId as int?,
+      productId: nextProductId,
       status: status ?? self.status,
       reviews: nextReviews,
       recommendations: nextRecommendations,
-      errorMessage: identical(errorMessage, _undefined)
-          ? self.errorMessage
-          : errorMessage as String?,
+      errorMessage: nextErrorMessage,
     );
   }
 }

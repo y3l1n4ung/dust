@@ -58,8 +58,6 @@ fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
         generated_output(
             r#"part of 'models.dart';
 
-const Object _undefined = Object();
-
 mixin _$User {
   @override
   String toString() {
@@ -92,14 +90,17 @@ mixin _$User {
 
   User copyWith({
     String? id,
-    Object? age = _undefined,
+    Option<int?> age = const None(),
   }) {
     final self = this as User;
+    final nextAge = switch (age) {
+      None<int?>() => self.age,
+      Some<int?>(:final value) => value,
+    };
+
     return User(
       id ?? self.id,
-      identical(age, _undefined)
-          ? self.age
-          : age as int?,
+      nextAge,
     );
   }
 }

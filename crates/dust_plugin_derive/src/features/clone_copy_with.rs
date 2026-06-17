@@ -18,16 +18,9 @@ use self::{
     render::render_copied_value,
     support::{
         render_copy_with_params, render_copy_with_source_expr, render_setup_blocks,
-        should_keep_source_local, temp_name, uses_undefined_sentinel,
+        should_keep_source_local, temp_name,
     },
 };
-
-pub(crate) fn copy_with_requires_undefined(class: &ClassIr) -> bool {
-    class
-        .fields
-        .iter()
-        .any(|field| uses_undefined_sentinel(&field.ty))
-}
 
 pub(crate) fn emit_copy_with(
     class: &ClassIr,
@@ -47,7 +40,13 @@ pub(crate) fn emit_copy_with(
         let copied_expr = render_copied_value(&field.ty, &source_expr, depth, copyable_types);
 
         if copied_expr.as_ref() == source_expr {
-            values.push((field.name.as_str(), Cow::Owned(source_expr)));
+            if should_keep_source_local(&field.ty) {
+                let next_var = temp_name("next", &field.name, "");
+                setup.push(format!("final {next_var} = {source_expr};"));
+                values.push((field.name.as_str(), Cow::Owned(next_var)));
+            } else {
+                values.push((field.name.as_str(), Cow::Owned(source_expr)));
+            }
         } else if should_keep_source_local(&field.ty) {
             let source_var = temp_name("next", &field.name, "Source");
             let next_var = temp_name("next", &field.name, "");

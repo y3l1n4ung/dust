@@ -13,8 +13,6 @@
 
 part of 'cart_state.dart';
 
-const Object _undefined = Object();
-
 const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$CartNotification {
@@ -80,18 +78,20 @@ mixin _$CartState {
 
   CartState copyWith({
     List<CartItem>? items,
-    Object? notification = _undefined,
+    Option<CartNotification?> notification = const None(),
   }) {
     final self = this as CartState;
     final nextItems = List<CartItem>.of(
       (items ?? self.items).map((item_0) => item_0.copyWith()),
     );
+    final nextNotification = switch (notification) {
+      None<CartNotification?>() => self.notification,
+      Some<CartNotification?>(:final value) => value,
+    };
 
     return CartState(
       items: nextItems,
-      notification: identical(notification, _undefined)
-          ? self.notification
-          : notification as CartNotification?,
+      notification: nextNotification,
     );
   }
 }
