@@ -1,16 +1,16 @@
-use dust_parser_dart::{ParsedAnnotation, ParsedMethodParamSurface};
+use dust_parser_dart::{ParameterKind, ParsedAnnotation, ParsedMethodParamSurface};
 use dust_text::SourceText;
 use tree_sitter::Node;
 
 use crate::{
-    annotations::{extract_annotation, extract_descendant_annotations},
+    annotations::{extract_annotation, extract_direct_annotations},
     syntax::{
         direct_named_child, find_first_descendant, has_direct_child_kind, node_text, text_range,
     },
     types::extract_type_before,
 };
 
-use super::parse_text::{default_value_source, determine_parameter_kind, parameter_name_node};
+use super::parse_text::{default_value_source, optional_parameter_kind, parameter_name_node};
 
 pub(super) fn extract_method(
     node: Node<'_>,
@@ -80,7 +80,13 @@ pub(crate) fn extract_method_params(
     source: &SourceText,
 ) -> Vec<ParsedMethodParamSurface> {
     let mut params = Vec::new();
-    collect_method_formal_parameters(node, source, &mut params, &mut Vec::new());
+    collect_method_formal_parameters(
+        node,
+        source,
+        &mut params,
+        &mut Vec::new(),
+        ParameterKind::Positional,
+    );
     params
 }
 
@@ -89,36 +95,62 @@ fn collect_method_formal_parameters(
     source: &SourceText,
     out: &mut Vec<ParsedMethodParamSurface>,
     pending_annotations: &mut Vec<ParsedAnnotation>,
+    kind: ParameterKind,
 ) {
-    if !node.is_named() {
-        return;
-    }
-
-    if node.kind() == "annotation" {
-        pending_annotations.push(extract_annotation(node, source));
-        return;
-    }
-
-    if node.is_named() && matches!(node.kind(), "formal_parameter" | "default_formal_parameter") {
-        let mut param = extract_method_formal_parameter(node, source);
-        if !pending_annotations.is_empty() {
-            let mut annotations = std::mem::take(pending_annotations);
-            annotations.extend(param.annotations);
-            param.annotations = annotations;
-        }
-        out.push(param);
-        return;
-    }
-
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
-        collect_method_formal_parameters(child, source, out, pending_annotations);
+    for child in node.children(&mut cursor).filter(|child| child.is_named()) {
+        match child.kind() {
+            "annotation" => pending_annotations.push(extract_annotation(child, source)),
+            "formal_parameter" | "default_formal_parameter" => {
+                push_method_formal_parameter(child, source, out, pending_annotations, kind);
+            }
+            "optional_formal_parameters" => {
+                collect_method_optional_formal_parameters(child, source, out, pending_annotations);
+            }
+            _ => {}
+        }
     }
+}
+
+fn collect_method_optional_formal_parameters(
+    node: Node<'_>,
+    source: &SourceText,
+    out: &mut Vec<ParsedMethodParamSurface>,
+    pending_annotations: &mut Vec<ParsedAnnotation>,
+) {
+    let kind = optional_parameter_kind(node, source);
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor).filter(|child| child.is_named()) {
+        match child.kind() {
+            "annotation" => pending_annotations.push(extract_annotation(child, source)),
+            "formal_parameter" | "default_formal_parameter" => {
+                push_method_formal_parameter(child, source, out, pending_annotations, kind);
+            }
+            _ => {}
+        }
+    }
+}
+
+fn push_method_formal_parameter(
+    node: Node<'_>,
+    source: &SourceText,
+    out: &mut Vec<ParsedMethodParamSurface>,
+    pending_annotations: &mut Vec<ParsedAnnotation>,
+    kind: ParameterKind,
+) {
+    let mut param = extract_method_formal_parameter(node, source, kind);
+    if !pending_annotations.is_empty() {
+        let mut annotations = std::mem::take(pending_annotations);
+        annotations.extend(param.annotations);
+        param.annotations = annotations;
+    }
+    out.push(param);
 }
 
 fn extract_method_formal_parameter(
     node: Node<'_>,
     source: &SourceText,
+    kind: ParameterKind,
 ) -> ParsedMethodParamSurface {
     let name_node = parameter_name_node(node);
     let name = name_node
@@ -131,10 +163,10 @@ fn extract_method_formal_parameter(
 
     ParsedMethodParamSurface {
         name,
-        annotations: extract_descendant_annotations(node, source),
+        annotations: extract_direct_annotations(node, source),
         type_source,
         parsed_type,
-        kind: determine_parameter_kind(node, source),
+        kind,
         has_default: default_value_source.is_some(),
         default_value_source,
         span: text_range(node),

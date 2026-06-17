@@ -1,12 +1,10 @@
-use std::collections::HashSet;
-
 use dust_ir::DartFileIr;
 use dust_plugin_api::{PluginContribution, SymbolPlan};
 
 use crate::{
     analysis::COPYABLE_TYPES_ANALYSIS_KEY,
     features::{
-        clone_copy_with::emit_copy_with,
+        clone_copy_with::{CopyableTypes, emit_copy_with},
         debug::emit_debug_mixin,
         eq_hash::{emit_eq, emit_hash_code, emit_shared_helpers},
         validate::emit_validate,
@@ -15,7 +13,7 @@ use crate::{
 
 pub(crate) fn emit_library(library: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
     let mut contribution = PluginContribution::default();
-    let copyable_types = library
+    let local_copyable_types = library
         .classes
         .iter()
         .filter(|class| {
@@ -25,14 +23,11 @@ pub(crate) fn emit_library(library: &DartFileIr, _plan: &SymbolPlan) -> PluginCo
                 .any(|trait_app| trait_app.symbol.0 == crate::features::COPY_WITH_SYMBOL)
         })
         .map(|class| class.name.as_str())
-        .chain(
-            _plan
-                .workspace_string_set(COPYABLE_TYPES_ANALYSIS_KEY)
-                .into_iter()
-                .flatten()
-                .map(String::as_str),
-        )
-        .collect::<HashSet<_>>();
+        .collect::<Vec<_>>();
+    let copyable_types = CopyableTypes::new(
+        &local_copyable_types,
+        _plan.workspace_string_set(COPYABLE_TYPES_ANALYSIS_KEY),
+    );
     contribution
         .shared_helpers
         .extend(emit_shared_helpers(library));

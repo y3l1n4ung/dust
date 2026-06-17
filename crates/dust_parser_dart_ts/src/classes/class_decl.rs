@@ -5,12 +5,16 @@ use tree_sitter::Node;
 use crate::{
     annotations::{extract_annotation, extract_member_annotations},
     syntax::{
-        find_first_descendant_text, first_non_annotation_named_child, has_descendant_kind,
-        has_direct_child_kind, node_text, text_range,
+        find_first_descendant_text, first_non_annotation_named_child, has_direct_child_kind,
+        node_text, text_range,
     },
 };
 
-use super::{constructors::extract_constructor, fields::extract_fields, methods::extract_method};
+use super::{
+    constructors::{extract_constructor, is_constructor_signature_kind},
+    fields::extract_fields_from_identifier_list,
+    methods::extract_method,
+};
 
 pub(super) fn extract_class(node: Node<'_>, source: &SourceText) -> ParsedClassSurface {
     let kind = if has_direct_child_kind(node, "mixin") {
@@ -49,23 +53,26 @@ pub(super) fn extract_class(node: Node<'_>, source: &SourceText) -> ParsedClassS
         {
             let member_annotations = extract_member_annotations(member, source);
             if let Some(declaration) = first_non_annotation_named_child(member) {
-                if has_descendant_kind(declaration, "constant_constructor_signature")
-                    || has_descendant_kind(declaration, "constructor_signature")
-                    || has_descendant_kind(declaration, "factory_constructor_signature")
-                    || has_descendant_kind(declaration, "redirecting_factory_constructor_signature")
-                {
-                    constructors.push(extract_constructor(declaration, source));
-                } else if has_descendant_kind(declaration, "initialized_identifier_list") {
-                    fields.extend(extract_fields(declaration, &member_annotations, source));
-                } else if has_descendant_kind(declaration, "declaration")
-                    || has_descendant_kind(declaration, "method_signature")
-                    || has_descendant_kind(declaration, "function_signature")
-                {
-                    // Tree-sitter-dart uses different kinds for methods depending on if they have a body.
-                    // We'll try to extract them if they look like methods.
-                    if let Some(method) = extract_method(declaration, &member_annotations, source) {
-                        methods.push(method);
+                match classify_class_member(declaration) {
+                    Some(ClassMemberShape::Constructor(signature)) => {
+                        constructors.push(extract_constructor(signature, source));
                     }
+                    Some(ClassMemberShape::Field(identifier_list)) => {
+                        fields.extend(extract_fields_from_identifier_list(
+                            declaration,
+                            identifier_list,
+                            &member_annotations,
+                            source,
+                        ));
+                    }
+                    Some(ClassMemberShape::Method) => {
+                        if let Some(method) =
+                            extract_method(declaration, &member_annotations, source)
+                        {
+                            methods.push(method);
+                        }
+                    }
+                    None => {}
                 }
             }
         }
@@ -83,4 +90,32 @@ pub(super) fn extract_class(node: Node<'_>, source: &SourceText) -> ParsedClassS
         methods,
         span: text_range(node),
     }
+}
+
+enum ClassMemberShape<'tree> {
+    Constructor(Node<'tree>),
+    Field(Node<'tree>),
+    Method,
+}
+
+fn classify_class_member<'tree>(node: Node<'tree>) -> Option<ClassMemberShape<'tree>> {
+    if is_constructor_signature_kind(node.kind()) {
+        return Some(ClassMemberShape::Constructor(node));
+    }
+    if node.kind() == "initialized_identifier_list" {
+        return Some(ClassMemberShape::Field(node));
+    }
+
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor).filter(|child| child.is_named()) {
+        if let Some(shape) = classify_class_member(child) {
+            return Some(shape);
+        }
+    }
+
+    matches!(
+        node.kind(),
+        "declaration" | "method_signature" | "function_signature"
+    )
+    .then_some(ClassMemberShape::Method)
 }

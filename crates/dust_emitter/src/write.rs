@@ -79,10 +79,7 @@ pub fn persist_emit_result(
         .iter()
         .any(|diagnostic| diagnostic.is_error());
     let primary_written = if !has_errors && emitted.changed {
-        if let Some(parent) = output_path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        fs::write(&output_path, &emitted.source)?;
+        write_output_file(&output_path, &emitted.source)?;
         true
     } else {
         false
@@ -121,10 +118,7 @@ fn persist_auxiliary_outputs(
             let previous_output = read_previous_output(&output.output_path)?;
             let changed = previous_output.as_deref() != Some(output.source.as_str());
             let written = if !has_errors && changed {
-                if let Some(parent) = output.output_path.parent() {
-                    fs::create_dir_all(parent)?;
-                }
-                fs::write(&output.output_path, &output.source)?;
+                write_output_file(&output.output_path, &output.source)?;
                 true
             } else {
                 false
@@ -138,4 +132,17 @@ fn persist_auxiliary_outputs(
             })
         })
         .collect()
+}
+
+fn write_output_file(path: &Path, source: &str) -> io::Result<()> {
+    match fs::write(path, source) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            fs::write(path, source)
+        }
+        Err(error) => Err(error),
+    }
 }

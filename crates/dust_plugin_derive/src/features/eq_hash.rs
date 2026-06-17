@@ -1,21 +1,10 @@
-use dust_dart_emit::{DART_ITERABLE, DART_LIST, DART_MAP, DART_SET, render_template};
+use std::fmt::Write;
+
+use dust_dart_emit::{DART_ITERABLE, DART_LIST, DART_MAP, DART_SET};
 use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassIr, DartFileIr, TypeIr};
-use serde::Serialize;
 
 use crate::features::EQ_SYMBOL;
-
-#[derive(Serialize)]
-struct EqContext<'a> {
-    class_name: &'a str,
-    comparisons: String,
-}
-
-#[derive(Serialize)]
-struct HashContext {
-    self_binding: String,
-    values: String,
-}
 
 pub(crate) fn has_trait(class: &ClassIr, symbol: &str) -> bool {
     class
@@ -64,23 +53,17 @@ pub(crate) fn emit_eq(class: &ClassIr) -> Option<String> {
     }
 
     if class.fields.is_empty() {
-        return Some(render_template(
-            "eq_empty",
-            include_str!("templates/eq_empty.jinja"),
-            EqContext {
-                class_name: &class.name,
-                comparisons: String::new(),
-            },
+        return Some(format!(
+            "@override\nbool operator ==(Object other) =>\n    identical(this, other) ||\n    other is {} &&\n        runtimeType == other.runtimeType;",
+            class.name
         ));
     }
 
-    Some(render_template(
-        "eq_fields",
-        include_str!("templates/eq_fields.jinja"),
-        EqContext {
-            class_name: &class.name,
-            comparisons: render_equality_comparisons(class),
-        },
+    Some(format!(
+        "@override\nbool operator ==(Object other) {{\n  final self = this as {};\n  return identical(this, other) ||\n      other is {} &&\n          runtimeType == other.runtimeType{};\n}}",
+        class.name,
+        class.name,
+        render_equality_comparisons(class)
     ))
 }
 
@@ -89,42 +72,38 @@ pub(crate) fn emit_hash_code(class: &ClassIr) -> Option<String> {
         return None;
     }
 
-    Some(render_template(
-        "hash_code",
-        include_str!("templates/hash_code.jinja"),
-        HashContext {
-            self_binding: if class.fields.is_empty() {
-                String::new()
-            } else {
-                format!("  final self = this as {};\n", class.name)
-            },
-            values: render_hash_values(class),
-        },
+    let self_binding = if class.fields.is_empty() {
+        String::new()
+    } else {
+        format!("  final self = this as {};\n", class.name)
+    };
+    Some(format!(
+        "@override\nint get hashCode {{\n{}  return Object.hashAll([\n    runtimeType,\n{}  ]);\n}}",
+        self_binding,
+        render_hash_values(class)
     ))
 }
 
 fn render_equality_comparisons(class: &ClassIr) -> String {
-    class
-        .fields
-        .iter()
-        .map(|field| {
-            format!(
-                " &&\n          {}",
-                render_equality_comparison(&field.name, &field.ty)
-            )
-        })
-        .collect::<Vec<_>>()
-        .join("")
+    let mut out = String::with_capacity(class.fields.len() * 40);
+    for field in &class.fields {
+        write!(
+            out,
+            " &&\n          {}",
+            render_equality_comparison(&field.name, &field.ty)
+        )
+        .expect("writing to String cannot fail");
+    }
+    out
 }
 
 fn render_hash_values(class: &ClassIr) -> String {
-    class
-        .fields
-        .iter()
-        .map(|field| format!("    {},", render_hash_value(&field.name, &field.ty)))
-        .collect::<Vec<_>>()
-        .join("\n")
-        + if class.fields.is_empty() { "" } else { "\n" }
+    let mut out = String::with_capacity(class.fields.len() * 24);
+    for field in &class.fields {
+        writeln!(out, "    {},", render_hash_value(&field.name, &field.ty))
+            .expect("writing to String cannot fail");
+    }
+    out
 }
 
 fn render_equality_comparison(field_name: &str, ty: &TypeIr) -> String {

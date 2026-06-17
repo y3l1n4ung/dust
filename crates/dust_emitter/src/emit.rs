@@ -1,18 +1,13 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fmt::Write,
+    path::{Path, PathBuf},
+};
 
-use dust_dart_emit::render_template;
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
 use dust_plugin_api::{AuxiliaryOutputContribution, GENERATED_HEADER, PluginRegistry, SymbolPlan};
-use serde::Serialize;
 
 use crate::{format::format_generated_source, merge::MergedSections, writer::DartWriter};
-
-#[derive(Serialize)]
-struct MixinBlockContext {
-    mixin_name: String,
-    members: String,
-}
 
 /// The in-memory result of emitting one generated library.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -58,18 +53,25 @@ pub fn emit_library_with_plan(
     previous_output: Option<&str>,
 ) -> EmitResult {
     let mut diagnostics = registry.validate_library(library);
-    let contributions = registry.emit_contributions(library, &plan);
-    diagnostics.extend(
-        contributions
-            .iter()
-            .flat_map(|contribution| contribution.diagnostics.iter().cloned()),
-    );
-    let merged = MergedSections::from_contributions(&contributions);
-    let auxiliary_outputs = collect_auxiliary_outputs(&contributions);
-    let (source, changed) = if should_emit_primary(library, &contributions, &plan, &merged) {
-        let source = primary_source_override(&contributions)
-            .unwrap_or_else(|| assemble_source(library, &plan, &merged));
-        let source = format_generated_source(&source);
+    let mut contributions = registry.emit_contributions(library, &plan);
+    for contribution in &mut contributions {
+        diagnostics.append(&mut contribution.diagnostics);
+    }
+    let primary_source_override = take_primary_source_override(&mut contributions);
+    let auxiliary_outputs = collect_auxiliary_outputs(&mut contributions);
+    let has_contributions = contributions
+        .iter()
+        .any(|contribution| !contribution.is_empty());
+    let merged = MergedSections::from_contributions(contributions);
+    let (source, changed) = if should_emit_primary(
+        library,
+        has_contributions || primary_source_override.is_some(),
+        &plan,
+        &merged,
+    ) {
+        let source =
+            primary_source_override.unwrap_or_else(|| assemble_source(library, &plan, &merged));
+        let source = format_generated_source(source);
         let changed = previous_output != Some(source.as_str());
         (source, changed)
     } else {
@@ -121,13 +123,11 @@ fn update_hash_bytes(hash: &mut u64, bytes: &[u8]) {
 
 fn should_emit_primary(
     library: &DartFileIr,
-    contributions: &[dust_plugin_api::PluginContribution],
+    has_contributions: bool,
     plan: &SymbolPlan,
     merged: &MergedSections,
 ) -> bool {
-    contributions
-        .iter()
-        .any(|contribution| !contribution.is_empty())
+    has_contributions
         || !merged.shared_helpers.is_empty()
         || !merged.support_types.is_empty()
         || !merged.top_level_functions.is_empty()
@@ -139,20 +139,20 @@ fn should_emit_primary(
         || library.enums.iter().any(|enum_ir| enum_ir.serde.is_some())
 }
 
-fn primary_source_override(
-    contributions: &[dust_plugin_api::PluginContribution],
+fn take_primary_source_override(
+    contributions: &mut [dust_plugin_api::PluginContribution],
 ) -> Option<String> {
     contributions
-        .iter()
-        .find_map(|contribution| contribution.primary_source.clone())
+        .iter_mut()
+        .find_map(|contribution| contribution.primary_source.take())
 }
 
 fn collect_auxiliary_outputs(
-    contributions: &[dust_plugin_api::PluginContribution],
+    contributions: &mut [dust_plugin_api::PluginContribution],
 ) -> Vec<AuxiliaryEmitOutput> {
     contributions
-        .iter()
-        .flat_map(|contribution| contribution.auxiliary_outputs.iter())
+        .iter_mut()
+        .flat_map(|contribution| std::mem::take(&mut contribution.auxiliary_outputs))
         .map(format_auxiliary_output)
         .collect()
 }
@@ -216,39 +216,40 @@ fn render_reserved_helpers(plan: &SymbolPlan) -> Vec<String> {
     helpers
 }
 
-fn format_auxiliary_output(output: &AuxiliaryOutputContribution) -> AuxiliaryEmitOutput {
+fn format_auxiliary_output(output: AuxiliaryOutputContribution) -> AuxiliaryEmitOutput {
     AuxiliaryEmitOutput {
-        output_path: output.output_path.clone(),
-        source: format_generated_source(&output.source),
+        output_path: output.output_path,
+        source: format_generated_source(output.source),
     }
 }
 
 fn render_mixin_block(writer: &mut DartWriter, class_name: &str, members: &[String]) {
     let mixin_name = format!("_${class_name}");
-    writer.raw_block(&render_template(
-        "mixin_block",
-        include_str!("templates/mixin_block.jinja"),
-        MixinBlockContext {
-            mixin_name,
-            members: members
-                .iter()
-                .map(|member| indent_mixin_member(member))
-                .collect::<Vec<_>>()
-                .join("\n\n"),
-        },
-    ));
+    let mut block = String::with_capacity(
+        mixin_name.len() + members.iter().map(String::len).sum::<usize>() + 16,
+    );
+    writeln!(block, "mixin {mixin_name} {{").expect("writing to String cannot fail");
+    for (index, member) in members.iter().enumerate() {
+        if index > 0 {
+            block.push('\n');
+            block.push('\n');
+        }
+        indent_mixin_member_into(&mut block, member);
+    }
+    block.push('\n');
+    block.push('}');
+    writer.raw_block(&block);
 }
 
-fn indent_mixin_member(member: &str) -> String {
-    member
-        .lines()
-        .map(|line| {
-            if line.is_empty() {
-                String::new()
-            } else {
-                format!("  {line}")
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
+fn indent_mixin_member_into(out: &mut String, member: &str) {
+    for (index, line) in member.lines().enumerate() {
+        if index > 0 {
+            out.push('\n');
+        }
+        if line.is_empty() {
+            continue;
+        }
+        out.push_str("  ");
+        out.push_str(line);
+    }
 }

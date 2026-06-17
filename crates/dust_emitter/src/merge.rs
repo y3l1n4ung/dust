@@ -1,5 +1,3 @@
-use std::collections::{HashMap, HashSet};
-
 use dust_plugin_api::{ClassMixinContribution, PluginContribution};
 
 /// The merged plugin sections for one emitted library.
@@ -17,28 +15,28 @@ pub(crate) struct MergedSections {
 
 impl MergedSections {
     /// Merges plugin contributions while preserving registration order.
-    pub(crate) fn from_contributions(contributions: &[PluginContribution]) -> Self {
+    pub(crate) fn from_contributions(contributions: Vec<PluginContribution>) -> Self {
         let mut merged = Self::default();
-        let mut helper_seen = HashSet::new();
-        let mut mixin_index_by_class = HashMap::<&str, usize>::new();
 
         for contribution in contributions {
-            for helper in &contribution.shared_helpers {
-                if helper_seen.insert(helper.as_str()) {
-                    merged.shared_helpers.push(helper.clone());
+            for helper in contribution.shared_helpers {
+                if !merged
+                    .shared_helpers
+                    .iter()
+                    .any(|existing| existing == &helper)
+                {
+                    merged.shared_helpers.push(helper);
                 }
             }
 
-            for mixin in &contribution.mixin_members {
-                merge_mixin_members(&mut merged, &mut mixin_index_by_class, mixin);
+            for mixin in contribution.mixin_members {
+                merge_mixin_members(&mut merged, mixin);
             }
 
-            merged
-                .support_types
-                .extend(contribution.support_types.iter().cloned());
+            merged.support_types.extend(contribution.support_types);
             merged
                 .top_level_functions
-                .extend(contribution.top_level_functions.iter().cloned());
+                .extend(contribution.top_level_functions);
         }
 
         merged
@@ -54,18 +52,15 @@ impl MergedSections {
     }
 }
 
-fn merge_mixin_members<'a>(
-    merged: &mut MergedSections,
-    index_by_class: &mut HashMap<&'a str, usize>,
-    mixin: &'a ClassMixinContribution,
-) {
-    if let Some(index) = index_by_class.get(mixin.class_name.as_str()).copied() {
-        merged.mixin_members[index]
-            .members
-            .extend(mixin.members.iter().cloned());
+fn merge_mixin_members(merged: &mut MergedSections, mixin: ClassMixinContribution) {
+    if let Some(existing) = merged
+        .mixin_members
+        .iter_mut()
+        .find(|entry| entry.class_name == mixin.class_name)
+    {
+        existing.members.extend(mixin.members);
         return;
     }
 
-    index_by_class.insert(&mixin.class_name, merged.mixin_members.len());
-    merged.mixin_members.push(mixin.clone());
+    merged.mixin_members.push(mixin);
 }

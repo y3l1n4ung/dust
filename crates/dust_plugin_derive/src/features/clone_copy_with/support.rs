@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use dust_dart_emit::{DART_DYNAMIC, DART_OBJECT_NULLABLE, OBJECT_NULLABLE_TYPES};
 use dust_ir::{ClassIr, TypeIr};
 
@@ -6,29 +8,29 @@ pub(super) fn render_copy_with_params(class: &ClassIr) -> String {
         return "{}".to_owned();
     }
 
-    let rendered_params = class
-        .fields
-        .iter()
-        .map(|field| {
-            if uses_undefined_sentinel(&field.ty) {
-                format!(
-                    "{} {} = _undefined",
-                    undefined_parameter_type(&field.ty),
-                    field.name
-                )
-            } else {
-                format!("{} {}", render_copy_with_param_type(&field.ty), field.name)
-            }
-        })
-        .collect::<Vec<_>>();
-
-    let params = rendered_params
-        .into_iter()
-        .map(|param| format!("  {param},"))
-        .collect::<Vec<_>>()
-        .join("\n");
-
-    format!("{{\n{params}\n}}")
+    let mut params = String::with_capacity(class.fields.len() * 32);
+    params.push_str("{\n");
+    for field in &class.fields {
+        if uses_undefined_sentinel(&field.ty) {
+            writeln!(
+                params,
+                "  {} {} = _undefined,",
+                undefined_parameter_type(&field.ty),
+                field.name
+            )
+            .expect("writing to String cannot fail");
+        } else {
+            writeln!(
+                params,
+                "  {} {},",
+                render_copy_with_param_type(&field.ty),
+                field.name
+            )
+            .expect("writing to String cannot fail");
+        }
+    }
+    params.push('}');
+    params
 }
 
 pub(super) fn render_copy_with_source_expr(field_name: &str, ty: &TypeIr) -> String {
@@ -51,17 +53,20 @@ pub(super) fn should_keep_source_local(ty: &TypeIr) -> bool {
 }
 
 pub(super) fn render_setup_blocks(blocks: Vec<String>) -> String {
-    blocks
-        .into_iter()
-        .map(|block| {
-            block
-                .lines()
-                .map(|line| format!("  {line}"))
-                .collect::<Vec<_>>()
-                .join("\n")
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
+    let mut out = String::new();
+    for (block_index, block) in blocks.into_iter().enumerate() {
+        if block_index > 0 {
+            out.push('\n');
+        }
+        for (line_index, line) in block.lines().enumerate() {
+            if line_index > 0 {
+                out.push('\n');
+            }
+            out.push_str("  ");
+            out.push_str(line);
+        }
+    }
+    out
 }
 
 pub(super) fn non_null_value_expr(value: &str) -> String {

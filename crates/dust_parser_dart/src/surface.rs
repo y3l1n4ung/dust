@@ -432,6 +432,8 @@ pub struct ParsedConstructorSurface {
 pub struct ParsedConstructorParamSurface {
     /// The parameter name.
     pub name: String,
+    /// All metadata annotations attached to the parameter.
+    pub annotations: Vec<ParsedAnnotation>,
     /// The raw type source, if explicitly written.
     pub type_source: Option<String>,
     /// Parsed type facts, when provided by the parser backend.

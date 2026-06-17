@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use dust_dart_emit::{
     DART_BIG_INT, DART_BOOL, DART_DATE_TIME, DART_INT, DART_LIST, DART_MAP, DART_NUM, DART_OBJECT,
     DART_SET, DART_STRING, DART_URI, OBJECT_NULLABLE_TYPES,
@@ -11,8 +9,8 @@ use crate::writer_type::{access_receiver, non_null_encode_expr, non_nullable};
 pub(crate) fn encode_field_expr(
     expr: &str,
     field: &FieldIr,
-    serializable_classes: &HashSet<String>,
-    serializable_enums: &HashSet<String>,
+    serializable_classes: &[&str],
+    serializable_enums: &[&str],
 ) -> String {
     match field
         .serde
@@ -27,8 +25,8 @@ pub(crate) fn encode_field_expr(
 pub(crate) fn encode_expr(
     expr: &str,
     ty: &TypeIr,
-    serializable_classes: &HashSet<String>,
-    serializable_enums: &HashSet<String>,
+    serializable_classes: &[&str],
+    serializable_enums: &[&str],
 ) -> String {
     if nullable_identity_encode(ty) {
         return expr.to_owned();
@@ -52,8 +50,8 @@ pub(crate) fn decode_field_expr(
     raw: &str,
     key: &str,
     field: &FieldIr,
-    deserializable_classes: &HashSet<String>,
-    deserializable_enums: &HashSet<String>,
+    deserializable_classes: &[&str],
+    deserializable_enums: &[&str],
 ) -> String {
     match field
         .serde
@@ -75,8 +73,8 @@ pub(crate) fn decode_expr(
     raw: &str,
     key: &str,
     ty: &TypeIr,
-    deserializable_classes: &HashSet<String>,
-    deserializable_enums: &HashSet<String>,
+    deserializable_classes: &[&str],
+    deserializable_enums: &[&str],
 ) -> String {
     if ty.is_nullable() {
         let inner = non_nullable(ty);
@@ -100,8 +98,8 @@ fn nullable_identity_encode(ty: &TypeIr) -> bool {
 fn encode_non_nullable_expr(
     expr: &str,
     ty: &TypeIr,
-    serializable_classes: &HashSet<String>,
-    serializable_enums: &HashSet<String>,
+    serializable_classes: &[&str],
+    serializable_enums: &[&str],
 ) -> String {
     match ty {
         TypeIr::Builtin { .. } | TypeIr::Dynamic | TypeIr::Unknown => expr.to_owned(),
@@ -135,8 +133,8 @@ fn encode_non_nullable_expr(
             }
         }
         TypeIr::Named { name, .. } => {
-            if serializable_classes.contains(name.as_ref())
-                || serializable_enums.contains(name.as_ref())
+            if contains_symbol(serializable_classes, name.as_ref())
+                || contains_symbol(serializable_enums, name.as_ref())
             {
                 format!("_${name}ToJson({expr})")
             } else {
@@ -150,8 +148,8 @@ fn decode_non_nullable_expr(
     raw: &str,
     key: &str,
     ty: &TypeIr,
-    deserializable_classes: &HashSet<String>,
-    deserializable_enums: &HashSet<String>,
+    deserializable_classes: &[&str],
+    deserializable_enums: &[&str],
 ) -> String {
     match ty {
         TypeIr::Builtin { kind, .. } => match kind {
@@ -223,15 +221,19 @@ fn decode_non_nullable_expr(
             }
         }
         TypeIr::Named { name, .. } => {
-            if deserializable_classes.contains(name.as_ref()) {
+            if contains_symbol(deserializable_classes, name.as_ref()) {
                 format!("_${name}FromJson(JsonHelper.asMap({raw}, {key}))")
-            } else if deserializable_enums.contains(name.as_ref()) {
+            } else if contains_symbol(deserializable_enums, name.as_ref()) {
                 format!("_${name}FromJson({raw})")
             } else {
                 format!("{name}.fromJson(JsonHelper.asMap({raw}, {key}))")
             }
         }
     }
+}
+
+fn contains_symbol(symbols: &[&str], name: &str) -> bool {
+    symbols.contains(&name)
 }
 
 fn indent_expr(expr: &str, spaces: usize) -> String {

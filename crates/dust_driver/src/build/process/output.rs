@@ -99,10 +99,7 @@ fn persist_with_previous_hash(
     let should_write = write_output && changed && !has_errors;
 
     if should_write {
-        if let Some(parent) = output_path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        fs::write(&output_path, &emitted.source)?;
+        write_output_file(&output_path, &emitted.source)?;
     }
 
     let auxiliary_outputs = emitted
@@ -110,10 +107,7 @@ fn persist_with_previous_hash(
         .into_iter()
         .map(|output| {
             if should_write {
-                if let Some(parent) = output.output_path.parent() {
-                    fs::create_dir_all(parent)?;
-                }
-                fs::write(&output.output_path, &output.source)?;
+                write_output_file(&output.output_path, &output.source)?;
             }
             Ok(AuxiliaryWriteResult {
                 source: output.source,
@@ -134,6 +128,19 @@ fn persist_with_previous_hash(
         output_path,
         auxiliary_outputs,
     })
+}
+
+fn write_output_file(path: &Path, source: &str) -> io::Result<()> {
+    match fs::write(path, source) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            fs::write(path, source)
+        }
+        Err(error) => Err(error),
+    }
 }
 
 fn read_previous_output(path: &Path, strict: bool) -> io::Result<Option<String>> {

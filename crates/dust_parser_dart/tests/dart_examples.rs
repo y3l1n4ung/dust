@@ -63,6 +63,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
                 params: vec![
                     ParsedConstructorParamSurface {
                         name: "name".to_owned(),
+                        annotations: Vec::new(),
                         type_source: None,
                         parsed_type: None,
                         kind: ParameterKind::Named,
@@ -72,6 +73,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
                     },
                     ParsedConstructorParamSurface {
                         name: "age".to_owned(),
+                        annotations: Vec::new(),
                         type_source: None,
                         parsed_type: None,
                         kind: ParameterKind::Named,

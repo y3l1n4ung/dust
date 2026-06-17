@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashSet};
+use std::borrow::Cow;
 
 use dust_dart_emit::{
     DART_ITERABLE, DART_LIST, DART_MAP, DART_OBJECT_NULLABLE, DART_SET, OBJECT_NULLABLE_TYPES,
@@ -7,11 +7,31 @@ use dust_ir::{BuiltinType, TypeIr};
 
 use super::support::{member_access_expr, non_null_value_expr};
 
+pub(crate) struct CopyableTypes<'a> {
+    local: &'a [&'a str],
+    workspace: Option<&'a [String]>,
+}
+
+impl<'a> CopyableTypes<'a> {
+    pub(crate) fn new(local: &'a [&'a str], workspace: Option<&'a [String]>) -> Self {
+        Self { local, workspace }
+    }
+
+    fn contains(&self, name: &str) -> bool {
+        self.local.iter().any(|candidate| *candidate == name)
+            || self.workspace.is_some_and(|values| {
+                values
+                    .binary_search_by(|value| value.as_str().cmp(name))
+                    .is_ok()
+            })
+    }
+}
+
 pub(super) fn render_copied_value<'a>(
     ty: &TypeIr,
     value: &'a str,
     depth: usize,
-    copyable_types: &HashSet<&str>,
+    copyable_types: &CopyableTypes<'_>,
 ) -> Cow<'a, str> {
     match ty {
         TypeIr::Named {
@@ -83,7 +103,7 @@ fn render_sequence_copy(
     nullable: bool,
     value: &str,
     depth: usize,
-    copyable_types: &HashSet<&str>,
+    copyable_types: &CopyableTypes<'_>,
 ) -> String {
     let item_ty = args.first();
     let item_rendered = item_ty
@@ -123,7 +143,7 @@ fn render_map_copy(
     nullable: bool,
     value: &str,
     depth: usize,
-    copyable_types: &HashSet<&str>,
+    copyable_types: &CopyableTypes<'_>,
 ) -> String {
     let key_ty = args.first();
     let value_ty = args.get(1);

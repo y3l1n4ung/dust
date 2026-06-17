@@ -4,21 +4,19 @@ use tree_sitter::Node;
 
 use crate::syntax::{direct_named_child, node_text};
 
-pub(super) fn determine_parameter_kind(node: Node<'_>, source: &SourceText) -> ParameterKind {
-    let mut current = node.parent();
-    while let Some(parent) = current {
-        if parent.kind() == "optional_formal_parameters" {
-            let text = node_text(parent, source);
-            return if text.trim_start().starts_with('{') {
-                ParameterKind::Named
-            } else {
-                ParameterKind::Positional
-            };
-        }
-        current = parent.parent();
+pub(super) fn optional_parameter_kind(node: Node<'_>, source: &SourceText) -> ParameterKind {
+    let bytes = source.as_str().as_bytes();
+    let mut index = node.start_byte();
+    let end = node.end_byte();
+    while index < end && bytes.get(index).is_some_and(u8::is_ascii_whitespace) {
+        index += 1;
     }
 
-    ParameterKind::Positional
+    if bytes.get(index) == Some(&b'{') {
+        ParameterKind::Named
+    } else {
+        ParameterKind::Positional
+    }
 }
 
 pub(super) fn parameter_name_node<'tree>(node: Node<'tree>) -> Option<Node<'tree>> {
@@ -43,6 +41,12 @@ pub(super) fn parameter_name_node<'tree>(node: Node<'tree>) -> Option<Node<'tree
     }
 
     direct_named_child(node, "identifier")
+}
+
+pub(super) fn is_field_formal_parameter(node: Node<'_>) -> bool {
+    direct_named_child(node, "constructor_param").is_some()
+        || direct_named_child(node, "super_formal_parameter").is_some()
+        || direct_named_child(node, "formal_parameter").is_some_and(is_field_formal_parameter)
 }
 
 pub(super) fn default_value_source(node: Node<'_>, source: &SourceText) -> Option<String> {
