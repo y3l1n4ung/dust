@@ -1,4 +1,4 @@
-import '../core/result.dart';
+import '../fp/result.dart';
 import 'exec_result.dart';
 import 'pool.dart';
 import 'row_mapper.dart';

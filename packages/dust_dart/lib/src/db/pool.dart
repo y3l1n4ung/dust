@@ -1,6 +1,6 @@
 import 'annotations.dart';
-import '../core/result.dart';
-import '../core/unit.dart';
+import '../fp/result.dart';
+import '../fp/unit.dart';
 import 'exec_result.dart';
 import 'row_mapper.dart';
 import 'sqlx_error.dart';
