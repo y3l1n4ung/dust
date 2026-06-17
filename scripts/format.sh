@@ -5,12 +5,28 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 CHECK_MODE=false
+SCOPE=all
 
-case "${1:-}" in
-  "") ;;
-  --check|-c) CHECK_MODE=true ;;
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --check|-c) CHECK_MODE=true ;;
+    --scope)
+      SCOPE="${2:-}"
+      shift
+      ;;
+    --scope=*) SCOPE="${1#--scope=}" ;;
+    *)
+      echo "Usage: $0 [--check] [--scope rust|packages|all]" >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
+case "$SCOPE" in
+  rust|packages|all) ;;
   *)
-    echo "Usage: $0 [--check]" >&2
+    echo "error: unsupported scope `$SCOPE`; expected rust, packages, or all" >&2
     exit 2
     ;;
 esac
@@ -73,12 +89,28 @@ if ! command -v dart >/dev/null 2>&1; then
   exit 0
 fi
 
+if [[ "$SCOPE" == rust ]]; then
+  echo "==> Format complete"
+  exit 0
+fi
+
 echo "==> Dart/Flutter package format"
-run_dart_format "packages/dust_dart"
-run_dart_format "packages/dust_db_sqlite3"
-run_dart_format "packages/dust_flutter"
-run_dart_format "examples/product_showcase"
-run_dart_format "examples/benchmark_project"
-run_dart_format "examples/shopping_app"
+FORMAT_DIRS=(
+  "packages/dust_dart"
+  "packages/dust_db_sqlite3"
+  "packages/dust_flutter"
+)
+
+if [[ "$SCOPE" == all ]]; then
+  FORMAT_DIRS+=(
+    "examples/product_showcase"
+    "examples/benchmark_project"
+    "examples/shopping_app"
+  )
+fi
+
+for dir in "${FORMAT_DIRS[@]}"; do
+  run_dart_format "$dir"
+done
 
 echo "==> Format complete"

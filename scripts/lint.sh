@@ -4,6 +4,31 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+SCOPE=all
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --scope)
+      SCOPE="${2:-}"
+      shift
+      ;;
+    --scope=*) SCOPE="${1#--scope=}" ;;
+    *)
+      echo "Usage: $0 [--scope rust|packages|all]" >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
+case "$SCOPE" in
+  rust|packages|all) ;;
+  *)
+    echo "error: unsupported scope `$SCOPE`; expected rust, packages, or all" >&2
+    exit 2
+    ;;
+esac
+
 run() {
   "$@"
 }
@@ -59,16 +84,45 @@ run_dust_check() {
 DART_PACKAGES=(
   "packages/dust_dart"
   "packages/dust_db_sqlite3"
-  "examples/product_showcase"
 )
 
 FLUTTER_PACKAGES=(
   "packages/dust_flutter"
-  "examples/benchmark_project"
-  "examples/shopping_app"
 )
 
-run ./scripts/format.sh --check
+DART_TARGETS=()
+FLUTTER_TARGETS=()
+
+if [[ "$SCOPE" != rust ]]; then
+  DART_TARGETS=("${DART_PACKAGES[@]}")
+  FLUTTER_TARGETS=("${FLUTTER_PACKAGES[@]}")
+
+  if [[ "$SCOPE" == all ]]; then
+    DART_TARGETS+=("examples/product_showcase")
+    FLUTTER_TARGETS+=(
+      "examples/benchmark_project"
+      "examples/shopping_app"
+    )
+  fi
+fi
+
+if has_cmd dart; then
+  for package in "${DART_TARGETS[@]}"; do
+    run_dart_pub_get "$package"
+  done
+
+  if has_cmd flutter; then
+    for package in "${FLUTTER_TARGETS[@]}"; do
+      run_flutter_pub_get "$package"
+    done
+  else
+    for package in "${FLUTTER_TARGETS[@]}"; do
+      echo "warning: flutter not found; skipped analysis for $package" >&2
+    done
+  fi
+fi
+
+run ./scripts/format.sh --check --scope "$SCOPE"
 
 if ! has_cmd cargo; then
   echo "error: cargo is required to lint Rust code" >&2
@@ -78,31 +132,37 @@ fi
 echo "==> Rust clippy"
 run cargo clippy --workspace --all-targets --all-features -- -D warnings
 
-if ! has_cmd dart; then
-  echo "warning: dart not found; skipping Dart/Flutter analysis" >&2
+if [[ "$SCOPE" == rust ]]; then
+  echo "==> Lint complete"
   exit 0
 fi
 
-echo "==> Dust freshness checks"
-run_dust_check "examples/product_showcase"
-run_dust_check "examples/benchmark_project"
-run_dust_check "examples/shopping_app"
-run_dust_check "examples/shopping_app" --db
+if ! has_cmd dart; then
+    echo "warning: dart not found; skipping Dart/Flutter analysis" >&2
+    exit 0
+fi
 
-for package in "${DART_PACKAGES[@]}"; do
-  run_dart_pub_get "$package"
+if [[ "$SCOPE" == all ]]; then
+  echo "==> Dust freshness checks"
+  run_dust_check "examples/product_showcase"
+  if has_cmd flutter; then
+    run_dust_check "examples/benchmark_project"
+    run_dust_check "examples/shopping_app"
+    run_dust_check "examples/shopping_app" --db
+  else
+    echo "warning: flutter not found; skipped Flutter Dust freshness checks" >&2
+  fi
+fi
+
+for package in "${DART_TARGETS[@]}"; do
   run_dart_analyze "$package"
 done
 
 if ! has_cmd flutter; then
-  for package in "${FLUTTER_PACKAGES[@]}"; do
-    echo "warning: flutter not found; skipped analysis for $package" >&2
-  done
   exit 0
 fi
 
-for package in "${FLUTTER_PACKAGES[@]}"; do
-  run_flutter_pub_get "$package"
+for package in "${FLUTTER_TARGETS[@]}"; do
   run_flutter_analyze "$package"
 done
 

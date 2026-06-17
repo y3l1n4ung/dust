@@ -18,7 +18,7 @@ impl<'a> CopyableTypes<'a> {
     }
 
     fn contains(&self, name: &str) -> bool {
-        self.local.iter().any(|candidate| *candidate == name)
+        self.local.contains(&name)
             || self.workspace.is_some_and(|values| {
                 values
                     .binary_search_by(|value| value.as_str().cmp(name))

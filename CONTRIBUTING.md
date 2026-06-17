@@ -23,6 +23,21 @@ To contribute to Dust, you'll need both the Rust and Dart toolchains installed o
    # Fetch Dart dependencies
    flutter pub get
    ```
+3. Enable the repository pre-commit hook:
+   ```bash
+   git config core.hooksPath .githooks
+   ```
+
+   The hook delegates to the shared scripts:
+   ```bash
+   scripts/lint.sh
+   scripts/test.sh
+   ```
+
+   By default, the hook runs the full repo gate: Rust formatting, workspace
+   tests, clippy, Dust freshness checks, and Dart/Flutter package and example
+   analysis/tests. Use `--scope packages` or `--scope rust` only for focused
+   local development checks.
 
 ---
 
