@@ -1,22 +1,24 @@
-use dust_parser_dart::{ParsedConstructorParamSurface, ParsedConstructorSurface};
+use dust_parser_dart::{ParameterKind, ParsedConstructorParamSurface, ParsedConstructorSurface};
 use dust_text::SourceText;
 use tree_sitter::Node;
 
+use crate::annotations::extract_direct_annotations;
 use crate::syntax::{find_first_descendant, find_first_descendant_by, node_text, text_range};
 use crate::types::extract_type_before;
 
-use super::parse_text::{default_value_source, determine_parameter_kind, parameter_name_node};
+use super::parse_text::{
+    default_value_source, is_field_formal_parameter, optional_parameter_kind, parameter_name_node,
+};
 
 pub(super) fn extract_constructor(node: Node<'_>, source: &SourceText) -> ParsedConstructorSurface {
-    let Some(signature) = find_first_descendant_by(node, |candidate| {
-        matches!(
-            candidate.kind(),
-            "constant_constructor_signature"
-                | "constructor_signature"
-                | "factory_constructor_signature"
-                | "redirecting_factory_constructor_signature"
-        )
-    }) else {
+    let signature = if is_constructor_signature_kind(node.kind()) {
+        Some(node)
+    } else {
+        find_first_descendant_by(node, |candidate| {
+            is_constructor_signature_kind(candidate.kind())
+        })
+    };
+    let Some(signature) = signature else {
         return ParsedConstructorSurface {
             name: None,
             is_factory: false,
@@ -48,14 +50,25 @@ pub(super) fn extract_constructor(node: Node<'_>, source: &SourceText) -> Parsed
     }
 }
 
+pub(super) fn is_constructor_signature_kind(kind: &str) -> bool {
+    matches!(
+        kind,
+        "constant_constructor_signature"
+            | "constructor_signature"
+            | "factory_constructor_signature"
+            | "redirecting_factory_constructor_signature"
+    )
+}
+
 fn constructor_name(signature: Node<'_>, source: &SourceText) -> Option<String> {
     let mut cursor = signature.walk();
-    let identifiers = signature
+    let mut identifiers = signature
         .children_by_field_name("name", &mut cursor)
-        .filter(|child| child.is_named() && child.kind() == "identifier")
+        .filter(|child| child.is_named() && child.kind() == "identifier");
+    identifiers.next();
+    identifiers
+        .next()
         .map(|identifier| node_text(identifier, source))
-        .collect::<Vec<_>>();
-    identifiers.get(1).cloned()
 }
 
 fn redirecting_factory_target(
@@ -66,14 +79,17 @@ fn redirecting_factory_target(
         return (None, None);
     }
 
+    let mut first_target = None;
+    let mut last_target = None;
     let mut cursor = signature.walk();
-    let target_nodes = signature
-        .children_by_field_name("target", &mut cursor)
-        .collect::<Vec<_>>();
-    let Some(first_target) = target_nodes.first() else {
+    for target in signature.children_by_field_name("target", &mut cursor) {
+        first_target.get_or_insert(target);
+        last_target = Some(target);
+    }
+    let Some(first_target) = first_target else {
         return (None, None);
     };
-    let Some(last_target) = target_nodes.last() else {
+    let Some(last_target) = last_target else {
         return (None, None);
     };
 
@@ -97,7 +113,7 @@ fn extract_constructor_params(
     source: &SourceText,
 ) -> Vec<ParsedConstructorParamSurface> {
     let mut params = Vec::new();
-    collect_formal_parameters(node, source, &mut params);
+    collect_formal_parameters(node, source, &mut params, ParameterKind::Positional);
     params
 }
 
@@ -105,33 +121,63 @@ fn collect_formal_parameters(
     node: Node<'_>,
     source: &SourceText,
     out: &mut Vec<ParsedConstructorParamSurface>,
+    kind: ParameterKind,
 ) {
-    if node.is_named() && matches!(node.kind(), "formal_parameter" | "default_formal_parameter") {
-        out.push(extract_formal_parameter(node, source));
-        return;
-    }
-
     let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
-        collect_formal_parameters(child, source, out);
+    for child in node.children(&mut cursor).filter(|child| child.is_named()) {
+        match child.kind() {
+            "formal_parameter" | "default_formal_parameter" => {
+                out.push(extract_formal_parameter(child, source, kind));
+            }
+            "optional_formal_parameters" => {
+                collect_optional_formal_parameters(child, source, out);
+            }
+            _ => {}
+        }
     }
 }
 
-fn extract_formal_parameter(node: Node<'_>, source: &SourceText) -> ParsedConstructorParamSurface {
+fn collect_optional_formal_parameters(
+    node: Node<'_>,
+    source: &SourceText,
+    out: &mut Vec<ParsedConstructorParamSurface>,
+) {
+    let kind = optional_parameter_kind(node, source);
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor).filter(|child| child.is_named()) {
+        if matches!(
+            child.kind(),
+            "formal_parameter" | "default_formal_parameter"
+        ) {
+            out.push(extract_formal_parameter(child, source, kind));
+        }
+    }
+}
+
+fn extract_formal_parameter(
+    node: Node<'_>,
+    source: &SourceText,
+    kind: ParameterKind,
+) -> ParsedConstructorParamSurface {
     let name_node = parameter_name_node(node);
     let name = name_node
         .map(|node| node_text(node, source))
         .unwrap_or_default();
-    let parsed_type =
-        name_node.and_then(|name| extract_type_before(node, name.start_byte(), source));
+    let parsed_type = if is_field_formal_parameter(node) {
+        None
+    } else {
+        name_node.and_then(|name| extract_type_before(node, name.start_byte(), source))
+    };
     let type_source = parsed_type.as_ref().map(|ty| ty.source.clone());
     let default_value_source = default_value_source(node, source);
+    let annotations = extract_direct_annotations(node, source);
 
     ParsedConstructorParamSurface {
         name,
+        annotations,
         type_source,
         parsed_type,
-        kind: determine_parameter_kind(node, source),
+        kind,
         has_default: default_value_source.is_some(),
         default_value_source,
         span: text_range(node),

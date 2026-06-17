@@ -14,6 +14,15 @@ pub(crate) fn extract_fields(
         return Vec::new();
     };
 
+    extract_fields_from_identifier_list(node, identifier_list, annotations, source)
+}
+
+pub(crate) fn extract_fields_from_identifier_list(
+    node: Node<'_>,
+    identifier_list: Node<'_>,
+    annotations: &[ParsedAnnotation],
+    source: &SourceText,
+) -> Vec<ParsedFieldSurface> {
     let parsed_type = extract_type_before(node, identifier_list.start_byte(), source);
     let type_source = parsed_type.as_ref().map(|ty| ty.source.clone());
 

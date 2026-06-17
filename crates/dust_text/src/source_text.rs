@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use crate::{FileId, LineCol, LineIndex, TextRange, TextSize};
 
@@ -7,19 +7,18 @@ use crate::{FileId, LineCol, LineIndex, TextRange, TextSize};
 pub struct SourceText {
     file_id: FileId,
     text: Arc<str>,
-    line_index: LineIndex,
+    line_index: OnceLock<LineIndex>,
 }
 
 impl SourceText {
     /// Creates a new source container.
     pub fn new(file_id: FileId, text: impl Into<Arc<str>>) -> Self {
         let text = text.into();
-        let line_index = LineIndex::new(&text);
 
         Self {
             file_id,
             text,
-            line_index,
+            line_index: OnceLock::new(),
         }
     }
 
@@ -50,7 +49,7 @@ impl SourceText {
 
     /// Returns the line index for this source.
     pub fn line_index(&self) -> &LineIndex {
-        &self.line_index
+        self.line_index.get_or_init(|| LineIndex::new(&self.text))
     }
 
     /// Returns a UTF-8 slice for the given byte range.
@@ -61,6 +60,6 @@ impl SourceText {
 
     /// Converts a byte offset into a line/column pair.
     pub fn line_col(&self, offset: impl Into<TextSize>) -> Option<LineCol> {
-        self.line_index.line_col(offset)
+        self.line_index().line_col(offset)
     }
 }

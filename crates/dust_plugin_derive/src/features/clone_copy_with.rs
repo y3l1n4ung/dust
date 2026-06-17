@@ -1,18 +1,18 @@
 mod render;
 mod support;
 
-use std::{borrow::Cow, collections::HashSet};
+use std::borrow::Cow;
 
-use dust_dart_emit::render_template;
 use dust_diagnostics::Diagnostic;
 use dust_ir::ClassIr;
-use serde::Serialize;
 
 use crate::features::{
     COPY_WITH_SYMBOL,
     eq_hash::has_trait,
     writer::{build_constructor_call_multiline, find_clone_constructor, render_return_statement},
 };
+
+pub(crate) use self::render::CopyableTypes;
 
 use self::{
     render::render_copied_value,
@@ -22,14 +22,6 @@ use self::{
     },
 };
 
-#[derive(Serialize)]
-struct CopyWithContext<'a> {
-    name: &'a str,
-    params: String,
-    self_binding: String,
-    body: String,
-}
-
 pub(crate) fn copy_with_requires_undefined(class: &ClassIr) -> bool {
     class
         .fields
@@ -37,7 +29,10 @@ pub(crate) fn copy_with_requires_undefined(class: &ClassIr) -> bool {
         .any(|field| uses_undefined_sentinel(&field.ty))
 }
 
-pub(crate) fn emit_copy_with(class: &ClassIr, copyable_types: &HashSet<&str>) -> Option<String> {
+pub(crate) fn emit_copy_with(
+    class: &ClassIr,
+    copyable_types: &CopyableTypes<'_>,
+) -> Option<String> {
     if !has_trait(class, COPY_WITH_SYMBOL) {
         return None;
     }
@@ -83,15 +78,9 @@ pub(crate) fn emit_copy_with(class: &ClassIr, copyable_types: &HashSet<&str>) ->
         format!("{setup}\n\n{return_call}")
     };
 
-    Some(render_template(
-        "copy_with",
-        include_str!("clone_copy_with/templates/copy_with.jinja"),
-        CopyWithContext {
-            name: &class.name,
-            params,
-            self_binding,
-            body,
-        },
+    Some(format!(
+        "{} copyWith({}) {{\n{}{}\n}}",
+        class.name, params, self_binding, body
     ))
 }
 

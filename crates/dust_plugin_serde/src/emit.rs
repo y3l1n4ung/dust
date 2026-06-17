@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use dust_ir::{ClassIr, DartFileIr, EnumIr};
 use dust_plugin_api::PluginContribution;
 
@@ -18,27 +16,27 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
         .classes
         .iter()
         .filter(|class| wants_serialize(class))
-        .map(|class| class.name.clone())
-        .collect::<HashSet<_>>();
+        .map(|class| class.name.as_str())
+        .collect::<Vec<_>>();
     let serializable_enums = library
         .enums
         .iter()
         .filter(|e| wants_serialize_enum(e))
-        .map(|e| e.name.clone())
-        .collect::<HashSet<_>>();
+        .map(|e| e.name.as_str())
+        .collect::<Vec<_>>();
 
     let deserializable_classes = library
         .classes
         .iter()
         .filter(|class| wants_deserialize(class))
-        .map(|class| class.name.clone())
-        .collect::<HashSet<_>>();
+        .map(|class| class.name.as_str())
+        .collect::<Vec<_>>();
     let deserializable_enums = library
         .enums
         .iter()
         .filter(|e| wants_deserialize_enum(e))
-        .map(|e| e.name.clone())
-        .collect::<HashSet<_>>();
+        .map(|e| e.name.as_str())
+        .collect::<Vec<_>>();
 
     // Generate class-specific code.
     for class in &library.classes {

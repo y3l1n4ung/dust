@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use dust_dart_emit::render_template;
 use dust_ir::ClassIr;
 use heck::AsPascalCase;
@@ -32,8 +30,8 @@ pub(crate) fn emit_to_json_mixin(class: &ClassIr) -> String {
 
 pub(crate) fn emit_to_json_helper(
     class: &ClassIr,
-    serializable_classes: &HashSet<String>,
-    serializable_enums: &HashSet<String>,
+    serializable_classes: &[&str],
+    serializable_enums: &[&str],
 ) -> String {
     let mut lines = Vec::new();
     for field in &class.fields {
@@ -73,8 +71,8 @@ pub(crate) fn emit_to_json_helper(
 
 pub(crate) fn emit_from_json_helper(
     class: &ClassIr,
-    deserializable_classes: &HashSet<String>,
-    deserializable_enums: &HashSet<String>,
+    deserializable_classes: &[&str],
+    deserializable_enums: &[&str],
 ) -> Option<String> {
     let constructor = find_deserialize_constructor(class)?;
     let mut lines = Vec::new();
@@ -149,8 +147,8 @@ fn emit_allowed_key_validation(class: &ClassIr, lines: &mut Vec<String>) {
 fn emit_field_decode(
     class: &ClassIr,
     field: &dust_ir::FieldIr,
-    deserializable_classes: &HashSet<String>,
-    deserializable_enums: &HashSet<String>,
+    deserializable_classes: &[&str],
+    deserializable_enums: &[&str],
     lines: &mut Vec<String>,
 ) -> String {
     let serde = field.serde.as_ref();
@@ -213,8 +211,8 @@ fn emit_alias_decode(
     field: &dust_ir::FieldIr,
     primary_key: &str,
     aliases: &[String],
-    deserializable_classes: &HashSet<String>,
-    deserializable_enums: &HashSet<String>,
+    deserializable_classes: &[&str],
+    deserializable_enums: &[&str],
     lines: &mut Vec<String>,
 ) -> String {
     let raw_name = format!("raw{}", AsPascalCase(&field.name));

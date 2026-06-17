@@ -162,10 +162,11 @@ impl PluginRegistry {
         file: &DartFileIr,
         plan: &SymbolPlan,
     ) -> Vec<crate::PluginContribution> {
-        self.plugins
-            .iter()
-            .map(|plugin| plugin.plugin.emit(file, plan))
-            .collect()
+        let mut contributions = Vec::with_capacity(self.plugins.len());
+        for plugin in &self.plugins {
+            contributions.push(plugin.plugin.emit(file, plan));
+        }
+        contributions
     }
 }
 

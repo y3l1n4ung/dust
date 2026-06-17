@@ -65,6 +65,20 @@ fn type_kind_from_node(
             args: Vec::new(),
         }),
         "type_identifier" => {
+            if has_no_type_arguments_after_identifier(type_node, type_end_byte, source) {
+                let name = type_identifier_source(type_node, source)?;
+                if name == "dynamic" {
+                    return Some(ParsedTypeKind::Dynamic);
+                }
+                if is_builtin(&name) {
+                    return Some(ParsedTypeKind::Builtin(name));
+                }
+                return Some(ParsedTypeKind::Named {
+                    name,
+                    args: Vec::new(),
+                });
+            }
+
             let args_node = find_type_arguments_after(type_node, type_end_byte);
             let name = named_type_source(type_node, args_node, type_end_byte, source)?;
             if name == "dynamic" {
@@ -82,6 +96,25 @@ fn type_kind_from_node(
         }
         _ => None,
     }
+}
+
+fn has_no_type_arguments_after_identifier(
+    type_node: Node<'_>,
+    type_end_byte: usize,
+    source: &SourceText,
+) -> bool {
+    let Some(after_identifier) = source.as_str().get(type_node.end_byte()..type_end_byte) else {
+        return false;
+    };
+    matches!(after_identifier.trim(), "" | "?")
+}
+
+fn type_identifier_source(type_node: Node<'_>, source: &SourceText) -> Option<String> {
+    let source = source
+        .as_str()
+        .get(type_node.start_byte()..type_node.end_byte())?;
+    let source = source.trim();
+    (!source.is_empty()).then(|| source.to_owned())
 }
 
 fn named_type_source(

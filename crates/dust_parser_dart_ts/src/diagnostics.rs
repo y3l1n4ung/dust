@@ -15,6 +15,10 @@ fn collect_error_diagnostics(
     source: &SourceText,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
+    if !node.has_error() && !node.is_missing() {
+        return;
+    }
+
     if node.is_error() || node.is_missing() {
         diagnostics.push(
             Diagnostic::error("tree-sitter reported a Dart syntax error").with_label(
