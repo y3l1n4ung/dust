@@ -12,6 +12,7 @@ To contribute to Dust, you'll need both the Rust and Dart toolchains installed o
 - **Rust:** Latest stable version (via [rustup](https://rustup.rs/))
 - **Dart:** SDK 3.0 or later (via [dart.dev](https://dart.dev/get-dart))
 - **Flutter:** (Optional) For running mobile examples
+- **SQLite:** System SQLite library for `dust_db_sqlite3` tests.
 
 ### Initial Setup
 1. Fork and clone the repository.
@@ -72,12 +73,13 @@ cargo run -p dust_cli -- build --root examples/benchmark_project
 Before submitting a PR, ensure all checks pass:
 
 ```bash
-# Rust checks
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo test --workspace
+# Full repo gate, matching CI and the pre-commit hook
+scripts/lint.sh
+scripts/test.sh
 
-# Dart checks (example)
-cd packages/derive_annotation && flutter analyze && flutter test
+# Focused local checks while developing
+scripts/lint.sh --scope rust
+scripts/test.sh --scope packages
 ```
 
 ---

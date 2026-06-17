@@ -10,3 +10,10 @@ workspace:
   - packages/dust_db_sqlite3
   - examples/product_showcase
   - examples/benchmark_project
+
+hooks:
+  user_defines:
+    sqlite3:
+      source: system
+      name: sqlite3
+      name_windows: winsqlite3
