@@ -3,6 +3,8 @@ use std::fmt::Write;
 use dust_dart_emit::{DART_DYNAMIC, DART_OBJECT_NULLABLE, OBJECT_NULLABLE_TYPES};
 use dust_ir::{ClassIr, TypeIr};
 
+use crate::features::names::upper_first;
+
 pub(super) fn render_copy_with_params(class: &ClassIr) -> String {
     if class.fields.is_empty() {
         return "{}".to_owned();
@@ -33,14 +35,18 @@ pub(super) fn render_copy_with_params(class: &ClassIr) -> String {
     params
 }
 
-pub(super) fn render_copy_with_source_expr(field_name: &str, ty: &TypeIr) -> String {
+pub(super) fn render_copy_with_source_expr(
+    field_name: &str,
+    ty: &TypeIr,
+    self_name: &str,
+) -> String {
     if uses_option_update(ty) {
         let value_type = OBJECT_NULLABLE_TYPES.render(ty);
         format!(
-            "switch ({field_name}) {{\n  None<{value_type}>() => self.{field_name},\n  Some<{value_type}>(:final value) => value,\n}}"
+            "switch ({field_name}) {{\n  None<{value_type}>() => {self_name}.{field_name},\n  Some<{value_type}>(:final value) => value,\n}}"
         )
     } else {
-        format!("{field_name} ?? self.{field_name}")
+        format!("{field_name} ?? {self_name}.{field_name}")
     }
 }
 
@@ -86,7 +92,7 @@ pub(super) fn member_access_expr(value: &str) -> String {
 }
 
 pub(super) fn temp_name(prefix: &str, field_name: &str, suffix: &str) -> String {
-    format!("{prefix}{}{suffix}", upper_camel_suffix(field_name))
+    format!("{prefix}{}{suffix}", upper_first(field_name))
 }
 
 fn render_copy_with_param_type(ty: &TypeIr) -> String {
@@ -123,15 +129,4 @@ fn is_simple_identifier(value: &str) -> bool {
     }
 
     chars.all(|ch| ch == '_' || ch.is_ascii_alphanumeric())
-}
-
-fn upper_camel_suffix(field_name: &str) -> String {
-    let mut chars = field_name.chars();
-    let Some(first) = chars.next() else {
-        return String::new();
-    };
-
-    let mut rendered = first.to_uppercase().collect::<String>();
-    rendered.push_str(chars.as_str());
-    rendered
 }

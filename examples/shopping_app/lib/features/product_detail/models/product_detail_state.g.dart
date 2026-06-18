@@ -13,7 +13,8 @@
 
 part of 'product_detail_state.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _productDetailStateReviewsEquality = DeepCollectionEquality();
+const DeepCollectionEquality _productDetailStateRecommendationsEquality = DeepCollectionEquality();
 
 mixin _$ProductDetailState {
   @override
@@ -36,8 +37,8 @@ mixin _$ProductDetailState {
             runtimeType == other.runtimeType &&
             other.productId == self.productId &&
             other.status == self.status &&
-            _deepCollectionEquality.equals(other.reviews, self.reviews) &&
-            _deepCollectionEquality.equals(other.recommendations, self.recommendations) &&
+            _productDetailStateReviewsEquality.equals(other.reviews, self.reviews) &&
+            _productDetailStateRecommendationsEquality.equals(other.recommendations, self.recommendations) &&
             other.errorMessage == self.errorMessage;
   }
 
@@ -48,8 +49,8 @@ mixin _$ProductDetailState {
       runtimeType,
       self.productId,
       self.status,
-      _deepCollectionEquality.hash(self.reviews),
-      _deepCollectionEquality.hash(self.recommendations),
+      _productDetailStateReviewsEquality.hash(self.reviews),
+      _productDetailStateRecommendationsEquality.hash(self.recommendations),
       self.errorMessage,
     ]);
   }

@@ -13,8 +13,9 @@
 
 part of 'json_enum_bundle.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-const DeepCollectionEquality _unorderedDeepCollectionEquality = DeepCollectionEquality.unordered();
+const DeepCollectionEquality _jsonEnumBundleLevelsEquality = DeepCollectionEquality();
+const DeepCollectionEquality _jsonEnumBundleStateByRegionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _jsonEnumBundleStatesEquality = DeepCollectionEquality.unordered();
 
 mixin _$JsonEnumBundle {
   @override
@@ -37,9 +38,9 @@ mixin _$JsonEnumBundle {
             runtimeType == other.runtimeType &&
             other.primaryLevel == self.primaryLevel &&
             other.fallbackState == self.fallbackState &&
-            _deepCollectionEquality.equals(other.levels, self.levels) &&
-            _deepCollectionEquality.equals(other.stateByRegion, self.stateByRegion) &&
-            _unorderedDeepCollectionEquality.equals(other.states, self.states);
+            _jsonEnumBundleLevelsEquality.equals(other.levels, self.levels) &&
+            _jsonEnumBundleStateByRegionEquality.equals(other.stateByRegion, self.stateByRegion) &&
+            _jsonEnumBundleStatesEquality.equals(other.states, self.states);
   }
 
   @override
@@ -49,9 +50,9 @@ mixin _$JsonEnumBundle {
       runtimeType,
       self.primaryLevel,
       self.fallbackState,
-      _deepCollectionEquality.hash(self.levels),
-      _deepCollectionEquality.hash(self.stateByRegion),
-      _unorderedDeepCollectionEquality.hash(self.states),
+      _jsonEnumBundleLevelsEquality.hash(self.levels),
+      _jsonEnumBundleStateByRegionEquality.hash(self.stateByRegion),
+      _jsonEnumBundleStatesEquality.hash(self.states),
     ]);
   }
 

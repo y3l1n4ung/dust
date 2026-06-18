@@ -13,7 +13,7 @@
 
 part of 'json_account.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _jsonAccountMetricsEquality = DeepCollectionEquality();
 
 mixin _$JsonAccount {
   @override
@@ -33,7 +33,7 @@ mixin _$JsonAccount {
         other is JsonAccount &&
             runtimeType == other.runtimeType &&
             other.profile == self.profile &&
-            _deepCollectionEquality.equals(other.metrics, self.metrics) &&
+            _jsonAccountMetricsEquality.equals(other.metrics, self.metrics) &&
             other.archived == self.archived;
   }
 
@@ -43,7 +43,7 @@ mixin _$JsonAccount {
     return Object.hashAll([
       runtimeType,
       self.profile,
-      _deepCollectionEquality.hash(self.metrics),
+      _jsonAccountMetricsEquality.hash(self.metrics),
       self.archived,
     ]);
   }

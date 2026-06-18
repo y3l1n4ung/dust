@@ -57,8 +57,6 @@ fn build_writes_real_serde_outputs() {
         generated_output(
             r#"part of 'profile.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-
 mixin _$Profile {
   Map<String, Object?> toJson() => _$ProfileToJson(this as Profile);
 }
@@ -108,8 +106,6 @@ Profile _$ProfileFromJson(Map<String, Object?> json) {
         account_output,
         generated_output(
             r#"part of 'account.dart';
-
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
 
 mixin _$Account {
   Map<String, Object?> toJson() => _$AccountToJson(this as Account);

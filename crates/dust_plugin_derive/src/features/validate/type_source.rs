@@ -48,18 +48,6 @@ pub(crate) fn supports_length(ty: &TypeIr) -> bool {
         || ty.is_named(DART_MAP)
 }
 
-pub(crate) fn upper_first(value: &str) -> String {
-    let mut chars = value.chars();
-    let Some(first) = chars.next() else {
-        return String::new();
-    };
-    format!(
-        "{}{}",
-        first.to_ascii_uppercase(),
-        chars.collect::<String>()
-    )
-}
-
 fn nullable_type(source: &str, nullable: bool) -> String {
     if nullable {
         format!("{source}?")

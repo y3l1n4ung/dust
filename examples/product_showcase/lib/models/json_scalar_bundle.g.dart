@@ -13,8 +13,8 @@
 
 part of 'json_scalar_bundle.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-const DeepCollectionEquality _unorderedDeepCollectionEquality = DeepCollectionEquality.unordered();
+const DeepCollectionEquality _jsonScalarBundleEndpointsEquality = DeepCollectionEquality.unordered();
+const DeepCollectionEquality _jsonScalarBundleCheckpointsEquality = DeepCollectionEquality();
 
 mixin _$JsonScalarBundle {
   @override
@@ -40,8 +40,8 @@ mixin _$JsonScalarBundle {
             other.updatedAt == self.updatedAt &&
             other.website == self.website &&
             other.largeNumber == self.largeNumber &&
-            _unorderedDeepCollectionEquality.equals(other.endpoints, self.endpoints) &&
-            _deepCollectionEquality.equals(other.checkpoints, self.checkpoints);
+            _jsonScalarBundleEndpointsEquality.equals(other.endpoints, self.endpoints) &&
+            _jsonScalarBundleCheckpointsEquality.equals(other.checkpoints, self.checkpoints);
   }
 
   @override
@@ -53,8 +53,8 @@ mixin _$JsonScalarBundle {
       self.updatedAt,
       self.website,
       self.largeNumber,
-      _unorderedDeepCollectionEquality.hash(self.endpoints),
-      _deepCollectionEquality.hash(self.checkpoints),
+      _jsonScalarBundleEndpointsEquality.hash(self.endpoints),
+      _jsonScalarBundleCheckpointsEquality.hash(self.checkpoints),
     ]);
   }
 

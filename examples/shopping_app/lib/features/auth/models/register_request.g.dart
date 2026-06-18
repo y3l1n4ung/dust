@@ -14,126 +14,231 @@
 part of 'register_request.dart';
 
 mixin _$RegisterRequest {
+  /// Validates this `RegisterRequest`.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final result = value.validate();
+  /// if (result case Invalid(:final errors)) {
+  ///   print(errors.first.message);
+  /// }
+  /// ```
   ValidationResult validate() {
     final self = this as RegisterRequest;
     final errors = <ValidationError>[];
-    _validateRegisterRequestEmail(self.email, errors);
-    _validateRegisterRequestUsername(self.username, errors);
-    _validateRegisterRequestPassword(self.password, errors);
-    _validateRegisterRequestConfirmPassword(self, self.confirmPassword, errors);
-    _validateRegisterRequestFirstName(self.firstName, errors);
-    _validateRegisterRequestLastName(self.lastName, errors);
-    _validateRegisterRequestPhone(self.phone, errors);
+    _RegisterRequestValidation._validateEmail(self.email, errors);
+    _RegisterRequestValidation._validateUsername(self.username, errors);
+    _RegisterRequestValidation._validatePassword(self.password, errors);
+    _RegisterRequestValidation._validateConfirmPassword(self, self.confirmPassword, errors);
+    _RegisterRequestValidation._validateFirstName(self.firstName, errors);
+    _RegisterRequestValidation._validateLastName(self.lastName, errors);
+    _RegisterRequestValidation._validatePhone(self.phone, errors);
     return errors.isEmpty ? const Valid() : Invalid(errors);
   }
 
+  /// Throws [ValidationException] when this `RegisterRequest` is invalid.
+  ///
+  /// Usage:
+  /// ```dart
+  /// value.validateOrThrow();
+  /// ```
   void validateOrThrow() {
     final result = validate();
-    if (result case Invalid(:final errors)) {
+    if (result case Invalid(errors: final errors)) {
       throw ValidationException(errors);
     }
   }
 }
 
-void _validateRegisterRequestEmail(String email, List<ValidationError> errors) {
-  if (email.length < 1) {
-    errors.add(ValidationError(field: 'email', message: 'Please enter email'));
-  }
-  if (!ValidationHelper.isEmail(email)) {
-    errors.add(ValidationError(field: 'email', message: 'Please enter a valid email'));
-  }
-}
-
+/// TextFormField validator for `RegisterRequest.email`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateRegisterRequestEmailInput,
+/// )
+/// ```
 String? validateRegisterRequestEmailInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateRegisterRequestEmail(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _RegisterRequestValidation.validateEmailInput(value);
 }
 
-void _validateRegisterRequestUsername(String username, List<ValidationError> errors) {
-  if (username.length < 1) {
-    errors.add(ValidationError(field: 'username', message: 'Please enter username'));
-  }
-  if (username.length < 3) {
-    errors.add(ValidationError(field: 'username', message: 'Username must be at least 3 characters'));
-  }
-}
-
+/// TextFormField validator for `RegisterRequest.username`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateRegisterRequestUsernameInput,
+/// )
+/// ```
 String? validateRegisterRequestUsernameInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateRegisterRequestUsername(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _RegisterRequestValidation.validateUsernameInput(value);
 }
 
-void _validateRegisterRequestPassword(String password, List<ValidationError> errors) {
-  if (password.length < 1) {
-    errors.add(ValidationError(field: 'password', message: 'Please enter password'));
-  }
-  if (password.length < 6) {
-    errors.add(ValidationError(field: 'password', message: 'Password must be at least 6 characters'));
-  }
-}
-
+/// TextFormField validator for `RegisterRequest.password`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateRegisterRequestPasswordInput,
+/// )
+/// ```
 String? validateRegisterRequestPasswordInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateRegisterRequestPassword(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _RegisterRequestValidation.validatePasswordInput(value);
 }
 
-void _validateRegisterRequestConfirmPassword(
-  RegisterRequest self,
-  String confirmPassword,
-  List<ValidationError> errors,
-) {
-  if (confirmPassword.length < 1) {
-    errors.add(ValidationError(field: 'confirmPassword', message: 'Please confirm password'));
-  }
-  if (confirmPassword != self.password) {
-    errors.add(ValidationError(field: 'confirmPassword', message: 'Passwords do not match'));
-  }
-}
-
+/// TextFormField validator for `RegisterRequest.confirmPassword`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: (value) => validateRegisterRequestConfirmPasswordInput(self, value),
+/// )
+/// ```
 String? validateRegisterRequestConfirmPasswordInput(
   RegisterRequest self,
   String? value,
 ) {
-  final errors = <ValidationError>[];
-  _validateRegisterRequestConfirmPassword(self, value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _RegisterRequestValidation.validateConfirmPasswordInput(self, value);
 }
 
-void _validateRegisterRequestFirstName(String firstName, List<ValidationError> errors) {
-  if (firstName.length < 1) {
-    errors.add(ValidationError(field: 'firstName', message: 'Required'));
-  }
-}
-
+/// TextFormField validator for `RegisterRequest.firstName`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateRegisterRequestFirstNameInput,
+/// )
+/// ```
 String? validateRegisterRequestFirstNameInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateRegisterRequestFirstName(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _RegisterRequestValidation.validateFirstNameInput(value);
 }
 
-void _validateRegisterRequestLastName(String lastName, List<ValidationError> errors) {
-  if (lastName.length < 1) {
-    errors.add(ValidationError(field: 'lastName', message: 'Required'));
-  }
-}
-
+/// TextFormField validator for `RegisterRequest.lastName`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateRegisterRequestLastNameInput,
+/// )
+/// ```
 String? validateRegisterRequestLastNameInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateRegisterRequestLastName(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _RegisterRequestValidation.validateLastNameInput(value);
 }
 
-void _validateRegisterRequestPhone(String phone, List<ValidationError> errors) {
-  if (phone.length < 1) {
-    errors.add(ValidationError(field: 'phone', message: 'Please enter phone number'));
-  }
-}
-
+/// TextFormField validator for `RegisterRequest.phone`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateRegisterRequestPhoneInput,
+/// )
+/// ```
 String? validateRegisterRequestPhoneInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateRegisterRequestPhone(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _RegisterRequestValidation.validatePhoneInput(value);
+}
+
+extension _RegisterRequestValidation on RegisterRequest {
+  static void _validateEmail(String email, List<ValidationError> errors) {
+    if (email.length < 1) {
+      errors.add(ValidationError(field: 'email', message: 'Please enter email'));
+    }
+    if (!ValidationHelper.isEmail(email)) {
+      errors.add(ValidationError(field: 'email', message: 'Please enter a valid email'));
+    }
+  }
+
+  static String? validateEmailInput(String? value) {
+    final errors = <ValidationError>[];
+    _validateEmail(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validateUsername(String username, List<ValidationError> errors) {
+    if (username.length < 1) {
+      errors.add(ValidationError(field: 'username', message: 'Please enter username'));
+    }
+    if (username.length < 3) {
+      errors.add(ValidationError(field: 'username', message: 'Username must be at least 3 characters'));
+    }
+  }
+
+  static String? validateUsernameInput(String? value) {
+    final errors = <ValidationError>[];
+    _validateUsername(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validatePassword(String password, List<ValidationError> errors) {
+    if (password.length < 1) {
+      errors.add(ValidationError(field: 'password', message: 'Please enter password'));
+    }
+    if (password.length < 6) {
+      errors.add(ValidationError(field: 'password', message: 'Password must be at least 6 characters'));
+    }
+  }
+
+  static String? validatePasswordInput(String? value) {
+    final errors = <ValidationError>[];
+    _validatePassword(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validateConfirmPassword(
+    RegisterRequest self,
+    String confirmPassword,
+    List<ValidationError> errors,
+  ) {
+    if (confirmPassword.length < 1) {
+      errors.add(ValidationError(field: 'confirmPassword', message: 'Please confirm password'));
+    }
+    if (confirmPassword != self.password) {
+      errors.add(ValidationError(field: 'confirmPassword', message: 'Passwords do not match'));
+    }
+  }
+
+  static String? validateConfirmPasswordInput(
+    RegisterRequest self,
+    String? value,
+  ) {
+    final errors = <ValidationError>[];
+    _validateConfirmPassword(self, value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validateFirstName(String firstName, List<ValidationError> errors) {
+    if (firstName.length < 1) {
+      errors.add(ValidationError(field: 'firstName', message: 'Required'));
+    }
+  }
+
+  static String? validateFirstNameInput(String? value) {
+    final errors = <ValidationError>[];
+    _validateFirstName(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validateLastName(String lastName, List<ValidationError> errors) {
+    if (lastName.length < 1) {
+      errors.add(ValidationError(field: 'lastName', message: 'Required'));
+    }
+  }
+
+  static String? validateLastNameInput(String? value) {
+    final errors = <ValidationError>[];
+    _validateLastName(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validatePhone(String phone, List<ValidationError> errors) {
+    if (phone.length < 1) {
+      errors.add(ValidationError(field: 'phone', message: 'Please enter phone number'));
+    }
+  }
+
+  static String? validatePhoneInput(String? value) {
+    final errors = <ValidationError>[];
+    _validatePhone(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
 }

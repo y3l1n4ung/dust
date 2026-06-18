@@ -13,7 +13,7 @@
 
 part of 'cart_state.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _cartStateItemsEquality = DeepCollectionEquality();
 
 mixin _$CartNotification {
   @override
@@ -62,7 +62,7 @@ mixin _$CartState {
     return identical(this, other) ||
         other is CartState &&
             runtimeType == other.runtimeType &&
-            _deepCollectionEquality.equals(other.items, self.items) &&
+            _cartStateItemsEquality.equals(other.items, self.items) &&
             other.notification == self.notification;
   }
 
@@ -71,7 +71,7 @@ mixin _$CartState {
     final self = this as CartState;
     return Object.hashAll([
       runtimeType,
-      _deepCollectionEquality.hash(self.items),
+      _cartStateItemsEquality.hash(self.items),
       self.notification,
     ]);
   }

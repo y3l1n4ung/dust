@@ -1,9 +1,10 @@
-use dust_ir::{LibraryIr, TypeIr};
+use dust_ir::{FunctionIr, LibraryIr, NameIr, TypeIr};
 use dust_plugin_api::{DustPlugin, SymbolPlan};
 use dust_plugin_derive::register_plugin;
 
 use crate::{
     support::members_for_class,
+    support::span,
     validate_support::{class, field, library, validate},
 };
 
@@ -15,19 +16,34 @@ fn emits_validate_for_string_number_and_matching_fields() {
 
     assert_eq!(
         members,
-        [r#"ValidationResult validate() {
+        [r#"/// Validates this `SignupRequest`.
+///
+/// Usage:
+/// ```dart
+/// final result = value.validate();
+/// if (result case Invalid(:final errors)) {
+///   print(errors.first.message);
+/// }
+/// ```
+ValidationResult validate() {
   final self = this as SignupRequest;
   final errors = <ValidationError>[];
-  _validateSignupRequestEmail(self.email, errors);
-  _validateSignupRequestAge(self.age, errors);
-  _validateSignupRequestPassword(self.password, errors);
-  _validateSignupRequestConfirmPassword(self, self.confirmPassword, errors);
+  _SignupRequestValidation._validateEmail(self.email, errors);
+  _SignupRequestValidation._validateAge(self.age, errors);
+  _SignupRequestValidation._validatePassword(self.password, errors);
+  _SignupRequestValidation._validateConfirmPassword(self, self.confirmPassword, errors);
   return errors.isEmpty ? const Valid() : Invalid(errors);
 }
 
+/// Throws [ValidationException] when this `SignupRequest` is invalid.
+///
+/// Usage:
+/// ```dart
+/// value.validateOrThrow();
+/// ```
 void validateOrThrow() {
   final result = validate();
-  if (result case Invalid(:final errors)) {
+  if (result case Invalid(errors: final errors)) {
     throw ValidationException(errors);
   }
 }"#
@@ -37,75 +53,153 @@ void validateOrThrow() {
 
     assert_eq!(
         contribution.support_types,
-        [
-            r#"void _validateSignupRequestEmail(String email, List<ValidationError> errors) {
-  if (!ValidationHelper.isEmail(email)) {
-    errors.add(ValidationError(field: 'email', message: 'Invalid email'));
-  }
-}
-
+        [r#"/// TextFormField validator for `SignupRequest.email`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateSignupRequestEmailInput,
+/// )
+/// ```
 String? validateSignupRequestEmailInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateSignupRequestEmail(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _SignupRequestValidation.validateEmailInput(value);
 }
 
-void _validateSignupRequestAge(int age, List<ValidationError> errors) {
-  if (age < 18) {
-    errors.add(ValidationError(field: 'age', message: 'Too small'));
-  }
-  if (age > 120) {
-    errors.add(ValidationError(field: 'age', message: 'Too large'));
-  }
-}
-
+/// TextFormField validator for `SignupRequest.age`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateSignupRequestAgeInput,
+/// )
+/// ```
 String? validateSignupRequestAgeInput(String? value) {
-  final errors = <ValidationError>[];
-  final age = int.tryParse(value ?? '');
-  if (age == null) {
-    errors.add(ValidationError(field: 'age', message: 'Invalid number'));
-  } else {
-    _validateSignupRequestAge(age, errors);
-  }
-  return errors.isEmpty ? null : errors.first.message;
+  return _SignupRequestValidation.validateAgeInput(value);
 }
 
-void _validateSignupRequestPassword(String password, List<ValidationError> errors) {
-  if (password.length < 8) {
-    errors.add(ValidationError(field: 'password', message: 'At least 8 characters'));
-  }
-  if (!RegExp('^(?=.*[A-Z]).+\$').hasMatch(password)) {
-    errors.add(ValidationError(field: 'password', message: 'Need uppercase'));
-  }
-}
-
+/// TextFormField validator for `SignupRequest.password`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateSignupRequestPasswordInput,
+/// )
+/// ```
 String? validateSignupRequestPasswordInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateSignupRequestPassword(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _SignupRequestValidation.validatePasswordInput(value);
 }
 
-void _validateSignupRequestConfirmPassword(
-  SignupRequest self,
-  String confirmPassword,
-  List<ValidationError> errors,
-) {
-  if (confirmPassword != self.password) {
-    errors.add(ValidationError(field: 'confirmPassword', message: 'Fields do not match'));
-  }
-}
-
+/// TextFormField validator for `SignupRequest.confirmPassword`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: (value) => validateSignupRequestConfirmPasswordInput(self, value),
+/// )
+/// ```
 String? validateSignupRequestConfirmPasswordInput(
   SignupRequest self,
   String? value,
 ) {
-  final errors = <ValidationError>[];
-  _validateSignupRequestConfirmPassword(self, value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _SignupRequestValidation.validateConfirmPasswordInput(self, value);
+}
+
+extension _SignupRequestValidation on SignupRequest {
+  static void _validateEmail(String email, List<ValidationError> errors) {
+    if (!ValidationHelper.isEmail(email)) {
+      errors.add(ValidationError(field: 'email', message: 'Invalid email'));
+    }
+  }
+
+  static String? validateEmailInput(String? value) {
+    final errors = <ValidationError>[];
+    _validateEmail(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validateAge(int age, List<ValidationError> errors) {
+    if (age < 18) {
+      errors.add(ValidationError(field: 'age', message: 'Too small'));
+    }
+    if (age > 120) {
+      errors.add(ValidationError(field: 'age', message: 'Too large'));
+    }
+  }
+
+  static String? validateAgeInput(String? value) {
+    final errors = <ValidationError>[];
+    final age = int.tryParse(value ?? '');
+    if (age == null) {
+      errors.add(ValidationError(field: 'age', message: 'Invalid number'));
+    } else {
+      _validateAge(age, errors);
+    }
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validatePassword(String password, List<ValidationError> errors) {
+    if (password.length < 8) {
+      errors.add(ValidationError(field: 'password', message: 'At least 8 characters'));
+    }
+    if (!RegExp('^(?=.*[A-Z]).+\$').hasMatch(password)) {
+      errors.add(ValidationError(field: 'password', message: 'Need uppercase'));
+    }
+  }
+
+  static String? validatePasswordInput(String? value) {
+    final errors = <ValidationError>[];
+    _validatePassword(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validateConfirmPassword(
+    SignupRequest self,
+    String confirmPassword,
+    List<ValidationError> errors,
+  ) {
+    if (confirmPassword != self.password) {
+      errors.add(ValidationError(field: 'confirmPassword', message: 'Fields do not match'));
+    }
+  }
+
+  static String? validateConfirmPasswordInput(
+    SignupRequest self,
+    String? value,
+  ) {
+    final errors = <ValidationError>[];
+    _validateConfirmPassword(self, value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
 }"#
-            .to_owned()
-        ]
+        .to_owned()]
         .as_slice()
+    );
+}
+
+#[test]
+fn rejects_public_validator_name_collisions() {
+    let plugin = register_plugin();
+    let mut library = validation_library();
+    library.functions.push(FunctionIr {
+        name: name("validateSignupRequestEmailInput"),
+        return_type: TypeIr::named("String").nullable(),
+        params: Vec::new(),
+        annotations: Vec::new(),
+        span: span(90, 120),
+    });
+
+    let diagnostics = plugin.validate(&library);
+    let messages = diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.message.as_str())
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        messages,
+        vec![
+            "generated validator `validateSignupRequestEmailInput` for `SignupRequest.email` conflicts with an existing top-level declaration",
+        ]
     );
 }
 
@@ -117,18 +211,33 @@ fn emits_nullable_nested_custom_and_class_validation() {
 
     assert_eq!(
         members,
-        [r#"ValidationResult validate() {
+        [r#"/// Validates this `Profile`.
+///
+/// Usage:
+/// ```dart
+/// final result = value.validate();
+/// if (result case Invalid(:final errors)) {
+///   print(errors.first.message);
+/// }
+/// ```
+ValidationResult validate() {
   final self = this as Profile;
   final errors = <ValidationError>[];
-  _validateProfileBio(self.bio, errors);
-  _validateProfileAddress(self.address, errors);
-  _validateProfilePhone(self.phone, errors);
+  _ProfileValidation._validateBio(self.bio, errors);
+  _ProfileValidation._validateAddress(self.address, errors);
+  _ProfileValidation._validatePhone(self.phone, errors);
   return errors.isEmpty ? const Valid() : Invalid(errors);
 }
 
+/// Throws [ValidationException] when this `Profile` is invalid.
+///
+/// Usage:
+/// ```dart
+/// value.validateOrThrow();
+/// ```
 void validateOrThrow() {
   final result = validate();
-  if (result case Invalid(:final errors)) {
+  if (result case Invalid(errors: final errors)) {
     throw ValidationException(errors);
   }
 }"#
@@ -139,52 +248,94 @@ void validateOrThrow() {
     assert_eq!(
         contribution.support_types,
         [
-            r#"void _validateAddressZip(String zip, List<ValidationError> errors) {
-  if (zip.length != 5) {
-    errors.add(ValidationError(field: 'zip', message: 'Invalid length'));
-  }
+            r#"/// TextFormField validator for `Address.zip`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateAddressZipInput,
+/// )
+/// ```
+String? validateAddressZipInput(String? value) {
+  return _AddressValidation.validateZipInput(value);
 }
 
-String? validateAddressZipInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateAddressZip(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+extension _AddressValidation on Address {
+  static void _validateZip(String zip, List<ValidationError> errors) {
+    if (zip.length != 5) {
+      errors.add(ValidationError(field: 'zip', message: 'Invalid length'));
+    }
+  }
+
+  static String? validateZipInput(String? value) {
+    final errors = <ValidationError>[];
+    _validateZip(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
 }"#
             .to_owned(),
-            r#"void _validateProfileBio(String? bio, List<ValidationError> errors) {
-  if (bio != null) {
-    if (bio.length > 200) {
-      errors.add(ValidationError(field: 'bio', message: 'Too long'));
-    }
-  }
-}
-
+            r#"/// TextFormField validator for `Profile.bio`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateProfileBioInput,
+/// )
+/// ```
 String? validateProfileBioInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateProfileBio(value, errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _ProfileValidation.validateBioInput(value);
 }
 
-void _validateProfileAddress(Address address, List<ValidationError> errors) {
-  final addressValidation = address.validate();
-  if (addressValidation case Invalid(errors: final nestedErrors)) {
-    for (final error in nestedErrors) {
-      errors.add(ValidationError(field: 'address.${error.field}', message: error.message));
+/// TextFormField validator for `Profile.phone`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateProfilePhoneInput,
+/// )
+/// ```
+String? validateProfilePhoneInput(String? value) {
+  return _ProfileValidation.validatePhoneInput(value);
+}
+
+extension _ProfileValidation on Profile {
+  static void _validateBio(String? bio, List<ValidationError> errors) {
+    if (bio != null) {
+      if (bio.length > 200) {
+        errors.add(ValidationError(field: 'bio', message: 'Too long'));
+      }
     }
   }
-}
 
-void _validateProfilePhone(String phone, List<ValidationError> errors) {
-  final phoneCustomError = Profile.checkPhone(phone);
-  if (phoneCustomError != null) {
-    errors.add(phoneCustomError);
+  static String? validateBioInput(String? value) {
+    final errors = <ValidationError>[];
+    _validateBio(value, errors);
+    return errors.isEmpty ? null : errors.first.message;
   }
-}
 
-String? validateProfilePhoneInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateProfilePhone(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  static void _validateAddress(Address address, List<ValidationError> errors) {
+    final addressValidation = address.validate();
+    if (addressValidation case Invalid(errors: final nestedErrors)) {
+      for (final error in nestedErrors) {
+        errors.add(ValidationError(field: 'address.${error.field}', message: error.message));
+      }
+    }
+  }
+
+  static void _validatePhone(String phone, List<ValidationError> errors) {
+    final phoneCustomError = Profile.checkPhone(phone);
+    if (phoneCustomError != null) {
+      errors.add(phoneCustomError);
+    }
+  }
+
+  static String? validatePhoneInput(String? value) {
+    final errors = <ValidationError>[];
+    _validatePhone(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
 }"#
             .to_owned(),
         ]
@@ -245,4 +396,13 @@ fn nested_library() -> LibraryIr {
         ),
     ];
     library(vec![address, profile])
+}
+
+fn name(source: &str) -> NameIr {
+    NameIr {
+        source: source.to_owned(),
+        short: source.to_owned(),
+        prefix: None,
+        span: span(0, source.len() as u32),
+    }
 }

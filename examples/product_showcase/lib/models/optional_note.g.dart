@@ -13,7 +13,7 @@
 
 part of 'optional_note.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _optionalNoteAliasesEquality = DeepCollectionEquality();
 
 mixin _$OptionalNote {
   @override
@@ -34,7 +34,7 @@ mixin _$OptionalNote {
             runtimeType == other.runtimeType &&
             other.id == self.id &&
             other.note == self.note &&
-            _deepCollectionEquality.equals(other.aliases, self.aliases);
+            _optionalNoteAliasesEquality.equals(other.aliases, self.aliases);
   }
 
   @override
@@ -44,7 +44,7 @@ mixin _$OptionalNote {
       runtimeType,
       self.id,
       self.note,
-      _deepCollectionEquality.hash(self.aliases),
+      _optionalNoteAliasesEquality.hash(self.aliases),
     ]);
   }
 

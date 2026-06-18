@@ -1,61 +1,83 @@
 {%- for field in fields %}
-{{ field.helper_signature }} {
+{%- if field.can_validate_input %}
+/// TextFormField validator for `{{ class_name }}.{{ field.name }}`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+{%- if field.uses_self %}
+///   validator: (value) => {{ field.public_input_helper_name }}(self, value),
+{%- else %}
+///   validator: {{ field.public_input_helper_name }},
+{%- endif %}
+/// )
+/// ```
+{{ field.public_input_signature }} {
+  return {{ extension_name }}.{{ field.input_helper_name }}({% if field.uses_self %}self, {% endif %}value);
+}
+
+{% endif %}
+{% endfor %}
+extension {{ extension_name }} on {{ class_name }} {
+{%- for field in fields %}
+  {{ field.helper_signature }} {
 {%- for config in field.configs %}
 {%- if config.nullable %}
 {%- if config.required_message %}
-  if ({{ field.name }} == null) {
-    errors.add(ValidationError(field: {{ field.literal }}, message: {{ config.required_message }}));
-  } else {
+    if ({{ field.value_name }} == null) {
+      {{ field.errors_name }}.add(ValidationError(field: {{ field.literal }}, message: {{ config.required_message }}));
+    } else {
 {%- for rule in config.rules %}
-{{ rule_line(field, rule, "    ") }}
+{{ rule_line(field, rule, "      ") }}
 {%- endfor %}
-  }
+    }
 {%- else %}
-  if ({{ field.name }} != null) {
+    if ({{ field.value_name }} != null) {
 {%- for rule in config.rules %}
-{{ rule_line(field, rule, "    ") }}
+{{ rule_line(field, rule, "      ") }}
 {%- endfor %}
-  }
+    }
 {%- endif %}
 {%- else %}
 {%- for rule in config.rules %}
-{{ rule_line(field, rule, "  ") }}
+{{ rule_line(field, rule, "    ") }}
 {%- endfor %}
 {%- endif %}
 {%- endfor %}
-}
+  }
 {%- if field.can_validate_input %}
 
-{{ field.input_signature }} {
-  final errors = <ValidationError>[];
+  {{ field.input_signature }} {
+    final {{ field.errors_name }} = <ValidationError>[];
 {%- if field.input_kind == "string" %}
 {%- if field.nullable %}
-  {{ field.helper_name }}({% if field.uses_self %}self, {% endif %}value, errors);
+    {{ field.helper_name }}({% if field.uses_self %}{{ field.self_name }}, {% endif %}value, {{ field.errors_name }});
 {%- else %}
-  {{ field.helper_name }}({% if field.uses_self %}self, {% endif %}value ?? '', errors);
+    {{ field.helper_name }}({% if field.uses_self %}{{ field.self_name }}, {% endif %}value ?? '', {{ field.errors_name }});
 {%- endif %}
 {%- else %}
 {%- if field.nullable %}
-  if (value == null || value.isEmpty) {
-    {{ field.helper_name }}({% if field.uses_self %}self, {% endif %}null, errors);
-  } else {
-    final {{ field.name }} = {{ field.input_kind }}.tryParse(value);
-    if ({{ field.name }} == null) {
-      errors.add(ValidationError(field: {{ field.literal }}, message: {{ field.parse_error_message }}));
+    if (value == null || value.isEmpty) {
+      {{ field.helper_name }}({% if field.uses_self %}{{ field.self_name }}, {% endif %}null, {{ field.errors_name }});
     } else {
-      {{ field.helper_name }}({% if field.uses_self %}self, {% endif %}{{ field.name }}, errors);
+      final {{ field.parsed_name }} = {{ field.input_kind }}.tryParse(value);
+      if ({{ field.parsed_name }} == null) {
+        {{ field.errors_name }}.add(ValidationError(field: {{ field.literal }}, message: {{ field.parse_error_message }}));
+      } else {
+        {{ field.helper_name }}({% if field.uses_self %}{{ field.self_name }}, {% endif %}{{ field.parsed_name }}, {{ field.errors_name }});
+      }
     }
-  }
 {%- else %}
-  final {{ field.name }} = {{ field.input_kind }}.tryParse(value ?? '');
-  if ({{ field.name }} == null) {
-    errors.add(ValidationError(field: {{ field.literal }}, message: {{ field.parse_error_message }}));
-  } else {
-    {{ field.helper_name }}({% if field.uses_self %}self, {% endif %}{{ field.name }}, errors);
+    final {{ field.parsed_name }} = {{ field.input_kind }}.tryParse(value ?? '');
+    if ({{ field.parsed_name }} == null) {
+      {{ field.errors_name }}.add(ValidationError(field: {{ field.literal }}, message: {{ field.parse_error_message }}));
+    } else {
+      {{ field.helper_name }}({% if field.uses_self %}{{ field.self_name }}, {% endif %}{{ field.parsed_name }}, {{ field.errors_name }});
+    }
+{%- endif %}
+{%- endif %}
+    return {{ field.errors_name }}.isEmpty ? null : {{ field.errors_name }}.first.message;
   }
-{%- endif %}
-{%- endif %}
-  return errors.isEmpty ? null : errors.first.message;
-}
 {%- endif %}
 {% endfor %}
+}

@@ -13,7 +13,7 @@
 
 part of 'wishlist_state.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _wishlistStateItemsEquality = DeepCollectionEquality();
 
 mixin _$WishlistState {
   @override
@@ -31,7 +31,7 @@ mixin _$WishlistState {
     return identical(this, other) ||
         other is WishlistState &&
             runtimeType == other.runtimeType &&
-            _deepCollectionEquality.equals(other.items, self.items) &&
+            _wishlistStateItemsEquality.equals(other.items, self.items) &&
             other.isLoading == self.isLoading;
   }
 
@@ -40,7 +40,7 @@ mixin _$WishlistState {
     final self = this as WishlistState;
     return Object.hashAll([
       runtimeType,
-      _deepCollectionEquality.hash(self.items),
+      _wishlistStateItemsEquality.hash(self.items),
       self.isLoading,
     ]);
   }

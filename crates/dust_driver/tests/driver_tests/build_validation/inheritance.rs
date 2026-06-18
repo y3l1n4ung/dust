@@ -45,7 +45,7 @@ fn build_includes_inherited_fields_for_annotated_subclasses() {
         generated_output(
             r#"part of 'entity.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _detailedEntityTagsEquality = DeepCollectionEquality();
 
 mixin _$Entity {
   @override
@@ -94,7 +94,7 @@ mixin _$DetailedEntity {
             runtimeType == other.runtimeType &&
             other.id == self.id &&
             other.label == self.label &&
-            _deepCollectionEquality.equals(other.tags, self.tags);
+            _detailedEntityTagsEquality.equals(other.tags, self.tags);
   }
 
   @override
@@ -104,7 +104,7 @@ mixin _$DetailedEntity {
       runtimeType,
       self.id,
       self.label,
-      _deepCollectionEquality.hash(self.tags),
+      _detailedEntityTagsEquality.hash(self.tags),
     ]);
   }
 

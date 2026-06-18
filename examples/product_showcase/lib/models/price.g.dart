@@ -13,7 +13,7 @@
 
 part of 'price.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _priceTagsEquality = DeepCollectionEquality();
 
 mixin _$Price {
   @override
@@ -34,7 +34,7 @@ mixin _$Price {
             runtimeType == other.runtimeType &&
             other.currency == self.currency &&
             other.cents == self.cents &&
-            _deepCollectionEquality.equals(other.tags, self.tags);
+            _priceTagsEquality.equals(other.tags, self.tags);
   }
 
   @override
@@ -44,7 +44,7 @@ mixin _$Price {
       runtimeType,
       self.currency,
       self.cents,
-      _deepCollectionEquality.hash(self.tags),
+      _priceTagsEquality.hash(self.tags),
     ]);
   }
 

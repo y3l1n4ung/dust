@@ -142,6 +142,34 @@ fn production_code_uses_canonical_file_model_names() {
 }
 
 #[test]
+fn derive_generator_sources_are_in_cache_fingerprint() {
+    let root = workspace_root();
+    let derive_src = root.join("crates/dust_plugin_derive/src");
+    let tool_hash_source =
+        fs::read_to_string(root.join("crates/dust_driver/src/build/support/tool_hash.rs"))
+            .expect("tool hash source should be readable");
+    let mut missing = Vec::new();
+
+    for path in collect_files(&derive_src) {
+        let relative = path
+            .strip_prefix(&derive_src)
+            .expect("collected path must be inside derive src")
+            .to_string_lossy()
+            .replace('\\', "/");
+        let fingerprint_path = format!("../../../../dust_plugin_derive/src/{relative}");
+        if !tool_hash_source.contains(&fingerprint_path) {
+            missing.push(fingerprint_path);
+        }
+    }
+
+    assert!(
+        missing.is_empty(),
+        "derive generator source files must be part of the Dust cache fingerprint:\n{}",
+        missing.join("\n")
+    );
+}
+
+#[test]
 fn db_query_discovery_uses_tree_sitter_nodes() {
     let root = workspace_root();
     let mut violations = Vec::new();
@@ -384,6 +412,24 @@ fn scan_dir(dir: &Path, patterns: &[&str], violations: &mut Vec<String>) {
         }
         scan_file(&path, patterns, violations);
     }
+}
+
+fn collect_files(dir: &Path) -> Vec<std::path::PathBuf> {
+    let mut files = Vec::new();
+    let Ok(entries) = fs::read_dir(dir) else {
+        return files;
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            files.extend(collect_files(&path));
+        } else {
+            files.push(path);
+        }
+    }
+    files.sort();
+    files
 }
 
 fn scan_dir_with_exclusions(

@@ -13,7 +13,7 @@
 
 part of 'category.dart';
 
-const DeepCollectionEquality _unorderedDeepCollectionEquality = DeepCollectionEquality.unordered();
+const DeepCollectionEquality _categoryLabelsEquality = DeepCollectionEquality.unordered();
 
 mixin _$Category {
   @override
@@ -34,7 +34,7 @@ mixin _$Category {
             runtimeType == other.runtimeType &&
             other.id == self.id &&
             other.title == self.title &&
-            _unorderedDeepCollectionEquality.equals(other.labels, self.labels);
+            _categoryLabelsEquality.equals(other.labels, self.labels);
   }
 
   @override
@@ -44,7 +44,7 @@ mixin _$Category {
       runtimeType,
       self.id,
       self.title,
-      _unorderedDeepCollectionEquality.hash(self.labels),
+      _categoryLabelsEquality.hash(self.labels),
     ]);
   }
 

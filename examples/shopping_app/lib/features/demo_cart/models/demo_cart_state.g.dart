@@ -13,7 +13,7 @@
 
 part of 'demo_cart_state.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _demoCartStateCartsEquality = DeepCollectionEquality();
 
 mixin _$DemoCartState {
   @override
@@ -33,7 +33,7 @@ mixin _$DemoCartState {
         other is DemoCartState &&
             runtimeType == other.runtimeType &&
             other.status == self.status &&
-            _deepCollectionEquality.equals(other.carts, self.carts) &&
+            _demoCartStateCartsEquality.equals(other.carts, self.carts) &&
             other.errorMessage == self.errorMessage;
   }
 
@@ -43,7 +43,7 @@ mixin _$DemoCartState {
     return Object.hashAll([
       runtimeType,
       self.status,
-      _deepCollectionEquality.hash(self.carts),
+      _demoCartStateCartsEquality.hash(self.carts),
       self.errorMessage,
     ]);
   }

@@ -6,6 +6,7 @@ use dust_dart_emit::{
 use dust_ir::{BuiltinType, TypeIr};
 
 use super::support::{member_access_expr, non_null_value_expr};
+use crate::features::names::NameAllocator;
 
 pub(crate) struct CopyableTypes<'a> {
     local: &'a [&'a str],
@@ -32,6 +33,7 @@ pub(super) fn render_copied_value<'a>(
     value: &'a str,
     depth: usize,
     copyable_types: &CopyableTypes<'_>,
+    names: &mut NameAllocator,
 ) -> Cow<'a, str> {
     match ty {
         TypeIr::Named {
@@ -45,6 +47,7 @@ pub(super) fn render_copied_value<'a>(
             value,
             depth,
             copyable_types,
+            names,
         )),
         TypeIr::Named {
             name,
@@ -57,6 +60,7 @@ pub(super) fn render_copied_value<'a>(
             value,
             depth,
             copyable_types,
+            names,
         )),
         TypeIr::Named {
             name,
@@ -68,6 +72,7 @@ pub(super) fn render_copied_value<'a>(
             value,
             depth,
             copyable_types,
+            names,
         )),
         TypeIr::Named {
             name,
@@ -80,6 +85,7 @@ pub(super) fn render_copied_value<'a>(
             value,
             depth,
             copyable_types,
+            names,
         )),
         TypeIr::Named { name, nullable, .. } if copyable_types.contains(name.as_ref()) => {
             Cow::Owned(render_named_copy(*nullable, value))
@@ -104,6 +110,7 @@ fn render_sequence_copy(
     value: &str,
     depth: usize,
     copyable_types: &CopyableTypes<'_>,
+    names: &mut NameAllocator,
 ) -> String {
     let item_ty = args.first();
     let item_rendered = item_ty
@@ -114,16 +121,25 @@ fn render_sequence_copy(
     } else {
         value.to_owned()
     };
-    let item_binding = format!("item_{depth}");
     let mapped_value = if let Some(item_ty) = item_ty {
-        let copied_item = render_copied_value(item_ty, &item_binding, depth + 1, copyable_types);
+        let mut tentative_names = names.clone();
+        let item_binding = tentative_names.allocate(format!("item_{depth}"));
+        let copied_item = render_copied_value(
+            item_ty,
+            &item_binding,
+            depth + 1,
+            copyable_types,
+            &mut tentative_names,
+        );
         if copied_item == item_binding {
             Cow::Borrowed(source_value.as_str())
         } else {
-            Cow::Owned(format!(
+            let mapped = format!(
                 "{}.map(({item_binding}) => {copied_item})",
                 member_access_expr(&source_value)
-            ))
+            );
+            *names = tentative_names;
+            Cow::Owned(mapped)
         }
     } else {
         Cow::Borrowed(source_value.as_str())
@@ -144,6 +160,7 @@ fn render_map_copy(
     value: &str,
     depth: usize,
     copyable_types: &CopyableTypes<'_>,
+    names: &mut NameAllocator,
 ) -> String {
     let key_ty = args.first();
     let value_ty = args.get(1);
@@ -158,23 +175,42 @@ fn render_map_copy(
     } else {
         value.to_owned()
     };
-    let entry_binding = format!("entry_{depth}");
+    let mut tentative_names = names.clone();
+    let entry_binding = tentative_names.allocate(format!("entry_{depth}"));
     let key_binding = format!("{entry_binding}.key");
     let value_binding = format!("{entry_binding}.value");
     let key_expr = key_ty
-        .map(|ty| render_copied_value(ty, &key_binding, depth + 1, copyable_types))
+        .map(|ty| {
+            render_copied_value(
+                ty,
+                &key_binding,
+                depth + 1,
+                copyable_types,
+                &mut tentative_names,
+            )
+        })
         .unwrap_or_else(|| Cow::Borrowed(key_binding.as_str()));
     let value_expr = value_ty
-        .map(|ty| render_copied_value(ty, &value_binding, depth + 1, copyable_types))
+        .map(|ty| {
+            render_copied_value(
+                ty,
+                &value_binding,
+                depth + 1,
+                copyable_types,
+                &mut tentative_names,
+            )
+        })
         .unwrap_or_else(|| Cow::Borrowed(value_binding.as_str()));
 
     let body = if key_expr.as_ref() == key_binding && value_expr.as_ref() == value_binding {
         format!("Map<{key_rendered}, {value_rendered}>.of({source_value})")
     } else {
-        format!(
+        let mapped = format!(
             "Map<{key_rendered}, {value_rendered}>.fromEntries(\n  {}.entries.map(\n    ({entry_binding}) => MapEntry({key_expr}, {value_expr}),\n  ),\n)",
             member_access_expr(&source_value)
-        )
+        );
+        *names = tentative_names;
+        mapped
     };
 
     wrap_nullable_copy(nullable, value, body)

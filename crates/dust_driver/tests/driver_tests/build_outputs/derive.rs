@@ -123,8 +123,6 @@ mixin _$Team {
         generated_output(
             r#"part of 'request.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-
 mixin _$Request {
   Request copyWith({
     String? path,
@@ -175,52 +173,94 @@ fn build_writes_validate_output_for_form_request() {
             r#"part of 'signup.dart';
 
 mixin _$SignupRequest {
+  /// Validates this `SignupRequest`.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final result = value.validate();
+  /// if (result case Invalid(:final errors)) {
+  ///   print(errors.first.message);
+  /// }
+  /// ```
   ValidationResult validate() {
     final self = this as SignupRequest;
     final errors = <ValidationError>[];
-    _validateSignupRequestEmail(self.email, errors);
-    _validateSignupRequestAge(self.age, errors);
+    _SignupRequestValidation._validateEmail(self.email, errors);
+    _SignupRequestValidation._validateAge(self.age, errors);
     return errors.isEmpty ? const Valid() : Invalid(errors);
   }
 
+  /// Throws [ValidationException] when this `SignupRequest` is invalid.
+  ///
+  /// Usage:
+  /// ```dart
+  /// value.validateOrThrow();
+  /// ```
   void validateOrThrow() {
     final result = validate();
-    if (result case Invalid(:final errors)) {
+    if (result case Invalid(errors: final errors)) {
       throw ValidationException(errors);
     }
   }
 }
 
-void _validateSignupRequestEmail(String email, List<ValidationError> errors) {
-  if (!ValidationHelper.isEmail(email)) {
-    errors.add(ValidationError(field: 'email', message: 'Invalid email'));
-  }
-}
-
+/// TextFormField validator for `SignupRequest.email`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateSignupRequestEmailInput,
+/// )
+/// ```
 String? validateSignupRequestEmailInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateSignupRequestEmail(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _SignupRequestValidation.validateEmailInput(value);
 }
 
-void _validateSignupRequestAge(int age, List<ValidationError> errors) {
-  if (age < 18) {
-    errors.add(ValidationError(field: 'age', message: 'Adult only'));
-  }
-  if (age > 120) {
-    errors.add(ValidationError(field: 'age', message: 'Adult only'));
-  }
-}
-
+/// TextFormField validator for `SignupRequest.age`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateSignupRequestAgeInput,
+/// )
+/// ```
 String? validateSignupRequestAgeInput(String? value) {
-  final errors = <ValidationError>[];
-  final age = int.tryParse(value ?? '');
-  if (age == null) {
-    errors.add(ValidationError(field: 'age', message: 'Adult only'));
-  } else {
-    _validateSignupRequestAge(age, errors);
+  return _SignupRequestValidation.validateAgeInput(value);
+}
+
+extension _SignupRequestValidation on SignupRequest {
+  static void _validateEmail(String email, List<ValidationError> errors) {
+    if (!ValidationHelper.isEmail(email)) {
+      errors.add(ValidationError(field: 'email', message: 'Invalid email'));
+    }
   }
-  return errors.isEmpty ? null : errors.first.message;
+
+  static String? validateEmailInput(String? value) {
+    final errors = <ValidationError>[];
+    _validateEmail(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validateAge(int age, List<ValidationError> errors) {
+    if (age < 18) {
+      errors.add(ValidationError(field: 'age', message: 'Adult only'));
+    }
+    if (age > 120) {
+      errors.add(ValidationError(field: 'age', message: 'Adult only'));
+    }
+  }
+
+  static String? validateAgeInput(String? value) {
+    final errors = <ValidationError>[];
+    final age = int.tryParse(value ?? '');
+    if (age == null) {
+      errors.add(ValidationError(field: 'age', message: 'Adult only'));
+    } else {
+      _validateAge(age, errors);
+    }
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
 }
 "#
         )

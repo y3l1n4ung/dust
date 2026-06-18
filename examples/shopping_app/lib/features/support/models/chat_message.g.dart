@@ -13,7 +13,7 @@
 
 part of 'chat_message.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _chatRequestHistoryEquality = DeepCollectionEquality();
 
 mixin _$ChatMessage {
   @override
@@ -86,7 +86,7 @@ mixin _$ChatRequest {
         other is ChatRequest &&
             runtimeType == other.runtimeType &&
             other.message == self.message &&
-            _deepCollectionEquality.equals(other.history, self.history);
+            _chatRequestHistoryEquality.equals(other.history, self.history);
   }
 
   @override
@@ -95,7 +95,7 @@ mixin _$ChatRequest {
     return Object.hashAll([
       runtimeType,
       self.message,
-      _deepCollectionEquality.hash(self.history),
+      _chatRequestHistoryEquality.hash(self.history),
     ]);
   }
 

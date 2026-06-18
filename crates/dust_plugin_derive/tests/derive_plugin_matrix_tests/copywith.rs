@@ -251,6 +251,64 @@ fn copywith_uses_stable_temp_bindings_for_nested_types() {
 }
 
 #[test]
+fn copywith_allocates_locals_around_field_name_collisions() {
+    let plugin = register_plugin();
+    let contribution = plugin.emit(
+        &library(vec![class(
+            "Collision",
+            vec![
+                field("self", TypeIr::string()),
+                field("nextItems", TypeIr::string()),
+                field("nextItemsSource", TypeIr::string()),
+                field("items", TypeIr::list_of(TypeIr::string()).nullable()),
+            ],
+            vec![constructor(
+                None,
+                vec![
+                    constructor_param("self", TypeIr::string(), ParamKind::Positional),
+                    constructor_param("nextItems", TypeIr::string(), ParamKind::Positional),
+                    constructor_param("nextItemsSource", TypeIr::string(), ParamKind::Positional),
+                    constructor_param(
+                        "items",
+                        TypeIr::list_of(TypeIr::string()).nullable(),
+                        ParamKind::Positional,
+                    ),
+                ],
+            )],
+            &["dust_dart::CopyWith"],
+        )]),
+        &SymbolPlan::default(),
+    );
+
+    let members = members_for_class(&contribution, "Collision");
+    assert_eq!(
+        members,
+        [r#"Collision copyWith({
+  String? self,
+  String? nextItems,
+  String? nextItemsSource,
+  Option<List<String>?> items = const None(),
+}) {
+  final self2 = this as Collision;
+  final nextItemsSource2 = switch (items) {
+    None<List<String>?>() => self2.items,
+    Some<List<String>?>(:final value) => value,
+  };
+  final nextItems2 = nextItemsSource2 == null ? null : List<String>.of(nextItemsSource2);
+
+  return Collision(
+    self ?? self2.self,
+    nextItems ?? self2.nextItems,
+    nextItemsSource ?? self2.nextItemsSource,
+    nextItems2,
+  );
+}"#
+        .to_owned()]
+        .as_slice()
+    );
+}
+
+#[test]
 fn copywith_handles_named_model_collections_without_aliasing() {
     let plugin = register_plugin();
     let contribution = plugin.emit(

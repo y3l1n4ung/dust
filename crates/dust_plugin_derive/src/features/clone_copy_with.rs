@@ -9,6 +9,7 @@ use dust_ir::ClassIr;
 use crate::features::{
     COPY_WITH_SYMBOL,
     eq_hash::has_trait,
+    names::NameAllocator,
     writer::{build_constructor_call_multiline, find_clone_constructor, render_return_statement},
 };
 
@@ -34,29 +35,48 @@ pub(crate) fn emit_copy_with(
     let params = render_copy_with_params(class);
     let mut setup = Vec::new();
     let mut values: Vec<(&str, Cow<'_, str>)> = Vec::with_capacity(class.fields.len());
+    let mut names = NameAllocator::new(class.fields.iter().map(|field| field.name.as_str()));
+    let self_name = if class.fields.is_empty() {
+        String::new()
+    } else {
+        names.allocate("self")
+    };
 
     for (depth, field) in class.fields.iter().enumerate() {
-        let source_expr = render_copy_with_source_expr(field.name.as_str(), &field.ty);
-        let copied_expr = render_copied_value(&field.ty, &source_expr, depth, copyable_types);
+        let source_expr = render_copy_with_source_expr(field.name.as_str(), &field.ty, &self_name);
+        let mut tentative_names = names.clone();
+        let copied_expr = render_copied_value(
+            &field.ty,
+            &source_expr,
+            depth,
+            copyable_types,
+            &mut tentative_names,
+        );
 
         if copied_expr.as_ref() == source_expr {
             if should_keep_source_local(&field.ty) {
-                let next_var = temp_name("next", &field.name, "");
+                let next_var = names.allocate(temp_name("next", &field.name, ""));
                 setup.push(format!("final {next_var} = {source_expr};"));
                 values.push((field.name.as_str(), Cow::Owned(next_var)));
             } else {
                 values.push((field.name.as_str(), Cow::Owned(source_expr)));
             }
         } else if should_keep_source_local(&field.ty) {
-            let source_var = temp_name("next", &field.name, "Source");
-            let next_var = temp_name("next", &field.name, "");
-            let copied_expr =
-                render_copied_value(&field.ty, source_var.as_str(), depth, copyable_types);
+            let source_var = names.allocate(temp_name("next", &field.name, "Source"));
+            let next_var = names.allocate(temp_name("next", &field.name, ""));
+            let copied_expr = render_copied_value(
+                &field.ty,
+                source_var.as_str(),
+                depth,
+                copyable_types,
+                &mut names,
+            );
             setup.push(format!("final {source_var} = {source_expr};"));
             setup.push(format!("final {next_var} = {};", copied_expr.as_ref()));
             values.push((field.name.as_str(), Cow::Owned(next_var)));
         } else {
-            let next_var = temp_name("next", &field.name, "");
+            names = tentative_names;
+            let next_var = names.allocate(temp_name("next", &field.name, ""));
             setup.push(format!("final {next_var} = {};", copied_expr.as_ref()));
             values.push((field.name.as_str(), Cow::Owned(next_var)));
         }
@@ -66,10 +86,10 @@ pub(crate) fn emit_copy_with(
     let setup = render_setup_blocks(setup);
     let return_call = render_return_statement(&call, "  ");
 
-    let self_binding = if class.fields.is_empty() {
+    let self_binding = if self_name.is_empty() {
         String::new()
     } else {
-        format!("  final self = this as {};\n", class.name)
+        format!("  final {self_name} = this as {};\n", class.name)
     };
     let body = if setup.is_empty() {
         return_call

@@ -13,7 +13,7 @@
 
 part of 'products_state.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _productsStateProductsEquality = DeepCollectionEquality();
 
 mixin _$ProductsState {
   @override
@@ -35,7 +35,7 @@ mixin _$ProductsState {
     return identical(this, other) ||
         other is ProductsState &&
             runtimeType == other.runtimeType &&
-            _deepCollectionEquality.equals(other.products, self.products) &&
+            _productsStateProductsEquality.equals(other.products, self.products) &&
             other.status == self.status &&
             other.errorMessage == self.errorMessage &&
             other.selectedCategory == self.selectedCategory &&
@@ -48,7 +48,7 @@ mixin _$ProductsState {
     final self = this as ProductsState;
     return Object.hashAll([
       runtimeType,
-      _deepCollectionEquality.hash(self.products),
+      _productsStateProductsEquality.hash(self.products),
       self.status,
       self.errorMessage,
       self.selectedCategory,

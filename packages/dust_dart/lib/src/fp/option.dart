@@ -71,7 +71,7 @@ final class None<T> extends Option<T> {
 /// ```
 final class Some<T> extends Option<T> {
   /// Creates a present option state.
-///
+  ///
   /// In generated nullable `copyWith` parameters, this carries the replacement
   /// value. Pass `null` there when the field should be cleared.
   ///

@@ -6,7 +6,7 @@ use crate::{
     features::{
         clone_copy_with::{CopyableTypes, emit_copy_with},
         debug::emit_debug_mixin,
-        eq_hash::{emit_eq, emit_hash_code, emit_shared_helpers},
+        eq_hash::{emit_eq, emit_hash_code, plan_equality},
         validate::emit_validate,
     },
 };
@@ -28,18 +28,19 @@ pub(crate) fn emit_library(library: &DartFileIr, _plan: &SymbolPlan) -> PluginCo
         &local_copyable_types,
         _plan.workspace_string_set(COPYABLE_TYPES_ANALYSIS_KEY),
     );
+    let equality = plan_equality(library);
     contribution
         .shared_helpers
-        .extend(emit_shared_helpers(library));
+        .extend(equality.declarations().iter().cloned());
 
     for class in &library.classes {
         if let Some(debug_mixin) = emit_debug_mixin(class) {
             contribution.push_mixin_member(&class.name, debug_mixin);
         }
-        if let Some(eq) = emit_eq(class) {
+        if let Some(eq) = emit_eq(class, &equality) {
             contribution.push_mixin_member(&class.name, eq);
         }
-        if let Some(hash_code) = emit_hash_code(class) {
+        if let Some(hash_code) = emit_hash_code(class, &equality) {
             contribution.push_mixin_member(&class.name, hash_code);
         }
         if let Some(copy_with) = emit_copy_with(class, &copyable_types) {
