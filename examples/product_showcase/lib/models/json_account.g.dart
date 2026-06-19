@@ -48,26 +48,51 @@ mixin _$JsonAccount {
     ]);
   }
 
-  JsonAccount copyWith({
+  /// Creates a copy of this `JsonAccount` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = jsonAccount.copyWith(archived: true);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$JsonAccountCopyWith<JsonAccount> get copyWith => _$JsonAccountCopyWithImpl<JsonAccount>(this as JsonAccount, (value) => value);
+
+  Map<String, Object?> toJson() => _$JsonAccountToJson(this as JsonAccount);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$JsonAccountCopyWith<$Res> {
+  $Res call({
     JsonProfile? profile,
     Map<String, List<int>>? metrics,
     bool? archived,
-  }) {
-    final self = this as JsonAccount;
-    final nextMetrics = Map<String, List<int>>.fromEntries(
-      (metrics ?? self.metrics).entries.map(
-        (entry_1) => MapEntry(entry_1.key, List<int>.of(entry_1.value)),
-      ),
-    );
+  });
+}
 
-    return JsonAccount(
-      profile: profile ?? self.profile,
-      metrics: nextMetrics,
-      archived: archived ?? self.archived,
+/// @nodoc
+final class _$JsonAccountCopyWithImpl<$Res> implements _$JsonAccountCopyWith<$Res> {
+  const _$JsonAccountCopyWithImpl(this._self, this._then);
+
+  final JsonAccount _self;
+  final $Res Function(JsonAccount) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? profile = null,
+    Object? metrics = null,
+    Object? archived = null,
+  }) {
+    return _then(
+      JsonAccount(
+        profile: profile == null ? _self.profile : profile as JsonProfile,
+        metrics: metrics == null ? _self.metrics : metrics as Map<String, List<int>>,
+        archived: archived == null ? _self.archived : archived as bool,
+      )
     );
   }
-
-  Map<String, Object?> toJson() => _$JsonAccountToJson(this as JsonAccount);
 }
 
 Map<String, Object?> _$JsonAccountToJson(JsonAccount instance) {

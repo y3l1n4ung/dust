@@ -25,22 +25,54 @@ mixin _$HttpPost {
         ')';
   }
 
-  HttpPost copyWith({
+  /// Creates a copy of this `HttpPost` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = httpPost.copyWith(userId: 1);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$HttpPostCopyWith<HttpPost> get copyWith => _$HttpPostCopyWithImpl<HttpPost>(this as HttpPost, (value) => value);
+
+  Map<String, Object?> toJson() => _$HttpPostToJson(this as HttpPost);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$HttpPostCopyWith<$Res> {
+  $Res call({
     int? userId,
     int? id,
     String? title,
     String? body,
+  });
+}
+
+/// @nodoc
+final class _$HttpPostCopyWithImpl<$Res> implements _$HttpPostCopyWith<$Res> {
+  const _$HttpPostCopyWithImpl(this._self, this._then);
+
+  final HttpPost _self;
+  final $Res Function(HttpPost) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? userId = null,
+    Object? id = null,
+    Object? title = null,
+    Object? body = null,
   }) {
-    final self = this as HttpPost;
-    return HttpPost(
-      userId: userId ?? self.userId,
-      id: id ?? self.id,
-      title: title ?? self.title,
-      body: body ?? self.body,
+    return _then(
+      HttpPost(
+        userId: userId == null ? _self.userId : userId as int,
+        id: id == null ? _self.id : id as int,
+        title: title == null ? _self.title : title as String,
+        body: body == null ? _self.body : body as String,
+      )
     );
   }
-
-  Map<String, Object?> toJson() => _$HttpPostToJson(this as HttpPost);
 }
 
 Map<String, Object?> _$HttpPostToJson(HttpPost instance) {

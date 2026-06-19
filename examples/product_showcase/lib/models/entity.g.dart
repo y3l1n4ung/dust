@@ -76,18 +76,47 @@ mixin _$DetailedEntity {
     ]);
   }
 
-  DetailedEntity copyWith({
+  /// Creates a copy of this `DetailedEntity` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = detailedEntity.copyWith(id: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$DetailedEntityCopyWith<DetailedEntity> get copyWith => _$DetailedEntityCopyWithImpl<DetailedEntity>(this as DetailedEntity, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$DetailedEntityCopyWith<$Res> {
+  $Res call({
     String? id,
     String? label,
     List<String>? tags,
-  }) {
-    final self = this as DetailedEntity;
-    final nextTags = List<String>.of(tags ?? self.tags);
+  });
+}
 
-    return DetailedEntity(
-      id ?? self.id,
-      label: label ?? self.label,
-      tags: nextTags,
+/// @nodoc
+final class _$DetailedEntityCopyWithImpl<$Res> implements _$DetailedEntityCopyWith<$Res> {
+  const _$DetailedEntityCopyWithImpl(this._self, this._then);
+
+  final DetailedEntity _self;
+  final $Res Function(DetailedEntity) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? label = null,
+    Object? tags = null,
+  }) {
+    return _then(
+      DetailedEntity(
+        id == null ? _self.id : id as String,
+        label: label == null ? _self.label : label as String,
+        tags: tags == null ? _self.tags : tags as List<String>,
+      )
     );
   }
 }

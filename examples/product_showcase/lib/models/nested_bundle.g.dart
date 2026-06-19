@@ -15,6 +15,11 @@ part of 'nested_bundle.dart';
 
 const DeepCollectionEquality _nestedBundleGroupsEquality = DeepCollectionEquality();
 const DeepCollectionEquality _nestedBundleMetricsEquality = DeepCollectionEquality();
+final class _ProfileCopyWithUnset {
+  const _ProfileCopyWithUnset();
+}
+
+const _profileCopyWithUnset = _ProfileCopyWithUnset();
 
 mixin _$NestedBundle {
   @override
@@ -46,23 +51,227 @@ mixin _$NestedBundle {
     ]);
   }
 
-  NestedBundle copyWith({
+  /// Creates a copy of this `NestedBundle` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = nestedBundle.copyWith();
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$NestedBundleCopyWith<NestedBundle> get copyWith => _$NestedBundleCopyWithImpl<NestedBundle>(this as NestedBundle, (value) => value);
+}
+
+mixin _$Address {
+  @override
+  String toString() {
+    final self = this as Address;
+    return 'Address('
+        'city: ${self.city}, '
+        'line1: ${self.line1}'
+        ')';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    final self = this as Address;
+    return identical(this, other) ||
+        other is Address &&
+            runtimeType == other.runtimeType &&
+            other.city == self.city &&
+            other.line1 == self.line1;
+  }
+
+  @override
+  int get hashCode {
+    final self = this as Address;
+    return Object.hashAll([
+      runtimeType,
+      self.city,
+      self.line1,
+    ]);
+  }
+
+  /// Creates a copy of this `Address` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = address.copyWith(city: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$AddressCopyWith<Address> get copyWith => _$AddressCopyWithImpl<Address>(this as Address, (value) => value);
+}
+
+mixin _$Profile {
+  @override
+  String toString() {
+    final self = this as Profile;
+    return 'Profile('
+        'name: ${self.name}, '
+        'nickname: ${self.nickname}, '
+        'address: ${self.address}, '
+        'mailingAddress: ${self.mailingAddress}'
+        ')';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    final self = this as Profile;
+    return identical(this, other) ||
+        other is Profile &&
+            runtimeType == other.runtimeType &&
+            other.name == self.name &&
+            other.nickname == self.nickname &&
+            other.address == self.address &&
+            other.mailingAddress == self.mailingAddress;
+  }
+
+  @override
+  int get hashCode {
+    final self = this as Profile;
+    return Object.hashAll([
+      runtimeType,
+      self.name,
+      self.nickname,
+      self.address,
+      self.mailingAddress,
+    ]);
+  }
+
+  /// Creates a copy of this `Profile` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = profile.copyWith(name: 'John');
+  /// final cleared = profile.copyWith(nickname: null);
+  /// final nested = profile.copyWith.address(city: 'London');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$ProfileCopyWith<Profile> get copyWith => _$ProfileCopyWithImpl<Profile>(this as Profile, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$NestedBundleCopyWith<$Res> {
+  $Res call({
     List<List<String>>? groups,
     Map<String, List<int>>? metrics,
-  }) {
-    final self = this as NestedBundle;
-    final nextGroups = List<List<String>>.of(
-      (groups ?? self.groups).map((item_0) => List<String>.of(item_0)),
-    );
-    final nextMetrics = Map<String, List<int>>.fromEntries(
-      (metrics ?? self.metrics).entries.map(
-        (entry_1) => MapEntry(entry_1.key, List<int>.of(entry_1.value)),
-      ),
-    );
+  });
+}
 
-    return NestedBundle(
-      groups: nextGroups,
-      metrics: nextMetrics,
+/// @nodoc
+final class _$NestedBundleCopyWithImpl<$Res> implements _$NestedBundleCopyWith<$Res> {
+  const _$NestedBundleCopyWithImpl(this._self, this._then);
+
+  final NestedBundle _self;
+  final $Res Function(NestedBundle) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? groups = null,
+    Object? metrics = null,
+  }) {
+    return _then(
+      NestedBundle(
+        groups: groups == null ? _self.groups : groups as List<List<String>>,
+        metrics: metrics == null ? _self.metrics : metrics as Map<String, List<int>>,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$AddressCopyWith<$Res> {
+  $Res call({
+    String? city,
+    String? line1,
+  });
+}
+
+/// @nodoc
+final class _$AddressCopyWithImpl<$Res> implements _$AddressCopyWith<$Res> {
+  const _$AddressCopyWithImpl(this._self, this._then);
+
+  final Address _self;
+  final $Res Function(Address) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? city = null,
+    Object? line1 = null,
+  }) {
+    return _then(
+      Address(
+        city: city == null ? _self.city : city as String,
+        line1: line1 == null ? _self.line1 : line1 as String,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$ProfileCopyWith<$Res> {
+  $Res call({
+    String? name,
+    String? nickname,
+    Address? address,
+    Address? mailingAddress,
+  });
+
+  _$AddressCopyWith<$Res> get address;
+
+  _$AddressCopyWith<$Res>? get mailingAddress;
+}
+
+/// @nodoc
+final class _$ProfileCopyWithImpl<$Res> implements _$ProfileCopyWith<$Res> {
+  const _$ProfileCopyWithImpl(this._self, this._then);
+
+  final Profile _self;
+  final $Res Function(Profile) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? name = null,
+    Object? nickname = _profileCopyWithUnset,
+    Object? address = null,
+    Object? mailingAddress = _profileCopyWithUnset,
+  }) {
+    return _then(
+      Profile(
+        name: name == null ? _self.name : name as String,
+        address: address == null ? _self.address : address as Address,
+        nickname: identical(nickname, _profileCopyWithUnset)
+            ? _self.nickname
+            : nickname as String?,
+        mailingAddress: identical(mailingAddress, _profileCopyWithUnset)
+            ? _self.mailingAddress
+            : mailingAddress as Address?,
+      )
+    );
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  _$AddressCopyWith<$Res> get address {
+    return _$AddressCopyWithImpl<$Res>(
+      _self.address,
+      (value) => call(address: value),
+    );
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  _$AddressCopyWith<$Res>? get mailingAddress {
+    final mailingAddressValue = _self.mailingAddress;
+    if (mailingAddressValue == null) {
+      return null;
+    }
+
+    return _$AddressCopyWithImpl<$Res>(
+      mailingAddressValue,
+      (value) => call(mailingAddress: value),
     );
   }
 }

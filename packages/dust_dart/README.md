@@ -28,51 +28,60 @@ Dust owns its functional primitives. Do not add `fpdart`, `dartz`, or another ex
 ## Option
 
 `Option<T>` is Rust-style: `None()` means no value, and `Some(value)` means a
-value is present. Generated nullable `copyWith` methods use an outer `Option`
-as a typed update envelope.
+value is present, even when that value is `null`.
 
 ```dart
 import 'package:dust_dart/fp.dart';
 
-User copyWith({
-  Option<String?> nickname = const None(),
-}) {
-  return User(
-    nickname: switch (nickname) {
-      None<String?>() => this.nickname,
-      Some<String?>(:final value) => value,
-    },
-  );
-}
-```
-
-Use the three states explicitly:
-
-```dart
-user.copyWith(); // keep old nullable values
-user.copyWith(nickname: const None()); // keep old nullable value
-user.copyWith(nickname: const Some('Ye')); // set value
-user.copyWith(nickname: const Some(null)); // clear value
-```
-
-If the field itself is an `Option<String>`, generated `copyWith` uses a nested
-envelope:
-
-```dart
-Profile copyWith({
-  Option<Option<String>> nickname = const None(),
-}) {
-  return Profile(
-    nickname: switch (nickname) {
-      None<Option<String>>() => this.nickname,
-      Some<Option<String>>(:final value) => value,
-    },
-  );
+String displayNickname(Option<String?> nickname) {
+  return switch (nickname) {
+    None<String?>() => 'Anonymous',
+    Some<String?>(:final value) => value ?? 'No nickname',
+  };
 }
 
-profile.copyWith(); // keep old Option field
-profile.copyWith(nickname: const Some<Option<String>>(None<String>()));
-profile.copyWith(nickname: const Some<Option<String>>(Some<String>('Ye')));
+const missing = None<String?>();
+const present = Some<String?>('John');
+const presentNull = Some<String?>(null);
+```
+
+Pattern match to branch on absence or presence:
+
+```dart
+Option<int> parseCount(String text) {
+  final value = int.tryParse(text);
+  return value == null ? const None<int>() : Some(value);
+}
+
+final label = switch (parseCount('21')) {
+  None<int>() => 'missing',
+  Some<int>(:final value) => 'count=$value',
+};
+```
+
+## Generated copyWith
+
+CopyWith API inspired by Freezed.
+
+Generated `copyWith` uses typed callable ergonomics for IDE completion, supports
+clearing nullable fields with `null`, and keeps normal copy operations shallow.
+
+```dart
+final renamed = profile.copyWith(name: 'John');
+final cleared = profile.copyWith(nickname: null);
+final moved = profile.copyWith.address(city: 'London');
+final movedNullable = profile.copyWith.mailingAddress?.call(city: 'London');
+```
+
+Normal `copyWith(...)` replaces fields directly. Nested Dust model fields expose
+chained helpers when the nested model is generated in the same library.
+Collections are replaced by identity; Dust does not clone `List`, `Map`, or
+`Set` values inside normal `copyWith`.
+
+```dart
+final tags = <String>['new'];
+final updated = product.copyWith(tags: tags);
+identical(updated.tags, tags); // true
 ```
 
 ## Result

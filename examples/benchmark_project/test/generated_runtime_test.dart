@@ -67,9 +67,9 @@ void main() {
     final copied = linked.copyWith();
 
     expect(decoded, equals(linked));
-    expect(identical(copied.primary, linked.primary), isFalse);
-    expect(identical(copied.items, linked.items), isFalse);
-    expect(identical(copied.byId, linked.byId), isFalse);
+    expect(identical(copied.primary, linked.primary), isTrue);
+    expect(identical(copied.items, linked.items), isTrue);
+    expect(identical(copied.byId, linked.byId), isTrue);
   });
 
   test('validation showcase reports nested and field-level custom errors', () {

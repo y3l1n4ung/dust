@@ -45,18 +45,44 @@ mixin _$WishlistState {
     ]);
   }
 
-  WishlistState copyWith({
+  /// Creates a copy of this `WishlistState` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = wishlistState.copyWith(isLoading: true);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$WishlistStateCopyWith<WishlistState> get copyWith => _$WishlistStateCopyWithImpl<WishlistState>(this as WishlistState, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$WishlistStateCopyWith<$Res> {
+  $Res call({
     List<WishlistItem>? items,
     bool? isLoading,
-  }) {
-    final self = this as WishlistState;
-    final nextItems = List<WishlistItem>.of(
-      (items ?? self.items).map((item_0) => item_0.copyWith()),
-    );
+  });
+}
 
-    return WishlistState(
-      items: nextItems,
-      isLoading: isLoading ?? self.isLoading,
+/// @nodoc
+final class _$WishlistStateCopyWithImpl<$Res> implements _$WishlistStateCopyWith<$Res> {
+  const _$WishlistStateCopyWithImpl(this._self, this._then);
+
+  final WishlistState _self;
+  final $Res Function(WishlistState) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? items = null,
+    Object? isLoading = null,
+  }) {
+    return _then(
+      WishlistState(
+        items: items == null ? _self.items : items as List<WishlistItem>,
+        isLoading: isLoading == null ? _self.isLoading : isLoading as bool,
+      )
     );
   }
 }

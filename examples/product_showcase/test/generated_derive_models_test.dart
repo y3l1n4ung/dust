@@ -89,7 +89,7 @@ void main() {
     expect(catalog.toString(), contains('Catalog('));
   });
 
-  test('copyWith deep clones nested Dust models', () {
+  test('copyWith preserves nested model and collection references', () {
     final price = Price(
       currency: 'USD',
       cents: 1999,
@@ -109,24 +109,32 @@ void main() {
       featured: true,
     );
 
-    final cloned = product.copyWith();
+    final copied = product.copyWith();
     price.tags.add('vip');
     category.labels.add('clearance');
 
-    expect(cloned.price, isNot(same(price)));
-    expect(cloned.categories[0], isNot(same(category)));
-    expect(cloned.price.tags, ['featured', 'sale']);
-    expect(cloned.categories[0].labels, {'summer', 'sale'});
+    expect(copied, isNot(same(product)));
+    expect(copied.price, same(price));
+    expect(copied.categories, same(product.categories));
+    expect(copied.categories[0], same(category));
+    expect(copied.price.tags, ['featured', 'sale', 'vip']);
+    expect(copied.categories[0].labels, {'summer', 'sale', 'clearance'});
 
-    final copied = product.copyWith(featured: false);
+    final updated = product.copyWith(featured: false);
     price.tags.add('limited');
     category.labels.add('outlet');
 
-    expect(copied.featured, isFalse);
-    expect(copied.price, isNot(same(price)));
-    expect(copied.categories[0], isNot(same(category)));
-    expect(copied.price.tags, ['featured', 'sale', 'vip']);
-    expect(copied.categories[0].labels, {'summer', 'sale', 'clearance'});
+    expect(updated.featured, isFalse);
+    expect(updated.price, same(price));
+    expect(updated.categories, same(product.categories));
+    expect(updated.categories[0], same(category));
+    expect(updated.price.tags, ['featured', 'sale', 'vip', 'limited']);
+    expect(updated.categories[0].labels, {
+      'summer',
+      'sale',
+      'clearance',
+      'outlet',
+    });
   });
 
   test('generated derive features work for abstract annotated classes', () {

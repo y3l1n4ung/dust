@@ -13,7 +13,17 @@ final class Debug extends DeriveTrait {
   const Debug();
 }
 
-/// Generates `copyWith(...)` support.
+/// Generates typed `copyWith` support.
+///
+/// Generated `copyWith` uses Freezed-inspired callable ergonomics, keeps normal
+/// copy operations shallow, and exposes chained helpers for nested Dust model
+/// fields.
+///
+/// ```dart
+/// final renamed = profile.copyWith(name: 'John');
+/// final cleared = profile.copyWith(nickname: null);
+/// final moved = profile.copyWith.address(city: 'London');
+/// ```
 final class CopyWith extends DeriveTrait {
   /// Creates the `CopyWith` derive marker.
   const CopyWith();

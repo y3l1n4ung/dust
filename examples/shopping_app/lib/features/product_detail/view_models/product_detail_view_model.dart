@@ -1,4 +1,3 @@
-import 'package:dust_dart/fp.dart';
 import 'package:dust_flutter/state.dart';
 
 import '../../../core/data/shopping_repository.dart';
@@ -24,9 +23,9 @@ class ProductDetailViewModel extends $ProductDetailViewModel {
 
     emit(
       state.copyWith(
-        productId: Some(productId),
+        productId: productId,
         status: ProductDetailStatus.loading,
-        errorMessage: const Some(null),
+        errorMessage: null,
       ),
     );
 
@@ -37,19 +36,19 @@ class ProductDetailViewModel extends $ProductDetailViewModel {
       );
       emit(
         state.copyWith(
-          productId: Some(productId),
+          productId: productId,
           status: ProductDetailStatus.success,
           reviews: reviews,
           recommendations: recommendations,
-          errorMessage: const Some(null),
+          errorMessage: null,
         ),
       );
     } catch (error) {
       emit(
         state.copyWith(
-          productId: Some(productId),
+          productId: productId,
           status: ProductDetailStatus.error,
-          errorMessage: Some(error.toString()),
+          errorMessage: error.toString(),
         ),
       );
     }

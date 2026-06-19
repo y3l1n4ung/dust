@@ -51,24 +51,14 @@ mixin _$StoreCart {
     ]);
   }
 
-  StoreCart copyWith({
-    int? id,
-    int? userId,
-    DateTime? date,
-    List<StoreCartProduct>? products,
-  }) {
-    final self = this as StoreCart;
-    final nextProducts = List<StoreCartProduct>.of(
-      (products ?? self.products).map((item_3) => item_3.copyWith()),
-    );
-
-    return StoreCart(
-      id: id ?? self.id,
-      userId: userId ?? self.userId,
-      date: date ?? self.date,
-      products: nextProducts,
-    );
-  }
+  /// Creates a copy of this `StoreCart` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = storeCart.copyWith(id: 1);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$StoreCartCopyWith<StoreCart> get copyWith => _$StoreCartCopyWithImpl<StoreCart>(this as StoreCart, (value) => value);
 
   Map<String, Object?> toJson() => _$StoreCartToJson(this as StoreCart);
 }
@@ -103,18 +93,83 @@ mixin _$StoreCartProduct {
     ]);
   }
 
-  StoreCartProduct copyWith({
-    int? productId,
-    int? quantity,
-  }) {
-    final self = this as StoreCartProduct;
-    return StoreCartProduct(
-      productId: productId ?? self.productId,
-      quantity: quantity ?? self.quantity,
-    );
-  }
+  /// Creates a copy of this `StoreCartProduct` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = storeCartProduct.copyWith(productId: 1);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$StoreCartProductCopyWith<StoreCartProduct> get copyWith => _$StoreCartProductCopyWithImpl<StoreCartProduct>(this as StoreCartProduct, (value) => value);
 
   Map<String, Object?> toJson() => _$StoreCartProductToJson(this as StoreCartProduct);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$StoreCartCopyWith<$Res> {
+  $Res call({
+    int? id,
+    int? userId,
+    DateTime? date,
+    List<StoreCartProduct>? products,
+  });
+}
+
+/// @nodoc
+final class _$StoreCartCopyWithImpl<$Res> implements _$StoreCartCopyWith<$Res> {
+  const _$StoreCartCopyWithImpl(this._self, this._then);
+
+  final StoreCart _self;
+  final $Res Function(StoreCart) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? userId = null,
+    Object? date = null,
+    Object? products = null,
+  }) {
+    return _then(
+      StoreCart(
+        id: id == null ? _self.id : id as int,
+        userId: userId == null ? _self.userId : userId as int,
+        date: date == null ? _self.date : date as DateTime,
+        products: products == null ? _self.products : products as List<StoreCartProduct>,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$StoreCartProductCopyWith<$Res> {
+  $Res call({
+    int? productId,
+    int? quantity,
+  });
+}
+
+/// @nodoc
+final class _$StoreCartProductCopyWithImpl<$Res> implements _$StoreCartProductCopyWith<$Res> {
+  const _$StoreCartProductCopyWithImpl(this._self, this._then);
+
+  final StoreCartProduct _self;
+  final $Res Function(StoreCartProduct) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? productId = null,
+    Object? quantity = null,
+  }) {
+    return _then(
+      StoreCartProduct(
+        productId: productId == null ? _self.productId : productId as int,
+        quantity: quantity == null ? _self.quantity : quantity as int,
+      )
+    );
+  }
 }
 
 Map<String, Object?> _$StoreCartToJson(StoreCart instance) {

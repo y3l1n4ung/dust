@@ -1,10 +1,9 @@
-import 'package:dust_dart/fp.dart';
 import 'package:test/test.dart';
 
 import 'package:product_showcase/product_showcase.dart';
 
 void main() {
-  test('copyWith deep copies nested collection fields without replacement', () {
+  test('copyWith keeps collection field references without replacement', () {
     final original = NestedBundle(
       groups: [
         ['sale', 'featured'],
@@ -16,18 +15,18 @@ void main() {
       },
     );
 
-    final cloned = original.copyWith();
+    final copied = original.copyWith();
     original.groups[0].add('vip');
     original.metrics['yangon']!.add(99);
 
-    expect(cloned.groups[0], ['sale', 'featured']);
-    expect(cloned.metrics['yangon'], [1, 2]);
-    expect(cloned, isNot(same(original)));
-    expect(cloned.groups, isNot(same(original.groups)));
-    expect(cloned.metrics, isNot(same(original.metrics)));
+    expect(copied, isNot(same(original)));
+    expect(copied.groups, same(original.groups));
+    expect(copied.metrics, same(original.metrics));
+    expect(copied.groups[0], ['sale', 'featured', 'vip']);
+    expect(copied.metrics['yangon'], [1, 2, 99]);
   });
 
-  test('copyWith deep copies nested collection fields', () {
+  test('copyWith stores replacement collections by identity', () {
     final original = NestedBundle(
       groups: [
         ['sale', 'featured'],
@@ -50,17 +49,19 @@ void main() {
     replacementGroups[0].add('late');
     replacementMetrics['mandalay']!.add(99);
 
-    expect(copied.groups[0], ['vip']);
-    expect(copied.metrics['mandalay'], [4, 5]);
-    expect(copied.groups, isNot(same(replacementGroups)));
-    expect(copied.metrics, isNot(same(replacementMetrics)));
+    expect(copied.groups, same(replacementGroups));
+    expect(copied.metrics, same(replacementMetrics));
+    expect(copied.groups[0], ['vip', 'late']);
+    expect(copied.metrics['mandalay'], [4, 5, 99]);
 
     final retained = original.copyWith();
     original.groups[0].add('clearance');
     original.metrics['yangon']!.add(7);
 
-    expect(retained.groups[0], ['sale', 'featured']);
-    expect(retained.metrics['yangon'], [1, 2]);
+    expect(retained.groups, same(original.groups));
+    expect(retained.metrics, same(original.metrics));
+    expect(retained.groups[0], ['sale', 'featured', 'clearance']);
+    expect(retained.metrics['yangon'], [1, 2, 7]);
   });
 
   test('copyWith keeps typed params and clears nullable fields explicitly', () {
@@ -75,20 +76,52 @@ void main() {
     expect(renamed.note, 'seasonal');
     expect(renamed.aliases, ['sale', 'featured']);
 
-    final replaced = original.copyWith(aliases: const Some(['clearance']));
+    final replacementAliases = ['clearance'];
+    final replaced = original.copyWith(aliases: replacementAliases);
     expect(replaced.aliases, ['clearance']);
-    expect(replaced.aliases, isNot(same(original.aliases)));
+    expect(replaced.aliases, same(replacementAliases));
 
-    final cleared = original.copyWith(
-      note: const Some(null),
-      aliases: const Some(null),
-    );
+    final cleared = original.copyWith(note: null, aliases: null);
     expect(cleared.note, isNull);
     expect(cleared.aliases, isNull);
 
     final retained = original.copyWith();
     expect(retained.note, 'seasonal');
     expect(retained.aliases, ['sale', 'featured']);
+    expect(retained.aliases, same(original.aliases));
+  });
+
+  test('copyWith exposes chained helpers for nested models', () {
+    const original = Profile(
+      name: 'Jane',
+      nickname: 'Jay',
+      address: Address(city: 'Paris', line1: '1 Main Street'),
+      mailingAddress: Address(city: 'Berlin', line1: '2 Postal Road'),
+    );
+
+    final renamed = original.copyWith(name: 'John');
+    expect(renamed.name, 'John');
+    expect(renamed.address, same(original.address));
+    expect(renamed.mailingAddress, same(original.mailingAddress));
+
+    final cleared = original.copyWith(nickname: null, mailingAddress: null);
+    expect(cleared.nickname, isNull);
+    expect(cleared.mailingAddress, isNull);
+
+    final moved = original.copyWith.address(city: 'London');
+    expect(moved.address.city, 'London');
+    expect(moved.address.line1, '1 Main Street');
+    expect(moved.mailingAddress, same(original.mailingAddress));
+
+    final movedNullable = original.copyWith.mailingAddress?.call(city: 'Rome');
+    expect(movedNullable, isNotNull);
+    expect(movedNullable!.mailingAddress!.city, 'Rome');
+
+    const withoutMailing = Profile(
+      name: 'Jane',
+      address: Address(city: 'Paris', line1: '1 Main Street'),
+    );
+    expect(withoutMailing.copyWith.mailingAddress, isNull);
   });
 
   test(

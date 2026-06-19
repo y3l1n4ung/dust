@@ -8,7 +8,7 @@ use dust_plugin_derive::register_plugin;
 use crate::support::{members_for_class, span};
 
 #[test]
-fn copywith_clones_nested_dust_models() {
+fn copywith_replaces_nested_models_shallowly_and_emits_chained_helper() {
     let plugin = register_plugin();
     let contribution = plugin.emit(
         &LibraryIr {
@@ -138,22 +138,98 @@ fn copywith_clones_nested_dust_models() {
     assert_eq!(members.len(), 1);
     assert_eq!(
         members,
-        [r#"Product copyWith({
-  Price? price,
-  List<Price>? prices,
-}) {
-  final self = this as Product;
-  final nextPrice = (price ?? self.price).copyWith();
-  final nextPrices = List<Price>.of(
-    (prices ?? self.prices).map((item_1) => item_1.copyWith()),
-  );
-
-  return Product(
-    nextPrice,
-    nextPrices,
-  );
-}"#
+        [r#"/// Creates a copy of this `Product` with selected fields replaced.
+///
+/// Usage:
+/// ```dart
+/// final updated = product.copyWith();
+/// final nested = product.copyWith.price(currency: 'London');
+/// ```
+@pragma('vm:prefer-inline')
+_$ProductCopyWith<Product> get copyWith => _$ProductCopyWithImpl<Product>(this as Product, (value) => value);"#
         .to_owned()]
         .as_slice()
     );
+    assert_eq!(contribution.shared_helpers, Vec::<String>::new());
+    assert_eq!(
+        contribution.support_types,
+        [
+            r#"// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$PriceCopyWith<$Res> {
+  $Res call({
+    String? currency,
+  });
+}
+
+/// @nodoc
+final class _$PriceCopyWithImpl<$Res> implements _$PriceCopyWith<$Res> {
+  const _$PriceCopyWithImpl(this._self, this._then);
+
+  final Price _self;
+  final $Res Function(Price) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? currency = null,
+  }) {
+    return _then(
+      Price(
+        currency == null ? _self.currency : currency as String,
+      )
+    );
+  }
+}"#
+            .to_owned(),
+            r#"/// @nodoc
+abstract class _$ProductCopyWith<$Res> {
+  $Res call({
+    Price? price,
+    List<Price>? prices,
+  });
+
+  _$PriceCopyWith<$Res> get price;
+}
+
+/// @nodoc
+final class _$ProductCopyWithImpl<$Res> implements _$ProductCopyWith<$Res> {
+  const _$ProductCopyWithImpl(this._self, this._then);
+
+  final Product _self;
+  final $Res Function(Product) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? price = null,
+    Object? prices = null,
+  }) {
+    return _then(
+      Product(
+        price == null ? _self.price : price as Price,
+        prices == null ? _self.prices : prices as List<Price>,
+      )
+    );
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  _$PriceCopyWith<$Res> get price {
+    return _$PriceCopyWithImpl<$Res>(
+      _self.price,
+      (value) => call(price: value),
+    );
+  }
+}"#
+            .to_owned(),
+        ]
+        .as_slice()
+    );
+
+    let generated = contribution.support_types.join("\n");
+    assert!(!generated.contains("item_"));
+    assert!(!generated.contains(".map((item"));
+    assert!(!generated.contains("List<Price>.of"));
 }

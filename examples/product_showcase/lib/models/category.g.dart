@@ -48,18 +48,47 @@ mixin _$Category {
     ]);
   }
 
-  Category copyWith({
+  /// Creates a copy of this `Category` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = category.copyWith(id: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$CategoryCopyWith<Category> get copyWith => _$CategoryCopyWithImpl<Category>(this as Category, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$CategoryCopyWith<$Res> {
+  $Res call({
     String? id,
     String? title,
     Set<String>? labels,
-  }) {
-    final self = this as Category;
-    final nextLabels = Set<String>.of(labels ?? self.labels);
+  });
+}
 
-    return Category(
-      id: id ?? self.id,
-      title: title ?? self.title,
-      labels: nextLabels,
+/// @nodoc
+final class _$CategoryCopyWithImpl<$Res> implements _$CategoryCopyWith<$Res> {
+  const _$CategoryCopyWithImpl(this._self, this._then);
+
+  final Category _self;
+  final $Res Function(Category) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? title = null,
+    Object? labels = null,
+  }) {
+    return _then(
+      Category(
+        id: id == null ? _self.id : id as String,
+        title: title == null ? _self.title : title as String,
+        labels: labels == null ? _self.labels : labels as Set<String>,
+      )
     );
   }
 }

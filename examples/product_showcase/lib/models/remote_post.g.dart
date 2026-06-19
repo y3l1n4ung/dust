@@ -25,20 +25,14 @@ mixin _$RemotePost {
         ')';
   }
 
-  RemotePost copyWith({
-    int? userId,
-    int? id,
-    String? title,
-    String? body,
-  }) {
-    final self = this as RemotePost;
-    return RemotePost(
-      userId: userId ?? self.userId,
-      id: id ?? self.id,
-      title: title ?? self.title,
-      body: body ?? self.body,
-    );
-  }
+  /// Creates a copy of this `RemotePost` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = remotePost.copyWith(userId: 1);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$RemotePostCopyWith<RemotePost> get copyWith => _$RemotePostCopyWithImpl<RemotePost>(this as RemotePost, (value) => value);
 
   Map<String, Object?> toJson() => _$RemotePostToJson(this as RemotePost);
 }
@@ -54,20 +48,86 @@ mixin _$RemotePostDraft {
         ')';
   }
 
-  RemotePostDraft copyWith({
+  /// Creates a copy of this `RemotePostDraft` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = remotePostDraft.copyWith(userId: 1);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$RemotePostDraftCopyWith<RemotePostDraft> get copyWith => _$RemotePostDraftCopyWithImpl<RemotePostDraft>(this as RemotePostDraft, (value) => value);
+
+  Map<String, Object?> toJson() => _$RemotePostDraftToJson(this as RemotePostDraft);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$RemotePostCopyWith<$Res> {
+  $Res call({
+    int? userId,
+    int? id,
+    String? title,
+    String? body,
+  });
+}
+
+/// @nodoc
+final class _$RemotePostCopyWithImpl<$Res> implements _$RemotePostCopyWith<$Res> {
+  const _$RemotePostCopyWithImpl(this._self, this._then);
+
+  final RemotePost _self;
+  final $Res Function(RemotePost) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? userId = null,
+    Object? id = null,
+    Object? title = null,
+    Object? body = null,
+  }) {
+    return _then(
+      RemotePost(
+        userId: userId == null ? _self.userId : userId as int,
+        id: id == null ? _self.id : id as int,
+        title: title == null ? _self.title : title as String,
+        body: body == null ? _self.body : body as String,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$RemotePostDraftCopyWith<$Res> {
+  $Res call({
     int? userId,
     String? title,
     String? body,
+  });
+}
+
+/// @nodoc
+final class _$RemotePostDraftCopyWithImpl<$Res> implements _$RemotePostDraftCopyWith<$Res> {
+  const _$RemotePostDraftCopyWithImpl(this._self, this._then);
+
+  final RemotePostDraft _self;
+  final $Res Function(RemotePostDraft) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? userId = null,
+    Object? title = null,
+    Object? body = null,
   }) {
-    final self = this as RemotePostDraft;
-    return RemotePostDraft(
-      userId: userId ?? self.userId,
-      title: title ?? self.title,
-      body: body ?? self.body,
+    return _then(
+      RemotePostDraft(
+        userId: userId == null ? _self.userId : userId as int,
+        title: title == null ? _self.title : title as String,
+        body: body == null ? _self.body : body as String,
+      )
     );
   }
-
-  Map<String, Object?> toJson() => _$RemotePostDraftToJson(this as RemotePostDraft);
 }
 
 Map<String, Object?> _$RemotePostToJson(RemotePost instance) {

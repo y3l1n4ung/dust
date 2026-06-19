@@ -15,6 +15,11 @@ part of 'product_detail_state.dart';
 
 const DeepCollectionEquality _productDetailStateReviewsEquality = DeepCollectionEquality();
 const DeepCollectionEquality _productDetailStateRecommendationsEquality = DeepCollectionEquality();
+final class _ProductDetailStateCopyWithUnset {
+  const _ProductDetailStateCopyWithUnset();
+}
+
+const _productDetailStateCopyWithUnset = _ProductDetailStateCopyWithUnset();
 
 mixin _$ProductDetailState {
   @override
@@ -55,35 +60,58 @@ mixin _$ProductDetailState {
     ]);
   }
 
-  ProductDetailState copyWith({
-    Option<int?> productId = const None(),
+  /// Creates a copy of this `ProductDetailState` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = productDetailState.copyWith();
+  /// final cleared = productDetailState.copyWith(productId: null);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$ProductDetailStateCopyWith<ProductDetailState> get copyWith => _$ProductDetailStateCopyWithImpl<ProductDetailState>(this as ProductDetailState, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$ProductDetailStateCopyWith<$Res> {
+  $Res call({
+    int? productId,
     ProductDetailStatus? status,
     List<ProductReview>? reviews,
     List<Product>? recommendations,
-    Option<String?> errorMessage = const None(),
-  }) {
-    final self = this as ProductDetailState;
-    final nextProductId = switch (productId) {
-      None<int?>() => self.productId,
-      Some<int?>(:final value) => value,
-    };
-    final nextReviews = List<ProductReview>.of(
-      (reviews ?? self.reviews).map((item_2) => item_2.copyWith()),
-    );
-    final nextRecommendations = List<Product>.of(
-      (recommendations ?? self.recommendations).map((item_3) => item_3.copyWith()),
-    );
-    final nextErrorMessage = switch (errorMessage) {
-      None<String?>() => self.errorMessage,
-      Some<String?>(:final value) => value,
-    };
+    String? errorMessage,
+  });
+}
 
-    return ProductDetailState(
-      productId: nextProductId,
-      status: status ?? self.status,
-      reviews: nextReviews,
-      recommendations: nextRecommendations,
-      errorMessage: nextErrorMessage,
+/// @nodoc
+final class _$ProductDetailStateCopyWithImpl<$Res> implements _$ProductDetailStateCopyWith<$Res> {
+  const _$ProductDetailStateCopyWithImpl(this._self, this._then);
+
+  final ProductDetailState _self;
+  final $Res Function(ProductDetailState) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? productId = _productDetailStateCopyWithUnset,
+    Object? status = null,
+    Object? reviews = null,
+    Object? recommendations = null,
+    Object? errorMessage = _productDetailStateCopyWithUnset,
+  }) {
+    return _then(
+      ProductDetailState(
+        productId: identical(productId, _productDetailStateCopyWithUnset)
+            ? _self.productId
+            : productId as int?,
+        status: status == null ? _self.status : status as ProductDetailStatus,
+        reviews: reviews == null ? _self.reviews : reviews as List<ProductReview>,
+        recommendations: recommendations == null ? _self.recommendations : recommendations as List<Product>,
+        errorMessage: identical(errorMessage, _productDetailStateCopyWithUnset)
+            ? _self.errorMessage
+            : errorMessage as String?,
+      )
     );
   }
 }

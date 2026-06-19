@@ -130,16 +130,44 @@ mixin _$TaggedValue {
     ]);
   }
 
-  TaggedValue copyWith({
+  /// Creates a copy of this `TaggedValue` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = taggedValue.copyWith(code: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$TaggedValueCopyWith<TaggedValue> get copyWith => _$TaggedValueCopyWithImpl<TaggedValue>(this as TaggedValue, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$TaggedValueCopyWith<$Res> {
+  $Res call({
     String? code,
     List<String>? aliases,
-  }) {
-    final self = this as TaggedValue;
-    final nextAliases = List<String>.of(aliases ?? self.aliases);
+  });
+}
 
-    return TaggedValue(
-      code: code ?? self.code,
-      aliases: nextAliases,
+/// @nodoc
+final class _$TaggedValueCopyWithImpl<$Res> implements _$TaggedValueCopyWith<$Res> {
+  const _$TaggedValueCopyWithImpl(this._self, this._then);
+
+  final TaggedValue _self;
+  final $Res Function(TaggedValue) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? code = null,
+    Object? aliases = null,
+  }) {
+    return _then(
+      TaggedValue(
+        code: code == null ? _self.code : code as String,
+        aliases: aliases == null ? _self.aliases : aliases as List<String>,
+      )
     );
   }
 }

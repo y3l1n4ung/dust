@@ -26,24 +26,57 @@ mixin _$RemoteComment {
         ')';
   }
 
-  RemoteComment copyWith({
+  /// Creates a copy of this `RemoteComment` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = remoteComment.copyWith(postId: 1);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$RemoteCommentCopyWith<RemoteComment> get copyWith => _$RemoteCommentCopyWithImpl<RemoteComment>(this as RemoteComment, (value) => value);
+
+  Map<String, Object?> toJson() => _$RemoteCommentToJson(this as RemoteComment);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$RemoteCommentCopyWith<$Res> {
+  $Res call({
     int? postId,
     int? id,
     String? name,
     String? email,
     String? body,
+  });
+}
+
+/// @nodoc
+final class _$RemoteCommentCopyWithImpl<$Res> implements _$RemoteCommentCopyWith<$Res> {
+  const _$RemoteCommentCopyWithImpl(this._self, this._then);
+
+  final RemoteComment _self;
+  final $Res Function(RemoteComment) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? postId = null,
+    Object? id = null,
+    Object? name = null,
+    Object? email = null,
+    Object? body = null,
   }) {
-    final self = this as RemoteComment;
-    return RemoteComment(
-      postId: postId ?? self.postId,
-      id: id ?? self.id,
-      name: name ?? self.name,
-      email: email ?? self.email,
-      body: body ?? self.body,
+    return _then(
+      RemoteComment(
+        postId: postId == null ? _self.postId : postId as int,
+        id: id == null ? _self.id : id as int,
+        name: name == null ? _self.name : name as String,
+        email: email == null ? _self.email : email as String,
+        body: body == null ? _self.body : body as String,
+      )
     );
   }
-
-  Map<String, Object?> toJson() => _$RemoteCommentToJson(this as RemoteComment);
 }
 
 Map<String, Object?> _$RemoteCommentToJson(RemoteComment instance) {

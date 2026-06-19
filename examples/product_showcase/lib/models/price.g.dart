@@ -48,18 +48,47 @@ mixin _$Price {
     ]);
   }
 
-  Price copyWith({
+  /// Creates a copy of this `Price` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = price.copyWith(currency: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$PriceCopyWith<Price> get copyWith => _$PriceCopyWithImpl<Price>(this as Price, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$PriceCopyWith<$Res> {
+  $Res call({
     String? currency,
     int? cents,
     List<String>? tags,
-  }) {
-    final self = this as Price;
-    final nextTags = List<String>.of(tags ?? self.tags);
+  });
+}
 
-    return Price(
-      currency: currency ?? self.currency,
-      cents: cents ?? self.cents,
-      tags: nextTags,
+/// @nodoc
+final class _$PriceCopyWithImpl<$Res> implements _$PriceCopyWith<$Res> {
+  const _$PriceCopyWithImpl(this._self, this._then);
+
+  final Price _self;
+  final $Res Function(Price) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? currency = null,
+    Object? cents = null,
+    Object? tags = null,
+  }) {
+    return _then(
+      Price(
+        currency: currency == null ? _self.currency : currency as String,
+        cents: cents == null ? _self.cents : cents as int,
+        tags: tags == null ? _self.tags : tags as List<String>,
+      )
     );
   }
 }

@@ -51,20 +51,14 @@ mixin _$ChatMessage {
     ]);
   }
 
-  ChatMessage copyWith({
-    String? id,
-    ChatRole? role,
-    String? text,
-    DateTime? createdAt,
-  }) {
-    final self = this as ChatMessage;
-    return ChatMessage(
-      id: id ?? self.id,
-      role: role ?? self.role,
-      text: text ?? self.text,
-      createdAt: createdAt ?? self.createdAt,
-    );
-  }
+  /// Creates a copy of this `ChatMessage` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = chatMessage.copyWith(id: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$ChatMessageCopyWith<ChatMessage> get copyWith => _$ChatMessageCopyWithImpl<ChatMessage>(this as ChatMessage, (value) => value);
 
   Map<String, Object?> toJson() => _$ChatMessageToJson(this as ChatMessage);
 }
@@ -99,20 +93,14 @@ mixin _$ChatRequest {
     ]);
   }
 
-  ChatRequest copyWith({
-    String? message,
-    List<ChatMessage>? history,
-  }) {
-    final self = this as ChatRequest;
-    final nextHistory = List<ChatMessage>.of(
-      (history ?? self.history).map((item_1) => item_1.copyWith()),
-    );
-
-    return ChatRequest(
-      message: message ?? self.message,
-      history: nextHistory,
-    );
-  }
+  /// Creates a copy of this `ChatRequest` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = chatRequest.copyWith(message: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$ChatRequestCopyWith<ChatRequest> get copyWith => _$ChatRequestCopyWithImpl<ChatRequest>(this as ChatRequest, (value) => value);
 
   Map<String, Object?> toJson() => _$ChatRequestToJson(this as ChatRequest);
 }
@@ -147,20 +135,124 @@ mixin _$ChatResponse {
     ]);
   }
 
-  ChatResponse copyWith({
+  /// Creates a copy of this `ChatResponse` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = chatResponse.copyWith(escalated: true);
+  /// final nested = chatResponse.copyWith.message(id: 'London');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$ChatResponseCopyWith<ChatResponse> get copyWith => _$ChatResponseCopyWithImpl<ChatResponse>(this as ChatResponse, (value) => value);
+
+  Map<String, Object?> toJson() => _$ChatResponseToJson(this as ChatResponse);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$ChatMessageCopyWith<$Res> {
+  $Res call({
+    String? id,
+    ChatRole? role,
+    String? text,
+    DateTime? createdAt,
+  });
+}
+
+/// @nodoc
+final class _$ChatMessageCopyWithImpl<$Res> implements _$ChatMessageCopyWith<$Res> {
+  const _$ChatMessageCopyWithImpl(this._self, this._then);
+
+  final ChatMessage _self;
+  final $Res Function(ChatMessage) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? role = null,
+    Object? text = null,
+    Object? createdAt = null,
+  }) {
+    return _then(
+      ChatMessage(
+        id: id == null ? _self.id : id as String,
+        role: role == null ? _self.role : role as ChatRole,
+        text: text == null ? _self.text : text as String,
+        createdAt: createdAt == null ? _self.createdAt : createdAt as DateTime,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$ChatRequestCopyWith<$Res> {
+  $Res call({
+    String? message,
+    List<ChatMessage>? history,
+  });
+}
+
+/// @nodoc
+final class _$ChatRequestCopyWithImpl<$Res> implements _$ChatRequestCopyWith<$Res> {
+  const _$ChatRequestCopyWithImpl(this._self, this._then);
+
+  final ChatRequest _self;
+  final $Res Function(ChatRequest) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? message = null,
+    Object? history = null,
+  }) {
+    return _then(
+      ChatRequest(
+        message: message == null ? _self.message : message as String,
+        history: history == null ? _self.history : history as List<ChatMessage>,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$ChatResponseCopyWith<$Res> {
+  $Res call({
     ChatMessage? message,
     bool? escalated,
-  }) {
-    final self = this as ChatResponse;
-    final nextMessage = (message ?? self.message).copyWith();
+  });
 
-    return ChatResponse(
-      message: nextMessage,
-      escalated: escalated ?? self.escalated,
+  _$ChatMessageCopyWith<$Res> get message;
+}
+
+/// @nodoc
+final class _$ChatResponseCopyWithImpl<$Res> implements _$ChatResponseCopyWith<$Res> {
+  const _$ChatResponseCopyWithImpl(this._self, this._then);
+
+  final ChatResponse _self;
+  final $Res Function(ChatResponse) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? message = null,
+    Object? escalated = null,
+  }) {
+    return _then(
+      ChatResponse(
+        message: message == null ? _self.message : message as ChatMessage,
+        escalated: escalated == null ? _self.escalated : escalated as bool,
+      )
     );
   }
 
-  Map<String, Object?> toJson() => _$ChatResponseToJson(this as ChatResponse);
+  @override
+  @pragma('vm:prefer-inline')
+  _$ChatMessageCopyWith<$Res> get message {
+    return _$ChatMessageCopyWithImpl<$Res>(
+      _self.message,
+      (value) => call(message: value),
+    );
+  }
 }
 
 Map<String, Object?> _$ChatMessageToJson(ChatMessage instance) {

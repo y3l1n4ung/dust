@@ -13,6 +13,17 @@
 
 part of 'checkout_quote.dart';
 
+final class _CheckoutQuoteRequestCopyWithUnset {
+  const _CheckoutQuoteRequestCopyWithUnset();
+}
+
+const _checkoutQuoteRequestCopyWithUnset = _CheckoutQuoteRequestCopyWithUnset();
+final class _CheckoutQuoteCopyWithUnset {
+  const _CheckoutQuoteCopyWithUnset();
+}
+
+const _checkoutQuoteCopyWithUnset = _CheckoutQuoteCopyWithUnset();
+
 mixin _$CheckoutQuoteRequest {
   @override
   String toString() {
@@ -43,21 +54,15 @@ mixin _$CheckoutQuoteRequest {
     ]);
   }
 
-  CheckoutQuoteRequest copyWith({
-    double? subtotal,
-    Option<String?> couponCode = const None(),
-  }) {
-    final self = this as CheckoutQuoteRequest;
-    final nextCouponCode = switch (couponCode) {
-      None<String?>() => self.couponCode,
-      Some<String?>(:final value) => value,
-    };
-
-    return CheckoutQuoteRequest(
-      subtotal: subtotal ?? self.subtotal,
-      couponCode: nextCouponCode,
-    );
-  }
+  /// Creates a copy of this `CheckoutQuoteRequest` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = checkoutQuoteRequest.copyWith(subtotal: 1.0);
+  /// final cleared = checkoutQuoteRequest.copyWith(couponCode: null);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$CheckoutQuoteRequestCopyWith<CheckoutQuoteRequest> get copyWith => _$CheckoutQuoteRequestCopyWithImpl<CheckoutQuoteRequest>(this as CheckoutQuoteRequest, (value) => value);
 
   Map<String, Object?> toJson() => _$CheckoutQuoteRequestToJson(this as CheckoutQuoteRequest);
 }
@@ -110,39 +115,102 @@ mixin _$CheckoutQuote {
     ]);
   }
 
-  CheckoutQuote copyWith({
+  /// Creates a copy of this `CheckoutQuote` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = checkoutQuote.copyWith(subtotal: 1.0);
+  /// final cleared = checkoutQuote.copyWith(appliedCoupon: null);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$CheckoutQuoteCopyWith<CheckoutQuote> get copyWith => _$CheckoutQuoteCopyWithImpl<CheckoutQuote>(this as CheckoutQuote, (value) => value);
+
+  Map<String, Object?> toJson() => _$CheckoutQuoteToJson(this as CheckoutQuote);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$CheckoutQuoteRequestCopyWith<$Res> {
+  $Res call({
+    double? subtotal,
+    String? couponCode,
+  });
+}
+
+/// @nodoc
+final class _$CheckoutQuoteRequestCopyWithImpl<$Res> implements _$CheckoutQuoteRequestCopyWith<$Res> {
+  const _$CheckoutQuoteRequestCopyWithImpl(this._self, this._then);
+
+  final CheckoutQuoteRequest _self;
+  final $Res Function(CheckoutQuoteRequest) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? subtotal = null,
+    Object? couponCode = _checkoutQuoteRequestCopyWithUnset,
+  }) {
+    return _then(
+      CheckoutQuoteRequest(
+        subtotal: subtotal == null ? _self.subtotal : subtotal as double,
+        couponCode: identical(couponCode, _checkoutQuoteRequestCopyWithUnset)
+            ? _self.couponCode
+            : couponCode as String?,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$CheckoutQuoteCopyWith<$Res> {
+  $Res call({
     double? subtotal,
     double? discount,
     double? shipping,
     double? tax,
     double? total,
     int? estimatedDeliveryDays,
-    Option<String?> appliedCoupon = const None(),
-    Option<String?> message = const None(),
-  }) {
-    final self = this as CheckoutQuote;
-    final nextAppliedCoupon = switch (appliedCoupon) {
-      None<String?>() => self.appliedCoupon,
-      Some<String?>(:final value) => value,
-    };
-    final nextMessage = switch (message) {
-      None<String?>() => self.message,
-      Some<String?>(:final value) => value,
-    };
+    String? appliedCoupon,
+    String? message,
+  });
+}
 
-    return CheckoutQuote(
-      subtotal: subtotal ?? self.subtotal,
-      discount: discount ?? self.discount,
-      shipping: shipping ?? self.shipping,
-      tax: tax ?? self.tax,
-      total: total ?? self.total,
-      estimatedDeliveryDays: estimatedDeliveryDays ?? self.estimatedDeliveryDays,
-      appliedCoupon: nextAppliedCoupon,
-      message: nextMessage,
+/// @nodoc
+final class _$CheckoutQuoteCopyWithImpl<$Res> implements _$CheckoutQuoteCopyWith<$Res> {
+  const _$CheckoutQuoteCopyWithImpl(this._self, this._then);
+
+  final CheckoutQuote _self;
+  final $Res Function(CheckoutQuote) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? subtotal = null,
+    Object? discount = null,
+    Object? shipping = null,
+    Object? tax = null,
+    Object? total = null,
+    Object? estimatedDeliveryDays = null,
+    Object? appliedCoupon = _checkoutQuoteCopyWithUnset,
+    Object? message = _checkoutQuoteCopyWithUnset,
+  }) {
+    return _then(
+      CheckoutQuote(
+        subtotal: subtotal == null ? _self.subtotal : subtotal as double,
+        discount: discount == null ? _self.discount : discount as double,
+        shipping: shipping == null ? _self.shipping : shipping as double,
+        tax: tax == null ? _self.tax : tax as double,
+        total: total == null ? _self.total : total as double,
+        estimatedDeliveryDays: estimatedDeliveryDays == null ? _self.estimatedDeliveryDays : estimatedDeliveryDays as int,
+        appliedCoupon: identical(appliedCoupon, _checkoutQuoteCopyWithUnset)
+            ? _self.appliedCoupon
+            : appliedCoupon as String?,
+        message: identical(message, _checkoutQuoteCopyWithUnset)
+            ? _self.message
+            : message as String?,
+      )
     );
   }
-
-  Map<String, Object?> toJson() => _$CheckoutQuoteToJson(this as CheckoutQuote);
 }
 
 Map<String, Object?> _$CheckoutQuoteRequestToJson(CheckoutQuoteRequest instance) {

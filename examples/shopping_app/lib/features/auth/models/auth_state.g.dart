@@ -13,6 +13,12 @@
 
 part of 'auth_state.dart';
 
+final class _AuthStateCopyWithUnset {
+  const _AuthStateCopyWithUnset();
+}
+
+const _authStateCopyWithUnset = _AuthStateCopyWithUnset();
+
 mixin _$AuthState {
   @override
   String toString() {
@@ -49,32 +55,57 @@ mixin _$AuthState {
     ]);
   }
 
-  AuthState copyWith({
-    Option<User?> user = const None(),
-    Option<String?> token = const None(),
-    AuthStatus? status,
-    Option<String?> errorMessage = const None(),
-  }) {
-    final self = this as AuthState;
-    final nextUserSource = switch (user) {
-      None<User?>() => self.user,
-      Some<User?>(:final value) => value,
-    };
-    final nextUser = nextUserSource == null ? null : nextUserSource.copyWith();
-    final nextToken = switch (token) {
-      None<String?>() => self.token,
-      Some<String?>(:final value) => value,
-    };
-    final nextErrorMessage = switch (errorMessage) {
-      None<String?>() => self.errorMessage,
-      Some<String?>(:final value) => value,
-    };
+  /// Creates a copy of this `AuthState` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = authState.copyWith();
+  /// final cleared = authState.copyWith(user: null);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$AuthStateCopyWith<AuthState> get copyWith => _$AuthStateCopyWithImpl<AuthState>(this as AuthState, (value) => value);
+}
 
-    return AuthState(
-      user: nextUser,
-      token: nextToken,
-      status: status ?? self.status,
-      errorMessage: nextErrorMessage,
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$AuthStateCopyWith<$Res> {
+  $Res call({
+    User? user,
+    String? token,
+    AuthStatus? status,
+    String? errorMessage,
+  });
+}
+
+/// @nodoc
+final class _$AuthStateCopyWithImpl<$Res> implements _$AuthStateCopyWith<$Res> {
+  const _$AuthStateCopyWithImpl(this._self, this._then);
+
+  final AuthState _self;
+  final $Res Function(AuthState) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? user = _authStateCopyWithUnset,
+    Object? token = _authStateCopyWithUnset,
+    Object? status = null,
+    Object? errorMessage = _authStateCopyWithUnset,
+  }) {
+    return _then(
+      AuthState(
+        user: identical(user, _authStateCopyWithUnset)
+            ? _self.user
+            : user as User?,
+        token: identical(token, _authStateCopyWithUnset)
+            ? _self.token
+            : token as String?,
+        status: status == null ? _self.status : status as AuthStatus,
+        errorMessage: identical(errorMessage, _authStateCopyWithUnset)
+            ? _self.errorMessage
+            : errorMessage as String?,
+      )
     );
   }
 }

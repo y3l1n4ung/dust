@@ -14,6 +14,11 @@
 part of 'products_state.dart';
 
 const DeepCollectionEquality _productsStateProductsEquality = DeepCollectionEquality();
+final class _ProductsStateCopyWithUnset {
+  const _ProductsStateCopyWithUnset();
+}
+
+const _productsStateCopyWithUnset = _ProductsStateCopyWithUnset();
 
 mixin _$ProductsState {
   @override
@@ -57,34 +62,61 @@ mixin _$ProductsState {
     ]);
   }
 
-  ProductsState copyWith({
+  /// Creates a copy of this `ProductsState` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = productsState.copyWith(searchQuery: 'John');
+  /// final cleared = productsState.copyWith(errorMessage: null);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$ProductsStateCopyWith<ProductsState> get copyWith => _$ProductsStateCopyWithImpl<ProductsState>(this as ProductsState, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$ProductsStateCopyWith<$Res> {
+  $Res call({
     List<Product>? products,
     ProductsStatus? status,
-    Option<String?> errorMessage = const None(),
-    Option<String?> selectedCategory = const None(),
+    String? errorMessage,
+    String? selectedCategory,
     String? searchQuery,
     ProductSortOption? sortOption,
-  }) {
-    final self = this as ProductsState;
-    final nextProducts = List<Product>.of(
-      (products ?? self.products).map((item_0) => item_0.copyWith()),
-    );
-    final nextErrorMessage = switch (errorMessage) {
-      None<String?>() => self.errorMessage,
-      Some<String?>(:final value) => value,
-    };
-    final nextSelectedCategory = switch (selectedCategory) {
-      None<String?>() => self.selectedCategory,
-      Some<String?>(:final value) => value,
-    };
+  });
+}
 
-    return ProductsState(
-      products: nextProducts,
-      status: status ?? self.status,
-      errorMessage: nextErrorMessage,
-      selectedCategory: nextSelectedCategory,
-      searchQuery: searchQuery ?? self.searchQuery,
-      sortOption: sortOption ?? self.sortOption,
+/// @nodoc
+final class _$ProductsStateCopyWithImpl<$Res> implements _$ProductsStateCopyWith<$Res> {
+  const _$ProductsStateCopyWithImpl(this._self, this._then);
+
+  final ProductsState _self;
+  final $Res Function(ProductsState) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? products = null,
+    Object? status = null,
+    Object? errorMessage = _productsStateCopyWithUnset,
+    Object? selectedCategory = _productsStateCopyWithUnset,
+    Object? searchQuery = null,
+    Object? sortOption = null,
+  }) {
+    return _then(
+      ProductsState(
+        products: products == null ? _self.products : products as List<Product>,
+        status: status == null ? _self.status : status as ProductsStatus,
+        errorMessage: identical(errorMessage, _productsStateCopyWithUnset)
+            ? _self.errorMessage
+            : errorMessage as String?,
+        selectedCategory: identical(selectedCategory, _productsStateCopyWithUnset)
+            ? _self.selectedCategory
+            : selectedCategory as String?,
+        searchQuery: searchQuery == null ? _self.searchQuery : searchQuery as String,
+        sortOption: sortOption == null ? _self.sortOption : sortOption as ProductSortOption,
+      )
     );
   }
 }

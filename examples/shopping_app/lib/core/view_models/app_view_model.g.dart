@@ -40,16 +40,44 @@ mixin _$AppState {
     ]);
   }
 
-  AppState copyWith({
+  /// Creates a copy of this `AppState` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = appState.copyWith();
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$AppStateCopyWith<AppState> get copyWith => _$AppStateCopyWithImpl<AppState>(this as AppState, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$AppStateCopyWith<$Res> {
+  $Res call({
     AppBackendMode? backendMode,
+  });
+}
+
+/// @nodoc
+final class _$AppStateCopyWithImpl<$Res> implements _$AppStateCopyWith<$Res> {
+  const _$AppStateCopyWithImpl(this._self, this._then);
+
+  final AppState _self;
+  final $Res Function(AppState) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? backendMode = null,
   }) {
-    final self = this as AppState;
-    return AppState(
-      backendMode: backendMode ?? self.backendMode,
+    return _then(
+      AppState(
+        backendMode: backendMode == null ? _self.backendMode : backendMode as AppBackendMode,
+      )
     );
   }
 }
-
 final class _AppViewModelAspect<R> {
   const _AppViewModelAspect(this.selector);
 

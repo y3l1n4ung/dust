@@ -58,7 +58,23 @@ mixin _$TrackingEvent {
     ]);
   }
 
-  TrackingEvent copyWith({
+  /// Creates a copy of this `TrackingEvent` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = trackingEvent.copyWith(id: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$TrackingEventCopyWith<TrackingEvent> get copyWith => _$TrackingEventCopyWithImpl<TrackingEvent>(this as TrackingEvent, (value) => value);
+
+  Map<String, Object?> toJson() => _$TrackingEventToJson(this as TrackingEvent);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$TrackingEventCopyWith<$Res> {
+  $Res call({
     String? id,
     String? orderId,
     String? title,
@@ -66,20 +82,39 @@ mixin _$TrackingEvent {
     String? location,
     DateTime? occurredAt,
     bool? completed,
+  });
+}
+
+/// @nodoc
+final class _$TrackingEventCopyWithImpl<$Res> implements _$TrackingEventCopyWith<$Res> {
+  const _$TrackingEventCopyWithImpl(this._self, this._then);
+
+  final TrackingEvent _self;
+  final $Res Function(TrackingEvent) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? orderId = null,
+    Object? title = null,
+    Object? description = null,
+    Object? location = null,
+    Object? occurredAt = null,
+    Object? completed = null,
   }) {
-    final self = this as TrackingEvent;
-    return TrackingEvent(
-      id: id ?? self.id,
-      orderId: orderId ?? self.orderId,
-      title: title ?? self.title,
-      description: description ?? self.description,
-      location: location ?? self.location,
-      occurredAt: occurredAt ?? self.occurredAt,
-      completed: completed ?? self.completed,
+    return _then(
+      TrackingEvent(
+        id: id == null ? _self.id : id as String,
+        orderId: orderId == null ? _self.orderId : orderId as String,
+        title: title == null ? _self.title : title as String,
+        description: description == null ? _self.description : description as String,
+        location: location == null ? _self.location : location as String,
+        occurredAt: occurredAt == null ? _self.occurredAt : occurredAt as DateTime,
+        completed: completed == null ? _self.completed : completed as bool,
+      )
     );
   }
-
-  Map<String, Object?> toJson() => _$TrackingEventToJson(this as TrackingEvent);
 }
 
 Map<String, Object?> _$TrackingEventToJson(TrackingEvent instance) {

@@ -75,40 +75,6 @@ fn render_arg_value(out: &mut String, value: &str, continuation_indent: &str) {
     }
 }
 
-pub(crate) fn render_return_statement(call: &str, indent: &str) -> String {
-    let mut lines = call.lines();
-    let Some(first_line) = lines.next() else {
-        return format!("{indent}return;");
-    };
-
-    let mut rendered = String::with_capacity(indent.len() + call.len() + 12);
-    rendered.push_str(indent);
-    rendered.push_str("return ");
-    rendered.push_str(first_line);
-
-    let Some(second_line) = lines.next() else {
-        rendered.push(';');
-        return rendered;
-    };
-
-    rendered.push('\n');
-    append_return_line(&mut rendered, indent, second_line);
-    for line in lines {
-        rendered.push('\n');
-        append_return_line(&mut rendered, indent, line);
-    }
-
-    rendered
-}
-
-fn append_return_line(rendered: &mut String, indent: &str, line: &str) {
-    rendered.push_str(indent);
-    rendered.push_str(line);
-    if line == ")" {
-        rendered.push(';');
-    }
-}
-
 fn constructor_name(class: &ClassIr, constructor: &ConstructorIr) -> String {
     match &constructor.name {
         Some(name) => format!("{}.{}", class.name, name),

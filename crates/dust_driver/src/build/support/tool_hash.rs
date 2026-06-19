@@ -67,9 +67,6 @@ const DERIVE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_plugin_derive/src/features/clone_copy_with.rs"),
     include_str!("../../../../dust_plugin_derive/src/features/clone_copy_with/render.rs"),
     include_str!("../../../../dust_plugin_derive/src/features/clone_copy_with/support.rs"),
-    include_str!(
-        "../../../../dust_plugin_derive/src/features/clone_copy_with/templates/copy_with.jinja"
-    ),
     include_str!("../../../../dust_plugin_derive/src/features/names.rs"),
     include_str!("../../../../dust_plugin_derive/src/features/templates/debug_empty.jinja"),
     include_str!("../../../../dust_plugin_derive/src/features/templates/debug_fields.jinja"),
