@@ -8,10 +8,7 @@ use dust_plugin_api::{
 use crate::{
     analysis::collect_workspace_analysis,
     emit::emit_library,
-    features::{
-        COPY_WITH_SYMBOL, DEBUG_SYMBOL, EQ_SYMBOL, TO_STRING_SYMBOL, VALIDATE_SYMBOL,
-        clone_copy_with::copy_with_requires_undefined,
-    },
+    features::{COPY_WITH_SYMBOL, DEBUG_SYMBOL, EQ_SYMBOL, TO_STRING_SYMBOL, VALIDATE_SYMBOL},
     validate::validate_library,
 };
 
@@ -53,18 +50,8 @@ impl DustPlugin for DerivePlugin {
         SUPPORTED_ANNOTATIONS
     }
 
-    fn requested_symbols(&self, library: &DartFileIr) -> Vec<String> {
-        let needs_undefined = library.classes.iter().any(|class| {
-            class.traits.iter().any(|trait_app| {
-                trait_app.symbol.0 == COPY_WITH_SYMBOL && copy_with_requires_undefined(class)
-            })
-        });
-
-        if needs_undefined {
-            vec!["_undefined".to_owned()]
-        } else {
-            Vec::new()
-        }
+    fn requested_symbols(&self, _library: &DartFileIr) -> Vec<String> {
+        Vec::new()
     }
 
     fn collect_workspace_analysis(

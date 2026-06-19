@@ -13,7 +13,7 @@
 
 part of 'tagged_value.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _taggedValueAliasesEquality = DeepCollectionEquality();
 
 mixin _$TaggedValue {
   @override
@@ -32,7 +32,7 @@ mixin _$TaggedValue {
         other is TaggedValue &&
             runtimeType == other.runtimeType &&
             other.code == self.code &&
-            _deepCollectionEquality.equals(other.aliases, self.aliases);
+            _taggedValueAliasesEquality.equals(other.aliases, self.aliases);
   }
 
   @override
@@ -41,7 +41,7 @@ mixin _$TaggedValue {
     return Object.hashAll([
       runtimeType,
       self.code,
-      _deepCollectionEquality.hash(self.aliases),
+      _taggedValueAliasesEquality.hash(self.aliases),
     ]);
   }
 

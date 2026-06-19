@@ -1,3 +1,4 @@
+import 'package:dust_dart/fp.dart';
 import 'package:dust_flutter/state.dart';
 
 import '../../../core/data/shopping_repository.dart';
@@ -35,7 +36,7 @@ class ProductsViewModel extends $ProductsViewModel {
       emit(
         state.copyWith(
           status: ProductsStatus.error,
-          errorMessage: e.toString(),
+          errorMessage: Some(e.toString()),
         ),
       );
     }
@@ -43,7 +44,7 @@ class ProductsViewModel extends $ProductsViewModel {
 
   void selectCategory(String? category) {
     logger.userAction('select_category', {'category': category ?? 'all'});
-    emit(state.copyWith(selectedCategory: category));
+    emit(state.copyWith(selectedCategory: Some(category)));
     logger.debug(
       'PRODUCTS',
       'Filtered to category: ${category ?? 'all'}, showing ${state.filteredProducts.length} products',

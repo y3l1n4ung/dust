@@ -13,7 +13,7 @@
 
 part of 'featured_product.dart';
 
-const DeepCollectionEquality _unorderedDeepCollectionEquality = DeepCollectionEquality.unordered();
+const DeepCollectionEquality _featuredProductTagsEquality = DeepCollectionEquality.unordered();
 
 mixin _$FeaturedProduct {
   @override
@@ -35,7 +35,7 @@ mixin _$FeaturedProduct {
             runtimeType == other.runtimeType &&
             other.sku == self.sku &&
             other.price == self.price &&
-            _unorderedDeepCollectionEquality.equals(other.tags, self.tags) &&
+            _featuredProductTagsEquality.equals(other.tags, self.tags) &&
             other.archived == self.archived;
   }
 
@@ -46,7 +46,7 @@ mixin _$FeaturedProduct {
       runtimeType,
       self.sku,
       self.price,
-      _unorderedDeepCollectionEquality.hash(self.tags),
+      _featuredProductTagsEquality.hash(self.tags),
       self.archived,
     ]);
   }

@@ -3,6 +3,8 @@ use std::fmt::Write;
 use dust_dart_emit::{DART_DYNAMIC, DART_OBJECT_NULLABLE, OBJECT_NULLABLE_TYPES};
 use dust_ir::{ClassIr, TypeIr};
 
+use crate::features::names::upper_first;
+
 pub(super) fn render_copy_with_params(class: &ClassIr) -> String {
     if class.fields.is_empty() {
         return "{}".to_owned();
@@ -11,11 +13,11 @@ pub(super) fn render_copy_with_params(class: &ClassIr) -> String {
     let mut params = String::with_capacity(class.fields.len() * 32);
     params.push_str("{\n");
     for field in &class.fields {
-        if uses_undefined_sentinel(&field.ty) {
+        if uses_option_update(&field.ty) {
             writeln!(
                 params,
-                "  {} {} = _undefined,",
-                undefined_parameter_type(&field.ty),
+                "  {} {} = const None(),",
+                option_update_parameter_type(&field.ty),
                 field.name
             )
             .expect("writing to String cannot fail");
@@ -33,23 +35,27 @@ pub(super) fn render_copy_with_params(class: &ClassIr) -> String {
     params
 }
 
-pub(super) fn render_copy_with_source_expr(field_name: &str, ty: &TypeIr) -> String {
-    if uses_undefined_sentinel(ty) {
-        let cast = OBJECT_NULLABLE_TYPES.render(ty);
+pub(super) fn render_copy_with_source_expr(
+    field_name: &str,
+    ty: &TypeIr,
+    self_name: &str,
+) -> String {
+    if uses_option_update(ty) {
+        let value_type = OBJECT_NULLABLE_TYPES.render(ty);
         format!(
-            "identical({field_name}, _undefined)\n    ? self.{field_name}\n    : {field_name} as {cast}"
+            "switch ({field_name}) {{\n  None<{value_type}>() => {self_name}.{field_name},\n  Some<{value_type}>(:final value) => value,\n}}"
         )
     } else {
-        format!("{field_name} ?? self.{field_name}")
+        format!("{field_name} ?? {self_name}.{field_name}")
     }
 }
 
-pub(super) fn uses_undefined_sentinel(ty: &TypeIr) -> bool {
-    ty.is_nullable() || matches!(ty, TypeIr::Dynamic | TypeIr::Unknown)
+pub(super) fn uses_option_update(ty: &TypeIr) -> bool {
+    ty.is_nullable() || ty.is_named("Option") || matches!(ty, TypeIr::Dynamic | TypeIr::Unknown)
 }
 
 pub(super) fn should_keep_source_local(ty: &TypeIr) -> bool {
-    ty.is_nullable()
+    uses_option_update(ty)
 }
 
 pub(super) fn render_setup_blocks(blocks: Vec<String>) -> String {
@@ -86,7 +92,7 @@ pub(super) fn member_access_expr(value: &str) -> String {
 }
 
 pub(super) fn temp_name(prefix: &str, field_name: &str, suffix: &str) -> String {
-    format!("{prefix}{}{suffix}", upper_camel_suffix(field_name))
+    format!("{prefix}{}{suffix}", upper_first(field_name))
 }
 
 fn render_copy_with_param_type(ty: &TypeIr) -> String {
@@ -100,12 +106,8 @@ fn render_copy_with_param_type(ty: &TypeIr) -> String {
     }
 }
 
-fn undefined_parameter_type(ty: &TypeIr) -> &'static str {
-    if matches!(ty, TypeIr::Dynamic) {
-        DART_DYNAMIC
-    } else {
-        DART_OBJECT_NULLABLE
-    }
+fn option_update_parameter_type(ty: &TypeIr) -> String {
+    format!("Option<{}>", OBJECT_NULLABLE_TYPES.render(ty))
 }
 
 fn nullable_parameter_type(rendered: String) -> String {
@@ -127,15 +129,4 @@ fn is_simple_identifier(value: &str) -> bool {
     }
 
     chars.all(|ch| ch == '_' || ch.is_ascii_alphanumeric())
-}
-
-fn upper_camel_suffix(field_name: &str) -> String {
-    let mut chars = field_name.chars();
-    let Some(first) = chars.next() else {
-        return String::new();
-    };
-
-    let mut rendered = first.to_uppercase().collect::<String>();
-    rendered.push_str(chars.as_str());
-    rendered
 }

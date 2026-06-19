@@ -13,8 +13,6 @@
 
 part of 'checkout_quote.dart';
 
-const Object _undefined = Object();
-
 mixin _$CheckoutQuoteRequest {
   @override
   String toString() {
@@ -47,14 +45,17 @@ mixin _$CheckoutQuoteRequest {
 
   CheckoutQuoteRequest copyWith({
     double? subtotal,
-    Object? couponCode = _undefined,
+    Option<String?> couponCode = const None(),
   }) {
     final self = this as CheckoutQuoteRequest;
+    final nextCouponCode = switch (couponCode) {
+      None<String?>() => self.couponCode,
+      Some<String?>(:final value) => value,
+    };
+
     return CheckoutQuoteRequest(
       subtotal: subtotal ?? self.subtotal,
-      couponCode: identical(couponCode, _undefined)
-          ? self.couponCode
-          : couponCode as String?,
+      couponCode: nextCouponCode,
     );
   }
 
@@ -116,10 +117,19 @@ mixin _$CheckoutQuote {
     double? tax,
     double? total,
     int? estimatedDeliveryDays,
-    Object? appliedCoupon = _undefined,
-    Object? message = _undefined,
+    Option<String?> appliedCoupon = const None(),
+    Option<String?> message = const None(),
   }) {
     final self = this as CheckoutQuote;
+    final nextAppliedCoupon = switch (appliedCoupon) {
+      None<String?>() => self.appliedCoupon,
+      Some<String?>(:final value) => value,
+    };
+    final nextMessage = switch (message) {
+      None<String?>() => self.message,
+      Some<String?>(:final value) => value,
+    };
+
     return CheckoutQuote(
       subtotal: subtotal ?? self.subtotal,
       discount: discount ?? self.discount,
@@ -127,12 +137,8 @@ mixin _$CheckoutQuote {
       tax: tax ?? self.tax,
       total: total ?? self.total,
       estimatedDeliveryDays: estimatedDeliveryDays ?? self.estimatedDeliveryDays,
-      appliedCoupon: identical(appliedCoupon, _undefined)
-          ? self.appliedCoupon
-          : appliedCoupon as String?,
-      message: identical(message, _undefined)
-          ? self.message
-          : message as String?,
+      appliedCoupon: nextAppliedCoupon,
+      message: nextMessage,
     );
   }
 

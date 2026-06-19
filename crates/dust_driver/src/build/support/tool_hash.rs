@@ -58,10 +58,38 @@ const CODEGEN_CORE_FINGERPRINT_INPUT: &str = concat!(
 
 const DERIVE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_plugin_derive/src/analysis.rs"),
+    include_str!("../../../../dust_plugin_derive/src/emit.rs"),
+    include_str!("../../../../dust_plugin_derive/src/features/mod.rs"),
     include_str!("../../../../dust_plugin_derive/src/plugin.rs"),
+    include_str!("../../../../dust_plugin_derive/src/validate.rs"),
     include_str!("../../../../dust_plugin_derive/src/features/debug.rs"),
     include_str!("../../../../dust_plugin_derive/src/features/eq_hash.rs"),
     include_str!("../../../../dust_plugin_derive/src/features/clone_copy_with.rs"),
+    include_str!("../../../../dust_plugin_derive/src/features/clone_copy_with/render.rs"),
+    include_str!("../../../../dust_plugin_derive/src/features/clone_copy_with/support.rs"),
+    include_str!(
+        "../../../../dust_plugin_derive/src/features/clone_copy_with/templates/copy_with.jinja"
+    ),
+    include_str!("../../../../dust_plugin_derive/src/features/names.rs"),
+    include_str!("../../../../dust_plugin_derive/src/features/templates/debug_empty.jinja"),
+    include_str!("../../../../dust_plugin_derive/src/features/templates/debug_fields.jinja"),
+    include_str!("../../../../dust_plugin_derive/src/features/templates/eq_empty.jinja"),
+    include_str!("../../../../dust_plugin_derive/src/features/templates/eq_fields.jinja"),
+    include_str!("../../../../dust_plugin_derive/src/features/templates/hash_code.jinja"),
+    include_str!("../../../../dust_plugin_derive/src/features/validate/mod.rs"),
+    include_str!("../../../../dust_plugin_derive/src/features/validate/emit.rs"),
+    include_str!("../../../../dust_plugin_derive/src/features/validate/model.rs"),
+    include_str!("../../../../dust_plugin_derive/src/features/validate/rule_snippets.rs"),
+    include_str!("../../../../dust_plugin_derive/src/features/validate/rules.rs"),
+    include_str!("../../../../dust_plugin_derive/src/features/validate/type_source.rs"),
+    include_str!(
+        "../../../../dust_plugin_derive/src/features/validate/templates/validate_mixin.jinja"
+    ),
+    include_str!(
+        "../../../../dust_plugin_derive/src/features/validate/templates/validate_support.jinja"
+    ),
+    include_str!("../../../../dust_plugin_derive/src/features/writer.rs"),
+    include_str!("../../../../dust_plugin_derive/src/lib.rs"),
 );
 
 const SERDE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(

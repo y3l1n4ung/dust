@@ -33,13 +33,13 @@ fn eq_requires_no_companion_trait() {
 }
 
 #[test]
-fn requests_undefined_only_for_copywith_when_needed() {
+fn copywith_requires_no_reserved_helpers() {
     let plugin = register_plugin();
 
     let copywith_requested = plugin.requested_symbols(&sample_library(&["dust_dart::CopyWith"]));
     let no_requested = plugin.requested_symbols(&sample_library(&["dust_dart::ToString"]));
 
-    assert_eq!(copywith_requested, vec!["_undefined".to_owned()]);
+    assert!(copywith_requested.is_empty());
     assert!(no_requested.is_empty());
 }
 
@@ -85,14 +85,17 @@ int get hashCode {
         .to_owned(),
         r#"User copyWith({
   String? id,
-  Object? age = _undefined,
+  Option<int?> age = const None(),
 }) {
   final self = this as User;
+  final nextAge = switch (age) {
+    None<int?>() => self.age,
+    Some<int?>(:final value) => value,
+  };
+
   return User(
     id ?? self.id,
-    identical(age, _undefined)
-        ? self.age
-        : age as int?,
+    nextAge,
   );
 }"#
         .to_owned(),

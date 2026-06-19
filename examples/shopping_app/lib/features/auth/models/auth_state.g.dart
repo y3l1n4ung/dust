@@ -13,8 +13,6 @@
 
 part of 'auth_state.dart';
 
-const Object _undefined = Object();
-
 mixin _$AuthState {
   @override
   String toString() {
@@ -52,26 +50,31 @@ mixin _$AuthState {
   }
 
   AuthState copyWith({
-    Object? user = _undefined,
-    Object? token = _undefined,
+    Option<User?> user = const None(),
+    Option<String?> token = const None(),
     AuthStatus? status,
-    Object? errorMessage = _undefined,
+    Option<String?> errorMessage = const None(),
   }) {
     final self = this as AuthState;
-    final nextUserSource = identical(user, _undefined)
-        ? self.user
-        : user as User?;
+    final nextUserSource = switch (user) {
+      None<User?>() => self.user,
+      Some<User?>(:final value) => value,
+    };
     final nextUser = nextUserSource == null ? null : nextUserSource.copyWith();
+    final nextToken = switch (token) {
+      None<String?>() => self.token,
+      Some<String?>(:final value) => value,
+    };
+    final nextErrorMessage = switch (errorMessage) {
+      None<String?>() => self.errorMessage,
+      Some<String?>(:final value) => value,
+    };
 
     return AuthState(
       user: nextUser,
-      token: identical(token, _undefined)
-          ? self.token
-          : token as String?,
+      token: nextToken,
       status: status ?? self.status,
-      errorMessage: identical(errorMessage, _undefined)
-          ? self.errorMessage
-          : errorMessage as String?,
+      errorMessage: nextErrorMessage,
     );
   }
 }

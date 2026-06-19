@@ -98,24 +98,83 @@ fn copywith_renders_nested_generic_and_dynamic_casts() {
     assert_eq!(
         members,
         [r#"Payload copyWith({
-  Object? items = _undefined,
-  dynamic extra = _undefined,
+  Option<List<String>?> items = const None(),
+  Option<dynamic> extra = const None(),
   void Function(String, int)? transform,
   (String, int)? summary,
 }) {
   final self = this as Payload;
-  final nextItemsSource = identical(items, _undefined)
-      ? self.items
-      : items as List<String>?;
+  final nextItemsSource = switch (items) {
+    None<List<String>?>() => self.items,
+    Some<List<String>?>(:final value) => value,
+  };
   final nextItems = nextItemsSource == null ? null : List<String>.of(nextItemsSource);
+  final nextExtra = switch (extra) {
+    None<dynamic>() => self.extra,
+    Some<dynamic>(:final value) => value,
+  };
 
   return Payload(
     nextItems,
-    identical(extra, _undefined)
-        ? self.extra
-        : extra as dynamic,
+    nextExtra,
     transform ?? self.transform,
     summary ?? self.summary,
+  );
+}"#
+        .to_owned()]
+        .as_slice()
+    );
+}
+
+#[test]
+fn copywith_uses_option_update_for_option_and_unknown_fields() {
+    let plugin = register_plugin();
+    let contribution = plugin.emit(
+        &library(vec![class(
+            "Profile",
+            vec![
+                field(
+                    "nickname",
+                    TypeIr::generic("Option", vec![TypeIr::string()]),
+                ),
+                field("metadata", TypeIr::unknown()),
+            ],
+            vec![constructor(
+                None,
+                vec![
+                    constructor_param(
+                        "nickname",
+                        TypeIr::generic("Option", vec![TypeIr::string()]),
+                        ParamKind::Named,
+                    ),
+                    constructor_param("metadata", TypeIr::unknown(), ParamKind::Named),
+                ],
+            )],
+            &["dust_dart::CopyWith"],
+        )]),
+        &SymbolPlan::default(),
+    );
+
+    let members = members_for_class(&contribution, "Profile");
+    assert_eq!(
+        members,
+        [r#"Profile copyWith({
+  Option<Option<String>> nickname = const None(),
+  Option<Object?> metadata = const None(),
+}) {
+  final self = this as Profile;
+  final nextNickname = switch (nickname) {
+    None<Option<String>>() => self.nickname,
+    Some<Option<String>>(:final value) => value,
+  };
+  final nextMetadata = switch (metadata) {
+    None<Object?>() => self.metadata,
+    Some<Object?>(:final value) => value,
+  };
+
+  return Profile(
+    nickname: nextNickname,
+    metadata: nextMetadata,
   );
 }"#
         .to_owned()]
@@ -164,13 +223,14 @@ fn copywith_uses_stable_temp_bindings_for_nested_types() {
     assert_eq!(
         members,
         [r#"Complex copyWith({
-  Object? left = _undefined,
+  Option<Map<String, List<Node>>?> left = const None(),
   Set<List<String>>? right,
 }) {
   final self = this as Complex;
-  final nextLeftSource = identical(left, _undefined)
-      ? self.left
-      : left as Map<String, List<Node>>?;
+  final nextLeftSource = switch (left) {
+    None<Map<String, List<Node>>?>() => self.left,
+    Some<Map<String, List<Node>>?>(:final value) => value,
+  };
   final nextLeft = nextLeftSource == null ? null : Map<String, List<Node>>.fromEntries(
     nextLeftSource.entries.map(
       (entry_0) => MapEntry(entry_0.key, List<Node>.of(entry_0.value)),
@@ -183,6 +243,64 @@ fn copywith_uses_stable_temp_bindings_for_nested_types() {
   return Complex(
     nextLeft,
     nextRight,
+  );
+}"#
+        .to_owned()]
+        .as_slice()
+    );
+}
+
+#[test]
+fn copywith_allocates_locals_around_field_name_collisions() {
+    let plugin = register_plugin();
+    let contribution = plugin.emit(
+        &library(vec![class(
+            "Collision",
+            vec![
+                field("self", TypeIr::string()),
+                field("nextItems", TypeIr::string()),
+                field("nextItemsSource", TypeIr::string()),
+                field("items", TypeIr::list_of(TypeIr::string()).nullable()),
+            ],
+            vec![constructor(
+                None,
+                vec![
+                    constructor_param("self", TypeIr::string(), ParamKind::Positional),
+                    constructor_param("nextItems", TypeIr::string(), ParamKind::Positional),
+                    constructor_param("nextItemsSource", TypeIr::string(), ParamKind::Positional),
+                    constructor_param(
+                        "items",
+                        TypeIr::list_of(TypeIr::string()).nullable(),
+                        ParamKind::Positional,
+                    ),
+                ],
+            )],
+            &["dust_dart::CopyWith"],
+        )]),
+        &SymbolPlan::default(),
+    );
+
+    let members = members_for_class(&contribution, "Collision");
+    assert_eq!(
+        members,
+        [r#"Collision copyWith({
+  String? self,
+  String? nextItems,
+  String? nextItemsSource,
+  Option<List<String>?> items = const None(),
+}) {
+  final self2 = this as Collision;
+  final nextItemsSource2 = switch (items) {
+    None<List<String>?>() => self2.items,
+    Some<List<String>?>(:final value) => value,
+  };
+  final nextItems2 = nextItemsSource2 == null ? null : List<String>.of(nextItemsSource2);
+
+  return Collision(
+    self ?? self2.self,
+    nextItems ?? self2.nextItems,
+    nextItemsSource ?? self2.nextItemsSource,
+    nextItems2,
   );
 }"#
         .to_owned()]

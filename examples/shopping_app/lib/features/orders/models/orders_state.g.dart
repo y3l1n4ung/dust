@@ -13,7 +13,7 @@
 
 part of 'orders_state.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _ordersStateOrdersEquality = DeepCollectionEquality();
 
 mixin _$OrdersState {
   @override
@@ -31,7 +31,7 @@ mixin _$OrdersState {
     return identical(this, other) ||
         other is OrdersState &&
             runtimeType == other.runtimeType &&
-            _deepCollectionEquality.equals(other.orders, self.orders) &&
+            _ordersStateOrdersEquality.equals(other.orders, self.orders) &&
             other.isLoading == self.isLoading;
   }
 
@@ -40,7 +40,7 @@ mixin _$OrdersState {
     final self = this as OrdersState;
     return Object.hashAll([
       runtimeType,
-      _deepCollectionEquality.hash(self.orders),
+      _ordersStateOrdersEquality.hash(self.orders),
       self.isLoading,
     ]);
   }

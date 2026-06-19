@@ -13,7 +13,8 @@
 
 part of 'nested_bundle.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _nestedBundleGroupsEquality = DeepCollectionEquality();
+const DeepCollectionEquality _nestedBundleMetricsEquality = DeepCollectionEquality();
 
 mixin _$NestedBundle {
   @override
@@ -31,8 +32,8 @@ mixin _$NestedBundle {
     return identical(this, other) ||
         other is NestedBundle &&
             runtimeType == other.runtimeType &&
-            _deepCollectionEquality.equals(other.groups, self.groups) &&
-            _deepCollectionEquality.equals(other.metrics, self.metrics);
+            _nestedBundleGroupsEquality.equals(other.groups, self.groups) &&
+            _nestedBundleMetricsEquality.equals(other.metrics, self.metrics);
   }
 
   @override
@@ -40,8 +41,8 @@ mixin _$NestedBundle {
     final self = this as NestedBundle;
     return Object.hashAll([
       runtimeType,
-      _deepCollectionEquality.hash(self.groups),
-      _deepCollectionEquality.hash(self.metrics),
+      _nestedBundleGroupsEquality.hash(self.groups),
+      _nestedBundleMetricsEquality.hash(self.metrics),
     ]);
   }
 

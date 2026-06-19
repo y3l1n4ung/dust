@@ -13,8 +13,6 @@
 
 part of 'todo.dart';
 
-const Object _undefined = Object();
-
 mixin _$Todo {
   @override
   String toString() {
@@ -77,17 +75,22 @@ mixin _$TodoUpdate {
   }
 
   TodoUpdate copyWith({
-    Object? title = _undefined,
-    Object? isCompleted = _undefined,
+    Option<String?> title = const None(),
+    Option<bool?> isCompleted = const None(),
   }) {
     final self = this as TodoUpdate;
+    final nextTitle = switch (title) {
+      None<String?>() => self.title,
+      Some<String?>(:final value) => value,
+    };
+    final nextIsCompleted = switch (isCompleted) {
+      None<bool?>() => self.isCompleted,
+      Some<bool?>(:final value) => value,
+    };
+
     return TodoUpdate(
-      title: identical(title, _undefined)
-          ? self.title
-          : title as String?,
-      isCompleted: identical(isCompleted, _undefined)
-          ? self.isCompleted
-          : isCompleted as bool?,
+      title: nextTitle,
+      isCompleted: nextIsCompleted,
     );
   }
 

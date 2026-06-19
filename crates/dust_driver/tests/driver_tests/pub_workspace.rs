@@ -74,7 +74,9 @@ fn watch_rebuilds_member_package_when_shared_workspace_config_changes() {
     let shared_package_config = workspace.path().join(".dart_tool/package_config.json");
     let modifier = std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_millis(25));
-        write_file(&shared_package_config, "{\"configVersion\":3}\n");
+        let replacement = shared_package_config.with_extension("json.next");
+        std::fs::write(&replacement, "{\"configVersion\":3}\n").unwrap();
+        std::fs::rename(replacement, shared_package_config).unwrap();
     });
 
     let result = run_watch(WatchRequest {

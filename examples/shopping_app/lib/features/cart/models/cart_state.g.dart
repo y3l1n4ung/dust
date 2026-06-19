@@ -13,9 +13,7 @@
 
 part of 'cart_state.dart';
 
-const Object _undefined = Object();
-
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _cartStateItemsEquality = DeepCollectionEquality();
 
 mixin _$CartNotification {
   @override
@@ -64,7 +62,7 @@ mixin _$CartState {
     return identical(this, other) ||
         other is CartState &&
             runtimeType == other.runtimeType &&
-            _deepCollectionEquality.equals(other.items, self.items) &&
+            _cartStateItemsEquality.equals(other.items, self.items) &&
             other.notification == self.notification;
   }
 
@@ -73,25 +71,27 @@ mixin _$CartState {
     final self = this as CartState;
     return Object.hashAll([
       runtimeType,
-      _deepCollectionEquality.hash(self.items),
+      _cartStateItemsEquality.hash(self.items),
       self.notification,
     ]);
   }
 
   CartState copyWith({
     List<CartItem>? items,
-    Object? notification = _undefined,
+    Option<CartNotification?> notification = const None(),
   }) {
     final self = this as CartState;
     final nextItems = List<CartItem>.of(
       (items ?? self.items).map((item_0) => item_0.copyWith()),
     );
+    final nextNotification = switch (notification) {
+      None<CartNotification?>() => self.notification,
+      Some<CartNotification?>(:final value) => value,
+    };
 
     return CartState(
       items: nextItems,
-      notification: identical(notification, _undefined)
-          ? self.notification
-          : notification as CartNotification?,
+      notification: nextNotification,
     );
   }
 }

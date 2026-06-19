@@ -13,9 +13,7 @@
 
 part of 'demo_cart_state.dart';
 
-const Object _undefined = Object();
-
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _demoCartStateCartsEquality = DeepCollectionEquality();
 
 mixin _$DemoCartState {
   @override
@@ -35,7 +33,7 @@ mixin _$DemoCartState {
         other is DemoCartState &&
             runtimeType == other.runtimeType &&
             other.status == self.status &&
-            _deepCollectionEquality.equals(other.carts, self.carts) &&
+            _demoCartStateCartsEquality.equals(other.carts, self.carts) &&
             other.errorMessage == self.errorMessage;
   }
 
@@ -45,7 +43,7 @@ mixin _$DemoCartState {
     return Object.hashAll([
       runtimeType,
       self.status,
-      _deepCollectionEquality.hash(self.carts),
+      _demoCartStateCartsEquality.hash(self.carts),
       self.errorMessage,
     ]);
   }
@@ -53,19 +51,21 @@ mixin _$DemoCartState {
   DemoCartState copyWith({
     DemoCartStatus? status,
     List<StoreCart>? carts,
-    Object? errorMessage = _undefined,
+    Option<String?> errorMessage = const None(),
   }) {
     final self = this as DemoCartState;
     final nextCarts = List<StoreCart>.of(
       (carts ?? self.carts).map((item_1) => item_1.copyWith()),
     );
+    final nextErrorMessage = switch (errorMessage) {
+      None<String?>() => self.errorMessage,
+      Some<String?>(:final value) => value,
+    };
 
     return DemoCartState(
       status: status ?? self.status,
       carts: nextCarts,
-      errorMessage: identical(errorMessage, _undefined)
-          ? self.errorMessage
-          : errorMessage as String?,
+      errorMessage: nextErrorMessage,
     );
   }
 }

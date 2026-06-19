@@ -13,8 +13,10 @@
 
 part of 'catalog.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
-const DeepCollectionEquality _unorderedDeepCollectionEquality = DeepCollectionEquality.unordered();
+const DeepCollectionEquality _catalogProductsEquality = DeepCollectionEquality();
+const DeepCollectionEquality _catalogCategoryByIdEquality = DeepCollectionEquality();
+const DeepCollectionEquality _catalogFeaturedSkusEquality = DeepCollectionEquality.unordered();
+const DeepCollectionEquality _catalogInventoryEquality = DeepCollectionEquality();
 
 mixin _$InventoryEntry {
   @override
@@ -83,10 +85,10 @@ mixin _$Catalog {
         other is Catalog &&
             runtimeType == other.runtimeType &&
             other.id == self.id &&
-            _deepCollectionEquality.equals(other.products, self.products) &&
-            _deepCollectionEquality.equals(other.categoryById, self.categoryById) &&
-            _unorderedDeepCollectionEquality.equals(other.featuredSkus, self.featuredSkus) &&
-            _deepCollectionEquality.equals(other.inventory, self.inventory);
+            _catalogProductsEquality.equals(other.products, self.products) &&
+            _catalogCategoryByIdEquality.equals(other.categoryById, self.categoryById) &&
+            _catalogFeaturedSkusEquality.equals(other.featuredSkus, self.featuredSkus) &&
+            _catalogInventoryEquality.equals(other.inventory, self.inventory);
   }
 
   @override
@@ -95,10 +97,10 @@ mixin _$Catalog {
     return Object.hashAll([
       runtimeType,
       self.id,
-      _deepCollectionEquality.hash(self.products),
-      _deepCollectionEquality.hash(self.categoryById),
-      _unorderedDeepCollectionEquality.hash(self.featuredSkus),
-      _deepCollectionEquality.hash(self.inventory),
+      _catalogProductsEquality.hash(self.products),
+      _catalogCategoryByIdEquality.hash(self.categoryById),
+      _catalogFeaturedSkusEquality.hash(self.featuredSkus),
+      _catalogInventoryEquality.hash(self.inventory),
     ]);
   }
 

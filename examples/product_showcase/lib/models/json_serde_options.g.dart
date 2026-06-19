@@ -13,7 +13,7 @@
 
 part of 'json_serde_options.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _jsonSerdeOptionsTagsEquality = DeepCollectionEquality();
 
 mixin _$JsonSerdeOptions {
   @override
@@ -39,7 +39,7 @@ mixin _$JsonSerdeOptions {
             other.id == self.id &&
             other.e == self.e &&
             other.displayName == self.displayName &&
-            _deepCollectionEquality.equals(other.tags, self.tags) &&
+            _jsonSerdeOptionsTagsEquality.equals(other.tags, self.tags) &&
             other.serverOnly == self.serverOnly &&
             other.clientOnly == self.clientOnly &&
             other.hidden == self.hidden;
@@ -53,7 +53,7 @@ mixin _$JsonSerdeOptions {
       self.id,
       self.e,
       self.displayName,
-      _deepCollectionEquality.hash(self.tags),
+      _jsonSerdeOptionsTagsEquality.hash(self.tags),
       self.serverOnly,
       self.clientOnly,
       self.hidden,

@@ -13,7 +13,8 @@
 
 part of 'product.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _productCategoriesEquality = DeepCollectionEquality();
+const DeepCollectionEquality _productAttributesEquality = DeepCollectionEquality();
 
 mixin _$Product {
   @override
@@ -38,8 +39,8 @@ mixin _$Product {
             other.sku == self.sku &&
             other.title == self.title &&
             other.price == self.price &&
-            _deepCollectionEquality.equals(other.categories, self.categories) &&
-            _deepCollectionEquality.equals(other.attributes, self.attributes) &&
+            _productCategoriesEquality.equals(other.categories, self.categories) &&
+            _productAttributesEquality.equals(other.attributes, self.attributes) &&
             other.featured == self.featured;
   }
 
@@ -51,8 +52,8 @@ mixin _$Product {
       self.sku,
       self.title,
       self.price,
-      _deepCollectionEquality.hash(self.categories),
-      _deepCollectionEquality.hash(self.attributes),
+      _productCategoriesEquality.hash(self.categories),
+      _productAttributesEquality.hash(self.attributes),
       self.featured,
     ]);
   }

@@ -13,7 +13,7 @@
 
 part of 'json_profile.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _jsonProfileTagsEquality = DeepCollectionEquality();
 
 mixin _$JsonProfile {
   @override
@@ -34,7 +34,7 @@ mixin _$JsonProfile {
             runtimeType == other.runtimeType &&
             other.id == self.id &&
             other.displayName == self.displayName &&
-            _deepCollectionEquality.equals(other.tags, self.tags);
+            _jsonProfileTagsEquality.equals(other.tags, self.tags);
   }
 
   @override
@@ -44,7 +44,7 @@ mixin _$JsonProfile {
       runtimeType,
       self.id,
       self.displayName,
-      _deepCollectionEquality.hash(self.tags),
+      _jsonProfileTagsEquality.hash(self.tags),
     ]);
   }
 

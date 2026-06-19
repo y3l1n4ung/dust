@@ -1,3 +1,4 @@
+import 'package:dust_dart/fp.dart';
 import 'package:product_showcase/product_showcase.dart';
 import 'package:test/test.dart';
 
@@ -20,7 +21,7 @@ void main() {
     expect(
       TodoUpdate(
         title: 'Refine render reuse',
-      ).copyWith(isCompleted: true).toJson(),
+      ).copyWith(isCompleted: const Some(true)).toJson(),
       {'title': 'Refine render reuse', 'isCompleted': true},
     );
   });

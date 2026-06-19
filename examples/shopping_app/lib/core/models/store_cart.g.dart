@@ -13,7 +13,7 @@
 
 part of 'store_cart.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _storeCartProductsEquality = DeepCollectionEquality();
 
 mixin _$StoreCart {
   @override
@@ -36,7 +36,7 @@ mixin _$StoreCart {
             other.id == self.id &&
             other.userId == self.userId &&
             other.date == self.date &&
-            _deepCollectionEquality.equals(other.products, self.products);
+            _storeCartProductsEquality.equals(other.products, self.products);
   }
 
   @override
@@ -47,7 +47,7 @@ mixin _$StoreCart {
       self.id,
       self.userId,
       self.date,
-      _deepCollectionEquality.hash(self.products),
+      _storeCartProductsEquality.hash(self.products),
     ]);
   }
 

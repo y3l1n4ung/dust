@@ -13,9 +13,8 @@
 
 part of 'product_detail_state.dart';
 
-const Object _undefined = Object();
-
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _productDetailStateReviewsEquality = DeepCollectionEquality();
+const DeepCollectionEquality _productDetailStateRecommendationsEquality = DeepCollectionEquality();
 
 mixin _$ProductDetailState {
   @override
@@ -38,8 +37,8 @@ mixin _$ProductDetailState {
             runtimeType == other.runtimeType &&
             other.productId == self.productId &&
             other.status == self.status &&
-            _deepCollectionEquality.equals(other.reviews, self.reviews) &&
-            _deepCollectionEquality.equals(other.recommendations, self.recommendations) &&
+            _productDetailStateReviewsEquality.equals(other.reviews, self.reviews) &&
+            _productDetailStateRecommendationsEquality.equals(other.recommendations, self.recommendations) &&
             other.errorMessage == self.errorMessage;
   }
 
@@ -50,37 +49,41 @@ mixin _$ProductDetailState {
       runtimeType,
       self.productId,
       self.status,
-      _deepCollectionEquality.hash(self.reviews),
-      _deepCollectionEquality.hash(self.recommendations),
+      _productDetailStateReviewsEquality.hash(self.reviews),
+      _productDetailStateRecommendationsEquality.hash(self.recommendations),
       self.errorMessage,
     ]);
   }
 
   ProductDetailState copyWith({
-    Object? productId = _undefined,
+    Option<int?> productId = const None(),
     ProductDetailStatus? status,
     List<ProductReview>? reviews,
     List<Product>? recommendations,
-    Object? errorMessage = _undefined,
+    Option<String?> errorMessage = const None(),
   }) {
     final self = this as ProductDetailState;
+    final nextProductId = switch (productId) {
+      None<int?>() => self.productId,
+      Some<int?>(:final value) => value,
+    };
     final nextReviews = List<ProductReview>.of(
       (reviews ?? self.reviews).map((item_2) => item_2.copyWith()),
     );
     final nextRecommendations = List<Product>.of(
       (recommendations ?? self.recommendations).map((item_3) => item_3.copyWith()),
     );
+    final nextErrorMessage = switch (errorMessage) {
+      None<String?>() => self.errorMessage,
+      Some<String?>(:final value) => value,
+    };
 
     return ProductDetailState(
-      productId: identical(productId, _undefined)
-          ? self.productId
-          : productId as int?,
+      productId: nextProductId,
       status: status ?? self.status,
       reviews: nextReviews,
       recommendations: nextRecommendations,
-      errorMessage: identical(errorMessage, _undefined)
-          ? self.errorMessage
-          : errorMessage as String?,
+      errorMessage: nextErrorMessage,
     );
   }
 }

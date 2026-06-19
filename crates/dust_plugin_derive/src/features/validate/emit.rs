@@ -5,11 +5,17 @@ use serde::Serialize;
 
 use super::model::{ValidateConfig, field_validations, has_validate_trait};
 use super::rule_snippets::rule_line;
-use super::type_source::{input_kind, render_type, upper_first};
+use super::type_source::{input_kind, render_type};
+use crate::features::names::{NameAllocator, library_declaration_names, upper_first};
 
 #[derive(Serialize)]
 struct ValidateContext<'a> {
     class_name: &'a str,
+    extension_name: String,
+    self_name: String,
+    errors_name: String,
+    result_name: String,
+    invalid_errors_name: String,
     fields: Vec<FieldContext>,
 }
 
@@ -17,10 +23,20 @@ struct ValidateContext<'a> {
 struct FieldContext {
     name: String,
     literal: String,
+    value_name: String,
+    self_name: String,
+    errors_name: String,
+    parsed_name: String,
+    nested_validation_name: String,
+    nested_errors_name: String,
+    nested_error_name: String,
+    custom_error_name: String,
     helper_name: String,
     input_helper_name: String,
+    public_input_helper_name: String,
     helper_signature: String,
     input_signature: String,
+    public_input_signature: String,
     type_source: String,
     nullable: bool,
     can_validate_input: bool,
@@ -41,8 +57,8 @@ struct ConfigContext {
 struct RuleContext {
     kind: &'static str,
     message: String,
-    min: Option<i64>,
-    max: Option<String>,
+    int_value: Option<i64>,
+    number_value: Option<String>,
     equal: Option<i64>,
     pattern: Option<String>,
     other: Option<String>,
@@ -59,9 +75,22 @@ pub(crate) fn emit_validate(_library: &DartFileIr, class: &ClassIr) -> Option<Va
         return None;
     }
 
+    let mut allocator = NameAllocator::new(library_declaration_names(_library));
+    let extension_name = allocator.allocate(format!("_{}Validation", class.name));
+    let mut method_allocator = NameAllocator::new(std::iter::empty::<&str>());
+    let self_name = method_allocator.allocate("self");
+    let errors_name = method_allocator.allocate("errors");
+    let result_name = method_allocator.allocate("result");
+    let mut throw_allocator = NameAllocator::new(std::iter::empty::<&str>());
+    let invalid_errors_name = throw_allocator.allocate("errors");
     let fields = render_fields(class);
     let context = ValidateContext {
         class_name: &class.name,
+        extension_name,
+        self_name,
+        errors_name,
+        result_name,
+        invalid_errors_name,
         fields,
     };
 
@@ -89,12 +118,21 @@ fn render_validate_template(
     };
     env.add_template(name, source)
         .expect("Dust validate template source must be valid");
-    env.get_template(name)
+    let rendered = env
+        .get_template(name)
         .expect("Dust validate template must be registered")
         .render(context)
         .expect("Dust validate template context must satisfy template variables")
         .trim_matches('\n')
-        .to_owned()
+        .to_owned();
+    collapse_excess_blank_lines(rendered)
+}
+
+fn collapse_excess_blank_lines(mut value: String) -> String {
+    while value.contains("\n\n\n") {
+        value = value.replace("\n\n\n", "\n\n");
+    }
+    value
 }
 
 fn render_fields(class: &ClassIr) -> Vec<FieldContext> {
@@ -108,22 +146,58 @@ fn render_fields(class: &ClassIr) -> Vec<FieldContext> {
                 .any(|config| config.must_match.is_some());
             let field_name = &validation.field.name;
             let field_type = render_type(&validation.field.ty);
-            let helper_name = format!("_validate{}{}", class.name, upper_first(field_name));
-            let input_helper_name =
+            let mut allocator = NameAllocator::new(std::iter::empty::<&str>());
+            let self_name = if uses_self {
+                allocator.allocate("self")
+            } else {
+                "self".to_owned()
+            };
+            let value_name = allocator.allocate(field_name);
+            let errors_name = allocator.allocate("errors");
+            let nested_validation_name = allocator.allocate(format!("{value_name}Validation"));
+            let nested_errors_name = allocator.allocate("nestedErrors");
+            let nested_error_name = allocator.allocate("error");
+            let custom_error_name = allocator.allocate(format!("{value_name}CustomError"));
+            let mut input_allocator = NameAllocator::new(["value"]);
+            let parsed_name = input_allocator.allocate(field_name);
+            let helper_name = format!("_validate{}", upper_first(field_name));
+            let input_helper_name = format!("validate{}Input", upper_first(field_name));
+            let public_input_helper_name =
                 format!("validate{}{}Input", class.name, upper_first(field_name));
             FieldContext {
                 name: validation.field.name.clone(),
                 literal: dart_string_literal(&validation.field.name),
+                value_name: value_name.clone(),
+                self_name: self_name.clone(),
+                errors_name: errors_name.clone(),
+                parsed_name: parsed_name.clone(),
+                nested_validation_name: nested_validation_name.clone(),
+                nested_errors_name: nested_errors_name.clone(),
+                nested_error_name: nested_error_name.clone(),
+                custom_error_name: custom_error_name.clone(),
                 helper_signature: helper_signature(
                     &helper_name,
                     &class.name,
-                    field_name,
+                    &self_name,
+                    &value_name,
+                    &errors_name,
                     &field_type,
                     uses_self,
                 ),
-                input_signature: input_signature(&input_helper_name, &class.name, uses_self),
+                input_signature: input_signature(
+                    &input_helper_name,
+                    &class.name,
+                    &self_name,
+                    uses_self,
+                ),
+                public_input_signature: public_input_signature(
+                    &public_input_helper_name,
+                    &class.name,
+                    uses_self,
+                ),
                 helper_name,
                 input_helper_name,
+                public_input_helper_name,
                 type_source: field_type,
                 nullable: validation.field.ty.is_nullable(),
                 can_validate_input: input_kind.is_some(),
@@ -143,24 +217,47 @@ fn render_fields(class: &ClassIr) -> Vec<FieldContext> {
 fn helper_signature(
     helper_name: &str,
     class_name: &str,
-    field_name: &str,
+    self_name: &str,
+    value_name: &str,
+    errors_name: &str,
     field_type: &str,
     uses_self: bool,
 ) -> String {
     if uses_self {
         format!(
-            "void {helper_name}(\n  {class_name} self,\n  {field_type} {field_name},\n  List<ValidationError> errors,\n)"
+            "static void {helper_name}(\n    {class_name} {self_name},\n    {field_type} {value_name},\n    List<ValidationError> {errors_name},\n  )"
         )
     } else {
-        format!("void {helper_name}({field_type} {field_name}, List<ValidationError> errors)")
+        format!(
+            "static void {helper_name}({field_type} {value_name}, List<ValidationError> {errors_name})"
+        )
     }
 }
 
-fn input_signature(input_helper_name: &str, class_name: &str, uses_self: bool) -> String {
+fn input_signature(
+    input_helper_name: &str,
+    class_name: &str,
+    self_name: &str,
+    uses_self: bool,
+) -> String {
     if uses_self {
-        format!("String? {input_helper_name}(\n  {class_name} self,\n  String? value,\n)")
+        format!(
+            "static String? {input_helper_name}(\n    {class_name} {self_name},\n    String? value,\n  )"
+        )
     } else {
-        format!("String? {input_helper_name}(String? value)")
+        format!("static String? {input_helper_name}(String? value)")
+    }
+}
+
+fn public_input_signature(
+    public_input_helper_name: &str,
+    class_name: &str,
+    uses_self: bool,
+) -> String {
+    if uses_self {
+        format!("String? {public_input_helper_name}(\n  {class_name} self,\n  String? value,\n)")
+    } else {
+        format!("String? {public_input_helper_name}(String? value)")
     }
 }
 
@@ -195,18 +292,18 @@ fn render_rules(config: &ValidateConfig) -> Vec<RuleContext> {
             rules.push(rule("length_equal", config).with_equal(equal));
         }
         if let Some(min) = length.min {
-            rules.push(rule("length_min", config).with_min(min));
+            rules.push(rule("length_min", config).with_int_value(min));
         }
         if let Some(max) = length.max {
-            rules.push(rule("length_max", config).with_min(max));
+            rules.push(rule("length_max", config).with_int_value(max));
         }
     }
     if let Some(range) = &config.range {
         if let Some(min) = &range.min {
-            rules.push(rule("range_min", config).with_max(min.clone()));
+            rules.push(rule("range_min", config).with_number_value(min.clone()));
         }
         if let Some(max) = &range.max {
-            rules.push(rule("range_max", config).with_max(max.clone()));
+            rules.push(rule("range_max", config).with_number_value(max.clone()));
         }
     }
     if let Some(pattern) = &config.contains {
@@ -234,8 +331,8 @@ fn rule(kind: &'static str, config: &ValidateConfig) -> RuleContext {
     RuleContext {
         kind,
         message: dart_string_literal(message(config, fallback(kind))),
-        min: None,
-        max: None,
+        int_value: None,
+        number_value: None,
         equal: None,
         pattern: None,
         other: None,
@@ -265,13 +362,13 @@ fn message<'a>(config: &'a ValidateConfig, fallback: &'a str) -> &'a str {
 }
 
 impl RuleContext {
-    fn with_min(mut self, value: i64) -> Self {
-        self.min = Some(value);
+    fn with_int_value(mut self, value: i64) -> Self {
+        self.int_value = Some(value);
         self
     }
 
-    fn with_max(mut self, value: String) -> Self {
-        self.max = Some(value);
+    fn with_number_value(mut self, value: String) -> Self {
+        self.number_value = Some(value);
         self
     }
 

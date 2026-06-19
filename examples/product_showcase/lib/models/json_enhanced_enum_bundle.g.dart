@@ -13,7 +13,7 @@
 
 part of 'json_enhanced_enum_bundle.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _jsonEnhancedEnumBundleFleetEquality = DeepCollectionEquality();
 
 mixin _$JsonEnhancedEnumBundle {
   @override
@@ -34,7 +34,7 @@ mixin _$JsonEnhancedEnumBundle {
             runtimeType == other.runtimeType &&
             other.primaryVehicle == self.primaryVehicle &&
             other.fallbackVehicle == self.fallbackVehicle &&
-            _deepCollectionEquality.equals(other.fleet, self.fleet);
+            _jsonEnhancedEnumBundleFleetEquality.equals(other.fleet, self.fleet);
   }
 
   @override
@@ -44,7 +44,7 @@ mixin _$JsonEnhancedEnumBundle {
       runtimeType,
       self.primaryVehicle,
       self.fallbackVehicle,
-      _deepCollectionEquality.hash(self.fleet),
+      _jsonEnhancedEnumBundleFleetEquality.hash(self.fleet),
     ]);
   }
 

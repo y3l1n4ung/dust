@@ -15,19 +15,70 @@ You focus on product. We focus on performance.
 
 ## Public surfaces
 
-- `package:dust_dart/core.dart`: shared core primitives such as `Result`, `Ok`, `Err`, `Unit`, and `unit`.
+- `package:dust_dart/fp.dart`: functional primitives such as `Option`, `None`, `Some`, `Result`, `Ok`, `Err`, `Unit`, and `unit`.
+- `package:dust_dart/core.dart`: compatibility export for functional primitives.
 - `package:dust_dart/derive.dart`: derive annotations and marker traits.
 - `package:dust_dart/serde.dart`: JSON/serde annotations and runtime helpers.
 - `package:dust_dart/http.dart`: HTTP client annotations.
 - `package:dust_dart/db.dart`: SQLx-style DB annotations and runtime contracts.
 - `package:dust_dart/dust_dart.dart`: convenience export for all Dart-only APIs.
 
-Dust owns its functional primitives. Do not add `fpdart`, `dartz`, or another external functional package for generated-code `Result` handling.
+Dust owns its functional primitives. Do not add `fpdart`, `dartz`, or another external functional package for generated-code `Option` or `Result` handling.
+
+## Option
+
+`Option<T>` is Rust-style: `None()` means no value, and `Some(value)` means a
+value is present. Generated nullable `copyWith` methods use an outer `Option`
+as a typed update envelope.
+
+```dart
+import 'package:dust_dart/fp.dart';
+
+User copyWith({
+  Option<String?> nickname = const None(),
+}) {
+  return User(
+    nickname: switch (nickname) {
+      None<String?>() => this.nickname,
+      Some<String?>(:final value) => value,
+    },
+  );
+}
+```
+
+Use the three states explicitly:
+
+```dart
+user.copyWith(); // keep old nullable values
+user.copyWith(nickname: const None()); // keep old nullable value
+user.copyWith(nickname: const Some('Ye')); // set value
+user.copyWith(nickname: const Some(null)); // clear value
+```
+
+If the field itself is an `Option<String>`, generated `copyWith` uses a nested
+envelope:
+
+```dart
+Profile copyWith({
+  Option<Option<String>> nickname = const None(),
+}) {
+  return Profile(
+    nickname: switch (nickname) {
+      None<Option<String>>() => this.nickname,
+      Some<Option<String>>(:final value) => value,
+    },
+  );
+}
+
+profile.copyWith(); // keep old Option field
+profile.copyWith(nickname: const Some<Option<String>>(None<String>()));
+profile.copyWith(nickname: const Some<Option<String>>(Some<String>('Ye')));
+```
 
 ## Result
 
 ```dart
-import 'package:dust_dart/core.dart';
+import 'package:dust_dart/fp.dart';
 
 Result<int, String> parseCount(String text) {
   final value = int.tryParse(text);
@@ -38,6 +89,42 @@ final label = parseCount('42').match(
   ok: (value) => 'count=$value',
   err: (error) => error,
 );
+```
+
+Chain fallible steps with `andThen`:
+
+```dart
+Result<int, String> requirePositive(int value) {
+  return value > 0 ? Ok(value) : const Err('count must be positive');
+}
+
+final parsed = parseCount('42').andThen(requirePositive);
+```
+
+Recover with `orElse` when the fallback can also fail:
+
+```dart
+Result<int, String> readCache() => const Err('cache miss');
+Result<int, String> readRemote(String error) => const Ok(42);
+
+final count = readCache().orElse(readRemote);
+```
+
+Use `map`, `mapErr`, and unwrapping helpers at app boundaries:
+
+```dart
+final doubled = parseCount('21').map((value) => value * 2);
+final message = parseCount('bad').mapErr((error) => 'Parse failed: $error');
+final fallback = parseCount('bad').unwrapOr(0);
+final computed = parseCount('bad').unwrapOrElse((error) => error.length);
+```
+
+Use `Unit` when only success/failure matters:
+
+```dart
+Result<Unit, String> save() {
+  return const Ok(unit);
+}
 ```
 
 ## DB compatibility

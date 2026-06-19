@@ -14,81 +14,159 @@
 part of 'checkout_shipping_request.dart';
 
 mixin _$CheckoutShippingRequest {
+  /// Validates this `CheckoutShippingRequest`.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final result = value.validate();
+  /// if (result case Invalid(:final errors)) {
+  ///   print(errors.first.message);
+  /// }
+  /// ```
   ValidationResult validate() {
     final self = this as CheckoutShippingRequest;
     final errors = <ValidationError>[];
-    _validateCheckoutShippingRequestFullName(self.fullName, errors);
-    _validateCheckoutShippingRequestAddress(self.address, errors);
-    _validateCheckoutShippingRequestCity(self.city, errors);
-    _validateCheckoutShippingRequestZipCode(self.zipCode, errors);
-    _validateCheckoutShippingRequestPhone(self.phone, errors);
+    _CheckoutShippingRequestValidation._validateFullName(self.fullName, errors);
+    _CheckoutShippingRequestValidation._validateAddress(self.address, errors);
+    _CheckoutShippingRequestValidation._validateCity(self.city, errors);
+    _CheckoutShippingRequestValidation._validateZipCode(self.zipCode, errors);
+    _CheckoutShippingRequestValidation._validatePhone(self.phone, errors);
     return errors.isEmpty ? const Valid() : Invalid(errors);
   }
 
+  /// Throws [ValidationException] when this `CheckoutShippingRequest` is invalid.
+  ///
+  /// Usage:
+  /// ```dart
+  /// value.validateOrThrow();
+  /// ```
   void validateOrThrow() {
     final result = validate();
-    if (result case Invalid(:final errors)) {
+    if (result case Invalid(errors: final errors)) {
       throw ValidationException(errors);
     }
   }
 }
 
-void _validateCheckoutShippingRequestFullName(String fullName, List<ValidationError> errors) {
-  if (fullName.length < 1) {
-    errors.add(ValidationError(field: 'fullName', message: 'Required'));
-  }
-}
-
+/// TextFormField validator for `CheckoutShippingRequest.fullName`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateCheckoutShippingRequestFullNameInput,
+/// )
+/// ```
 String? validateCheckoutShippingRequestFullNameInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateCheckoutShippingRequestFullName(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _CheckoutShippingRequestValidation.validateFullNameInput(value);
 }
 
-void _validateCheckoutShippingRequestAddress(String address, List<ValidationError> errors) {
-  if (address.length < 1) {
-    errors.add(ValidationError(field: 'address', message: 'Required'));
-  }
-}
-
+/// TextFormField validator for `CheckoutShippingRequest.address`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateCheckoutShippingRequestAddressInput,
+/// )
+/// ```
 String? validateCheckoutShippingRequestAddressInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateCheckoutShippingRequestAddress(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _CheckoutShippingRequestValidation.validateAddressInput(value);
 }
 
-void _validateCheckoutShippingRequestCity(String city, List<ValidationError> errors) {
-  if (city.length < 1) {
-    errors.add(ValidationError(field: 'city', message: 'Required'));
-  }
-}
-
+/// TextFormField validator for `CheckoutShippingRequest.city`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateCheckoutShippingRequestCityInput,
+/// )
+/// ```
 String? validateCheckoutShippingRequestCityInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateCheckoutShippingRequestCity(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _CheckoutShippingRequestValidation.validateCityInput(value);
 }
 
-void _validateCheckoutShippingRequestZipCode(String zipCode, List<ValidationError> errors) {
-  if (zipCode.length < 1) {
-    errors.add(ValidationError(field: 'zipCode', message: 'Required'));
-  }
-}
-
+/// TextFormField validator for `CheckoutShippingRequest.zipCode`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateCheckoutShippingRequestZipCodeInput,
+/// )
+/// ```
 String? validateCheckoutShippingRequestZipCodeInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateCheckoutShippingRequestZipCode(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _CheckoutShippingRequestValidation.validateZipCodeInput(value);
 }
 
-void _validateCheckoutShippingRequestPhone(String phone, List<ValidationError> errors) {
-  if (phone.length < 1) {
-    errors.add(ValidationError(field: 'phone', message: 'Required'));
-  }
-}
-
+/// TextFormField validator for `CheckoutShippingRequest.phone`.
+///
+/// Usage:
+/// ```dart
+/// TextFormField(
+///   validator: validateCheckoutShippingRequestPhoneInput,
+/// )
+/// ```
 String? validateCheckoutShippingRequestPhoneInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateCheckoutShippingRequestPhone(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
+  return _CheckoutShippingRequestValidation.validatePhoneInput(value);
+}
+
+extension _CheckoutShippingRequestValidation on CheckoutShippingRequest {
+  static void _validateFullName(String fullName, List<ValidationError> errors) {
+    if (fullName.length < 1) {
+      errors.add(ValidationError(field: 'fullName', message: 'Required'));
+    }
+  }
+
+  static String? validateFullNameInput(String? value) {
+    final errors = <ValidationError>[];
+    _validateFullName(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validateAddress(String address, List<ValidationError> errors) {
+    if (address.length < 1) {
+      errors.add(ValidationError(field: 'address', message: 'Required'));
+    }
+  }
+
+  static String? validateAddressInput(String? value) {
+    final errors = <ValidationError>[];
+    _validateAddress(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validateCity(String city, List<ValidationError> errors) {
+    if (city.length < 1) {
+      errors.add(ValidationError(field: 'city', message: 'Required'));
+    }
+  }
+
+  static String? validateCityInput(String? value) {
+    final errors = <ValidationError>[];
+    _validateCity(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validateZipCode(String zipCode, List<ValidationError> errors) {
+    if (zipCode.length < 1) {
+      errors.add(ValidationError(field: 'zipCode', message: 'Required'));
+    }
+  }
+
+  static String? validateZipCodeInput(String? value) {
+    final errors = <ValidationError>[];
+    _validateZipCode(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
+  static void _validatePhone(String phone, List<ValidationError> errors) {
+    if (phone.length < 1) {
+      errors.add(ValidationError(field: 'phone', message: 'Required'));
+    }
+  }
+
+  static String? validatePhoneInput(String? value) {
+    final errors = <ValidationError>[];
+    _validatePhone(value ?? '', errors);
+    return errors.isEmpty ? null : errors.first.message;
+  }
+
 }

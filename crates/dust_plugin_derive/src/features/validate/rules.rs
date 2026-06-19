@@ -8,9 +8,12 @@ use super::{
         ValidateConfig, field_validations, has_validate_trait, parse_config_named_values,
         parse_validate_config,
     },
-    type_source::supports_length,
+    type_source::{input_kind, supports_length},
 };
-use crate::features::VALIDATE_SYMBOL;
+use crate::features::{
+    VALIDATE_SYMBOL,
+    names::{library_declaration_names, upper_first},
+};
 
 pub(crate) fn validate_validate(library: &DartFileIr, class: &ClassIr) -> Vec<Diagnostic> {
     if !has_validate_trait(class) {
@@ -18,6 +21,7 @@ pub(crate) fn validate_validate(library: &DartFileIr, class: &ClassIr) -> Vec<Di
     }
 
     let mut diagnostics = Vec::new();
+    validate_public_validator_names(library, class, &mut diagnostics);
     for validation in field_validations(class) {
         for config in &validation.annotations {
             validate_field_config(library, class, validation.field, config, &mut diagnostics);
@@ -33,6 +37,31 @@ pub(crate) fn validate_validate(library: &DartFileIr, class: &ClassIr) -> Vec<Di
         }
     }
     diagnostics
+}
+
+fn validate_public_validator_names(
+    library: &DartFileIr,
+    class: &ClassIr,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let declaration_names = library_declaration_names(library);
+    for validation in field_validations(class) {
+        if input_kind(&validation.field.ty).is_none() {
+            continue;
+        }
+
+        let validator_name = format!(
+            "validate{}{}Input",
+            class.name,
+            upper_first(&validation.field.name)
+        );
+        if declaration_names.contains(&validator_name) {
+            diagnostics.push(Diagnostic::error(format!(
+                "generated validator `{validator_name}` for `{}.{}` conflicts with an existing top-level declaration",
+                class.name, validation.field.name
+            )));
+        }
+    }
 }
 
 fn validate_field_config(

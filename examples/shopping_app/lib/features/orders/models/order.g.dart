@@ -13,7 +13,7 @@
 
 part of 'order.dart';
 
-const DeepCollectionEquality _deepCollectionEquality = DeepCollectionEquality();
+const DeepCollectionEquality _orderItemsEquality = DeepCollectionEquality();
 
 mixin _$Order {
   @override
@@ -36,7 +36,7 @@ mixin _$Order {
         other is Order &&
             runtimeType == other.runtimeType &&
             other.id == self.id &&
-            _deepCollectionEquality.equals(other.items, self.items) &&
+            _orderItemsEquality.equals(other.items, self.items) &&
             other.totalAmount == self.totalAmount &&
             other.status == self.status &&
             other.createdAt == self.createdAt &&
@@ -49,7 +49,7 @@ mixin _$Order {
     return Object.hashAll([
       runtimeType,
       self.id,
-      _deepCollectionEquality.hash(self.items),
+      _orderItemsEquality.hash(self.items),
       self.totalAmount,
       self.status,
       self.createdAt,
