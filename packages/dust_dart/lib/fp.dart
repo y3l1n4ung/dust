@@ -6,7 +6,7 @@
 /// ```dart
 /// import 'package:dust_dart/fp.dart';
 ///
-/// final nickname = Some<String?>('Ye');
+/// final nickname = Some<String?>('John');
 /// final saved = Ok<Unit, String>(unit);
 /// ```
 library;

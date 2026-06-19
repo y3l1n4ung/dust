@@ -45,18 +45,44 @@ mixin _$OrdersState {
     ]);
   }
 
-  OrdersState copyWith({
+  /// Creates a copy of this `OrdersState` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = ordersState.copyWith(isLoading: true);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$OrdersStateCopyWith<OrdersState> get copyWith => _$OrdersStateCopyWithImpl<OrdersState>(this as OrdersState, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$OrdersStateCopyWith<$Res> {
+  $Res call({
     List<Order>? orders,
     bool? isLoading,
-  }) {
-    final self = this as OrdersState;
-    final nextOrders = List<Order>.of(
-      (orders ?? self.orders).map((item_0) => item_0.copyWith()),
-    );
+  });
+}
 
-    return OrdersState(
-      orders: nextOrders,
-      isLoading: isLoading ?? self.isLoading,
+/// @nodoc
+final class _$OrdersStateCopyWithImpl<$Res> implements _$OrdersStateCopyWith<$Res> {
+  const _$OrdersStateCopyWithImpl(this._self, this._then);
+
+  final OrdersState _self;
+  final $Res Function(OrdersState) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? orders = null,
+    Object? isLoading = null,
+  }) {
+    return _then(
+      OrdersState(
+        orders: orders == null ? _self.orders : orders as List<Order>,
+        isLoading: isLoading == null ? _self.isLoading : isLoading as bool,
+      )
     );
   }
 }

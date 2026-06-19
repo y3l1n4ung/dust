@@ -13,6 +13,12 @@
 
 part of 'todo.dart';
 
+final class _TodoUpdateCopyWithUnset {
+  const _TodoUpdateCopyWithUnset();
+}
+
+const _todoUpdateCopyWithUnset = _TodoUpdateCopyWithUnset();
+
 mixin _$Todo {
   @override
   String toString() {
@@ -24,18 +30,14 @@ mixin _$Todo {
         ')';
   }
 
-  Todo copyWith({
-    String? id,
-    String? title,
-    bool? isCompleted,
-  }) {
-    final self = this as Todo;
-    return Todo(
-      id: id ?? self.id,
-      title: title ?? self.title,
-      isCompleted: isCompleted ?? self.isCompleted,
-    );
-  }
+  /// Creates a copy of this `Todo` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = todo.copyWith(id: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$TodoCopyWith<Todo> get copyWith => _$TodoCopyWithImpl<Todo>(this as Todo, (value) => value);
 
   Map<String, Object?> toJson() => _$TodoToJson(this as Todo);
 }
@@ -50,16 +52,14 @@ mixin _$TodoCreate {
         ')';
   }
 
-  TodoCreate copyWith({
-    String? title,
-    bool? isCompleted,
-  }) {
-    final self = this as TodoCreate;
-    return TodoCreate(
-      title: title ?? self.title,
-      isCompleted: isCompleted ?? self.isCompleted,
-    );
-  }
+  /// Creates a copy of this `TodoCreate` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = todoCreate.copyWith(title: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$TodoCreateCopyWith<TodoCreate> get copyWith => _$TodoCreateCopyWithImpl<TodoCreate>(this as TodoCreate, (value) => value);
 
   Map<String, Object?> toJson() => _$TodoCreateToJson(this as TodoCreate);
 }
@@ -74,27 +74,114 @@ mixin _$TodoUpdate {
         ')';
   }
 
-  TodoUpdate copyWith({
-    Option<String?> title = const None(),
-    Option<bool?> isCompleted = const None(),
-  }) {
-    final self = this as TodoUpdate;
-    final nextTitle = switch (title) {
-      None<String?>() => self.title,
-      Some<String?>(:final value) => value,
-    };
-    final nextIsCompleted = switch (isCompleted) {
-      None<bool?>() => self.isCompleted,
-      Some<bool?>(:final value) => value,
-    };
-
-    return TodoUpdate(
-      title: nextTitle,
-      isCompleted: nextIsCompleted,
-    );
-  }
+  /// Creates a copy of this `TodoUpdate` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = todoUpdate.copyWith();
+  /// final cleared = todoUpdate.copyWith(title: null);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$TodoUpdateCopyWith<TodoUpdate> get copyWith => _$TodoUpdateCopyWithImpl<TodoUpdate>(this as TodoUpdate, (value) => value);
 
   Map<String, Object?> toJson() => _$TodoUpdateToJson(this as TodoUpdate);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$TodoCopyWith<$Res> {
+  $Res call({
+    String? id,
+    String? title,
+    bool? isCompleted,
+  });
+}
+
+/// @nodoc
+final class _$TodoCopyWithImpl<$Res> implements _$TodoCopyWith<$Res> {
+  const _$TodoCopyWithImpl(this._self, this._then);
+
+  final Todo _self;
+  final $Res Function(Todo) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? title = null,
+    Object? isCompleted = null,
+  }) {
+    return _then(
+      Todo(
+        id: id == null ? _self.id : id as String,
+        title: title == null ? _self.title : title as String,
+        isCompleted: isCompleted == null ? _self.isCompleted : isCompleted as bool,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$TodoCreateCopyWith<$Res> {
+  $Res call({
+    String? title,
+    bool? isCompleted,
+  });
+}
+
+/// @nodoc
+final class _$TodoCreateCopyWithImpl<$Res> implements _$TodoCreateCopyWith<$Res> {
+  const _$TodoCreateCopyWithImpl(this._self, this._then);
+
+  final TodoCreate _self;
+  final $Res Function(TodoCreate) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? title = null,
+    Object? isCompleted = null,
+  }) {
+    return _then(
+      TodoCreate(
+        title: title == null ? _self.title : title as String,
+        isCompleted: isCompleted == null ? _self.isCompleted : isCompleted as bool,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$TodoUpdateCopyWith<$Res> {
+  $Res call({
+    String? title,
+    bool? isCompleted,
+  });
+}
+
+/// @nodoc
+final class _$TodoUpdateCopyWithImpl<$Res> implements _$TodoUpdateCopyWith<$Res> {
+  const _$TodoUpdateCopyWithImpl(this._self, this._then);
+
+  final TodoUpdate _self;
+  final $Res Function(TodoUpdate) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? title = _todoUpdateCopyWithUnset,
+    Object? isCompleted = _todoUpdateCopyWithUnset,
+  }) {
+    return _then(
+      TodoUpdate(
+        title: identical(title, _todoUpdateCopyWithUnset)
+            ? _self.title
+            : title as String?,
+        isCompleted: identical(isCompleted, _todoUpdateCopyWithUnset)
+            ? _self.isCompleted
+            : isCompleted as bool?,
+      )
+    );
+  }
 }
 
 Map<String, Object?> _$TodoToJson(Todo instance) {

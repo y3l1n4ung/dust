@@ -52,24 +52,15 @@ mixin _$User {
     ]);
   }
 
-  User copyWith({
-    int? id,
-    String? email,
-    String? username,
-    Name? name,
-    String? phone,
-  }) {
-    final self = this as User;
-    final nextName = (name ?? self.name).copyWith();
-
-    return User(
-      id: id ?? self.id,
-      email: email ?? self.email,
-      username: username ?? self.username,
-      name: nextName,
-      phone: phone ?? self.phone,
-    );
-  }
+  /// Creates a copy of this `User` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = user.copyWith(id: 1);
+  /// final nested = user.copyWith.name(firstname: 'London');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$UserCopyWith<User> get copyWith => _$UserCopyWithImpl<User>(this as User, (value) => value);
 
   Map<String, Object?> toJson() => _$UserToJson(this as User);
 }
@@ -104,18 +95,97 @@ mixin _$Name {
     ]);
   }
 
-  Name copyWith({
-    String? firstname,
-    String? lastname,
+  /// Creates a copy of this `Name` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = name.copyWith(firstname: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$NameCopyWith<Name> get copyWith => _$NameCopyWithImpl<Name>(this as Name, (value) => value);
+
+  Map<String, Object?> toJson() => _$NameToJson(this as Name);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$UserCopyWith<$Res> {
+  $Res call({
+    int? id,
+    String? email,
+    String? username,
+    Name? name,
+    String? phone,
+  });
+
+  _$NameCopyWith<$Res> get name;
+}
+
+/// @nodoc
+final class _$UserCopyWithImpl<$Res> implements _$UserCopyWith<$Res> {
+  const _$UserCopyWithImpl(this._self, this._then);
+
+  final User _self;
+  final $Res Function(User) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? email = null,
+    Object? username = null,
+    Object? name = null,
+    Object? phone = null,
   }) {
-    final self = this as Name;
-    return Name(
-      firstname: firstname ?? self.firstname,
-      lastname: lastname ?? self.lastname,
+    return _then(
+      User(
+        id: id == null ? _self.id : id as int,
+        email: email == null ? _self.email : email as String,
+        username: username == null ? _self.username : username as String,
+        name: name == null ? _self.name : name as Name,
+        phone: phone == null ? _self.phone : phone as String,
+      )
     );
   }
 
-  Map<String, Object?> toJson() => _$NameToJson(this as Name);
+  @override
+  @pragma('vm:prefer-inline')
+  _$NameCopyWith<$Res> get name {
+    return _$NameCopyWithImpl<$Res>(
+      _self.name,
+      (value) => call(name: value),
+    );
+  }
+}
+/// @nodoc
+abstract class _$NameCopyWith<$Res> {
+  $Res call({
+    String? firstname,
+    String? lastname,
+  });
+}
+
+/// @nodoc
+final class _$NameCopyWithImpl<$Res> implements _$NameCopyWith<$Res> {
+  const _$NameCopyWithImpl(this._self, this._then);
+
+  final Name _self;
+  final $Res Function(Name) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? firstname = null,
+    Object? lastname = null,
+  }) {
+    return _then(
+      Name(
+        firstname: firstname == null ? _self.firstname : firstname as String,
+        lastname: lastname == null ? _self.lastname : lastname as String,
+      )
+    );
+  }
 }
 
 Map<String, Object?> _$UserToJson(User instance) {

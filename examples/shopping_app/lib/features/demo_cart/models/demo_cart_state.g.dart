@@ -14,6 +14,11 @@
 part of 'demo_cart_state.dart';
 
 const DeepCollectionEquality _demoCartStateCartsEquality = DeepCollectionEquality();
+final class _DemoCartStateCopyWithUnset {
+  const _DemoCartStateCopyWithUnset();
+}
+
+const _demoCartStateCopyWithUnset = _DemoCartStateCopyWithUnset();
 
 mixin _$DemoCartState {
   @override
@@ -48,24 +53,50 @@ mixin _$DemoCartState {
     ]);
   }
 
-  DemoCartState copyWith({
+  /// Creates a copy of this `DemoCartState` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = demoCartState.copyWith();
+  /// final cleared = demoCartState.copyWith(errorMessage: null);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$DemoCartStateCopyWith<DemoCartState> get copyWith => _$DemoCartStateCopyWithImpl<DemoCartState>(this as DemoCartState, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$DemoCartStateCopyWith<$Res> {
+  $Res call({
     DemoCartStatus? status,
     List<StoreCart>? carts,
-    Option<String?> errorMessage = const None(),
-  }) {
-    final self = this as DemoCartState;
-    final nextCarts = List<StoreCart>.of(
-      (carts ?? self.carts).map((item_1) => item_1.copyWith()),
-    );
-    final nextErrorMessage = switch (errorMessage) {
-      None<String?>() => self.errorMessage,
-      Some<String?>(:final value) => value,
-    };
+    String? errorMessage,
+  });
+}
 
-    return DemoCartState(
-      status: status ?? self.status,
-      carts: nextCarts,
-      errorMessage: nextErrorMessage,
+/// @nodoc
+final class _$DemoCartStateCopyWithImpl<$Res> implements _$DemoCartStateCopyWith<$Res> {
+  const _$DemoCartStateCopyWithImpl(this._self, this._then);
+
+  final DemoCartState _self;
+  final $Res Function(DemoCartState) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? status = null,
+    Object? carts = null,
+    Object? errorMessage = _demoCartStateCopyWithUnset,
+  }) {
+    return _then(
+      DemoCartState(
+        status: status == null ? _self.status : status as DemoCartStatus,
+        carts: carts == null ? _self.carts : carts as List<StoreCart>,
+        errorMessage: identical(errorMessage, _demoCartStateCopyWithUnset)
+            ? _self.errorMessage
+            : errorMessage as String?,
+      )
     );
   }
 }

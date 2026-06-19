@@ -51,21 +51,50 @@ mixin _$FeaturedProduct {
     ]);
   }
 
-  FeaturedProduct copyWith({
+  /// Creates a copy of this `FeaturedProduct` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = featuredProduct.copyWith(sku: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$FeaturedProductCopyWith<FeaturedProduct> get copyWith => _$FeaturedProductCopyWithImpl<FeaturedProduct>(this as FeaturedProduct, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$FeaturedProductCopyWith<$Res> {
+  $Res call({
     String? sku,
     Price? price,
     Set<String>? tags,
     bool? archived,
-  }) {
-    final self = this as FeaturedProduct;
-    final nextPrice = (price ?? self.price).copyWith();
-    final nextTags = Set<String>.of(tags ?? self.tags);
+  });
+}
 
-    return FeaturedProduct(
-      sku: sku ?? self.sku,
-      price: nextPrice,
-      tags: nextTags,
-      archived: archived ?? self.archived,
+/// @nodoc
+final class _$FeaturedProductCopyWithImpl<$Res> implements _$FeaturedProductCopyWith<$Res> {
+  const _$FeaturedProductCopyWithImpl(this._self, this._then);
+
+  final FeaturedProduct _self;
+  final $Res Function(FeaturedProduct) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? sku = null,
+    Object? price = null,
+    Object? tags = null,
+    Object? archived = null,
+  }) {
+    return _then(
+      FeaturedProduct(
+        sku: sku == null ? _self.sku : sku as String,
+        price: price == null ? _self.price : price as Price,
+        tags: tags == null ? _self.tags : tags as Set<String>,
+        archived: archived == null ? _self.archived : archived as bool,
+      )
     );
   }
 }

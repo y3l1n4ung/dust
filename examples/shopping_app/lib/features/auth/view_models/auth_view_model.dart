@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:dust_dart/fp.dart';
 import 'package:dust_flutter/state.dart';
 
 import '../../../core/data/shopping_repository.dart';
@@ -69,12 +68,7 @@ class AuthViewModel extends $AuthViewModel {
 
   Future<void> login(String username, String password) async {
     logger.userAction('login_attempt', {'username': username});
-    emit(
-      state.copyWith(
-        status: AuthStatus.loading,
-        errorMessage: const Some(null),
-      ),
-    );
+    emit(state.copyWith(status: AuthStatus.loading, errorMessage: null));
 
     try {
       final token = await args.repository.login(username, password);
@@ -84,8 +78,8 @@ class AuthViewModel extends $AuthViewModel {
 
       emit(
         state.copyWith(
-          token: Some(token),
-          user: Some(user),
+          token: token,
+          user: user,
           status: AuthStatus.authenticated,
         ),
       );
@@ -93,10 +87,7 @@ class AuthViewModel extends $AuthViewModel {
     } catch (e) {
       logger.error('AUTH', 'Login failed', e);
       emit(
-        state.copyWith(
-          status: AuthStatus.error,
-          errorMessage: Some(e.toString()),
-        ),
+        state.copyWith(status: AuthStatus.error, errorMessage: e.toString()),
       );
     }
   }
@@ -109,12 +100,7 @@ class AuthViewModel extends $AuthViewModel {
     required String lastName,
     required String phone,
   }) async {
-    emit(
-      state.copyWith(
-        status: AuthStatus.loading,
-        errorMessage: const Some(null),
-      ),
-    );
+    emit(state.copyWith(status: AuthStatus.loading, errorMessage: null));
 
     try {
       final userId = await args.repository.registerUser(
@@ -139,8 +125,8 @@ class AuthViewModel extends $AuthViewModel {
 
       emit(
         state.copyWith(
-          token: Some(token),
-          user: Some(user),
+          token: token,
+          user: user,
           status: AuthStatus.authenticated,
         ),
       );
@@ -148,10 +134,7 @@ class AuthViewModel extends $AuthViewModel {
     } catch (e) {
       logger.error('AUTH', 'Registration failed', e);
       emit(
-        state.copyWith(
-          status: AuthStatus.error,
-          errorMessage: Some(e.toString()),
-        ),
+        state.copyWith(status: AuthStatus.error, errorMessage: e.toString()),
       );
     }
   }

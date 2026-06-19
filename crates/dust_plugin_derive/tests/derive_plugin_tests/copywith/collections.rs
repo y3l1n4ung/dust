@@ -8,7 +8,7 @@ use dust_plugin_derive::register_plugin;
 use crate::support::{members_for_class, span};
 
 #[test]
-fn copywith_copies_collection_fields() {
+fn copywith_replaces_collection_fields_shallowly() {
     let plugin = register_plugin();
     let contribution = plugin.emit(
         &LibraryIr {
@@ -98,26 +98,56 @@ fn copywith_copies_collection_fields() {
     assert_eq!(members.len(), 1);
     assert_eq!(
         members,
-        [r#"Catalog copyWith({
-  List<List<String>>? groups,
-  Map<String, List<int>>? metrics,
-}) {
-  final self = this as Catalog;
-  final nextGroups = List<List<String>>.of(
-    (groups ?? self.groups).map((item_0) => List<String>.of(item_0)),
-  );
-  final nextMetrics = Map<String, List<int>>.fromEntries(
-    (metrics ?? self.metrics).entries.map(
-      (entry_1) => MapEntry(entry_1.key, List<int>.of(entry_1.value)),
-    ),
-  );
+        [r#"/// Creates a copy of this `Catalog` with selected fields replaced.
+///
+/// Usage:
+/// ```dart
+/// final updated = catalog.copyWith();
+/// ```
+@pragma('vm:prefer-inline')
+_$CatalogCopyWith<Catalog> get copyWith => _$CatalogCopyWithImpl<Catalog>(this as Catalog, (value) => value);"#
+        .to_owned()]
+        .as_slice()
+    );
+    assert_eq!(contribution.shared_helpers, Vec::<String>::new());
+    assert_eq!(
+        contribution.support_types,
+        [r#"// CopyWith API inspired by Freezed.
 
-  return Catalog(
-    groups: nextGroups,
-    metrics: nextMetrics,
-  );
+/// @nodoc
+abstract class _$CatalogCopyWith<$Res> {
+  $Res call({
+    List<List<String>>? groups,
+    Map<String, List<int>>? metrics,
+  });
+}
+
+/// @nodoc
+final class _$CatalogCopyWithImpl<$Res> implements _$CatalogCopyWith<$Res> {
+  const _$CatalogCopyWithImpl(this._self, this._then);
+
+  final Catalog _self;
+  final $Res Function(Catalog) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? groups = null,
+    Object? metrics = null,
+  }) {
+    return _then(
+      Catalog(
+        groups: groups == null ? _self.groups : groups as List<List<String>>,
+        metrics: metrics == null ? _self.metrics : metrics as Map<String, List<int>>,
+      )
+    );
+  }
 }"#
         .to_owned()]
         .as_slice()
     );
+
+    let generated = contribution.support_types.join("\n");
+    assert!(!generated.contains("List.of"));
+    assert!(!generated.contains("Map.fromEntries"));
 }

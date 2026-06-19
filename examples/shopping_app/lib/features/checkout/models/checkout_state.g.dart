@@ -13,6 +13,12 @@
 
 part of 'checkout_state.dart';
 
+final class _CheckoutStateCopyWithUnset {
+  const _CheckoutStateCopyWithUnset();
+}
+
+const _checkoutStateCopyWithUnset = _CheckoutStateCopyWithUnset();
+
 mixin _$CheckoutState {
   @override
   String toString() {
@@ -58,47 +64,70 @@ mixin _$CheckoutState {
     ]);
   }
 
-  CheckoutState copyWith({
-    CheckoutStatus? status,
-    Option<ShippingAddress?> shippingAddress = const None(),
-    Option<String?> errorMessage = const None(),
-    Option<String?> orderId = const None(),
-    Option<String?> couponCode = const None(),
-    Option<CheckoutQuote?> quote = const None(),
-    bool? isQuoteLoading,
-  }) {
-    final self = this as CheckoutState;
-    final nextShippingAddressSource = switch (shippingAddress) {
-      None<ShippingAddress?>() => self.shippingAddress,
-      Some<ShippingAddress?>(:final value) => value,
-    };
-    final nextShippingAddress = nextShippingAddressSource == null ? null : nextShippingAddressSource.copyWith();
-    final nextErrorMessage = switch (errorMessage) {
-      None<String?>() => self.errorMessage,
-      Some<String?>(:final value) => value,
-    };
-    final nextOrderId = switch (orderId) {
-      None<String?>() => self.orderId,
-      Some<String?>(:final value) => value,
-    };
-    final nextCouponCode = switch (couponCode) {
-      None<String?>() => self.couponCode,
-      Some<String?>(:final value) => value,
-    };
-    final nextQuoteSource = switch (quote) {
-      None<CheckoutQuote?>() => self.quote,
-      Some<CheckoutQuote?>(:final value) => value,
-    };
-    final nextQuote = nextQuoteSource == null ? null : nextQuoteSource.copyWith();
+  /// Creates a copy of this `CheckoutState` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = checkoutState.copyWith(isQuoteLoading: true);
+  /// final cleared = checkoutState.copyWith(shippingAddress: null);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$CheckoutStateCopyWith<CheckoutState> get copyWith => _$CheckoutStateCopyWithImpl<CheckoutState>(this as CheckoutState, (value) => value);
+}
 
-    return CheckoutState(
-      status: status ?? self.status,
-      shippingAddress: nextShippingAddress,
-      errorMessage: nextErrorMessage,
-      orderId: nextOrderId,
-      couponCode: nextCouponCode,
-      quote: nextQuote,
-      isQuoteLoading: isQuoteLoading ?? self.isQuoteLoading,
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$CheckoutStateCopyWith<$Res> {
+  $Res call({
+    CheckoutStatus? status,
+    ShippingAddress? shippingAddress,
+    String? errorMessage,
+    String? orderId,
+    String? couponCode,
+    CheckoutQuote? quote,
+    bool? isQuoteLoading,
+  });
+}
+
+/// @nodoc
+final class _$CheckoutStateCopyWithImpl<$Res> implements _$CheckoutStateCopyWith<$Res> {
+  const _$CheckoutStateCopyWithImpl(this._self, this._then);
+
+  final CheckoutState _self;
+  final $Res Function(CheckoutState) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? status = null,
+    Object? shippingAddress = _checkoutStateCopyWithUnset,
+    Object? errorMessage = _checkoutStateCopyWithUnset,
+    Object? orderId = _checkoutStateCopyWithUnset,
+    Object? couponCode = _checkoutStateCopyWithUnset,
+    Object? quote = _checkoutStateCopyWithUnset,
+    Object? isQuoteLoading = null,
+  }) {
+    return _then(
+      CheckoutState(
+        status: status == null ? _self.status : status as CheckoutStatus,
+        shippingAddress: identical(shippingAddress, _checkoutStateCopyWithUnset)
+            ? _self.shippingAddress
+            : shippingAddress as ShippingAddress?,
+        errorMessage: identical(errorMessage, _checkoutStateCopyWithUnset)
+            ? _self.errorMessage
+            : errorMessage as String?,
+        orderId: identical(orderId, _checkoutStateCopyWithUnset)
+            ? _self.orderId
+            : orderId as String?,
+        couponCode: identical(couponCode, _checkoutStateCopyWithUnset)
+            ? _self.couponCode
+            : couponCode as String?,
+        quote: identical(quote, _checkoutStateCopyWithUnset)
+            ? _self.quote
+            : quote as CheckoutQuote?,
+        isQuoteLoading: isQuoteLoading == null ? _self.isQuoteLoading : isQuoteLoading as bool,
+      )
     );
   }
 }

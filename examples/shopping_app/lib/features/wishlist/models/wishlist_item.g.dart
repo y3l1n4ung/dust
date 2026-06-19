@@ -43,20 +43,48 @@ mixin _$WishlistItem {
     ]);
   }
 
-  WishlistItem copyWith({
-    Product? product,
-    DateTime? savedAt,
-  }) {
-    final self = this as WishlistItem;
-    final nextProduct = (product ?? self.product).copyWith();
-
-    return WishlistItem(
-      product: nextProduct,
-      savedAt: savedAt ?? self.savedAt,
-    );
-  }
+  /// Creates a copy of this `WishlistItem` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = wishlistItem.copyWith();
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$WishlistItemCopyWith<WishlistItem> get copyWith => _$WishlistItemCopyWithImpl<WishlistItem>(this as WishlistItem, (value) => value);
 
   Map<String, Object?> toJson() => _$WishlistItemToJson(this as WishlistItem);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$WishlistItemCopyWith<$Res> {
+  $Res call({
+    Product? product,
+    DateTime? savedAt,
+  });
+}
+
+/// @nodoc
+final class _$WishlistItemCopyWithImpl<$Res> implements _$WishlistItemCopyWith<$Res> {
+  const _$WishlistItemCopyWithImpl(this._self, this._then);
+
+  final WishlistItem _self;
+  final $Res Function(WishlistItem) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? product = null,
+    Object? savedAt = null,
+  }) {
+    return _then(
+      WishlistItem(
+        product: product == null ? _self.product : product as Product,
+        savedAt: savedAt == null ? _self.savedAt : savedAt as DateTime,
+      )
+    );
+  }
 }
 
 Map<String, Object?> _$WishlistItemToJson(WishlistItem instance) {

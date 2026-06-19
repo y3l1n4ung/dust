@@ -13,17 +13,17 @@ void main() {
     }, 'current');
   });
 
-  test('Some carries a non-null replacement value', () {
-    const Option<String?> option = Some<String?>('Ye');
+  test('Some carries a non-null value', () {
+    const Option<String?> option = Some<String?>('John');
 
     expect(option, isA<Some<String?>>());
     expect(switch (option) {
       None<String?>() => 'current',
       Some<String?>(:final value) => value,
-    }, 'Ye');
+    }, 'John');
   });
 
-  test('Some carries a null replacement value', () {
+  test('Some can carry a null value', () {
     const Option<String?> option = Some<String?>(null);
 
     expect(option, isA<Some<String?>>());

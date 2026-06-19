@@ -14,6 +14,11 @@
 part of 'optional_note.dart';
 
 const DeepCollectionEquality _optionalNoteAliasesEquality = DeepCollectionEquality();
+final class _OptionalNoteCopyWithUnset {
+  const _OptionalNoteCopyWithUnset();
+}
+
+const _optionalNoteCopyWithUnset = _OptionalNoteCopyWithUnset();
 
 mixin _$OptionalNote {
   @override
@@ -48,26 +53,52 @@ mixin _$OptionalNote {
     ]);
   }
 
-  OptionalNote copyWith({
-    String? id,
-    Option<String?> note = const None(),
-    Option<List<String>?> aliases = const None(),
-  }) {
-    final self = this as OptionalNote;
-    final nextNote = switch (note) {
-      None<String?>() => self.note,
-      Some<String?>(:final value) => value,
-    };
-    final nextAliasesSource = switch (aliases) {
-      None<List<String>?>() => self.aliases,
-      Some<List<String>?>(:final value) => value,
-    };
-    final nextAliases = nextAliasesSource == null ? null : List<String>.of(nextAliasesSource);
+  /// Creates a copy of this `OptionalNote` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = optionalNote.copyWith(id: 'John');
+  /// final cleared = optionalNote.copyWith(note: null);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$OptionalNoteCopyWith<OptionalNote> get copyWith => _$OptionalNoteCopyWithImpl<OptionalNote>(this as OptionalNote, (value) => value);
+}
 
-    return OptionalNote(
-      id: id ?? self.id,
-      note: nextNote,
-      aliases: nextAliases,
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$OptionalNoteCopyWith<$Res> {
+  $Res call({
+    String? id,
+    String? note,
+    List<String>? aliases,
+  });
+}
+
+/// @nodoc
+final class _$OptionalNoteCopyWithImpl<$Res> implements _$OptionalNoteCopyWith<$Res> {
+  const _$OptionalNoteCopyWithImpl(this._self, this._then);
+
+  final OptionalNote _self;
+  final $Res Function(OptionalNote) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? note = _optionalNoteCopyWithUnset,
+    Object? aliases = _optionalNoteCopyWithUnset,
+  }) {
+    return _then(
+      OptionalNote(
+        id: id == null ? _self.id : id as String,
+        note: identical(note, _optionalNoteCopyWithUnset)
+            ? _self.note
+            : note as String?,
+        aliases: identical(aliases, _optionalNoteCopyWithUnset)
+            ? _self.aliases
+            : aliases as List<String>?,
+      )
     );
   }
 }

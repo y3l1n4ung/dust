@@ -80,16 +80,14 @@ mixin _$LoginRequest {
     ]);
   }
 
-  LoginRequest copyWith({
-    String? username,
-    String? password,
-  }) {
-    final self = this as LoginRequest;
-    return LoginRequest(
-      username: username ?? self.username,
-      password: password ?? self.password,
-    );
-  }
+  /// Creates a copy of this `LoginRequest` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = loginRequest.copyWith(username: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$LoginRequestCopyWith<LoginRequest> get copyWith => _$LoginRequestCopyWithImpl<LoginRequest>(this as LoginRequest, (value) => value);
 
   Map<String, Object?> toJson() => _$LoginRequestToJson(this as LoginRequest);
 }
@@ -121,14 +119,14 @@ mixin _$LoginResponse {
     ]);
   }
 
-  LoginResponse copyWith({
-    String? token,
-  }) {
-    final self = this as LoginResponse;
-    return LoginResponse(
-      token: token ?? self.token,
-    );
-  }
+  /// Creates a copy of this `LoginResponse` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = loginResponse.copyWith(token: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$LoginResponseCopyWith<LoginResponse> get copyWith => _$LoginResponseCopyWithImpl<LoginResponse>(this as LoginResponse, (value) => value);
 
   Map<String, Object?> toJson() => _$LoginResponseToJson(this as LoginResponse);
 }
@@ -160,14 +158,14 @@ mixin _$RegisterUserResponse {
     ]);
   }
 
-  RegisterUserResponse copyWith({
-    int? id,
-  }) {
-    final self = this as RegisterUserResponse;
-    return RegisterUserResponse(
-      id: id ?? self.id,
-    );
-  }
+  /// Creates a copy of this `RegisterUserResponse` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = registerUserResponse.copyWith(id: 1);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$RegisterUserResponseCopyWith<RegisterUserResponse> get copyWith => _$RegisterUserResponseCopyWithImpl<RegisterUserResponse>(this as RegisterUserResponse, (value) => value);
 
   Map<String, Object?> toJson() => _$RegisterUserResponseToJson(this as RegisterUserResponse);
 }
@@ -202,16 +200,14 @@ mixin _$RegisterName {
     ]);
   }
 
-  RegisterName copyWith({
-    String? firstname,
-    String? lastname,
-  }) {
-    final self = this as RegisterName;
-    return RegisterName(
-      firstname: firstname ?? self.firstname,
-      lastname: lastname ?? self.lastname,
-    );
-  }
+  /// Creates a copy of this `RegisterName` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = registerName.copyWith(firstname: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$RegisterNameCopyWith<RegisterName> get copyWith => _$RegisterNameCopyWithImpl<RegisterName>(this as RegisterName, (value) => value);
 
   Map<String, Object?> toJson() => _$RegisterNameToJson(this as RegisterName);
 }
@@ -246,16 +242,14 @@ mixin _$RegisterGeolocation {
     ]);
   }
 
-  RegisterGeolocation copyWith({
-    String? lat,
-    String? long,
-  }) {
-    final self = this as RegisterGeolocation;
-    return RegisterGeolocation(
-      lat: lat ?? self.lat,
-      long: long ?? self.long,
-    );
-  }
+  /// Creates a copy of this `RegisterGeolocation` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = registerGeolocation.copyWith(lat: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$RegisterGeolocationCopyWith<RegisterGeolocation> get copyWith => _$RegisterGeolocationCopyWithImpl<RegisterGeolocation>(this as RegisterGeolocation, (value) => value);
 
   Map<String, Object?> toJson() => _$RegisterGeolocationToJson(this as RegisterGeolocation);
 }
@@ -299,24 +293,15 @@ mixin _$RegisterAddress {
     ]);
   }
 
-  RegisterAddress copyWith({
-    String? city,
-    String? street,
-    int? number,
-    String? zipcode,
-    RegisterGeolocation? geolocation,
-  }) {
-    final self = this as RegisterAddress;
-    final nextGeolocation = (geolocation ?? self.geolocation).copyWith();
-
-    return RegisterAddress(
-      city: city ?? self.city,
-      street: street ?? self.street,
-      number: number ?? self.number,
-      zipcode: zipcode ?? self.zipcode,
-      geolocation: nextGeolocation,
-    );
-  }
+  /// Creates a copy of this `RegisterAddress` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = registerAddress.copyWith(city: 'John');
+  /// final nested = registerAddress.copyWith.geolocation(lat: 'London');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$RegisterAddressCopyWith<RegisterAddress> get copyWith => _$RegisterAddressCopyWithImpl<RegisterAddress>(this as RegisterAddress, (value) => value);
 
   Map<String, Object?> toJson() => _$RegisterAddressToJson(this as RegisterAddress);
 }
@@ -363,31 +348,272 @@ mixin _$RegisterUserRequest {
     ]);
   }
 
-  RegisterUserRequest copyWith({
+  /// Creates a copy of this `RegisterUserRequest` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = registerUserRequest.copyWith(email: 'John');
+  /// final nested = registerUserRequest.copyWith.name(firstname: 'London');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$RegisterUserRequestCopyWith<RegisterUserRequest> get copyWith => _$RegisterUserRequestCopyWithImpl<RegisterUserRequest>(this as RegisterUserRequest, (value) => value);
+
+  Map<String, Object?> toJson() => _$RegisterUserRequestToJson(this as RegisterUserRequest);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$LoginRequestCopyWith<$Res> {
+  $Res call({
+    String? username,
+    String? password,
+  });
+}
+
+/// @nodoc
+final class _$LoginRequestCopyWithImpl<$Res> implements _$LoginRequestCopyWith<$Res> {
+  const _$LoginRequestCopyWithImpl(this._self, this._then);
+
+  final LoginRequest _self;
+  final $Res Function(LoginRequest) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? username = null,
+    Object? password = null,
+  }) {
+    return _then(
+      LoginRequest(
+        username: username == null ? _self.username : username as String,
+        password: password == null ? _self.password : password as String,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$LoginResponseCopyWith<$Res> {
+  $Res call({
+    String? token,
+  });
+}
+
+/// @nodoc
+final class _$LoginResponseCopyWithImpl<$Res> implements _$LoginResponseCopyWith<$Res> {
+  const _$LoginResponseCopyWithImpl(this._self, this._then);
+
+  final LoginResponse _self;
+  final $Res Function(LoginResponse) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? token = null,
+  }) {
+    return _then(
+      LoginResponse(
+        token: token == null ? _self.token : token as String,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$RegisterUserResponseCopyWith<$Res> {
+  $Res call({
+    int? id,
+  });
+}
+
+/// @nodoc
+final class _$RegisterUserResponseCopyWithImpl<$Res> implements _$RegisterUserResponseCopyWith<$Res> {
+  const _$RegisterUserResponseCopyWithImpl(this._self, this._then);
+
+  final RegisterUserResponse _self;
+  final $Res Function(RegisterUserResponse) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+  }) {
+    return _then(
+      RegisterUserResponse(
+        id: id == null ? _self.id : id as int,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$RegisterNameCopyWith<$Res> {
+  $Res call({
+    String? firstname,
+    String? lastname,
+  });
+}
+
+/// @nodoc
+final class _$RegisterNameCopyWithImpl<$Res> implements _$RegisterNameCopyWith<$Res> {
+  const _$RegisterNameCopyWithImpl(this._self, this._then);
+
+  final RegisterName _self;
+  final $Res Function(RegisterName) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? firstname = null,
+    Object? lastname = null,
+  }) {
+    return _then(
+      RegisterName(
+        firstname: firstname == null ? _self.firstname : firstname as String,
+        lastname: lastname == null ? _self.lastname : lastname as String,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$RegisterGeolocationCopyWith<$Res> {
+  $Res call({
+    String? lat,
+    String? long,
+  });
+}
+
+/// @nodoc
+final class _$RegisterGeolocationCopyWithImpl<$Res> implements _$RegisterGeolocationCopyWith<$Res> {
+  const _$RegisterGeolocationCopyWithImpl(this._self, this._then);
+
+  final RegisterGeolocation _self;
+  final $Res Function(RegisterGeolocation) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? lat = null,
+    Object? long = null,
+  }) {
+    return _then(
+      RegisterGeolocation(
+        lat: lat == null ? _self.lat : lat as String,
+        long: long == null ? _self.long : long as String,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$RegisterAddressCopyWith<$Res> {
+  $Res call({
+    String? city,
+    String? street,
+    int? number,
+    String? zipcode,
+    RegisterGeolocation? geolocation,
+  });
+
+  _$RegisterGeolocationCopyWith<$Res> get geolocation;
+}
+
+/// @nodoc
+final class _$RegisterAddressCopyWithImpl<$Res> implements _$RegisterAddressCopyWith<$Res> {
+  const _$RegisterAddressCopyWithImpl(this._self, this._then);
+
+  final RegisterAddress _self;
+  final $Res Function(RegisterAddress) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? city = null,
+    Object? street = null,
+    Object? number = null,
+    Object? zipcode = null,
+    Object? geolocation = null,
+  }) {
+    return _then(
+      RegisterAddress(
+        city: city == null ? _self.city : city as String,
+        street: street == null ? _self.street : street as String,
+        number: number == null ? _self.number : number as int,
+        zipcode: zipcode == null ? _self.zipcode : zipcode as String,
+        geolocation: geolocation == null ? _self.geolocation : geolocation as RegisterGeolocation,
+      )
+    );
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  _$RegisterGeolocationCopyWith<$Res> get geolocation {
+    return _$RegisterGeolocationCopyWithImpl<$Res>(
+      _self.geolocation,
+      (value) => call(geolocation: value),
+    );
+  }
+}
+/// @nodoc
+abstract class _$RegisterUserRequestCopyWith<$Res> {
+  $Res call({
     String? email,
     String? username,
     String? password,
     RegisterName? name,
     String? phone,
     RegisterAddress? address,
-  }) {
-    final self = this as RegisterUserRequest;
-    final nextName = (name ?? self.name).copyWith();
-    final nextAddress = (address ?? self.address).copyWith();
+  });
 
-    return RegisterUserRequest(
-      email: email ?? self.email,
-      username: username ?? self.username,
-      password: password ?? self.password,
-      name: nextName,
-      phone: phone ?? self.phone,
-      address: nextAddress,
+  _$RegisterNameCopyWith<$Res> get name;
+
+  _$RegisterAddressCopyWith<$Res> get address;
+}
+
+/// @nodoc
+final class _$RegisterUserRequestCopyWithImpl<$Res> implements _$RegisterUserRequestCopyWith<$Res> {
+  const _$RegisterUserRequestCopyWithImpl(this._self, this._then);
+
+  final RegisterUserRequest _self;
+  final $Res Function(RegisterUserRequest) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? email = null,
+    Object? username = null,
+    Object? password = null,
+    Object? name = null,
+    Object? phone = null,
+    Object? address = null,
+  }) {
+    return _then(
+      RegisterUserRequest(
+        email: email == null ? _self.email : email as String,
+        username: username == null ? _self.username : username as String,
+        password: password == null ? _self.password : password as String,
+        name: name == null ? _self.name : name as RegisterName,
+        phone: phone == null ? _self.phone : phone as String,
+        address: address == null ? _self.address : address as RegisterAddress,
+      )
     );
   }
 
-  Map<String, Object?> toJson() => _$RegisterUserRequestToJson(this as RegisterUserRequest);
-}
+  @override
+  @pragma('vm:prefer-inline')
+  _$RegisterNameCopyWith<$Res> get name {
+    return _$RegisterNameCopyWithImpl<$Res>(
+      _self.name,
+      (value) => call(name: value),
+    );
+  }
 
+  @override
+  @pragma('vm:prefer-inline')
+  _$RegisterAddressCopyWith<$Res> get address {
+    return _$RegisterAddressCopyWithImpl<$Res>(
+      _self.address,
+      (value) => call(address: value),
+    );
+  }
+}
 final class _$ShoppingApi implements ShoppingApi {
   _$ShoppingApi(this._dio, {String? baseUrl}) : _baseUrl = baseUrl;
 

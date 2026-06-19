@@ -14,6 +14,11 @@
 part of 'cart_state.dart';
 
 const DeepCollectionEquality _cartStateItemsEquality = DeepCollectionEquality();
+final class _CartStateCopyWithUnset {
+  const _CartStateCopyWithUnset();
+}
+
+const _cartStateCopyWithUnset = _CartStateCopyWithUnset();
 
 mixin _$CartNotification {
   @override
@@ -76,22 +81,47 @@ mixin _$CartState {
     ]);
   }
 
-  CartState copyWith({
-    List<CartItem>? items,
-    Option<CartNotification?> notification = const None(),
-  }) {
-    final self = this as CartState;
-    final nextItems = List<CartItem>.of(
-      (items ?? self.items).map((item_0) => item_0.copyWith()),
-    );
-    final nextNotification = switch (notification) {
-      None<CartNotification?>() => self.notification,
-      Some<CartNotification?>(:final value) => value,
-    };
+  /// Creates a copy of this `CartState` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = cartState.copyWith();
+  /// final cleared = cartState.copyWith(notification: null);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$CartStateCopyWith<CartState> get copyWith => _$CartStateCopyWithImpl<CartState>(this as CartState, (value) => value);
+}
 
-    return CartState(
-      items: nextItems,
-      notification: nextNotification,
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$CartStateCopyWith<$Res> {
+  $Res call({
+    List<CartItem>? items,
+    CartNotification? notification,
+  });
+}
+
+/// @nodoc
+final class _$CartStateCopyWithImpl<$Res> implements _$CartStateCopyWith<$Res> {
+  const _$CartStateCopyWithImpl(this._self, this._then);
+
+  final CartState _self;
+  final $Res Function(CartState) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? items = null,
+    Object? notification = _cartStateCopyWithUnset,
+  }) {
+    return _then(
+      CartState(
+        items: items == null ? _self.items : items as List<CartItem>,
+        notification: identical(notification, _cartStateCopyWithUnset)
+            ? _self.notification
+            : notification as CartNotification?,
+      )
     );
   }
 }

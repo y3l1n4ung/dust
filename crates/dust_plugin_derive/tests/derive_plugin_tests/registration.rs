@@ -83,26 +83,68 @@ int get hashCode {
   ]);
 }"#
         .to_owned(),
-        r#"User copyWith({
-  String? id,
-  Option<int?> age = const None(),
-}) {
-  final self = this as User;
-  final nextAge = switch (age) {
-    None<int?>() => self.age,
-    Some<int?>(:final value) => value,
-  };
-
-  return User(
-    id ?? self.id,
-    nextAge,
-  );
-}"#
-        .to_owned(),
+        r#"/// Creates a copy of this `User` with selected fields replaced.
+///
+/// Usage:
+/// ```dart
+/// final updated = user.copyWith(id: 'John');
+/// final cleared = user.copyWith(age: null);
+/// ```
+@pragma('vm:prefer-inline')
+_$UserCopyWith<User> get copyWith => _$UserCopyWithImpl<User>(this as User, (value) => value);"#
+            .to_owned(),
     ];
 
     assert_eq!(contribution.mixin_members.len(), 1);
     assert_eq!(members, expected.as_slice());
+    assert_eq!(
+        contribution.shared_helpers,
+        [r#"final class _UserCopyWithUnset {
+  const _UserCopyWithUnset();
+}
+
+const _userCopyWithUnset = _UserCopyWithUnset();"#
+            .to_owned()]
+        .as_slice()
+    );
+    assert_eq!(
+        contribution.support_types,
+        [r#"// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$UserCopyWith<$Res> {
+  $Res call({
+    String? id,
+    int? age,
+  });
+}
+
+/// @nodoc
+final class _$UserCopyWithImpl<$Res> implements _$UserCopyWith<$Res> {
+  const _$UserCopyWithImpl(this._self, this._then);
+
+  final User _self;
+  final $Res Function(User) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? age = _userCopyWithUnset,
+  }) {
+    return _then(
+      User(
+        id == null ? _self.id : id as String,
+        identical(age, _userCopyWithUnset)
+            ? _self.age
+            : age as int?,
+      )
+    );
+  }
+}"#
+        .to_owned()]
+        .as_slice()
+    );
 }
 
 #[test]

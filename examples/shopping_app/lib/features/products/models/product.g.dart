@@ -58,28 +58,15 @@ mixin _$Product {
     ]);
   }
 
-  Product copyWith({
-    int? id,
-    String? title,
-    double? price,
-    String? description,
-    String? category,
-    String? image,
-    Rating? rating,
-  }) {
-    final self = this as Product;
-    final nextRating = (rating ?? self.rating).copyWith();
-
-    return Product(
-      id: id ?? self.id,
-      title: title ?? self.title,
-      price: price ?? self.price,
-      description: description ?? self.description,
-      category: category ?? self.category,
-      image: image ?? self.image,
-      rating: nextRating,
-    );
-  }
+  /// Creates a copy of this `Product` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = product.copyWith(id: 1);
+  /// final nested = product.copyWith.rating(rate: 1.0);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$ProductCopyWith<Product> get copyWith => _$ProductCopyWithImpl<Product>(this as Product, (value) => value);
 
   Map<String, Object?> toJson() => _$ProductToJson(this as Product);
 }
@@ -114,18 +101,103 @@ mixin _$Rating {
     ]);
   }
 
-  Rating copyWith({
-    double? rate,
-    int? count,
+  /// Creates a copy of this `Rating` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = rating.copyWith(rate: 1.0);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$RatingCopyWith<Rating> get copyWith => _$RatingCopyWithImpl<Rating>(this as Rating, (value) => value);
+
+  Map<String, Object?> toJson() => _$RatingToJson(this as Rating);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$ProductCopyWith<$Res> {
+  $Res call({
+    int? id,
+    String? title,
+    double? price,
+    String? description,
+    String? category,
+    String? image,
+    Rating? rating,
+  });
+
+  _$RatingCopyWith<$Res> get rating;
+}
+
+/// @nodoc
+final class _$ProductCopyWithImpl<$Res> implements _$ProductCopyWith<$Res> {
+  const _$ProductCopyWithImpl(this._self, this._then);
+
+  final Product _self;
+  final $Res Function(Product) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? title = null,
+    Object? price = null,
+    Object? description = null,
+    Object? category = null,
+    Object? image = null,
+    Object? rating = null,
   }) {
-    final self = this as Rating;
-    return Rating(
-      rate: rate ?? self.rate,
-      count: count ?? self.count,
+    return _then(
+      Product(
+        id: id == null ? _self.id : id as int,
+        title: title == null ? _self.title : title as String,
+        price: price == null ? _self.price : price as double,
+        description: description == null ? _self.description : description as String,
+        category: category == null ? _self.category : category as String,
+        image: image == null ? _self.image : image as String,
+        rating: rating == null ? _self.rating : rating as Rating,
+      )
     );
   }
 
-  Map<String, Object?> toJson() => _$RatingToJson(this as Rating);
+  @override
+  @pragma('vm:prefer-inline')
+  _$RatingCopyWith<$Res> get rating {
+    return _$RatingCopyWithImpl<$Res>(
+      _self.rating,
+      (value) => call(rating: value),
+    );
+  }
+}
+/// @nodoc
+abstract class _$RatingCopyWith<$Res> {
+  $Res call({
+    double? rate,
+    int? count,
+  });
+}
+
+/// @nodoc
+final class _$RatingCopyWithImpl<$Res> implements _$RatingCopyWith<$Res> {
+  const _$RatingCopyWithImpl(this._self, this._then);
+
+  final Rating _self;
+  final $Res Function(Rating) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? rate = null,
+    Object? count = null,
+  }) {
+    return _then(
+      Rating(
+        rate: rate == null ? _self.rate : rate as double,
+        count: count == null ? _self.count : count as int,
+      )
+    );
+  }
 }
 
 Map<String, Object?> _$ProductToJson(Product instance) {

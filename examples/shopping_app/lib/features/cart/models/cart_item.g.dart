@@ -43,20 +43,48 @@ mixin _$CartItem {
     ]);
   }
 
-  CartItem copyWith({
-    Product? product,
-    int? quantity,
-  }) {
-    final self = this as CartItem;
-    final nextProduct = (product ?? self.product).copyWith();
-
-    return CartItem(
-      product: nextProduct,
-      quantity: quantity ?? self.quantity,
-    );
-  }
+  /// Creates a copy of this `CartItem` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = cartItem.copyWith(quantity: 1);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$CartItemCopyWith<CartItem> get copyWith => _$CartItemCopyWithImpl<CartItem>(this as CartItem, (value) => value);
 
   Map<String, Object?> toJson() => _$CartItemToJson(this as CartItem);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$CartItemCopyWith<$Res> {
+  $Res call({
+    Product? product,
+    int? quantity,
+  });
+}
+
+/// @nodoc
+final class _$CartItemCopyWithImpl<$Res> implements _$CartItemCopyWith<$Res> {
+  const _$CartItemCopyWithImpl(this._self, this._then);
+
+  final CartItem _self;
+  final $Res Function(CartItem) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? product = null,
+    Object? quantity = null,
+  }) {
+    return _then(
+      CartItem(
+        product: product == null ? _self.product : product as Product,
+        quantity: quantity == null ? _self.quantity : quantity as int,
+      )
+    );
+  }
 }
 
 Map<String, Object?> _$CartItemToJson(CartItem instance) {

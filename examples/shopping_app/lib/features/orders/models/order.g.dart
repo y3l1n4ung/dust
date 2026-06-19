@@ -57,29 +57,15 @@ mixin _$Order {
     ]);
   }
 
-  Order copyWith({
-    String? id,
-    List<CartItem>? items,
-    double? totalAmount,
-    OrderStatus? status,
-    DateTime? createdAt,
-    ShippingAddress? shippingAddress,
-  }) {
-    final self = this as Order;
-    final nextItems = List<CartItem>.of(
-      (items ?? self.items).map((item_1) => item_1.copyWith()),
-    );
-    final nextShippingAddress = (shippingAddress ?? self.shippingAddress).copyWith();
-
-    return Order(
-      id: id ?? self.id,
-      items: nextItems,
-      totalAmount: totalAmount ?? self.totalAmount,
-      status: status ?? self.status,
-      createdAt: createdAt ?? self.createdAt,
-      shippingAddress: nextShippingAddress,
-    );
-  }
+  /// Creates a copy of this `Order` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = order.copyWith(id: 'John');
+  /// final nested = order.copyWith.shippingAddress(fullName: 'London');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$OrderCopyWith<Order> get copyWith => _$OrderCopyWithImpl<Order>(this as Order, (value) => value);
 
   Map<String, Object?> toJson() => _$OrderToJson(this as Order);
 }
@@ -123,24 +109,109 @@ mixin _$ShippingAddress {
     ]);
   }
 
-  ShippingAddress copyWith({
+  /// Creates a copy of this `ShippingAddress` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = shippingAddress.copyWith(fullName: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$ShippingAddressCopyWith<ShippingAddress> get copyWith => _$ShippingAddressCopyWithImpl<ShippingAddress>(this as ShippingAddress, (value) => value);
+
+  Map<String, Object?> toJson() => _$ShippingAddressToJson(this as ShippingAddress);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$OrderCopyWith<$Res> {
+  $Res call({
+    String? id,
+    List<CartItem>? items,
+    double? totalAmount,
+    OrderStatus? status,
+    DateTime? createdAt,
+    ShippingAddress? shippingAddress,
+  });
+
+  _$ShippingAddressCopyWith<$Res> get shippingAddress;
+}
+
+/// @nodoc
+final class _$OrderCopyWithImpl<$Res> implements _$OrderCopyWith<$Res> {
+  const _$OrderCopyWithImpl(this._self, this._then);
+
+  final Order _self;
+  final $Res Function(Order) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? items = null,
+    Object? totalAmount = null,
+    Object? status = null,
+    Object? createdAt = null,
+    Object? shippingAddress = null,
+  }) {
+    return _then(
+      Order(
+        id: id == null ? _self.id : id as String,
+        items: items == null ? _self.items : items as List<CartItem>,
+        totalAmount: totalAmount == null ? _self.totalAmount : totalAmount as double,
+        status: status == null ? _self.status : status as OrderStatus,
+        createdAt: createdAt == null ? _self.createdAt : createdAt as DateTime,
+        shippingAddress: shippingAddress == null ? _self.shippingAddress : shippingAddress as ShippingAddress,
+      )
+    );
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  _$ShippingAddressCopyWith<$Res> get shippingAddress {
+    return _$ShippingAddressCopyWithImpl<$Res>(
+      _self.shippingAddress,
+      (value) => call(shippingAddress: value),
+    );
+  }
+}
+/// @nodoc
+abstract class _$ShippingAddressCopyWith<$Res> {
+  $Res call({
     String? fullName,
     String? address,
     String? city,
     String? zipCode,
     String? phone,
+  });
+}
+
+/// @nodoc
+final class _$ShippingAddressCopyWithImpl<$Res> implements _$ShippingAddressCopyWith<$Res> {
+  const _$ShippingAddressCopyWithImpl(this._self, this._then);
+
+  final ShippingAddress _self;
+  final $Res Function(ShippingAddress) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? fullName = null,
+    Object? address = null,
+    Object? city = null,
+    Object? zipCode = null,
+    Object? phone = null,
   }) {
-    final self = this as ShippingAddress;
-    return ShippingAddress(
-      fullName: fullName ?? self.fullName,
-      address: address ?? self.address,
-      city: city ?? self.city,
-      zipCode: zipCode ?? self.zipCode,
-      phone: phone ?? self.phone,
+    return _then(
+      ShippingAddress(
+        fullName: fullName == null ? _self.fullName : fullName as String,
+        address: address == null ? _self.address : address as String,
+        city: city == null ? _self.city : city as String,
+        zipCode: zipCode == null ? _self.zipCode : zipCode as String,
+        phone: phone == null ? _self.phone : phone as String,
+      )
     );
   }
-
-  Map<String, Object?> toJson() => _$ShippingAddressToJson(this as ShippingAddress);
 }
 
 Map<String, Object?> _$OrderToJson(Order instance) {

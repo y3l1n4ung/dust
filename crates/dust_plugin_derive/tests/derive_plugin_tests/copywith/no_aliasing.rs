@@ -8,7 +8,7 @@ use dust_plugin_derive::register_plugin;
 use crate::support::{members_for_class, span};
 
 #[test]
-fn copywith_copies_collection_fields_without_aliasing() {
+fn copywith_preserves_collection_references_without_deep_copy() {
     let plugin = register_plugin();
     let contribution = plugin.emit(
         &LibraryIr {
@@ -130,36 +130,75 @@ fn copywith_copies_collection_fields_without_aliasing() {
     assert_eq!(members.len(), 1);
     assert_eq!(
         members,
-        [r#"Catalog copyWith({
-  List<List<String>>? groups,
-  List<String>? items,
-  Option<Set<String>?> tags = const None(),
-  Map<String, List<int>>? metrics,
-}) {
-  final self = this as Catalog;
-  final nextGroups = List<List<String>>.of(
-    (groups ?? self.groups).map((item_0) => List<String>.of(item_0)),
-  );
-  final nextItems = List<String>.of(items ?? self.items);
-  final nextTagsSource = switch (tags) {
-    None<Set<String>?>() => self.tags,
-    Some<Set<String>?>(:final value) => value,
-  };
-  final nextTags = nextTagsSource == null ? null : Set<String>.of(nextTagsSource);
-  final nextMetrics = Map<String, List<int>>.fromEntries(
-    (metrics ?? self.metrics).entries.map(
-      (entry_3) => MapEntry(entry_3.key, List<int>.of(entry_3.value)),
-    ),
-  );
+        [r#"/// Creates a copy of this `Catalog` with selected fields replaced.
+///
+/// Usage:
+/// ```dart
+/// final updated = catalog.copyWith();
+/// final cleared = catalog.copyWith(tags: null);
+/// ```
+@pragma('vm:prefer-inline')
+_$CatalogCopyWith<Catalog> get copyWith => _$CatalogCopyWithImpl<Catalog>(this as Catalog, (value) => value);"#
+        .to_owned()]
+        .as_slice()
+    );
+    assert_eq!(
+        contribution.shared_helpers,
+        [r#"final class _CatalogCopyWithUnset {
+  const _CatalogCopyWithUnset();
+}
 
-  return Catalog(
-    nextGroups,
-    nextItems,
-    nextTags,
-    nextMetrics,
-  );
+const _catalogCopyWithUnset = _CatalogCopyWithUnset();"#
+            .to_owned()]
+        .as_slice()
+    );
+    assert_eq!(
+        contribution.support_types,
+        [r#"// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$CatalogCopyWith<$Res> {
+  $Res call({
+    List<List<String>>? groups,
+    List<String>? items,
+    Set<String>? tags,
+    Map<String, List<int>>? metrics,
+  });
+}
+
+/// @nodoc
+final class _$CatalogCopyWithImpl<$Res> implements _$CatalogCopyWith<$Res> {
+  const _$CatalogCopyWithImpl(this._self, this._then);
+
+  final Catalog _self;
+  final $Res Function(Catalog) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? groups = null,
+    Object? items = null,
+    Object? tags = _catalogCopyWithUnset,
+    Object? metrics = null,
+  }) {
+    return _then(
+      Catalog(
+        groups == null ? _self.groups : groups as List<List<String>>,
+        items == null ? _self.items : items as List<String>,
+        identical(tags, _catalogCopyWithUnset)
+            ? _self.tags
+            : tags as Set<String>?,
+        metrics == null ? _self.metrics : metrics as Map<String, List<int>>,
+      )
+    );
+  }
 }"#
         .to_owned()]
         .as_slice()
     );
+
+    let generated = contribution.support_types.join("\n");
+    assert!(!generated.contains("List.of"));
+    assert!(!generated.contains("Set<String>.of"));
+    assert!(!generated.contains("Map.fromEntries"));
 }

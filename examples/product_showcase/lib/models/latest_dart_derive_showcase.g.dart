@@ -64,30 +64,14 @@ mixin _$LatestDartProductCard {
     ]);
   }
 
-  LatestDartProductCard copyWith({
-    String? id,
-    String? title,
-    String? productUrl,
-    int? priceCents,
-    double? rating,
-    int? stockCount,
-    bool? active,
-    DateTime? launchedAt,
-    bool? internalOnly,
-  }) {
-    final self = this as LatestDartProductCard;
-    return LatestDartProductCard(
-      id: id ?? self.id,
-      title: title ?? self.title,
-      productUrl: productUrl ?? self.productUrl,
-      priceCents: priceCents ?? self.priceCents,
-      rating: rating ?? self.rating,
-      stockCount: stockCount ?? self.stockCount,
-      active: active ?? self.active,
-      launchedAt: launchedAt ?? self.launchedAt,
-      internalOnly: internalOnly ?? self.internalOnly,
-    );
-  }
+  /// Creates a copy of this `LatestDartProductCard` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = latestDartProductCard.copyWith(id: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$LatestDartProductCardCopyWith<LatestDartProductCard> get copyWith => _$LatestDartProductCardCopyWithImpl<LatestDartProductCard>(this as LatestDartProductCard, (value) => value);
 
   /// Validates this `LatestDartProductCard`.
   ///
@@ -126,6 +110,58 @@ mixin _$LatestDartProductCard {
   Map<String, Object?> toJson() => _$LatestDartProductCardToJson(this as LatestDartProductCard);
 }
 
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$LatestDartProductCardCopyWith<$Res> {
+  $Res call({
+    String? id,
+    String? title,
+    String? productUrl,
+    int? priceCents,
+    double? rating,
+    int? stockCount,
+    bool? active,
+    DateTime? launchedAt,
+    bool? internalOnly,
+  });
+}
+
+/// @nodoc
+final class _$LatestDartProductCardCopyWithImpl<$Res> implements _$LatestDartProductCardCopyWith<$Res> {
+  const _$LatestDartProductCardCopyWithImpl(this._self, this._then);
+
+  final LatestDartProductCard _self;
+  final $Res Function(LatestDartProductCard) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? title = null,
+    Object? productUrl = null,
+    Object? priceCents = null,
+    Object? rating = null,
+    Object? stockCount = null,
+    Object? active = null,
+    Object? launchedAt = null,
+    Object? internalOnly = null,
+  }) {
+    return _then(
+      LatestDartProductCard(
+        id: id == null ? _self.id : id as String,
+        title: title == null ? _self.title : title as String,
+        productUrl: productUrl == null ? _self.productUrl : productUrl as String,
+        priceCents: priceCents == null ? _self.priceCents : priceCents as int,
+        rating: rating == null ? _self.rating : rating as double,
+        stockCount: stockCount == null ? _self.stockCount : stockCount as int,
+        active: active == null ? _self.active : active as bool,
+        launchedAt: launchedAt == null ? _self.launchedAt : launchedAt as DateTime,
+        internalOnly: internalOnly == null ? _self.internalOnly : internalOnly as bool,
+      )
+    );
+  }
+}
 /// TextFormField validator for `LatestDartProductCard.id`.
 ///
 /// Usage:

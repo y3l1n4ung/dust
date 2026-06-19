@@ -177,13 +177,48 @@ int get hashCode {
     );
     assert_eq!(
         team_members,
-        [r#"Team copyWith({
-  String? name,
-}) {
-  final self = this as Team;
-  return Team(
-    name ?? self.name,
-  );
+        [
+            r#"/// Creates a copy of this `Team` with selected fields replaced.
+///
+/// Usage:
+/// ```dart
+/// final updated = team.copyWith(name: 'John');
+/// ```
+@pragma('vm:prefer-inline')
+_$TeamCopyWith<Team> get copyWith => _$TeamCopyWithImpl<Team>(this as Team, (value) => value);"#
+                .to_owned()
+        ]
+        .as_slice()
+    );
+    assert_eq!(
+        contribution.support_types,
+        [r#"// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$TeamCopyWith<$Res> {
+  $Res call({
+    String? name,
+  });
+}
+
+/// @nodoc
+final class _$TeamCopyWithImpl<$Res> implements _$TeamCopyWith<$Res> {
+  const _$TeamCopyWithImpl(this._self, this._then);
+
+  final Team _self;
+  final $Res Function(Team) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? name = null,
+  }) {
+    return _then(
+      Team(
+        name == null ? _self.name : name as String,
+      )
+    );
+  }
 }"#
         .to_owned()]
         .as_slice()

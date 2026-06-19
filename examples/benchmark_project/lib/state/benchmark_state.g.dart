@@ -46,20 +46,51 @@ mixin _$BenchmarkState {
     ]);
   }
 
-  BenchmarkState copyWith({
+  /// Creates a copy of this `BenchmarkState` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = benchmarkState.copyWith(activeFeature: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$BenchmarkStateCopyWith<BenchmarkState> get copyWith => _$BenchmarkStateCopyWithImpl<BenchmarkState>(this as BenchmarkState, (value) => value);
+
+  Map<String, Object?> toJson() => _$BenchmarkStateToJson(this as BenchmarkState);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$BenchmarkStateCopyWith<$Res> {
+  $Res call({
     BenchmarkMode? mode,
     String? activeFeature,
     int? buildsRun,
+  });
+}
+
+/// @nodoc
+final class _$BenchmarkStateCopyWithImpl<$Res> implements _$BenchmarkStateCopyWith<$Res> {
+  const _$BenchmarkStateCopyWithImpl(this._self, this._then);
+
+  final BenchmarkState _self;
+  final $Res Function(BenchmarkState) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? mode = null,
+    Object? activeFeature = null,
+    Object? buildsRun = null,
   }) {
-    final self = this as BenchmarkState;
-    return BenchmarkState(
-      mode: mode ?? self.mode,
-      activeFeature: activeFeature ?? self.activeFeature,
-      buildsRun: buildsRun ?? self.buildsRun,
+    return _then(
+      BenchmarkState(
+        mode: mode == null ? _self.mode : mode as BenchmarkMode,
+        activeFeature: activeFeature == null ? _self.activeFeature : activeFeature as String,
+        buildsRun: buildsRun == null ? _self.buildsRun : buildsRun as int,
+      )
     );
   }
-
-  Map<String, Object?> toJson() => _$BenchmarkStateToJson(this as BenchmarkState);
 }
 
 Map<String, Object?> _$BenchmarkStateToJson(BenchmarkState instance) {

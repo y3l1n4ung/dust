@@ -51,18 +51,14 @@ mixin _$InventoryEntry {
     ]);
   }
 
-  InventoryEntry copyWith({
-    String? productSku,
-    String? warehouse,
-    int? quantity,
-  }) {
-    final self = this as InventoryEntry;
-    return InventoryEntry(
-      productSku: productSku ?? self.productSku,
-      warehouse: warehouse ?? self.warehouse,
-      quantity: quantity ?? self.quantity,
-    );
-  }
+  /// Creates a copy of this `InventoryEntry` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = inventoryEntry.copyWith(productSku: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$InventoryEntryCopyWith<InventoryEntry> get copyWith => _$InventoryEntryCopyWithImpl<InventoryEntry>(this as InventoryEntry, (value) => value);
 }
 
 mixin _$Catalog {
@@ -104,33 +100,85 @@ mixin _$Catalog {
     ]);
   }
 
-  Catalog copyWith({
+  /// Creates a copy of this `Catalog` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = catalog.copyWith(id: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$CatalogCopyWith<Catalog> get copyWith => _$CatalogCopyWithImpl<Catalog>(this as Catalog, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$InventoryEntryCopyWith<$Res> {
+  $Res call({
+    String? productSku,
+    String? warehouse,
+    int? quantity,
+  });
+}
+
+/// @nodoc
+final class _$InventoryEntryCopyWithImpl<$Res> implements _$InventoryEntryCopyWith<$Res> {
+  const _$InventoryEntryCopyWithImpl(this._self, this._then);
+
+  final InventoryEntry _self;
+  final $Res Function(InventoryEntry) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? productSku = null,
+    Object? warehouse = null,
+    Object? quantity = null,
+  }) {
+    return _then(
+      InventoryEntry(
+        productSku: productSku == null ? _self.productSku : productSku as String,
+        warehouse: warehouse == null ? _self.warehouse : warehouse as String,
+        quantity: quantity == null ? _self.quantity : quantity as int,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$CatalogCopyWith<$Res> {
+  $Res call({
     String? id,
     List<Product>? products,
     Map<String, Category>? categoryById,
     Set<String>? featuredSkus,
     List<InventoryEntry>? inventory,
-  }) {
-    final self = this as Catalog;
-    final nextProducts = List<Product>.of(
-      (products ?? self.products).map((item_1) => item_1.copyWith()),
-    );
-    final nextCategoryById = Map<String, Category>.fromEntries(
-      (categoryById ?? self.categoryById).entries.map(
-        (entry_2) => MapEntry(entry_2.key, (entry_2.value).copyWith()),
-      ),
-    );
-    final nextFeaturedSkus = Set<String>.of(featuredSkus ?? self.featuredSkus);
-    final nextInventory = List<InventoryEntry>.of(
-      (inventory ?? self.inventory).map((item_4) => item_4.copyWith()),
-    );
+  });
+}
 
-    return Catalog(
-      id: id ?? self.id,
-      products: nextProducts,
-      categoryById: nextCategoryById,
-      featuredSkus: nextFeaturedSkus,
-      inventory: nextInventory,
+/// @nodoc
+final class _$CatalogCopyWithImpl<$Res> implements _$CatalogCopyWith<$Res> {
+  const _$CatalogCopyWithImpl(this._self, this._then);
+
+  final Catalog _self;
+  final $Res Function(Catalog) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? products = null,
+    Object? categoryById = null,
+    Object? featuredSkus = null,
+    Object? inventory = null,
+  }) {
+    return _then(
+      Catalog(
+        id: id == null ? _self.id : id as String,
+        products: products == null ? _self.products : products as List<Product>,
+        categoryById: categoryById == null ? _self.categoryById : categoryById as Map<String, Category>,
+        featuredSkus: featuredSkus == null ? _self.featuredSkus : featuredSkus as Set<String>,
+        inventory: inventory == null ? _self.inventory : inventory as List<InventoryEntry>,
+      )
     );
   }
 }

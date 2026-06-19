@@ -119,12 +119,41 @@ mixin _$User {
             r#"part of 'team.dart';
 
 mixin _$Team {
-  Team copyWith({
+  /// Creates a copy of this `Team` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = team.copyWith(name: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$TeamCopyWith<Team> get copyWith => _$TeamCopyWithImpl<Team>(this as Team, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$TeamCopyWith<$Res> {
+  $Res call({
     String? name,
+  });
+}
+
+/// @nodoc
+final class _$TeamCopyWithImpl<$Res> implements _$TeamCopyWith<$Res> {
+  const _$TeamCopyWithImpl(this._self, this._then);
+
+  final Team _self;
+  final $Res Function(Team) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? name = null,
   }) {
-    final self = this as Team;
-    return Team(
-      name ?? self.name,
+    return _then(
+      Team(
+        name == null ? _self.name : name as String,
+      )
     );
   }
 }

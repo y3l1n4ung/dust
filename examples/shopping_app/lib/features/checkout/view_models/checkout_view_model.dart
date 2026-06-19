@@ -1,4 +1,3 @@
-import 'package:dust_dart/fp.dart';
 import 'package:dust_flutter/state.dart';
 
 import '../../../core/data/shopping_repository.dart';
@@ -20,7 +19,7 @@ class CheckoutViewModel extends $CheckoutViewModel {
   CheckoutViewModel(super.args);
 
   void updateShippingAddress(ShippingAddress address) {
-    emit(state.copyWith(shippingAddress: Some(address)));
+    emit(state.copyWith(shippingAddress: address));
   }
 
   Future<void> applyCoupon({
@@ -28,12 +27,12 @@ class CheckoutViewModel extends $CheckoutViewModel {
     required String couponCode,
   }) async {
     final code = couponCode.trim();
-    emit(state.copyWith(couponCode: Some(code), isQuoteLoading: true));
+    emit(state.copyWith(couponCode: code, isQuoteLoading: true));
 
     final quote = await args.repository.quoteCheckout(
       CheckoutQuoteRequest(subtotal: subtotal, couponCode: code),
     );
-    emit(state.copyWith(quote: Some(quote), isQuoteLoading: false));
+    emit(state.copyWith(quote: quote, isQuoteLoading: false));
   }
 
   Future<String?> processCheckout(
@@ -44,7 +43,7 @@ class CheckoutViewModel extends $CheckoutViewModel {
       emit(
         state.copyWith(
           status: CheckoutStatus.error,
-          errorMessage: const Some('Please enter shipping address'),
+          errorMessage: 'Please enter shipping address',
         ),
       );
       return null;
@@ -55,9 +54,7 @@ class CheckoutViewModel extends $CheckoutViewModel {
     await Future<void>.delayed(const Duration(milliseconds: 600));
 
     final orderId = DateTime.now().millisecondsSinceEpoch.toString();
-    emit(
-      state.copyWith(status: CheckoutStatus.success, orderId: Some(orderId)),
-    );
+    emit(state.copyWith(status: CheckoutStatus.success, orderId: orderId));
 
     return orderId;
   }

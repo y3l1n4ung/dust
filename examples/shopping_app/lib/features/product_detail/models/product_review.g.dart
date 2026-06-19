@@ -58,7 +58,23 @@ mixin _$ProductReview {
     ]);
   }
 
-  ProductReview copyWith({
+  /// Creates a copy of this `ProductReview` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = productReview.copyWith(id: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$ProductReviewCopyWith<ProductReview> get copyWith => _$ProductReviewCopyWithImpl<ProductReview>(this as ProductReview, (value) => value);
+
+  Map<String, Object?> toJson() => _$ProductReviewToJson(this as ProductReview);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$ProductReviewCopyWith<$Res> {
+  $Res call({
     String? id,
     int? productId,
     String? authorName,
@@ -66,20 +82,39 @@ mixin _$ProductReview {
     String? comment,
     DateTime? createdAt,
     bool? verifiedPurchase,
+  });
+}
+
+/// @nodoc
+final class _$ProductReviewCopyWithImpl<$Res> implements _$ProductReviewCopyWith<$Res> {
+  const _$ProductReviewCopyWithImpl(this._self, this._then);
+
+  final ProductReview _self;
+  final $Res Function(ProductReview) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? productId = null,
+    Object? authorName = null,
+    Object? rating = null,
+    Object? comment = null,
+    Object? createdAt = null,
+    Object? verifiedPurchase = null,
   }) {
-    final self = this as ProductReview;
-    return ProductReview(
-      id: id ?? self.id,
-      productId: productId ?? self.productId,
-      authorName: authorName ?? self.authorName,
-      rating: rating ?? self.rating,
-      comment: comment ?? self.comment,
-      createdAt: createdAt ?? self.createdAt,
-      verifiedPurchase: verifiedPurchase ?? self.verifiedPurchase,
+    return _then(
+      ProductReview(
+        id: id == null ? _self.id : id as String,
+        productId: productId == null ? _self.productId : productId as int,
+        authorName: authorName == null ? _self.authorName : authorName as String,
+        rating: rating == null ? _self.rating : rating as double,
+        comment: comment == null ? _self.comment : comment as String,
+        createdAt: createdAt == null ? _self.createdAt : createdAt as DateTime,
+        verifiedPurchase: verifiedPurchase == null ? _self.verifiedPurchase : verifiedPurchase as bool,
+      )
     );
   }
-
-  Map<String, Object?> toJson() => _$ProductReviewToJson(this as ProductReview);
 }
 
 Map<String, Object?> _$ProductReviewToJson(ProductReview instance) {

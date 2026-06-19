@@ -58,28 +58,56 @@ mixin _$Product {
     ]);
   }
 
-  Product copyWith({
+  /// Creates a copy of this `Product` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = product.copyWith(sku: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$ProductCopyWith<Product> get copyWith => _$ProductCopyWithImpl<Product>(this as Product, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$ProductCopyWith<$Res> {
+  $Res call({
     String? sku,
     String? title,
     Price? price,
     List<Category>? categories,
     Map<String, String>? attributes,
     bool? featured,
-  }) {
-    final self = this as Product;
-    final nextPrice = (price ?? self.price).copyWith();
-    final nextCategories = List<Category>.of(
-      (categories ?? self.categories).map((item_3) => item_3.copyWith()),
-    );
-    final nextAttributes = Map<String, String>.of(attributes ?? self.attributes);
+  });
+}
 
-    return Product(
-      sku: sku ?? self.sku,
-      title: title ?? self.title,
-      price: nextPrice,
-      categories: nextCategories,
-      attributes: nextAttributes,
-      featured: featured ?? self.featured,
+/// @nodoc
+final class _$ProductCopyWithImpl<$Res> implements _$ProductCopyWith<$Res> {
+  const _$ProductCopyWithImpl(this._self, this._then);
+
+  final Product _self;
+  final $Res Function(Product) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? sku = null,
+    Object? title = null,
+    Object? price = null,
+    Object? categories = null,
+    Object? attributes = null,
+    Object? featured = null,
+  }) {
+    return _then(
+      Product(
+        sku: sku == null ? _self.sku : sku as String,
+        title: title == null ? _self.title : title as String,
+        price: price == null ? _self.price : price as Price,
+        categories: categories == null ? _self.categories : categories as List<Category>,
+        attributes: attributes == null ? _self.attributes : attributes as Map<String, String>,
+        featured: featured == null ? _self.featured : featured as bool,
+      )
     );
   }
 }

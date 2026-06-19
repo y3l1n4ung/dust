@@ -150,6 +150,12 @@ fn emitter_generates_real_multi_class_output_with_derive_plugin() {
     let expected = generated_output(
         r#"part of 'models.dart';
 
+final class _UserCopyWithUnset {
+  const _UserCopyWithUnset();
+}
+
+const _userCopyWithUnset = _UserCopyWithUnset();
+
 mixin _$User {
   @override
   String toString() {
@@ -180,30 +186,84 @@ mixin _$User {
     ]);
   }
 
-  User copyWith({
-    String? id,
-    Option<int?> age = const None(),
-  }) {
-    final self = this as User;
-    final nextAge = switch (age) {
-      None<int?>() => self.age,
-      Some<int?>(:final value) => value,
-    };
-
-    return User(
-      id ?? self.id,
-      nextAge,
-    );
-  }
+  /// Creates a copy of this `User` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = user.copyWith(id: 'John');
+  /// final cleared = user.copyWith(age: null);
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$UserCopyWith<User> get copyWith => _$UserCopyWithImpl<User>(this as User, (value) => value);
 }
 
 mixin _$Team {
-  Team copyWith({
-    String? name,
+  /// Creates a copy of this `Team` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = team.copyWith(name: 'John');
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$TeamCopyWith<Team> get copyWith => _$TeamCopyWithImpl<Team>(this as Team, (value) => value);
+}
+
+// CopyWith API inspired by Freezed.
+
+/// @nodoc
+abstract class _$UserCopyWith<$Res> {
+  $Res call({
+    String? id,
+    int? age,
+  });
+}
+
+/// @nodoc
+final class _$UserCopyWithImpl<$Res> implements _$UserCopyWith<$Res> {
+  const _$UserCopyWithImpl(this._self, this._then);
+
+  final User _self;
+  final $Res Function(User) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? age = _userCopyWithUnset,
   }) {
-    final self = this as Team;
-    return Team(
-      name ?? self.name,
+    return _then(
+      User(
+        id == null ? _self.id : id as String,
+        identical(age, _userCopyWithUnset)
+            ? _self.age
+            : age as int?,
+      )
+    );
+  }
+}
+/// @nodoc
+abstract class _$TeamCopyWith<$Res> {
+  $Res call({
+    String? name,
+  });
+}
+
+/// @nodoc
+final class _$TeamCopyWithImpl<$Res> implements _$TeamCopyWith<$Res> {
+  const _$TeamCopyWithImpl(this._self, this._then);
+
+  final Team _self;
+  final $Res Function(Team) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? name = null,
+  }) {
+    return _then(
+      Team(
+        name == null ? _self.name : name as String,
+      )
     );
   }
 }

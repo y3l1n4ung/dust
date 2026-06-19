@@ -1,239 +1,273 @@
-use std::borrow::Cow;
+use std::fmt::Write;
 
-use dust_dart_emit::{
-    DART_ITERABLE, DART_LIST, DART_MAP, DART_OBJECT_NULLABLE, DART_SET, OBJECT_NULLABLE_TYPES,
+use dust_ir::{ClassIr, FieldIr};
+
+use crate::features::names::lower_first;
+
+use super::{
+    CopyWithNames, CopyWithPlan, ValueSampleKind, nested_target_type, sample_replacement_field,
+    sample_value,
+    support::{
+        copy_with_impl_param_type, copy_with_interface_param_type, needs_copy_with_sentinel,
+    },
 };
-use dust_ir::{BuiltinType, TypeIr};
 
-use super::support::{member_access_expr, non_null_value_expr};
-use crate::features::names::NameAllocator;
-
-pub(crate) struct CopyableTypes<'a> {
-    local: &'a [&'a str],
-    workspace: Option<&'a [String]>,
-}
-
-impl<'a> CopyableTypes<'a> {
-    pub(crate) fn new(local: &'a [&'a str], workspace: Option<&'a [String]>) -> Self {
-        Self { local, workspace }
-    }
-
-    fn contains(&self, name: &str) -> bool {
-        self.local.contains(&name)
-            || self.workspace.is_some_and(|values| {
-                values
-                    .binary_search_by(|value| value.as_str().cmp(name))
-                    .is_ok()
-            })
-    }
-}
-
-pub(super) fn render_copied_value<'a>(
-    ty: &TypeIr,
-    value: &'a str,
-    depth: usize,
-    copyable_types: &CopyableTypes<'_>,
-    names: &mut NameAllocator,
-) -> Cow<'a, str> {
-    match ty {
-        TypeIr::Named {
-            name,
-            args,
-            nullable,
-        } if name.as_ref() == DART_LIST => Cow::Owned(render_sequence_copy(
-            DART_LIST,
-            args,
-            *nullable,
-            value,
-            depth,
-            copyable_types,
-            names,
-        )),
-        TypeIr::Named {
-            name,
-            args,
-            nullable,
-        } if name.as_ref() == DART_SET => Cow::Owned(render_sequence_copy(
-            DART_SET,
-            args,
-            *nullable,
-            value,
-            depth,
-            copyable_types,
-            names,
-        )),
-        TypeIr::Named {
-            name,
-            args,
-            nullable,
-        } if name.as_ref() == DART_MAP => Cow::Owned(render_map_copy(
-            args,
-            *nullable,
-            value,
-            depth,
-            copyable_types,
-            names,
-        )),
-        TypeIr::Named {
-            name,
-            args,
-            nullable,
-        } if name.as_ref() == DART_ITERABLE => Cow::Owned(render_sequence_copy(
-            DART_LIST,
-            args,
-            *nullable,
-            value,
-            depth,
-            copyable_types,
-            names,
-        )),
-        TypeIr::Named { name, nullable, .. } if copyable_types.contains(name.as_ref()) => {
-            Cow::Owned(render_named_copy(*nullable, value))
-        }
-        TypeIr::Builtin {
-            kind: BuiltinType::Object,
-            nullable: true,
-        }
-        | TypeIr::Dynamic
-        | TypeIr::Unknown
-        | TypeIr::Builtin { .. }
-        | TypeIr::Function { .. }
-        | TypeIr::Record { .. }
-        | TypeIr::Named { .. } => Cow::Borrowed(value),
-    }
-}
-
-fn render_sequence_copy(
-    container: &str,
-    args: &[TypeIr],
-    nullable: bool,
-    value: &str,
-    depth: usize,
-    copyable_types: &CopyableTypes<'_>,
-    names: &mut NameAllocator,
-) -> String {
-    let item_ty = args.first();
-    let item_rendered = item_ty
-        .map(|ty| OBJECT_NULLABLE_TYPES.render(ty))
-        .unwrap_or_else(|| DART_OBJECT_NULLABLE.to_owned());
-    let source_value = if nullable {
-        non_null_value_expr(value)
-    } else {
-        value.to_owned()
-    };
-    let mapped_value = if let Some(item_ty) = item_ty {
-        let mut tentative_names = names.clone();
-        let item_binding = tentative_names.allocate(format!("item_{depth}"));
-        let copied_item = render_copied_value(
-            item_ty,
-            &item_binding,
-            depth + 1,
-            copyable_types,
-            &mut tentative_names,
-        );
-        if copied_item == item_binding {
-            Cow::Borrowed(source_value.as_str())
-        } else {
-            let mapped = format!(
-                "{}.map(({item_binding}) => {copied_item})",
-                member_access_expr(&source_value)
-            );
-            *names = tentative_names;
-            Cow::Owned(mapped)
-        }
-    } else {
-        Cow::Borrowed(source_value.as_str())
-    };
-
-    let body = if mapped_value.as_ref() == source_value {
-        format!("{container}<{item_rendered}>.of({mapped_value})")
-    } else {
-        format!("{container}<{item_rendered}>.of(\n  {mapped_value},\n)")
-    };
-
-    wrap_nullable_copy(nullable, value, body)
-}
-
-fn render_map_copy(
-    args: &[TypeIr],
-    nullable: bool,
-    value: &str,
-    depth: usize,
-    copyable_types: &CopyableTypes<'_>,
-    names: &mut NameAllocator,
-) -> String {
-    let key_ty = args.first();
-    let value_ty = args.get(1);
-    let key_rendered = key_ty
-        .map(|ty| OBJECT_NULLABLE_TYPES.render(ty))
-        .unwrap_or_else(|| DART_OBJECT_NULLABLE.to_owned());
-    let value_rendered = value_ty
-        .map(|ty| OBJECT_NULLABLE_TYPES.render(ty))
-        .unwrap_or_else(|| DART_OBJECT_NULLABLE.to_owned());
-    let source_value = if nullable {
-        non_null_value_expr(value)
-    } else {
-        value.to_owned()
-    };
-    let mut tentative_names = names.clone();
-    let entry_binding = tentative_names.allocate(format!("entry_{depth}"));
-    let key_binding = format!("{entry_binding}.key");
-    let value_binding = format!("{entry_binding}.value");
-    let key_expr = key_ty
-        .map(|ty| {
-            render_copied_value(
-                ty,
-                &key_binding,
-                depth + 1,
-                copyable_types,
-                &mut tentative_names,
-            )
-        })
-        .unwrap_or_else(|| Cow::Borrowed(key_binding.as_str()));
-    let value_expr = value_ty
-        .map(|ty| {
-            render_copied_value(
-                ty,
-                &value_binding,
-                depth + 1,
-                copyable_types,
-                &mut tentative_names,
-            )
-        })
-        .unwrap_or_else(|| Cow::Borrowed(value_binding.as_str()));
-
-    let body = if key_expr.as_ref() == key_binding && value_expr.as_ref() == value_binding {
-        format!("Map<{key_rendered}, {value_rendered}>.of({source_value})")
-    } else {
-        let mapped = format!(
-            "Map<{key_rendered}, {value_rendered}>.fromEntries(\n  {}.entries.map(\n    ({entry_binding}) => MapEntry({key_expr}, {value_expr}),\n  ),\n)",
-            member_access_expr(&source_value)
-        );
-        *names = tentative_names;
-        mapped
-    };
-
-    wrap_nullable_copy(nullable, value, body)
-}
-
-fn render_named_copy(nullable: bool, value: &str) -> String {
-    let source_value = if nullable {
-        non_null_value_expr(value)
-    } else {
-        value.to_owned()
-    };
-
-    wrap_nullable_copy(
-        nullable,
-        value,
-        format!("{}.copyWith()", member_access_expr(&source_value)),
+pub(super) fn render_sentinel_helper(class_name: &str, value_name: &str) -> String {
+    format!(
+        "final class {class_name} {{\n  const {class_name}();\n}}\n\nconst {value_name} = {class_name}();"
     )
 }
 
-fn wrap_nullable_copy(nullable: bool, original: &str, copied: String) -> String {
-    if nullable {
-        format!("{original} == null ? null : {copied}")
+pub(super) fn render_copy_with_getter(
+    class: &ClassIr,
+    names: &CopyWithNames,
+    plan: &CopyWithPlan,
+) -> String {
+    let docs = render_getter_docs(class, plan);
+    format!(
+        "{docs}\n@pragma('vm:prefer-inline')\n{}<{}> get copyWith => {}<{}>(this as {}, ({}) => {});",
+        names.interface_name,
+        class.name,
+        names.impl_name,
+        class.name,
+        class.name,
+        names.callback_value_name,
+        names.callback_value_name
+    )
+}
+
+pub(super) fn render_copy_with_support(
+    class: &ClassIr,
+    names: &CopyWithNames,
+    constructor_call: &str,
+    plan: &CopyWithPlan,
+    include_credit: bool,
+) -> String {
+    let interface_params = render_interface_params(class);
+    let interface_getters = render_nested_interface_getters(class, plan);
+    let impl_params = render_impl_params(class, names);
+    let return_call = render_then_return(constructor_call, &names.then_name);
+    let impl_getters = render_nested_impl_getters(class, names, plan);
+    let credit = if include_credit {
+        "// CopyWith API inspired by Freezed.\n\n"
     } else {
-        copied
+        ""
+    };
+
+    format!(
+        "{credit}/// @nodoc\nabstract class {}<{}> {{\n  {} call({});{}\n}}\n\n/// @nodoc\nfinal class {}<{}> implements {}<{}> {{\n  const {}(this.{}, this.{});\n\n  final {} {};\n  final {} Function({}) {};\n\n  @override\n  @pragma('vm:prefer-inline')\n  {} call({}) {{\n{}\n  }}{}\n}}",
+        names.interface_name,
+        "$Res",
+        "$Res",
+        interface_params,
+        interface_getters,
+        names.impl_name,
+        "$Res",
+        names.interface_name,
+        "$Res",
+        names.impl_name,
+        names.self_name,
+        names.then_name,
+        class.name,
+        names.self_name,
+        "$Res",
+        class.name,
+        names.then_name,
+        "$Res",
+        impl_params,
+        return_call,
+        impl_getters
+    )
+}
+
+fn render_interface_params(class: &ClassIr) -> String {
+    render_call_params(class, |field| {
+        format!(
+            "{} {}",
+            copy_with_interface_param_type(&field.ty),
+            field.name
+        )
+    })
+}
+
+fn render_impl_params(class: &ClassIr, names: &CopyWithNames) -> String {
+    render_call_params(class, |field| {
+        let default = if needs_copy_with_sentinel(&field.ty) {
+            names
+                .sentinel
+                .as_ref()
+                .map(|sentinel| sentinel.value_name.as_str())
+                .unwrap_or("null")
+        } else {
+            "null"
+        };
+        format!(
+            "{} {} = {}",
+            copy_with_impl_param_type(),
+            field.name,
+            default
+        )
+    })
+}
+
+fn render_call_params(class: &ClassIr, render_param: impl Fn(&FieldIr) -> String) -> String {
+    if class.fields.is_empty() {
+        return String::new();
     }
+
+    let mut params = String::from("{\n");
+    for field in &class.fields {
+        writeln!(params, "    {},", render_param(field)).expect("writing to String cannot fail");
+    }
+    params.push_str("  }");
+    params
+}
+
+fn render_then_return(constructor_call: &str, then_name: &str) -> String {
+    let mut out = format!("    return {then_name}(\n");
+    for line in constructor_call.lines() {
+        out.push_str("      ");
+        out.push_str(line);
+        out.push('\n');
+    }
+    out.push_str("    );");
+    out
+}
+
+fn render_nested_interface_getters(class: &ClassIr, plan: &CopyWithPlan) -> String {
+    let mut out = String::new();
+    for field in &class.fields {
+        let Some(target) = nested_target(field, plan) else {
+            continue;
+        };
+
+        write!(
+            out,
+            "\n\n  {}<$Res>{} get {};",
+            target.names.interface_name,
+            if target.nullable { "?" } else { "" },
+            field.name
+        )
+        .expect("writing to String cannot fail");
+    }
+    out
+}
+
+fn render_nested_impl_getters(
+    class: &ClassIr,
+    names: &CopyWithNames,
+    plan: &CopyWithPlan,
+) -> String {
+    let mut out = String::new();
+    for field in &class.fields {
+        let Some(target) = nested_target(field, plan) else {
+            continue;
+        };
+
+        if target.nullable {
+            let value_name = names
+                .nested_value_names
+                .get(&field.name)
+                .map(String::as_str)
+                .unwrap_or(field.name.as_str());
+            write!(
+                out,
+                "\n\n  @override\n  @pragma('vm:prefer-inline')\n  {}<$Res>? get {} {{\n    final {} = {}.{};\n    if ({} == null) {{\n      return null;\n    }}\n\n    return {}<$Res>(\n      {},\n      ({}) => call({}: {}),\n    );\n  }}",
+                target.names.interface_name,
+                field.name,
+                value_name,
+                names.self_name,
+                field.name,
+                value_name,
+                target.names.impl_name,
+                value_name,
+                names.callback_value_name,
+                field.name,
+                names.callback_value_name,
+            )
+            .expect("writing to String cannot fail");
+        } else {
+            write!(
+                out,
+                "\n\n  @override\n  @pragma('vm:prefer-inline')\n  {}<$Res> get {} {{\n    return {}<$Res>(\n      {}.{},\n      ({}) => call({}: {}),\n    );\n  }}",
+                target.names.interface_name,
+                field.name,
+                target.names.impl_name,
+                names.self_name,
+                field.name,
+                names.callback_value_name,
+                field.name,
+                names.callback_value_name,
+            )
+            .expect("writing to String cannot fail");
+        }
+    }
+    out
+}
+
+fn render_getter_docs(class: &ClassIr, plan: &CopyWithPlan) -> String {
+    let receiver = lower_first(&class.name);
+    let mut docs = format!(
+        "/// Creates a copy of this `{}` with selected fields replaced.\n///\n/// Usage:\n/// ```dart",
+        class.name
+    );
+
+    if let Some(field) = sample_replacement_field(class) {
+        writeln!(
+            docs,
+            "\n/// final updated = {receiver}.copyWith({}: {});",
+            field.name,
+            sample_value(&field.ty, ValueSampleKind::Replacement)
+        )
+        .expect("writing to String cannot fail");
+    } else {
+        writeln!(docs, "\n/// final updated = {receiver}.copyWith();")
+            .expect("writing to String cannot fail");
+    }
+
+    if let Some(field) = class
+        .fields
+        .iter()
+        .find(|field| needs_copy_with_sentinel(&field.ty))
+    {
+        writeln!(
+            docs,
+            "/// final cleared = {receiver}.copyWith({}: null);",
+            field.name
+        )
+        .expect("writing to String cannot fail");
+    }
+
+    if let Some((field, target)) = class
+        .fields
+        .iter()
+        .filter_map(|field| {
+            nested_target_type(&field.ty).map(|(target_name, _)| (field, target_name))
+        })
+        .find_map(|(field, target_name)| {
+            let sample = plan.samples_by_class.get(target_name)?;
+            Some((field, (sample.field_name.as_str(), sample.nested_value)))
+        })
+    {
+        writeln!(
+            docs,
+            "/// final nested = {receiver}.copyWith.{}({}: {});",
+            field.name, target.0, target.1
+        )
+        .expect("writing to String cannot fail");
+    }
+
+    docs.push_str("/// ```");
+    docs
+}
+
+fn nested_target<'a>(field: &FieldIr, plan: &'a CopyWithPlan) -> Option<NestedTarget<'a>> {
+    let (name, nullable) = nested_target_type(&field.ty)?;
+    let names = plan.names_for(name)?;
+    Some(NestedTarget { names, nullable })
+}
+
+struct NestedTarget<'a> {
+    names: &'a CopyWithNames,
+    nullable: bool,
 }
