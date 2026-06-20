@@ -10,6 +10,7 @@ use super::parse_text::{
     default_value_source, is_field_formal_parameter, optional_parameter_kind, parameter_name_node,
 };
 
+/// Extracts constructor metadata from a class member declaration or signature.
 pub(super) fn extract_constructor(node: Node<'_>, source: &SourceText) -> ParsedConstructorSurface {
     let signature = if is_constructor_signature_kind(node.kind()) {
         Some(node)
@@ -50,6 +51,7 @@ pub(super) fn extract_constructor(node: Node<'_>, source: &SourceText) -> Parsed
     }
 }
 
+/// Returns whether a tree-sitter kind represents a constructor signature.
 pub(super) fn is_constructor_signature_kind(kind: &str) -> bool {
     matches!(
         kind,
@@ -60,6 +62,7 @@ pub(super) fn is_constructor_signature_kind(kind: &str) -> bool {
     )
 }
 
+/// Extracts the named-constructor suffix from a constructor signature.
 fn constructor_name(signature: Node<'_>, source: &SourceText) -> Option<String> {
     let mut cursor = signature.walk();
     let mut identifiers = signature
@@ -71,6 +74,7 @@ fn constructor_name(signature: Node<'_>, source: &SourceText) -> Option<String> 
         .map(|identifier| node_text(identifier, source))
 }
 
+/// Extracts the target expression from a redirecting factory constructor.
 fn redirecting_factory_target(
     signature: Node<'_>,
     source: &SourceText,
@@ -108,6 +112,7 @@ fn redirecting_factory_target(
     (target_source, target_name)
 }
 
+/// Extracts constructor parameters from a formal parameter list.
 fn extract_constructor_params(
     node: Node<'_>,
     source: &SourceText,
@@ -117,6 +122,7 @@ fn extract_constructor_params(
     params
 }
 
+/// Recursively collects constructor formal parameters and their parameter kind.
 fn collect_formal_parameters(
     node: Node<'_>,
     source: &SourceText,
@@ -137,6 +143,7 @@ fn collect_formal_parameters(
     }
 }
 
+/// Collects parameters inside optional positional or named parameter groups.
 fn collect_optional_formal_parameters(
     node: Node<'_>,
     source: &SourceText,
@@ -154,6 +161,7 @@ fn collect_optional_formal_parameters(
     }
 }
 
+/// Converts one tree-sitter parameter node into constructor parameter metadata.
 fn extract_formal_parameter(
     node: Node<'_>,
     source: &SourceText,

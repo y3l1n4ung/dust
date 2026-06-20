@@ -14,12 +14,19 @@ use crate::{
     types::{extract_type_before, extract_type_node},
 };
 
+/// Parsed top-level declarations not covered by class and enum extraction.
 pub(crate) struct ParsedTopLevelDeclarations {
+    /// Parsed mixin declarations.
     pub(crate) mixins: Vec<ParsedMixinSurface>,
+    /// Parsed extension declarations.
     pub(crate) extensions: Vec<ParsedExtensionSurface>,
+    /// Parsed extension type declarations.
     pub(crate) extension_types: Vec<ParsedExtensionTypeSurface>,
+    /// Parsed top-level function declarations.
     pub(crate) functions: Vec<ParsedFunctionSurface>,
+    /// Parsed top-level variable declarations.
     pub(crate) variables: Vec<ParsedTopLevelVariableSurface>,
+    /// Parsed typedef declarations.
     pub(crate) typedefs: Vec<ParsedTypedefSurface>,
 }
 
@@ -37,6 +44,7 @@ impl ParsedTopLevelDeclarations {
     }
 }
 
+/// Extracts all supported top-level declarations from a compilation unit root.
 pub(crate) fn extract_top_level_declarations(
     root: Node<'_>,
     source: &SourceText,
@@ -132,6 +140,7 @@ pub(crate) fn extract_top_level_declarations(
     declarations
 }
 
+/// Returns whether the root contains declarations this module can extract.
 pub(crate) fn has_extractable_top_level_declarations(root: Node<'_>) -> bool {
     let mut cursor = root.walk();
     root.children(&mut cursor)
@@ -151,6 +160,7 @@ pub(crate) fn has_extractable_top_level_declarations(root: Node<'_>) -> bool {
         })
 }
 
+/// Extracts a mixin surface and its fields from a mixin declaration.
 fn extract_mixin(node: Node<'_>, source: &SourceText) -> ParsedMixinSurface {
     let name = node
         .child_by_field_name("name")
@@ -181,6 +191,7 @@ fn extract_mixin(node: Node<'_>, source: &SourceText) -> ParsedMixinSurface {
     }
 }
 
+/// Extracts an extension surface from an extension declaration.
 fn extract_extension(node: Node<'_>, source: &SourceText) -> ParsedExtensionSurface {
     let name = node
         .child_by_field_name("name")
@@ -199,6 +210,7 @@ fn extract_extension(node: Node<'_>, source: &SourceText) -> ParsedExtensionSurf
     }
 }
 
+/// Extracts an extension type and its representation metadata.
 fn extract_extension_type(node: Node<'_>, source: &SourceText) -> ParsedExtensionTypeSurface {
     let name = node
         .child_by_field_name("name")
@@ -226,6 +238,7 @@ fn extract_extension_type(node: Node<'_>, source: &SourceText) -> ParsedExtensio
     }
 }
 
+/// Extracts a top-level function surface from a function signature.
 fn extract_function(
     signature: Node<'_>,
     annotations: Vec<ParsedAnnotation>,
@@ -252,6 +265,7 @@ fn extract_function(
     }
 }
 
+/// Extracts initialized top-level variable declarations.
 fn extract_initialized_variables(
     list: Node<'_>,
     type_node: Option<Node<'_>>,
@@ -287,6 +301,7 @@ fn extract_initialized_variables(
     variables
 }
 
+/// Extracts static final top-level variable declarations.
 fn extract_static_final_variables(
     list: Node<'_>,
     type_node: Option<Node<'_>>,
@@ -322,6 +337,7 @@ fn extract_static_final_variables(
     variables
 }
 
+/// Extracts external top-level variables that have no initializer node.
 fn extract_external_variables(
     list: Node<'_>,
     type_node: Option<Node<'_>>,
@@ -349,6 +365,7 @@ fn extract_external_variables(
     variables
 }
 
+/// Extracts a typedef declaration and any aliased type source.
 fn extract_typedef(node: Node<'_>, source: &SourceText) -> ParsedTypedefSurface {
     let equals = direct_child(node, "=");
     let name_node = if let Some(equals) = equals {
@@ -378,6 +395,7 @@ fn extract_typedef(node: Node<'_>, source: &SourceText) -> ParsedTypedefSurface 
     }
 }
 
+/// Extracts annotation children directly attached to a declaration.
 fn direct_annotations(node: Node<'_>, source: &SourceText) -> Vec<ParsedAnnotation> {
     let mut annotations = Vec::new();
     let mut cursor = node.walk();
@@ -389,18 +407,21 @@ fn direct_annotations(node: Node<'_>, source: &SourceText) -> Vec<ParsedAnnotati
     annotations
 }
 
+/// Finds a direct child with the requested tree-sitter kind.
 fn direct_child<'tree>(node: Node<'tree>, kind: &str) -> Option<Node<'tree>> {
     let mut cursor = node.walk();
     node.children(&mut cursor)
         .find(|child| child.kind() == kind)
 }
 
+/// Finds a direct named child with the requested kind before deeper traversal.
 fn direct_named_child_before<'tree>(node: Node<'tree>, kind: &str) -> Option<Node<'tree>> {
     let mut cursor = node.walk();
     node.children(&mut cursor)
         .find(|child| child.is_named() && child.kind() == kind)
 }
 
+/// Finds the last type identifier before a byte boundary.
 fn first_type_identifier_before<'tree>(
     node: Node<'tree>,
     boundary_byte: usize,
@@ -415,10 +436,12 @@ fn first_type_identifier_before<'tree>(
         .last()
 }
 
+/// Alias for finding a previous type identifier before a byte boundary.
 fn previous_type_identifier<'tree>(node: Node<'tree>, boundary_byte: usize) -> Option<Node<'tree>> {
     first_type_identifier_before(node, boundary_byte)
 }
 
+/// Finds the first type node after a byte boundary.
 fn first_type_node_after<'tree>(node: Node<'tree>, boundary_byte: usize) -> Option<Node<'tree>> {
     let mut cursor = node.walk();
     node.children(&mut cursor).find(|child| {
@@ -426,6 +449,7 @@ fn first_type_node_after<'tree>(node: Node<'tree>, boundary_byte: usize) -> Opti
     })
 }
 
+/// Returns whether a tree-sitter kind can begin a Dart type source.
 fn is_type_node_kind(kind: &str) -> bool {
     matches!(
         kind,

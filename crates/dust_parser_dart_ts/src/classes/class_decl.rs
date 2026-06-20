@@ -16,6 +16,7 @@ use super::{
     methods::extract_method,
 };
 
+/// Extracts a Dust class surface from one tree-sitter class declaration.
 pub(super) fn extract_class(node: Node<'_>, source: &SourceText) -> ParsedClassSurface {
     let kind = if has_direct_child_kind(node, "mixin") {
         ParsedClassKind::MixinClass

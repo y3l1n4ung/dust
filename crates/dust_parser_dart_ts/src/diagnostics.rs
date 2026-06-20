@@ -4,12 +4,14 @@ use tree_sitter::{Node, Tree};
 
 use crate::syntax::text_range;
 
+/// Extracts syntax diagnostics reported by tree-sitter.
 pub(crate) fn extract_diagnostics(tree: &Tree, source: &SourceText) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     collect_error_diagnostics(tree.root_node(), source, &mut diagnostics);
     diagnostics
 }
 
+/// Recursively walks error nodes and records user-facing diagnostics.
 fn collect_error_diagnostics(
     node: Node<'_>,
     source: &SourceText,

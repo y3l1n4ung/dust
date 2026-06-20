@@ -5,6 +5,7 @@ use tree_sitter::Node;
 use crate::syntax::{find_first_descendant, node_text, text_range};
 use crate::types::extract_type_before;
 
+/// Extracts fields from a declaration node that contains an identifier list.
 pub(crate) fn extract_fields(
     node: Node<'_>,
     annotations: &[ParsedAnnotation],
@@ -17,6 +18,7 @@ pub(crate) fn extract_fields(
     extract_fields_from_identifier_list(node, identifier_list, annotations, source)
 }
 
+/// Extracts fields from a known initialized identifier list.
 pub(crate) fn extract_fields_from_identifier_list(
     node: Node<'_>,
     identifier_list: Node<'_>,
