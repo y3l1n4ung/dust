@@ -41,9 +41,11 @@ where
     S: Into<String>,
 {
     fn from_iter<T: IntoIterator<Item = S>>(iter: T) -> Self {
-        let names = iter.into_iter().map(Into::into).collect::<Vec<String>>();
         Self {
-            names: names.into_iter().map(String::into_boxed_str).collect(),
+            names: iter
+                .into_iter()
+                .map(|name| name.into().into_boxed_str())
+                .collect(),
         }
     }
 }
@@ -224,14 +226,40 @@ fn directive_uris(source: &str) -> Vec<String> {
                 break;
             };
             let value_start = quote_index + quote.len_utf8();
-            let Some(value_end) = rest[value_start..].find(quote) else {
+            let Some((uri, value_end)) = quoted_uri_value(&rest[value_start..], quote) else {
                 break;
             };
-            uris.push(rest[value_start..value_start + value_end].to_owned());
+            uris.push(uri);
             rest = &rest[value_start + value_end + quote.len_utf8()..];
         }
     }
     uris
+}
+
+fn quoted_uri_value(source: &str, quote: char) -> Option<(String, usize)> {
+    let mut value = String::new();
+    let mut escaped = false;
+    for (index, ch) in source.char_indices() {
+        if escaped {
+            if ch == quote || ch == '\\' {
+                value.push(ch);
+            } else {
+                value.push('\\');
+                value.push(ch);
+            }
+            escaped = false;
+            continue;
+        }
+        if ch == '\\' {
+            escaped = true;
+            continue;
+        }
+        if ch == quote {
+            return Some((value, index));
+        }
+        value.push(ch);
+    }
+    None
 }
 
 fn resolve_local_import(

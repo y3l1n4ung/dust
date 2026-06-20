@@ -171,6 +171,28 @@ fn discover_libraries_accepts_dust_reexport_imports() {
 }
 
 #[test]
+fn discover_libraries_accepts_escaped_quote_in_local_dust_reexport_uri() {
+    let root = tempdir().unwrap();
+    write_file(&root.path().join("pubspec.yaml"), "name: dust_test\n");
+    write_file(&root.path().join(".dart_tool/package_config.json"), "{}\n");
+
+    write_file(
+        &root.path().join("lib/dust's.dart"),
+        "export 'package:dust_dart/derive.dart';\n",
+    );
+    write_file(
+        &root.path().join("lib/user.dart"),
+        "import 'dust\\'s.dart';\npart 'user.g.dart';\n@Derive()\nclass User {}\n",
+    );
+
+    let supported_annotations = test_annotations();
+    let libraries = discover_libraries(root.path(), &supported_annotations).unwrap();
+
+    assert_eq!(libraries.len(), 1);
+    assert_eq!(libraries[0].source_path, root.path().join("lib/user.dart"));
+}
+
+#[test]
 fn discover_libraries_ignores_override_and_unknown_annotations() {
     let root = tempdir().unwrap();
     write_file(&root.path().join("pubspec.yaml"), "name: dust_test\n");

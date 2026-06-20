@@ -24,23 +24,49 @@ fn fixture_contents(path: &std::path::Path, contents: &str) -> String {
     format!("{import}{contents}")
 }
 
-fn fixture_dust_import(contents: &str) -> Option<&'static str> {
-    if contents.contains("@Route") || contents.contains("@Router") {
-        Some("import 'package:dust_flutter/route.dart';\n")
-    } else if contents.contains("@Derive")
-        || contents.contains("@ToString")
-        || contents.contains("@Debug")
-        || contents.contains("@Eq")
-        || contents.contains("@CopyWith")
-        || contents.contains("@Validate")
-        || contents.contains("@SerDe")
+fn fixture_dust_import(contents: &str) -> Option<String> {
+    let mut imports = Vec::new();
+    let has = |name: &str| has_annotation(contents, name);
+
+    if has("Route") || has("Router") {
+        imports.push("import 'package:dust_flutter/route.dart';\n");
+    }
+    if has("Derive")
+        || has("ToString")
+        || has("Debug")
+        || has("Eq")
+        || has("CopyWith")
+        || has("Validate")
+        || has("SerDe")
         || contents.contains("Serialize()")
         || contents.contains("Deserialize()")
     {
-        Some("import 'package:dust_dart/derive.dart';\n")
-    } else {
-        None
+        imports.push("import 'package:dust_dart/derive.dart';\n");
     }
+
+    if imports.is_empty() {
+        None
+    } else {
+        Some(imports.concat())
+    }
+}
+
+fn has_annotation(contents: &str, name: &str) -> bool {
+    contents.match_indices('@').any(|(index, _)| {
+        let mut start = index + 1;
+        let bytes = contents.as_bytes();
+        while bytes.get(start).is_some_and(u8::is_ascii_whitespace) {
+            start += 1;
+        }
+        let mut end = start;
+        while bytes
+            .get(end)
+            .is_some_and(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'$' | b'.'))
+        {
+            end += 1;
+        }
+        contents[start..end].rsplit('.').next() == Some(name)
+    })
 }
 
 pub(crate) fn make_workspace() -> tempfile::TempDir {
@@ -70,4 +96,21 @@ pub(crate) fn make_pub_workspace_member() -> (tempfile::TempDir, std::path::Path
         "{\"configVersion\":1,\"roots\":[\"product_showcase\"],\"packages\":[]}\n",
     );
     (root, package_root)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::fixture_dust_import;
+
+    #[test]
+    fn fixture_dust_import_detects_prefixed_and_mixed_annotations() {
+        let contents = "@r.Route('/profile')\n@ d.Derive([d.ToString()])\nclass Profile {}\n";
+
+        assert_eq!(
+            fixture_dust_import(contents).as_deref(),
+            Some(
+                "import 'package:dust_flutter/route.dart';\nimport 'package:dust_dart/derive.dart';\n"
+            )
+        );
+    }
 }
