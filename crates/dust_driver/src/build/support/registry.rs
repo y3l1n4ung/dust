@@ -10,21 +10,32 @@ use dust_plugin_serde::register_plugin as register_serde_plugin;
 use dust_route_plugin::register_plugin as register_route_plugin;
 use dust_state_plugin::register_plugin as register_state_plugin;
 
+/// Selects which plugin registry should run for a command.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum RegistrySelection {
+    /// Full Dust registry for normal build and check commands.
     All,
-    DbOnly { offline: bool, write_metadata: bool },
+    /// DB-only registry for SQL metadata generation.
+    DbOnly {
+        /// Whether DB analysis should run without connecting to a database.
+        offline: bool,
+        /// Whether DB metadata sidecar files should be written.
+        write_metadata: bool,
+    },
 }
 
 impl RegistrySelection {
+    /// Builds registry selection for a writing build request.
     pub(crate) fn for_build(value: crate::request::DbRequestOptions) -> Self {
         Self::from_db_request(value, true)
     }
 
+    /// Builds registry selection for a non-writing check request.
     pub(crate) fn for_check(value: crate::request::DbRequestOptions) -> Self {
         Self::from_db_request(value, false)
     }
 
+    /// Converts shared DB request flags into a registry mode.
     fn from_db_request(value: crate::request::DbRequestOptions, write_metadata: bool) -> Self {
         if value.only_db {
             return Self::DbOnly {
@@ -35,6 +46,7 @@ impl RegistrySelection {
         Self::All
     }
 
+    /// Returns the cache salt that distinguishes registry modes.
     pub(crate) fn cache_salt(self) -> &'static str {
         match self {
             Self::All => "registry:all",
@@ -57,10 +69,12 @@ impl RegistrySelection {
         }
     }
 }
+/// Builds the full default plugin registry.
 pub(crate) fn default_registry() -> PluginRegistry {
     registry_for_selection(RegistrySelection::All)
 }
 
+/// Builds the plugin registry requested by a command.
 pub(crate) fn registry_for_selection(selection: RegistrySelection) -> PluginRegistry {
     let mut registry = PluginRegistry::new();
     match selection {
@@ -103,8 +117,10 @@ pub(crate) fn registry_for_selection(selection: RegistrySelection) -> PluginRegi
     registry
 }
 
+/// Claims non-DB symbols during DB-only generation so they are ignored cleanly.
 struct DbModePassThroughPlugin;
 
+/// Derive traits intentionally claimed by the DB-only pass-through plugin.
 const DB_MODE_PASS_THROUGH_TRAITS: &[&str] = &[
     "dust_dart::ToString",
     "dust_dart::Debug",
@@ -114,6 +130,7 @@ const DB_MODE_PASS_THROUGH_TRAITS: &[&str] = &[
     "dust_dart::Deserialize",
 ];
 
+/// Config annotations intentionally claimed by the DB-only pass-through plugin.
 const DB_MODE_PASS_THROUGH_CONFIGS: &[&str] = &[
     "dust_dart::SerDe",
     "dust_dart::HttpClient",

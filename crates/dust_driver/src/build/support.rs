@@ -1,5 +1,8 @@
+/// Cache input loading and fingerprint comparison.
 mod cache_input;
+/// Plugin registry selection for full and DB-only generation modes.
 mod registry;
+/// Stable toolchain hash inputs used for cache invalidation.
 mod tool_hash;
 
 pub(crate) use cache_input::{

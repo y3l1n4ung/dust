@@ -9,6 +9,7 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 
+/// Processes pending libraries on the current thread in discovery order.
 pub(super) fn process_pending_serial(
     pending: Vec<PendingLibrary>,
     fail_fast: bool,
@@ -34,6 +35,7 @@ pub(super) fn process_pending_serial(
     processed
 }
 
+/// Processes pending libraries across scoped worker threads.
 pub(super) fn process_pending_parallel(
     pending: Vec<PendingLibrary>,
     jobs: usize,

@@ -7,6 +7,7 @@ use dust_workspace::SourceLibrary;
 
 use super::ProcessingConfig;
 
+/// Emits a library and either writes output or returns check-mode changes.
 pub(crate) fn emit_or_write_library(
     library: &SourceLibrary,
     lowered_library: &dust_ir::DartFileIr,
@@ -82,6 +83,7 @@ pub(crate) fn emit_or_write_library(
     }
 }
 
+/// Persists emitted output only when the hash differs from the cached hash.
 fn persist_with_previous_hash(
     output_path: std::path::PathBuf,
     emitted: EmitResult,
@@ -130,6 +132,7 @@ fn persist_with_previous_hash(
     })
 }
 
+/// Writes a generated file, creating its parent directory on demand.
 fn write_output_file(path: &Path, source: &str) -> io::Result<()> {
     match fs::write(path, source) {
         Ok(()) => Ok(()),
@@ -143,6 +146,7 @@ fn write_output_file(path: &Path, source: &str) -> io::Result<()> {
     }
 }
 
+/// Reads existing generated output, optionally treating read errors as fatal.
 fn read_previous_output(path: &Path, strict: bool) -> io::Result<Option<String>> {
     match fs::read_to_string(path) {
         Ok(source) => Ok(Some(source)),

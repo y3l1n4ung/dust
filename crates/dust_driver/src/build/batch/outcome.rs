@@ -7,6 +7,7 @@ use crate::{
     result::BuildArtifact,
 };
 
+/// Builds an indexed outcome for a library that failed during input loading.
 pub(super) fn build_load_error(
     index: usize,
     library: &SourceLibrary,
@@ -35,6 +36,7 @@ pub(super) fn build_load_error(
     }
 }
 
+/// Builds an indexed outcome for a library reused from cache.
 pub(super) fn build_cached_outcome(
     index: usize,
     library: &SourceLibrary,

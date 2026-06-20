@@ -1,6 +1,10 @@
+/// Serial and parallel processing of uncached libraries.
 mod execute;
+/// Parallel source and output fingerprint loading.
 mod load;
+/// Constructors for cached and load-error build outcomes.
 mod outcome;
+/// Progress callback adapter for batch execution.
 mod progress;
 
 use std::{
@@ -31,26 +35,43 @@ use self::{
     outcome::{build_cached_outcome, build_load_error},
 };
 
+/// Callback signature used by build and watch progress reporting.
 pub(crate) type ProgressCallback<'a> = dyn Fn(ProgressEvent) + Send + Sync + 'a;
 
+/// Shared inputs needed to load, cache-check, analyze, and process a library batch.
 #[derive(Clone, Copy)]
 pub(crate) struct BatchConfig<'a> {
+    /// Root directory that stores Dust cache metadata.
     pub(crate) cache_root: &'a Path,
+    /// Package root used to resolve source-relative output paths.
     pub(crate) package_root: &'a Path,
+    /// Dart package name used by plugin workspace analysis.
     pub(crate) package_name: &'a str,
+    /// Hash of package and Dust configuration files.
     pub(crate) package_config_hash: u64,
+    /// Hash of Dust codegen logic and active plugin set.
     pub(crate) tool_hash: CodegenToolHash,
+    /// Current workspace cache used for hit detection.
     pub(crate) cache: &'a WorkspaceCache,
+    /// Resolver catalog built from active plugin symbols.
     pub(crate) catalog: &'a dust_resolver::SymbolCatalog,
+    /// Active plugin registry for validation and emission.
     pub(crate) registry: &'a dust_plugin_api::PluginRegistry,
+    /// Whether generated files should be persisted to disk.
     pub(crate) write_output: bool,
+    /// Whether processing should stop after the first error.
     pub(crate) fail_fast: bool,
+    /// Optional caller-specified worker limit.
     pub(crate) jobs: Option<usize>,
+    /// Starting file id assigned to parsed source libraries.
     pub(crate) file_id_base: u32,
+    /// Progress phase associated with this batch.
     pub(crate) phase: ProgressPhase,
+    /// Optional progress event callback.
     pub(crate) progress: Option<&'a ProgressCallback<'a>>,
 }
 
+/// Loads inputs, reuses cache hits, runs workspace analysis, and processes misses.
 pub(crate) fn prepare_and_process_batch(
     config: BatchConfig<'_>,
     libraries: &[SourceLibrary],
@@ -168,6 +189,7 @@ pub(crate) fn prepare_and_process_batch(
     outcomes
 }
 
+/// Returns whether any route declaration analysis changed in this batch.
 fn route_analysis_changed(
     loaded_results: &[Result<
         crate::build::process::LoadedLibraryInput,
@@ -196,6 +218,7 @@ fn route_analysis_changed(
     })
 }
 
+/// Returns whether a cached router must be rebuilt after route changes.
 fn cached_router_depends_on_changed_routes(
     entry: &dust_cache::CacheEntry,
     route_analysis_changed: bool,
@@ -207,6 +230,7 @@ fn cached_router_depends_on_changed_routes(
             .is_some()
 }
 
+/// Checks for route annotations using the fast source marker path.
 fn contains_route_analysis_marker(source: &str) -> bool {
     source.contains("@Route") || source.contains("@Router")
 }
