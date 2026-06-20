@@ -2,11 +2,20 @@ use std::collections::BTreeMap;
 
 use crate::plugin::model::{EndpointParam, EndpointSpec};
 
+/// Segment in a generated HTTP path expression.
 pub(super) enum PathSegment<'a> {
+    /// Literal path text copied from the annotation template.
     Literal(&'a str),
-    Binding { key: &'a str, param_name: &'a str },
+    /// Placeholder replaced by an encoded Dart parameter value.
+    Binding {
+        /// Placeholder key from the path template.
+        key: &'a str,
+        /// Dart parameter name bound to the placeholder.
+        param_name: &'a str,
+    },
 }
 
+/// Splits an endpoint path template into literals and parameter bindings.
 pub(super) fn path_segments<'a>(endpoint: &'a EndpointSpec<'a>) -> Vec<PathSegment<'a>> {
     let path_bindings = endpoint
         .params

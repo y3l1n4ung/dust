@@ -16,31 +16,48 @@ use crate::plugin::emit::test_support::{
 use crate::plugin::model::{ClientSpec, EndpointParam, EndpointSpec, RequestMode};
 use crate::plugin::util::escape_single_quoted;
 
+/// Template context for a generated HTTP test file.
 #[derive(Serialize)]
 struct TestFileContext {
+    /// Generated file header.
     header: &'static str,
+    /// Imports required by the generated test.
     imports: String,
+    /// Import URI for the source library under test.
     source_import: String,
+    /// Rendered test groups.
     groups: String,
 }
 
+/// Template context for one generated client test group.
 #[derive(Serialize)]
 struct TestGroupContext<'a> {
+    /// Source HTTP client class name.
     class_name: &'a str,
+    /// Rendered endpoint tests in the group.
     tests: String,
 }
 
+/// Template context for one generated endpoint test.
 #[derive(Serialize)]
 struct EndpointTestContext<'a> {
+    /// HTTP verb expected by the fake adapter.
     verb: &'a str,
+    /// Source method name under test.
     method_name: &'a str,
+    /// Fake response data expression.
     response_data: String,
+    /// Source HTTP client class name.
     class_name: &'a str,
+    /// Rendered API invocation.
     invocation: String,
+    /// Expected request path after placeholder substitution.
     expected_path: String,
+    /// Rendered request assertions.
     assertions: String,
 }
 
+/// Renders an auxiliary generated test file for `@GenerateTest` clients.
 pub(crate) fn render_test_file(library: &DartFileIr, specs: &[ClientSpec<'_>]) -> Option<String> {
     let package_root = Path::new(&library.package_root);
     let source_path = Path::new(&library.source_path);
@@ -70,6 +87,7 @@ pub(crate) fn render_test_file(library: &DartFileIr, specs: &[ClientSpec<'_>]) -
     ))
 }
 
+/// Renders imports copied from the source library with generated-test exclusions.
 fn render_imports(library: &DartFileIr, package_root: &Path, source_path: &Path) -> String {
     rendered_imports(library, package_root, source_path)
         .into_iter()
@@ -83,6 +101,7 @@ fn render_imports(library: &DartFileIr, package_root: &Path, source_path: &Path)
         .collect::<String>()
 }
 
+/// Rewrites source imports so generated tests can import the same dependencies.
 fn rendered_imports(
     library: &DartFileIr,
     package_root: &Path,
@@ -98,6 +117,7 @@ fn rendered_imports(
         .collect()
 }
 
+/// Renders one generated test group for a client spec.
 fn render_client_group(spec: &ClientSpec<'_>, fixtures: &FixtureCatalog<'_>) -> Option<String> {
     let endpoint_tests = spec
         .endpoints
@@ -118,6 +138,7 @@ fn render_client_group(spec: &ClientSpec<'_>, fixtures: &FixtureCatalog<'_>) -> 
     ))
 }
 
+/// Renders one generated endpoint test, including fake response and assertions.
 fn render_endpoint_test(
     spec: &ClientSpec<'_>,
     endpoint: &EndpointSpec<'_>,
@@ -157,6 +178,7 @@ fn render_endpoint_test(
     ))
 }
 
+/// Builds sample call arguments and request assertions for an endpoint.
 fn build_invocation(
     endpoint: &EndpointSpec<'_>,
     fixtures: &FixtureCatalog<'_>,
@@ -235,6 +257,7 @@ fn build_invocation(
     })
 }
 
+/// Renders the expected request path for a generated endpoint test.
 fn render_expected_path(
     endpoint: &EndpointSpec<'_>,
     values: &[(String, Option<String>)],
@@ -262,8 +285,12 @@ fn render_expected_path(
     path
 }
 
+/// Generated endpoint invocation data used by test rendering.
 struct Invocation {
+    /// Comma-separated Dart call arguments.
     call_arguments: String,
+    /// Request assertions generated for the fake adapter callback.
     assertions: Vec<String>,
+    /// Path placeholder values captured from argument samples.
     path_values: Vec<(String, Option<String>)>,
 }

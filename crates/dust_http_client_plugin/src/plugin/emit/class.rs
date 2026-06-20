@@ -9,72 +9,112 @@ use crate::plugin::emit::{
 };
 use crate::plugin::model::{ClientSpec, EndpointParam, EndpointSpec};
 
+/// Template context for the generated HTTP client class.
 #[derive(Serialize)]
 struct ClientClassContext<'a> {
+    /// Name of the generated Dart client class.
     class_name: &'a str,
+    /// Rendered endpoint method declarations.
     methods: String,
 }
 
+/// Template context for one generated endpoint method.
 #[derive(Serialize)]
 struct EndpointMethodContext<'a> {
+    /// Rendered Dart return type.
     return_type: String,
+    /// Dart method name copied from source IR.
     method_name: &'a str,
+    /// Rendered Dart method parameter list.
     params: String,
+    /// Either `async` or `async*`.
     async_marker: &'static str,
+    /// Rendered method body.
     body: String,
 }
 
+/// Template context for the generated method body.
 #[derive(Serialize)]
 struct EndpointBodyContext {
+    /// Statements that prepare headers, extras, queries, and options.
     setup: String,
+    /// Rendered Dio request data block.
     request_data: String,
+    /// Rendered Dio options block.
     options: String,
+    /// Rendered `_dio.fetch` block.
     fetch: String,
+    /// Return or stream-forwarding statements after fetch.
     completion: String,
 }
 
+/// Template context that only needs a Dart identifier.
 #[derive(Serialize)]
 struct NameContext<'a> {
+    /// Dart identifier supplied to the template.
     name: &'a str,
 }
 
+/// Template context for assigning one keyed map entry.
 #[derive(Serialize)]
 struct MapEntryContext<'a> {
+    /// Dart map variable receiving the entry.
     target: &'a str,
+    /// Dart expression assigned to the entry.
     name: &'a str,
+    /// Escaped string key for the map entry.
     key: String,
 }
 
+/// Template context for merging a Dart map parameter.
 #[derive(Serialize)]
 struct MapMergeContext<'a> {
+    /// Dart map variable receiving merged entries.
     target: &'a str,
+    /// Dart map parameter name to merge.
     name: &'a str,
 }
 
+/// Template context for Dio options when a user options parameter exists.
 #[derive(Serialize)]
 struct OptionsContext<'a> {
+    /// Dart options parameter name.
     options_name: &'a str,
+    /// HTTP verb string for the generated options.
     verb: &'a str,
+    /// Content-type expression for the generated request.
     content_type: &'a str,
 }
 
+/// Template context for generated Dio options without a user parameter.
 #[derive(Serialize)]
 struct PlainOptionsContext<'a> {
+    /// HTTP verb string for the generated options.
     verb: &'a str,
+    /// Content-type expression for the generated request.
     content_type: &'a str,
 }
 
+/// Template context for the `_dio.fetch` call.
 #[derive(Serialize)]
 struct FetchContext {
+    /// Assignment prefix, or bare await for void methods.
     assignment: String,
+    /// Dio stream response type expression.
     stream_type: String,
+    /// Rendered path expression for the request.
     path_expr: String,
+    /// Cancel token expression.
     cancel_token: String,
+    /// Upload progress callback expression.
     on_send_progress: String,
+    /// Download progress callback expression.
     on_receive_progress: String,
+    /// Base URL expression after class-level defaults are applied.
     base_url_expr: String,
 }
 
+/// Renders the generated HTTP client class for a validated spec.
 pub(crate) fn render_client_class(spec: &ClientSpec<'_>) -> String {
     format!(
         "{}\n",
@@ -94,6 +134,7 @@ pub(crate) fn render_client_class(spec: &ClientSpec<'_>) -> String {
     )
 }
 
+/// Renders one generated Dart method for an endpoint.
 fn render_endpoint_method(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) -> String {
     let async_marker = if endpoint.return_spec.is_stream() {
         "async*"
@@ -114,6 +155,7 @@ fn render_endpoint_method(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) ->
     )
 }
 
+/// Renders the full generated body for an endpoint method.
 fn render_endpoint_body(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) -> String {
     let content_type = match endpoint.request_mode {
         crate::plugin::model::RequestMode::Standard => "null".to_owned(),
@@ -192,6 +234,7 @@ fn render_endpoint_body(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) -> S
     )
 }
 
+/// Renders setup statements before the Dio request is issued.
 fn render_endpoint_setup(endpoint: &EndpointSpec<'_>) -> String {
     let mut setup = Vec::new();
     if let Some(options_param) = option_param(endpoint) {
@@ -256,6 +299,7 @@ fn render_endpoint_setup(endpoint: &EndpointSpec<'_>) -> String {
     join_chunks(setup)
 }
 
+/// Renders the generated Dio `Options` expression for an endpoint.
 fn render_options(endpoint: &EndpointSpec<'_>, content_type: &str) -> String {
     if let Some(options_name) = option_param(endpoint).map(|param| param.name.as_str()) {
         render_template(
@@ -279,6 +323,7 @@ fn render_options(endpoint: &EndpointSpec<'_>, content_type: &str) -> String {
     }
 }
 
+/// Renders a Dart method parameter list from positional and named parameters.
 fn render_method_parameters(params: &[dust_ir::MethodParamIr]) -> String {
     let positional = params
         .iter()
@@ -299,6 +344,7 @@ fn render_method_parameters(params: &[dust_ir::MethodParamIr]) -> String {
     }
 }
 
+/// Renders a single Dart method parameter with `required` when needed.
 fn render_method_parameter(param: &dust_ir::MethodParamIr) -> String {
     if param.kind == dust_ir::ParamKind::Named && !param.ty.is_nullable() && !param.has_default {
         format!("required {} {}", render_type(&param.ty), param.name)
@@ -307,6 +353,7 @@ fn render_method_parameter(param: &dust_ir::MethodParamIr) -> String {
     }
 }
 
+/// Returns the user-supplied Dio options parameter, if present.
 fn option_param<'a>(endpoint: &'a EndpointSpec<'_>) -> Option<&'a dust_ir::MethodParamIr> {
     endpoint.params.iter().find_map(|param| match param {
         EndpointParam::Options { param } => Some(*param),
@@ -314,6 +361,7 @@ fn option_param<'a>(endpoint: &'a EndpointSpec<'_>) -> Option<&'a dust_ir::Metho
     })
 }
 
+/// Finds the first special Dio parameter name matching a predicate.
 fn param_name<'a, F>(endpoint: &'a EndpointSpec<'_>, matches: F) -> Option<&'a str>
 where
     F: Fn(&EndpointParam<'_>) -> bool,
@@ -331,6 +379,7 @@ where
         })
 }
 
+/// Renders assignment for a single generated request map entry.
 fn render_map_entry(target: &str, name: &str, key: &str, nullable: bool) -> String {
     if nullable {
         render_template(
@@ -355,6 +404,7 @@ fn render_map_entry(target: &str, name: &str, key: &str, nullable: bool) -> Stri
     }
 }
 
+/// Renders merging of a generated request map.
 fn render_map_merge(target: &str, name: &str, nullable: bool) -> String {
     if nullable {
         render_template(
@@ -371,6 +421,7 @@ fn render_map_merge(target: &str, name: &str, nullable: bool) -> String {
     }
 }
 
+/// Ensures a rendered chunk ends with a newline when non-empty.
 fn chunk(mut value: String) -> String {
     if !value.is_empty() && !value.ends_with('\n') {
         value.push('\n');
@@ -378,6 +429,7 @@ fn chunk(mut value: String) -> String {
     value
 }
 
+/// Joins rendered chunks while normalizing their trailing newlines.
 fn join_chunks(chunks: Vec<String>) -> String {
     chunks.into_iter().map(chunk).collect()
 }

@@ -5,6 +5,7 @@ use crate::plugin::emit::types::{
 use crate::plugin::model::{ClientSpec, EndpointSpec, ParseThreadMode};
 use crate::plugin::util::is_response_body_type;
 
+/// Renders the endpoint completion statement after `_dio.fetch`.
 pub(super) fn render_response_return(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) -> String {
     let ty = &endpoint.return_spec.ty;
     if is_void_type(ty) {
@@ -49,6 +50,7 @@ pub(super) fn render_response_return(spec: &ClientSpec<'_>, endpoint: &EndpointS
     }
 }
 
+/// Renders isolate decode helpers required by a client spec.
 pub(crate) fn render_isolate_helpers(spec: &ClientSpec<'_>) -> Vec<String> {
     spec.endpoints
         .iter()
@@ -60,6 +62,7 @@ pub(crate) fn render_isolate_helpers(spec: &ClientSpec<'_>) -> Vec<String> {
         .collect()
 }
 
+/// Renders shared helpers used by generated HTTP clients.
 pub(crate) fn render_shared_helpers() -> Vec<String> {
     vec![
         render_set_stream_type_helper().to_owned(),
@@ -68,6 +71,7 @@ pub(crate) fn render_shared_helpers() -> Vec<String> {
     ]
 }
 
+/// Renders one top-level isolate decode helper for an endpoint.
 fn render_isolate_helper(class_name: &str, endpoint: &EndpointSpec<'_>) -> String {
     format!(
         "{} {}(dynamic json) {{\n  return {};\n}}\n",
@@ -77,10 +81,12 @@ fn render_isolate_helper(class_name: &str, endpoint: &EndpointSpec<'_>) -> Strin
     )
 }
 
+/// Builds the deterministic generated isolate helper name.
 fn isolate_helper_name(class_name: &str, method_name: &str) -> String {
     format!("_${}_{}_Decode", class_name, method_name)
 }
 
+/// Renders the Dio response-type adjustment helper.
 fn render_set_stream_type_helper() -> &'static str {
     r#"RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
   if (T != dynamic &&
@@ -98,6 +104,7 @@ fn render_set_stream_type_helper() -> &'static str {
 }"#
 }
 
+/// Renders the helper that combines Dio and annotation base URLs.
 fn render_combine_base_urls_helper() -> &'static str {
     r#"String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   if (baseUrl == null || baseUrl.trim().isEmpty) {
@@ -111,6 +118,7 @@ fn render_combine_base_urls_helper() -> &'static str {
 }"#
 }
 
+/// Renders the helper that rebuilds `Response<T>` around decoded data.
 fn render_response_wrapper_helper() -> &'static str {
     r#"Response<T> _buildResponse<T>(Response<dynamic> response, T data) {
   return Response<T>(

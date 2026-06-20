@@ -5,13 +5,18 @@ use crate::plugin::emit::types::uses_direct_body_value;
 use crate::plugin::model::{EndpointParam, ReturnSpec};
 use crate::plugin::util::{is_response_body_type, type_name_is};
 
+/// Generated test sample value and optional path-substitution value.
 pub(super) struct SampleValue {
+    /// Dart expression used at the call site.
     pub(super) expression: String,
+    /// Dart expression used in generated request assertions.
     pub(super) assertion_expression: String,
+    /// Optional URI-safe value expected in a rendered path.
     pub(super) path_value: Option<String>,
 }
 
 impl SampleValue {
+    /// Creates a sample whose assertion expression matches the call expression.
     pub(super) fn new(expression: &str, path_value: Option<&str>) -> Self {
         Self {
             expression: expression.to_owned(),
@@ -21,6 +26,7 @@ impl SampleValue {
     }
 }
 
+/// Returns generated response data for a fake Dio adapter response.
 pub(super) fn sample_response_data(return_spec: &ReturnSpec) -> &'static str {
     if return_spec.is_stream() {
         return "ResponseBody.fromString('{}', 200)";
@@ -46,6 +52,7 @@ pub(super) fn sample_response_data(return_spec: &ReturnSpec) -> &'static str {
     }
 }
 
+/// Returns fallback samples for HTTP bindings that are not ordinary model values.
 pub(super) fn fallback_sample(binding: &EndpointParam<'_>) -> Option<SampleValue> {
     Some(match binding {
         EndpointParam::Body { .. } => return None,
@@ -70,6 +77,7 @@ pub(super) fn fallback_sample(binding: &EndpointParam<'_>) -> Option<SampleValue
     })
 }
 
+/// Renders the expected body assertion expression for a generated sample.
 pub(super) fn sample_body_assertion(ty: &TypeIr, sample: &SampleValue) -> String {
     if uses_direct_body_value(ty) {
         sample.assertion_expression.clone()

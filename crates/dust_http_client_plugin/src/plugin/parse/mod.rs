@@ -1,4 +1,6 @@
+/// Parses common annotation argument shapes.
 mod args;
+/// Parses HTTP client annotations into plugin settings.
 mod http;
 
 pub(super) use args::{

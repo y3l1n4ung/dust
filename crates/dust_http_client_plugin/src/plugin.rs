@@ -3,12 +3,19 @@ use dust_ir::DartFileIr;
 use dust_plugin_api::{AuxiliaryOutputContribution, DustPlugin, PluginContribution, SymbolPlan};
 use dust_workspace::generated_test_output_path;
 
+/// Converts parsed IR into validated HTTP client specs.
 mod build;
+/// Shared annotation and configuration symbol names.
 mod constants;
+/// Renders generated Dart HTTP client sources.
 mod emit;
+/// Internal HTTP client model used after validation.
 mod model;
+/// Extracts HTTP annotations from lowered Dart IR.
 mod parse;
+/// Shared helpers for HTTP plugin parsing, validation, and rendering.
 mod util;
+/// Validates annotated HTTP client classes before emission.
 mod validate;
 
 use self::build::build_client_spec;

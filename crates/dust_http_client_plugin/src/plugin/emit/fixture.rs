@@ -6,12 +6,16 @@ use dust_ir::{BuiltinType, ClassIr, DartFileIr, EnumIr, TypeIr};
 use crate::plugin::emit::test_support::SampleValue;
 use crate::plugin::util::is_string_keyed_map;
 
+/// Lookup table used to build generated HTTP test fixture values.
 pub(super) struct FixtureCatalog<'a> {
+    /// Classes available in the source library, keyed by Dart type name.
     classes: HashMap<&'a str, &'a ClassIr>,
+    /// Enums available in the source library, keyed by Dart type name.
     enums: HashMap<&'a str, &'a EnumIr>,
 }
 
 impl<'a> FixtureCatalog<'a> {
+    /// Builds a fixture catalog from all classes and enums in a parsed library.
     pub(super) fn from_library(library: &'a DartFileIr) -> Self {
         Self {
             classes: library
@@ -27,10 +31,12 @@ impl<'a> FixtureCatalog<'a> {
         }
     }
 
+    /// Returns a generated Dart sample expression for the given type.
     pub(super) fn sample_value(&self, ty: &TypeIr) -> Option<SampleValue> {
         self.sample_value_inner(ty, &mut Vec::new())
     }
 
+    /// Recursively renders a sample value while guarding against class cycles.
     fn sample_value_inner(&self, ty: &TypeIr, stack: &mut Vec<&'a str>) -> Option<SampleValue> {
         match ty {
             TypeIr::Builtin { kind, .. } => Some(sample_builtin(*kind)),
@@ -57,11 +63,13 @@ impl<'a> FixtureCatalog<'a> {
         }
     }
 
+    /// Renders a sample `List<T>` expression.
     fn sample_list_value(&self, inner: &TypeIr, stack: &mut Vec<&'a str>) -> Option<SampleValue> {
         let item = self.sample_value_inner(inner, stack)?;
         Some(SampleValue::new(&format!("[{}]", item.expression), None))
     }
 
+    /// Renders a sample `Map<String, T>` expression.
     fn sample_map_value(&self, inner: &TypeIr, stack: &mut Vec<&'a str>) -> Option<SampleValue> {
         let value = self.sample_value_inner(inner, stack)?;
         Some(SampleValue::new(
@@ -70,6 +78,7 @@ impl<'a> FixtureCatalog<'a> {
         ))
     }
 
+    /// Renders a sample enum expression using the first declared variant.
     fn sample_enum_value(&self, name: &str) -> Option<SampleValue> {
         let enum_ir = self.enums.get(name)?;
         let variant = enum_ir.variants.first()?;
@@ -79,6 +88,7 @@ impl<'a> FixtureCatalog<'a> {
         ))
     }
 
+    /// Renders a sample data-class expression through `fromJson`.
     fn sample_class_value(&self, name: &str, stack: &mut Vec<&'a str>) -> Option<SampleValue> {
         let class = *self.classes.get(name)?;
         if stack.contains(&class.name.as_str()) {
@@ -100,6 +110,7 @@ impl<'a> FixtureCatalog<'a> {
         json.map(|json| SampleValue::new(&format!("{}.fromJson({json})", class.name), None))
     }
 
+    /// Renders a JSON map literal suitable for constructing a source class.
     fn class_json_map(&self, class: &ClassIr, stack: &mut Vec<&'a str>) -> Option<String> {
         let mut entries = Vec::new();
 
@@ -130,6 +141,7 @@ impl<'a> FixtureCatalog<'a> {
         }
     }
 
+    /// Recursively renders a JSON literal for a type.
     fn json_value_inner(&self, ty: &TypeIr, stack: &mut Vec<&'a str>) -> Option<String> {
         match ty {
             TypeIr::Builtin { kind, .. } => Some(match kind {
@@ -159,6 +171,7 @@ impl<'a> FixtureCatalog<'a> {
         }
     }
 
+    /// Renders sample JSON for an enum, respecting serde rename rules.
     fn sample_enum_json(&self, name: &str) -> Option<String> {
         let enum_ir = self.enums.get(name)?;
         let variant = enum_ir.variants.first()?;
@@ -169,6 +182,7 @@ impl<'a> FixtureCatalog<'a> {
         Some(format!("'{}'", wire_name))
     }
 
+    /// Renders sample JSON for a class while guarding against cycles.
     fn sample_class_json(&self, name: &str, stack: &mut Vec<&'a str>) -> Option<String> {
         let class = *self.classes.get(name)?;
         if stack.contains(&class.name.as_str()) {
@@ -182,6 +196,7 @@ impl<'a> FixtureCatalog<'a> {
     }
 }
 
+/// Returns the canonical generated test sample for a Dart builtin type.
 fn sample_builtin(kind: BuiltinType) -> SampleValue {
     match kind {
         BuiltinType::String => SampleValue::new("'dust-id'", Some("dust-id")),
@@ -193,6 +208,7 @@ fn sample_builtin(kind: BuiltinType) -> SampleValue {
     }
 }
 
+/// Returns true when generated class JSON may omit an unsupported field sample.
 fn can_omit_field(
     has_default: bool,
     is_nullable: bool,
@@ -205,6 +221,7 @@ fn can_omit_field(
             .is_some()
 }
 
+/// Resolves the JSON key for a field using field and class serde config.
 fn json_key(
     class: &ClassIr,
     field_name: &str,

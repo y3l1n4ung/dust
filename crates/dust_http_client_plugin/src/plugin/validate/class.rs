@@ -8,6 +8,7 @@ use crate::plugin::parse::{has_config_named, parse_http_client_config};
 use crate::plugin::util::{config_name, has_import, label, type_name_is};
 use crate::plugin::validate::validate_endpoint;
 
+/// Validates an annotated HTTP client class and all endpoint methods.
 pub(crate) fn validate_client_class(imports: &[String], class: &ClassIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let wants_http_client = has_config_named(&class.configs, HTTP_CLIENT);
@@ -52,6 +53,7 @@ pub(crate) fn validate_client_class(imports: &[String], class: &ClassIr) -> Vec<
     diagnostics
 }
 
+/// Validates imports required by generated `Stream<String>` decoding.
 pub(crate) fn validate_text_stream_import(
     imports: &[String],
     class: &ClassIr,
@@ -76,6 +78,7 @@ pub(crate) fn validate_text_stream_import(
     }
 }
 
+/// Validates annotations allowed directly on an HTTP client class.
 fn validate_class_level_configs(class: &ClassIr, diagnostics: &mut Vec<Diagnostic>) {
     for config in &class.configs {
         match config_name(&config.symbol.0) {
@@ -94,6 +97,7 @@ fn validate_class_level_configs(class: &ClassIr, diagnostics: &mut Vec<Diagnosti
     }
 }
 
+/// Validates the required redirecting factory constructor shape.
 fn validate_factory_constructor(class: &ClassIr, diagnostics: &mut Vec<Diagnostic>) {
     let expected_target = format!("_${}", class.name);
     let factory = class

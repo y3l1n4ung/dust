@@ -11,14 +11,20 @@ use crate::plugin::parse::{
 };
 use crate::plugin::util::{config_name, label};
 
+/// Parsed options from the `@HttpClient` annotation.
 #[derive(Debug, Clone)]
 pub(crate) struct ParsedHttpClientConfig {
+    /// Optional default base URL for generated requests.
     pub(crate) base_url: Option<String>,
+    /// Target runtime selected for generated imports and helpers.
     pub(crate) target: HttpTargetMode,
+    /// Default parse-thread mode for endpoint response decoding.
     pub(crate) parse_thread: ParseThreadMode,
+    /// Class-level static headers applied to every endpoint.
     pub(crate) headers: Vec<(String, String)>,
 }
 
+/// Parses class-level `@HttpClient` options.
 pub(crate) fn parse_http_client_config(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
@@ -63,6 +69,7 @@ pub(crate) fn parse_http_client_config(
     parsed
 }
 
+/// Parses the named `headers:` map from `@HttpClient`.
 pub(crate) fn parse_http_client_headers(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
@@ -76,6 +83,7 @@ pub(crate) fn parse_http_client_headers(
     }
 }
 
+/// Parses a `@Headers` annotation into key/value pairs.
 pub(crate) fn parse_headers_config(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
@@ -83,6 +91,7 @@ pub(crate) fn parse_headers_config(
     parse_config_map_argument(config, diagnostics, "Headers")
 }
 
+/// Parses all `@Headers` annotations attached to a method.
 pub(crate) fn parse_method_headers(
     method: &MethodIr,
     diagnostics: &mut Vec<Diagnostic>,
@@ -95,6 +104,7 @@ pub(crate) fn parse_method_headers(
         .collect()
 }
 
+/// Resolves the parse-thread mode for a method after method-level overrides.
 pub(crate) fn method_parse_thread(
     method: &MethodIr,
     default: ParseThreadMode,
@@ -108,6 +118,7 @@ pub(crate) fn method_parse_thread(
     default
 }
 
+/// Parses an `@HttpParse` annotation.
 pub(crate) fn parse_http_parse_config(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
@@ -126,6 +137,7 @@ pub(crate) fn parse_http_parse_config(
     ParseThreadMode::Main
 }
 
+/// Resolves the request encoding mode for a method.
 pub(crate) fn method_request_mode(method: &MethodIr) -> RequestMode {
     if method
         .configs
@@ -144,6 +156,7 @@ pub(crate) fn method_request_mode(method: &MethodIr) -> RequestMode {
     }
 }
 
+/// Returns all HTTP verb annotations attached to a method.
 pub(crate) fn method_verbs(method: &MethodIr) -> Vec<HttpVerb> {
     method
         .configs
@@ -161,6 +174,7 @@ pub(crate) fn method_verbs(method: &MethodIr) -> Vec<HttpVerb> {
         .collect()
 }
 
+/// Parses the path string from a method's HTTP verb annotation.
 pub(crate) fn method_path(method: &MethodIr, diagnostics: &mut Vec<Diagnostic>) -> Option<String> {
     for config in &method.configs {
         match config_name(&config.symbol.0) {
@@ -173,12 +187,14 @@ pub(crate) fn method_path(method: &MethodIr, diagnostics: &mut Vec<Diagnostic>) 
     None
 }
 
+/// Returns true when a config list contains the requested short name.
 pub(crate) fn has_config_named(configs: &[ConfigApplicationIr], expected: &str) -> bool {
     configs
         .iter()
         .any(|config| config_name(&config.symbol.0) == expected)
 }
 
+/// Returns HTTP source annotations attached to a parameter.
 pub(crate) fn param_source_names(param: &MethodParamIr) -> Vec<&str> {
     param
         .configs
@@ -193,6 +209,7 @@ pub(crate) fn param_source_names(param: &MethodParamIr) -> Vec<&str> {
         .collect()
 }
 
+/// Parses a `DustParseThread` enum option from class or method config.
 fn parse_thread_config(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,

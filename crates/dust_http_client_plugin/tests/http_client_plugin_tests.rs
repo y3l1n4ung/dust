@@ -1,3 +1,5 @@
+//! Integration tests for HTTP client plugin validation and emission.
+
 mod http_client_plugin_tests {
     mod emission;
     mod emission_request;

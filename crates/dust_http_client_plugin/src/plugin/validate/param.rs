@@ -15,23 +15,37 @@ use crate::plugin::parse::{
 };
 use crate::plugin::util::{config_name, is_string_keyed_map, label};
 
+/// Accumulated endpoint parameter validation state.
 #[derive(Default)]
 pub(super) struct ParamState {
+    /// Request body encoding mode selected by method annotations.
     pub(super) request_mode: RequestMode,
+    /// Number of `@Body` parameters seen.
     pub(super) body_count: u32,
+    /// Unique path placeholder keys.
     pub(super) path_keys: BTreeSet<String>,
+    /// Unique query parameter keys.
     pub(super) query_keys: BTreeSet<String>,
+    /// Unique header keys from static and parameter sources.
     pub(super) header_keys: BTreeSet<String>,
+    /// Unique form field keys.
     pub(super) field_keys: BTreeSet<String>,
+    /// Unique multipart part keys.
     pub(super) part_keys: BTreeSet<String>,
+    /// Unique Dio extra keys.
     pub(super) extra_keys: BTreeSet<String>,
+    /// Count of unannotated Dio cancel-token parameters.
     pub(super) cancel_token_count: u32,
+    /// Count of unannotated Dio options parameters.
     pub(super) options_count: u32,
+    /// Count of upload progress callback parameters.
     pub(super) on_send_progress_count: u32,
+    /// Count of download progress callback parameters.
     pub(super) on_receive_progress_count: u32,
 }
 
 impl ParamState {
+    /// Applies and validates a method-level annotation.
     pub(super) fn apply_method_config(
         &mut self,
         class: &ClassIr,
@@ -69,6 +83,7 @@ impl ParamState {
         }
     }
 
+    /// Validates one endpoint parameter annotation or special Dio type.
     pub(super) fn validate_param(
         &mut self,
         class: &ClassIr,
@@ -162,6 +177,7 @@ impl ParamState {
         }
     }
 
+    /// Validates an unannotated parameter as a supported Dio special parameter.
     fn validate_special_param(
         &mut self,
         class: &ClassIr,
@@ -198,6 +214,7 @@ impl ParamState {
     }
 }
 
+/// Validates that a map-style parameter is keyed by `String`.
 fn validate_string_keyed_map(
     param: &MethodParamIr,
     class: &ClassIr,
@@ -220,6 +237,7 @@ fn validate_string_keyed_map(
     );
 }
 
+/// Parses and records an annotation key that must be explicitly supplied.
 fn record_required_key(
     param: &MethodParamIr,
     annotation: &str,
@@ -233,6 +251,7 @@ fn record_required_key(
     }
 }
 
+/// Records a unique HTTP binding key and reports duplicates.
 fn record_key(
     key: String,
     keys: &mut BTreeSet<String>,
@@ -257,6 +276,7 @@ fn record_key(
     );
 }
 
+/// Builds a diagnostic for mutually exclusive request body modes.
 fn request_mode_error(
     class: &ClassIr,
     method: &MethodIr,

@@ -2,6 +2,7 @@ use dust_dart_emit::render_template;
 
 use crate::plugin::model::{EndpointSpec, ReturnMode};
 
+/// Renders the body for generated stream endpoint forwarding.
 pub(crate) fn render_stream_yield(endpoint: &EndpointSpec<'_>) -> String {
     match endpoint.return_spec.mode {
         ReturnMode::ByteStream => format!(

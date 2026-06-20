@@ -16,15 +16,22 @@ use crate::plugin::util::{
 };
 use crate::plugin::validate::validate_client_class;
 
+/// Special Dio parameter role inferred from the Dart parameter type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum EndpointParamKind {
+    /// Dio `CancelToken` passed through to `_dio.fetch`.
     CancelToken,
+    /// Dio `Options` merged into generated request options.
     Options,
+    /// Dio upload progress callback.
     OnSendProgress,
+    /// Dio download progress callback.
     OnReceiveProgress,
+    /// A `ProgressCallback` parameter whose source name is not supported.
     UnsupportedProgressName,
 }
 
+/// Builds a validated client spec for an annotated class.
 pub(super) fn build_client_spec<'a>(
     imports: &[String],
     class: &'a ClassIr,
@@ -71,6 +78,7 @@ pub(super) fn build_client_spec<'a>(
     }
 }
 
+/// Builds a validated endpoint spec for a method with an HTTP verb annotation.
 pub(super) fn build_endpoint_spec<'a>(
     _class: &'a ClassIr,
     method: &'a dust_ir::MethodIr,
@@ -146,6 +154,7 @@ pub(super) fn build_endpoint_spec<'a>(
     })
 }
 
+/// Classifies unannotated parameters that Dio recognizes by type.
 pub(super) fn special_param_kind(param: &MethodParamIr) -> Option<EndpointParamKind> {
     if type_name_is(&param.ty, "CancelToken") {
         return Some(EndpointParamKind::CancelToken);
@@ -163,6 +172,7 @@ pub(super) fn special_param_kind(param: &MethodParamIr) -> Option<EndpointParamK
     None
 }
 
+/// Classifies the supported generated return shape for an endpoint method.
 pub(super) fn classify_return_type(return_type: &TypeIr) -> Option<ReturnSpec> {
     if type_name_is(return_type, DART_FUTURE) && return_type.args().len() == 1 {
         let inner = &return_type.args()[0];
@@ -195,6 +205,7 @@ pub(super) fn classify_return_type(return_type: &TypeIr) -> Option<ReturnSpec> {
     None
 }
 
+/// Returns true when the payload can be fetched and decoded by generated code.
 fn is_supported_payload(ty: &TypeIr, allow_response_body: bool) -> bool {
     match ty {
         TypeIr::Dynamic => true,
@@ -215,6 +226,7 @@ fn is_supported_payload(ty: &TypeIr, allow_response_body: bool) -> bool {
     }
 }
 
+/// Classifies `Stream<T>` payloads that Dust can render as response streams.
 fn classify_stream_mode(ty: &TypeIr) -> Option<ReturnMode> {
     if is_list_of_int_type(ty) {
         return Some(ReturnMode::ByteStream);

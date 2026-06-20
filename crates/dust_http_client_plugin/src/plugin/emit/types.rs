@@ -6,14 +6,17 @@ use dust_ir::{BuiltinType, MethodParamIr, TypeIr};
 
 use crate::plugin::util::{is_response_body_type, type_name_is};
 
+/// Renders a Dart type using the HTTP plugin's dynamic-type policy.
 pub(super) fn render_type(ty: &TypeIr) -> String {
     DYNAMIC_TYPES.render(ty)
 }
 
+/// Renders a non-nullable Dart type for decode helper signatures.
 pub(super) fn render_non_nullable_type(ty: &TypeIr) -> String {
     DYNAMIC_TYPES.render_non_nullable(ty)
 }
 
+/// Renders the type argument passed to `_dio.fetch`.
 pub(super) fn render_fetch_type(ty: &TypeIr) -> String {
     if is_void_type(ty) {
         return DART_VOID.to_owned();
@@ -38,6 +41,7 @@ pub(super) fn render_fetch_type(ty: &TypeIr) -> String {
     }
 }
 
+/// Renders the Dart body expression for a `@Body` parameter.
 pub(super) fn render_body_value(param: &MethodParamIr) -> String {
     if uses_direct_body_value(&param.ty) {
         param.name.clone()
@@ -46,6 +50,7 @@ pub(super) fn render_body_value(param: &MethodParamIr) -> String {
     }
 }
 
+/// Renders a Dart decode expression that preserves nullable payloads.
 pub(super) fn render_decode_expr(data_expr: &str, ty: &TypeIr) -> String {
     if ty.is_nullable() {
         format!(
@@ -58,6 +63,7 @@ pub(super) fn render_decode_expr(data_expr: &str, ty: &TypeIr) -> String {
     }
 }
 
+/// Renders a Dart decode expression for a known non-null payload value.
 pub(super) fn render_decode_expr_nonnull(data_expr: &str, ty: &TypeIr) -> String {
     match ty {
         TypeIr::Dynamic | TypeIr::Unknown => data_expr.to_owned(),
@@ -90,6 +96,7 @@ pub(super) fn render_decode_expr_nonnull(data_expr: &str, ty: &TypeIr) -> String
     }
 }
 
+/// Returns true when decoding should be moved to a generated isolate helper.
 pub(super) fn needs_isolate_helper(ty: &TypeIr) -> bool {
     match ty {
         TypeIr::Named { args, .. } if type_name_is(ty, DART_LIST) && args.len() == 1 => {
@@ -104,10 +111,12 @@ pub(super) fn needs_isolate_helper(ty: &TypeIr) -> bool {
     }
 }
 
+/// Returns true for Dart `void`.
 pub(super) fn is_void_type(ty: &TypeIr) -> bool {
     ty.is_named(DART_VOID)
 }
 
+/// Returns true when a body value can be sent without calling `toJson`.
 pub(super) fn uses_direct_body_value(ty: &TypeIr) -> bool {
     match ty {
         TypeIr::Dynamic | TypeIr::Unknown => true,
