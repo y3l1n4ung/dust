@@ -15,10 +15,13 @@ pub fn register_plugin() -> SerdePlugin {
     SerdePlugin
 }
 
+/// Trait symbols claimed by the serde plugin.
 const CLAIMED_TRAITS: &[&str] = &["dust_dart::Serialize", "dust_dart::Deserialize"];
 
+/// Config symbols claimed by the serde plugin.
 const CLAIMED_CONFIGS: &[&str] = &["dust_dart::SerDe"];
 
+/// Short annotation names supported by the serde plugin.
 const SUPPORTED_ANNOTATIONS: &[&str] = &["Serialize", "Deserialize", "SerDe"];
 
 impl DustPlugin for SerdePlugin {

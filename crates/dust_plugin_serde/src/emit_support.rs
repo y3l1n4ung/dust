@@ -1,5 +1,6 @@
 use dust_dart_syntax::{balanced_parenthesized, split_top_level_items};
 
+/// Renders an expression after a prefix while preserving readable wrapping.
 pub(crate) fn format_prefixed_expr(
     indent: usize,
     prefix: &str,
@@ -43,6 +44,7 @@ pub(crate) fn format_prefixed_expr(
     rendered.join("\n")
 }
 
+/// Wraps a simple call expression into multiple lines when it is too long.
 fn wrap_call_expr(expr: &str, indent: usize, prefix: &str, suffix: &str) -> Option<String> {
     let open = expr.find('(')?;
     let args_source = balanced_parenthesized(&expr[open..])?;

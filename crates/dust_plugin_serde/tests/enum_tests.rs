@@ -1,3 +1,5 @@
+//! Integration tests for enum serde generation.
+
 #[path = "enum_tests/support.rs"]
 mod support;
 

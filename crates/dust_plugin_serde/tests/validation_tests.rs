@@ -1,3 +1,5 @@
+//! Integration tests for serde plugin validation diagnostics.
+
 use dust_ir::{
     ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, EnumIr, FieldIr, LibraryIr, ParamKind,
     SpanIr, SymbolId, TraitApplicationIr, TypeIr,
@@ -6,10 +8,12 @@ use dust_plugin_api::DustPlugin;
 use dust_plugin_serde::register_plugin;
 use dust_text::{FileId, TextRange};
 
+/// Builds a source span for validation fixture IR.
 fn span(start: u32, end: u32) -> SpanIr {
     SpanIr::new(FileId::new(11), TextRange::new(start, end))
 }
 
+/// Builds a trait application fixture.
 fn trait_application(symbol: &str) -> TraitApplicationIr {
     TraitApplicationIr {
         symbol: SymbolId::new(symbol),
@@ -17,6 +21,7 @@ fn trait_application(symbol: &str) -> TraitApplicationIr {
     }
 }
 
+/// Builds a field fixture with default serde settings.
 fn field(name: &str, ty: TypeIr) -> FieldIr {
     FieldIr {
         name: name.to_owned(),
@@ -28,6 +33,7 @@ fn field(name: &str, ty: TypeIr) -> FieldIr {
     }
 }
 
+/// Builds a constructor parameter fixture.
 fn constructor_param(name: &str, ty: TypeIr, kind: ParamKind) -> ConstructorParamIr {
     ConstructorParamIr {
         name: name.to_owned(),
@@ -39,6 +45,7 @@ fn constructor_param(name: &str, ty: TypeIr, kind: ParamKind) -> ConstructorPara
     }
 }
 
+/// Builds a generative constructor fixture.
 fn constructor(name: Option<&str>, params: Vec<ConstructorParamIr>) -> ConstructorIr {
     ConstructorIr {
         name: name.map(str::to_owned),
@@ -50,6 +57,7 @@ fn constructor(name: Option<&str>, params: Vec<ConstructorParamIr>) -> Construct
     }
 }
 
+/// Builds a class fixture with serde traits.
 fn class(
     name: &str,
     fields: Vec<FieldIr>,
@@ -75,6 +83,7 @@ fn class(
     }
 }
 
+/// Builds a library fixture for validation tests.
 fn library(classes: Vec<ClassIr>, enums: Vec<EnumIr>) -> LibraryIr {
     LibraryIr {
         package_root: ".".to_owned(),

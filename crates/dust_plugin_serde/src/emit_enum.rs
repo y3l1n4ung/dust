@@ -2,12 +2,16 @@ use dust_dart_emit::render_template;
 use dust_ir::EnumIr;
 use serde::Serialize;
 
+/// Template context for generated enum JSON helpers.
 #[derive(Serialize)]
 struct EnumTemplateContext<'a> {
+    /// Source enum name.
     enum_name: &'a str,
+    /// Rendered switch cases.
     cases: String,
 }
 
+/// Renders the top-level helper that deserializes an enum value.
 pub(crate) fn emit_enum_from_json_helper(e: &EnumIr) -> String {
     let mut cases = Vec::new();
     for variant in &e.variants {
@@ -25,6 +29,7 @@ pub(crate) fn emit_enum_from_json_helper(e: &EnumIr) -> String {
     )
 }
 
+/// Renders the top-level helper that serializes an enum value.
 pub(crate) fn emit_enum_to_json_helper(e: &EnumIr) -> String {
     let mut cases = Vec::new();
     for variant in &e.variants {
@@ -42,6 +47,7 @@ pub(crate) fn emit_enum_to_json_helper(e: &EnumIr) -> String {
     )
 }
 
+/// Resolves the wire value for an enum variant.
 fn variant_wire_name(e: &EnumIr, variant_name: &str) -> String {
     match e.serde.as_ref().and_then(|s| s.rename_all) {
         Some(rule) => crate::writer::apply_rename_rule(variant_name, rule),

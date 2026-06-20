@@ -185,6 +185,7 @@ fn validate_type_supported(
     }
 }
 
+/// Returns true when a class requests JSON serialization.
 fn wants_serialize(class: &ClassIr) -> bool {
     class
         .traits
@@ -192,6 +193,7 @@ fn wants_serialize(class: &ClassIr) -> bool {
         .any(|item| item.symbol.0 == "dust_dart::Serialize")
 }
 
+/// Returns true when a class requests JSON deserialization.
 fn wants_deserialize(class: &ClassIr) -> bool {
     class
         .traits

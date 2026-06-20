@@ -1,3 +1,5 @@
+//! Integration tests for serde type encoding and decoding.
+
 #[path = "type_tests/collections.rs"]
 mod collections;
 #[path = "type_tests/scalars.rs"]

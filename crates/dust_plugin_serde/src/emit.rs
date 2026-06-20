@@ -73,6 +73,7 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
     contribution
 }
 
+/// Returns true when a class requests JSON serialization.
 fn wants_serialize(class: &ClassIr) -> bool {
     class
         .traits
@@ -80,6 +81,7 @@ fn wants_serialize(class: &ClassIr) -> bool {
         .any(|item| item.symbol.0 == "dust_dart::Serialize")
 }
 
+/// Returns true when a class requests JSON deserialization.
 fn wants_deserialize(class: &ClassIr) -> bool {
     class
         .traits
@@ -87,12 +89,14 @@ fn wants_deserialize(class: &ClassIr) -> bool {
         .any(|item| item.symbol.0 == "dust_dart::Deserialize")
 }
 
+/// Returns true when an enum requests JSON serialization.
 fn wants_serialize_enum(e: &EnumIr) -> bool {
     e.traits
         .iter()
         .any(|item| item.symbol.0 == "dust_dart::Serialize")
 }
 
+/// Returns true when an enum requests JSON deserialization.
 fn wants_deserialize_enum(e: &EnumIr) -> bool {
     e.traits
         .iter()
