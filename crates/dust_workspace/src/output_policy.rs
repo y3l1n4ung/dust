@@ -92,6 +92,7 @@ pub fn rewrite_library_import_uri(
     ))
 }
 
+/// Returns the source path relative to the package root.
 fn library_relative_path(package_root: &Path, source_path: &Path) -> Result<PathBuf, Diagnostic> {
     let normalized = normalized_source_path(package_root, source_path)?;
     if !normalized.starts_with("lib") {
@@ -103,6 +104,7 @@ fn library_relative_path(package_root: &Path, source_path: &Path) -> Result<Path
     Ok(normalized)
 }
 
+/// Returns the source path relative to `lib/`.
 fn package_relative_library_path(
     package_root: &Path,
     source_path: &Path,
@@ -111,6 +113,7 @@ fn package_relative_library_path(
         .map(|path| path.strip_prefix("lib").unwrap_or(&path).to_path_buf())
 }
 
+/// Normalizes a source path relative to the package root.
 fn normalized_source_path(package_root: &Path, source_path: &Path) -> Result<PathBuf, Diagnostic> {
     let relative = if source_path.is_absolute() {
         source_path
@@ -129,6 +132,7 @@ fn normalized_source_path(package_root: &Path, source_path: &Path) -> Result<Pat
     Ok(normalize_relative_path(relative))
 }
 
+/// Normalizes a relative path without filesystem access.
 fn normalize_relative_path(path: PathBuf) -> PathBuf {
     let mut normalized = PathBuf::new();
     for component in path.components() {

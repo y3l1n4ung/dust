@@ -3,8 +3,10 @@ use std::{fs, path::Path};
 use dust_diagnostics::Diagnostic;
 use serde::Deserialize;
 
+/// Minimal pubspec fields needed by workspace discovery.
 #[derive(Debug, Deserialize)]
 struct Pubspec {
+    /// Optional package name from `pubspec.yaml`.
     name: Option<String>,
 }
 

@@ -24,6 +24,7 @@ pub(crate) struct ParsedTopLevelDeclarations {
 }
 
 impl ParsedTopLevelDeclarations {
+    /// Creates an empty top-level declaration set.
     pub(crate) fn empty() -> Self {
         Self {
             mixins: Vec::new(),

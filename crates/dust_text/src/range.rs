@@ -65,7 +65,9 @@ impl Sub for TextSize {
 /// The range includes `start` and excludes `end`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct TextRange {
+    /// Inclusive start offset.
     start: TextSize,
+    /// Exclusive end offset.
     end: TextSize,
 }
 

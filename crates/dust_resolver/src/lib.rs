@@ -2,10 +2,15 @@
 #![deny(missing_docs)]
 #![doc = "Resolution helpers that map parsed Dust-relevant syntax into symbol-aware semantic data."]
 
+/// Annotation lowering helpers.
 mod annotations;
+/// Symbol catalog lookup.
 mod catalog;
+/// Library resolution entry points.
 mod resolve;
+/// Shared declaration resolution helpers.
 mod resolve_support;
+/// Resolved library result types.
 mod result;
 
 pub use annotations::annotation_ir_from_parsed;

@@ -41,6 +41,7 @@ pub fn parse_annotation_named_values(source: &str) -> Option<Vec<(String, Annota
         .collect()
 }
 
+/// Parses one annotation value expression.
 fn parse_annotation_value(source: &str) -> AnnotationValue {
     let source = source.trim();
     if source == "true" {
@@ -70,6 +71,7 @@ fn parse_annotation_value(source: &str) -> AnnotationValue {
     AnnotationValue::Expression(source.to_owned())
 }
 
+/// Parses a list literal annotation value.
 fn parse_list(source: &str) -> Option<Vec<AnnotationValue>> {
     let inner = source.strip_prefix('[')?.strip_suffix(']')?.trim();
     if inner.is_empty() {
@@ -83,6 +85,7 @@ fn parse_list(source: &str) -> Option<Vec<AnnotationValue>> {
     )
 }
 
+/// Parses a named record literal annotation value.
 fn parse_record(source: &str) -> Option<Vec<(String, AnnotationValue)>> {
     let inner = source.strip_prefix('(')?.strip_suffix(')')?.trim();
     if inner.is_empty() {
@@ -97,6 +100,7 @@ fn parse_record(source: &str) -> Option<Vec<(String, AnnotationValue)>> {
         .collect()
 }
 
+/// Parses a constant constructor annotation value.
 fn parse_constructor(source: &str) -> Option<(String, Vec<(String, AnnotationValue)>)> {
     let source = source.strip_prefix("const ").unwrap_or(source).trim();
     let open = source.find('(')?;
@@ -116,6 +120,7 @@ fn parse_constructor(source: &str) -> Option<(String, Vec<(String, AnnotationVal
     Some((name.to_owned(), named))
 }
 
+/// Returns whether the source is a simple numeric literal.
 fn is_number_literal(source: &str) -> bool {
     let source = source.strip_prefix('-').unwrap_or(source);
     let mut saw_digit = false;

@@ -17,6 +17,7 @@ use crate::{
 /// imports or re-exports.
 #[derive(Debug, Clone, Default)]
 pub struct SupportedAnnotations {
+    /// Supported annotation short names.
     names: HashSet<Box<str>>,
 }
 
@@ -101,13 +102,19 @@ pub fn discover_libraries(
     Ok(libraries)
 }
 
+/// One Dart source file considered during discovery.
 struct CandidateFile {
+    /// Absolute source path.
     path: PathBuf,
+    /// Whether the file directly imports a Dust package.
     direct_dust: bool,
+    /// Local files imported or exported by this file.
     local_imports: Vec<PathBuf>,
+    /// Whether the file contains a supported annotation name.
     has_supported_annotation: bool,
 }
 
+/// Reads candidate files and extracts discovery facts.
 fn candidate_files<I>(
     root: &Path,
     lib_dir: &Path,
@@ -137,6 +144,7 @@ where
         .collect()
 }
 
+/// Computes files reachable from direct Dust imports or local re-exports.
 fn dust_aware_files(candidates: &[CandidateFile]) -> HashSet<&Path> {
     let known_paths = candidates
         .iter()
@@ -166,6 +174,7 @@ fn dust_aware_files(candidates: &[CandidateFile]) -> HashSet<&Path> {
     dust_aware
 }
 
+/// Recursively collects Dart files under one directory.
 fn collect_dart_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), Diagnostic> {
     let entries = fs::read_dir(dir).map_err(|error| {
         Diagnostic::error(format!(
@@ -201,6 +210,7 @@ fn collect_dart_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), Diagnost
     Ok(())
 }
 
+/// Resolves local import and export directives for one source file.
 fn local_imports(
     root: &Path,
     lib_dir: &Path,
@@ -214,6 +224,7 @@ fn local_imports(
         .collect()
 }
 
+/// Extracts import and export URI strings from Dart source.
 fn directive_uris(source: &str) -> Vec<String> {
     let mut uris = Vec::new();
     for directive in ["import", "export"] {
@@ -236,6 +247,7 @@ fn directive_uris(source: &str) -> Vec<String> {
     uris
 }
 
+/// Reads a quoted URI value and returns it with its closing quote offset.
 fn quoted_uri_value(source: &str, quote: char) -> Option<(String, usize)> {
     let mut value = String::new();
     let mut escaped = false;
@@ -262,6 +274,7 @@ fn quoted_uri_value(source: &str, quote: char) -> Option<(String, usize)> {
     None
 }
 
+/// Resolves one Dart import URI to a local file path when possible.
 fn resolve_local_import(
     root: &Path,
     lib_dir: &Path,
@@ -282,6 +295,7 @@ fn resolve_local_import(
     Some(normalize_path(&parent.join(uri)))
 }
 
+/// Normalizes `.` and `..` path components without touching the filesystem.
 fn normalize_path(path: &Path) -> PathBuf {
     let mut normalized = PathBuf::new();
     for component in path.components() {
@@ -296,10 +310,12 @@ fn normalize_path(path: &Path) -> PathBuf {
     normalized
 }
 
+/// Returns whether source contains any supported annotation short name.
 fn has_supported_annotation(source: &str, supported_annotations: &SupportedAnnotations) -> bool {
     annotation_short_names(source).any(|name| supported_annotations.contains(name))
 }
 
+/// Iterates annotation short names, including names from prefixed annotations.
 fn annotation_short_names(source: &str) -> impl Iterator<Item = &str> {
     source.match_indices('@').filter_map(|(index, _)| {
         let mut start = index + 1;
@@ -321,6 +337,7 @@ fn annotation_short_names(source: &str) -> impl Iterator<Item = &str> {
     })
 }
 
+/// Returns whether source imports or exports a Dust package URI.
 fn contains_dust_package(source: &str) -> bool {
     source.contains("package:dust_dart/") || source.contains("package:dust_flutter/")
 }

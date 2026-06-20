@@ -2,10 +2,15 @@
 #![deny(missing_docs)]
 #![doc = "Plugin contracts and registry types for Dust generation plugins."]
 
+/// Plugin analysis snapshots.
 mod analysis;
+/// Plugin output contributions.
 mod contribution;
+/// Plugin trait and context types.
 mod plugin;
+/// Plugin registration.
 mod registry;
+/// Generated symbol planning.
 mod symbols;
 
 pub use analysis::{LibraryAnalysisSnapshot, WorkspaceAnalysis, WorkspaceAnalysisBuilder};

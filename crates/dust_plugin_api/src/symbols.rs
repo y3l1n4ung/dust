@@ -24,7 +24,9 @@ impl RequestedSymbol {
 /// The deterministic set of reserved generated symbols for one library.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct SymbolPlan {
+    /// Reserved symbols in deterministic order.
     reserved: Vec<RequestedSymbol>,
+    /// Workspace analysis available to generators.
     workspace_analysis: Arc<WorkspaceAnalysis>,
 }
 

@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 /// One cached per-library analysis snapshot produced during the workspace scan phase.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct LibraryAnalysisSnapshot {
+    /// Per-key sorted string sets.
     string_sets: BTreeMap<String, Vec<String>>,
 }
 
@@ -31,6 +32,7 @@ impl LibraryAnalysisSnapshot {
 /// The immutable workspace-wide analysis facts shared across all file emissions.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct WorkspaceAnalysis {
+    /// Immutable per-key workspace string sets.
     string_sets: BTreeMap<String, Arc<Vec<String>>>,
 }
 
@@ -44,6 +46,7 @@ impl WorkspaceAnalysis {
 /// A mutable builder used during the parse/scan phase to collect analysis facts.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct WorkspaceAnalysisBuilder {
+    /// Mutable per-key workspace string sets.
     string_sets: HashMap<String, HashSet<String>>,
 }
 

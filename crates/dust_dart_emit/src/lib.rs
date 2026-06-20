@@ -2,11 +2,17 @@
 #![deny(missing_docs)]
 #![doc = "Shared Dart rendering helpers reused by Dust plugins."]
 
+/// Dart runtime type and symbol names.
 mod dart_names;
+/// Dart literal escaping.
 mod literals;
+/// Serde rename rules.
 mod rename;
+/// Dart source parsing re-exports.
 mod source;
+/// Template rendering helpers.
 mod templates;
+/// Dart type rendering.
 mod type_render;
 
 pub use dart_names::{

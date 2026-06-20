@@ -2,9 +2,13 @@
 #![deny(missing_docs)]
 #![doc = "Diagnostics and source labels for Dust."]
 
+/// Diagnostic builders.
 mod diagnostic;
+/// Source label metadata.
 mod label;
+/// Plain-text diagnostic rendering.
 mod render;
+/// Diagnostic severity levels.
 mod severity;
 
 pub use diagnostic::Diagnostic;

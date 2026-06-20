@@ -14,6 +14,7 @@ pub enum UnknownTypeRendering {
 /// Shared Dart type renderer used across Dust emitters.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DartTypeRenderer {
+    /// Strategy used for unresolved Dust types.
     unknown: UnknownTypeRendering,
 }
 
@@ -92,6 +93,7 @@ impl DartTypeRenderer {
 }
 
 impl UnknownTypeRendering {
+    /// Renders the fallback Dart type for this strategy.
     fn render(self, nullable: bool) -> &'static str {
         match self {
             Self::Dynamic => DART_DYNAMIC,
@@ -113,6 +115,7 @@ pub fn non_nullable(ty: &TypeIr) -> TypeIr {
     }
 }
 
+/// Appends `?` when a rendered Dart type is nullable.
 fn with_nullable(mut rendered: String, nullable: bool) -> String {
     if nullable {
         rendered.push('?');

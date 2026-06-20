@@ -13,16 +13,24 @@ use crate::{
     annotations::annotation_argument_values,
 };
 
+/// Positional and named annotation argument values.
 type AnnotationArguments = (Vec<AnnotationValueIr>, BTreeMap<String, AnnotationValueIr>);
 
+/// One parsed annotation matched to a registered symbol.
 struct ResolvedAnnotationSymbol {
+    /// Annotation source span.
     span: TextRange,
+    /// Matched symbol kind.
     kind: SymbolKind,
+    /// Fully qualified symbol id.
     symbol: SymbolId,
+    /// Original argument source when available.
     arguments_source: Option<String>,
+    /// Lowered annotation arguments.
     arguments: AnnotationArguments,
 }
 
+/// Resolves annotations and parameters for one method.
 pub(crate) fn resolve_method(
     file_id: FileId,
     method: &ParsedMethodSurface,
@@ -69,6 +77,7 @@ pub(crate) fn resolve_method(
     }
 }
 
+/// Resolves annotations for one method parameter.
 fn resolve_method_param(
     file_id: FileId,
     param: &ParsedMethodParamSurface,
@@ -104,6 +113,7 @@ fn resolve_method_param(
     }
 }
 
+/// Resolves declaration-level Dust trait and config annotations.
 pub(crate) fn resolve_declaration_annotations(
     file_id: FileId,
     annotations: &[ParsedAnnotation],
@@ -158,6 +168,7 @@ pub(crate) fn resolve_declaration_annotations(
     }
 }
 
+/// Resolves field-level Dust config annotations.
 pub(crate) fn resolve_field(
     file_id: FileId,
     field: &ParsedFieldSurface,
@@ -204,6 +215,7 @@ pub(crate) fn resolve_field(
     }
 }
 
+/// Returns the first generated part URI from parsed directives.
 pub(crate) fn first_part_uri(directives: &[ParsedDirective]) -> Option<String> {
     directives.iter().find_map(|directive| match directive {
         ParsedDirective::Part { uri, .. } => Some(uri.clone()),
@@ -211,6 +223,7 @@ pub(crate) fn first_part_uri(directives: &[ParsedDirective]) -> Option<String> {
     })
 }
 
+/// Pushes one resolved symbol into the matching trait or config list.
 fn push_resolved_symbol(
     file_id: FileId,
     application: ResolvedAnnotationSymbol,

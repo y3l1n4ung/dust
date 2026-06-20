@@ -5,8 +5,11 @@ use crate::{FileId, LineCol, LineIndex, TextRange, TextSize};
 /// Owns one source file's text and its precomputed line index.
 #[derive(Debug, Clone)]
 pub struct SourceText {
+    /// Owning source file identifier.
     file_id: FileId,
+    /// Shared UTF-8 source contents.
     text: Arc<str>,
+    /// Lazily built line index for this source.
     line_index: OnceLock<LineIndex>,
 }
 

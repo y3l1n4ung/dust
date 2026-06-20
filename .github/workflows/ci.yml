@@ -58,6 +58,9 @@ jobs:
       - name: Clippy
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
+      - name: Rust documentation warnings
+        run: cargo clippy --workspace --all-targets --all-features -- -W clippy::missing_docs_in_private_items -W missing_docs
+
   dart-packages:
     name: Dart / ${{ matrix.name }}
     runs-on: ubuntu-latest

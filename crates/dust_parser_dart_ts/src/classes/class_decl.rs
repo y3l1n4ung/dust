@@ -92,12 +92,17 @@ pub(super) fn extract_class(node: Node<'_>, source: &SourceText) -> ParsedClassS
     }
 }
 
+/// Shape of one class member declaration.
 enum ClassMemberShape<'tree> {
+    /// Constructor signature node.
     Constructor(Node<'tree>),
+    /// Initialized identifier list for fields.
     Field(Node<'tree>),
+    /// Method-like member.
     Method,
 }
 
+/// Classifies a class member into a shape Dust extracts.
 fn classify_class_member<'tree>(node: Node<'tree>) -> Option<ClassMemberShape<'tree>> {
     if is_constructor_signature_kind(node.kind()) {
         return Some(ClassMemberShape::Constructor(node));

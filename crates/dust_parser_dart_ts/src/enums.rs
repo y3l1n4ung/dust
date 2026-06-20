@@ -7,6 +7,7 @@ use crate::{
     syntax::{node_text, text_range},
 };
 
+/// Extracts enum declarations from a root node.
 pub(crate) fn extract_enums(root: Node<'_>, source: &SourceText) -> Vec<ParsedEnumSurface> {
     let mut enums = Vec::new();
     let mut cursor = root.walk();
@@ -19,6 +20,7 @@ pub(crate) fn extract_enums(root: Node<'_>, source: &SourceText) -> Vec<ParsedEn
     enums
 }
 
+/// Extracts one enum declaration.
 fn extract_enum(node: Node<'_>, source: &SourceText) -> ParsedEnumSurface {
     let name = node
         .child_by_field_name("name")
@@ -54,6 +56,7 @@ fn extract_enum(node: Node<'_>, source: &SourceText) -> ParsedEnumSurface {
     }
 }
 
+/// Extracts one enum variant declaration.
 fn extract_enum_variant(node: Node<'_>, source: &SourceText) -> ParsedEnumVariantSurface {
     let name = node
         .child_by_field_name("name")

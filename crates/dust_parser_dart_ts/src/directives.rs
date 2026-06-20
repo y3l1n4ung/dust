@@ -10,6 +10,7 @@ use crate::{
     },
 };
 
+/// Extracts Dart library directives from the root node.
 pub(crate) fn extract_directives(root: Node<'_>, source: &SourceText) -> Vec<ParsedDirective> {
     let mut directives = Vec::new();
     let mut cursor = root.walk();
@@ -73,6 +74,7 @@ pub(crate) fn extract_directives(root: Node<'_>, source: &SourceText) -> Vec<Par
     directives
 }
 
+/// Extracts `show` and `hide` import combinators.
 fn import_combinators(import: Node<'_>, source: &SourceText) -> (Vec<String>, Vec<String>) {
     let mut show = Vec::new();
     let mut hide = Vec::new();
@@ -81,6 +83,7 @@ fn import_combinators(import: Node<'_>, source: &SourceText) -> (Vec<String>, Ve
     (show, hide)
 }
 
+/// Recursively collects import combinator nodes.
 fn collect_import_combinators(
     node: Node<'_>,
     source: &SourceText,
@@ -98,6 +101,7 @@ fn collect_import_combinators(
     }
 }
 
+/// Adds one import combinator's identifiers to the correct output list.
 fn collect_import_combinator(
     combinator: Node<'_>,
     source: &SourceText,

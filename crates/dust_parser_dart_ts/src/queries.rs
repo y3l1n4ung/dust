@@ -22,6 +22,7 @@ pub(crate) fn extract_query_calls(
     calls
 }
 
+/// Fast source check for query helper names.
 fn might_contain_query_helper(source: &str) -> bool {
     source.contains("queryAs")
         || source.contains("queryScalar")
@@ -29,6 +30,7 @@ fn might_contain_query_helper(source: &str) -> bool {
         || source.contains("queryExecute")
 }
 
+/// Recursively collects query helper calls.
 fn collect_calls(node: Node<'_>, source: &SourceText, out: &mut Vec<ParsedQueryCallSurface>) {
     if node.kind() == "call_expression"
         && let Some(call) = lower_query_call(node, source)
@@ -47,6 +49,7 @@ fn collect_calls(node: Node<'_>, source: &SourceText, out: &mut Vec<ParsedQueryC
     }
 }
 
+/// Lowers a regular call expression query helper.
 fn lower_query_call(node: Node<'_>, source: &SourceText) -> Option<ParsedQueryCallSurface> {
     let function_node = node.child_by_field_name("function")?;
     let (function, type_arg_source) = query_function(function_node, source)?;
@@ -63,6 +66,7 @@ fn lower_query_call(node: Node<'_>, source: &SourceText) -> Option<ParsedQueryCa
     ))
 }
 
+/// Lowers a selector-chain query helper call.
 fn lower_selector_query_chain(
     node: Node<'_>,
     source: &SourceText,
@@ -115,6 +119,7 @@ fn lower_selector_query_chain(
     None
 }
 
+/// Returns whether a node has a direct query helper identifier child.
 fn has_direct_query_identifier(node: Node<'_>, source: &SourceText) -> bool {
     let mut cursor = node.walk();
     node.children(&mut cursor).any(|child| {
@@ -124,6 +129,7 @@ fn has_direct_query_identifier(node: Node<'_>, source: &SourceText) -> bool {
     })
 }
 
+/// Builds a parsed query call surface from extracted parts.
 fn query_call_surface(
     function: ParsedQueryFunction,
     type_arg_source: Option<String>,
@@ -153,6 +159,7 @@ fn query_call_surface(
     }
 }
 
+/// Extracts query function metadata from a call target node.
 fn query_function(
     function_node: Node<'_>,
     source: &SourceText,
@@ -174,11 +181,13 @@ fn query_function(
     }
 }
 
+/// Converts an identifier node into a query function.
 fn query_function_node(node: Node<'_>, source: &SourceText) -> Option<ParsedQueryFunction> {
     let name = source.as_str().get(node.start_byte()..node.end_byte())?;
     query_function_name(name)
 }
 
+/// Converts an identifier name into a query function.
 fn query_function_name(name: &str) -> Option<ParsedQueryFunction> {
     match name {
         "queryAs" => Some(ParsedQueryFunction::As),
@@ -189,6 +198,7 @@ fn query_function_name(name: &str) -> Option<ParsedQueryFunction> {
     }
 }
 
+/// Returns type argument source without surrounding angle brackets.
 fn type_arguments_source(type_args: Node<'_>, source: &SourceText) -> Option<String> {
     let text = node_text(type_args, source);
     text.trim()
@@ -199,6 +209,7 @@ fn type_arguments_source(type_args: Node<'_>, source: &SourceText) -> Option<Str
         .map(str::to_owned)
 }
 
+/// Returns source snippets for argument nodes.
 fn argument_sources(arguments: Node<'_>, source: &SourceText) -> Vec<String> {
     let mut cursor = arguments.walk();
     arguments
@@ -208,6 +219,7 @@ fn argument_sources(arguments: Node<'_>, source: &SourceText) -> Vec<String> {
         .collect()
 }
 
+/// Returns source for one argument value.
 fn argument_source(argument: Node<'_>, source: &SourceText) -> Option<String> {
     if argument.kind() != "argument" {
         return Some(node_text(argument, source));
@@ -216,6 +228,7 @@ fn argument_source(argument: Node<'_>, source: &SourceText) -> Option<String> {
     first_named_child(argument).map(|value| node_text(value, source))
 }
 
+/// Returns type argument source from a selector node.
 fn selector_type_arguments_source(selector: Node<'_>, source: &SourceText) -> Option<String> {
     let type_args = named_children(selector)
         .into_iter()
@@ -223,6 +236,7 @@ fn selector_type_arguments_source(selector: Node<'_>, source: &SourceText) -> Op
     type_arguments_source(type_args, source)
 }
 
+/// Returns query argument sources from a selector node.
 fn selector_argument_sources(selector: Node<'_>, source: &SourceText) -> Option<Vec<String>> {
     let argument_part = named_children(selector)
         .into_iter()
@@ -233,6 +247,7 @@ fn selector_argument_sources(selector: Node<'_>, source: &SourceText) -> Option<
     Some(argument_sources(arguments, source))
 }
 
+/// Returns a selector property identifier.
 fn selector_property_name(selector: Node<'_>, source: &SourceText) -> Option<String> {
     let assignable_selector = named_children(selector)
         .into_iter()
@@ -243,6 +258,7 @@ fn selector_property_name(selector: Node<'_>, source: &SourceText) -> Option<Str
         .map(|identifier| node_text(identifier, source))
 }
 
+/// Returns a chained fetch method following a query call.
 fn fetch_method_for_query_call(query_call: Node<'_>, source: &SourceText) -> Option<String> {
     let member = query_call.parent()?;
     if member.kind() != "member_expression" {
@@ -261,6 +277,7 @@ fn fetch_method_for_query_call(query_call: Node<'_>, source: &SourceText) -> Opt
     Some(method)
 }
 
+/// Returns whether a method name is a supported fetch method.
 fn is_fetch_method(method: &str) -> bool {
     matches!(
         method,
@@ -268,12 +285,14 @@ fn is_fetch_method(method: &str) -> bool {
     )
 }
 
+/// Returns whether two tree-sitter handles point at the same node span.
 fn same_node(lhs: Node<'_>, rhs: Node<'_>) -> bool {
     lhs.kind() == rhs.kind()
         && lhs.start_byte() == rhs.start_byte()
         && lhs.end_byte() == rhs.end_byte()
 }
 
+/// Returns named direct children.
 fn named_children(node: Node<'_>) -> Vec<Node<'_>> {
     let mut cursor = node.walk();
     node.children(&mut cursor)
@@ -281,11 +300,13 @@ fn named_children(node: Node<'_>) -> Vec<Node<'_>> {
         .collect()
 }
 
+/// Returns the first named direct child.
 fn first_named_child(node: Node<'_>) -> Option<Node<'_>> {
     let mut cursor = node.walk();
     node.children(&mut cursor).find(|child| child.is_named())
 }
 
+/// Parses an optional generic type argument list from a source offset.
 fn parse_optional_type_arg(source: &str, start: usize) -> Option<(Option<String>, usize)> {
     let start = skip_ws(source, start);
     if !source[start..].starts_with('<') {
@@ -308,6 +329,7 @@ fn parse_optional_type_arg(source: &str, start: usize) -> Option<(Option<String>
     None
 }
 
+/// Returns whether source is a list literal and how many top-level items it has.
 fn parse_list_argument_count(source: &str) -> (bool, usize) {
     let mut source = source.trim();
     source = source.strip_prefix("const ").unwrap_or(source).trim();
@@ -329,6 +351,7 @@ fn parse_list_argument_count(source: &str) -> (bool, usize) {
     (true, split_top_level_items(inner).len())
 }
 
+/// Skips whitespace from a byte offset.
 fn skip_ws(source: &str, mut offset: usize) -> usize {
     while let Some(ch) = source[offset..].chars().next() {
         if !ch.is_whitespace() {

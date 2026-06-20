@@ -33,6 +33,7 @@ impl<'a> DiagnosticFileContext<'a> {
         }
     }
 
+    /// Converts a label range into start and end line/column pairs.
     fn line_cols(self, label: &SourceLabel) -> Option<(LineCol, LineCol)> {
         Some((
             self.line_index.line_col(label.range.start())?,
@@ -40,6 +41,7 @@ impl<'a> DiagnosticFileContext<'a> {
         ))
     }
 
+    /// Returns one source line without its line ending.
     fn line_text(self, line: u32) -> Option<&'a str> {
         let range = self.line_index.line_range(line as usize)?;
         self.source
@@ -64,6 +66,7 @@ pub fn render_to_string_with_files(
     render_with_contexts(diagnostic, files)
 }
 
+/// Renders one diagnostic with optional source file contexts.
 fn render_with_contexts(diagnostic: &Diagnostic, files: &[DiagnosticFileContext<'_>]) -> String {
     let mut output = format!("{}: {}", diagnostic.severity.as_str(), diagnostic.message);
 
@@ -79,6 +82,7 @@ fn render_with_contexts(diagnostic: &Diagnostic, files: &[DiagnosticFileContext<
     output
 }
 
+/// Renders one source label with source context when available.
 fn render_label(label: &SourceLabel, files: &[DiagnosticFileContext<'_>]) -> String {
     let Some(file) = files
         .iter()
@@ -116,6 +120,7 @@ fn render_label(label: &SourceLabel, files: &[DiagnosticFileContext<'_>]) -> Str
     )
 }
 
+/// Renders a source label without source-line context.
 fn render_label_fallback(path: Option<&Path>, label: &SourceLabel) -> String {
     match path {
         Some(path) => format!(

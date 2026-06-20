@@ -85,6 +85,7 @@ pub fn load_package_config(package_root: &Path) -> Result<PackageConfig, Diagnos
     ))
 }
 
+/// Returns the pub workspace signal file path when present.
 fn workspace_signal_path(package_graph_path: &Path, workspace_ref_path: &Path) -> Option<PathBuf> {
     if package_graph_path.is_file() {
         return Some(package_graph_path.to_path_buf());
@@ -94,6 +95,7 @@ fn workspace_signal_path(package_graph_path: &Path, workspace_ref_path: &Path) -
         .then(|| workspace_ref_path.to_path_buf())
 }
 
+/// Builds the diagnostic for a missing shared workspace package config.
 fn missing_shared_workspace_config(package_root: &Path, package_graph_path: &Path) -> Diagnostic {
     Diagnostic::error(format!(
         "workspace member `{}` uses `{}` but no shared package configuration was found above it; expected an ancestor `.dart_tool/package_config.json`",

@@ -21,6 +21,7 @@ pub(crate) fn extract_type_node(
     type_surface_from_node(type_node, boundary_byte, source)
 }
 
+/// Builds a parsed type surface from one type node and boundary.
 fn type_surface_from_node(
     type_node: Node<'_>,
     boundary_byte: usize,
@@ -52,6 +53,7 @@ fn type_surface_from_node(
     })
 }
 
+/// Converts a type node into a normalized type kind.
 fn type_kind_from_node(
     type_node: Node<'_>,
     type_end_byte: usize,
@@ -98,6 +100,7 @@ fn type_kind_from_node(
     }
 }
 
+/// Returns whether an identifier has no type arguments before the boundary.
 fn has_no_type_arguments_after_identifier(
     type_node: Node<'_>,
     type_end_byte: usize,
@@ -109,6 +112,7 @@ fn has_no_type_arguments_after_identifier(
     matches!(after_identifier.trim(), "" | "?")
 }
 
+/// Returns source text for a type identifier node.
 fn type_identifier_source(type_node: Node<'_>, source: &SourceText) -> Option<String> {
     let source = source
         .as_str()
@@ -117,6 +121,7 @@ fn type_identifier_source(type_node: Node<'_>, source: &SourceText) -> Option<St
     (!source.is_empty()).then(|| source.to_owned())
 }
 
+/// Returns a named type's base source before type arguments.
 fn named_type_source(
     type_node: Node<'_>,
     args_node: Option<Node<'_>>,
@@ -131,6 +136,7 @@ fn named_type_source(
     (!source.is_empty()).then(|| source.to_owned())
 }
 
+/// Finds type arguments that follow a type identifier before a boundary.
 fn find_type_arguments_after<'tree>(
     type_node: Node<'tree>,
     type_end_byte: usize,
@@ -155,6 +161,7 @@ fn find_type_arguments_after<'tree>(
     None
 }
 
+/// Extracts parsed type argument surfaces.
 fn extract_type_arguments(args_node: Node<'_>, source: &SourceText) -> Vec<ParsedTypeSurface> {
     let mut args = Vec::new();
     let mut current_start = None;
@@ -190,6 +197,7 @@ fn extract_type_arguments(args_node: Node<'_>, source: &SourceText) -> Vec<Parse
     args
 }
 
+/// Extracts one type argument from a byte range inside an argument list.
 fn type_argument_from_range(
     args_node: Node<'_>,
     start: Option<usize>,
@@ -202,6 +210,7 @@ fn type_argument_from_range(
     type_surface_from_node(type_node, end, source)
 }
 
+/// Finds the first type root inside a byte range.
 fn first_type_node_in_range<'tree>(
     node: Node<'tree>,
     start_byte: usize,
@@ -225,6 +234,7 @@ fn first_type_node_in_range<'tree>(
     None
 }
 
+/// Finds the first type root before a byte boundary.
 fn first_type_node_before<'tree>(node: Node<'tree>, boundary_byte: usize) -> Option<Node<'tree>> {
     if node.start_byte() >= boundary_byte {
         return None;
@@ -246,6 +256,7 @@ fn first_type_node_before<'tree>(node: Node<'tree>, boundary_byte: usize) -> Opt
     None
 }
 
+/// Returns whether a tree-sitter kind can root a Dart type.
 fn is_type_root(kind: &str) -> bool {
     matches!(
         kind,
@@ -253,6 +264,7 @@ fn is_type_root(kind: &str) -> bool {
     )
 }
 
+/// Returns whether source is a known Dart built-in type.
 fn is_builtin(source: &str) -> bool {
     matches!(
         source,
