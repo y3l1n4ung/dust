@@ -30,7 +30,7 @@ fn discover_workspace_composes_root_config_and_library_scan() {
     );
     write_file(
         &package_root.join("lib/models/user.dart"),
-        "part 'user.g.dart';\n@Derive([ToString(), Eq()])\nclass User {}\n",
+        "import 'package:dust_dart/derive.dart';\npart 'user.g.dart';\n@Derive([ToString(), Eq()])\nclass User {}\n",
     );
 
     let nested = package_root.join("lib/models");

@@ -13,6 +13,9 @@ fn parse_surface_can_model_real_dart_library_shapes() {
             ParsedDirective::Import {
                 uri: "dart:convert".to_owned(),
                 prefix: None,
+                show: Vec::new(),
+                hide: Vec::new(),
+                is_deferred: false,
                 span: TextRange::new(0_u32, 22_u32),
             },
             ParsedDirective::Part {
@@ -28,6 +31,8 @@ fn parse_surface_can_model_real_dart_library_shapes() {
             superclass_name: Some("Entity".to_owned()),
             annotations: vec![ParsedAnnotation {
                 name: "Derive".to_owned(),
+                prefix: None,
+                qualified_name: "Derive".to_owned(),
                 arguments_source: Some("[ToString(), Serialize(), Deserialize()]".to_owned()),
                 parsed_arguments: None,
                 span: TextRange::new(44_u32, 84_u32),
@@ -37,6 +42,8 @@ fn parse_surface_can_model_real_dart_library_shapes() {
                     name: "name".to_owned(),
                     annotations: vec![ParsedAnnotation {
                         name: "SerDe".to_owned(),
+                        prefix: None,
+                        qualified_name: "SerDe".to_owned(),
                         arguments_source: Some("rename: 'full_name'".to_owned()),
                         parsed_arguments: None,
                         span: TextRange::new(95_u32, 121_u32),

@@ -24,6 +24,8 @@ fn lowers_parser_directives_into_dart_file_ir() {
                 name: Some("models.user".to_owned()),
                 annotations: vec![ParsedAnnotation {
                     name: "Deprecated".to_owned(),
+                    prefix: None,
+                    qualified_name: "Deprecated".to_owned(),
                     arguments_source: Some("('legacy')".to_owned()),
                     parsed_arguments: Some(ParsedAnnotationArguments {
                         positional: vec![ParsedAnnotationArgument {
@@ -45,6 +47,9 @@ fn lowers_parser_directives_into_dart_file_ir() {
             ParsedDirective::Import {
                 uri: "package:app/src/user.dart".to_owned(),
                 prefix: Some("user".to_owned()),
+                show: vec!["User".to_owned(), "UserId".to_owned()],
+                hide: vec!["InternalUser".to_owned()],
+                is_deferred: true,
                 span: TextRange::new(58_u32, 106_u32),
             },
             ParsedDirective::Export {
@@ -95,6 +100,9 @@ fn lowers_parser_directives_into_dart_file_ir() {
         Some(true)
     );
     assert_eq!(file.import_directives[0].prefix.as_deref(), Some("user"));
+    assert_eq!(file.import_directives[0].show, ["User", "UserId"]);
+    assert_eq!(file.import_directives[0].hide, ["InternalUser"]);
+    assert!(file.import_directives[0].is_deferred);
     assert_eq!(file.export_directives[0].uri, "src/public.dart");
     assert_eq!(file.part_directives[0].uri, "user.g.dart");
     assert_eq!(

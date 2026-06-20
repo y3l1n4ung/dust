@@ -16,37 +16,33 @@ pub(crate) fn collect_route_workspace_analysis(
 ) {
     for class in &library.classes {
         for annotation in &class.annotations {
-            match annotation.name.as_str() {
-                ROUTE => {
-                    if let Some(route) = parse_route_surface(annotation) {
-                        let fact = RouteFact {
-                            class_name: class.name.clone(),
-                            path: route.path.clone(),
-                            name: route.name.clone(),
-                            annotation: route,
-                            import_uri: import_uri(context),
-                            source_path: context.source_path.display().to_string(),
-                            imports: library_imports(context, library),
-                            params: route_params(class),
-                        };
-                        if let Ok(value) = serde_json::to_string(&fact) {
-                            analysis.add_string_set_value(ROUTES_ANALYSIS_KEY, value);
-                        }
-                    }
-                }
-                ROUTER => {
-                    let router = parse_router_surface(annotation);
-                    let fact = RouterFact {
+            if annotation.is_named(ROUTE) {
+                if let Some(route) = parse_route_surface(annotation) {
+                    let fact = RouteFact {
                         class_name: class.name.clone(),
-                        initial: router.initial,
-                        not_found: router.not_found,
+                        path: route.path.clone(),
+                        name: route.name.clone(),
+                        annotation: route,
+                        import_uri: import_uri(context),
                         source_path: context.source_path.display().to_string(),
+                        imports: library_imports(context, library),
+                        params: route_params(class),
                     };
                     if let Ok(value) = serde_json::to_string(&fact) {
-                        analysis.add_string_set_value(ROUTERS_ANALYSIS_KEY, value);
+                        analysis.add_string_set_value(ROUTES_ANALYSIS_KEY, value);
                     }
                 }
-                _ => {}
+            } else if annotation.is_named(ROUTER) {
+                let router = parse_router_surface(annotation);
+                let fact = RouterFact {
+                    class_name: class.name.clone(),
+                    initial: router.initial,
+                    not_found: router.not_found,
+                    source_path: context.source_path.display().to_string(),
+                };
+                if let Ok(value) = serde_json::to_string(&fact) {
+                    analysis.add_string_set_value(ROUTERS_ANALYSIS_KEY, value);
+                }
             }
         }
         let guard_fact = GuardFact {
@@ -159,7 +155,10 @@ fn library_imports(
 fn normalize_import_uri(context: WorkspaceAnalysisContext<'_>, uri: &str) -> Option<String> {
     if matches!(
         uri,
-        "package:flutter/material.dart" | "package:flutter/cupertino.dart"
+        "package:flutter/material.dart"
+            | "package:flutter/cupertino.dart"
+            | "package:dust_flutter/route.dart"
+            | "package:dust_flutter/dust_flutter.dart"
     ) {
         return None;
     }

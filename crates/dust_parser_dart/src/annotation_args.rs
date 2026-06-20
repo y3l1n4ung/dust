@@ -184,6 +184,8 @@ mod tests {
     fn constructor_names_prefer_structured_positional_arguments() {
         let annotation = ParsedAnnotation {
             name: "Derive".to_owned(),
+            prefix: None,
+            qualified_name: "Derive".to_owned(),
             arguments_source: Some("(ignored: Unknown())".to_owned()),
             parsed_arguments: Some(ParsedAnnotationArguments {
                 positional: vec![ParsedAnnotationArgument {
@@ -211,6 +213,8 @@ mod tests {
     fn constructor_names_fall_back_to_raw_positional_arguments() {
         let annotation = ParsedAnnotation {
             name: "Derive".to_owned(),
+            prefix: None,
+            qualified_name: "Derive".to_owned(),
             arguments_source: Some("([ToString(), Eq()])".to_owned()),
             parsed_arguments: None,
             span: TextRange::new(0_u32, 24_u32),

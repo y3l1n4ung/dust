@@ -10,5 +10,14 @@ pub(crate) fn write_file(path: &std::path::Path, contents: &str) {
 }
 
 pub(crate) fn test_annotations() -> SupportedAnnotations {
-    ["Derive", "ToString", "Client"].into_iter().collect()
+    [
+        "Client",
+        "Derive",
+        "Route",
+        "Router",
+        "ToString",
+        "ViewModel",
+    ]
+    .into_iter()
+    .collect()
 }

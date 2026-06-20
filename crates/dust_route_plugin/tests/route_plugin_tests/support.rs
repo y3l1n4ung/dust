@@ -162,8 +162,20 @@ pub(crate) fn parsed_library_with_annotations(
 }
 
 pub(crate) fn parsed_annotation(name: &str, args: &str) -> ParsedAnnotation {
+    parsed_qualified_annotation(None, name, args)
+}
+
+pub(crate) fn parsed_prefixed_annotation(prefix: &str, name: &str, args: &str) -> ParsedAnnotation {
+    parsed_qualified_annotation(Some(prefix), name, args)
+}
+
+fn parsed_qualified_annotation(prefix: Option<&str>, name: &str, args: &str) -> ParsedAnnotation {
     ParsedAnnotation {
         name: name.to_owned(),
+        prefix: prefix.map(str::to_owned),
+        qualified_name: prefix
+            .map(|prefix| format!("{prefix}.{name}"))
+            .unwrap_or_else(|| name.to_owned()),
         arguments_source: Some(args.to_owned()),
         parsed_arguments: None,
         span: TextRange::new(1_u32, 2_u32),

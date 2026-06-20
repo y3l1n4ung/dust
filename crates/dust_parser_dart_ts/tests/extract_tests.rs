@@ -1,3 +1,5 @@
+#[path = "extract_tests/annotations.rs"]
+mod annotations;
 #[path = "extract_tests/class_shapes.rs"]
 mod class_shapes;
 #[path = "extract_tests/constructors.rs"]

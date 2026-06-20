@@ -82,6 +82,18 @@ run_dust_check() {
   run cargo run --quiet -p dust_cli -- check --root "$root" "$@"
 }
 
+has_cargo_nextest() {
+  cargo nextest --version >/dev/null 2>&1
+}
+
+run_rust_tests() {
+  if has_cargo_nextest; then
+    run cargo nextest run --workspace
+  else
+    run cargo test --workspace --quiet
+  fi
+}
+
 DART_TEST_PACKAGES=(
   "packages/dust_dart"
   "packages/dust_db_sqlite3"
@@ -113,7 +125,7 @@ if ! has_cmd cargo; then
 fi
 
 echo "==> Rust tests"
-run cargo test --workspace --quiet
+run_rust_tests
 
 if [[ "$SCOPE" == rust ]]; then
   echo "==> Tests complete"

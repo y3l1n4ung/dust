@@ -113,7 +113,7 @@ pub(crate) fn resolve_declaration_annotations(
     configs: &mut Vec<ConfigApplicationIr>,
 ) {
     for annotation in annotations {
-        if annotation.name == "Derive" {
+        if annotation.is_named("Derive") {
             for name in annotation.positional_constructor_names() {
                 match catalog.resolve_trait(&name) {
                     Some(resolved) => push_resolved_symbol(

@@ -28,12 +28,12 @@ fn cli_build_renders_warning_details() {
             .contains("warning: unknown derive trait or config `UnknownTrait`")
     );
     assert!(run.stdout.contains(&format!(
-        "{}:2:",
+        "{}:3:",
         workspace.path().join("lib/user.dart").display()
     )));
     assert!(
         run.stdout
-            .contains("2 | @Derive([ToString(), UnknownTrait()])")
+            .contains("3 | @Derive([ToString(), UnknownTrait()])")
     );
     assert!(
         run.stdout

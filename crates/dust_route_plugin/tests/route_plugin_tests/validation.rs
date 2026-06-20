@@ -1,8 +1,10 @@
-use dust_ir::TypeIr;
+use dust_ir::{ImportIr, LibraryIr, TypeIr};
 use dust_plugin_api::DustPlugin;
 use dust_route_plugin::register_plugin;
 
-use super::support::{constructor_param, defaulted_param, library_with_classes, route_page_class};
+use super::support::{
+    constructor_param, defaulted_param, library_with_classes, route_page_class, span,
+};
 
 #[test]
 fn accepts_url_primitive_route_params() {
@@ -145,9 +147,84 @@ fn rejects_duplicate_paths_and_names() {
     );
 }
 
+#[test]
+fn accepts_visible_route_guard_from_show_import() {
+    let plugin = register_plugin();
+    let class = route_page_class(
+        "AdminPage",
+        "('/admin', name: 'admin', guards: [AuthGuard])",
+        Vec::new(),
+    );
+    let mut library = library_with_classes(vec![class]);
+    add_import(&mut library, "package:app/guards.dart", &["AuthGuard"], &[]);
+
+    let diagnostics = plugin.validate(&library);
+
+    assert!(diagnostics.is_empty(), "{diagnostics:?}");
+}
+
+#[test]
+fn rejects_route_guard_missing_from_show_import() {
+    let plugin = register_plugin();
+    let class = route_page_class(
+        "AdminPage",
+        "('/admin', name: 'admin', guards: [AuthGuard])",
+        Vec::new(),
+    );
+    let mut library = library_with_classes(vec![class]);
+    add_import(
+        &mut library,
+        "package:app/guards.dart",
+        &["BillingGuard"],
+        &[],
+    );
+
+    let diagnostics = plugin.validate(&library);
+
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec![
+            "route guard `AuthGuard` on `AdminPage` must be declared in the same library or imported"
+        ]
+    );
+}
+
+#[test]
+fn rejects_route_guard_hidden_by_import() {
+    let plugin = register_plugin();
+    let class = route_page_class(
+        "AdminPage",
+        "('/admin', name: 'admin', guards: [AuthGuard])",
+        Vec::new(),
+    );
+    let mut library = library_with_classes(vec![class]);
+    add_import(&mut library, "package:app/guards.dart", &[], &["AuthGuard"]);
+
+    let diagnostics = plugin.validate(&library);
+
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec![
+            "route guard `AuthGuard` on `AdminPage` must be declared in the same library or imported"
+        ]
+    );
+}
+
 fn diagnostic_messages(diagnostics: &[dust_diagnostics::Diagnostic]) -> Vec<&str> {
     diagnostics
         .iter()
         .map(|diagnostic| diagnostic.message.as_str())
         .collect()
+}
+
+fn add_import(library: &mut LibraryIr, uri: &str, show: &[&str], hide: &[&str]) {
+    library.imports.push(uri.to_owned());
+    library.import_directives.push(ImportIr {
+        uri: uri.to_owned(),
+        prefix: None,
+        show: show.iter().map(|name| (*name).to_owned()).collect(),
+        hide: hide.iter().map(|name| (*name).to_owned()).collect(),
+        is_deferred: false,
+        span: span(0, 0),
+    });
 }

@@ -6,7 +6,41 @@ pub(crate) fn write_file(path: &std::path::Path, contents: &str) {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).expect("create parent dirs");
     }
-    fs::write(path, contents).expect("write file");
+    fs::write(path, fixture_contents(path, contents)).expect("write file");
+}
+
+fn fixture_contents(path: &std::path::Path, contents: &str) -> String {
+    if path.extension().and_then(|ext| ext.to_str()) != Some("dart")
+        || contents.contains("package:dust_dart/")
+        || contents.contains("package:dust_flutter/")
+    {
+        return contents.to_owned();
+    }
+
+    let Some(import) = fixture_dust_import(contents) else {
+        return contents.to_owned();
+    };
+
+    format!("{import}{contents}")
+}
+
+fn fixture_dust_import(contents: &str) -> Option<&'static str> {
+    if contents.contains("@Route") || contents.contains("@Router") {
+        Some("import 'package:dust_flutter/route.dart';\n")
+    } else if contents.contains("@Derive")
+        || contents.contains("@ToString")
+        || contents.contains("@Debug")
+        || contents.contains("@Eq")
+        || contents.contains("@CopyWith")
+        || contents.contains("@Validate")
+        || contents.contains("@SerDe")
+        || contents.contains("Serialize()")
+        || contents.contains("Deserialize()")
+    {
+        Some("import 'package:dust_dart/derive.dart';\n")
+    } else {
+        None
+    }
 }
 
 pub(crate) fn make_workspace() -> tempfile::TempDir {
