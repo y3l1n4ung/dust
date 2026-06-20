@@ -12,12 +12,14 @@ use super::{
     },
 };
 
+/// Renders the per-class sentinel helper type and value.
 pub(super) fn render_sentinel_helper(class_name: &str, value_name: &str) -> String {
     format!(
         "final class {class_name} {{\n  const {class_name}();\n}}\n\nconst {value_name} = {class_name}();"
     )
 }
 
+/// Renders the generated public `copyWith` getter for a class.
 pub(super) fn render_copy_with_getter(
     class: &ClassIr,
     names: &CopyWithNames,
@@ -36,6 +38,7 @@ pub(super) fn render_copy_with_getter(
     )
 }
 
+/// Renders the copyWith callable interface and implementation types.
 pub(super) fn render_copy_with_support(
     class: &ClassIr,
     names: &CopyWithNames,
@@ -80,6 +83,7 @@ pub(super) fn render_copy_with_support(
     )
 }
 
+/// Renders the public call parameters for the copyWith interface.
 fn render_interface_params(class: &ClassIr) -> String {
     render_call_params(class, |field| {
         format!(
@@ -90,6 +94,7 @@ fn render_interface_params(class: &ClassIr) -> String {
     })
 }
 
+/// Renders implementation call parameters with sentinel defaults.
 fn render_impl_params(class: &ClassIr, names: &CopyWithNames) -> String {
     render_call_params(class, |field| {
         let default = if needs_copy_with_sentinel(&field.ty) {
@@ -110,6 +115,7 @@ fn render_impl_params(class: &ClassIr, names: &CopyWithNames) -> String {
     })
 }
 
+/// Renders named call parameters for an interface or implementation.
 fn render_call_params(class: &ClassIr, render_param: impl Fn(&FieldIr) -> String) -> String {
     if class.fields.is_empty() {
         return String::new();
@@ -123,6 +129,7 @@ fn render_call_params(class: &ClassIr, render_param: impl Fn(&FieldIr) -> String
     params
 }
 
+/// Wraps the constructor call with the generated return callback.
 fn render_then_return(constructor_call: &str, then_name: &str) -> String {
     let mut out = format!("    return {then_name}(\n");
     for line in constructor_call.lines() {
@@ -134,6 +141,7 @@ fn render_then_return(constructor_call: &str, then_name: &str) -> String {
     out
 }
 
+/// Renders nested copyWith getters on the public interface.
 fn render_nested_interface_getters(class: &ClassIr, plan: &CopyWithPlan) -> String {
     let mut out = String::new();
     for field in &class.fields {
@@ -153,6 +161,7 @@ fn render_nested_interface_getters(class: &ClassIr, plan: &CopyWithPlan) -> Stri
     out
 }
 
+/// Renders nested copyWith getter implementations.
 fn render_nested_impl_getters(
     class: &ClassIr,
     names: &CopyWithNames,
@@ -205,6 +214,7 @@ fn render_nested_impl_getters(
     out
 }
 
+/// Renders Dartdoc for the generated copyWith getter.
 fn render_getter_docs(class: &ClassIr, plan: &CopyWithPlan) -> String {
     let receiver = lower_first(&class.name);
     let mut docs = format!(
@@ -261,13 +271,17 @@ fn render_getter_docs(class: &ClassIr, plan: &CopyWithPlan) -> String {
     docs
 }
 
+/// Resolves the nested copyWith target for a field.
 fn nested_target<'a>(field: &FieldIr, plan: &'a CopyWithPlan) -> Option<NestedTarget<'a>> {
     let (name, nullable) = nested_target_type(&field.ty)?;
     let names = plan.names_for(name)?;
     Some(NestedTarget { names, nullable })
 }
 
+/// Nested copyWith target metadata for one field.
 struct NestedTarget<'a> {
+    /// Generated names for the nested target class.
     names: &'a CopyWithNames,
+    /// Whether the source field is nullable.
     nullable: bool,
 }

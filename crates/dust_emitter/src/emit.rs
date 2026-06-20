@@ -114,6 +114,7 @@ pub fn hash_output_set<'a>(outputs: impl IntoIterator<Item = (&'a Path, &'a str)
     hash
 }
 
+/// Updates a stable FNV-1a hash with raw bytes.
 fn update_hash_bytes(hash: &mut u64, bytes: &[u8]) {
     for byte in bytes {
         *hash ^= u64::from(*byte);
@@ -121,6 +122,7 @@ fn update_hash_bytes(hash: &mut u64, bytes: &[u8]) {
     }
 }
 
+/// Returns true when a primary `.g.dart` file should be emitted.
 fn should_emit_primary(
     library: &DartFileIr,
     has_contributions: bool,
@@ -139,6 +141,7 @@ fn should_emit_primary(
         || library.enums.iter().any(|enum_ir| enum_ir.serde.is_some())
 }
 
+/// Extracts the first plugin-provided primary source override.
 fn take_primary_source_override(
     contributions: &mut [dust_plugin_api::PluginContribution],
 ) -> Option<String> {
@@ -147,6 +150,7 @@ fn take_primary_source_override(
         .find_map(|contribution| contribution.primary_source.take())
 }
 
+/// Extracts and formats all plugin-provided auxiliary outputs.
 fn collect_auxiliary_outputs(
     contributions: &mut [dust_plugin_api::PluginContribution],
 ) -> Vec<AuxiliaryEmitOutput> {
@@ -157,6 +161,7 @@ fn collect_auxiliary_outputs(
         .collect()
 }
 
+/// Assembles standard Dust generated source from merged plugin sections.
 fn assemble_source(library: &DartFileIr, plan: &SymbolPlan, merged: &MergedSections) -> String {
     let source_name = Path::new(&library.source_path)
         .file_name()
@@ -206,6 +211,7 @@ fn assemble_source(library: &DartFileIr, plan: &SymbolPlan, merged: &MergedSecti
     writer.finish()
 }
 
+/// Renders reserved helper declarations required by the symbol plan.
 fn render_reserved_helpers(plan: &SymbolPlan) -> Vec<String> {
     let mut helpers = Vec::new();
 
@@ -216,6 +222,7 @@ fn render_reserved_helpers(plan: &SymbolPlan) -> Vec<String> {
     helpers
 }
 
+/// Formats a plugin auxiliary output contribution.
 fn format_auxiliary_output(output: AuxiliaryOutputContribution) -> AuxiliaryEmitOutput {
     AuxiliaryEmitOutput {
         output_path: output.output_path,
@@ -223,6 +230,7 @@ fn format_auxiliary_output(output: AuxiliaryOutputContribution) -> AuxiliaryEmit
     }
 }
 
+/// Renders the generated mixin block for one source class.
 fn render_mixin_block(writer: &mut DartWriter, class_name: &str, members: &[String]) {
     let mixin_name = format!("_${class_name}");
     let mut block = String::with_capacity(
@@ -241,6 +249,7 @@ fn render_mixin_block(writer: &mut DartWriter, class_name: &str, members: &[Stri
     writer.raw_block(&block);
 }
 
+/// Appends a generated mixin member with two-space indentation.
 fn indent_mixin_member_into(out: &mut String, member: &str) {
     for (index, line) in member.lines().enumerate() {
         if index > 0 {

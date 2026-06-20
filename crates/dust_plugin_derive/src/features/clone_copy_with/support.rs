@@ -1,6 +1,7 @@
 use dust_dart_emit::{DART_DYNAMIC, DART_OBJECT_NULLABLE, OBJECT_NULLABLE_TYPES};
 use dust_ir::TypeIr;
 
+/// Renders the public call parameter type for the copyWith interface.
 pub(super) fn copy_with_interface_param_type(ty: &TypeIr) -> String {
     match ty {
         TypeIr::Builtin { kind, .. } => nullable_parameter_type(kind.as_str().to_owned()),
@@ -12,10 +13,12 @@ pub(super) fn copy_with_interface_param_type(ty: &TypeIr) -> String {
     }
 }
 
+/// Renders the implementation parameter type that can carry the sentinel.
 pub(super) fn copy_with_impl_param_type() -> &'static str {
     DART_OBJECT_NULLABLE
 }
 
+/// Renders the constructor value expression for one copyWith field.
 pub(super) fn copy_with_value_expr(
     field_name: &str,
     ty: &TypeIr,
@@ -35,10 +38,12 @@ pub(super) fn copy_with_value_expr(
     format!("{field_name} == null ? {self_field} : {replacement}")
 }
 
+/// Returns true when omitted and explicit null need a sentinel.
 pub(super) fn needs_copy_with_sentinel(ty: &TypeIr) -> bool {
     ty.is_nullable() || matches!(ty, TypeIr::Dynamic | TypeIr::Unknown)
 }
 
+/// Renders a replacement expression with the required cast.
 fn replacement_expr(field_name: &str, ty: &TypeIr) -> String {
     if matches!(ty, TypeIr::Dynamic) {
         field_name.to_owned()
@@ -47,6 +52,7 @@ fn replacement_expr(field_name: &str, ty: &TypeIr) -> String {
     }
 }
 
+/// Renders the cast type used by copyWith replacement expressions.
 fn replacement_cast_type(ty: &TypeIr) -> String {
     match ty {
         TypeIr::Builtin { kind, nullable } => nullable_type(kind.as_str().to_owned(), *nullable),
@@ -58,6 +64,7 @@ fn replacement_cast_type(ty: &TypeIr) -> String {
     }
 }
 
+/// Applies nullability to a rendered type.
 fn nullable_type(rendered: String, nullable: bool) -> String {
     if nullable {
         nullable_parameter_type(rendered)
@@ -66,6 +73,7 @@ fn nullable_type(rendered: String, nullable: bool) -> String {
     }
 }
 
+/// Ensures a rendered type can accept `null` at the call site.
 fn nullable_parameter_type(rendered: String) -> String {
     if rendered.ends_with('?') {
         rendered

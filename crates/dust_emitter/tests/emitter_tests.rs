@@ -1,3 +1,5 @@
+//! Integration tests for deterministic emitter assembly and writes.
+
 #[path = "emitter_tests/support.rs"]
 mod support;
 

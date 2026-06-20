@@ -1,8 +1,10 @@
 use dust_parser_dart::{ParsedAnnotation, ParsedClassSurface, ParsedDartFileSurface};
 use dust_plugin_api::WorkspaceAnalysisBuilder;
 
+/// Workspace analysis key for classes that can provide copyWith support.
 pub(crate) const COPYABLE_TYPES_ANALYSIS_KEY: &str = "dust_plugin_derive.copyable_types";
 
+/// Collects class names that derive `CopyWith`.
 pub(crate) fn collect_workspace_analysis(
     library: &ParsedDartFileSurface,
     analysis: &mut WorkspaceAnalysisBuilder,
@@ -14,10 +16,12 @@ pub(crate) fn collect_workspace_analysis(
     }
 }
 
+/// Returns true when a parsed class requests `CopyWith`.
 fn class_has_copy_with(class: &ParsedClassSurface) -> bool {
     class.annotations.iter().any(annotation_has_copy_with)
 }
 
+/// Returns true when a parsed annotation requests `CopyWith`.
 fn annotation_has_copy_with(annotation: &ParsedAnnotation) -> bool {
     if annotation.is_named("CopyWith") {
         return true;

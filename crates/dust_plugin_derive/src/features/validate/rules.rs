@@ -15,6 +15,7 @@ use crate::features::{
     names::{library_declaration_names, upper_first},
 };
 
+/// Validates `Validate` derive usage for one class.
 pub(crate) fn validate_validate(library: &DartFileIr, class: &ClassIr) -> Vec<Diagnostic> {
     if !has_validate_trait(class) {
         return Vec::new();
@@ -39,6 +40,7 @@ pub(crate) fn validate_validate(library: &DartFileIr, class: &ClassIr) -> Vec<Di
     diagnostics
 }
 
+/// Ensures generated public validator helper names do not collide.
 fn validate_public_validator_names(
     library: &DartFileIr,
     class: &ClassIr,
@@ -64,6 +66,7 @@ fn validate_public_validator_names(
     }
 }
 
+/// Validates one field's parsed validation config against its type.
 fn validate_field_config(
     library: &DartFileIr,
     class: &ClassIr,
@@ -104,6 +107,7 @@ fn validate_field_config(
     }
 }
 
+/// Validates raw `@Validate(...)` argument shapes.
 fn validate_config_shape(config: &ConfigApplicationIr, diagnostics: &mut Vec<Diagnostic>) {
     let Some(values) = parse_config_named_values(config) else {
         diagnostics.push(Diagnostic::error("invalid `@Validate(...)` arguments"));
@@ -145,6 +149,7 @@ fn validate_config_shape(config: &ConfigApplicationIr, diagnostics: &mut Vec<Dia
     }
 }
 
+/// Validates a `Length(...)` rule payload.
 fn validate_length_record(value: &AnnotationValue, diagnostics: &mut Vec<Diagnostic>) {
     let Some(values) = validate_constructor_shape("length", "Length", value, diagnostics) else {
         return;
@@ -176,6 +181,7 @@ fn validate_length_record(value: &AnnotationValue, diagnostics: &mut Vec<Diagnos
     }
 }
 
+/// Validates a `Range(...)` rule payload.
 fn validate_range_record(value: &AnnotationValue, diagnostics: &mut Vec<Diagnostic>) {
     let Some(values) = validate_constructor_shape("range", "Range", value, diagnostics) else {
         return;
@@ -200,6 +206,7 @@ fn validate_range_record(value: &AnnotationValue, diagnostics: &mut Vec<Diagnost
     }
 }
 
+/// Validates a constructor-shaped annotation argument.
 fn validate_constructor_shape<'a>(
     name: &str,
     constructor: &str,
@@ -231,6 +238,7 @@ fn validate_constructor_shape<'a>(
     Some(values)
 }
 
+/// Parses and validates an integer rule value.
 fn validate_integer(
     option: &str,
     key: &str,
@@ -254,6 +262,7 @@ fn validate_integer(
     }
 }
 
+/// Parses and validates a numeric rule value.
 fn validate_number(
     option: &str,
     key: &str,
@@ -277,6 +286,7 @@ fn validate_number(
     }
 }
 
+/// Validates that a must-match target exists with matching type.
 fn validate_must_match(
     class: &ClassIr,
     field: &FieldIr,
@@ -301,6 +311,7 @@ fn validate_must_match(
     }
 }
 
+/// Validates that nested validation targets another `Validate` class.
 fn validate_nested(library: &DartFileIr, field: &FieldIr, diagnostics: &mut Vec<Diagnostic>) {
     let Some(name) = field.ty.name() else {
         diagnostics.push(Diagnostic::error(format!(
@@ -319,6 +330,7 @@ fn validate_nested(library: &DartFileIr, field: &FieldIr, diagnostics: &mut Vec<
     }
 }
 
+/// Returns true when a type supports range validation.
 fn is_numeric(ty: &TypeIr) -> bool {
     ty.is_named(DART_INT) || ty.is_named(DART_DOUBLE) || ty.is_named(DART_NUM)
 }

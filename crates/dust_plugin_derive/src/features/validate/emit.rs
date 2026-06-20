@@ -8,68 +8,117 @@ use super::rule_snippets::rule_line;
 use super::type_source::{input_kind, render_type};
 use crate::features::names::{NameAllocator, library_declaration_names, upper_first};
 
+/// Template context for a class validation extension.
 #[derive(Serialize)]
 struct ValidateContext<'a> {
+    /// Source class name.
     class_name: &'a str,
+    /// Generated private validation extension name.
     extension_name: String,
+    /// Local receiver variable name.
     self_name: String,
+    /// Local validation error list variable name.
     errors_name: String,
+    /// Local validation result variable name.
     result_name: String,
+    /// Local error list name used by `validateOrThrow`.
     invalid_errors_name: String,
+    /// Field validation contexts.
     fields: Vec<FieldContext>,
 }
 
+/// Template context for one validated field.
 #[derive(Clone, Serialize)]
 struct FieldContext {
+    /// Field name.
     name: String,
+    /// Dart string literal for the field name.
     literal: String,
+    /// Local field value variable name.
     value_name: String,
+    /// Local receiver variable name.
     self_name: String,
+    /// Local validation error list variable name.
     errors_name: String,
+    /// Local parsed TextFormField input variable name.
     parsed_name: String,
+    /// Local nested validation result variable name.
     nested_validation_name: String,
+    /// Local nested errors variable name.
     nested_errors_name: String,
+    /// Local nested error loop variable name.
     nested_error_name: String,
+    /// Local custom validator result variable name.
     custom_error_name: String,
+    /// Private validation helper method name.
     helper_name: String,
+    /// Private TextFormField input helper method name.
     input_helper_name: String,
+    /// Public top-level TextFormField validator helper name.
     public_input_helper_name: String,
+    /// Private validation helper signature.
     helper_signature: String,
+    /// Private input helper signature.
     input_signature: String,
+    /// Public input helper signature.
     public_input_signature: String,
+    /// Rendered Dart field type source.
     type_source: String,
+    /// Whether the field type is nullable.
     nullable: bool,
+    /// Whether TextFormField input validation can be generated.
     can_validate_input: bool,
+    /// Parser kind for TextFormField input validation.
     input_kind: Option<&'static str>,
+    /// Error message used when parsing input fails.
     parse_error_message: String,
+    /// Whether validation rules need the receiver.
     uses_self: bool,
+    /// Parsed validation configs for the field.
     configs: Vec<ConfigContext>,
 }
 
+/// Template context for one `@Validate` config.
 #[derive(Clone, Serialize)]
 struct ConfigContext {
+    /// Whether the field is nullable.
     nullable: bool,
+    /// Optional required-field error message.
     required_message: Option<String>,
+    /// Rule contexts rendered for this config.
     rules: Vec<RuleContext>,
 }
 
+/// Template context for one validation rule.
 #[derive(Clone, Serialize)]
 struct RuleContext {
+    /// Rule kind consumed by the rule snippet renderer.
     kind: &'static str,
+    /// Dart string literal for the error message.
     message: String,
+    /// Integer rule value.
     int_value: Option<i64>,
+    /// Numeric rule value source.
     number_value: Option<String>,
+    /// Exact length value.
     equal: Option<i64>,
+    /// Dart string literal pattern.
     pattern: Option<String>,
+    /// Other field name for must-match rules.
     other: Option<String>,
+    /// Custom validator function source.
     custom: Option<String>,
 }
 
+/// Generated validation mixin member and support type source.
 pub(crate) struct ValidateEmission {
+    /// Mixin member inserted into the source class mixin.
     pub(crate) mixin_member: String,
+    /// Private extension and public validator helper source.
     pub(crate) support_type: String,
 }
 
+/// Emits validation support for a class that derives `Validate`.
 pub(crate) fn emit_validate(_library: &DartFileIr, class: &ClassIr) -> Option<ValidateEmission> {
     if !has_validate_trait(class) {
         return None;
@@ -104,6 +153,7 @@ pub(crate) fn emit_validate(_library: &DartFileIr, class: &ClassIr) -> Option<Va
     })
 }
 
+/// Renders a validation template with the rule-line helper registered.
 fn render_validate_template(
     context: &ValidateContext<'_>,
     name: &str,
@@ -128,6 +178,7 @@ fn render_validate_template(
     collapse_excess_blank_lines(rendered)
 }
 
+/// Collapses accidental triple blank lines after template rendering.
 fn collapse_excess_blank_lines(mut value: String) -> String {
     while value.contains("\n\n\n") {
         value = value.replace("\n\n\n", "\n\n");
@@ -135,6 +186,7 @@ fn collapse_excess_blank_lines(mut value: String) -> String {
     value
 }
 
+/// Builds template contexts for all validated fields on a class.
 fn render_fields(class: &ClassIr) -> Vec<FieldContext> {
     field_validations(class)
         .into_iter()
@@ -214,6 +266,7 @@ fn render_fields(class: &ClassIr) -> Vec<FieldContext> {
         .collect()
 }
 
+/// Renders the private field validation helper signature.
 fn helper_signature(
     helper_name: &str,
     class_name: &str,
@@ -234,6 +287,7 @@ fn helper_signature(
     }
 }
 
+/// Renders the private TextFormField input helper signature.
 fn input_signature(
     input_helper_name: &str,
     class_name: &str,
@@ -249,6 +303,7 @@ fn input_signature(
     }
 }
 
+/// Renders the public TextFormField validator helper signature.
 fn public_input_signature(
     public_input_helper_name: &str,
     class_name: &str,
@@ -261,6 +316,7 @@ fn public_input_signature(
     }
 }
 
+/// Renders the parse-error message for numeric TextFormField inputs.
 fn parse_error_message(configs: &[ValidateConfig]) -> String {
     let message = configs
         .iter()
@@ -269,6 +325,7 @@ fn parse_error_message(configs: &[ValidateConfig]) -> String {
     dart_string_literal(message)
 }
 
+/// Builds a template context for one validation config.
 fn render_config(field: &FieldIr, config: &ValidateConfig) -> ConfigContext {
     ConfigContext {
         nullable: field.ty.is_nullable(),
@@ -279,6 +336,7 @@ fn render_config(field: &FieldIr, config: &ValidateConfig) -> ConfigContext {
     }
 }
 
+/// Builds all rule contexts for a validation config.
 fn render_rules(config: &ValidateConfig) -> Vec<RuleContext> {
     let mut rules = Vec::new();
     if config.email {
@@ -327,6 +385,7 @@ fn render_rules(config: &ValidateConfig) -> Vec<RuleContext> {
     rules
 }
 
+/// Builds a base rule context for a rule kind.
 fn rule(kind: &'static str, config: &ValidateConfig) -> RuleContext {
     RuleContext {
         kind,
@@ -340,6 +399,7 @@ fn rule(kind: &'static str, config: &ValidateConfig) -> RuleContext {
     }
 }
 
+/// Returns the fallback message for a generated validation rule.
 fn fallback(kind: &str) -> &'static str {
     match kind {
         "email" => "Invalid email",
@@ -357,36 +417,43 @@ fn fallback(kind: &str) -> &'static str {
     }
 }
 
+/// Returns the configured message or the rule fallback.
 fn message<'a>(config: &'a ValidateConfig, fallback: &'a str) -> &'a str {
     config.message.as_deref().unwrap_or(fallback)
 }
 
 impl RuleContext {
+    /// Attaches an integer value to a rule context.
     fn with_int_value(mut self, value: i64) -> Self {
         self.int_value = Some(value);
         self
     }
 
+    /// Attaches a numeric source value to a rule context.
     fn with_number_value(mut self, value: String) -> Self {
         self.number_value = Some(value);
         self
     }
 
+    /// Attaches an exact length value to a rule context.
     fn with_equal(mut self, value: i64) -> Self {
         self.equal = Some(value);
         self
     }
 
+    /// Attaches a Dart string literal pattern to a rule context.
     fn with_pattern(mut self, value: &str) -> Self {
         self.pattern = Some(dart_string_literal(value));
         self
     }
 
+    /// Attaches another field name to a must-match rule context.
     fn with_other(mut self, value: &str) -> Self {
         self.other = Some(value.to_owned());
         self
     }
 
+    /// Attaches a custom validator function to a rule context.
     fn with_custom(mut self, value: &str) -> Self {
         self.custom = Some(value.to_owned());
         self

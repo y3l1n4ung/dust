@@ -8,6 +8,7 @@ use crate::features::{
     validate::emit_validate,
 };
 
+/// Emits all derive-generated mixin members and support types for a library.
 pub(crate) fn emit_library(library: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
     let mut contribution = PluginContribution::default();
     let equality = plan_equality(library);

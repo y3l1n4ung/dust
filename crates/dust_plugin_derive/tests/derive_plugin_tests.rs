@@ -1,3 +1,5 @@
+//! Integration tests for derive plugin validation and generated support.
+
 #[path = "derive_plugin_tests/support.rs"]
 mod support;
 

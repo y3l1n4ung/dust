@@ -2,6 +2,7 @@ use std::{borrow::Cow, fmt::Write};
 
 use dust_ir::{ClassIr, ConstructorIr, ParamKind};
 
+/// Finds a constructor that can initialize every field.
 pub(crate) fn find_clone_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
     class.constructors.iter().find(|constructor| {
         class.fields.iter().all(|field| {
@@ -13,6 +14,7 @@ pub(crate) fn find_clone_constructor(class: &ClassIr) -> Option<&ConstructorIr> 
     })
 }
 
+/// Renders a constructor call with one argument per line.
 pub(crate) fn build_constructor_call_multiline(
     class: &ClassIr,
     constructor: &ConstructorIr,
@@ -45,6 +47,7 @@ pub(crate) fn build_constructor_call_multiline(
     Some(out)
 }
 
+/// Renders one positional constructor argument.
 fn render_constructor_arg(out: &mut String, arg: &str) {
     let mut lines = arg.lines();
     let Some(first) = lines.next() else {
@@ -62,6 +65,7 @@ fn render_constructor_arg(out: &mut String, arg: &str) {
     out.push('\n');
 }
 
+/// Renders a potentially multiline constructor argument value.
 fn render_arg_value(out: &mut String, value: &str, continuation_indent: &str) {
     let mut lines = value.lines();
     let Some(first) = lines.next() else {
@@ -75,6 +79,7 @@ fn render_arg_value(out: &mut String, value: &str, continuation_indent: &str) {
     }
 }
 
+/// Renders the Dart constructor target name.
 fn constructor_name(class: &ClassIr, constructor: &ConstructorIr) -> String {
     match &constructor.name {
         Some(name) => format!("{}.{}", class.name, name),
