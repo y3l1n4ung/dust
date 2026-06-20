@@ -1,3 +1,5 @@
+//! Integration tests for plugin registry validation and emission execution.
+
 #[path = "support/library.rs"]
 mod library;
 

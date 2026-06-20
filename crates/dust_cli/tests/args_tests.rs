@@ -1,3 +1,5 @@
+//! Integration tests for Dust CLI argument parsing.
+
 use std::path::PathBuf;
 
 use clap::error::ErrorKind;

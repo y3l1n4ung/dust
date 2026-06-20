@@ -1,3 +1,5 @@
+//! Integration performance checks for the Dust CLI benchmark fixture.
+
 use std::{
     env, fs,
     path::{Path, PathBuf},

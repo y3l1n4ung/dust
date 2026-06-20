@@ -1,3 +1,5 @@
+//! Integration tests for resolver symbol ownership and annotation resolution.
+
 use dust_ir::{AnnotationValueIr, SymbolId};
 use dust_parser_dart::{ParseBackend, ParseOptions};
 use dust_parser_dart_ts::TreeSitterDartBackend;

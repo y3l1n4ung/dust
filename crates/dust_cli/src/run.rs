@@ -33,6 +33,7 @@ pub fn run_cli(args: impl IntoIterator<Item = impl Into<String>>) -> CliRun {
     run_parsed_cli(parse_cli_args(args))
 }
 
+/// Runs a parsed CLI result or converts Clap parse errors to CLI output.
 fn run_parsed_cli(parsed: Result<ParsedCli, clap::Error>) -> CliRun {
     let parsed = match parsed {
         Ok(parsed) => parsed,
@@ -58,6 +59,7 @@ fn run_parsed_cli(parsed: Result<ParsedCli, clap::Error>) -> CliRun {
     }
 }
 
+/// Executes one parsed CLI command through the driver.
 fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandResult {
     let cwd = command_root(&parsed);
 
@@ -100,6 +102,7 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
     }
 }
 
+/// Converts parsed DB flags into driver DB request options.
 fn db_options(parsed: &ParsedCli) -> DbRequestOptions {
     DbRequestOptions {
         only_db: parsed.options.db,
@@ -107,6 +110,7 @@ fn db_options(parsed: &ParsedCli) -> DbRequestOptions {
     }
 }
 
+/// Routes rendered output to stdout for success and stderr otherwise.
 fn split_output(exit_code: i32, rendered: String) -> (String, String) {
     if exit_code == ExitCode::Success as i32 {
         return (rendered, String::new());
@@ -115,6 +119,7 @@ fn split_output(exit_code: i32, rendered: String) -> (String, String) {
     (String::new(), rendered)
 }
 
+/// Resolves the command root, defaulting to the current directory.
 fn command_root(parsed: &ParsedCli) -> PathBuf {
     parsed
         .options
@@ -123,6 +128,7 @@ fn command_root(parsed: &ParsedCli) -> PathBuf {
         .unwrap_or_else(|| env::current_dir().expect("current directory must be available"))
 }
 
+/// Converts a Clap error into process output and exit code.
 fn cli_error_output(error: clap::Error) -> CliRun {
     let output = ensure_trailing_newline(error.to_string());
     match error.kind() {
@@ -139,6 +145,7 @@ fn cli_error_output(error: clap::Error) -> CliRun {
     }
 }
 
+/// Ensures Clap-rendered output ends with exactly at least one newline.
 fn ensure_trailing_newline(mut text: String) -> String {
     if !text.ends_with('\n') {
         text.push('\n');

@@ -1,3 +1,5 @@
+//! Integration tests that model Dart examples with Dust IR structures.
+
 use dust_ir::{
     ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, FieldIr, LibraryIr, ParamKind, SpanIr,
     SymbolId, TraitApplicationIr, TypeIr,

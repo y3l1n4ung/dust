@@ -1,3 +1,5 @@
+//! Integration tests for Dust IR helpers and compatibility surfaces.
+
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
     AnnotationIr, AnnotationValueIr, BuiltinType, ClassIr, ClassKindIr, ConfigApplicationIr,
