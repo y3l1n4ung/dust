@@ -7,16 +7,19 @@ use crate::plugin::{
     model::{DbDriver, SqlxConfig, SqlxRenameRule},
 };
 
+/// Returns the short annotation name for a resolved symbol.
 pub(crate) fn config_name(symbol: &SymbolId) -> &str {
     short_symbol_name(&symbol.0)
 }
 
+/// Returns true when an annotation list contains the expected short name.
 pub(crate) fn has_config(configs: &[ConfigApplicationIr], expected: &str) -> bool {
     configs
         .iter()
         .any(|config| config_name(&config.symbol) == expected)
 }
 
+/// Parses all `@Sqlx` configs attached to a class or field.
 pub(crate) fn sqlx_config(configs: &[ConfigApplicationIr]) -> SqlxConfig {
     let mut out = SqlxConfig::default();
     for config in configs {
@@ -44,6 +47,7 @@ pub(crate) fn sqlx_config(configs: &[ConfigApplicationIr]) -> SqlxConfig {
     out
 }
 
+/// Resolves the final SQL column name for a row field.
 pub(crate) fn effective_column_name(
     class_config: &SqlxConfig,
     field_name: &str,
@@ -58,11 +62,15 @@ pub(crate) fn effective_column_name(
     }
 }
 
+/// Parsed database annotation options.
 pub(super) struct DatabaseConfig {
+    /// Database driver selected by the annotation.
     pub(super) driver: DbDriver,
+    /// Migration directory configured by the annotation.
     pub(super) migrations: String,
 }
 
+/// Parses `@Database` or `@SqlxDatabase` options.
 pub(super) fn parse_database_config(config: &ConfigApplicationIr) -> Option<DatabaseConfig> {
     let mut driver = DbDriver::Sqlite3;
     let mut migrations = "./migrations".to_owned();
@@ -86,14 +94,17 @@ pub(super) fn parse_database_config(config: &ConfigApplicationIr) -> Option<Data
     Some(DatabaseConfig { driver, migrations })
 }
 
+/// Returns true for database class annotation names.
 pub(super) fn is_database_config(name: &str) -> bool {
     matches!(name, DATABASE | SQLX_DATABASE)
 }
 
+/// Returns true for DAO class annotation names.
 pub(super) fn is_dao_config(name: &str) -> bool {
     matches!(name, DAO | SQLX_DAO)
 }
 
+/// Converts SQLx rename rules to the shared serde rename rule enum.
 fn rename_to_serde(rule: SqlxRenameRule) -> SerdeRenameRuleIr {
     match rule {
         SqlxRenameRule::Lower => SerdeRenameRuleIr::LowerCase,
@@ -107,6 +118,7 @@ fn rename_to_serde(rule: SqlxRenameRule) -> SerdeRenameRuleIr {
     }
 }
 
+/// Parses a database driver enum member from source text.
 fn parse_driver(source: &str) -> Option<DbDriver> {
     match source.trim().rsplit('.').next()? {
         "sqlite3" => Some(DbDriver::Sqlite3),
@@ -115,6 +127,7 @@ fn parse_driver(source: &str) -> Option<DbDriver> {
     }
 }
 
+/// Parses a database type enum member from source text.
 fn parse_database_type(source: &str) -> Option<DbDriver> {
     match source.trim().rsplit('.').next()? {
         "sqlite" | "sqlite3" => Some(DbDriver::Sqlite3),
@@ -123,6 +136,7 @@ fn parse_database_type(source: &str) -> Option<DbDriver> {
     }
 }
 
+/// Parses a SQLx rename rule enum member from source text.
 fn parse_rename_rule(source: &str) -> Option<SqlxRenameRule> {
     match source.trim().rsplit('.').next()? {
         "lowerCase" => Some(SqlxRenameRule::Lower),

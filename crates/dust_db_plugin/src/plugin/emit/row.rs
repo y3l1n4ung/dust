@@ -12,13 +12,18 @@ use crate::plugin::{
 
 use super::shared::{escape_dart_string, lower_first};
 
+/// Template context for a generated `FromRow` extension.
 #[derive(Serialize)]
 struct FromRowContext<'a> {
+    /// Source row class name.
     class_name: &'a str,
+    /// Rendered constructor call for decoded fields.
     call: String,
+    /// Rendered row mapper registration statement.
     registration: String,
 }
 
+/// Renders generated `FromRow` support for a row class.
 pub(super) fn render_from_row_extension(
     library: &DartFileIr,
     class: &ClassIr,
@@ -88,10 +93,12 @@ pub(super) fn render_from_row_extension(
     )
 }
 
+/// Returns the generated top-level row mapper registration variable name.
 fn row_registration_name(class_name: &str) -> String {
     format!("_${}FromRowRegistered", lower_first(class_name))
 }
 
+/// Renders the Dart expression that reads one field from a row.
 fn render_row_value(
     library: &DartFileIr,
     field: &RowField<'_>,
@@ -127,6 +134,7 @@ fn render_row_value(
     }
 }
 
+/// Renders builtin row-read calls for directly supported Dart types.
 fn render_builtin_decode(ty: &TypeIr, column: &str) -> String {
     let nullable = ty.is_nullable();
     match ty.name() {
@@ -140,6 +148,7 @@ fn render_builtin_decode(ty: &TypeIr, column: &str) -> String {
     }
 }
 
+/// Resolves the input type accepted by a `tryFrom` converter.
 fn try_from_decode_type(library: &DartFileIr, source: &str) -> Option<String> {
     let converter_name = try_from_converter_name(source)?;
     library
@@ -157,6 +166,7 @@ fn try_from_decode_type(library: &DartFileIr, source: &str) -> Option<String> {
         .or_else(|| infer_try_from_type_suffix(converter_name))
 }
 
+/// Extracts the converter class name from a `tryFrom` expression.
 fn try_from_converter_name(source: &str) -> Option<&str> {
     let source = source
         .trim()
@@ -172,6 +182,7 @@ fn try_from_converter_name(source: &str) -> Option<&str> {
         .filter(|name| !name.is_empty())
 }
 
+/// Infers a converter input type from common converter name suffixes.
 fn infer_try_from_type_suffix(converter_name: &str) -> Option<String> {
     [
         ("FromInt", DART_INT),
@@ -184,6 +195,7 @@ fn infer_try_from_type_suffix(converter_name: &str) -> Option<String> {
     .find_map(|(suffix, ty)| converter_name.ends_with(suffix).then(|| ty.to_owned()))
 }
 
+/// Renders a row constructor call, wrapping long argument lists.
 fn render_constructor_call(
     class_name: &str,
     constructor: &ConstructorIr,
@@ -202,6 +214,7 @@ fn render_constructor_call(
     }
 }
 
+/// Finds a constructor that can initialize every row field.
 fn find_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
     class
         .constructors
@@ -210,4 +223,5 @@ fn find_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
 }
 
 #[cfg(test)]
+/// Unit tests for generated row mapping output.
 mod tests;

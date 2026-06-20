@@ -10,6 +10,7 @@ use crate::plugin::{
 
 use super::types::{is_supported_scalar_type, render_type};
 
+/// Validates all row mapper classes in a library.
 pub(super) fn validate_rows(rows: &[RowClass<'_>], diagnostics: &mut Vec<Diagnostic>) {
     let row_by_name = rows
         .iter()
@@ -21,6 +22,7 @@ pub(super) fn validate_rows(rows: &[RowClass<'_>], diagnostics: &mut Vec<Diagnos
     }
 }
 
+/// Builds the required SQL column set for each row class.
 pub(super) fn row_column_map(rows: &[RowClass<'_>]) -> HashMap<String, HashSet<String>> {
     let row_by_name = rows
         .iter()
@@ -36,6 +38,7 @@ pub(super) fn row_column_map(rows: &[RowClass<'_>]) -> HashMap<String, HashSet<S
         .collect()
 }
 
+/// Validates one row class for duplicate and unsupported field mappings.
 fn validate_row(
     row: &RowClass<'_>,
     row_by_name: &HashMap<&str, &RowClass<'_>>,
@@ -60,6 +63,7 @@ fn validate_row(
     }
 }
 
+/// Collects columns required by a row class, expanding flattened rows.
 fn collect_row_columns(
     row: &RowClass<'_>,
     row_by_name: &HashMap<&str, &RowClass<'_>>,
@@ -81,6 +85,7 @@ fn collect_row_columns(
     columns
 }
 
+/// Inserts columns from a flattened row and reports duplicates.
 fn insert_flattened_columns<'a>(
     class: &ClassIr,
     field: &'a FieldIr,
@@ -97,6 +102,7 @@ fn insert_flattened_columns<'a>(
     }
 }
 
+/// Validates one row field's mapping options and supported type.
 fn validate_field_shape(
     class: &ClassIr,
     field: &FieldIr,
@@ -138,6 +144,7 @@ fn validate_field_shape(
     }
 }
 
+/// Validates that `flatten` points at another row mapper type.
 fn validate_flatten_shape(
     field: &FieldIr,
     config: &SqlxConfig,
@@ -165,6 +172,7 @@ fn validate_flatten_shape(
     }
 }
 
+/// Validates mutually exclusive row field options.
 fn validate_conflicting_options(
     field: &FieldIr,
     config: &SqlxConfig,
@@ -184,10 +192,12 @@ fn validate_conflicting_options(
     }
 }
 
+/// Returns true when a type can be read directly from a SQL row.
 fn is_supported_row_type(ty: &TypeIr) -> bool {
     is_supported_scalar_type(ty) || ty.is_nullable() && is_supported_scalar_type(ty)
 }
 
+/// Reports duplicate SQL columns on a row class.
 fn push_duplicate_column(
     class: &ClassIr,
     field: &FieldIr,
@@ -213,6 +223,7 @@ fn push_duplicate_column(
     );
 }
 
+/// Builds a row-field diagnostic with a common label.
 fn error_on_field(field: &FieldIr, message: impl Into<String>) -> Diagnostic {
     Diagnostic::error(message.into()).with_label(SourceLabel::new(
         field.span.file_id,
@@ -221,6 +232,7 @@ fn error_on_field(field: &FieldIr, message: impl Into<String>) -> Diagnostic {
     ))
 }
 
+/// Returns true when a field-formal constructor parameter has a default.
 fn constructor_param_has_default(class: &ClassIr, field_name: &str) -> bool {
     class.constructors.iter().any(|constructor| {
         constructor

@@ -3,6 +3,7 @@ use dust_dart_emit::{
 };
 use dust_ir::TypeIr;
 
+/// Returns true when a type can be fetched through scalar DB helpers.
 pub(super) fn is_supported_scalar_type(ty: &TypeIr) -> bool {
     matches!(
         ty.name(),
@@ -10,6 +11,7 @@ pub(super) fn is_supported_scalar_type(ty: &TypeIr) -> bool {
     )
 }
 
+/// Renders a type name for validation diagnostics.
 pub(super) fn render_type(ty: &TypeIr) -> String {
     match ty {
         TypeIr::Builtin { kind, nullable } => {

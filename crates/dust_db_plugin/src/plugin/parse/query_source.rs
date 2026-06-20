@@ -8,6 +8,7 @@ use crate::plugin::model::{FetchMode, QueryFunction};
 
 use dust_dart_syntax::parse_static_dart_string_literal;
 
+/// Parses SQL source from a `@Query` annotation.
 pub(super) fn parse_query_config(config: &ConfigApplicationIr) -> (String, bool) {
     if let Some(sql) = config
         .positional_argument_source(0)
@@ -23,6 +24,7 @@ pub(super) fn parse_query_config(config: &ConfigApplicationIr) -> (String, bool)
     (String::new(), false)
 }
 
+/// Infers query function and fetch mode from a DAO method `Result` type.
 pub(super) fn query_shape_from_return(
     ok_type: Option<&TypeIr>,
 ) -> (QueryFunction, FetchMode, Option<String>, Option<TypeIr>) {
@@ -70,6 +72,7 @@ pub(super) fn query_shape_from_return(
     )
 }
 
+/// Extracts the `Ok` type from `Future<Result<T, E>>`.
 pub(crate) fn result_ok_type(return_type: &TypeIr) -> Option<&TypeIr> {
     let future = return_type
         .is_named(DART_FUTURE)
@@ -79,6 +82,7 @@ pub(crate) fn result_ok_type(return_type: &TypeIr) -> Option<&TypeIr> {
     result.args().first()
 }
 
+/// Returns true when a type can be fetched through scalar query helpers.
 fn is_scalar_type(ty: &TypeIr) -> bool {
     matches!(
         ty.name(),
@@ -86,6 +90,7 @@ fn is_scalar_type(ty: &TypeIr) -> bool {
     )
 }
 
+/// Parses an explicit query fetch method or returns the default for a helper.
 pub(super) fn parse_fetch_method(function: QueryFunction, method: Option<&str>) -> FetchMode {
     match method {
         Some("fetchOptional") => return FetchMode::Optional,

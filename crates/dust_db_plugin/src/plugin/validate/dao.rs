@@ -11,6 +11,7 @@ use crate::plugin::{
 
 use super::types::is_supported_scalar_type;
 
+/// Validates all DAO classes and methods in a library.
 pub(super) fn validate_daos(
     library: &dust_ir::DartFileIr,
     rows: &[RowClass<'_>],
@@ -30,6 +31,7 @@ pub(super) fn validate_daos(
     }
 }
 
+/// Validates the required redirecting DAO factory constructor.
 fn validate_dao_constructor(
     dao: &crate::plugin::model::DaoClass<'_>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -58,6 +60,7 @@ fn validate_dao_constructor(
     }
 }
 
+/// Validates one DAO query method.
 fn validate_dao_method(
     dao_name: &str,
     method: &DaoMethod<'_>,
@@ -110,6 +113,7 @@ fn validate_dao_method(
     }
 }
 
+/// Validates that a DAO query method remains abstract.
 fn validate_method_body(dao_name: &str, method: &DaoMethod<'_>, diagnostics: &mut Vec<Diagnostic>) {
     if method.method.has_body {
         diagnostics.push(
@@ -126,6 +130,7 @@ fn validate_method_body(dao_name: &str, method: &DaoMethod<'_>, diagnostics: &mu
     }
 }
 
+/// Validates DAO method parameters supported by v1 codegen.
 fn validate_method_params(
     dao_name: &str,
     method: &DaoMethod<'_>,
@@ -148,6 +153,7 @@ fn validate_method_params(
     }
 }
 
+/// Returns true when a DAO `Result` success type can be generated.
 fn is_supported_dao_ok_type(ty: &TypeIr, row_names: &HashSet<&str>) -> bool {
     if ty.is_named(DART_EXEC_RESULT) || ty.is_named(DART_UNIT) || is_supported_scalar_type(ty) {
         return true;

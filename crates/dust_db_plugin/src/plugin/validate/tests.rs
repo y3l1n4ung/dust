@@ -16,10 +16,12 @@ use super::{
 };
 use crate::plugin::model::{FetchMode, QueryFunction, QuerySpec};
 
+/// Builds a small source span for validation test fixtures.
 fn span() -> SpanIr {
     SpanIr::new(FileId::new(1), TextRange::new(0_u32, 1_u32))
 }
 
+/// Builds a query fixture with common valid defaults.
 fn query(function: QueryFunction, fetch: FetchMode) -> QuerySpec {
     QuerySpec {
         function,
@@ -35,6 +37,7 @@ fn query(function: QueryFunction, fetch: FetchMode) -> QuerySpec {
     }
 }
 
+/// Builds a unique temporary package root for validation tests.
 fn temp_root(name: &str) -> std::path::PathBuf {
     let stamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -43,6 +46,7 @@ fn temp_root(name: &str) -> std::path::PathBuf {
     std::env::temp_dir().join(format!("dust_db_validate_{name}_{stamp}"))
 }
 
+/// Builds a minimal Dart library fixture rooted at a temporary package.
 fn library(root: &std::path::Path) -> DartFileIr {
     DartFileIr {
         package_root: root.display().to_string(),

@@ -1,3 +1,5 @@
+//! Integration tests for DB plugin emission and SQLx validation.
+
 #[path = "db_plugin_tests/emission.rs"]
 mod emission;
 #[path = "db_plugin_tests/sqlx_validation.rs"]

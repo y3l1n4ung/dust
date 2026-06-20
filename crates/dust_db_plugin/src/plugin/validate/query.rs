@@ -7,6 +7,7 @@ use crate::plugin::{
 
 use super::types::is_supported_scalar_type;
 
+/// Validates SQL source, parameters, placeholders, and fetch shape.
 pub(super) fn validate_query_shape(query: &QuerySpec, diagnostics: &mut Vec<Diagnostic>) {
     if !query.sql_source_static {
         diagnostics.push(query_error(
@@ -37,6 +38,7 @@ pub(super) fn validate_query_shape(query: &QuerySpec, diagnostics: &mut Vec<Diag
     }
 }
 
+/// Validates and rewrites SQLx-style placeholders.
 pub(super) fn validate_placeholders(
     sql: &str,
     user_parameter_count: usize,
@@ -44,10 +46,12 @@ pub(super) fn validate_placeholders(
     rewrite_sqlite_placeholders(sql, user_parameter_count)
 }
 
+/// Returns the row type for `queryAs<T>` specs.
 pub(super) fn query_row_type(query: &QuerySpec) -> Option<&str> {
     matches!(query.function, QueryFunction::As).then(|| query.row_type.as_deref())?
 }
 
+/// Builds a source-labelled diagnostic for a query spec.
 pub(super) fn query_error(query: &QuerySpec, message: impl Into<String>) -> Diagnostic {
     Diagnostic::error(message.into()).with_label(SourceLabel::new(
         query.span.file_id,
@@ -56,6 +60,7 @@ pub(super) fn query_error(query: &QuerySpec, message: impl Into<String>) -> Diag
     ))
 }
 
+/// Validates `queryAs<T>` fetch shape and type argument.
 fn validate_query_as(query: &QuerySpec, diagnostics: &mut Vec<Diagnostic>) {
     if query.row_type.is_none() {
         diagnostics.push(query_error(query, "queryAs<T> must specify a row type"));
@@ -72,6 +77,7 @@ fn validate_query_as(query: &QuerySpec, diagnostics: &mut Vec<Diagnostic>) {
     }
 }
 
+/// Validates `queryScalar<T>` fetch shape and scalar type.
 fn validate_query_scalar(query: &QuerySpec, diagnostics: &mut Vec<Diagnostic>) {
     if query
         .scalar_type

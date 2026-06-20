@@ -8,20 +8,29 @@ use crate::plugin::model::{DatabaseClass, DbDriver};
 
 use super::shared::{escape_dart_string, lower_first};
 
+/// Template context for a generated database implementation class.
 #[derive(Serialize)]
 struct DatabaseContext<'a> {
+    /// Generated private implementation class name.
     generated_name: &'a str,
+    /// Source database interface class name.
     class_name: &'a str,
+    /// Dart expression used to open the pool.
     open_expr: String,
+    /// Rendered migrations constant.
     migrations: String,
 }
 
+/// Template context for generated migration map constants.
 #[derive(Serialize)]
 struct MigrationsContext<'a> {
+    /// Constant name for the migration map.
     name: &'a str,
+    /// Rendered migration entries.
     entries: String,
 }
 
+/// Renders a generated database implementation class.
 pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>) -> String {
     let class_name = &db.class.name;
     let generated_name = format!("_${class_name}");
@@ -48,6 +57,7 @@ pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>
     )
 }
 
+/// Renders a deterministic migration map from SQL files on disk.
 fn render_migrations_map(library: &DartFileIr, migrations: &str, name: &str) -> String {
     let path = Path::new(&library.package_root).join(migrations);
     let mut files = fs::read_dir(&path)
