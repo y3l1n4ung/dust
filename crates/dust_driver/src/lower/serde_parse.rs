@@ -2,6 +2,7 @@ use dust_dart_syntax::{parse_bool_literal, parse_string_literal};
 use dust_diagnostics::Diagnostic;
 use dust_ir::SerdeRenameRuleIr;
 
+/// Parses a Dart enum member expression into a SerDe rename rule.
 pub(crate) fn parse_serde_rename_rule(source: &str) -> Option<SerdeRenameRuleIr> {
     match source.trim().rsplit('.').next()? {
         "lowerCase" => Some(SerdeRenameRuleIr::LowerCase),
@@ -16,6 +17,7 @@ pub(crate) fn parse_serde_rename_rule(source: &str) -> Option<SerdeRenameRuleIr>
     }
 }
 
+/// Validates and preserves a SerDe codec expression source.
 pub(crate) fn parse_codec_source(
     field_name: &str,
     source: &str,
@@ -61,10 +63,12 @@ pub(crate) fn parse_codec_source(
     Some(source.to_owned())
 }
 
+/// Returns user guidance for valid SerDe codec expressions.
 fn codec_source_guidance() -> &'static str {
     "Use a codec object such as `const UnixEpochDateTimeCodec()` or `unixEpochDateTimeCodec`."
 }
 
+/// Returns whether source looks like a numeric literal.
 fn looks_like_number_literal(source: &str) -> bool {
     let source = source.trim();
     let Some(first) = source.chars().next() else {
@@ -79,16 +83,19 @@ fn looks_like_number_literal(source: &str) -> bool {
                 .is_some_and(|next| next.is_ascii_digit()))
 }
 
+/// Returns whether source looks like a list or map/set literal.
 fn looks_like_collection_literal(source: &str) -> bool {
     let source = source.trim();
     (source.starts_with('[') && source.ends_with(']'))
         || (source.starts_with('{') && source.ends_with('}'))
 }
 
+/// Returns whether source looks like an inline Dart function literal.
 fn looks_like_function_literal(source: &str) -> bool {
     source.contains("=>")
 }
 
+/// Returns whether source looks like a type reference instead of an object value.
 fn looks_like_bare_type_reference(source: &str) -> bool {
     let source = source.trim();
     !source.contains('(')

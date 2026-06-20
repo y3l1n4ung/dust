@@ -3,6 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+/// Workspace snapshot construction and diffing for watch mode.
 mod snapshot;
 
 use dust_cache::WorkspaceCache;
@@ -33,6 +34,7 @@ where
     run_watch_inner(request, Some(&progress))
 }
 
+/// Shared implementation for watch commands with optional progress reporting.
 fn run_watch_inner(
     request: WatchRequest,
     progress: Option<&(dyn Fn(ProgressEvent) + Send + Sync + '_)>,
@@ -192,6 +194,7 @@ fn run_watch_inner(
     finish_watch_result(result, &mut cache, cache_report, watch, started)
 }
 
+/// Builds an empty watch report for early exits.
 fn empty_watch_report() -> WatchReport {
     WatchReport {
         cycles: 0,
@@ -200,6 +203,7 @@ fn empty_watch_report() -> WatchReport {
     }
 }
 
+/// Finalizes cache state and attaches watch metadata to the command result.
 fn finish_watch_result(
     mut result: CommandResult,
     cache: &mut WorkspaceCache,

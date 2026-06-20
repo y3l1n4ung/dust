@@ -9,20 +9,29 @@ use dust_workspace::{SourceLibrary, SupportedAnnotations, discover_workspace};
 
 use crate::build::{default_registry, hash_text, read_workspace_config_hash};
 
+/// Snapshot of workspace inputs relevant to watch rebuild decisions.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct WorkspaceSnapshot {
+    /// Current package and Dust configuration hash, if readable.
     pub(crate) package_config_hash: Option<u64>,
+    /// Source libraries keyed by source path.
     pub(crate) libraries: BTreeMap<PathBuf, SnapshotEntry>,
 }
 
+/// Source metadata for one library in a watch snapshot.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SnapshotEntry {
+    /// Source and output paths for the library.
     pub(crate) library: SourceLibrary,
+    /// Hash of the current source text.
     pub(crate) source_hash: u64,
+    /// Whether the source contains a route declaration marker.
     pub(crate) contains_route_marker: bool,
+    /// Whether the source contains a router declaration marker.
     pub(crate) contains_router_marker: bool,
 }
 
+/// Builds a fresh workspace snapshot from disk.
 pub(crate) fn build_snapshot(cwd: &Path) -> Result<WorkspaceSnapshot, Diagnostic> {
     let registry = default_registry();
     let supported_annotations: SupportedAnnotations =
@@ -59,6 +68,7 @@ pub(crate) fn build_snapshot(cwd: &Path) -> Result<WorkspaceSnapshot, Diagnostic
     })
 }
 
+/// Adds route/router libraries when route declaration analysis changed.
 pub(crate) fn expand_route_rebuilds(
     changed: Vec<SourceLibrary>,
     snapshot: &WorkspaceSnapshot,
@@ -85,6 +95,7 @@ pub(crate) fn expand_route_rebuilds(
     by_path.into_values().collect()
 }
 
+/// Computes changed libraries between two workspace snapshots.
 pub(crate) fn changed_libraries(
     previous: &WorkspaceSnapshot,
     next: &WorkspaceSnapshot,

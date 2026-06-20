@@ -1,14 +1,20 @@
+/// Inherited field and constructor parameter lowering helpers.
 mod inheritance;
+/// Text parsing helpers used by lower-level Dart source parsing.
 mod parse_support;
 #[path = "lower/query_calls.rs"]
+/// SQL query call lowering.
 mod query_calls;
+/// SerDe configuration lowering.
 mod serde;
+/// SerDe annotation argument parsing.
 mod serde_parse;
 mod tests_declarations;
 mod tests_directives;
 mod tests_inheritance;
 mod tests_serde;
 mod tests_type;
+/// Dart type lowering and fallback parsing.
 mod type_parse;
 
 use std::collections::{HashMap, HashSet};
@@ -104,6 +110,7 @@ pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<DartFi
     }
 }
 
+/// Returns classes that must be lowered because plugins or converters reference them.
 fn lowering_required_class_names(library: &ResolvedLibrary) -> HashSet<&str> {
     let mut names = library
         .classes
@@ -128,6 +135,7 @@ fn lowering_required_class_names(library: &ResolvedLibrary) -> HashSet<&str> {
     names
 }
 
+/// Extracts a converter class name from a `tryFrom` annotation expression.
 fn try_from_converter_name(source: &str) -> Option<&str> {
     let value = source.trim();
     let value = value.strip_prefix("const ").unwrap_or(value).trim();
@@ -138,6 +146,7 @@ fn try_from_converter_name(source: &str) -> Option<&str> {
         .filter(|name| !name.is_empty())
 }
 
+/// Collects import URIs for backwards-compatible plugin input.
 fn library_imports(library: &ResolvedLibrary) -> Vec<String> {
     library
         .directives
@@ -149,6 +158,7 @@ fn library_imports(library: &ResolvedLibrary) -> Vec<String> {
         .collect()
 }
 
+/// Lowers the Dart `library` directive, if present.
 fn lower_library_directive(library: &ResolvedLibrary) -> Option<LibraryDeclIr> {
     let file_id = library.span.file_id;
     library
@@ -165,6 +175,7 @@ fn lower_library_directive(library: &ResolvedLibrary) -> Option<LibraryDeclIr> {
         })
 }
 
+/// Lowers annotations attached to the Dart `library` directive.
 fn lower_library_annotations(library: &ResolvedLibrary) -> Vec<AnnotationIr> {
     let file_id = library.span.file_id;
     library
@@ -180,6 +191,7 @@ fn lower_library_annotations(library: &ResolvedLibrary) -> Vec<AnnotationIr> {
         .collect()
 }
 
+/// Lowers Dart import directives including combinators and deferred prefixes.
 fn lower_import_directives(library: &ResolvedLibrary) -> Vec<ImportIr> {
     let file_id = library.span.file_id;
     library
@@ -206,6 +218,7 @@ fn lower_import_directives(library: &ResolvedLibrary) -> Vec<ImportIr> {
         .collect()
 }
 
+/// Lowers Dart export directives.
 fn lower_export_directives(library: &ResolvedLibrary) -> Vec<ExportIr> {
     let file_id = library.span.file_id;
     library
@@ -221,6 +234,7 @@ fn lower_export_directives(library: &ResolvedLibrary) -> Vec<ExportIr> {
         .collect()
 }
 
+/// Lowers Dart part directives.
 fn lower_part_directives(library: &ResolvedLibrary) -> Vec<PartIr> {
     let file_id = library.span.file_id;
     library
@@ -236,6 +250,7 @@ fn lower_part_directives(library: &ResolvedLibrary) -> Vec<PartIr> {
         .collect()
 }
 
+/// Lowers the Dart part-of directive, if present.
 fn lower_part_of_directive(library: &ResolvedLibrary) -> Option<PartOfIr> {
     let file_id = library.span.file_id;
     library
@@ -257,6 +272,7 @@ fn lower_part_of_directive(library: &ResolvedLibrary) -> Option<PartOfIr> {
         })
 }
 
+/// Lowers parsed mixins and their unresolved fields.
 fn lower_mixins(library: &ResolvedLibrary, diagnostics: &mut Vec<Diagnostic>) -> Vec<MixinIr> {
     let file_id = library.span.file_id;
     library
@@ -279,6 +295,7 @@ fn lower_mixins(library: &ResolvedLibrary, diagnostics: &mut Vec<Diagnostic>) ->
         .collect()
 }
 
+/// Lowers parsed extensions and their `on` type.
 fn lower_extensions(
     library: &ResolvedLibrary,
     diagnostics: &mut Vec<Diagnostic>,
@@ -311,6 +328,7 @@ fn lower_extensions(
         .collect()
 }
 
+/// Lowers parsed extension types and their representation field.
 fn lower_extension_types(
     library: &ResolvedLibrary,
     diagnostics: &mut Vec<Diagnostic>,
@@ -347,6 +365,7 @@ fn lower_extension_types(
         .collect()
 }
 
+/// Lowers parsed top-level functions and their parameters.
 fn lower_functions(
     library: &ResolvedLibrary,
     diagnostics: &mut Vec<Diagnostic>,
@@ -377,6 +396,7 @@ fn lower_functions(
         .collect()
 }
 
+/// Lowers parsed top-level variables and initializers.
 fn lower_variables(
     library: &ResolvedLibrary,
     diagnostics: &mut Vec<Diagnostic>,
@@ -416,6 +436,7 @@ fn lower_variables(
         .collect()
 }
 
+/// Lowers parsed typedefs and aliased type sources.
 fn lower_typedefs(library: &ResolvedLibrary, diagnostics: &mut Vec<Diagnostic>) -> Vec<TypedefIr> {
     let file_id = library.span.file_id;
     library
@@ -442,6 +463,7 @@ fn lower_typedefs(library: &ResolvedLibrary, diagnostics: &mut Vec<Diagnostic>) 
         .collect()
 }
 
+/// Lowers a parsed field before resolver trait/config data exists.
 fn lower_unresolved_field(
     file_id: dust_text::FileId,
     field: &ParsedFieldSurface,
@@ -460,6 +482,7 @@ fn lower_unresolved_field(
     }
 }
 
+/// Lowers parsed method parameters before resolver trait/config data exists.
 fn lower_unresolved_method_params(
     file_id: dust_text::FileId,
     params: &[ParsedMethodParamSurface],
@@ -485,6 +508,7 @@ fn lower_unresolved_method_params(
         .collect()
 }
 
+/// Maps parser parameter kind to IR parameter kind.
 fn lower_parameter_kind(kind: ParameterKind) -> ParamKind {
     match kind {
         ParameterKind::Positional => ParamKind::Positional,
@@ -492,10 +516,12 @@ fn lower_parameter_kind(kind: ParameterKind) -> ParamKind {
     }
 }
 
+/// Lowers a parsed annotation into resolver-compatible annotation IR.
 fn lower_annotation_ir(file_id: dust_text::FileId, annotation: &ParsedAnnotation) -> AnnotationIr {
     dust_resolver::annotation_ir_from_parsed(file_id, annotation, None)
 }
 
+/// Builds a name IR value from raw source and source span.
 fn lower_name_ir(file_id: dust_text::FileId, source: &str, span: dust_text::TextRange) -> NameIr {
     let source = source.trim().to_owned();
     let (prefix, short) = source
@@ -511,6 +537,7 @@ fn lower_name_ir(file_id: dust_text::FileId, source: &str, span: dust_text::Text
     }
 }
 
+/// Lowers one resolved enum into semantic IR.
 fn lower_enum(e: &dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
     let mut diagnostics: Vec<Diagnostic> = Vec::new();
     let serde = lower_class_serde_config(&e.name, &e.configs, &mut diagnostics);
@@ -534,6 +561,7 @@ fn lower_enum(e: &dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
     }
 }
 
+/// Lowers one resolved class into semantic IR.
 fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
     let mut diagnostics = Vec::new();
     let serde = lower_class_serde_config(&class.name, &class.configs, &mut diagnostics);

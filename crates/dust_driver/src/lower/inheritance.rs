@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassIr, FieldIr, LoweringOutcome, TypeIr};
 
+/// Infers a constructor parameter type from a field with the same name.
 pub(crate) fn infer_param_type(name: &str, fields: &[FieldIr]) -> LoweringOutcome<TypeIr> {
     if let Some(field) = fields.iter().find(|field| field.name == name) {
         LoweringOutcome::new(field.ty.clone())
@@ -11,6 +12,7 @@ pub(crate) fn infer_param_type(name: &str, fields: &[FieldIr]) -> LoweringOutcom
     }
 }
 
+/// Builds the effective field list for a class including inherited fields.
 pub(crate) fn merged_fields_for_class(
     index: usize,
     classes: &[ClassIr],
@@ -66,6 +68,7 @@ pub(crate) fn merged_fields_for_class(
     fields
 }
 
+/// Resolves unknown constructor parameter types from same-named fields.
 pub(crate) fn resolve_constructor_param_types(
     class: &mut ClassIr,
     diagnostics: &mut Vec<Diagnostic>,
@@ -92,6 +95,7 @@ pub(crate) fn resolve_constructor_param_types(
     }
 }
 
+/// Returns whether a class is configured as a generated view model.
 fn is_view_model_class(class: &ClassIr) -> bool {
     class
         .configs

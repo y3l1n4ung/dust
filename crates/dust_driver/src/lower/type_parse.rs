@@ -4,6 +4,7 @@ use dust_parser_dart::{ParsedTypeKind, ParsedTypeSurface};
 use super::parse_support::{find_top_level_char, has_top_level_char};
 pub(crate) use dust_dart_syntax::split_top_level_items as split_top_level_args;
 
+/// Lowers a parsed type surface or fallback source into type IR.
 pub(crate) fn lower_type(
     parsed: Option<&ParsedTypeSurface>,
     source: Option<&str>,
@@ -19,6 +20,7 @@ pub(crate) fn lower_type(
     LoweringOutcome::new(parse_type(source))
 }
 
+/// Converts structured parser type output into type IR.
 fn type_from_parsed_surface(parsed: &ParsedTypeSurface) -> TypeIr {
     let ty = match &parsed.kind {
         ParsedTypeKind::Builtin(name) => parse_builtin(name)
@@ -44,10 +46,12 @@ fn type_from_parsed_surface(parsed: &ParsedTypeSurface) -> TypeIr {
     if parsed.nullable { ty.nullable() } else { ty }
 }
 
+/// Returns the source form without a trailing nullable marker.
 fn non_nullable_source(parsed: &ParsedTypeSurface) -> &str {
     parsed.source.strip_suffix('?').unwrap_or(&parsed.source)
 }
 
+/// Parses fallback Dart type source into type IR.
 pub(crate) fn parse_type(source: &str) -> TypeIr {
     let (base, nullable) = strip_nullable(source);
     let base = base.trim();
@@ -79,6 +83,7 @@ pub(crate) fn parse_type(source: &str) -> TypeIr {
     }
 }
 
+/// Splits a type source into non-nullable source and nullable flag.
 fn strip_nullable(source: &str) -> (&str, bool) {
     if let Some(stripped) = source.strip_suffix('?') {
         (stripped, true)
@@ -87,6 +92,7 @@ fn strip_nullable(source: &str) -> (&str, bool) {
     }
 }
 
+/// Parses supported builtin Dart type names.
 fn parse_builtin(source: &str) -> Option<BuiltinType> {
     match source {
         "String" => Some(BuiltinType::String),
@@ -99,6 +105,7 @@ fn parse_builtin(source: &str) -> Option<BuiltinType> {
     }
 }
 
+/// Splits a simple generic type source into name and argument source.
 fn split_generic(source: &str) -> Option<(&str, &str)> {
     let start = source.find('<')?;
     let end = source.rfind('>')?;
@@ -108,6 +115,7 @@ fn split_generic(source: &str) -> Option<(&str, &str)> {
     Some((&source[..start], &source[start + 1..end]))
 }
 
+/// Returns whether source looks like a Dart record type.
 fn looks_like_record_type(source: &str) -> bool {
     let Some(inner) = source
         .strip_prefix('(')
@@ -124,6 +132,7 @@ fn looks_like_record_type(source: &str) -> bool {
     inner.starts_with('{') || has_top_level_char(inner, ',')
 }
 
+/// Returns whether source looks like a Dart function type.
 fn looks_like_function_type(source: &str) -> bool {
     find_top_level_char(source, |index, ch| {
         if ch != 'F' || index == 0 {

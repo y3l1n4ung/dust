@@ -15,13 +15,18 @@ use crate::{
     result::CacheReport,
 };
 
+/// Workspace context shared by commands that do not need cache metadata.
 pub(crate) struct DriverContext {
+    /// Discovered workspace plan.
     pub(crate) workspace: WorkspacePlan,
+    /// Plugin registry selected for the command.
     pub(crate) registry: PluginRegistry,
+    /// Resolver catalog derived from the registry.
     pub(crate) catalog: SymbolCatalog,
 }
 
 impl DriverContext {
+    /// Discovers the workspace and builds the selected registry and catalog.
     pub(crate) fn load(cwd: &Path, selection: RegistrySelection) -> Result<Self, Diagnostic> {
         let registry = registry_for_selection(selection);
         let supported_annotations: SupportedAnnotations =
@@ -37,17 +42,26 @@ impl DriverContext {
     }
 }
 
+/// Workspace context shared by commands that need cache metadata.
 pub(crate) struct CachedDriverContext {
+    /// Discovered workspace plan.
     pub(crate) workspace: WorkspacePlan,
+    /// Plugin registry selected for the command.
     pub(crate) registry: PluginRegistry,
+    /// Resolver catalog derived from the registry.
     pub(crate) catalog: SymbolCatalog,
+    /// Hash of active code generation logic and plugins.
     pub(crate) tool_hash: CodegenToolHash,
+    /// Hash of package and Dust configuration files.
     pub(crate) package_config_hash: u64,
+    /// Mutable workspace cache.
     pub(crate) cache: WorkspaceCache,
+    /// Cache report initialized with the cache storage path.
     pub(crate) cache_report: CacheReport,
 }
 
 impl CachedDriverContext {
+    /// Loads workspace, registry, catalog, hashes, and cache state.
     pub(crate) fn load(cwd: &Path, selection: RegistrySelection) -> Result<Self, Diagnostic> {
         let DriverContext {
             workspace,
@@ -77,6 +91,7 @@ impl CachedDriverContext {
     }
 }
 
+/// Loads the workspace cache and converts IO failures into diagnostics.
 fn load_workspace_cache(workspace: &WorkspacePlan) -> Result<WorkspaceCache, Diagnostic> {
     WorkspaceCache::load(&workspace.cache_root).map_err(|error| {
         Diagnostic::error(format!(
