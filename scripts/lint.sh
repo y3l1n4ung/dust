@@ -130,10 +130,7 @@ if ! has_cmd cargo; then
 fi
 
 echo "==> Rust clippy"
-run cargo clippy --workspace --all-targets --all-features -- -D warnings
-
-echo "==> Rust documentation warnings"
-run cargo clippy --workspace --all-targets --all-features -- -W clippy::missing_docs_in_private_items -W missing_docs
+run cargo clippy --workspace --all-targets --all-features -- -D warnings -D clippy::missing_docs_in_private_items -D missing_docs
 
 if [[ "$SCOPE" == rust ]]; then
   echo "==> Lint complete"
