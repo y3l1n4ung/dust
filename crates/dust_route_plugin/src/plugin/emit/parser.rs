@@ -8,31 +8,45 @@ use super::parser_decode::{decode_path_expr, decode_query_expr};
 
 use super::route_classes::is_not_found_route;
 
+/// Template context for the generated URI parser.
 #[derive(Serialize)]
 struct ParserContext {
+    /// Rendered route parsing cases.
     cases: String,
+    /// Fallback route expression.
     fallback: String,
 }
 
+/// Template context for one route parser branch.
 #[derive(Serialize)]
 struct ParseCaseContext {
+    /// Dart condition that matches the URI path shape.
     condition: String,
+    /// Rendered path parameter decoder statements.
     decoders: String,
+    /// Rendered null checks for failed decodes.
     null_checks: String,
+    /// Route instance returned by the branch.
     route_instance: String,
 }
 
+/// Template context for one path parameter decoder.
 #[derive(Serialize)]
 struct ParseDecoderContext<'a> {
+    /// Path parameter name.
     name: &'a str,
+    /// Dart expression that decodes the path segment.
     expr: String,
 }
 
+/// Template context for one required decode null check.
 #[derive(Serialize)]
 struct ParseNullCheckContext<'a> {
+    /// Path parameter name being checked.
     name: &'a str,
 }
 
+/// Renders the generated URI parser for all route specs.
 pub(super) fn render_parser(out: &mut String, spec: &RouterSpec) {
     let fallback = spec
         .not_found_route_class
@@ -61,6 +75,7 @@ pub(super) fn render_parser(out: &mut String, spec: &RouterSpec) {
     out.push_str("\n\n");
 }
 
+/// Renders a route constructor used by parser fallback logic.
 fn route_constructor_with_fallback(route: &RouteSpec, fallback_expr: &str) -> String {
     if route.params.is_empty() {
         return format!("const {}()", route.route_class);
@@ -85,6 +100,7 @@ fn route_constructor_with_fallback(route: &RouteSpec, fallback_expr: &str) -> St
     format!("{}({args})", route.route_class)
 }
 
+/// Returns a conservative fallback value for a required route parameter.
 fn fallback_value_for_param(param: &RouteParamSpec, fallback_expr: &str) -> String {
     match &param.ty {
         TypeIr::Builtin {
@@ -107,6 +123,7 @@ fn fallback_value_for_param(param: &RouteParamSpec, fallback_expr: &str) -> Stri
     }
 }
 
+/// Renders one URI parser case for a route.
 fn render_parse_case(route: &RouteSpec) -> String {
     if is_not_found_route(route) {
         return render_template(
@@ -181,6 +198,7 @@ fn render_parse_case(route: &RouteSpec) -> String {
     )
 }
 
+/// Renders a readable Dart boolean expression from parser conditions.
 fn condition_expr(conditions: &[String]) -> String {
     let inline = conditions.join(" && ");
     if inline.len() <= 76 {
@@ -189,6 +207,7 @@ fn condition_expr(conditions: &[String]) -> String {
     format!("\n    {}\n  ", conditions.join(" &&\n    "))
 }
 
+/// Renders a route instance expression, wrapping long argument lists.
 fn route_instance_expr(route_class: &str, args: &[String]) -> String {
     if args.is_empty() {
         return format!("const {route_class}()");
@@ -201,6 +220,7 @@ fn route_instance_expr(route_class: &str, args: &[String]) -> String {
     }
 }
 
+/// Joins generated chunks with a trailing newline when non-empty.
 fn join_chunks(chunks: Vec<String>) -> String {
     if chunks.is_empty() {
         return String::new();
@@ -208,6 +228,7 @@ fn join_chunks(chunks: Vec<String>) -> String {
     format!("{}\n", chunks.join("\n"))
 }
 
+/// Joins rendered parser cases with a trailing newline when non-empty.
 fn join_rendered(chunks: Vec<String>) -> String {
     if chunks.is_empty() {
         String::new()

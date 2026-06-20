@@ -1,3 +1,5 @@
+//! Integration tests for route plugin validation, emission, and workspace analysis.
+
 #[path = "route_plugin_tests/support.rs"]
 mod support;
 

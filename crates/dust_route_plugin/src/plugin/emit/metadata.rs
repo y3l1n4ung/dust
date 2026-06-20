@@ -4,38 +4,56 @@ use serde::Serialize;
 use super::shell::effective_shell;
 use crate::plugin::model::RouteSpec;
 
+/// Template context for the generated route metadata list.
 #[derive(Serialize)]
 struct MetadataListContext {
+    /// Rendered metadata nodes in tree order.
     nodes: String,
 }
 
+/// Template context for one metadata list entry.
 #[derive(Serialize)]
 struct MetadataEntryContext {
+    /// Indentation used by the generated Dart source.
     indent: String,
+    /// Rendered metadata node source.
     node: String,
 }
 
+/// Template context for a generated metadata group node.
 #[derive(Serialize)]
 struct GeneratedGroupContext {
+    /// Indentation used by the generated Dart source.
     indent: String,
+    /// Path segment represented by this group.
     path: String,
+    /// Rendered child metadata nodes.
     children: String,
 }
 
+/// Template context for a generated route metadata node.
 #[derive(Serialize)]
 struct GeneratedRouteContext {
+    /// Indentation used by the generated Dart source.
     indent: String,
+    /// Rendered generated route constructor fields.
     fields: String,
+    /// Rendered child metadata nodes.
     children: String,
 }
 
+/// Template context for generated child metadata.
 #[derive(Serialize)]
 struct GeneratedChildrenContext {
+    /// Optional prefix inserted before child lists.
     prefix: &'static str,
+    /// Indentation used by the generated Dart source.
     indent: String,
+    /// Rendered child nodes.
     nodes: String,
 }
 
+/// Renders the generated route metadata tree.
 pub(super) fn render_route_metadata(out: &mut String, routes: &[RouteSpec]) {
     let tree = MetadataTree::build(routes);
     out.push_str(&render_template(
@@ -48,19 +66,26 @@ pub(super) fn render_route_metadata(out: &mut String, routes: &[RouteSpec]) {
     out.push_str("\n\n");
 }
 
+/// Prefix tree used to render nested route metadata.
 #[derive(Debug, Default)]
 struct MetadataTree {
+    /// Index of the route represented by this node, if any.
     route_index: Option<usize>,
+    /// Child path segments under this node.
     children: Vec<MetadataChild>,
 }
 
+/// Child node in the route metadata prefix tree.
 #[derive(Debug)]
 struct MetadataChild {
+    /// Path segment represented by this child.
     segment: String,
+    /// Subtree rooted at the segment.
     node: MetadataTree,
 }
 
 impl MetadataTree {
+    /// Builds a metadata tree from sorted route specs.
     fn build(routes: &[RouteSpec]) -> Self {
         let mut root = Self::default();
         for (index, route) in routes.iter().enumerate() {
@@ -78,6 +103,7 @@ impl MetadataTree {
         root
     }
 
+    /// Inserts a route index under a path segment chain.
     fn insert(&mut self, segments: &[&str], route_index: usize) {
         let Some((segment, remaining)) = segments.split_first() else {
             self.route_index = Some(route_index);
@@ -100,6 +126,7 @@ impl MetadataTree {
     }
 }
 
+/// Renders metadata nodes for a tree level.
 fn render_metadata_nodes(
     node: &MetadataTree,
     routes: &[RouteSpec],
@@ -136,6 +163,7 @@ fn render_metadata_nodes(
     entries.join("\n")
 }
 
+/// Renders one metadata list entry.
 fn render_metadata_entry(indent: usize, node: String) -> String {
     render_template(
         "route_metadata_entry",
@@ -147,6 +175,7 @@ fn render_metadata_entry(indent: usize, node: String) -> String {
     )
 }
 
+/// Renders a generated metadata group for route children without a page.
 fn render_generated_group(
     path: &str,
     children: &[MetadataChild],
@@ -164,6 +193,7 @@ fn render_generated_group(
     )
 }
 
+/// Renders a generated metadata node for a concrete route.
 fn render_generated_route(
     path: &str,
     route: &RouteSpec,
@@ -213,6 +243,7 @@ fn render_generated_route(
     )
 }
 
+/// Renders generated child metadata with an optional leading comma.
 fn render_generated_children_with_prefix(
     children: &[MetadataChild],
     routes: &[RouteSpec],
@@ -251,6 +282,7 @@ fn render_generated_children_with_prefix(
     )
 }
 
+/// Returns two-space indentation for generated Dart.
 fn indent_str(indent: usize) -> String {
     "  ".repeat(indent)
 }

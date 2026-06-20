@@ -11,6 +11,7 @@ use super::{
     model::{RouteAnnotation, RouterAnnotation},
 };
 
+/// Returns the `@Route` config from a lowered class, if present.
 pub(crate) fn route_config(configs: &[ConfigApplicationIr]) -> Option<&ConfigApplicationIr> {
     configs
         .iter()
@@ -18,10 +19,12 @@ pub(crate) fn route_config(configs: &[ConfigApplicationIr]) -> Option<&ConfigApp
 }
 
 #[cfg(test)]
+/// Parses route annotation arguments in parser unit tests.
 pub(crate) fn parse_route_annotation(args: Option<&str>) -> Option<RouteAnnotation> {
     parse_route_config(&test_config(ROUTE, args))
 }
 
+/// Parses a lowered `@Route` annotation.
 pub(crate) fn parse_route_config(config: &ConfigApplicationIr) -> Option<RouteAnnotation> {
     let path = config.positional_string(0)?;
     let name = config.named_string("name");
@@ -45,6 +48,7 @@ pub(crate) fn parse_route_config(config: &ConfigApplicationIr) -> Option<RouteAn
     })
 }
 
+/// Parses a source-surface `@Route` annotation for workspace analysis.
 pub(crate) fn parse_route_surface(annotation: &ParsedAnnotation) -> Option<RouteAnnotation> {
     let path = annotation.positional_string(0)?;
     let name = annotation.named_string("name");
@@ -69,10 +73,12 @@ pub(crate) fn parse_route_surface(annotation: &ParsedAnnotation) -> Option<Route
 }
 
 #[cfg(test)]
+/// Parses router annotation arguments in parser unit tests.
 pub(crate) fn parse_router_annotation(args: Option<&str>) -> RouterAnnotation {
     parse_router_config(Some(&test_config("Router", args)))
 }
 
+/// Parses a lowered `@Router` annotation.
 pub(crate) fn parse_router_config(config: Option<&ConfigApplicationIr>) -> RouterAnnotation {
     let Some(config) = config else {
         return RouterAnnotation {
@@ -87,6 +93,7 @@ pub(crate) fn parse_router_config(config: Option<&ConfigApplicationIr>) -> Route
     }
 }
 
+/// Parses a source-surface `@Router` annotation for workspace analysis.
 pub(crate) fn parse_router_surface(annotation: &ParsedAnnotation) -> RouterAnnotation {
     RouterAnnotation {
         initial: annotation.named_string("initial"),
@@ -94,10 +101,12 @@ pub(crate) fn parse_router_surface(annotation: &ParsedAnnotation) -> RouterAnnot
     }
 }
 
+/// Returns the simple name for a resolved annotation symbol.
 fn config_name(symbol: &SymbolId) -> &str {
     symbol.0.rsplit("::").next().unwrap_or(symbol.0.as_str())
 }
 
+/// Normalizes transition builder source captured from annotation arguments.
 fn normalize_transition_source(source: String) -> String {
     let source = source
         .trim()
@@ -112,6 +121,7 @@ fn normalize_transition_source(source: String) -> String {
 }
 
 #[cfg(test)]
+/// Builds a lowered config for parser unit tests.
 fn test_config(name: &str, args: Option<&str>) -> ConfigApplicationIr {
     ConfigApplicationIr::new(
         SymbolId::new(name),

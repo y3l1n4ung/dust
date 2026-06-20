@@ -2,6 +2,7 @@ use std::collections::BTreeSet;
 
 use crate::plugin::model::RouteSpec;
 
+/// Renders a Dart switch pattern for a generated route class.
 pub(super) fn route_switch_pattern(
     route: &RouteSpec,
     bound_params: Option<&BTreeSet<String>>,

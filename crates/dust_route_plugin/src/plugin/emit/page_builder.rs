@@ -5,26 +5,38 @@ use crate::plugin::model::RouterSpec;
 
 use super::{patterns::route_switch_pattern, shell::effective_shell};
 
+/// Template context for generated shell consistency metadata.
 #[derive(Serialize)]
 struct ShellConsistencyContext {
+    /// Rendered page-to-shell map entries.
     entries: String,
 }
 
+/// Template context for generated page builder switch.
 #[derive(Serialize)]
 struct PageBuilderContext {
+    /// Rendered route builder cases.
     cases: String,
 }
 
+/// Template context for one generated page builder case.
 #[derive(Serialize)]
 struct PageBuilderCaseContext<'a> {
+    /// Dart route switch pattern.
     pattern: String,
+    /// Route name used by generated `Page`.
     name: &'a str,
+    /// Optional page transition argument.
     transition_arg: String,
+    /// Whether the page is a fullscreen dialog.
     fullscreen_dialog: bool,
+    /// Whether the page maintains state.
     maintain_state: bool,
+    /// Rendered child widget expression.
     child: String,
 }
 
+/// Renders helper data used to keep shell wrapping consistent.
 pub(super) fn render_shell_consistency_helpers(out: &mut String, spec: &RouterSpec) {
     out.push_str(&render_template(
         "shell_consistency",
@@ -46,6 +58,7 @@ pub(super) fn render_shell_consistency_helpers(out: &mut String, spec: &RouterSp
     out.push_str("\n\n");
 }
 
+/// Renders the generated route-to-page builder.
 pub(super) fn render_page_builder(out: &mut String, spec: &RouterSpec) {
     out.push_str(&render_template(
         "page_builder",
@@ -61,6 +74,7 @@ pub(super) fn render_page_builder(out: &mut String, spec: &RouterSpec) {
     out.push('\n');
 }
 
+/// Renders one page builder switch case.
 fn render_page_builder_case(spec: &RouterSpec, route: &crate::plugin::model::RouteSpec) -> String {
     let page_args = route
         .params
@@ -92,6 +106,7 @@ fn render_page_builder_case(spec: &RouterSpec, route: &crate::plugin::model::Rou
     ) + "\n"
 }
 
+/// Renders a page constructor expression, wrapping long argument lists.
 fn page_constructor_expr(page_class: &str, args: &[String]) -> String {
     if args.is_empty() {
         return format!("const {page_class}()");
