@@ -1,18 +1,23 @@
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     fs,
     path::{Path, PathBuf},
 };
 
 use dust_diagnostics::Diagnostic;
 
-use crate::{SourceLibrary, is_generated_primary_file, load_dust_config, primary_output_path};
+use crate::{
+    SourceLibrary, is_generated_primary_file, load_dust_config, load_package_name,
+    primary_output_path,
+};
 
 /// Deduplicated set of annotation names owned by Dust plugins.
+///
+/// Discovery uses these names only after a library is reachable from Dust
+/// imports or re-exports.
 #[derive(Debug, Clone, Default)]
 pub struct SupportedAnnotations {
     names: HashSet<Box<str>>,
-    byte_names: Vec<Box<[u8]>>,
 }
 
 impl SupportedAnnotations {
@@ -29,10 +34,6 @@ impl SupportedAnnotations {
     pub fn contains(&self, name: &str) -> bool {
         self.names.contains(name)
     }
-
-    fn contains_bytes(&self, name: &[u8]) -> bool {
-        self.byte_names.iter().any(|supported| &**supported == name)
-    }
 }
 
 impl<S> FromIterator<S> for SupportedAnnotations
@@ -40,14 +41,11 @@ where
     S: Into<String>,
 {
     fn from_iter<T: IntoIterator<Item = S>>(iter: T) -> Self {
-        let names = iter.into_iter().map(Into::into).collect::<Vec<String>>();
-        let byte_names = names
-            .iter()
-            .map(|name| name.as_bytes().to_vec().into_boxed_slice())
-            .collect();
         Self {
-            names: names.into_iter().map(String::into_boxed_str).collect(),
-            byte_names,
+            names: iter
+                .into_iter()
+                .map(|name| name.into().into_boxed_str())
+                .collect(),
         }
     }
 }
@@ -56,12 +54,14 @@ where
 ///
 /// The scan is deterministic and only keeps source files that:
 /// - are not already generated primary output files
-/// - contain at least one plugin-owned annotation marker
+/// - use a supported Dust annotation
+/// - import Dust directly or through local Dart import/export chains
 pub fn discover_libraries(
     root: &Path,
     supported_annotations: &SupportedAnnotations,
 ) -> Result<Vec<SourceLibrary>, Diagnostic> {
     let dust_config = load_dust_config(root)?;
+    let package_name = load_package_name(root)?;
     let lib_dir = root.join("lib");
     if !lib_dir.is_dir() {
         return Ok(Vec::new());
@@ -71,13 +71,26 @@ pub fn discover_libraries(
     collect_dart_files(&lib_dir, &mut dart_files)?;
     dart_files.sort();
 
-    let mut libraries = Vec::new();
-    for source_path in dart_files {
-        if is_generated_primary_file(&source_path, &dust_config.outputs.primary_suffix) {
-            continue;
-        }
+    let candidates = candidate_files(
+        root,
+        &lib_dir,
+        &package_name,
+        dart_files
+            .into_iter()
+            .filter(|path| !is_generated_primary_file(path, &dust_config.outputs.primary_suffix)),
+        supported_annotations,
+    )?;
+    let dust_aware = dust_aware_files(&candidates);
 
-        if is_candidate_library(&source_path, supported_annotations)? {
+    let mut libraries = Vec::new();
+    for source_path in candidates
+        .iter()
+        .filter(|candidate| {
+            candidate.has_supported_annotation && dust_aware.contains(candidate.path.as_path())
+        })
+        .map(|candidate| candidate.path.clone())
+    {
+        if source_path.starts_with(root) {
             libraries.push(SourceLibrary {
                 output_path: primary_output_path(&source_path, &dust_config.outputs.primary_suffix),
                 source_path,
@@ -86,6 +99,71 @@ pub fn discover_libraries(
     }
 
     Ok(libraries)
+}
+
+struct CandidateFile {
+    path: PathBuf,
+    direct_dust: bool,
+    local_imports: Vec<PathBuf>,
+    has_supported_annotation: bool,
+}
+
+fn candidate_files<I>(
+    root: &Path,
+    lib_dir: &Path,
+    package_name: &str,
+    paths: I,
+    supported_annotations: &SupportedAnnotations,
+) -> Result<Vec<CandidateFile>, Diagnostic>
+where
+    I: IntoIterator<Item = PathBuf>,
+{
+    paths
+        .into_iter()
+        .map(|path| {
+            let source = fs::read_to_string(&path).map_err(|error| {
+                Diagnostic::error(format!(
+                    "failed to read library `{}`: {error}",
+                    path.display()
+                ))
+            })?;
+            Ok(CandidateFile {
+                direct_dust: contains_dust_package(&source),
+                local_imports: local_imports(root, lib_dir, package_name, &path, &source),
+                has_supported_annotation: has_supported_annotation(&source, supported_annotations),
+                path,
+            })
+        })
+        .collect()
+}
+
+fn dust_aware_files(candidates: &[CandidateFile]) -> HashSet<&Path> {
+    let known_paths = candidates
+        .iter()
+        .map(|candidate| (candidate.path.as_path(), candidate))
+        .collect::<HashMap<_, _>>();
+    let mut dust_aware = candidates
+        .iter()
+        .filter(|candidate| candidate.direct_dust)
+        .map(|candidate| candidate.path.as_path())
+        .collect::<HashSet<_>>();
+
+    let mut changed = true;
+    while changed {
+        changed = false;
+        for candidate in candidates {
+            if dust_aware.contains(candidate.path.as_path()) {
+                continue;
+            }
+            if candidate.local_imports.iter().any(|import| {
+                known_paths.contains_key(import.as_path()) && dust_aware.contains(import.as_path())
+            }) {
+                changed = dust_aware.insert(candidate.path.as_path());
+            }
+        }
+    }
+
+    dust_aware
 }
 
 fn collect_dart_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), Diagnostic> {
@@ -123,46 +201,126 @@ fn collect_dart_files(dir: &Path, out: &mut Vec<PathBuf>) -> Result<(), Diagnost
     Ok(())
 }
 
-fn is_candidate_library(
+fn local_imports(
+    root: &Path,
+    lib_dir: &Path,
+    package_name: &str,
     path: &Path,
-    supported_annotations: &SupportedAnnotations,
-) -> Result<bool, Diagnostic> {
-    let source = fs::read(path).map_err(|error| {
-        Diagnostic::error(format!(
-            "failed to read library `{}`: {error}",
-            path.display()
-        ))
-    })?;
-
-    Ok(contains_annotation_marker(&source, supported_annotations))
+    source: &str,
+) -> Vec<PathBuf> {
+    directive_uris(source)
+        .into_iter()
+        .filter_map(|uri| resolve_local_import(root, lib_dir, package_name, path, &uri))
+        .collect()
 }
 
-fn contains_annotation_marker(source: &[u8], supported_annotations: &SupportedAnnotations) -> bool {
-    let mut index = 0;
-    while index < source.len() {
-        if source[index] != b'@' {
-            index += 1;
-            continue;
-        }
-
-        index += 1;
-        while index < source.len() && source[index].is_ascii_whitespace() {
-            index += 1;
-        }
-
-        let start = index;
-        while index < source.len() && is_annotation_ident(source[index]) {
-            index += 1;
-        }
-
-        if start != index && supported_annotations.contains_bytes(&source[start..index]) {
-            return true;
+fn directive_uris(source: &str) -> Vec<String> {
+    let mut uris = Vec::new();
+    for directive in ["import", "export"] {
+        let mut rest = source;
+        while let Some(index) = rest.find(directive) {
+            rest = &rest[index + directive.len()..];
+            let Some((quote_index, quote)) =
+                rest.char_indices().find(|(_, ch)| matches!(ch, '\'' | '"'))
+            else {
+                break;
+            };
+            let value_start = quote_index + quote.len_utf8();
+            let Some((uri, value_end)) = quoted_uri_value(&rest[value_start..], quote) else {
+                break;
+            };
+            uris.push(uri);
+            rest = &rest[value_start + value_end + quote.len_utf8()..];
         }
     }
-
-    false
+    uris
 }
 
-fn is_annotation_ident(byte: u8) -> bool {
-    byte == b'_' || byte.is_ascii_alphanumeric()
+fn quoted_uri_value(source: &str, quote: char) -> Option<(String, usize)> {
+    let mut value = String::new();
+    let mut escaped = false;
+    for (index, ch) in source.char_indices() {
+        if escaped {
+            if ch == quote || ch == '\\' {
+                value.push(ch);
+            } else {
+                value.push('\\');
+                value.push(ch);
+            }
+            escaped = false;
+            continue;
+        }
+        if ch == '\\' {
+            escaped = true;
+            continue;
+        }
+        if ch == quote {
+            return Some((value, index));
+        }
+        value.push(ch);
+    }
+    None
+}
+
+fn resolve_local_import(
+    root: &Path,
+    lib_dir: &Path,
+    package_name: &str,
+    path: &Path,
+    uri: &str,
+) -> Option<PathBuf> {
+    if uri.starts_with("dart:") {
+        return None;
+    }
+    if let Some(package_path) = uri.strip_prefix(&format!("package:{package_name}/")) {
+        return Some(normalize_path(&lib_dir.join(package_path)));
+    }
+    if uri.starts_with("package:") || !uri.ends_with(".dart") {
+        return None;
+    }
+    let parent = path.parent().unwrap_or(root);
+    Some(normalize_path(&parent.join(uri)))
+}
+
+fn normalize_path(path: &Path) -> PathBuf {
+    let mut normalized = PathBuf::new();
+    for component in path.components() {
+        match component {
+            std::path::Component::ParentDir => {
+                normalized.pop();
+            }
+            std::path::Component::CurDir => {}
+            _ => normalized.push(component.as_os_str()),
+        }
+    }
+    normalized
+}
+
+fn has_supported_annotation(source: &str, supported_annotations: &SupportedAnnotations) -> bool {
+    annotation_short_names(source).any(|name| supported_annotations.contains(name))
+}
+
+fn annotation_short_names(source: &str) -> impl Iterator<Item = &str> {
+    source.match_indices('@').filter_map(|(index, _)| {
+        let mut start = index + 1;
+        let bytes = source.as_bytes();
+        while bytes.get(start).is_some_and(u8::is_ascii_whitespace) {
+            start += 1;
+        }
+        let mut end = start;
+        while bytes
+            .get(end)
+            .is_some_and(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'$' | b'.'))
+        {
+            end += 1;
+        }
+        source[start..end]
+            .rsplit('.')
+            .next()
+            .filter(|name| !name.is_empty())
+    })
+}
+
+fn contains_dust_package(source: &str) -> bool {
+    source.contains("package:dust_dart/") || source.contains("package:dust_flutter/")
 }

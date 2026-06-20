@@ -11,8 +11,20 @@ fn span() -> TextRange {
 }
 
 fn annotation(args: &str) -> ParsedAnnotation {
+    qualified_annotation(None, args)
+}
+
+fn prefixed_annotation(prefix: &str, args: &str) -> ParsedAnnotation {
+    qualified_annotation(Some(prefix), args)
+}
+
+fn qualified_annotation(prefix: Option<&str>, args: &str) -> ParsedAnnotation {
     ParsedAnnotation {
         name: "ViewModel".to_owned(),
+        prefix: prefix.map(str::to_owned),
+        qualified_name: prefix
+            .map(|prefix| format!("{prefix}.ViewModel"))
+            .unwrap_or_else(|| "ViewModel".to_owned()),
         arguments_source: Some(args.to_owned()),
         parsed_arguments: None,
         span: span(),
@@ -125,6 +137,36 @@ fn collects_state_and_view_model_workspace_facts() {
     let view_models = snapshot.string_set("dust_state.view_models.v1").unwrap();
     assert_eq!(
         view_models,
+        &[r#"{"class_name":"TaskBoardViewModel","state_type":"TaskBoardState","args_type":"TaskBoardArgs","initial_source":"const TaskBoardState()","generated_base_class":"$TaskBoardViewModel","import_uri":"package:state_test/features/task_board.dart"}"#.to_owned()]
+    );
+}
+
+#[test]
+fn collects_prefixed_view_model_workspace_fact() {
+    let plugin = register_plugin();
+    let library = parsed_library(vec![class(
+        "TaskBoardViewModel",
+        vec![prefixed_annotation(
+            "f",
+            "(state: TaskBoardState, args: TaskBoardArgs, initial: const TaskBoardState())",
+        )],
+        Vec::new(),
+    )]);
+    let mut builder = WorkspaceAnalysisBuilder::default();
+
+    plugin.collect_workspace_analysis(
+        WorkspaceAnalysisContext {
+            package_name: "state_test",
+            package_root: std::path::Path::new("/workspace/app"),
+            source_path: std::path::Path::new("/workspace/app/lib/features/task_board.dart"),
+        },
+        &library,
+        &mut builder,
+    );
+    let snapshot = builder.snapshot();
+
+    assert_eq!(
+        snapshot.string_set("dust_state.view_models.v1").unwrap(),
         &[r#"{"class_name":"TaskBoardViewModel","state_type":"TaskBoardState","args_type":"TaskBoardArgs","initial_source":"const TaskBoardState()","generated_base_class":"$TaskBoardViewModel","import_uri":"package:state_test/features/task_board.dart"}"#.to_owned()]
     );
 }

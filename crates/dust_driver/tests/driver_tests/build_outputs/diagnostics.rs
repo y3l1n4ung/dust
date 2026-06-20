@@ -69,7 +69,7 @@ fn build_keeps_source_context_for_labeled_diagnostics() {
     );
 
     let rendered = render_to_string_with_files(&result.diagnostics[0], &[file.render_context()]);
-    assert!(rendered.contains(&format!("  --> {}:2:1", file.path.display())));
-    assert!(rendered.contains("2 | @Derive([ToString(), UnknownTrait()])"));
+    assert!(rendered.contains(&format!("  --> {}:3:1", file.path.display())));
+    assert!(rendered.contains("3 | @Derive([ToString(), UnknownTrait()])"));
     assert!(rendered.contains("annotation member is not owned by any registered symbol"));
 }

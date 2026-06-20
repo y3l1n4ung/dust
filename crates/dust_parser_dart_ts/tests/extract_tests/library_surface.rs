@@ -54,7 +54,7 @@ fn extracts_library_and_prefixed_directives() {
 @Deprecated('legacy')
 library models.user;
 
-import 'package:app/src/user.dart' as user;
+import 'package:app/src/user.dart' deferred as user show User, UserId hide InternalUser;
 export 'src/public.dart';
 part 'user.g.dart';
 part of models.user;
@@ -80,9 +80,19 @@ part of models.user;
     }
 
     match &result.library.directives[1] {
-        ParsedDirective::Import { uri, prefix, .. } => {
+        ParsedDirective::Import {
+            uri,
+            prefix,
+            show,
+            hide,
+            is_deferred,
+            ..
+        } => {
             assert_eq!(uri, "package:app/src/user.dart");
             assert_eq!(prefix.as_deref(), Some("user"));
+            assert_eq!(show, &["User", "UserId"]);
+            assert_eq!(hide, &["InternalUser"]);
+            assert!(*is_deferred);
         }
         other => panic!("expected import directive, got {other:?}"),
     }

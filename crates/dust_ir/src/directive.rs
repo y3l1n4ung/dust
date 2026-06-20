@@ -16,6 +16,12 @@ pub struct ImportIr {
     pub uri: String,
     /// The optional import prefix.
     pub prefix: Option<String>,
+    /// Names included by `show` combinators.
+    pub show: Vec<String>,
+    /// Names excluded by `hide` combinators.
+    pub hide: Vec<String>,
+    /// Whether the import uses `deferred as`.
+    pub is_deferred: bool,
     /// The source span for the directive.
     pub span: SpanIr,
 }

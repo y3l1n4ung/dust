@@ -281,6 +281,9 @@ fn dart_file_ir_preserves_directive_surfaces() {
     file.import_directives.push(ImportIr {
         uri: "package:dust_dart/dust_dart.dart".to_owned(),
         prefix: Some("dust".to_owned()),
+        show: vec!["Derive".to_owned()],
+        hide: vec!["Internal".to_owned()],
+        is_deferred: false,
         span: span(21, 67),
     });
     file.export_directives.push(ExportIr {
@@ -305,6 +308,9 @@ fn dart_file_ir_preserves_directive_surfaces() {
         Some("models.user")
     );
     assert_eq!(file.import_directives[0].prefix.as_deref(), Some("dust"));
+    assert_eq!(file.import_directives[0].show, ["Derive"]);
+    assert_eq!(file.import_directives[0].hide, ["Internal"]);
+    assert!(!file.import_directives[0].is_deferred);
     assert_eq!(file.export_directives[0].uri, "src/user_api.dart");
     assert_eq!(file.part_directives[0].uri, "user.g.dart");
     assert_eq!(
@@ -340,6 +346,9 @@ fn annotation_ir_preserves_prefix_and_structured_values() {
     let import = ImportIr {
         uri: "package:dust_dart/dust_dart.dart".to_owned(),
         prefix: Some("dust".to_owned()),
+        show: Vec::new(),
+        hide: Vec::new(),
+        is_deferred: false,
         span: span(0, 32),
     };
 

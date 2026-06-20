@@ -10,7 +10,7 @@ pub fn annotation_ir_from_parsed(
     annotation: &ParsedAnnotation,
     resolved_symbol: Option<SymbolId>,
 ) -> AnnotationIr {
-    let name = name_ir(file_id, &annotation.name, annotation.span);
+    let name = name_ir(file_id, &annotation.qualified_name, annotation.span);
     let (positional_args, named_args) = annotation_argument_values(file_id, annotation);
 
     AnnotationIr {

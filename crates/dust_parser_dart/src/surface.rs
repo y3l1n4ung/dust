@@ -69,6 +69,12 @@ pub enum ParsedDirective {
         uri: String,
         /// The optional import prefix after `as`.
         prefix: Option<String>,
+        /// Names included by `show` combinators.
+        show: Vec<String>,
+        /// Names excluded by `hide` combinators.
+        hide: Vec<String>,
+        /// Whether the import uses `deferred as`.
+        is_deferred: bool,
         /// The source span of the full directive.
         span: TextRange,
     },
@@ -315,7 +321,7 @@ impl ParsedClassSurface {
     pub fn has_annotation(&self, annotation_name: &str) -> bool {
         self.annotations
             .iter()
-            .any(|annotation| annotation.name == annotation_name)
+            .any(|annotation| annotation.is_named(annotation_name))
     }
 
     /// Returns `true` when this declaration is a Dart `mixin class`.
@@ -332,14 +338,28 @@ impl ParsedClassSurface {
 /// One metadata annotation attached to a declaration.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParsedAnnotation {
-    /// The annotation name without `@`.
+    /// The short annotation name without `@` or import prefix.
     pub name: String,
+    /// The optional import prefix before the short name.
+    pub prefix: Option<String>,
+    /// The full annotation name without `@`.
+    pub qualified_name: String,
     /// The raw argument source, if present.
     pub arguments_source: Option<String>,
     /// Parsed argument facts, when provided by the parser backend.
     pub parsed_arguments: Option<ParsedAnnotationArguments>,
     /// The source span for the full annotation.
     pub span: TextRange,
+}
+
+impl ParsedAnnotation {
+    /// Returns `true` when the parsed short annotation name matches `annotation_name`.
+    ///
+    /// Import prefixes are intentionally ignored here. For example, both
+    /// `@Derive()` and `@d.Derive()` match `Derive`.
+    pub fn is_named(&self, annotation_name: &str) -> bool {
+        self.name == annotation_name
+    }
 }
 
 /// Parsed annotation argument facts.
@@ -397,7 +417,7 @@ impl ParsedFieldSurface {
     pub fn has_annotation(&self, annotation_name: &str) -> bool {
         self.annotations
             .iter()
-            .any(|annotation| annotation.name == annotation_name)
+            .any(|annotation| annotation.is_named(annotation_name))
     }
 }
 

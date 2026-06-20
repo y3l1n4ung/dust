@@ -166,6 +166,62 @@ class Signup {
 }
 
 #[test]
+fn resolves_prefixed_annotations_by_short_name() {
+    let source = SourceText::new(
+        FileId::new(6),
+        r#"
+import 'package:dust_dart/derive.dart' as d;
+import 'package:other/derive.dart' as other;
+
+part 'user.g.dart';
+
+@other.Derive([d.ToString()])
+@d.SerDe(renameAll: d.SerDeRename.snakeCase)
+class User {
+  @other.SerDe(rename: 'full_name')
+  final String name;
+
+  const User(this.name);
+}
+"#,
+    );
+
+    let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+    let mut catalog = SymbolCatalog::new();
+    catalog.register_trait("ToString", "dust_dart::ToString");
+    catalog.register_config("SerDe", "dust_dart::SerDe");
+
+    let resolved = resolve_library(
+        FileId::new(6),
+        "lib/user.dart",
+        "lib/user.g.dart",
+        &parsed.library,
+        &catalog,
+    );
+
+    assert!(
+        resolved.diagnostics.is_empty(),
+        "{:?}",
+        resolved.diagnostics
+    );
+    assert_eq!(resolved.library.classes[0].traits.len(), 1);
+    assert_eq!(
+        resolved.library.classes[0].traits[0].symbol,
+        SymbolId::new("dust_dart::ToString")
+    );
+    assert_eq!(resolved.library.classes[0].configs.len(), 1);
+    assert_eq!(
+        resolved.library.classes[0].configs[0].symbol,
+        SymbolId::new("dust_dart::SerDe")
+    );
+    assert_eq!(resolved.library.classes[0].fields[0].configs.len(), 1);
+    assert_eq!(
+        resolved.library.classes[0].fields[0].configs[0].symbol,
+        SymbolId::new("dust_dart::SerDe")
+    );
+}
+
+#[test]
 fn missing_generated_part_is_reported_when_dust_symbols_are_present() {
     let source = SourceText::new(
         FileId::new(2),

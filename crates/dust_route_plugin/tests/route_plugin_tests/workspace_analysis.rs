@@ -2,7 +2,9 @@ use dust_plugin_api::{DustPlugin, WorkspaceAnalysisBuilder, WorkspaceAnalysisCon
 use dust_route_plugin::register_plugin;
 use serde_json::{Value, json};
 
-use super::support::{parsed_annotation, parsed_library_with_annotations};
+use super::support::{
+    parsed_annotation, parsed_library_with_annotations, parsed_prefixed_annotation,
+};
 
 #[test]
 fn collects_route_and_router_workspace_facts() {
@@ -62,6 +64,39 @@ fn collects_route_and_router_workspace_facts() {
             "not_found": "/404",
             "source_path": "lib/pages/dashboard_page.dart"
         }),
+    );
+}
+
+#[test]
+fn collects_prefixed_route_and_router_workspace_facts() {
+    let plugin = register_plugin();
+    let library = parsed_library_with_annotations(
+        "DashboardPage",
+        vec![
+            parsed_prefixed_annotation("f", "Route", "('/', name: 'dashboard')"),
+            parsed_prefixed_annotation("f", "Router", "(initial: '/', notFound: '/404')"),
+        ],
+    );
+    let mut builder = WorkspaceAnalysisBuilder::default();
+
+    plugin.collect_workspace_analysis(
+        WorkspaceAnalysisContext {
+            package_name: "route_test",
+            package_root: std::path::Path::new("."),
+            source_path: std::path::Path::new("lib/pages/dashboard_page.dart"),
+        },
+        &library,
+        &mut builder,
+    );
+    let snapshot = builder.snapshot();
+
+    assert_eq!(
+        snapshot.string_set("dust_route.routes.v1").unwrap().len(),
+        1
+    );
+    assert_eq!(
+        snapshot.string_set("dust_route.routers.v1").unwrap().len(),
+        1
     );
 }
 

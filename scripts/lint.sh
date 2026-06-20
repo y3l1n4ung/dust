@@ -106,7 +106,7 @@ if [[ "$SCOPE" != rust ]]; then
   fi
 fi
 
-if has_cmd dart; then
+if [[ "$SCOPE" != rust ]] && has_cmd dart; then
   for package in "${DART_TARGETS[@]}"; do
     run_dart_pub_get "$package"
   done

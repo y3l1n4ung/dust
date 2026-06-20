@@ -1,7 +1,9 @@
 use std::collections::HashSet;
 
 use dust_diagnostics::Diagnostic;
-use dust_ir::{BuiltinType, ClassIr, ConstructorIr, ConstructorParamIr, DartFileIr, TypeIr};
+use dust_ir::{
+    BuiltinType, ClassIr, ConstructorIr, ConstructorParamIr, DartFileIr, ImportIr, TypeIr,
+};
 
 use super::{
     model::RouteAnnotation,
@@ -81,7 +83,26 @@ fn validate_visible_route_types(
 }
 
 fn is_visible_type(library: &DartFileIr, local_classes: &HashSet<&str>, name: &str) -> bool {
-    local_classes.contains(name) || !library.imports.is_empty()
+    local_classes.contains(name)
+        || library
+            .import_directives
+            .iter()
+            .any(|import| import_exposes_type(import, name))
+        || library.import_directives.is_empty()
+            && library.imports.iter().any(|uri| is_user_type_import(uri))
+}
+
+fn import_exposes_type(import: &ImportIr, name: &str) -> bool {
+    is_user_type_import(&import.uri)
+        && !import.hide.iter().any(|hidden| hidden == name)
+        && (import.show.is_empty() || import.show.iter().any(|shown| shown == name))
+}
+
+fn is_user_type_import(uri: &str) -> bool {
+    !uri.starts_with("dart:")
+        && !uri.starts_with("package:flutter/")
+        && !uri.starts_with("package:dust_flutter/")
+        && !uri.starts_with("package:dust_dart/")
 }
 
 fn validate_route_params(class: &ClassIr, path: &str, diagnostics: &mut Vec<Diagnostic>) {

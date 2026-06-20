@@ -19,11 +19,11 @@ fn class_has_copy_with(class: &ParsedClassSurface) -> bool {
 }
 
 fn annotation_has_copy_with(annotation: &ParsedAnnotation) -> bool {
-    if annotation.name == "CopyWith" {
+    if annotation.is_named("CopyWith") {
         return true;
     }
 
-    if annotation.name != "Derive" {
+    if !annotation.is_named("Derive") {
         return false;
     }
 

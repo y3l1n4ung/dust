@@ -1,5 +1,9 @@
+use dust_parser_dart::{
+    ParsedAnnotation, ParsedClassKind, ParsedClassSurface, ParsedDartFileSurface,
+};
 use dust_plugin_api::{DustPlugin, SymbolPlan};
 use dust_plugin_derive::register_plugin;
+use dust_text::TextRange;
 
 use super::support::{members_for_class, sample_library};
 
@@ -41,6 +45,61 @@ fn copywith_requires_no_reserved_helpers() {
 
     assert!(copywith_requested.is_empty());
     assert!(no_requested.is_empty());
+}
+
+#[test]
+fn prefixed_derive_copywith_collects_copyable_type_fact() {
+    let plugin = register_plugin();
+    let library = ParsedDartFileSurface {
+        span: TextRange::new(0_u32, 80_u32),
+        directives: Vec::new(),
+        classes: vec![ParsedClassSurface {
+            kind: ParsedClassKind::Class,
+            name: "User".to_owned(),
+            is_abstract: false,
+            is_interface: false,
+            superclass_name: None,
+            annotations: vec![ParsedAnnotation {
+                name: "Derive".to_owned(),
+                prefix: Some("d".to_owned()),
+                qualified_name: "d.Derive".to_owned(),
+                arguments_source: Some("([d.CopyWith()])".to_owned()),
+                parsed_arguments: None,
+                span: TextRange::new(0_u32, 24_u32),
+            }],
+            fields: Vec::new(),
+            constructors: Vec::new(),
+            methods: Vec::new(),
+            span: TextRange::new(25_u32, 80_u32),
+        }],
+        enums: Vec::new(),
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
+        query_calls: Vec::new(),
+    };
+    let mut builder = dust_plugin_api::WorkspaceAnalysisBuilder::default();
+
+    plugin.collect_workspace_analysis(
+        dust_plugin_api::WorkspaceAnalysisContext {
+            package_name: "derive_test",
+            package_root: std::path::Path::new("."),
+            source_path: std::path::Path::new("lib/user.dart"),
+        },
+        &library,
+        &mut builder,
+    );
+
+    assert_eq!(
+        builder
+            .snapshot()
+            .string_set("dust_plugin_derive.copyable_types")
+            .unwrap(),
+        &["User".to_owned()]
+    );
 }
 
 #[test]

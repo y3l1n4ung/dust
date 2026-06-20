@@ -5,31 +5,61 @@ use dust_parser_dart::{
 use dust_text::{SourceText, TextRange, TextSize};
 use tree_sitter::Node;
 
-use crate::syntax::{find_first_descendant_text, node_text, text_range};
+use crate::syntax::{direct_named_child, find_first_descendant_text, node_text, text_range};
 
 pub(crate) fn extract_annotation(node: Node<'_>, source: &SourceText) -> ParsedAnnotation {
-    let mut name = String::new();
+    let (name, prefix, qualified_name) = node
+        .child_by_field_name("name")
+        .map(|name| annotation_name(name, source))
+        .unwrap_or_default();
     let mut arguments_source = None;
     let mut parsed_arguments = None;
 
     let mut cursor = node.walk();
     for child in node.children(&mut cursor).filter(|child| child.is_named()) {
-        match child.kind() {
-            "identifier" if name.is_empty() => name = node_text(child, source),
-            "annotation_arguments" => {
-                arguments_source = Some(node_text(child, source));
-                parsed_arguments = Some(extract_annotation_arguments(child, source));
-            }
-            _ => {}
+        if child.kind() == "annotation_arguments" {
+            arguments_source = Some(node_text(child, source));
+            parsed_arguments = Some(extract_annotation_arguments(child, source));
         }
     }
 
     ParsedAnnotation {
         name,
+        prefix,
+        qualified_name,
         arguments_source,
         parsed_arguments,
         span: text_range(node),
     }
+}
+
+fn annotation_name(node: Node<'_>, source: &SourceText) -> (String, Option<String>, String) {
+    let qualified_name = node_text(node, source);
+    if node.kind() != "qualified" {
+        return (qualified_name.clone(), None, qualified_name);
+    }
+
+    let mut cursor = node.walk();
+    let Some(short_node) = node
+        .children(&mut cursor)
+        .filter(|child| child.is_named())
+        .last()
+    else {
+        return (qualified_name.clone(), None, qualified_name);
+    };
+
+    let name = node_text(short_node, source);
+    let prefix = source
+        .slice(TextRange::new(
+            TextSize::new(node.start_byte() as u32),
+            TextSize::new(short_node.start_byte() as u32),
+        ))
+        .map(str::trim)
+        .map(|value| value.trim_end_matches('.').trim())
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned);
+
+    (name, prefix, qualified_name)
 }
 
 fn extract_annotation_arguments(node: Node<'_>, source: &SourceText) -> ParsedAnnotationArguments {
@@ -69,12 +99,6 @@ fn extract_named_argument(
         span: text_range(argument_node),
         value_span,
     })
-}
-
-fn direct_named_child<'tree>(node: Node<'tree>, kind: &str) -> Option<Node<'tree>> {
-    let mut cursor = node.walk();
-    node.children(&mut cursor)
-        .find(|child| child.is_named() && child.kind() == kind)
 }
 
 fn named_value_span(named_node: Node<'_>, label_node: Node<'_>, source: &SourceText) -> TextRange {

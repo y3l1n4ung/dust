@@ -186,9 +186,19 @@ fn lower_import_directives(library: &ResolvedLibrary) -> Vec<ImportIr> {
         .directives
         .iter()
         .filter_map(|directive| match directive {
-            ParsedDirective::Import { uri, prefix, span } => Some(ImportIr {
+            ParsedDirective::Import {
+                uri,
+                prefix,
+                show,
+                hide,
+                is_deferred,
+                span,
+            } => Some(ImportIr {
                 uri: uri.clone(),
                 prefix: prefix.clone(),
+                show: show.clone(),
+                hide: hide.clone(),
+                is_deferred: *is_deferred,
                 span: SpanIr::new(file_id, *span),
             }),
             _ => None,

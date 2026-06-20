@@ -67,7 +67,7 @@ fn view_model_annotation(class: &ParsedClassSurface) -> Option<super::model::Vie
     class
         .annotations
         .iter()
-        .find(|annotation| annotation.name == VIEW_MODEL)
+        .find(|annotation| annotation.is_named(VIEW_MODEL))
         .and_then(parse_view_model_surface)
 }
 

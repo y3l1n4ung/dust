@@ -25,12 +25,21 @@ pub(crate) fn emit_db_library(
     let mut sections = Vec::new();
     let rows = row_classes(library);
 
+    let databases = options.databases.then(|| database_classes(library));
+    let daos = options.databases.then(|| dao_classes(library));
+    if options.databases
+        && databases.as_ref().is_none_or(Vec::is_empty)
+        && daos.as_ref().is_none_or(Vec::is_empty)
+    {
+        return contribution;
+    }
+
     for row in &rows {
         sections.push(render_from_row_extension(library, row.class, &row.config));
     }
 
     if options.databases {
-        let databases = database_classes(library);
+        let databases = databases.expect("database classes are collected in database mode");
         let driver = databases
             .first()
             .map_or(super::model::DbDriver::Sqlite3, |db| db.driver);
@@ -43,7 +52,7 @@ pub(crate) fn emit_db_library(
             .map(|row| row.class.name.as_str())
             .chain(imported_rows.iter().map(String::as_str))
             .collect::<HashSet<_>>();
-        for dao in dao_classes(library) {
+        for dao in daos.expect("DAO classes are collected in database mode") {
             sections.push(render_dao_class(&dao, &row_names, driver));
         }
     }
