@@ -5,11 +5,17 @@ use dust_plugin_api::{
     DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
 };
 
+/// Workspace-wide fact collection for state and view model declarations.
 mod analysis;
+/// Annotation names and workspace analysis keys used by the state plugin.
 mod constants;
+/// Generated Dart support type emission.
 mod emit;
+/// Serializable facts and parsed annotation models shared across plugin phases.
 mod model;
+/// Annotation argument parsing for `@ViewModel`.
 mod parse;
+/// Validation diagnostics for invalid view model declarations.
 mod validate;
 
 use self::analysis::collect_state_workspace_analysis;

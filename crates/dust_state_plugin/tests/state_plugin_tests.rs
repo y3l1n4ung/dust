@@ -1,3 +1,5 @@
+//! Integration test harness for the Dust state plugin.
+
 #[path = "state_plugin_tests/analysis.rs"]
 mod analysis;
 #[path = "state_plugin_tests/emission.rs"]

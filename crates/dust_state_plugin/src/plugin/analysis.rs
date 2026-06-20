@@ -13,6 +13,7 @@ use super::{
     parse::parse_view_model_surface,
 };
 
+/// Collects state and view model facts for later cross-library emission.
 pub(crate) fn collect_state_workspace_analysis(
     context: WorkspaceAnalysisContext<'_>,
     library: &ParsedDartFileSurface,
@@ -37,6 +38,7 @@ pub(crate) fn collect_state_workspace_analysis(
     }
 }
 
+/// Records field metadata for a parsed Dart class as a possible state class.
 fn collect_state_fact(
     class: &ParsedClassSurface,
     declared_type_names: &[String],
@@ -63,6 +65,7 @@ fn collect_state_fact(
     }
 }
 
+/// Returns the parsed view model annotation attached to a class, if present.
 fn view_model_annotation(class: &ParsedClassSurface) -> Option<super::model::ViewModelAnnotation> {
     class
         .annotations
@@ -71,6 +74,7 @@ fn view_model_annotation(class: &ParsedClassSurface) -> Option<super::model::Vie
         .and_then(parse_view_model_surface)
 }
 
+/// Lists local type names that can be referenced safely from generated code.
 fn declared_type_names(library: &ParsedDartFileSurface) -> Vec<String> {
     library
         .classes
@@ -80,6 +84,7 @@ fn declared_type_names(library: &ParsedDartFileSurface) -> Vec<String> {
         .collect()
 }
 
+/// Rewrites unavailable Dart type sources to nullable `Object` fallbacks.
 fn sanitize_type_source(type_source: &str, declared_type_names: &[String]) -> String {
     let ty = type_source.trim();
     if let Some(inner) = ty
@@ -102,6 +107,7 @@ fn sanitize_type_source(type_source: &str, declared_type_names: &[String]) -> St
     }
 }
 
+/// Returns whether a type can be referenced from generated selector code.
 fn is_visible_type(type_name: &str, declared_type_names: &[String]) -> bool {
     matches!(
         type_name,
@@ -117,6 +123,7 @@ fn is_visible_type(type_name: &str, declared_type_names: &[String]) -> bool {
     ) || declared_type_names.iter().any(|name| name == type_name)
 }
 
+/// Builds the import URI for a source file relative to the package root.
 fn import_uri(context: WorkspaceAnalysisContext<'_>) -> String {
     let source_path = context.source_path;
     let package_root = context.package_root;
@@ -130,6 +137,7 @@ fn import_uri(context: WorkspaceAnalysisContext<'_>) -> String {
     source_path.display().to_string()
 }
 
+/// Converts a filesystem path to a normalized forward-slash Dart import path.
 fn normalize_path(path: &Path) -> String {
     normalize_components(path)
         .components()
@@ -141,6 +149,7 @@ fn normalize_path(path: &Path) -> String {
         .join("/")
 }
 
+/// Collapses `..` components so generated import paths stay stable.
 fn normalize_components(path: &Path) -> PathBuf {
     let mut components = Vec::new();
     for component in path.components() {
