@@ -35,7 +35,8 @@ void main() {
       final result = await pool.transaction((tx) async {
         expect(tx.driver, Driver.sqlite3);
         expect(
-          (tx as Sqlite3Executor).database
+          (tx as Sqlite3Executor)
+              .database
               .select('SELECT 1')
               .single
               .columnAt(0),
