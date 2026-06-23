@@ -1,7 +1,9 @@
 /// A small indentation-aware writer for deterministic Dart source emission.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub(crate) struct DartWriter {
+    /// Accumulated source buffer.
     buffer: String,
+    /// Current indentation level in two-space units.
     indent: usize,
 }
 
@@ -41,6 +43,7 @@ impl DartWriter {
         self.buffer
     }
 
+    /// Writes one line with the current indentation level applied.
     fn write_indented_line(&mut self, line: &str) {
         self.buffer.push_str(&" ".repeat(self.indent * 2));
         self.buffer.push_str(line);

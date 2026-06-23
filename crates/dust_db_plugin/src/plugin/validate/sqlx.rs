@@ -21,6 +21,7 @@ use super::{
     query::{query_row_type, validate_placeholders},
 };
 
+/// Validates SQL queries through SQLx describe or the offline query cache.
 pub(super) fn validate_sqlx_describe(
     library: &dust_ir::DartFileIr,
     db: &DatabaseClass<'_>,
@@ -76,6 +77,7 @@ pub(super) fn validate_sqlx_describe(
     }
 }
 
+/// Runs online SQLx validation inside a current-thread Tokio runtime.
 fn run_sqlx_validation(
     migrations_path: &Path,
     migrations: &str,
@@ -94,6 +96,7 @@ fn run_sqlx_validation(
     })
 }
 
+/// Opens the SQLite database used for SQL validation.
 async fn connect_sqlite_for_validation() -> Result<SqliteConnection, String> {
     let database_url =
         std::env::var("DUST_DATABASE_URL").unwrap_or_else(|_| "sqlite::memory:".to_owned());
@@ -104,6 +107,7 @@ async fn connect_sqlite_for_validation() -> Result<SqliteConnection, String> {
         })
 }
 
+/// Applies migration files to the validation database.
 async fn apply_migrations(
     conn: &mut SqliteConnection,
     migrations_path: &Path,
@@ -125,6 +129,7 @@ async fn apply_migrations(
     Ok(())
 }
 
+/// Describes all queries and returns metadata suitable for cache writes.
 async fn describe_queries(
     conn: &mut SqliteConnection,
     migrations: &str,
@@ -173,6 +178,7 @@ async fn describe_queries(
     Ok(metadata)
 }
 
+/// Validates SQLx-described columns against scalar and row requirements.
 fn validate_described_columns(
     query: &QuerySpec,
     row_columns: &HashMap<String, HashSet<String>>,

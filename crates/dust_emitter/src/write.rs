@@ -100,6 +100,7 @@ pub fn persist_emit_result(
     })
 }
 
+/// Reads an existing generated output file when it exists.
 fn read_previous_output(path: &Path) -> io::Result<Option<String>> {
     match fs::read_to_string(path) {
         Ok(source) => Ok(Some(source)),
@@ -108,6 +109,7 @@ fn read_previous_output(path: &Path) -> io::Result<Option<String>> {
     }
 }
 
+/// Persists auxiliary outputs unless primary emission has errors.
 fn persist_auxiliary_outputs(
     outputs: &[crate::emit::AuxiliaryEmitOutput],
     has_errors: bool,
@@ -134,6 +136,7 @@ fn persist_auxiliary_outputs(
         .collect()
 }
 
+/// Writes a generated source file, creating parent directories if needed.
 fn write_output_file(path: &Path, source: &str) -> io::Result<()> {
     match fs::write(path, source) {
         Ok(()) => Ok(()),

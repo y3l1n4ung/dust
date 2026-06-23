@@ -1,3 +1,5 @@
+//! Integration tests for plugin registry symbol ownership validation.
+
 use dust_diagnostics::Diagnostic;
 use dust_ir::LibraryIr;
 use dust_plugin_api::{DustPlugin, PluginContribution, PluginRegistry, SymbolPlan};

@@ -1,3 +1,5 @@
+//! Micro-benchmark for generated state plugin emission throughput.
+
 use std::{sync::Arc, time::Instant};
 
 use dust_ir::{ClassIr, ClassKindIr, ConfigApplicationIr, LibraryIr, SpanIr, SymbolId};
@@ -5,10 +7,12 @@ use dust_plugin_api::{DustPlugin, SymbolPlan, WorkspaceAnalysisBuilder};
 use dust_state_plugin::register_plugin;
 use dust_text::{FileId, TextRange};
 
+/// Builds a placeholder source span for synthetic benchmark IR nodes.
 fn span() -> SpanIr {
     SpanIr::new(FileId::new(1), TextRange::new(0_u32, 1_u32))
 }
 
+/// Builds a synthetic view model class configured for state emission.
 fn view_model(name: &str) -> ClassIr {
     ClassIr {
         kind: ClassKindIr::Class,

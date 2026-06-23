@@ -1,3 +1,5 @@
+//! Binary entry point for the Dust CLI.
+
 use std::process::ExitCode;
 
 fn main() -> ExitCode {

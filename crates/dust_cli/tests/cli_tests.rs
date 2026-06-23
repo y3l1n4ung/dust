@@ -1,3 +1,5 @@
+//! Integration test harness for the Dust CLI binary and command lifecycle.
+
 #[path = "cli_tests/binary.rs"]
 mod binary;
 

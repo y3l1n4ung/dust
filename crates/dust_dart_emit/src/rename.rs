@@ -1,6 +1,7 @@
 use dust_ir::SerdeRenameRuleIr;
 use heck::{AsKebabCase, AsLowerCamelCase, AsPascalCase, AsSnakeCase, AsTrainCase};
 
+/// Applies a serde rename rule without exposing the helper publicly.
 pub(crate) fn apply_rename_rule_impl(source: &str, rule: SerdeRenameRuleIr) -> String {
     match rule {
         SerdeRenameRuleIr::LowerCase => source.to_lowercase(),

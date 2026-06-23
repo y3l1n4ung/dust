@@ -1,5 +1,6 @@
 use minijinja::Value;
 
+/// Renders one generated validation rule line from template values.
 pub(crate) fn rule_line(field: Value, rule: Value, indent: String) -> String {
     let name = field.get_attr("name").unwrap().to_string();
     let value_name = field.get_attr("value_name").unwrap().to_string();
@@ -128,6 +129,7 @@ pub(crate) fn rule_line(field: Value, rule: Value, indent: String) -> String {
     }
 }
 
+/// Renders a rule that delegates to `ValidationHelper`.
 fn simple_helper(
     indent: &str,
     name: &str,
@@ -146,6 +148,7 @@ fn simple_helper(
     )
 }
 
+/// Renders a comparison-based validation rule.
 fn compare(
     indent: &str,
     expression: String,
@@ -163,6 +166,7 @@ fn compare(
     )
 }
 
+/// Renders a substring validation rule.
 fn string_contains(
     indent: &str,
     name: &str,
@@ -184,6 +188,7 @@ fn string_contains(
     )
 }
 
+/// Renders a regular expression validation rule.
 fn regex(
     indent: &str,
     name: &str,
@@ -203,6 +208,7 @@ fn regex(
     )
 }
 
+/// Renders a must-match validation rule.
 fn must_match(
     indent: &str,
     name: &str,
@@ -223,6 +229,7 @@ fn must_match(
     )
 }
 
+/// Renders nested validation forwarding.
 fn nested(
     indent: &str,
     field_name: &str,
@@ -247,6 +254,7 @@ fn nested(
     )
 }
 
+/// Renders a custom validation function call.
 fn custom(
     indent: &str,
     name: &str,
@@ -266,6 +274,7 @@ fn custom(
     )
 }
 
+/// Renders an indented block from generated Dart lines.
 fn block<const N: usize>(indent: &str, lines: [String; N]) -> String {
     lines
         .into_iter()

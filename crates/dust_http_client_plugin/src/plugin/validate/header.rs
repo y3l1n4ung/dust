@@ -7,6 +7,7 @@ use crate::plugin::util::{config_name, label};
 use crate::plugin::validate::param::ParamState;
 
 impl ParamState {
+    /// Records static class and method headers while checking duplicate keys.
     pub(super) fn record_static_headers(
         &mut self,
         class: &ClassIr,
@@ -33,6 +34,7 @@ impl ParamState {
     }
 }
 
+/// Returns class-level static header entries when configured.
 fn class_header_entries(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
@@ -44,6 +46,7 @@ fn class_header_entries(
     }
 }
 
+/// Records a static header key and reports duplicates.
 fn record_header_key(
     state: &mut ParamState,
     class: &ClassIr,

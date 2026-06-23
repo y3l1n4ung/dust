@@ -3,6 +3,7 @@ use dust_ir::{ConfigApplicationIr, SerdeClassConfigIr, SerdeFieldConfigIr};
 
 use super::serde_parse::{parse_codec_source, parse_serde_rename_rule};
 
+/// Lowers class-level `@SerDe` options.
 pub(crate) fn lower_class_serde_config(
     class_name: &str,
     configs: &[ConfigApplicationIr],
@@ -59,6 +60,7 @@ pub(crate) fn lower_class_serde_config(
     saw_serde.then_some(serde)
 }
 
+/// Lowers field-level `@SerDe` options.
 pub(crate) fn lower_field_serde_config(
     field_name: &str,
     configs: &[ConfigApplicationIr],
@@ -130,10 +132,12 @@ pub(crate) fn lower_field_serde_config(
     saw_serde.then_some(serde)
 }
 
+/// Returns whether a config application is the Dust SerDe annotation.
 fn is_serde_config(config: &ConfigApplicationIr) -> bool {
     config.symbol.0 == "dust_dart::SerDe"
 }
 
+/// Returns named SerDe arguments and reports malformed positional usage.
 fn serde_named_arguments<'a>(
     config: &'a ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,

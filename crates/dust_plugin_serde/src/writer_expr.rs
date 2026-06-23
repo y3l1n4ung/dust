@@ -6,6 +6,7 @@ use dust_ir::{BuiltinType, FieldIr, TypeIr};
 
 use crate::writer_type::{access_receiver, non_null_encode_expr, non_nullable};
 
+/// Renders a JSON encode expression for a class field.
 pub(crate) fn encode_field_expr(
     expr: &str,
     field: &FieldIr,
@@ -22,6 +23,7 @@ pub(crate) fn encode_field_expr(
     }
 }
 
+/// Renders a JSON encode expression for a type.
 pub(crate) fn encode_expr(
     expr: &str,
     ty: &TypeIr,
@@ -46,6 +48,7 @@ pub(crate) fn encode_expr(
     encode_non_nullable_expr(expr, ty, serializable_classes, serializable_enums)
 }
 
+/// Renders a JSON decode expression for a class field.
 pub(crate) fn decode_field_expr(
     raw: &str,
     key: &str,
@@ -69,6 +72,7 @@ pub(crate) fn decode_field_expr(
     }
 }
 
+/// Renders a JSON decode expression for a type.
 pub(crate) fn decode_expr(
     raw: &str,
     key: &str,
@@ -91,10 +95,12 @@ pub(crate) fn decode_expr(
     decode_non_nullable_expr(raw, key, ty, deserializable_classes, deserializable_enums)
 }
 
+/// Returns true when nullable values can be serialized unchanged.
 fn nullable_identity_encode(ty: &TypeIr) -> bool {
     matches!(ty, TypeIr::Builtin { nullable: true, .. } | TypeIr::Dynamic)
 }
 
+/// Renders a JSON encode expression for a non-nullable value.
 fn encode_non_nullable_expr(
     expr: &str,
     ty: &TypeIr,
@@ -144,6 +150,7 @@ fn encode_non_nullable_expr(
     }
 }
 
+/// Renders a JSON decode expression for a non-nullable value.
 fn decode_non_nullable_expr(
     raw: &str,
     key: &str,
@@ -232,10 +239,12 @@ fn decode_non_nullable_expr(
     }
 }
 
+/// Returns true when a generated helper exists for a symbol name.
 fn contains_symbol(symbols: &[&str], name: &str) -> bool {
     symbols.contains(&name)
 }
 
+/// Indents a multiline expression by a fixed number of spaces.
 fn indent_expr(expr: &str, spaces: usize) -> String {
     let pad = " ".repeat(spaces);
     expr.lines()
@@ -244,6 +253,7 @@ fn indent_expr(expr: &str, spaces: usize) -> String {
         .join("\n")
 }
 
+/// Renders JSON encoding through a user-provided codec.
 fn encode_with_codec(expr: &str, ty: &TypeIr, codec: &str) -> String {
     let codec = access_receiver(codec);
     if ty.is_nullable() {
@@ -254,6 +264,7 @@ fn encode_with_codec(expr: &str, ty: &TypeIr, codec: &str) -> String {
     format!("{codec}.serialize({expr})")
 }
 
+/// Renders JSON decoding through a user-provided codec.
 fn decode_with_codec(raw: &str, key: &str, ty: &TypeIr, codec: &str) -> String {
     let codec = access_receiver(codec);
     let value_ty = OBJECT_NULLABLE_TYPES.render(&non_nullable(ty));

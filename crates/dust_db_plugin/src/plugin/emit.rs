@@ -8,15 +8,20 @@ use super::{
     parse::{dao_classes, database_classes, imported_row_names, row_classes},
 };
 
+/// Renders generated DAO methods.
 mod dao;
+/// Renders generated database openers and migrations.
 mod database;
+/// Renders generated `FromRow` extensions.
 mod row;
+/// Shared Dart rendering helpers for DB generation.
 mod shared;
 
 use self::{
     dao::render_dao_class, database::render_database_class, row::render_from_row_extension,
 };
 
+/// Emits DB plugin generated sections for a Dart library.
 pub(crate) fn emit_db_library(
     library: &DartFileIr,
     options: DbPluginOptions,

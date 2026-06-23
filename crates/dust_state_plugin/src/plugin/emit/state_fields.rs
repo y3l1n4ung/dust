@@ -8,6 +8,7 @@ use crate::plugin::{constants::STATES_ANALYSIS_KEY, model::StateFact};
 
 use super::StateFieldSpec;
 
+/// Loads state field facts produced by workspace analysis.
 pub(super) fn state_facts(plan: &SymbolPlan) -> HashMap<String, Vec<StateFieldSpec>> {
     plan.workspace_string_set(STATES_ANALYSIS_KEY)
         .unwrap_or_default()
@@ -27,6 +28,7 @@ pub(super) fn state_facts(plan: &SymbolPlan) -> HashMap<String, Vec<StateFieldSp
         .collect()
 }
 
+/// Returns state fields from the current library or workspace fallback facts.
 pub(super) fn class_fields(
     library: &DartFileIr,
     state_facts: &HashMap<String, Vec<StateFieldSpec>>,
@@ -56,6 +58,7 @@ pub(super) fn class_fields(
         .unwrap_or_default()
 }
 
+/// Renders a state field type through the shared dynamic-safe type renderer.
 fn render_type(ty: &TypeIr) -> String {
     DYNAMIC_TYPES.render(ty)
 }

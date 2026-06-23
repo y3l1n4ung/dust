@@ -150,6 +150,7 @@ impl ParsedAnnotation {
             .collect()
     }
 
+    /// Returns positional argument source snippets.
     fn positional_argument_sources(&self) -> Vec<&str> {
         if let Some(arguments) = &self.parsed_arguments {
             return arguments
@@ -166,6 +167,7 @@ impl ParsedAnnotation {
     }
 }
 
+/// Extracts constructor names from one positional annotation argument.
 fn constructor_names_from_argument(source: &str) -> Vec<String> {
     parse_constructor_list(source)
         .or_else(|| parse_constructor_name(source).map(|name| vec![name]))

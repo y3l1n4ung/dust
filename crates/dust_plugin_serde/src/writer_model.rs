@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use dust_ir::{ClassIr, ConstructorIr, ParamKind, SerdeFieldConfigIr};
 
+/// Finds the constructor used for generated deserialization.
 pub(crate) fn find_deserialize_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
     class
         .constructors
@@ -9,6 +10,7 @@ pub(crate) fn find_deserialize_constructor(class: &ClassIr) -> Option<&Construct
         .find(|constructor| constructor.can_construct_all_fields(&class.fields))
 }
 
+/// Resolves the JSON key for a field using field and class serde config.
 pub(crate) fn json_key(
     class: &ClassIr,
     field_name: &str,
@@ -24,6 +26,7 @@ pub(crate) fn json_key(
     }
 }
 
+/// Returns every primary and alias key accepted during deserialization.
 pub(crate) fn all_allowed_keys(class: &ClassIr) -> Vec<String> {
     let mut keys = Vec::new();
     let mut seen = HashSet::new();
@@ -49,6 +52,7 @@ pub(crate) fn all_allowed_keys(class: &ClassIr) -> Vec<String> {
     keys
 }
 
+/// Renders a constructor call from decoded field values.
 pub(crate) fn render_constructor_call(
     class: &ClassIr,
     constructor: &ConstructorIr,

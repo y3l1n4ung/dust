@@ -6,17 +6,25 @@ use dust_parser_dart::ParsedDartFileSurface;
 
 use crate::{DustPlugin, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 
+/// One plugin registration plus its claimed symbols.
 struct RegisteredPlugin {
+    /// The plugin implementation.
     plugin: Box<dyn DustPlugin>,
+    /// Trait symbols claimed by the plugin.
     trait_symbols: Vec<SymbolId>,
+    /// Config symbols claimed by the plugin.
     config_symbols: Vec<SymbolId>,
+    /// Surface annotation names supported by the plugin.
     supported_annotations: &'static [&'static str],
 }
 
 /// The registered set of Dust plugins plus symbol ownership checks.
 pub struct PluginRegistry {
+    /// Registered plugins in deterministic order.
     plugins: Vec<RegisteredPlugin>,
+    /// Trait symbol owners.
     trait_owners: HashMap<SymbolId, &'static str>,
+    /// Config symbol owners.
     config_owners: HashMap<SymbolId, &'static str>,
 }
 

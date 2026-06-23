@@ -1,3 +1,5 @@
+//! Parser contract tests based on representative Dart example surfaces.
+
 use dust_parser_dart::{
     ParameterKind, ParsedAnnotation, ParsedClassKind, ParsedClassSurface,
     ParsedConstructorParamSurface, ParsedConstructorSurface, ParsedDirective, ParsedFieldSurface,

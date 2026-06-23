@@ -10,6 +10,7 @@ use crate::plugin::{
     parse::{parse_route_config, route_config},
 };
 
+/// Builds a local route spec from a lowered page class.
 pub(super) fn build_route_spec(class: &ClassIr) -> Option<RouteSpec> {
     let config = route_config(&class.configs)?;
     let annotation = parse_route_config(config)?;
@@ -50,6 +51,7 @@ pub(super) fn build_route_spec(class: &ClassIr) -> Option<RouteSpec> {
     })
 }
 
+/// Builds route specs from workspace analysis facts outside the current library.
 pub(super) fn workspace_route_specs(
     plan: &SymbolPlan,
     local_pages: &HashSet<String>,
@@ -63,6 +65,7 @@ pub(super) fn workspace_route_specs(
         .collect()
 }
 
+/// Returns the unnamed generative constructor used by route pages.
 pub(super) fn route_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
     class
         .constructors
@@ -70,6 +73,7 @@ pub(super) fn route_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
         .find(|constructor| constructor.name.is_none() && !constructor.is_factory)
 }
 
+/// Parses a simple route parameter type name from Dart source.
 pub(super) fn parse_route_type_name(source: Option<&str>) -> Option<String> {
     let raw = source?.trim().trim_end_matches('?').trim();
     let base = raw.split('<').next().unwrap_or(raw).trim();
@@ -80,6 +84,7 @@ pub(super) fn parse_route_type_name(source: Option<&str>) -> Option<String> {
     }
 }
 
+/// Builds a route spec from a serialized workspace route fact.
 fn build_route_spec_from_fact(fact: RouteFact) -> Option<RouteSpec> {
     let name = fact
         .name
@@ -114,6 +119,7 @@ fn build_route_spec_from_fact(fact: RouteFact) -> Option<RouteSpec> {
     })
 }
 
+/// Parses a URL-supported primitive type from source text.
 fn parse_url_type(source: Option<&str>) -> Option<TypeIr> {
     let raw = source?.trim();
     let (name, nullable) = raw
@@ -129,6 +135,7 @@ fn parse_url_type(source: Option<&str>) -> Option<TypeIr> {
     Some(TypeIr::Builtin { kind, nullable })
 }
 
+/// Extracts `:param` placeholders from a route path.
 fn path_params(path: &str) -> Vec<String> {
     path.split('/')
         .filter_map(|segment| segment.strip_prefix(':'))
@@ -137,6 +144,7 @@ fn path_params(path: &str) -> Vec<String> {
         .collect()
 }
 
+/// Derives a route action name from a page class name.
 fn derive_route_name(class_name: &str) -> String {
     let stem = class_name
         .strip_suffix("Page")
@@ -146,6 +154,7 @@ fn derive_route_name(class_name: &str) -> String {
     lower_camel(stem)
 }
 
+/// Converts a snake, kebab, or spaced name to UpperCamelCase.
 fn upper_camel(value: &str) -> String {
     value
         .split(|ch: char| ch == '_' || ch == '-' || ch.is_whitespace())
@@ -160,6 +169,7 @@ fn upper_camel(value: &str) -> String {
         .collect::<String>()
 }
 
+/// Converts a name to lowerCamelCase.
 fn lower_camel(value: &str) -> String {
     let upper = upper_camel(value);
     let mut chars = upper.chars();

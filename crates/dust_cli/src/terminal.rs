@@ -8,8 +8,10 @@ use dust_driver::{ProgressEvent, ProgressPhase};
 
 use crate::args::CliCommand;
 
+/// Shared terminal progress state guarded for driver callbacks.
 pub(crate) type ProgressHandle = Arc<Mutex<TerminalProgress>>;
 
+/// Creates a progress handle when stdout is interactive and command supports progress.
 pub(crate) fn create_progress_handle(command: &CliCommand) -> Option<ProgressHandle> {
     if !std::io::stdout().is_terminal() {
         return None;
@@ -22,6 +24,7 @@ pub(crate) fn create_progress_handle(command: &CliCommand) -> Option<ProgressHan
     Some(Arc::new(Mutex::new(TerminalProgress::default())))
 }
 
+/// Applies one driver progress event to terminal state.
 pub(crate) fn handle_progress(handle: &ProgressHandle, event: ProgressEvent) {
     let mut progress = handle
         .lock()
@@ -29,6 +32,7 @@ pub(crate) fn handle_progress(handle: &ProgressHandle, event: ProgressEvent) {
     progress.handle(event);
 }
 
+/// Clears any active terminal progress line.
 pub(crate) fn finish_progress(handle: &ProgressHandle) {
     let mut progress = handle
         .lock()
@@ -36,18 +40,23 @@ pub(crate) fn finish_progress(handle: &ProgressHandle) {
     progress.finish();
 }
 
+/// Mutable state for one-line terminal progress rendering.
 #[derive(Default)]
 pub(crate) struct TerminalProgress {
+    /// Length of the last rendered line so it can be cleared.
     last_len: usize,
+    /// Whether a progress line is currently active.
     active: bool,
 }
 
 impl TerminalProgress {
+    /// Handles one progress event and renders the corresponding line.
     fn handle(&mut self, event: ProgressEvent) {
         self.active = true;
         self.render_line(&render_progress_event(&event));
     }
 
+    /// Clears the active progress line from stderr.
     fn finish(&mut self) {
         if !self.active {
             return;
@@ -61,6 +70,7 @@ impl TerminalProgress {
         self.active = false;
     }
 
+    /// Renders one carriage-return progress line to stderr.
     fn render_line(&mut self, line: &str) {
         let mut stderr = std::io::stderr().lock();
         let padding = self.last_len.saturating_sub(line.len());
@@ -71,6 +81,7 @@ impl TerminalProgress {
     }
 }
 
+/// Renders one progress event as a terminal status line.
 fn render_progress_event(event: &ProgressEvent) -> String {
     match event {
         ProgressEvent::StartedBatch { phase, total } => {
@@ -98,6 +109,7 @@ fn render_progress_event(event: &ProgressEvent) -> String {
     }
 }
 
+/// Chooses the compact status label for one finished library.
 fn progress_status(had_errors: bool, written: bool, routed: bool, cached: bool) -> &'static str {
     if had_errors {
         "err"
@@ -112,6 +124,7 @@ fn progress_status(had_errors: bool, written: bool, routed: bool, cached: bool) 
     }
 }
 
+/// Renders a fixed-width ASCII progress bar.
 fn render_bar(completed: usize, total: usize) -> String {
     let total = total.max(1);
     let width = 24;
@@ -124,6 +137,7 @@ fn render_bar(completed: usize, total: usize) -> String {
     )
 }
 
+/// Returns the terminal label for a progress phase.
 fn progress_label(phase: ProgressPhase) -> &'static str {
     match phase {
         ProgressPhase::Build => "build",
@@ -132,6 +146,7 @@ fn progress_label(phase: ProgressPhase) -> &'static str {
     }
 }
 
+/// Returns a compact display name for a source path.
 fn display_name(path: &Path) -> String {
     if let Some(name) = path.file_name().and_then(|name| name.to_str()) {
         name.to_owned()

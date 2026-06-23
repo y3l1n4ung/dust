@@ -6,32 +6,47 @@ use crate::plugin::model::{RouteParamSpec, RouteSpec, RouterSpec};
 
 use super::{formatting::dart_type, parser_decode::encode_param_expr};
 
+/// Template context for one generated route class.
 #[derive(Serialize)]
 struct RouteClassContext<'a> {
+    /// Generated route class name.
     route_class: &'a str,
+    /// Generated constructor declaration.
     constructor: String,
+    /// Rendered route parameter fields.
     fields: String,
+    /// Rendered `location` getter.
     location: String,
+    /// Optional `requiresAuth` override.
     requires_auth: String,
 }
 
+/// Template context for the route `location` getter body.
 #[derive(Serialize)]
 struct LocationContext {
+    /// Rendered body of the location getter.
     body: String,
 }
 
+/// Template context for one query parameter encoding statement.
 #[derive(Serialize)]
 struct LocationQueryContext {
+    /// Query parameter name.
     name: String,
+    /// Dart expression that encodes the parameter value.
     encode: String,
+    /// Default value source used for omission checks.
     default_value: String,
 }
 
+/// Template context for a route location return expression.
 #[derive(Serialize)]
 struct LocationReturnContext {
+    /// Rendered path segment list expression.
     segments: String,
 }
 
+/// Renders generated route data classes.
 pub(super) fn render_route_classes(out: &mut String, spec: &RouterSpec) {
     out.push_str(&render_template(
         "app_route_base",
@@ -74,6 +89,7 @@ pub(super) fn render_route_classes(out: &mut String, spec: &RouterSpec) {
     }
 }
 
+/// Renders `final` fields for route constructor parameters.
 fn render_route_fields(route: &RouteSpec) -> String {
     let fields = route
         .params
@@ -87,6 +103,7 @@ fn render_route_fields(route: &RouteSpec) -> String {
         format!("{fields}\n\n")
     }
 }
+/// Renders one generated route constructor parameter.
 fn render_constructor_param(param: &RouteParamSpec) -> String {
     if param.is_path || (!param.ty.is_nullable() && !param.has_default) {
         format!("required this.{}", param.name)
@@ -97,9 +114,11 @@ fn render_constructor_param(param: &RouteParamSpec) -> String {
     }
 }
 
+/// Returns true for the conventional generated not-found route shape.
 pub(super) fn is_not_found_route(route: &RouteSpec) -> bool {
     route.route_class == "NotFoundRoute" && route.params.iter().any(|param| param.name == "path")
 }
+/// Renders the generated `location` getter for a route.
 fn render_location_getter(route: &RouteSpec) -> String {
     render_template(
         "location_getter",
@@ -110,6 +129,7 @@ fn render_location_getter(route: &RouteSpec) -> String {
     )
 }
 
+/// Renders the body of the generated `location` getter.
 fn render_location_body(route: &RouteSpec) -> String {
     if is_not_found_route(route) {
         return format!(

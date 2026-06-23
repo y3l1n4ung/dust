@@ -56,7 +56,7 @@ jobs:
         run: cargo test --workspace --quiet
 
       - name: Clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings -D clippy::missing_docs_in_private_items -D missing_docs
 
   dart-packages:
     name: Dart / ${{ matrix.name }}

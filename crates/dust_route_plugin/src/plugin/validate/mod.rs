@@ -10,6 +10,7 @@ use super::{
     parse::{parse_route_config, route_config},
 };
 
+/// Validates all `@Route` pages in a lowered Dart library.
 pub(crate) fn validate_library_routes(library: &DartFileIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let mut paths = HashSet::new();
@@ -57,6 +58,7 @@ pub(crate) fn validate_library_routes(library: &DartFileIr) -> Vec<Diagnostic> {
     diagnostics
 }
 
+/// Validates shell and guard type names are visible to generated code.
 fn validate_visible_route_types(
     library: &DartFileIr,
     class: &ClassIr,
@@ -82,6 +84,7 @@ fn validate_visible_route_types(
     }
 }
 
+/// Returns true when a type name is local or imported by the route library.
 fn is_visible_type(library: &DartFileIr, local_classes: &HashSet<&str>, name: &str) -> bool {
     local_classes.contains(name)
         || library
@@ -92,12 +95,14 @@ fn is_visible_type(library: &DartFileIr, local_classes: &HashSet<&str>, name: &s
             && library.imports.iter().any(|uri| is_user_type_import(uri))
 }
 
+/// Returns true when an import directive exposes the requested type.
 fn import_exposes_type(import: &ImportIr, name: &str) -> bool {
     is_user_type_import(&import.uri)
         && !import.hide.iter().any(|hidden| hidden == name)
         && (import.show.is_empty() || import.show.iter().any(|shown| shown == name))
 }
 
+/// Returns true for imports that may contain app-defined route types.
 fn is_user_type_import(uri: &str) -> bool {
     !uri.starts_with("dart:")
         && !uri.starts_with("package:flutter/")
@@ -105,6 +110,7 @@ fn is_user_type_import(uri: &str) -> bool {
         && !uri.starts_with("package:dust_dart/")
 }
 
+/// Validates constructor parameters used by a route path and query string.
 fn validate_route_params(class: &ClassIr, path: &str, diagnostics: &mut Vec<Diagnostic>) {
     let Some(constructor) = route_constructor(class) else {
         diagnostics.push(Diagnostic::error(format!(
@@ -166,6 +172,7 @@ fn validate_route_params(class: &ClassIr, path: &str, diagnostics: &mut Vec<Diag
     }
 }
 
+/// Returns the unnamed generative constructor for a route page.
 fn route_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
     class
         .constructors
@@ -173,6 +180,7 @@ fn route_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
         .find(|constructor| constructor.name.is_none() && !constructor.is_factory)
 }
 
+/// Extracts `:param` placeholders from a route path.
 fn path_params(path: &str) -> Vec<String> {
     path.split('/')
         .filter_map(|segment| segment.strip_prefix(':'))
@@ -181,6 +189,7 @@ fn path_params(path: &str) -> Vec<String> {
         .collect()
 }
 
+/// Returns true when a type can round-trip through route URLs.
 fn is_supported_url_primitive(ty: &TypeIr) -> bool {
     matches!(
         ty,
@@ -191,6 +200,7 @@ fn is_supported_url_primitive(ty: &TypeIr) -> bool {
     )
 }
 
+/// Builds a diagnostic for unsupported route constructor parameter types.
 fn unsupported_param_diagnostic(class_name: &str, param: &ConstructorParamIr) -> Diagnostic {
     Diagnostic::error(format!(
         "route parameter `{}` on `{class_name}` must be a URL primitive (`String`, `int`, `double`, or `bool`)",

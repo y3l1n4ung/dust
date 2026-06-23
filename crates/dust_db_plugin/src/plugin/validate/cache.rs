@@ -10,11 +10,15 @@ use crate::plugin::model::QuerySpec;
 
 use super::query::{query_row_type, validate_placeholders};
 
+/// Version for the persisted DB query metadata cache format.
 pub(super) const QUERY_CACHE_VERSION: u32 = 2;
 
+/// Persisted DB query metadata cache.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub(super) struct QueryCache {
+    /// Cache format version.
     pub(super) version: u32,
+    /// Cached query metadata entries.
     pub(super) entries: Vec<QueryCacheEntry>,
 }
 
@@ -27,19 +31,30 @@ impl Default for QueryCache {
     }
 }
 
+/// One cached SQL describe result.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub(super) struct QueryCacheEntry {
+    /// Migration directory used for validation.
     pub(super) migrations: String,
+    /// Stable hash of migration file names and contents.
     pub(super) schema_hash: String,
+    /// Stable hash of the SQL source text.
     pub(super) sql_hash: String,
+    /// Original SQL source text.
     pub(super) sql: String,
+    /// Number of user-supplied bind parameters.
     pub(super) user_parameter_count: usize,
+    /// Number of SQLite placeholders after `$n` rewriting.
     pub(super) expanded_parameter_count: usize,
+    /// Fetch mode string used by the query.
     pub(super) fetch_mode: String,
+    /// Row type name for typed row queries.
     pub(super) row_type: Option<String>,
+    /// Column names returned by SQLx describe.
     pub(super) columns: Vec<String>,
 }
 
+/// Validates queries against the offline metadata cache.
 pub(super) fn validate_from_query_cache(
     library: &dust_ir::DartFileIr,
     migrations: &str,
@@ -74,6 +89,7 @@ pub(super) fn validate_from_query_cache(
     Ok(())
 }
 
+/// Writes successful SQLx describe metadata to the query cache.
 pub(super) fn write_query_cache(
     library: &dust_ir::DartFileIr,
     entries: Vec<QueryCacheEntry>,
@@ -124,6 +140,7 @@ pub(super) fn write_query_cache(
     })
 }
 
+/// Validates cached returned columns against row mapper requirements.
 pub(super) fn validate_cached_columns(
     query: &QuerySpec,
     row_columns: &HashMap<String, HashSet<String>>,
@@ -148,6 +165,7 @@ pub(super) fn validate_cached_columns(
     Ok(())
 }
 
+/// Returns sorted `.sql` migration files from a migrations directory.
 pub(super) fn migration_files(path: &Path) -> Result<Vec<PathBuf>, String> {
     let mut files = fs::read_dir(path)
         .map_err(|error| format!("failed to read migrations `{}`: {error}", path.display()))?
@@ -159,6 +177,7 @@ pub(super) fn migration_files(path: &Path) -> Result<Vec<PathBuf>, String> {
     Ok(files)
 }
 
+/// Computes a stable schema hash from migration file names and contents.
 pub(super) fn schema_hash(migrations_path: &Path) -> Result<String, String> {
     let mut hash = StableHash::new();
     for migration in migration_files(migrations_path)? {
@@ -179,16 +198,19 @@ pub(super) fn schema_hash(migrations_path: &Path) -> Result<String, String> {
     Ok(hash.finish_hex())
 }
 
+/// Computes a stable hexadecimal hash for cache keys.
 pub(super) fn stable_hash_hex(bytes: &[u8]) -> String {
     let mut hash = StableHash::new();
     hash.update(bytes);
     hash.finish_hex()
 }
 
+/// Returns the package-local DB query metadata cache path.
 pub(super) fn query_cache_path(library: &dust_ir::DartFileIr) -> PathBuf {
     Path::new(&library.package_root).join(".dart_tool/dust/db_query_cache_v2.json")
 }
 
+/// Validates one query against a matching cache entry.
 fn validate_cached_query(
     migrations: &str,
     schema_hash: &str,
@@ -228,13 +250,16 @@ fn validate_cached_query(
     validate_cached_columns(query, row_columns, &entry.columns)
 }
 
+/// Small deterministic FNV-1a hasher for cache keys.
 struct StableHash(u64);
 
 impl StableHash {
+    /// Creates a hasher with the FNV offset basis.
     const fn new() -> Self {
         Self(1469598103934665603)
     }
 
+    /// Adds bytes to the stable hash.
     fn update(&mut self, bytes: &[u8]) {
         for byte in bytes {
             self.0 ^= u64::from(*byte);
@@ -242,6 +267,7 @@ impl StableHash {
         }
     }
 
+    /// Returns the final hash as a fixed-width hex string.
     fn finish_hex(self) -> String {
         format!("{:016x}", self.0)
     }

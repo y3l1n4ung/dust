@@ -6,6 +6,7 @@ use std::{
 
 use dust_ir::DartFileIr;
 
+/// Returns row class names discovered through source library imports.
 pub(crate) fn imported_row_names(library: &DartFileIr) -> HashSet<String> {
     library
         .imports
@@ -16,6 +17,7 @@ pub(crate) fn imported_row_names(library: &DartFileIr) -> HashSet<String> {
         .collect()
 }
 
+/// Resolves a Dart import URI to a local source path when possible.
 fn resolve_import_path(library: &DartFileIr, uri: &str) -> Option<PathBuf> {
     if uri.starts_with("dart:") || uri.starts_with("package:flutter/") {
         return None;
@@ -34,6 +36,7 @@ fn resolve_import_path(library: &DartFileIr, uri: &str) -> Option<PathBuf> {
     Some(normalize_path(&source_dir.join(uri)))
 }
 
+/// Normalizes a path by resolving current and parent components.
 fn normalize_path(path: &Path) -> PathBuf {
     let mut out = PathBuf::new();
     for component in path.components() {
@@ -48,6 +51,7 @@ fn normalize_path(path: &Path) -> PathBuf {
     out
 }
 
+/// Scans source text for classes annotated with `FromRow`.
 fn row_names_from_source(source: &str) -> Vec<String> {
     let mut names = Vec::new();
     let mut metadata = String::new();
@@ -71,6 +75,7 @@ fn row_names_from_source(source: &str) -> Vec<String> {
     names
 }
 
+/// Extracts a class name from a simple Dart class declaration line.
 fn class_name_from_line(line: &str) -> Option<&str> {
     let rest = line
         .strip_prefix("class ")

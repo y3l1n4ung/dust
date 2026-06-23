@@ -5,6 +5,7 @@ use std::{
 
 use clap::{Args, Parser, Subcommand};
 
+/// Default watch polling interval in milliseconds.
 const DEFAULT_POLL_INTERVAL_MS: u64 = 250;
 
 /// One supported Dust CLI command.
@@ -74,11 +75,14 @@ pub struct ParsedCli {
     propagate_version = true,
     after_help = "Examples:\n  dust build\n  dust check --fail-fast\n  dust watch --poll-ms 100 --jobs 4"
 )]
+/// Clap-owned representation of the top-level Dust CLI.
 struct RawCli {
+    /// Selected raw subcommand.
     #[command(subcommand)]
     command: RawCommand,
 }
 
+/// Raw subcommands parsed by Clap before conversion to driver requests.
 #[derive(Debug, Subcommand)]
 enum RawCommand {
     /// Run a writing build.
@@ -93,6 +97,7 @@ enum RawCommand {
     Watch(WatchOptions),
 }
 
+/// Shared `--root` option group.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Args)]
 struct RootOptions {
     /// The workspace root override.
@@ -100,8 +105,10 @@ struct RootOptions {
     root: Option<PathBuf>,
 }
 
+/// Build-like options shared by build, check, and watch.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Args)]
 struct BuildOptions {
+    /// Shared workspace root option.
     #[command(flatten)]
     root: RootOptions,
     /// Stop after the first observed worker error diagnostic.
@@ -120,8 +127,10 @@ struct BuildOptions {
     offline: bool,
 }
 
+/// Watch-specific options plus build-like options.
 #[derive(Debug, Clone, PartialEq, Eq, Args)]
 struct WatchOptions {
+    /// Build options applied to the initial and rebuild passes.
     #[command(flatten)]
     build: BuildOptions,
     /// The watch poll interval in milliseconds.
@@ -166,6 +175,7 @@ impl From<RawCommand> for ParsedCli {
 }
 
 impl ParsedCli {
+    /// Creates parsed CLI output from a command and convertible options.
     fn new(command: CliCommand, options: impl Into<CliOptions>) -> Self {
         Self {
             command,
@@ -174,6 +184,7 @@ impl ParsedCli {
     }
 }
 
+/// Returns the non-zero default poll interval required by Clap.
 fn default_poll_interval() -> NonZeroU64 {
     NonZeroU64::new(DEFAULT_POLL_INTERVAL_MS).expect("default poll interval must be non-zero")
 }

@@ -2,12 +2,19 @@
 #![deny(missing_docs)]
 #![doc = "Workspace discovery and Dart library candidate scanning for Dust."]
 
+/// Dust workspace configuration.
 mod config;
+/// Source library discovery.
 mod discover;
+/// Generated output path policy.
 mod output_policy;
+/// Dart package config discovery.
 mod package_config;
+/// Pubspec parsing.
 mod pubspec;
+/// Workspace root detection.
 mod root;
+/// Workspace planning.
 mod workspace;
 
 pub use config::{DustConfig, OutputConfig, load_dust_config};

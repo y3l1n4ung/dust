@@ -20,6 +20,7 @@ pub fn register_plugin() -> DerivePlugin {
     DerivePlugin
 }
 
+/// Trait symbols claimed by the derive plugin.
 const CLAIMED_TRAITS: &[&str] = &[
     TO_STRING_SYMBOL,
     DEBUG_SYMBOL,
@@ -28,8 +29,10 @@ const CLAIMED_TRAITS: &[&str] = &[
     VALIDATE_SYMBOL,
 ];
 
+/// Config symbols claimed by the derive plugin.
 const CLAIMED_CONFIGS: &[&str] = &[VALIDATE_SYMBOL];
 
+/// Short annotation names supported by the derive plugin.
 const SUPPORTED_ANNOTATIONS: &[&str] =
     &["Derive", "ToString", "Debug", "Eq", "CopyWith", "Validate"];
 

@@ -13,59 +13,89 @@ use crate::plugin::{
 
 use super::shared::{is_scalar_type, render_sql_literal};
 
+/// Template context for a generated DAO implementation class.
 #[derive(Serialize)]
 struct DaoClassContext<'a> {
+    /// Generated private implementation class name.
     generated_name: &'a str,
+    /// Source DAO interface class name.
     class_name: &'a str,
+    /// Rendered generated DAO methods.
     methods: String,
 }
 
+/// Template context for one generated DAO method.
 #[derive(Serialize)]
 struct DaoMethodContext<'a> {
+    /// Rendered Dart return type.
     return_type: String,
+    /// Source method name.
     method_name: &'a str,
+    /// Rendered method parameter list.
     params: String,
+    /// Rendered method body.
     body: String,
 }
 
+/// Template context for unsupported DAO return types.
 #[derive(Serialize)]
 struct InvalidReturnContext<'a> {
+    /// Source method name used in the thrown error.
     method_name: &'a str,
 }
 
+/// Template context for untyped query bodies.
 #[derive(Serialize)]
 struct QueryBodyContext<'a> {
+    /// Rendered SQL string literal.
     sql: &'a str,
+    /// Rendered argument list.
     args: &'a str,
 }
 
+/// Template context for scalar query bodies.
 #[derive(Serialize)]
 struct ScalarBodyContext<'a> {
+    /// Rendered scalar Dart type.
     ty: String,
+    /// Rendered SQL string literal.
     sql: &'a str,
+    /// Rendered argument list.
     args: &'a str,
 }
 
+/// Template context for single-row query bodies.
 #[derive(Serialize)]
 struct RowBodyContext<'a> {
+    /// Row class name used for decoding.
     row_name: &'a str,
+    /// Rendered SQL string literal.
     sql: &'a str,
+    /// Rendered argument list.
     args: &'a str,
 }
 
+/// Template context for list query bodies.
 #[derive(Serialize)]
 struct ListBodyContext<'a> {
+    /// List item row class name.
     item_name: &'a str,
+    /// Rendered SQL string literal.
     sql: &'a str,
+    /// Rendered argument list.
     args: &'a str,
 }
 
+/// Template context for unsupported generated query bodies.
 #[derive(Serialize)]
 struct UnsupportedBodyContext {
+    /// Unsupported Dart type rendered for diagnostics.
     ty: String,
+    /// Static error message emitted in generated code.
     message: &'static str,
 }
 
+/// Renders a generated DAO implementation class.
 pub(super) fn render_dao_class(
     dao: &DaoClass<'_>,
     row_names: &HashSet<&str>,
@@ -97,6 +127,7 @@ pub(super) fn render_dao_class(
     )
 }
 
+/// Renders one generated DAO method.
 fn render_dao_method(
     method: &DaoMethod<'_>,
     row_names: &HashSet<&str>,
@@ -120,6 +151,7 @@ fn render_dao_method(
     )
 }
 
+/// Renders SQL and argument order for the target database driver.
 fn render_driver_query(method: &DaoMethod<'_>, driver: DbDriver) -> RenderedQuery {
     let params = method.method.params.as_slice();
     if matches!(driver, DbDriver::Sqlite3) {
@@ -148,11 +180,15 @@ fn render_driver_query(method: &DaoMethod<'_>, driver: DbDriver) -> RenderedQuer
     }
 }
 
+/// Rendered SQL literal and bind argument list for generated DAO code.
 struct RenderedQuery {
+    /// Rendered SQL string literal.
     sql: String,
+    /// Comma-separated method parameter names in bind order.
     args: String,
 }
 
+/// Renders a generated Dart method parameter list.
 fn render_method_params(method: &MethodIr) -> String {
     let mut positional = Vec::new();
     let mut named = Vec::new();
@@ -172,6 +208,7 @@ fn render_method_params(method: &MethodIr) -> String {
     }
 }
 
+/// Renders the generated body for a DAO method based on its return type.
 fn render_dao_method_body(
     method: &DaoMethod<'_>,
     row_names: &HashSet<&str>,
@@ -244,6 +281,7 @@ fn render_dao_method_body(
     )
 }
 
+/// Renders the generated body for `List<T>` DAO returns.
 fn render_list_body(
     ok_type: &dust_ir::TypeIr,
     row_names: &HashSet<&str>,
@@ -288,6 +326,7 @@ fn render_list_body(
     )
 }
 
+/// Renders a simple query body template selected by name.
 fn render_query_body(name: &str, template: &'static str, sql: &str, args: &str) -> String {
     let source = match template {
         "templates/dao_body_execute.jinja" => include_str!("templates/dao_body_execute.jinja"),

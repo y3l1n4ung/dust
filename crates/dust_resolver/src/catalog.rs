@@ -23,12 +23,16 @@ pub struct ResolvedSymbol {
 /// A lookup table from surface annotation names to fully qualified Dust symbols.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct SymbolCatalog {
+    /// Resolved symbols grouped by surface annotation name.
     by_name: BTreeMap<String, ResolvedSymbols>,
 }
 
+/// Trait/config symbols registered for one surface name.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 struct ResolvedSymbols {
+    /// Trait symbol for the surface name.
     trait_symbol: Option<ResolvedSymbol>,
+    /// Config symbol for the surface name.
     config_symbol: Option<ResolvedSymbol>,
 }
 

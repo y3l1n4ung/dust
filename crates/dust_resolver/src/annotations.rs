@@ -24,6 +24,7 @@ pub fn annotation_ir_from_parsed(
     }
 }
 
+/// Converts parsed annotation arguments into semantic IR values.
 pub(crate) fn annotation_argument_values(
     file_id: FileId,
     annotation: &ParsedAnnotation,
@@ -70,6 +71,7 @@ pub(crate) fn annotation_argument_values(
     (positional, named)
 }
 
+/// Wraps a raw expression source as an annotation value.
 fn expression_value(file_id: FileId, source: String, span: TextRange) -> AnnotationValueIr {
     AnnotationValueIr::Expression(ExprSourceIr {
         source,
@@ -77,6 +79,7 @@ fn expression_value(file_id: FileId, source: String, span: TextRange) -> Annotat
     })
 }
 
+/// Builds normalized name IR from a parsed annotation name.
 fn name_ir(file_id: FileId, source: &str, span: TextRange) -> NameIr {
     let source = source.trim().to_owned();
     let (prefix, short) = source

@@ -5,6 +5,7 @@ use crate::features::{
     clone_copy_with::validate_copy_with, eq_hash::validate_eq_hash, validate::validate_validate,
 };
 
+/// Validates derive requests for every class in a library.
 pub(crate) fn validate_library(library: &DartFileIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     for class in &library.classes {

@@ -6,25 +6,36 @@ use crate::plugin::emit::types::render_body_value;
 use crate::plugin::model::{EndpointParam, EndpointSpec, RequestMode};
 use crate::plugin::util::escape_single_quoted;
 
+/// Template context for standard request data generation.
 #[derive(Serialize)]
 struct StandardDataContext {
+    /// Dart expression used as the request body.
     value: String,
 }
 
+/// Template context for form-url-encoded and multipart request bodies.
 #[derive(Serialize)]
 struct KeyedDataContext {
+    /// Dart expression prefix before the generated map.
     prefix: &'static str,
+    /// Rendered keyed body fields.
     fields: String,
+    /// Dart expression suffix after the generated map.
     suffix: &'static str,
 }
 
+/// Template context for one keyed body entry.
 #[derive(Serialize)]
 struct KeyedFieldContext<'a> {
+    /// Optional Dart null guard prefix for nullable parameters.
     nullable_prefix: String,
+    /// Escaped body field key.
     key: String,
+    /// Dart parameter name whose value is sent.
     name: &'a str,
 }
 
+/// Renders the Dio `data:` expression for an endpoint request.
 pub(super) fn render_request_data(endpoint: &EndpointSpec<'_>) -> String {
     match endpoint.request_mode {
         RequestMode::Standard => endpoint
@@ -41,6 +52,7 @@ pub(super) fn render_request_data(endpoint: &EndpointSpec<'_>) -> String {
     }
 }
 
+/// Renders a standard Dio request data assignment.
 fn render_standard_data(value: String) -> String {
     render_template(
         "request_data_standard",
@@ -49,6 +61,7 @@ fn render_standard_data(value: String) -> String {
     )
 }
 
+/// Renders the generated Dart expression for an endpoint path.
 pub(super) fn render_path_expression(endpoint: &EndpointSpec<'_>) -> String {
     let pieces = path_segments(endpoint)
         .into_iter()
@@ -67,6 +80,7 @@ pub(super) fn render_path_expression(endpoint: &EndpointSpec<'_>) -> String {
     }
 }
 
+/// Renders form-url-encoded or multipart keyed request data.
 fn render_keyed_body(endpoint: &EndpointSpec<'_>, multipart: bool) -> String {
     let fields = endpoint
         .params
@@ -98,6 +112,7 @@ fn render_keyed_body(endpoint: &EndpointSpec<'_>, multipart: bool) -> String {
     )
 }
 
+/// Renders a single keyed body field with an optional null guard.
 fn render_keyed_field(name: &str, key: &str, nullable: bool) -> String {
     render_template(
         "request_keyed_field",

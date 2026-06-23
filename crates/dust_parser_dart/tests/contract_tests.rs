@@ -1,3 +1,5 @@
+//! Integration tests for the parser backend contract and shared parsed surfaces.
+
 use dust_diagnostics::Diagnostic;
 use dust_parser_dart::{
     AnnotationValue, ParameterKind, ParseBackend, ParseOptions, ParseResult, ParsedAnnotation,

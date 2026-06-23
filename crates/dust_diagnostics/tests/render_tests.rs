@@ -1,3 +1,5 @@
+//! Tests diagnostic rendering output.
+
 use std::path::PathBuf;
 
 use dust_diagnostics::{

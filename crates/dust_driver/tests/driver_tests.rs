@@ -1,3 +1,5 @@
+//! Integration test harness for Dust driver commands and generated outputs.
+
 #[path = "driver_tests/support.rs"]
 mod support;
 

@@ -5,6 +5,7 @@ use dust_resolver::ResolvedLibrary;
 
 use super::type_parse::lower_type;
 
+/// Lowers parsed SQL query helper calls into DB plugin IR.
 pub(super) fn lower_query_calls(
     library: &ResolvedLibrary,
     diagnostics: &mut Vec<Diagnostic>,

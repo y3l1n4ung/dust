@@ -4,6 +4,7 @@ use dust_ir::ClassIr;
 
 use crate::features::{DEBUG_SYMBOL, TO_STRING_SYMBOL, eq_hash::has_trait};
 
+/// Emits a generated `toString` mixin member for `ToString` or `Debug`.
 pub(crate) fn emit_debug_mixin(class: &ClassIr) -> Option<String> {
     if !has_to_string_trait(class) {
         return None;
@@ -16,6 +17,7 @@ pub(crate) fn emit_debug_mixin(class: &ClassIr) -> Option<String> {
     })
 }
 
+/// Renders `toString` for classes without fields.
 fn render_empty_debug(class: &ClassIr) -> String {
     format!(
         "@override\nString toString() {{\n  return '{}()';\n}}",
@@ -23,6 +25,7 @@ fn render_empty_debug(class: &ClassIr) -> String {
     )
 }
 
+/// Renders `toString` for classes with fields.
 fn render_field_debug(class: &ClassIr) -> String {
     format!(
         "@override\nString toString() {{\n  final self = this as {};\n  return '{}('\n{}\n      ')';\n}}",
@@ -32,6 +35,7 @@ fn render_field_debug(class: &ClassIr) -> String {
     )
 }
 
+/// Renders interpolated field lines for generated `toString`.
 fn render_debug_field_lines(class: &ClassIr) -> String {
     let mut out = String::with_capacity(class.fields.len() * 32);
     for (index, field) in class.fields.iter().enumerate() {
@@ -53,6 +57,7 @@ fn render_debug_field_lines(class: &ClassIr) -> String {
     out
 }
 
+/// Returns true when a class requests `ToString` or `Debug`.
 fn has_to_string_trait(class: &ClassIr) -> bool {
     has_trait(class, TO_STRING_SYMBOL) || has_trait(class, DEBUG_SYMBOL)
 }

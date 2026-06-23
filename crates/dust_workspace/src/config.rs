@@ -6,6 +6,7 @@ use std::{
 use dust_diagnostics::Diagnostic;
 use serde::Deserialize;
 
+/// Default suffix for primary generated Dart libraries.
 const DEFAULT_PRIMARY_SUFFIX: &str = ".g.dart";
 
 /// Workspace-level Dust configuration loaded from `dust.yaml`.
@@ -32,13 +33,17 @@ impl Default for OutputConfig {
     }
 }
 
+/// Deserialized root object from `dust.yaml`.
 #[derive(Debug, Default, Deserialize)]
 struct RawDustConfig {
+    /// Raw output policy section.
     outputs: Option<RawOutputConfig>,
 }
 
+/// Deserialized `outputs` section from `dust.yaml`.
 #[derive(Debug, Default, Deserialize)]
 struct RawOutputConfig {
+    /// Optional primary generated library suffix.
     primary_suffix: Option<String>,
 }
 
@@ -74,6 +79,7 @@ pub fn load_dust_config(package_root: &Path) -> Result<DustConfig, Diagnostic> {
     })
 }
 
+/// Validates the configured generated library suffix.
 fn validate_primary_suffix(primary_suffix: &str, path: &Path) -> Result<(), Diagnostic> {
     if primary_suffix.is_empty() {
         return Err(invalid_suffix(
@@ -96,6 +102,7 @@ fn validate_primary_suffix(primary_suffix: &str, path: &Path) -> Result<(), Diag
     Ok(())
 }
 
+/// Builds an invalid suffix diagnostic.
 fn invalid_suffix(path: &Path, message: &str) -> Diagnostic {
     Diagnostic::error(format!(
         "invalid Dust configuration `{}`: {message}",

@@ -1,3 +1,4 @@
+/// Chooses a bounded worker count for a non-empty unit of work.
 pub(crate) fn available_worker_count(item_count: usize, limit: Option<usize>) -> usize {
     if item_count == 0 {
         return 1;
@@ -9,6 +10,7 @@ pub(crate) fn available_worker_count(item_count: usize, limit: Option<usize>) ->
     limit.unwrap_or(max_workers).max(1).min(item_count)
 }
 
+/// Distributes items into worker groups while preserving deterministic order.
 pub(crate) fn round_robin_groups<T>(
     items: impl IntoIterator<Item = T>,
     groups: usize,

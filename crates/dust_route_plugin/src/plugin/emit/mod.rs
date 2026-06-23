@@ -6,16 +6,27 @@ use serde::Serialize;
 
 use super::model::RouterSpec;
 
+/// Shared formatting helpers for generated Dart code.
 mod formatting;
+/// Renders the generated route metadata tree.
 mod metadata;
+/// Renders navigation helpers and guard lookup code.
 mod navigation;
+/// Renders page builder and shell consistency helpers.
 mod page_builder;
+/// Renders URI-to-route parser code.
 mod parser;
+/// Renders route parameter encoder and decoder expressions.
 mod parser_decode;
+/// Compares and splits route path segments.
 mod path;
+/// Renders Dart pattern matching fragments for route classes.
 mod patterns;
+/// Renders stack restoration helpers.
 mod restore;
+/// Renders generated route data classes.
 mod route_classes;
+/// Resolves effective shell widgets for nested routes.
 mod shell;
 
 use formatting::package_import_uri;
@@ -25,16 +36,24 @@ use parser::render_parser;
 use restore::render_restore_stack;
 use route_classes::render_route_classes;
 
+/// Template context for the top-level generated route file.
 #[derive(Serialize)]
 struct RouteFileContext<'a> {
+    /// Rendered imports required by workspace routes.
     imports: String,
+    /// Optional no-transition builder helper source.
     no_transition_builder: String,
+    /// Generated router base class name.
     generated_base_class: &'a str,
+    /// Initial generated route class.
     initial_route_class: &'a str,
+    /// Optional refresh listenable override.
     refresh_getter: String,
+    /// Rendered generated body sections.
     body: String,
 }
 
+/// Renders the complete generated route file for a router spec.
 pub(crate) fn render_route_generated(library: &DartFileIr, spec: &RouterSpec) -> String {
     let current_import = package_import_uri(library);
     let imports = spec
@@ -84,6 +103,7 @@ pub(crate) fn render_route_generated(library: &DartFileIr, spec: &RouterSpec) ->
     )
 }
 
+/// Renders the helper transition builder used by no-transition routes.
 fn render_no_transition_builder() -> String {
     render_template(
         "no_transition_builder",
@@ -92,6 +112,7 @@ fn render_no_transition_builder() -> String {
     )
 }
 
+/// Returns true when any route references the no-transition helper.
 fn uses_no_transition_builder(spec: &RouterSpec) -> bool {
     spec.routes.iter().any(|route| {
         route
@@ -102,6 +123,7 @@ fn uses_no_transition_builder(spec: &RouterSpec) -> bool {
     })
 }
 
+/// Renders the router refresh-listenable override when available.
 fn render_refresh_getter(spec: &RouterSpec) -> String {
     spec.refresh_listenable
         .as_ref()

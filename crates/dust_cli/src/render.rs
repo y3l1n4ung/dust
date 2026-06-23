@@ -3,12 +3,15 @@ use dust_driver::CommandResult;
 
 use crate::args::CliCommand;
 
+/// Embedded ASCII banner shown before command summaries.
 const BANNER: &str = include_str!("../assets/dust-logo-cli.txt");
 
+/// Returns the banner without trailing asset newlines.
 fn render_banner() -> &'static str {
     BANNER.trim_end()
 }
 
+/// Renders a complete command result for stdout or stderr.
 pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> String {
     let mut lines = Vec::new();
     lines.push(render_banner().to_owned());
@@ -84,6 +87,7 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
     }
 }
 
+/// Appends the build/check/watch artifact summary line.
 fn append_generation_summary(lines: &mut Vec<String>, label: &str, result: &CommandResult) {
     let written = result
         .build_artifacts
@@ -109,6 +113,7 @@ fn append_generation_summary(lines: &mut Vec<String>, label: &str, result: &Comm
     ));
 }
 
+/// Renders the aggregate diagnostic severity count line.
 fn render_diagnostic_summary(diagnostics: &[Diagnostic]) -> String {
     let counts = DiagnosticCounts::from_diagnostics(diagnostics);
 
@@ -118,14 +123,19 @@ fn render_diagnostic_summary(diagnostics: &[Diagnostic]) -> String {
     )
 }
 
+/// Severity counts used by CLI diagnostic summaries.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 struct DiagnosticCounts {
+    /// Number of error diagnostics.
     errors: usize,
+    /// Number of warning diagnostics.
     warnings: usize,
+    /// Number of note diagnostics.
     notes: usize,
 }
 
 impl DiagnosticCounts {
+    /// Counts diagnostics by severity.
     fn from_diagnostics(diagnostics: &[Diagnostic]) -> Self {
         let mut counts = Self::default();
         for diagnostic in diagnostics {
@@ -139,6 +149,7 @@ impl DiagnosticCounts {
     }
 }
 
+/// Appends rendered diagnostic blocks with source context.
 fn append_diagnostic_blocks(
     lines: &mut Vec<String>,
     result: &CommandResult,

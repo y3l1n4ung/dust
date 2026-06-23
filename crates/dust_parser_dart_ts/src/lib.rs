@@ -2,14 +2,23 @@
 #![deny(missing_docs)]
 #![doc = "Concrete tree-sitter backend for the Dust Dart parser contract."]
 
+/// Annotation extraction.
 mod annotations;
+/// Class extraction.
 mod classes;
+/// Top-level declaration extraction.
 mod declarations;
+/// Tree-sitter diagnostic extraction.
 mod diagnostics;
+/// Library directive extraction.
 mod directives;
+/// Enum extraction.
 mod enums;
+/// Query helper extraction.
 mod queries;
+/// Tree-sitter utility helpers.
 mod syntax;
+/// Type extraction.
 mod types;
 
 use dust_diagnostics::Diagnostic;
@@ -96,6 +105,7 @@ impl ParseBackend for TreeSitterDartBackend {
     }
 }
 
+/// Builds an empty parsed library for parser failures.
 fn empty_library(source: &SourceText) -> ParsedDartFileSurface {
     ParsedDartFileSurface {
         span: source.full_range(),

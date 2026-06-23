@@ -1,6 +1,7 @@
 use dust_text::{SourceText, TextRange, TextSize};
 use tree_sitter::Node;
 
+/// Converts a tree-sitter node span into a text range.
 pub(crate) fn text_range(node: Node<'_>) -> TextRange {
     TextRange::new(
         TextSize::new(node.start_byte() as u32),
@@ -8,6 +9,7 @@ pub(crate) fn text_range(node: Node<'_>) -> TextRange {
     )
 }
 
+/// Returns the source text for one node.
 pub(crate) fn node_text(node: Node<'_>, source: &SourceText) -> String {
     source
         .slice(text_range(node))
@@ -15,27 +17,32 @@ pub(crate) fn node_text(node: Node<'_>, source: &SourceText) -> String {
         .to_owned()
 }
 
+/// Returns the first named child that is not an annotation.
 pub(crate) fn first_non_annotation_named_child<'tree>(node: Node<'tree>) -> Option<Node<'tree>> {
     let mut cursor = node.walk();
     node.children(&mut cursor)
         .find(|child| child.is_named() && child.kind() != "annotation")
 }
 
+/// Returns the first direct named child of the requested kind.
 pub(crate) fn direct_named_child<'tree>(node: Node<'tree>, kind: &str) -> Option<Node<'tree>> {
     let mut cursor = node.walk();
     node.children(&mut cursor)
         .find(|child| child.is_named() && child.kind() == kind)
 }
 
+/// Returns whether a node has a direct child of the requested kind.
 pub(crate) fn has_direct_child_kind(node: Node<'_>, kind: &str) -> bool {
     let mut cursor = node.walk();
     node.children(&mut cursor).any(|child| child.kind() == kind)
 }
 
+/// Finds the first descendant of the requested kind.
 pub(crate) fn find_first_descendant<'tree>(node: Node<'tree>, kind: &str) -> Option<Node<'tree>> {
     find_first_descendant_by(node, |candidate| candidate.kind() == kind)
 }
 
+/// Finds the first descendant matching a predicate.
 pub(crate) fn find_first_descendant_by<'tree>(
     node: Node<'tree>,
     predicate: impl Copy + Fn(Node<'tree>) -> bool,
@@ -54,10 +61,12 @@ pub(crate) fn find_first_descendant_by<'tree>(
     None
 }
 
+/// Returns whether a node has a descendant of the requested kind.
 pub(crate) fn has_descendant_kind(node: Node<'_>, kind: &str) -> bool {
     find_first_descendant(node, kind).is_some()
 }
 
+/// Returns source text for the first descendant matching one of the kinds.
 pub(crate) fn find_first_descendant_text(
     node: Node<'_>,
     source: &SourceText,
@@ -77,6 +86,7 @@ pub(crate) fn find_first_descendant_text(
     None
 }
 
+/// Removes matching single or double quotes from a tree-sitter string token.
 pub(crate) fn unquote(text: String) -> String {
     text.trim().trim_matches('\'').trim_matches('"').to_owned()
 }

@@ -8,13 +8,18 @@ use crate::{
     result::CommandResult,
 };
 
+/// Cache and command settings used while applying per-library outcomes.
 #[derive(Clone, Copy)]
 pub(crate) struct ApplyOutcomeConfig<'a> {
+    /// Root directory for persisted Dust cache entries.
     pub(crate) cache_root: &'a Path,
+    /// Hash of package and Dust configuration files.
     pub(crate) package_config_hash: u64,
+    /// Whether applying should stop after the first error outcome.
     pub(crate) fail_fast: bool,
 }
 
+/// Applies processed library outcomes to cache state and the command result.
 pub(crate) fn apply_indexed_outcomes(
     indexed: impl IntoIterator<Item = IndexedBuildOutcome>,
     config: ApplyOutcomeConfig<'_>,
@@ -78,6 +83,7 @@ pub(crate) fn apply_indexed_outcomes(
     false
 }
 
+/// Persists cache metadata and reports a diagnostic if flushing fails.
 pub(crate) fn flush_cache_into_result(cache: &mut WorkspaceCache, result: &mut CommandResult) {
     if let Err(error) = cache.flush() {
         result.diagnostics.push(Diagnostic::error(format!(

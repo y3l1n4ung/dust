@@ -1,3 +1,5 @@
+//! Integration tests for class serde generation.
+
 #[path = "class_tests/support.rs"]
 mod support;
 

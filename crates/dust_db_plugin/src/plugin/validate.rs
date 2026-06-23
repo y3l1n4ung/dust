@@ -7,13 +7,20 @@ use super::{
     parse::{database_classes, query_specs, row_classes},
 };
 
+/// Validates cached and offline SQL query metadata.
 mod cache;
+/// Validates annotated DAO classes and methods.
 mod dao;
+/// Validates parsed query specs.
 mod query;
+/// Validates row mapper classes and columns.
 mod rows;
+/// Runs SQLx describe validation against SQLite.
 mod sqlx;
+/// Shared DB validation type helpers.
 mod types;
 
+/// Validates DB plugin annotations and SQL query metadata for a library.
 pub(crate) fn validate_db_library(
     library: &DartFileIr,
     options: DbPluginOptions,
@@ -31,6 +38,7 @@ pub(crate) fn validate_db_library(
     diagnostics
 }
 
+/// Validates database classes, DAOs, queries, and SQLx metadata.
 fn validate_databases(
     library: &DartFileIr,
     options: DbPluginOptions,
@@ -72,4 +80,5 @@ fn validate_databases(
 
 #[cfg(test)]
 #[path = "validate/tests.rs"]
+/// Unit tests for DB validation helpers.
 mod tests;

@@ -5,12 +5,19 @@ use dust_plugin_api::{
     DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
 };
 
+/// Collects route, router, and guard facts across the workspace.
 mod analysis;
+/// Builds the final router generation spec from local IR and workspace facts.
 mod build;
+/// Shared route annotation names and workspace analysis keys.
 mod constants;
+/// Renders generated Flutter route code.
 mod emit;
+/// Internal route plugin model used by validation and emission.
 mod model;
+/// Parses route annotations from lowered IR and source-surface facts.
 mod parse;
+/// Validates route pages and router configuration.
 mod validate;
 
 use self::analysis::collect_route_workspace_analysis;

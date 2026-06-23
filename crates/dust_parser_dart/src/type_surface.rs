@@ -56,6 +56,7 @@ impl ParsedTypeSurface {
     }
 }
 
+/// Parses the non-nullable base type shape.
 fn parse_type_kind(source: &str, span: TextRange) -> ParsedTypeKind {
     if source == "dynamic" {
         return ParsedTypeKind::Dynamic;
@@ -88,6 +89,7 @@ fn parse_type_kind(source: &str, span: TextRange) -> ParsedTypeKind {
     }
 }
 
+/// Splits a trailing nullable marker from a type source.
 fn strip_nullable(source: &str) -> (&str, bool) {
     if let Some(stripped) = source.strip_suffix('?') {
         (stripped, true)
@@ -96,6 +98,7 @@ fn strip_nullable(source: &str) -> (&str, bool) {
     }
 }
 
+/// Returns whether the type name is a built-in Dart scalar.
 fn is_builtin(source: &str) -> bool {
     matches!(
         source,
@@ -103,6 +106,7 @@ fn is_builtin(source: &str) -> bool {
     )
 }
 
+/// Splits a generic type into base name and argument source.
 fn split_generic(source: &str) -> Option<(&str, &str)> {
     let start = source.find('<')?;
     let end = source.rfind('>')?;
@@ -112,6 +116,7 @@ fn split_generic(source: &str) -> Option<(&str, &str)> {
     Some((&source[..start], &source[start + 1..end]))
 }
 
+/// Returns whether the source looks like a Dart record type.
 fn looks_like_record_type(source: &str) -> bool {
     let Some(inner) = source
         .strip_prefix('(')
@@ -128,6 +133,7 @@ fn looks_like_record_type(source: &str) -> bool {
     inner.starts_with('{') || has_top_level_char(inner, ',')
 }
 
+/// Returns whether the source looks like a Dart function type.
 fn looks_like_function_type(source: &str) -> bool {
     find_top_level_char(source, |index, ch| {
         if ch != 'F' || index == 0 {

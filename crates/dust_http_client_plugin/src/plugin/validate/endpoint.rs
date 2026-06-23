@@ -7,6 +7,7 @@ use crate::plugin::util::label;
 use crate::plugin::validate::class::validate_text_stream_import;
 use crate::plugin::validate::param::ParamState;
 
+/// Validates one HTTP endpoint method and its parameters.
 pub(crate) fn validate_endpoint(
     imports: &[String],
     class: &ClassIr,

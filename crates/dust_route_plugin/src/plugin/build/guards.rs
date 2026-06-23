@@ -11,6 +11,7 @@ use crate::plugin::{
 
 use super::routes::{parse_route_type_name, route_constructor};
 
+/// Builds guard specs required by the route set and resolves router injections.
 pub(super) fn build_guard_specs(
     library: &DartFileIr,
     plan: &SymbolPlan,
@@ -45,6 +46,7 @@ pub(super) fn build_guard_specs(
     }
 }
 
+/// Resolves guard constructor dependencies against router fields.
 fn resolve_guard_injection(
     mut guard: GuardSpec,
     router_fields: &[RouterFieldSpec],
@@ -77,6 +79,7 @@ fn resolve_guard_injection(
     Ok(guard)
 }
 
+/// Returns the unique guard class names referenced by routes.
 fn guard_classes(routes: &[RouteSpec]) -> Vec<String> {
     let mut guards = routes
         .iter()
@@ -87,6 +90,7 @@ fn guard_classes(routes: &[RouteSpec]) -> Vec<String> {
     guards
 }
 
+/// Builds guard specs for classes declared in the current library.
 fn local_guard_specs(library: &DartFileIr) -> HashMap<String, GuardSpec> {
     library
         .classes
@@ -95,6 +99,7 @@ fn local_guard_specs(library: &DartFileIr) -> HashMap<String, GuardSpec> {
         .collect()
 }
 
+/// Builds guard specs from workspace analysis facts.
 fn workspace_guard_specs(plan: &SymbolPlan) -> HashMap<String, GuardSpec> {
     plan.workspace_string_set(GUARDS_ANALYSIS_KEY)
         .unwrap_or_default()
@@ -105,6 +110,7 @@ fn workspace_guard_specs(plan: &SymbolPlan) -> HashMap<String, GuardSpec> {
         .collect()
 }
 
+/// Builds a guard spec from a lowered local class.
 fn guard_spec_from_class(class: &ClassIr) -> GuardSpec {
     let params = route_constructor(class)
         .map(|constructor| {
@@ -129,6 +135,7 @@ fn guard_spec_from_class(class: &ClassIr) -> GuardSpec {
     }
 }
 
+/// Builds a guard spec from a serialized workspace guard fact.
 fn guard_spec_from_fact(fact: GuardFact) -> Option<GuardSpec> {
     let params = fact
         .params

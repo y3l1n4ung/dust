@@ -1,15 +1,20 @@
+/// Result of rewriting SQLx-style placeholders into SQLite placeholders.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct PlaceholderRewrite {
+    /// SQL text with `$n` placeholders rewritten to `?`.
     pub(crate) sql: String,
+    /// One-based user parameter index for each expanded SQLite placeholder.
     pub(crate) parameter_order: Vec<usize>,
 }
 
 impl PlaceholderRewrite {
+    /// Returns the number of placeholders after repeated parameters are expanded.
     pub(crate) fn expanded_parameter_count(&self) -> usize {
         self.parameter_order.len()
     }
 }
 
+/// Rewrites SQLx-style `$1` placeholders into SQLite `?` placeholders.
 pub(crate) fn rewrite_sqlite_placeholders(
     sql: &str,
     user_parameter_count: usize,

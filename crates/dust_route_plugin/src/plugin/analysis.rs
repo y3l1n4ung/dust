@@ -9,6 +9,7 @@ use super::{
     parse::{parse_route_surface, parse_router_surface},
 };
 
+/// Collects route, router, and guard facts from parsed Dart surface syntax.
 pub(crate) fn collect_route_workspace_analysis(
     context: WorkspaceAnalysisContext<'_>,
     library: &ParsedDartFileSurface,
@@ -57,6 +58,7 @@ pub(crate) fn collect_route_workspace_analysis(
     }
 }
 
+/// Extracts route constructor parameters from a parsed page class.
 fn route_params(class: &ParsedClassSurface) -> Vec<RouteParamFact> {
     let Some(constructor) = class
         .constructors
@@ -83,6 +85,7 @@ fn route_params(class: &ParsedClassSurface) -> Vec<RouteParamFact> {
         .collect()
 }
 
+/// Finds a field type source that backs a field-formal constructor parameter.
 fn field_type_source(class: &ParsedClassSurface, name: &str) -> Option<String> {
     class
         .fields
@@ -91,6 +94,7 @@ fn field_type_source(class: &ParsedClassSurface, name: &str) -> Option<String> {
         .and_then(|field| field.type_source.clone())
 }
 
+/// Extracts guard constructor parameters from a parsed guard class.
 fn guard_params(class: &ParsedClassSurface) -> Vec<GuardParamFact> {
     let Some(constructor) = class
         .constructors
@@ -115,6 +119,7 @@ fn guard_params(class: &ParsedClassSurface) -> Vec<GuardParamFact> {
         .collect()
 }
 
+/// Builds a package import URI for the current source file.
 fn import_uri(context: WorkspaceAnalysisContext<'_>) -> String {
     let source_path = context.source_path;
     let package_root = context.package_root;
@@ -135,6 +140,7 @@ fn import_uri(context: WorkspaceAnalysisContext<'_>) -> String {
     source_path.display().to_string()
 }
 
+/// Returns normalized user imports needed by generated route code.
 fn library_imports(
     context: WorkspaceAnalysisContext<'_>,
     library: &ParsedDartFileSurface,
@@ -152,6 +158,7 @@ fn library_imports(
     imports
 }
 
+/// Normalizes an import URI from a route source file into generated-code form.
 fn normalize_import_uri(context: WorkspaceAnalysisContext<'_>, uri: &str) -> Option<String> {
     if matches!(
         uri,
@@ -182,6 +189,7 @@ fn normalize_import_uri(context: WorkspaceAnalysisContext<'_>, uri: &str) -> Opt
     }
 }
 
+/// Converts a source path under `lib/` into a package import URI.
 fn package_uri_from_source_path(
     package_name: &str,
     package_root: &Path,
@@ -196,6 +204,7 @@ fn package_uri_from_source_path(
     Some(format!("package:{package_name}/{normalized}"))
 }
 
+/// Resolves `.` and `..` path components without touching the filesystem.
 fn normalize_components(path: &Path) -> PathBuf {
     let mut components = Vec::new();
     for component in path.components() {
@@ -210,6 +219,7 @@ fn normalize_components(path: &Path) -> PathBuf {
     components.into_iter().collect()
 }
 
+/// Renders a path with forward slashes for Dart package imports.
 fn normalize_path(path: &Path) -> String {
     path.components()
         .filter_map(|component| match component {

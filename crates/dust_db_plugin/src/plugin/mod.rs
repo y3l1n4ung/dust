@@ -2,11 +2,17 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
 use dust_plugin_api::{DustPlugin, PluginContribution, SymbolPlan};
 
+/// Shared annotation names and claimed symbol lists.
 mod constants;
+/// Renders generated DB, DAO, and row-mapping Dart code.
 mod emit;
+/// Internal DB plugin model used by parsing, validation, and emission.
 mod model;
+/// Parses DB annotations and query call sites.
 mod parse;
+/// SQL string rewriting helpers.
 mod sql;
+/// Validates DB annotations and SQL query metadata.
 mod validate;
 
 use self::constants::{
@@ -39,6 +45,7 @@ impl Default for DbPluginOptions {
 
 /// Dust plugin for SQLx-validated sqlite3 database generation.
 pub struct DbPlugin {
+    /// Runtime validation and emission options for this plugin instance.
     options: DbPluginOptions,
 }
 

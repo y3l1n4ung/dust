@@ -5,8 +5,11 @@ use super::{
     model::{DaoClass, DaoMethod, DatabaseClass, QueryFunction, QuerySpec, RowClass},
 };
 
+/// Parses annotation configs into DB plugin model settings.
 mod annotations;
+/// Scans imports for row classes used by generated DAOs.
 mod imports;
+/// Parses SQL query source and return-shape metadata.
 mod query_source;
 
 pub(crate) use annotations::{config_name, effective_column_name, has_config, sqlx_config};
@@ -16,6 +19,7 @@ pub(crate) use query_source::result_ok_type;
 use annotations::{is_dao_config, is_database_config, parse_database_config};
 use query_source::{parse_fetch_method, parse_query_config, query_shape_from_return};
 
+/// Returns database classes annotated for DB generation.
 pub(crate) fn database_classes(library: &DartFileIr) -> Vec<DatabaseClass<'_>> {
     library
         .classes
@@ -35,6 +39,7 @@ pub(crate) fn database_classes(library: &DartFileIr) -> Vec<DatabaseClass<'_>> {
         .collect()
 }
 
+/// Returns DAO classes annotated for generated SQL methods.
 pub(crate) fn dao_classes(library: &DartFileIr) -> Vec<DaoClass<'_>> {
     library
         .classes
@@ -68,6 +73,7 @@ pub(crate) fn dao_classes(library: &DartFileIr) -> Vec<DaoClass<'_>> {
         .collect()
 }
 
+/// Returns row classes annotated for `FromRow` generation.
 pub(crate) fn row_classes(library: &DartFileIr) -> Vec<RowClass<'_>> {
     library
         .classes
@@ -86,6 +92,7 @@ pub(crate) fn row_classes(library: &DartFileIr) -> Vec<RowClass<'_>> {
         .collect()
 }
 
+/// Returns all SQL query specs discovered in a library.
 pub(crate) fn query_specs(library: &DartFileIr) -> Vec<QuerySpec> {
     let mut specs = standalone_query_specs(library);
     specs.extend(dao_query_specs(library));
@@ -93,6 +100,7 @@ pub(crate) fn query_specs(library: &DartFileIr) -> Vec<QuerySpec> {
     specs
 }
 
+/// Returns standalone query call specs from lowered query call IR.
 fn standalone_query_specs(library: &DartFileIr) -> Vec<QuerySpec> {
     library
         .query_calls
@@ -101,6 +109,7 @@ fn standalone_query_specs(library: &DartFileIr) -> Vec<QuerySpec> {
         .collect()
 }
 
+/// Converts one lowered query call into a query spec.
 fn query_spec_from_call(call: &QueryCallIr) -> QuerySpec {
     let function = match call.function {
         QueryFunctionIr::As => QueryFunction::As,
@@ -126,6 +135,7 @@ fn query_spec_from_call(call: &QueryCallIr) -> QuerySpec {
     }
 }
 
+/// Returns query specs implied by annotated DAO methods.
 pub(crate) fn dao_query_specs(library: &DartFileIr) -> Vec<QuerySpec> {
     dao_classes(library)
         .into_iter()

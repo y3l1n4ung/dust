@@ -1,3 +1,5 @@
+//! Ad hoc benchmark for DB plugin DAO and row mapper emission.
+
 use std::time::Instant;
 
 use dust_db_plugin::register_plugin;
@@ -8,14 +10,17 @@ use dust_ir::{
 use dust_plugin_api::{DustPlugin, SymbolPlan};
 use dust_text::{FileId, TextRange};
 
+/// Builds a small source span for benchmark fixture IR.
 fn span() -> SpanIr {
     SpanIr::new(FileId::new(1), TextRange::new(0_u32, 1_u32))
 }
 
+/// Builds an annotation config for benchmark fixture IR.
 fn config(symbol: &str, args: &str) -> ConfigApplicationIr {
     ConfigApplicationIr::new(SymbolId::new(symbol), Some(args.to_owned()), span())
 }
 
+/// Builds a `Future<Result<T, SqlxError>>` return type.
 fn result_type(ok: TypeIr) -> TypeIr {
     TypeIr::generic(
         "Future",

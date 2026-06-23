@@ -10,12 +10,15 @@ use super::{
     parse::parse_router_config,
 };
 
+/// Builds guard specs and router-field injections.
 mod guards;
+/// Builds local and workspace route specs.
 mod routes;
 
 use guards::build_guard_specs;
 use routes::{build_route_spec, workspace_route_specs};
 
+/// Builds the final router spec for a library containing the workspace router.
 pub(crate) fn build_router_spec(
     library: &DartFileIr,
     plan: &SymbolPlan,
@@ -75,6 +78,7 @@ pub(crate) fn build_router_spec(
     }))
 }
 
+/// Returns classes annotated with `@Router` in the current library.
 fn router_classes(library: &DartFileIr) -> Vec<&ClassIr> {
     library
         .classes
@@ -88,6 +92,7 @@ fn router_classes(library: &DartFileIr) -> Vec<&ClassIr> {
         .collect()
 }
 
+/// Merges local route specs with workspace route facts from other files.
 fn local_and_workspace_routes(library: &DartFileIr, plan: &SymbolPlan) -> Vec<RouteSpec> {
     let mut routes = library
         .classes
@@ -102,12 +107,14 @@ fn local_and_workspace_routes(library: &DartFileIr, plan: &SymbolPlan) -> Vec<Ro
     routes
 }
 
+/// Counts discovered routers across the workspace analysis set.
 fn workspace_router_count(plan: &SymbolPlan) -> usize {
     plan.workspace_string_set(ROUTERS_ANALYSIS_KEY)
         .unwrap_or_default()
         .len()
 }
 
+/// Validates duplicate route paths, names, and required query parameters.
 fn validate_workspace_route_set(routes: &[RouteSpec]) -> Result<(), Vec<Diagnostic>> {
     let mut diagnostics = Vec::new();
     let mut paths = HashSet::new();
@@ -141,6 +148,7 @@ fn validate_workspace_route_set(routes: &[RouteSpec]) -> Result<(), Vec<Diagnost
     }
 }
 
+/// Resolves an annotation path to the generated route class for router settings.
 fn route_class_for_path(
     routes: &[RouteSpec],
     path: Option<&str>,
@@ -163,6 +171,7 @@ fn route_class_for_path(
         })
 }
 
+/// Ensures the not-found route remains unconditional.
 fn validate_not_found_route(
     routes: &[RouteSpec],
     route_class: &str,
@@ -179,6 +188,7 @@ fn validate_not_found_route(
     Ok(())
 }
 
+/// Extracts router fields available for refresh and guard injection.
 fn router_fields(router_class: &ClassIr) -> Vec<RouterFieldSpec> {
     router_class
         .fields
@@ -192,6 +202,7 @@ fn router_fields(router_class: &ClassIr) -> Vec<RouterFieldSpec> {
         .collect()
 }
 
+/// Finds a single Listenable-like router field for refresh notifications.
 fn discover_refresh_listenable(
     fields: &[RouterFieldSpec],
 ) -> Result<Option<String>, Vec<Diagnostic>> {
@@ -208,6 +219,7 @@ fn discover_refresh_listenable(
     }
 }
 
+/// Returns true when a router field type can refresh Navigator state.
 fn is_listenable_type(name: &str) -> bool {
     matches!(name, "Listenable" | "ChangeNotifier" | "ValueNotifier") || name.ends_with("ViewModel")
 }

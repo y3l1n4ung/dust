@@ -12,8 +12,11 @@ pub struct LineCol {
 /// Maps byte offsets to line/column locations.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LineIndex {
+    /// Byte offset where each line starts.
     line_starts: Vec<TextSize>,
+    /// Byte offset where each line ends, excluding newline bytes.
     line_ends: Vec<TextSize>,
+    /// Total source length in bytes.
     text_len: TextSize,
 }
 

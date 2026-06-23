@@ -1,5 +1,8 @@
+//! Tests text offsets against Dart-like source snippets.
+
 use dust_text::{FileId, SourceText, TextRange, TextSize};
 
+/// Builds a reusable Dart source fixture.
 fn sample_source() -> SourceText {
     SourceText::new(
         FileId::new(1),

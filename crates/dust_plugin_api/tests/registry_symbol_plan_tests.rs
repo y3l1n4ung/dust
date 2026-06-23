@@ -1,3 +1,5 @@
+//! Integration tests for plugin registry symbol planning and workspace analysis.
+
 #[path = "support/library.rs"]
 mod library;
 

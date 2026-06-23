@@ -1,3 +1,5 @@
+//! Integration tests for plugin contribution aggregation helpers.
+
 use dust_plugin_api::{ClassMixinContribution, PluginContribution};
 
 #[test]

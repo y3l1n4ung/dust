@@ -3,6 +3,7 @@ use std::path::Path;
 use dust_dart_emit::{DART_DYNAMIC, DART_OBJECT_NULLABLE};
 use dust_ir::{DartFileIr, TypeIr};
 
+/// Builds the package import URI for the source library being generated.
 pub(super) fn package_import_uri(library: &DartFileIr) -> Option<String> {
     let source = Path::new(&library.source_path);
     let relative = source
@@ -21,6 +22,7 @@ pub(super) fn package_import_uri(library: &DartFileIr) -> Option<String> {
     Some(format!("package:{}/{}", library.package_name, path))
 }
 
+/// Renders a Dart type from lowered IR for generated route signatures.
 pub(super) fn dart_type(ty: &TypeIr) -> String {
     match ty {
         TypeIr::Builtin { kind, nullable } => {

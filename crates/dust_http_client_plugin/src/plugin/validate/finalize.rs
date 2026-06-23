@@ -7,6 +7,7 @@ use crate::plugin::util::{extract_path_placeholders, label};
 use crate::plugin::validate::param::ParamState;
 
 impl ParamState {
+    /// Completes endpoint validation after all method configs and params are scanned.
     pub(super) fn finish(
         &self,
         class: &ClassIr,
@@ -93,6 +94,7 @@ impl ParamState {
         self.finish_path_placeholders(class, method, diagnostics);
     }
 
+    /// Validates duplicate special Dio parameters.
     fn finish_special_counts(
         &self,
         class: &ClassIr,
@@ -134,6 +136,7 @@ impl ParamState {
         }
     }
 
+    /// Validates path placeholder and `@Path` key consistency.
     fn finish_path_placeholders(
         &self,
         class: &ClassIr,

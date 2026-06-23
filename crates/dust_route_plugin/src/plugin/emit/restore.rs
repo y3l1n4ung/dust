@@ -10,22 +10,30 @@ use super::{
     patterns::route_switch_pattern,
 };
 
+/// Template context for generated restore-stack switch cases.
 #[derive(Serialize)]
 struct RestoreStackContext {
+    /// Rendered restore cases.
     cases: String,
 }
 
+/// Template context for one restore-stack case.
 #[derive(Serialize)]
 struct RestoreCaseContext {
+    /// Dart route switch pattern.
     pattern: String,
+    /// Rendered stack entries for the route.
     entries: String,
 }
 
+/// Template context for one restored stack entry.
 #[derive(Serialize)]
 struct RestoreEntryContext<'a> {
+    /// Route expression placed in the restored stack.
     entry: &'a str,
 }
 
+/// Renders route stack restoration helpers.
 pub(super) fn render_restore_stack(out: &mut String, spec: &RouterSpec) {
     let cases = spec
         .routes
@@ -41,6 +49,7 @@ pub(super) fn render_restore_stack(out: &mut String, spec: &RouterSpec) {
     out.push_str("\n\n");
 }
 
+/// Renders one restore-stack switch case.
 fn render_restore_case(route: &RouteSpec, spec: &RouterSpec) -> String {
     let bound_params = restore_stack_bound_params(route, spec);
     let entries = restore_stack_entries(route, spec)
@@ -64,6 +73,7 @@ fn render_restore_case(route: &RouteSpec, spec: &RouterSpec) -> String {
     )
 }
 
+/// Computes the stack entries restored for a target route.
 fn restore_stack_entries(route: &RouteSpec, spec: &RouterSpec) -> Vec<String> {
     if route.route_class == spec.initial_route_class {
         return vec!["route".to_owned()];
@@ -98,6 +108,7 @@ fn restore_stack_entries(route: &RouteSpec, spec: &RouterSpec) -> Vec<String> {
     entries
 }
 
+/// Returns route parameters that must be bound by a restore pattern.
 fn restore_stack_bound_params(route: &RouteSpec, spec: &RouterSpec) -> BTreeSet<String> {
     let mut names = BTreeSet::new();
     if route.route_class == spec.initial_route_class {
@@ -115,6 +126,7 @@ fn restore_stack_bound_params(route: &RouteSpec, spec: &RouterSpec) -> BTreeSet<
     }
     names
 }
+/// Builds a route constructor for an ancestor route using target route params.
 fn route_constructor_from_target(route: &RouteSpec, target: &RouteSpec) -> Option<String> {
     if route.route_class == target.route_class {
         return Some("route".to_owned());

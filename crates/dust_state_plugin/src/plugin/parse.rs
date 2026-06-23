@@ -8,6 +8,7 @@ use dust_text::{FileId, TextRange};
 
 use super::{constants::VIEW_MODEL, model::ViewModelAnnotation};
 
+/// Finds the first `@ViewModel` config application in a class config list.
 pub(crate) fn view_model_config(configs: &[ConfigApplicationIr]) -> Option<&ConfigApplicationIr> {
     configs
         .iter()
@@ -15,10 +16,12 @@ pub(crate) fn view_model_config(configs: &[ConfigApplicationIr]) -> Option<&Conf
 }
 
 #[cfg(test)]
+/// Parses a synthetic `@ViewModel` annotation argument list for unit tests.
 pub(crate) fn parse_view_model_annotation(args: Option<&str>) -> Option<ViewModelAnnotation> {
     parse_view_model_config(&test_config(args))
 }
 
+/// Extracts state, args, and initial values from resolved view model config IR.
 pub(crate) fn parse_view_model_config(config: &ConfigApplicationIr) -> Option<ViewModelAnnotation> {
     let state_type = config
         .named_type("state")
@@ -32,6 +35,7 @@ pub(crate) fn parse_view_model_config(config: &ConfigApplicationIr) -> Option<Vi
     })
 }
 
+/// Extracts state, args, and initial values from parser-level annotation data.
 pub(crate) fn parse_view_model_surface(
     annotation: &ParsedAnnotation,
 ) -> Option<ViewModelAnnotation> {
@@ -47,11 +51,13 @@ pub(crate) fn parse_view_model_surface(
     })
 }
 
+/// Returns the final unqualified segment of a config symbol identifier.
 fn config_name(symbol: &SymbolId) -> &str {
     symbol.0.rsplit("::").next().unwrap_or(symbol.0.as_str())
 }
 
 #[cfg(test)]
+/// Builds a resolved config IR value around a raw annotation argument list.
 fn test_config(args: Option<&str>) -> ConfigApplicationIr {
     ConfigApplicationIr::new(
         SymbolId::new(VIEW_MODEL),

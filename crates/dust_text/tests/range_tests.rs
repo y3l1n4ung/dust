@@ -1,3 +1,5 @@
+//! Tests byte-offset and source range primitives.
+
 use dust_text::{FileId, LineIndex, SourceText, TextRange, TextSize};
 
 #[test]

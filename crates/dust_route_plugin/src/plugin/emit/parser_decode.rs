@@ -2,6 +2,7 @@ use dust_ir::{BuiltinType, TypeIr};
 
 use crate::plugin::model::RouteParamSpec;
 
+/// Renders a Dart expression that encodes a route parameter for a URL segment.
 pub(super) fn encode_param_expr(ty: &TypeIr, name: &str) -> String {
     let access = if ty.is_nullable() {
         format!("{name}!")
@@ -17,6 +18,7 @@ pub(super) fn encode_param_expr(ty: &TypeIr, name: &str) -> String {
     }
 }
 
+/// Renders a Dart expression that decodes one path segment.
 pub(super) fn decode_path_expr(ty: &TypeIr, index: usize) -> String {
     match ty {
         TypeIr::Builtin {
@@ -39,6 +41,7 @@ pub(super) fn decode_path_expr(ty: &TypeIr, index: usize) -> String {
     }
 }
 
+/// Renders a Dart expression that decodes one query parameter.
 pub(super) fn decode_query_expr(param: &RouteParamSpec) -> String {
     let name = &param.name;
     match &param.ty {

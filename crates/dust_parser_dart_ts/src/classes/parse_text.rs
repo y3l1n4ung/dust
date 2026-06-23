@@ -4,6 +4,7 @@ use tree_sitter::Node;
 
 use crate::syntax::{direct_named_child, node_text};
 
+/// Determines whether an optional parameter group is named or positional.
 pub(super) fn optional_parameter_kind(node: Node<'_>, source: &SourceText) -> ParameterKind {
     let bytes = source.as_str().as_bytes();
     let mut index = node.start_byte();
@@ -19,6 +20,7 @@ pub(super) fn optional_parameter_kind(node: Node<'_>, source: &SourceText) -> Pa
     }
 }
 
+/// Finds the identifier node that names a formal parameter.
 pub(super) fn parameter_name_node<'tree>(node: Node<'tree>) -> Option<Node<'tree>> {
     if let Some(name) = node.child_by_field_name("name") {
         return Some(name);
@@ -43,12 +45,14 @@ pub(super) fn parameter_name_node<'tree>(node: Node<'tree>) -> Option<Node<'tree
     direct_named_child(node, "identifier")
 }
 
+/// Returns whether a parameter is a Dart field-formal or super-formal parameter.
 pub(super) fn is_field_formal_parameter(node: Node<'_>) -> bool {
     direct_named_child(node, "constructor_param").is_some()
         || direct_named_child(node, "super_formal_parameter").is_some()
         || direct_named_child(node, "formal_parameter").is_some_and(is_field_formal_parameter)
 }
 
+/// Extracts a parameter default-value expression from the surrounding syntax.
 pub(super) fn default_value_source(node: Node<'_>, source: &SourceText) -> Option<String> {
     let parent = node.parent()?;
 
@@ -79,6 +83,7 @@ pub(super) fn default_value_source(node: Node<'_>, source: &SourceText) -> Optio
     None
 }
 
+/// Compares tree-sitter nodes by stable kind and byte range.
 fn same_node(left: Node<'_>, right: Node<'_>) -> bool {
     left.kind() == right.kind()
         && left.start_byte() == right.start_byte()

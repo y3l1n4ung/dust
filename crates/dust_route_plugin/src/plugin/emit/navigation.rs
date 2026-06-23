@@ -5,25 +5,36 @@ use crate::plugin::model::{GuardSpec, RouteParamSpec, RouteSpec, RouterSpec};
 
 use super::formatting::dart_type;
 
+/// Template context for generated route navigation helpers.
 #[derive(Serialize)]
 struct HelpersContext {
+    /// Rendered switch cases that instantiate route guards.
     guard_cases: String,
+    /// Rendered route action factory methods.
     factories: String,
+    /// Generated router base class name.
     router_base_class: String,
 }
 
+/// Template context for one guard lookup case.
 #[derive(Serialize)]
 struct GuardCaseContext {
+    /// Dart route pattern for the case.
     pattern: String,
+    /// Rendered guard constructor list.
     guards: String,
 }
 
+/// Template context for one route action factory.
 #[derive(Serialize)]
 struct FactoryContext {
+    /// Factory method signature.
     factory: String,
+    /// Factory method body expression.
     body: String,
 }
 
+/// Renders generated navigation helpers for guards and route actions.
 pub(super) fn render_helpers(out: &mut String, spec: &RouterSpec) {
     out.push_str(&render_template(
         "route_helpers",
@@ -37,6 +48,7 @@ pub(super) fn render_helpers(out: &mut String, spec: &RouterSpec) {
     out.push_str("\n\n");
 }
 
+/// Renders switch cases that return guard instances for guarded routes.
 fn render_guard_cases(spec: &RouterSpec) -> String {
     let cases = spec
         .routes
@@ -68,6 +80,7 @@ fn render_guard_cases(spec: &RouterSpec) -> String {
     }
 }
 
+/// Renders a guard constructor expression, including router field injection.
 fn render_guard_instance(guard: &str, spec: &RouterSpec) -> String {
     let Some(guard_spec) = spec
         .guard_specs
@@ -79,6 +92,7 @@ fn render_guard_instance(guard: &str, spec: &RouterSpec) -> String {
     guard_constructor(guard_spec, &spec.router_class)
 }
 
+/// Renders a guard constructor call from a resolved guard spec.
 fn guard_constructor(guard: &GuardSpec, router_class: &str) -> String {
     if guard.params.is_empty() {
         return format!("const {}()", guard.class_name);
@@ -101,6 +115,7 @@ fn guard_constructor(guard: &GuardSpec, router_class: &str) -> String {
     format!("{}({args})", guard.class_name)
 }
 
+/// Renders route action factory methods for all routes.
 fn render_route_factories(spec: &RouterSpec) -> String {
     let factories = spec
         .routes
@@ -115,6 +130,7 @@ fn render_route_factories(spec: &RouterSpec) -> String {
     }
 }
 
+/// Renders one route action factory method.
 fn render_route_factory(route: &RouteSpec) -> String {
     let route_ctor = format!("{}({})", route.route_class, render_route_args(route));
     let params = render_factory_params(route);
@@ -135,6 +151,7 @@ fn render_route_factory(route: &RouteSpec) -> String {
     )
 }
 
+/// Renders factory parameters for a route action.
 fn render_factory_params(route: &RouteSpec) -> String {
     let params = route
         .params
@@ -149,6 +166,7 @@ fn render_factory_params(route: &RouteSpec) -> String {
     }
 }
 
+/// Renders one route action factory parameter.
 fn render_factory_param(param: &RouteParamSpec) -> String {
     let ty = dart_type(&param.ty);
     if param.is_path || (!param.ty.is_nullable() && !param.has_default) {
@@ -160,6 +178,7 @@ fn render_factory_param(param: &RouteParamSpec) -> String {
     }
 }
 
+/// Renders arguments passed from a route action factory to a route class.
 fn render_route_args(route: &RouteSpec) -> String {
     route
         .params

@@ -1,7 +1,12 @@
+/// Applies per-library build outcomes to command results and cache state.
 mod apply;
+/// Batch loading, cache selection, workspace analysis, and parallel processing.
 mod batch;
+/// Per-library parse, resolve, lower, and emit pipeline.
 mod process;
+/// Registry, hashing, and cache input helpers.
 mod support;
+/// Worker-count and work-distribution helpers.
 mod work;
 
 use std::time::Instant;
@@ -34,6 +39,7 @@ where
     run_build_inner(request, Some(&progress))
 }
 
+/// Shared implementation for build commands with optional progress reporting.
 fn run_build_inner(
     request: BuildRequest,
     progress: Option<&(dyn Fn(ProgressEvent) + Send + Sync + '_)>,

@@ -2,12 +2,15 @@ use std::collections::BTreeSet;
 
 use dust_ir::DartFileIr;
 
+/// Deterministic allocator for generated names with numeric suffix fallback.
 #[derive(Clone)]
 pub(crate) struct NameAllocator {
+    /// Names already reserved in the current scope.
     used: BTreeSet<String>,
 }
 
 impl NameAllocator {
+    /// Creates an allocator seeded with reserved names.
     pub(crate) fn new<I, S>(reserved: I) -> Self
     where
         I: IntoIterator<Item = S>,
@@ -18,6 +21,7 @@ impl NameAllocator {
         }
     }
 
+    /// Allocates a unique name based on the requested base.
     pub(crate) fn allocate(&mut self, base: impl Into<String>) -> String {
         let base = base.into();
         if self.used.insert(base.clone()) {
@@ -35,6 +39,7 @@ impl NameAllocator {
     }
 }
 
+/// Collects top-level declaration names that generated code must avoid.
 pub(crate) fn library_declaration_names(library: &DartFileIr) -> BTreeSet<String> {
     let mut names = BTreeSet::new();
 
@@ -76,6 +81,7 @@ pub(crate) fn library_declaration_names(library: &DartFileIr) -> BTreeSet<String
     names
 }
 
+/// Lowercases the first ASCII character in a generated identifier fragment.
 pub(crate) fn lower_first(value: &str) -> String {
     let mut chars = value.chars();
     let Some(first) = chars.next() else {
@@ -89,6 +95,7 @@ pub(crate) fn lower_first(value: &str) -> String {
     )
 }
 
+/// Uppercases the first ASCII character in a generated identifier fragment.
 pub(crate) fn upper_first(value: &str) -> String {
     let mut chars = value.chars();
     let Some(first) = chars.next() else {

@@ -104,6 +104,7 @@ pub fn resolve_library_with_partless_configs(
     }
 }
 
+/// Returns whether a resolved class requires a generated part file.
 fn class_needs_part(class: &ResolvedClass, partless_config_symbols: &[&str]) -> bool {
     !class.traits.is_empty()
         || class
@@ -131,6 +132,7 @@ fn class_needs_part(class: &ResolvedClass, partless_config_symbols: &[&str]) -> 
         })
 }
 
+/// Returns whether a resolved enum requires a generated part file.
 fn enum_needs_part(enum_ir: &ResolvedEnum, partless_config_symbols: &[&str]) -> bool {
     !enum_ir.traits.is_empty()
         || enum_ir
@@ -139,6 +141,7 @@ fn enum_needs_part(enum_ir: &ResolvedEnum, partless_config_symbols: &[&str]) -> 
             .any(|config| !partless_config_symbols.contains(&config.symbol.0.as_str()))
 }
 
+/// Resolves one parsed enum into semantic data.
 fn resolve_enum(
     file_id: FileId,
     enum_surface: &dust_parser_dart::ParsedEnumSurface,
@@ -195,6 +198,7 @@ pub fn validate_generated_part_uri(output_path: &str, part_uri: &str) -> Result<
     Ok(())
 }
 
+/// Returns the expected part URI from a generated output path.
 fn expected_part_uri(output_path: &str) -> String {
     Path::new(output_path)
         .file_name()
@@ -203,6 +207,7 @@ fn expected_part_uri(output_path: &str) -> String {
         .to_owned()
 }
 
+/// Resolves one parsed class into semantic data.
 fn resolve_class(
     file_id: FileId,
     class: &ParsedClassSurface,

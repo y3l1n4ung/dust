@@ -1,3 +1,5 @@
+//! Tests diagnostics for Dart-like source snippets.
+
 use dust_diagnostics::{Diagnostic, SourceLabel, render_to_string};
 use dust_text::{FileId, TextRange};
 

@@ -1,6 +1,7 @@
 use dust_dart_emit::{DART_DOUBLE, DART_INT, DART_LIST, DART_MAP, DART_NUM, DART_SET, DART_STRING};
 use dust_ir::TypeIr;
 
+/// Renders a Dart type for generated validation helper signatures.
 pub(crate) fn render_type(ty: &TypeIr) -> String {
     match ty {
         TypeIr::Builtin { kind, nullable } => nullable_type(kind.as_str(), *nullable),
@@ -27,6 +28,7 @@ pub(crate) fn render_type(ty: &TypeIr) -> String {
     }
 }
 
+/// Returns the TextFormField input parser kind supported by a type.
 pub(crate) fn input_kind(ty: &TypeIr) -> Option<&'static str> {
     if ty.is_named(DART_STRING) {
         Some("string")
@@ -41,6 +43,7 @@ pub(crate) fn input_kind(ty: &TypeIr) -> Option<&'static str> {
     }
 }
 
+/// Returns true when `.length` validation is supported for a type.
 pub(crate) fn supports_length(ty: &TypeIr) -> bool {
     ty.is_named(DART_STRING)
         || ty.is_named(DART_LIST)
@@ -48,6 +51,7 @@ pub(crate) fn supports_length(ty: &TypeIr) -> bool {
         || ty.is_named(DART_MAP)
 }
 
+/// Applies Dart nullability to a type source string.
 fn nullable_type(source: &str, nullable: bool) -> String {
     if nullable {
         format!("{source}?")

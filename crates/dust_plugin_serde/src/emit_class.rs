@@ -11,12 +11,16 @@ use crate::{
     },
 };
 
+/// Template context for generated class JSON helpers.
 #[derive(Serialize)]
 struct ClassTemplateContext<'a> {
+    /// Source Dart class name.
     class_name: &'a str,
+    /// Rendered helper body.
     body: String,
 }
 
+/// Renders the generated `toJson` mixin member for a class.
 pub(crate) fn emit_to_json_mixin(class: &ClassIr) -> String {
     render_template(
         "to_json_mixin",
@@ -28,6 +32,7 @@ pub(crate) fn emit_to_json_mixin(class: &ClassIr) -> String {
     )
 }
 
+/// Renders the top-level helper that serializes a class instance.
 pub(crate) fn emit_to_json_helper(
     class: &ClassIr,
     serializable_classes: &[&str],
@@ -69,6 +74,7 @@ pub(crate) fn emit_to_json_helper(
     )
 }
 
+/// Renders the top-level helper that deserializes a class instance.
 pub(crate) fn emit_from_json_helper(
     class: &ClassIr,
     deserializable_classes: &[&str],
@@ -117,6 +123,7 @@ pub(crate) fn emit_from_json_helper(
     ))
 }
 
+/// Emits runtime validation for allowed JSON keys.
 fn emit_allowed_key_validation(class: &ClassIr, lines: &mut Vec<String>) {
     let allowed_keys = all_allowed_keys(class);
     if allowed_keys.len() <= 4 {
@@ -144,6 +151,7 @@ fn emit_allowed_key_validation(class: &ClassIr, lines: &mut Vec<String>) {
     lines.push(String::new());
 }
 
+/// Emits the expression that decodes one class field.
 fn emit_field_decode(
     class: &ClassIr,
     field: &dust_ir::FieldIr,
@@ -192,6 +200,7 @@ fn emit_field_decode(
         })
 }
 
+/// Builds the expression that checks primary and alias keys.
 fn build_has_expr(primary_key: &str, aliases: &[String]) -> String {
     if aliases.is_empty() {
         format!("json.containsKey('{primary_key}')")
@@ -207,6 +216,7 @@ fn build_has_expr(primary_key: &str, aliases: &[String]) -> String {
     }
 }
 
+/// Emits alias-aware decode setup and returns the final decode expression.
 fn emit_alias_decode(
     field: &dust_ir::FieldIr,
     primary_key: &str,
@@ -244,6 +254,7 @@ fn emit_alias_decode(
     decoded
 }
 
+/// Appends a constructor return statement, preserving multiline formatting.
 fn append_constructor_return(lines: &mut Vec<String>, call: &str) {
     lines.push(String::new());
     lines.push(format!(

@@ -1,16 +1,20 @@
 use super::registry::RegistrySelection;
 
+/// Stable hash of the active code generation logic and plugin set.
 #[derive(Clone, Copy)]
 pub(crate) struct CodegenToolHash {
+    /// FNV-1a hash value used in cache entries.
     hash: u64,
 }
 
 impl CodegenToolHash {
+    /// Returns the raw hash value persisted in cache metadata.
     pub(crate) fn value(self) -> u64 {
         self.hash
     }
 }
 
+/// Source inputs that affect core driver, resolver, workspace, and emitter behavior.
 const CODEGEN_CORE_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../build.rs"),
     include_str!("../../check.rs"),
@@ -56,6 +60,7 @@ const CODEGEN_CORE_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_emitter/src/writer.rs"),
 );
 
+/// Source inputs that affect generated derive behavior.
 const DERIVE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_plugin_derive/src/analysis.rs"),
     include_str!("../../../../dust_plugin_derive/src/emit.rs"),
@@ -89,6 +94,7 @@ const DERIVE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_plugin_derive/src/lib.rs"),
 );
 
+/// Source inputs that affect generated SerDe behavior.
 const SERDE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_plugin_serde/src/plugin.rs"),
     include_str!("../../../../dust_plugin_serde/src/validate.rs"),
@@ -102,6 +108,7 @@ const SERDE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_plugin_serde/src/writer_type.rs"),
 );
 
+/// Source inputs that affect generated HTTP client behavior.
 const HTTP_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_http_client_plugin/src/lib.rs"),
     include_str!("../../../../dust_http_client_plugin/src/plugin.rs"),
@@ -128,6 +135,7 @@ const HTTP_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_http_client_plugin/src/plugin/emit/types.rs"),
 );
 
+/// Source inputs that affect generated Flutter route behavior.
 const ROUTE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_route_plugin/src/lib.rs"),
     include_str!("../../../../dust_route_plugin/src/plugin.rs"),
@@ -139,6 +147,7 @@ const ROUTE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_route_plugin/src/plugin/emit/mod.rs"),
 );
 
+/// Source inputs that affect generated Flutter state behavior.
 const STATE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_state_plugin/src/lib.rs"),
     include_str!("../../../../dust_state_plugin/src/plugin.rs"),
@@ -150,6 +159,7 @@ const STATE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_state_plugin/src/plugin/validate.rs"),
 );
 
+/// Source inputs that affect generated DB behavior.
 const DB_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_db_plugin/src/lib.rs"),
     include_str!("../../../../dust_db_plugin/src/plugin/mod.rs"),
@@ -160,22 +170,26 @@ const DB_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_db_plugin/src/plugin/validate.rs"),
 );
 
+/// Hashes UTF-8 text using Dust's stable cache hash algorithm.
 pub(crate) fn hash_text(text: &str) -> u64 {
     hash_bytes(text.as_bytes())
 }
 
+/// Hashes raw bytes using FNV-1a.
 fn hash_bytes(bytes: &[u8]) -> u64 {
     let mut hash = 1469598103934665603_u64;
     update_hash_bytes(&mut hash, bytes);
     hash
 }
 
+/// Mixes bytes into an existing FNV-1a hash state.
 fn update_hash_bytes(hash: &mut u64, bytes: &[u8]) {
     for byte in bytes {
         *hash ^= u64::from(*byte);
         *hash = (*hash).wrapping_mul(1099511628211);
     }
 }
+/// Computes the codegen tool hash for the selected plugin registry mode.
 pub(crate) fn codegen_tool_hash_for_selection(selection: RegistrySelection) -> CodegenToolHash {
     let mut combined = String::new();
     combined.push_str(selection.cache_salt());

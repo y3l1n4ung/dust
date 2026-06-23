@@ -8,15 +8,22 @@ use crate::build::process::LoadedLibraryInput;
 
 use super::tool_hash::{CodegenToolHash, hash_text};
 
+/// Cached source, config, tool, and output metadata for one library.
 #[derive(Clone)]
 pub(crate) struct CacheFingerprint {
+    /// Hash of the previously cached source text.
     pub(crate) source_hash: u64,
+    /// Hash of the package and Dust configuration used by the cache entry.
     pub(crate) package_config_hash: u64,
+    /// Hash of the toolchain used by the cache entry.
     pub(crate) tool_hash: u64,
+    /// Primary and auxiliary generated output paths covered by the cache entry.
     pub(crate) output_paths: Vec<std::path::PathBuf>,
+    /// Whether the primary output may be missing for route-only analysis files.
     pub(crate) allow_missing_primary: bool,
 }
 
+/// Loads source text and cache-sensitive hashes for one source library.
 pub(crate) fn load_library_input(
     library: &SourceLibrary,
     cache_fingerprint: Option<CacheFingerprint>,
@@ -52,6 +59,7 @@ pub(crate) fn load_library_input(
     })
 }
 
+/// Reads and hashes package and Dust configuration inputs.
 pub(crate) fn read_workspace_config_hash(
     package_config_path: &Path,
     dust_config_path: Option<&Path>,
@@ -81,6 +89,7 @@ pub(crate) fn read_workspace_config_hash(
     Ok(hash_text(&combined))
 }
 
+/// Returns whether cache metadata still matches the current loaded input.
 pub(crate) fn matches_cache_metadata(
     entry: &dust_cache::CacheEntry,
     input: &LoadedLibraryInput,
@@ -91,10 +100,13 @@ pub(crate) fn matches_cache_metadata(
         && entry.tool_hash == input.tool_hash
 }
 
+/// Returns whether a library snapshot only contains route declarations.
 pub(crate) fn route_only_analysis(snapshot: &dust_plugin_api::LibraryAnalysisSnapshot) -> bool {
     snapshot.string_set("dust_route.routes.v1").is_some()
         && snapshot.string_set("dust_route.routers.v1").is_none()
 }
+
+/// Computes the previous generated output hash for a cache entry.
 fn cached_output_hash(
     entry: &CacheFingerprint,
     source_path: &Path,
@@ -107,6 +119,7 @@ fn cached_output_hash(
     })
 }
 
+/// Reads all generated outputs and hashes them as one ordered output set.
 fn read_optional_hashes(
     paths: &[std::path::PathBuf],
     allow_missing_primary: bool,
@@ -129,6 +142,7 @@ fn read_optional_hashes(
     )))
 }
 
+/// Reads a previously generated output file if it still exists.
 fn read_previous_output(path: &Path) -> io::Result<Option<String>> {
     match fs::read_to_string(path) {
         Ok(source) => Ok(Some(source)),

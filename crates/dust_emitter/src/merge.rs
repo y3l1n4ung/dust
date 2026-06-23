@@ -52,6 +52,7 @@ impl MergedSections {
     }
 }
 
+/// Merges one class mixin contribution into existing merged sections.
 fn merge_mixin_members(merged: &mut MergedSections, mixin: ClassMixinContribution) {
     if let Some(existing) = merged
         .mixin_members

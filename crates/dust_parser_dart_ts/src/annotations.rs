@@ -7,6 +7,7 @@ use tree_sitter::Node;
 
 use crate::syntax::{direct_named_child, find_first_descendant_text, node_text, text_range};
 
+/// Extracts a structured annotation from a tree-sitter annotation node.
 pub(crate) fn extract_annotation(node: Node<'_>, source: &SourceText) -> ParsedAnnotation {
     let (name, prefix, qualified_name) = node
         .child_by_field_name("name")
@@ -33,6 +34,7 @@ pub(crate) fn extract_annotation(node: Node<'_>, source: &SourceText) -> ParsedA
     }
 }
 
+/// Splits an annotation name into short, prefix, and qualified forms.
 fn annotation_name(node: Node<'_>, source: &SourceText) -> (String, Option<String>, String) {
     let qualified_name = node_text(node, source);
     if node.kind() != "qualified" {
@@ -62,6 +64,7 @@ fn annotation_name(node: Node<'_>, source: &SourceText) -> (String, Option<Strin
     (name, prefix, qualified_name)
 }
 
+/// Extracts positional and named arguments from an annotation argument list.
 fn extract_annotation_arguments(node: Node<'_>, source: &SourceText) -> ParsedAnnotationArguments {
     let mut arguments = ParsedAnnotationArguments::default();
     let mut cursor = node.walk();
@@ -83,6 +86,7 @@ fn extract_annotation_arguments(node: Node<'_>, source: &SourceText) -> ParsedAn
     arguments
 }
 
+/// Extracts one named annotation argument and its value span.
 fn extract_named_argument(
     argument_node: Node<'_>,
     named_node: Node<'_>,
@@ -101,6 +105,7 @@ fn extract_named_argument(
     })
 }
 
+/// Returns the source span containing a named argument value without the label.
 fn named_value_span(named_node: Node<'_>, label_node: Node<'_>, source: &SourceText) -> TextRange {
     let mut start = label_node.end_byte();
     let mut end = named_node.end_byte();
@@ -126,6 +131,7 @@ fn named_value_span(named_node: Node<'_>, label_node: Node<'_>, source: &SourceT
     TextRange::new(TextSize::from(start), TextSize::from(end))
 }
 
+/// Extracts annotations attached directly to a class or mixin member node.
 pub(crate) fn extract_member_annotations(
     node: Node<'_>,
     source: &SourceText,
@@ -133,6 +139,7 @@ pub(crate) fn extract_member_annotations(
     extract_direct_annotations(node, source)
 }
 
+/// Extracts annotation children that are direct named children of a node.
 pub(crate) fn extract_direct_annotations(
     node: Node<'_>,
     source: &SourceText,

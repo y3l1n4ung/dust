@@ -12,6 +12,7 @@ use crate::{
 
 use super::parse_text::{default_value_source, optional_parameter_kind, parameter_name_node};
 
+/// Extracts a parsed method surface from a class member declaration.
 pub(super) fn extract_method(
     node: Node<'_>,
     annotations: &[ParsedAnnotation],
@@ -55,6 +56,7 @@ pub(super) fn extract_method(
     })
 }
 
+/// Resolves a wrapper node to the callable signature that carries the name.
 fn callable_signature(node: Node<'_>) -> Node<'_> {
     if node.kind() != "method_signature" {
         return node;
@@ -67,6 +69,7 @@ fn callable_signature(node: Node<'_>) -> Node<'_> {
         .unwrap_or(node)
 }
 
+/// Finds the method body attached to a declaration or signature wrapper.
 fn method_body_node<'tree>(node: Node<'tree>, signature: Node<'tree>) -> Option<Node<'tree>> {
     direct_named_child(node, "function_body").or_else(|| {
         signature
@@ -75,6 +78,7 @@ fn method_body_node<'tree>(node: Node<'tree>, signature: Node<'tree>) -> Option<
     })
 }
 
+/// Extracts method or function parameters from a formal parameter list.
 pub(crate) fn extract_method_params(
     node: Node<'_>,
     source: &SourceText,
@@ -90,6 +94,7 @@ pub(crate) fn extract_method_params(
     params
 }
 
+/// Recursively collects method parameters while preserving leading annotations.
 fn collect_method_formal_parameters(
     node: Node<'_>,
     source: &SourceText,
@@ -112,6 +117,7 @@ fn collect_method_formal_parameters(
     }
 }
 
+/// Collects parameters inside optional positional or named method groups.
 fn collect_method_optional_formal_parameters(
     node: Node<'_>,
     source: &SourceText,
@@ -131,6 +137,7 @@ fn collect_method_optional_formal_parameters(
     }
 }
 
+/// Adds one parsed method parameter and applies any pending annotations.
 fn push_method_formal_parameter(
     node: Node<'_>,
     source: &SourceText,
@@ -147,6 +154,7 @@ fn push_method_formal_parameter(
     out.push(param);
 }
 
+/// Converts one tree-sitter parameter node into method parameter metadata.
 fn extract_method_formal_parameter(
     node: Node<'_>,
     source: &SourceText,

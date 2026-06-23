@@ -1,3 +1,5 @@
+//! Generated-code matrix tests for derive plugin features.
+
 #[path = "derive_plugin_matrix_tests/support.rs"]
 mod support;
 

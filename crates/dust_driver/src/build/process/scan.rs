@@ -11,6 +11,7 @@ use crate::build::work::{available_worker_count, round_robin_groups};
 
 use super::PendingLibrary;
 
+/// Collects plugin workspace analysis for pending libraries in parallel.
 pub(crate) fn collect_workspace_analysis(
     pending: &[PendingLibrary],
     package_root: &std::path::Path,

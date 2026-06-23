@@ -8,6 +8,7 @@ use crate::build::{
     work::{available_worker_count, round_robin_groups},
 };
 
+/// Loads source text and prior output fingerprints for all libraries.
 pub(super) fn load_library_inputs(
     config: BatchConfig<'_>,
     libraries: &[SourceLibrary],

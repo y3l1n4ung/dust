@@ -15,6 +15,7 @@ use super::{
     BuildOutcome, PendingLibrary, ProcessingConfig, build_diagnostic_file, emit_or_write_library,
 };
 
+/// Processes one pending library and reports progress when it finishes.
 pub(crate) fn process_pending_library(
     pending: PendingLibrary,
     processing: &ProcessingConfig<'_>,
@@ -73,6 +74,7 @@ pub(crate) fn process_pending_library(
     }
 }
 
+/// Parses, resolves, lowers, and emits one library from already loaded source.
 pub(crate) fn process_library_from_source(
     file_id: FileId,
     library: &SourceLibrary,
@@ -113,6 +115,7 @@ pub(crate) fn process_library_from_source(
     finish_success(library, diagnostics, Some(diagnostic_file), output)
 }
 
+/// Resolves parser output and lowers it into Dust IR.
 fn resolve_and_lower_library(
     file_id: FileId,
     library: &SourceLibrary,
@@ -145,6 +148,7 @@ fn resolve_and_lower_library(
     (!diagnostics.iter().any(|diagnostic| diagnostic.is_error())).then_some(lowered_library)
 }
 
+/// Emits generated output for a lowered library using the active symbol plan.
 fn emit_library_output(
     library: &SourceLibrary,
     lowered_library: &dust_ir::DartFileIr,
@@ -162,6 +166,7 @@ fn emit_library_output(
     )
 }
 
+/// Combines emitter results with diagnostics into a successful build outcome.
 fn finish_success(
     library: &SourceLibrary,
     mut diagnostics: Vec<Diagnostic>,
@@ -194,6 +199,7 @@ fn finish_success(
     )
 }
 
+/// Formats a source or output path relative to the package root.
 fn workspace_relative_path(package_root: &std::path::Path, path: &std::path::Path) -> String {
     path.strip_prefix(package_root)
         .unwrap_or(path)

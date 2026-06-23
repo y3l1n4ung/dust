@@ -2,20 +2,35 @@
 #![deny(missing_docs)]
 #![doc = "Semantic intermediate representation for Dust."]
 
+/// Annotation metadata in lowered form.
 mod annotation;
+/// Class declarations.
 mod class;
+/// Constructor declarations.
 mod constructor;
+/// Non-class declaration types.
 mod declaration;
+/// Dart library directives.
 mod directive;
+/// Enum declarations.
 mod enum_type;
+/// Class and enum fields.
 mod field;
+/// Library and file containers.
 mod library;
+/// Lowering output containers.
 mod lowering;
+/// Method declarations.
 mod method;
+/// Query function metadata.
 mod query_call;
+/// Serialization configuration.
 mod serde;
+/// Applied plugin traits and configs.
 mod traits;
+/// Type metadata.
 mod types;
+/// Workspace-level IR.
 mod workspace;
 
 pub use annotation::{AnnotationIr, AnnotationValueIr, ExprSourceIr, NameIr};

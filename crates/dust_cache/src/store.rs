@@ -30,23 +30,32 @@ pub struct CacheEntry {
     pub analysis_snapshot: LibraryAnalysisSnapshot,
 }
 
+/// Owned cache file shape read from disk.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 struct CacheFile {
+    /// Cache schema version stored on disk.
     schema_version: u32,
+    /// Cached entries keyed by workspace-relative source path.
     entries: BTreeMap<String, CacheEntry>,
 }
 
+/// Borrowed cache file view used for serialization.
 #[derive(Debug, Serialize)]
 struct CacheFileRef<'a> {
+    /// Cache schema version to write.
     schema_version: u32,
+    /// Cached entries keyed by workspace-relative source path.
     entries: &'a BTreeMap<String, CacheEntry>,
 }
 
 /// The persistent cache for one Dart workspace.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WorkspaceCache {
+    /// Path to the cache JSON file on disk.
     path: PathBuf,
+    /// Cached entries keyed by workspace-relative source path.
     entries: BTreeMap<String, CacheEntry>,
+    /// Whether the in-memory cache has changes that need flushing.
     dirty: bool,
 }
 
@@ -146,6 +155,7 @@ impl WorkspaceCache {
     }
 }
 
+/// Builds the normalized cache key for a source path.
 fn cache_key(root: &Path, source_path: &Path) -> String {
     source_path
         .strip_prefix(root)
@@ -154,10 +164,12 @@ fn cache_key(root: &Path, source_path: &Path) -> String {
         .replace('\\', "/")
 }
 
+/// Returns the workspace cache file path.
 fn cache_file_path(root: &Path) -> PathBuf {
     cache_dir_path(root).join("build_cache_v1.json")
 }
 
+/// Returns the Dust cache storage directory for a workspace.
 fn cache_dir_path(root: &Path) -> PathBuf {
     root.join(".dart_tool/dust")
 }
@@ -169,6 +181,7 @@ mod tests {
 
     use super::{CacheEntry, WorkspaceCache, cache_dir_path};
 
+    /// Writes a minimal pubspec so the temporary directory resembles a package.
     fn write_pubspec(root: &std::path::Path) {
         std::fs::write(root.join("pubspec.yaml"), "name: dust_test\n").unwrap();
     }

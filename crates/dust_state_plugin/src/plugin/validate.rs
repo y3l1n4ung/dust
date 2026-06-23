@@ -5,6 +5,7 @@ use dust_ir::{ClassIr, DartFileIr};
 
 use super::parse::{parse_view_model_config, view_model_config};
 
+/// Validates state plugin annotations and generated-base-class contracts.
 pub(crate) fn validate_library_state(library: &DartFileIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let local_classes = library
@@ -74,6 +75,7 @@ pub(crate) fn validate_library_state(library: &DartFileIr) -> Vec<Diagnostic> {
     diagnostics
 }
 
+/// Ensures Dust can create a default initial state when no `initial` is given.
 fn validate_default_initial_state(
     view_model: &ClassIr,
     state_class: &ClassIr,
@@ -114,6 +116,7 @@ fn validate_default_initial_state(
     }
 }
 
+/// Validates that a declared args type is available and extends `ViewModelArgs`.
 fn validate_args_type(
     library: &DartFileIr,
     class: &ClassIr,
@@ -141,6 +144,7 @@ fn validate_args_type(
     }
 }
 
+/// Returns whether the library can satisfy references through imports.
 fn has_imports(library: &DartFileIr) -> bool {
     !library.imports.is_empty()
 }
