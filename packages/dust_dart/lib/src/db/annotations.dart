@@ -25,11 +25,10 @@ final class SqlxDatabase {
     SqlxDatabaseType? type,
     Driver? driver,
     this.migrations = './migrations',
-  }) : type =
-           type ??
-           (driver == Driver.postgres
-               ? SqlxDatabaseType.postgres
-               : SqlxDatabaseType.sqlite);
+  }) : type = type ??
+            (driver == Driver.postgres
+                ? SqlxDatabaseType.postgres
+                : SqlxDatabaseType.sqlite);
 
   /// SQLx database type used by the generated database.
   final SqlxDatabaseType type;

@@ -43,10 +43,12 @@ Run package checks:
 cd packages/dust_dart
 dart analyze
 dart test
+dart pub publish --dry-run
 
 cd ../dust_flutter
 flutter analyze
 flutter test
+flutter pub publish --dry-run
 
 cd ../dust_db_sqlite3
 dart analyze
@@ -58,8 +60,9 @@ dart test
 Skip crates.io for Rust crates. Release the `dust` CLI from GitHub binary
 artifacts and installers.
 
-Dart packages currently use `publish_to: none`; keep package validation in the
-release gate, but do not publish to pub.dev unless the package policy changes.
+Publish `dust_dart` and `dust_flutter` to pub.dev after their dry-runs and CI
+pass. Track `dust_db_sqlite3` in #77 and publish it after `dust_dart` v0.1.0 is
+live on pub.dev.
 
 ## GitHub Release
 

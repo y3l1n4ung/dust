@@ -2,7 +2,7 @@ part of 'sqlite_pool.dart';
 
 final class _SingleConnectionPool implements Transaction, Sqlite3Executor {
   _SingleConnectionPool(sqlite.Database database)
-    : _driver = Sqlite3Driver._(database, ownsDatabase: false);
+      : _driver = Sqlite3Driver._(database, ownsDatabase: false);
 
   final Sqlite3Driver _driver;
 

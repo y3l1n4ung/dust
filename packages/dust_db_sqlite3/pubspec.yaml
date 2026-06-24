@@ -1,10 +1,18 @@
 name: dust_db_sqlite3
-description: sqlite3 runtime for Dust DB.
+description: SQLite runtime support for generated database code with dust.
 version: 0.1.0
 publish_to: none
+repository: https://github.com/y3l1n4ung/dust
+issue_tracker: https://github.com/y3l1n4ung/dust/issues
+topics:
+  - codegen
+  - database
+  - sqlite
+  - sql
+  - sqlite3
 
 environment:
-  sdk: ^3.11.0
+  sdk: ">=3.6.0 <4.0.0"
 
 resolution: workspace
 

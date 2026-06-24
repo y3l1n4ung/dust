@@ -7,30 +7,36 @@ void main() {
     const Option<String?> option = None<String?>();
 
     expect(option, isA<None<String?>>());
-    expect(switch (option) {
-      None<String?>() => 'current',
-      Some<String?>(:final value) => value,
-    }, 'current');
+    expect(
+        switch (option) {
+          None<String?>() => 'current',
+          Some<String?>(:final value) => value,
+        },
+        'current');
   });
 
   test('Some carries a non-null value', () {
     const Option<String?> option = Some<String?>('John');
 
     expect(option, isA<Some<String?>>());
-    expect(switch (option) {
-      None<String?>() => 'current',
-      Some<String?>(:final value) => value,
-    }, 'John');
+    expect(
+        switch (option) {
+          None<String?>() => 'current',
+          Some<String?>(:final value) => value,
+        },
+        'John');
   });
 
   test('Some can carry a null value', () {
     const Option<String?> option = Some<String?>(null);
 
     expect(option, isA<Some<String?>>());
-    expect(switch (option) {
-      None<String?>() => 'current',
-      Some<String?>(:final value) => value,
-    }, isNull);
+    expect(
+        switch (option) {
+          None<String?>() => 'current',
+          Some<String?>(:final value) => value,
+        },
+        isNull);
   });
 
   test('derive barrel re-exports generated-code Option symbols', () {
