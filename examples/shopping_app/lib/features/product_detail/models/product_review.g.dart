@@ -128,6 +128,7 @@ Map<String, Object?> _$ProductReviewToJson(ProductReview instance) {
     'verifiedPurchase': instance.verifiedPurchase,
   };
 }
+
 // factory ProductReview.fromJson(Map<String, Object?> json) => _$ProductReviewFromJson(json);
 ProductReview _$ProductReviewFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');

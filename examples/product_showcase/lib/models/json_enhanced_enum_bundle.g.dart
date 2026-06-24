@@ -48,7 +48,8 @@ mixin _$JsonEnhancedEnumBundle {
     ]);
   }
 
-  Map<String, Object?> toJson() => _$JsonEnhancedEnumBundleToJson(this as JsonEnhancedEnumBundle);
+  Map<String, Object?> toJson() =>
+      _$JsonEnhancedEnumBundleToJson(this as JsonEnhancedEnumBundle);
 }
 
 Map<String, Object?> _$JsonEnhancedEnumBundleToJson(JsonEnhancedEnumBundle instance) {
@@ -60,6 +61,7 @@ Map<String, Object?> _$JsonEnhancedEnumBundleToJson(JsonEnhancedEnumBundle insta
     'fleet': vehicleIndexListCodec.serialize(instance.fleet),
   };
 }
+
 // factory JsonEnhancedEnumBundle.fromJson(Map<String, Object?> json) => _$JsonEnhancedEnumBundleFromJson(json);
 JsonEnhancedEnumBundle _$JsonEnhancedEnumBundleFromJson(Map<String, Object?> json) {
   final primaryVehicleValue = JsonHelper.decodeWithCodec<Vehicle>(
@@ -82,6 +84,7 @@ JsonEnhancedEnumBundle _$JsonEnhancedEnumBundleFromJson(Map<String, Object?> jso
     fleet: fleetValue,
   );
 }
+
 Object? _$VehicleToJson(Vehicle instance) {
   return switch (instance) {
     Vehicle.car => 'car',
@@ -89,6 +92,7 @@ Object? _$VehicleToJson(Vehicle instance) {
     Vehicle.unicycle => 'unicycle',
   };
 }
+
 Vehicle _$VehicleFromJson(Object? json) {
   return switch (json) {
     'car' => Vehicle.car,

@@ -43,7 +43,8 @@ mixin _$JsonCodecBundle {
     ]);
   }
 
-  Map<String, Object?> toJson() => _$JsonCodecBundleToJson(this as JsonCodecBundle);
+  Map<String, Object?> toJson() =>
+      _$JsonCodecBundleToJson(this as JsonCodecBundle);
 }
 
 Map<String, Object?> _$JsonCodecBundleToJson(JsonCodecBundle instance) {
@@ -54,6 +55,7 @@ Map<String, Object?> _$JsonCodecBundleToJson(JsonCodecBundle instance) {
         : unixEpochDateTimeCodec.serialize(instance.updatedAt!),
   };
 }
+
 // factory JsonCodecBundle.fromJson(Map<String, Object?> json) => _$JsonCodecBundleFromJson(json);
 JsonCodecBundle _$JsonCodecBundleFromJson(Map<String, Object?> json) {
   final createdAtValue = JsonHelper.decodeWithCodec<DateTime>(

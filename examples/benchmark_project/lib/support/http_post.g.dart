@@ -83,6 +83,7 @@ Map<String, Object?> _$HttpPostToJson(HttpPost instance) {
     'body': instance.body,
   };
 }
+
 // factory HttpPost.fromJson(Map<String, Object?> json) => _$HttpPostFromJson(json);
 HttpPost _$HttpPostFromJson(Map<String, Object?> json) {
   final userIdValue = JsonHelper.as<int>(json['userId'], 'userId', 'int');
@@ -90,5 +91,10 @@ HttpPost _$HttpPostFromJson(Map<String, Object?> json) {
   final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
   final bodyValue = JsonHelper.as<String>(json['body'], 'body', 'String');
 
-  return HttpPost(userId: userIdValue, id: idValue, title: titleValue, body: bodyValue);
+  return HttpPost(
+    userId: userIdValue,
+    id: idValue,
+    title: titleValue,
+    body: bodyValue,
+  );
 }

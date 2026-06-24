@@ -60,6 +60,7 @@ Map<String, Object?> _$JsonProfileToJson(JsonProfile instance) {
         .toList(),
   };
 }
+
 // factory JsonProfile.fromJson(Map<String, Object?> json) => _$JsonProfileFromJson(json);
 JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
   const allowedKeys = <String>{'id', 'display_name', 'displayName', 'tags'};
@@ -87,5 +88,9 @@ JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
       .toList()
       : ['guest'];
 
-  return JsonProfile(id: idValue, displayName: displayNameValue, tags: tagsValue);
+  return JsonProfile(
+    id: idValue,
+    displayName: displayNameValue,
+    tags: tagsValue,
+  );
 }

@@ -64,7 +64,8 @@ mixin _$CheckoutQuoteRequest {
   @pragma('vm:prefer-inline')
   _$CheckoutQuoteRequestCopyWith<CheckoutQuoteRequest> get copyWith => _$CheckoutQuoteRequestCopyWithImpl<CheckoutQuoteRequest>(this as CheckoutQuoteRequest, (value) => value);
 
-  Map<String, Object?> toJson() => _$CheckoutQuoteRequestToJson(this as CheckoutQuoteRequest);
+  Map<String, Object?> toJson() =>
+      _$CheckoutQuoteRequestToJson(this as CheckoutQuoteRequest);
 }
 
 mixin _$CheckoutQuote {
@@ -219,6 +220,7 @@ Map<String, Object?> _$CheckoutQuoteRequestToJson(CheckoutQuoteRequest instance)
     'couponCode': instance.couponCode,
   };
 }
+
 // factory CheckoutQuoteRequest.fromJson(Map<String, Object?> json) => _$CheckoutQuoteRequestFromJson(json);
 CheckoutQuoteRequest _$CheckoutQuoteRequestFromJson(Map<String, Object?> json) {
   final subtotalValue = JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble();
@@ -226,8 +228,12 @@ CheckoutQuoteRequest _$CheckoutQuoteRequestFromJson(Map<String, Object?> json) {
       ? null
       : JsonHelper.as<String>(json['couponCode'], 'couponCode', 'String');
 
-  return CheckoutQuoteRequest(subtotal: subtotalValue, couponCode: couponCodeValue);
+  return CheckoutQuoteRequest(
+    subtotal: subtotalValue,
+    couponCode: couponCodeValue,
+  );
 }
+
 Map<String, Object?> _$CheckoutQuoteToJson(CheckoutQuote instance) {
   return <String, Object?>{
     'subtotal': instance.subtotal,
@@ -240,6 +246,7 @@ Map<String, Object?> _$CheckoutQuoteToJson(CheckoutQuote instance) {
     'message': instance.message,
   };
 }
+
 // factory CheckoutQuote.fromJson(Map<String, Object?> json) => _$CheckoutQuoteFromJson(json);
 CheckoutQuote _$CheckoutQuoteFromJson(Map<String, Object?> json) {
   final subtotalValue = JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble();

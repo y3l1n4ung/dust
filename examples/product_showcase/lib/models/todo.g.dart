@@ -191,6 +191,7 @@ Map<String, Object?> _$TodoToJson(Todo instance) {
     'isCompleted': instance.isCompleted,
   };
 }
+
 // factory Todo.fromJson(Map<String, Object?> json) => _$TodoFromJson(json);
 Todo _$TodoFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
@@ -203,12 +204,14 @@ Todo _$TodoFromJson(Map<String, Object?> json) {
 
   return Todo(id: idValue, title: titleValue, isCompleted: isCompletedValue);
 }
+
 Map<String, Object?> _$TodoCreateToJson(TodoCreate instance) {
   return <String, Object?>{
     'title': instance.title,
     'isCompleted': instance.isCompleted,
   };
 }
+
 // factory TodoCreate.fromJson(Map<String, Object?> json) => _$TodoCreateFromJson(json);
 TodoCreate _$TodoCreateFromJson(Map<String, Object?> json) {
   final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
@@ -220,12 +223,14 @@ TodoCreate _$TodoCreateFromJson(Map<String, Object?> json) {
 
   return TodoCreate(title: titleValue, isCompleted: isCompletedValue);
 }
+
 Map<String, Object?> _$TodoUpdateToJson(TodoUpdate instance) {
   return <String, Object?>{
     'title': instance.title,
     'isCompleted': instance.isCompleted,
   };
 }
+
 // factory TodoUpdate.fromJson(Map<String, Object?> json) => _$TodoUpdateFromJson(json);
 TodoUpdate _$TodoUpdateFromJson(Map<String, Object?> json) {
   final titleValue = json['title'] == null

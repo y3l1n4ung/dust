@@ -16,5 +16,6 @@ String renderBenchmarkModelFile(int index) {
     BenchmarkPattern.serdeNested => renderSerdeNested(index),
     BenchmarkPattern.serdeCodec => renderSerdeCodec(index),
     BenchmarkPattern.serdeLinked => renderSerdeLinked(index),
+    BenchmarkPattern.serdeSealed => renderSerdeSealed(index),
   };
 }

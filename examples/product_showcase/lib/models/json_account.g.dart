@@ -110,6 +110,7 @@ Map<String, Object?> _$JsonAccountToJson(JsonAccount instance) {
     'archived': instance.archived,
   };
 }
+
 // factory JsonAccount.fromJson(Map<String, Object?> json) => _$JsonAccountFromJson(json);
 JsonAccount _$JsonAccountFromJson(Map<String, Object?> json) {
   final profileValue = JsonProfile.fromJson(JsonHelper.asMap(json['profile'], 'profile'));

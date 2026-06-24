@@ -70,6 +70,7 @@ Map<String, Object?> _$ProfileToJson(Profile instance) {
         .toList(),
   };
 }
+
 // factory Profile.fromJson(Map<String, Object?> json) => _$ProfileFromJson(json);
 Profile _$ProfileFromJson(Map<String, Object?> json) {
   const allowedKeys = <String>{'id', 'display_name', 'displayName', 'tags'};
@@ -126,6 +127,7 @@ Map<String, Object?> _$AccountToJson(Account instance) {
     'archived': instance.archived,
   };
 }
+
 // factory Account.fromJson(Map<String, Object?> json) => _$AccountFromJson(json);
 Account _$AccountFromJson(Map<String, Object?> json) {
   final profileValue = Profile.fromJson(JsonHelper.asMap(json['profile'], 'profile'));
@@ -144,7 +146,11 @@ Account _$AccountFromJson(Map<String, Object?> json) {
     'bool',
   );
 
-  return Account(profile: profileValue, metrics: metricsValue, archived: archivedValue);
+  return Account(
+    profile: profileValue,
+    metrics: metricsValue,
+    archived: archivedValue,
+  );
 }
 "#
         )

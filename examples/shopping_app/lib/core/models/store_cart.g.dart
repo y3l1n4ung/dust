@@ -102,7 +102,8 @@ mixin _$StoreCartProduct {
   @pragma('vm:prefer-inline')
   _$StoreCartProductCopyWith<StoreCartProduct> get copyWith => _$StoreCartProductCopyWithImpl<StoreCartProduct>(this as StoreCartProduct, (value) => value);
 
-  Map<String, Object?> toJson() => _$StoreCartProductToJson(this as StoreCartProduct);
+  Map<String, Object?> toJson() =>
+      _$StoreCartProductToJson(this as StoreCartProduct);
 }
 
 // CopyWith API inspired by Freezed.
@@ -182,6 +183,7 @@ Map<String, Object?> _$StoreCartToJson(StoreCart instance) {
         .toList(),
   };
 }
+
 // factory StoreCart.fromJson(Map<String, Object?> json) => _$StoreCartFromJson(json);
 StoreCart _$StoreCartFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
@@ -198,12 +200,14 @@ StoreCart _$StoreCartFromJson(Map<String, Object?> json) {
     products: productsValue,
   );
 }
+
 Map<String, Object?> _$StoreCartProductToJson(StoreCartProduct instance) {
   return <String, Object?>{
     'productId': instance.productId,
     'quantity': instance.quantity,
   };
 }
+
 // factory StoreCartProduct.fromJson(Map<String, Object?> json) => _$StoreCartProductFromJson(json);
 StoreCartProduct _$StoreCartProductFromJson(Map<String, Object?> json) {
   final productIdValue = JsonHelper.as<int>(

@@ -1,7 +1,4 @@
-use std::{
-    fmt::Write,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
@@ -205,6 +202,7 @@ fn assemble_source(library: &DartFileIr, plan: &SymbolPlan, merged: &MergedSecti
         writer.blank_line();
         for function in &merged.top_level_functions {
             writer.raw_block(function);
+            writer.blank_line();
         }
     }
 
@@ -236,7 +234,9 @@ fn render_mixin_block(writer: &mut DartWriter, class_name: &str, members: &[Stri
     let mut block = String::with_capacity(
         mixin_name.len() + members.iter().map(String::len).sum::<usize>() + 16,
     );
-    writeln!(block, "mixin {mixin_name} {{").expect("writing to String cannot fail");
+    block.push_str("mixin ");
+    block.push_str(&mixin_name);
+    block.push_str(" {\n");
     for (index, member) in members.iter().enumerate() {
         if index > 0 {
             block.push('\n');

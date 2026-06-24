@@ -55,7 +55,8 @@ mixin _$BenchmarkState {
   @pragma('vm:prefer-inline')
   _$BenchmarkStateCopyWith<BenchmarkState> get copyWith => _$BenchmarkStateCopyWithImpl<BenchmarkState>(this as BenchmarkState, (value) => value);
 
-  Map<String, Object?> toJson() => _$BenchmarkStateToJson(this as BenchmarkState);
+  Map<String, Object?> toJson() =>
+      _$BenchmarkStateToJson(this as BenchmarkState);
 }
 
 // CopyWith API inspired by Freezed.
@@ -100,6 +101,7 @@ Map<String, Object?> _$BenchmarkStateToJson(BenchmarkState instance) {
     'buildsRun': instance.buildsRun,
   };
 }
+
 // factory BenchmarkState.fromJson(Map<String, Object?> json) => _$BenchmarkStateFromJson(json);
 BenchmarkState _$BenchmarkStateFromJson(Map<String, Object?> json) {
   final modeValue = _$BenchmarkModeFromJson(json['mode']);
@@ -120,6 +122,7 @@ BenchmarkState _$BenchmarkStateFromJson(Map<String, Object?> json) {
     buildsRun: buildsRunValue,
   );
 }
+
 Object? _$BenchmarkModeToJson(BenchmarkMode instance) {
   return switch (instance) {
     BenchmarkMode.cold => 'cold',
@@ -127,6 +130,7 @@ Object? _$BenchmarkModeToJson(BenchmarkMode instance) {
     BenchmarkMode.invalidated => 'invalidated',
   };
 }
+
 BenchmarkMode _$BenchmarkModeFromJson(Object? json) {
   return switch (json) {
     'cold' => BenchmarkMode.cold,

@@ -3,6 +3,7 @@ import 'package:dust_benchmark_project/generated_models/model_00004.dart';
 import 'package:dust_benchmark_project/generated_models/model_00005.dart';
 import 'package:dust_benchmark_project/generated_models/model_00007.dart';
 import 'package:dust_benchmark_project/generated_models/model_00008.dart';
+import 'package:dust_benchmark_project/generated_models/model_00009.dart';
 import 'package:dust_benchmark_project/generated_models/validation_showcase.dart';
 import 'package:dust_benchmark_project/support/common.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -71,6 +72,28 @@ void main() {
     expect(identical(copied.items, linked.items), isTrue);
     expect(identical(copied.byId, linked.byId), isTrue);
   });
+
+  test(
+    'sealed serde metadata sample keeps concrete variants round-trippable',
+    () {
+      final event = SealedEvent9.manualAccept(id: 'case-9', score: 99);
+
+      expect(event, isA<SealedAccepted9>());
+      final accepted = event as SealedAccepted9;
+      expect(accepted.toJson(), {'id': 'case-9', 'score': 99});
+      expect(SealedAccepted9.fromJson(accepted.toJson()), equals(accepted));
+
+      final rejected = SealedEvent9.autoReject(
+        id: 'case-10',
+        reason: 'timeout',
+      );
+      expect(rejected, isA<SealedRejected9>());
+      expect((rejected as SealedRejected9).toJson(), {
+        'id': 'case-10',
+        'reason': 'timeout',
+      });
+    },
+  );
 
   test('validation showcase reports nested and field-level custom errors', () {
     final invalid = BenchmarkSignupValidation(

@@ -211,6 +211,7 @@ Map<String, Object?> _$ProductToJson(Product instance) {
     'rating': _$RatingToJson(instance.rating),
   };
 }
+
 // factory Product.fromJson(Map<String, Object?> json) => _$ProductFromJson(json);
 Product _$ProductFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
@@ -239,12 +240,14 @@ Product _$ProductFromJson(Map<String, Object?> json) {
     rating: ratingValue,
   );
 }
+
 Map<String, Object?> _$RatingToJson(Rating instance) {
   return <String, Object?>{
     'rate': instance.rate,
     'count': instance.count,
   };
 }
+
 // factory Rating.fromJson(Map<String, Object?> json) => _$RatingFromJson(json);
 Rating _$RatingFromJson(Map<String, Object?> json) {
   final rateValue = JsonHelper.as<num>(json['rate'], 'rate', 'num').toDouble();

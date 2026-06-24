@@ -57,7 +57,8 @@ mixin _$RemotePostDraft {
   @pragma('vm:prefer-inline')
   _$RemotePostDraftCopyWith<RemotePostDraft> get copyWith => _$RemotePostDraftCopyWithImpl<RemotePostDraft>(this as RemotePostDraft, (value) => value);
 
-  Map<String, Object?> toJson() => _$RemotePostDraftToJson(this as RemotePostDraft);
+  Map<String, Object?> toJson() =>
+      _$RemotePostDraftToJson(this as RemotePostDraft);
 }
 
 // CopyWith API inspired by Freezed.
@@ -138,6 +139,7 @@ Map<String, Object?> _$RemotePostToJson(RemotePost instance) {
     'body': instance.body,
   };
 }
+
 // factory RemotePost.fromJson(Map<String, Object?> json) => _$RemotePostFromJson(json);
 RemotePost _$RemotePostFromJson(Map<String, Object?> json) {
   final userIdValue = JsonHelper.as<int>(json['userId'], 'userId', 'int');
@@ -145,8 +147,14 @@ RemotePost _$RemotePostFromJson(Map<String, Object?> json) {
   final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
   final bodyValue = JsonHelper.as<String>(json['body'], 'body', 'String');
 
-  return RemotePost(userId: userIdValue, id: idValue, title: titleValue, body: bodyValue);
+  return RemotePost(
+    userId: userIdValue,
+    id: idValue,
+    title: titleValue,
+    body: bodyValue,
+  );
 }
+
 Map<String, Object?> _$RemotePostDraftToJson(RemotePostDraft instance) {
   return <String, Object?>{
     'userId': instance.userId,
@@ -154,11 +162,16 @@ Map<String, Object?> _$RemotePostDraftToJson(RemotePostDraft instance) {
     'body': instance.body,
   };
 }
+
 // factory RemotePostDraft.fromJson(Map<String, Object?> json) => _$RemotePostDraftFromJson(json);
 RemotePostDraft _$RemotePostDraftFromJson(Map<String, Object?> json) {
   final userIdValue = JsonHelper.as<int>(json['userId'], 'userId', 'int');
   final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
   final bodyValue = JsonHelper.as<String>(json['body'], 'body', 'String');
 
-  return RemotePostDraft(userId: userIdValue, title: titleValue, body: bodyValue);
+  return RemotePostDraft(
+    userId: userIdValue,
+    title: titleValue,
+    body: bodyValue,
+  );
 }
