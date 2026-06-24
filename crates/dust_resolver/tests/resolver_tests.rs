@@ -140,6 +140,7 @@ final class UserLoggedIn extends AuthEvent {
     );
 
     let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
     let mut catalog = SymbolCatalog::new();
     catalog.register_config("SerDe", "dust_dart::SerDe");
 
@@ -160,8 +161,11 @@ final class UserLoggedIn extends AuthEvent {
     assert_eq!(class.kind, ClassKindIr::SealedClass);
     assert_eq!(class.configs.len(), 1);
     assert_eq!(class.constructors.len(), 2);
-    let constructor = &class.constructors[1];
-    assert_eq!(constructor.surface.name.as_deref(), Some("userLoggedIn"));
+    let constructor = class
+        .constructors
+        .iter()
+        .find(|constructor| constructor.surface.name.as_deref() == Some("userLoggedIn"))
+        .expect("expected `AuthEvent.userLoggedIn` constructor");
     assert_eq!(constructor.configs.len(), 1);
     assert_eq!(
         constructor.configs[0].symbol,
@@ -193,6 +197,7 @@ final class UserLoggedIn extends AuthEvent {
     );
 
     let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
     let mut catalog = SymbolCatalog::new();
     catalog.register_config("SerDe", "dust_dart::SerDe");
 

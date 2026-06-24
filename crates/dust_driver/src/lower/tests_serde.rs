@@ -186,6 +186,53 @@ fn lowers_sealed_serde_variant_metadata_from_redirecting_factories() {
 }
 
 #[test]
+fn lowers_sealed_serde_variant_metadata_without_explicit_representation() {
+    let mut base = empty_class("PaymentStatus", ClassKindIr::SealedClass);
+    base.configs = vec![serde_config("(renameAll: SerDeRename.snakeCase)", 1, 10)];
+    base.constructors = vec![factory_constructor(
+        "paymentPaid",
+        "PaymentPaid",
+        Vec::new(),
+    )];
+
+    let mut paid = empty_class("PaymentPaid", ClassKindIr::Class);
+    paid.superclass_name = Some("PaymentStatus".to_owned());
+
+    let outcome = lower_library(&library(vec![base, paid]));
+
+    assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
+    let class = outcome
+        .value
+        .classes
+        .iter()
+        .find(|class| class.name == "PaymentStatus")
+        .unwrap();
+    let serde = class.serde.as_ref().unwrap();
+    assert_eq!(serde.tag.as_deref(), None);
+    assert_eq!(serde.variants.len(), 1);
+    assert_eq!(serde.variants[0].constructor_name, "paymentPaid");
+    assert_eq!(serde.variants[0].target_class_name, "PaymentPaid");
+    assert_eq!(serde.variants[0].tag, "payment_paid");
+}
+
+#[test]
+fn non_sealed_serde_without_variant_options_does_not_require_factories() {
+    let mut user = empty_class("User", ClassKindIr::Class);
+    user.configs = vec![serde_config("(renameAll: SerDeRename.snakeCase)", 1, 10)];
+
+    let outcome = lower_library(&library(vec![user]));
+
+    assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
+    let class = outcome
+        .value
+        .classes
+        .iter()
+        .find(|class| class.name == "User")
+        .unwrap();
+    assert!(class.serde.as_ref().unwrap().variants.is_empty());
+}
+
+#[test]
 fn invalid_sealed_serde_class_options_produce_lowering_diagnostics() {
     let mut content_only = empty_class("ContentOnly", ClassKindIr::Class);
     content_only.configs = vec![serde_config("(content: 'data')", 1, 10)];

@@ -166,16 +166,20 @@ fn lower_sealed_serde_variants(
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     for index in 0..classes.len() {
+        let has_serde = classes[index].serde.is_some();
         let uses_sealed_serde = classes[index]
             .serde
             .as_ref()
             .is_some_and(|serde| serde.uses_sealed_representation());
-        if !uses_sealed_serde {
+        if !has_serde {
             continue;
         }
 
         let base_name = classes[index].name.clone();
         if classes[index].kind != ClassKindIr::SealedClass {
+            if !uses_sealed_serde {
+                continue;
+            }
             diagnostics.push(Diagnostic::error(format!(
                 "SerDe class `{base_name}` uses sealed variant options but is not sealed"
             )));
