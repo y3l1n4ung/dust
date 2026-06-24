@@ -150,6 +150,54 @@ abstract interface class Api {
 }
 
 #[test]
+fn extracts_constructor_annotations_for_redirecting_factories() {
+    let result = parse(
+        9,
+        r#"
+part 'auth_event.g.dart';
+
+sealed class AuthEvent {
+  const AuthEvent();
+
+  @SerDe(rename: 'login')
+  factory AuthEvent.userLoggedIn({required String userId}) = UserLoggedIn;
+}
+
+final class UserLoggedIn extends AuthEvent {
+  const UserLoggedIn({required this.userId}) : super();
+
+  final String userId;
+}
+"#,
+    );
+
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    let class = &result.library.classes[0];
+    assert_eq!(class.kind, ParsedClassKind::SealedClass);
+    assert_eq!(class.constructors.len(), 2);
+    let constructor = &class.constructors[1];
+    assert_eq!(constructor.name.as_deref(), Some("userLoggedIn"));
+    assert!(constructor.is_factory);
+    assert_eq!(
+        constructor.redirected_target_name.as_deref(),
+        Some("UserLoggedIn")
+    );
+    assert_eq!(constructor.annotations.len(), 1);
+    assert_eq!(constructor.annotations[0].name, "SerDe");
+    assert_eq!(
+        constructor.annotations[0].arguments_source.as_deref(),
+        Some("(rename: 'login')")
+    );
+    let args = constructor.annotations[0]
+        .parsed_arguments
+        .as_ref()
+        .unwrap();
+    assert_eq!(args.named.len(), 1);
+    assert_eq!(args.named[0].name, "rename");
+    assert_eq!(args.named[0].value_source, "'login'");
+}
+
+#[test]
 fn extracts_current_and_legacy_constructor_forms() {
     let result = parse(
         21,

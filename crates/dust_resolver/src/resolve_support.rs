@@ -3,14 +3,14 @@ use std::collections::BTreeMap;
 use dust_diagnostics::{Diagnostic, SourceLabel};
 use dust_ir::{AnnotationValueIr, ConfigApplicationIr, SpanIr, SymbolId, TraitApplicationIr};
 use dust_parser_dart::{
-    ParsedAnnotation, ParsedDirective, ParsedFieldSurface, ParsedMethodParamSurface,
-    ParsedMethodSurface,
+    ParsedAnnotation, ParsedConstructorSurface, ParsedDirective, ParsedFieldSurface,
+    ParsedMethodParamSurface, ParsedMethodSurface,
 };
 use dust_text::{FileId, TextRange};
 
 use crate::{
-    ResolvedField, ResolvedMethod, ResolvedMethodParam, SymbolCatalog, SymbolKind,
-    annotations::annotation_argument_values,
+    ResolvedConstructor, ResolvedField, ResolvedMethod, ResolvedMethodParam, SymbolCatalog,
+    SymbolKind, annotations::annotation_argument_values,
 };
 
 /// Positional and named annotation argument values.
@@ -165,6 +165,49 @@ pub(crate) fn resolve_declaration_annotations(
                 configs,
             );
         }
+    }
+}
+
+/// Resolves constructor-level Dust config annotations.
+pub(crate) fn resolve_constructor(
+    file_id: FileId,
+    constructor: &ParsedConstructorSurface,
+    catalog: &SymbolCatalog,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> ResolvedConstructor {
+    let mut configs = Vec::new();
+
+    for annotation in &constructor.annotations {
+        let Some(resolved) = catalog.resolve_config(&annotation.name) else {
+            if catalog.resolve_trait(&annotation.name).is_some() {
+                diagnostics.push(
+                    Diagnostic::warning(format!(
+                        "trait annotation `{}` is not supported on constructors",
+                        annotation.name
+                    ))
+                    .with_label(SourceLabel::new(
+                        file_id,
+                        annotation.span,
+                        "constructor annotations may only use Dust config symbols",
+                    )),
+                );
+            }
+            continue;
+        };
+
+        let (positional_args, named_args) = annotation_argument_values(file_id, annotation);
+        configs.push(ConfigApplicationIr::with_arguments(
+            resolved.symbol.clone(),
+            annotation.arguments_source.clone(),
+            positional_args,
+            named_args,
+            SpanIr::new(file_id, annotation.span),
+        ));
+    }
+
+    ResolvedConstructor {
+        surface: constructor.clone(),
+        configs,
     }
 }
 

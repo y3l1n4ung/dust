@@ -51,6 +51,15 @@ pub struct ResolvedMethodParam {
     pub configs: Vec<ConfigApplicationIr>,
 }
 
+/// One resolved constructor plus its constructor-level Dust configuration.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ResolvedConstructor {
+    /// The parsed constructor surface.
+    pub surface: ParsedConstructorSurface,
+    /// Resolved config applications.
+    pub configs: Vec<ConfigApplicationIr>,
+}
+
 /// One resolved enum plus its resolved Dust symbols.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResolvedEnum {
@@ -92,7 +101,7 @@ pub struct ResolvedClass {
     /// The resolved fields preserved for later lowering.
     pub fields: Vec<ResolvedField>,
     /// The parsed constructors preserved for later lowering.
-    pub constructors: Vec<ParsedConstructorSurface>,
+    pub constructors: Vec<ResolvedConstructor>,
     /// The resolved methods preserved for later lowering.
     pub methods: Vec<ResolvedMethod>,
     /// Resolved trait applications.

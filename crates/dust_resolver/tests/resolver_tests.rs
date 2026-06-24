@@ -1,6 +1,6 @@
 //! Integration tests for resolver symbol ownership and annotation resolution.
 
-use dust_ir::{AnnotationValueIr, SymbolId};
+use dust_ir::{AnnotationValueIr, ClassKindIr, SymbolId};
 use dust_parser_dart::{ParseBackend, ParseOptions};
 use dust_parser_dart_ts::TreeSitterDartBackend;
 use dust_resolver::{SymbolCatalog, SymbolKind, resolve_library, validate_generated_part_uri};
@@ -114,6 +114,101 @@ class User {
         "rename",
         "'full_name'",
     );
+}
+
+#[test]
+fn resolves_constructor_configs_for_sealed_factory_variants() {
+    let source = SourceText::new(
+        FileId::new(7),
+        r#"
+part 'auth_event.g.dart';
+
+@SerDe(tag: 'type')
+sealed class AuthEvent {
+  const AuthEvent();
+
+  @SerDe(rename: 'login')
+  factory AuthEvent.userLoggedIn({required String userId}) = UserLoggedIn;
+}
+
+final class UserLoggedIn extends AuthEvent {
+  const UserLoggedIn({required this.userId}) : super();
+
+  final String userId;
+}
+"#,
+    );
+
+    let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+    let mut catalog = SymbolCatalog::new();
+    catalog.register_config("SerDe", "dust_dart::SerDe");
+
+    let resolved = resolve_library(
+        FileId::new(7),
+        "lib/auth_event.dart",
+        "lib/auth_event.g.dart",
+        &parsed.library,
+        &catalog,
+    );
+
+    assert!(
+        resolved.diagnostics.is_empty(),
+        "{:?}",
+        resolved.diagnostics
+    );
+    let class = &resolved.library.classes[0];
+    assert_eq!(class.kind, ClassKindIr::SealedClass);
+    assert_eq!(class.configs.len(), 1);
+    assert_eq!(class.constructors.len(), 2);
+    let constructor = &class.constructors[1];
+    assert_eq!(constructor.surface.name.as_deref(), Some("userLoggedIn"));
+    assert_eq!(constructor.configs.len(), 1);
+    assert_eq!(
+        constructor.configs[0].symbol,
+        SymbolId::new("dust_dart::SerDe")
+    );
+    assert_eq!(
+        constructor.configs[0].arguments_source.as_deref(),
+        Some("(rename: 'login')")
+    );
+    assert_named_expression(&constructor.configs[0], "rename", "'login'");
+}
+
+#[test]
+fn constructor_configs_require_generated_part_directive() {
+    let source = SourceText::new(
+        FileId::new(8),
+        r#"
+sealed class AuthEvent {
+  const AuthEvent();
+
+  @SerDe(rename: 'login')
+  factory AuthEvent.userLoggedIn() = UserLoggedIn;
+}
+
+final class UserLoggedIn extends AuthEvent {
+  const UserLoggedIn() : super();
+}
+"#,
+    );
+
+    let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+    let mut catalog = SymbolCatalog::new();
+    catalog.register_config("SerDe", "dust_dart::SerDe");
+
+    let resolved = resolve_library(
+        FileId::new(8),
+        "lib/auth_event.dart",
+        "lib/auth_event.g.dart",
+        &parsed.library,
+        &catalog,
+    );
+
+    assert!(resolved.diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("missing generated `part` directive")
+    }));
 }
 
 fn assert_named_expression(

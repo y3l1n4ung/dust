@@ -72,6 +72,7 @@ fn serde_configs_preserve_normalized_values() {
         rename: Some("user_profile".to_owned()),
         rename_all: Some(SerdeRenameRuleIr::CamelCase),
         disallow_unrecognized_keys: true,
+        ..Default::default()
     };
     let field_config = SerdeFieldConfigIr {
         rename: Some("display_name".to_owned()),

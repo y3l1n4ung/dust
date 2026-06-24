@@ -13,6 +13,7 @@ description = "Build driver and orchestration pipeline for Dust."
 dust_dart_syntax = { path = "../dust_dart_syntax", version = "0.1.1" }
 dust_text = { path = "../dust_text", version = "0.1.1" }
 dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
+dust_dart_emit = { path = "../dust_dart_emit", version = "0.1.1" }
 dust_cache = { path = "../dust_cache", version = "0.1.1" }
 dust_workspace = { path = "../dust_workspace", version = "0.1.1" }
 dust_parser_dart = { path = "../dust_parser_dart", version = "0.1.1" }

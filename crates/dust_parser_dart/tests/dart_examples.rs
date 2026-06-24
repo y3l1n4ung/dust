@@ -67,6 +67,7 @@ fn parse_surface_can_model_real_dart_library_shapes() {
             constructors: vec![ParsedConstructorSurface {
                 name: Some("named".to_owned()),
                 is_factory: false,
+                annotations: Vec::new(),
                 redirected_target_source: None,
                 redirected_target_name: None,
                 params: vec![

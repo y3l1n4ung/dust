@@ -21,10 +21,10 @@ use std::collections::{HashMap, HashSet};
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
-    AnnotationIr, ClassIr, ConstructorIr, ConstructorParamIr, DartFileIr, EnumIr, EnumVariantIr,
-    ExportIr, ExprSourceIr, ExtensionIr, ExtensionTypeIr, FieldIr, FunctionIr, ImportIr,
-    LibraryDeclIr, LoweringOutcome, MethodIr, MethodParamIr, MixinIr, NameIr, ParamKind, PartIr,
-    PartOfIr, SpanIr, TopLevelVariableIr, TypedefIr,
+    AnnotationIr, ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, DartFileIr, EnumIr,
+    EnumVariantIr, ExportIr, ExprSourceIr, ExtensionIr, ExtensionTypeIr, FieldIr, FunctionIr,
+    ImportIr, LibraryDeclIr, LoweringOutcome, MethodIr, MethodParamIr, MixinIr, NameIr, ParamKind,
+    PartIr, PartOfIr, SerdeVariantConfigIr, SpanIr, TopLevelVariableIr, TypedefIr,
 };
 use dust_parser_dart::{
     ParameterKind, ParsedAnnotation, ParsedDirective, ParsedFieldSurface, ParsedMethodParamSurface,
@@ -34,7 +34,7 @@ use dust_resolver::{ResolvedClass, ResolvedLibrary};
 use self::{
     inheritance::{infer_param_type, merged_fields_for_class, resolve_constructor_param_types},
     query_calls::lower_query_calls,
-    serde::{lower_class_serde_config, lower_field_serde_config},
+    serde::{lower_class_serde_config, lower_field_serde_config, lower_variant_serde_tag},
     type_parse::lower_type,
 };
 
@@ -67,6 +67,18 @@ pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<DartFi
         .enumerate()
         .map(|(index, class)| (class.name.clone(), index))
         .collect::<HashMap<_, _>>();
+    let resolved_by_name = library
+        .classes
+        .iter()
+        .map(|class| (class.name.as_str(), class))
+        .collect::<HashMap<_, _>>();
+    lower_sealed_serde_variants(
+        &mut classes,
+        &index_by_name,
+        &resolved_by_name,
+        &mut diagnostics,
+    );
+
     let mut merged_cache = HashMap::new();
     let mut active_stack = Vec::new();
     for index in 0..classes.len() {
@@ -120,6 +132,10 @@ fn lowering_required_class_names(library: &ResolvedLibrary) -> HashSet<&str> {
         .collect::<HashSet<_>>();
 
     for class in &library.classes {
+        let class_has_serde = class
+            .configs
+            .iter()
+            .any(|config| config.symbol.0 == "dust_dart::SerDe");
         for field in &class.fields {
             for config in &field.configs {
                 if let Some(converter) = config
@@ -130,9 +146,105 @@ fn lowering_required_class_names(library: &ResolvedLibrary) -> HashSet<&str> {
                 }
             }
         }
+        if class_has_serde {
+            for constructor in &class.constructors {
+                if let Some(target) = constructor.surface.redirected_target_name.as_deref() {
+                    names.insert(target);
+                }
+            }
+        }
     }
 
     names
+}
+
+/// Builds sealed class SerDe variant metadata from redirecting factory constructors.
+fn lower_sealed_serde_variants(
+    classes: &mut [ClassIr],
+    index_by_name: &HashMap<String, usize>,
+    resolved_by_name: &HashMap<&str, &ResolvedClass>,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    for index in 0..classes.len() {
+        let uses_sealed_serde = classes[index]
+            .serde
+            .as_ref()
+            .is_some_and(|serde| serde.uses_sealed_representation());
+        if !uses_sealed_serde {
+            continue;
+        }
+
+        let base_name = classes[index].name.clone();
+        if classes[index].kind != ClassKindIr::SealedClass {
+            diagnostics.push(Diagnostic::error(format!(
+                "SerDe class `{base_name}` uses sealed variant options but is not sealed"
+            )));
+            continue;
+        }
+
+        let rename_all = classes[index]
+            .serde
+            .as_ref()
+            .and_then(|serde| serde.rename_all);
+        let mut variants = Vec::new();
+        let constructors = resolved_by_name
+            .get(base_name.as_str())
+            .map(|class| class.constructors.as_slice())
+            .unwrap_or_default();
+        let mut seen_tags = HashSet::new();
+
+        for constructor in constructors
+            .iter()
+            .filter(|constructor| constructor.surface.is_factory)
+        {
+            let Some(constructor_name) = constructor.surface.name.as_deref() else {
+                continue;
+            };
+            let Some(target_class_name) = constructor.surface.redirected_target_name.as_deref()
+            else {
+                continue;
+            };
+
+            let target_extends_base = index_by_name
+                .get(target_class_name)
+                .and_then(|target_index| classes.get(*target_index))
+                .and_then(|target| target.superclass_name.as_deref())
+                == Some(base_name.as_str());
+            if !target_extends_base {
+                diagnostics.push(Diagnostic::error(format!(
+                    "Variant target class {target_class_name} does not extend {base_name}"
+                )));
+            }
+
+            let tag = lower_variant_serde_tag(
+                constructor_name,
+                &constructor.configs,
+                rename_all,
+                diagnostics,
+            );
+            if !seen_tags.insert(tag.clone()) {
+                diagnostics.push(Diagnostic::error(format!(
+                    "Duplicate SerDe variant tag: {tag}"
+                )));
+            }
+
+            variants.push(SerdeVariantConfigIr {
+                constructor_name: constructor_name.to_owned(),
+                target_class_name: target_class_name.to_owned(),
+                tag,
+            });
+        }
+
+        if variants.is_empty() {
+            diagnostics.push(Diagnostic::error(format!(
+                "Sealed SerDe class {base_name} has no factory variants"
+            )));
+        }
+
+        if let Some(serde) = &mut classes[index].serde {
+            serde.variants = variants;
+        }
+    }
 }
 
 /// Extracts a converter class name from a `tryFrom` annotation expression.
@@ -639,6 +751,7 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
         .iter()
         .map(|constructor| {
             let params = constructor
+                .surface
                 .params
                 .iter()
                 .map(|param| {
@@ -663,11 +776,11 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
                 .collect();
 
             ConstructorIr {
-                name: constructor.name.clone(),
-                is_factory: constructor.is_factory,
-                redirected_target_source: constructor.redirected_target_source.clone(),
-                redirected_target_name: constructor.redirected_target_name.clone(),
-                span: SpanIr::new(class.span.file_id, constructor.span),
+                name: constructor.surface.name.clone(),
+                is_factory: constructor.surface.is_factory,
+                redirected_target_source: constructor.surface.redirected_target_source.clone(),
+                redirected_target_name: constructor.surface.redirected_target_name.clone(),
+                span: SpanIr::new(class.span.file_id, constructor.surface.span),
                 params,
             }
         })
