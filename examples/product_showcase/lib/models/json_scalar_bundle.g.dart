@@ -58,7 +58,8 @@ mixin _$JsonScalarBundle {
     ]);
   }
 
-  Map<String, Object?> toJson() => _$JsonScalarBundleToJson(this as JsonScalarBundle);
+  Map<String, Object?> toJson() =>
+      _$JsonScalarBundleToJson(this as JsonScalarBundle);
 }
 
 Map<String, Object?> _$JsonScalarBundleToJson(JsonScalarBundle instance) {
@@ -76,6 +77,7 @@ Map<String, Object?> _$JsonScalarBundleToJson(JsonScalarBundle instance) {
         .map((key, value) => MapEntry(key, value.toIso8601String())),
   };
 }
+
 // factory JsonScalarBundle.fromJson(Map<String, Object?> json) => _$JsonScalarBundleFromJson(json);
 JsonScalarBundle _$JsonScalarBundleFromJson(Map<String, Object?> json) {
   final createdAtValue = JsonHelper.asDateTime(json['createdAt'], 'createdAt');

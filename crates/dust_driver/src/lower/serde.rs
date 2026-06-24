@@ -1,5 +1,5 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ConfigApplicationIr, SerdeClassConfigIr, SerdeFieldConfigIr};
+use dust_ir::{ConfigApplicationIr, SerdeClassConfigIr, SerdeFieldConfigIr, SerdeRenameRuleIr};
 
 use super::serde_parse::{parse_codec_source, parse_serde_rename_rule};
 
@@ -36,6 +36,24 @@ pub(crate) fn lower_class_serde_config(
                         "class `{class_name}` uses an unknown `SerDe(renameAll: ...)` rule"
                     ))),
                 },
+                "tag" => match config.named_string("tag") {
+                    Some(tag) => serde.tag = Some(tag),
+                    None => diagnostics.push(Diagnostic::error(format!(
+                        "class `{class_name}` uses a non-string `SerDe(tag: ...)` value"
+                    ))),
+                },
+                "content" => match config.named_string("content") {
+                    Some(content) => serde.content = Some(content),
+                    None => diagnostics.push(Diagnostic::error(format!(
+                        "class `{class_name}` uses a non-string `SerDe(content: ...)` value"
+                    ))),
+                },
+                "untagged" => match config.named_bool("untagged") {
+                    Some(flag) => serde.untagged = flag,
+                    None => diagnostics.push(Diagnostic::error(format!(
+                        "class `{class_name}` uses a non-boolean `SerDe(untagged: ...)` value"
+                    ))),
+                },
                 "disallowUnrecognizedKeys" => match config.named_bool("disallowUnrecognizedKeys") {
                     Some(flag) => serde.disallow_unrecognized_keys = flag,
                     None => diagnostics.push(Diagnostic::error(format!(
@@ -57,7 +75,66 @@ pub(crate) fn lower_class_serde_config(
         }
     }
 
+    if serde.content.is_some() && serde.tag.is_none() {
+        diagnostics.push(Diagnostic::error(
+            "SerDe(content: ...) requires SerDe(tag: ...)",
+        ));
+    }
+    if serde.tag.is_some() && serde.untagged {
+        diagnostics.push(Diagnostic::error(
+            "SerDe(tag: ...) cannot be used with SerDe(untagged: true)",
+        ));
+    }
+
     saw_serde.then_some(serde)
+}
+
+/// Resolves one sealed variant tag from constructor-level `@SerDe` options.
+pub(crate) fn lower_variant_serde_tag(
+    variant_name: &str,
+    configs: &[ConfigApplicationIr],
+    rename_all: Option<SerdeRenameRuleIr>,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> String {
+    let mut rename = None;
+
+    for config in configs {
+        if !is_serde_config(config) {
+            continue;
+        }
+
+        for (key, _) in serde_named_arguments(config, diagnostics) {
+            match key {
+                "rename" => match config.named_string("rename") {
+                    Some(value) => rename = Some(value),
+                    None => diagnostics.push(Diagnostic::error(format!(
+                        "variant `{variant_name}` uses a non-string `SerDe(rename: ...)` value"
+                    ))),
+                },
+                "renameAll"
+                | "tag"
+                | "content"
+                | "untagged"
+                | "disallowUnrecognizedKeys"
+                | "aliases"
+                | "defaultValue"
+                | "skip"
+                | "skipSerializing"
+                | "skipDeserializing"
+                | "using" => diagnostics.push(Diagnostic::error(format!(
+                    "variant `{variant_name}` does not support `SerDe({key}: ...)`"
+                ))),
+                unknown => diagnostics.push(Diagnostic::warning(format!(
+                    "variant `{variant_name}` uses unknown `SerDe` option `{unknown}`"
+                ))),
+            }
+        }
+    }
+
+    rename.unwrap_or_else(|| match rename_all {
+        Some(rule) => dust_dart_emit::apply_rename_rule(variant_name, rule),
+        None => variant_name.to_owned(),
+    })
 }
 
 /// Lowers field-level `@SerDe` options.
@@ -117,7 +194,7 @@ pub(crate) fn lower_field_serde_config(
                         "field `{field_name}` uses a non-boolean `SerDe(skipDeserializing: ...)` value"
                     ))),
                 },
-                "renameAll" | "disallowUnrecognizedKeys" => diagnostics.push(
+                "renameAll" | "tag" | "content" | "untagged" | "disallowUnrecognizedKeys" => diagnostics.push(
                     Diagnostic::error(format!(
                         "field `{field_name}` does not support `SerDe({key}: ...)`"
                     )),

@@ -107,7 +107,8 @@ mixin _$LatestDartProductCard {
     }
   }
 
-  Map<String, Object?> toJson() => _$LatestDartProductCardToJson(this as LatestDartProductCard);
+  Map<String, Object?> toJson() =>
+      _$LatestDartProductCardToJson(this as LatestDartProductCard);
 }
 
 // CopyWith API inspired by Freezed.
@@ -359,6 +360,7 @@ Map<String, Object?> _$LatestDartProductCardToJson(LatestDartProductCard instanc
     'launched_at': instance.launchedAt.toIso8601String(),
   };
 }
+
 // factory LatestDartProductCard.fromJson(Map<String, Object?> json) => _$LatestDartProductCardFromJson(json);
 LatestDartProductCard _$LatestDartProductCardFromJson(Map<String, Object?> json) {
   const allowedKeys = <String>{

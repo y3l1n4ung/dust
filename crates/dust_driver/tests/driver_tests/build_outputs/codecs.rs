@@ -56,6 +56,7 @@ Map<String, Object?> _$AuditToJson(Audit instance) {
         : unixEpochDateTimeCodec.serialize(instance.updatedAt!),
   };
 }
+
 // factory Audit.fromJson(Map<String, Object?> json) => _$AuditFromJson(json);
 Audit _$AuditFromJson(Map<String, Object?> json) {
   final createdAtValue = JsonHelper.decodeWithCodec<DateTime>(

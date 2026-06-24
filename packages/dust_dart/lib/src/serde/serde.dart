@@ -64,6 +64,9 @@ enum SerDeRename {
 ///
 /// Common declaration-level options:
 /// - [renameAll]
+/// - [tag]
+/// - [content]
+/// - [untagged]
 /// - [disallowUnrecognizedKeys]
 ///
 /// Common field-level options:
@@ -80,6 +83,15 @@ final class SerDe extends DeriveConfig {
 
   /// Automatic rename rule applied to child fields or enum variants.
   final SerDeRename? renameAll;
+
+  /// JSON discriminator field for sealed class variants.
+  final String? tag;
+
+  /// JSON payload field for adjacent-tagged sealed class variants.
+  final String? content;
+
+  /// Whether sealed class deserialization should try variants without a tag.
+  final bool untagged;
 
   /// Fallback value used when deserialization omits the annotated field.
   final Object? defaultValue;
@@ -110,6 +122,9 @@ final class SerDe extends DeriveConfig {
   const SerDe({
     this.rename,
     this.renameAll,
+    this.tag,
+    this.content,
+    this.untagged = false,
     this.defaultValue,
     this.skip = false,
     this.skipSerializing = false,

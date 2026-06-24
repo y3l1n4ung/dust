@@ -8,6 +8,8 @@ use crate::{
 pub enum ClassKindIr {
     /// A normal `class` declaration.
     Class,
+    /// A `sealed class` declaration.
+    SealedClass,
     /// A `mixin class` declaration.
     MixinClass,
 }

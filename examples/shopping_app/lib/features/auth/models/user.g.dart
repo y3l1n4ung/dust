@@ -197,6 +197,7 @@ Map<String, Object?> _$UserToJson(User instance) {
     'phone': instance.phone,
   };
 }
+
 // factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
@@ -217,12 +218,14 @@ User _$UserFromJson(Map<String, Object?> json) {
     phone: phoneValue,
   );
 }
+
 Map<String, Object?> _$NameToJson(Name instance) {
   return <String, Object?>{
     'firstname': instance.firstname,
     'lastname': instance.lastname,
   };
 }
+
 // factory Name.fromJson(Map<String, Object?> json) => _$NameFromJson(json);
 Name _$NameFromJson(Map<String, Object?> json) {
   final firstnameValue = JsonHelper.as<String>(

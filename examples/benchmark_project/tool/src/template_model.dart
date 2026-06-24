@@ -7,6 +7,7 @@ enum BenchmarkPattern {
   serdeNested,
   serdeCodec,
   serdeLinked,
+  serdeSealed,
 }
 
 String fileNameForIndex(int index) =>
@@ -24,5 +25,6 @@ String primaryClassNameForIndex(int index) {
     BenchmarkPattern.serdeNested => 'NestedEnvelope$number',
     BenchmarkPattern.serdeCodec => 'CodecEnvelope$number',
     BenchmarkPattern.serdeLinked => 'LinkedSerdeModel$number',
+    BenchmarkPattern.serdeSealed => 'SealedEvent$number',
   };
 }

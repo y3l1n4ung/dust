@@ -118,7 +118,8 @@ mixin _$ShippingAddress {
   @pragma('vm:prefer-inline')
   _$ShippingAddressCopyWith<ShippingAddress> get copyWith => _$ShippingAddressCopyWithImpl<ShippingAddress>(this as ShippingAddress, (value) => value);
 
-  Map<String, Object?> toJson() => _$ShippingAddressToJson(this as ShippingAddress);
+  Map<String, Object?> toJson() =>
+      _$ShippingAddressToJson(this as ShippingAddress);
 }
 
 // CopyWith API inspired by Freezed.
@@ -226,6 +227,7 @@ Map<String, Object?> _$OrderToJson(Order instance) {
     'shippingAddress': _$ShippingAddressToJson(instance.shippingAddress),
   };
 }
+
 // factory Order.fromJson(Map<String, Object?> json) => _$OrderFromJson(json);
 Order _$OrderFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
@@ -246,6 +248,7 @@ Order _$OrderFromJson(Map<String, Object?> json) {
     shippingAddress: shippingAddressValue,
   );
 }
+
 Map<String, Object?> _$ShippingAddressToJson(ShippingAddress instance) {
   return <String, Object?>{
     'fullName': instance.fullName,
@@ -255,6 +258,7 @@ Map<String, Object?> _$ShippingAddressToJson(ShippingAddress instance) {
     'phone': instance.phone,
   };
 }
+
 // factory ShippingAddress.fromJson(Map<String, Object?> json) => _$ShippingAddressFromJson(json);
 ShippingAddress _$ShippingAddressFromJson(Map<String, Object?> json) {
   final fullNameValue = JsonHelper.as<String>(
@@ -283,6 +287,7 @@ ShippingAddress _$ShippingAddressFromJson(Map<String, Object?> json) {
     phone: phoneValue,
   );
 }
+
 Object? _$OrderStatusToJson(OrderStatus instance) {
   return switch (instance) {
     OrderStatus.pending => 'pending',
@@ -292,6 +297,7 @@ Object? _$OrderStatusToJson(OrderStatus instance) {
     OrderStatus.cancelled => 'cancelled',
   };
 }
+
 OrderStatus _$OrderStatusFromJson(Object? json) {
   return switch (json) {
     'pending' => OrderStatus.pending,

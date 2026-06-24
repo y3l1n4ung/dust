@@ -56,7 +56,8 @@ mixin _$JsonEnumBundle {
     ]);
   }
 
-  Map<String, Object?> toJson() => _$JsonEnumBundleToJson(this as JsonEnumBundle);
+  Map<String, Object?> toJson() =>
+      _$JsonEnumBundleToJson(this as JsonEnumBundle);
 }
 
 Map<String, Object?> _$JsonEnumBundleToJson(JsonEnumBundle instance) {
@@ -75,6 +76,7 @@ Map<String, Object?> _$JsonEnumBundleToJson(JsonEnumBundle instance) {
         .toList(),
   };
 }
+
 // factory JsonEnumBundle.fromJson(Map<String, Object?> json) => _$JsonEnumBundleFromJson(json);
 JsonEnumBundle _$JsonEnumBundleFromJson(Map<String, Object?> json) {
   Object? rawPrimaryLevel;
@@ -104,6 +106,7 @@ JsonEnumBundle _$JsonEnumBundleFromJson(Map<String, Object?> json) {
     states: statesValue,
   );
 }
+
 Object? _$AccessLevelToJson(AccessLevel instance) {
   return switch (instance) {
     AccessLevel.superAdmin => 'super-admin',
@@ -111,6 +114,7 @@ Object? _$AccessLevelToJson(AccessLevel instance) {
     AccessLevel.readOnly => 'read-only',
   };
 }
+
 AccessLevel _$AccessLevelFromJson(Object? json) {
   return switch (json) {
     'super-admin' => AccessLevel.superAdmin,
@@ -119,6 +123,7 @@ AccessLevel _$AccessLevelFromJson(Object? json) {
     _ => throw ArgumentError.value(json, 'json', 'unknown value for AccessLevel'),
   };
 }
+
 Object? _$ReviewStateToJson(ReviewState instance) {
   return switch (instance) {
     ReviewState.pending => 'pending',
@@ -126,6 +131,7 @@ Object? _$ReviewStateToJson(ReviewState instance) {
     ReviewState.archived => 'archived',
   };
 }
+
 ReviewState _$ReviewStateFromJson(Object? json) {
   return switch (json) {
     'pending' => ReviewState.pending,

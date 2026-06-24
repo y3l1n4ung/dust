@@ -128,6 +128,7 @@ Map<String, Object?> _$TrackingEventToJson(TrackingEvent instance) {
     'completed': instance.completed,
   };
 }
+
 // factory TrackingEvent.fromJson(Map<String, Object?> json) => _$TrackingEventFromJson(json);
 TrackingEvent _$TrackingEventFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');

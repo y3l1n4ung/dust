@@ -243,3 +243,54 @@ ${serdeFactory(className)}
     ],
   );
 }
+
+String renderSerdeSealed(int index) {
+  final number = index + 1;
+  final className = primaryClassNameForIndex(index);
+  final acceptedName = 'SealedAccepted$number';
+  final rejectedName = 'SealedRejected$number';
+  return renderFile(
+    fileName: fileNameForIndex(index),
+    imports: ["import 'package:dust_dart/serde.dart';"],
+    declarations: [
+      '''
+@SerDe(tag: 'kind', content: 'payload', renameAll: SerDeRename.snakeCase)
+sealed class $className {
+  const $className();
+
+  @SerDe(rename: 'manual_accept')
+  factory $className.manualAccept({
+    required String id,
+    required int score,
+  }) = $acceptedName;
+
+  factory $className.autoReject({
+    required String id,
+    required String reason,
+  }) = $rejectedName;
+}''',
+      '''
+@Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
+@SerDe(renameAll: SerDeRename.snakeCase)
+final class $acceptedName extends $className with ${mixinName(acceptedName)} {
+  const $acceptedName({required this.id, required this.score}) : super();
+
+${serdeFactory(acceptedName)}
+
+  final String id;
+  final int score;
+}''',
+      '''
+@Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
+@SerDe(renameAll: SerDeRename.snakeCase)
+final class $rejectedName extends $className with ${mixinName(rejectedName)} {
+  const $rejectedName({required this.id, required this.reason}) : super();
+
+${serdeFactory(rejectedName)}
+
+  final String id;
+  final String reason;
+}''',
+    ],
+  );
+}

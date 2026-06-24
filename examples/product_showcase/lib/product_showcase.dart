@@ -10,6 +10,7 @@ export 'models/json_account.dart';
 export 'models/json_codec_bundle.dart';
 export 'models/json_enhanced_enum_bundle.dart';
 export 'models/json_enum_bundle.dart';
+export 'models/json_payment_event.dart';
 export 'models/json_profile.dart';
 export 'models/json_scalar_bundle.dart';
 export 'models/json_serde_options.dart';

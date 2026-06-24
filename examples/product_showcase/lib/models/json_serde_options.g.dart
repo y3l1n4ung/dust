@@ -60,7 +60,8 @@ mixin _$JsonSerdeOptions {
     ]);
   }
 
-  Map<String, Object?> toJson() => _$JsonSerdeOptionsToJson(this as JsonSerdeOptions);
+  Map<String, Object?> toJson() =>
+      _$JsonSerdeOptionsToJson(this as JsonSerdeOptions);
 }
 
 Map<String, Object?> _$JsonSerdeOptionsToJson(JsonSerdeOptions instance) {
@@ -74,6 +75,7 @@ Map<String, Object?> _$JsonSerdeOptionsToJson(JsonSerdeOptions instance) {
     'client_only': instance.clientOnly,
   };
 }
+
 // factory JsonSerdeOptions.fromJson(Map<String, Object?> json) => _$JsonSerdeOptionsFromJson(json);
 JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
   const allowedKeys = <String>{
@@ -128,12 +130,14 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
     hidden: hiddenValue,
   );
 }
+
 Object? _$MyEnumToJson(MyEnum instance) {
   return switch (instance) {
     MyEnum.A => 'A',
     MyEnum.B => 'B',
   };
 }
+
 MyEnum _$MyEnumFromJson(Object? json) {
   return switch (json) {
     'A' => MyEnum.A,

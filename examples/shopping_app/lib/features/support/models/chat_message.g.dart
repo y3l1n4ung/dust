@@ -263,6 +263,7 @@ Map<String, Object?> _$ChatMessageToJson(ChatMessage instance) {
     'createdAt': instance.createdAt.toIso8601String(),
   };
 }
+
 // factory ChatMessage.fromJson(Map<String, Object?> json) => _$ChatMessageFromJson(json);
 ChatMessage _$ChatMessageFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
@@ -277,6 +278,7 @@ ChatMessage _$ChatMessageFromJson(Map<String, Object?> json) {
     createdAt: createdAtValue,
   );
 }
+
 Map<String, Object?> _$ChatRequestToJson(ChatRequest instance) {
   return <String, Object?>{
     'message': instance.message,
@@ -285,6 +287,7 @@ Map<String, Object?> _$ChatRequestToJson(ChatRequest instance) {
         .toList(),
   };
 }
+
 // factory ChatRequest.fromJson(Map<String, Object?> json) => _$ChatRequestFromJson(json);
 ChatRequest _$ChatRequestFromJson(Map<String, Object?> json) {
   final messageValue = JsonHelper.as<String>(
@@ -298,12 +301,14 @@ ChatRequest _$ChatRequestFromJson(Map<String, Object?> json) {
 
   return ChatRequest(message: messageValue, history: historyValue);
 }
+
 Map<String, Object?> _$ChatResponseToJson(ChatResponse instance) {
   return <String, Object?>{
     'message': _$ChatMessageToJson(instance.message),
     'escalated': instance.escalated,
   };
 }
+
 // factory ChatResponse.fromJson(Map<String, Object?> json) => _$ChatResponseFromJson(json);
 ChatResponse _$ChatResponseFromJson(Map<String, Object?> json) {
   final messageValue = _$ChatMessageFromJson(JsonHelper.asMap(json['message'], 'message'));
@@ -315,12 +320,14 @@ ChatResponse _$ChatResponseFromJson(Map<String, Object?> json) {
 
   return ChatResponse(message: messageValue, escalated: escalatedValue);
 }
+
 Object? _$ChatRoleToJson(ChatRole instance) {
   return switch (instance) {
     ChatRole.user => 'user',
     ChatRole.assistant => 'assistant',
   };
 }
+
 ChatRole _$ChatRoleFromJson(Object? json) {
   return switch (json) {
     'user' => ChatRole.user,

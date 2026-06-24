@@ -283,15 +283,19 @@ List<Todo> _$TodoApi_list_Decode(dynamic json) {
     .map((item) => Todo.fromJson(item as Map<String, dynamic>))
     .toList();
 }
+
 Todo _$TodoApi_fetchRaw_Decode(dynamic json) {
   return Todo.fromJson(json as Map<String, dynamic>);
 }
+
 Todo _$TodoApi_create_Decode(dynamic json) {
   return Todo.fromJson(json as Map<String, dynamic>);
 }
+
 Todo _$TodoApi_rename_Decode(dynamic json) {
   return Todo.fromJson(json as Map<String, dynamic>);
 }
+
 Todo _$TodoApi_update_Decode(dynamic json) {
   return Todo.fromJson(json as Map<String, dynamic>);
 }

@@ -167,7 +167,8 @@ mixin _$RegisterUserResponse {
   @pragma('vm:prefer-inline')
   _$RegisterUserResponseCopyWith<RegisterUserResponse> get copyWith => _$RegisterUserResponseCopyWithImpl<RegisterUserResponse>(this as RegisterUserResponse, (value) => value);
 
-  Map<String, Object?> toJson() => _$RegisterUserResponseToJson(this as RegisterUserResponse);
+  Map<String, Object?> toJson() =>
+      _$RegisterUserResponseToJson(this as RegisterUserResponse);
 }
 
 mixin _$RegisterName {
@@ -251,7 +252,8 @@ mixin _$RegisterGeolocation {
   @pragma('vm:prefer-inline')
   _$RegisterGeolocationCopyWith<RegisterGeolocation> get copyWith => _$RegisterGeolocationCopyWithImpl<RegisterGeolocation>(this as RegisterGeolocation, (value) => value);
 
-  Map<String, Object?> toJson() => _$RegisterGeolocationToJson(this as RegisterGeolocation);
+  Map<String, Object?> toJson() =>
+      _$RegisterGeolocationToJson(this as RegisterGeolocation);
 }
 
 mixin _$RegisterAddress {
@@ -303,7 +305,8 @@ mixin _$RegisterAddress {
   @pragma('vm:prefer-inline')
   _$RegisterAddressCopyWith<RegisterAddress> get copyWith => _$RegisterAddressCopyWithImpl<RegisterAddress>(this as RegisterAddress, (value) => value);
 
-  Map<String, Object?> toJson() => _$RegisterAddressToJson(this as RegisterAddress);
+  Map<String, Object?> toJson() =>
+      _$RegisterAddressToJson(this as RegisterAddress);
 }
 
 mixin _$RegisterUserRequest {
@@ -358,7 +361,8 @@ mixin _$RegisterUserRequest {
   @pragma('vm:prefer-inline')
   _$RegisterUserRequestCopyWith<RegisterUserRequest> get copyWith => _$RegisterUserRequestCopyWithImpl<RegisterUserRequest>(this as RegisterUserRequest, (value) => value);
 
-  Map<String, Object?> toJson() => _$RegisterUserRequestToJson(this as RegisterUserRequest);
+  Map<String, Object?> toJson() =>
+      _$RegisterUserRequestToJson(this as RegisterUserRequest);
 }
 
 // CopyWith API inspired by Freezed.
@@ -1033,6 +1037,7 @@ Map<String, Object?> _$LoginRequestToJson(LoginRequest instance) {
     'password': instance.password,
   };
 }
+
 // factory LoginRequest.fromJson(Map<String, Object?> json) => _$LoginRequestFromJson(json);
 LoginRequest _$LoginRequestFromJson(Map<String, Object?> json) {
   final usernameValue = JsonHelper.as<String>(
@@ -1048,34 +1053,40 @@ LoginRequest _$LoginRequestFromJson(Map<String, Object?> json) {
 
   return LoginRequest(username: usernameValue, password: passwordValue);
 }
+
 Map<String, Object?> _$LoginResponseToJson(LoginResponse instance) {
   return <String, Object?>{
     'token': instance.token,
   };
 }
+
 // factory LoginResponse.fromJson(Map<String, Object?> json) => _$LoginResponseFromJson(json);
 LoginResponse _$LoginResponseFromJson(Map<String, Object?> json) {
   final tokenValue = JsonHelper.as<String>(json['token'], 'token', 'String');
 
   return LoginResponse(token: tokenValue);
 }
+
 Map<String, Object?> _$RegisterUserResponseToJson(RegisterUserResponse instance) {
   return <String, Object?>{
     'id': instance.id,
   };
 }
+
 // factory RegisterUserResponse.fromJson(Map<String, Object?> json) => _$RegisterUserResponseFromJson(json);
 RegisterUserResponse _$RegisterUserResponseFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
 
   return RegisterUserResponse(id: idValue);
 }
+
 Map<String, Object?> _$RegisterNameToJson(RegisterName instance) {
   return <String, Object?>{
     'firstname': instance.firstname,
     'lastname': instance.lastname,
   };
 }
+
 // factory RegisterName.fromJson(Map<String, Object?> json) => _$RegisterNameFromJson(json);
 RegisterName _$RegisterNameFromJson(Map<String, Object?> json) {
   final firstnameValue = JsonHelper.as<String>(
@@ -1091,12 +1102,14 @@ RegisterName _$RegisterNameFromJson(Map<String, Object?> json) {
 
   return RegisterName(firstname: firstnameValue, lastname: lastnameValue);
 }
+
 Map<String, Object?> _$RegisterGeolocationToJson(RegisterGeolocation instance) {
   return <String, Object?>{
     'lat': instance.lat,
     'long': instance.long,
   };
 }
+
 // factory RegisterGeolocation.fromJson(Map<String, Object?> json) => _$RegisterGeolocationFromJson(json);
 RegisterGeolocation _$RegisterGeolocationFromJson(Map<String, Object?> json) {
   final latValue = JsonHelper.as<String>(json['lat'], 'lat', 'String');
@@ -1104,6 +1117,7 @@ RegisterGeolocation _$RegisterGeolocationFromJson(Map<String, Object?> json) {
 
   return RegisterGeolocation(lat: latValue, long: longValue);
 }
+
 Map<String, Object?> _$RegisterAddressToJson(RegisterAddress instance) {
   return <String, Object?>{
     'city': instance.city,
@@ -1113,6 +1127,7 @@ Map<String, Object?> _$RegisterAddressToJson(RegisterAddress instance) {
     'geolocation': _$RegisterGeolocationToJson(instance.geolocation),
   };
 }
+
 // factory RegisterAddress.fromJson(Map<String, Object?> json) => _$RegisterAddressFromJson(json);
 RegisterAddress _$RegisterAddressFromJson(Map<String, Object?> json) {
   final cityValue = JsonHelper.as<String>(json['city'], 'city', 'String');
@@ -1133,6 +1148,7 @@ RegisterAddress _$RegisterAddressFromJson(Map<String, Object?> json) {
     geolocation: geolocationValue,
   );
 }
+
 Map<String, Object?> _$RegisterUserRequestToJson(RegisterUserRequest instance) {
   return <String, Object?>{
     'email': instance.email,
@@ -1143,6 +1159,7 @@ Map<String, Object?> _$RegisterUserRequestToJson(RegisterUserRequest instance) {
     'address': _$RegisterAddressToJson(instance.address),
   };
 }
+
 // factory RegisterUserRequest.fromJson(Map<String, Object?> json) => _$RegisterUserRequestFromJson(json);
 RegisterUserRequest _$RegisterUserRequestFromJson(Map<String, Object?> json) {
   final emailValue = JsonHelper.as<String>(json['email'], 'email', 'String');

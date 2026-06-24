@@ -121,6 +121,8 @@ impl ParsedDirective {
 pub enum ParsedClassKind {
     /// A normal Dart `class` declaration.
     Class,
+    /// A Dart `sealed class` declaration.
+    SealedClass,
     /// A Dart `mixin class` declaration.
     MixinClass,
 }
@@ -437,6 +439,8 @@ pub struct ParsedConstructorSurface {
     pub name: Option<String>,
     /// Whether the constructor is declared with the `factory` modifier.
     pub is_factory: bool,
+    /// All metadata annotations attached to the constructor.
+    pub annotations: Vec<ParsedAnnotation>,
     /// The redirected target symbol reference, if the constructor redirects.
     pub redirected_target_source: Option<String>,
     /// The redirected target base name, if it could be extracted.

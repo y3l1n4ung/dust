@@ -18,8 +18,11 @@ use super::{
 
 /// Extracts a Dust class surface from one tree-sitter class declaration.
 pub(super) fn extract_class(node: Node<'_>, source: &SourceText) -> ParsedClassSurface {
+    let is_sealed = has_direct_child_kind(node, "sealed");
     let kind = if has_direct_child_kind(node, "mixin") {
         ParsedClassKind::MixinClass
+    } else if is_sealed {
+        ParsedClassKind::SealedClass
     } else {
         ParsedClassKind::Class
     };
@@ -56,7 +59,11 @@ pub(super) fn extract_class(node: Node<'_>, source: &SourceText) -> ParsedClassS
             if let Some(declaration) = first_non_annotation_named_child(member) {
                 match classify_class_member(declaration) {
                     Some(ClassMemberShape::Constructor(signature)) => {
-                        constructors.push(extract_constructor(signature, source));
+                        constructors.push(extract_constructor(
+                            signature,
+                            &member_annotations,
+                            source,
+                        ));
                     }
                     Some(ClassMemberShape::Field(identifier_list)) => {
                         fields.extend(extract_fields_from_identifier_list(

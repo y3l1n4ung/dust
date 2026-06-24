@@ -9,7 +9,8 @@ use crate::{
     ResolveResult, ResolvedClass, ResolvedEnum, ResolvedEnumVariant, ResolvedLibrary,
     SymbolCatalog,
     resolve_support::{
-        first_part_uri, resolve_declaration_annotations, resolve_field, resolve_method,
+        first_part_uri, resolve_constructor, resolve_declaration_annotations, resolve_field,
+        resolve_method,
     },
 };
 
@@ -41,7 +42,7 @@ pub fn resolve_library_with_partless_configs(
 
     for class in &library.classes {
         let resolved = resolve_class(file_id, class, catalog, &mut diagnostics);
-        if !resolved.traits.is_empty() || !resolved.configs.is_empty() {
+        if class_has_dust_symbol(&resolved) {
             saw_dust_symbol = true;
         }
         classes.push(resolved);
@@ -111,6 +112,12 @@ fn class_needs_part(class: &ResolvedClass, partless_config_symbols: &[&str]) -> 
             .configs
             .iter()
             .any(|config| !partless_config_symbols.contains(&config.symbol.0.as_str()))
+        || class.constructors.iter().any(|constructor| {
+            constructor
+                .configs
+                .iter()
+                .any(|config| !partless_config_symbols.contains(&config.symbol.0.as_str()))
+        })
         || class.fields.iter().any(|field| {
             field
                 .configs
@@ -129,6 +136,25 @@ fn class_needs_part(class: &ResolvedClass, partless_config_symbols: &[&str]) -> 
                             !partless_config_symbols.contains(&config.symbol.0.as_str())
                         })
                 })
+        })
+}
+
+/// Returns whether a resolved class contains any Dust-owned symbol.
+fn class_has_dust_symbol(class: &ResolvedClass) -> bool {
+    !class.traits.is_empty()
+        || !class.configs.is_empty()
+        || class
+            .constructors
+            .iter()
+            .any(|constructor| !constructor.configs.is_empty())
+        || class.fields.iter().any(|field| !field.configs.is_empty())
+        || class.methods.iter().any(|method| {
+            !method.traits.is_empty()
+                || !method.configs.is_empty()
+                || method
+                    .params
+                    .iter()
+                    .any(|param| !param.traits.is_empty() || !param.configs.is_empty())
         })
 }
 
@@ -238,9 +264,16 @@ fn resolve_class(
         .map(|method| resolve_method(file_id, method, catalog, diagnostics))
         .collect();
 
+    let constructors = class
+        .constructors
+        .iter()
+        .map(|constructor| resolve_constructor(file_id, constructor, catalog, diagnostics))
+        .collect();
+
     ResolvedClass {
         kind: match class.kind {
             ParsedClassKind::Class => ClassKindIr::Class,
+            ParsedClassKind::SealedClass => ClassKindIr::SealedClass,
             ParsedClassKind::MixinClass => ClassKindIr::MixinClass,
         },
         name: class.name.clone(),
@@ -249,7 +282,7 @@ fn resolve_class(
         superclass_name: class.superclass_name.clone(),
         span: SpanIr::new(file_id, class.span),
         fields,
-        constructors: class.constructors.clone(),
+        constructors,
         methods,
         traits,
         configs,

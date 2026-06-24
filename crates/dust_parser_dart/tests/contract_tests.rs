@@ -52,6 +52,7 @@ impl ParseBackend for FakeBackend {
                     constructors: vec![ParsedConstructorSurface {
                         name: None,
                         is_factory: false,
+                        annotations: Vec::new(),
                         redirected_target_source: None,
                         redirected_target_name: None,
                         params: vec![ParsedConstructorParamSurface {
