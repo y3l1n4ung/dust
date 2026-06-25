@@ -1,3 +1,3 @@
-## 1.0.0
+## 0.1.0
 
-- Initial version.
+- Initial workspace package for Dust Dart runtime and annotation APIs.
