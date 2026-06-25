@@ -15,12 +15,16 @@ This track covers:
 - key rename rules, aliases, defaults, skip rules, and unknown-key rejection
 - built-in scalar policies for `DateTime`, `Uri`, and `BigInt`
 - enum serialization and deserialization
+- tagged sealed class serialization and deserialization
 - custom field conversion through `SerDeCodec<DartT, JsonT>`
 
 This track does not yet cover:
 
 - variant-level enum metadata such as per-variant `rename` or `skip`
-- union/tagged enum strategies
+- generated sealed variants with additional derives such as `CopyWith()` or
+  `Eq()`
+- nullable named sealed-factory parameters that must still be marked
+  `required`
 - type-level codecs
 - non-JSON wire formats
 
@@ -40,6 +44,8 @@ Dust SerDe currently supports:
 - [x] enum `@SerDe(renameAll: ...)` wire names
 - [x] enum values inside nullable fields, lists, sets, and maps
 - [x] unknown enum wire value diagnostics
+- [x] tagged and adjacent-tagged sealed class helpers
+- [x] generated concrete sealed variant classes from redirecting factories
 - [x] custom field conversion through `SerDeCodec`
 - [x] generated decode diagnostics that include the failing JSON key and
   expected Dart type for built-in conversions
@@ -181,6 +187,9 @@ For codec-backed fields:
 - [ ] support type-level codec registration beyond field-level `using`
 - [ ] support configurable `DateTime`, `Uri`, and `BigInt` policies beyond the
   current defaults
+- [x] generate omitted concrete sealed variant classes from redirecting
+  factories
+- [ ] preserve explicit `required` on nullable sealed-factory parameters
 - [x] make generated SerDe output stable and readable directly from the emitter
   across showcase models
 - [ ] decide whether public guidance should require `const` codec objects
@@ -190,6 +199,8 @@ For codec-backed fields:
 - [ ] add golden coverage for every rename rule
 - [x] add enum SerDe runtime coverage for normal enums, renamed enum values,
   enum collections, unknown values, and codec-backed enhanced enums
+- [x] add exact-output coverage for generated sealed variant classes and
+  constructor edge cases
 - [ ] add negative coverage for unsupported record serialization
 - [x] add negative coverage for malformed `using:` values
 
@@ -205,6 +216,7 @@ This track needs:
   custom `SerDeCodec` fields
 - [x] runtime tests for enum fields, enum collections, declaration-level enum
   rename rules, unknown enum values, and codec-backed enhanced enum fields
+- [x] runtime tests for tagged sealed class variants
 - [x] dedicated malformed-input tests with key-aware decode diagnostics
 - [x] negative tests for unsupported function serialization
 - [ ] negative tests for unsupported record serialization

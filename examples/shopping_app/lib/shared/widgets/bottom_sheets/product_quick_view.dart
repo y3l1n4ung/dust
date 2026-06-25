@@ -130,7 +130,9 @@ class _ProductQuickViewContentState extends State<_ProductQuickViewContent>
                             ),
                             Text(
                               ' (${widget.product.rating.count})',
-                              style: Theme.of(context).textTheme.bodySmall
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
                                   ?.copyWith(color: Colors.grey),
                             ),
                           ],
@@ -138,7 +140,9 @@ class _ProductQuickViewContentState extends State<_ProductQuickViewContent>
                         const SizedBox(height: 12),
                         Text(
                           '\$${widget.product.price.toStringAsFixed(2)}',
-                          style: Theme.of(context).textTheme.headlineSmall
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.deepPurple,

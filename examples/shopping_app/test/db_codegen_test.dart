@@ -19,7 +19,8 @@ void main() {
 
       await app.pool.seedProductCache();
       expect(
-        (app.pool as Sqlite3Executor).database
+        (app.pool as Sqlite3Executor)
+            .database
             .select('SELECT 1')
             .single
             .columnAt(0),

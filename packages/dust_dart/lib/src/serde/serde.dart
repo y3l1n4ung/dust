@@ -85,6 +85,9 @@ final class SerDe extends DeriveConfig {
   final SerDeRename? renameAll;
 
   /// JSON discriminator field for sealed class variants.
+  ///
+  /// On a sealed class, redirecting factory constructors define the variants;
+  /// Dust generates omitted concrete target classes into the `.g.dart` part.
   final String? tag;
 
   /// JSON payload field for adjacent-tagged sealed class variants.

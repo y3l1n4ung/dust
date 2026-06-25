@@ -12,6 +12,8 @@ mod emit_enum;
 mod emit_sealed;
 /// Shared formatting helpers for serde emission.
 mod emit_support;
+/// Renders generated sealed variant classes.
+mod emit_variant_class;
 /// Plugin registration and Dust plugin implementation.
 mod plugin;
 /// Validates serde-compatible model shapes.

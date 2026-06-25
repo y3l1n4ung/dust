@@ -84,26 +84,34 @@ void main() {
         'kind': 'manual_accept',
         'payload': {'id': 'case-9', 'score': 99},
       });
-      expect(SealedEvent9.fromJson(event.toJson()), equals(accepted));
-      expect(
-        SealedAccepted9.fromJson({'id': 'case-9', 'score': 99}),
-        equals(accepted),
-      );
+      final decodedAccepted = SealedEvent9.fromJson(event.toJson());
+      expect(decodedAccepted, isA<SealedAccepted9>());
+      expect((decodedAccepted as SealedAccepted9).id, accepted.id);
+      expect(decodedAccepted.score, accepted.score);
+      final directAccepted = SealedAccepted9.fromJson({
+        'id': 'case-9',
+        'score': 99,
+      });
+      expect(directAccepted.id, accepted.id);
+      expect(directAccepted.score, accepted.score);
 
       final rejected = SealedEvent9.autoReject(
         id: 'case-10',
         reason: 'timeout',
       );
       expect(rejected, isA<SealedRejected9>());
+      final rejectedVariant = rejected as SealedRejected9;
       expect(rejected.toJson(), {
         'kind': 'auto_reject',
         'payload': {'id': 'case-10', 'reason': 'timeout'},
       });
       expect(SealedEvent9.fromJson(rejected.toJson()), isA<SealedRejected9>());
-      expect(
-        SealedRejected9.fromJson({'id': 'case-10', 'reason': 'timeout'}),
-        equals(rejected),
-      );
+      final directRejected = SealedRejected9.fromJson({
+        'id': 'case-10',
+        'reason': 'timeout',
+      });
+      expect(directRejected.id, rejectedVariant.id);
+      expect(directRejected.reason, rejectedVariant.reason);
     },
   );
 

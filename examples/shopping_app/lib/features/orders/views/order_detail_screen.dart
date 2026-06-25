@@ -49,17 +49,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           Text('Tracking', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           switch (trackingState.status) {
-            OrderTrackingStatus.initial || OrderTrackingStatus.loading =>
+            OrderTrackingStatus.initial ||
+            OrderTrackingStatus.loading =>
               const Center(child: CircularProgressIndicator()),
             OrderTrackingStatus.error => Text(
-              trackingState.errorMessage ?? 'Failed to load tracking.',
-              style: const TextStyle(color: Colors.red),
-            ),
+                trackingState.errorMessage ?? 'Failed to load tracking.',
+                style: const TextStyle(color: Colors.red),
+              ),
             OrderTrackingStatus.success => Column(
-              children: trackingState.events
-                  .map((event) => _TrackingTile(event: event))
-                  .toList(),
-            ),
+                children: trackingState.events
+                    .map((event) => _TrackingTile(event: event))
+                    .toList(),
+              ),
           },
         ],
       ),

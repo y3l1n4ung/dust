@@ -13,8 +13,8 @@ final class CachedShoppingRepository implements ShoppingRepository {
   CachedShoppingRepository({
     required ShoppingRepository remote,
     required ShoppingCacheDatabase database,
-  }) : _remote = remote,
-       _database = database;
+  })  : _remote = remote,
+        _database = database;
 
   final ShoppingRepository _remote;
   final ShoppingCacheDatabase _database;

@@ -111,3 +111,17 @@ pub(crate) fn members_for_class<'a>(
         .map(|entry| entry.members.as_slice())
         .unwrap_or(&[])
 }
+
+pub(crate) fn function_for<'a>(functions: &'a [String], name: &str) -> &'a str {
+    functions
+        .iter()
+        .find(|function| top_level_function_name(function) == Some(name))
+        .map(String::as_str)
+        .unwrap_or("")
+}
+
+fn top_level_function_name(source: &str) -> Option<&str> {
+    let signature = source.lines().find(|line| !line.starts_with("//"))?;
+    let before_params = signature.split_once('(')?.0;
+    before_params.rsplit_once(' ').map(|(_, name)| name)
+}

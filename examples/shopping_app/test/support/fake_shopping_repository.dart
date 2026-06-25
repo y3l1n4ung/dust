@@ -50,10 +50,11 @@ final class FakeShoppingRepository implements ShoppingRepository {
     String category, {
     int? limit,
     String? sort,
-  }) async => products
-      .where((product) => product.category == category)
-      .take(limit ?? products.length)
-      .toList();
+  }) async =>
+      products
+          .where((product) => product.category == category)
+          .take(limit ?? products.length)
+          .toList();
 
   @override
   Future<List<String>> getCategories() async => const ['bags', 'clothing'];
@@ -67,25 +68,25 @@ final class FakeShoppingRepository implements ShoppingRepository {
 
   @override
   Future<List<StoreCart>> getUserCarts(int userId) async => [
-    StoreCart(
-      id: 1,
-      userId: userId,
-      date: DateTime(2026, 1, 1),
-      products: const [StoreCartProduct(productId: 1, quantity: 2)],
-    ),
-  ];
+        StoreCart(
+          id: 1,
+          userId: userId,
+          date: DateTime(2026, 1, 1),
+          products: const [StoreCartProduct(productId: 1, quantity: 2)],
+        ),
+      ];
 
   @override
   Future<String> login(String username, String password) async => 'token';
 
   @override
   Future<User> getUser(int id) async => const User(
-    id: 1,
-    email: 'dust@example.com',
-    username: 'dust',
-    name: Name(firstname: 'Dust', lastname: 'User'),
-    phone: '555-0100',
-  );
+        id: 1,
+        email: 'dust@example.com',
+        username: 'dust',
+        name: Name(firstname: 'Dust', lastname: 'User'),
+        phone: '555-0100',
+      );
 
   @override
   Future<int> registerUser({
@@ -103,16 +104,16 @@ final class FakeShoppingRepository implements ShoppingRepository {
 
   @override
   Future<List<ProductReview>> getProductReviews(int productId) async => [
-    ProductReview(
-      id: 'review-1',
-      productId: productId,
-      authorName: 'Dust Tester',
-      rating: 4.9,
-      comment: 'Generated reviews work.',
-      createdAt: DateTime(2026, 1, 2),
-      verifiedPurchase: true,
-    ),
-  ];
+        ProductReview(
+          id: 'review-1',
+          productId: productId,
+          authorName: 'Dust Tester',
+          rating: 4.9,
+          comment: 'Generated reviews work.',
+          createdAt: DateTime(2026, 1, 2),
+          verifiedPurchase: true,
+        ),
+      ];
 
   @override
   Future<List<Product>> getRecommendations(int productId) async => products
@@ -121,9 +122,8 @@ final class FakeShoppingRepository implements ShoppingRepository {
 
   @override
   Future<CheckoutQuote> quoteCheckout(CheckoutQuoteRequest request) async {
-    final discount = request.couponCode == 'DUST10'
-        ? request.subtotal * 0.1
-        : 0.0;
+    final discount =
+        request.couponCode == 'DUST10' ? request.subtotal * 0.1 : 0.0;
     return CheckoutQuote(
       subtotal: request.subtotal,
       discount: discount,
@@ -137,16 +137,16 @@ final class FakeShoppingRepository implements ShoppingRepository {
 
   @override
   Future<List<TrackingEvent>> getOrderTracking(String orderId) async => [
-    TrackingEvent(
-      id: 'tracking-1',
-      orderId: orderId,
-      title: 'Packed',
-      description: 'Packed for delivery.',
-      location: 'Dust warehouse',
-      occurredAt: DateTime(2026, 1, 3),
-      completed: true,
-    ),
-  ];
+        TrackingEvent(
+          id: 'tracking-1',
+          orderId: orderId,
+          title: 'Packed',
+          description: 'Packed for delivery.',
+          location: 'Dust warehouse',
+          occurredAt: DateTime(2026, 1, 3),
+          completed: true,
+        ),
+      ];
 
   @override
   ShoppingChatSocket openChatSocket() =>

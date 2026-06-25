@@ -26,22 +26,22 @@ final class SharedStatusIndexCodec implements SerDeCodec<SharedStatus, int> {
 
   @override
   int serialize(SharedStatus value) => switch (value) {
-    SharedStatus.active => 0,
-    SharedStatus.paused => 1,
-    SharedStatus.archived => 2,
-  };
+        SharedStatus.active => 0,
+        SharedStatus.paused => 1,
+        SharedStatus.archived => 2,
+      };
 
   @override
   SharedStatus deserialize(int value) => switch (value) {
-    0 => SharedStatus.active,
-    1 => SharedStatus.paused,
-    2 => SharedStatus.archived,
-    _ => throw ArgumentError.value(
-      value,
-      'value',
-      'unknown SharedStatus index',
-    ),
-  };
+        0 => SharedStatus.active,
+        1 => SharedStatus.paused,
+        2 => SharedStatus.archived,
+        _ => throw ArgumentError.value(
+            value,
+            'value',
+            'unknown SharedStatus index',
+          ),
+      };
 }
 
 const unixEpochDateTimeCodec = UnixEpochDateTimeCodec();

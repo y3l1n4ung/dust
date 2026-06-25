@@ -20,18 +20,18 @@ final class VehicleIndexCodec implements SerDeCodec<Vehicle, int> {
 
   @override
   int serialize(Vehicle value) => switch (value) {
-    Vehicle.car => 0,
-    Vehicle.bicycle => 1,
-    Vehicle.unicycle => 2,
-  };
+        Vehicle.car => 0,
+        Vehicle.bicycle => 1,
+        Vehicle.unicycle => 2,
+      };
 
   @override
   Vehicle deserialize(int value) => switch (value) {
-    0 => Vehicle.car,
-    1 => Vehicle.bicycle,
-    2 => Vehicle.unicycle,
-    _ => throw ArgumentError.value(value, 'value', 'unknown Vehicle index'),
-  };
+        0 => Vehicle.car,
+        1 => Vehicle.bicycle,
+        2 => Vehicle.unicycle,
+        _ => throw ArgumentError.value(value, 'value', 'unknown Vehicle index'),
+      };
 }
 
 final class VehicleIndexListCodec

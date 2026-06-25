@@ -71,8 +71,8 @@ class _OrderCard extends StatelessWidget {
                   Text(
                     'Order #${order.id.substring(order.id.length - 6)}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   _StatusChip(status: order.status),
                 ],
@@ -97,8 +97,8 @@ class _OrderCard extends StatelessWidget {
                   Text(
                     '\$${order.totalAmount.toStringAsFixed(2)}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ],
               ),

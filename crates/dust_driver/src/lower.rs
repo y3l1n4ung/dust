@@ -24,7 +24,7 @@ use dust_ir::{
     AnnotationIr, ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, DartFileIr, EnumIr,
     EnumVariantIr, ExportIr, ExprSourceIr, ExtensionIr, ExtensionTypeIr, FieldIr, FunctionIr,
     ImportIr, LibraryDeclIr, LoweringOutcome, MethodIr, MethodParamIr, MixinIr, NameIr, ParamKind,
-    PartIr, PartOfIr, SerdeVariantConfigIr, SpanIr, TopLevelVariableIr, TypedefIr,
+    PartIr, PartOfIr, SerdeVariantConfigIr, SpanIr, TopLevelVariableIr, TypeIr, TypedefIr,
 };
 use dust_parser_dart::{
     ParameterKind, ParsedAnnotation, ParsedDirective, ParsedFieldSurface, ParsedMethodParamSurface,
@@ -209,12 +209,11 @@ fn lower_sealed_serde_variants(
                 continue;
             };
 
-            let target_extends_base = index_by_name
+            let target_superclass = index_by_name
                 .get(target_class_name)
                 .and_then(|target_index| classes.get(*target_index))
-                .and_then(|target| target.superclass_name.as_deref())
-                == Some(base_name.as_str());
-            if !target_extends_base {
+                .and_then(|target| target.superclass_name.as_deref());
+            if target_superclass.is_some() && target_superclass != Some(base_name.as_str()) {
                 diagnostics.push(Diagnostic::error(format!(
                     "Variant target class {target_class_name} does not extend {base_name}"
                 )));
@@ -236,6 +235,30 @@ fn lower_sealed_serde_variants(
                 constructor_name: constructor_name.to_owned(),
                 target_class_name: target_class_name.to_owned(),
                 tag,
+                params: constructor
+                    .surface
+                    .params
+                    .iter()
+                    .map(|param| {
+                        let outcome = param
+                            .type_source
+                            .as_deref()
+                            .map(|source| lower_type(param.parsed_type.as_ref(), Some(source)))
+                            .unwrap_or_else(|| LoweringOutcome::new(TypeIr::unknown()));
+                        diagnostics.extend(outcome.diagnostics);
+                        ConstructorParamIr {
+                            name: param.name.clone(),
+                            ty: outcome.value,
+                            span: SpanIr::new(classes[index].span.file_id, param.span),
+                            kind: match param.kind {
+                                ParameterKind::Positional => ParamKind::Positional,
+                                ParameterKind::Named => ParamKind::Named,
+                            },
+                            has_default: param.has_default,
+                            default_value_source: param.default_value_source.clone(),
+                        }
+                    })
+                    .collect(),
             });
         }
 

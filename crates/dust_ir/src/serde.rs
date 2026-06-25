@@ -1,3 +1,5 @@
+use crate::ConstructorParamIr;
+
 /// Normalized rename strategies derived from `SerDeRename`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SerdeRenameRuleIr {
@@ -65,6 +67,8 @@ pub struct SerdeVariantConfigIr {
     pub target_class_name: String,
     /// Resolved tag value after variant rename and class `renameAll`.
     pub tag: String,
+    /// Source factory constructor parameters used to synthesize variant classes.
+    pub params: Vec<ConstructorParamIr>,
 }
 
 /// Normalized serde-related configuration attached to one field.

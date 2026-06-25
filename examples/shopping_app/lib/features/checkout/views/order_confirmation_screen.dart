@@ -27,8 +27,8 @@ class OrderConfirmationScreen extends StatelessWidget {
               Text(
                 'Order Placed!',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -51,8 +51,8 @@ class OrderConfirmationScreen extends StatelessWidget {
                     Text(
                       '#${orderId.substring(orderId.length - 6)}',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),

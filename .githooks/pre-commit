@@ -6,7 +6,16 @@ cd "$ROOT_DIR"
 
 echo "==> Running Dust pre-commit checks"
 
-./scripts/lint.sh
-./scripts/test.sh
+./scripts/format.sh --check
+./scripts/rust/lint.sh
+./scripts/dart/lint.sh
+./scripts/flutter/lint.sh
+./scripts/dart/lint.sh --examples
+./scripts/flutter/lint.sh --examples
+./scripts/rust/test.sh
+./scripts/dart/test.sh
+./scripts/flutter/test.sh
+./scripts/dart/test.sh --examples
+./scripts/flutter/test.sh --examples
 
 echo "==> Pre-commit checks passed"

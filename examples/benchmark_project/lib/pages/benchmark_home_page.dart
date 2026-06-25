@@ -44,8 +44,8 @@ class BenchmarkHomePage extends StatelessWidget {
         const SizedBox(height: 16),
         FilledButton(
           onPressed: () => context.readBenchmarkViewModel().recordBuild(
-            BenchmarkMode.invalidated,
-          ),
+                BenchmarkMode.invalidated,
+              ),
           child: const Text('Record invalidated build'),
         ),
       ],

@@ -45,8 +45,8 @@ final class LiveShoppingRepository implements ShoppingRepository {
   LiveShoppingRepository({
     ShoppingApi? api,
     ShoppingFeatureBackend? featureBackend,
-  }) : _api = api ?? ShoppingApi(Dio()),
-       _featureBackend = featureBackend ?? const FakeShoppingFeatureBackend();
+  })  : _api = api ?? ShoppingApi(Dio()),
+        _featureBackend = featureBackend ?? const FakeShoppingFeatureBackend();
 
   final ShoppingApi _api;
   final ShoppingFeatureBackend _featureBackend;

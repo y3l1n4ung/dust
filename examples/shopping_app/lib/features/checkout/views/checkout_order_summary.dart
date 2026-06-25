@@ -59,9 +59,8 @@ class CheckoutOrderSummary extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 FilledButton.tonal(
-                  onPressed: checkoutState.isQuoteLoading
-                      ? null
-                      : onApplyCoupon,
+                  onPressed:
+                      checkoutState.isQuoteLoading ? null : onApplyCoupon,
                   child: checkoutState.isQuoteLoading
                       ? const SizedBox(
                           width: 16,
@@ -85,9 +84,9 @@ class CheckoutOrderSummary extends StatelessWidget {
                 Text(
                   '\$${total.toStringAsFixed(2)}',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
                 ),
               ],
             ),
@@ -119,9 +118,9 @@ class _QuoteBreakdown extends StatelessWidget {
               child: Text(
                 'Applied ${quote.appliedCoupon}',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ),
           ),
