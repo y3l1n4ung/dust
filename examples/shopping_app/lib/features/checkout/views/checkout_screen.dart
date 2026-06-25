@@ -114,9 +114,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _applyCoupon() async {
     final subtotal = context.readCartViewModel().state.totalPrice;
     await context.readCheckoutViewModel().applyCoupon(
-      subtotal: subtotal,
-      couponCode: _couponController.text,
-    );
+          subtotal: subtotal,
+          couponCode: _couponController.text,
+        );
     if (!mounted) return;
 
     final quote = context.readCheckoutViewModel().state.quote;

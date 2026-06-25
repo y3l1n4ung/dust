@@ -272,28 +272,6 @@ ${serdeFactory(className)}
     required String reason,
   }) = $rejectedName;
 }''',
-      '''
-@Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-@SerDe(renameAll: SerDeRename.snakeCase)
-final class $acceptedName extends $className with ${mixinName(acceptedName)} {
-  const $acceptedName({required this.id, required this.score}) : super();
-
-${serdeFactory(acceptedName)}
-
-  final String id;
-  final int score;
-}''',
-      '''
-@Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
-@SerDe(renameAll: SerDeRename.snakeCase)
-final class $rejectedName extends $className with ${mixinName(rejectedName)} {
-  const $rejectedName({required this.id, required this.reason}) : super();
-
-${serdeFactory(rejectedName)}
-
-  final String id;
-  final String reason;
-}''',
     ],
   );
 }

@@ -18,14 +18,34 @@ mixin _$JsonPaymentEvent {
       _$JsonPaymentEventToJson(this as JsonPaymentEvent);
 }
 
-mixin _$JsonPaymentSuccess {
-  Map<String, Object?> toJson() =>
-      _$JsonPaymentEventToJson(this as JsonPaymentEvent);
+final class JsonPaymentSuccess extends JsonPaymentEvent {
+  const JsonPaymentSuccess({
+    required this.id,
+    required this.cents,
+    required this.currency,
+  }) : super();
+
+  factory JsonPaymentSuccess.fromJson(Map<String, Object?> json) =>
+      _$JsonPaymentSuccessFromJson(json);
+
+  final String id;
+  final int cents;
+  final String currency;
 }
 
-mixin _$JsonPaymentFailed {
-  Map<String, Object?> toJson() =>
-      _$JsonPaymentEventToJson(this as JsonPaymentEvent);
+final class JsonPaymentFailed extends JsonPaymentEvent {
+  const JsonPaymentFailed({
+    required this.id,
+    required this.reason,
+    required this.retryable,
+  }) : super();
+
+  factory JsonPaymentFailed.fromJson(Map<String, Object?> json) =>
+      _$JsonPaymentFailedFromJson(json);
+
+  final String id;
+  final String reason;
+  final bool retryable;
 }
 
 Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) {

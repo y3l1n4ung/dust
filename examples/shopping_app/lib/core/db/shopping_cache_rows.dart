@@ -11,10 +11,10 @@ final class CacheSourceFromString implements SqlxTryFrom<CacheSource, String> {
 
   @override
   CacheSource decode(String value) => switch (value) {
-    'fake_store' => CacheSource.fakeStore,
-    'local' => CacheSource.local,
-    _ => throw ArgumentError.value(value, 'value', 'Unknown cache source'),
-  };
+        'fake_store' => CacheSource.fakeStore,
+        'local' => CacheSource.local,
+        _ => throw ArgumentError.value(value, 'value', 'Unknown cache source'),
+      };
 }
 
 final class CachedProductPayload {

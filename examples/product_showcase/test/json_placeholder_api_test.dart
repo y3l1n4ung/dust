@@ -32,9 +32,8 @@ void main() {
       final streamedBytes = await _readByteStream(
         api.streamPostsBytes(userId: 1, limit: 1),
       );
-      final streamedTextChunks = await api
-          .streamPostsText(userId: 1, limit: 1)
-          .toList();
+      final streamedTextChunks =
+          await api.streamPostsText(userId: 1, limit: 1).toList();
       final raw = await api.fetchPost(1);
       final comments = await api.listComments(postId: 1, limit: 2);
       final created = await api.createPost(
@@ -120,9 +119,8 @@ void main() {
       final streamedBytes = await _readByteStream(
         api.streamPostsBytes(userId: 1, limit: 1),
       );
-      final streamedTextChunks = await api
-          .streamPostsText(userId: 1, limit: 1)
-          .toList();
+      final streamedTextChunks =
+          await api.streamPostsText(userId: 1, limit: 1).toList();
       final response = await api.fetchPost(1);
       final comments = await api.listComments(postId: 1, limit: 2);
       final created = await api.createPost(

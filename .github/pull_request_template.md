@@ -16,9 +16,9 @@
 ### Commands Run
 ```bash
 # List the exact commands you used to verify the changes
-cargo test --workspace
-cargo clippy --workspace
-dart analyze examples/product_showcase
+./scripts/rust/test.sh
+./scripts/rust/lint.sh
+./scripts/dart/lint.sh --examples
 ```
 
 ### Performance Impact (If applicable)

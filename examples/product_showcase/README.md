@@ -12,7 +12,7 @@ Read the canonical guides in:
 ## What This Package Covers
 
 - derive generation such as `ToString()`, `Eq()`, and `CopyWith()`
-- serde generation such as `Serialize()`, `Deserialize()`, enum values, rename rules, defaults, aliases, and codecs
+- serde generation such as `Serialize()`, `Deserialize()`, enum values, tagged sealed classes, rename rules, defaults, aliases, and codecs
 - validation generation such as `Validate()`, `Length`, `Range`, and generated form-field validator functions
 - DB row mapping generation through DB-owned `FromRow()`
 - latest Dart-style source syntax that keeps generated code behavior unchanged, including final classes, records, switch expressions, and pattern matching
@@ -53,6 +53,7 @@ DUST_RUN_ONLINE_HTTP_TESTS=1 dart test test/json_placeholder_api_test.dart
 - [lib/models/price.dart](lib/models/price.dart)
 - [lib/models/json_profile.dart](lib/models/json_profile.dart)
 - [lib/models/json_enum_bundle.dart](lib/models/json_enum_bundle.dart)
+- [lib/models/json_payment_event.dart](lib/models/json_payment_event.dart)
 - [lib/models/json_codec_bundle.dart](lib/models/json_codec_bundle.dart)
 - [lib/models/latest_dart_derive_showcase.dart](lib/models/latest_dart_derive_showcase.dart)
 - [lib/api/json_placeholder_api.dart](lib/api/json_placeholder_api.dart)

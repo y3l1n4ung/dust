@@ -9,6 +9,7 @@ use crate::{
     emit_sealed::{
         emit_sealed_from_json_helper, emit_sealed_to_json_helper, is_tagged_sealed_class,
     },
+    emit_variant_class::{emit_generated_variant_class, generated_variant_classes},
 };
 
 /// Orchestrates the emission of all SerDe-related code for a library.
@@ -17,7 +18,8 @@ use crate::{
 /// serialization or deserialization and generates the corresponding Dart code.
 pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
     let mut contribution = PluginContribution::default();
-    let serializable_classes = library
+    let generated_variants = generated_variant_classes(library);
+    let mut serializable_classes = library
         .classes
         .iter()
         .filter(|class| wants_serialize(class))
@@ -30,7 +32,14 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
         .map(|e| e.name.as_str())
         .collect::<Vec<_>>();
 
-    let deserializable_classes = library
+    serializable_classes.extend(
+        generated_variants
+            .iter()
+            .filter(|variant| variant.serializable)
+            .map(|variant| variant.class.name.as_str()),
+    );
+
+    let mut deserializable_classes = library
         .classes
         .iter()
         .filter(|class| wants_deserialize(class))
@@ -42,6 +51,12 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
         .filter(|e| wants_deserialize_enum(e))
         .map(|e| e.name.as_str())
         .collect::<Vec<_>>();
+    deserializable_classes.extend(
+        generated_variants
+            .iter()
+            .filter(|variant| variant.deserializable)
+            .map(|variant| variant.class.name.as_str()),
+    );
     let sealed_base_by_variant = sealed_base_by_variant(library);
 
     // Generate class-specific code.
@@ -72,6 +87,34 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
             } else if let Some(helper) =
                 emit_from_json_helper(class, &deserializable_classes, &deserializable_enums)
             {
+                contribution.top_level_functions.push(helper);
+            }
+        }
+    }
+
+    let generated_variant_support = generated_variants
+        .iter()
+        .map(emit_generated_variant_class)
+        .collect::<Vec<_>>()
+        .join("\n\n");
+    if !generated_variant_support.is_empty() {
+        contribution.support_types.push(generated_variant_support);
+    }
+
+    for variant in &generated_variants {
+        if variant.serializable {
+            contribution.top_level_functions.push(emit_to_json_helper(
+                &variant.class,
+                &serializable_classes,
+                &serializable_enums,
+            ));
+        }
+        if variant.deserializable {
+            if let Some(helper) = emit_from_json_helper(
+                &variant.class,
+                &deserializable_classes,
+                &deserializable_enums,
+            ) {
                 contribution.top_level_functions.push(helper);
             }
         }

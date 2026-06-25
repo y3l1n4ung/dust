@@ -2,7 +2,7 @@
 
 use super::{lower_class, lower_library};
 use dust_ir::{ClassKindIr, ConfigApplicationIr, SerdeRenameRuleIr, SpanIr, SymbolId};
-use dust_parser_dart::ParsedConstructorSurface;
+use dust_parser_dart::{ParameterKind, ParsedConstructorParamSurface, ParsedConstructorSurface};
 use dust_resolver::{ResolvedClass, ResolvedConstructor, ResolvedField, ResolvedLibrary};
 use dust_text::{FileId, TextRange};
 
@@ -39,6 +39,15 @@ fn factory_constructor(
     target_class_name: &str,
     configs: Vec<ConfigApplicationIr>,
 ) -> ResolvedConstructor {
+    factory_constructor_with_params(name, target_class_name, configs, Vec::new())
+}
+
+fn factory_constructor_with_params(
+    name: &str,
+    target_class_name: &str,
+    configs: Vec<ConfigApplicationIr>,
+    params: Vec<ParsedConstructorParamSurface>,
+) -> ResolvedConstructor {
     ResolvedConstructor {
         surface: ParsedConstructorSurface {
             name: Some(name.to_owned()),
@@ -46,10 +55,23 @@ fn factory_constructor(
             annotations: Vec::new(),
             redirected_target_source: Some(target_class_name.to_owned()),
             redirected_target_name: Some(target_class_name.to_owned()),
-            params: Vec::new(),
+            params,
             span: TextRange::new(0_u32, 10_u32),
         },
         configs,
+    }
+}
+
+fn named_constructor_param(name: &str, ty: &str) -> ParsedConstructorParamSurface {
+    ParsedConstructorParamSurface {
+        name: name.to_owned(),
+        annotations: Vec::new(),
+        type_source: Some(ty.to_owned()),
+        parsed_type: None,
+        kind: ParameterKind::Named,
+        has_default: false,
+        default_value_source: None,
+        span: TextRange::new(0_u32, 10_u32),
     }
 }
 
@@ -183,6 +205,43 @@ fn lowers_sealed_serde_variant_metadata_from_redirecting_factories() {
     assert_eq!(serde.variants[1].constructor_name, "failed");
     assert_eq!(serde.variants[1].target_class_name, "PaymentFailed");
     assert_eq!(serde.variants[1].tag, "failure");
+}
+
+#[test]
+fn lowers_sealed_serde_variant_params_without_source_target_class() {
+    let mut base = empty_class("JsonPaymentEvent", ClassKindIr::SealedClass);
+    base.configs = vec![serde_config(
+        "(tag: 'type', renameAll: SerDeRename.snakeCase)",
+        1,
+        10,
+    )];
+    base.constructors = vec![factory_constructor_with_params(
+        "success",
+        "JsonPaymentSuccess",
+        Vec::new(),
+        vec![
+            named_constructor_param("id", "String"),
+            named_constructor_param("cents", "int"),
+        ],
+    )];
+
+    let outcome = lower_library(&library(vec![base]));
+
+    assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
+    let class = outcome
+        .value
+        .classes
+        .iter()
+        .find(|class| class.name == "JsonPaymentEvent")
+        .unwrap();
+    let serde = class.serde.as_ref().unwrap();
+    assert_eq!(serde.variants.len(), 1);
+    assert_eq!(serde.variants[0].target_class_name, "JsonPaymentSuccess");
+    assert_eq!(serde.variants[0].params.len(), 2);
+    assert_eq!(serde.variants[0].params[0].name, "id");
+    assert_eq!(serde.variants[0].params[0].ty.name(), Some("String"));
+    assert_eq!(serde.variants[0].params[1].name, "cents");
+    assert_eq!(serde.variants[0].params[1].ty.name(), Some("int"));
 }
 
 #[test]

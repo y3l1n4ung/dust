@@ -14,3 +14,6 @@ mod config;
 
 #[path = "class_tests/sealed.rs"]
 mod sealed;
+
+#[path = "class_tests/sealed_generated_variants.rs"]
+mod sealed_generated_variants;

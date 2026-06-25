@@ -172,7 +172,8 @@ class _CartScreenState extends State<CartScreen> {
                                         color: Colors.red,
                                       ),
                                       onPressed: () async {
-                                        final confirmed = await ConfirmDialog.show(
+                                        final confirmed =
+                                            await ConfirmDialog.show(
                                           context: context,
                                           title: 'Remove Item',
                                           message:

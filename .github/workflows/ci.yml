@@ -9,6 +9,9 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions:
+  contents: read
+
 jobs:
   installers:
     name: Installers / ${{ matrix.os }}
@@ -50,13 +53,16 @@ jobs:
           rustup default stable
 
       - name: Format check
-        run: cargo fmt --all -- --check
+        run: ./scripts/rust/format.sh --check
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@16a76bb73558798e4218983c40c25fee9f2f99a8 # nextest
 
       - name: Test
-        run: cargo test --workspace --quiet
+        run: ./scripts/rust/test.sh
 
       - name: Clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings -D clippy::missing_docs_in_private_items -D missing_docs
+        run: ./scripts/rust/lint.sh
 
   dart-packages:
     name: Dart / ${{ matrix.name }}
@@ -88,6 +94,9 @@ jobs:
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
+
+      - name: Disable Dart analytics
+        run: dart --disable-analytics
 
       - name: Pub get
         working-directory: ${{ matrix.path }}
@@ -139,9 +148,12 @@ jobs:
           rustup toolchain install stable --profile minimal
           rustup default stable
 
+      - name: Disable Dart analytics
+        run: dart --disable-analytics
+
       - name: Pub get
         working-directory: ${{ matrix.path }}
-        run: flutter pub get
+        run: flutter --suppress-analytics pub get
 
       - name: Generate benchmark fixtures
         if: matrix.path == 'examples/benchmark_project'
@@ -162,11 +174,11 @@ jobs:
 
       - name: Analyze
         working-directory: ${{ matrix.path }}
-        run: flutter analyze --no-pub
+        run: flutter --suppress-analytics analyze --no-pub
 
       - name: Test
         working-directory: ${{ matrix.path }}
-        run: flutter test
+        run: flutter --suppress-analytics test
 
   benchmark:
     name: Benchmark / benchmark_project
@@ -191,7 +203,7 @@ jobs:
 
       - name: Pub get
         working-directory: examples/benchmark_project
-        run: flutter pub get
+        run: flutter --suppress-analytics pub get
 
       - name: Build release CLI
         run: cargo build --quiet -p dust_cli --release

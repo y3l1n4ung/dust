@@ -64,8 +64,8 @@ final class LatestDartProductCard with _$LatestDartProductCard {
   ({String id, String title}) get summary => (id: id, title: title);
 
   LatestProductBadge get badge => switch ((active, stockCount)) {
-    (false, _) => LatestProductBadge.soldOut,
-    (true, <= 3) => LatestProductBadge.lowStock,
-    _ => LatestProductBadge.fresh,
-  };
+        (false, _) => LatestProductBadge.soldOut,
+        (true, <= 3) => LatestProductBadge.lowStock,
+        _ => LatestProductBadge.fresh,
+      };
 }

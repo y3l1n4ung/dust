@@ -67,6 +67,8 @@ The `@SerDe` annotation can be applied to both **classes** and **individual fiel
 | :--- | :--- | :--- |
 | `renameAll` | `SerDeRename` | Automatically renames all fields (e.g., `snakeCase`, `camelCase`). |
 | `disallowUnrecognizedKeys` | `bool` | If `true`, deserialization throws an error if the JSON contains keys not mapped to a field. |
+| `tag` | `String` | JSON discriminator key for sealed class variants. |
+| `content` | `String` | Optional payload key for adjacent-tagged sealed class variants. |
 
 ### Field-Level Options
 
@@ -115,6 +117,57 @@ enum UserRole {
 
 > [!NOTE]
 > Per-variant renames (e.g. `@SerDe(rename: '...')` on a specific enum value) are not yet supported.
+
+---
+
+## Sealed Classes
+
+Dust supports Rust-style tagged sealed classes through redirecting factories.
+If the redirected target class is not written in source, Dust generates it in
+the `.g.dart` part.
+
+```dart
+import 'package:dust_dart/serde.dart';
+
+part 'payment_event.g.dart';
+
+@Derive([Serialize(), Deserialize()])
+@SerDe(tag: 'type', renameAll: SerDeRename.snakeCase)
+sealed class PaymentEvent with _$PaymentEvent {
+  const PaymentEvent();
+
+  factory PaymentEvent.fromJson(Map<String, Object?> json) =>
+      _$PaymentEventFromJson(json);
+
+  @SerDe(rename: 'payment_success')
+  factory PaymentEvent.success({
+    required String id,
+    required int cents,
+  }) = PaymentSuccess;
+
+  factory PaymentEvent.failed({
+    required String id,
+    required String reason,
+  }) = PaymentFailed;
+}
+```
+
+The generated part contains `PaymentSuccess` and `PaymentFailed` as concrete
+`final class` variants, plus variant-specific `fromJson` helpers. The base
+`toJson()` mixin still handles serialization for all variants.
+
+Use an explicit source class instead of generated variants when the variant
+needs extra derives such as `CopyWith()` or `Eq()`, custom methods, custom
+interfaces, or nullable named parameters that must still be marked `required`.
+
+For adjacent tagging, add `content`:
+
+```dart
+@SerDe(tag: 'kind', content: 'payload', renameAll: SerDeRename.snakeCase)
+sealed class PaymentEvent with _$PaymentEvent {
+  const PaymentEvent();
+}
+```
 
 ---
 

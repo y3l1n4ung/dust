@@ -2,7 +2,9 @@ use dust_ir::{ClassIr, ClassKindIr, ParamKind, SerdeClassConfigIr, SerdeVariantC
 use dust_plugin_api::{DustPlugin, SymbolPlan};
 use dust_plugin_serde::register_plugin;
 
-use super::support::{class, constructor, constructor_param, field, library, members_for_class};
+use super::support::{
+    class, constructor, constructor_param, field, function_for, library, members_for_class,
+};
 
 #[test]
 fn generates_internal_tagged_sealed_helpers() {
@@ -106,14 +108,6 @@ JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) {
     );
 }
 
-fn function_for<'a>(functions: &'a [String], needle: &str) -> &'a str {
-    functions
-        .iter()
-        .find(|function| function.contains(needle))
-        .map(String::as_str)
-        .unwrap_or("")
-}
-
 fn sealed_base(content: Option<&str>) -> ClassIr {
     let mut base = class(
         "JsonPaymentEvent",
@@ -130,11 +124,13 @@ fn sealed_base(content: Option<&str>) -> ClassIr {
                 constructor_name: "success".to_owned(),
                 target_class_name: "JsonPaymentSuccess".to_owned(),
                 tag: "payment_success".to_owned(),
+                params: Vec::new(),
             },
             SerdeVariantConfigIr {
                 constructor_name: "failed".to_owned(),
                 target_class_name: "JsonPaymentFailed".to_owned(),
                 tag: "payment_failed".to_owned(),
+                params: Vec::new(),
             },
         ],
         ..SerdeClassConfigIr::default()
