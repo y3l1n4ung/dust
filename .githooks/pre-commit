@@ -6,16 +6,27 @@ cd "$ROOT_DIR"
 
 echo "==> Running Dust pre-commit checks"
 
-./scripts/format.sh --check
+run_without_git_env() {
+  (
+    unset $(git rev-parse --local-env-vars)
+    "$@"
+  )
+}
+
+./scripts/rust/format.sh --check
+run_without_git_env ./scripts/dart/format.sh --check
+run_without_git_env ./scripts/flutter/format.sh --check
+run_without_git_env ./scripts/dart/format.sh --check --examples
+run_without_git_env ./scripts/flutter/format.sh --check --examples
 ./scripts/rust/lint.sh
-./scripts/dart/lint.sh
-./scripts/flutter/lint.sh
-./scripts/dart/lint.sh --examples
-./scripts/flutter/lint.sh --examples
+run_without_git_env ./scripts/dart/lint.sh
+run_without_git_env ./scripts/flutter/lint.sh
+run_without_git_env ./scripts/dart/lint.sh --examples
+run_without_git_env ./scripts/flutter/lint.sh --examples
 ./scripts/rust/test.sh
-./scripts/dart/test.sh
-./scripts/flutter/test.sh
-./scripts/dart/test.sh --examples
-./scripts/flutter/test.sh --examples
+run_without_git_env ./scripts/dart/test.sh
+run_without_git_env ./scripts/flutter/test.sh
+run_without_git_env ./scripts/dart/test.sh --examples
+run_without_git_env ./scripts/flutter/test.sh --examples
 
 echo "==> Pre-commit checks passed"
