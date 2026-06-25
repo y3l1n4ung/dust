@@ -2,9 +2,13 @@ import 'package:dust_dart/serde.dart';
 
 part 'json_payment_event.g.dart';
 
-@SerDe(tag: 'type', content: 'payload', renameAll: SerDeRename.snakeCase)
-sealed class JsonPaymentEvent {
+@Derive([Serialize(), Deserialize()])
+@SerDe(tag: 'type', renameAll: SerDeRename.snakeCase)
+sealed class JsonPaymentEvent with _$JsonPaymentEvent {
   const JsonPaymentEvent();
+
+  factory JsonPaymentEvent.fromJson(Map<String, Object?> json) =>
+      _$JsonPaymentEventFromJson(json);
 
   @SerDe(rename: 'payment_success')
   factory JsonPaymentEvent.success({

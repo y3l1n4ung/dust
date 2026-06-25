@@ -13,14 +13,44 @@
 
 part of 'json_payment_event.dart';
 
+mixin _$JsonPaymentEvent {
+  Map<String, Object?> toJson() =>
+      _$JsonPaymentEventToJson(this as JsonPaymentEvent);
+}
+
 mixin _$JsonPaymentSuccess {
   Map<String, Object?> toJson() =>
-      _$JsonPaymentSuccessToJson(this as JsonPaymentSuccess);
+      _$JsonPaymentEventToJson(this as JsonPaymentEvent);
 }
 
 mixin _$JsonPaymentFailed {
   Map<String, Object?> toJson() =>
-      _$JsonPaymentFailedToJson(this as JsonPaymentFailed);
+      _$JsonPaymentEventToJson(this as JsonPaymentEvent);
+}
+
+Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) {
+  return switch (instance) {
+    JsonPaymentSuccess value => <String, Object?>{
+      ..._$JsonPaymentSuccessToJson(value),
+      'type': 'payment_success',
+    },
+    JsonPaymentFailed value => <String, Object?>{
+      ..._$JsonPaymentFailedToJson(value),
+      'type': 'failed',
+    },
+  };
+}
+
+// factory JsonPaymentEvent.fromJson(Map<String, Object?> json) => _$JsonPaymentEventFromJson(json);
+JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) {
+  final tagValue = JsonHelper.as<String>(json['type'], 'type', 'String');
+  final variantJson = Map<String, Object?>.from(json)..remove('type');
+
+  return switch (tagValue) {
+    'payment_success' => _$JsonPaymentSuccessFromJson(variantJson),
+    'failed' => _$JsonPaymentFailedFromJson(variantJson),
+    _ => throw ArgumentError('Unknown SerDe variant tag: $tagValue'),
+  };
 }
 
 Map<String, Object?> _$JsonPaymentSuccessToJson(JsonPaymentSuccess instance) {

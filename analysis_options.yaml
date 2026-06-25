@@ -5,7 +5,3 @@ analyzer:
     - "lib/generated/**"
     - "**/*.g.dart"
     - "**/*.freezed.dart"
-
-linter:
-  rules:
-    unnecessary_underscores: false

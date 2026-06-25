@@ -254,9 +254,12 @@ String renderSerdeSealed(int index) {
     imports: ["import 'package:dust_dart/serde.dart';"],
     declarations: [
       '''
+@Derive([Serialize(), Deserialize()])
 @SerDe(tag: 'kind', content: 'payload', renameAll: SerDeRename.snakeCase)
-sealed class $className {
+sealed class $className with ${mixinName(className)} {
   const $className();
+
+${serdeFactory(className)}
 
   @SerDe(rename: 'manual_accept')
   factory $className.manualAccept({

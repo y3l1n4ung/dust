@@ -80,18 +80,30 @@ void main() {
 
       expect(event, isA<SealedAccepted9>());
       final accepted = event as SealedAccepted9;
-      expect(accepted.toJson(), {'id': 'case-9', 'score': 99});
-      expect(SealedAccepted9.fromJson(accepted.toJson()), equals(accepted));
+      expect(event.toJson(), {
+        'kind': 'manual_accept',
+        'payload': {'id': 'case-9', 'score': 99},
+      });
+      expect(SealedEvent9.fromJson(event.toJson()), equals(accepted));
+      expect(
+        SealedAccepted9.fromJson({'id': 'case-9', 'score': 99}),
+        equals(accepted),
+      );
 
       final rejected = SealedEvent9.autoReject(
         id: 'case-10',
         reason: 'timeout',
       );
       expect(rejected, isA<SealedRejected9>());
-      expect((rejected as SealedRejected9).toJson(), {
-        'id': 'case-10',
-        'reason': 'timeout',
+      expect(rejected.toJson(), {
+        'kind': 'auto_reject',
+        'payload': {'id': 'case-10', 'reason': 'timeout'},
       });
+      expect(SealedEvent9.fromJson(rejected.toJson()), isA<SealedRejected9>());
+      expect(
+        SealedRejected9.fromJson({'id': 'case-10', 'reason': 'timeout'}),
+        equals(rejected),
+      );
     },
   );
 
