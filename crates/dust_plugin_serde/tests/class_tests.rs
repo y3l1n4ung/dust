@@ -11,3 +11,6 @@ mod nested;
 
 #[path = "class_tests/config.rs"]
 mod config;
+
+#[path = "class_tests/sealed.rs"]
+mod sealed;

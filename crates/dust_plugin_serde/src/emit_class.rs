@@ -27,18 +27,16 @@ struct ClassTemplateContext<'a> {
 }
 
 /// Renders the generated `toJson` mixin member for a class.
-pub(crate) fn emit_to_json_mixin(class: &ClassIr) -> String {
+pub(crate) fn emit_to_json_mixin(helper_class_name: &str) -> String {
     let inline = format!(
-        "Map<String, Object?> toJson() => _${}ToJson(this as {});",
-        class.name, class.name
+        "Map<String, Object?> toJson() => _${helper_class_name}ToJson(this as {helper_class_name});"
     );
     if inline.len() <= MIXIN_MEMBER_WIDTH {
         return inline;
     }
 
     format!(
-        "Map<String, Object?> toJson() =>\n    _${}ToJson(this as {});",
-        class.name, class.name
+        "Map<String, Object?> toJson() =>\n    _${helper_class_name}ToJson(this as {helper_class_name});"
     )
 }
 

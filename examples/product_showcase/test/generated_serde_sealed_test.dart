@@ -14,11 +14,16 @@ void main() {
 
       expect(event, isA<JsonPaymentSuccess>());
       final success = event as JsonPaymentSuccess;
-      expect(success.toJson(), {
+      expect(event.toJson(), {
         'id': 'pay-1',
         'cents': 4200,
         'currency': 'USD',
+        'type': 'payment_success',
       });
+      expect(
+        JsonPaymentEvent.fromJson(event.toJson()),
+        isA<JsonPaymentSuccess>(),
+      );
 
       final decoded = JsonPaymentSuccess.fromJson({
         'id': 'pay-1',
@@ -35,11 +40,16 @@ void main() {
         retryable: true,
       );
       expect(failed, isA<JsonPaymentFailed>());
-      expect((failed as JsonPaymentFailed).toJson(), {
+      expect(failed.toJson(), {
         'id': 'pay-2',
         'reason': 'insufficient_funds',
         'retryable': true,
+        'type': 'failed',
       });
+      expect(
+        JsonPaymentEvent.fromJson(failed.toJson()),
+        isA<JsonPaymentFailed>(),
+      );
     },
   );
 }
