@@ -44,7 +44,7 @@ void main() {
               .having(
                 (error) => '${error.message}',
                 'message',
-                contains('expected String'),
+                'expected String at id',
               ),
         ),
       );
@@ -93,6 +93,31 @@ void main() {
     });
 
     expect(roundTrip, equals(account));
+  });
+
+  test('generated serde diagnostics include nested collection paths', () {
+    expect(
+      () => JsonAccount.fromJson({
+        'profile': {
+          'id': 'user-9',
+          'display_name': 'Aye',
+          'tags': ['featured'],
+        },
+        'metrics': {
+          'daily': [1, 'bad'],
+        },
+        'archived': false,
+      }),
+      throwsA(
+        isA<ArgumentError>()
+            .having((error) => error.name, 'name', 'metrics.daily[1]')
+            .having(
+              (error) => '${error.message}',
+              'message',
+              'expected int at metrics.daily[1]',
+            ),
+      ),
+    );
   });
 
   test('generated serde features support DateTime Uri and BigInt', () {

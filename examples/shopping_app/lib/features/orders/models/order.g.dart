@@ -231,11 +231,10 @@ Map<String, Object?> _$OrderToJson(Order instance) {
 // factory Order.fromJson(Map<String, Object?> json) => _$OrderFromJson(json);
 Order _$OrderFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
-  final itemsValue = JsonHelper.asList(json['items'], 'items')
-      .map((item) => CartItem.fromJson(JsonHelper.asMap(item, 'items')))
-      .toList();
+  final itemsValue = JsonHelper.decodeList(json['items'], 'items',
+      (item, itemKey) => CartItem.fromJson(JsonHelper.asMap(item, itemKey)));
   final totalAmountValue = JsonHelper.as<num>(json['totalAmount'], 'totalAmount', 'num').toDouble();
-  final statusValue = _$OrderStatusFromJson(json['status']);
+  final statusValue = _$OrderStatusFromJson(json['status'], 'status');
   final createdAtValue = JsonHelper.asDateTime(json['createdAt'], 'createdAt');
   final shippingAddressValue = _$ShippingAddressFromJson(JsonHelper.asMap(json['shippingAddress'], 'shippingAddress'));
 
@@ -298,13 +297,13 @@ Object? _$OrderStatusToJson(OrderStatus instance) {
   };
 }
 
-OrderStatus _$OrderStatusFromJson(Object? json) {
+OrderStatus _$OrderStatusFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
     'pending' => OrderStatus.pending,
     'processing' => OrderStatus.processing,
     'shipped' => OrderStatus.shipped,
     'delivered' => OrderStatus.delivered,
     'cancelled' => OrderStatus.cancelled,
-    _ => throw ArgumentError.value(json, 'json', 'unknown value for OrderStatus'),
+    _ => throw ArgumentError.value(json, key, 'unknown value for OrderStatus at $key'),
   };
 }

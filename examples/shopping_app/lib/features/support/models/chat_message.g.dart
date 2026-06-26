@@ -267,7 +267,7 @@ Map<String, Object?> _$ChatMessageToJson(ChatMessage instance) {
 // factory ChatMessage.fromJson(Map<String, Object?> json) => _$ChatMessageFromJson(json);
 ChatMessage _$ChatMessageFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
-  final roleValue = _$ChatRoleFromJson(json['role']);
+  final roleValue = _$ChatRoleFromJson(json['role'], 'role');
   final textValue = JsonHelper.as<String>(json['text'], 'text', 'String');
   final createdAtValue = JsonHelper.asDateTime(json['createdAt'], 'createdAt');
 
@@ -295,9 +295,8 @@ ChatRequest _$ChatRequestFromJson(Map<String, Object?> json) {
     'message',
     'String',
   );
-  final historyValue = JsonHelper.asList(json['history'], 'history')
-      .map((item) => _$ChatMessageFromJson(JsonHelper.asMap(item, 'history')))
-      .toList();
+  final historyValue = JsonHelper.decodeList(json['history'], 'history',
+      (item, itemKey) => _$ChatMessageFromJson(JsonHelper.asMap(item, itemKey)));
 
   return ChatRequest(message: messageValue, history: historyValue);
 }
@@ -328,10 +327,10 @@ Object? _$ChatRoleToJson(ChatRole instance) {
   };
 }
 
-ChatRole _$ChatRoleFromJson(Object? json) {
+ChatRole _$ChatRoleFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
     'user' => ChatRole.user,
     'assistant' => ChatRole.assistant,
-    _ => throw ArgumentError.value(json, 'json', 'unknown value for ChatRole'),
+    _ => throw ArgumentError.value(json, key, 'unknown value for ChatRole at $key'),
   };
 }

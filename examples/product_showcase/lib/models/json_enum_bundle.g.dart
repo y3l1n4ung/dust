@@ -79,24 +79,27 @@ Map<String, Object?> _$JsonEnumBundleToJson(JsonEnumBundle instance) {
 
 // factory JsonEnumBundle.fromJson(Map<String, Object?> json) => _$JsonEnumBundleFromJson(json);
 JsonEnumBundle _$JsonEnumBundleFromJson(Map<String, Object?> json) {
+  var rawPrimaryLevelKey = 'primary_level';
   Object? rawPrimaryLevel;
   if (json.containsKey('primary_level')) {
     rawPrimaryLevel = json['primary_level'];
   } else if (json.containsKey('primaryLevel')) {
+    rawPrimaryLevelKey = 'primaryLevel';
     rawPrimaryLevel = json['primaryLevel'];
   }
-  final primaryLevelValue = _$AccessLevelFromJson(rawPrimaryLevel);
+  final primaryLevelValue = _$AccessLevelFromJson(
+    rawPrimaryLevel,
+    rawPrimaryLevelKey,
+  );
   final fallbackStateValue = json['fallbackState'] == null
       ? null
-      : _$ReviewStateFromJson(json['fallbackState']);
-  final levelsValue = JsonHelper.asList(json['levels'], 'levels')
-      .map((item) => _$AccessLevelFromJson(item))
-      .toList();
-  final stateByRegionValue = JsonHelper.asMap(json['stateByRegion'], 'stateByRegion')
-      .map((mapKey, value) => MapEntry(mapKey, _$ReviewStateFromJson(value)));
-  final statesValue = JsonHelper.asList(json['states'], 'states')
-      .map((item) => _$ReviewStateFromJson(item))
-      .toSet();
+      : _$ReviewStateFromJson(json['fallbackState'], 'fallbackState');
+  final levelsValue = JsonHelper.decodeList(json['levels'], 'levels',
+      (item, itemKey) => _$AccessLevelFromJson(item, itemKey));
+  final stateByRegionValue = JsonHelper.decodeMap(json['stateByRegion'], 'stateByRegion',
+      (value, valueKey) => _$ReviewStateFromJson(value, valueKey));
+  final statesValue = JsonHelper.decodeSet(json['states'], 'states',
+      (item, itemKey) => _$ReviewStateFromJson(item, itemKey));
 
   return JsonEnumBundle(
     primaryLevel: primaryLevelValue,
@@ -115,12 +118,12 @@ Object? _$AccessLevelToJson(AccessLevel instance) {
   };
 }
 
-AccessLevel _$AccessLevelFromJson(Object? json) {
+AccessLevel _$AccessLevelFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
     'super-admin' => AccessLevel.superAdmin,
     'guest-user' => AccessLevel.guestUser,
     'read-only' => AccessLevel.readOnly,
-    _ => throw ArgumentError.value(json, 'json', 'unknown value for AccessLevel'),
+    _ => throw ArgumentError.value(json, key, 'unknown value for AccessLevel at $key'),
   };
 }
 
@@ -132,11 +135,11 @@ Object? _$ReviewStateToJson(ReviewState instance) {
   };
 }
 
-ReviewState _$ReviewStateFromJson(Object? json) {
+ReviewState _$ReviewStateFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
     'pending' => ReviewState.pending,
     'approved' => ReviewState.approved,
     'archived' => ReviewState.archived,
-    _ => throw ArgumentError.value(json, 'json', 'unknown value for ReviewState'),
+    _ => throw ArgumentError.value(json, key, 'unknown value for ReviewState at $key'),
   };
 }

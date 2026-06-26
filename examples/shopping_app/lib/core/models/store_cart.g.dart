@@ -189,9 +189,8 @@ StoreCart _$StoreCartFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
   final userIdValue = JsonHelper.as<int>(json['userId'], 'userId', 'int');
   final dateValue = JsonHelper.asDateTime(json['date'], 'date');
-  final productsValue = JsonHelper.asList(json['products'], 'products')
-      .map((item) => _$StoreCartProductFromJson(JsonHelper.asMap(item, 'products')))
-      .toList();
+  final productsValue = JsonHelper.decodeList(json['products'], 'products',
+      (item, itemKey) => _$StoreCartProductFromJson(JsonHelper.asMap(item, itemKey)));
 
   return StoreCart(
     id: idValue,

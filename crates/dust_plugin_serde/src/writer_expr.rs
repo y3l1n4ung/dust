@@ -188,54 +188,66 @@ fn decode_non_nullable_expr(
         TypeIr::Named { name, .. } if name.as_ref() == DART_BIG_INT => {
             format!("JsonHelper.asBigInt({raw}, {key})")
         }
-        TypeIr::Named { name, args, .. } if name.as_ref() == DART_LIST => format!(
-            "JsonHelper.asList({raw}, {key})\n    .map((item) => {})\n    .toList()",
-            decode_expr(
+        TypeIr::Named { name, args, .. } if name.as_ref() == DART_LIST => {
+            let item_expr = decode_expr(
                 "item",
-                key,
+                "itemKey",
                 &args[0],
                 deserializable_classes,
-                deserializable_enums
-            )
-        ),
-        TypeIr::Named { name, args, .. } if name.as_ref() == DART_SET => format!(
-            "JsonHelper.asList({raw}, {key})\n    .map((item) => {})\n    .toSet()",
-            decode_expr(
+                deserializable_enums,
+            );
+            decode_collection_expr("decodeList", raw, key, "item", "itemKey", &item_expr)
+        }
+        TypeIr::Named { name, args, .. } if name.as_ref() == DART_SET => {
+            let item_expr = decode_expr(
                 "item",
-                key,
+                "itemKey",
                 &args[0],
                 deserializable_classes,
-                deserializable_enums
-            )
-        ),
+                deserializable_enums,
+            );
+            decode_collection_expr("decodeSet", raw, key, "item", "itemKey", &item_expr)
+        }
         TypeIr::Named { name, args, .. } if name.as_ref() == DART_MAP => {
             let value_expr = decode_expr(
                 "value",
-                key,
+                "valueKey",
                 &args[1],
                 deserializable_classes,
                 deserializable_enums,
             );
-            if value_expr.contains('\n') {
-                format!(
-                    "JsonHelper.asMap({raw}, {key})\n    .map(\n      (mapKey, value) => MapEntry(\n        mapKey,\n{},\n      ),\n    )",
-                    indent_expr(&value_expr, 8)
-                )
-            } else {
-                format!(
-                    "JsonHelper.asMap({raw}, {key})\n    .map((mapKey, value) => MapEntry(mapKey, {value_expr}))"
-                )
-            }
+            decode_collection_expr("decodeMap", raw, key, "value", "valueKey", &value_expr)
         }
         TypeIr::Named { name, .. } => {
             if contains_symbol(deserializable_classes, name.as_ref()) {
                 format!("_${name}FromJson(JsonHelper.asMap({raw}, {key}))")
             } else if contains_symbol(deserializable_enums, name.as_ref()) {
-                format!("_${name}FromJson({raw})")
+                format!("_${name}FromJson({raw}, {key})")
             } else {
                 format!("{name}.fromJson(JsonHelper.asMap({raw}, {key}))")
             }
         }
+    }
+}
+
+/// Renders a path-aware collection decode expression.
+fn decode_collection_expr(
+    helper: &str,
+    raw: &str,
+    key: &str,
+    value_name: &str,
+    key_name: &str,
+    value_expr: &str,
+) -> String {
+    if value_expr.contains('\n') {
+        format!(
+            "JsonHelper.{helper}({raw}, {key},\n    ({value_name}, {key_name}) =>\n{})",
+            indent_expr(value_expr, 8)
+        )
+    } else {
+        format!(
+            "JsonHelper.{helper}({raw}, {key},\n    ({value_name}, {key_name}) => {value_expr})"
+        )
     }
 }
 

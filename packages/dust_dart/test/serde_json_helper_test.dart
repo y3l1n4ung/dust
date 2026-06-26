@@ -24,9 +24,19 @@ void main() {
         throwsA(
           isA<ArgumentError>()
               .having((error) => error.name, 'name', 'name')
-              .having((error) => error.invalidValue, 'invalidValue', 7),
+              .having((error) => error.invalidValue, 'invalidValue', 7)
+              .having(
+                (error) => '${error.message}',
+                'message',
+                'expected String at name',
+              ),
         ),
       );
+    });
+
+    test('builds nested json paths for collections', () {
+      expect(JsonHelper.indexPath('metrics.daily', 2), 'metrics.daily[2]');
+      expect(JsonHelper.keyPath('metrics', 'daily'), 'metrics.daily');
     });
 
     test('reads list and map values', () {
