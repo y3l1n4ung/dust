@@ -102,9 +102,9 @@ jobs:
         working-directory: ${{ matrix.path }}
         run: dart pub get
 
-      - name: Dust freshness check
+      - name: Dust clean build
         if: matrix.dust_check != ''
-        run: cargo run --quiet -p dust_cli -- check --root ${{ matrix.dust_check }}
+        run: cargo run --quiet -p dust_cli -- build --clean --root ${{ matrix.dust_check }}
 
       - name: Analyze
         working-directory: ${{ matrix.path }}
@@ -162,15 +162,15 @@ jobs:
 
       - name: Build benchmark generated outputs
         if: matrix.path == 'examples/benchmark_project'
-        run: cargo run --quiet -p dust_cli -- build --root examples/benchmark_project
+        run: cargo run --quiet -p dust_cli -- build --clean --root examples/benchmark_project
 
-      - name: Dust freshness check
+      - name: Dust clean build
         if: matrix.dust_check != '' && matrix.path != 'examples/benchmark_project'
-        run: cargo run --quiet -p dust_cli -- check --root ${{ matrix.dust_check }}
+        run: cargo run --quiet -p dust_cli -- build --clean --root ${{ matrix.dust_check }}
 
-      - name: Dust DB freshness check
+      - name: Dust DB build
         if: matrix.db_check
-        run: cargo run --quiet -p dust_cli -- check --root ${{ matrix.path }} --db
+        run: cargo run --quiet -p dust_cli -- build --root ${{ matrix.path }} --db
 
       - name: Analyze
         working-directory: ${{ matrix.path }}

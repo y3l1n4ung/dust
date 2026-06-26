@@ -24,10 +24,16 @@ for target in "${TARGETS[@]}"; do
 done
 
 if [[ "${1:-}" == "--examples" ]]; then
+  echo "==> Dust build --clean: examples/benchmark_project"
+  cargo run --quiet -p dust_cli -- build --clean --root examples/benchmark_project
   echo "==> Dust check: examples/benchmark_project"
   cargo run --quiet -p dust_cli -- check --root examples/benchmark_project
+  echo "==> Dust build --clean: examples/shopping_app"
+  cargo run --quiet -p dust_cli -- build --clean --root examples/shopping_app
   echo "==> Dust check: examples/shopping_app"
   cargo run --quiet -p dust_cli -- check --root examples/shopping_app
+  echo "==> Dust build: examples/shopping_app --db"
+  cargo run --quiet -p dust_cli -- build --root examples/shopping_app --db
   echo "==> Dust check: examples/shopping_app --db"
   cargo run --quiet -p dust_cli -- check --root examples/shopping_app --db
 fi

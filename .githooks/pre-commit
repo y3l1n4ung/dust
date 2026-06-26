@@ -13,6 +13,15 @@ run_without_git_env() {
   )
 }
 
+ensure_example_outputs_are_staged() {
+  if ! git diff --quiet -- examples/product_showcase examples/benchmark_project examples/shopping_app; then
+    echo "error: Dust example outputs changed during pre-commit." >&2
+    echo "Run: git add examples/product_showcase examples/benchmark_project examples/shopping_app" >&2
+    echo "Then rerun your commit." >&2
+    exit 1
+  fi
+}
+
 ./scripts/rust/format.sh --check
 run_without_git_env ./scripts/dart/format.sh --check
 run_without_git_env ./scripts/flutter/format.sh --check
@@ -23,10 +32,12 @@ run_without_git_env ./scripts/dart/lint.sh
 run_without_git_env ./scripts/flutter/lint.sh
 run_without_git_env ./scripts/dart/lint.sh --examples
 run_without_git_env ./scripts/flutter/lint.sh --examples
+ensure_example_outputs_are_staged
 ./scripts/rust/test.sh
 run_without_git_env ./scripts/dart/test.sh
 run_without_git_env ./scripts/flutter/test.sh
 run_without_git_env ./scripts/dart/test.sh --examples
 run_without_git_env ./scripts/flutter/test.sh --examples
+ensure_example_outputs_are_staged
 
 echo "==> Pre-commit checks passed"

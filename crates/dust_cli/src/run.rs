@@ -65,6 +65,12 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
 
     match parsed.command {
         CliCommand::Build => {
+            if parsed.options.clean {
+                let clean = run(CommandRequest::Clean(CleanRequest { cwd: cwd.clone() }));
+                if clean.has_errors() {
+                    return clean;
+                }
+            }
             let request = BuildRequest {
                 cwd,
                 fail_fast: parsed.options.fail_fast,
