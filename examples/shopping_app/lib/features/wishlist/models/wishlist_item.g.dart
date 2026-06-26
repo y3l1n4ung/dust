@@ -93,6 +93,7 @@ Map<String, Object?> _$WishlistItemToJson(WishlistItem instance) {
     'savedAt': instance.savedAt.toIso8601String(),
   };
 }
+
 // factory WishlistItem.fromJson(Map<String, Object?> json) => _$WishlistItemFromJson(json);
 WishlistItem _$WishlistItemFromJson(Map<String, Object?> json) {
   final productValue = Product.fromJson(JsonHelper.asMap(json['product'], 'product'));

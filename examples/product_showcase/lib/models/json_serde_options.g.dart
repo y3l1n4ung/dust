@@ -60,7 +60,8 @@ mixin _$JsonSerdeOptions {
     ]);
   }
 
-  Map<String, Object?> toJson() => _$JsonSerdeOptionsToJson(this as JsonSerdeOptions);
+  Map<String, Object?> toJson() =>
+      _$JsonSerdeOptionsToJson(this as JsonSerdeOptions);
 }
 
 Map<String, Object?> _$JsonSerdeOptionsToJson(JsonSerdeOptions instance) {
@@ -74,6 +75,7 @@ Map<String, Object?> _$JsonSerdeOptionsToJson(JsonSerdeOptions instance) {
     'client_only': instance.clientOnly,
   };
 }
+
 // factory JsonSerdeOptions.fromJson(Map<String, Object?> json) => _$JsonSerdeOptionsFromJson(json);
 JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
   const allowedKeys = <String>{
@@ -93,7 +95,7 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
   }
 
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
-  final eValue = _$MyEnumFromJson(json['e']);
+  final eValue = _$MyEnumFromJson(json['e'], 'e');
   var rawDisplayNameKey = 'display_name';
   Object? rawDisplayName;
   if (json.containsKey('display_name')) {
@@ -108,9 +110,8 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
     'String',
   );
   final tagsValue = json.containsKey('tags')
-      ? JsonHelper.asList(json['tags'], 'tags')
-      .map((item) => JsonHelper.as<String>(item, 'tags', 'String'))
-      .toList()
+      ? JsonHelper.decodeList(json['tags'], 'tags',
+      (item, itemKey) => JsonHelper.as<String>(item, itemKey, 'String'))
       : ['guest'];
   final serverOnlyValue = json.containsKey('server_only')
       ? JsonHelper.as<String>(json['server_only'], 'server_only', 'String')
@@ -128,16 +129,18 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
     hidden: hiddenValue,
   );
 }
+
 Object? _$MyEnumToJson(MyEnum instance) {
   return switch (instance) {
     MyEnum.A => 'A',
     MyEnum.B => 'B',
   };
 }
-MyEnum _$MyEnumFromJson(Object? json) {
+
+MyEnum _$MyEnumFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
     'A' => MyEnum.A,
     'B' => MyEnum.B,
-    _ => throw ArgumentError.value(json, 'json', 'unknown value for MyEnum'),
+    _ => throw ArgumentError.value(json, key, 'unknown value for MyEnum at $key'),
   };
 }

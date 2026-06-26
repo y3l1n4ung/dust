@@ -1,5 +1,5 @@
 name: dust_dart
-description: Unified Dart runtime and annotations for Dust code generation.
+description: Annotations and runtime support for generating Dart code with dust.
 version: 0.1.0
 repository: https://github.com/y3l1n4ung/dust
 issue_tracker: https://github.com/y3l1n4ung/dust/issues
@@ -7,11 +7,11 @@ topics:
   - codegen
   - annotations
   - json
+  - validation
   - http
-  - functional
 
 environment:
-  sdk: ^3.11.0
+  sdk: ">=3.6.0 <4.0.0"
 
 resolution: workspace
 

@@ -57,8 +57,8 @@ class WishlistViewModel extends $WishlistViewModel {
     final exists = state.containsProduct(product.id);
     final nextItems = exists
         ? state.items
-              .where((item) => item.product.id != product.id)
-              .toList(growable: false)
+            .where((item) => item.product.id != product.id)
+            .toList(growable: false)
         : [
             WishlistItem(product: product, savedAt: DateTime.now()),
             ...state.items,

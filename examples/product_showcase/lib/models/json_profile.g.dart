@@ -60,6 +60,7 @@ Map<String, Object?> _$JsonProfileToJson(JsonProfile instance) {
         .toList(),
   };
 }
+
 // factory JsonProfile.fromJson(Map<String, Object?> json) => _$JsonProfileFromJson(json);
 JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
   const allowedKeys = <String>{'id', 'display_name', 'displayName', 'tags'};
@@ -82,10 +83,13 @@ JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
       ? null
       : JsonHelper.as<String>(rawDisplayName, rawDisplayNameKey, 'String');
   final tagsValue = json.containsKey('tags')
-      ? JsonHelper.asList(json['tags'], 'tags')
-      .map((item) => JsonHelper.as<String>(item, 'tags', 'String'))
-      .toList()
+      ? JsonHelper.decodeList(json['tags'], 'tags',
+      (item, itemKey) => JsonHelper.as<String>(item, itemKey, 'String'))
       : ['guest'];
 
-  return JsonProfile(id: idValue, displayName: displayNameValue, tags: tagsValue);
+  return JsonProfile(
+    id: idValue,
+    displayName: displayNameValue,
+    tags: tagsValue,
+  );
 }

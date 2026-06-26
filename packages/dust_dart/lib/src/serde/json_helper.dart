@@ -6,7 +6,7 @@
 abstract final class JsonHelper {
   /// Throws a consistent type error for one JSON key.
   static Never typeError(Object? value, String key, String expected) {
-    throw ArgumentError.value(value, key, 'expected $expected');
+    throw ArgumentError.value(value, key, 'expected $expected at $key');
   }
 
   /// Reads [value] as [T], or throws a typed JSON error for [key].
@@ -30,6 +30,28 @@ abstract final class JsonHelper {
     return as<List>(value, key, 'List<Object?>').cast<Object?>();
   }
 
+  /// Decodes a JSON list while extending [key] with each item index.
+  static List<T> decodeList<T>(
+    Object? value,
+    String key,
+    T Function(Object? item, String itemKey) decode,
+  ) {
+    final list = asList(value, key);
+    return [
+      for (var index = 0; index < list.length; index++)
+        decode(list[index], indexPath(key, index)),
+    ];
+  }
+
+  /// Decodes a JSON set through [decodeList].
+  static Set<T> decodeSet<T>(
+    Object? value,
+    String key,
+    T Function(Object? item, String itemKey) decode,
+  ) {
+    return decodeList(value, key, decode).toSet();
+  }
+
   /// Reads [value] as a `Map<String, Object?>`.
   static Map<String, Object?> asMap(Object? value, String key) {
     final map = as<Map>(value, key, 'Map<String, Object?>');
@@ -39,6 +61,23 @@ abstract final class JsonHelper {
       return typeError(value, key, 'Map<String, Object?>');
     }
   }
+
+  /// Decodes a JSON map while extending [key] with each map key.
+  static Map<String, T> decodeMap<T>(
+    Object? value,
+    String key,
+    T Function(Object? item, String itemKey) decode,
+  ) {
+    return asMap(value, key).map(
+      (mapKey, item) => MapEntry(mapKey, decode(item, keyPath(key, mapKey))),
+    );
+  }
+
+  /// Returns the JSON path for a list item.
+  static String indexPath(String key, int index) => '$key[$index]';
+
+  /// Returns the JSON path for a map entry.
+  static String keyPath(String key, String childKey) => '$key.$childKey';
 
   /// Reads an ISO-8601 [DateTime] string.
   static DateTime asDateTime(Object? value, String key) {
@@ -63,12 +102,20 @@ abstract final class JsonHelper {
   /// Decodes [value] through a user-provided `SerDeCodec`.
   static T decodeWithCodec<T>(dynamic codec, Object? value, String key) {
     if (value == null) {
-      throw ArgumentError.value(value, key, 'expected value for SerDeCodec');
+      throw ArgumentError.value(
+        value,
+        key,
+        'expected value for SerDeCodec at $key',
+      );
     }
     try {
       return codec.deserialize(value as dynamic) as T;
     } catch (error) {
-      throw ArgumentError.value(value, key, 'failed SerDeCodec decode: $error');
+      throw ArgumentError.value(
+        value,
+        key,
+        'failed SerDeCodec decode at $key: $error',
+      );
     }
   }
 }

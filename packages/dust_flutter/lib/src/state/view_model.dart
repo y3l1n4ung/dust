@@ -78,7 +78,7 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     extends ValueNotifier<TState> {
   /// Creates a view model with typed [args] and [initialState].
   ViewModelBase(this.args, {required TState initialState})
-    : super(initialState);
+      : super(initialState);
 
   /// Typed dependencies for this view model.
   final TArgs args;
@@ -175,24 +175,20 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
 }
 
 /// Creates args for a generated view model scope.
-typedef ViewModelArgsFactory<TArgs extends ViewModelArgs> =
-    TArgs Function(BuildContext context);
+typedef ViewModelArgsFactory<TArgs extends ViewModelArgs> = TArgs Function(
+    BuildContext context);
 
 /// Creates a view model for a generated scope.
-typedef ViewModelFactory<
-  TViewModel extends ViewModelBase<dynamic, dynamic>,
-  TArgs extends ViewModelArgs
-> = TViewModel Function(BuildContext context, TArgs args);
+typedef ViewModelFactory<TViewModel extends ViewModelBase<dynamic, dynamic>,
+        TArgs extends ViewModelArgs>
+    = TViewModel Function(BuildContext context, TArgs args);
 
 /// Generic owner used by generated scopes.
 ///
 /// Generated code should wrap this with typed APIs instead of exposing it
 /// directly to app code.
-class ViewModelOwner<
-  TViewModel extends ViewModelBase<dynamic, dynamic>,
-  TArgs extends ViewModelArgs
->
-    extends StatefulWidget {
+class ViewModelOwner<TViewModel extends ViewModelBase<dynamic, dynamic>,
+    TArgs extends ViewModelArgs> extends StatefulWidget {
   /// Creates an owner that constructs and disposes the view model.
   const ViewModelOwner({
     super.key,
@@ -208,8 +204,8 @@ class ViewModelOwner<
     this.debugName,
     required TViewModel this.value,
     required this.builder,
-  }) : args = null,
-       create = null;
+  })  : args = null,
+        create = null;
 
   /// Args factory for the owned constructor.
   final ViewModelArgsFactory<TArgs>? args;
@@ -231,10 +227,8 @@ class ViewModelOwner<
       _ViewModelOwnerState<TViewModel, TArgs>();
 }
 
-class _ViewModelOwnerState<
-  TViewModel extends ViewModelBase<dynamic, dynamic>,
-  TArgs extends ViewModelArgs
->
+class _ViewModelOwnerState<TViewModel extends ViewModelBase<dynamic, dynamic>,
+        TArgs extends ViewModelArgs>
     extends State<ViewModelOwner<TViewModel, TArgs>> {
   TViewModel? _owned;
 

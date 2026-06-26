@@ -11,6 +11,12 @@ use crate::{
     },
 };
 
+/// Dart's standard formatter line width.
+const DART_LINE_WIDTH: usize = 80;
+
+/// Width available before the enclosing mixin adds two spaces of indentation.
+const MIXIN_MEMBER_WIDTH: usize = DART_LINE_WIDTH - 2;
+
 /// Template context for generated class JSON helpers.
 #[derive(Serialize)]
 struct ClassTemplateContext<'a> {
@@ -21,14 +27,16 @@ struct ClassTemplateContext<'a> {
 }
 
 /// Renders the generated `toJson` mixin member for a class.
-pub(crate) fn emit_to_json_mixin(class: &ClassIr) -> String {
-    render_template(
-        "to_json_mixin",
-        include_str!("templates/to_json_mixin.jinja"),
-        ClassTemplateContext {
-            class_name: &class.name,
-            body: String::new(),
-        },
+pub(crate) fn emit_to_json_mixin(helper_class_name: &str) -> String {
+    let inline = format!(
+        "Map<String, Object?> toJson() => _${helper_class_name}ToJson(this as {helper_class_name});"
+    );
+    if inline.len() <= MIXIN_MEMBER_WIDTH {
+        return inline;
+    }
+
+    format!(
+        "Map<String, Object?> toJson() =>\n    _${helper_class_name}ToJson(this as {helper_class_name});"
     )
 }
 

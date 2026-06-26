@@ -7,6 +7,7 @@ enum BenchmarkPattern {
   serdeNested,
   serdeCodec,
   serdeLinked,
+  serdeSealed,
 }
 
 String fileNameForIndex(int index) =>
@@ -14,8 +15,8 @@ String fileNameForIndex(int index) =>
 
 String primaryClassNameForIndex(int index) {
   final number = index + 1;
-  return switch (BenchmarkPattern.values[index %
-      BenchmarkPattern.values.length]) {
+  return switch (
+      BenchmarkPattern.values[index % BenchmarkPattern.values.length]) {
     BenchmarkPattern.deriveScalar => 'ScalarModel$number',
     BenchmarkPattern.deriveLinked => 'LinkedModel$number',
     BenchmarkPattern.deriveHierarchy => 'EntityView$number',
@@ -24,5 +25,6 @@ String primaryClassNameForIndex(int index) {
     BenchmarkPattern.serdeNested => 'NestedEnvelope$number',
     BenchmarkPattern.serdeCodec => 'CodecEnvelope$number',
     BenchmarkPattern.serdeLinked => 'LinkedSerdeModel$number',
+    BenchmarkPattern.serdeSealed => 'SealedEvent$number',
   };
 }

@@ -33,11 +33,11 @@ fn generates_serde_for_enums() {
     );
     assert_eq!(
         from_json,
-        r#"Status _$StatusFromJson(Object? json) {
+        r#"Status _$StatusFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
     'pending' => Status.pending,
     'active' => Status.active,
-    _ => throw ArgumentError.value(json, 'json', 'unknown value for Status'),
+    _ => throw ArgumentError.value(json, key, 'unknown value for Status at $key'),
   };
 }"#
     );
@@ -70,11 +70,11 @@ fn supports_enum_renaming() {
     );
     assert_eq!(
         from_json,
-        r#"UserRole _$UserRoleFromJson(Object? json) {
+        r#"UserRole _$UserRoleFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
     'super_admin' => UserRole.superAdmin,
     'guest_user' => UserRole.guestUser,
-    _ => throw ArgumentError.value(json, 'json', 'unknown value for UserRole'),
+    _ => throw ArgumentError.value(json, key, 'unknown value for UserRole at $key'),
   };
 }"#
     );

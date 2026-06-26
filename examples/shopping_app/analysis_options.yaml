@@ -1,11 +1,11 @@
-include: package:flutter_lints/flutter.yaml
+include: package:lints/recommended.yaml
 
 analyzer:
   exclude:
-    - lib/*.g.dart
-    - lib/**/*.g.dart
+    - "lib/generated/**"
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
 
 linter:
   rules:
-    prefer_const_constructors: false
     unnecessary_underscores: false

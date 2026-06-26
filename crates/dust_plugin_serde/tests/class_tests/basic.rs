@@ -28,6 +28,30 @@ fn generates_to_json_mixin_member() {
 }
 
 #[test]
+fn wraps_long_to_json_mixin_member_like_dart_format() {
+    let plugin = register_plugin();
+    let library = library(
+        vec![class(
+            "JsonPaymentSuccess",
+            Vec::new(),
+            Vec::new(),
+            &["dust_dart::Serialize"],
+        )],
+        vec![],
+    );
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let members = members_for_class(&contribution, "JsonPaymentSuccess");
+
+    assert_eq!(members.len(), 1);
+    assert_eq!(
+        members[0],
+        r#"Map<String, Object?> toJson() =>
+    _$JsonPaymentSuccessToJson(this as JsonPaymentSuccess);"#
+    );
+}
+
+#[test]
 fn generates_to_json_helper() {
     let plugin = register_plugin();
     let library = library(
@@ -53,6 +77,54 @@ fn generates_to_json_helper() {
     'id': instance.id,
     'age': instance.age,
   };
+}"#
+    );
+}
+
+#[test]
+fn wraps_from_json_constructor_return_like_dart_format() {
+    let plugin = register_plugin();
+    let library = library(
+        vec![class(
+            "JsonPaymentSuccess",
+            vec![
+                field("id", TypeIr::string()),
+                field("cents", TypeIr::builtin(BuiltinType::Int)),
+                field("currency", TypeIr::string()),
+            ],
+            vec![constructor(
+                None,
+                vec![
+                    constructor_param("id", TypeIr::string(), ParamKind::Named),
+                    constructor_param("cents", TypeIr::builtin(BuiltinType::Int), ParamKind::Named),
+                    constructor_param("currency", TypeIr::string(), ParamKind::Named),
+                ],
+            )],
+            &["dust_dart::Deserialize"],
+        )],
+        vec![],
+    );
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let helper = &contribution.top_level_functions[0];
+
+    assert_eq!(
+        helper,
+        r#"// factory JsonPaymentSuccess.fromJson(Map<String, Object?> json) => _$JsonPaymentSuccessFromJson(json);
+JsonPaymentSuccess _$JsonPaymentSuccessFromJson(Map<String, Object?> json) {
+  final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
+  final centsValue = JsonHelper.as<int>(json['cents'], 'cents', 'int');
+  final currencyValue = JsonHelper.as<String>(
+    json['currency'],
+    'currency',
+    'String',
+  );
+
+  return JsonPaymentSuccess(
+    id: idValue,
+    cents: centsValue,
+    currency: currencyValue,
+  );
 }"#
     );
 }

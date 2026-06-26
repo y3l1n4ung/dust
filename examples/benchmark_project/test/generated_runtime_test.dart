@@ -3,6 +3,7 @@ import 'package:dust_benchmark_project/generated_models/model_00004.dart';
 import 'package:dust_benchmark_project/generated_models/model_00005.dart';
 import 'package:dust_benchmark_project/generated_models/model_00007.dart';
 import 'package:dust_benchmark_project/generated_models/model_00008.dart';
+import 'package:dust_benchmark_project/generated_models/model_00009.dart';
 import 'package:dust_benchmark_project/generated_models/validation_showcase.dart';
 import 'package:dust_benchmark_project/support/common.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -71,6 +72,48 @@ void main() {
     expect(identical(copied.items, linked.items), isTrue);
     expect(identical(copied.byId, linked.byId), isTrue);
   });
+
+  test(
+    'sealed serde metadata sample keeps concrete variants round-trippable',
+    () {
+      final event = SealedEvent9.manualAccept(id: 'case-9', score: 99);
+
+      expect(event, isA<SealedAccepted9>());
+      final accepted = event as SealedAccepted9;
+      expect(event.toJson(), {
+        'kind': 'manual_accept',
+        'payload': {'id': 'case-9', 'score': 99},
+      });
+      final decodedAccepted = SealedEvent9.fromJson(event.toJson());
+      expect(decodedAccepted, isA<SealedAccepted9>());
+      expect((decodedAccepted as SealedAccepted9).id, accepted.id);
+      expect(decodedAccepted.score, accepted.score);
+      final directAccepted = SealedAccepted9.fromJson({
+        'id': 'case-9',
+        'score': 99,
+      });
+      expect(directAccepted.id, accepted.id);
+      expect(directAccepted.score, accepted.score);
+
+      final rejected = SealedEvent9.autoReject(
+        id: 'case-10',
+        reason: 'timeout',
+      );
+      expect(rejected, isA<SealedRejected9>());
+      final rejectedVariant = rejected as SealedRejected9;
+      expect(rejected.toJson(), {
+        'kind': 'auto_reject',
+        'payload': {'id': 'case-10', 'reason': 'timeout'},
+      });
+      expect(SealedEvent9.fromJson(rejected.toJson()), isA<SealedRejected9>());
+      final directRejected = SealedRejected9.fromJson({
+        'id': 'case-10',
+        'reason': 'timeout',
+      });
+      expect(directRejected.id, rejectedVariant.id);
+      expect(directRejected.reason, rejectedVariant.reason);
+    },
+  );
 
   test('validation showcase reports nested and field-level custom errors', () {
     final invalid = BenchmarkSignupValidation(

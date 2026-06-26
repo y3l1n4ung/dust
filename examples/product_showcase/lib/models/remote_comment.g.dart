@@ -88,6 +88,7 @@ Map<String, Object?> _$RemoteCommentToJson(RemoteComment instance) {
     'body': instance.body,
   };
 }
+
 // factory RemoteComment.fromJson(Map<String, Object?> json) => _$RemoteCommentFromJson(json);
 RemoteComment _$RemoteCommentFromJson(Map<String, Object?> json) {
   final postIdValue = JsonHelper.as<int>(json['postId'], 'postId', 'int');

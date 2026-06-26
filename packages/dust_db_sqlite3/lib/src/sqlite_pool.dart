@@ -15,7 +15,7 @@ abstract interface class Sqlite3Executor implements Executor {
 /// SQLite driver backed by one `package:sqlite3` database connection.
 final class Sqlite3Driver implements Pool, Sqlite3Executor {
   Sqlite3Driver._(this._database, {required bool ownsDatabase})
-    : _ownsDatabase = ownsDatabase;
+      : _ownsDatabase = ownsDatabase;
 
   /// Opens a database at [path] and applies unapplied migrations in name order.
   factory Sqlite3Driver.open(

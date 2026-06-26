@@ -2,6 +2,12 @@ use std::collections::HashSet;
 
 use dust_ir::{ClassIr, ConstructorIr, ParamKind, SerdeFieldConfigIr};
 
+/// Dart's standard formatter line width.
+const DART_LINE_WIDTH: usize = 80;
+
+/// Characters added around a constructor call by `  return {call};`.
+const RETURN_STATEMENT_OVERHEAD: usize = 10;
+
 /// Finds the constructor used for generated deserialization.
 pub(crate) fn find_deserialize_constructor(class: &ClassIr) -> Option<&ConstructorIr> {
     class
@@ -91,7 +97,7 @@ pub(crate) fn render_constructor_call(
         return Some(format!("{ctor}()"));
     }
     let inline = format!("{ctor}({})", args.join(", "));
-    if inline.len() <= 80 {
+    if inline.len() + RETURN_STATEMENT_OVERHEAD <= DART_LINE_WIDTH {
         return Some(inline);
     }
 

@@ -55,21 +55,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         body: Center(
           child: switch (productsState.status) {
             ProductsStatus.initial ||
-            ProductsStatus.loading => const CircularProgressIndicator(),
+            ProductsStatus.loading =>
+              const CircularProgressIndicator(),
             _ => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.search_off, size: 72, color: Colors.grey),
-                const SizedBox(height: 16),
-                Text('Product #${widget.productId} was not found.'),
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: () => context.navigator.products().go(),
-                  icon: const Icon(Icons.storefront),
-                  label: const Text('Back to shop'),
-                ),
-              ],
-            ),
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.search_off, size: 72, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  Text('Product #${widget.productId} was not found.'),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: () => context.navigator.products().go(),
+                    icon: const Icon(Icons.storefront),
+                    label: const Text('Back to shop'),
+                  ),
+                ],
+              ),
           },
         ),
       );
@@ -126,8 +127,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     Text(
                       'Description',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 8),
                     Text(selectedProduct.description),
@@ -211,9 +212,9 @@ class _ProductHeader extends StatelessWidget {
         Text(
           '\$${product.price.toStringAsFixed(2)}',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Colors.deepPurple,
-          ),
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
+              ),
         ),
       ],
     );
@@ -233,17 +234,18 @@ class _ReviewsSection extends StatelessWidget {
         Text('Reviews', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 12),
         switch (state.status) {
-          ProductDetailStatus.initial || ProductDetailStatus.loading =>
+          ProductDetailStatus.initial ||
+          ProductDetailStatus.loading =>
             const Center(child: CircularProgressIndicator()),
           ProductDetailStatus.error => Text(
-            state.errorMessage ?? 'Failed to load reviews.',
-            style: const TextStyle(color: Colors.red),
-          ),
+              state.errorMessage ?? 'Failed to load reviews.',
+              style: const TextStyle(color: Colors.red),
+            ),
           ProductDetailStatus.success => Column(
-            children: state.reviews
-                .map((review) => _ReviewTile(review: review))
-                .toList(),
-          ),
+              children: state.reviews
+                  .map((review) => _ReviewTile(review: review))
+                  .toList(),
+            ),
         },
       ],
     );
@@ -283,9 +285,9 @@ class _ReviewTile extends StatelessWidget {
                 child: Text(
                   'Verified purchase',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ),
           ],

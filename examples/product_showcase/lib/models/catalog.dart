@@ -22,7 +22,6 @@ class InventoryEntry with _$InventoryEntry {
 class Catalog with _$Catalog {
   Catalog({
     required this.id,
-
     required this.products,
     required this.categoryById,
     required this.featuredSkus,

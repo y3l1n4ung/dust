@@ -8,6 +8,9 @@ void main() {
     const config = SerDe(
       rename: 'display_name',
       renameAll: SerDeRename.snakeCase,
+      tag: 'type',
+      content: 'data',
+      untagged: true,
       defaultValue: 'anon',
       skip: true,
       skipSerializing: true,
@@ -21,6 +24,9 @@ void main() {
     expect(deserialize, isA<Deserialize>());
     expect(config.rename, 'display_name');
     expect(config.renameAll, SerDeRename.snakeCase);
+    expect(config.tag, 'type');
+    expect(config.content, 'data');
+    expect(config.untagged, isTrue);
     expect(config.defaultValue, 'anon');
     expect(config.skip, isTrue);
     expect(config.skipSerializing, isTrue);

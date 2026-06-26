@@ -17,6 +17,14 @@ fn parses_build_with_root_fail_fast_and_jobs() {
 }
 
 #[test]
+fn parses_build_clean_flag() {
+    let parsed = parse_cli_args(["build", "--clean"]).unwrap();
+
+    assert_eq!(parsed.command, CliCommand::Build);
+    assert!(parsed.options.clean);
+}
+
+#[test]
 fn parses_clean_with_root() {
     let parsed = parse_cli_args(["clean", "--root", "/tmp/work"]).unwrap();
 
@@ -60,6 +68,14 @@ fn rejects_offline_without_db() {
 
     assert_eq!(error.kind(), ErrorKind::MissingRequiredArgument);
     assert!(error.to_string().contains("--db"));
+}
+
+#[test]
+fn rejects_clean_without_build() {
+    let error = parse_cli_args(["check", "--clean"]).unwrap_err();
+
+    assert_eq!(error.kind(), ErrorKind::UnknownArgument);
+    assert!(error.to_string().contains("--clean"));
 }
 
 #[test]

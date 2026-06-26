@@ -66,14 +66,12 @@ fn handles_collection_types() {
         from_json,
         r#"// factory Collections.fromJson(Map<String, Object?> json) => _$CollectionsFromJson(json);
 Collections _$CollectionsFromJson(Map<String, Object?> json) {
-  final lValue = JsonHelper.asList(json['l'], 'l')
-      .map((item) => JsonHelper.as<String>(item, 'l', 'String'))
-      .toList();
-  final sValue = JsonHelper.asList(json['s'], 's')
-      .map((item) => JsonHelper.as<String>(item, 's', 'String'))
-      .toSet();
-  final mValue = JsonHelper.asMap(json['m'], 'm')
-      .map((mapKey, value) => MapEntry(mapKey, JsonHelper.as<String>(value, 'm', 'String')));
+  final lValue = JsonHelper.decodeList(json['l'], 'l',
+      (item, itemKey) => JsonHelper.as<String>(item, itemKey, 'String'));
+  final sValue = JsonHelper.decodeSet(json['s'], 's',
+      (item, itemKey) => JsonHelper.as<String>(item, itemKey, 'String'));
+  final mValue = JsonHelper.decodeMap(json['m'], 'm',
+      (value, valueKey) => JsonHelper.as<String>(value, valueKey, 'String'));
 
   return Collections(l: lValue, s: sValue, m: mValue);
 }"#

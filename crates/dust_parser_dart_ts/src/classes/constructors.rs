@@ -1,4 +1,6 @@
-use dust_parser_dart::{ParameterKind, ParsedConstructorParamSurface, ParsedConstructorSurface};
+use dust_parser_dart::{
+    ParameterKind, ParsedAnnotation, ParsedConstructorParamSurface, ParsedConstructorSurface,
+};
 use dust_text::SourceText;
 use tree_sitter::Node;
 
@@ -11,7 +13,11 @@ use super::parse_text::{
 };
 
 /// Extracts constructor metadata from a class member declaration or signature.
-pub(super) fn extract_constructor(node: Node<'_>, source: &SourceText) -> ParsedConstructorSurface {
+pub(super) fn extract_constructor(
+    node: Node<'_>,
+    annotations: &[ParsedAnnotation],
+    source: &SourceText,
+) -> ParsedConstructorSurface {
     let signature = if is_constructor_signature_kind(node.kind()) {
         Some(node)
     } else {
@@ -23,6 +29,7 @@ pub(super) fn extract_constructor(node: Node<'_>, source: &SourceText) -> Parsed
         return ParsedConstructorSurface {
             name: None,
             is_factory: false,
+            annotations: annotations.to_vec(),
             redirected_target_source: None,
             redirected_target_name: None,
             params: Vec::new(),
@@ -44,6 +51,7 @@ pub(super) fn extract_constructor(node: Node<'_>, source: &SourceText) -> Parsed
     ParsedConstructorSurface {
         name,
         is_factory,
+        annotations: annotations.to_vec(),
         redirected_target_source,
         redirected_target_name,
         params,

@@ -71,7 +71,8 @@ class AppLogger {
     String message, [
     Object? error,
     StackTrace? stackTrace,
-  ]) => _log(LogLevel.error, tag, message, error, stackTrace);
+  ]) =>
+      _log(LogLevel.error, tag, message, error, stackTrace);
 
   // State change logging
   void stateChange<T>(String viewModel, T oldState, T newState) {

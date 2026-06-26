@@ -472,8 +472,8 @@ class _ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSaved = context.watchWishlistViewModel().value.containsProduct(
-      product.id,
-    );
+          product.id,
+        );
 
     return AnimatedCard(
       onTap: () =>
@@ -551,7 +551,9 @@ class _ProductCard extends StatelessWidget {
                     children: [
                       Text(
                         '\$${product.price.toStringAsFixed(2)}',
-                        style: Theme.of(context).textTheme.titleMedium
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const Spacer(),

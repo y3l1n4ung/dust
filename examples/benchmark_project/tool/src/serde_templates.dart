@@ -243,3 +243,35 @@ ${serdeFactory(className)}
     ],
   );
 }
+
+String renderSerdeSealed(int index) {
+  final number = index + 1;
+  final className = primaryClassNameForIndex(index);
+  final acceptedName = 'SealedAccepted$number';
+  final rejectedName = 'SealedRejected$number';
+  return renderFile(
+    fileName: fileNameForIndex(index),
+    imports: ["import 'package:dust_dart/serde.dart';"],
+    declarations: [
+      '''
+@Derive([Serialize(), Deserialize()])
+@SerDe(tag: 'kind', content: 'payload', renameAll: SerDeRename.snakeCase)
+sealed class $className with ${mixinName(className)} {
+  const $className();
+
+${serdeFactory(className)}
+
+  @SerDe(rename: 'manual_accept')
+  factory $className.manualAccept({
+    required String id,
+    required int score,
+  }) = $acceptedName;
+
+  factory $className.autoReject({
+    required String id,
+    required String reason,
+  }) = $rejectedName;
+}''',
+    ],
+  );
+}

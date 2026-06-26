@@ -36,8 +36,8 @@ void main() {
               Builder(
                 builder: (context) {
                   final status = context.watchProductsViewModel().select(
-                    (state) => state.status,
-                  );
+                        (state) => state.status,
+                      );
                   selectRebuilds++;
                   return Text('Select status: $status');
                 },

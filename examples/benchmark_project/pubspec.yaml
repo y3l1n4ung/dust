@@ -2,7 +2,7 @@ name: dust_benchmark_project
 description: Large Flutter fixture package for Dust generator scale and feature benchmarking.
 publish_to: none
 environment:
-  sdk: ^3.11.0
+  sdk: ">=3.6.0 <4.0.0"
 
 resolution: workspace
 

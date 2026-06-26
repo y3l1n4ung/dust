@@ -46,7 +46,7 @@ fn handles_enum_fields_in_classes() {
         from_json,
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final statusValue = _$StatusFromJson(json['status']);
+  final statusValue = _$StatusFromJson(json['status'], 'status');
 
   return User(status: statusValue);
 }"#
@@ -97,7 +97,7 @@ fn handles_nullable_enum_fields() {
 User _$UserFromJson(Map<String, Object?> json) {
   final statusValue = json['status'] == null
       ? null
-      : _$StatusFromJson(json['status']);
+      : _$StatusFromJson(json['status'], 'status');
 
   return User(status: statusValue);
 }"#
@@ -149,9 +149,8 @@ fn handles_enums_in_collections() {
         from_json,
         r#"// factory Bundle.fromJson(Map<String, Object?> json) => _$BundleFromJson(json);
 Bundle _$BundleFromJson(Map<String, Object?> json) {
-  final rolesValue = JsonHelper.asList(json['roles'], 'roles')
-      .map((item) => _$RoleFromJson(item))
-      .toList();
+  final rolesValue = JsonHelper.decodeList(json['roles'], 'roles',
+      (item, itemKey) => _$RoleFromJson(item, itemKey));
 
   return Bundle(roles: rolesValue);
 }"#

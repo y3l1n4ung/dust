@@ -107,3 +107,23 @@ abstract mixin class MixinTarget {
     assert_eq!(result.library.classes[0].kind, ParsedClassKind::MixinClass);
     assert!(result.library.classes[0].is_abstract);
 }
+
+#[test]
+fn detects_sealed_class_declarations_for_serde_variants() {
+    let result = parse(
+        7,
+        r#"
+part 'payment_status.g.dart';
+
+@SerDe(tag: 'type')
+sealed class PaymentStatus {
+  const PaymentStatus();
+}
+"#,
+    );
+
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    assert_eq!(result.library.classes.len(), 1);
+    assert_eq!(result.library.classes[0].kind, ParsedClassKind::SealedClass);
+    assert_eq!(result.library.classes[0].name, "PaymentStatus");
+}

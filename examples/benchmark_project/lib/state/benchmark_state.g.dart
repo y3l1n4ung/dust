@@ -55,7 +55,8 @@ mixin _$BenchmarkState {
   @pragma('vm:prefer-inline')
   _$BenchmarkStateCopyWith<BenchmarkState> get copyWith => _$BenchmarkStateCopyWithImpl<BenchmarkState>(this as BenchmarkState, (value) => value);
 
-  Map<String, Object?> toJson() => _$BenchmarkStateToJson(this as BenchmarkState);
+  Map<String, Object?> toJson() =>
+      _$BenchmarkStateToJson(this as BenchmarkState);
 }
 
 // CopyWith API inspired by Freezed.
@@ -100,9 +101,10 @@ Map<String, Object?> _$BenchmarkStateToJson(BenchmarkState instance) {
     'buildsRun': instance.buildsRun,
   };
 }
+
 // factory BenchmarkState.fromJson(Map<String, Object?> json) => _$BenchmarkStateFromJson(json);
 BenchmarkState _$BenchmarkStateFromJson(Map<String, Object?> json) {
-  final modeValue = _$BenchmarkModeFromJson(json['mode']);
+  final modeValue = _$BenchmarkModeFromJson(json['mode'], 'mode');
   final activeFeatureValue = JsonHelper.as<String>(
     json['activeFeature'],
     'activeFeature',
@@ -120,6 +122,7 @@ BenchmarkState _$BenchmarkStateFromJson(Map<String, Object?> json) {
     buildsRun: buildsRunValue,
   );
 }
+
 Object? _$BenchmarkModeToJson(BenchmarkMode instance) {
   return switch (instance) {
     BenchmarkMode.cold => 'cold',
@@ -127,11 +130,12 @@ Object? _$BenchmarkModeToJson(BenchmarkMode instance) {
     BenchmarkMode.invalidated => 'invalidated',
   };
 }
-BenchmarkMode _$BenchmarkModeFromJson(Object? json) {
+
+BenchmarkMode _$BenchmarkModeFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
     'cold' => BenchmarkMode.cold,
     'warm' => BenchmarkMode.warm,
     'invalidated' => BenchmarkMode.invalidated,
-    _ => throw ArgumentError.value(json, 'json', 'unknown value for BenchmarkMode'),
+    _ => throw ArgumentError.value(json, key, 'unknown value for BenchmarkMode at $key'),
   };
 }
