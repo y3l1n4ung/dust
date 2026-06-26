@@ -48,7 +48,7 @@ Dust SerDe currently supports:
 - [x] untagged sealed class helpers
 - [x] generated concrete sealed variant classes from redirecting factories
 - [x] custom field conversion through `SerDeCodec`
-- [x] generated decode diagnostics that include the failing JSON key and
+- [x] generated decode diagnostics that include the failing JSON path and
   expected Dart type for built-in conversions
 - [x] compact decode output for simple fields, with temporaries kept only when
   aliases or fallback resolution require them

@@ -95,7 +95,7 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
   }
 
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
-  final eValue = _$MyEnumFromJson(json['e']);
+  final eValue = _$MyEnumFromJson(json['e'], 'e');
   var rawDisplayNameKey = 'display_name';
   Object? rawDisplayName;
   if (json.containsKey('display_name')) {
@@ -110,9 +110,8 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
     'String',
   );
   final tagsValue = json.containsKey('tags')
-      ? JsonHelper.asList(json['tags'], 'tags')
-      .map((item) => JsonHelper.as<String>(item, 'tags', 'String'))
-      .toList()
+      ? JsonHelper.decodeList(json['tags'], 'tags',
+      (item, itemKey) => JsonHelper.as<String>(item, itemKey, 'String'))
       : ['guest'];
   final serverOnlyValue = json.containsKey('server_only')
       ? JsonHelper.as<String>(json['server_only'], 'server_only', 'String')
@@ -138,10 +137,10 @@ Object? _$MyEnumToJson(MyEnum instance) {
   };
 }
 
-MyEnum _$MyEnumFromJson(Object? json) {
+MyEnum _$MyEnumFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
     'A' => MyEnum.A,
     'B' => MyEnum.B,
-    _ => throw ArgumentError.value(json, 'json', 'unknown value for MyEnum'),
+    _ => throw ArgumentError.value(json, key, 'unknown value for MyEnum at $key'),
   };
 }

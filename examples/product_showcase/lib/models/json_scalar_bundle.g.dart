@@ -89,11 +89,10 @@ JsonScalarBundle _$JsonScalarBundleFromJson(Map<String, Object?> json) {
     json['largeNumber'],
     'largeNumber',
   );
-  final endpointsValue = JsonHelper.asList(json['endpoints'], 'endpoints')
-      .map((item) => JsonHelper.asUri(item, 'endpoints'))
-      .toSet();
-  final checkpointsValue = JsonHelper.asMap(json['checkpoints'], 'checkpoints')
-      .map((mapKey, value) => MapEntry(mapKey, JsonHelper.asDateTime(value, 'checkpoints')));
+  final endpointsValue = JsonHelper.decodeSet(json['endpoints'], 'endpoints',
+      (item, itemKey) => JsonHelper.asUri(item, itemKey));
+  final checkpointsValue = JsonHelper.decodeMap(json['checkpoints'], 'checkpoints',
+      (value, valueKey) => JsonHelper.asDateTime(value, valueKey));
 
   return JsonScalarBundle(
     createdAt: createdAtValue,

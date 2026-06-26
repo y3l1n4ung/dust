@@ -83,9 +83,8 @@ JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
       ? null
       : JsonHelper.as<String>(rawDisplayName, rawDisplayNameKey, 'String');
   final tagsValue = json.containsKey('tags')
-      ? JsonHelper.asList(json['tags'], 'tags')
-      .map((item) => JsonHelper.as<String>(item, 'tags', 'String'))
-      .toList()
+      ? JsonHelper.decodeList(json['tags'], 'tags',
+      (item, itemKey) => JsonHelper.as<String>(item, itemKey, 'String'))
       : ['guest'];
 
   return JsonProfile(

@@ -93,11 +93,11 @@ Object? _$VehicleToJson(Vehicle instance) {
   };
 }
 
-Vehicle _$VehicleFromJson(Object? json) {
+Vehicle _$VehicleFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
     'car' => Vehicle.car,
     'bicycle' => Vehicle.bicycle,
     'unicycle' => Vehicle.unicycle,
-    _ => throw ArgumentError.value(json, 'json', 'unknown value for Vehicle'),
+    _ => throw ArgumentError.value(json, key, 'unknown value for Vehicle at $key'),
   };
 }

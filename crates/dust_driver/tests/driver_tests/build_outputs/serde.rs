@@ -93,9 +93,8 @@ Profile _$ProfileFromJson(Map<String, Object?> json) {
       ? null
       : JsonHelper.as<String>(rawDisplayName, rawDisplayNameKey, 'String');
   final tagsValue = json.containsKey('tags')
-      ? JsonHelper.asList(json['tags'], 'tags')
-      .map((item) => JsonHelper.as<String>(item, 'tags', 'String'))
-      .toList()
+      ? JsonHelper.decodeList(json['tags'], 'tags',
+      (item, itemKey) => JsonHelper.as<String>(item, itemKey, 'String'))
       : const ['guest'];
 
   return Profile(id: idValue, displayName: displayNameValue, tags: tagsValue);
@@ -131,15 +130,10 @@ Map<String, Object?> _$AccountToJson(Account instance) {
 // factory Account.fromJson(Map<String, Object?> json) => _$AccountFromJson(json);
 Account _$AccountFromJson(Map<String, Object?> json) {
   final profileValue = Profile.fromJson(JsonHelper.asMap(json['profile'], 'profile'));
-  final metricsValue = JsonHelper.asMap(json['metrics'], 'metrics')
-      .map(
-        (mapKey, value) => MapEntry(
-          mapKey,
-          JsonHelper.asList(value, 'metrics')
-              .map((item) => JsonHelper.as<int>(item, 'metrics', 'int'))
-              .toList(),
-        ),
-      );
+  final metricsValue = JsonHelper.decodeMap(json['metrics'], 'metrics',
+      (value, valueKey) =>
+          JsonHelper.decodeList(value, valueKey,
+              (item, itemKey) => JsonHelper.as<int>(item, itemKey, 'int')));
   final archivedValue = JsonHelper.as<bool>(
     json['archived'],
     'archived',

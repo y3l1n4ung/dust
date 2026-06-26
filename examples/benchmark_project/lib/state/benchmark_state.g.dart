@@ -104,7 +104,7 @@ Map<String, Object?> _$BenchmarkStateToJson(BenchmarkState instance) {
 
 // factory BenchmarkState.fromJson(Map<String, Object?> json) => _$BenchmarkStateFromJson(json);
 BenchmarkState _$BenchmarkStateFromJson(Map<String, Object?> json) {
-  final modeValue = _$BenchmarkModeFromJson(json['mode']);
+  final modeValue = _$BenchmarkModeFromJson(json['mode'], 'mode');
   final activeFeatureValue = JsonHelper.as<String>(
     json['activeFeature'],
     'activeFeature',
@@ -131,11 +131,11 @@ Object? _$BenchmarkModeToJson(BenchmarkMode instance) {
   };
 }
 
-BenchmarkMode _$BenchmarkModeFromJson(Object? json) {
+BenchmarkMode _$BenchmarkModeFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
     'cold' => BenchmarkMode.cold,
     'warm' => BenchmarkMode.warm,
     'invalidated' => BenchmarkMode.invalidated,
-    _ => throw ArgumentError.value(json, 'json', 'unknown value for BenchmarkMode'),
+    _ => throw ArgumentError.value(json, key, 'unknown value for BenchmarkMode at $key'),
   };
 }
