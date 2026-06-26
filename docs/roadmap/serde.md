@@ -15,7 +15,7 @@ This track covers:
 - key rename rules, aliases, defaults, skip rules, and unknown-key rejection
 - built-in scalar policies for `DateTime`, `Uri`, and `BigInt`
 - enum serialization and deserialization
-- tagged sealed class serialization and deserialization
+- tagged and untagged sealed class serialization and deserialization
 - custom field conversion through `SerDeCodec<DartT, JsonT>`
 
 This track does not yet cover:
@@ -45,6 +45,7 @@ Dust SerDe currently supports:
 - [x] enum values inside nullable fields, lists, sets, and maps
 - [x] unknown enum wire value diagnostics
 - [x] tagged and adjacent-tagged sealed class helpers
+- [x] untagged sealed class helpers
 - [x] generated concrete sealed variant classes from redirecting factories
 - [x] custom field conversion through `SerDeCodec`
 - [x] generated decode diagnostics that include the failing JSON key and
@@ -216,7 +217,7 @@ This track needs:
   custom `SerDeCodec` fields
 - [x] runtime tests for enum fields, enum collections, declaration-level enum
   rename rules, unknown enum values, and codec-backed enhanced enum fields
-- [x] runtime tests for tagged sealed class variants
+- [x] runtime tests for tagged and untagged sealed class variants
 - [x] dedicated malformed-input tests with key-aware decode diagnostics
 - [x] negative tests for unsupported function serialization
 - [ ] negative tests for unsupported record serialization
