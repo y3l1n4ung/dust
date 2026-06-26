@@ -36,6 +36,8 @@ pub struct CliOptions {
     pub db: bool,
     /// Whether Dust DB should use offline query metadata only.
     pub db_offline: bool,
+    /// Whether build should remove Dust outputs and cache before generation.
+    pub clean: bool,
     /// The watch poll interval in milliseconds.
     pub poll_interval_ms: u64,
     /// The optional maximum number of watch cycles.
@@ -50,6 +52,7 @@ impl Default for CliOptions {
             jobs: None,
             db: false,
             db_offline: false,
+            clean: false,
             poll_interval_ms: DEFAULT_POLL_INTERVAL_MS,
             max_cycles: None,
         }
@@ -86,7 +89,7 @@ struct RawCli {
 #[derive(Debug, Subcommand)]
 enum RawCommand {
     /// Run a writing build.
-    Build(BuildOptions),
+    Build(BuildCommandOptions),
     /// Remove Dust-generated outputs and cache state.
     Clean(RootOptions),
     /// Run a no-write freshness check.
@@ -95,6 +98,17 @@ enum RawCommand {
     Doctor(RootOptions),
     /// Run initial build and then watch for changes.
     Watch(WatchOptions),
+}
+
+/// Options accepted only by the writing build command.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Args)]
+struct BuildCommandOptions {
+    /// Shared build-like options.
+    #[command(flatten)]
+    build: BuildOptions,
+    /// Remove Dust outputs and cache before generating.
+    #[arg(long, default_value_t = false)]
+    clean: bool,
 }
 
 /// Shared `--root` option group.
@@ -194,6 +208,15 @@ impl From<RootOptions> for CliOptions {
         Self {
             root: value.root,
             ..Self::default()
+        }
+    }
+}
+
+impl From<BuildCommandOptions> for CliOptions {
+    fn from(value: BuildCommandOptions) -> Self {
+        Self {
+            clean: value.clean,
+            ..CliOptions::from(value.build)
         }
     }
 }
