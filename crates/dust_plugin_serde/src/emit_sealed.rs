@@ -1,18 +1,17 @@
 use dust_dart_emit::dart_string_literal;
 use dust_ir::{ClassIr, SerdeClassConfigIr, SerdeVariantConfigIr};
 
-/// Returns whether a class should use tagged sealed dispatch helpers.
-pub(crate) fn is_tagged_sealed_class(class: &ClassIr) -> bool {
-    tagged_serde(class).is_some()
+/// Returns whether a class should use sealed dispatch helpers.
+pub(crate) fn is_sealed_serde_class(class: &ClassIr) -> bool {
+    sealed_serde(class).is_some()
 }
 
-/// Renders the top-level helper that serializes a tagged sealed base instance.
+/// Renders the top-level helper that serializes a sealed base instance.
 pub(crate) fn emit_sealed_to_json_helper(
     class: &ClassIr,
     serializable_classes: &[&str],
 ) -> Option<String> {
-    let serde = tagged_serde(class)?;
-    let tag_key = serde.tag.as_deref()?;
+    let serde = sealed_serde(class)?;
 
     let mut lines = vec![
         format!(
@@ -22,25 +21,37 @@ pub(crate) fn emit_sealed_to_json_helper(
         "  return switch (instance) {".to_owned(),
     ];
     for variant in &serde.variants {
-        append_to_json_case(
-            &mut lines,
-            variant,
-            tag_key,
-            serde.content.as_deref(),
-            serializable_classes,
-        );
+        if serde.untagged {
+            append_untagged_to_json_case(&mut lines, variant, serializable_classes);
+        } else {
+            append_tagged_to_json_case(
+                &mut lines,
+                variant,
+                serde.tag.as_deref()?,
+                serde.content.as_deref(),
+                serializable_classes,
+            );
+        }
     }
     lines.push("  };".to_owned());
     lines.push("}".to_owned());
     Some(lines.join("\n"))
 }
 
-/// Renders the top-level helper that deserializes a tagged sealed base instance.
+/// Renders the top-level helper that deserializes a sealed base instance.
 pub(crate) fn emit_sealed_from_json_helper(
     class: &ClassIr,
     deserializable_classes: &[&str],
 ) -> Option<String> {
-    let serde = tagged_serde(class)?;
+    let serde = sealed_serde(class)?;
+    if serde.untagged {
+        return Some(emit_untagged_from_json_helper(
+            class,
+            serde,
+            deserializable_classes,
+        ));
+    }
+
     let tag_key = serde.tag.as_deref()?;
     let tag_key_lit = dart_string_literal(tag_key);
 
@@ -87,7 +98,7 @@ pub(crate) fn emit_sealed_from_json_helper(
 }
 
 /// Appends one sealed serialization switch case.
-fn append_to_json_case(
+fn append_tagged_to_json_case(
     lines: &mut Vec<String>,
     variant: &SerdeVariantConfigIr,
     tag_key: &str,
@@ -112,6 +123,57 @@ fn append_to_json_case(
         lines.push(format!("      {tag_key_lit}: {tag_value_lit},"));
     }
     lines.push("    },".to_owned());
+}
+
+/// Appends one untagged serialization switch case.
+fn append_untagged_to_json_case(
+    lines: &mut Vec<String>,
+    variant: &SerdeVariantConfigIr,
+    serializable_classes: &[&str],
+) {
+    lines.push(format!(
+        "    {} value => {},",
+        variant.target_class_name,
+        variant_to_json_expr(variant, "value", serializable_classes)
+    ));
+}
+
+/// Renders the top-level helper that tries untagged variants in order.
+fn emit_untagged_from_json_helper(
+    class: &ClassIr,
+    serde: &SerdeClassConfigIr,
+    deserializable_classes: &[&str],
+) -> String {
+    let mut lines = vec![
+        format!(
+            "// factory {}.fromJson(Map<String, Object?> json) => _${}FromJson(json);",
+            class.name, class.name
+        ),
+        format!(
+            "{} _${}FromJson(Map<String, Object?> json) {{",
+            class.name, class.name
+        ),
+    ];
+    for variant in &serde.variants {
+        lines.push("  try {".to_owned());
+        lines.push(format!(
+            "    return {};",
+            variant_from_json_expr(variant, "json", deserializable_classes)
+        ));
+        lines.push("  } on Object {".to_owned());
+        lines.push("    // Try the next untagged SerDe variant.".to_owned());
+        lines.push("  }".to_owned());
+    }
+    lines.push("  throw ArgumentError.value(".to_owned());
+    lines.push("    json,".to_owned());
+    lines.push("    'json',".to_owned());
+    lines.push(format!(
+        "    'no matching SerDe variant for {}',",
+        class.name
+    ));
+    lines.push("  );".to_owned());
+    lines.push("}".to_owned());
+    lines.join("\n")
 }
 
 /// Renders one variant serialization expression.
@@ -145,10 +207,10 @@ fn contains_symbol(symbols: &[&str], name: &str) -> bool {
     symbols.contains(&name)
 }
 
-/// Returns tagged sealed serde metadata when generation is supported here.
-fn tagged_serde(class: &ClassIr) -> Option<&SerdeClassConfigIr> {
+/// Returns sealed serde metadata when generation is supported here.
+fn sealed_serde(class: &ClassIr) -> Option<&SerdeClassConfigIr> {
     let serde = class.serde.as_ref()?;
-    if serde.tag.is_none() || serde.variants.is_empty() || serde.untagged {
+    if serde.variants.is_empty() || (!serde.untagged && serde.tag.is_none()) {
         return None;
     }
     Some(serde)

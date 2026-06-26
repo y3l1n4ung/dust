@@ -7,7 +7,7 @@ use crate::{
     emit_class::{emit_from_json_helper, emit_to_json_helper, emit_to_json_mixin},
     emit_enum::{emit_enum_from_json_helper, emit_enum_to_json_helper},
     emit_sealed::{
-        emit_sealed_from_json_helper, emit_sealed_to_json_helper, is_tagged_sealed_class,
+        emit_sealed_from_json_helper, emit_sealed_to_json_helper, is_sealed_serde_class,
     },
     emit_variant_class::{emit_generated_variant_class, generated_variant_classes},
 };
@@ -67,7 +67,7 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
                 .copied()
                 .unwrap_or(class.name.as_str());
             contribution.push_mixin_member(&class.name, emit_to_json_mixin(helper_class_name));
-            if is_tagged_sealed_class(class) {
+            if is_sealed_serde_class(class) {
                 if let Some(helper) = emit_sealed_to_json_helper(class, &serializable_classes) {
                     contribution.top_level_functions.push(helper);
                 }
@@ -80,7 +80,7 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
             }
         }
         if wants_deserialize(class) {
-            if is_tagged_sealed_class(class) {
+            if is_sealed_serde_class(class) {
                 if let Some(helper) = emit_sealed_from_json_helper(class, &deserializable_classes) {
                     contribution.top_level_functions.push(helper);
                 }

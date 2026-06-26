@@ -69,6 +69,7 @@ The `@SerDe` annotation can be applied to both **classes** and **individual fiel
 | `disallowUnrecognizedKeys` | `bool` | If `true`, deserialization throws an error if the JSON contains keys not mapped to a field. |
 | `tag` | `String` | JSON discriminator key for sealed class variants. |
 | `content` | `String` | Optional payload key for adjacent-tagged sealed class variants. |
+| `untagged` | `bool` | Try sealed class variants in factory declaration order without a discriminator key. |
 
 ### Field-Level Options
 
@@ -168,6 +169,9 @@ sealed class PaymentEvent with _$PaymentEvent {
   const PaymentEvent();
 }
 ```
+
+For untagged sealed payloads, set `untagged: true`; decoding tries redirecting
+factory variants in declaration order and fails if no variant shape matches.
 
 ---
 

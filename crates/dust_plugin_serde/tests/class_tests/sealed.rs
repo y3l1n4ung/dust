@@ -108,6 +108,54 @@ JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) {
     );
 }
 
+#[test]
+fn generates_untagged_sealed_helpers_in_variant_order() {
+    let plugin = register_plugin();
+    let library = library(
+        vec![untagged_base(), success_variant(), failed_variant()],
+        vec![],
+    );
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+
+    assert_eq!(
+        function_for(
+            &contribution.top_level_functions,
+            "_$JsonPaymentEventToJson"
+        ),
+        r#"Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) {
+  return switch (instance) {
+    JsonPaymentSuccess value => _$JsonPaymentSuccessToJson(value),
+    JsonPaymentFailed value => _$JsonPaymentFailedToJson(value),
+  };
+}"#
+    );
+    assert_eq!(
+        function_for(
+            &contribution.top_level_functions,
+            "_$JsonPaymentEventFromJson",
+        ),
+        r#"// factory JsonPaymentEvent.fromJson(Map<String, Object?> json) => _$JsonPaymentEventFromJson(json);
+JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) {
+  try {
+    return _$JsonPaymentSuccessFromJson(json);
+  } on Object {
+    // Try the next untagged SerDe variant.
+  }
+  try {
+    return _$JsonPaymentFailedFromJson(json);
+  } on Object {
+    // Try the next untagged SerDe variant.
+  }
+  throw ArgumentError.value(
+    json,
+    'json',
+    'no matching SerDe variant for JsonPaymentEvent',
+  );
+}"#
+    );
+}
+
 fn sealed_base(content: Option<&str>) -> ClassIr {
     let mut base = class(
         "JsonPaymentEvent",
@@ -135,6 +183,15 @@ fn sealed_base(content: Option<&str>) -> ClassIr {
         ],
         ..SerdeClassConfigIr::default()
     });
+    base
+}
+
+fn untagged_base() -> ClassIr {
+    let mut base = sealed_base(None);
+    if let Some(serde) = &mut base.serde {
+        serde.tag = None;
+        serde.untagged = true;
+    }
     base
 }
 

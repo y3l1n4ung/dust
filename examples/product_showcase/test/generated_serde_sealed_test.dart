@@ -52,4 +52,31 @@ void main() {
       );
     },
   );
+
+  test('untagged sealed serde sample tries variants in declaration order', () {
+    final signup = JsonUntaggedEvent.signup(
+      id: 'evt-1',
+      email: 'ada@example.com',
+    );
+    expect(signup.toJson(), {'id': 'evt-1', 'email': 'ada@example.com'});
+    expect(
+      JsonUntaggedEvent.fromJson(signup.toJson()),
+      isA<JsonSignupEvent>(),
+    );
+
+    final archive = JsonUntaggedEvent.archive(
+      id: 'evt-2',
+      reason: 'duplicate',
+    );
+    expect(archive.toJson(), {'id': 'evt-2', 'reason': 'duplicate'});
+    expect(
+      JsonUntaggedEvent.fromJson(archive.toJson()),
+      isA<JsonArchiveEvent>(),
+    );
+
+    expect(
+      () => JsonUntaggedEvent.fromJson({'id': 'evt-3'}),
+      throwsA(isA<ArgumentError>()),
+    );
+  });
 }

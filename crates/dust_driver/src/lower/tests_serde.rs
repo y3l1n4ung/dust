@@ -319,6 +319,31 @@ fn invalid_sealed_serde_class_options_produce_lowering_diagnostics() {
             .message
             .contains("Sealed SerDe class EmptyStatus has no factory variants")
     }));
+
+    let mut duplicate_tags = empty_class("DuplicateTags", ClassKindIr::SealedClass);
+    duplicate_tags.configs = vec![serde_config("(tag: 'type')", 31, 40)];
+    duplicate_tags.constructors = vec![
+        factory_constructor("paid", "Paid", Vec::new()),
+        factory_constructor("paid", "DuplicatePaid", Vec::new()),
+    ];
+    let duplicate_outcome = lower_library(&library(vec![duplicate_tags]));
+    assert!(duplicate_outcome.diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("Duplicate SerDe variant tag: paid")
+    }));
+
+    let mut invalid_target = empty_class("PaymentStatus", ClassKindIr::SealedClass);
+    invalid_target.configs = vec![serde_config("(tag: 'type')", 41, 50)];
+    invalid_target.constructors = vec![factory_constructor("paid", "PaymentPaid", Vec::new())];
+    let mut paid = empty_class("PaymentPaid", ClassKindIr::Class);
+    paid.superclass_name = Some("OtherStatus".to_owned());
+    let invalid_target_outcome = lower_library(&library(vec![invalid_target, paid]));
+    assert!(invalid_target_outcome.diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("Variant target class PaymentPaid does not extend PaymentStatus")
+    }));
 }
 
 #[test]
