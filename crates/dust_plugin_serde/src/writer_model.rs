@@ -45,6 +45,10 @@ pub(crate) fn all_allowed_keys(class: &ClassIr) -> Vec<String> {
             continue;
         };
 
+        if serde.skip_deserializing {
+            continue;
+        }
+
         let key = json_key(class, &field.name, Some(serde));
         if seen.insert(key.clone()) {
             keys.push(key);

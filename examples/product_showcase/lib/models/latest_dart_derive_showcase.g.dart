@@ -372,7 +372,6 @@ LatestDartProductCard _$LatestDartProductCardFromJson(Map<String, Object?> json)
     'stock_count',
     'active',
     'launched_at',
-    'internal_only',
   };
   for (final key in json.keys) {
     if (!allowedKeys.contains(key)) {

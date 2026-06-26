@@ -157,8 +157,6 @@ void main() {
       'displayName': 'May',
       'e': 'B',
       'server_only': 'from-server',
-      'client_only': 'ignored-client',
-      'hidden': 'ignored-hidden',
     });
 
     expect(
@@ -173,6 +171,48 @@ void main() {
           clientOnly: 'client-default',
           hidden: 'hidden-default',
         ),
+      ),
+    );
+
+    expect(
+      () => JsonSerdeOptions.fromJson({
+        'id': 'user-2',
+        'display_name': 'May',
+        'e': 'A',
+        'client_only': 'ignored-client',
+      }),
+      throwsA(
+        isA<ArgumentError>()
+            .having((error) => error.name, 'name', 'json')
+            .having(
+              (error) => error.invalidValue,
+              'invalidValue',
+              'client_only',
+            )
+            .having(
+              (error) => '${error.message}',
+              'message',
+              'unknown key for JsonSerdeOptions',
+            ),
+      ),
+    );
+
+    expect(
+      () => JsonSerdeOptions.fromJson({
+        'id': 'user-2',
+        'display_name': 'May',
+        'e': 'A',
+        'hidden': 'ignored-hidden',
+      }),
+      throwsA(
+        isA<ArgumentError>()
+            .having((error) => error.name, 'name', 'json')
+            .having((error) => error.invalidValue, 'invalidValue', 'hidden')
+            .having(
+              (error) => '${error.message}',
+              'message',
+              'unknown key for JsonSerdeOptions',
+            ),
       ),
     );
 

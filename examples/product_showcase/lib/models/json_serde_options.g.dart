@@ -85,8 +85,6 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
     'displayName',
     'tags',
     'server_only',
-    'client_only',
-    'hidden',
   };
   for (final key in json.keys) {
     if (!allowedKeys.contains(key)) {
