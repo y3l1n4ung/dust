@@ -171,7 +171,10 @@ pub(crate) fn lower_field_serde_config(
                         serde.codec_source = Some(codec_source);
                     }
                 }
-                "defaultValue" => serde.default_value_source = Some(value.trim().to_owned()),
+                "defaultValue" => {
+                    serde.default_value_source = Some(value.trim().to_owned());
+                    serde.default_value = config.named_argument_value("defaultValue").cloned();
+                }
                 "skip" => match config.named_bool("skip") {
                     Some(true) => {
                         serde.skip_serializing = true;

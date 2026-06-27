@@ -1,114 +1,14 @@
 //! Integration tests for serde plugin validation diagnostics.
 
-use dust_ir::{
-    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, EnumIr, FieldIr, LibraryIr, ParamKind,
-    SpanIr, SymbolId, TraitApplicationIr, TypeIr,
-};
+use dust_ir::{AnnotationNumberKindIr, AnnotationValueIr, ParamKind, TypeIr};
 use dust_plugin_api::DustPlugin;
 use dust_plugin_serde::register_plugin;
-use dust_text::{FileId, TextRange};
 
-/// Builds a source span for validation fixture IR.
-fn span(start: u32, end: u32) -> SpanIr {
-    SpanIr::new(FileId::new(11), TextRange::new(start, end))
-}
+use crate::support::{class, constructor, constructor_param, field, field_with_default, library};
 
-/// Builds a trait application fixture.
-fn trait_application(symbol: &str) -> TraitApplicationIr {
-    TraitApplicationIr {
-        symbol: SymbolId::new(symbol),
-        span: span(1, 5),
-    }
-}
-
-/// Builds a field fixture with default serde settings.
-fn field(name: &str, ty: TypeIr) -> FieldIr {
-    FieldIr {
-        name: name.to_owned(),
-        ty,
-        span: span(10, 20),
-        has_default: false,
-        serde: None,
-        configs: Vec::new(),
-    }
-}
-
-/// Builds a constructor parameter fixture.
-fn constructor_param(name: &str, ty: TypeIr, kind: ParamKind) -> ConstructorParamIr {
-    ConstructorParamIr {
-        name: name.to_owned(),
-        ty,
-        span: span(30, 35),
-        kind,
-        has_default: false,
-        default_value_source: None,
-    }
-}
-
-/// Builds a generative constructor fixture.
-fn constructor(name: Option<&str>, params: Vec<ConstructorParamIr>) -> ConstructorIr {
-    ConstructorIr {
-        name: name.map(str::to_owned),
-        is_factory: false,
-        redirected_target_source: None,
-        redirected_target_name: None,
-        span: span(25, 60),
-        params,
-    }
-}
-
-/// Builds a class fixture with serde traits.
-fn class(
-    name: &str,
-    fields: Vec<FieldIr>,
-    constructors: Vec<ConstructorIr>,
-    traits: &[&str],
-) -> ClassIr {
-    ClassIr {
-        kind: ClassKindIr::Class,
-        name: name.to_owned(),
-        is_abstract: false,
-        is_interface: false,
-        superclass_name: None,
-        span: span(0, 100),
-        fields,
-        constructors,
-        methods: Vec::new(),
-        traits: traits
-            .iter()
-            .map(|symbol| trait_application(symbol))
-            .collect(),
-        configs: Vec::new(),
-        serde: None,
-    }
-}
-
-/// Builds a library fixture for validation tests.
-fn library(classes: Vec<ClassIr>, enums: Vec<EnumIr>) -> LibraryIr {
-    LibraryIr {
-        package_root: ".".to_owned(),
-        package_name: "dust_test".to_owned(),
-        source_path: "lib/models.dart".to_owned(),
-        output_path: "lib/models.g.dart".to_owned(),
-        imports: Vec::new(),
-        library: None,
-        library_annotations: Vec::new(),
-        import_directives: Vec::new(),
-        export_directives: Vec::new(),
-        part_directives: Vec::new(),
-        part_of: None,
-        span: span(0, 200),
-        classes,
-        mixins: Vec::new(),
-        extensions: Vec::new(),
-        extension_types: Vec::new(),
-        functions: Vec::new(),
-        variables: Vec::new(),
-        typedefs: Vec::new(),
-        enums,
-        query_calls: Vec::new(),
-    }
-}
+/// Fixture helpers for validation tests.
+#[path = "validation_tests/support.rs"]
+mod support;
 
 #[test]
 fn validates_abstract_deserialize_and_unsupported_field_types() {
@@ -162,4 +62,160 @@ fn validates_missing_deserialize_constructor() {
         item.message
             .contains("`Deserialize` requires a constructor that can initialize every field on class `Payload`")
     }));
+}
+
+#[test]
+fn rejects_incompatible_typed_default_values() {
+    let plugin = register_plugin();
+    let target = class(
+        "Defaults",
+        vec![
+            field_with_default("name", TypeIr::string(), "null", AnnotationValueIr::Null),
+            field_with_default(
+                "count",
+                TypeIr::int(),
+                "'guest'",
+                AnnotationValueIr::String("guest".to_owned()),
+            ),
+            field_with_default(
+                "enabled",
+                TypeIr::bool(),
+                "1",
+                AnnotationValueIr::Number {
+                    source: "1".to_owned(),
+                    kind: AnnotationNumberKindIr::Int,
+                },
+            ),
+            field_with_default(
+                "tags",
+                TypeIr::list_of(TypeIr::string()),
+                "{'a': 'b'}",
+                AnnotationValueIr::Map(Vec::new()),
+            ),
+        ],
+        vec![constructor(
+            None,
+            vec![
+                constructor_param("name", TypeIr::string(), ParamKind::Named),
+                constructor_param("count", TypeIr::int(), ParamKind::Named),
+                constructor_param("enabled", TypeIr::bool(), ParamKind::Named),
+                constructor_param("tags", TypeIr::list_of(TypeIr::string()), ParamKind::Named),
+            ],
+        )],
+        &["dust_dart::Deserialize"],
+    );
+
+    let diagnostics = plugin.validate(&library(vec![target], vec![]));
+    let messages = diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.message.as_str())
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        messages,
+        vec![
+            "field `name` on class `Defaults` uses `SerDe(defaultValue: null)` on non-nullable field",
+            "field `count` on class `Defaults` uses `SerDe(defaultValue: 'guest')` that is not compatible with `int`",
+            "field `enabled` on class `Defaults` uses `SerDe(defaultValue: 1)` that is not compatible with `bool`",
+            "field `tags` on class `Defaults` uses `SerDe(defaultValue: {'a': 'b'})` that is not compatible with `List`",
+        ]
+    );
+}
+
+#[test]
+fn accepts_compatible_typed_default_values() {
+    let plugin = register_plugin();
+    let target = class(
+        "Defaults",
+        vec![
+            field_with_default(
+                "name",
+                TypeIr::string(),
+                "'guest'",
+                AnnotationValueIr::String("guest".to_owned()),
+            ),
+            field_with_default(
+                "optional",
+                TypeIr::string().nullable(),
+                "null",
+                AnnotationValueIr::Null,
+            ),
+            field_with_default(
+                "enabled",
+                TypeIr::bool(),
+                "true",
+                AnnotationValueIr::Bool(true),
+            ),
+            field_with_default(
+                "count",
+                TypeIr::int(),
+                "1",
+                AnnotationValueIr::Number {
+                    source: "1".to_owned(),
+                    kind: AnnotationNumberKindIr::Int,
+                },
+            ),
+            field_with_default(
+                "subtotal",
+                TypeIr::double(),
+                "1",
+                AnnotationValueIr::Number {
+                    source: "1".to_owned(),
+                    kind: AnnotationNumberKindIr::Int,
+                },
+            ),
+            field_with_default(
+                "ratio",
+                TypeIr::num(),
+                "1.5",
+                AnnotationValueIr::Number {
+                    source: "1.5".to_owned(),
+                    kind: AnnotationNumberKindIr::Double,
+                },
+            ),
+            field_with_default(
+                "tags",
+                TypeIr::list_of(TypeIr::string()),
+                "['a']",
+                AnnotationValueIr::List(Vec::new()),
+            ),
+            field_with_default(
+                "flags",
+                TypeIr::generic("Set", vec![TypeIr::string()]),
+                "{'a'}",
+                AnnotationValueIr::Set(Vec::new()),
+            ),
+            field_with_default(
+                "lookup",
+                TypeIr::map_of(TypeIr::string(), TypeIr::string()),
+                "{'a': 'b'}",
+                AnnotationValueIr::Map(Vec::new()),
+            ),
+        ],
+        vec![constructor(
+            None,
+            vec![
+                constructor_param("name", TypeIr::string(), ParamKind::Named),
+                constructor_param("optional", TypeIr::string().nullable(), ParamKind::Named),
+                constructor_param("enabled", TypeIr::bool(), ParamKind::Named),
+                constructor_param("count", TypeIr::int(), ParamKind::Named),
+                constructor_param("subtotal", TypeIr::double(), ParamKind::Named),
+                constructor_param("ratio", TypeIr::num(), ParamKind::Named),
+                constructor_param("tags", TypeIr::list_of(TypeIr::string()), ParamKind::Named),
+                constructor_param(
+                    "flags",
+                    TypeIr::generic("Set", vec![TypeIr::string()]),
+                    ParamKind::Named,
+                ),
+                constructor_param(
+                    "lookup",
+                    TypeIr::map_of(TypeIr::string(), TypeIr::string()),
+                    ParamKind::Named,
+                ),
+            ],
+        )],
+        &["dust_dart::Deserialize"],
+    );
+
+    assert_eq!(plugin.validate(&library(vec![target], vec![])), Vec::new());
 }

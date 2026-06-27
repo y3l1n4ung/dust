@@ -1,7 +1,11 @@
 #![cfg(test)]
 
+use std::collections::BTreeMap;
+
 use super::{lower_class, lower_library};
-use dust_ir::{ClassKindIr, ConfigApplicationIr, SerdeRenameRuleIr, SpanIr, SymbolId};
+use dust_ir::{
+    AnnotationValueIr, ClassKindIr, ConfigApplicationIr, SerdeRenameRuleIr, SpanIr, SymbolId,
+};
 use dust_parser_dart::{ParameterKind, ParsedConstructorParamSurface, ParsedConstructorSurface};
 use dust_resolver::{ResolvedClass, ResolvedConstructor, ResolvedField, ResolvedLibrary};
 use dust_text::{FileId, TextRange};
@@ -15,6 +19,16 @@ fn serde_config(args: &str, start: u32, end: u32) -> ConfigApplicationIr {
         SymbolId::new("dust_dart::SerDe"),
         Some(args.to_owned()),
         span(start, end),
+    )
+}
+
+fn serde_config_with_default(args: &str, default_value: AnnotationValueIr) -> ConfigApplicationIr {
+    ConfigApplicationIr::with_arguments(
+        SymbolId::new("dust_dart::SerDe"),
+        Some(args.to_owned()),
+        Vec::new(),
+        BTreeMap::from([("defaultValue".to_owned(), default_value)]),
+        span(18, 30),
     )
 }
 
@@ -109,10 +123,9 @@ fn lowers_serde_configs_into_ir() {
             parsed_type: None,
             has_default: false,
             span: span(20, 30),
-            configs: vec![serde_config(
+            configs: vec![serde_config_with_default(
                 "(rename: 'full_name', aliases: ['fullName'], using: const NameCodec(), defaultValue: 'guest')",
-                18,
-                30,
+                AnnotationValueIr::String("guest".to_owned()),
             )],
         }],
         constructors: Vec::new(),
@@ -162,6 +175,13 @@ fn lowers_serde_configs_into_ir() {
             .as_ref()
             .and_then(|serde| serde.default_value_source.as_deref()),
         Some("'guest'")
+    );
+    assert_eq!(
+        outcome.value.fields[0]
+            .serde
+            .as_ref()
+            .and_then(|serde| serde.default_value.as_ref()),
+        Some(&AnnotationValueIr::String("guest".to_owned()))
     );
 }
 
