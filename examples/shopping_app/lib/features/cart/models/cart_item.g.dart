@@ -96,7 +96,9 @@ Map<String, Object?> _$CartItemToJson(CartItem instance) {
 
 // factory CartItem.fromJson(Map<String, Object?> json) => _$CartItemFromJson(json);
 CartItem _$CartItemFromJson(Map<String, Object?> json) {
-  final productValue = Product.fromJson(JsonHelper.asMap(json['product'], 'product'));
+  final productValue = Product.fromJson(
+    JsonHelper.asMap(json['product'], 'product'),
+  );
   final quantityValue = JsonHelper.as<int>(json['quantity'], 'quantity', 'int');
 
   return CartItem(product: productValue, quantity: quantityValue);

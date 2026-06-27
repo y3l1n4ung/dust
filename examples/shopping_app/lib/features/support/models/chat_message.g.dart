@@ -310,7 +310,9 @@ Map<String, Object?> _$ChatResponseToJson(ChatResponse instance) {
 
 // factory ChatResponse.fromJson(Map<String, Object?> json) => _$ChatResponseFromJson(json);
 ChatResponse _$ChatResponseFromJson(Map<String, Object?> json) {
-  final messageValue = _$ChatMessageFromJson(JsonHelper.asMap(json['message'], 'message'));
+  final messageValue = _$ChatMessageFromJson(
+    JsonHelper.asMap(json['message'], 'message'),
+  );
   final escalatedValue = JsonHelper.as<bool>(
     json['escalated'],
     'escalated',

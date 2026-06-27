@@ -228,7 +228,9 @@ Product _$ProductFromJson(Map<String, Object?> json) {
     'String',
   );
   final imageValue = JsonHelper.as<String>(json['image'], 'image', 'String');
-  final ratingValue = _$RatingFromJson(JsonHelper.asMap(json['rating'], 'rating'));
+  final ratingValue = _$RatingFromJson(
+    JsonHelper.asMap(json['rating'], 'rating'),
+  );
 
   return Product(
     id: idValue,
