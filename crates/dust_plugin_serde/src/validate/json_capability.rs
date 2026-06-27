@@ -22,11 +22,11 @@ pub(super) struct JsonModelContext<'a> {
     /// Enums for which Dust will generate `fromJson` helpers.
     deserializable_enums: HashSet<&'a str>,
     /// Type names discovered across workspace source files.
-    workspace_types: HashSet<&'a str>,
+    workspace_types: &'a [String],
     /// Workspace type names that can serialize to JSON.
-    workspace_serializable_types: HashSet<&'a str>,
+    workspace_serializable_types: &'a [String],
     /// Workspace type names that can deserialize from JSON.
-    workspace_deserializable_types: HashSet<&'a str>,
+    workspace_deserializable_types: &'a [String],
 }
 
 impl<'a> JsonModelContext<'a> {
@@ -78,12 +78,12 @@ impl<'a> JsonModelContext<'a> {
                 })
                 .map(|item| item.name.as_str())
                 .collect(),
-            workspace_types: workspace_string_set(workspace, JSON_TYPES_KEY),
-            workspace_serializable_types: workspace_string_set(
+            workspace_types: workspace_string_slice(workspace, JSON_TYPES_KEY),
+            workspace_serializable_types: workspace_string_slice(
                 workspace,
                 JSON_SERIALIZABLE_TYPES_KEY,
             ),
-            workspace_deserializable_types: workspace_string_set(
+            workspace_deserializable_types: workspace_string_slice(
                 workspace,
                 JSON_DESERIALIZABLE_TYPES_KEY,
             ),
@@ -106,7 +106,7 @@ pub(super) fn has_verified_json_conversion(
                 None => has_workspace_json_conversion(
                     context,
                     name,
-                    &context.workspace_serializable_types,
+                    context.workspace_serializable_types,
                 ),
             }) || context.serializable_enums.contains(name)
         }
@@ -118,7 +118,7 @@ pub(super) fn has_verified_json_conversion(
                 None => has_workspace_json_conversion(
                     context,
                     name,
-                    &context.workspace_deserializable_types,
+                    context.workspace_deserializable_types,
                 ),
             }) || context.deserializable_enums.contains(name)
         }
@@ -126,26 +126,28 @@ pub(super) fn has_verified_json_conversion(
     }
 }
 
-/// Returns one workspace string-set as borrowed values.
-fn workspace_string_set<'a>(
-    workspace: Option<&'a WorkspaceAnalysis>,
-    key: &str,
-) -> HashSet<&'a str> {
+/// Returns one workspace string-set as a borrowed sorted slice.
+fn workspace_string_slice<'a>(workspace: Option<&'a WorkspaceAnalysis>, key: &str) -> &'a [String] {
     workspace
         .and_then(|analysis| analysis.string_set(key))
         .unwrap_or_default()
-        .iter()
-        .map(String::as_str)
-        .collect()
 }
 
 /// Returns whether workspace facts prove or intentionally cannot disprove JSON support.
 fn has_workspace_json_conversion(
     context: &JsonModelContext<'_>,
     name: &str,
-    capable_types: &HashSet<&str>,
+    capable_types: &[String],
 ) -> bool {
-    !context.workspace_types.contains(name) || capable_types.contains(name)
+    !contains_sorted_string(context.workspace_types, name)
+        || contains_sorted_string(capable_types, name)
+}
+
+/// Returns whether a sorted string slice contains `needle`.
+fn contains_sorted_string(values: &[String], needle: &str) -> bool {
+    values
+        .binary_search_by(|value| value.as_str().cmp(needle))
+        .is_ok()
 }
 
 /// Returns the JSON member required for one conversion direction.

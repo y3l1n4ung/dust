@@ -96,16 +96,25 @@ const DERIVE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
 
 /// Source inputs that affect generated SerDe behavior.
 const SERDE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
+    include_str!("../../../../dust_plugin_serde/src/analysis.rs"),
+    include_str!("../../../../dust_plugin_serde/src/lib.rs"),
     include_str!("../../../../dust_plugin_serde/src/plugin.rs"),
     include_str!("../../../../dust_plugin_serde/src/validate.rs"),
+    include_str!("../../../../dust_plugin_serde/src/validate/json_capability.rs"),
     include_str!("../../../../dust_plugin_serde/src/emit.rs"),
     include_str!("../../../../dust_plugin_serde/src/emit_class.rs"),
     include_str!("../../../../dust_plugin_serde/src/emit_enum.rs"),
+    include_str!("../../../../dust_plugin_serde/src/emit_sealed.rs"),
     include_str!("../../../../dust_plugin_serde/src/emit_support.rs"),
+    include_str!("../../../../dust_plugin_serde/src/emit_variant_class.rs"),
     include_str!("../../../../dust_plugin_serde/src/writer.rs"),
     include_str!("../../../../dust_plugin_serde/src/writer_expr.rs"),
     include_str!("../../../../dust_plugin_serde/src/writer_model.rs"),
     include_str!("../../../../dust_plugin_serde/src/writer_type.rs"),
+    include_str!("../../../../dust_plugin_serde/src/templates/enum_from_json.jinja"),
+    include_str!("../../../../dust_plugin_serde/src/templates/enum_to_json.jinja"),
+    include_str!("../../../../dust_plugin_serde/src/templates/from_json_helper.jinja"),
+    include_str!("../../../../dust_plugin_serde/src/templates/to_json_helper.jinja"),
 );
 
 /// Source inputs that affect generated HTTP client behavior.
