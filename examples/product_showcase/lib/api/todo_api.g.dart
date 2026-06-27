@@ -57,15 +57,15 @@ final class _$TodoApi implements TodoApi {
   final String? _baseUrl;
 
   @override
-  Future<List<Todo>> list({int? userId, int? page, String? traceId}) async {
+  Future<List<Todo>> list({int? userId, int page = 1, String traceId = 'showcase-default'}) async {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     _headers['x-api-version'] = '2026-05';
     _headers['x-endpoint'] = 'todos';
     if (userId != null) _queryParameters['userId'] = userId;
-    if (page != null) _queryParameters['page'] = page;
-    if (traceId != null) _headers['x-trace-id'] = traceId;
+    _queryParameters['page'] = page;
+    _headers['x-trace-id'] = traceId;
     final Object? _data = null;
     final _options = Options(
       method: 'GET',
