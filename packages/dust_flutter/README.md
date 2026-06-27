@@ -62,14 +62,9 @@ import 'package:dust_flutter/i18n.dart';
 
 final i18n = I18nController(
   config: const I18nConfig(locales: ['en', 'my'], fallbackLocale: 'en'),
-  bundles: const [
-    I18nBundle(
-      locale: 'en',
-      namespace: 'home',
-      messages: {'title': 'Home'},
-    ),
-  ],
 );
+
+await i18n.loadAssetBundles(namespaces: ['home']);
 
 I18nScope(
   controller: i18n,
