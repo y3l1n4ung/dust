@@ -27,3 +27,10 @@ examples/benchmark_project/lib/generated_models/
 .env
 coverage/
 .pr/
+
+# Profiling output
+flamegraph.svg
+cargo-flamegraph.trace/
+perf.data
+perf.data.old
+*.speedscope.json
