@@ -10,7 +10,9 @@ use crate::{
     types::extract_type_before,
 };
 
-use super::parse_text::{default_value_source, optional_parameter_kind, parameter_name_node};
+use super::parse_text::{
+    default_value_source, is_required_parameter, optional_parameter_kind, parameter_name_node,
+};
 
 /// Extracts a parsed method surface from a class member declaration.
 pub(super) fn extract_method(
@@ -175,6 +177,7 @@ fn extract_method_formal_parameter(
         type_source,
         parsed_type,
         kind,
+        is_required: is_required_parameter(node, source),
         has_default: default_value_source.is_some(),
         default_value_source,
         span: text_range(node),

@@ -1,13 +1,13 @@
 #![cfg(test)]
 
 use super::lower_library;
-use dust_ir::{SpanIr, TypeIr};
+use dust_ir::{ClassKindIr, ConfigApplicationIr, SpanIr, SymbolId, TypeIr};
 use dust_parser_dart::{
     ParameterKind, ParsedExtensionSurface, ParsedExtensionTypeSurface, ParsedFieldSurface,
-    ParsedFunctionSurface, ParsedMethodParamSurface, ParsedMixinSurface,
+    ParsedFunctionSurface, ParsedMethodParamSurface, ParsedMethodSurface, ParsedMixinSurface,
     ParsedTopLevelVariableSurface, ParsedTypeSurface, ParsedTypedefSurface,
 };
-use dust_resolver::ResolvedLibrary;
+use dust_resolver::{ResolvedClass, ResolvedLibrary, ResolvedMethod, ResolvedMethodParam};
 use dust_text::{FileId, TextRange};
 
 fn range(start: u32, end: u32) -> TextRange {
@@ -20,6 +20,14 @@ fn span(start: u32, end: u32) -> SpanIr {
 
 fn parsed_type(source: &str, start: u32) -> ParsedTypeSurface {
     ParsedTypeSurface::parse(source, range(start, start + source.len() as u32)).unwrap()
+}
+
+fn config(name: &str) -> ConfigApplicationIr {
+    ConfigApplicationIr::new(
+        SymbolId::new(format!("dust_dart::{name}")),
+        None,
+        span(1, 2),
+    )
 }
 
 #[test]
@@ -75,6 +83,7 @@ fn lowers_parser_top_level_declaration_surfaces_into_dart_file_ir() {
                 type_source: Some("User".to_owned()),
                 parsed_type: Some(user_type.clone()),
                 kind: ParameterKind::Positional,
+                is_required: false,
                 has_default: false,
                 default_value_source: None,
                 span: range(205, 214),
@@ -136,4 +145,75 @@ fn lowers_parser_top_level_declaration_surfaces_into_dart_file_ir() {
         file.typedefs[0].aliased_type,
         TypeIr::generic("Map", vec![TypeIr::string(), TypeIr::named("User")])
     );
+}
+
+#[test]
+fn lowers_explicit_required_method_parameter_state() {
+    let param = ParsedMethodParamSurface {
+        name: "traceId".to_owned(),
+        annotations: Vec::new(),
+        type_source: Some("String?".to_owned()),
+        parsed_type: Some(parsed_type("String?", 20)),
+        kind: ParameterKind::Named,
+        is_required: true,
+        has_default: false,
+        default_value_source: None,
+        span: range(20, 35),
+    };
+    let method = ParsedMethodSurface {
+        name: "search".to_owned(),
+        is_static: false,
+        is_external: false,
+        annotations: Vec::new(),
+        return_type_source: Some("void".to_owned()),
+        parsed_return_type: Some(parsed_type("void", 10)),
+        has_body: false,
+        body_source: None,
+        params: vec![param.clone()],
+        span: range(10, 50),
+    };
+    let library = ResolvedLibrary {
+        source_path: "lib/api.dart".to_owned(),
+        output_path: "lib/api.g.dart".to_owned(),
+        span: span(0, 100),
+        directives: Vec::new(),
+        part_uri: None,
+        classes: vec![ResolvedClass {
+            kind: ClassKindIr::Class,
+            name: "Api".to_owned(),
+            is_abstract: true,
+            is_interface: true,
+            superclass_name: None,
+            span: span(0, 100),
+            fields: Vec::new(),
+            constructors: Vec::new(),
+            methods: vec![ResolvedMethod {
+                surface: method,
+                span: span(10, 50),
+                traits: Vec::new(),
+                configs: Vec::new(),
+                params: vec![ResolvedMethodParam {
+                    surface: param,
+                    span: span(20, 35),
+                    traits: Vec::new(),
+                    configs: Vec::new(),
+                }],
+            }],
+            traits: Vec::new(),
+            configs: vec![config("HttpClient")],
+        }],
+        enums: Vec::new(),
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
+        query_calls: Vec::new(),
+    };
+
+    let outcome = lower_library(&library);
+
+    assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
+    assert!(outcome.value.classes[0].methods[0].params[0].is_required);
 }

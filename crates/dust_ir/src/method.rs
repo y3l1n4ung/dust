@@ -36,6 +36,8 @@ pub struct MethodParamIr {
     pub span: SpanIr,
     /// The parameter kind.
     pub kind: ParamKind,
+    /// Whether the parameter uses Dart's explicit `required` modifier.
+    pub is_required: bool,
     /// Whether the parameter has a default value or initializer.
     pub has_default: bool,
     /// The raw default value expression source, if explicitly written.

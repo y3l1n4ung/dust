@@ -190,6 +190,8 @@ pub struct ParsedMethodParamSurface {
     pub parsed_type: Option<ParsedTypeSurface>,
     /// The parameter kind.
     pub kind: ParameterKind,
+    /// Whether the parameter uses Dart's explicit `required` modifier.
+    pub is_required: bool,
     /// Whether the parameter has a default value.
     pub has_default: bool,
     /// The raw default value expression source, if explicitly written.

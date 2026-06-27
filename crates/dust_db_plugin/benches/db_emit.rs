@@ -108,6 +108,7 @@ fn main() {
                     ty: TypeIr::int(),
                     span: span(),
                     kind: ParamKind::Positional,
+                    is_required: false,
                     has_default: false,
                     default_value_source: None,
                     traits: Vec::new(),

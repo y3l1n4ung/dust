@@ -49,7 +49,7 @@ fn extracts_annotations_for_multiple_named_method_parameters() {
             "  Future<void> list({\n",
             "    @Query('userId') int? userId,\n",
             "    @Query('page') int? page = defaultPage,\n",
-            "    @Header('x-trace-id') String? traceId,\n",
+            "    @Header('x-trace-id') required String? traceId,\n",
             "    @Query('sort') String sort = const SortOption('name,asc'),\n",
             "  });\n",
             "}\n",
@@ -77,6 +77,7 @@ fn extracts_annotations_for_multiple_named_method_parameters() {
     );
     assert_eq!(method.params[2].annotations[0].name, "Header");
     assert_eq!(method.params[2].type_source.as_deref(), Some("String?"));
+    assert!(method.params[2].is_required);
     assert_eq!(method.params[3].name, "sort");
     assert_eq!(method.params[3].annotations[0].name, "Query");
     assert_eq!(method.params[3].type_source.as_deref(), Some("String"));
@@ -84,6 +85,9 @@ fn extracts_annotations_for_multiple_named_method_parameters() {
         method.params[3].default_value_source.as_deref(),
         Some("const SortOption('name,asc')")
     );
+    assert!(!method.params[0].is_required);
+    assert!(!method.params[1].is_required);
+    assert!(!method.params[3].is_required);
 }
 
 #[test]

@@ -350,7 +350,7 @@ fn render_method_parameter(param: &dust_ir::MethodParamIr) -> String {
         .default_value_source
         .as_deref()
         .map_or(String::new(), |source| format!(" = {source}"));
-    if param.kind == dust_ir::ParamKind::Named && !param.ty.is_nullable() && !param.has_default {
+    if param.kind == dust_ir::ParamKind::Named && param.is_required {
         format!("required {} {}", render_type(&param.ty), param.name)
     } else {
         format!("{} {}{default}", render_type(&param.ty), param.name)
