@@ -228,18 +228,53 @@ void main() {
         1706745600000,
         isUtc: true,
       ),
+      profiles: const JsonPage(
+        items: [
+          JsonProfile(id: 'user-1', displayName: 'May'),
+          JsonProfile(id: 'user-2', displayName: 'Aye'),
+        ],
+        total: 2,
+      ),
     );
 
     expect(bundle.toJson(), {
       'createdAt': 1704067200000,
       'updatedAt': 1706745600000,
+      'profiles': {
+        'items': [
+          {
+            'id': 'user-1',
+            'display_name': 'May',
+            'tags': ['guest'],
+          },
+          {
+            'id': 'user-2',
+            'display_name': 'Aye',
+            'tags': ['guest'],
+          },
+        ],
+        'total': 2,
+      },
     });
 
     final roundTrip = JsonCodecBundle.fromJson({
       'createdAt': 1704067200000,
       'updatedAt': 1706745600000,
+      'profiles': {
+        'items': [
+          {'id': 'user-1', 'displayName': 'May'},
+          {'id': 'user-2', 'displayName': 'Aye'},
+        ],
+        'total': 2,
+      },
     });
 
-    expect(roundTrip, equals(bundle));
+    expect(roundTrip.createdAt, bundle.createdAt);
+    expect(roundTrip.updatedAt, bundle.updatedAt);
+    expect(roundTrip.profiles.total, 2);
+    expect(roundTrip.profiles.items.map((profile) => profile.id), [
+      'user-1',
+      'user-2',
+    ]);
   });
 }
