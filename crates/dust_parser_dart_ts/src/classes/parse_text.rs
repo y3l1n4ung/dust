@@ -52,6 +52,39 @@ pub(super) fn is_field_formal_parameter(node: Node<'_>) -> bool {
         || direct_named_child(node, "formal_parameter").is_some_and(is_field_formal_parameter)
 }
 
+/// Returns whether a parameter has the explicit Dart `required` modifier.
+pub(super) fn is_required_parameter(node: Node<'_>, source: &SourceText) -> bool {
+    let Some(name) = parameter_name_node(node) else {
+        return false;
+    };
+    let before_name = &source.as_str()[node.start_byte()..name.start_byte()];
+    if before_name
+        .split(|ch: char| !ch.is_ascii_alphanumeric() && ch != '_')
+        .any(|word| word == "required")
+    {
+        return true;
+    }
+
+    let Some(parent) = node.parent() else {
+        return false;
+    };
+    let mut cursor = parent.walk();
+    let mut required_since_separator = false;
+    for child in parent.children(&mut cursor) {
+        if same_node(child, node) {
+            return required_since_separator;
+        }
+        if matches!(child.kind(), "," | "{" | "[") {
+            required_since_separator = false;
+            continue;
+        }
+        if child.kind() == "required" || node_text(child, source).trim() == "required" {
+            required_since_separator = true;
+        }
+    }
+    false
+}
+
 /// Extracts a parameter default-value expression from the surrounding syntax.
 pub(super) fn default_value_source(node: Node<'_>, source: &SourceText) -> Option<String> {
     let parent = node.parent()?;

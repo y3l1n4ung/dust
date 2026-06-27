@@ -2,6 +2,7 @@
 
 mod http_client_plugin_tests {
     mod emission;
+    mod emission_params;
     mod emission_request;
     mod emission_response;
     mod emission_test_file;

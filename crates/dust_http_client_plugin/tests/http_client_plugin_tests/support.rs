@@ -22,6 +22,7 @@ pub(crate) fn param(name: &str, ty: TypeIr, configs: Vec<ConfigApplicationIr>) -
         ty,
         span: span(20, 30),
         kind: ParamKind::Positional,
+        is_required: false,
         has_default: false,
         default_value_source: None,
         traits: Vec::new(),
@@ -37,6 +38,17 @@ pub(crate) fn named_param(
     MethodParamIr {
         kind: ParamKind::Named,
         ..param(name, ty, configs)
+    }
+}
+
+pub(crate) fn required_named_param(
+    name: &str,
+    ty: TypeIr,
+    configs: Vec<ConfigApplicationIr>,
+) -> MethodParamIr {
+    MethodParamIr {
+        is_required: true,
+        ..named_param(name, ty, configs)
     }
 }
 
