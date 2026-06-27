@@ -2,4 +2,5 @@
 library;
 
 export 'route.dart';
+export 'i18n.dart';
 export 'state.dart';
