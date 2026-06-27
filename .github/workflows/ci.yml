@@ -180,6 +180,41 @@ jobs:
         working-directory: ${{ matrix.path }}
         run: flutter --suppress-analytics test
 
+  serde-analyze:
+    name: SerDe analyzer fixture
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK for Dart tooling
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Disable Dart analytics
+        run: dart --disable-analytics
+
+      - name: Pub get
+        working-directory: fixtures/serde_json_app
+        run: dart pub get
+
+      - name: Dust clean build
+        run: cargo run --quiet -p dust_cli -- build --clean --root fixtures/serde_json_app
+
+      - name: Analyze generated SerDe output
+        working-directory: fixtures/serde_json_app
+        run: dart analyze --fatal-infos
+
+      - name: Test generated SerDe runtime
+        working-directory: fixtures/serde_json_app
+        run: dart test
+
   benchmark:
     name: Benchmark / benchmark_project
     runs-on: ubuntu-latest
