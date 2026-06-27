@@ -1,6 +1,7 @@
 use dust_ir::{
     AnnotationValueIr, ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, EnumIr, FieldIr,
-    LibraryIr, ParamKind, SerdeFieldConfigIr, SpanIr, SymbolId, TraitApplicationIr, TypeIr,
+    LibraryIr, MethodIr, MethodParamIr, ParamKind, SerdeFieldConfigIr, SpanIr, SymbolId,
+    TraitApplicationIr, TypeIr,
 };
 use dust_text::{FileId, TextRange};
 
@@ -71,6 +72,33 @@ pub(crate) fn constructor(name: Option<&str>, params: Vec<ConstructorParamIr>) -
         redirected_target_name: None,
         span: span(25, 60),
         params,
+    }
+}
+
+/// Builds a factory constructor fixture.
+pub(crate) fn factory_constructor(
+    name: Option<&str>,
+    params: Vec<ConstructorParamIr>,
+) -> ConstructorIr {
+    ConstructorIr {
+        is_factory: true,
+        ..constructor(name, params)
+    }
+}
+
+/// Builds a method fixture.
+pub(crate) fn method(name: &str, return_type: TypeIr, params: Vec<MethodParamIr>) -> MethodIr {
+    MethodIr {
+        name: name.to_owned(),
+        is_static: false,
+        is_external: false,
+        return_type,
+        has_body: true,
+        body_source: None,
+        params,
+        span: span(40, 50),
+        traits: Vec::new(),
+        configs: Vec::new(),
     }
 }
 
