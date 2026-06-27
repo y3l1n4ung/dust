@@ -1,7 +1,12 @@
 use std::collections::BTreeMap;
 
-use dust_ir::{AnnotationIr, AnnotationValueIr, ExprSourceIr, NameIr, SpanIr, SymbolId};
-use dust_parser_dart::ParsedAnnotation;
+use dust_ir::{
+    AnnotationIr, AnnotationNumberKindIr, AnnotationValueIr, ExprSourceIr, NameIr, SpanIr, SymbolId,
+};
+use dust_parser_dart::{
+    ParsedAnnotation, ParsedAnnotationNumberKind, ParsedAnnotationValue,
+    ParsedAnnotationValueRootKind,
+};
 use dust_text::{FileId, TextRange};
 
 /// Converts one parsed annotation into semantic IR, optionally attaching a resolved symbol.
@@ -33,7 +38,10 @@ pub(crate) fn annotation_argument_values(
         let positional = arguments
             .positional
             .iter()
-            .map(|argument| expression_value(file_id, argument.source.clone(), argument.span))
+            .map(|argument| match &argument.value {
+                Some(value) => annotation_value_ir(file_id, value),
+                None => expression_value(file_id, argument.source.clone(), argument.span),
+            })
             .collect();
         let named = arguments
             .named
@@ -41,7 +49,14 @@ pub(crate) fn annotation_argument_values(
             .map(|argument| {
                 (
                     argument.name.clone(),
-                    expression_value(file_id, argument.value_source.clone(), argument.value_span),
+                    match &argument.value {
+                        Some(value) => annotation_value_ir(file_id, value),
+                        None => expression_value(
+                            file_id,
+                            argument.value_source.clone(),
+                            argument.value_span,
+                        ),
+                    },
                 )
             })
             .collect();
@@ -69,6 +84,37 @@ pub(crate) fn annotation_argument_values(
         })
         .collect();
     (positional, named)
+}
+
+/// Converts a parser-owned annotation value into semantic IR.
+fn annotation_value_ir(file_id: FileId, value: &ParsedAnnotationValue) -> AnnotationValueIr {
+    match &value.kind {
+        ParsedAnnotationValueRootKind::Null => AnnotationValueIr::Null,
+        ParsedAnnotationValueRootKind::Bool(flag) => AnnotationValueIr::Bool(*flag),
+        ParsedAnnotationValueRootKind::String(source) => AnnotationValueIr::String(source.clone()),
+        ParsedAnnotationValueRootKind::Number(kind) => AnnotationValueIr::Number {
+            source: value.source.clone(),
+            kind: match kind {
+                ParsedAnnotationNumberKind::Int => AnnotationNumberKindIr::Int,
+                ParsedAnnotationNumberKind::Double => AnnotationNumberKindIr::Double,
+            },
+        },
+        ParsedAnnotationValueRootKind::List => AnnotationValueIr::List(Vec::new()),
+        ParsedAnnotationValueRootKind::Set => AnnotationValueIr::Set(Vec::new()),
+        ParsedAnnotationValueRootKind::Map => AnnotationValueIr::Map(Vec::new()),
+        ParsedAnnotationValueRootKind::Record => AnnotationValueIr::Record(Vec::new()),
+        ParsedAnnotationValueRootKind::Constructor { name } => AnnotationValueIr::Constructor {
+            name: name_ir(file_id, name, value.span),
+            positional_args: Vec::new(),
+            named_args: BTreeMap::new(),
+        },
+        ParsedAnnotationValueRootKind::Member(name) => {
+            AnnotationValueIr::Member(name_ir(file_id, name, value.span))
+        }
+        ParsedAnnotationValueRootKind::Expression => {
+            expression_value(file_id, value.source.clone(), value.span)
+        }
+    }
 }
 
 /// Wraps a raw expression source as an annotation value.

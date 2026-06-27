@@ -27,14 +27,25 @@ pub struct ExprSourceIr {
 /// A structured constant annotation value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AnnotationValueIr {
+    /// The `null` literal.
+    Null,
     /// A boolean literal.
     Bool(bool),
     /// A string literal with delimiters removed.
     String(String),
     /// A numeric literal kept as source for exact interpretation.
-    Number(String),
+    Number {
+        /// The numeric literal source.
+        source: String,
+        /// The numeric literal kind.
+        kind: AnnotationNumberKindIr,
+    },
     /// A list literal.
     List(Vec<AnnotationValueIr>),
+    /// A set literal.
+    Set(Vec<AnnotationValueIr>),
+    /// A map literal.
+    Map(Vec<(AnnotationValueIr, AnnotationValueIr)>),
     /// A named record literal.
     Record(Vec<(String, AnnotationValueIr)>),
     /// A constant constructor invocation.
@@ -50,6 +61,15 @@ pub enum AnnotationValueIr {
     Member(NameIr),
     /// An expression shape Dust preserves but does not semantically parse yet.
     Expression(ExprSourceIr),
+}
+
+/// Semantic annotation numeric literal kind.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AnnotationNumberKindIr {
+    /// An integer literal.
+    Int,
+    /// A floating point literal.
+    Double,
 }
 
 /// One normalized Dart annotation.

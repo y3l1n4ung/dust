@@ -192,12 +192,14 @@ mod tests {
             parsed_arguments: Some(ParsedAnnotationArguments {
                 positional: vec![ParsedAnnotationArgument {
                     source: "[ToString(), const prefix.CopyWith<User>()]".to_owned(),
+                    value: None,
                     span: TextRange::new(0_u32, 42_u32),
                 }],
                 named: vec![ParsedAnnotationNamedArgument {
                     name: "ignored".to_owned(),
                     source: "ignored: Unknown()".to_owned(),
                     value_source: "Unknown()".to_owned(),
+                    value: None,
                     span: TextRange::new(44_u32, 62_u32),
                     value_span: TextRange::new(53_u32, 62_u32),
                 }],

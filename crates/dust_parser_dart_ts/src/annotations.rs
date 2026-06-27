@@ -5,7 +5,11 @@ use dust_parser_dart::{
 use dust_text::{SourceText, TextRange, TextSize};
 use tree_sitter::Node;
 
+use self::values::annotation_value_from_container;
 use crate::syntax::{direct_named_child, find_first_descendant_text, node_text, text_range};
+
+/// Parser-owned annotation value extraction helpers.
+mod values;
 
 /// Extracts a structured annotation from a tree-sitter annotation node.
 pub(crate) fn extract_annotation(node: Node<'_>, source: &SourceText) -> ParsedAnnotation {
@@ -77,8 +81,15 @@ fn extract_annotation_arguments(node: Node<'_>, source: &SourceText) -> ParsedAn
                 arguments.named.push(argument);
             }
         } else {
+            let argument_source = node_text(child, source);
             arguments.positional.push(ParsedAnnotationArgument {
-                source: node_text(child, source),
+                value: annotation_value_from_container(
+                    child,
+                    argument_source.clone(),
+                    text_range(child),
+                    source,
+                ),
+                source: argument_source,
                 span: text_range(child),
             });
         }
@@ -95,11 +106,18 @@ fn extract_named_argument(
     let label = direct_named_child(named_node, "label")?;
     let name = find_first_descendant_text(label, source, &["identifier"])?;
     let value_span = named_value_span(named_node, label, source);
+    let value_source = source.slice(value_span).unwrap_or_default().to_owned();
 
     Some(ParsedAnnotationNamedArgument {
         name,
         source: node_text(argument_node, source),
-        value_source: source.slice(value_span).unwrap_or_default().to_owned(),
+        value: annotation_value_from_container(
+            named_node,
+            value_source.clone(),
+            value_span,
+            source,
+        ),
+        value_source,
         span: text_range(argument_node),
         value_span,
     })

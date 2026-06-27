@@ -200,12 +200,15 @@ impl ConfigApplicationIr {
 /// Returns source text for annotation values that are backed by raw source.
 fn annotation_value_source(value: &AnnotationValueIr) -> Option<&str> {
     match value {
-        AnnotationValueIr::Number(source) => Some(source),
+        AnnotationValueIr::Number { source, .. } => Some(source),
         AnnotationValueIr::Member(name) => Some(name.source.as_str()),
         AnnotationValueIr::Expression(source) => Some(source.source.as_str()),
-        AnnotationValueIr::Bool(_)
+        AnnotationValueIr::Null
+        | AnnotationValueIr::Bool(_)
         | AnnotationValueIr::String(_)
         | AnnotationValueIr::List(_)
+        | AnnotationValueIr::Set(_)
+        | AnnotationValueIr::Map(_)
         | AnnotationValueIr::Record(_)
         | AnnotationValueIr::Constructor { .. } => None,
     }
