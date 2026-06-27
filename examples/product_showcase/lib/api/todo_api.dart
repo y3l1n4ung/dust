@@ -19,8 +19,8 @@ abstract interface class TodoApi {
   @GET('/todos')
   Future<List<Todo>> list({
     @Query('userId') int? userId,
-    @Query('page') int? page,
-    @Header('x-trace-id') String? traceId,
+    @Query('page') int page = 1,
+    @Header('x-trace-id') String traceId = 'showcase-default',
   });
 
   @GET('/todos/{id}')

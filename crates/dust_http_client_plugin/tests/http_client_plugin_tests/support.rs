@@ -40,6 +40,19 @@ pub(crate) fn named_param(
     }
 }
 
+pub(crate) fn named_param_with_default(
+    name: &str,
+    ty: TypeIr,
+    default_value: &str,
+    configs: Vec<ConfigApplicationIr>,
+) -> MethodParamIr {
+    MethodParamIr {
+        has_default: true,
+        default_value_source: Some(default_value.to_owned()),
+        ..named_param(name, ty, configs)
+    }
+}
+
 pub(crate) fn method(
     name: &str,
     return_type: TypeIr,
