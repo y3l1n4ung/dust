@@ -1,7 +1,7 @@
 use dust_ir::{
     ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, EnumIr, EnumVariantIr, FieldIr,
-    LibraryIr, ParamKind, SerdeClassConfigIr, SerdeRenameRuleIr, SpanIr, SymbolId,
-    TraitApplicationIr, TypeIr,
+    LibraryIr, ParamKind, SerdeClassConfigIr, SerdeEnumVariantConfigIr, SerdeRenameRuleIr, SpanIr,
+    SymbolId, TraitApplicationIr, TypeIr,
 };
 use dust_text::{FileId, TextRange};
 
@@ -30,7 +30,28 @@ pub(crate) fn field(name: &str, ty: TypeIr) -> FieldIr {
 pub(crate) fn enum_variant(name: &str) -> EnumVariantIr {
     EnumVariantIr {
         name: name.to_owned(),
+        serde: None,
         span: span(10, 20),
+    }
+}
+
+pub(crate) fn renamed_enum_variant(name: &str, rename: &str) -> EnumVariantIr {
+    EnumVariantIr {
+        serde: Some(SerdeEnumVariantConfigIr {
+            rename: Some(rename.to_owned()),
+            skip: false,
+        }),
+        ..enum_variant(name)
+    }
+}
+
+pub(crate) fn skipped_enum_variant(name: &str) -> EnumVariantIr {
+    EnumVariantIr {
+        serde: Some(SerdeEnumVariantConfigIr {
+            skip: true,
+            ..Default::default()
+        }),
+        ..enum_variant(name)
     }
 }
 

@@ -112,15 +112,16 @@ JsonEnumBundle _$JsonEnumBundleFromJson(Map<String, Object?> json) {
 
 Object? _$AccessLevelToJson(AccessLevel instance) {
   return switch (instance) {
-    AccessLevel.superAdmin => 'super-admin',
+    AccessLevel.superAdmin => 'owner',
     AccessLevel.guestUser => 'guest-user',
     AccessLevel.readOnly => 'read-only',
+    _ => throw ArgumentError.value(instance, 'instance', 'skipped value for AccessLevel'),
   };
 }
 
 AccessLevel _$AccessLevelFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
-    'super-admin' => AccessLevel.superAdmin,
+    'owner' => AccessLevel.superAdmin,
     'guest-user' => AccessLevel.guestUser,
     'read-only' => AccessLevel.readOnly,
     _ => throw ArgumentError.value(json, key, 'unknown value for AccessLevel at $key'),

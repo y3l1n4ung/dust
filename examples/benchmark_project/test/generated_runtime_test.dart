@@ -4,12 +4,36 @@ import 'package:dust_benchmark_project/generated_models/model_00005.dart';
 import 'package:dust_benchmark_project/generated_models/model_00007.dart';
 import 'package:dust_benchmark_project/generated_models/model_00008.dart';
 import 'package:dust_benchmark_project/generated_models/model_00009.dart';
-import 'package:dust_benchmark_project/support/serde_workspace_capability.dart';
 import 'package:dust_benchmark_project/generated_models/validation_showcase.dart';
-import 'package:dust_benchmark_project/support/common.dart';
+import 'package:dust_benchmark_project/benchmark_project.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('benchmark enum serde honors variant rename and skip metadata', () {
+    const cold = BenchmarkState(
+      mode: BenchmarkMode.cold,
+      activeFeature: 'serde',
+      buildsRun: 3,
+    );
+
+    expect(cold.toJson(), {
+      'mode': 'cold-start',
+      'activeFeature': 'serde',
+      'buildsRun': 3,
+    });
+    expect(
+      BenchmarkState.fromJson({
+        'mode': 'cold-start',
+        'activeFeature': 'serde',
+        'buildsRun': 3,
+      }).mode,
+      BenchmarkMode.cold,
+    );
+
+    const skipped = BenchmarkState(mode: BenchmarkMode.invalidated);
+    expect(skipped.toJson, throwsArgumentError);
+  });
+
   test('serde scalar models round-trip primitive adapters', () {
     final model = SerdeScalarModel4(
       id: 'user-4',

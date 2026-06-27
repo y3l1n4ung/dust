@@ -71,6 +71,22 @@ pub struct SerdeVariantConfigIr {
     pub params: Vec<ConstructorParamIr>,
 }
 
+/// Normalized serde-related configuration attached to one enum variant.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct SerdeEnumVariantConfigIr {
+    /// Optional explicit wire value.
+    pub rename: Option<String>,
+    /// Whether this variant should be omitted from generated enum helpers.
+    pub skip: bool,
+}
+
+impl SerdeEnumVariantConfigIr {
+    /// Returns `true` when the config carries no effective settings.
+    pub fn is_empty(&self) -> bool {
+        self.rename.is_none() && !self.skip
+    }
+}
+
 /// Normalized serde-related configuration attached to one field.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct SerdeFieldConfigIr {

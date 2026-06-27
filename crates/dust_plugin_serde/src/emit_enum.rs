@@ -1,5 +1,5 @@
-use dust_dart_emit::render_template;
-use dust_ir::EnumIr;
+use dust_dart_emit::{dart_string_literal, render_template};
+use dust_ir::{EnumIr, EnumVariantIr};
 use serde::Serialize;
 
 /// Template context for generated enum JSON helpers.
@@ -15,8 +15,14 @@ struct EnumTemplateContext<'a> {
 pub(crate) fn emit_enum_from_json_helper(e: &EnumIr) -> String {
     let mut cases = Vec::new();
     for variant in &e.variants {
-        let key = variant_wire_name(e, &variant.name);
-        cases.push(format!("    '{}' => {}.{},", key, e.name, variant.name));
+        if let Some(key) = variant_wire_name(e, variant) {
+            cases.push(format!(
+                "    {} => {}.{},",
+                dart_string_literal(&key),
+                e.name,
+                variant.name
+            ));
+        }
     }
 
     render_template(
@@ -33,8 +39,23 @@ pub(crate) fn emit_enum_from_json_helper(e: &EnumIr) -> String {
 pub(crate) fn emit_enum_to_json_helper(e: &EnumIr) -> String {
     let mut cases = Vec::new();
     for variant in &e.variants {
-        let key = variant_wire_name(e, &variant.name);
-        cases.push(format!("    {}.{} => '{}',", e.name, variant.name, key));
+        if let Some(key) = variant_wire_name(e, variant) {
+            cases.push(format!(
+                "    {}.{} => {},",
+                e.name,
+                variant.name,
+                dart_string_literal(&key)
+            ));
+        }
+    }
+    if e.variants
+        .iter()
+        .any(|variant| variant.serde.as_ref().is_some_and(|serde| serde.skip))
+    {
+        cases.push(format!(
+            "    _ => throw ArgumentError.value(instance, 'instance', 'skipped value for {}'),",
+            e.name
+        ));
     }
 
     render_template(
@@ -48,9 +69,17 @@ pub(crate) fn emit_enum_to_json_helper(e: &EnumIr) -> String {
 }
 
 /// Resolves the wire value for an enum variant.
-fn variant_wire_name(e: &EnumIr, variant_name: &str) -> String {
-    match e.serde.as_ref().and_then(|s| s.rename_all) {
-        Some(rule) => crate::writer::apply_rename_rule(variant_name, rule),
-        None => variant_name.to_owned(),
+pub(crate) fn variant_wire_name(e: &EnumIr, variant: &EnumVariantIr) -> Option<String> {
+    let serde = variant.serde.as_ref();
+    if serde.is_some_and(|serde| serde.skip) {
+        return None;
     }
+    if let Some(rename) = serde.and_then(|serde| serde.rename.as_ref()).cloned() {
+        return Some(rename);
+    }
+
+    Some(match e.serde.as_ref().and_then(|s| s.rename_all) {
+        Some(rule) => crate::writer::apply_rename_rule(&variant.name, rule),
+        None => variant.name.clone(),
+    })
 }

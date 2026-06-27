@@ -1,4 +1,4 @@
-use crate::{SerdeClassConfigIr, SpanIr, TraitApplicationIr};
+use crate::{SerdeClassConfigIr, SerdeEnumVariantConfigIr, SpanIr, TraitApplicationIr};
 
 /// One lowered enum declaration.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -20,6 +20,8 @@ pub struct EnumIr {
 pub struct EnumVariantIr {
     /// The variant name.
     pub name: String,
+    /// Normalized serde-related configuration.
+    pub serde: Option<SerdeEnumVariantConfigIr>,
     /// The source span for the variant.
     pub span: SpanIr,
 }

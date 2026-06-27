@@ -108,6 +108,7 @@ pub(crate) fn enum_type(name: &str, variants: &[&str]) -> EnumIr {
             .iter()
             .map(|variant| EnumVariantIr {
                 name: (*variant).to_owned(),
+                serde: None,
                 span: span(20, 30),
             })
             .collect(),

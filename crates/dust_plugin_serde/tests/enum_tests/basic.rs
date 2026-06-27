@@ -2,7 +2,9 @@ use dust_ir::SerdeRenameRuleIr;
 use dust_plugin_api::{DustPlugin, SymbolPlan};
 use dust_plugin_serde::register_plugin;
 
-use super::support::{enum_ir, enum_variant, library, renamed_enum};
+use super::support::{
+    enum_ir, enum_variant, library, renamed_enum, renamed_enum_variant, skipped_enum_variant,
+};
 
 #[test]
 fn generates_serde_for_enums() {
@@ -75,6 +77,48 @@ fn supports_enum_renaming() {
     'super_admin' => UserRole.superAdmin,
     'guest_user' => UserRole.guestUser,
     _ => throw ArgumentError.value(json, key, 'unknown value for UserRole at $key'),
+  };
+}"#
+    );
+}
+
+#[test]
+fn supports_enum_variant_rename_and_skip() {
+    let plugin = register_plugin();
+    let library = library(
+        vec![],
+        vec![enum_ir(
+            "PaymentStatus",
+            vec![
+                renamed_enum_variant("pendingReview", "pending"),
+                enum_variant("paid"),
+                skipped_enum_variant("legacyFailed"),
+            ],
+            &["dust_dart::Serialize", "dust_dart::Deserialize"],
+        )],
+    );
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let to_json = &contribution.top_level_functions[0];
+    let from_json = &contribution.top_level_functions[1];
+
+    assert_eq!(
+        to_json,
+        r#"Object? _$PaymentStatusToJson(PaymentStatus instance) {
+  return switch (instance) {
+    PaymentStatus.pendingReview => 'pending',
+    PaymentStatus.paid => 'paid',
+    _ => throw ArgumentError.value(instance, 'instance', 'skipped value for PaymentStatus'),
+  };
+}"#
+    );
+    assert_eq!(
+        from_json,
+        r#"PaymentStatus _$PaymentStatusFromJson(Object? json, [String key = 'json']) {
+  return switch (json) {
+    'pending' => PaymentStatus.pendingReview,
+    'paid' => PaymentStatus.paid,
+    _ => throw ArgumentError.value(json, key, 'unknown value for PaymentStatus at $key'),
   };
 }"#
     );

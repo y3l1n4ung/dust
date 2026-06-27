@@ -1,5 +1,8 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ConfigApplicationIr, SerdeClassConfigIr, SerdeFieldConfigIr, SerdeRenameRuleIr};
+use dust_ir::{
+    ConfigApplicationIr, SerdeClassConfigIr, SerdeEnumVariantConfigIr, SerdeFieldConfigIr,
+    SerdeRenameRuleIr,
+};
 
 use super::serde_parse::{parse_codec_source, parse_serde_rename_rule};
 
@@ -135,6 +138,57 @@ pub(crate) fn lower_variant_serde_tag(
         Some(rule) => dust_dart_emit::apply_rename_rule(variant_name, rule),
         None => variant_name.to_owned(),
     })
+}
+
+/// Lowers enum variant-level `@SerDe` options.
+pub(crate) fn lower_enum_variant_serde_config(
+    variant_name: &str,
+    configs: &[ConfigApplicationIr],
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Option<SerdeEnumVariantConfigIr> {
+    let mut serde = SerdeEnumVariantConfigIr::default();
+    let mut saw_serde = false;
+
+    for config in configs {
+        if !is_serde_config(config) {
+            continue;
+        }
+        saw_serde = true;
+
+        for (key, _) in serde_named_arguments(config, diagnostics) {
+            match key {
+                "rename" => match config.named_string("rename") {
+                    Some(rename) => serde.rename = Some(rename),
+                    None => diagnostics.push(Diagnostic::error(format!(
+                        "enum variant `{variant_name}` uses a non-string `SerDe(rename: ...)` value"
+                    ))),
+                },
+                "skip" => match config.named_bool("skip") {
+                    Some(flag) => serde.skip = flag,
+                    None => diagnostics.push(Diagnostic::error(format!(
+                        "enum variant `{variant_name}` uses a non-boolean `SerDe(skip: ...)` value"
+                    ))),
+                },
+                "renameAll"
+                | "tag"
+                | "content"
+                | "untagged"
+                | "disallowUnrecognizedKeys"
+                | "aliases"
+                | "defaultValue"
+                | "skipSerializing"
+                | "skipDeserializing"
+                | "using" => diagnostics.push(Diagnostic::error(format!(
+                    "enum variant `{variant_name}` does not support `SerDe({key}: ...)`"
+                ))),
+                unknown => diagnostics.push(Diagnostic::warning(format!(
+                    "enum variant `{variant_name}` uses unknown `SerDe` option `{unknown}`"
+                ))),
+            }
+        }
+    }
+
+    saw_serde.then_some(serde)
 }
 
 /// Lowers field-level `@SerDe` options.

@@ -125,17 +125,16 @@ BenchmarkState _$BenchmarkStateFromJson(Map<String, Object?> json) {
 
 Object? _$BenchmarkModeToJson(BenchmarkMode instance) {
   return switch (instance) {
-    BenchmarkMode.cold => 'cold',
+    BenchmarkMode.cold => 'cold-start',
     BenchmarkMode.warm => 'warm',
-    BenchmarkMode.invalidated => 'invalidated',
+    _ => throw ArgumentError.value(instance, 'instance', 'skipped value for BenchmarkMode'),
   };
 }
 
 BenchmarkMode _$BenchmarkModeFromJson(Object? json, [String key = 'json']) {
   return switch (json) {
-    'cold' => BenchmarkMode.cold,
+    'cold-start' => BenchmarkMode.cold,
     'warm' => BenchmarkMode.warm,
-    'invalidated' => BenchmarkMode.invalidated,
     _ => throw ArgumentError.value(json, key, 'unknown value for BenchmarkMode at $key'),
   };
 }

@@ -7,7 +7,10 @@ use dust_ir::{
     AnnotationValueIr, ClassKindIr, ConfigApplicationIr, SerdeRenameRuleIr, SpanIr, SymbolId,
 };
 use dust_parser_dart::{ParameterKind, ParsedConstructorParamSurface, ParsedConstructorSurface};
-use dust_resolver::{ResolvedClass, ResolvedConstructor, ResolvedField, ResolvedLibrary};
+use dust_resolver::{
+    ResolvedClass, ResolvedConstructor, ResolvedEnum, ResolvedEnumVariant, ResolvedField,
+    ResolvedLibrary,
+};
 use dust_text::{FileId, TextRange};
 
 fn span(start: u32, end: u32) -> SpanIr {
@@ -108,6 +111,13 @@ fn library(classes: Vec<ResolvedClass>) -> ResolvedLibrary {
     }
 }
 
+fn enum_library(enums: Vec<ResolvedEnum>) -> ResolvedLibrary {
+    ResolvedLibrary {
+        enums,
+        ..library(Vec::new())
+    }
+}
+
 #[test]
 fn lowers_serde_configs_into_ir() {
     let class = ResolvedClass {
@@ -182,6 +192,42 @@ fn lowers_serde_configs_into_ir() {
             .as_ref()
             .and_then(|serde| serde.default_value.as_ref()),
         Some(&AnnotationValueIr::String("guest".to_owned()))
+    );
+}
+
+#[test]
+fn lowers_enum_variant_serde_metadata() {
+    let outcome = lower_library(&enum_library(vec![ResolvedEnum {
+        name: "Status".to_owned(),
+        span: span(0, 100),
+        variants: vec![
+            ResolvedEnumVariant {
+                name: "pendingReview".to_owned(),
+                span: span(20, 35),
+                configs: vec![serde_config("(rename: 'pending')", 20, 35)],
+            },
+            ResolvedEnumVariant {
+                name: "legacyFailed".to_owned(),
+                span: span(40, 55),
+                configs: vec![serde_config("(skip: true)", 40, 55)],
+            },
+        ],
+        traits: Vec::new(),
+        configs: Vec::new(),
+    }]));
+
+    assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
+    let enum_ = &outcome.value.enums[0];
+    assert_eq!(
+        enum_.variants[0]
+            .serde
+            .as_ref()
+            .and_then(|serde| serde.rename.as_deref()),
+        Some("pending")
+    );
+    assert_eq!(
+        enum_.variants[1].serde.as_ref().map(|serde| serde.skip),
+        Some(true)
     );
 }
 

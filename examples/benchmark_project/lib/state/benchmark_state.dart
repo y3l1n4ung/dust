@@ -3,7 +3,13 @@ import 'package:dust_dart/serde.dart';
 part 'benchmark_state.g.dart';
 
 @Derive([Serialize(), Deserialize()])
-enum BenchmarkMode { cold, warm, invalidated }
+enum BenchmarkMode {
+  @SerDe(rename: 'cold-start')
+  cold,
+  warm,
+  @SerDe(skip: true)
+  invalidated,
+}
 
 @Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize()])
 class BenchmarkState with _$BenchmarkState {
