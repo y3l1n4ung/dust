@@ -36,7 +36,7 @@ These pages are backed by the runnable example package in
 - [Developer guide](./developer.md)
 - [Plugin guide](./plugin-guide.md)
 - [Release runbook](./release-0.1.0.md)
-- [Roadmap](./roadmap/README.md)
+- [Roadmap and milestones](https://github.com/y3l1n4ung/dust/milestones)
 
 ## Example Packages
 
