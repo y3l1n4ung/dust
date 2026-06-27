@@ -72,6 +72,11 @@ pub trait DustPlugin: Send + Sync {
     /// Validates the Dart file from this plugin's point of view.
     fn validate(&self, file: &DartFileIr) -> Vec<Diagnostic>;
 
+    /// Validates the Dart file with access to the current generated symbol plan.
+    fn validate_with_plan(&self, file: &DartFileIr, _plan: &SymbolPlan) -> Vec<Diagnostic> {
+        self.validate(file)
+    }
+
     /// Produces generated fragments for this plugin.
     fn emit(&self, file: &DartFileIr, plan: &SymbolPlan) -> PluginContribution;
 

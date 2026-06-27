@@ -95,6 +95,25 @@ void main() {
     expect(roundTrip, equals(account));
   });
 
+  test('imported workspace serde models round-trip across files', () {
+    const profile = JsonWorkspaceProfile(
+      id: 'workspace-profile',
+      kind: JsonWorkspaceKind.retail,
+    );
+    const account = JsonWorkspaceAccount(
+      profile: profile,
+      active: true,
+    );
+
+    final json = account.toJson();
+
+    expect(json['profile'], profile.toJson());
+    final decoded = JsonWorkspaceAccount.fromJson(json);
+    expect(decoded.profile.id, profile.id);
+    expect(decoded.profile.kind, profile.kind);
+    expect(decoded.active, account.active);
+  });
+
   test('generated serde diagnostics include nested collection paths', () {
     expect(
       () => JsonAccount.fromJson({

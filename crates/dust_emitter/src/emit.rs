@@ -49,7 +49,7 @@ pub fn emit_library_with_plan(
     plan: SymbolPlan,
     previous_output: Option<&str>,
 ) -> EmitResult {
-    let mut diagnostics = registry.validate_library(library);
+    let mut diagnostics = registry.validate_library_with_plan(library, &plan);
     let mut contributions = registry.emit_contributions(library, &plan);
     for contribution in &mut contributions {
         diagnostics.append(&mut contribution.diagnostics);

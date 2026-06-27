@@ -4,8 +4,10 @@ use std::collections::{HashMap, HashSet};
 
 use dust_dart_emit::{DART_BIG_INT, DART_DATE_TIME, DART_MAP, DART_OBJECT, DART_URI};
 use dust_ir::{BuiltinType, ClassIr, DartFileIr, ParamKind, TypeIr};
+use dust_plugin_api::WorkspaceAnalysis;
 
 use super::{wants_deserialize, wants_serialize};
+use crate::analysis::{JSON_DESERIALIZABLE_TYPES_KEY, JSON_SERIALIZABLE_TYPES_KEY, JSON_TYPES_KEY};
 
 /// Local JSON conversion facts available to SerDe validation.
 pub(super) struct JsonModelContext<'a> {
@@ -19,11 +21,25 @@ pub(super) struct JsonModelContext<'a> {
     serializable_enums: HashSet<&'a str>,
     /// Enums for which Dust will generate `fromJson` helpers.
     deserializable_enums: HashSet<&'a str>,
+    /// Type names discovered across workspace source files.
+    workspace_types: HashSet<&'a str>,
+    /// Workspace type names that can serialize to JSON.
+    workspace_serializable_types: HashSet<&'a str>,
+    /// Workspace type names that can deserialize from JSON.
+    workspace_deserializable_types: HashSet<&'a str>,
 }
 
 impl<'a> JsonModelContext<'a> {
     /// Collects JSON conversion facts from the current library IR.
     pub(super) fn new(library: &'a DartFileIr) -> Self {
+        Self::with_workspace(library, None)
+    }
+
+    /// Collects JSON conversion facts from current IR and workspace analysis.
+    pub(super) fn with_workspace(
+        library: &'a DartFileIr,
+        workspace: Option<&'a WorkspaceAnalysis>,
+    ) -> Self {
         Self {
             classes: library
                 .classes
@@ -62,6 +78,15 @@ impl<'a> JsonModelContext<'a> {
                 })
                 .map(|item| item.name.as_str())
                 .collect(),
+            workspace_types: workspace_string_set(workspace, JSON_TYPES_KEY),
+            workspace_serializable_types: workspace_string_set(
+                workspace,
+                JSON_SERIALIZABLE_TYPES_KEY,
+            ),
+            workspace_deserializable_types: workspace_string_set(
+                workspace,
+                JSON_DESERIALIZABLE_TYPES_KEY,
+            ),
         }
     }
 }
@@ -78,7 +103,11 @@ pub(super) fn has_verified_json_conversion(
                 Some(class) => {
                     context.serializable_classes.contains(name) || has_to_json_method(class)
                 }
-                None => true,
+                None => has_workspace_json_conversion(
+                    context,
+                    name,
+                    &context.workspace_serializable_types,
+                ),
             }) || context.serializable_enums.contains(name)
         }
         "Deserialize" => {
@@ -86,11 +115,37 @@ pub(super) fn has_verified_json_conversion(
                 Some(class) => {
                     context.deserializable_classes.contains(name) || has_from_json_factory(class)
                 }
-                None => true,
+                None => has_workspace_json_conversion(
+                    context,
+                    name,
+                    &context.workspace_deserializable_types,
+                ),
             }) || context.deserializable_enums.contains(name)
         }
         _ => false,
     }
+}
+
+/// Returns one workspace string-set as borrowed values.
+fn workspace_string_set<'a>(
+    workspace: Option<&'a WorkspaceAnalysis>,
+    key: &str,
+) -> HashSet<&'a str> {
+    workspace
+        .and_then(|analysis| analysis.string_set(key))
+        .unwrap_or_default()
+        .iter()
+        .map(String::as_str)
+        .collect()
+}
+
+/// Returns whether workspace facts prove or intentionally cannot disprove JSON support.
+fn has_workspace_json_conversion(
+    context: &JsonModelContext<'_>,
+    name: &str,
+    capable_types: &HashSet<&str>,
+) -> bool {
+    !context.workspace_types.contains(name) || capable_types.contains(name)
 }
 
 /// Returns the JSON member required for one conversion direction.

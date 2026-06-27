@@ -15,6 +15,7 @@ export 'models/json_profile.dart';
 export 'models/json_scalar_bundle.dart';
 export 'models/json_serde_options.dart';
 export 'models/json_untagged_event.dart';
+export 'models/json_workspace_capability.dart';
 export 'models/latest_dart_derive_showcase.dart';
 export 'models/nested_bundle.dart';
 export 'models/optional_note.dart';

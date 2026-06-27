@@ -472,6 +472,7 @@ dependencies = [
  "dust_dart_syntax",
  "dust_diagnostics",
  "dust_ir",
+ "dust_parser_dart",
  "dust_plugin_api",
  "dust_text",
  "heck",

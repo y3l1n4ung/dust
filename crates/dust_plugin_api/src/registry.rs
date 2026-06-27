@@ -157,9 +157,18 @@ impl PluginRegistry {
 
     /// Runs validation across all registered plugins in registration order.
     pub fn validate_library(&self, file: &DartFileIr) -> Vec<Diagnostic> {
+        self.validate_library_with_plan(file, &SymbolPlan::default())
+    }
+
+    /// Runs validation with one shared symbol plan in registration order.
+    pub fn validate_library_with_plan(
+        &self,
+        file: &DartFileIr,
+        plan: &SymbolPlan,
+    ) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
         for plugin in &self.plugins {
-            diagnostics.extend(plugin.plugin.validate(file));
+            diagnostics.extend(plugin.plugin.validate_with_plan(file, plan));
         }
         diagnostics
     }
