@@ -53,16 +53,26 @@ fn wrap_call_expr(expr: &str, indent: usize, prefix: &str, suffix: &str) -> Opti
     }
     let callee = &expr[..open];
     let args = split_top_level_items(&args_source[1..args_source.len() - 1]);
-    if args.len() <= 1 {
+    if args.is_empty() {
         return None;
     }
 
     let pad = " ".repeat(indent);
-    let arg_pad = " ".repeat(indent + 2);
     let mut rendered = vec![format!("{pad}{prefix}{callee}(")];
-    rendered.extend(args.into_iter().map(|arg| format!("{arg_pad}{arg},")));
+    rendered.extend(args.into_iter().map(|arg| wrap_arg_expr(arg, indent + 2)));
     rendered.push(format!("{pad}){suffix}"));
     Some(rendered.join("\n"))
+}
+
+/// Wraps one call argument if the argument is itself too long.
+fn wrap_arg_expr(arg: &str, indent: usize) -> String {
+    let pad = " ".repeat(indent);
+    let candidate = format!("{pad}{arg},");
+    if candidate.len() <= 80 {
+        return candidate;
+    }
+
+    wrap_call_expr(arg, indent, "", ",").unwrap_or(candidate)
 }
 
 #[cfg(test)]

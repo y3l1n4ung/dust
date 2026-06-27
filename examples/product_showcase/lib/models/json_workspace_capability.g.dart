@@ -27,7 +27,9 @@ Map<String, Object?> _$JsonWorkspaceAccountToJson(JsonWorkspaceAccount instance)
 
 // factory JsonWorkspaceAccount.fromJson(Map<String, Object?> json) => _$JsonWorkspaceAccountFromJson(json);
 JsonWorkspaceAccount _$JsonWorkspaceAccountFromJson(Map<String, Object?> json) {
-  final profileValue = JsonWorkspaceProfile.fromJson(JsonHelper.asMap(json['profile'], 'profile'));
+  final profileValue = JsonWorkspaceProfile.fromJson(
+    JsonHelper.asMap(json['profile'], 'profile'),
+  );
   final activeValue = JsonHelper.as<bool>(json['active'], 'active', 'bool');
 
   return JsonWorkspaceAccount(profile: profileValue, active: activeValue);

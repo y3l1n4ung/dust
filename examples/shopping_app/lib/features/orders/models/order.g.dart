@@ -236,7 +236,9 @@ Order _$OrderFromJson(Map<String, Object?> json) {
   final totalAmountValue = JsonHelper.as<num>(json['totalAmount'], 'totalAmount', 'num').toDouble();
   final statusValue = _$OrderStatusFromJson(json['status'], 'status');
   final createdAtValue = JsonHelper.asDateTime(json['createdAt'], 'createdAt');
-  final shippingAddressValue = _$ShippingAddressFromJson(JsonHelper.asMap(json['shippingAddress'], 'shippingAddress'));
+  final shippingAddressValue = _$ShippingAddressFromJson(
+    JsonHelper.asMap(json['shippingAddress'], 'shippingAddress'),
+  );
 
   return Order(
     id: idValue,

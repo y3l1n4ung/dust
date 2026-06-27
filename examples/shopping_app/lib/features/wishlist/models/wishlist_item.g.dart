@@ -96,7 +96,9 @@ Map<String, Object?> _$WishlistItemToJson(WishlistItem instance) {
 
 // factory WishlistItem.fromJson(Map<String, Object?> json) => _$WishlistItemFromJson(json);
 WishlistItem _$WishlistItemFromJson(Map<String, Object?> json) {
-  final productValue = Product.fromJson(JsonHelper.asMap(json['product'], 'product'));
+  final productValue = Product.fromJson(
+    JsonHelper.asMap(json['product'], 'product'),
+  );
   final savedAtValue = JsonHelper.asDateTime(json['savedAt'], 'savedAt');
 
   return WishlistItem(product: productValue, savedAt: savedAtValue);

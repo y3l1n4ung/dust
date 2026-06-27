@@ -68,9 +68,63 @@ fn handles_nested_deserializable_models() {
         user_from_json,
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
 User _$UserFromJson(Map<String, Object?> json) {
-  final profileValue = _$ProfileFromJson(JsonHelper.asMap(json['profile'], 'profile'));
+  final profileValue = _$ProfileFromJson(
+    JsonHelper.asMap(json['profile'], 'profile'),
+  );
 
   return User(profile: profileValue);
+}"#
+    );
+}
+
+#[test]
+fn wraps_long_nested_deserializable_model_decode() {
+    let plugin = register_plugin();
+    let library = library(
+        vec![
+            class(
+                "CheckoutEnvelope",
+                vec![field(
+                    "deeplyNestedBillingProfile",
+                    TypeIr::named("ExtremelyVerboseBillingProfileSnapshot"),
+                )],
+                vec![constructor(
+                    None,
+                    vec![constructor_param(
+                        "deeplyNestedBillingProfile",
+                        TypeIr::named("ExtremelyVerboseBillingProfileSnapshot"),
+                        ParamKind::Named,
+                    )],
+                )],
+                &["dust_dart::Deserialize"],
+            ),
+            class(
+                "ExtremelyVerboseBillingProfileSnapshot",
+                Vec::new(),
+                vec![constructor(None, Vec::new())],
+                &["dust_dart::Deserialize"],
+            ),
+        ],
+        vec![],
+    );
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let envelope_from_json = &contribution.top_level_functions[0];
+
+    assert_eq!(
+        envelope_from_json,
+        r#"// factory CheckoutEnvelope.fromJson(Map<String, Object?> json) => _$CheckoutEnvelopeFromJson(json);
+CheckoutEnvelope _$CheckoutEnvelopeFromJson(Map<String, Object?> json) {
+  final deeplyNestedBillingProfileValue = _$ExtremelyVerboseBillingProfileSnapshotFromJson(
+    JsonHelper.asMap(
+      json['deeplyNestedBillingProfile'],
+      'deeplyNestedBillingProfile',
+    ),
+  );
+
+  return CheckoutEnvelope(
+    deeplyNestedBillingProfile: deeplyNestedBillingProfileValue,
+  );
 }"#
     );
 }

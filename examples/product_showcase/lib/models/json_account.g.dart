@@ -113,7 +113,9 @@ Map<String, Object?> _$JsonAccountToJson(JsonAccount instance) {
 
 // factory JsonAccount.fromJson(Map<String, Object?> json) => _$JsonAccountFromJson(json);
 JsonAccount _$JsonAccountFromJson(Map<String, Object?> json) {
-  final profileValue = JsonProfile.fromJson(JsonHelper.asMap(json['profile'], 'profile'));
+  final profileValue = JsonProfile.fromJson(
+    JsonHelper.asMap(json['profile'], 'profile'),
+  );
   final metricsValue = JsonHelper.decodeMap(json['metrics'], 'metrics',
       (value, valueKey) =>
           JsonHelper.decodeList(value, valueKey,

@@ -1138,7 +1138,9 @@ RegisterAddress _$RegisterAddressFromJson(Map<String, Object?> json) {
     'zipcode',
     'String',
   );
-  final geolocationValue = _$RegisterGeolocationFromJson(JsonHelper.asMap(json['geolocation'], 'geolocation'));
+  final geolocationValue = _$RegisterGeolocationFromJson(
+    JsonHelper.asMap(json['geolocation'], 'geolocation'),
+  );
 
   return RegisterAddress(
     city: cityValue,
@@ -1173,9 +1175,13 @@ RegisterUserRequest _$RegisterUserRequestFromJson(Map<String, Object?> json) {
     'password',
     'String',
   );
-  final nameValue = _$RegisterNameFromJson(JsonHelper.asMap(json['name'], 'name'));
+  final nameValue = _$RegisterNameFromJson(
+    JsonHelper.asMap(json['name'], 'name'),
+  );
   final phoneValue = JsonHelper.as<String>(json['phone'], 'phone', 'String');
-  final addressValue = _$RegisterAddressFromJson(JsonHelper.asMap(json['address'], 'address'));
+  final addressValue = _$RegisterAddressFromJson(
+    JsonHelper.asMap(json['address'], 'address'),
+  );
 
   return RegisterUserRequest(
     email: emailValue,

@@ -27,7 +27,9 @@ Map<String, Object?> _$BenchmarkWorkspaceAccountToJson(BenchmarkWorkspaceAccount
 
 // factory BenchmarkWorkspaceAccount.fromJson(Map<String, Object?> json) => _$BenchmarkWorkspaceAccountFromJson(json);
 BenchmarkWorkspaceAccount _$BenchmarkWorkspaceAccountFromJson(Map<String, Object?> json) {
-  final profileValue = BenchmarkWorkspaceProfile.fromJson(JsonHelper.asMap(json['profile'], 'profile'));
+  final profileValue = BenchmarkWorkspaceProfile.fromJson(
+    JsonHelper.asMap(json['profile'], 'profile'),
+  );
   final scoreValue = JsonHelper.as<int>(json['score'], 'score', 'int');
 
   return BenchmarkWorkspaceAccount(profile: profileValue, score: scoreValue);
