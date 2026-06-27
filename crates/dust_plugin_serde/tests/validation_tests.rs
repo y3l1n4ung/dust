@@ -4,7 +4,10 @@ use dust_ir::{AnnotationNumberKindIr, AnnotationValueIr, ParamKind, TypeIr};
 use dust_plugin_api::DustPlugin;
 use dust_plugin_serde::register_plugin;
 
-use crate::support::{class, constructor, constructor_param, field, field_with_default, library};
+use crate::support::{
+    class, constructor, constructor_param, factory_constructor, field, field_with_default, library,
+    method,
+};
 
 /// Fixture helpers for validation tests.
 #[path = "validation_tests/support.rs"]
@@ -62,6 +65,80 @@ fn validates_missing_deserialize_constructor() {
         item.message
             .contains("`Deserialize` requires a constructor that can initialize every field on class `Payload`")
     }));
+}
+
+#[test]
+fn rejects_unverified_local_model_conversions() {
+    let plugin = register_plugin();
+    let target = class(
+        "Payload",
+        vec![field("profile", TypeIr::named("ExternalProfile"))],
+        vec![constructor(
+            None,
+            vec![constructor_param(
+                "profile",
+                TypeIr::named("ExternalProfile"),
+                ParamKind::Named,
+            )],
+        )],
+        &["dust_dart::Serialize", "dust_dart::Deserialize"],
+    );
+
+    let external = class("ExternalProfile", Vec::new(), Vec::new(), &[]);
+    let diagnostics = plugin.validate(&library(vec![target, external], vec![]));
+    let messages = diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.message.as_str())
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        messages,
+        vec![
+            "`Serialize` requires `ExternalProfile.toJson()` or deriving `Serialize`/using `SerDe(codec: ...)` for `Payload.profile`",
+            "`Deserialize` requires `ExternalProfile.fromJson(Map<String, Object?>)` or deriving `Deserialize`/using `SerDe(codec: ...)` for `Payload.profile`",
+        ]
+    );
+}
+
+#[test]
+fn accepts_local_json_capable_model_conversions() {
+    let plugin = register_plugin();
+    let target = class(
+        "Payload",
+        vec![field("profile", TypeIr::named("ExternalProfile"))],
+        vec![constructor(
+            None,
+            vec![constructor_param(
+                "profile",
+                TypeIr::named("ExternalProfile"),
+                ParamKind::Named,
+            )],
+        )],
+        &["dust_dart::Serialize", "dust_dart::Deserialize"],
+    );
+    let mut external = class(
+        "ExternalProfile",
+        Vec::new(),
+        vec![factory_constructor(
+            Some("fromJson"),
+            vec![constructor_param(
+                "json",
+                TypeIr::map_of(TypeIr::string(), TypeIr::object().nullable()),
+                ParamKind::Positional,
+            )],
+        )],
+        &[],
+    );
+    external.methods = vec![method(
+        "toJson",
+        TypeIr::map_of(TypeIr::string(), TypeIr::object().nullable()),
+        Vec::new(),
+    )];
+
+    assert_eq!(
+        plugin.validate(&library(vec![target, external], vec![])),
+        Vec::new()
+    );
 }
 
 #[test]

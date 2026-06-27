@@ -1,8 +1,17 @@
-use dust_dart_emit::{DART_LIST, DART_MAP, DART_OBJECT, DART_SET};
+//! Validation for SerDe generation inputs.
+
+use dust_dart_emit::{DART_LIST, DART_MAP, DART_SET};
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
     AnnotationNumberKindIr, AnnotationValueIr, BuiltinType, ClassIr, ClassKindIr, DartFileIr,
     TypeIr,
+};
+
+/// Local JSON capability facts used by field-type validation.
+mod json_capability;
+
+use json_capability::{
+    JsonModelContext, has_verified_json_conversion, is_supported_named_scalar, required_json_member,
 };
 
 /// Validates that a library and its models are compatible with SerDe generation.
@@ -11,12 +20,7 @@ use dust_ir::{
 /// errors early, such as unsupported field types for deserialization.
 pub(crate) fn validate_library(library: &DartFileIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
-    let mut known_models = library
-        .classes
-        .iter()
-        .map(|class| class.name.as_str())
-        .collect::<Vec<_>>();
-    known_models.extend(library.enums.iter().map(|e| e.name.as_str()));
+    let context = JsonModelContext::new(library);
 
     for class in &library.classes {
         let serialize = wants_serialize(class);
@@ -99,7 +103,7 @@ pub(crate) fn validate_library(library: &DartFileIr) -> Vec<Diagnostic> {
             if serialize && !uses_codec {
                 validate_type_supported(
                     &field.ty,
-                    known_models.as_slice(),
+                    &context,
                     &class.name,
                     &field.name,
                     "Serialize",
@@ -109,7 +113,7 @@ pub(crate) fn validate_library(library: &DartFileIr) -> Vec<Diagnostic> {
             if deserialize && !uses_codec {
                 validate_type_supported(
                     &field.ty,
-                    known_models.as_slice(),
+                    &context,
                     &class.name,
                     &field.name,
                     "Deserialize",
@@ -182,7 +186,7 @@ fn default_value_is_compatible(ty: &TypeIr, value: &AnnotationValueIr) -> bool {
 /// collections (List, Set, Map), and other models within the same library.
 fn validate_type_supported(
     ty: &TypeIr,
-    known_models: &[&str],
+    context: &JsonModelContext<'_>,
     class_name: &str,
     field_name: &str,
     direction: &str,
@@ -205,7 +209,7 @@ fn validate_type_supported(
             if let Some(item) = args.first() {
                 validate_type_supported(
                     item,
-                    known_models,
+                    context,
                     class_name,
                     field_name,
                     direction,
@@ -231,7 +235,7 @@ fn validate_type_supported(
             }
             validate_type_supported(
                 &args[1],
-                known_models,
+                context,
                 class_name,
                 field_name,
                 direction,
@@ -243,17 +247,20 @@ fn validate_type_supported(
                 diagnostics.push(Diagnostic::error(format!(
                     "`{direction}` does not yet support generic named type `{name}` on `{class_name}.{field_name}`"
                 )));
-            } else if name.as_ref() == DART_OBJECT {
-                // Handled as supported fallback.
-            } else if !known_models.iter().any(|item| *item == name.as_ref()) {
-                // External models are allowed; callers can provide custom mappings.
+            } else if is_supported_named_scalar(name) {
+                // Handled by built-in SerDe conversions.
+            } else if !has_verified_json_conversion(context, name, direction) {
+                diagnostics.push(Diagnostic::error(format!(
+                    "`{direction}` requires `{}` or deriving `{direction}`/using `SerDe(codec: ...)` for `{class_name}.{field_name}`",
+                    required_json_member(name, direction)
+                )));
             }
         }
     }
 }
 
 /// Returns true when a class requests JSON serialization.
-fn wants_serialize(class: &ClassIr) -> bool {
+pub(super) fn wants_serialize(class: &ClassIr) -> bool {
     class
         .traits
         .iter()
@@ -261,7 +268,7 @@ fn wants_serialize(class: &ClassIr) -> bool {
 }
 
 /// Returns true when a class requests JSON deserialization.
-fn wants_deserialize(class: &ClassIr) -> bool {
+pub(super) fn wants_deserialize(class: &ClassIr) -> bool {
     class
         .traits
         .iter()
