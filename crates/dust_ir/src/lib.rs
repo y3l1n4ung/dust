@@ -33,7 +33,9 @@ mod types;
 /// Workspace-level IR.
 mod workspace;
 
-pub use annotation::{AnnotationIr, AnnotationValueIr, ExprSourceIr, NameIr};
+pub use annotation::{
+    AnnotationIr, AnnotationNumberKindIr, AnnotationValueIr, ExprSourceIr, NameIr,
+};
 pub use class::{ClassIr, ClassKindIr};
 pub use constructor::{ConstructorIr, ConstructorParamIr, ParamKind};
 pub use declaration::{

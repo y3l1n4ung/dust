@@ -1,5 +1,7 @@
 //! Integration test harness for tree-sitter Dart extraction.
 
+#[path = "extract_tests/annotation_values.rs"]
+mod annotation_values;
 #[path = "extract_tests/annotations.rs"]
 mod annotations;
 #[path = "extract_tests/class_shapes.rs"]

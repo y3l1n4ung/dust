@@ -30,12 +30,14 @@ fn lowers_parser_directives_into_dart_file_ir() {
                     parsed_arguments: Some(ParsedAnnotationArguments {
                         positional: vec![ParsedAnnotationArgument {
                             source: "'legacy'".to_owned(),
+                            value: None,
                             span: TextRange::new(12_u32, 20_u32),
                         }],
                         named: vec![ParsedAnnotationNamedArgument {
                             name: "message".to_owned(),
                             source: "message: 'old'".to_owned(),
                             value_source: "'old'".to_owned(),
+                            value: None,
                             span: TextRange::new(21_u32, 35_u32),
                             value_span: TextRange::new(30_u32, 35_u32),
                         }],

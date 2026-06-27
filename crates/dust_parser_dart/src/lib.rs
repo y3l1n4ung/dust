@@ -26,7 +26,8 @@ pub use query_call::{ParsedQueryCallSurface, ParsedQueryFunction};
 pub use result::ParseResult;
 pub use surface::{
     ParameterKind, ParsedAnnotation, ParsedAnnotationArgument, ParsedAnnotationArguments,
-    ParsedAnnotationNamedArgument, ParsedClassKind, ParsedClassSurface,
+    ParsedAnnotationNamedArgument, ParsedAnnotationNumberKind, ParsedAnnotationValue,
+    ParsedAnnotationValueRootKind, ParsedClassKind, ParsedClassSurface,
     ParsedConstructorParamSurface, ParsedConstructorSurface, ParsedDartFileSurface,
     ParsedDirective, ParsedEnumSurface, ParsedEnumVariantSurface, ParsedExtensionSurface,
     ParsedExtensionTypeSurface, ParsedFieldSurface, ParsedFunctionSurface, ParsedLibrarySurface,

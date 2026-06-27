@@ -373,11 +373,63 @@ pub struct ParsedAnnotationArguments {
     pub named: Vec<ParsedAnnotationNamedArgument>,
 }
 
+/// A parser-owned annotation value with exact source and root CST kind.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParsedAnnotationValue {
+    /// The exact value expression source.
+    pub source: String,
+    /// The source span for this value expression.
+    pub span: TextRange,
+    /// The root value kind reported by the parser backend.
+    pub kind: ParsedAnnotationValueRootKind,
+}
+
+/// Parser-owned annotation value root kinds.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ParsedAnnotationValueRootKind {
+    /// The `null` literal.
+    Null,
+    /// A boolean literal.
+    Bool(bool),
+    /// A string literal with delimiters removed.
+    String(String),
+    /// A numeric literal.
+    Number(ParsedAnnotationNumberKind),
+    /// A list literal.
+    List,
+    /// A set literal.
+    Set,
+    /// A map literal.
+    Map,
+    /// A record literal.
+    Record,
+    /// A constructor invocation.
+    Constructor {
+        /// Constructor/type source.
+        name: String,
+    },
+    /// A member, type, or function reference.
+    Member(String),
+    /// Any expression shape Dust preserves but does not semantically parse yet.
+    Expression,
+}
+
+/// Parser-owned annotation numeric literal kind.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ParsedAnnotationNumberKind {
+    /// An integer literal.
+    Int,
+    /// A floating point literal.
+    Double,
+}
+
 /// One positional annotation argument.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParsedAnnotationArgument {
     /// The raw argument expression source.
     pub source: String,
+    /// The parser-owned typed value, when available.
+    pub value: Option<ParsedAnnotationValue>,
     /// The source span for this argument expression.
     pub span: TextRange,
 }
@@ -391,6 +443,8 @@ pub struct ParsedAnnotationNamedArgument {
     pub source: String,
     /// The raw value expression source.
     pub value_source: String,
+    /// The parser-owned typed value, when available.
+    pub value: Option<ParsedAnnotationValue>,
     /// The source span for the full named argument.
     pub span: TextRange,
     /// The source span for the value expression.
