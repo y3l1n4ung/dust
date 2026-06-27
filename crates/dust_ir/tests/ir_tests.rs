@@ -79,6 +79,7 @@ fn serde_configs_preserve_normalized_values() {
         aliases: vec!["displayName".to_owned(), "display-name".to_owned()],
         codec_source: Some("const UserIdCodec()".to_owned()),
         default_value_source: Some("const []".to_owned()),
+        default_value: None,
         skip_serializing: false,
         skip_deserializing: true,
     };

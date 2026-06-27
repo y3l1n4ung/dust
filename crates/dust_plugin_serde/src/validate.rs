@@ -1,6 +1,9 @@
 use dust_dart_emit::{DART_LIST, DART_MAP, DART_OBJECT, DART_SET};
 use dust_diagnostics::Diagnostic;
-use dust_ir::{BuiltinType, ClassIr, ClassKindIr, DartFileIr, TypeIr};
+use dust_ir::{
+    AnnotationNumberKindIr, AnnotationValueIr, BuiltinType, ClassIr, ClassKindIr, DartFileIr,
+    TypeIr,
+};
 
 /// Validates that a library and its models are compatible with SerDe generation.
 ///
@@ -74,6 +77,16 @@ pub(crate) fn validate_library(library: &DartFileIr) -> Vec<Diagnostic> {
                         field.name, class.name
                     )));
                 }
+                if let Some(default_value) = &serde.default_value {
+                    validate_default_value(
+                        &field.ty,
+                        default_value,
+                        serde.default_value_source.as_deref().unwrap_or("..."),
+                        &class.name,
+                        &field.name,
+                        &mut diagnostics,
+                    );
+                }
             }
 
             let uses_codec = field
@@ -107,6 +120,60 @@ pub(crate) fn validate_library(library: &DartFileIr) -> Vec<Diagnostic> {
     }
 
     diagnostics
+}
+
+/// Ensures a typed serde default is compatible with the field type root.
+fn validate_default_value(
+    ty: &TypeIr,
+    value: &AnnotationValueIr,
+    source: &str,
+    class_name: &str,
+    field_name: &str,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if default_value_is_compatible(ty, value) {
+        return;
+    }
+
+    if matches!(value, AnnotationValueIr::Null) {
+        diagnostics.push(Diagnostic::error(format!(
+            "field `{field_name}` on class `{class_name}` uses `SerDe(defaultValue: {source})` on non-nullable field"
+        )));
+        return;
+    }
+
+    diagnostics.push(Diagnostic::error(format!(
+        "field `{field_name}` on class `{class_name}` uses `SerDe(defaultValue: {source})` that is not compatible with `{}`",
+        ty.name().unwrap_or("field type")
+    )));
+}
+
+/// Returns whether one parser-owned default value root can initialize a type.
+fn default_value_is_compatible(ty: &TypeIr, value: &AnnotationValueIr) -> bool {
+    match value {
+        AnnotationValueIr::Null => ty.is_nullable(),
+        AnnotationValueIr::Bool(_) => ty.is_builtin(BuiltinType::Bool),
+        AnnotationValueIr::String(_) => ty.is_builtin(BuiltinType::String),
+        AnnotationValueIr::Number {
+            kind: AnnotationNumberKindIr::Int,
+            ..
+        } => {
+            ty.is_builtin(BuiltinType::Int)
+                || ty.is_builtin(BuiltinType::Double)
+                || ty.is_builtin(BuiltinType::Num)
+        }
+        AnnotationValueIr::Number {
+            kind: AnnotationNumberKindIr::Double,
+            ..
+        } => ty.is_builtin(BuiltinType::Double) || ty.is_builtin(BuiltinType::Num),
+        AnnotationValueIr::List(_) => ty.is_named(DART_LIST),
+        AnnotationValueIr::Set(_) => ty.is_named(DART_SET),
+        AnnotationValueIr::Map(_) => ty.is_named(DART_MAP),
+        AnnotationValueIr::Record(_)
+        | AnnotationValueIr::Constructor { .. }
+        | AnnotationValueIr::Member(_)
+        | AnnotationValueIr::Expression(_) => true,
+    }
 }
 
 /// Ensures a type can be automatically mapped from JSON.

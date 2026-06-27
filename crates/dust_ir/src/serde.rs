@@ -1,4 +1,4 @@
-use crate::ConstructorParamIr;
+use crate::{AnnotationValueIr, ConstructorParamIr};
 
 /// Normalized rename strategies derived from `SerDeRename`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -82,6 +82,8 @@ pub struct SerdeFieldConfigIr {
     pub codec_source: Option<String>,
     /// Raw source expression for a default value, if one was provided.
     pub default_value_source: Option<String>,
+    /// Parser-owned typed default value, when available from annotation IR.
+    pub default_value: Option<AnnotationValueIr>,
     /// Whether serialization should skip this field.
     pub skip_serializing: bool,
     /// Whether deserialization should skip this field.
@@ -95,6 +97,7 @@ impl SerdeFieldConfigIr {
             && self.aliases.is_empty()
             && self.codec_source.is_none()
             && self.default_value_source.is_none()
+            && self.default_value.is_none()
             && !self.skip_serializing
             && !self.skip_deserializing
     }
