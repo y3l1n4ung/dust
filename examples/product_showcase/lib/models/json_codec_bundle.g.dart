@@ -19,7 +19,8 @@ mixin _$JsonCodecBundle {
     final self = this as JsonCodecBundle;
     return 'JsonCodecBundle('
         'createdAt: ${self.createdAt}, '
-        'updatedAt: ${self.updatedAt}'
+        'updatedAt: ${self.updatedAt}, '
+        'profiles: ${self.profiles}'
         ')';
   }
 
@@ -30,7 +31,8 @@ mixin _$JsonCodecBundle {
         other is JsonCodecBundle &&
             runtimeType == other.runtimeType &&
             other.createdAt == self.createdAt &&
-            other.updatedAt == self.updatedAt;
+            other.updatedAt == self.updatedAt &&
+            other.profiles == self.profiles;
   }
 
   @override
@@ -40,6 +42,7 @@ mixin _$JsonCodecBundle {
       runtimeType,
       self.createdAt,
       self.updatedAt,
+      self.profiles,
     ]);
   }
 
@@ -53,6 +56,7 @@ Map<String, Object?> _$JsonCodecBundleToJson(JsonCodecBundle instance) {
     'updatedAt': instance.updatedAt == null
         ? null
         : unixEpochDateTimeCodec.serialize(instance.updatedAt!),
+    'profiles': jsonProfilePageCodec.serialize(instance.profiles),
   };
 }
 
@@ -66,6 +70,15 @@ JsonCodecBundle _$JsonCodecBundleFromJson(Map<String, Object?> json) {
   final updatedAtValue = json['updatedAt'] == null
       ? null
       : JsonHelper.decodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['updatedAt'], 'updatedAt');
+  final profilesValue = JsonHelper.decodeWithCodec<JsonPage<JsonProfile>>(
+    jsonProfilePageCodec,
+    json['profiles'],
+    'profiles',
+  );
 
-  return JsonCodecBundle(createdAt: createdAtValue, updatedAt: updatedAtValue);
+  return JsonCodecBundle(
+    createdAt: createdAtValue,
+    updatedAt: updatedAtValue,
+    profiles: profilesValue,
+  );
 }

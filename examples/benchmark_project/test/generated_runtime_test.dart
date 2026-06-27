@@ -116,6 +116,35 @@ void main() {
     expect(decoded.score, account.score);
   });
 
+  test('generic benchmark containers use explicit SerDeCodec fields', () {
+    const envelope = BenchmarkWorkspacePageEnvelope(
+      page: BenchmarkPage(
+        items: [
+          BenchmarkWorkspaceProfile(
+            id: 'primary-profile',
+            kind: BenchmarkWorkspaceKind.primary,
+          ),
+        ],
+        total: 1,
+      ),
+    );
+
+    final json = envelope.toJson();
+
+    expect(json, {
+      'page': {
+        'items': [
+          {'id': 'primary-profile', 'kind': 'primary'},
+        ],
+        'total': 1,
+      },
+    });
+    final decoded = BenchmarkWorkspacePageEnvelope.fromJson(json);
+    expect(decoded.page.total, 1);
+    expect(decoded.page.items.single.id, 'primary-profile');
+    expect(decoded.page.items.single.kind, BenchmarkWorkspaceKind.primary);
+  });
+
   test(
     'sealed serde metadata sample keeps concrete variants round-trippable',
     () {

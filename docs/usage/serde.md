@@ -117,14 +117,18 @@ Dust supports full serialization for enums. Rename rules applied at the enum lev
 @Derive([Serialize(), Deserialize()])
 @SerDe(renameAll: SerDeRename.kebabCase)
 enum UserRole {
-  admin,      // "admin"
-  moderator,  // "moderator"
-  superUser,  // "super-user"
+  admin, // "admin"
+  moderator, // "moderator"
+  @SerDe(rename: 'root')
+  superUser, // "root"
+  @SerDe(skip: true)
+  legacy,
 }
 ```
 
 > [!NOTE]
-> Per-variant renames (e.g. `@SerDe(rename: '...')` on a specific enum value) are not yet supported.
+> Skipped enum variants remain valid Dart values, but generated JSON helpers
+> reject them during serialization and do not accept them during decoding.
 
 ---
 
@@ -221,6 +225,44 @@ final class DateTimeCodec implements SerDeCodec<DateTime, int> {
 // Usage
 @SerDe(using: DateTimeCodec())
 final DateTime createdAt;
+```
+
+Generic containers use the same escape hatch in v1. Dust does not generate
+`Page<T>` callbacks yet, so the field codec owns that container mapping:
+
+```dart
+final class Page<T> {
+  const Page({required this.items, required this.total});
+
+  final List<T> items;
+  final int total;
+}
+
+final class UserPageCodec
+    implements SerDeCodec<Page<User>, Map<String, Object?>> {
+  const UserPageCodec();
+
+  @override
+  Map<String, Object?> serialize(Page<User> value) => {
+        'items': value.items.map((item) => item.toJson()).toList(),
+        'total': value.total,
+      };
+
+  @override
+  Page<User> deserialize(Map<String, Object?> value) => Page(
+        items: JsonHelper.decodeList(
+          value['items'],
+          'items',
+          (item, key) => User.fromJson(JsonHelper.asMap(item, key)),
+        ),
+        total: JsonHelper.as<int>(value['total'], 'total', 'int'),
+      );
+}
+
+const userPageCodec = UserPageCodec();
+
+@SerDe(using: userPageCodec)
+final Page<User> users;
 ```
 
 > [!TIP]

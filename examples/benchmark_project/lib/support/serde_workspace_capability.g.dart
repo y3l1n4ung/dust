@@ -18,6 +18,11 @@ mixin _$BenchmarkWorkspaceAccount {
       _$BenchmarkWorkspaceAccountToJson(this as BenchmarkWorkspaceAccount);
 }
 
+mixin _$BenchmarkWorkspacePageEnvelope {
+  Map<String, Object?> toJson() =>
+      _$BenchmarkWorkspacePageEnvelopeToJson(this as BenchmarkWorkspacePageEnvelope);
+}
+
 Map<String, Object?> _$BenchmarkWorkspaceAccountToJson(BenchmarkWorkspaceAccount instance) {
   return <String, Object?>{
     'profile': instance.profile.toJson(),
@@ -33,6 +38,23 @@ BenchmarkWorkspaceAccount _$BenchmarkWorkspaceAccountFromJson(Map<String, Object
   final scoreValue = JsonHelper.as<int>(json['score'], 'score', 'int');
 
   return BenchmarkWorkspaceAccount(profile: profileValue, score: scoreValue);
+}
+
+Map<String, Object?> _$BenchmarkWorkspacePageEnvelopeToJson(BenchmarkWorkspacePageEnvelope instance) {
+  return <String, Object?>{
+    'page': benchmarkWorkspaceProfilePageCodec.serialize(instance.page),
+  };
+}
+
+// factory BenchmarkWorkspacePageEnvelope.fromJson(Map<String, Object?> json) => _$BenchmarkWorkspacePageEnvelopeFromJson(json);
+BenchmarkWorkspacePageEnvelope _$BenchmarkWorkspacePageEnvelopeFromJson(Map<String, Object?> json) {
+  final pageValue = JsonHelper.decodeWithCodec<BenchmarkPage<BenchmarkWorkspaceProfile>>(
+    benchmarkWorkspaceProfilePageCodec,
+    json['page'],
+    'page',
+  );
+
+  return BenchmarkWorkspacePageEnvelope(page: pageValue);
 }
 
 Object? _$BenchmarkWorkspaceKindToJson(BenchmarkWorkspaceKind instance) {
