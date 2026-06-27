@@ -119,6 +119,10 @@ final class SerDe extends DeriveConfig {
 
   /// Whether generated deserialization should reject unknown JSON keys on the
   /// annotated declaration.
+  ///
+  /// Primary field keys and [aliases] are recognized. Fields skipped for
+  /// deserialization with [skip] or [skipDeserializing] are not accepted as
+  /// input keys.
   final bool disallowUnrecognizedKeys;
 
   /// Creates one serde configuration annotation.
