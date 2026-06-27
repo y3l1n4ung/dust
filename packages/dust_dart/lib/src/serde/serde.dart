@@ -97,16 +97,27 @@ final class SerDe extends DeriveConfig {
   final bool untagged;
 
   /// Fallback value used when deserialization omits the annotated field.
+  ///
+  /// Fields skipped for deserialization with [skip] or [skipDeserializing]
+  /// must provide this value so generated constructors stay total.
   final Object? defaultValue;
 
   /// Whether the field should be skipped for both serialization and
   /// deserialization.
+  ///
+  /// When [disallowUnrecognizedKeys] is enabled, skipped fields are not
+  /// accepted as input keys.
   final bool skip;
 
   /// Whether the field should be skipped only for serialization.
+  ///
+  /// The field is still read during deserialization.
   final bool skipSerializing;
 
   /// Whether the field should be skipped only for deserialization.
+  ///
+  /// When [disallowUnrecognizedKeys] is enabled, this field is not accepted as
+  /// an input key.
   final bool skipDeserializing;
 
   /// Alternate accepted input names for one field during deserialization.
@@ -114,7 +125,8 @@ final class SerDe extends DeriveConfig {
 
   /// Custom field codec used instead of Dust's built-in serde mapping.
   ///
-  /// This should usually be a const object that implements [SerDeCodec].
+  /// This should usually be a const object that implements [SerDeCodec]. Dust
+  /// handles nullable fields outside the codec; codecs convert non-null values.
   final Object? using;
 
   /// Whether generated deserialization should reject unknown JSON keys on the

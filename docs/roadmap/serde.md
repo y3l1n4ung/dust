@@ -50,6 +50,8 @@ Dust SerDe currently supports:
 - [x] custom field conversion through `SerDeCodec`
 - [x] generated decode diagnostics that include the failing JSON path and
   expected Dart type for built-in conversions
+- [x] same-file diagnostics for local model fields that lack SerDe support,
+  `toJson()`, `fromJson(Map<String, Object?>)`, or a field codec
 - [x] compact decode output for simple fields, with temporaries kept only when
   aliases or fallback resolution require them
 - [x] stronger lowering diagnostics for malformed or suspicious `using:` values
@@ -169,8 +171,13 @@ Dust should reject or flag:
 - function and record fields for built-in SerDe generation
 - `skipDeserializing` without `defaultValue`
 - unsupported generic named types without a custom codec
+- same-file model fields without generated or handwritten JSON conversion
 - unsupported class-level `SerDe(...)` options used in field-only positions
 - unsupported field-level `SerDe(...)` options used in class-only positions
+
+Imported models are trusted when per-file validation cannot prove their JSON
+capability. Workspace-wide imported-model diagnostics are tracked separately so
+split-file Dust models stay valid while strict cross-library checks are added.
 
 For codec-backed fields:
 
@@ -200,9 +207,11 @@ For codec-backed fields:
 - [ ] add golden coverage for every rename rule
 - [x] add enum SerDe runtime coverage for normal enums, renamed enum values,
   enum collections, unknown values, and codec-backed enhanced enums
+- [x] add analyzer fixture CI for generated SerDe `.g.dart` output
 - [x] add exact-output coverage for generated sealed variant classes and
   constructor edge cases
 - [ ] add negative coverage for unsupported record serialization
+- [ ] add workspace-wide imported-model JSON capability diagnostics
 - [x] add negative coverage for malformed `using:` values
 
 ## Tests
