@@ -16,9 +16,9 @@ void main() {
     );
 
     expect(bundle.toJson(), {
-      'primary_level': 'super-admin',
+      'primary_level': 'owner',
       'fallbackState': 'approved',
-      'levels': ['super-admin', 'read-only'],
+      'levels': ['owner', 'read-only'],
       'stateByRegion': {'yangon': 'pending', 'mandalay': 'archived'},
       'states': ['pending', 'approved'],
     });
@@ -45,6 +45,39 @@ void main() {
           states: {ReviewState.approved, ReviewState.archived},
         ),
       ),
+    );
+  });
+
+  test('generated serde honors enum variant rename and skip metadata', () {
+    final renamed = JsonEnumBundle.fromJson({
+      'primary_level': 'owner',
+      'fallbackState': 'approved',
+      'levels': ['owner'],
+      'stateByRegion': {'yangon': 'pending'},
+      'states': ['approved'],
+    });
+
+    expect(renamed.primaryLevel, AccessLevel.superAdmin);
+    expect(renamed.toJson()['primary_level'], 'owner');
+
+    const skipped = JsonEnumBundle(
+      primaryLevel: AccessLevel.legacyStaff,
+      fallbackState: ReviewState.approved,
+      levels: [],
+      stateByRegion: {},
+      states: {},
+    );
+
+    expect(skipped.toJson, throwsArgumentError);
+    expect(
+      () => JsonEnumBundle.fromJson({
+        'primary_level': 'legacy-staff',
+        'fallbackState': 'approved',
+        'levels': [],
+        'stateByRegion': {},
+        'states': [],
+      }),
+      throwsArgumentError,
     );
   });
 

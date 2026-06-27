@@ -81,6 +81,8 @@ pub struct ResolvedEnumVariant {
     pub name: String,
     /// The variant source span.
     pub span: SpanIr,
+    /// Resolved config applications.
+    pub configs: Vec<ConfigApplicationIr>,
 }
 
 /// One resolved class plus its resolved Dust symbols.

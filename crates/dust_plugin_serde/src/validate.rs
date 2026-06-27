@@ -1,10 +1,12 @@
 //! Validation for SerDe generation inputs.
 
+use std::collections::BTreeMap;
+
 use dust_dart_emit::{DART_LIST, DART_MAP, DART_SET};
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
     AnnotationNumberKindIr, AnnotationValueIr, BuiltinType, ClassIr, ClassKindIr, DartFileIr,
-    TypeIr,
+    EnumIr, TypeIr,
 };
 use dust_plugin_api::WorkspaceAnalysis;
 
@@ -139,7 +141,38 @@ fn validate_library_inner(library: &DartFileIr, context: JsonModelContext<'_>) -
         }
     }
 
+    for enum_ in &library.enums {
+        validate_enum_wire_names(enum_, &mut diagnostics);
+    }
+
     diagnostics
+}
+
+/// Ensures generated enum helpers cannot produce ambiguous wire values.
+fn validate_enum_wire_names(enum_: &EnumIr, diagnostics: &mut Vec<Diagnostic>) {
+    if !enum_wants_serde(enum_) {
+        return;
+    }
+
+    let mut seen = BTreeMap::new();
+    for variant in &enum_.variants {
+        let Some(wire_name) = crate::emit_enum::variant_wire_name(enum_, variant) else {
+            continue;
+        };
+        if let Some(previous) = seen.insert(wire_name.clone(), variant.name.as_str()) {
+            diagnostics.push(Diagnostic::error(format!(
+                "enum `{}` maps variants `{previous}` and `{}` to duplicate SerDe value `{wire_name}`",
+                enum_.name, variant.name
+            )));
+        }
+    }
+}
+
+/// Returns true when an enum requests JSON serialization or deserialization.
+fn enum_wants_serde(enum_: &EnumIr) -> bool {
+    enum_.traits.iter().any(|item| {
+        item.symbol.0 == "dust_dart::Serialize" || item.symbol.0 == "dust_dart::Deserialize"
+    })
 }
 
 /// Ensures a typed serde default is compatible with the field type root.

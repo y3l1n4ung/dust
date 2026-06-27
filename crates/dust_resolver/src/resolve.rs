@@ -188,9 +188,22 @@ fn resolve_enum(
     let variants = enum_surface
         .variants
         .iter()
-        .map(|variant| ResolvedEnumVariant {
-            name: variant.name.clone(),
-            span: SpanIr::new(file_id, variant.span),
+        .map(|variant| {
+            let mut variant_traits = Vec::new();
+            let mut variant_configs = Vec::new();
+            resolve_declaration_annotations(
+                file_id,
+                &variant.annotations,
+                catalog,
+                diagnostics,
+                &mut variant_traits,
+                &mut variant_configs,
+            );
+            ResolvedEnumVariant {
+                name: variant.name.clone(),
+                span: SpanIr::new(file_id, variant.span),
+                configs: variant_configs,
+            }
         })
         .collect();
 

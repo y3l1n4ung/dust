@@ -34,7 +34,10 @@ use dust_resolver::{ResolvedClass, ResolvedLibrary};
 use self::{
     inheritance::{infer_param_type, merged_fields_for_class, resolve_constructor_param_types},
     query_calls::lower_query_calls,
-    serde::{lower_class_serde_config, lower_field_serde_config, lower_variant_serde_tag},
+    serde::{
+        lower_class_serde_config, lower_enum_variant_serde_config, lower_field_serde_config,
+        lower_variant_serde_tag,
+    },
     type_parse::lower_type,
 };
 
@@ -686,6 +689,7 @@ fn lower_enum(e: &dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
         .iter()
         .map(|v| EnumVariantIr {
             name: v.name.clone(),
+            serde: lower_enum_variant_serde_config(&v.name, &v.configs, &mut diagnostics),
             span: v.span,
         })
         .collect();

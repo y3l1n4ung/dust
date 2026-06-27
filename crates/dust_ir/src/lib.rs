@@ -49,7 +49,10 @@ pub use library::{DartFileIr, LibraryIr, SpanIr};
 pub use lowering::LoweringOutcome;
 pub use method::{MethodIr, MethodParamIr};
 pub use query_call::{QueryCallIr, QueryFunctionIr};
-pub use serde::{SerdeClassConfigIr, SerdeFieldConfigIr, SerdeRenameRuleIr, SerdeVariantConfigIr};
+pub use serde::{
+    SerdeClassConfigIr, SerdeEnumVariantConfigIr, SerdeFieldConfigIr, SerdeRenameRuleIr,
+    SerdeVariantConfigIr,
+};
 pub use traits::{ConfigApplicationIr, SymbolId, TraitApplicationIr};
 pub use types::{BuiltinType, TypeIr};
 pub use workspace::WorkspaceIr;

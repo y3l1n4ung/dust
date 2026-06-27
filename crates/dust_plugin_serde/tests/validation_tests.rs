@@ -1,12 +1,15 @@
 //! Integration tests for serde plugin validation diagnostics.
 
-use dust_ir::{AnnotationNumberKindIr, AnnotationValueIr, ParamKind, TypeIr};
+use dust_ir::{
+    AnnotationNumberKindIr, AnnotationValueIr, EnumIr, EnumVariantIr, ParamKind,
+    SerdeEnumVariantConfigIr, SymbolId, TraitApplicationIr, TypeIr,
+};
 use dust_plugin_api::DustPlugin;
 use dust_plugin_serde::register_plugin;
 
 use crate::support::{
     class, constructor, constructor_param, factory_constructor, field, field_with_default, library,
-    method,
+    method, span,
 };
 
 /// Fixture helpers for validation tests.
@@ -138,6 +141,49 @@ fn accepts_local_json_capable_model_conversions() {
     assert_eq!(
         plugin.validate(&library(vec![target, external], vec![])),
         Vec::new()
+    );
+}
+
+#[test]
+fn rejects_duplicate_enum_variant_wire_names() {
+    let plugin = register_plugin();
+    let diagnostics = plugin.validate(&library(
+        vec![],
+        vec![EnumIr {
+            name: "Status".to_owned(),
+            span: span(0, 20),
+            variants: vec![
+                EnumVariantIr {
+                    name: "pending".to_owned(),
+                    serde: None,
+                    span: span(5, 10),
+                },
+                EnumVariantIr {
+                    name: "queued".to_owned(),
+                    serde: Some(SerdeEnumVariantConfigIr {
+                        rename: Some("pending".to_owned()),
+                        skip: false,
+                    }),
+                    span: span(12, 18),
+                },
+            ],
+            traits: vec![TraitApplicationIr {
+                symbol: SymbolId::new("dust_dart::Serialize"),
+                span: span(1, 5),
+            }],
+            serde: None,
+        }],
+    ));
+    let messages = diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.message.as_str())
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        messages,
+        vec![
+            "enum `Status` maps variants `pending` and `queued` to duplicate SerDe value `pending`"
+        ]
     );
 }
 

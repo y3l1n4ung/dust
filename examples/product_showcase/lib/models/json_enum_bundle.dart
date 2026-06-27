@@ -4,7 +4,14 @@ part 'json_enum_bundle.g.dart';
 
 @Derive([Serialize(), Deserialize()])
 @SerDe(renameAll: SerDeRename.kebabCase)
-enum AccessLevel { superAdmin, guestUser, readOnly }
+enum AccessLevel {
+  @SerDe(rename: 'owner')
+  superAdmin,
+  guestUser,
+  @SerDe(skip: true)
+  legacyStaff,
+  readOnly,
+}
 
 @Derive([Serialize(), Deserialize()])
 enum ReviewState { pending, approved, archived }
