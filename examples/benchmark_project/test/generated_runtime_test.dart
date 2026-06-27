@@ -4,6 +4,7 @@ import 'package:dust_benchmark_project/generated_models/model_00005.dart';
 import 'package:dust_benchmark_project/generated_models/model_00007.dart';
 import 'package:dust_benchmark_project/generated_models/model_00008.dart';
 import 'package:dust_benchmark_project/generated_models/model_00009.dart';
+import 'package:dust_benchmark_project/support/serde_workspace_capability.dart';
 import 'package:dust_benchmark_project/generated_models/validation_showcase.dart';
 import 'package:dust_benchmark_project/support/common.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -71,6 +72,24 @@ void main() {
     expect(identical(copied.primary, linked.primary), isTrue);
     expect(identical(copied.items, linked.items), isTrue);
     expect(identical(copied.byId, linked.byId), isTrue);
+  });
+
+  test('linked serde benchmark model keeps imported workspace facts live', () {
+    const profile = BenchmarkWorkspaceProfile(
+      id: 'bench-profile',
+      kind: BenchmarkWorkspaceKind.primary,
+    );
+    const account = BenchmarkWorkspaceAccount(
+      profile: profile,
+      score: 42,
+    );
+    final json = account.toJson();
+
+    expect(json['profile'], profile.toJson());
+    final decoded = BenchmarkWorkspaceAccount.fromJson(json);
+    expect(decoded.profile.id, profile.id);
+    expect(decoded.profile.kind, profile.kind);
+    expect(decoded.score, account.score);
   });
 
   test(

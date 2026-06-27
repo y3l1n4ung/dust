@@ -1,8 +1,15 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
-use dust_plugin_api::{DustPlugin, PluginContribution, SymbolPlan};
+use dust_parser_dart::ParsedDartFileSurface;
+use dust_plugin_api::{
+    DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
+};
 
-use crate::{emit::emit_library, validate::validate_library};
+use crate::{
+    analysis::collect_workspace_analysis,
+    emit::emit_library,
+    validate::{validate_library, validate_library_with_workspace},
+};
 
 /// The built-in plugin that implements Dust's JSON serialization and deserialization.
 ///
@@ -83,6 +90,15 @@ impl DustPlugin for SerdePlugin {
         symbols
     }
 
+    fn collect_workspace_analysis(
+        &self,
+        _context: WorkspaceAnalysisContext<'_>,
+        library: &ParsedDartFileSurface,
+        analysis: &mut WorkspaceAnalysisBuilder,
+    ) {
+        collect_workspace_analysis(library, analysis);
+    }
+
     /// Validates that the library is suitable for SerDe generation.
     ///
     /// This includes checking for abstract classes that want deserialization,
@@ -90,6 +106,10 @@ impl DustPlugin for SerdePlugin {
     /// constructors exist.
     fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
         validate_library(library)
+    }
+
+    fn validate_with_plan(&self, library: &DartFileIr, plan: &SymbolPlan) -> Vec<Diagnostic> {
+        validate_library_with_workspace(library, plan.workspace_analysis())
     }
 
     /// Performs the actual code emission for the plugin.

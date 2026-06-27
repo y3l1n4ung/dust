@@ -2,6 +2,8 @@
 #![deny(missing_docs)]
 #![doc = "Built-in Dust plugin providing JSON serialization and deserialization support for Dart classes and enums."]
 
+/// Workspace analysis for serde validation.
+mod analysis;
 /// Coordinates serde code emission for a library.
 mod emit;
 /// Renders class JSON helpers and mixins.

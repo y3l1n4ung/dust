@@ -6,6 +6,7 @@ use dust_ir::{
     AnnotationNumberKindIr, AnnotationValueIr, BuiltinType, ClassIr, ClassKindIr, DartFileIr,
     TypeIr,
 };
+use dust_plugin_api::WorkspaceAnalysis;
 
 /// Local JSON capability facts used by field-type validation.
 mod json_capability;
@@ -19,8 +20,23 @@ use json_capability::{
 /// This function performs static analysis on the IR to catch potential runtime
 /// errors early, such as unsupported field types for deserialization.
 pub(crate) fn validate_library(library: &DartFileIr) -> Vec<Diagnostic> {
+    validate_library_inner(library, JsonModelContext::new(library))
+}
+
+/// Validates a library with workspace-wide JSON conversion facts.
+pub(crate) fn validate_library_with_workspace(
+    library: &DartFileIr,
+    workspace: &WorkspaceAnalysis,
+) -> Vec<Diagnostic> {
+    validate_library_inner(
+        library,
+        JsonModelContext::with_workspace(library, Some(workspace)),
+    )
+}
+
+/// Validates a library using the provided JSON capability context.
+fn validate_library_inner(library: &DartFileIr, context: JsonModelContext<'_>) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
-    let context = JsonModelContext::new(library);
 
     for class in &library.classes {
         let serialize = wants_serialize(class);
