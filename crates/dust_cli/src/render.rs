@@ -63,6 +63,31 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
                 lines.push(format!("config  {}", doctor.package_config_path.display()));
             }
         }
+        CliCommand::I18nScan => {
+            if let Some(scan) = &result.i18n_scan {
+                lines.push(format!(
+                    "i18n scan  files: {}  keys: {}  time: {}ms",
+                    scan.scanned_files,
+                    scan.entries.len(),
+                    result.elapsed_ms
+                ));
+                for entry in &scan.entries {
+                    let args = if entry.args.is_empty() {
+                        "-".to_owned()
+                    } else {
+                        entry.args.join(",")
+                    };
+                    let default = entry
+                        .default_text
+                        .as_ref()
+                        .map_or_else(|| "-".to_owned(), |text| format!("{text:?}"));
+                    lines.push(format!(
+                        "{}  namespace={}  default={}  args={}",
+                        entry.key, entry.namespace, default, args
+                    ));
+                }
+            }
+        }
         CliCommand::Watch => {
             append_generation_summary(&mut lines, "watch", result);
             if let Some(watch) = &result.watch {

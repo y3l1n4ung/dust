@@ -19,6 +19,8 @@ pub enum CliCommand {
     Check,
     /// Report workspace and plugin readiness.
     Doctor,
+    /// Scan static i18n API calls.
+    I18nScan,
     /// Run initial build and then watch for changes.
     Watch,
 }
@@ -96,8 +98,25 @@ enum RawCommand {
     Check(BuildOptions),
     /// Report workspace and plugin readiness.
     Doctor(RootOptions),
+    /// i18n utilities.
+    I18n(I18nCommandOptions),
     /// Run initial build and then watch for changes.
     Watch(WatchOptions),
+}
+
+/// Options for the `i18n` command group.
+#[derive(Debug, Clone, PartialEq, Eq, Args)]
+struct I18nCommandOptions {
+    /// Selected i18n subcommand.
+    #[command(subcommand)]
+    command: I18nCommand,
+}
+
+/// i18n subcommands parsed by Clap.
+#[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
+enum I18nCommand {
+    /// Scan static translation API calls.
+    Scan(RootOptions),
 }
 
 /// Options accepted only by the writing build command.
@@ -183,7 +202,16 @@ impl From<RawCommand> for ParsedCli {
             RawCommand::Clean(options) => ParsedCli::new(CliCommand::Clean, options),
             RawCommand::Check(options) => ParsedCli::new(CliCommand::Check, options),
             RawCommand::Doctor(options) => ParsedCli::new(CliCommand::Doctor, options),
+            RawCommand::I18n(options) => options.into(),
             RawCommand::Watch(options) => ParsedCli::new(CliCommand::Watch, options),
+        }
+    }
+}
+
+impl From<I18nCommandOptions> for ParsedCli {
+    fn from(value: I18nCommandOptions) -> Self {
+        match value.command {
+            I18nCommand::Scan(options) => ParsedCli::new(CliCommand::I18nScan, options),
         }
     }
 }

@@ -416,10 +416,15 @@ class _AddToCartButton extends StatelessWidget {
         );
       },
       icon: Icon(inCart ? Icons.add_shopping_cart : Icons.shopping_cart),
-      label: TranslatedText(
-        inCart ? 'shop_add_another' : 'shop_add_to_cart',
-        defaultText: inCart ? 'Add Another' : 'Add to Cart',
-      ),
+      label: inCart
+          ? const TranslatedText(
+              'shop_add_another',
+              defaultText: 'Add Another',
+            )
+          : const TranslatedText(
+              'shop_add_to_cart',
+              defaultText: 'Add to Cart',
+            ),
     );
   }
 }

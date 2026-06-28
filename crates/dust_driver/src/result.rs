@@ -100,6 +100,28 @@ pub struct CheckedLibrary {
     pub cached: bool,
 }
 
+/// One static i18n translation use discovered by `dust i18n scan`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct I18nScanEntry {
+    /// Static translation key.
+    pub key: String,
+    /// Namespace inferred from the key prefix.
+    pub namespace: String,
+    /// Optional default text from the source call.
+    pub default_text: Option<String>,
+    /// Placeholder argument names from the source call.
+    pub args: Vec<String>,
+}
+
+/// Workspace i18n scan report.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct I18nScanReport {
+    /// Number of Dart source files scanned.
+    pub scanned_files: usize,
+    /// Static translation entries found in deterministic order.
+    pub entries: Vec<I18nScanEntry>,
+}
+
 /// One cache summary for a command run.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CacheReport {
@@ -161,6 +183,8 @@ pub struct CommandResult {
     pub build_artifacts: Vec<BuildArtifact>,
     /// Freshness-check results.
     pub checked_libraries: Vec<CheckedLibrary>,
+    /// An optional i18n scan report.
+    pub i18n_scan: Option<I18nScanReport>,
     /// An optional doctor report.
     pub doctor: Option<DoctorReport>,
     /// An optional clean report.

@@ -20,7 +20,7 @@ fi
 
 for target in "${TARGETS[@]}"; do
   echo "==> Flutter pub get: $target"
-  (cd "$target" && flutter --suppress-analytics pub get)
+  (cd "$target" && flutter pub get)
 done
 
 if [[ "${1:-}" == "--examples" ]]; then
@@ -40,5 +40,5 @@ fi
 
 for target in "${TARGETS[@]}"; do
   echo "==> Flutter test: $target"
-  (cd "$target" && flutter --suppress-analytics test)
+  (cd "$target" && flutter test)
 done

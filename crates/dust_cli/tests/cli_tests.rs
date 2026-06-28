@@ -12,5 +12,8 @@ mod diagnostics;
 #[path = "cli_tests/helpers.rs"]
 mod helpers;
 
+#[path = "cli_tests/i18n.rs"]
+mod i18n;
+
 #[path = "cli_tests/lifecycle.rs"]
 mod lifecycle;

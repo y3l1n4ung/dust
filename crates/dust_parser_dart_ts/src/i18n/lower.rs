@@ -81,6 +81,13 @@ fn const_object_call_shape(call: Node<'_>, source: &SourceText) -> Option<I18nCa
 /// Resolves selector calls such as `TranslatedText(...)` and `context.tr(...)`.
 fn selector_call_shape(selector: Node<'_>, source: &SourceText) -> Option<I18nCallShape> {
     let previous = selector.prev_named_sibling()?;
+    if previous.kind() == "selector" && selector_property_name(previous, source)? == "dynamic" {
+        let receiver = previous.prev_named_sibling()?;
+        if receiver.kind() == "identifier" && node_text(receiver, source) == "TranslatedText" {
+            return None;
+        }
+    }
+
     if previous.kind() == "identifier" && node_text(previous, source) == "TranslatedText" {
         return Some(I18nCallShape {
             kind: I18nTranslationKind::TranslatedText,

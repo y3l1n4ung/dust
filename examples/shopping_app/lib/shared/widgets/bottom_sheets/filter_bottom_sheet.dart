@@ -234,9 +234,9 @@ class _FilterBottomSheetContentState extends State<_FilterBottomSheetContent> {
                   const SizedBox(height: 12),
                   ...SortOption.values.map(
                     (option) => RadioListTile<SortOption>(
-                      title: TranslatedText(
+                      title: TranslatedText.dynamic(
                         option.translationKey,
-                        defaultText: option.label,
+                        fallback: option.label,
                       ),
                       value: option,
                       // ignore: deprecated_member_use
