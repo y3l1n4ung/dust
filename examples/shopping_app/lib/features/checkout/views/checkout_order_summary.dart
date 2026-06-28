@@ -186,16 +186,18 @@ class _QuoteRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          TranslatedText(labelKey, defaultText: defaultLabel),
-          TranslatedText(
-            value < 0 ? 'shop_negative_product_price' : 'shop_product_price',
-            defaultText: value < 0 ? r'-${price}' : r'${price}',
-            args: {
-              'price': value < 0
-                  ? (-value).toStringAsFixed(2)
-                  : value.toStringAsFixed(2),
-            },
-          ),
+          TranslatedText.dynamic(labelKey, fallback: defaultLabel),
+          value < 0
+              ? TranslatedText(
+                  'shop_negative_product_price',
+                  defaultText: r'-${price}',
+                  args: {'price': (-value).toStringAsFixed(2)},
+                )
+              : TranslatedText(
+                  'shop_product_price',
+                  defaultText: r'${price}',
+                  args: {'price': value.toStringAsFixed(2)},
+                ),
         ],
       ),
     );

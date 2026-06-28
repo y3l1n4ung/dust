@@ -163,9 +163,9 @@ class _StatusChip extends StatelessWidget {
         color: color.withAlpha(25),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: TranslatedText(
+      child: TranslatedText.dynamic(
         labelKey,
-        defaultText: defaultLabel,
+        fallback: defaultLabel,
         style: TextStyle(
           color: color,
           fontSize: 12,

@@ -4,8 +4,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
-dart --disable-analytics >/dev/null
-
 CHECK_MODE=false
 TARGETS=(
   "packages/dust_dart"
