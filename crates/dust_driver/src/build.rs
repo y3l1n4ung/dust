@@ -13,6 +13,7 @@ use std::time::Instant;
 
 use crate::{
     context::CachedDriverContext,
+    i18n_bootstrap::build_i18n_bootstrap,
     progress::{ProgressEvent, ProgressPhase},
     request::BuildRequest,
     result::CommandResult,
@@ -95,6 +96,11 @@ fn run_build_inner(
         &mut result,
         None,
     );
+    match build_i18n_bootstrap(&workspace.package_root, &workspace.dust_config) {
+        Ok(Some(artifact)) => result.build_artifacts.push(artifact),
+        Ok(None) => {}
+        Err(diagnostic) => result.diagnostics.push(diagnostic),
+    }
     flush_cache_into_result(&mut cache, &mut result);
     result.cache = Some(cache_report);
     result.elapsed_ms = started.elapsed().as_millis();

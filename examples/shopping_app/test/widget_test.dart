@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopping_app/core/services/storage_service.dart';
 import 'package:shopping_app/features/checkout/models/checkout_quote.dart';
 import 'package:shopping_app/features/support/models/chat_message.dart';
+import 'package:shopping_app/i18n/app_i18n.g.dart';
 import 'package:shopping_app/main.dart';
 import 'package:shopping_app/route.dart';
 
@@ -14,13 +15,13 @@ void main() {
   ) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final i18n = await createShoppingI18n();
 
     await tester.pumpWidget(
-      ShoppingApp(
-        storage: StorageService(prefs),
-        i18n: i18n,
-        repository: FakeShoppingRepository(),
+      AppI18n(
+        child: ShoppingApp(
+          storage: StorageService(prefs),
+          repository: FakeShoppingRepository(),
+        ),
       ),
     );
     await tester.pumpAndSettle();

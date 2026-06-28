@@ -6,6 +6,7 @@ use crate::{
         prepare_and_process_batch,
     },
     context::CachedDriverContext,
+    i18n_bootstrap::check_i18n_bootstrap,
     progress::ProgressPhase,
     request::CheckRequest,
     result::{CheckedLibrary, CommandResult},
@@ -87,6 +88,12 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
         ) {
             break;
         }
+    }
+
+    match check_i18n_bootstrap(&workspace.package_root, &workspace.dust_config) {
+        Ok(Some(checked)) => result.checked_libraries.push(checked),
+        Ok(None) => {}
+        Err(diagnostic) => result.diagnostics.push(diagnostic),
     }
 
     flush_cache_into_result(&mut cache, &mut result);

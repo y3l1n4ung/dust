@@ -14,6 +14,8 @@ mod clean;
 mod context;
 /// Doctor command diagnostics for workspace setup.
 mod doctor;
+/// Generated i18n bootstrap output.
+mod i18n_bootstrap;
 /// Conversion from resolved parser data into Dust IR.
 mod lower;
 /// Public progress event model.
