@@ -1,4 +1,4 @@
-use dust_workspace::{PackageConfigKind, load_dust_config, load_package_config};
+use dust_workspace::{I18nConfig, PackageConfigKind, load_dust_config, load_package_config};
 use tempfile::tempdir;
 
 use crate::support::write_file;
@@ -128,4 +128,23 @@ fn load_dust_config_rejects_invalid_suffixes() {
 
     let error = load_dust_config(root.path()).unwrap_err();
     assert!(error.message.contains("outputs.primary_suffix"));
+}
+
+#[test]
+fn load_dust_config_reads_i18n_locales() {
+    let root = tempdir().unwrap();
+    write_file(&root.path().join("pubspec.yaml"), "name: dust_test\n");
+    write_file(
+        &root.path().join("dust.yaml"),
+        "i18n:\n  locales: [en, my]\n",
+    );
+
+    let config = load_dust_config(root.path()).unwrap();
+
+    assert_eq!(
+        config.i18n,
+        Some(I18nConfig {
+            locales: vec!["en".to_owned(), "my".to_owned()]
+        })
+    );
 }

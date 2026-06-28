@@ -17,7 +17,7 @@ mod root;
 /// Workspace planning.
 mod workspace;
 
-pub use config::{DustConfig, OutputConfig, load_dust_config};
+pub use config::{DustConfig, I18nConfig, OutputConfig, load_dust_config};
 pub use discover::{SupportedAnnotations, discover_libraries};
 pub use output_policy::{
     expected_part_uri, generated_test_output_path, is_generated_primary_file, package_import_uri,
