@@ -82,6 +82,8 @@ class RouterScope extends InheritedNotifier<Listenable> {
     super.key,
   });
 
-  /// Router controller stored as Object so generated routers can keep T private.
+  /// Router controller stored as Object.
+  ///
+  /// Generated routers keep their route type private.
   final Object controller;
 }

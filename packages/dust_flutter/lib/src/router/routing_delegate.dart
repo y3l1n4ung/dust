@@ -27,7 +27,19 @@ final class GeneratedRouteInformationParser<T extends Object>
 }
 
 /// Internal navigation action mode.
-enum NavigationMode { go, push, replace, restore }
+enum NavigationMode {
+  /// Replace the current stack with the target route.
+  go,
+
+  /// Add the target route to the top of the stack.
+  push,
+
+  /// Replace the current top route with the target route.
+  replace,
+
+  /// Restore a route from platform route information.
+  restore,
+}
 
 /// Navigator 2.0 delegate used by generated routers.
 final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
@@ -51,6 +63,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   bool _refreshScheduled = false;
   int _navigationEpoch = 0;
 
+  /// Last route in the stack, or the configured initial route.
   T get currentRoute => stack.isEmpty ? config.initialRoute : stack.last;
 
   @override
@@ -94,10 +107,13 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     return true;
   }
 
+  /// Navigates to [route], replacing the current stack.
   void go(T route) => unawaited(_applyRoute(route, NavigationMode.go));
 
+  /// Pushes [route] on top of the current stack.
   void push(T route) => unawaited(_applyRoute(route, NavigationMode.push));
 
+  /// Replaces the current top route with [route].
   void replace(T route) =>
       unawaited(_applyRoute(route, NavigationMode.replace));
 

@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
@@ -40,20 +41,36 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final trackingState = context.watchOrderTrackingViewModel().value;
 
     return Scaffold(
-      appBar: AppBar(title: Text('Order #${_shortId(widget.orderId)}')),
+      appBar: AppBar(
+        title: Text(
+          context.tr(
+            'shop_order_number',
+            defaultText: 'Order #{id}',
+            args: {'id': _shortId(widget.orderId)},
+          ),
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           if (order != null) _OrderSummary(order: order),
           const SizedBox(height: 16),
-          Text('Tracking', style: Theme.of(context).textTheme.titleLarge),
+          TranslatedText(
+            'shop_tracking',
+            defaultText: 'Tracking',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 12),
           switch (trackingState.status) {
             OrderTrackingStatus.initial ||
             OrderTrackingStatus.loading =>
               const Center(child: CircularProgressIndicator()),
             OrderTrackingStatus.error => Text(
-                trackingState.errorMessage ?? 'Failed to load tracking.',
+                trackingState.errorMessage ??
+                    context.tr(
+                      'shop_tracking_failed',
+                      defaultText: 'Failed to load tracking.',
+                    ),
                 style: const TextStyle(color: Colors.red),
               ),
             OrderTrackingStatus.success => Column(
@@ -91,14 +108,33 @@ class _OrderSummary extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Order summary',
+            TranslatedText(
+              'shop_order_summary',
+              defaultText: 'Order summary',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            Text('${order.items.length} item(s)'),
-            Text('\$${order.totalAmount.toStringAsFixed(2)} total'),
-            Text('Ship to ${order.shippingAddress.fullName}'),
+            TranslatedText(
+              'shop_item_count',
+              defaultText: '{count} item(s)',
+              args: {'count': order.items.length},
+            ),
+            TranslatedText(
+              'shop_total_price',
+              defaultText: '{price} total',
+              args: {
+                'price': context.tr(
+                  'shop_product_price',
+                  defaultText: r'${price}',
+                  args: {'price': order.totalAmount.toStringAsFixed(2)},
+                ),
+              },
+            ),
+            TranslatedText(
+              'shop_ship_to',
+              defaultText: 'Ship to {name}',
+              args: {'name': order.shippingAddress.fullName},
+            ),
           ],
         ),
       ),

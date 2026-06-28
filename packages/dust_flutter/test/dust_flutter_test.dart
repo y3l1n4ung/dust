@@ -19,7 +19,10 @@ void main() {
   });
 
   test('exports i18n runtime API', () {
-    const config = I18nConfig(locales: ['en'], fallbackLocale: 'en');
+    const config = I18nConfig(
+      locales: ['en'],
+      fallbackLocale: 'en',
+    );
     const bundle = I18nBundle(
       locale: 'en',
       namespace: 'home',
@@ -28,7 +31,7 @@ void main() {
 
     final controller = I18nController(config: config, bundles: [bundle]);
 
-    expect(controller.translate('home.title'), 'Home');
+    expect(controller.translate('home_title'), 'Home');
   });
 }
 

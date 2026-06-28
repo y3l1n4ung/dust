@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../route.dart';
@@ -34,13 +35,19 @@ class RegisterActions extends StatelessWidget {
                     color: Colors.white,
                   ),
                 )
-              : const Text('Create Account'),
+              : const TranslatedText(
+                  'shop_create_account',
+                  defaultText: 'Create Account',
+                ),
         ),
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Already have an account?'),
+            const TranslatedText(
+              'shop_have_account',
+              defaultText: 'Already have an account?',
+            ),
             TextButton(
               onPressed: () {
                 if (redirectPath != null) {
@@ -49,7 +56,8 @@ class RegisterActions extends StatelessWidget {
                   context.navigator.login().go();
                 }
               },
-              child: const Text('Sign In'),
+              child:
+                  const TranslatedText('shop_sign_in', defaultText: 'Sign In'),
             ),
           ],
         ),

@@ -1,5 +1,7 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
+import '../../../core/i18n/shop_i18n_keys.dart';
 import '../../../route.dart';
 
 import '../../../shared/animations/stagger_animation.dart';
@@ -40,15 +42,19 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shop'),
+        title: const TranslatedText('shop_title', defaultText: 'Shop'),
         actions: [
+          const _LanguageToggleButton(),
           IconButton(
-            tooltip: 'Wishlist',
+            tooltip: context.tr('shop_wishlist', defaultText: 'Wishlist'),
             icon: const Icon(Icons.favorite_border),
             onPressed: () => context.navigator.wishlist().push(),
           ),
           IconButton(
-            tooltip: 'Support chat',
+            tooltip: context.tr(
+              'shop_support_chat',
+              defaultText: 'Support Chat',
+            ),
             icon: const Icon(Icons.support_agent),
             onPressed: () => context.navigator.supportChat().push(),
           ),
@@ -90,12 +96,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              Text('Error: ${state.errorMessage}'),
+              Text(
+                context.tr(
+                  'shop_error_message',
+                  defaultText: 'Error: {message}',
+                  args: {'message': state.errorMessage ?? ''},
+                ),
+              ),
               const SizedBox(height: 16),
               FilledButton.icon(
                 onPressed: () => context.readProductsViewModel().loadProducts(),
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: const TranslatedText('shop_retry', defaultText: 'Retry'),
               ),
             ],
           ),
@@ -106,6 +118,21 @@ class _ProductsScreenState extends State<ProductsScreen> {
           child: _ProductsGrid(products: state.filteredProducts),
         );
     }
+  }
+}
+
+class _LanguageToggleButton extends StatelessWidget {
+  const _LanguageToggleButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = I18nScope.of(context);
+    final nextLocale = i18n.locale == 'en' ? 'my' : 'en';
+    return TextButton.icon(
+      onPressed: () => i18n.setLocale(nextLocale),
+      icon: const Icon(Icons.language),
+      label: Text(i18n.locale.toUpperCase()),
+    );
   }
 }
 
@@ -215,16 +242,26 @@ class _AppDrawer extends StatelessWidget {
                   child: Icon(Icons.person, size: 30),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  authState.isAuthenticated
-                      ? authState.user?.name.fullName ?? 'User'
-                      : 'Guest',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                if (authState.isAuthenticated)
+                  Text(
+                    authState.user?.name.fullName ??
+                        context.tr('shop_user', defaultText: 'User'),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                else
+                  const TranslatedText(
+                    'shop_guest',
+                    defaultText: 'Guest',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
                 if (authState.isAuthenticated)
                   Text(
                     authState.user?.email ?? '',
@@ -238,7 +275,7 @@ class _AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.home),
-            title: const Text('Shop'),
+            title: const TranslatedText('shop_title', defaultText: 'Shop'),
             onTap: () {
               Navigator.pop(context);
               context.navigator.products().go();
@@ -246,7 +283,7 @@ class _AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.shopping_cart),
-            title: const Text('Cart'),
+            title: const TranslatedText('shop_cart', defaultText: 'Cart'),
             onTap: () {
               Navigator.pop(context);
               context.navigator.cart().push();
@@ -254,7 +291,8 @@ class _AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.favorite),
-            title: const Text('Wishlist'),
+            title:
+                const TranslatedText('shop_wishlist', defaultText: 'Wishlist'),
             onTap: () {
               Navigator.pop(context);
               context.navigator.wishlist().push();
@@ -262,7 +300,10 @@ class _AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.cloud_queue),
-            title: const Text('FakeStore Carts'),
+            title: const TranslatedText(
+              'shop_remote_carts',
+              defaultText: 'FakeStore Carts',
+            ),
             onTap: () {
               Navigator.pop(context);
               context.navigator.demoCarts().push();
@@ -270,7 +311,10 @@ class _AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.support_agent),
-            title: const Text('Support Chat'),
+            title: const TranslatedText(
+              'shop_support_chat',
+              defaultText: 'Support Chat',
+            ),
             onTap: () {
               Navigator.pop(context);
               context.navigator.supportChat().push();
@@ -278,7 +322,7 @@ class _AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.receipt_long),
-            title: const Text('Orders'),
+            title: const TranslatedText('shop_orders', defaultText: 'Orders'),
             onTap: () {
               Navigator.pop(context);
               context.navigator.orders().push();
@@ -286,7 +330,7 @@ class _AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.person),
-            title: const Text('Profile'),
+            title: const TranslatedText('shop_profile', defaultText: 'Profile'),
             onTap: () {
               Navigator.pop(context);
               context.navigator.profile().push();
@@ -296,13 +340,20 @@ class _AppDrawer extends StatelessWidget {
           if (authState.isAuthenticated)
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Logout', style: TextStyle(color: Colors.red)),
+              title: const TranslatedText(
+                'shop_logout',
+                defaultText: 'Logout',
+                style: TextStyle(color: Colors.red),
+              ),
               onTap: () async {
                 final confirmed = await ConfirmDialog.show(
                   context: context,
-                  title: 'Logout',
-                  message: 'Are you sure you want to logout?',
-                  confirmText: 'Logout',
+                  title: context.tr('shop_logout', defaultText: 'Logout'),
+                  message: context.tr(
+                    'shop_logout_message',
+                    defaultText: 'Are you sure you want to logout?',
+                  ),
+                  confirmText: context.tr('shop_logout', defaultText: 'Logout'),
                   isDangerous: true,
                 );
                 if (confirmed == true && context.mounted) {
@@ -314,7 +365,10 @@ class _AppDrawer extends StatelessWidget {
           else
             ListTile(
               leading: const Icon(Icons.login),
-              title: const Text('Sign In'),
+              title: const TranslatedText(
+                'shop_sign_in',
+                defaultText: 'Sign In',
+              ),
               onTap: () {
                 Navigator.pop(context);
                 context.navigator.login().go();
@@ -351,7 +405,12 @@ class _CategoryFilter extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: FilterChip(
-              label: Text(category.toUpperCase()),
+              label: TranslatedText.dynamic(
+                category == 'all'
+                    ? 'shop_category_all'
+                    : shopCategoryKey(category),
+                fallback: category.toUpperCase(),
+              ),
               selected: isSelected,
               onSelected: (_) => onCategorySelected(category),
             ),
@@ -384,10 +443,13 @@ class _SearchAndSortBar extends StatelessWidget {
           Expanded(
             child: TextFormField(
               initialValue: query,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Search products',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: context.tr(
+                  'shop_search_hint',
+                  defaultText: 'Search products',
+                ),
+                border: const OutlineInputBorder(),
                 isDense: true,
               ),
               onChanged: onSearch,
@@ -402,19 +464,31 @@ class _SearchAndSortBar extends StatelessWidget {
             items: const [
               DropdownMenuItem(
                 value: ProductSortOption.featured,
-                child: Text('Featured'),
+                child: TranslatedText(
+                  'shop_sort_featured',
+                  defaultText: 'Featured',
+                ),
               ),
               DropdownMenuItem(
                 value: ProductSortOption.priceLow,
-                child: Text('Price ↑'),
+                child: TranslatedText(
+                  'shop_sort_price_low',
+                  defaultText: 'Price ↑',
+                ),
               ),
               DropdownMenuItem(
                 value: ProductSortOption.priceHigh,
-                child: Text('Price ↓'),
+                child: TranslatedText(
+                  'shop_sort_price_high',
+                  defaultText: 'Price ↓',
+                ),
               ),
               DropdownMenuItem(
                 value: ProductSortOption.ratingHigh,
-                child: Text('Rating'),
+                child: TranslatedText(
+                  'shop_sort_rating',
+                  defaultText: 'Rating',
+                ),
               ),
             ],
           ),
@@ -438,7 +512,10 @@ class _ProductsGrid extends StatelessWidget {
           children: [
             Icon(Icons.search_off, size: 72, color: Colors.grey),
             SizedBox(height: 12),
-            Text('No products match your filters'),
+            TranslatedText(
+              'shop_no_products',
+              defaultText: 'No products match your filters',
+            ),
           ],
         ),
       );
@@ -486,8 +563,13 @@ class _ProductCard extends StatelessWidget {
             context.readCartViewModel().addToCart(product);
             AppSnackbar.success(
               context,
-              '${product.title} added to cart',
-              actionLabel: 'View',
+              context.tr(
+                'shop_added_to_cart',
+                defaultText: '{name} added to cart',
+                args: {'name': product.title},
+              ),
+              actionLabel:
+                  context.tr('shop_view_cart', defaultText: 'View Cart'),
               onAction: () => context.navigator.cart().push(),
             );
           },
@@ -522,7 +604,9 @@ class _ProductCard extends StatelessWidget {
                   right: 4,
                   top: 4,
                   child: IconButton.filledTonal(
-                    tooltip: isSaved ? 'Saved' : 'Save',
+                    tooltip: isSaved
+                        ? context.tr('shop_saved', defaultText: 'Saved')
+                        : context.tr('shop_save', defaultText: 'Save'),
                     icon: Icon(
                       isSaved ? Icons.favorite : Icons.favorite_border,
                     ),
@@ -546,21 +630,44 @@ class _ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  TranslatedText.dynamic(
+                    product.categoryTranslationKey,
+                    fallback: product.categoryFallbackLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
                   const Spacer(),
                   Row(
                     children: [
-                      Text(
-                        '\$${product.price.toStringAsFixed(2)}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                      Expanded(
+                        child: TranslatedText(
+                          'shop_product_price',
+                          defaultText: r'${price}',
+                          args: {'price': product.priceLabel},
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 4),
                       Icon(Icons.star, size: 16, color: Colors.amber[700]),
-                      Text(
-                        product.rating.rate.toStringAsFixed(1),
-                        style: Theme.of(context).textTheme.bodySmall,
+                      const SizedBox(width: 2),
+                      Flexible(
+                        child: TranslatedText(
+                          'shop_rating_summary',
+                          defaultText: '{rating} ({count})',
+                          args: {
+                            'rating': product.rating.rateLabel,
+                            'count': product.rating.count,
+                          },
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ),
                     ],
                   ),

@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
@@ -27,7 +28,12 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
     final state = context.watchShoppingChatViewModel().value;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Shopping Assistant')),
+      appBar: AppBar(
+        title: const TranslatedText(
+          'shop_shopping_assistant',
+          defaultText: 'Shopping Assistant',
+        ),
+      ),
       body: Column(
         children: [
           Expanded(
@@ -42,7 +48,8 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                state.errorMessage ?? 'Chat failed',
+                state.errorMessage ??
+                    context.tr('shop_chat_failed', defaultText: 'Chat failed'),
                 style: const TextStyle(color: Colors.red),
               ),
             ),
@@ -54,9 +61,12 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: 'Ask about coupons, orders, API...',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        hintText: context.tr(
+                          'shop_chat_hint',
+                          defaultText: 'Ask about coupons, orders, API...',
+                        ),
+                        border: const OutlineInputBorder(),
                       ),
                       onSubmitted: (_) => _send(),
                     ),

@@ -14,6 +14,8 @@ mod diagnostics;
 mod directives;
 /// Enum extraction.
 mod enums;
+/// Static i18n source scanning.
+mod i18n;
 /// Query helper extraction.
 mod queries;
 /// Tree-sitter utility helpers.
@@ -36,6 +38,8 @@ use self::{
     queries::extract_query_calls,
     syntax::text_range,
 };
+
+pub use i18n::{I18nScanResult, I18nTranslationKind, I18nTranslationUse, scan_i18n_source};
 
 thread_local! {
     static PARSER: RefCell<Parser> = {

@@ -1,3 +1,4 @@
+import 'package:dust_flutter/src/i18n/key.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -8,6 +9,7 @@ final class I18nConfig {
   const I18nConfig({
     required this.locales,
     required this.fallbackLocale,
+    this.namespaces = const [],
   });
 
   /// Locale codes supported by the application.
@@ -15,6 +17,11 @@ final class I18nConfig {
 
   /// Locale used when the active locale does not contain a key.
   final String fallbackLocale;
+
+  /// Optional translation namespaces with one ARB file per locale.
+  ///
+  /// When empty, lookups infer namespaces from loaded bundles.
+  final List<String> namespaces;
 }
 
 /// One loaded namespace of messages for one locale.
@@ -30,7 +37,7 @@ final class I18nBundle {
   /// Locale code this bundle belongs to.
   final String locale;
 
-  /// Namespace, usually the first segment of a key such as `home.title`.
+  /// Namespace, usually the first key prefix such as `home` in `home_title`.
   final String namespace;
 
   /// Translation messages in this namespace.
@@ -131,13 +138,11 @@ class I18nController extends ChangeNotifier {
         fallback ??
         key;
 
-    return _interpolate(template, args);
+    return interpolateI18n(template, args);
   }
 
   void _addBundles(Iterable<I18nBundle> bundles) {
-    for (final bundle in bundles) {
-      _setBundle(bundle);
-    }
+    bundles.forEach(_setBundle);
   }
 
   void _setBundle(I18nBundle bundle) {
@@ -147,7 +152,11 @@ class I18nController extends ChangeNotifier {
   }
 
   String? _lookup(String locale, String key) {
-    final parts = _I18nKeyParts.parse(key);
+    final namespaces = <String>{
+      ...config.namespaces,
+      ...?_bundles[locale]?.keys,
+    };
+    final parts = I18nKeyParts.parse(key, namespaces: namespaces);
     final messages = _bundles[locale]?[parts.namespace];
     return messages?[key] ?? messages?[parts.localKey];
   }
@@ -163,9 +172,9 @@ class I18nController extends ChangeNotifier {
 class I18nScope extends InheritedNotifier<I18nController> {
   /// Creates an i18n scope.
   const I18nScope({
-    super.key,
     required I18nController controller,
     required super.child,
+    super.key,
   }) : super(notifier: controller);
 
   /// Returns the nearest controller, or null when no scope exists.
@@ -197,103 +206,4 @@ extension I18nBuildContext on BuildContext {
       args: args,
     );
   }
-}
-
-/// Text widget that resolves an i18n key at build time.
-class TranslatedText extends StatelessWidget {
-  /// Creates statically discoverable translated text.
-  const TranslatedText(
-    this.translationKey, {
-    super.key,
-    this.defaultText,
-    this.args = const {},
-    this.style,
-    this.textAlign,
-    this.overflow,
-    this.maxLines,
-    this.softWrap,
-  }) : fallback = null;
-
-  /// Creates runtime-only translated text for API or JSON driven keys.
-  const TranslatedText.dynamic(
-    this.translationKey, {
-    super.key,
-    this.fallback,
-    this.args = const {},
-    this.style,
-    this.textAlign,
-    this.overflow,
-    this.maxLines,
-    this.softWrap,
-  }) : defaultText = null;
-
-  /// Translation key.
-  final String translationKey;
-
-  /// Default text for static keys.
-  final String? defaultText;
-
-  /// Runtime fallback for dynamic keys.
-  final String? fallback;
-
-  /// Placeholder values.
-  final Map<String, Object?> args;
-
-  /// Text style forwarded to [Text].
-  final TextStyle? style;
-
-  /// Text alignment forwarded to [Text].
-  final TextAlign? textAlign;
-
-  /// Overflow behavior forwarded to [Text].
-  final TextOverflow? overflow;
-
-  /// Maximum line count forwarded to [Text].
-  final int? maxLines;
-
-  /// Soft-wrap behavior forwarded to [Text].
-  final bool? softWrap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      I18nScope.of(context).translate(
-        translationKey,
-        defaultText: defaultText,
-        fallback: fallback,
-        args: args,
-      ),
-      style: style,
-      textAlign: textAlign,
-      overflow: overflow,
-      maxLines: maxLines,
-      softWrap: softWrap,
-    );
-  }
-}
-
-final RegExp _placeholderPattern = RegExp(r'\{([A-Za-z_][A-Za-z0-9_]*)\}');
-
-String _interpolate(String template, Map<String, Object?> args) {
-  if (args.isEmpty) return template;
-  return template.replaceAllMapped(_placeholderPattern, (match) {
-    final name = match.group(1)!;
-    if (!args.containsKey(name)) return match.group(0)!;
-    return args[name]?.toString() ?? '';
-  });
-}
-
-final class _I18nKeyParts {
-  const _I18nKeyParts(this.namespace, this.localKey);
-
-  factory _I18nKeyParts.parse(String key) {
-    final index = key.indexOf('.');
-    if (index <= 0 || index == key.length - 1) {
-      return _I18nKeyParts('', key);
-    }
-    return _I18nKeyParts(key.substring(0, index), key.substring(index + 1));
-  }
-
-  final String namespace;
-  final String localKey;
 }

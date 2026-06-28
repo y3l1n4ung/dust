@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart';
 
 import '../../cart/models/cart_state.dart';
@@ -34,13 +35,22 @@ class CheckoutOrderSummary extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                      child: Text(
-                        '${item.product.title} x${item.quantity}',
+                      child: TranslatedText(
+                        'shop_cart_line_item',
+                        defaultText: '{name} x{quantity}',
+                        args: {
+                          'name': item.product.title,
+                          'quantity': item.quantity,
+                        },
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Text('\$${item.totalPrice.toStringAsFixed(2)}'),
+                    TranslatedText(
+                      'shop_product_price',
+                      defaultText: r'${price}',
+                      args: {'price': item.totalPrice.toStringAsFixed(2)},
+                    ),
                   ],
                 ),
               ),
@@ -51,9 +61,15 @@ class CheckoutOrderSummary extends StatelessWidget {
                 Expanded(
                   child: TextField(
                     controller: couponController,
-                    decoration: const InputDecoration(
-                      labelText: 'Coupon code',
-                      helperText: 'Try DUST10 or SHIPFREE',
+                    decoration: InputDecoration(
+                      labelText: context.tr(
+                        'shop_coupon_code',
+                        defaultText: 'Coupon code',
+                      ),
+                      helperText: context.tr(
+                        'shop_coupon_hint',
+                        defaultText: 'Try DUST10 or SHIPFREE',
+                      ),
                     ),
                   ),
                 ),
@@ -67,7 +83,10 @@ class CheckoutOrderSummary extends StatelessWidget {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Apply'),
+                      : const TranslatedText(
+                          'shop_apply',
+                          defaultText: 'Apply',
+                        ),
                 ),
               ],
             ),
@@ -80,9 +99,15 @@ class CheckoutOrderSummary extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Total', style: Theme.of(context).textTheme.titleMedium),
-                Text(
-                  '\$${total.toStringAsFixed(2)}',
+                TranslatedText(
+                  'shop_total',
+                  defaultText: 'Total',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                TranslatedText(
+                  'shop_product_price',
+                  defaultText: r'${price}',
+                  args: {'price': total.toStringAsFixed(2)},
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.deepPurple,
@@ -106,17 +131,31 @@ class _QuoteBreakdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _QuoteRow(label: 'Subtotal', value: quote.subtotal),
-        _QuoteRow(label: 'Discount', value: -quote.discount),
-        _QuoteRow(label: 'Shipping', value: quote.shipping),
-        _QuoteRow(label: 'Tax', value: quote.tax),
+        _QuoteRow(
+          labelKey: 'shop_subtotal',
+          defaultLabel: 'Subtotal',
+          value: quote.subtotal,
+        ),
+        _QuoteRow(
+          labelKey: 'shop_discount',
+          defaultLabel: 'Discount',
+          value: -quote.discount,
+        ),
+        _QuoteRow(
+          labelKey: 'shop_shipping',
+          defaultLabel: 'Shipping',
+          value: quote.shipping,
+        ),
+        _QuoteRow(labelKey: 'shop_tax', defaultLabel: 'Tax', value: quote.tax),
         if (quote.appliedCoupon != null)
           Align(
             alignment: Alignment.centerLeft,
             child: Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                'Applied ${quote.appliedCoupon}',
+              child: TranslatedText(
+                'shop_coupon_applied',
+                defaultText: 'Applied {code}',
+                args: {'code': quote.appliedCoupon},
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
@@ -130,9 +169,14 @@ class _QuoteBreakdown extends StatelessWidget {
 }
 
 class _QuoteRow extends StatelessWidget {
-  const _QuoteRow({required this.label, required this.value});
+  const _QuoteRow({
+    required this.labelKey,
+    required this.defaultLabel,
+    required this.value,
+  });
 
-  final String label;
+  final String labelKey;
+  final String defaultLabel;
   final double value;
 
   @override
@@ -142,11 +186,15 @@ class _QuoteRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label),
-          Text(
-            value < 0
-                ? '-\$${(-value).toStringAsFixed(2)}'
-                : '\$${value.toStringAsFixed(2)}',
+          TranslatedText(labelKey, defaultText: defaultLabel),
+          TranslatedText(
+            value < 0 ? 'shop_negative_product_price' : 'shop_product_price',
+            defaultText: value < 0 ? r'-${price}' : r'${price}',
+            args: {
+              'price': value < 0
+                  ? (-value).toStringAsFixed(2)
+                  : value.toStringAsFixed(2),
+            },
           ),
         ],
       ),

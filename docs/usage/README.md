@@ -25,7 +25,8 @@ If you are new to Dust, we recommend reading these guides in order:
 4.  **[Validation](./validation.md)**: Generated model and Flutter form validation.
 5.  **[State Management](./state.md)**: Boilerplate-free reactive ViewModels.
 6.  **[Typed Routing](./routing.md)**: Safe Navigator 2.0 implementation.
-7.  **[Dust DB](./db.md)**: SQLx-style sqlite3 query validation and row mapping.
+7.  **[i18n](./i18n.md)**: Runtime translations, ARB assets, and namespaced keys.
+8.  **[Dust DB](./db.md)**: SQLx-style sqlite3 query validation and row mapping.
 
 ---
 
@@ -41,6 +42,7 @@ Depending on the features you need, add the following packages to your `pubspec.
 | **Networking** | `dust_dart`, `dio` |
 | **State** | `dust_flutter` |
 | **Routing** | `dust_flutter` |
+| **i18n** | `dust_flutter`, `flutter_localizations` |
 | **Database** | `dust_dart`, `dust_db_sqlite3` |
 
 > [!TIP]

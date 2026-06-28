@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   flutter_web_plugins:
     sdk: flutter
 
@@ -29,6 +31,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/i18n/en/shop.arb
+    - assets/i18n/my/shop.arb
 
 hooks:
   user_defines:

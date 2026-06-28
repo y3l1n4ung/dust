@@ -1,4 +1,7 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart';
+
+import '../../../core/i18n/shop_i18n_keys.dart';
 
 class FilterOptions {
   final String? category;
@@ -37,6 +40,14 @@ enum SortOption {
 
   final String label;
   const SortOption(this.label);
+
+  String get translationKey => switch (this) {
+        SortOption.none => 'shop_sort_none',
+        SortOption.priceAsc => 'shop_sort_price_low_full',
+        SortOption.priceDesc => 'shop_sort_price_high_full',
+        SortOption.rating => 'shop_sort_rating',
+        SortOption.name => 'shop_sort_name',
+      };
 }
 
 class FilterBottomSheet {
@@ -109,7 +120,11 @@ class _FilterBottomSheetContentState extends State<_FilterBottomSheetContent> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Filters', style: Theme.of(context).textTheme.titleLarge),
+                TranslatedText(
+                  'shop_filters',
+                  defaultText: 'Filters',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
                 TextButton(
                   onPressed: () {
                     setState(() {
@@ -117,7 +132,10 @@ class _FilterBottomSheetContentState extends State<_FilterBottomSheetContent> {
                       _priceRange = const RangeValues(0, 1000);
                     });
                   },
-                  child: const Text('Reset'),
+                  child: const TranslatedText(
+                    'shop_reset',
+                    defaultText: 'Reset',
+                  ),
                 ),
               ],
             ),
@@ -129,8 +147,9 @@ class _FilterBottomSheetContentState extends State<_FilterBottomSheetContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Category',
+                  TranslatedText(
+                    'shop_category',
+                    defaultText: 'Category',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 12),
@@ -140,7 +159,12 @@ class _FilterBottomSheetContentState extends State<_FilterBottomSheetContent> {
                     children: widget.categories.map((cat) {
                       final isSelected = _filters.category == cat;
                       return FilterChip(
-                        label: Text(cat.toUpperCase()),
+                        label: TranslatedText.dynamic(
+                          cat == 'all'
+                              ? 'shop_category_all'
+                              : shopCategoryKey(cat),
+                          fallback: cat.toUpperCase(),
+                        ),
                         selected: isSelected,
                         onSelected: (selected) {
                           setState(() {
@@ -153,8 +177,9 @@ class _FilterBottomSheetContentState extends State<_FilterBottomSheetContent> {
                     }).toList(),
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    'Price Range',
+                  TranslatedText(
+                    'shop_price_range',
+                    defaultText: 'Price Range',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 12),
@@ -164,8 +189,16 @@ class _FilterBottomSheetContentState extends State<_FilterBottomSheetContent> {
                     max: 1000,
                     divisions: 100,
                     labels: RangeLabels(
-                      '\$${_priceRange.start.round()}',
-                      '\$${_priceRange.end.round()}',
+                      context.tr(
+                        'shop_product_price',
+                        defaultText: r'${price}',
+                        args: {'price': _priceRange.start.round()},
+                      ),
+                      context.tr(
+                        'shop_product_price',
+                        defaultText: r'${price}',
+                        args: {'price': _priceRange.end.round()},
+                      ),
                     ),
                     onChanged: (values) {
                       setState(() {
@@ -180,19 +213,31 @@ class _FilterBottomSheetContentState extends State<_FilterBottomSheetContent> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('\$${_priceRange.start.round()}'),
-                      Text('\$${_priceRange.end.round()}'),
+                      TranslatedText(
+                        'shop_product_price',
+                        defaultText: r'${price}',
+                        args: {'price': _priceRange.start.round()},
+                      ),
+                      TranslatedText(
+                        'shop_product_price',
+                        defaultText: r'${price}',
+                        args: {'price': _priceRange.end.round()},
+                      ),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    'Sort By',
+                  TranslatedText(
+                    'shop_sort_by',
+                    defaultText: 'Sort By',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 12),
                   ...SortOption.values.map(
                     (option) => RadioListTile<SortOption>(
-                      title: Text(option.label),
+                      title: TranslatedText(
+                        option.translationKey,
+                        defaultText: option.label,
+                      ),
                       value: option,
                       // ignore: deprecated_member_use
                       groupValue: _filters.sortBy,
@@ -218,7 +263,10 @@ class _FilterBottomSheetContentState extends State<_FilterBottomSheetContent> {
               width: double.infinity,
               child: FilledButton(
                 onPressed: () => Navigator.pop(context, _filters),
-                child: const Text('Apply Filters'),
+                child: const TranslatedText(
+                  'shop_apply_filters',
+                  defaultText: 'Apply Filters',
+                ),
               ),
             ),
           ),

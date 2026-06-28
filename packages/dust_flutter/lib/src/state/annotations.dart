@@ -23,7 +23,7 @@ class ViewModel {
   /// Immutable state type managed by the generated view model base.
   final Type state;
 
-  /// Optional dependency bundle type. It must extend [ViewModelArgs].
+  /// Optional dependency bundle type. It must extend `ViewModelArgs`.
   final Type? args;
 
   /// Optional initial state expression for enums, imported states, or states

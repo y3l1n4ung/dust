@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -79,16 +80,18 @@ void main() {
       ..addToCart(FakeShoppingRepository.products.first);
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: CartViewModelScope.value(
-          value: cart,
-          child: CheckoutViewModelScope.value(
-            value: CheckoutViewModel(
-              CheckoutViewModelArgs(repository: repository),
-            ),
-            child: OrdersViewModelScope.value(
-              value: OrdersViewModel(const OrdersViewModelArgs()),
-              child: const CheckoutScreen(),
+      _i18nHarness(
+        MaterialApp(
+          home: CartViewModelScope.value(
+            value: cart,
+            child: CheckoutViewModelScope.value(
+              value: CheckoutViewModel(
+                CheckoutViewModelArgs(repository: repository),
+              ),
+              child: OrdersViewModelScope.value(
+                value: OrdersViewModel(const OrdersViewModelArgs()),
+                child: const CheckoutScreen(),
+              ),
             ),
           ),
         ),
@@ -108,15 +111,26 @@ void main() {
 Future<Widget> _registerHarness(FakeShoppingRepository repository) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
-  return MaterialApp(
-    home: AuthViewModelScope(
-      args: (context) => AuthViewModelArgs(
-        repository: repository,
-        storage: StorageService(prefs),
+  return _i18nHarness(
+    MaterialApp(
+      home: AuthViewModelScope(
+        args: (context) => AuthViewModelArgs(
+          repository: repository,
+          storage: StorageService(prefs),
+        ),
+        create: (context, args) => AuthViewModel(args),
+        child: const RegisterScreen(),
       ),
-      create: (context, args) => AuthViewModel(args),
-      child: const RegisterScreen(),
     ),
+  );
+}
+
+Widget _i18nHarness(Widget child) {
+  return I18nScope(
+    controller: I18nController(
+      config: const I18nConfig(locales: ['en'], fallbackLocale: 'en'),
+    ),
+    child: child,
   );
 }
 

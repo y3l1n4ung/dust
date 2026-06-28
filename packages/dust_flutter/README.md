@@ -61,16 +61,24 @@ final class CounterViewModel extends $CounterViewModel {
 import 'package:dust_flutter/i18n.dart';
 
 final i18n = I18nController(
-  config: const I18nConfig(locales: ['en', 'my'], fallbackLocale: 'en'),
+  config: const I18nConfig(
+    locales: ['en', 'my'],
+    fallbackLocale: 'en',
+  ),
 );
 
-await i18n.loadAssetBundles(namespaces: ['home']);
+await i18n.loadAssetBundles();
 
 I18nScope(
   controller: i18n,
-  child: const TranslatedText('home.title'),
+  child: const TranslatedText('home_title'),
 );
 ```
 
-See the canonical guides in `docs/usage/routing.md` and
-`docs/usage/state.md`.
+Runtime keys use a namespace prefix followed by an underscore. For example,
+`home_title` loads from `assets/i18n/{locale}/home.arb` and reads the ARB
+message key `title`. `home_title_name` reads the `title_name` key from the same
+file.
+
+See the canonical guides in `docs/usage/routing.md`, `docs/usage/state.md`,
+and `docs/usage/i18n.md`.

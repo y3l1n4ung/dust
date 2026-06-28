@@ -26,6 +26,7 @@ Dust has two documentation tracks:
 - [HttpClient guide](./usage/http.md)
 - [State Management guide](./usage/state.md)
 - [Routing guide](./usage/routing.md)
+- [i18n guide](./usage/i18n.md)
 - [Dust DB guide](./usage/db.md)
 
 These pages are backed by the runnable example package in

@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
@@ -51,7 +52,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     if (product == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Product Details')),
+        appBar: AppBar(
+          title: const TranslatedText(
+            'shop_product_details',
+            defaultText: 'Product Details',
+          ),
+        ),
         body: Center(
           child: switch (productsState.status) {
             ProductsStatus.initial ||
@@ -62,12 +68,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   const Icon(Icons.search_off, size: 72, color: Colors.grey),
                   const SizedBox(height: 16),
-                  Text('Product #${widget.productId} was not found.'),
+                  Text(
+                    context.tr(
+                      'shop_product_not_found',
+                      defaultText: 'Product #{id} was not found.',
+                      args: {'id': widget.productId},
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   FilledButton.icon(
                     onPressed: () => context.navigator.products().go(),
                     icon: const Icon(Icons.storefront),
-                    label: const Text('Back to shop'),
+                    label: const TranslatedText(
+                      'shop_back_to_shop',
+                      defaultText: 'Back to shop',
+                    ),
                   ),
                 ],
               ),
@@ -87,7 +102,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Product Details'),
+          title: const TranslatedText(
+            'shop_product_details',
+            defaultText: 'Product Details',
+          ),
           actions: [
             IconButton(
               icon: Icon(isSaved ? Icons.favorite : Icons.favorite_border),
@@ -124,8 +142,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   children: [
                     _ProductHeader(product: selectedProduct),
                     const SizedBox(height: 24),
-                    Text(
-                      'Description',
+                    TranslatedText(
+                      'shop_description',
+                      defaultText: 'Description',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -179,29 +198,30 @@ class _ProductHeader extends StatelessWidget {
             color: Colors.deepPurple.withAlpha(25),
             borderRadius: BorderRadius.circular(4),
           ),
-          child: Text(
-            product.category.toUpperCase(),
+          child: TranslatedText.dynamic(
+            product.categoryTranslationKey,
+            fallback: product.categoryFallbackLabel,
             style: Theme.of(
               context,
             ).textTheme.labelSmall?.copyWith(color: Colors.deepPurple),
           ),
         ),
         const SizedBox(height: 12),
-        Text(product.title, style: Theme.of(context).textTheme.headlineSmall),
+        Text(
+          product.title,
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
         const SizedBox(height: 8),
         Row(
           children: [
             Icon(Icons.star, color: Colors.amber[700], size: 20),
             const SizedBox(width: 4),
-            Text(
-              '${product.rating.rate}',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
+            Text(product.rating.rateLabel),
             const SizedBox(width: 8),
-            Text(
-              '(${product.rating.count} reviews)',
+            TranslatedText(
+              'shop_review_count',
+              defaultText: '({count} reviews)',
+              args: {'count': product.rating.count},
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
@@ -209,8 +229,10 @@ class _ProductHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        Text(
-          '\$${product.price.toStringAsFixed(2)}',
+        TranslatedText(
+          'shop_product_price',
+          defaultText: r'${price}',
+          args: {'price': product.priceLabel},
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.deepPurple,
@@ -231,14 +253,22 @@ class _ReviewsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Reviews', style: Theme.of(context).textTheme.titleLarge),
+        TranslatedText(
+          'shop_reviews',
+          defaultText: 'Reviews',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         const SizedBox(height: 12),
         switch (state.status) {
           ProductDetailStatus.initial ||
           ProductDetailStatus.loading =>
             const Center(child: CircularProgressIndicator()),
           ProductDetailStatus.error => Text(
-              state.errorMessage ?? 'Failed to load reviews.',
+              state.errorMessage ??
+                  context.tr(
+                    'shop_reviews_failed',
+                    defaultText: 'Failed to load reviews.',
+                  ),
               style: const TextStyle(color: Colors.red),
             ),
           ProductDetailStatus.success => Column(
@@ -282,8 +312,9 @@ class _ReviewTile extends StatelessWidget {
             if (review.verifiedPurchase)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: Text(
-                  'Verified purchase',
+                child: TranslatedText(
+                  'shop_verified_purchase',
+                  defaultText: 'Verified purchase',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Colors.green,
                         fontWeight: FontWeight.bold,
@@ -309,8 +340,9 @@ class _RecommendationsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'You may also like',
+        TranslatedText(
+          'shop_recommendations',
+          defaultText: 'You may also like',
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 12),
@@ -374,13 +406,20 @@ class _AddToCartButton extends StatelessWidget {
         context.readCartViewModel().addToCart(product);
         AppSnackbar.success(
           context,
-          '${product.title} added to cart',
-          actionLabel: 'View Cart',
+          context.tr(
+            'shop_added_to_cart',
+            defaultText: '{name} added to cart',
+            args: {'name': product.title},
+          ),
+          actionLabel: context.tr('shop_view_cart', defaultText: 'View Cart'),
           onAction: () => context.navigator.cart().push(),
         );
       },
       icon: Icon(inCart ? Icons.add_shopping_cart : Icons.shopping_cart),
-      label: Text(inCart ? 'Add Another' : 'Add to Cart'),
+      label: TranslatedText(
+        inCart ? 'shop_add_another' : 'shop_add_to_cart',
+        defaultText: inCart ? 'Add Another' : 'Add to Cart',
+      ),
     );
   }
 }

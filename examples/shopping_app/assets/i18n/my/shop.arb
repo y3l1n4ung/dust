@@ -1,0 +1,246 @@
+{
+  "@@locale": "my",
+  "add_another": "နောက်တစ်ခု ထည့်မည်",
+  "add_to_cart": "စျေးခြင်းထဲ ထည့်မည်",
+  "added_to_cart": "{name} ကို စျေးခြင်းထဲ ထည့်ပြီးပါပြီ",
+  "@added_to_cart": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "address": "လိပ်စာ",
+  "apply": "အသုံးပြုမည်",
+  "apply_filters": "စစ်ထုတ်မှု အသုံးပြုမည်",
+  "back_to_shop": "ဆိုင်သို့ ပြန်သွားမည်",
+  "browse_products": "ပစ္စည်းများ ကြည့်မည်",
+  "cancel": "မလုပ်တော့ပါ",
+  "cart": "စျေးခြင်း",
+  "cart_empty": "စျေးခြင်းထဲတွင် ပစ္စည်းမရှိပါ",
+  "cart_line_item": "{name} x{quantity}",
+  "@cart_line_item": {
+    "placeholders": {
+      "name": {},
+      "quantity": {}
+    }
+  },
+  "category": "အမျိုးအစား",
+  "category_all": "အားလုံး",
+  "category_bags": "အိတ်များ",
+  "category_clothing": "အဝတ်အစား",
+  "category_electronics": "အီလက်ထရွန်နစ်",
+  "category_jewelery": "လက်ဝတ်ရတနာ",
+  "category_mens_clothing": "အမျိုးသားဝတ်",
+  "category_womens_clothing": "အမျိုးသမီးဝတ်",
+  "chat_failed": "ချက် မအောင်မြင်ပါ",
+  "chat_hint": "ကူပွန်၊ မှာယူမှု၊ API အကြောင်း မေးပါ...",
+  "checkout": "ငွေချေမှု",
+  "city": "မြို့",
+  "clear_all": "အားလုံးရှင်းမည်",
+  "clear_cart": "စျေးခြင်းရှင်းမည်",
+  "clear_cart_message": "စျေးခြင်းထဲရှိ ပစ္စည်း {count} ခုအားလုံးကို ဖယ်ရှားမည် သေချာပါသလား?",
+  "@clear_cart_message": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "confirm_password": "စကားဝှက် အတည်ပြုပါ",
+  "continue_as_guest": "ဧည့်သည်အဖြစ် ဆက်သွားမည်",
+  "continue_shopping": "စျေးဆက်ဝယ်မည်",
+  "coupon_applied": "{code} အသုံးပြုပြီး",
+  "@coupon_applied": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "coupon_code": "ကူပွန်ကုဒ်",
+  "coupon_hint": "DUST10 သို့မဟုတ် SHIPFREE စမ်းကြည့်ပါ",
+  "create_account": "အကောင့်ဖွင့်မည်",
+  "create_account_subtitle": "စျေးဝယ်ရန် အကောင့်ဖွင့်ပါ",
+  "demo_credentials": "စမ်းသပ်အကောင့် အချက်အလက်များ ကြိုဖြည့်ထားသည်",
+  "description": "ဖော်ပြချက်",
+  "discount": "လျှော့စျေး",
+  "email": "အီးမေးလ်",
+  "enter_password": "စကားဝှက် ထည့်ပါ",
+  "enter_username": "အသုံးပြုသူအမည် ထည့်ပါ",
+  "error_message": "အမှား - {message}",
+  "@error_message": {
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "error_occurred": "အမှား ဖြစ်ပွားခဲ့သည်",
+  "filters": "စစ်ထုတ်မှုများ",
+  "first_name": "ပထမအမည်",
+  "full_name": "အမည်အပြည့်အစုံ",
+  "guest": "ဧည့်သည်",
+  "guest_profile_message": "ပရိုဖိုင်နှင့် မှာယူမှုမှတ်တမ်း ကြည့်ရန် ဝင်ရောက်ပါ",
+  "have_account": "အကောင့်ရှိပြီးသားလား?",
+  "item_count": "ပစ္စည်း {count} ခု",
+  "@item_count": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "join_us": "ကျွန်ုပ်တို့နှင့် ပူးပေါင်းပါ",
+  "last_name": "နောက်ဆုံးအမည်",
+  "load_carts_failed": "စျေးခြင်းများ မတင်နိုင်ပါ",
+  "logged_out": "သင် ထွက်ပြီးပါပြီ",
+  "login_failed": "ဝင်ရောက်မှု မအောင်မြင်ပါ",
+  "logout": "ထွက်မည်",
+  "logout_message": "ထွက်မည် သေချာပါသလား?",
+  "my_orders": "ကျွန်ုပ်၏ မှာယူမှုများ",
+  "negative_product_price": "-US$ {price}",
+  "@negative_product_price": {
+    "placeholders": {
+      "price": {}
+    }
+  },
+  "no_account": "အကောင့်မရှိသေးဘူးလား?",
+  "no_orders": "မှာယူမှု မရှိသေးပါ",
+  "no_products": "စစ်ထုတ်မှုနှင့် ကိုက်ညီသော ပစ္စည်းမရှိပါ",
+  "no_route_for_path": "{path} အတွက် စာမျက်နှာမရှိပါ",
+  "@no_route_for_path": {
+    "placeholders": {
+      "path": {}
+    }
+  },
+  "order_id": "မှာယူမှု ID",
+  "order_number": "မှာယူမှု #{id}",
+  "@order_number": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "order_placed": "မှာယူမှု တင်ပြီးပါပြီ",
+  "order_summary": "မှာယူမှု အကျဉ်းချုပ်",
+  "orders": "မှာယူမှုများ",
+  "page_not_found": "စာမျက်နှာ မတွေ့ပါ",
+  "password": "စကားဝှက်",
+  "phone": "ဖုန်း",
+  "place_order": "မှာယူမည်",
+  "place_order_failed": "မှာယူမှု မအောင်မြင်ပါ",
+  "price_range": "စျေးနှုန်းအပိုင်းအခြား",
+  "proceed_to_checkout": "ငွေချေရန် ဆက်သွားမည်",
+  "processing_order": "သင်၏ မှာယူမှုကို ဆောင်ရွက်နေသည်...",
+  "product_details": "ပစ္စည်းအသေးစိတ်",
+  "product_not_found": "ပစ္စည်း #{id} ကို မတွေ့ပါ",
+  "@product_not_found": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "product_price": "US$ {price}",
+  "@product_price": {
+    "placeholders": {
+      "price": {}
+    }
+  },
+  "profile": "ပရိုဖိုင်",
+  "purchase_thanks": "ဝယ်ယူမှုအတွက် ကျေးဇူးတင်ပါသည်",
+  "rating_summary": "{rating} ({count})",
+  "@rating_summary": {
+    "placeholders": {
+      "rating": {},
+      "count": {}
+    }
+  },
+  "recommendations": "သင်ကြိုက်နိုင်သော ပစ္စည်းများ",
+  "registration_failed": "စာရင်းသွင်းမှု မအောင်မြင်ပါ",
+  "remote_cart_number": "အွန်လိုင်းစျေးခြင်း #{id}",
+  "@remote_cart_number": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "remote_cart_summary": "အသုံးပြုသူ {userId} - ပစ္စည်း {itemCount} ခု - ထုတ်ကုန်တန်း {rowCount} ခု",
+  "@remote_cart_summary": {
+    "placeholders": {
+      "userId": {},
+      "itemCount": {},
+      "rowCount": {}
+    }
+  },
+  "remote_carts": "FakeStore စျေးခြင်းများ",
+  "remote_carts_note": "ဤစာမျက်နှာသည် အသစ်ထုတ်ထားသော FakeStore စျေးခြင်း endpoint များကို အသုံးပြုသည်။ အက်ပ်၏ local cart flow ကို အစားမထိုးပါ။",
+  "remove": "ဖယ်ရှားမည်",
+  "remove_item": "ပစ္စည်းဖယ်ရှားမည်",
+  "remove_item_message": "\"{name}\" ကို စျေးခြင်းမှ ဖယ်ရှားမလား?",
+  "@remove_item_message": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "reset": "ပြန်စမည်",
+  "retry": "ထပ်ကြိုးစားပါ",
+  "review_count": "({count} သုံးသပ်ချက်)",
+  "@review_count": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "reviews": "သုံးသပ်ချက်များ",
+  "reviews_failed": "သုံးသပ်ချက်များ မတင်နိုင်ပါ",
+  "save": "သိမ်းမည်",
+  "saved": "သိမ်းပြီး",
+  "search_hint": "ပစ္စည်းရှာရန်",
+  "ship_to": "{name} သို့ ပို့မည်",
+  "@ship_to": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "shipping": "ပို့ဆောင်ခ",
+  "shipping_address": "ပို့ဆောင်ရန် လိပ်စာ",
+  "shopping_assistant": "စျေးဝယ်အကူ",
+  "sign_in": "ဝင်မည်",
+  "sign_in_subtitle": "စျေးဝယ်ရန် ဆက်လက်ဝင်ရောက်ပါ",
+  "sign_up": "စာရင်းသွင်းမည်",
+  "sort_by": "စီရန်",
+  "sort_featured": "အထူးရွေးချယ်ထားသော",
+  "sort_name": "အမည်",
+  "sort_none": "မစီပါ",
+  "sort_price_high": "စျေး ↓",
+  "sort_price_high_full": "စျေး: မြင့်မှ နိမ့်",
+  "sort_price_low": "စျေး ↑",
+  "sort_price_low_full": "စျေး: နိမ့်မှ မြင့်",
+  "sort_rating": "အဆင့်သတ်မှတ်ချက်",
+  "status_cancelled": "ပယ်ဖျက်ပြီး",
+  "status_delivered": "ပို့ပြီး",
+  "status_pending": "စောင့်ဆိုင်းနေသည်",
+  "status_processing": "ဆောင်ရွက်နေသည်",
+  "status_shipped": "ပို့ဆောင်နေသည်",
+  "subtotal": "အပိုင်းစုစုပေါင်း",
+  "support_chat": "အကူအညီချက်",
+  "tax": "အခွန်",
+  "title": "ဆိုင်",
+  "@title": {
+    "description": "Main product catalog title"
+  },
+  "total": "စုစုပေါင်း",
+  "total_items": "စုစုပေါင်း ({count} ခု)",
+  "@total_items": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "total_price": "{price} စုစုပေါင်း",
+  "@total_price": {
+    "placeholders": {
+      "price": {}
+    }
+  },
+  "track_order": "မှာယူမှုခြေရာခံမည်",
+  "tracking": "ခြေရာခံမှု",
+  "tracking_failed": "ခြေရာခံမှု မတင်နိုင်ပါ",
+  "user": "အသုံးပြုသူ",
+  "username": "အသုံးပြုသူအမည်",
+  "verified_purchase": "ဝယ်ယူမှု အတည်ပြုပြီး",
+  "view_cart": "စျေးခြင်း ကြည့်မည်",
+  "view_details": "အသေးစိတ် ကြည့်မည်",
+  "view_orders": "မှာယူမှုများ ကြည့်မည်",
+  "welcome_back": "ပြန်လည်ကြိုဆိုပါတယ်",
+  "welcome_guest": "ကြိုဆိုပါတယ်၊ ဧည့်သည်",
+  "wishlist": "သိမ်းထားသောပစ္စည်းများ",
+  "wishlist_empty": "သိမ်းထားသောပစ္စည်း မရှိသေးပါ",
+  "zip": "စာပို့ကုဒ်"
+}

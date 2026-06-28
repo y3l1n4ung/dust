@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
@@ -24,15 +25,17 @@ class OrderConfirmationScreen extends StatelessWidget {
             children: [
               const Icon(Icons.check_circle, size: 100, color: Colors.green),
               const SizedBox(height: 24),
-              Text(
-                'Order Placed!',
+              TranslatedText(
+                'shop_order_placed',
+                defaultText: 'Order Placed!',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Thank you for your purchase',
+              TranslatedText(
+                'shop_purchase_thanks',
+                defaultText: 'Thank you for your purchase',
                 style: Theme.of(
                   context,
                 ).textTheme.bodyLarge?.copyWith(color: Colors.grey),
@@ -46,7 +49,10 @@ class OrderConfirmationScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    const Text('Order ID'),
+                    const TranslatedText(
+                      'shop_order_id',
+                      defaultText: 'Order ID',
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       '#${orderId.substring(orderId.length - 6)}',
@@ -63,7 +69,10 @@ class OrderConfirmationScreen extends StatelessWidget {
                 child: FilledButton(
                   onPressed: () =>
                       context.navigator.orderDetail(orderId: orderId).go(),
-                  child: const Text('Track Order'),
+                  child: const TranslatedText(
+                    'shop_track_order',
+                    defaultText: 'Track Order',
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -71,7 +80,10 @@ class OrderConfirmationScreen extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () => context.navigator.orders().go(),
-                  child: const Text('View Orders'),
+                  child: const TranslatedText(
+                    'shop_view_orders',
+                    defaultText: 'View Orders',
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -79,7 +91,10 @@ class OrderConfirmationScreen extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () => context.navigator.products().go(),
-                  child: const Text('Continue Shopping'),
+                  child: const TranslatedText(
+                    'shop_continue_shopping',
+                    defaultText: 'Continue Shopping',
+                  ),
                 ),
               ),
             ],

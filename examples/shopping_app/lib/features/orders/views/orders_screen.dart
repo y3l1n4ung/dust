@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
@@ -14,7 +15,9 @@ class OrdersScreen extends StatelessWidget {
     final ordersState = context.watchOrdersViewModel().value;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Orders')),
+      appBar: AppBar(
+        title: const TranslatedText('shop_my_orders', defaultText: 'My Orders'),
+      ),
       body: ordersState.orders.isEmpty
           ? const Center(
               child: Column(
@@ -26,7 +29,10 @@ class OrdersScreen extends StatelessWidget {
                     color: Colors.grey,
                   ),
                   SizedBox(height: 16),
-                  Text('No orders yet'),
+                  TranslatedText(
+                    'shop_no_orders',
+                    defaultText: 'No orders yet',
+                  ),
                 ],
               ),
             )
@@ -68,8 +74,10 @@ class _OrderCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Order #${order.id.substring(order.id.length - 6)}',
+                  TranslatedText(
+                    'shop_order_number',
+                    defaultText: 'Order #{id}',
+                    args: {'id': order.id.substring(order.id.length - 6)},
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -78,8 +86,10 @@ class _OrderCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(
-                '${order.items.length} item(s)',
+              TranslatedText(
+                'shop_item_count',
+                defaultText: '{count} item(s)',
+                args: {'count': order.items.length},
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 4),
@@ -93,9 +103,11 @@ class _OrderCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Total'),
-                  Text(
-                    '\$${order.totalAmount.toStringAsFixed(2)}',
+                  const TranslatedText('shop_total', defaultText: 'Total'),
+                  TranslatedText(
+                    'shop_product_price',
+                    defaultText: r'${price}',
+                    args: {'price': order.totalAmount.toStringAsFixed(2)},
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -121,12 +133,28 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (color, label) = switch (status) {
-      OrderStatus.pending => (Colors.orange, 'Pending'),
-      OrderStatus.processing => (Colors.blue, 'Processing'),
-      OrderStatus.shipped => (Colors.purple, 'Shipped'),
-      OrderStatus.delivered => (Colors.green, 'Delivered'),
-      OrderStatus.cancelled => (Colors.red, 'Cancelled'),
+    final (color, labelKey, defaultLabel) = switch (status) {
+      OrderStatus.pending => (Colors.orange, 'shop_status_pending', 'Pending'),
+      OrderStatus.processing => (
+          Colors.blue,
+          'shop_status_processing',
+          'Processing',
+        ),
+      OrderStatus.shipped => (
+          Colors.purple,
+          'shop_status_shipped',
+          'Shipped',
+        ),
+      OrderStatus.delivered => (
+          Colors.green,
+          'shop_status_delivered',
+          'Delivered',
+        ),
+      OrderStatus.cancelled => (
+          Colors.red,
+          'shop_status_cancelled',
+          'Cancelled',
+        ),
     };
 
     return Container(
@@ -135,8 +163,9 @@ class _StatusChip extends StatelessWidget {
         color: color.withAlpha(25),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        label,
+      child: TranslatedText(
+        labelKey,
+        defaultText: defaultLabel,
         style: TextStyle(
           color: color,
           fontSize: 12,
