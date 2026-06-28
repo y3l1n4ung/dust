@@ -17,6 +17,22 @@ void main() {
     expect(annotation.state, _State);
     expect(annotation.args, _Args);
   });
+
+  test('exports i18n runtime API', () {
+    const config = I18nConfig(
+      locales: ['en'],
+      fallbackLocale: 'en',
+    );
+    const bundle = I18nBundle(
+      locale: 'en',
+      namespace: 'home',
+      messages: {'title': 'Home'},
+    );
+
+    final controller = I18nController(config: config, bundles: [bundle]);
+
+    expect(controller.translate('home_title'), 'Home');
+  });
 }
 
 final class _State {

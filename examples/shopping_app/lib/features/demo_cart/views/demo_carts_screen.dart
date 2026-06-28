@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
@@ -13,7 +14,12 @@ class DemoCartsScreen extends StatelessWidget {
     final state = context.watchDemoCartApiViewModel().value;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('FakeStore Carts')),
+      appBar: AppBar(
+        title: const TranslatedText(
+          'shop_remote_carts',
+          defaultText: 'FakeStore Carts',
+        ),
+      ),
       body: switch (state.status) {
         DemoCartStatus.initial || DemoCartStatus.loading => const Center(
             child: CircularProgressIndicator(),
@@ -26,13 +32,22 @@ class DemoCartsScreen extends StatelessWidget {
                 children: [
                   const Icon(Icons.cloud_off, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
-                  Text(state.errorMessage ?? 'Failed to load carts'),
+                  Text(
+                    state.errorMessage ??
+                        context.tr(
+                          'shop_load_carts_failed',
+                          defaultText: 'Failed to load carts',
+                        ),
+                  ),
                   const SizedBox(height: 16),
                   FilledButton.icon(
                     onPressed: () =>
                         context.readDemoCartApiViewModel().loadUserCarts(1),
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
+                    label: const TranslatedText(
+                      'shop_retry',
+                      defaultText: 'Retry',
+                    ),
                   ),
                 ],
               ),
@@ -45,8 +60,10 @@ class DemoCartsScreen extends StatelessWidget {
                 color: Theme.of(context).colorScheme.primaryContainer,
                 child: const Padding(
                   padding: EdgeInsets.all(16),
-                  child: Text(
-                    'This page uses new generated FakeStore cart endpoints. It does not replace the app\'s local cart flow.',
+                  child: TranslatedText(
+                    'shop_remote_carts_note',
+                    defaultText:
+                        "This page uses new generated FakeStore cart endpoints. It does not replace the app's local cart flow.",
                   ),
                 ),
               ),
@@ -55,9 +72,20 @@ class DemoCartsScreen extends StatelessWidget {
                 (cart) => Card(
                   child: ListTile(
                     leading: CircleAvatar(child: Text('${cart.id}')),
-                    title: Text('Remote cart #${cart.id}'),
-                    subtitle: Text(
-                      'User ${cart.userId} • ${cart.itemCount} item(s) • ${cart.products.length} product rows',
+                    title: TranslatedText(
+                      'shop_remote_cart_number',
+                      defaultText: 'Remote cart #{id}',
+                      args: {'id': cart.id},
+                    ),
+                    subtitle: TranslatedText(
+                      'shop_remote_cart_summary',
+                      defaultText:
+                          'User {userId} - {itemCount} item(s) - {rowCount} product rows',
+                      args: {
+                        'userId': cart.userId,
+                        'itemCount': cart.itemCount,
+                        'rowCount': cart.products.length,
+                      },
                     ),
                     trailing: const Icon(Icons.chevron_right),
                   ),

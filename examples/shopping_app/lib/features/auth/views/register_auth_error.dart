@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart';
 
 import '../models/auth_state.dart';
@@ -25,7 +26,11 @@ class RegisterAuthError extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              state.errorMessage ?? 'Registration failed',
+              state.errorMessage ??
+                  context.tr(
+                    'shop_registration_failed',
+                    defaultText: 'Registration failed',
+                  ),
               style: const TextStyle(color: Colors.red),
             ),
           ),

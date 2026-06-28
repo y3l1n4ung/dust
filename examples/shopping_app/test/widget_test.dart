@@ -14,16 +14,33 @@ void main() {
   ) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
+    final i18n = await createShoppingI18n();
 
     await tester.pumpWidget(
       ShoppingApp(
         storage: StorageService(prefs),
+        i18n: i18n,
         repository: FakeShoppingRepository(),
       ),
     );
     await tester.pumpAndSettle();
 
     expect(find.text('Shop'), findsOneWidget);
+    expect(find.text('EN'), findsOneWidget);
+    expect(find.text('Dust Backpack'), findsOneWidget);
+    expect(find.text('Bags'), findsWidgets);
+    expect(find.text(r'$42.00'), findsOneWidget);
+    expect(find.text('4.8 (12)'), findsOneWidget);
+
+    await tester.tap(find.text('EN'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ဆိုင်'), findsOneWidget);
+    expect(find.text('MY'), findsOneWidget);
+    expect(find.text('Dust Backpack'), findsOneWidget);
+    expect(find.text('အိတ်များ'), findsWidgets);
+    expect(find.text(r'US$ 42.00'), findsOneWidget);
+    expect(find.text('4.8 (12)'), findsOneWidget);
   });
 
   test('generated routes include new shopping showcase destinations', () {

@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
@@ -76,7 +77,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Create Account'),
+        title: const TranslatedText(
+          'shop_create_account',
+          defaultText: 'Create Account',
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -95,9 +99,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: _firstNameController,
-                        decoration: const InputDecoration(
-                          labelText: 'First Name',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.tr(
+                            'shop_first_name',
+                            defaultText: 'First Name',
+                          ),
+                          border: const OutlineInputBorder(),
                         ),
                         textInputAction: TextInputAction.next,
                         textCapitalization: TextCapitalization.words,
@@ -108,9 +115,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: _lastNameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Last Name',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: context.tr(
+                            'shop_last_name',
+                            defaultText: 'Last Name',
+                          ),
+                          border: const OutlineInputBorder(),
                         ),
                         textInputAction: TextInputAction.next,
                         textCapitalization: TextCapitalization.words,
@@ -124,10 +134,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Email
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: context.tr('shop_email', defaultText: 'Email'),
+                    prefixIcon: const Icon(Icons.email),
+                    border: const OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
@@ -138,10 +148,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Username
                 TextFormField(
                   controller: _usernameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: context.tr(
+                      'shop_username',
+                      defaultText: 'Username',
+                    ),
+                    prefixIcon: const Icon(Icons.person),
+                    border: const OutlineInputBorder(),
                   ),
                   textInputAction: TextInputAction.next,
                   validator: validateRegisterRequestUsernameInput,
@@ -151,10 +164,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Phone
                 TextFormField(
                   controller: _phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone',
-                    prefixIcon: Icon(Icons.phone),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: context.tr('shop_phone', defaultText: 'Phone'),
+                    prefixIcon: const Icon(Icons.phone),
+                    border: const OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.next,
@@ -167,7 +180,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: context.tr(
+                      'shop_password',
+                      defaultText: 'Password',
+                    ),
                     prefixIcon: const Icon(Icons.lock),
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
@@ -193,7 +209,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   decoration: InputDecoration(
-                    labelText: 'Confirm Password',
+                    labelText: context.tr(
+                      'shop_confirm_password',
+                      defaultText: 'Confirm Password',
+                    ),
                     prefixIcon: const Icon(Icons.lock_outline),
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(

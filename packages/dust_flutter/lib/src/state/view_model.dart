@@ -70,6 +70,7 @@ final class ViewModelActionToken {
   /// Logical action key, usually a private string or symbol.
   final Object key;
 
+  /// Version assigned when this action started.
   final int version;
 }
 
@@ -109,6 +110,8 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
 
   /// Emits [next] if it differs from the current state.
   @protected
+  // Generated APIs use `emit(next)` as the stable view-model verb.
+  // ignore: use_setters_to_change_properties
   void emit(TState next) {
     value = next;
   }
@@ -169,19 +172,23 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     if (_isDisposed) return;
     _isDisposed = true;
     _actionVersions.clear();
-    _effects.close();
+    unawaited(_effects.close());
     super.dispose();
   }
 }
 
 /// Creates args for a generated view model scope.
 typedef ViewModelArgsFactory<TArgs extends ViewModelArgs> = TArgs Function(
-    BuildContext context);
+  BuildContext context,
+);
 
 /// Creates a view model for a generated scope.
 typedef ViewModelFactory<TViewModel extends ViewModelBase<dynamic, dynamic>,
         TArgs extends ViewModelArgs>
-    = TViewModel Function(BuildContext context, TArgs args);
+    = TViewModel Function(
+  BuildContext context,
+  TArgs args,
+);
 
 /// Generic owner used by generated scopes.
 ///
@@ -191,19 +198,19 @@ class ViewModelOwner<TViewModel extends ViewModelBase<dynamic, dynamic>,
     TArgs extends ViewModelArgs> extends StatefulWidget {
   /// Creates an owner that constructs and disposes the view model.
   const ViewModelOwner({
-    super.key,
-    this.debugName,
     required this.args,
     required this.create,
     required this.builder,
+    super.key,
+    this.debugName,
   }) : value = null;
 
   /// Creates a provider for an externally owned view model.
   const ViewModelOwner.value({
-    super.key,
-    this.debugName,
     required TViewModel this.value,
     required this.builder,
+    super.key,
+    this.debugName,
   })  : args = null,
         create = null;
 
@@ -267,7 +274,7 @@ class _ViewModelOwnerState<TViewModel extends ViewModelBase<dynamic, dynamic>,
     _owned = created;
     scheduleMicrotask(() {
       if (mounted && identical(_owned, created)) {
-        created.init();
+        unawaited(created.init());
       }
     });
   }

@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
@@ -59,16 +60,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: Colors.deepPurple,
                 ),
                 const SizedBox(height: 24),
-                Text(
-                  'Welcome Back',
+                TranslatedText(
+                  'shop_welcome_back',
+                  defaultText: 'Welcome Back',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Sign in to continue shopping',
+                TranslatedText(
+                  'shop_sign_in_subtitle',
+                  defaultText: 'Sign in to continue shopping',
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
@@ -77,15 +80,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 48),
                 TextFormField(
                   controller: _usernameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: context.tr(
+                      'shop_username',
+                      defaultText: 'Username',
+                    ),
+                    prefixIcon: const Icon(Icons.person),
+                    border: const OutlineInputBorder(),
                   ),
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter username';
+                      return context.tr(
+                        'shop_enter_username',
+                        defaultText: 'Please enter username',
+                      );
                     }
                     return null;
                   },
@@ -95,7 +104,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: context.tr(
+                      'shop_password',
+                      defaultText: 'Password',
+                    ),
                     prefixIcon: const Icon(Icons.lock),
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
@@ -115,7 +127,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   onFieldSubmitted: (_) => _login(),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter password';
+                      return context.tr(
+                        'shop_enter_password',
+                        defaultText: 'Please enter password',
+                      );
                     }
                     return null;
                   },
@@ -134,7 +149,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            state.errorMessage ?? 'Login failed',
+                            state.errorMessage ??
+                                context.tr(
+                                  'shop_login_failed',
+                                  defaultText: 'Login failed',
+                                ),
                             style: const TextStyle(color: Colors.red),
                           ),
                         ),
@@ -157,13 +176,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('Sign In'),
+                      : const TranslatedText(
+                          'shop_sign_in',
+                          defaultText: 'Sign In',
+                        ),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don't have an account?"),
+                    const TranslatedText(
+                      'shop_no_account',
+                      defaultText: "Don't have an account?",
+                    ),
                     TextButton(
                       onPressed: () {
                         if (widget.redirectPath != null) {
@@ -174,14 +199,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           context.navigator.register().go();
                         }
                       },
-                      child: const Text('Sign Up'),
+                      child: const TranslatedText(
+                        'shop_sign_up',
+                        defaultText: 'Sign Up',
+                      ),
                     ),
                   ],
                 ),
                 const Divider(height: 32),
                 TextButton(
                   onPressed: () => context.navigator.products().go(),
-                  child: const Text('Continue as Guest'),
+                  child: const TranslatedText(
+                    'shop_continue_as_guest',
+                    defaultText: 'Continue as Guest',
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Container(
@@ -195,8 +226,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Icon(Icons.info_outline, color: Colors.deepPurple),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          'Demo credentials are pre-filled',
+                        child: TranslatedText(
+                          'shop_demo_credentials',
+                          defaultText: 'Demo credentials are pre-filled',
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall

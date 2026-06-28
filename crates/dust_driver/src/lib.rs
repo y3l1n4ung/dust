@@ -29,6 +29,9 @@ pub use build::{run_build, run_build_with_progress};
 pub use check::run_check;
 pub use clean::run_clean;
 pub use doctor::run_doctor;
+pub use dust_parser_dart_ts::{
+    I18nScanResult, I18nTranslationKind, I18nTranslationUse, scan_i18n_source,
+};
 pub use progress::{ProgressEvent, ProgressPhase};
 pub use request::{
     BuildRequest, CheckRequest, CleanRequest, CommandRequest, DbRequestOptions, DoctorRequest,

@@ -1,0 +1,246 @@
+{
+  "@@locale": "en",
+  "add_another": "Add Another",
+  "add_to_cart": "Add to Cart",
+  "added_to_cart": "{name} added to cart",
+  "@added_to_cart": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "address": "Address",
+  "apply": "Apply",
+  "apply_filters": "Apply Filters",
+  "back_to_shop": "Back to shop",
+  "browse_products": "Browse products",
+  "cancel": "Cancel",
+  "cart": "Cart",
+  "cart_empty": "Your cart is empty",
+  "cart_line_item": "{name} x{quantity}",
+  "@cart_line_item": {
+    "placeholders": {
+      "name": {},
+      "quantity": {}
+    }
+  },
+  "category": "Category",
+  "category_all": "All",
+  "category_bags": "Bags",
+  "category_clothing": "Clothing",
+  "category_electronics": "Electronics",
+  "category_jewelery": "Jewelry",
+  "category_mens_clothing": "Men's clothing",
+  "category_womens_clothing": "Women's clothing",
+  "chat_failed": "Chat failed",
+  "chat_hint": "Ask about coupons, orders, API...",
+  "checkout": "Checkout",
+  "city": "City",
+  "clear_all": "Clear All",
+  "clear_cart": "Clear Cart",
+  "clear_cart_message": "Are you sure you want to remove all {count} items from your cart?",
+  "@clear_cart_message": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "confirm_password": "Confirm Password",
+  "continue_as_guest": "Continue as Guest",
+  "continue_shopping": "Continue Shopping",
+  "coupon_applied": "Applied {code}",
+  "@coupon_applied": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "coupon_code": "Coupon code",
+  "coupon_hint": "Try DUST10 or SHIPFREE",
+  "create_account": "Create Account",
+  "create_account_subtitle": "Create an account to start shopping",
+  "demo_credentials": "Demo credentials are pre-filled",
+  "description": "Description",
+  "discount": "Discount",
+  "email": "Email",
+  "enter_password": "Please enter password",
+  "enter_username": "Please enter username",
+  "error_message": "Error: {message}",
+  "@error_message": {
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "error_occurred": "An error occurred",
+  "filters": "Filters",
+  "first_name": "First Name",
+  "full_name": "Full Name",
+  "guest": "Guest",
+  "guest_profile_message": "Sign in to access your profile and order history",
+  "have_account": "Already have an account?",
+  "item_count": "{count} item(s)",
+  "@item_count": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "join_us": "Join Us",
+  "last_name": "Last Name",
+  "load_carts_failed": "Failed to load carts",
+  "logged_out": "You have been logged out",
+  "login_failed": "Login failed",
+  "logout": "Logout",
+  "logout_message": "Are you sure you want to logout?",
+  "my_orders": "My Orders",
+  "negative_product_price": "-${price}",
+  "@negative_product_price": {
+    "placeholders": {
+      "price": {}
+    }
+  },
+  "no_account": "Don't have an account?",
+  "no_orders": "No orders yet",
+  "no_products": "No products match your filters",
+  "no_route_for_path": "No route for {path}",
+  "@no_route_for_path": {
+    "placeholders": {
+      "path": {}
+    }
+  },
+  "order_id": "Order ID",
+  "order_number": "Order #{id}",
+  "@order_number": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "order_placed": "Order Placed!",
+  "order_summary": "Order Summary",
+  "orders": "Orders",
+  "page_not_found": "Page not found",
+  "password": "Password",
+  "phone": "Phone",
+  "place_order": "Place Order",
+  "place_order_failed": "Failed to place order",
+  "price_range": "Price Range",
+  "proceed_to_checkout": "Proceed to Checkout",
+  "processing_order": "Processing your order...",
+  "product_details": "Product Details",
+  "product_not_found": "Product #{id} was not found.",
+  "@product_not_found": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "product_price": "${price}",
+  "@product_price": {
+    "placeholders": {
+      "price": {}
+    }
+  },
+  "profile": "Profile",
+  "purchase_thanks": "Thank you for your purchase",
+  "rating_summary": "{rating} ({count})",
+  "@rating_summary": {
+    "placeholders": {
+      "rating": {},
+      "count": {}
+    }
+  },
+  "recommendations": "You may also like",
+  "registration_failed": "Registration failed",
+  "remote_cart_number": "Remote cart #{id}",
+  "@remote_cart_number": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "remote_cart_summary": "User {userId} - {itemCount} item(s) - {rowCount} product rows",
+  "@remote_cart_summary": {
+    "placeholders": {
+      "userId": {},
+      "itemCount": {},
+      "rowCount": {}
+    }
+  },
+  "remote_carts": "FakeStore Carts",
+  "remote_carts_note": "This page uses new generated FakeStore cart endpoints. It does not replace the app's local cart flow.",
+  "remove": "Remove",
+  "remove_item": "Remove Item",
+  "remove_item_message": "Remove \"{name}\" from your cart?",
+  "@remove_item_message": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "reset": "Reset",
+  "retry": "Retry",
+  "review_count": "({count} reviews)",
+  "@review_count": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "reviews": "Reviews",
+  "reviews_failed": "Failed to load reviews.",
+  "save": "Save",
+  "saved": "Saved",
+  "search_hint": "Search products",
+  "ship_to": "Ship to {name}",
+  "@ship_to": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "shipping": "Shipping",
+  "shipping_address": "Shipping Address",
+  "shopping_assistant": "Shopping Assistant",
+  "sign_in": "Sign In",
+  "sign_in_subtitle": "Sign in to continue shopping",
+  "sign_up": "Sign Up",
+  "sort_by": "Sort By",
+  "sort_featured": "Featured",
+  "sort_name": "Name",
+  "sort_none": "None",
+  "sort_price_high": "Price ↓",
+  "sort_price_high_full": "Price: High to Low",
+  "sort_price_low": "Price ↑",
+  "sort_price_low_full": "Price: Low to High",
+  "sort_rating": "Rating",
+  "status_cancelled": "Cancelled",
+  "status_delivered": "Delivered",
+  "status_pending": "Pending",
+  "status_processing": "Processing",
+  "status_shipped": "Shipped",
+  "subtotal": "Subtotal",
+  "support_chat": "Support Chat",
+  "tax": "Tax",
+  "title": "Shop",
+  "@title": {
+    "description": "Main product catalog title"
+  },
+  "total": "Total",
+  "total_items": "Total ({count} items)",
+  "@total_items": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "total_price": "{price} total",
+  "@total_price": {
+    "placeholders": {
+      "price": {}
+    }
+  },
+  "track_order": "Track Order",
+  "tracking": "Tracking",
+  "tracking_failed": "Failed to load tracking.",
+  "user": "User",
+  "username": "Username",
+  "verified_purchase": "Verified purchase",
+  "view_cart": "View Cart",
+  "view_details": "View Details",
+  "view_orders": "View Orders",
+  "welcome_back": "Welcome Back",
+  "welcome_guest": "Welcome, Guest",
+  "wishlist": "Wishlist",
+  "wishlist_empty": "No saved products yet",
+  "zip": "ZIP"
+}

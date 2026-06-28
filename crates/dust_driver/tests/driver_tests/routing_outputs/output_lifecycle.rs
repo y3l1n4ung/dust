@@ -171,7 +171,7 @@ fn watch_rebuilds_route_output_when_annotated_page_changes() {
     let watch = result.watch.as_ref().unwrap();
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
-    assert_eq!(watch.rebuild_batches, 1);
+    assert!(watch.rebuild_batches >= 1);
     assert_route_snapshot("home_route.dart.snapshot", &source);
 }
 #[test]

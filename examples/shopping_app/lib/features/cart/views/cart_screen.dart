@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
@@ -46,19 +47,34 @@ class _CartScreenState extends State<CartScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Cart'),
+          title: const TranslatedText('shop_cart', defaultText: 'Cart'),
           actions: [
             if (state.items.isNotEmpty)
               IconButton(
                 icon: const Icon(Icons.delete_sweep),
-                tooltip: 'Clear Cart',
+                tooltip: context.tr(
+                  'shop_clear_cart',
+                  defaultText: 'Clear Cart',
+                ),
                 onPressed: () async {
                   final confirmed = await ConfirmDialog.show(
                     context: context,
-                    title: 'Clear Cart',
-                    message:
-                        'Are you sure you want to remove all ${state.itemCount} items from your cart?',
-                    confirmText: 'Clear All',
+                    title: context.tr(
+                      'shop_clear_cart',
+                      defaultText: 'Clear Cart',
+                    ),
+                    message: context.tr(
+                      'shop_clear_cart_message',
+                      defaultText:
+                          'Are you sure you want to remove all {count} items from your cart?',
+                      args: {'count': state.itemCount},
+                    ),
+                    confirmText: context.tr(
+                      'shop_clear_all',
+                      defaultText: 'Clear All',
+                    ),
+                    cancelText:
+                        context.tr('shop_cancel', defaultText: 'Cancel'),
                     isDangerous: true,
                   );
                   if (confirmed == true && context.mounted) {
@@ -79,7 +95,10 @@ class _CartScreenState extends State<CartScreen> {
                       color: Colors.grey,
                     ),
                     SizedBox(height: 16),
-                    Text('Your cart is empty'),
+                    TranslatedText(
+                      'shop_cart_empty',
+                      defaultText: 'Your cart is empty',
+                    ),
                   ],
                 ),
               )
@@ -125,8 +144,12 @@ class _CartScreenState extends State<CartScreen> {
                                         ).textTheme.bodyMedium,
                                       ),
                                       const SizedBox(height: 4),
-                                      Text(
-                                        '\$${item.product.price.toStringAsFixed(2)}',
+                                      TranslatedText(
+                                        'shop_product_price',
+                                        defaultText: r'${price}',
+                                        args: {
+                                          'price': item.product.priceLabel,
+                                        },
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleSmall
@@ -175,10 +198,24 @@ class _CartScreenState extends State<CartScreen> {
                                         final confirmed =
                                             await ConfirmDialog.show(
                                           context: context,
-                                          title: 'Remove Item',
-                                          message:
-                                              'Remove "${item.product.title}" from your cart?',
-                                          confirmText: 'Remove',
+                                          title: context.tr(
+                                            'shop_remove_item',
+                                            defaultText: 'Remove Item',
+                                          ),
+                                          message: context.tr(
+                                            'shop_remove_item_message',
+                                            defaultText:
+                                                'Remove "{name}" from your cart?',
+                                            args: {'name': item.product.title},
+                                          ),
+                                          confirmText: context.tr(
+                                            'shop_remove',
+                                            defaultText: 'Remove',
+                                          ),
+                                          cancelText: context.tr(
+                                            'shop_cancel',
+                                            defaultText: 'Cancel',
+                                          ),
                                           isDangerous: true,
                                         );
                                         if (confirmed == true &&
@@ -221,14 +258,21 @@ class _CartScreenState extends State<CartScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    'Total (${state.itemCount} items)',
+                                  TranslatedText(
+                                    'shop_total_items',
+                                    defaultText: 'Total ({count} items)',
+                                    args: {'count': state.itemCount},
                                     style: Theme.of(
                                       context,
                                     ).textTheme.titleMedium,
                                   ),
-                                  Text(
-                                    '\$${state.totalPrice.toStringAsFixed(2)}',
+                                  TranslatedText(
+                                    'shop_product_price',
+                                    defaultText: r'${price}',
+                                    args: {
+                                      'price':
+                                          state.totalPrice.toStringAsFixed(2),
+                                    },
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleLarge
@@ -242,7 +286,10 @@ class _CartScreenState extends State<CartScreen> {
                                 child: FilledButton(
                                   onPressed: () =>
                                       context.navigator.checkout().push(),
-                                  child: const Text('Proceed to Checkout'),
+                                  child: const TranslatedText(
+                                    'shop_proceed_to_checkout',
+                                    defaultText: 'Proceed to Checkout',
+                                  ),
                                 ),
                               ),
                             ],

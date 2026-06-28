@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
@@ -16,7 +17,9 @@ class ProfileScreen extends StatelessWidget {
     final authState = context.watchAuthViewModel().value;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(
+        title: const TranslatedText('shop_profile', defaultText: 'Profile'),
+      ),
       body: authState.isAuthenticated
           ? _AuthenticatedProfile(authState: authState)
           : const _GuestProfile(),
@@ -38,11 +41,19 @@ class _AuthenticatedProfile extends StatelessWidget {
       children: [
         const CircleAvatar(radius: 50, child: Icon(Icons.person, size: 50)),
         const SizedBox(height: 16),
-        Text(
-          user?.name.fullName ?? 'User',
-          style: Theme.of(context).textTheme.headlineSmall,
-          textAlign: TextAlign.center,
-        ),
+        if (user == null)
+          TranslatedText(
+            'shop_user',
+            defaultText: 'User',
+            style: Theme.of(context).textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          )
+        else
+          Text(
+            user.name.fullName,
+            style: Theme.of(context).textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
         Text(
           user?.email ?? '',
           style: Theme.of(
@@ -56,19 +67,25 @@ class _AuthenticatedProfile extends StatelessWidget {
             children: [
               ListTile(
                 leading: const Icon(Icons.person_outline),
-                title: const Text('Username'),
+                title: const TranslatedText(
+                  'shop_username',
+                  defaultText: 'Username',
+                ),
                 subtitle: Text(user?.username ?? ''),
               ),
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.phone_outlined),
-                title: const Text('Phone'),
+                title: const TranslatedText('shop_phone', defaultText: 'Phone'),
                 subtitle: Text(user?.phone ?? ''),
               ),
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.shopping_bag_outlined),
-                title: const Text('My Orders'),
+                title: const TranslatedText(
+                  'shop_my_orders',
+                  defaultText: 'My Orders',
+                ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.navigator.orders().push(),
               ),
@@ -80,19 +97,29 @@ class _AuthenticatedProfile extends StatelessWidget {
           onPressed: () async {
             final confirmed = await ConfirmDialog.show(
               context: context,
-              title: 'Logout',
-              message: 'Are you sure you want to logout?',
-              confirmText: 'Logout',
+              title: context.tr('shop_logout', defaultText: 'Logout'),
+              message: context.tr(
+                'shop_logout_message',
+                defaultText: 'Are you sure you want to logout?',
+              ),
+              confirmText: context.tr('shop_logout', defaultText: 'Logout'),
+              cancelText: context.tr('shop_cancel', defaultText: 'Cancel'),
               isDangerous: true,
             );
             if (confirmed == true && context.mounted) {
               context.readAuthViewModel().logout();
-              AppSnackbar.info(context, 'You have been logged out');
+              AppSnackbar.info(
+                context,
+                context.tr(
+                  'shop_logged_out',
+                  defaultText: 'You have been logged out',
+                ),
+              );
               context.navigator.products().go();
             }
           },
           icon: const Icon(Icons.logout),
-          label: const Text('Logout'),
+          label: const TranslatedText('shop_logout', defaultText: 'Logout'),
           style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
         ),
       ],
@@ -117,13 +144,15 @@ class _GuestProfile extends StatelessWidget {
               color: Colors.grey,
             ),
             const SizedBox(height: 24),
-            Text(
-              'Welcome, Guest',
+            TranslatedText(
+              'shop_welcome_guest',
+              defaultText: 'Welcome, Guest',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
-            Text(
-              'Sign in to access your profile and order history',
+            TranslatedText(
+              'shop_guest_profile_message',
+              defaultText: 'Sign in to access your profile and order history',
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
@@ -133,7 +162,10 @@ class _GuestProfile extends StatelessWidget {
             FilledButton.icon(
               onPressed: () => context.navigator.login().go(),
               icon: const Icon(Icons.login),
-              label: const Text('Sign In'),
+              label: const TranslatedText(
+                'shop_sign_in',
+                defaultText: 'Sign In',
+              ),
             ),
           ],
         ),

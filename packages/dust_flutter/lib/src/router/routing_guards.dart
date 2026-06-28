@@ -1,3 +1,6 @@
+// Route guard interfaces are user extension contracts generated code targets.
+// ignore_for_file: one_member_abstracts
+
 part of 'routing_core.dart';
 
 /// Synchronous route-specific guard contract.

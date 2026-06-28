@@ -8,6 +8,8 @@ import 'package:flutter/cupertino.dart' hide Route;
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
+import 'package:dust_flutter/i18n.dart';
+import 'package:shopping_app/core/i18n/shop_i18n_keys.dart';
 import 'package:shopping_app/features/auth/models/auth_state.dart';
 import 'package:shopping_app/features/auth/models/register_request.dart';
 import 'package:shopping_app/features/auth/view_models/auth_view_model.dart';

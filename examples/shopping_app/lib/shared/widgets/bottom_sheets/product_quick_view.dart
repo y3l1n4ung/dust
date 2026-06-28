@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart';
 
 import '../../../features/products/models/product.dart';
@@ -128,8 +129,10 @@ class _ProductQuickViewContentState extends State<_ProductQuickViewContent>
                               '${widget.product.rating.rate}',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
-                            Text(
-                              ' (${widget.product.rating.count})',
+                            TranslatedText(
+                              'shop_review_count',
+                              defaultText: '({count} reviews)',
+                              args: {'count': widget.product.rating.count},
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -138,8 +141,10 @@ class _ProductQuickViewContentState extends State<_ProductQuickViewContent>
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          '\$${widget.product.price.toStringAsFixed(2)}',
+                        TranslatedText(
+                          'shop_product_price',
+                          defaultText: r'${price}',
+                          args: {'price': widget.product.priceLabel},
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
@@ -165,7 +170,10 @@ class _ProductQuickViewContentState extends State<_ProductQuickViewContent>
                           Navigator.pop(context);
                           widget.onViewDetails?.call();
                         },
-                        child: const Text('View Details'),
+                        child: const TranslatedText(
+                          'shop_view_details',
+                          defaultText: 'View Details',
+                        ),
                       ),
                     ),
                   if (widget.onViewDetails != null) const SizedBox(width: 12),
@@ -176,7 +184,10 @@ class _ProductQuickViewContentState extends State<_ProductQuickViewContent>
                         Navigator.pop(context);
                       },
                       icon: const Icon(Icons.add_shopping_cart),
-                      label: const Text('Add to Cart'),
+                      label: const TranslatedText(
+                        'shop_add_to_cart',
+                        defaultText: 'Add to Cart',
+                      ),
                     ),
                   ),
                 ],

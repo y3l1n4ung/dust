@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
@@ -21,7 +22,9 @@ class WishlistScreen extends StatelessWidget {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Wishlist')),
+        appBar: AppBar(
+          title: const TranslatedText('shop_wishlist', defaultText: 'Wishlist'),
+        ),
         body: state.items.isEmpty
             ? Center(
                 child: Column(
@@ -33,12 +36,18 @@ class WishlistScreen extends StatelessWidget {
                       color: Colors.grey,
                     ),
                     const SizedBox(height: 16),
-                    const Text('No saved products yet'),
+                    const TranslatedText(
+                      'shop_wishlist_empty',
+                      defaultText: 'No saved products yet',
+                    ),
                     const SizedBox(height: 16),
                     FilledButton.icon(
                       onPressed: () => context.navigator.products().go(),
                       icon: const Icon(Icons.storefront),
-                      label: const Text('Browse products'),
+                      label: const TranslatedText(
+                        'shop_browse_products',
+                        defaultText: 'Browse products',
+                      ),
                     ),
                   ],
                 ),
@@ -86,22 +95,34 @@ class _WishlistTile extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+        subtitle: TranslatedText(
+          'shop_product_price',
+          defaultText: r'${price}',
+          args: {'price': product.priceLabel},
+        ),
         onTap: () =>
             context.navigator.productDetail(productId: product.id).push(),
         trailing: Wrap(
           spacing: 4,
           children: [
             IconButton(
-              tooltip: 'Add to cart',
+              tooltip:
+                  context.tr('shop_add_to_cart', defaultText: 'Add to Cart'),
               icon: const Icon(Icons.add_shopping_cart),
               onPressed: () {
                 context.readCartViewModel().addToCart(product);
-                AppSnackbar.success(context, '${product.title} added to cart');
+                AppSnackbar.success(
+                  context,
+                  context.tr(
+                    'shop_added_to_cart',
+                    defaultText: '{name} added to cart',
+                    args: {'name': product.title},
+                  ),
+                );
               },
             ),
             IconButton(
-              tooltip: 'Remove',
+              tooltip: context.tr('shop_remove', defaultText: 'Remove'),
               icon: const Icon(Icons.delete_outline),
               onPressed: () =>
                   context.readWishlistViewModel().remove(product.id),

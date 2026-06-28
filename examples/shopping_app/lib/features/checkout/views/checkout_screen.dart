@@ -1,3 +1,4 @@
+import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart' hide Route;
 
 import '../../../route.dart';
@@ -64,7 +65,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
 
     // Show loading dialog
-    LoadingDialog.show(context: context, message: 'Processing your order...');
+    LoadingDialog.show(
+      context: context,
+      message: context.tr(
+        'shop_processing_order',
+        defaultText: 'Processing your order...',
+      ),
+    );
 
     // Process checkout
     final orderId = await checkoutVM.processCheckout(
@@ -96,7 +103,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     } else if (mounted) {
       AppSnackbar.error(
         context,
-        checkoutVM.state.errorMessage ?? 'Failed to place order',
+        checkoutVM.state.errorMessage ??
+            context.tr(
+              'shop_place_order_failed',
+              defaultText: 'Failed to place order',
+            ),
       );
     }
   }
@@ -131,7 +142,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final checkoutState = context.watchCheckoutViewModel().value;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkout')),
+      appBar: AppBar(
+        title: const TranslatedText('shop_checkout', defaultText: 'Checkout'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -139,25 +152,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Shipping Address',
+              TranslatedText(
+                'shop_shipping_address',
+                defaultText: 'Shipping Address',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Full Name',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.tr(
+                    'shop_full_name',
+                    defaultText: 'Full Name',
+                  ),
+                  border: const OutlineInputBorder(),
                 ),
                 validator: validateCheckoutShippingRequestFullNameInput,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _addressController,
-                decoration: const InputDecoration(
-                  labelText: 'Address',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.tr('shop_address', defaultText: 'Address'),
+                  border: const OutlineInputBorder(),
                 ),
                 validator: validateCheckoutShippingRequestAddressInput,
               ),
@@ -168,9 +185,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     flex: 2,
                     child: TextFormField(
                       controller: _cityController,
-                      decoration: const InputDecoration(
-                        labelText: 'City',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: context.tr('shop_city', defaultText: 'City'),
+                        border: const OutlineInputBorder(),
                       ),
                       validator: validateCheckoutShippingRequestCityInput,
                     ),
@@ -179,9 +196,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _zipController,
-                      decoration: const InputDecoration(
-                        labelText: 'ZIP',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: context.tr('shop_zip', defaultText: 'ZIP'),
+                        border: const OutlineInputBorder(),
                       ),
                       validator: validateCheckoutShippingRequestZipCodeInput,
                     ),
@@ -191,16 +208,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: context.tr('shop_phone', defaultText: 'Phone'),
+                  border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.phone,
                 validator: validateCheckoutShippingRequestPhoneInput,
               ),
               const SizedBox(height: 24),
-              Text(
-                'Order Summary',
+              TranslatedText(
+                'shop_order_summary',
+                defaultText: 'Order Summary',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
@@ -213,7 +231,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               if (checkoutState.status == CheckoutStatus.error) ...[
                 const SizedBox(height: 16),
                 Text(
-                  checkoutState.errorMessage ?? 'An error occurred',
+                  checkoutState.errorMessage ??
+                      context.tr(
+                        'shop_error_occurred',
+                        defaultText: 'An error occurred',
+                      ),
                   style: const TextStyle(color: Colors.red),
                 ),
               ],
@@ -230,7 +252,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Place Order'),
+                      : const TranslatedText(
+                          'shop_place_order',
+                          defaultText: 'Place Order',
+                        ),
                 ),
               ),
             ],
