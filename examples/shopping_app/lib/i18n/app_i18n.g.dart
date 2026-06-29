@@ -14,11 +14,33 @@
 import 'dart:async' show unawaited;
 
 import 'package:dust_flutter/i18n.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/widgets.dart';
 
 const List<String> appI18nLocales = <String>['en', 'my'];
+const List<Locale> appI18nSupportedLocales = <Locale>[
+  Locale.fromSubtags(languageCode: 'en'),
+  Locale.fromSubtags(languageCode: 'my'),
+];
+const List<LocalizationsDelegate<dynamic>> appI18nLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+  GlobalMaterialLocalizations.delegate,
+  GlobalCupertinoLocalizations.delegate,
+  GlobalWidgetsLocalizations.delegate,
+];
 const String appI18nFallbackLocale = 'en';
 const String appI18nAssetPattern = defaultI18nAssetPattern;
+
+Locale appI18nLocaleOf(String locale) {
+  switch (locale) {
+    case 'en':
+      return Locale.fromSubtags(languageCode: 'en');
+    case 'my':
+      return Locale.fromSubtags(languageCode: 'my');
+    default:
+      return Locale(locale);
+  }
+}
 
 const I18nConfig appI18nConfig = I18nConfig(
   locales: appI18nLocales,

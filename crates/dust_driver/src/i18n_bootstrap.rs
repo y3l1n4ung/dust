@@ -108,16 +108,52 @@ fn render_i18n_bootstrap(config: &I18nConfig) -> String {
         .map(|locale| dart_string_literal(locale))
         .collect::<Vec<_>>()
         .join(", ");
+    let supported_locales = config
+        .locales
+        .iter()
+        .map(|locale| format!("  {},", render_locale(locale)))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let locale_cases = config
+        .locales
+        .iter()
+        .map(|locale| {
+            format!(
+                "    case {}:\n      return {};",
+                dart_string_literal(locale),
+                render_locale(locale)
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
     format!(
         r#"{GENERATED_HEADER}
 import 'dart:async' show unawaited;
 
 import 'package:dust_flutter/i18n.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/widgets.dart';
 
 const List<String> appI18nLocales = <String>[{locales}];
+const List<Locale> appI18nSupportedLocales = <Locale>[
+{supported_locales}
+];
+const List<LocalizationsDelegate<dynamic>> appI18nLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+  GlobalMaterialLocalizations.delegate,
+  GlobalCupertinoLocalizations.delegate,
+  GlobalWidgetsLocalizations.delegate,
+];
 const String appI18nFallbackLocale = {fallback};
 const String appI18nAssetPattern = defaultI18nAssetPattern;
+
+Locale appI18nLocaleOf(String locale) {{
+  switch (locale) {{
+{locale_cases}
+    default:
+      return Locale(locale);
+  }}
+}}
 
 const I18nConfig appI18nConfig = I18nConfig(
   locales: appI18nLocales,
@@ -183,6 +219,40 @@ class _AppI18nState extends State<AppI18n> {{
 "#,
         fallback = dart_string_literal(config.fallback_locale())
     )
+}
+
+/// Renders one configured locale as a const Flutter `Locale`.
+fn render_locale(locale: &str) -> String {
+    let parts = locale.split(['_', '-']).collect::<Vec<_>>();
+    let language = parts.first().copied().unwrap_or(locale);
+    let mut script = None;
+    let mut country = None;
+    for part in parts.iter().skip(1) {
+        if script.is_none() && is_script_subtag(part) {
+            script = Some(*part);
+        } else if country.is_none() && is_region_subtag(part) {
+            country = Some(*part);
+        }
+    }
+    let mut args = vec![format!("languageCode: {}", dart_string_literal(language))];
+    if let Some(script) = script {
+        args.push(format!("scriptCode: {}", dart_string_literal(script)));
+    }
+    if let Some(country) = country {
+        args.push(format!("countryCode: {}", dart_string_literal(country)));
+    }
+    format!("Locale.fromSubtags({})", args.join(", "))
+}
+
+/// Returns whether one locale subtag is a Unicode script code.
+fn is_script_subtag(value: &str) -> bool {
+    value.len() == 4 && value.chars().all(char::is_alphabetic)
+}
+
+/// Returns whether one locale subtag is a Unicode region code.
+fn is_region_subtag(value: &str) -> bool {
+    (value.len() == 2 && value.chars().all(char::is_alphabetic))
+        || (value.len() == 3 && value.chars().all(|item| item.is_ascii_digit()))
 }
 
 /// Reads an existing generated output file.
