@@ -140,11 +140,105 @@ fn validate_workspace_route_set(routes: &[RouteSpec]) -> Result<(), Vec<Diagnost
                 )));
             }
         }
+        validate_duplicate_path_params(route, &mut diagnostics);
     }
+    validate_ambiguous_path_siblings(routes, &mut diagnostics);
     if diagnostics.is_empty() {
         Ok(())
     } else {
         Err(diagnostics)
+    }
+}
+
+/// Rejects paths that bind the same `:param` name more than once.
+fn validate_duplicate_path_params(route: &RouteSpec, diagnostics: &mut Vec<Diagnostic>) {
+    let mut seen = HashSet::new();
+    let mut reported = HashSet::new();
+    for segment in path_segments(&route.path) {
+        let Some(param) = path_param_name(segment) else {
+            continue;
+        };
+        if !seen.insert(param) && reported.insert(param) {
+            diagnostics.push(Diagnostic::error(format!(
+                "route `{}` path `{}` declares duplicate path parameter `:{param}`",
+                route.page_class, route.path
+            )));
+        }
+    }
+}
+
+/// Rejects same-length path patterns with overlapping static/dynamic segments.
+fn validate_ambiguous_path_siblings(routes: &[RouteSpec], diagnostics: &mut Vec<Diagnostic>) {
+    for (index, route) in routes.iter().enumerate() {
+        let route_segments = path_segments(&route.path).collect::<Vec<_>>();
+        for sibling in routes.iter().skip(index + 1) {
+            let sibling_segments = path_segments(&sibling.path).collect::<Vec<_>>();
+            let Some(parent) = ambiguous_parent(&route_segments, &sibling_segments) else {
+                continue;
+            };
+            diagnostics.push(ambiguous_sibling_diagnostic(
+                &sibling.path,
+                &route.path,
+                &parent,
+            ));
+        }
+    }
+}
+
+/// Returns the shared parent path when sibling patterns can match the same URL.
+fn ambiguous_parent(left: &[&str], right: &[&str]) -> Option<String> {
+    if left.len() != right.len() {
+        return None;
+    }
+
+    let mut first_static_dynamic_parent = None;
+    for (index, (left_segment, right_segment)) in left.iter().zip(right).enumerate() {
+        if left_segment == right_segment {
+            continue;
+        }
+        let left_dynamic = path_param_name(left_segment).is_some();
+        let right_dynamic = path_param_name(right_segment).is_some();
+        if !left_dynamic && !right_dynamic {
+            return None;
+        }
+        if left_dynamic != right_dynamic {
+            first_static_dynamic_parent.get_or_insert_with(|| {
+                display_parent_path(
+                    &left[..index]
+                        .iter()
+                        .map(|segment| (*segment).to_owned())
+                        .collect::<Vec<_>>(),
+                )
+            });
+        }
+    }
+
+    first_static_dynamic_parent
+}
+
+/// Builds a diagnostic for ambiguous static and dynamic sibling segments.
+fn ambiguous_sibling_diagnostic(route_path: &str, sibling_path: &str, parent: &str) -> Diagnostic {
+    Diagnostic::error(format!(
+        "route path `{route_path}` conflicts with sibling `{sibling_path}`; static and dynamic segments under `{parent}` are ambiguous"
+    ))
+}
+
+/// Iterates over non-empty slash-delimited path segments.
+fn path_segments(path: &str) -> impl Iterator<Item = &str> {
+    path.split('/').filter(|segment| !segment.is_empty())
+}
+
+/// Returns the parameter name for a dynamic path segment.
+fn path_param_name(segment: &str) -> Option<&str> {
+    segment.strip_prefix(':').filter(|name| !name.is_empty())
+}
+
+/// Renders parent path segments with a leading slash.
+fn display_parent_path(segments: &[String]) -> String {
+    if segments.is_empty() {
+        "/".to_owned()
+    } else {
+        format!("/{}", segments.join("/"))
     }
 }
 
