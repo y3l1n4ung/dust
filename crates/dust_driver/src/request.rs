@@ -53,6 +53,13 @@ pub struct I18nScanRequest {
     pub cwd: PathBuf,
 }
 
+/// One i18n build request.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct I18nBuildRequest {
+    /// The working directory used to discover the Dart workspace.
+    pub cwd: PathBuf,
+}
+
 /// One clean request.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CleanRequest {
@@ -90,6 +97,8 @@ pub enum CommandRequest {
     Check(CheckRequest),
     /// Report workspace and plugin readiness.
     Doctor(DoctorRequest),
+    /// Reconcile scanned i18n keys into ARB assets.
+    I18nBuild(I18nBuildRequest),
     /// Scan static i18n API calls.
     I18nScan(I18nScanRequest),
     /// Run initial build plus repeated rebuild polling.

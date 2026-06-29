@@ -63,6 +63,18 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
                 lines.push(format!("config  {}", doctor.package_config_path.display()));
             }
         }
+        CliCommand::I18nBuild => {
+            if let Some(build) = &result.i18n_build {
+                lines.push(format!(
+                    "i18n build  files: {}  changed: {}  keys: {}  added: {}  time: {}ms",
+                    build.arb_files,
+                    build.changed_files,
+                    build.keys,
+                    build.added_messages,
+                    result.elapsed_ms
+                ));
+            }
+        }
         CliCommand::I18nScan => {
             if let Some(scan) = &result.i18n_scan {
                 lines.push(format!(

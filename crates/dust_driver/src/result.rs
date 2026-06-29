@@ -122,6 +122,21 @@ pub struct I18nScanReport {
     pub entries: Vec<I18nScanEntry>,
 }
 
+/// Workspace i18n ARB build report.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct I18nBuildReport {
+    /// Number of Dart source files scanned.
+    pub scanned_files: usize,
+    /// Number of unique static translation keys found.
+    pub keys: usize,
+    /// Number of ARB files inspected for configured locales and namespaces.
+    pub arb_files: usize,
+    /// Number of ARB files changed on disk.
+    pub changed_files: usize,
+    /// Number of message entries added across all ARB files.
+    pub added_messages: usize,
+}
+
 /// One cache summary for a command run.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CacheReport {
@@ -185,6 +200,8 @@ pub struct CommandResult {
     pub checked_libraries: Vec<CheckedLibrary>,
     /// An optional i18n scan report.
     pub i18n_scan: Option<I18nScanReport>,
+    /// An optional i18n build report.
+    pub i18n_build: Option<I18nBuildReport>,
     /// An optional doctor report.
     pub doctor: Option<DoctorReport>,
     /// An optional clean report.
