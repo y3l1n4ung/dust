@@ -63,8 +63,8 @@ RouterRuntimeConfig<_TestRoute> _runtimeConfig({
     routeLocation: (route) => route.location,
     requiresAuth: (_) => false,
     resolveGuards: resolveGuards ?? (_) => const [],
-    buildPage: (route) => MaterialPage<void>(
-      key: ValueKey(route.location),
+    buildPage: (route, key) => MaterialPage<void>(
+      key: key,
       child: const SizedBox(),
     ),
   );
