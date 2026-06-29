@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('exports routing annotations', () {
-    const route = Route('/', name: 'home');
-    const router = Router(initial: '/', notFound: '/404');
+    const route = AppRoute('/', name: 'home');
+    const router = AppRouter(initial: '/', notFound: '/404');
 
     expect(route.path, '/');
     expect(route.name, 'home');

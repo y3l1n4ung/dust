@@ -1,5 +1,5 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 import '../models/auth_state.dart';
@@ -9,7 +9,7 @@ import 'register_actions.dart';
 import 'register_auth_error.dart';
 import 'register_header.dart';
 
-@Route('/register', name: 'register', guards: [])
+@AppRoute('/register', name: 'register', guards: [])
 class RegisterScreen extends StatefulWidget {
   final String? redirectPath;
 

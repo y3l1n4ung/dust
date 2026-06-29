@@ -3,8 +3,8 @@
 //
 // ignore_for_file: unused_import, unnecessary_import
 
-import 'package:flutter/material.dart' hide Route;
-import 'package:flutter/cupertino.dart' hide Route;
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
@@ -62,9 +62,9 @@ import 'package:shopping_app/shared/widgets/dialogs/loading_dialog.dart';
 import 'package:shopping_app/shared/widgets/loaders/product_skeleton.dart';
 import 'package:shopping_app/shared/widgets/snackbars/app_snackbar.dart';
 
-abstract class $AppRouter extends RouterBase<AppRoutePath> {
+abstract class $ShoppingRouter extends RouterBase<AppRoutePath> {
   @override
-  Listenable? get refreshListenable => (this as AppRouter).auth;
+  Listenable? get refreshListenable => (this as ShoppingRouter).auth;
   RouterConfig<AppRoutePath> get config {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
@@ -421,7 +421,7 @@ bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
 
 List<Object> routeGuards(
   AppRoutePath route,
-  $AppRouter router,
+  $ShoppingRouter router,
 ) {
   return switch (route) {
     _ => const [],

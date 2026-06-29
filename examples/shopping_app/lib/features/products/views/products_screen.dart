@@ -1,5 +1,5 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../core/i18n/shop_i18n_keys.dart';
 import '../../../route.dart';
@@ -17,7 +17,7 @@ import '../models/product.dart';
 import '../models/products_state.dart';
 import '../view_models/products_view_model.dart';
 
-@Route(
+@AppRoute(
   '/',
   name: 'products',
   guards: [],

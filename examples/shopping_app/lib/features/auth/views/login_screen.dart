@@ -1,12 +1,12 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 
 import '../models/auth_state.dart';
 import '../view_models/auth_view_model.dart';
 
-@Route('/login', name: 'login', guards: [])
+@AppRoute('/login', name: 'login', guards: [])
 class LoginScreen extends StatefulWidget {
   final String? redirectPath;
 

@@ -42,7 +42,7 @@ pub(crate) fn route_page_class(
         }],
         methods: Vec::new(),
         traits: Vec::new(),
-        configs: vec![config("Route", Some(route_args))],
+        configs: vec![config("AppRoute", Some(route_args))],
         serde: None,
     }
 }
@@ -50,16 +50,16 @@ pub(crate) fn route_page_class(
 pub(crate) fn router_class(args: &str) -> ClassIr {
     ClassIr {
         kind: ClassKindIr::Class,
-        name: "AppRouter".to_owned(),
+        name: "TestRouter".to_owned(),
         is_abstract: false,
         is_interface: false,
-        superclass_name: Some("$AppRouter".to_owned()),
+        superclass_name: Some("$TestRouter".to_owned()),
         span: span(10, 90),
         fields: Vec::new(),
         constructors: Vec::new(),
         methods: Vec::new(),
         traits: Vec::new(),
-        configs: vec![config("Router", Some(args))],
+        configs: vec![config("AppRouter", Some(args))],
         serde: None,
     }
 }
@@ -88,7 +88,7 @@ pub(crate) fn library_with_classes(mut classes: Vec<ClassIr>) -> LibraryIr {
         class
             .configs
             .iter()
-            .any(|config| config.symbol.0.ends_with("::Router"))
+            .any(|config| config.symbol.0.ends_with("::AppRouter"))
     }) && !classes.iter().any(|class| class.name == "NotFoundPage")
     {
         classes.push(route_page_class(

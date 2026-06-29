@@ -24,9 +24,9 @@ You focus on product. We focus on performance.
 ```dart
 import 'package:dust_flutter/route.dart';
 
-@Router(initial: '/', notFound: '/404')
-final class AppRouter extends $AppRouter {
-  AppRouter({required this.auth});
+@AppRouter(initial: '/', notFound: '/404')
+final class RootRouter extends $RootRouter {
+  RootRouter({required this.auth});
 
   final AuthViewModel auth;
 

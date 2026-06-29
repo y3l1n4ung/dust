@@ -1,5 +1,5 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 import '../models/order.dart';
@@ -8,7 +8,7 @@ import '../models/order_tracking_state.dart';
 import '../view_models/order_tracking_view_model.dart';
 import '../view_models/orders_view_model.dart';
 
-@Route('/orders/:orderId', name: 'orderDetail')
+@AppRoute('/orders/:orderId', name: 'orderDetail')
 class OrderDetailScreen extends StatefulWidget {
   const OrderDetailScreen({required this.orderId, super.key});
 

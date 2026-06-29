@@ -28,7 +28,7 @@ fn fixture_dust_import(contents: &str) -> Option<String> {
     let mut imports = Vec::new();
     let has = |name: &str| has_annotation(contents, name);
 
-    if has("Route") || has("Router") {
+    if has("AppRoute") || has("AppRouter") {
         imports.push("import 'package:dust_flutter/route.dart';\n");
     }
     if has("Derive")
