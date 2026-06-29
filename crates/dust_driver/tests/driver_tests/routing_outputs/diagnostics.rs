@@ -96,6 +96,71 @@ fn build_reports_route_shell_or_guard_without_visible_import() {
     );
 }
 
+#[test]
+fn build_reports_duplicate_route_path_params() {
+    let workspace = make_workspace();
+    write_routing_workspace(workspace.path(), "dashboard");
+    write_file(
+        &workspace.path().join("lib/pages/post_page.dart"),
+        "@Route('/users/:id/posts/:id', name: 'post')\n\
+         final class PostPage {\n\
+           const PostPage({required this.id});\n\
+           final int id;\n\
+         }\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: true,
+        jobs: None,
+        db: Default::default(),
+    });
+
+    assert!(result.has_errors());
+    assert_eq!(
+        diagnostic_messages(&result.diagnostics),
+        vec![
+            "route `PostPage` path `/users/:id/posts/:id` declares duplicate path parameter `:id`"
+        ]
+    );
+}
+
+#[test]
+fn build_reports_static_and_dynamic_route_siblings() {
+    let workspace = make_workspace();
+    write_routing_workspace(workspace.path(), "dashboard");
+    write_file(
+        &workspace.path().join("lib/pages/user_page.dart"),
+        "@Route('/users/:id', name: 'user')\n\
+         final class UserPage {\n\
+           const UserPage({required this.id});\n\
+           final int id;\n\
+         }\n",
+    );
+    write_file(
+        &workspace.path().join("lib/pages/user_settings_page.dart"),
+        "@Route('/users/settings', name: 'userSettings')\n\
+         final class UserSettingsPage {\n\
+           const UserSettingsPage();\n\
+         }\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: true,
+        jobs: None,
+        db: Default::default(),
+    });
+
+    assert!(result.has_errors());
+    assert_eq!(
+        diagnostic_messages(&result.diagnostics),
+        vec![
+            "route path `/users/settings` conflicts with sibling `/users/:id`; static and dynamic segments under `/users` are ambiguous"
+        ]
+    );
+}
+
 fn diagnostic_messages(diagnostics: &[dust_diagnostics::Diagnostic]) -> Vec<&str> {
     diagnostics
         .iter()
