@@ -154,8 +154,8 @@ const DB_MODE_PASS_THROUGH_CONFIGS: &[&str] = &[
     "dust_dart::FormUrlEncoded",
     "dust_dart::MultiPart",
     "dust_dart::HttpParse",
-    "dust_flutter::Router",
-    "dust_flutter::Route",
+    "dust_flutter::AppRouter",
+    "dust_flutter::AppRoute",
     "dust_flutter::GeneratedRoute",
     "dust_flutter::ViewModel",
 ];

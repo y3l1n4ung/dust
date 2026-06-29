@@ -1,11 +1,11 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 import '../models/demo_cart_state.dart';
 import '../view_models/demo_cart_api_view_model.dart';
 
-@Route('/demo-carts', name: 'demoCarts', guards: [])
+@AppRoute('/demo-carts', name: 'demoCarts', guards: [])
 class DemoCartsScreen extends StatelessWidget {
   const DemoCartsScreen({super.key});
 

@@ -12,8 +12,8 @@ fn collects_route_and_router_workspace_facts() {
     let library = parsed_library_with_annotations(
         "DashboardPage",
         vec![
-            parsed_annotation("Route", "('/', name: 'dashboard')"),
-            parsed_annotation("Router", "(initial: '/', notFound: '/404')"),
+            parsed_annotation("AppRoute", "('/', name: 'dashboard')"),
+            parsed_annotation("AppRouter", "(initial: '/', notFound: '/404')"),
         ],
     );
     let mut builder = WorkspaceAnalysisBuilder::default();
@@ -73,8 +73,8 @@ fn collects_prefixed_route_and_router_workspace_facts() {
     let library = parsed_library_with_annotations(
         "DashboardPage",
         vec![
-            parsed_prefixed_annotation("f", "Route", "('/', name: 'dashboard')"),
-            parsed_prefixed_annotation("f", "Router", "(initial: '/', notFound: '/404')"),
+            parsed_prefixed_annotation("f", "AppRoute", "('/', name: 'dashboard')"),
+            parsed_prefixed_annotation("f", "AppRouter", "(initial: '/', notFound: '/404')"),
         ],
     );
     let mut builder = WorkspaceAnalysisBuilder::default();

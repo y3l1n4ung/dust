@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../route.dart';
 
-@Route('/404', name: 'notFound', guards: [])
+@AppRoute('/404', name: 'notFound', guards: [])
 class BenchmarkNotFoundPage extends StatelessWidget {
   const BenchmarkNotFoundPage({this.path = '', super.key});
 

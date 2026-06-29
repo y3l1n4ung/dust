@@ -1,5 +1,5 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 
@@ -8,7 +8,7 @@ import '../../../shared/widgets/snackbars/app_snackbar.dart';
 import '../models/cart_state.dart';
 import '../view_models/cart_view_model.dart';
 
-@Route(
+@AppRoute(
   '/cart',
   name: 'cart',
   guards: [],

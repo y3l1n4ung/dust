@@ -1,7 +1,7 @@
 /// Class-level annotation that marks the application router root.
-pub(crate) const ROUTER: &str = "Router";
+pub(crate) const ROUTER: &str = "AppRouter";
 /// Class-level annotation that marks a page as routable.
-pub(crate) const ROUTE: &str = "Route";
+pub(crate) const ROUTE: &str = "AppRoute";
 /// Generated route marker used by route codegen.
 pub(crate) const GENERATED_ROUTE: &str = "GeneratedRoute";
 
@@ -14,8 +14,8 @@ pub(crate) const GUARDS_ANALYSIS_KEY: &str = "dust_route.guards.v1";
 
 /// Fully qualified Dust symbols claimed by the route plugin.
 pub(crate) const CLAIMED_CONFIG_SYMBOLS: &[&str] = &[
-    "dust_flutter::Router",
-    "dust_flutter::Route",
+    "dust_flutter::AppRouter",
+    "dust_flutter::AppRoute",
     "dust_flutter::GeneratedRoute",
 ];
 

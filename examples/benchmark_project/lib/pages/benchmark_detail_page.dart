@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../route.dart';
 import 'benchmark_shell.dart';
 
-@Route('/models/:id', name: 'modelDetail', shell: BenchmarkShell)
+@AppRoute('/models/:id', name: 'modelDetail', shell: BenchmarkShell)
 class BenchmarkDetailPage extends StatelessWidget {
   const BenchmarkDetailPage({
     required this.id,

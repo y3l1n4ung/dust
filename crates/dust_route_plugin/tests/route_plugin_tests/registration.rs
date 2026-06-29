@@ -9,13 +9,13 @@ fn registers_route_annotation_symbols() {
     assert_eq!(
         plugin.claimed_configs(),
         vec![
-            "dust_flutter::Router",
-            "dust_flutter::Route",
+            "dust_flutter::AppRouter",
+            "dust_flutter::AppRoute",
             "dust_flutter::GeneratedRoute"
         ]
     );
     assert_eq!(
         plugin.supported_annotations(),
-        vec!["Router", "Route", "GeneratedRoute"]
+        vec!["AppRouter", "AppRoute", "GeneratedRoute"]
     );
 }

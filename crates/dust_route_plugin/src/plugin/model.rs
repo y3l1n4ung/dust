@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 /// One route page fact collected during workspace analysis.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct RouteFact {
-    /// Page class annotated with `@Route`.
+    /// Page class annotated with `@AppRoute`.
     pub(crate) class_name: String,
     /// Absolute route path from the annotation.
     pub(crate) path: String,
@@ -40,7 +40,7 @@ pub(crate) struct RouteParamFact {
 /// One router root fact collected during workspace analysis.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct RouterFact {
-    /// Router class annotated with `@Router`.
+    /// Router class annotated with `@AppRouter`.
     pub(crate) class_name: String,
     /// Optional initial route path.
     pub(crate) initial: Option<String>,
