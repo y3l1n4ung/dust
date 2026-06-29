@@ -75,6 +75,18 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> Str
                 ));
             }
         }
+        CliCommand::I18nCheck => {
+            if let Some(check) = &result.i18n_check {
+                lines.push(format!(
+                    "i18n check  files: {}  keys: {}  checked: {}  stale: {}  time: {}ms",
+                    check.arb_files,
+                    check.keys,
+                    check.checked_messages,
+                    check.stale_messages,
+                    result.elapsed_ms
+                ));
+            }
+        }
         CliCommand::I18nScan => {
             if let Some(scan) = &result.i18n_scan {
                 lines.push(format!(

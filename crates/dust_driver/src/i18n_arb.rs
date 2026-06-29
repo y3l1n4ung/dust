@@ -1,5 +1,4 @@
 use std::{
-    collections::BTreeMap,
     fs, io,
     path::{Path, PathBuf},
 };
@@ -8,12 +7,15 @@ use dust_diagnostics::Diagnostic;
 use dust_workspace::I18nConfig;
 use serde_json::{Map, Value};
 
+/// ARB message metadata enrichment.
+mod metadata;
 /// Deterministic ARB JSON rendering.
 mod render;
 /// Atomic file writing helpers.
 mod write;
 
-use self::{render::render_arb, write::write_atomic};
+use self::{metadata::ensure_metadata, render::render_arb, write::write_atomic};
+use crate::i18n_keys::{I18nPlannedEntry, group_i18n_entries, i18n_arb_path, plan_i18n_entries};
 use crate::result::{I18nBuildReport, I18nScanEntry};
 
 /// Reconciles scanned i18n entries into configured ARB files.
@@ -23,8 +25,8 @@ pub(crate) fn write_i18n_arb_files(
     scanned_files: usize,
     entries: &[I18nScanEntry],
 ) -> Result<I18nBuildReport, Diagnostic> {
-    let planned = plan_entries(entries)?;
-    let grouped = group_entries(&planned);
+    let planned = plan_i18n_entries(entries)?;
+    let grouped = group_i18n_entries(&planned);
     let mut report = I18nBuildReport {
         scanned_files,
         keys: planned.len(),
@@ -44,21 +46,6 @@ pub(crate) fn write_i18n_arb_files(
     Ok(report)
 }
 
-/// One validated scanned key ready for ARB reconciliation.
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct PlannedEntry {
-    /// Full Dart translation key.
-    key: String,
-    /// ARB namespace and asset file stem.
-    namespace: String,
-    /// Message key inside the namespace ARB file.
-    local_key: String,
-    /// Optional fallback text from source.
-    default_text: Option<String>,
-    /// Placeholder names from source.
-    args: Vec<String>,
-}
-
 /// One ARB file update prepared before any writes happen.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct ArbUpdate {
@@ -68,70 +55,21 @@ struct ArbUpdate {
     source: String,
 }
 
-/// Validates and converts scanned entries into writer entries.
-fn plan_entries(entries: &[I18nScanEntry]) -> Result<Vec<PlannedEntry>, Diagnostic> {
-    let mut planned = Vec::with_capacity(entries.len());
-    for entry in entries {
-        planned.push(plan_entry(entry)?);
-    }
-    Ok(planned)
-}
-
-/// Validates one scanned entry.
-fn plan_entry(entry: &I18nScanEntry) -> Result<PlannedEntry, Diagnostic> {
-    if entry.namespace.is_empty() {
-        return Err(invalid_key(&entry.key, "missing namespace prefix"));
-    }
-    let prefix = format!("{}_", entry.namespace);
-    if !entry.key.starts_with(&prefix) {
-        return Err(invalid_key(
-            &entry.key,
-            "use an underscore namespace prefix such as `shop_title`",
-        ));
-    }
-    let local_key = entry.key[prefix.len()..].to_owned();
-    if !is_arb_identifier(&entry.namespace) || !is_arb_identifier(&local_key) {
-        return Err(invalid_key(
-            &entry.key,
-            "keys must start with a letter and contain only letters, numbers, or underscores",
-        ));
-    }
-
-    Ok(PlannedEntry {
-        key: entry.key.clone(),
-        namespace: entry.namespace.clone(),
-        local_key,
-        default_text: entry.default_text.clone(),
-        args: entry.args.clone(),
-    })
-}
-
-/// Groups entries by namespace in deterministic order.
-fn group_entries(entries: &[PlannedEntry]) -> BTreeMap<String, Vec<PlannedEntry>> {
-    let mut grouped = BTreeMap::<String, Vec<PlannedEntry>>::new();
-    for entry in entries {
-        grouped
-            .entry(entry.namespace.clone())
-            .or_default()
-            .push(entry.clone());
-    }
-    grouped
-}
-
 /// Builds all file updates before writing any file.
 fn plan_updates(
     package_root: &Path,
     config: &I18nConfig,
-    grouped: &BTreeMap<String, Vec<PlannedEntry>>,
+    grouped: &std::collections::BTreeMap<String, Vec<I18nPlannedEntry>>,
     report: &mut I18nBuildReport,
 ) -> Result<Vec<ArbUpdate>, Diagnostic> {
     let mut updates = Vec::new();
     for (namespace, entries) in grouped {
         for locale in &config.locales {
             report.arb_files += 1;
-            let path = arb_path(package_root, locale, namespace);
+            let path = i18n_arb_path(package_root, locale, namespace);
             if let Some(update) = plan_file_update(
                 &path,
+                namespace,
                 locale,
                 locale == config.fallback_locale(),
                 entries,
@@ -147,14 +85,16 @@ fn plan_updates(
 /// Plans one ARB file update.
 fn plan_file_update(
     path: &Path,
+    namespace: &str,
     locale: &str,
     is_fallback: bool,
-    entries: &[PlannedEntry],
+    entries: &[I18nPlannedEntry],
     report: &mut I18nBuildReport,
 ) -> Result<Option<ArbUpdate>, Diagnostic> {
     let previous = read_optional(path)?;
     let mut arb = parse_arb(path, previous.as_deref())?;
     let mut changed = ensure_locale(&mut arb, locale);
+    changed |= ensure_context(&mut arb, namespace);
 
     for entry in entries {
         let added = ensure_message(&mut arb, entry, is_fallback, path)?;
@@ -162,7 +102,7 @@ fn plan_file_update(
         if added {
             report.added_messages += 1;
         }
-        changed |= ensure_metadata(&mut arb, entry, added);
+        changed |= ensure_metadata(&mut arb, entry);
     }
 
     if !changed {
@@ -214,10 +154,22 @@ fn ensure_locale(arb: &mut Map<String, Value>, locale: &str) -> bool {
     true
 }
 
+/// Ensures a deterministic namespace-level context exists.
+fn ensure_context(arb: &mut Map<String, Value>, namespace: &str) -> bool {
+    if arb.contains_key("@@context") {
+        return false;
+    }
+    arb.insert(
+        "@@context".to_owned(),
+        Value::String(format!("Translations for `{namespace}` namespace.")),
+    );
+    true
+}
+
 /// Ensures one message entry exists.
 fn ensure_message(
     arb: &mut Map<String, Value>,
-    entry: &PlannedEntry,
+    entry: &I18nPlannedEntry,
     is_fallback: bool,
     path: &Path,
 ) -> Result<bool, Diagnostic> {
@@ -242,51 +194,4 @@ fn ensure_message(
     };
     arb.insert(entry.local_key.clone(), Value::String(value));
     Ok(true)
-}
-
-/// Ensures metadata exists for new keys and placeholder-bearing existing keys.
-fn ensure_metadata(arb: &mut Map<String, Value>, entry: &PlannedEntry, added: bool) -> bool {
-    let metadata_key = format!("@{}", entry.local_key);
-    if arb.contains_key(&metadata_key) || (!added && entry.args.is_empty()) {
-        return false;
-    }
-    arb.insert(metadata_key, metadata_value(&entry.args));
-    true
-}
-
-/// Builds ARB metadata for one message.
-fn metadata_value(args: &[String]) -> Value {
-    if args.is_empty() {
-        return Value::Object(Map::new());
-    }
-
-    let mut placeholders = Map::new();
-    for arg in args {
-        placeholders.insert(arg.clone(), Value::Object(Map::new()));
-    }
-    let mut metadata = Map::new();
-    metadata.insert("placeholders".to_owned(), Value::Object(placeholders));
-    Value::Object(metadata)
-}
-
-/// Returns the default ARB path for one locale and namespace.
-fn arb_path(package_root: &Path, locale: &str, namespace: &str) -> PathBuf {
-    package_root
-        .join("assets/i18n")
-        .join(locale)
-        .join(format!("{namespace}.arb"))
-}
-
-/// Returns whether text is an ARB-safe identifier.
-fn is_arb_identifier(value: &str) -> bool {
-    let mut chars = value.chars();
-    let Some(first) = chars.next() else {
-        return false;
-    };
-    first.is_ascii_alphabetic() && chars.all(|ch| ch.is_ascii_alphanumeric() || ch == '_')
-}
-
-/// Builds an invalid i18n key diagnostic.
-fn invalid_key(key: &str, reason: &str) -> Diagnostic {
-    Diagnostic::error(format!("invalid i18n key `{key}`: {reason}"))
 }

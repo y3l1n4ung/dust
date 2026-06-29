@@ -21,6 +21,8 @@ pub enum CliCommand {
     Doctor,
     /// Reconcile scanned i18n keys into ARB assets.
     I18nBuild,
+    /// Validate ARB assets against static i18n keys.
+    I18nCheck,
     /// Scan static i18n API calls.
     I18nScan,
     /// Run initial build and then watch for changes.
@@ -119,6 +121,8 @@ struct I18nCommandOptions {
 enum I18nCommand {
     /// Reconcile static translation keys into ARB files.
     Build(RootOptions),
+    /// Validate ARB files against static translation keys.
+    Check(RootOptions),
     /// Scan static translation API calls.
     Scan(RootOptions),
 }
@@ -216,6 +220,7 @@ impl From<I18nCommandOptions> for ParsedCli {
     fn from(value: I18nCommandOptions) -> Self {
         match value.command {
             I18nCommand::Build(options) => ParsedCli::new(CliCommand::I18nBuild, options),
+            I18nCommand::Check(options) => ParsedCli::new(CliCommand::I18nCheck, options),
             I18nCommand::Scan(options) => ParsedCli::new(CliCommand::I18nScan, options),
         }
     }

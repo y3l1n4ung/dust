@@ -39,7 +39,62 @@ void build(count) {
     );
     assert_eq!(
         std::fs::read_to_string(workspace.path().join("assets/i18n/en/shop.arb")).unwrap(),
-        "{\n  \"@@locale\": \"en\",\n  \"item_count\": \"{count} items\",\n  \"@item_count\": {\n    \"placeholders\": {\n      \"count\": {}\n    }\n  }\n}\n"
+        "{\n  \"@@locale\": \"en\",\n  \"@@context\": \"Translations for `shop` namespace.\",\n  \"item_count\": \"{count} items\",\n  \"@item_count\": {\n    \"description\": \"Translation for `shop_item_count`.\",\n    \"placeholders\": {\n      \"count\": {\n        \"example\": \"1\"\n      }\n    }\n  }\n}\n"
+    );
+}
+
+#[test]
+fn cli_i18n_check_reports_clean_arb_files() {
+    let workspace = make_workspace();
+    write_file(
+        &workspace.path().join("dust.yaml"),
+        "i18n:\n  locales: [en, my]\n",
+    );
+    write_file(
+        &workspace.path().join("lib/home.dart"),
+        r#"
+import 'package:dust_flutter/i18n.dart';
+
+void build() {
+  const TranslatedText('shop_title', defaultText: 'Shop');
+}
+"#,
+    );
+    write_file(
+        &workspace.path().join("assets/i18n/en/shop.arb"),
+        r#"{
+  "@@locale": "en",
+  "title": "Shop",
+  "@title": {
+    "description": "Translation for `shop_title`."
+  }
+}
+"#,
+    );
+    write_file(
+        &workspace.path().join("assets/i18n/my/shop.arb"),
+        r#"{
+  "@@locale": "my",
+  "title": "Localized Shop",
+  "@title": {
+    "description": "Translation for `shop_title`."
+  }
+}
+"#,
+    );
+
+    let run = run_cli([
+        "i18n",
+        "check",
+        "--root",
+        workspace.path().to_str().unwrap(),
+    ]);
+
+    assert_eq!(run.exit_code, 0, "{}", run.stderr);
+    assert!(run.stderr.is_empty());
+    assert!(
+        run.stdout
+            .contains("i18n check  files: 2  keys: 1  checked: 2  stale: 0")
     );
 }
 

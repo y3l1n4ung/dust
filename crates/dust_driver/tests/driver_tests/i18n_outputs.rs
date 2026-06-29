@@ -144,14 +144,20 @@ void build(count) {
         fs::read_to_string(workspace.path().join("assets/i18n/en/shop.arb")).unwrap(),
         r#"{
   "@@locale": "en",
+  "@@context": "Translations for `shop` namespace.",
   "item_count": "{count} items",
   "@item_count": {
+    "description": "Translation for `shop_item_count`.",
     "placeholders": {
-      "count": {}
+      "count": {
+        "example": "1"
+      }
     }
   },
   "title": "Shop",
-  "@title": {}
+  "@title": {
+    "description": "Translation for `shop_title`."
+  }
 }
 "#
     );
@@ -159,14 +165,20 @@ void build(count) {
         fs::read_to_string(workspace.path().join("assets/i18n/my/shop.arb")).unwrap(),
         r#"{
   "@@locale": "my",
+  "@@context": "Translations for `shop` namespace.",
   "item_count": "",
   "@item_count": {
+    "description": "Translation for `shop_item_count`.",
     "placeholders": {
-      "count": {}
+      "count": {
+        "example": "1"
+      }
     }
   },
   "title": "",
-  "@title": {}
+  "@title": {
+    "description": "Translation for `shop_title`."
+  }
 }
 "#
     );
@@ -214,8 +226,11 @@ void build() {
         fs::read_to_string(workspace.path().join("assets/i18n/en/shop.arb")).unwrap(),
         r#"{
   "@@locale": "en",
+  "@@context": "Translations for `shop` namespace.",
   "subtitle": "Daily deals",
-  "@subtitle": {},
+  "@subtitle": {
+    "description": "Translation for `shop_subtitle`."
+  },
   "title": "Store",
   "@title": {
     "description": "Existing title metadata"

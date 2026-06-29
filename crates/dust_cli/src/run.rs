@@ -2,8 +2,8 @@ use std::{env, path::PathBuf};
 
 use dust_driver::{
     BuildRequest, CheckRequest, CleanRequest, CommandRequest, CommandResult, DbRequestOptions,
-    DoctorRequest, I18nBuildRequest, I18nScanRequest, WatchRequest, run, run_build_with_progress,
-    run_watch_with_progress,
+    DoctorRequest, I18nBuildRequest, I18nCheckRequest, I18nScanRequest, WatchRequest, run,
+    run_build_with_progress, run_watch_with_progress,
 };
 
 use crate::{
@@ -93,6 +93,7 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
         })),
         CliCommand::Doctor => run(CommandRequest::Doctor(DoctorRequest { cwd })),
         CliCommand::I18nBuild => run(CommandRequest::I18nBuild(I18nBuildRequest { cwd })),
+        CliCommand::I18nCheck => run(CommandRequest::I18nCheck(I18nCheckRequest { cwd })),
         CliCommand::I18nScan => run(CommandRequest::I18nScan(I18nScanRequest { cwd })),
         CliCommand::Watch => {
             let request = WatchRequest {

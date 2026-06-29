@@ -1,29 +1,71 @@
 {
   "@@locale": "en",
+  "@@context": "Translations for `shop` namespace.",
   "add_another": "Add Another",
+  "@add_another": {
+    "description": "Translation for `shop_add_another`."
+  },
   "add_to_cart": "Add to Cart",
+  "@add_to_cart": {
+    "description": "Translation for `shop_add_to_cart`."
+  },
   "added_to_cart": "{name} added to cart",
   "@added_to_cart": {
+    "description": "Translation for `shop_added_to_cart`.",
     "placeholders": {
-      "name": {}
+      "name": {
+        "example": "Alice"
+      }
     }
   },
   "address": "Address",
+  "@address": {
+    "description": "Translation for `shop_address`."
+  },
   "apply": "Apply",
+  "@apply": {
+    "description": "Translation for `shop_apply`."
+  },
   "apply_filters": "Apply Filters",
+  "@apply_filters": {
+    "description": "Translation for `shop_apply_filters`."
+  },
   "back_to_shop": "Back to shop",
+  "@back_to_shop": {
+    "description": "Translation for `shop_back_to_shop`."
+  },
   "browse_products": "Browse products",
+  "@browse_products": {
+    "description": "Translation for `shop_browse_products`."
+  },
   "cancel": "Cancel",
+  "@cancel": {
+    "description": "Translation for `shop_cancel`."
+  },
   "cart": "Cart",
+  "@cart": {
+    "description": "Translation for `shop_cart`."
+  },
   "cart_empty": "Your cart is empty",
+  "@cart_empty": {
+    "description": "Translation for `shop_cart_empty`."
+  },
   "cart_line_item": "{name} x{quantity}",
   "@cart_line_item": {
+    "description": "Translation for `shop_cart_line_item`.",
     "placeholders": {
-      "name": {},
-      "quantity": {}
+      "name": {
+        "example": "Alice"
+      },
+      "quantity": {
+        "example": "1"
+      }
     }
   },
   "category": "Category",
+  "@category": {
+    "description": "Translation for `shop_category`."
+  },
   "category_all": "All",
   "category_bags": "Bags",
   "category_clothing": "Clothing",
@@ -32,178 +74,451 @@
   "category_mens_clothing": "Men's clothing",
   "category_womens_clothing": "Women's clothing",
   "chat_failed": "Chat failed",
+  "@chat_failed": {
+    "description": "Translation for `shop_chat_failed`."
+  },
   "chat_hint": "Ask about coupons, orders, API...",
+  "@chat_hint": {
+    "description": "Translation for `shop_chat_hint`."
+  },
   "checkout": "Checkout",
+  "@checkout": {
+    "description": "Translation for `shop_checkout`."
+  },
   "city": "City",
+  "@city": {
+    "description": "Translation for `shop_city`."
+  },
   "clear_all": "Clear All",
+  "@clear_all": {
+    "description": "Translation for `shop_clear_all`."
+  },
   "clear_cart": "Clear Cart",
+  "@clear_cart": {
+    "description": "Translation for `shop_clear_cart`."
+  },
   "clear_cart_message": "Are you sure you want to remove all {count} items from your cart?",
   "@clear_cart_message": {
+    "description": "Translation for `shop_clear_cart_message`.",
     "placeholders": {
-      "count": {}
+      "count": {
+        "example": "1"
+      }
     }
   },
   "confirm_password": "Confirm Password",
+  "@confirm_password": {
+    "description": "Translation for `shop_confirm_password`."
+  },
   "continue_as_guest": "Continue as Guest",
+  "@continue_as_guest": {
+    "description": "Translation for `shop_continue_as_guest`."
+  },
   "continue_shopping": "Continue Shopping",
+  "@continue_shopping": {
+    "description": "Translation for `shop_continue_shopping`."
+  },
   "coupon_applied": "Applied {code}",
   "@coupon_applied": {
+    "description": "Translation for `shop_coupon_applied`.",
     "placeholders": {
-      "code": {}
+      "code": {
+        "example": "code"
+      }
     }
   },
   "coupon_code": "Coupon code",
+  "@coupon_code": {
+    "description": "Translation for `shop_coupon_code`."
+  },
   "coupon_hint": "Try DUST10 or SHIPFREE",
+  "@coupon_hint": {
+    "description": "Translation for `shop_coupon_hint`."
+  },
   "create_account": "Create Account",
+  "@create_account": {
+    "description": "Translation for `shop_create_account`."
+  },
   "create_account_subtitle": "Create an account to start shopping",
+  "@create_account_subtitle": {
+    "description": "Translation for `shop_create_account_subtitle`."
+  },
   "demo_credentials": "Demo credentials are pre-filled",
+  "@demo_credentials": {
+    "description": "Translation for `shop_demo_credentials`."
+  },
   "description": "Description",
+  "@description": {
+    "description": "Translation for `shop_description`."
+  },
   "discount": "Discount",
   "email": "Email",
+  "@email": {
+    "description": "Translation for `shop_email`."
+  },
   "enter_password": "Please enter password",
+  "@enter_password": {
+    "description": "Translation for `shop_enter_password`."
+  },
   "enter_username": "Please enter username",
+  "@enter_username": {
+    "description": "Translation for `shop_enter_username`."
+  },
   "error_message": "Error: {message}",
   "@error_message": {
+    "description": "Translation for `shop_error_message`.",
     "placeholders": {
-      "message": {}
+      "message": {
+        "example": "message"
+      }
     }
   },
   "error_occurred": "An error occurred",
+  "@error_occurred": {
+    "description": "Translation for `shop_error_occurred`."
+  },
   "filters": "Filters",
+  "@filters": {
+    "description": "Translation for `shop_filters`."
+  },
   "first_name": "First Name",
+  "@first_name": {
+    "description": "Translation for `shop_first_name`."
+  },
   "full_name": "Full Name",
+  "@full_name": {
+    "description": "Translation for `shop_full_name`."
+  },
   "guest": "Guest",
+  "@guest": {
+    "description": "Translation for `shop_guest`."
+  },
   "guest_profile_message": "Sign in to access your profile and order history",
+  "@guest_profile_message": {
+    "description": "Translation for `shop_guest_profile_message`."
+  },
   "have_account": "Already have an account?",
+  "@have_account": {
+    "description": "Translation for `shop_have_account`."
+  },
   "item_count": "{count} item(s)",
   "@item_count": {
+    "description": "Translation for `shop_item_count`.",
     "placeholders": {
-      "count": {}
+      "count": {
+        "example": "1"
+      }
     }
   },
   "join_us": "Join Us",
+  "@join_us": {
+    "description": "Translation for `shop_join_us`."
+  },
   "last_name": "Last Name",
+  "@last_name": {
+    "description": "Translation for `shop_last_name`."
+  },
   "load_carts_failed": "Failed to load carts",
+  "@load_carts_failed": {
+    "description": "Translation for `shop_load_carts_failed`."
+  },
   "logged_out": "You have been logged out",
+  "@logged_out": {
+    "description": "Translation for `shop_logged_out`."
+  },
   "login_failed": "Login failed",
+  "@login_failed": {
+    "description": "Translation for `shop_login_failed`."
+  },
   "logout": "Logout",
+  "@logout": {
+    "description": "Translation for `shop_logout`."
+  },
   "logout_message": "Are you sure you want to logout?",
+  "@logout_message": {
+    "description": "Translation for `shop_logout_message`."
+  },
   "my_orders": "My Orders",
+  "@my_orders": {
+    "description": "Translation for `shop_my_orders`."
+  },
   "negative_product_price": "-${price}",
   "@negative_product_price": {
+    "description": "Translation for `shop_negative_product_price`.",
     "placeholders": {
-      "price": {}
+      "price": {
+        "example": "9.99"
+      }
     }
   },
   "no_account": "Don't have an account?",
+  "@no_account": {
+    "description": "Translation for `shop_no_account`."
+  },
   "no_orders": "No orders yet",
+  "@no_orders": {
+    "description": "Translation for `shop_no_orders`."
+  },
   "no_products": "No products match your filters",
+  "@no_products": {
+    "description": "Translation for `shop_no_products`."
+  },
   "no_route_for_path": "No route for {path}",
   "@no_route_for_path": {
+    "description": "Translation for `shop_no_route_for_path`.",
     "placeholders": {
-      "path": {}
+      "path": {
+        "example": "path"
+      }
     }
   },
   "order_id": "Order ID",
+  "@order_id": {
+    "description": "Translation for `shop_order_id`."
+  },
   "order_number": "Order #{id}",
   "@order_number": {
+    "description": "Translation for `shop_order_number`.",
     "placeholders": {
-      "id": {}
+      "id": {
+        "example": "id"
+      }
     }
   },
   "order_placed": "Order Placed!",
+  "@order_placed": {
+    "description": "Translation for `shop_order_placed`."
+  },
   "order_summary": "Order Summary",
+  "@order_summary": {
+    "description": "Translation for `shop_order_summary`."
+  },
   "orders": "Orders",
+  "@orders": {
+    "description": "Translation for `shop_orders`."
+  },
   "page_not_found": "Page not found",
+  "@page_not_found": {
+    "description": "Translation for `shop_page_not_found`."
+  },
   "password": "Password",
+  "@password": {
+    "description": "Translation for `shop_password`."
+  },
   "phone": "Phone",
+  "@phone": {
+    "description": "Translation for `shop_phone`."
+  },
   "place_order": "Place Order",
+  "@place_order": {
+    "description": "Translation for `shop_place_order`."
+  },
   "place_order_failed": "Failed to place order",
+  "@place_order_failed": {
+    "description": "Translation for `shop_place_order_failed`."
+  },
   "price_range": "Price Range",
+  "@price_range": {
+    "description": "Translation for `shop_price_range`."
+  },
   "proceed_to_checkout": "Proceed to Checkout",
+  "@proceed_to_checkout": {
+    "description": "Translation for `shop_proceed_to_checkout`."
+  },
   "processing_order": "Processing your order...",
+  "@processing_order": {
+    "description": "Translation for `shop_processing_order`."
+  },
   "product_details": "Product Details",
+  "@product_details": {
+    "description": "Translation for `shop_product_details`."
+  },
   "product_not_found": "Product #{id} was not found.",
   "@product_not_found": {
+    "description": "Translation for `shop_product_not_found`.",
     "placeholders": {
-      "id": {}
+      "id": {
+        "example": "id"
+      }
     }
   },
   "product_price": "${price}",
   "@product_price": {
+    "description": "Translation for `shop_product_price`.",
     "placeholders": {
-      "price": {}
+      "price": {
+        "example": "9.99"
+      }
     }
   },
   "profile": "Profile",
+  "@profile": {
+    "description": "Translation for `shop_profile`."
+  },
   "purchase_thanks": "Thank you for your purchase",
+  "@purchase_thanks": {
+    "description": "Translation for `shop_purchase_thanks`."
+  },
   "rating_summary": "{rating} ({count})",
   "@rating_summary": {
+    "description": "Translation for `shop_rating_summary`.",
     "placeholders": {
-      "rating": {},
-      "count": {}
+      "count": {
+        "example": "1"
+      },
+      "rating": {
+        "example": "rating"
+      }
     }
   },
   "recommendations": "You may also like",
+  "@recommendations": {
+    "description": "Translation for `shop_recommendations`."
+  },
   "registration_failed": "Registration failed",
+  "@registration_failed": {
+    "description": "Translation for `shop_registration_failed`."
+  },
   "remote_cart_number": "Remote cart #{id}",
   "@remote_cart_number": {
+    "description": "Translation for `shop_remote_cart_number`.",
     "placeholders": {
-      "id": {}
+      "id": {
+        "example": "id"
+      }
     }
   },
   "remote_cart_summary": "User {userId} - {itemCount} item(s) - {rowCount} product rows",
   "@remote_cart_summary": {
+    "description": "Translation for `shop_remote_cart_summary`.",
     "placeholders": {
-      "userId": {},
-      "itemCount": {},
-      "rowCount": {}
+      "itemCount": {
+        "example": "1"
+      },
+      "rowCount": {
+        "example": "1"
+      },
+      "userId": {
+        "example": "Alice"
+      }
     }
   },
   "remote_carts": "FakeStore Carts",
+  "@remote_carts": {
+    "description": "Translation for `shop_remote_carts`."
+  },
   "remote_carts_note": "This page uses new generated FakeStore cart endpoints. It does not replace the app's local cart flow.",
+  "@remote_carts_note": {
+    "description": "Translation for `shop_remote_carts_note`."
+  },
   "remove": "Remove",
+  "@remove": {
+    "description": "Translation for `shop_remove`."
+  },
   "remove_item": "Remove Item",
+  "@remove_item": {
+    "description": "Translation for `shop_remove_item`."
+  },
   "remove_item_message": "Remove \"{name}\" from your cart?",
   "@remove_item_message": {
+    "description": "Translation for `shop_remove_item_message`.",
     "placeholders": {
-      "name": {}
+      "name": {
+        "example": "Alice"
+      }
     }
   },
   "reset": "Reset",
+  "@reset": {
+    "description": "Translation for `shop_reset`."
+  },
   "retry": "Retry",
+  "@retry": {
+    "description": "Translation for `shop_retry`."
+  },
   "review_count": "({count} reviews)",
   "@review_count": {
+    "description": "Translation for `shop_review_count`.",
     "placeholders": {
-      "count": {}
+      "count": {
+        "example": "1"
+      }
     }
   },
   "reviews": "Reviews",
+  "@reviews": {
+    "description": "Translation for `shop_reviews`."
+  },
   "reviews_failed": "Failed to load reviews.",
+  "@reviews_failed": {
+    "description": "Translation for `shop_reviews_failed`."
+  },
   "save": "Save",
+  "@save": {
+    "description": "Translation for `shop_save`."
+  },
   "saved": "Saved",
+  "@saved": {
+    "description": "Translation for `shop_saved`."
+  },
   "search_hint": "Search products",
+  "@search_hint": {
+    "description": "Translation for `shop_search_hint`."
+  },
   "ship_to": "Ship to {name}",
   "@ship_to": {
+    "description": "Translation for `shop_ship_to`.",
     "placeholders": {
-      "name": {}
+      "name": {
+        "example": "Alice"
+      }
     }
   },
   "shipping": "Shipping",
   "shipping_address": "Shipping Address",
+  "@shipping_address": {
+    "description": "Translation for `shop_shipping_address`."
+  },
   "shopping_assistant": "Shopping Assistant",
+  "@shopping_assistant": {
+    "description": "Translation for `shop_shopping_assistant`."
+  },
   "sign_in": "Sign In",
+  "@sign_in": {
+    "description": "Translation for `shop_sign_in`."
+  },
   "sign_in_subtitle": "Sign in to continue shopping",
+  "@sign_in_subtitle": {
+    "description": "Translation for `shop_sign_in_subtitle`."
+  },
   "sign_up": "Sign Up",
+  "@sign_up": {
+    "description": "Translation for `shop_sign_up`."
+  },
   "sort_by": "Sort By",
+  "@sort_by": {
+    "description": "Translation for `shop_sort_by`."
+  },
   "sort_featured": "Featured",
+  "@sort_featured": {
+    "description": "Translation for `shop_sort_featured`."
+  },
   "sort_name": "Name",
   "sort_none": "None",
   "sort_price_high": "Price ↓",
+  "@sort_price_high": {
+    "description": "Translation for `shop_sort_price_high`."
+  },
   "sort_price_high_full": "Price: High to Low",
   "sort_price_low": "Price ↑",
+  "@sort_price_low": {
+    "description": "Translation for `shop_sort_price_low`."
+  },
   "sort_price_low_full": "Price: Low to High",
   "sort_rating": "Rating",
+  "@sort_rating": {
+    "description": "Translation for `shop_sort_rating`."
+  },
   "status_cancelled": "Cancelled",
   "status_delivered": "Delivered",
   "status_pending": "Pending",
@@ -211,36 +526,90 @@
   "status_shipped": "Shipped",
   "subtotal": "Subtotal",
   "support_chat": "Support Chat",
+  "@support_chat": {
+    "description": "Translation for `shop_support_chat`."
+  },
   "tax": "Tax",
   "title": "Shop",
   "@title": {
     "description": "Main product catalog title"
   },
   "total": "Total",
+  "@total": {
+    "description": "Translation for `shop_total`."
+  },
   "total_items": "Total ({count} items)",
   "@total_items": {
+    "description": "Translation for `shop_total_items`.",
     "placeholders": {
-      "count": {}
+      "count": {
+        "example": "1"
+      }
     }
   },
   "total_price": "{price} total",
   "@total_price": {
+    "description": "Translation for `shop_total_price`.",
     "placeholders": {
-      "price": {}
+      "price": {
+        "example": "9.99"
+      }
     }
   },
   "track_order": "Track Order",
+  "@track_order": {
+    "description": "Translation for `shop_track_order`."
+  },
   "tracking": "Tracking",
+  "@tracking": {
+    "description": "Translation for `shop_tracking`."
+  },
   "tracking_failed": "Failed to load tracking.",
+  "@tracking_failed": {
+    "description": "Translation for `shop_tracking_failed`."
+  },
   "user": "User",
+  "@user": {
+    "description": "Translation for `shop_user`."
+  },
   "username": "Username",
+  "@username": {
+    "description": "Translation for `shop_username`."
+  },
   "verified_purchase": "Verified purchase",
+  "@verified_purchase": {
+    "description": "Translation for `shop_verified_purchase`."
+  },
   "view_cart": "View Cart",
+  "@view_cart": {
+    "description": "Translation for `shop_view_cart`."
+  },
   "view_details": "View Details",
+  "@view_details": {
+    "description": "Translation for `shop_view_details`."
+  },
   "view_orders": "View Orders",
+  "@view_orders": {
+    "description": "Translation for `shop_view_orders`."
+  },
   "welcome_back": "Welcome Back",
+  "@welcome_back": {
+    "description": "Translation for `shop_welcome_back`."
+  },
   "welcome_guest": "Welcome, Guest",
+  "@welcome_guest": {
+    "description": "Translation for `shop_welcome_guest`."
+  },
   "wishlist": "Wishlist",
+  "@wishlist": {
+    "description": "Translation for `shop_wishlist`."
+  },
   "wishlist_empty": "No saved products yet",
-  "zip": "ZIP"
+  "@wishlist_empty": {
+    "description": "Translation for `shop_wishlist_empty`."
+  },
+  "zip": "ZIP",
+  "@zip": {
+    "description": "Translation for `shop_zip`."
+  }
 }
