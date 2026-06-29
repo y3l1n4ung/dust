@@ -55,6 +55,8 @@ pub(crate) struct RouterFact {
 pub(crate) struct GuardFact {
     /// Guard class name.
     pub(crate) class_name: String,
+    /// Whether the class has an unnamed generative constructor.
+    pub(crate) has_unnamed_constructor: bool,
     /// Package import URI for the guard class.
     pub(crate) import_uri: String,
     /// Source path that contributed the guard fact.
@@ -158,8 +160,8 @@ pub(crate) struct RouterFieldSpec {
 pub(crate) struct GuardParamSpec {
     /// Constructor parameter name.
     pub(crate) name: String,
-    /// Simple type name required by the guard.
-    pub(crate) type_name: String,
+    /// Simple type name required by the guard, if Dust can resolve it.
+    pub(crate) type_name: Option<String>,
     /// Whether the guard constructor argument is named.
     pub(crate) is_named: bool,
     /// Whether the guard parameter has its own default.
@@ -173,6 +175,8 @@ pub(crate) struct GuardParamSpec {
 pub(crate) struct GuardSpec {
     /// Guard class name.
     pub(crate) class_name: String,
+    /// Whether generated code can call the unnamed generative constructor.
+    pub(crate) has_unnamed_constructor: bool,
     /// Constructor dependencies for the guard.
     pub(crate) params: Vec<GuardParamSpec>,
 }

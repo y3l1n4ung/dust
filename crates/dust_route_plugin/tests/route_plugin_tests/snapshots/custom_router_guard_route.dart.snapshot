@@ -112,7 +112,7 @@ List<Object> routeGuards(
   $BenchmarkRouter router,
 ) {
   return switch (route) {
-    DashboardRoute() => [const BenchmarkGuard()],
+    DashboardRoute() => [BenchmarkGuard()],
     _ => const [],
   };
 }

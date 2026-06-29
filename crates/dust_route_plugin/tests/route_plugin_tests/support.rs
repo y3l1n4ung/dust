@@ -47,6 +47,36 @@ pub(crate) fn route_page_class(
     }
 }
 
+pub(crate) fn guard_class(name: &str, params: Vec<ConstructorParamIr>) -> ClassIr {
+    ClassIr {
+        kind: ClassKindIr::Class,
+        name: name.to_owned(),
+        is_abstract: false,
+        is_interface: false,
+        superclass_name: None,
+        span: span(10, 90),
+        fields: Vec::new(),
+        constructors: vec![ConstructorIr {
+            name: None,
+            is_factory: false,
+            redirected_target_source: None,
+            redirected_target_name: None,
+            span: span(12, 18),
+            params,
+        }],
+        methods: Vec::new(),
+        traits: Vec::new(),
+        configs: Vec::new(),
+        serde: None,
+    }
+}
+
+pub(crate) fn named_constructor_guard_class(name: &str) -> ClassIr {
+    let mut guard = guard_class(name, Vec::new());
+    guard.constructors[0].name = Some("create".to_owned());
+    guard
+}
+
 pub(crate) fn router_class(args: &str) -> ClassIr {
     ClassIr {
         kind: ClassKindIr::Class,

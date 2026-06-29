@@ -157,7 +157,7 @@ List<Object> routeGuards(
   $BenchmarkRouter router,
 ) {
   return switch (route) {
-    HomeRoute() => [const BenchmarkGuard()],
+    HomeRoute() => [BenchmarkGuard()],
     _ => const [],
   };
 }
