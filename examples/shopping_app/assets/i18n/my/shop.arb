@@ -1,29 +1,71 @@
 {
   "@@locale": "my",
+  "@@context": "Translations for `shop` namespace.",
   "add_another": "နောက်တစ်ခု ထည့်မည်",
+  "@add_another": {
+    "description": "Translation for `shop_add_another`."
+  },
   "add_to_cart": "စျေးခြင်းထဲ ထည့်မည်",
+  "@add_to_cart": {
+    "description": "Translation for `shop_add_to_cart`."
+  },
   "added_to_cart": "{name} ကို စျေးခြင်းထဲ ထည့်ပြီးပါပြီ",
   "@added_to_cart": {
+    "description": "Translation for `shop_added_to_cart`.",
     "placeholders": {
-      "name": {}
+      "name": {
+        "example": "Alice"
+      }
     }
   },
   "address": "လိပ်စာ",
+  "@address": {
+    "description": "Translation for `shop_address`."
+  },
   "apply": "အသုံးပြုမည်",
+  "@apply": {
+    "description": "Translation for `shop_apply`."
+  },
   "apply_filters": "စစ်ထုတ်မှု အသုံးပြုမည်",
+  "@apply_filters": {
+    "description": "Translation for `shop_apply_filters`."
+  },
   "back_to_shop": "ဆိုင်သို့ ပြန်သွားမည်",
+  "@back_to_shop": {
+    "description": "Translation for `shop_back_to_shop`."
+  },
   "browse_products": "ပစ္စည်းများ ကြည့်မည်",
+  "@browse_products": {
+    "description": "Translation for `shop_browse_products`."
+  },
   "cancel": "မလုပ်တော့ပါ",
+  "@cancel": {
+    "description": "Translation for `shop_cancel`."
+  },
   "cart": "စျေးခြင်း",
+  "@cart": {
+    "description": "Translation for `shop_cart`."
+  },
   "cart_empty": "စျေးခြင်းထဲတွင် ပစ္စည်းမရှိပါ",
+  "@cart_empty": {
+    "description": "Translation for `shop_cart_empty`."
+  },
   "cart_line_item": "{name} x{quantity}",
   "@cart_line_item": {
+    "description": "Translation for `shop_cart_line_item`.",
     "placeholders": {
-      "name": {},
-      "quantity": {}
+      "name": {
+        "example": "Alice"
+      },
+      "quantity": {
+        "example": "1"
+      }
     }
   },
   "category": "အမျိုးအစား",
+  "@category": {
+    "description": "Translation for `shop_category`."
+  },
   "category_all": "အားလုံး",
   "category_bags": "အိတ်များ",
   "category_clothing": "အဝတ်အစား",
@@ -32,178 +74,451 @@
   "category_mens_clothing": "အမျိုးသားဝတ်",
   "category_womens_clothing": "အမျိုးသမီးဝတ်",
   "chat_failed": "ချက် မအောင်မြင်ပါ",
+  "@chat_failed": {
+    "description": "Translation for `shop_chat_failed`."
+  },
   "chat_hint": "ကူပွန်၊ မှာယူမှု၊ API အကြောင်း မေးပါ...",
+  "@chat_hint": {
+    "description": "Translation for `shop_chat_hint`."
+  },
   "checkout": "ငွေချေမှု",
+  "@checkout": {
+    "description": "Translation for `shop_checkout`."
+  },
   "city": "မြို့",
+  "@city": {
+    "description": "Translation for `shop_city`."
+  },
   "clear_all": "အားလုံးရှင်းမည်",
+  "@clear_all": {
+    "description": "Translation for `shop_clear_all`."
+  },
   "clear_cart": "စျေးခြင်းရှင်းမည်",
+  "@clear_cart": {
+    "description": "Translation for `shop_clear_cart`."
+  },
   "clear_cart_message": "စျေးခြင်းထဲရှိ ပစ္စည်း {count} ခုအားလုံးကို ဖယ်ရှားမည် သေချာပါသလား?",
   "@clear_cart_message": {
+    "description": "Translation for `shop_clear_cart_message`.",
     "placeholders": {
-      "count": {}
+      "count": {
+        "example": "1"
+      }
     }
   },
   "confirm_password": "စကားဝှက် အတည်ပြုပါ",
+  "@confirm_password": {
+    "description": "Translation for `shop_confirm_password`."
+  },
   "continue_as_guest": "ဧည့်သည်အဖြစ် ဆက်သွားမည်",
+  "@continue_as_guest": {
+    "description": "Translation for `shop_continue_as_guest`."
+  },
   "continue_shopping": "စျေးဆက်ဝယ်မည်",
+  "@continue_shopping": {
+    "description": "Translation for `shop_continue_shopping`."
+  },
   "coupon_applied": "{code} အသုံးပြုပြီး",
   "@coupon_applied": {
+    "description": "Translation for `shop_coupon_applied`.",
     "placeholders": {
-      "code": {}
+      "code": {
+        "example": "code"
+      }
     }
   },
   "coupon_code": "ကူပွန်ကုဒ်",
+  "@coupon_code": {
+    "description": "Translation for `shop_coupon_code`."
+  },
   "coupon_hint": "DUST10 သို့မဟုတ် SHIPFREE စမ်းကြည့်ပါ",
+  "@coupon_hint": {
+    "description": "Translation for `shop_coupon_hint`."
+  },
   "create_account": "အကောင့်ဖွင့်မည်",
+  "@create_account": {
+    "description": "Translation for `shop_create_account`."
+  },
   "create_account_subtitle": "စျေးဝယ်ရန် အကောင့်ဖွင့်ပါ",
+  "@create_account_subtitle": {
+    "description": "Translation for `shop_create_account_subtitle`."
+  },
   "demo_credentials": "စမ်းသပ်အကောင့် အချက်အလက်များ ကြိုဖြည့်ထားသည်",
+  "@demo_credentials": {
+    "description": "Translation for `shop_demo_credentials`."
+  },
   "description": "ဖော်ပြချက်",
+  "@description": {
+    "description": "Translation for `shop_description`."
+  },
   "discount": "လျှော့စျေး",
   "email": "အီးမေးလ်",
+  "@email": {
+    "description": "Translation for `shop_email`."
+  },
   "enter_password": "စကားဝှက် ထည့်ပါ",
+  "@enter_password": {
+    "description": "Translation for `shop_enter_password`."
+  },
   "enter_username": "အသုံးပြုသူအမည် ထည့်ပါ",
+  "@enter_username": {
+    "description": "Translation for `shop_enter_username`."
+  },
   "error_message": "အမှား - {message}",
   "@error_message": {
+    "description": "Translation for `shop_error_message`.",
     "placeholders": {
-      "message": {}
+      "message": {
+        "example": "message"
+      }
     }
   },
   "error_occurred": "အမှား ဖြစ်ပွားခဲ့သည်",
+  "@error_occurred": {
+    "description": "Translation for `shop_error_occurred`."
+  },
   "filters": "စစ်ထုတ်မှုများ",
+  "@filters": {
+    "description": "Translation for `shop_filters`."
+  },
   "first_name": "ပထမအမည်",
+  "@first_name": {
+    "description": "Translation for `shop_first_name`."
+  },
   "full_name": "အမည်အပြည့်အစုံ",
+  "@full_name": {
+    "description": "Translation for `shop_full_name`."
+  },
   "guest": "ဧည့်သည်",
+  "@guest": {
+    "description": "Translation for `shop_guest`."
+  },
   "guest_profile_message": "ပရိုဖိုင်နှင့် မှာယူမှုမှတ်တမ်း ကြည့်ရန် ဝင်ရောက်ပါ",
+  "@guest_profile_message": {
+    "description": "Translation for `shop_guest_profile_message`."
+  },
   "have_account": "အကောင့်ရှိပြီးသားလား?",
+  "@have_account": {
+    "description": "Translation for `shop_have_account`."
+  },
   "item_count": "ပစ္စည်း {count} ခု",
   "@item_count": {
+    "description": "Translation for `shop_item_count`.",
     "placeholders": {
-      "count": {}
+      "count": {
+        "example": "1"
+      }
     }
   },
   "join_us": "ကျွန်ုပ်တို့နှင့် ပူးပေါင်းပါ",
+  "@join_us": {
+    "description": "Translation for `shop_join_us`."
+  },
   "last_name": "နောက်ဆုံးအမည်",
+  "@last_name": {
+    "description": "Translation for `shop_last_name`."
+  },
   "load_carts_failed": "စျေးခြင်းများ မတင်နိုင်ပါ",
+  "@load_carts_failed": {
+    "description": "Translation for `shop_load_carts_failed`."
+  },
   "logged_out": "သင် ထွက်ပြီးပါပြီ",
+  "@logged_out": {
+    "description": "Translation for `shop_logged_out`."
+  },
   "login_failed": "ဝင်ရောက်မှု မအောင်မြင်ပါ",
+  "@login_failed": {
+    "description": "Translation for `shop_login_failed`."
+  },
   "logout": "ထွက်မည်",
+  "@logout": {
+    "description": "Translation for `shop_logout`."
+  },
   "logout_message": "ထွက်မည် သေချာပါသလား?",
+  "@logout_message": {
+    "description": "Translation for `shop_logout_message`."
+  },
   "my_orders": "ကျွန်ုပ်၏ မှာယူမှုများ",
+  "@my_orders": {
+    "description": "Translation for `shop_my_orders`."
+  },
   "negative_product_price": "-US$ {price}",
   "@negative_product_price": {
+    "description": "Translation for `shop_negative_product_price`.",
     "placeholders": {
-      "price": {}
+      "price": {
+        "example": "9.99"
+      }
     }
   },
   "no_account": "အကောင့်မရှိသေးဘူးလား?",
+  "@no_account": {
+    "description": "Translation for `shop_no_account`."
+  },
   "no_orders": "မှာယူမှု မရှိသေးပါ",
+  "@no_orders": {
+    "description": "Translation for `shop_no_orders`."
+  },
   "no_products": "စစ်ထုတ်မှုနှင့် ကိုက်ညီသော ပစ္စည်းမရှိပါ",
+  "@no_products": {
+    "description": "Translation for `shop_no_products`."
+  },
   "no_route_for_path": "{path} အတွက် စာမျက်နှာမရှိပါ",
   "@no_route_for_path": {
+    "description": "Translation for `shop_no_route_for_path`.",
     "placeholders": {
-      "path": {}
+      "path": {
+        "example": "path"
+      }
     }
   },
   "order_id": "မှာယူမှု ID",
+  "@order_id": {
+    "description": "Translation for `shop_order_id`."
+  },
   "order_number": "မှာယူမှု #{id}",
   "@order_number": {
+    "description": "Translation for `shop_order_number`.",
     "placeholders": {
-      "id": {}
+      "id": {
+        "example": "id"
+      }
     }
   },
   "order_placed": "မှာယူမှု တင်ပြီးပါပြီ",
+  "@order_placed": {
+    "description": "Translation for `shop_order_placed`."
+  },
   "order_summary": "မှာယူမှု အကျဉ်းချုပ်",
+  "@order_summary": {
+    "description": "Translation for `shop_order_summary`."
+  },
   "orders": "မှာယူမှုများ",
+  "@orders": {
+    "description": "Translation for `shop_orders`."
+  },
   "page_not_found": "စာမျက်နှာ မတွေ့ပါ",
+  "@page_not_found": {
+    "description": "Translation for `shop_page_not_found`."
+  },
   "password": "စကားဝှက်",
+  "@password": {
+    "description": "Translation for `shop_password`."
+  },
   "phone": "ဖုန်း",
+  "@phone": {
+    "description": "Translation for `shop_phone`."
+  },
   "place_order": "မှာယူမည်",
+  "@place_order": {
+    "description": "Translation for `shop_place_order`."
+  },
   "place_order_failed": "မှာယူမှု မအောင်မြင်ပါ",
+  "@place_order_failed": {
+    "description": "Translation for `shop_place_order_failed`."
+  },
   "price_range": "စျေးနှုန်းအပိုင်းအခြား",
+  "@price_range": {
+    "description": "Translation for `shop_price_range`."
+  },
   "proceed_to_checkout": "ငွေချေရန် ဆက်သွားမည်",
+  "@proceed_to_checkout": {
+    "description": "Translation for `shop_proceed_to_checkout`."
+  },
   "processing_order": "သင်၏ မှာယူမှုကို ဆောင်ရွက်နေသည်...",
+  "@processing_order": {
+    "description": "Translation for `shop_processing_order`."
+  },
   "product_details": "ပစ္စည်းအသေးစိတ်",
+  "@product_details": {
+    "description": "Translation for `shop_product_details`."
+  },
   "product_not_found": "ပစ္စည်း #{id} ကို မတွေ့ပါ",
   "@product_not_found": {
+    "description": "Translation for `shop_product_not_found`.",
     "placeholders": {
-      "id": {}
+      "id": {
+        "example": "id"
+      }
     }
   },
   "product_price": "US$ {price}",
   "@product_price": {
+    "description": "Translation for `shop_product_price`.",
     "placeholders": {
-      "price": {}
+      "price": {
+        "example": "9.99"
+      }
     }
   },
   "profile": "ပရိုဖိုင်",
+  "@profile": {
+    "description": "Translation for `shop_profile`."
+  },
   "purchase_thanks": "ဝယ်ယူမှုအတွက် ကျေးဇူးတင်ပါသည်",
+  "@purchase_thanks": {
+    "description": "Translation for `shop_purchase_thanks`."
+  },
   "rating_summary": "{rating} ({count})",
   "@rating_summary": {
+    "description": "Translation for `shop_rating_summary`.",
     "placeholders": {
-      "rating": {},
-      "count": {}
+      "count": {
+        "example": "1"
+      },
+      "rating": {
+        "example": "rating"
+      }
     }
   },
   "recommendations": "သင်ကြိုက်နိုင်သော ပစ္စည်းများ",
+  "@recommendations": {
+    "description": "Translation for `shop_recommendations`."
+  },
   "registration_failed": "စာရင်းသွင်းမှု မအောင်မြင်ပါ",
+  "@registration_failed": {
+    "description": "Translation for `shop_registration_failed`."
+  },
   "remote_cart_number": "အွန်လိုင်းစျေးခြင်း #{id}",
   "@remote_cart_number": {
+    "description": "Translation for `shop_remote_cart_number`.",
     "placeholders": {
-      "id": {}
+      "id": {
+        "example": "id"
+      }
     }
   },
   "remote_cart_summary": "အသုံးပြုသူ {userId} - ပစ္စည်း {itemCount} ခု - ထုတ်ကုန်တန်း {rowCount} ခု",
   "@remote_cart_summary": {
+    "description": "Translation for `shop_remote_cart_summary`.",
     "placeholders": {
-      "userId": {},
-      "itemCount": {},
-      "rowCount": {}
+      "itemCount": {
+        "example": "1"
+      },
+      "rowCount": {
+        "example": "1"
+      },
+      "userId": {
+        "example": "Alice"
+      }
     }
   },
   "remote_carts": "FakeStore စျေးခြင်းများ",
+  "@remote_carts": {
+    "description": "Translation for `shop_remote_carts`."
+  },
   "remote_carts_note": "ဤစာမျက်နှာသည် အသစ်ထုတ်ထားသော FakeStore စျေးခြင်း endpoint များကို အသုံးပြုသည်။ အက်ပ်၏ local cart flow ကို အစားမထိုးပါ။",
+  "@remote_carts_note": {
+    "description": "Translation for `shop_remote_carts_note`."
+  },
   "remove": "ဖယ်ရှားမည်",
+  "@remove": {
+    "description": "Translation for `shop_remove`."
+  },
   "remove_item": "ပစ္စည်းဖယ်ရှားမည်",
+  "@remove_item": {
+    "description": "Translation for `shop_remove_item`."
+  },
   "remove_item_message": "\"{name}\" ကို စျေးခြင်းမှ ဖယ်ရှားမလား?",
   "@remove_item_message": {
+    "description": "Translation for `shop_remove_item_message`.",
     "placeholders": {
-      "name": {}
+      "name": {
+        "example": "Alice"
+      }
     }
   },
   "reset": "ပြန်စမည်",
+  "@reset": {
+    "description": "Translation for `shop_reset`."
+  },
   "retry": "ထပ်ကြိုးစားပါ",
+  "@retry": {
+    "description": "Translation for `shop_retry`."
+  },
   "review_count": "({count} သုံးသပ်ချက်)",
   "@review_count": {
+    "description": "Translation for `shop_review_count`.",
     "placeholders": {
-      "count": {}
+      "count": {
+        "example": "1"
+      }
     }
   },
   "reviews": "သုံးသပ်ချက်များ",
+  "@reviews": {
+    "description": "Translation for `shop_reviews`."
+  },
   "reviews_failed": "သုံးသပ်ချက်များ မတင်နိုင်ပါ",
+  "@reviews_failed": {
+    "description": "Translation for `shop_reviews_failed`."
+  },
   "save": "သိမ်းမည်",
+  "@save": {
+    "description": "Translation for `shop_save`."
+  },
   "saved": "သိမ်းပြီး",
+  "@saved": {
+    "description": "Translation for `shop_saved`."
+  },
   "search_hint": "ပစ္စည်းရှာရန်",
+  "@search_hint": {
+    "description": "Translation for `shop_search_hint`."
+  },
   "ship_to": "{name} သို့ ပို့မည်",
   "@ship_to": {
+    "description": "Translation for `shop_ship_to`.",
     "placeholders": {
-      "name": {}
+      "name": {
+        "example": "Alice"
+      }
     }
   },
   "shipping": "ပို့ဆောင်ခ",
   "shipping_address": "ပို့ဆောင်ရန် လိပ်စာ",
+  "@shipping_address": {
+    "description": "Translation for `shop_shipping_address`."
+  },
   "shopping_assistant": "စျေးဝယ်အကူ",
+  "@shopping_assistant": {
+    "description": "Translation for `shop_shopping_assistant`."
+  },
   "sign_in": "ဝင်မည်",
+  "@sign_in": {
+    "description": "Translation for `shop_sign_in`."
+  },
   "sign_in_subtitle": "စျေးဝယ်ရန် ဆက်လက်ဝင်ရောက်ပါ",
+  "@sign_in_subtitle": {
+    "description": "Translation for `shop_sign_in_subtitle`."
+  },
   "sign_up": "စာရင်းသွင်းမည်",
+  "@sign_up": {
+    "description": "Translation for `shop_sign_up`."
+  },
   "sort_by": "စီရန်",
+  "@sort_by": {
+    "description": "Translation for `shop_sort_by`."
+  },
   "sort_featured": "အထူးရွေးချယ်ထားသော",
+  "@sort_featured": {
+    "description": "Translation for `shop_sort_featured`."
+  },
   "sort_name": "အမည်",
   "sort_none": "မစီပါ",
   "sort_price_high": "စျေး ↓",
+  "@sort_price_high": {
+    "description": "Translation for `shop_sort_price_high`."
+  },
   "sort_price_high_full": "စျေး: မြင့်မှ နိမ့်",
   "sort_price_low": "စျေး ↑",
+  "@sort_price_low": {
+    "description": "Translation for `shop_sort_price_low`."
+  },
   "sort_price_low_full": "စျေး: နိမ့်မှ မြင့်",
   "sort_rating": "အဆင့်သတ်မှတ်ချက်",
+  "@sort_rating": {
+    "description": "Translation for `shop_sort_rating`."
+  },
   "status_cancelled": "ပယ်ဖျက်ပြီး",
   "status_delivered": "ပို့ပြီး",
   "status_pending": "စောင့်ဆိုင်းနေသည်",
@@ -211,36 +526,90 @@
   "status_shipped": "ပို့ဆောင်နေသည်",
   "subtotal": "အပိုင်းစုစုပေါင်း",
   "support_chat": "အကူအညီချက်",
+  "@support_chat": {
+    "description": "Translation for `shop_support_chat`."
+  },
   "tax": "အခွန်",
   "title": "ဆိုင်",
   "@title": {
     "description": "Main product catalog title"
   },
   "total": "စုစုပေါင်း",
+  "@total": {
+    "description": "Translation for `shop_total`."
+  },
   "total_items": "စုစုပေါင်း ({count} ခု)",
   "@total_items": {
+    "description": "Translation for `shop_total_items`.",
     "placeholders": {
-      "count": {}
+      "count": {
+        "example": "1"
+      }
     }
   },
   "total_price": "{price} စုစုပေါင်း",
   "@total_price": {
+    "description": "Translation for `shop_total_price`.",
     "placeholders": {
-      "price": {}
+      "price": {
+        "example": "9.99"
+      }
     }
   },
   "track_order": "မှာယူမှုခြေရာခံမည်",
+  "@track_order": {
+    "description": "Translation for `shop_track_order`."
+  },
   "tracking": "ခြေရာခံမှု",
+  "@tracking": {
+    "description": "Translation for `shop_tracking`."
+  },
   "tracking_failed": "ခြေရာခံမှု မတင်နိုင်ပါ",
+  "@tracking_failed": {
+    "description": "Translation for `shop_tracking_failed`."
+  },
   "user": "အသုံးပြုသူ",
+  "@user": {
+    "description": "Translation for `shop_user`."
+  },
   "username": "အသုံးပြုသူအမည်",
+  "@username": {
+    "description": "Translation for `shop_username`."
+  },
   "verified_purchase": "ဝယ်ယူမှု အတည်ပြုပြီး",
+  "@verified_purchase": {
+    "description": "Translation for `shop_verified_purchase`."
+  },
   "view_cart": "စျေးခြင်း ကြည့်မည်",
+  "@view_cart": {
+    "description": "Translation for `shop_view_cart`."
+  },
   "view_details": "အသေးစိတ် ကြည့်မည်",
+  "@view_details": {
+    "description": "Translation for `shop_view_details`."
+  },
   "view_orders": "မှာယူမှုများ ကြည့်မည်",
+  "@view_orders": {
+    "description": "Translation for `shop_view_orders`."
+  },
   "welcome_back": "ပြန်လည်ကြိုဆိုပါတယ်",
+  "@welcome_back": {
+    "description": "Translation for `shop_welcome_back`."
+  },
   "welcome_guest": "ကြိုဆိုပါတယ်၊ ဧည့်သည်",
+  "@welcome_guest": {
+    "description": "Translation for `shop_welcome_guest`."
+  },
   "wishlist": "သိမ်းထားသောပစ္စည်းများ",
+  "@wishlist": {
+    "description": "Translation for `shop_wishlist`."
+  },
   "wishlist_empty": "သိမ်းထားသောပစ္စည်း မရှိသေးပါ",
-  "zip": "စာပို့ကုဒ်"
+  "@wishlist_empty": {
+    "description": "Translation for `shop_wishlist_empty`."
+  },
+  "zip": "စာပို့ကုဒ်",
+  "@zip": {
+    "description": "Translation for `shop_zip`."
+  }
 }

@@ -137,6 +137,21 @@ pub struct I18nBuildReport {
     pub added_messages: usize,
 }
 
+/// Workspace i18n ARB check report.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct I18nCheckReport {
+    /// Number of Dart source files scanned.
+    pub scanned_files: usize,
+    /// Number of unique static translation keys found.
+    pub keys: usize,
+    /// Number of configured ARB files inspected.
+    pub arb_files: usize,
+    /// Number of configured locale messages checked against the static scan.
+    pub checked_messages: usize,
+    /// Number of existing ARB messages absent from the static scan.
+    pub stale_messages: usize,
+}
+
 /// One cache summary for a command run.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CacheReport {
@@ -202,6 +217,8 @@ pub struct CommandResult {
     pub i18n_scan: Option<I18nScanReport>,
     /// An optional i18n build report.
     pub i18n_build: Option<I18nBuildReport>,
+    /// An optional i18n check report.
+    pub i18n_check: Option<I18nCheckReport>,
     /// An optional doctor report.
     pub doctor: Option<DoctorReport>,
     /// An optional clean report.

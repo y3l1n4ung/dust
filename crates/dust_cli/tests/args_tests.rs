@@ -79,6 +79,14 @@ fn parses_i18n_build_with_root() {
 }
 
 #[test]
+fn parses_i18n_check_with_root() {
+    let parsed = parse_cli_args(["i18n", "check", "--root", "/tmp/work"]).unwrap();
+
+    assert_eq!(parsed.command, CliCommand::I18nCheck);
+    assert_eq!(parsed.options.root, Some(PathBuf::from("/tmp/work")));
+}
+
+#[test]
 fn rejects_offline_without_db() {
     let error = parse_cli_args(["check", "--offline"]).unwrap_err();
 

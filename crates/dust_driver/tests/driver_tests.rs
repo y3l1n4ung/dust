@@ -12,6 +12,9 @@ mod http_client_outputs;
 #[path = "driver_tests/i18n_outputs.rs"]
 mod i18n_outputs;
 
+#[path = "driver_tests/i18n_check_outputs.rs"]
+mod i18n_check_outputs;
+
 #[path = "driver_tests/routing_outputs.rs"]
 mod routing_outputs;
 
