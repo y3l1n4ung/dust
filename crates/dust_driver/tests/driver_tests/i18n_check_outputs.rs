@@ -168,6 +168,82 @@ void build() {
 }
 
 #[test]
+fn i18n_check_warns_on_english_looking_non_fallback_text() {
+    let workspace = make_workspace();
+    write_i18n_config(&workspace);
+    write_file(
+        &workspace.path().join("lib/home.dart"),
+        r#"
+import 'package:dust_flutter/i18n.dart';
+
+void build(price) {
+  const TranslatedText('shop_title', defaultText: 'Shop');
+  const TranslatedText('shop_subtitle', defaultText: 'Deals');
+  TranslatedText('shop_price', defaultText: 'US$ {price}', args: {'price': price});
+}
+"#,
+    );
+    write_file(
+        &workspace.path().join("assets/i18n/en/shop.arb"),
+        r#"{
+  "@@locale": "en",
+  "price": "USD {price}",
+  "@price": {
+    "description": "Price",
+    "placeholders": {
+      "price": {
+        "example": "9.99"
+      }
+    }
+  },
+  "subtitle": "Deals",
+  "@subtitle": {
+    "description": "Subtitle"
+  },
+  "title": "Shop",
+  "@title": {
+    "description": "Title"
+  }
+}
+"#,
+    );
+    write_file(
+        &workspace.path().join("assets/i18n/my/shop.arb"),
+        r#"{
+  "@@locale": "my",
+  "price": "US$ {price}",
+  "@price": {
+    "description": "Price",
+    "placeholders": {
+      "price": {
+        "example": "9.99"
+      }
+    }
+  },
+  "subtitle": "လျှော့စျေးများ",
+  "@subtitle": {
+    "description": "Subtitle"
+  },
+  "title": "Checkout now",
+  "@title": {
+    "description": "Title"
+  }
+}
+"#,
+    );
+
+    let result = run_i18n_check(I18nCheckRequest {
+        cwd: workspace.path().to_path_buf(),
+    });
+
+    assert!(!result.has_errors(), "{:?}", result.diagnostics);
+    let messages = diagnostic_messages(&result);
+    assert!(messages.contains("looks like untranslated English text"));
+    assert!(!messages.contains("i18n key `subtitle`"));
+    assert!(!messages.contains("i18n key `price`"));
+}
+
+#[test]
 fn i18n_check_reports_placeholder_metadata_and_message_mismatch() {
     let workspace = workspace_with_i18n_source();
     write_file(

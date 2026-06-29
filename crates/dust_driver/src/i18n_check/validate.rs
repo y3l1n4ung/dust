@@ -118,6 +118,13 @@ fn validate_message_text(
             file.path.display(),
             config.fallback_locale()
         )));
+        return;
+    }
+    if looks_english(message) {
+        diagnostics.push(Diagnostic::warning(format!(
+            "i18n key `{local_key}` in `{}` looks like untranslated English text",
+            file.path.display()
+        )));
     }
 }
 
@@ -256,6 +263,47 @@ fn message_placeholders(message: &str) -> BTreeSet<String> {
         rest = &after_start[end + 1..];
     }
     placeholders
+}
+
+/// Returns whether a non-fallback message looks like untranslated English.
+fn looks_english(message: &str) -> bool {
+    let mut ascii_letters = 0;
+    let mut in_placeholder = false;
+    let mut word_len = 0;
+    let mut words = 0;
+    for item in message.chars() {
+        if item == '{' {
+            in_placeholder = true;
+            if word_len >= 3 {
+                words += 1;
+            }
+            word_len = 0;
+            continue;
+        }
+        if item == '}' {
+            in_placeholder = false;
+            continue;
+        }
+        if in_placeholder {
+            continue;
+        }
+        if item.is_ascii_alphabetic() {
+            ascii_letters += 1;
+            word_len += 1;
+        } else {
+            if word_len >= 3 {
+                words += 1;
+            }
+            word_len = 0;
+            if item.is_alphabetic() {
+                return false;
+            }
+        }
+    }
+    if word_len >= 3 {
+        words += 1;
+    }
+    ascii_letters >= 4 && words > 0
 }
 
 /// Returns whether one ARB top-level key is a message key.
