@@ -9,8 +9,11 @@ typedef RouteStack<T extends Object> = List<T>;
 /// Converts an incoming browser or platform URI into a typed route object.
 typedef RouteParser<T extends Object> = T Function(Uri uri);
 
-/// Builds a Flutter page for one typed route object.
-typedef RoutePageBuilder<T extends Object> = Page<dynamic> Function(T route);
+/// Builds a Flutter page for one typed route object and stack entry key.
+typedef RoutePageBuilder<T extends Object> = Page<dynamic> Function(
+  T route,
+  LocalKey key,
+);
 
 /// Resolves route-level guards for one typed route object.
 typedef RouteGuardResolver<T extends Object> = List<Object> Function(T route);
