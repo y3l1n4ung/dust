@@ -102,7 +102,7 @@ fn build_reports_duplicate_route_path_params() {
     write_routing_workspace(workspace.path(), "dashboard");
     write_file(
         &workspace.path().join("lib/pages/post_page.dart"),
-        "@Route('/users/:id/posts/:id', name: 'post')\n\
+        "@AppRoute('/users/:id/posts/:id', name: 'post')\n\
          final class PostPage {\n\
            const PostPage({required this.id});\n\
            final int id;\n\
@@ -131,7 +131,7 @@ fn build_reports_static_and_dynamic_route_siblings() {
     write_routing_workspace(workspace.path(), "dashboard");
     write_file(
         &workspace.path().join("lib/pages/user_page.dart"),
-        "@Route('/users/:id', name: 'user')\n\
+        "@AppRoute('/users/:id', name: 'user')\n\
          final class UserPage {\n\
            const UserPage({required this.id});\n\
            final int id;\n\
@@ -139,7 +139,7 @@ fn build_reports_static_and_dynamic_route_siblings() {
     );
     write_file(
         &workspace.path().join("lib/pages/user_settings_page.dart"),
-        "@Route('/users/settings', name: 'userSettings')\n\
+        "@AppRoute('/users/settings', name: 'userSettings')\n\
          final class UserSettingsPage {\n\
            const UserSettingsPage();\n\
          }\n",
