@@ -11,6 +11,7 @@ use self::{
     },
 };
 use crate::{
+    i18n_assets::{I18nAssetSeverity, validate_i18n_asset_declarations},
     i18n_keys::{I18nPlannedEntry, plan_i18n_entries},
     i18n_scan::scan_workspace_sources,
     request::I18nCheckRequest,
@@ -113,6 +114,12 @@ fn check_i18n_arb_files(
             &mut diagnostics,
         );
     }
+    diagnostics.extend(validate_i18n_asset_declarations(
+        package_root,
+        config,
+        &planned,
+        I18nAssetSeverity::Error,
+    )?);
 
     Ok((report, diagnostics))
 }

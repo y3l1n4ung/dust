@@ -1,11 +1,16 @@
 use std::time::Instant;
 
-use dust_diagnostics::Diagnostic;
+use dust_diagnostics::{Diagnostic, Severity};
 use dust_workspace::{detect_workspace_root, load_dust_config};
 
 use crate::{
-    i18n_arb::write_i18n_arb_files, i18n_bootstrap::build_i18n_bootstrap,
-    i18n_scan::scan_workspace_sources, request::I18nBuildRequest, result::CommandResult,
+    i18n_arb::write_i18n_arb_files,
+    i18n_assets::{I18nAssetSeverity, validate_i18n_asset_declarations},
+    i18n_bootstrap::build_i18n_bootstrap,
+    i18n_keys::plan_i18n_entries,
+    i18n_scan::scan_workspace_sources,
+    request::I18nBuildRequest,
+    result::CommandResult,
 };
 
 /// Runs i18n scan, ARB reconciliation, and bootstrap generation.
@@ -59,6 +64,21 @@ pub fn run_i18n_build(request: I18nBuildRequest) -> CommandResult {
         Ok(report) => result.i18n_build = Some(report),
         Err(diagnostic) => result.diagnostics.push(diagnostic),
     }
+
+    if !result.has_errors() {
+        match plan_i18n_entries(&scan.entries) {
+            Ok(entries) => match validate_i18n_asset_declarations(
+                &package_root,
+                i18n_config,
+                &entries,
+                I18nAssetSeverity::Warning,
+            ) {
+                Ok(diagnostics) => result.diagnostics.extend(diagnostics),
+                Err(diagnostic) => result.diagnostics.push(as_warning(diagnostic)),
+            },
+            Err(diagnostic) => result.diagnostics.push(diagnostic),
+        }
+    }
     result.i18n_scan = Some(scan);
 
     if !result.has_errors() {
@@ -71,4 +91,10 @@ pub fn run_i18n_build(request: I18nBuildRequest) -> CommandResult {
 
     result.elapsed_ms = started.elapsed().as_millis();
     result
+}
+
+/// Converts a diagnostic into a warning while preserving message details.
+fn as_warning(mut diagnostic: Diagnostic) -> Diagnostic {
+    diagnostic.severity = Severity::Warning;
+    diagnostic
 }

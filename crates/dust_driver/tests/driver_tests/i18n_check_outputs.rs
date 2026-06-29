@@ -239,6 +239,10 @@ fn write_i18n_config(workspace: &tempfile::TempDir) {
         &workspace.path().join("dust.yaml"),
         "i18n:\n  locales: [en, my]\n",
     );
+    write_file(
+        &workspace.path().join("pubspec.yaml"),
+        "name: dust_test\nflutter:\n  assets:\n    - assets/i18n/en/\n    - assets/i18n/my/\n",
+    );
 }
 
 fn write_complete_shop_arb(workspace: &tempfile::TempDir) {

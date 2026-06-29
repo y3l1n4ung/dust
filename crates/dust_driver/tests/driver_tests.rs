@@ -15,6 +15,9 @@ mod i18n_outputs;
 #[path = "driver_tests/i18n_check_outputs.rs"]
 mod i18n_check_outputs;
 
+#[path = "driver_tests/i18n_asset_outputs.rs"]
+mod i18n_asset_outputs;
+
 #[path = "driver_tests/i18n_stress_outputs.rs"]
 mod i18n_stress_outputs;
 

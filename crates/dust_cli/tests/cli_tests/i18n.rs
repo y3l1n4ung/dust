@@ -10,6 +10,10 @@ fn cli_i18n_build_writes_arb_files() {
         "i18n:\n  locales: [en, my]\n",
     );
     write_file(
+        &workspace.path().join("pubspec.yaml"),
+        "name: dust_test\nflutter:\n  assets:\n    - assets/i18n/en/\n    - assets/i18n/my/\n",
+    );
+    write_file(
         &workspace.path().join("lib/home.dart"),
         r#"
 import 'package:dust_flutter/i18n.dart';
@@ -49,6 +53,10 @@ fn cli_i18n_check_reports_clean_arb_files() {
     write_file(
         &workspace.path().join("dust.yaml"),
         "i18n:\n  locales: [en, my]\n",
+    );
+    write_file(
+        &workspace.path().join("pubspec.yaml"),
+        "name: dust_test\nflutter:\n  assets:\n    - assets/i18n/en/\n    - assets/i18n/my/\n",
     );
     write_file(
         &workspace.path().join("lib/home.dart"),

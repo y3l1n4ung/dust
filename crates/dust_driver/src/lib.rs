@@ -16,6 +16,8 @@ mod context;
 mod doctor;
 /// ARB reconciliation helpers for i18n build.
 mod i18n_arb;
+/// Flutter asset declaration checks for i18n ARB files.
+mod i18n_assets;
 /// Generated i18n bootstrap output.
 mod i18n_bootstrap;
 /// Workspace i18n ARB build command.
