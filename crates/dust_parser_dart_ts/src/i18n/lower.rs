@@ -28,10 +28,17 @@ fn lower_call(
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Option<I18nTranslationUse> {
     let first_argument = first_positional_argument(arguments)?;
+    if call_shape.kind == I18nCallKind::HardcodedText {
+        if static_string(first_argument, source).is_some() {
+            diagnostics.push(hardcoded_text_diagnostic(source, call_shape.span));
+        }
+        return None;
+    }
+
     let Some(key) = static_string(first_argument, source) else {
         diagnostics.push(non_literal_key_diagnostic(
             source,
-            call_shape.kind,
+            call_shape.translation_kind()?,
             call_shape.span,
         ));
         return None;
@@ -47,7 +54,7 @@ fn lower_call(
         key,
         default_text,
         args,
-        kind: call_shape.kind,
+        kind: call_shape.translation_kind()?,
         span: call_shape.span,
     })
 }
@@ -63,7 +70,14 @@ fn call_shape(call: Node<'_>, source: &SourceText) -> Option<I18nCallShape> {
 /// Resolves `const TranslatedText(...)`.
 fn const_object_call_shape(call: Node<'_>, source: &SourceText) -> Option<I18nCallShape> {
     let type_node = call.child_by_field_name("type")?;
-    if node_text(type_node, source) != "TranslatedText" {
+    let type_name = node_text(type_node, source);
+    if type_name == "Text" {
+        return Some(I18nCallShape {
+            kind: I18nCallKind::HardcodedText,
+            span: text_range(call.start_byte(), call.end_byte()),
+        });
+    }
+    if type_name != "TranslatedText" {
         return None;
     }
     if call
@@ -73,7 +87,7 @@ fn const_object_call_shape(call: Node<'_>, source: &SourceText) -> Option<I18nCa
         return None;
     }
     Some(I18nCallShape {
-        kind: I18nTranslationKind::TranslatedText,
+        kind: I18nCallKind::Translation(I18nTranslationKind::TranslatedText),
         span: text_range(call.start_byte(), call.end_byte()),
     })
 }
@@ -90,7 +104,14 @@ fn selector_call_shape(selector: Node<'_>, source: &SourceText) -> Option<I18nCa
 
     if previous.kind() == "identifier" && node_text(previous, source) == "TranslatedText" {
         return Some(I18nCallShape {
-            kind: I18nTranslationKind::TranslatedText,
+            kind: I18nCallKind::Translation(I18nTranslationKind::TranslatedText),
+            span: text_range(previous.start_byte(), selector.end_byte()),
+        });
+    }
+
+    if previous.kind() == "identifier" && node_text(previous, source) == "Text" {
+        return Some(I18nCallShape {
+            kind: I18nCallKind::HardcodedText,
             span: text_range(previous.start_byte(), selector.end_byte()),
         });
     }
@@ -103,7 +124,7 @@ fn selector_call_shape(selector: Node<'_>, source: &SourceText) -> Option<I18nCa
         return None;
     }
     Some(I18nCallShape {
-        kind: I18nTranslationKind::ContextTr,
+        kind: I18nCallKind::Translation(I18nTranslationKind::ContextTr),
         span: text_range(receiver.start_byte(), selector.end_byte()),
     })
 }
@@ -207,6 +228,13 @@ fn non_literal_key_diagnostic(
     ))
 }
 
+/// Builds a warning for a hardcoded Flutter `Text` string literal.
+fn hardcoded_text_diagnostic(source: &SourceText, range: TextRange) -> Diagnostic {
+    Diagnostic::warning("hardcoded Text string; use TranslatedText or context.tr").with_label(
+        SourceLabel::new(source.file_id(), range, "hardcoded UI text used here"),
+    )
+}
+
 /// Returns the first key segment as the namespace.
 fn namespace_for(key: &str) -> String {
     key.split_once('.')
@@ -259,8 +287,27 @@ fn offset(value: usize) -> TextSize {
 
 /// Matched i18n call metadata.
 struct I18nCallShape {
-    /// Recognized public i18n API kind.
-    kind: I18nTranslationKind,
+    /// Recognized call kind.
+    kind: I18nCallKind,
     /// Full source span for the call.
     span: TextRange,
+}
+
+impl I18nCallShape {
+    /// Returns the public translation API kind when this is a translation call.
+    fn translation_kind(&self) -> Option<I18nTranslationKind> {
+        match self.kind {
+            I18nCallKind::Translation(kind) => Some(kind),
+            I18nCallKind::HardcodedText => None,
+        }
+    }
+}
+
+/// Recognized call kinds relevant to i18n scanning.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum I18nCallKind {
+    /// A public i18n translation API call.
+    Translation(I18nTranslationKind),
+    /// A direct Flutter `Text("literal")` call.
+    HardcodedText,
 }

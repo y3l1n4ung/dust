@@ -93,6 +93,38 @@ Widget build(BuildContext context) {
 }
 
 #[test]
+fn warns_on_direct_hardcoded_text_literals() {
+    let source = source_text(
+        r#"
+Widget build(BuildContext context) {
+  return Column(children: [
+    const Text('Checkout'),
+    Text("Cart"),
+    Text(context.tr('shop_title')),
+  ]);
+}
+"#,
+    );
+
+    let result = scan_i18n_source(&source);
+
+    assert_eq!(result.entries.len(), 1);
+    assert_eq!(result.entries[0].key, "shop_title");
+    assert_eq!(result.diagnostics.len(), 2);
+    assert!(
+        result
+            .diagnostics
+            .iter()
+            .all(|item| item.severity == Severity::Warning)
+    );
+    assert!(
+        result.diagnostics.iter().all(|item| {
+            item.message == "hardcoded Text string; use TranslatedText or context.tr"
+        })
+    );
+}
+
+#[test]
 fn scans_shopping_app_i18n_sample_without_dynamic_warnings() {
     let source = source_text(include_str!(
         "../../../../examples/shopping_app/lib/features/products/views/products_screen.dart"

@@ -169,6 +169,37 @@ void build(context, dynamicKey) {
     );
 }
 
+#[test]
+fn cli_i18n_scan_warns_on_hardcoded_text_literals() {
+    let workspace = make_workspace();
+    write_file(
+        &workspace.path().join("lib/home.dart"),
+        r#"
+import 'package:dust_flutter/i18n.dart';
+import 'package:flutter/widgets.dart';
+
+void build(context) {
+  const Text('Checkout');
+  Text(context.tr('shop_title'));
+}
+"#,
+    );
+
+    let run = run_cli(["i18n", "scan", "--root", workspace.path().to_str().unwrap()]);
+
+    assert_eq!(run.exit_code, 0, "{}", run.stderr);
+    assert!(run.stderr.is_empty());
+    assert!(run.stdout.contains("i18n scan  files: 1  keys: 1"));
+    assert!(
+        run.stdout
+            .contains("diagnostics  errors: 0  warnings: 1  notes: 0")
+    );
+    assert!(
+        run.stdout
+            .contains("hardcoded Text string; use TranslatedText or context.tr")
+    );
+}
+
 fn strip_banner_and_time(source: &str) -> String {
     let mut lines = source
         .split_once("\n\n")
