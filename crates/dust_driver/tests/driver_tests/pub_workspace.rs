@@ -71,9 +71,10 @@ fn watch_rebuilds_member_package_when_shared_workspace_config_changes() {
          }\n",
     );
 
+    let initial_output = package_root.join("lib/user.g.dart");
     let shared_package_config = workspace.path().join(".dart_tool/package_config.json");
     let modifier = std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(25));
+        wait_for_path(&initial_output);
         let replacement = shared_package_config.with_extension("json.next");
         std::fs::write(&replacement, "{\"configVersion\":3}\n").unwrap();
         std::fs::rename(replacement, shared_package_config).unwrap();
@@ -97,6 +98,18 @@ fn watch_rebuilds_member_package_when_shared_workspace_config_changes() {
             package_root.join("lib/user.dart")
         ]
     );
+}
+
+fn wait_for_path(path: &std::path::Path) {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
+    while !path.exists() {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "timed out waiting for `{}`",
+            path.display()
+        );
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
 }
 
 #[test]
