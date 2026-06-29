@@ -15,8 +15,7 @@ state management, and database codegen.
 - Stable public APIs for features marked stable.
 - Performance and quality improvements should change generated code, the Rust
   engine, and runtime internals first.
-- Features marked 50% stable may still receive API refinements before
-  stabilization.
+- Features marked beta may still receive API refinements before stabilization.
 - Your handwritten product code should stay focused on product logic.
 
 > [!IMPORTANT]
@@ -45,12 +44,12 @@ state management, and database codegen.
 | **JSON Serialization** | Stable public API. API will not change. | Blazing fast JSON encode/decode with support for renames and custom codecs. | [Read Guide →](docs/usage/serde.md) |
 | **Validation** | Stable public API. API will not change. | Generated model and Flutter form validation from typed field rules. | [Read Guide →](docs/usage/validation.md) |
 | **HTTP Client** | Stable public API. API will not change. | Type-safe, Dio-backed API client generation from annotations. | [Read Guide →](docs/usage/http.md) |
-| **Routing** | 50% stable. API may still be refined. | Boilerplate-free Navigator 2.0 routing with typed parameters. | [Read Guide →](docs/usage/routing.md) |
-| **State Management** | 50% stable. API may still be refined. | Lightweight, high-performance state containers with action generation. | [Read Guide →](docs/usage/state.md) |
-| **Dust DB** | 50% stable. API may still be refined. | SQLx-style sqlite3 query validation, DAOs, and row mapping. | [Read Guide →](docs/usage/db.md) |
+| **Routing** | Beta. API may still be refined. | Boilerplate-free Navigator 2.0 routing with typed parameters. | [Read Guide →](docs/usage/routing.md) |
+| **State Management** | Beta. API may still be refined. | Lightweight, high-performance state containers with action generation. | [Read Guide →](docs/usage/state.md) |
+| **Dust DB** | Beta. API may still be refined. | SQLx-style sqlite3 query validation, DAOs, and row mapping. | [Read Guide →](docs/usage/db.md) |
 | **Firebase** | Coming soon. | Typed Firebase integration and generated data access helpers. | _(Coming Soon)_ |
 | **Supabase** | Coming soon. | Typed Supabase integration and generated data access helpers. | _(Coming Soon)_ |
-| **i18n** | Planned. | Extraction-first translation system with chunked generation. | _(Coming Soon)_ |
+| **i18n** | Beta. API may still be refined. | Flutter i18n runtime, ARB assets, static scanning, generated bootstrap, and translation checks. | [Read Guide →](docs/usage/i18n.md) |
 
 ---
 
@@ -70,7 +69,7 @@ irm https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.ps1 | iex
 
 ### 2. Add Annotations
 ```dart
-import 'package:dust_dart/serde.dart';
+import 'package:dust_dart/dust_dart.dart';
 
 part 'user.g.dart';
 

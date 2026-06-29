@@ -67,8 +67,8 @@ You focus on product. We focus on performance.
 
 App-facing APIs marked stable should not change. When possible, improvements
 belong in generated code, runtime internals, or the Rust engine rather than in
-migration work for handwritten product code. Features marked 50% stable can
-still refine app-facing APIs before stabilization.
+migration work for handwritten product code. Features marked beta can still
+refine app-facing APIs before stabilization.
 
 > [!IMPORTANT]
 > **Performance is a Requirement:**

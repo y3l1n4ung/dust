@@ -8,7 +8,7 @@ You focus on product. We focus on performance.
 
 - Stable Dart authoring APIs for data classes, JSON, validation, and HTTP
   client generation.
-- DB APIs are 50% stable and may still be refined before stabilization.
+- DB APIs are beta and may still be refined before stabilization.
 - Generated code and runtime helpers can improve without forcing app-code
   rewrites.
 - No external functional dependency for core generated-code contracts.

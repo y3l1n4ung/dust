@@ -6,7 +6,7 @@ You focus on product. We focus on performance.
 
 ## Our Promise
 
-- Routing, state management, and i18n APIs are 50% stable and may still be refined
+- Routing, state management, and i18n APIs are beta and may still be refined
   before stabilization.
 - Generated code can improve while app widgets and product logic stay focused.
 - No external routing or state-management package is required by Dust.
