@@ -18,7 +18,9 @@ import 'package:dust_benchmark_project/state/benchmark_view_model.dart';
 abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
   @override
   Listenable? get refreshListenable => (this as BenchmarkRouter).refresh;
-  RouterConfig<AppRoutePath> get config {
+  late final RouterConfig<AppRoutePath> config = _buildConfig();
+
+  RouterConfig<AppRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
       initialRoute: const HomeRoute(),

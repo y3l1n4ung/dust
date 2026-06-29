@@ -11,7 +11,9 @@ import 'route.dart';
 
 abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
 
-  RouterConfig<AppRoutePath> get config {
+  late final RouterConfig<AppRoutePath> config = _buildConfig();
+
+  RouterConfig<AppRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
       initialRoute: const DashboardRoute(),
