@@ -8,7 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
-import 'package:route_test/layout/app_shell.dart';
+import 'package:route_test/layout/app_shell.dart' as ui show AppShell hide InternalShell;
 import 'package:route_test/pages/project_page.dart';
 
 abstract class $TestRouter extends RouterBase<AppRoutePath> {
@@ -59,7 +59,7 @@ const List<GeneratedRoute> $appRoutes = [
         ':projectId',
         page: ProjectPage,
         name: 'project',
-        shell: AppShell,
+        shell: ui.AppShell,
       ),
     ],
   ),
@@ -196,7 +196,7 @@ bool? _parseBool(String? value) {
 
 const Map<Type, Type?> _kAppliedShellsByPage = {
   NotFoundPage: null,
-  ProjectPage: AppShell,
+  ProjectPage: ui.AppShell,
 };
 
 bool _shellConsistencyCheck() {
@@ -230,7 +230,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       name: 'project',
       fullscreenDialog: false,
       maintainState: true,
-      child: AppShell(child: ProjectPage(projectId: projectId)),
+      child: ui.AppShell(child: ProjectPage(projectId: projectId)),
     ),
   };
 }

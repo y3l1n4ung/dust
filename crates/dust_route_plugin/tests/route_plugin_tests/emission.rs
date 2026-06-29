@@ -251,7 +251,15 @@ fn emits_workspace_page_imports_and_query_defaults() {
             },
             "import_uri": "package:route_test/pages/search_page.dart",
             "source_path": "lib/pages/search_page.dart",
-            "imports": ["package:route_test/layout/app_shell.dart"],
+            "imports": [
+                {
+                    "uri": "package:route_test/layout/app_shell.dart",
+                    "prefix": null,
+                    "show": [],
+                    "hide": [],
+                    "is_deferred": false
+                }
+            ],
             "params": [
                 {
                     "name": "page",
@@ -289,7 +297,7 @@ fn emits_shell_import_from_route_page_library_imports() {
             "annotation": {
                 "path": "/projects/:projectId",
                 "name": "project",
-                "shell": "AppShell",
+                "shell": "ui.AppShell",
                 "guards": [],
                 "guards_configured": false,
                 "transition": null,
@@ -298,7 +306,15 @@ fn emits_shell_import_from_route_page_library_imports() {
             },
             "import_uri": "package:route_test/pages/project_page.dart",
             "source_path": "lib/pages/project_page.dart",
-            "imports": ["package:route_test/layout/app_shell.dart"],
+            "imports": [
+                {
+                    "uri": "package:route_test/layout/app_shell.dart",
+                    "prefix": "ui",
+                    "show": ["AppShell"],
+                    "hide": ["InternalShell"],
+                    "is_deferred": false
+                }
+            ],
             "params": [
                 {
                     "name": "projectId",

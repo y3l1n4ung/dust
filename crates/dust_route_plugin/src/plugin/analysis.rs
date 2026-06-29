@@ -5,7 +5,7 @@ use dust_plugin_api::{WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 
 use super::{
     constants::{GUARDS_ANALYSIS_KEY, ROUTE, ROUTER, ROUTERS_ANALYSIS_KEY, ROUTES_ANALYSIS_KEY},
-    model::{GuardFact, GuardParamFact, RouteFact, RouteParamFact, RouterFact},
+    model::{GuardFact, GuardParamFact, RouteFact, RouteImport, RouteParamFact, RouterFact},
     parse::{parse_route_surface, parse_router_surface},
 };
 
@@ -148,12 +148,25 @@ fn import_uri(context: WorkspaceAnalysisContext<'_>) -> String {
 fn library_imports(
     context: WorkspaceAnalysisContext<'_>,
     library: &ParsedDartFileSurface,
-) -> Vec<String> {
+) -> Vec<RouteImport> {
     let mut imports = library
         .directives
         .iter()
         .filter_map(|directive| match directive {
-            ParsedDirective::Import { uri, .. } => normalize_import_uri(context, uri),
+            ParsedDirective::Import {
+                uri,
+                prefix,
+                show,
+                hide,
+                is_deferred,
+                ..
+            } => normalize_import_uri(context, uri).map(|uri| RouteImport {
+                uri,
+                prefix: prefix.clone(),
+                show: show.clone(),
+                hide: hide.clone(),
+                is_deferred: *is_deferred,
+            }),
             _ => None,
         })
         .collect::<Vec<_>>();

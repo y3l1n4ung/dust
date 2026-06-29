@@ -17,9 +17,24 @@ pub(crate) struct RouteFact {
     /// Source path that contributed the route fact.
     pub(crate) source_path: String,
     /// Imports required by generated code for this route.
-    pub(crate) imports: Vec<String>,
+    pub(crate) imports: Vec<RouteImport>,
     /// Constructor parameters available for route generation.
     pub(crate) params: Vec<RouteParamFact>,
+}
+
+/// One import directive required by generated route output.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub(crate) struct RouteImport {
+    /// Imported URI after route-output normalization.
+    pub(crate) uri: String,
+    /// Optional import prefix.
+    pub(crate) prefix: Option<String>,
+    /// Names included by `show` combinators.
+    pub(crate) show: Vec<String>,
+    /// Names excluded by `hide` combinators.
+    pub(crate) hide: Vec<String>,
+    /// Whether the import uses `deferred as`.
+    pub(crate) is_deferred: bool,
 }
 
 /// One route constructor parameter fact collected during workspace analysis.
@@ -143,7 +158,7 @@ pub(crate) struct RouteSpec {
     /// Optional import URI for workspace routes outside the current library.
     pub(crate) import_uri: Option<String>,
     /// Additional imports needed by workspace routes.
-    pub(crate) imports: Vec<String>,
+    pub(crate) imports: Vec<RouteImport>,
 }
 
 /// One router field available for generated refresh and guard injection.
