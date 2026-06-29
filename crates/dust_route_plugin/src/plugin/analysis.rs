@@ -48,6 +48,10 @@ pub(crate) fn collect_route_workspace_analysis(
         }
         let guard_fact = GuardFact {
             class_name: class.name.clone(),
+            has_unnamed_constructor: class
+                .constructors
+                .iter()
+                .any(|constructor| constructor.name.is_none() && !constructor.is_factory),
             import_uri: import_uri(context),
             source_path: context.source_path.display().to_string(),
             params: guard_params(class),
