@@ -33,11 +33,33 @@ fn build_writes_generated_i18n_bootstrap() {
             r#"import 'dart:async' show unawaited;
 
 import 'package:dust_flutter/i18n.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/widgets.dart';
 
 const List<String> appI18nLocales = <String>['en', 'my'];
+const List<Locale> appI18nSupportedLocales = <Locale>[
+  Locale.fromSubtags(languageCode: 'en'),
+  Locale.fromSubtags(languageCode: 'my'),
+];
+const List<LocalizationsDelegate<dynamic>> appI18nLocalizationsDelegates =
+    <LocalizationsDelegate<dynamic>>[
+  GlobalMaterialLocalizations.delegate,
+  GlobalCupertinoLocalizations.delegate,
+  GlobalWidgetsLocalizations.delegate,
+];
 const String appI18nFallbackLocale = 'en';
 const String appI18nAssetPattern = defaultI18nAssetPattern;
+
+Locale appI18nLocaleOf(String locale) {
+  switch (locale) {
+    case 'en':
+      return Locale.fromSubtags(languageCode: 'en');
+    case 'my':
+      return Locale.fromSubtags(languageCode: 'my');
+    default:
+      return Locale(locale);
+  }
+}
 
 const I18nConfig appI18nConfig = I18nConfig(
   locales: appI18nLocales,
@@ -103,6 +125,38 @@ class _AppI18nState extends State<AppI18n> {
 "#
         )
     );
+}
+
+#[test]
+fn build_writes_i18n_bootstrap_locale_subtags() {
+    let workspace = make_workspace();
+    write_file(
+        &workspace.path().join("dust.yaml"),
+        "i18n:\n  locales: [en_US, en_US_POSIX, zh_Hans, zh_Hans_CN]\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+        db: Default::default(),
+    });
+
+    assert!(!result.has_errors(), "{:?}", result.diagnostics);
+    let output = fs::read_to_string(workspace.path().join("lib/i18n/app_i18n.g.dart")).unwrap();
+    assert!(output.contains(
+        "const List<String> appI18nLocales = <String>['en_US', 'en_US_POSIX', 'zh_Hans', 'zh_Hans_CN'];"
+    ));
+    assert!(output.contains("Locale.fromSubtags(languageCode: 'en', countryCode: 'US')"));
+    assert!(!output.contains("scriptCode: 'US'"));
+    assert!(!output.contains("countryCode: 'POSIX'"));
+    assert!(output.contains("Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hans')"));
+    assert!(
+        output.contains(
+            "Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hans', countryCode: 'CN')"
+        )
+    );
+    assert!(output.contains("case 'zh_Hans_CN':"));
 }
 
 #[test]

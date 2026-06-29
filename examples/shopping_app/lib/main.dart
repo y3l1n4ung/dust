@@ -2,7 +2,6 @@ import 'dart:async' show unawaited;
 
 import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:dust_flutter/state.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -164,18 +163,12 @@ class _ShoppingRouterAppState extends State<_ShoppingRouterApp> {
   Widget build(BuildContext context) {
     final router = _router;
     final i18n = I18nScope.of(context);
-    final locale = Locale(i18n.locale);
-    final supportedLocales =
-        i18n.config.locales.map(Locale.new).toList(growable: false);
+    final locale = appI18nLocaleOf(i18n.locale);
     if (router == null) {
       return MaterialApp(
         locale: locale,
-        supportedLocales: supportedLocales,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-        ],
+        supportedLocales: appI18nSupportedLocales,
+        localizationsDelegates: appI18nLocalizationsDelegates,
         home: const Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
@@ -187,12 +180,8 @@ class _ShoppingRouterAppState extends State<_ShoppingRouterApp> {
       ),
       debugShowCheckedModeBanner: false,
       locale: locale,
-      supportedLocales: supportedLocales,
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
+      supportedLocales: appI18nSupportedLocales,
+      localizationsDelegates: appI18nLocalizationsDelegates,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
