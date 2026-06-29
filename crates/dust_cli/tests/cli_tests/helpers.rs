@@ -104,7 +104,7 @@ mod tests {
 
     #[test]
     fn fixture_dust_import_detects_prefixed_and_mixed_annotations() {
-        let contents = "@r.Route('/profile')\n@ d.Derive([d.ToString()])\nclass Profile {}\n";
+        let contents = "@r.AppRoute('/profile')\n@ d.Derive([d.ToString()])\nclass Profile {}\n";
 
         assert_eq!(
             fixture_dust_import(contents).as_deref(),
