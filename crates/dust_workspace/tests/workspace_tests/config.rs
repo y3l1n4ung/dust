@@ -1,4 +1,6 @@
-use dust_workspace::{I18nConfig, PackageConfigKind, load_dust_config, load_package_config};
+use dust_workspace::{
+    I18nConfig, PackageConfigKind, load_dust_config, load_flutter_assets, load_package_config,
+};
 use tempfile::tempdir;
 
 use crate::support::write_file;
@@ -147,4 +149,39 @@ fn load_dust_config_reads_i18n_locales() {
             locales: vec!["en".to_owned(), "my".to_owned()]
         })
     );
+}
+
+#[test]
+fn load_flutter_assets_reads_string_and_object_entries() {
+    let root = tempdir().unwrap();
+    write_file(
+        &root.path().join("pubspec.yaml"),
+        r#"
+name: dust_test
+flutter:
+  assets:
+    - assets/i18n/en/
+    - path: assets/i18n/my/shop.arb
+"#,
+    );
+
+    let assets = load_flutter_assets(root.path()).unwrap();
+
+    assert_eq!(
+        assets,
+        vec![
+            "assets/i18n/en/".to_owned(),
+            "assets/i18n/my/shop.arb".to_owned()
+        ]
+    );
+}
+
+#[test]
+fn load_flutter_assets_defaults_to_empty_assets() {
+    let root = tempdir().unwrap();
+    write_file(&root.path().join("pubspec.yaml"), "name: dust_test\n");
+
+    let assets = load_flutter_assets(root.path()).unwrap();
+
+    assert!(assets.is_empty());
 }
