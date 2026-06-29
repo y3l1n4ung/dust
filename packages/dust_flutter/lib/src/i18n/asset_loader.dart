@@ -68,6 +68,21 @@ extension I18nAssetLoading on I18nController {
     addBundles(loaded);
     return loaded;
   }
+
+  /// Applies a JSON or ARB payload as runtime overrides for one namespace.
+  I18nBundle applyOverrideBundle(
+    String source, {
+    required String locale,
+    required String namespace,
+  }) {
+    final bundle = I18nArbParser.parse(
+      source,
+      locale: locale,
+      namespace: namespace,
+    );
+    setOverrideBundle(bundle);
+    return bundle;
+  }
 }
 
 /// Parser for the ARB subset used by the runtime loader.

@@ -115,6 +115,18 @@ class I18nController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Replaces runtime overrides for one namespace bundle.
+  void setOverrideBundle(I18nBundle bundle) {
+    _checkLocale(bundle.locale);
+    final prefix = '${bundle.namespace}_';
+    final next = Map<String, String>.of(_overrides)
+      ..removeWhere((key, value) => key.startsWith(prefix));
+    for (final entry in bundle.messages.entries) {
+      next[_overrideKey(bundle.namespace, entry.key)] = entry.value;
+    }
+    setOverrides(next);
+  }
+
   /// Clears all runtime translation overrides.
   void clearOverrides() {
     if (_overrides.isEmpty) return;
@@ -166,6 +178,11 @@ class I18nController extends ChangeNotifier {
       throw ArgumentError.value(locale, 'locale', 'unsupported locale');
     }
   }
+}
+
+String _overrideKey(String namespace, String key) {
+  final prefix = '${namespace}_';
+  return key.startsWith(prefix) ? key : '$prefix$key';
 }
 
 /// Provides an [I18nController] to a widget subtree.
