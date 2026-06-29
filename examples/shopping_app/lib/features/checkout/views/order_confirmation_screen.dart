@@ -1,9 +1,9 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 
-@Route(
+@AppRoute(
   '/order-confirmation/:orderId',
   name: 'orderConfirmation',
   guards: [],

@@ -1,5 +1,5 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 import '../../../shared/widgets/snackbars/app_snackbar.dart';
@@ -12,7 +12,7 @@ import '../models/product_detail_state.dart';
 import '../models/product_review.dart';
 import '../view_models/product_detail_view_model.dart';
 
-@Route('/product/:productId', name: 'productDetail', guards: [])
+@AppRoute('/product/:productId', name: 'productDetail', guards: [])
 class ProductDetailScreen extends StatefulWidget {
   final int productId;
 

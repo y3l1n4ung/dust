@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../route.dart';
 import '../state/benchmark_state.dart';
@@ -7,7 +7,7 @@ import 'benchmark_shell.dart';
 
 const benchmarkFeatures = ['derive', 'serde', 'http', 'route', 'state'];
 
-@Route(
+@AppRoute(
   '/',
   name: 'home',
   shell: BenchmarkShell,

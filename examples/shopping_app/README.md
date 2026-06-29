@@ -42,8 +42,8 @@ flutter build web
 
 ## Codegen Contract
 
-- `lib/route.dart` owns `@Router`; `lib/route.g.dart` is generated.
-- Pages use `@Route` directly on normal Flutter widgets.
+- `lib/route.dart` owns `@AppRouter`; `lib/route.g.dart` is generated.
+- Pages use `@AppRoute` directly on normal Flutter widgets.
 - Routes with `guards: []` are intentionally public; routes that omit `guards:`
   stay protected by default through generated `requiresAuth`.
 - ViewModels use `@ViewModel` with typed args, for example `AppViewModelArgs(repository, storage)`.

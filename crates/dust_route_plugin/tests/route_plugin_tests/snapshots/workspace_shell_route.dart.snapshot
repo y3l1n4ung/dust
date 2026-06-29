@@ -3,17 +3,19 @@
 //
 // ignore_for_file: unused_import, unnecessary_import
 
-import 'package:flutter/material.dart' hide Route;
-import 'package:flutter/cupertino.dart' hide Route;
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
-import 'package:route_test/layout/app_shell.dart';
+import 'package:route_test/layout/app_shell.dart' as ui show AppShell hide InternalShell;
 import 'package:route_test/pages/project_page.dart';
 
-abstract class $AppRouter extends RouterBase<AppRoutePath> {
+abstract class $TestRouter extends RouterBase<AppRoutePath> {
 
-  RouterConfig<AppRoutePath> get config {
+  late final RouterConfig<AppRoutePath> config = _buildConfig();
+
+  RouterConfig<AppRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
       initialRoute: const ProjectRoute(),
@@ -57,7 +59,7 @@ const List<GeneratedRoute> $appRoutes = [
         ':projectId',
         page: ProjectPage,
         name: 'project',
-        shell: AppShell,
+        shell: ui.AppShell,
       ),
     ],
   ),
@@ -116,7 +118,7 @@ bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
 
 List<Object> routeGuards(
   AppRoutePath route,
-  $AppRouter router,
+  $TestRouter router,
 ) {
   return switch (route) {
     _ => const [],
@@ -194,7 +196,7 @@ bool? _parseBool(String? value) {
 
 const Map<Type, Type?> _kAppliedShellsByPage = {
   NotFoundPage: null,
-  ProjectPage: AppShell,
+  ProjectPage: ui.AppShell,
 };
 
 bool _shellConsistencyCheck() {
@@ -208,13 +210,14 @@ bool _shellConsistencyCheck() {
   return $appRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(AppRoutePath route) {
+Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
   assert(
     _shellConsistencyCheck(),
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
     NotFoundRoute(path: final path) => generatedPage(
+      key: key,
       location: route.location,
       name: 'notFound',
       fullscreenDialog: false,
@@ -222,11 +225,12 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: NotFoundPage(path: path),
     ),
     ProjectRoute(projectId: final projectId) => generatedPage(
+      key: key,
       location: route.location,
       name: 'project',
       fullscreenDialog: false,
       maintainState: true,
-      child: AppShell(child: ProjectPage(projectId: projectId)),
+      child: ui.AppShell(child: ProjectPage(projectId: projectId)),
     ),
   };
 }

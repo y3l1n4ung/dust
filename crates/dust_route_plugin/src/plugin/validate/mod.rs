@@ -10,7 +10,7 @@ use super::{
     parse::{parse_route_config, route_config},
 };
 
-/// Validates all `@Route` pages in a lowered Dart library.
+/// Validates all `@AppRoute` pages in a lowered Dart library.
 pub(crate) fn validate_library_routes(library: &DartFileIr) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let mut paths = HashSet::new();
@@ -27,7 +27,7 @@ pub(crate) fn validate_library_routes(library: &DartFileIr) -> Vec<Diagnostic> {
         };
         let Some(route) = parse_route_config(config) else {
             diagnostics.push(Diagnostic::error(format!(
-                "`@Route` on `{}` requires a string path argument",
+                "`@AppRoute` on `{}` requires a string path argument",
                 class.name
             )));
             continue;

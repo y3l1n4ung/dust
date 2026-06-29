@@ -151,12 +151,12 @@ class _ShoppingRouterApp extends StatefulWidget {
 }
 
 class _ShoppingRouterAppState extends State<_ShoppingRouterApp> {
-  AppRouter? _router;
+  ShoppingRouter? _router;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _router ??= AppRouter(auth: AuthViewModelScope.read(context));
+    _router ??= ShoppingRouter(auth: AuthViewModelScope.read(context));
   }
 
   @override

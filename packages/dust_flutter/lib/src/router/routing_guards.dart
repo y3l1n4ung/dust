@@ -15,7 +15,7 @@ abstract interface class AsyncRouteGuard<T extends Object> {
   Future<T?> canActivate(T route);
 }
 
-/// Runs route guards in deterministic sync-then-async order.
+/// Runs route guards in generated declaration order.
 final class RouteGuardChain<T extends Object> {
   /// Creates a guard chain.
   const RouteGuardChain(this.guards);
@@ -23,17 +23,13 @@ final class RouteGuardChain<T extends Object> {
   /// Guards to run. Generated code guarantees each entry is a supported guard.
   final List<Object> guards;
 
-  /// Runs sync guards first, then async guards, preserving declaration order.
+  /// Runs sync and async guards in the order generated for the route.
   Future<T?> canActivate(T route) async {
     for (final guard in guards) {
       if (guard is RouteGuard<T>) {
         final redirected = guard.canActivate(route);
         if (redirected != null) return redirected;
-      }
-    }
-
-    for (final guard in guards) {
-      if (guard is AsyncRouteGuard<T>) {
+      } else if (guard is AsyncRouteGuard<T>) {
         final redirected = await guard.canActivate(route);
         if (redirected != null) return redirected;
       }

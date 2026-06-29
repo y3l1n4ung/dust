@@ -1,5 +1,5 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 import '../../../shared/widgets/dialogs/loading_dialog.dart';
@@ -12,7 +12,7 @@ import '../models/checkout_state.dart';
 import '../view_models/checkout_view_model.dart';
 import 'checkout_order_summary.dart';
 
-@Route(
+@AppRoute(
   '/checkout',
   name: 'checkout',
   transition: BottomToTopPageTransitionsBuilder(),
