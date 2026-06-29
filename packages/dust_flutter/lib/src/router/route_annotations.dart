@@ -1,23 +1,23 @@
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 /// Marks the single router entrypoint for a Flutter application.
 ///
 /// [initial] and [notFound] are route paths, not page classes. Dust validates
-/// that both paths match generated `@Route` pages.
+/// that both paths match generated `@AppRoute` pages.
 ///
 /// Example:
 ///
 /// ```dart
-/// @Router(initial: '/', notFound: '/404')
-/// final class AppRouter extends $AppRouter {
-///   AppRouter({required this.auth});
+/// @AppRouter(initial: '/', notFound: '/404')
+/// final class RootRouter extends $RootRouter {
+///   RootRouter({required this.auth});
 ///
 ///   final AuthViewModel auth;
 /// }
 /// ```
-class Router {
+class AppRouter {
   /// Creates a router root annotation.
-  const Router({required this.initial, required this.notFound});
+  const AppRouter({required this.initial, required this.notFound});
 
   /// Initial route path, for example `/`.
   final String initial;
@@ -37,7 +37,7 @@ class Router {
 /// Example:
 ///
 /// ```dart
-/// @Route('/projects/:projectId', name: 'project', shell: AppShell)
+/// @AppRoute('/projects/:projectId', name: 'project', shell: AppShell)
 /// final class ProjectPage extends StatelessWidget {
 ///   const ProjectPage({
 ///     super.key,
@@ -49,9 +49,9 @@ class Router {
 ///   final String? tab;
 /// }
 /// ```
-class Route {
+class AppRoute {
   /// Creates a page route annotation.
-  const Route(
+  const AppRoute(
     this.path, {
     this.name,
     this.shell,

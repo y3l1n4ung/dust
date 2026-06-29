@@ -3,15 +3,17 @@
 //
 // ignore_for_file: unused_import, unnecessary_import
 
-import 'package:flutter/material.dart' hide Route;
-import 'package:flutter/cupertino.dart' hide Route;
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
 
-abstract class $AppRouter extends RouterBase<AppRoutePath> {
+abstract class $TestRouter extends RouterBase<AppRoutePath> {
 
-  RouterConfig<AppRoutePath> get config {
+  late final RouterConfig<AppRoutePath> config = _buildConfig();
+
+  RouterConfig<AppRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
       initialRoute: const Route0Route(),
@@ -2346,7 +2348,7 @@ bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
 
 List<Object> routeGuards(
   AppRoutePath route,
-  $AppRouter router,
+  $TestRouter router,
 ) {
   return switch (route) {
     _ => const [],
@@ -3924,13 +3926,14 @@ bool _shellConsistencyCheck() {
   return $appRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(AppRoutePath route) {
+Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
   assert(
     _shellConsistencyCheck(),
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
     NotFoundRoute(path: final path) => generatedPage(
+      key: key,
       location: route.location,
       name: 'notFound',
       fullscreenDialog: false,
@@ -3938,6 +3941,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: NotFoundPage(path: path),
     ),
     Route0Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route0',
       fullscreenDialog: false,
@@ -3945,6 +3949,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page0(),
     ),
     Route1Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route1',
       fullscreenDialog: false,
@@ -3952,6 +3957,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page1(),
     ),
     Route10Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route10',
       fullscreenDialog: false,
@@ -3959,6 +3965,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page10(),
     ),
     Route100Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route100',
       fullscreenDialog: false,
@@ -3966,6 +3973,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page100(),
     ),
     Route101Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route101',
       fullscreenDialog: false,
@@ -3973,6 +3981,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page101(),
     ),
     Route102Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route102',
       fullscreenDialog: false,
@@ -3980,6 +3989,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page102(),
     ),
     Route103Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route103',
       fullscreenDialog: false,
@@ -3987,6 +3997,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page103(),
     ),
     Route104Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route104',
       fullscreenDialog: false,
@@ -3994,6 +4005,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page104(),
     ),
     Route105Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route105',
       fullscreenDialog: false,
@@ -4001,6 +4013,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page105(),
     ),
     Route106Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route106',
       fullscreenDialog: false,
@@ -4008,6 +4021,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page106(),
     ),
     Route107Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route107',
       fullscreenDialog: false,
@@ -4015,6 +4029,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page107(),
     ),
     Route108Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route108',
       fullscreenDialog: false,
@@ -4022,6 +4037,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page108(),
     ),
     Route109Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route109',
       fullscreenDialog: false,
@@ -4029,6 +4045,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page109(),
     ),
     Route11Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route11',
       fullscreenDialog: false,
@@ -4036,6 +4053,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page11(),
     ),
     Route110Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route110',
       fullscreenDialog: false,
@@ -4043,6 +4061,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page110(),
     ),
     Route111Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route111',
       fullscreenDialog: false,
@@ -4050,6 +4069,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page111(),
     ),
     Route112Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route112',
       fullscreenDialog: false,
@@ -4057,6 +4077,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page112(),
     ),
     Route113Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route113',
       fullscreenDialog: false,
@@ -4064,6 +4085,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page113(),
     ),
     Route114Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route114',
       fullscreenDialog: false,
@@ -4071,6 +4093,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page114(),
     ),
     Route115Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route115',
       fullscreenDialog: false,
@@ -4078,6 +4101,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page115(),
     ),
     Route116Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route116',
       fullscreenDialog: false,
@@ -4085,6 +4109,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page116(),
     ),
     Route117Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route117',
       fullscreenDialog: false,
@@ -4092,6 +4117,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page117(),
     ),
     Route118Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route118',
       fullscreenDialog: false,
@@ -4099,6 +4125,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page118(),
     ),
     Route119Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route119',
       fullscreenDialog: false,
@@ -4106,6 +4133,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page119(),
     ),
     Route12Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route12',
       fullscreenDialog: false,
@@ -4113,6 +4141,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page12(),
     ),
     Route120Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route120',
       fullscreenDialog: false,
@@ -4120,6 +4149,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page120(),
     ),
     Route121Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route121',
       fullscreenDialog: false,
@@ -4127,6 +4157,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page121(),
     ),
     Route122Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route122',
       fullscreenDialog: false,
@@ -4134,6 +4165,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page122(),
     ),
     Route123Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route123',
       fullscreenDialog: false,
@@ -4141,6 +4173,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page123(),
     ),
     Route124Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route124',
       fullscreenDialog: false,
@@ -4148,6 +4181,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page124(),
     ),
     Route125Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route125',
       fullscreenDialog: false,
@@ -4155,6 +4189,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page125(),
     ),
     Route126Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route126',
       fullscreenDialog: false,
@@ -4162,6 +4197,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page126(),
     ),
     Route127Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route127',
       fullscreenDialog: false,
@@ -4169,6 +4205,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page127(),
     ),
     Route128Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route128',
       fullscreenDialog: false,
@@ -4176,6 +4213,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page128(),
     ),
     Route129Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route129',
       fullscreenDialog: false,
@@ -4183,6 +4221,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page129(),
     ),
     Route13Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route13',
       fullscreenDialog: false,
@@ -4190,6 +4229,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page13(),
     ),
     Route130Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route130',
       fullscreenDialog: false,
@@ -4197,6 +4237,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page130(),
     ),
     Route131Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route131',
       fullscreenDialog: false,
@@ -4204,6 +4245,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page131(),
     ),
     Route132Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route132',
       fullscreenDialog: false,
@@ -4211,6 +4253,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page132(),
     ),
     Route133Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route133',
       fullscreenDialog: false,
@@ -4218,6 +4261,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page133(),
     ),
     Route134Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route134',
       fullscreenDialog: false,
@@ -4225,6 +4269,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page134(),
     ),
     Route135Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route135',
       fullscreenDialog: false,
@@ -4232,6 +4277,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page135(),
     ),
     Route136Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route136',
       fullscreenDialog: false,
@@ -4239,6 +4285,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page136(),
     ),
     Route137Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route137',
       fullscreenDialog: false,
@@ -4246,6 +4293,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page137(),
     ),
     Route138Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route138',
       fullscreenDialog: false,
@@ -4253,6 +4301,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page138(),
     ),
     Route139Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route139',
       fullscreenDialog: false,
@@ -4260,6 +4309,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page139(),
     ),
     Route14Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route14',
       fullscreenDialog: false,
@@ -4267,6 +4317,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page14(),
     ),
     Route140Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route140',
       fullscreenDialog: false,
@@ -4274,6 +4325,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page140(),
     ),
     Route141Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route141',
       fullscreenDialog: false,
@@ -4281,6 +4333,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page141(),
     ),
     Route142Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route142',
       fullscreenDialog: false,
@@ -4288,6 +4341,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page142(),
     ),
     Route143Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route143',
       fullscreenDialog: false,
@@ -4295,6 +4349,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page143(),
     ),
     Route144Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route144',
       fullscreenDialog: false,
@@ -4302,6 +4357,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page144(),
     ),
     Route145Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route145',
       fullscreenDialog: false,
@@ -4309,6 +4365,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page145(),
     ),
     Route146Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route146',
       fullscreenDialog: false,
@@ -4316,6 +4373,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page146(),
     ),
     Route147Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route147',
       fullscreenDialog: false,
@@ -4323,6 +4381,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page147(),
     ),
     Route148Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route148',
       fullscreenDialog: false,
@@ -4330,6 +4389,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page148(),
     ),
     Route149Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route149',
       fullscreenDialog: false,
@@ -4337,6 +4397,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page149(),
     ),
     Route15Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route15',
       fullscreenDialog: false,
@@ -4344,6 +4405,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page15(),
     ),
     Route16Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route16',
       fullscreenDialog: false,
@@ -4351,6 +4413,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page16(),
     ),
     Route17Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route17',
       fullscreenDialog: false,
@@ -4358,6 +4421,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page17(),
     ),
     Route18Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route18',
       fullscreenDialog: false,
@@ -4365,6 +4429,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page18(),
     ),
     Route19Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route19',
       fullscreenDialog: false,
@@ -4372,6 +4437,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page19(),
     ),
     Route2Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route2',
       fullscreenDialog: false,
@@ -4379,6 +4445,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page2(),
     ),
     Route20Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route20',
       fullscreenDialog: false,
@@ -4386,6 +4453,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page20(),
     ),
     Route21Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route21',
       fullscreenDialog: false,
@@ -4393,6 +4461,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page21(),
     ),
     Route22Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route22',
       fullscreenDialog: false,
@@ -4400,6 +4469,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page22(),
     ),
     Route23Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route23',
       fullscreenDialog: false,
@@ -4407,6 +4477,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page23(),
     ),
     Route24Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route24',
       fullscreenDialog: false,
@@ -4414,6 +4485,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page24(),
     ),
     Route25Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route25',
       fullscreenDialog: false,
@@ -4421,6 +4493,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page25(),
     ),
     Route26Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route26',
       fullscreenDialog: false,
@@ -4428,6 +4501,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page26(),
     ),
     Route27Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route27',
       fullscreenDialog: false,
@@ -4435,6 +4509,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page27(),
     ),
     Route28Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route28',
       fullscreenDialog: false,
@@ -4442,6 +4517,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page28(),
     ),
     Route29Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route29',
       fullscreenDialog: false,
@@ -4449,6 +4525,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page29(),
     ),
     Route3Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route3',
       fullscreenDialog: false,
@@ -4456,6 +4533,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page3(),
     ),
     Route30Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route30',
       fullscreenDialog: false,
@@ -4463,6 +4541,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page30(),
     ),
     Route31Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route31',
       fullscreenDialog: false,
@@ -4470,6 +4549,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page31(),
     ),
     Route32Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route32',
       fullscreenDialog: false,
@@ -4477,6 +4557,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page32(),
     ),
     Route33Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route33',
       fullscreenDialog: false,
@@ -4484,6 +4565,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page33(),
     ),
     Route34Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route34',
       fullscreenDialog: false,
@@ -4491,6 +4573,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page34(),
     ),
     Route35Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route35',
       fullscreenDialog: false,
@@ -4498,6 +4581,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page35(),
     ),
     Route36Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route36',
       fullscreenDialog: false,
@@ -4505,6 +4589,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page36(),
     ),
     Route37Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route37',
       fullscreenDialog: false,
@@ -4512,6 +4597,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page37(),
     ),
     Route38Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route38',
       fullscreenDialog: false,
@@ -4519,6 +4605,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page38(),
     ),
     Route39Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route39',
       fullscreenDialog: false,
@@ -4526,6 +4613,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page39(),
     ),
     Route4Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route4',
       fullscreenDialog: false,
@@ -4533,6 +4621,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page4(),
     ),
     Route40Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route40',
       fullscreenDialog: false,
@@ -4540,6 +4629,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page40(),
     ),
     Route41Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route41',
       fullscreenDialog: false,
@@ -4547,6 +4637,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page41(),
     ),
     Route42Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route42',
       fullscreenDialog: false,
@@ -4554,6 +4645,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page42(),
     ),
     Route43Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route43',
       fullscreenDialog: false,
@@ -4561,6 +4653,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page43(),
     ),
     Route44Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route44',
       fullscreenDialog: false,
@@ -4568,6 +4661,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page44(),
     ),
     Route45Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route45',
       fullscreenDialog: false,
@@ -4575,6 +4669,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page45(),
     ),
     Route46Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route46',
       fullscreenDialog: false,
@@ -4582,6 +4677,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page46(),
     ),
     Route47Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route47',
       fullscreenDialog: false,
@@ -4589,6 +4685,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page47(),
     ),
     Route48Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route48',
       fullscreenDialog: false,
@@ -4596,6 +4693,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page48(),
     ),
     Route49Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route49',
       fullscreenDialog: false,
@@ -4603,6 +4701,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page49(),
     ),
     Route5Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route5',
       fullscreenDialog: false,
@@ -4610,6 +4709,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page5(),
     ),
     Route50Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route50',
       fullscreenDialog: false,
@@ -4617,6 +4717,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page50(),
     ),
     Route51Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route51',
       fullscreenDialog: false,
@@ -4624,6 +4725,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page51(),
     ),
     Route52Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route52',
       fullscreenDialog: false,
@@ -4631,6 +4733,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page52(),
     ),
     Route53Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route53',
       fullscreenDialog: false,
@@ -4638,6 +4741,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page53(),
     ),
     Route54Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route54',
       fullscreenDialog: false,
@@ -4645,6 +4749,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page54(),
     ),
     Route55Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route55',
       fullscreenDialog: false,
@@ -4652,6 +4757,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page55(),
     ),
     Route56Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route56',
       fullscreenDialog: false,
@@ -4659,6 +4765,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page56(),
     ),
     Route57Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route57',
       fullscreenDialog: false,
@@ -4666,6 +4773,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page57(),
     ),
     Route58Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route58',
       fullscreenDialog: false,
@@ -4673,6 +4781,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page58(),
     ),
     Route59Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route59',
       fullscreenDialog: false,
@@ -4680,6 +4789,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page59(),
     ),
     Route6Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route6',
       fullscreenDialog: false,
@@ -4687,6 +4797,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page6(),
     ),
     Route60Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route60',
       fullscreenDialog: false,
@@ -4694,6 +4805,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page60(),
     ),
     Route61Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route61',
       fullscreenDialog: false,
@@ -4701,6 +4813,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page61(),
     ),
     Route62Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route62',
       fullscreenDialog: false,
@@ -4708,6 +4821,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page62(),
     ),
     Route63Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route63',
       fullscreenDialog: false,
@@ -4715,6 +4829,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page63(),
     ),
     Route64Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route64',
       fullscreenDialog: false,
@@ -4722,6 +4837,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page64(),
     ),
     Route65Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route65',
       fullscreenDialog: false,
@@ -4729,6 +4845,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page65(),
     ),
     Route66Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route66',
       fullscreenDialog: false,
@@ -4736,6 +4853,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page66(),
     ),
     Route67Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route67',
       fullscreenDialog: false,
@@ -4743,6 +4861,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page67(),
     ),
     Route68Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route68',
       fullscreenDialog: false,
@@ -4750,6 +4869,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page68(),
     ),
     Route69Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route69',
       fullscreenDialog: false,
@@ -4757,6 +4877,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page69(),
     ),
     Route7Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route7',
       fullscreenDialog: false,
@@ -4764,6 +4885,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page7(),
     ),
     Route70Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route70',
       fullscreenDialog: false,
@@ -4771,6 +4893,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page70(),
     ),
     Route71Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route71',
       fullscreenDialog: false,
@@ -4778,6 +4901,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page71(),
     ),
     Route72Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route72',
       fullscreenDialog: false,
@@ -4785,6 +4909,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page72(),
     ),
     Route73Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route73',
       fullscreenDialog: false,
@@ -4792,6 +4917,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page73(),
     ),
     Route74Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route74',
       fullscreenDialog: false,
@@ -4799,6 +4925,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page74(),
     ),
     Route75Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route75',
       fullscreenDialog: false,
@@ -4806,6 +4933,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page75(),
     ),
     Route76Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route76',
       fullscreenDialog: false,
@@ -4813,6 +4941,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page76(),
     ),
     Route77Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route77',
       fullscreenDialog: false,
@@ -4820,6 +4949,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page77(),
     ),
     Route78Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route78',
       fullscreenDialog: false,
@@ -4827,6 +4957,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page78(),
     ),
     Route79Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route79',
       fullscreenDialog: false,
@@ -4834,6 +4965,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page79(),
     ),
     Route8Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route8',
       fullscreenDialog: false,
@@ -4841,6 +4973,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page8(),
     ),
     Route80Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route80',
       fullscreenDialog: false,
@@ -4848,6 +4981,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page80(),
     ),
     Route81Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route81',
       fullscreenDialog: false,
@@ -4855,6 +4989,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page81(),
     ),
     Route82Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route82',
       fullscreenDialog: false,
@@ -4862,6 +4997,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page82(),
     ),
     Route83Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route83',
       fullscreenDialog: false,
@@ -4869,6 +5005,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page83(),
     ),
     Route84Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route84',
       fullscreenDialog: false,
@@ -4876,6 +5013,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page84(),
     ),
     Route85Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route85',
       fullscreenDialog: false,
@@ -4883,6 +5021,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page85(),
     ),
     Route86Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route86',
       fullscreenDialog: false,
@@ -4890,6 +5029,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page86(),
     ),
     Route87Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route87',
       fullscreenDialog: false,
@@ -4897,6 +5037,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page87(),
     ),
     Route88Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route88',
       fullscreenDialog: false,
@@ -4904,6 +5045,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page88(),
     ),
     Route89Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route89',
       fullscreenDialog: false,
@@ -4911,6 +5053,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page89(),
     ),
     Route9Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route9',
       fullscreenDialog: false,
@@ -4918,6 +5061,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page9(),
     ),
     Route90Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route90',
       fullscreenDialog: false,
@@ -4925,6 +5069,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page90(),
     ),
     Route91Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route91',
       fullscreenDialog: false,
@@ -4932,6 +5077,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page91(),
     ),
     Route92Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route92',
       fullscreenDialog: false,
@@ -4939,6 +5085,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page92(),
     ),
     Route93Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route93',
       fullscreenDialog: false,
@@ -4946,6 +5093,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page93(),
     ),
     Route94Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route94',
       fullscreenDialog: false,
@@ -4953,6 +5101,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page94(),
     ),
     Route95Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route95',
       fullscreenDialog: false,
@@ -4960,6 +5109,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page95(),
     ),
     Route96Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route96',
       fullscreenDialog: false,
@@ -4967,6 +5117,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page96(),
     ),
     Route97Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route97',
       fullscreenDialog: false,
@@ -4974,6 +5125,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page97(),
     ),
     Route98Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route98',
       fullscreenDialog: false,
@@ -4981,6 +5133,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const Page98(),
     ),
     Route99Route() => generatedPage(
+      key: key,
       location: route.location,
       name: 'route99',
       fullscreenDialog: false,

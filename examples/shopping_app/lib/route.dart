@@ -1,4 +1,4 @@
-import 'package:dust_flutter/route.dart' show Router;
+import 'package:dust_flutter/route.dart' show AppRouter;
 
 import 'features/auth/models/auth_state.dart';
 import 'features/auth/view_models/auth_view_model.dart';
@@ -7,9 +7,9 @@ import 'route.g.dart';
 export 'route.g.dart';
 export 'package:dust_flutter/route.dart';
 
-@Router(initial: '/', notFound: '/404')
-final class AppRouter extends $AppRouter {
-  AppRouter({required this.auth});
+@AppRouter(initial: '/', notFound: '/404')
+final class ShoppingRouter extends $ShoppingRouter {
+  ShoppingRouter({required this.auth});
 
   final AuthViewModel auth;
 

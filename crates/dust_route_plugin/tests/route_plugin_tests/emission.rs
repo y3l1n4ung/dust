@@ -35,6 +35,18 @@ fn emits_standalone_route_and_core_outputs() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
+    assert!(
+        primary.contains("late final RouterConfig<AppRoutePath> config = _buildConfig();"),
+        "generated router config should be cached per router instance"
+    );
+    assert!(
+        primary.contains("RouterConfig<AppRoutePath> _buildConfig() {"),
+        "generated router config should move construction into a private builder"
+    );
+    assert!(
+        !primary.contains("RouterConfig<AppRoutePath> get config {"),
+        "generated router config must not rebuild on every access"
+    );
     assert_snapshot("standalone_route.dart.snapshot", &primary);
     assert!(contribution.auxiliary_outputs.is_empty());
 }

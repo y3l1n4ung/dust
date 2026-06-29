@@ -1,12 +1,12 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 
 import '../models/order.dart';
 import '../view_models/orders_view_model.dart';
 
-@Route('/orders', name: 'orders')
+@AppRoute('/orders', name: 'orders')
 class OrdersScreen extends StatelessWidget {
   const OrdersScreen({super.key});
 

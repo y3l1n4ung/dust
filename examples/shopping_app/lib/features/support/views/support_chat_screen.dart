@@ -1,12 +1,12 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 import '../models/chat_message.dart';
 import '../models/chat_state.dart';
 import '../view_models/shopping_chat_view_model.dart';
 
-@Route('/support/chat', name: 'supportChat', guards: [])
+@AppRoute('/support/chat', name: 'supportChat', guards: [])
 class SupportChatScreen extends StatefulWidget {
   const SupportChatScreen({super.key});
 

@@ -9,15 +9,15 @@ pub(crate) fn write_routing_workspace(root: &std::path::Path, dashboard_name: &s
          import 'pages/not_found_page.dart';\n\
          import 'route.g.dart';\n\
          \n\
-         @Router(initial: '/', notFound: '/404')\n\
-         final class AppRouter extends $AppRouter {\n\
-           const AppRouter();\n\
+         @AppRouter(initial: '/', notFound: '/404')\n\
+         final class TestRouter extends $TestRouter {\n\
+           const TestRouter();\n\
          }\n",
     );
     write_dashboard_page(root, dashboard_name);
     write_file(
         &root.join("lib/pages/not_found_page.dart"),
-        "@Route('/404', name: 'notFound', guards: [])\n\
+        "@AppRoute('/404', name: 'notFound', guards: [])\n\
          final class NotFoundPage {\n\
            const NotFoundPage({this.path = ''});\n\
            final String path;\n\
@@ -29,7 +29,7 @@ pub(crate) fn write_dashboard_page(root: &std::path::Path, name: &str) {
     write_file(
         &root.join("lib/pages/dashboard_page.dart"),
         &format!(
-            "@Route('/', name: '{name}')\n\
+            "@AppRoute('/', name: '{name}')\n\
              final class DashboardPage {{\n\
                const DashboardPage();\n\
              }}\n"

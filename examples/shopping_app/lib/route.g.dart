@@ -3,8 +3,8 @@
 //
 // ignore_for_file: unused_import, unnecessary_import
 
-import 'package:flutter/material.dart' hide Route;
-import 'package:flutter/cupertino.dart' hide Route;
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
@@ -62,10 +62,12 @@ import 'package:shopping_app/shared/widgets/dialogs/loading_dialog.dart';
 import 'package:shopping_app/shared/widgets/loaders/product_skeleton.dart';
 import 'package:shopping_app/shared/widgets/snackbars/app_snackbar.dart';
 
-abstract class $AppRouter extends RouterBase<AppRoutePath> {
+abstract class $ShoppingRouter extends RouterBase<AppRoutePath> {
   @override
-  Listenable? get refreshListenable => (this as AppRouter).auth;
-  RouterConfig<AppRoutePath> get config {
+  Listenable? get refreshListenable => (this as ShoppingRouter).auth;
+  late final RouterConfig<AppRoutePath> config = _buildConfig();
+
+  RouterConfig<AppRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
       initialRoute: const ProductsRoute(),
@@ -421,7 +423,7 @@ bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
 
 List<Object> routeGuards(
   AppRoutePath route,
-  $AppRouter router,
+  $ShoppingRouter router,
 ) {
   return switch (route) {
     _ => const [],
@@ -645,13 +647,14 @@ bool _shellConsistencyCheck() {
   return $appRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(AppRoutePath route) {
+Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
   assert(
     _shellConsistencyCheck(),
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
     ProductsRoute() => generatedPage(
+      key: key,
       location: route.location,
       name: 'products',
       transition: FadeUpwardsPageTransitionsBuilder(),
@@ -660,6 +663,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const ProductsScreen(),
     ),
     NotFoundRoute(path: final path) => generatedPage(
+      key: key,
       location: route.location,
       name: 'notFound',
       fullscreenDialog: false,
@@ -667,6 +671,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: NotFoundScreen(path: path),
     ),
     CartRoute() => generatedPage(
+      key: key,
       location: route.location,
       name: 'cart',
       transition: BottomToTopPageTransitionsBuilder(),
@@ -675,6 +680,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const CartScreen(),
     ),
     CheckoutRoute() => generatedPage(
+      key: key,
       location: route.location,
       name: 'checkout',
       transition: BottomToTopPageTransitionsBuilder(),
@@ -683,6 +689,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const CheckoutScreen(),
     ),
     DemoCartsRoute() => generatedPage(
+      key: key,
       location: route.location,
       name: 'demoCarts',
       fullscreenDialog: false,
@@ -690,6 +697,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const DemoCartsScreen(),
     ),
     LoginRoute(redirectPath: final redirectPath) => generatedPage(
+      key: key,
       location: route.location,
       name: 'login',
       fullscreenDialog: false,
@@ -697,6 +705,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: LoginScreen(redirectPath: redirectPath),
     ),
     OrderConfirmationRoute(orderId: final orderId) => generatedPage(
+      key: key,
       location: route.location,
       name: 'orderConfirmation',
       transition: ZoomPageTransitionsBuilder(),
@@ -705,6 +714,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: OrderConfirmationScreen(orderId: orderId),
     ),
     OrdersRoute() => generatedPage(
+      key: key,
       location: route.location,
       name: 'orders',
       fullscreenDialog: false,
@@ -712,6 +722,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const OrdersScreen(),
     ),
     OrderDetailRoute(orderId: final orderId) => generatedPage(
+      key: key,
       location: route.location,
       name: 'orderDetail',
       fullscreenDialog: false,
@@ -719,6 +730,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: OrderDetailScreen(orderId: orderId),
     ),
     ProductDetailRoute(productId: final productId) => generatedPage(
+      key: key,
       location: route.location,
       name: 'productDetail',
       fullscreenDialog: false,
@@ -726,6 +738,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: ProductDetailScreen(productId: productId),
     ),
     ProfileRoute() => generatedPage(
+      key: key,
       location: route.location,
       name: 'profile',
       fullscreenDialog: false,
@@ -733,6 +746,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const ProfileScreen(),
     ),
     RegisterRoute(redirectPath: final redirectPath) => generatedPage(
+      key: key,
       location: route.location,
       name: 'register',
       fullscreenDialog: false,
@@ -740,6 +754,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: RegisterScreen(redirectPath: redirectPath),
     ),
     SupportChatRoute() => generatedPage(
+      key: key,
       location: route.location,
       name: 'supportChat',
       fullscreenDialog: false,
@@ -747,6 +762,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const SupportChatScreen(),
     ),
     WishlistRoute() => generatedPage(
+      key: key,
       location: route.location,
       name: 'wishlist',
       fullscreenDialog: false,

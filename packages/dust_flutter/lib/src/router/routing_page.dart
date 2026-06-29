@@ -2,6 +2,7 @@ part of 'routing_core.dart';
 
 /// Builds a generated Flutter page for one typed route.
 Page<R> generatedPage<R>({
+  required LocalKey key,
   required String location,
   required String name,
   required Widget child,
@@ -10,7 +11,7 @@ Page<R> generatedPage<R>({
   bool maintainState = true,
 }) {
   return MaterialPage<R>(
-    key: ValueKey(location),
+    key: key,
     name: name,
     fullscreenDialog: fullscreenDialog,
     maintainState: maintainState,

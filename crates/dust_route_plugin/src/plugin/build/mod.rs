@@ -5,7 +5,7 @@ use dust_ir::{ClassIr, DartFileIr};
 use dust_plugin_api::SymbolPlan;
 
 use super::{
-    constants::ROUTERS_ANALYSIS_KEY,
+    constants::{ROUTER, ROUTERS_ANALYSIS_KEY},
     model::{RouteSpec, RouterFieldSpec, RouterSpec},
     parse::parse_router_config,
 };
@@ -29,21 +29,21 @@ pub(crate) fn build_router_spec(
     };
     if router_classes.len() > 1 || workspace_router_count(plan) > 1 {
         return Err(vec![Diagnostic::error(
-            "exactly one `@Router` is allowed in a Dust route workspace",
+            "exactly one `@AppRouter` is allowed in a Dust route workspace",
         )]);
     }
 
     let router_config = router_class
         .configs
         .iter()
-        .find(|config| config.symbol.0.ends_with("::Router"));
+        .find(|config| config.symbol.0.rsplit("::").next() == Some(ROUTER));
     let router_annotation = parse_router_config(router_config);
     let mut routes = local_and_workspace_routes(library, plan);
     routes.sort_by(|a, b| a.path.cmp(&b.path).then_with(|| a.name.cmp(&b.name)));
 
     if routes.is_empty() {
         return Err(vec![Diagnostic::error(format!(
-            "router `{}` needs at least one `@Route` page in the workspace for current route generation",
+            "router `{}` needs at least one `@AppRoute` page in the workspace for current route generation",
             router_class.name
         ))]);
     }
@@ -78,7 +78,7 @@ pub(crate) fn build_router_spec(
     }))
 }
 
-/// Returns classes annotated with `@Router` in the current library.
+/// Returns classes annotated with `@AppRouter` in the current library.
 fn router_classes(library: &DartFileIr) -> Vec<&ClassIr> {
     library
         .classes
@@ -87,7 +87,7 @@ fn router_classes(library: &DartFileIr) -> Vec<&ClassIr> {
             class
                 .configs
                 .iter()
-                .any(|config| config.symbol.0.ends_with("::Router"))
+                .any(|config| config.symbol.0.rsplit("::").next() == Some(ROUTER))
         })
         .collect()
 }
@@ -260,7 +260,7 @@ fn route_class_for_path(
         .map(|route| route.route_class.clone())
         .ok_or_else(|| {
             vec![Diagnostic::error(format!(
-                "router `{router_class}` {label} path `{path}` does not match any discovered `@Route` path"
+                "router `{router_class}` {label} path `{path}` does not match any discovered `@AppRoute` path"
             ))]
         })
 }
