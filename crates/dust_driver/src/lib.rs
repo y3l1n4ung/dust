@@ -14,8 +14,12 @@ mod clean;
 mod context;
 /// Doctor command diagnostics for workspace setup.
 mod doctor;
+/// ARB reconciliation helpers for i18n build.
+mod i18n_arb;
 /// Generated i18n bootstrap output.
 mod i18n_bootstrap;
+/// Workspace i18n ARB build command.
+mod i18n_build;
 /// Workspace i18n source scanning.
 mod i18n_scan;
 /// Conversion from resolved parser data into Dust IR.
@@ -36,15 +40,16 @@ pub use doctor::run_doctor;
 pub use dust_parser_dart_ts::{
     I18nScanResult, I18nTranslationKind, I18nTranslationUse, scan_i18n_source,
 };
+pub use i18n_build::run_i18n_build;
 pub use i18n_scan::run_i18n_scan;
 pub use progress::{ProgressEvent, ProgressPhase};
 pub use request::{
     BuildRequest, CheckRequest, CleanRequest, CommandRequest, DbRequestOptions, DoctorRequest,
-    I18nScanRequest, WatchRequest,
+    I18nBuildRequest, I18nScanRequest, WatchRequest,
 };
 pub use result::{
     BuildArtifact, CacheReport, CheckedLibrary, CleanReport, CommandResult, DiagnosticFile,
-    DoctorReport, I18nScanEntry, I18nScanReport, WatchReport,
+    DoctorReport, I18nBuildReport, I18nScanEntry, I18nScanReport, WatchReport,
 };
 pub use watch::{run_watch, run_watch_with_progress};
 
@@ -55,6 +60,7 @@ pub fn run(request: CommandRequest) -> CommandResult {
         CommandRequest::Clean(request) => run_clean(request),
         CommandRequest::Check(request) => run_check(request),
         CommandRequest::Doctor(request) => run_doctor(request),
+        CommandRequest::I18nBuild(request) => run_i18n_build(request),
         CommandRequest::I18nScan(request) => run_i18n_scan(request),
         CommandRequest::Watch(request) => run_watch(request),
     }

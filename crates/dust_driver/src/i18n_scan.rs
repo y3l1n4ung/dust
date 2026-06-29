@@ -38,7 +38,7 @@ pub fn run_i18n_scan(request: I18nScanRequest) -> CommandResult {
         }
     };
 
-    match scan_workspace(
+    match scan_workspace_sources(
         &package_root,
         &dust_config.outputs.primary_suffix,
         &mut result,
@@ -52,7 +52,7 @@ pub fn run_i18n_scan(request: I18nScanRequest) -> CommandResult {
 }
 
 /// Scans package source files and returns a report.
-fn scan_workspace(
+pub(crate) fn scan_workspace_sources(
     package_root: &Path,
     primary_suffix: &str,
     result: &mut CommandResult,

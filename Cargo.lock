@@ -378,6 +378,7 @@ dependencies = [
  "dust_state_plugin",
  "dust_text",
  "dust_workspace",
+ "serde_json",
  "tempfile",
 ]
 
