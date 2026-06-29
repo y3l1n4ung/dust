@@ -4,7 +4,7 @@ use dust_dart_emit::render_template;
 use dust_ir::DartFileIr;
 use serde::Serialize;
 
-use super::model::RouterSpec;
+use super::model::{RouteImport, RouterSpec};
 
 /// Shared formatting helpers for generated Dart code.
 mod formatting;
@@ -56,19 +56,23 @@ struct RouteFileContext<'a> {
 /// Renders the complete generated route file for a router spec.
 pub(crate) fn render_route_generated(library: &DartFileIr, spec: &RouterSpec) -> String {
     let current_import = package_import_uri(library);
-    let imports = spec
-        .routes
-        .iter()
-        .flat_map(|route| {
-            route
-                .import_uri
-                .iter()
-                .map(String::as_str)
-                .chain(route.imports.iter().map(String::as_str))
-        })
-        .filter(|import| Some(*import) != current_import.as_deref())
-        .filter(|import| !matches!(*import, "route.g.dart" | "routing_core.dart"))
-        .collect::<BTreeSet<_>>();
+    let mut imports = BTreeSet::new();
+    for route in &spec.routes {
+        if let Some(import) = &route.import_uri
+            && Some(import.as_str()) != current_import.as_deref()
+            && !is_internal_route_import(import)
+        {
+            imports.insert(format!("import '{import}';\n"));
+        }
+        for import in &route.imports {
+            if Some(import.uri.as_str()) == current_import.as_deref()
+                || is_internal_route_import(&import.uri)
+            {
+                continue;
+            }
+            imports.insert(render_import(import));
+        }
+    }
 
     let mut body = String::new();
     metadata::render_route_metadata(&mut body, &spec.routes);
@@ -85,10 +89,7 @@ pub(crate) fn render_route_generated(library: &DartFileIr, spec: &RouterSpec) ->
             "route_file",
             include_str!("templates/route_file.jinja"),
             RouteFileContext {
-                imports: imports
-                    .into_iter()
-                    .map(|import| format!("import '{import}';\n"))
-                    .collect::<String>(),
+                imports: imports.into_iter().collect::<String>(),
                 no_transition_builder: if uses_no_transition_builder(spec) {
                     render_no_transition_builder()
                 } else {
@@ -101,6 +102,28 @@ pub(crate) fn render_route_generated(library: &DartFileIr, spec: &RouterSpec) ->
             },
         )
     )
+}
+
+fn is_internal_route_import(import: &str) -> bool {
+    matches!(import, "route.g.dart" | "routing_core.dart")
+}
+
+fn render_import(import: &RouteImport) -> String {
+    let mut rendered = format!("import '{}'", import.uri);
+    if let Some(prefix) = &import.prefix {
+        if import.is_deferred {
+            rendered.push_str(" deferred");
+        }
+        rendered.push_str(&format!(" as {prefix}"));
+    }
+    if !import.show.is_empty() {
+        rendered.push_str(&format!(" show {}", import.show.join(", ")));
+    }
+    if !import.hide.is_empty() {
+        rendered.push_str(&format!(" hide {}", import.hide.join(", ")));
+    }
+    rendered.push_str(";\n");
+    rendered
 }
 
 /// Renders the helper transition builder used by no-transition routes.

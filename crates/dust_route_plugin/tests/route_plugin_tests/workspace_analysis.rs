@@ -1,5 +1,7 @@
+use dust_parser_dart::ParsedDirective;
 use dust_plugin_api::{DustPlugin, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 use dust_route_plugin::register_plugin;
+use dust_text::TextRange;
 use serde_json::{Value, json};
 
 use super::support::{
@@ -9,13 +11,21 @@ use super::support::{
 #[test]
 fn collects_route_and_router_workspace_facts() {
     let plugin = register_plugin();
-    let library = parsed_library_with_annotations(
+    let mut library = parsed_library_with_annotations(
         "DashboardPage",
         vec![
             parsed_annotation("Route", "('/', name: 'dashboard')"),
             parsed_annotation("Router", "(initial: '/', notFound: '/404')"),
         ],
     );
+    library.directives.push(ParsedDirective::Import {
+        uri: "package:route_test/layout/app_shell.dart".to_owned(),
+        prefix: Some("ui".to_owned()),
+        show: vec!["AppShell".to_owned()],
+        hide: vec!["InternalShell".to_owned()],
+        is_deferred: false,
+        span: TextRange::new(0_u32, 1_u32),
+    });
     let mut builder = WorkspaceAnalysisBuilder::default();
 
     plugin.collect_workspace_analysis(
@@ -49,7 +59,15 @@ fn collects_route_and_router_workspace_facts() {
             },
             "import_uri": "package:route_test/pages/dashboard_page.dart",
             "source_path": "lib/pages/dashboard_page.dart",
-            "imports": [],
+            "imports": [
+                {
+                    "uri": "package:route_test/layout/app_shell.dart",
+                    "prefix": "ui",
+                    "show": ["AppShell"],
+                    "hide": ["InternalShell"],
+                    "is_deferred": false
+                }
+            ],
             "params": []
         }),
     );
