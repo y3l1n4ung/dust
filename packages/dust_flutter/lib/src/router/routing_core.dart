@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 part 'routing_controller.dart';
 part 'routing_delegate.dart';

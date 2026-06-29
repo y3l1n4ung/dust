@@ -87,7 +87,7 @@ fn render_guard_instance(guard: &str, spec: &RouterSpec) -> String {
         .iter()
         .find(|candidate| candidate.class_name == guard)
     else {
-        return format!("const {guard}()");
+        return format!("{guard}()");
     };
     guard_constructor(guard_spec, &spec.router_class)
 }
@@ -95,7 +95,7 @@ fn render_guard_instance(guard: &str, spec: &RouterSpec) -> String {
 /// Renders a guard constructor call from a resolved guard spec.
 fn guard_constructor(guard: &GuardSpec, router_class: &str) -> String {
     if guard.params.is_empty() {
-        return format!("const {}()", guard.class_name);
+        return format!("{}()", guard.class_name);
     }
     let args = guard
         .params

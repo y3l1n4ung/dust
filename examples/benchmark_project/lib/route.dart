@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' hide Route, Router;
-import 'package:dust_flutter/route.dart' show Router, RouteGuard;
+import 'package:flutter/material.dart';
+import 'package:dust_flutter/route.dart' show AppRouter, RouteGuard;
 
 import 'route.g.dart';
 
 export 'route.g.dart';
 export 'package:dust_flutter/route.dart';
 
-@Router(initial: '/', notFound: '/404')
+@AppRouter(initial: '/', notFound: '/404')
 final class BenchmarkRouter extends $BenchmarkRouter {
   BenchmarkRouter({required this.refresh});
 

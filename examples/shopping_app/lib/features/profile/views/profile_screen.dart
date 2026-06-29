@@ -1,5 +1,5 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 
@@ -8,7 +8,7 @@ import '../../../shared/widgets/snackbars/app_snackbar.dart';
 import '../../auth/models/auth_state.dart';
 import '../../auth/view_models/auth_view_model.dart';
 
-@Route('/profile', name: 'profile')
+@AppRoute('/profile', name: 'profile')
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 

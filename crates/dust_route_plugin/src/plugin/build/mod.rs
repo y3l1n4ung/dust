@@ -5,7 +5,7 @@ use dust_ir::{ClassIr, DartFileIr};
 use dust_plugin_api::SymbolPlan;
 
 use super::{
-    constants::ROUTERS_ANALYSIS_KEY,
+    constants::{ROUTER, ROUTERS_ANALYSIS_KEY},
     model::{RouteSpec, RouterFieldSpec, RouterSpec},
     parse::parse_router_config,
 };
@@ -29,21 +29,21 @@ pub(crate) fn build_router_spec(
     };
     if router_classes.len() > 1 || workspace_router_count(plan) > 1 {
         return Err(vec![Diagnostic::error(
-            "exactly one `@Router` is allowed in a Dust route workspace",
+            "exactly one `@AppRouter` is allowed in a Dust route workspace",
         )]);
     }
 
     let router_config = router_class
         .configs
         .iter()
-        .find(|config| config.symbol.0.ends_with("::Router"));
+        .find(|config| config.symbol.0.rsplit("::").next() == Some(ROUTER));
     let router_annotation = parse_router_config(router_config);
     let mut routes = local_and_workspace_routes(library, plan);
     routes.sort_by(|a, b| a.path.cmp(&b.path).then_with(|| a.name.cmp(&b.name)));
 
     if routes.is_empty() {
         return Err(vec![Diagnostic::error(format!(
-            "router `{}` needs at least one `@Route` page in the workspace for current route generation",
+            "router `{}` needs at least one `@AppRoute` page in the workspace for current route generation",
             router_class.name
         ))]);
     }
@@ -78,7 +78,7 @@ pub(crate) fn build_router_spec(
     }))
 }
 
-/// Returns classes annotated with `@Router` in the current library.
+/// Returns classes annotated with `@AppRouter` in the current library.
 fn router_classes(library: &DartFileIr) -> Vec<&ClassIr> {
     library
         .classes
@@ -87,7 +87,7 @@ fn router_classes(library: &DartFileIr) -> Vec<&ClassIr> {
             class
                 .configs
                 .iter()
-                .any(|config| config.symbol.0.ends_with("::Router"))
+                .any(|config| config.symbol.0.rsplit("::").next() == Some(ROUTER))
         })
         .collect()
 }
@@ -140,11 +140,105 @@ fn validate_workspace_route_set(routes: &[RouteSpec]) -> Result<(), Vec<Diagnost
                 )));
             }
         }
+        validate_duplicate_path_params(route, &mut diagnostics);
     }
+    validate_ambiguous_path_siblings(routes, &mut diagnostics);
     if diagnostics.is_empty() {
         Ok(())
     } else {
         Err(diagnostics)
+    }
+}
+
+/// Rejects paths that bind the same `:param` name more than once.
+fn validate_duplicate_path_params(route: &RouteSpec, diagnostics: &mut Vec<Diagnostic>) {
+    let mut seen = HashSet::new();
+    let mut reported = HashSet::new();
+    for segment in path_segments(&route.path) {
+        let Some(param) = path_param_name(segment) else {
+            continue;
+        };
+        if !seen.insert(param) && reported.insert(param) {
+            diagnostics.push(Diagnostic::error(format!(
+                "route `{}` path `{}` declares duplicate path parameter `:{param}`",
+                route.page_class, route.path
+            )));
+        }
+    }
+}
+
+/// Rejects same-length path patterns with overlapping static/dynamic segments.
+fn validate_ambiguous_path_siblings(routes: &[RouteSpec], diagnostics: &mut Vec<Diagnostic>) {
+    for (index, route) in routes.iter().enumerate() {
+        let route_segments = path_segments(&route.path).collect::<Vec<_>>();
+        for sibling in routes.iter().skip(index + 1) {
+            let sibling_segments = path_segments(&sibling.path).collect::<Vec<_>>();
+            let Some(parent) = ambiguous_parent(&route_segments, &sibling_segments) else {
+                continue;
+            };
+            diagnostics.push(ambiguous_sibling_diagnostic(
+                &sibling.path,
+                &route.path,
+                &parent,
+            ));
+        }
+    }
+}
+
+/// Returns the shared parent path when sibling patterns can match the same URL.
+fn ambiguous_parent(left: &[&str], right: &[&str]) -> Option<String> {
+    if left.len() != right.len() {
+        return None;
+    }
+
+    let mut first_static_dynamic_parent = None;
+    for (index, (left_segment, right_segment)) in left.iter().zip(right).enumerate() {
+        if left_segment == right_segment {
+            continue;
+        }
+        let left_dynamic = path_param_name(left_segment).is_some();
+        let right_dynamic = path_param_name(right_segment).is_some();
+        if !left_dynamic && !right_dynamic {
+            return None;
+        }
+        if left_dynamic != right_dynamic {
+            first_static_dynamic_parent.get_or_insert_with(|| {
+                display_parent_path(
+                    &left[..index]
+                        .iter()
+                        .map(|segment| (*segment).to_owned())
+                        .collect::<Vec<_>>(),
+                )
+            });
+        }
+    }
+
+    first_static_dynamic_parent
+}
+
+/// Builds a diagnostic for ambiguous static and dynamic sibling segments.
+fn ambiguous_sibling_diagnostic(route_path: &str, sibling_path: &str, parent: &str) -> Diagnostic {
+    Diagnostic::error(format!(
+        "route path `{route_path}` conflicts with sibling `{sibling_path}`; static and dynamic segments under `{parent}` are ambiguous"
+    ))
+}
+
+/// Iterates over non-empty slash-delimited path segments.
+fn path_segments(path: &str) -> impl Iterator<Item = &str> {
+    path.split('/').filter(|segment| !segment.is_empty())
+}
+
+/// Returns the parameter name for a dynamic path segment.
+fn path_param_name(segment: &str) -> Option<&str> {
+    segment.strip_prefix(':').filter(|name| !name.is_empty())
+}
+
+/// Renders parent path segments with a leading slash.
+fn display_parent_path(segments: &[String]) -> String {
+    if segments.is_empty() {
+        "/".to_owned()
+    } else {
+        format!("/{}", segments.join("/"))
     }
 }
 
@@ -166,7 +260,7 @@ fn route_class_for_path(
         .map(|route| route.route_class.clone())
         .ok_or_else(|| {
             vec![Diagnostic::error(format!(
-                "router `{router_class}` {label} path `{path}` does not match any discovered `@Route` path"
+                "router `{router_class}` {label} path `{path}` does not match any discovered `@AppRoute` path"
             ))]
         })
 }

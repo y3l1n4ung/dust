@@ -13,8 +13,8 @@ pub(crate) fn test_annotations() -> SupportedAnnotations {
     [
         "Client",
         "Derive",
-        "Route",
-        "Router",
+        "AppRoute",
+        "AppRouter",
         "ToString",
         "ViewModel",
     ]

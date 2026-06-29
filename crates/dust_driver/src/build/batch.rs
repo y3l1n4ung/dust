@@ -232,5 +232,5 @@ fn cached_router_depends_on_changed_routes(
 
 /// Checks for route annotations using the fast source marker path.
 fn contains_route_analysis_marker(source: &str) -> bool {
-    source.contains("@Route") || source.contains("@Router")
+    source.contains("@AppRoute") || source.contains("@AppRouter")
 }

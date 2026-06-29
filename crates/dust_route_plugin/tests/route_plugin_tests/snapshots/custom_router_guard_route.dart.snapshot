@@ -3,15 +3,17 @@
 //
 // ignore_for_file: unused_import, unnecessary_import
 
-import 'package:flutter/material.dart' hide Route;
-import 'package:flutter/cupertino.dart' hide Route;
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
 
 abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
 
-  RouterConfig<AppRoutePath> get config {
+  late final RouterConfig<AppRoutePath> config = _buildConfig();
+
+  RouterConfig<AppRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
       initialRoute: const DashboardRoute(),
@@ -110,7 +112,7 @@ List<Object> routeGuards(
   $BenchmarkRouter router,
 ) {
   return switch (route) {
-    DashboardRoute() => [const BenchmarkGuard()],
+    DashboardRoute() => [BenchmarkGuard()],
     _ => const [],
   };
 }
@@ -196,13 +198,14 @@ bool _shellConsistencyCheck() {
   return $appRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(AppRoutePath route) {
+Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
   assert(
     _shellConsistencyCheck(),
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
     DashboardRoute() => generatedPage(
+      key: key,
       location: route.location,
       name: 'dashboard',
       fullscreenDialog: false,
@@ -210,6 +213,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const DashboardPage(),
     ),
     NotFoundRoute(path: final path) => generatedPage(
+      key: key,
       location: route.location,
       name: 'notFound',
       fullscreenDialog: false,

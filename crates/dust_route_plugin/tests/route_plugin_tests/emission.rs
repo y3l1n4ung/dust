@@ -4,7 +4,10 @@ use dust_route_plugin::register_plugin;
 use serde_json::json;
 use std::{fs, path::PathBuf, sync::Arc};
 
-use super::support::{constructor_param, library_with_classes, route_page_class, router_class};
+use super::support::{
+    constructor_param, guard_class, library_with_classes, named_constructor_guard_class,
+    route_page_class, router_class,
+};
 
 #[test]
 fn emits_standalone_route_and_core_outputs() {
@@ -35,6 +38,18 @@ fn emits_standalone_route_and_core_outputs() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
+    assert!(
+        primary.contains("late final RouterConfig<AppRoutePath> config = _buildConfig();"),
+        "generated router config should be cached per router instance"
+    );
+    assert!(
+        primary.contains("RouterConfig<AppRoutePath> _buildConfig() {"),
+        "generated router config should move construction into a private builder"
+    );
+    assert!(
+        !primary.contains("RouterConfig<AppRoutePath> get config {"),
+        "generated router config must not rebuild on every access"
+    );
     assert_snapshot("standalone_route.dart.snapshot", &primary);
     assert!(contribution.auxiliary_outputs.is_empty());
 }
@@ -75,7 +90,141 @@ fn emits_guard_helpers_with_custom_router_base_name() {
     let contribution = plugin.emit(&library, &SymbolPlan::default());
     let primary = contribution.primary_source.expect("primary route output");
 
+    assert!(primary.contains("DashboardRoute() => [BenchmarkGuard()]"));
+    assert!(!primary.contains("const BenchmarkGuard()"));
     assert_snapshot("custom_router_guard_route.dart.snapshot", &primary);
+}
+
+#[test]
+fn rejects_guard_without_unnamed_constructor() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/', notFound: '/404')"),
+        route_page_class(
+            "DashboardPage",
+            "('/', name: 'dashboard', guards: [AuthGuard])",
+            Vec::new(),
+        ),
+        named_constructor_guard_class("AuthGuard"),
+    ]);
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec![
+            "route guard `AuthGuard` needs an unnamed generative constructor for generated route guard lookup"
+        ]
+    );
+}
+
+#[test]
+fn rejects_guard_required_dependency_with_unresolvable_type() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/', notFound: '/404')"),
+        route_page_class(
+            "DashboardPage",
+            "('/', name: 'dashboard', guards: [AuthGuard])",
+            Vec::new(),
+        ),
+        guard_class(
+            "AuthGuard",
+            vec![constructor_param(
+                "predicate",
+                TypeIr::function("bool Function(String value)"),
+            )],
+        ),
+    ]);
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec![
+            "route guard `AuthGuard` constructor parameter `predicate` needs a resolvable type for router injection"
+        ]
+    );
+}
+
+#[test]
+fn rejects_duplicate_path_params_before_emitting_parser() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/users/:id/posts/:id', notFound: '/404')"),
+        route_page_class(
+            "PostPage",
+            "('/users/:id/posts/:id', name: 'post')",
+            vec![constructor_param("id", TypeIr::int())],
+        ),
+    ]);
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec![
+            "route `PostPage` path `/users/:id/posts/:id` declares duplicate path parameter `:id`"
+        ]
+    );
+}
+
+#[test]
+fn rejects_static_and_dynamic_route_siblings_before_emitting_parser() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/users/settings', notFound: '/404')"),
+        route_page_class(
+            "UserPage",
+            "('/users/:id', name: 'user')",
+            vec![constructor_param("id", TypeIr::int())],
+        ),
+        route_page_class(
+            "UserSettingsPage",
+            "('/users/settings', name: 'userSettings')",
+            Vec::new(),
+        ),
+    ]);
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec![
+            "route path `/users/settings` conflicts with sibling `/users/:id`; static and dynamic segments under `/users` are ambiguous"
+        ]
+    );
+}
+
+#[test]
+fn allows_deeper_static_route_beside_shorter_dynamic_route() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/users/settings/profile', notFound: '/404')"),
+        route_page_class(
+            "UserPage",
+            "('/users/:id', name: 'user')",
+            vec![constructor_param("id", TypeIr::int())],
+        ),
+        route_page_class(
+            "UserSettingsProfilePage",
+            "('/users/settings/profile', name: 'userSettingsProfile')",
+            Vec::new(),
+        ),
+    ]);
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+
+    assert!(
+        contribution.diagnostics.is_empty(),
+        "{:?}",
+        contribution.diagnostics
+    );
+    assert!(contribution.primary_source.is_some());
 }
 
 #[test]
@@ -244,4 +393,11 @@ fn snapshot_path(name: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/route_plugin_tests/snapshots")
         .join(name)
+}
+
+fn diagnostic_messages(diagnostics: &[dust_diagnostics::Diagnostic]) -> Vec<&str> {
+    diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.message.as_str())
+        .collect()
 }
