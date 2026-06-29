@@ -13,9 +13,9 @@ fn build_reports_missing_initial_route_page() {
          import 'pages/not_found_page.dart';\n\
          import 'route.g.dart';\n\
          \n\
-         @Router(initial: '/missing', notFound: '/404')\n\
-         final class AppRouter extends $AppRouter {\n\
-           const AppRouter();\n\
+         @AppRouter(initial: '/missing', notFound: '/404')\n\
+         final class TestRouter extends $TestRouter {\n\
+           const TestRouter();\n\
          }\n",
     );
 
@@ -30,7 +30,7 @@ fn build_reports_missing_initial_route_page() {
     assert_eq!(
         diagnostic_messages(&result.diagnostics),
         vec![
-            "router `AppRouter` initial path `/missing` does not match any discovered `@Route` path"
+            "router `TestRouter` initial path `/missing` does not match any discovered `@AppRoute` path"
         ]
     );
 }
@@ -44,9 +44,9 @@ fn build_reports_missing_not_found_route_page() {
         "import 'pages/dashboard_page.dart';\n\
          import 'route.g.dart';\n\
          \n\
-         @Router(initial: '/', notFound: '/missing')\n\
-         final class AppRouter extends $AppRouter {\n\
-           const AppRouter();\n\
+         @AppRouter(initial: '/', notFound: '/missing')\n\
+         final class TestRouter extends $TestRouter {\n\
+           const TestRouter();\n\
          }\n",
     );
 
@@ -61,7 +61,7 @@ fn build_reports_missing_not_found_route_page() {
     assert_eq!(
         diagnostic_messages(&result.diagnostics),
         vec![
-            "router `AppRouter` notFound path `/missing` does not match any discovered `@Route` path"
+            "router `TestRouter` notFound path `/missing` does not match any discovered `@AppRoute` path"
         ]
     );
 }
@@ -72,7 +72,7 @@ fn build_reports_route_shell_or_guard_without_visible_import() {
     write_routing_workspace(workspace.path(), "dashboard");
     write_file(
         &workspace.path().join("lib/pages/project_page.dart"),
-        "@Route('/projects/:projectId', name: 'project', shell: AppShell, guards: [ProjectGuard])\n\
+        "@AppRoute('/projects/:projectId', name: 'project', shell: AppShell, guards: [ProjectGuard])\n\
          final class ProjectPage {\n\
            const ProjectPage({required this.projectId});\n\
            final int projectId;\n\

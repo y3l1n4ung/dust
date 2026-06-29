@@ -1,5 +1,5 @@
 import 'package:dust_flutter/i18n.dart';
-import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 import '../../../shared/widgets/snackbars/app_snackbar.dart';
@@ -7,7 +7,7 @@ import '../../cart/view_models/cart_view_model.dart';
 import '../models/wishlist_item.dart';
 import '../view_models/wishlist_view_model.dart';
 
-@Route('/wishlist', name: 'wishlist', guards: [])
+@AppRoute('/wishlist', name: 'wishlist', guards: [])
 class WishlistScreen extends StatelessWidget {
   const WishlistScreen({super.key});
 

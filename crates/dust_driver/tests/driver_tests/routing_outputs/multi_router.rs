@@ -12,14 +12,14 @@ fn multiple_router_roots_are_rejected() {
         "import 'pages/admin_page.dart';\n\
          import 'admin_route.g.dart';\n\
          \n\
-         @Router(initial: '/admin', notFound: '/404')\n\
+         @AppRouter(initial: '/admin', notFound: '/404')\n\
          final class AdminRouter extends $AdminRouter {\n\
            const AdminRouter();\n\
          }\n",
     );
     write_file(
         &workspace.path().join("lib/pages/admin_page.dart"),
-        "@Route('/admin', name: 'admin')\n\
+        "@AppRoute('/admin', name: 'admin')\n\
          final class AdminPage {\n\
            const AdminPage();\n\
          }\n",
@@ -39,6 +39,6 @@ fn multiple_router_roots_are_rejected() {
             .iter()
             .map(|diagnostic| diagnostic.message.as_str())
             .collect::<Vec<_>>(),
-        vec!["exactly one `@Router` is allowed in a Dust route workspace"]
+        vec!["exactly one `@AppRouter` is allowed in a Dust route workspace"]
     );
 }

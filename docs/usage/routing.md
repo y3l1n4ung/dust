@@ -21,9 +21,9 @@ import 'route.g.dart';
 export 'route.g.dart';
 export 'package:dust_flutter/route.dart';
 
-@Router(initial: '/', notFound: '/404')
-final class AppRouter extends $AppRouter {
-  AppRouter({required this.auth});
+@AppRouter(initial: '/', notFound: '/404')
+final class RootRouter extends $RootRouter {
+  RootRouter({required this.auth});
 
   final AuthViewModel auth;
 
@@ -42,17 +42,17 @@ final class AppRouter extends $AppRouter {
 
 Dust auto-discovers exactly one `Listenable`-like field on the router, such as a
 `ViewModel`, `Listenable`, `ChangeNotifier`, or `ValueNotifier`, and wires it as
-the generated refresh source. Do not pass a string field name in `@Router`.
+the generated refresh source. Do not pass a string field name in `@AppRouter`.
 
 ## Routes
 
 ```dart
-@Route('/', name: 'home', shell: AppShell, guards: [AuthGuard])
+@AppRoute('/', name: 'home', shell: AppShell, guards: [AuthGuard])
 final class HomePage extends StatelessWidget {
   const HomePage({super.key});
 }
 
-@Route('/models/:id', name: 'modelDetail', shell: AppShell)
+@AppRoute('/models/:id', name: 'modelDetail', shell: AppShell)
 final class ModelDetailPage extends StatelessWidget {
   const ModelDetailPage({
     super.key,
@@ -66,7 +66,7 @@ final class ModelDetailPage extends StatelessWidget {
   final bool? archived;
 }
 
-@Route('/404', name: 'notFound', guards: [])
+@AppRoute('/404', name: 'notFound', guards: [])
 final class NotFoundPage extends StatelessWidget {
   const NotFoundPage({super.key, this.path = ''});
 
@@ -82,7 +82,7 @@ parameters.
 
 ```dart
 MaterialApp.router(
-  routerConfig: AppRouter(auth: authViewModel).config,
+  routerConfig: RootRouter(auth: authViewModel).config,
 );
 ```
 

@@ -3,8 +3,8 @@
 //
 // ignore_for_file: unused_import, unnecessary_import
 
-import 'package:flutter/material.dart' hide Route;
-import 'package:flutter/cupertino.dart' hide Route;
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:dust_flutter/route.dart';
 
 import 'route.dart';

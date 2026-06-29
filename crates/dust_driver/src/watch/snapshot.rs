@@ -56,8 +56,8 @@ pub(crate) fn build_snapshot(cwd: &Path) -> Result<WorkspaceSnapshot, Diagnostic
             SnapshotEntry {
                 library,
                 source_hash: hash_text(&source),
-                contains_route_marker: source.contains("@Route"),
-                contains_router_marker: source.contains("@Router"),
+                contains_route_marker: source.contains("@AppRoute"),
+                contains_router_marker: source.contains("@AppRouter"),
             },
         );
     }

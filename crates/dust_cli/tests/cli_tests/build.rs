@@ -34,21 +34,21 @@ fn cli_build_reports_route_contributors_separately() {
         "import 'pages/dashboard_page.dart';\n\
          import 'pages/not_found_page.dart';\n\
          import 'route.g.dart';\n\
-         @Router(initial: '/', notFound: '/404')\n\
-         final class AppRouter extends $AppRouter {\n\
-           const AppRouter();\n\
+         @AppRouter(initial: '/', notFound: '/404')\n\
+         final class TestRouter extends $TestRouter {\n\
+           const TestRouter();\n\
          }\n",
     );
     write_file(
         &workspace.path().join("lib/pages/dashboard_page.dart"),
-        "@Route('/', name: 'dashboard')\n\
+        "@AppRoute('/', name: 'dashboard')\n\
          final class DashboardPage {\n\
            const DashboardPage();\n\
          }\n",
     );
     write_file(
         &workspace.path().join("lib/pages/not_found_page.dart"),
-        "@Route('/404', name: 'notFound', guards: [])\n\
+        "@AppRoute('/404', name: 'notFound', guards: [])\n\
          final class NotFoundPage {\n\
            const NotFoundPage({this.path = ''});\n\
            final String path;\n\
