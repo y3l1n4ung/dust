@@ -132,9 +132,21 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     });
   }
 
-  Future<void> _applyRoute(T requested, NavigationMode mode) async {
+  Future<void> _applyRoute(
+    T requested,
+    NavigationMode mode, [
+    int guardRedirects = 0,
+  ]) async {
     final epoch = ++_navigationEpoch;
     var candidate = requested;
+
+    if (guardRedirects >= maxRedirects) {
+      throw StateError(
+        'Router guard redirects hit the redirect cap ($maxRedirects) '
+        'navigating to "${config.routeLocation(requested)}". '
+        'Check for a guard redirect cycle.',
+      );
+    }
 
     var redirects = 0;
     for (; redirects < maxRedirects; redirects += 1) {
@@ -144,6 +156,12 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
         break;
       }
       candidate = redirected;
+    }
+    if (redirects >= maxRedirects) {
+      throw StateError(
+        'Router hit the redirect cap ($maxRedirects) navigating to '
+        '"${config.routeLocation(requested)}". Check for a redirect cycle.',
+      );
     }
     assert(
       redirects < maxRedirects,
@@ -160,7 +178,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
       ).canActivate(candidate);
       if (epoch != _navigationEpoch) return;
       if (redirected != null) {
-        await _applyRoute(redirected, mode);
+        await _applyRoute(redirected, mode, guardRedirects + 1);
         return;
       }
     }
