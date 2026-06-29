@@ -13,7 +13,9 @@ import 'package:route_test/pages/project_page.dart';
 
 abstract class $TestRouter extends RouterBase<AppRoutePath> {
 
-  RouterConfig<AppRoutePath> get config {
+  late final RouterConfig<AppRoutePath> config = _buildConfig();
+
+  RouterConfig<AppRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
       initialRoute: const ProjectRoute(),
@@ -208,13 +210,14 @@ bool _shellConsistencyCheck() {
   return $appRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(AppRoutePath route) {
+Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
   assert(
     _shellConsistencyCheck(),
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
     NotFoundRoute(path: final path) => generatedPage(
+      key: key,
       location: route.location,
       name: 'notFound',
       fullscreenDialog: false,
@@ -222,6 +225,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: NotFoundPage(path: path),
     ),
     ProjectRoute(projectId: final projectId) => generatedPage(
+      key: key,
       location: route.location,
       name: 'project',
       fullscreenDialog: false,

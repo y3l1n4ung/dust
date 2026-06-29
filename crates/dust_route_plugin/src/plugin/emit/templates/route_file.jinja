@@ -11,7 +11,9 @@ import 'route.dart';
 {{ imports }}
 {{ no_transition_builder }}abstract class {{ generated_base_class }} extends RouterBase<AppRoutePath> {
 {{ refresh_getter }}
-  RouterConfig<AppRoutePath> get config {
+  late final RouterConfig<AppRoutePath> config = _buildConfig();
+
+  RouterConfig<AppRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
       initialRoute: const {{ initial_route_class }}(),

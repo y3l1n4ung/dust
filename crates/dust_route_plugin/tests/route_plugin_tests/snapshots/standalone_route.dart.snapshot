@@ -11,7 +11,9 @@ import 'route.dart';
 
 abstract class $TestRouter extends RouterBase<AppRoutePath> {
 
-  RouterConfig<AppRoutePath> get config {
+  late final RouterConfig<AppRoutePath> config = _buildConfig();
+
+  RouterConfig<AppRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
       initialRoute: const DashboardRoute(),
@@ -288,13 +290,14 @@ bool _shellConsistencyCheck() {
   return $appRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(AppRoutePath route) {
+Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
   assert(
     _shellConsistencyCheck(),
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
     DashboardRoute() => generatedPage(
+      key: key,
       location: route.location,
       name: 'dashboard',
       transition: FadeUpwardsPageTransitionsBuilder(),
@@ -303,6 +306,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: const DashboardPage(),
     ),
     NotFoundRoute(path: final path) => generatedPage(
+      key: key,
       location: route.location,
       name: 'notFound',
       fullscreenDialog: false,
@@ -314,6 +318,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       tab: final tab,
       archived: final archived,
     ) => generatedPage(
+      key: key,
       location: route.location,
       name: 'project',
       fullscreenDialog: false,
@@ -321,6 +326,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: AppShell(child: ProjectPage(projectId: projectId, tab: tab, archived: archived)),
     ),
     ProjectSettingsRoute(projectId: final projectId) => generatedPage(
+      key: key,
       location: route.location,
       name: 'projectSettings',
       fullscreenDialog: false,
