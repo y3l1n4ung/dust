@@ -44,6 +44,8 @@ flutter build web
 
 - `lib/route.dart` owns `@Router`; `lib/route.g.dart` is generated.
 - Pages use `@Route` directly on normal Flutter widgets.
+- Routes with `guards: []` are intentionally public; routes that omit `guards:`
+  stay protected by default through generated `requiresAuth`.
 - ViewModels use `@ViewModel` with typed args, for example `AppViewModelArgs(repository, storage)`.
 - Data models use `@Derive` for copy/equality/serde output.
 - `ShoppingCacheDatabase` uses `@SqlxDatabase`; `ShoppingCacheDao` uses `@SqlxDao` and checked raw SQL `@Query` methods against `migrations/0001_shopping_cache.sql`; run `dust build --db` for SQLite validation and generated DAO output.

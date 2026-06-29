@@ -78,6 +78,20 @@ Route paths are absolute. Path segments like `:id` map to required constructor
 parameters. Nullable or defaulted non-path constructor parameters become query
 parameters.
 
+## Auth Semantics
+
+Routes are protected by default. If a route omits `guards:`, its generated
+`requiresAuth` getter returns `true`, so app-level router redirects can require
+authentication before opening it.
+
+Use `guards: []` to mark a route as public. Dust treats the empty guard list as
+an explicit public-route decision and generates `requiresAuth => false` for that
+route. Use this for login, register, not-found, invite, or other routes that
+must remain reachable before auth succeeds.
+
+Routes with one or more guards stay protected and run their guard chain after
+the router-level redirect check.
+
 ## App Setup
 
 ```dart
