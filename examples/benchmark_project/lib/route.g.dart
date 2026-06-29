@@ -260,13 +260,14 @@ bool _shellConsistencyCheck() {
   return $appRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(AppRoutePath route) {
+Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
   assert(
     _shellConsistencyCheck(),
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
     HomeRoute() => generatedPage(
+      key: key,
       location: route.location,
       name: 'home',
       transition: FadeUpwardsPageTransitionsBuilder(),
@@ -275,6 +276,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: BenchmarkShell(child: const BenchmarkHomePage()),
     ),
     NotFoundRoute(path: final path) => generatedPage(
+      key: key,
       location: route.location,
       name: 'notFound',
       fullscreenDialog: false,
@@ -282,6 +284,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route) {
       child: BenchmarkShell(child: BenchmarkNotFoundPage(path: path)),
     ),
     ModelDetailRoute(id: final id, tab: final tab, archived: final archived) => generatedPage(
+      key: key,
       location: route.location,
       name: 'modelDetail',
       fullscreenDialog: false,
