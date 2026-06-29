@@ -65,7 +65,9 @@ import 'package:shopping_app/shared/widgets/snackbars/app_snackbar.dart';
 abstract class $AppRouter extends RouterBase<AppRoutePath> {
   @override
   Listenable? get refreshListenable => (this as AppRouter).auth;
-  RouterConfig<AppRoutePath> get config {
+  late final RouterConfig<AppRoutePath> config = _buildConfig();
+
+  RouterConfig<AppRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
       initialRoute: const ProductsRoute(),
