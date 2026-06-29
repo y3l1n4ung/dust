@@ -185,6 +185,7 @@ fn validate_ambiguous_path_siblings(routes: &[RouteSpec], diagnostics: &mut Vec<
     }
 }
 
+/// Returns the shared parent path when sibling patterns can match the same URL.
 fn ambiguous_parent(left: &[&str], right: &[&str]) -> Option<String> {
     if left.len() != right.len() {
         return None;
@@ -215,20 +216,24 @@ fn ambiguous_parent(left: &[&str], right: &[&str]) -> Option<String> {
     first_static_dynamic_parent
 }
 
+/// Builds a diagnostic for ambiguous static and dynamic sibling segments.
 fn ambiguous_sibling_diagnostic(route_path: &str, sibling_path: &str, parent: &str) -> Diagnostic {
     Diagnostic::error(format!(
         "route path `{route_path}` conflicts with sibling `{sibling_path}`; static and dynamic segments under `{parent}` are ambiguous"
     ))
 }
 
+/// Iterates over non-empty slash-delimited path segments.
 fn path_segments(path: &str) -> impl Iterator<Item = &str> {
     path.split('/').filter(|segment| !segment.is_empty())
 }
 
+/// Returns the parameter name for a dynamic path segment.
 fn path_param_name(segment: &str) -> Option<&str> {
     segment.strip_prefix(':').filter(|name| !name.is_empty())
 }
 
+/// Renders parent path segments with a leading slash.
 fn display_parent_path(segments: &[String]) -> String {
     if segments.is_empty() {
         "/".to_owned()
