@@ -9,8 +9,7 @@ Flutter and Dart projects.
 
 - Stable authoring APIs for features marked stable.
 - Generated code can improve without forcing handwritten product-code churn.
-- Features marked 50% stable may still receive API refinements before
-  stabilization.
+- Features marked beta may still receive API refinements before stabilization.
 - Performance is part of the product contract, not a best-effort optimization.
 
 ---
@@ -46,7 +45,7 @@ Depending on the features you need, add the following packages to your `pubspec.
 | **Database** | `dust_dart`, `dust_db_sqlite3` |
 
 > [!TIP]
-> `package:dust_dart/serde.dart` re-exports the core derive traits, so you do not need two imports when using JSON serialization.
+> Use `package:dust_dart/dust_dart.dart` for starter examples or mixed Dust features. Feature guides may use narrower imports for focused examples.
 
 ---
 

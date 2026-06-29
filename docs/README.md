@@ -7,8 +7,7 @@
 - Stable public APIs for features marked stable.
 - Improvements should change generated code, engine internals, or runtime
   internals before they require changes to handwritten product code.
-- Features marked 50% stable may still receive API refinements before
-  stabilization.
+- Features marked beta may still receive API refinements before stabilization.
 - Docs and examples should show the stable authoring API first, then generated
   output only when it clarifies behavior.
 
