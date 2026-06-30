@@ -45,6 +45,8 @@ pub(super) fn render_fetch_type(ty: &TypeIr) -> String {
 pub(super) fn render_body_value(param: &MethodParamIr) -> String {
     if uses_direct_body_value(&param.ty) {
         param.name.clone()
+    } else if param.ty.is_nullable() {
+        format!("{}?.toJson()", param.name)
     } else {
         format!("{}.toJson()", param.name)
     }
