@@ -42,6 +42,38 @@ impl ParamState {
                 )),
             );
         }
+        if matches!(verb, HttpVerb::Get | HttpVerb::Head | HttpVerb::Options)
+            && self.request_mode == RequestMode::FormUrlEncoded
+        {
+            diagnostics.push(
+                Diagnostic::error(format!(
+                    "method `{}` on `{}` does not allow `@FormUrlEncoded()` for `{}` requests",
+                    method.name,
+                    class.name,
+                    verb.as_str()
+                ))
+                .with_label(label(
+                    method.span,
+                    "use `POST`, `PUT`, `PATCH`, or `DELETE` for form request bodies",
+                )),
+            );
+        }
+        if matches!(verb, HttpVerb::Get | HttpVerb::Head | HttpVerb::Options)
+            && self.request_mode == RequestMode::MultiPart
+        {
+            diagnostics.push(
+                Diagnostic::error(format!(
+                    "method `{}` on `{}` does not allow `@MultiPart()` for `{}` requests",
+                    method.name,
+                    class.name,
+                    verb.as_str()
+                ))
+                .with_label(label(
+                    method.span,
+                    "use `POST`, `PUT`, `PATCH`, or `DELETE` for multipart request bodies",
+                )),
+            );
+        }
         if self.request_mode == RequestMode::FormUrlEncoded && self.body_count > 0 {
             diagnostics.push(
                 Diagnostic::error(format!(
