@@ -71,6 +71,8 @@ pub(super) struct ClientSpec<'a> {
     pub(super) class_name: &'a str,
     /// Optional class-level base URL from `@HttpClient`.
     pub(super) base_url: Option<String>,
+    /// Runtime target selected by `@HttpClient(target: ...)`.
+    pub(super) target: HttpTargetMode,
     /// Methods that Dust can lower into generated endpoints.
     pub(super) endpoints: Vec<EndpointSpec<'a>>,
 }

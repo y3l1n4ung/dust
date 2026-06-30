@@ -86,12 +86,15 @@ abstract interface class ApiClient {
 
 ## Performance: Offloading JSON Parsing
 
-For large JSON payloads, you can offload the decoding process to a background Isolate to prevent UI jank.
+For large JSON payloads, you can offload the decoding process to a background isolate.
 
 ```dart
 @HttpClient(parseThread: DustParseThread.isolate)
 abstract interface class BigDataApi { ... }
 ```
+
+> [!IMPORTANT]
+> Dart-targeted clients use `Isolate.run`, so add `import 'dart:isolate';` when isolate parsing is enabled. Flutter-targeted clients use Flutter's `compute` helper, so add `import 'package:flutter/foundation.dart' show compute;` when Flutter targeting and isolate parsing are enabled.
 
 > [!TIP]
 > Use `HttpParse` to enable isolates only for specific heavy endpoints while keeping lightweight calls on the main thread. This provides granular control over resource usage.

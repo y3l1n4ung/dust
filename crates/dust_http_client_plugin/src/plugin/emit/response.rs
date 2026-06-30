@@ -2,7 +2,7 @@ use crate::plugin::emit::types::{
     is_void_type, needs_isolate_helper, render_decode_expr, render_decode_expr_nonnull,
     render_non_nullable_type, render_type,
 };
-use crate::plugin::model::{ClientSpec, EndpointSpec, ParseThreadMode};
+use crate::plugin::model::{ClientSpec, EndpointSpec, HttpTargetMode, ParseThreadMode};
 use crate::plugin::util::is_response_body_type;
 
 /// Renders the endpoint completion statement after `_dio.fetch`.
@@ -24,20 +24,20 @@ pub(super) fn render_response_return(spec: &ClientSpec<'_>, endpoint: &EndpointS
         return "    return _result.data!;\n".to_owned();
     }
 
-    let decode_value = if endpoint.parse_thread == ParseThreadMode::Isolate
-        && needs_isolate_helper(ty)
-    {
-        let helper_name = isolate_helper_name(spec.class_name, &endpoint.method.name);
-        if ty.is_nullable() {
-            format!(
-                "_result.data == null ? null : await Isolate.run(() => {helper_name}(_result.data))"
-            )
+    let decode_value =
+        if endpoint.parse_thread == ParseThreadMode::Isolate && needs_isolate_helper(ty) {
+            let helper_name = isolate_helper_name(spec.class_name, &endpoint.method.name);
+            if ty.is_nullable() {
+                format!(
+                    "_result.data == null ? null : {}",
+                    render_background_decode(spec.target, &helper_name, "_result.data")
+                )
+            } else {
+                render_background_decode(spec.target, &helper_name, "_result.data!")
+            }
         } else {
-            format!("await Isolate.run(() => {helper_name}(_result.data!))")
-        }
-    } else {
-        render_decode_expr("_result.data", ty)
-    };
+            render_decode_expr("_result.data", ty)
+        };
 
     if endpoint.return_spec.raw_response {
         format!(
@@ -84,6 +84,14 @@ fn render_isolate_helper(class_name: &str, endpoint: &EndpointSpec<'_>) -> Strin
 /// Builds the deterministic generated isolate helper name.
 fn isolate_helper_name(class_name: &str, method_name: &str) -> String {
     format!("_${}_{}_Decode", class_name, method_name)
+}
+
+/// Renders a target-specific background decode expression.
+fn render_background_decode(target: HttpTargetMode, helper_name: &str, data_expr: &str) -> String {
+    match target {
+        HttpTargetMode::Dart => format!("await Isolate.run(() => {helper_name}({data_expr}))"),
+        HttpTargetMode::Flutter => format!("await compute({helper_name}, {data_expr})"),
+    }
 }
 
 /// Renders the Dio response-type adjustment helper.

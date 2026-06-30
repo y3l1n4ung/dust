@@ -97,7 +97,7 @@ pub(super) fn render_decode_expr_nonnull(data_expr: &str, ty: &TypeIr) -> String
 }
 
 /// Returns true when decoding should be moved to a generated isolate helper.
-pub(super) fn needs_isolate_helper(ty: &TypeIr) -> bool {
+pub(crate) fn needs_isolate_helper(ty: &TypeIr) -> bool {
     match ty {
         TypeIr::Named { args, .. } if type_name_is(ty, DART_LIST) && args.len() == 1 => {
             needs_isolate_helper(&args[0])

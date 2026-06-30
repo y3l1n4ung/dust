@@ -5,7 +5,10 @@ enum DustParseThread {
   /// Decoding happens on the thread that initiated the request.
   main,
 
-  /// Decoding is offloaded to a background isolate using Isolate.run.
+  /// Decoding is offloaded to a background isolate.
+  ///
+  /// Dart-targeted clients use `Isolate.run`; Flutter-targeted clients use
+  /// Flutter's `compute` helper.
   isolate,
 }
 
