@@ -8,10 +8,10 @@ part 'todo_api.g.dart';
 
 @HttpClient(
   baseUrl: 'https://api.todos.com',
-  parseThread: DustParseThread.isolate,
+  parseThread: HttpParseThread.isolate,
   headers: {'x-api-version': '2026-05'},
+  generateTest: true,
 )
-@GenerateTest()
 abstract interface class TodoApi {
   factory TodoApi(Dio dio, {String? baseUrl}) = _$TodoApi;
 

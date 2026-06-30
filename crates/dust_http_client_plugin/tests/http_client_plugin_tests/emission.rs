@@ -14,7 +14,7 @@ fn emits_dio_client_with_inherited_isolate_decode() {
         http_client_class(
             vec![config(
                 "HttpClient",
-                Some("(baseUrl: 'https://api.example.com', parseThread: DustParseThread.isolate)"),
+                Some("(baseUrl: 'https://api.example.com', parseThread: HttpParseThread.isolate)"),
             )],
             vec![method(
                 "getUser",
@@ -59,7 +59,7 @@ fn emits_flutter_target_isolate_decode_with_compute() {
         http_client_class(
             vec![config(
                 "HttpClient",
-                Some("(target: DustHttpTarget.flutter, parseThread: DustParseThread.isolate)"),
+                Some("(target: HttpTarget.flutter, parseThread: HttpParseThread.isolate)"),
             )],
             vec![method(
                 "getUser",
@@ -89,17 +89,14 @@ fn method_parse_override_can_opt_in_one_endpoint() {
     let plugin = register_plugin();
     let library = library_for_with_imports(
         http_client_class(
-            vec![config(
-                "HttpClient",
-                Some("(target: DustHttpTarget.flutter)"),
-            )],
+            vec![config("HttpClient", Some("(target: HttpTarget.flutter)"))],
             vec![
                 method(
                     "getUser",
                     future_of(TypeIr::named("User")),
                     vec![
                         config("GET", Some("('/users/{id}')")),
-                        config("HttpParse", Some("(thread: DustParseThread.isolate)")),
+                        config("HttpParse", Some("(thread: HttpParseThread.isolate)")),
                     ],
                     vec![param(
                         "id",
@@ -291,10 +288,7 @@ fn preserves_named_parameter_defaults_in_generated_client_methods() {
 fn emits_generate_test_auxiliary_file() {
     let plugin = register_plugin();
     let library = library_for(http_client_class(
-        vec![
-            config("HttpClient", Some("()")),
-            config("GenerateTest", Some("()")),
-        ],
+        vec![config("HttpClient", Some("(generateTest: true)"))],
         vec![method(
             "getUser",
             future_of(TypeIr::named("User")),
@@ -327,14 +321,33 @@ fn emits_generate_test_auxiliary_file() {
 }
 
 #[test]
+fn omits_generate_test_auxiliary_file_by_default() {
+    let plugin = register_plugin();
+    let library = library_for(http_client_class(
+        vec![config("HttpClient", Some("()"))],
+        vec![method(
+            "getUser",
+            future_of(TypeIr::named("User")),
+            vec![config("GET", Some("('/users/{id}')"))],
+            vec![param(
+                "id",
+                TypeIr::string(),
+                vec![config("Path", Some("('id')"))],
+            )],
+        )],
+    ));
+
+    let contribution = plugin.emit(&library, &SymbolPlan::default());
+
+    assert!(contribution.auxiliary_outputs.is_empty());
+}
+
+#[test]
 fn rewrites_relative_source_imports_for_generated_tests() {
     let plugin = register_plugin();
     let library = library_for_with_imports(
         http_client_class(
-            vec![
-                config("HttpClient", Some("()")),
-                config("GenerateTest", Some("()")),
-            ],
+            vec![config("HttpClient", Some("(generateTest: true)"))],
             vec![method(
                 "getUser",
                 future_of(TypeIr::named("User")),

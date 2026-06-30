@@ -10,5 +10,5 @@ fn plugin_claims_http_client_configs() {
     assert!(claimed.contains(&"dust_dart::GET"));
     assert!(claimed.contains(&"dust_dart::Body"));
     assert!(claimed.contains(&"dust_dart::HttpParse"));
-    assert!(claimed.contains(&"dust_dart::GenerateTest"));
+    assert!(!claimed.contains(&"dust_dart::GenerateTest"));
 }

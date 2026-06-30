@@ -19,7 +19,7 @@ mod util;
 mod validate;
 
 use self::build::build_client_spec;
-use self::constants::{CLAIMED_CONFIG_SYMBOLS, GENERATE_TEST, HTTP_CLIENT, SUPPORTED_ANNOTATIONS};
+use self::constants::{CLAIMED_CONFIG_SYMBOLS, HTTP_CLIENT, SUPPORTED_ANNOTATIONS};
 use self::emit::{
     render_client_class, render_isolate_helpers, render_shared_helpers, render_test_file,
 };
@@ -88,7 +88,7 @@ impl DustPlugin for HttpClientPlugin {
             contribution
                 .top_level_functions
                 .extend(render_isolate_helpers(&spec));
-            if has_config_named(&class.configs, GENERATE_TEST) {
+            if spec.generate_test {
                 generated_test_specs.push(spec);
             }
         }

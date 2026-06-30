@@ -39,7 +39,7 @@ fn fixture_dust_import(contents: &str) -> Option<String> {
     if has("ViewModel") {
         imports.push("import 'package:dust_flutter/state.dart';\n");
     }
-    if has("HttpClient") || has("GenerateTest") || has("GET") || has("POST") {
+    if has("HttpClient") || has("GET") || has("POST") {
         imports.push("import 'package:dust_dart/http.dart';\n");
     }
     if has("Sqlx") || has("SqlxDatabase") || has("SqlxDao") || contents.contains("FromRow()") {

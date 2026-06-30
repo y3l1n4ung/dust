@@ -22,6 +22,8 @@ pub(crate) struct ParsedHttpClientConfig {
     pub(crate) parse_thread: ParseThreadMode,
     /// Class-level static headers applied to every endpoint.
     pub(crate) headers: Vec<(String, String)>,
+    /// Whether to generate an auxiliary request-mapping test file.
+    pub(crate) generate_test: bool,
 }
 
 /// Parses class-level `@HttpClient` options.
@@ -34,6 +36,7 @@ pub(crate) fn parse_http_client_config(
         target: HttpTargetMode::Dart,
         parse_thread: ParseThreadMode::Main,
         headers: Vec::new(),
+        generate_test: false,
     };
 
     for (key, _) in config.named_arguments() {
@@ -46,19 +49,26 @@ pub(crate) fn parse_http_client_config(
                 ),
             },
             "target" => match config.named_member("target").as_deref() {
-                Some("dart") | Some("DustHttpTarget.dart") => parsed.target = HttpTargetMode::Dart,
-                Some("flutter") | Some("DustHttpTarget.flutter") => {
+                Some("dart") | Some("HttpTarget.dart") => parsed.target = HttpTargetMode::Dart,
+                Some("flutter") | Some("HttpTarget.flutter") => {
                     parsed.target = HttpTargetMode::Flutter;
                 }
                 _ => diagnostics.push(
                     Diagnostic::error(
-                        "`HttpClient(target: ...)` must be `DustHttpTarget.dart` or `DustHttpTarget.flutter`",
+                        "`HttpClient(target: ...)` must be `HttpTarget.dart` or `HttpTarget.flutter`",
                     )
                     .with_label(label(config.span, "pick one of the supported target enum values")),
                 ),
             },
             "parseThread" => parsed.parse_thread = parse_thread_config(config, diagnostics),
             "headers" => parsed.headers = parse_http_client_headers(config, diagnostics),
+            "generateTest" => match config.named_bool("generateTest") {
+                Some(value) => parsed.generate_test = value,
+                None => diagnostics.push(
+                    Diagnostic::error("`HttpClient(generateTest: ...)` expects `true` or `false`")
+                        .with_label(label(config.span, "use `generateTest: true` to generate request-mapping tests")),
+                ),
+            },
             other => diagnostics.push(
                 Diagnostic::warning(format!("unknown `HttpClient` option `{other}`"))
                     .with_label(label(config.span, "remove or rename this unsupported option")),
@@ -209,7 +219,7 @@ pub(crate) fn param_source_names(param: &MethodParamIr) -> Vec<&str> {
         .collect()
 }
 
-/// Parses a `DustParseThread` enum option from class or method config.
+/// Parses an `HttpParseThread` enum option from class or method config.
 fn parse_thread_config(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
@@ -218,12 +228,12 @@ fn parse_thread_config(
         .named_member("parseThread")
         .or_else(|| config.named_member("thread"));
     match thread.as_deref() {
-        Some("main") | Some("DustParseThread.main") => ParseThreadMode::Main,
-        Some("isolate") | Some("DustParseThread.isolate") => ParseThreadMode::Isolate,
+        Some("main") | Some("HttpParseThread.main") => ParseThreadMode::Main,
+        Some("isolate") | Some("HttpParseThread.isolate") => ParseThreadMode::Isolate,
         _ => {
             diagnostics.push(
                 Diagnostic::error(
-                    "`parseThread` must be `DustParseThread.main` or `DustParseThread.isolate`",
+                    "`parseThread` must be `HttpParseThread.main` or `HttpParseThread.isolate`",
                 )
                 .with_label(label(
                     config.span,

@@ -10,8 +10,7 @@ fn build_writes_http_client_auxiliary_test_output() {
     write_file(
         &workspace.path().join("lib/api.dart"),
         "part 'api.g.dart';\n\
-         @HttpClient()\n\
-         @GenerateTest()\n\
+         @HttpClient(generateTest: true)\n\
          abstract interface class Api {\n\
            factory Api(Dio dio, {String? baseUrl}) = _$Api;\n\
            @GET('/users/{id}')\n\
@@ -53,8 +52,7 @@ fn check_marks_http_client_output_stale_when_auxiliary_file_is_missing() {
     write_file(
         &workspace.path().join("lib/api.dart"),
         "part 'api.g.dart';\n\
-         @HttpClient()\n\
-         @GenerateTest()\n\
+         @HttpClient(generateTest: true)\n\
          abstract interface class Api {\n\
            factory Api(Dio dio, {String? baseUrl}) = _$Api;\n\
            @GET('/users/{id}')\n\
@@ -96,8 +94,7 @@ fn clean_removes_http_client_auxiliary_test_output() {
     write_file(
         &workspace.path().join("lib/api.dart"),
         "part 'api.g.dart';\n\
-         @HttpClient()\n\
-         @GenerateTest()\n\
+         @HttpClient(generateTest: true)\n\
          abstract interface class Api {\n\
            factory Api(Dio dio, {String? baseUrl}) = _$Api;\n\
            @GET('/users/{id}')\n\
@@ -138,7 +135,7 @@ fn build_writes_dart_target_isolate_decode_output() {
         &workspace.path().join("lib/api.dart"),
         "import 'dart:isolate';\n\
          part 'api.g.dart';\n\
-         @HttpClient(parseThread: DustParseThread.isolate)\n\
+         @HttpClient(parseThread: HttpParseThread.isolate)\n\
          abstract interface class Api {\n\
            factory Api(Dio dio, {String? baseUrl}) = _$Api;\n\
            @GET('/users')\n\
@@ -171,8 +168,8 @@ fn build_writes_flutter_target_compute_decode_output() {
         "import 'package:flutter/foundation.dart' show compute;\n\
          part 'api.g.dart';\n\
          @HttpClient(\n\
-           target: DustHttpTarget.flutter,\n\
-           parseThread: DustParseThread.isolate,\n\
+           target: HttpTarget.flutter,\n\
+           parseThread: HttpParseThread.isolate,\n\
          )\n\
          abstract interface class Api {\n\
            factory Api(Dio dio, {String? baseUrl}) = _$Api;\n\
@@ -205,8 +202,8 @@ fn build_rejects_flutter_target_isolate_decode_without_compute_import() {
         &workspace.path().join("lib/api.dart"),
         "part 'api.g.dart';\n\
          @HttpClient(\n\
-           target: DustHttpTarget.flutter,\n\
-           parseThread: DustParseThread.isolate,\n\
+           target: HttpTarget.flutter,\n\
+           parseThread: HttpParseThread.isolate,\n\
          )\n\
          abstract interface class Api {\n\
            factory Api(Dio dio, {String? baseUrl}) = _$Api;\n\

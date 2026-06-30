@@ -1,7 +1,7 @@
 import 'package:meta/meta.dart';
 
 /// Defines the thread context for JSON parsing.
-enum DustParseThread {
+enum HttpParseThread {
   /// Decoding happens on the thread that initiated the request.
   main,
 
@@ -13,7 +13,7 @@ enum DustParseThread {
 }
 
 /// Defines the runtime target for generated HTTP clients.
-enum DustHttpTarget {
+enum HttpTarget {
   /// Generate runtime behavior that works in pure Dart environments.
   dart,
 
@@ -28,10 +28,13 @@ class HttpClient {
   final String? baseUrl;
 
   /// The runtime target the generated client should optimize for.
-  final DustHttpTarget target;
+  final HttpTarget target;
 
   /// The global default strategy for JSON decoding.
-  final DustParseThread parseThread;
+  final HttpParseThread parseThread;
+
+  /// Whether Dust should generate a companion request-mapping test file.
+  final bool generateTest;
 
   /// Static headers applied to every request from this client.
   final Map<String, String> headers;
@@ -39,17 +42,11 @@ class HttpClient {
   /// Creates one HTTP client generation annotation.
   const HttpClient({
     this.baseUrl,
-    this.target = DustHttpTarget.dart,
-    this.parseThread = DustParseThread.main,
+    this.target = HttpTarget.dart,
+    this.parseThread = HttpParseThread.main,
     this.headers = const {},
+    this.generateTest = false,
   });
-}
-
-/// Instructs Dust to generate a test suite (`.test.g.dart`) for this API.
-@immutable
-class GenerateTest {
-  /// Creates one generated-test marker annotation.
-  const GenerateTest();
 }
 
 /// Base class for HTTP method annotations.
@@ -215,7 +212,7 @@ class MultiPart {
 @immutable
 class HttpParse {
   /// Method-level JSON parse thread override.
-  final DustParseThread thread;
+  final HttpParseThread thread;
 
   /// Creates one HTTP parse override annotation.
   const HttpParse({required this.thread});

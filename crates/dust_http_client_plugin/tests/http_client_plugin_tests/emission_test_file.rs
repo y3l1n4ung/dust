@@ -11,10 +11,7 @@ use super::support::{
 fn generates_map_body_request_fixtures() {
     let plugin = register_plugin();
     let library = library_for(http_client_class(
-        vec![
-            config("HttpClient", Some("()")),
-            config("GenerateTest", Some("()")),
-        ],
+        vec![config("HttpClient", Some("(generateTest: true)"))],
         vec![method(
             "createUser",
             future_of(TypeIr::generic(
@@ -43,10 +40,7 @@ fn generates_model_body_request_fixtures_from_local_serde_models() {
     let plugin = register_plugin();
     let library = library_with_classes(vec![
         http_client_class(
-            vec![
-                config("HttpClient", Some("()")),
-                config("GenerateTest", Some("()")),
-            ],
+            vec![config("HttpClient", Some("(generateTest: true)"))],
             vec![method(
                 "createUser",
                 future_of(TypeIr::named("User")),
@@ -85,10 +79,7 @@ fn generates_model_body_request_fixtures_from_local_serde_models() {
 fn omits_model_body_request_fixtures_without_local_model_ir() {
     let plugin = register_plugin();
     let library = library_for(http_client_class(
-        vec![
-            config("HttpClient", Some("()")),
-            config("GenerateTest", Some("()")),
-        ],
+        vec![config("HttpClient", Some("(generateTest: true)"))],
         vec![method(
             "createUser",
             future_of(TypeIr::named("User")),
@@ -109,10 +100,7 @@ fn omits_model_body_request_fixtures_without_local_model_ir() {
 fn generates_stream_response_body_fixtures() {
     let plugin = register_plugin();
     let library = library_for(http_client_class(
-        vec![
-            config("HttpClient", Some("()")),
-            config("GenerateTest", Some("()")),
-        ],
+        vec![config("HttpClient", Some("(generateTest: true)"))],
         vec![method(
             "streamUsers",
             future_of(TypeIr::named("ResponseBody")),
@@ -132,10 +120,7 @@ fn generates_stream_response_body_fixtures() {
 fn drains_generated_byte_stream_invocations() {
     let plugin = register_plugin();
     let library = library_for(http_client_class(
-        vec![
-            config("HttpClient", Some("()")),
-            config("GenerateTest", Some("()")),
-        ],
+        vec![config("HttpClient", Some("(generateTest: true)"))],
         vec![method(
             "streamUsers",
             TypeIr::generic("Stream", vec![TypeIr::list_of(TypeIr::int())]),
@@ -156,10 +141,7 @@ fn drains_generated_text_stream_invocations() {
     let plugin = register_plugin();
     let library = library_for_with_imports(
         http_client_class(
-            vec![
-                config("HttpClient", Some("()")),
-                config("GenerateTest", Some("()")),
-            ],
+            vec![config("HttpClient", Some("(generateTest: true)"))],
             vec![method(
                 "streamUsers",
                 TypeIr::generic("Stream", vec![TypeIr::string()]),
