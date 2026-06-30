@@ -205,7 +205,7 @@ void main() {
     final router = await _shoppingRouter();
     final delegate =
         router.config.routerDelegate as GeneratedRouterDelegate<AppRoutePath>;
-    await _settleScheduledRouterRefresh();
+    await delegate.debugWaitForScheduledRefresh();
 
     await delegate.setNewRoutePath(const AdminRoute());
     expect(
@@ -219,7 +219,7 @@ void main() {
     expect(delegate.stack, [isA<ProductsRoute>(), isA<LoginRoute>()]);
 
     _authenticate(router, 'dust');
-    await _settleScheduledRouterRefresh();
+    await delegate.debugWaitForScheduledRefresh();
     expect(delegate.currentConfiguration, isA<ProductsRoute>());
 
     await delegate.setNewRoutePath(const StaffRoute());
@@ -227,7 +227,7 @@ void main() {
     expect(delegate.stack, [isA<ProductsRoute>()]);
 
     _authenticate(router, 'manager');
-    await _settleScheduledRouterRefresh();
+    await delegate.debugWaitForScheduledRefresh();
     await delegate.setNewRoutePath(const StaffRoute());
     expect(delegate.currentConfiguration, isA<StaffRoute>());
     expect(delegate.stack, [isA<ProductsRoute>(), isA<StaffRoute>()]);
@@ -236,13 +236,13 @@ void main() {
     expect(delegate.currentConfiguration, isA<ProductsRoute>());
 
     _authenticate(router, 'admin');
-    await _settleScheduledRouterRefresh();
+    await delegate.debugWaitForScheduledRefresh();
     await delegate.setNewRoutePath(const AdminRoute());
     expect(delegate.currentConfiguration, isA<AdminRoute>());
     expect(delegate.stack, [isA<ProductsRoute>(), isA<AdminRoute>()]);
 
     _expireSession(router);
-    await _settleScheduledRouterRefresh();
+    await delegate.debugWaitForScheduledRefresh();
     expect(
       delegate.currentConfiguration,
       isA<LoginRoute>().having(
@@ -254,7 +254,7 @@ void main() {
     expect(delegate.stack, [isA<ProductsRoute>(), isA<LoginRoute>()]);
 
     _authenticate(router, 'dust');
-    await _settleScheduledRouterRefresh();
+    await delegate.debugWaitForScheduledRefresh();
     expect(delegate.currentConfiguration, isA<ProductsRoute>());
   });
 }
@@ -292,11 +292,4 @@ User _user(String username) {
     name: Name(firstname: username, lastname: 'User'),
     phone: '555-0100',
   );
-}
-
-Future<void> _settleScheduledRouterRefresh() async {
-  // Auth changes schedule a router refresh microtask; that refresh then awaits
-  // the guard chain before committing the replacement route.
-  await Future<void>.delayed(Duration.zero);
-  await Future<void>.delayed(Duration.zero);
 }

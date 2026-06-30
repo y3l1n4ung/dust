@@ -9,7 +9,7 @@ void main() {
         router: _RouterRedirectCycle(),
       ),
     );
-    await _drainInitialRefresh();
+    await delegate.debugWaitForScheduledRefresh();
 
     await expectLater(
       delegate.setNewRoutePath(const _TestRoute('/one')),
@@ -33,7 +33,7 @@ void main() {
         },
       ),
     );
-    await _drainInitialRefresh();
+    await delegate.debugWaitForScheduledRefresh();
 
     await expectLater(
       delegate.setNewRoutePath(const _TestRoute('/guard-one')),
@@ -46,10 +46,6 @@ void main() {
       ),
     );
   });
-}
-
-Future<void> _drainInitialRefresh() async {
-  await Future<void>.delayed(Duration.zero);
 }
 
 RouterRuntimeConfig<_TestRoute> _runtimeConfig({
