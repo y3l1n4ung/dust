@@ -66,9 +66,14 @@ fn generates_model_body_request_fixtures_from_local_serde_models() {
         .emit(&library, &SymbolPlan::default())
         .auxiliary_outputs[0]
         .source;
-    assert!(
-        generated.contains("await expectLater(api.createUser(UserCreate.fromJson(<String, Object?>{'name': 'dust', 'isAdmin': true})), throwsA(anything));")
-    );
+    assert!(generated.contains(
+        "await expectLater(
+        api.createUser(
+          UserCreate.fromJson(<String, Object?>{'name': 'dust', 'isAdmin': true}),
+        ),
+        throwsA(anything),
+      );"
+    ));
     assert!(
         generated.contains(
             "expect(request.data, equals(UserCreate.fromJson(<String, Object?>{'name': 'dust', 'isAdmin': true}).toJson()));"

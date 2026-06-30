@@ -25,7 +25,7 @@ struct EndpointMethodContext<'a> {
     return_type: String,
     /// Dart method name copied from source IR.
     method_name: &'a str,
-    /// Rendered Dart method parameter list.
+    /// Rendered Dart method parameter list, including parentheses.
     params: String,
     /// Either `async` or `async*`.
     async_marker: &'static str,
@@ -126,9 +126,9 @@ pub(crate) fn render_client_class(spec: &ClientSpec<'_>) -> String {
                 methods: spec
                     .endpoints
                     .iter()
-                    .map(|endpoint| format!("\n{}", render_endpoint_method(spec, endpoint)))
+                    .map(|endpoint| render_endpoint_method(spec, endpoint))
                     .collect::<Vec<_>>()
-                    .join(""),
+                    .join("\n\n"),
             },
         )
     )
@@ -141,14 +141,21 @@ fn render_endpoint_method(spec: &ClientSpec<'_>, endpoint: &EndpointSpec<'_>) ->
     } else {
         "async"
     };
+    let return_type = render_type(&endpoint.method.return_type);
+    let params = render_method_parameters(
+        &endpoint.method.params,
+        &return_type,
+        &endpoint.method.name,
+        async_marker,
+    );
     let body = render_endpoint_body(spec, endpoint);
     render_template(
         "endpoint_method",
         include_str!("templates/endpoint_method.jinja"),
         EndpointMethodContext {
-            return_type: render_type(&endpoint.method.return_type),
+            return_type,
             method_name: &endpoint.method.name,
-            params: render_method_parameters(&endpoint.method.params),
+            params,
             async_marker,
             body,
         },
@@ -324,7 +331,12 @@ fn render_options(endpoint: &EndpointSpec<'_>, content_type: &str) -> String {
 }
 
 /// Renders a Dart method parameter list from positional and named parameters.
-fn render_method_parameters(params: &[dust_ir::MethodParamIr]) -> String {
+fn render_method_parameters(
+    params: &[dust_ir::MethodParamIr],
+    return_type: &str,
+    method_name: &str,
+    async_marker: &str,
+) -> String {
     let positional = params
         .iter()
         .filter(|param| param.kind == dust_ir::ParamKind::Positional)
@@ -336,12 +348,44 @@ fn render_method_parameters(params: &[dust_ir::MethodParamIr]) -> String {
         .map(render_method_parameter)
         .collect::<Vec<_>>();
 
-    match (positional.is_empty(), named.is_empty()) {
-        (true, true) => String::new(),
-        (false, true) => positional.join(", "),
-        (true, false) => format!("{{{}}}", named.join(", ")),
-        (false, false) => format!("{}, {{{}}}", positional.join(", "), named.join(", ")),
+    let one_line = match (positional.is_empty(), named.is_empty()) {
+        (true, true) => "()".to_owned(),
+        (false, true) => format!("({})", positional.join(", ")),
+        (true, false) => format!("({{{}}})", named.join(", ")),
+        (false, false) => format!("({}, {{{}}})", positional.join(", "), named.join(", ")),
+    };
+    let signature_len = format!("  {return_type} {method_name}{one_line} {async_marker} {{").len();
+    if signature_len <= 88 && params.len() <= 2 {
+        return one_line;
     }
+
+    match (positional.is_empty(), named.is_empty()) {
+        (true, true) => "()".to_owned(),
+        (false, true) => multiline_parameters("(", &positional, "  )"),
+        (true, false) => multiline_parameters("({", &named, "  })"),
+        (false, false) => {
+            let mut lines = vec!["(".to_owned()];
+            for (index, param) in positional.iter().enumerate() {
+                let suffix = if index + 1 == positional.len() {
+                    ", {"
+                } else {
+                    ","
+                };
+                lines.push(format!("    {param}{suffix}"));
+            }
+            lines.extend(named.iter().map(|param| format!("    {param},")));
+            lines.push("  })".to_owned());
+            lines.join("\n")
+        }
+    }
+}
+
+/// Renders a multi-line Dart parameter list with stable indentation.
+fn multiline_parameters(open: &str, params: &[String], close: &str) -> String {
+    let mut lines = vec![open.to_owned()];
+    lines.extend(params.iter().map(|param| format!("    {param},")));
+    lines.push(close.to_owned());
+    lines.join("\n")
 }
 
 /// Renders a single Dart method parameter with `required` when needed.

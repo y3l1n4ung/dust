@@ -27,6 +27,7 @@ RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
   }
   return requestOptions;
 }
+
 String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   if (baseUrl == null || baseUrl.trim().isEmpty) {
     return dioBaseUrl;
@@ -37,6 +38,7 @@ String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   }
   return Uri.parse(dioBaseUrl).resolveUri(url).toString();
 }
+
 Response<T> _buildResponse<T>(Response<dynamic> response, T data) {
   return Response<T>(
     data: data,
@@ -95,6 +97,7 @@ final class _$BenchmarkHttpApi implements BenchmarkHttpApi {
     .map((item) => HttpPost.fromJson(item as Map<String, dynamic>))
     .toList();
   }
+
   @override
   Future<Response<HttpPost>> fetchPost(int id) async {
     final _queryParameters = <String, dynamic>{};
@@ -131,6 +134,7 @@ final class _$BenchmarkHttpApi implements BenchmarkHttpApi {
     final _value = HttpPost.fromJson(_result.data as Map<String, dynamic>);
     return _buildResponse<HttpPost>(_result, _value);
   }
+
   @override
   Future<Map<String, dynamic>> createPost(Map<String, dynamic> payload) async {
     final _queryParameters = <String, dynamic>{};

@@ -12,6 +12,7 @@ pub(crate) const SHARED_HELPERS: &str = r#"RequestOptions _setStreamType<T>(Requ
   }
   return requestOptions;
 }
+
 String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   if (baseUrl == null || baseUrl.trim().isEmpty) {
     return dioBaseUrl;
@@ -22,6 +23,7 @@ String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   }
   return Uri.parse(dioBaseUrl).resolveUri(url).toString();
 }
+
 Response<T> _buildResponse<T>(Response<dynamic> response, T data) {
   return Response<T>(
     data: data,

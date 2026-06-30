@@ -5,7 +5,12 @@
         InterceptorsWrapper(
           onRequest: (options, handler) {
             captured = options;
-            handler.resolve(Response<dynamic>(requestOptions: options, data: {{ response_data }}));
+            handler.resolve(
+              Response<dynamic>(
+                requestOptions: options,
+                data: {{ response_data }},
+              ),
+            );
           },
         ),
       );

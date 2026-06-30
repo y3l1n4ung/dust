@@ -24,8 +24,6 @@ struct TestFileContext {
     header: &'static str,
     /// Imports required by the generated test.
     imports: String,
-    /// Import URI for the source library under test.
-    source_import: String,
     /// Rendered test groups.
     groups: String,
 }
@@ -80,8 +78,7 @@ pub(crate) fn render_test_file(library: &DartFileIr, specs: &[ClientSpec<'_>]) -
             include_str!("templates/test_file.jinja"),
             TestFileContext {
                 header: GENERATED_HEADER,
-                imports: render_imports(library, package_root, source_path),
-                source_import,
+                imports: render_imports(library, package_root, source_path, &source_import),
                 groups: format!("{}\n", client_groups.join("\n")),
             },
         )
@@ -89,8 +86,13 @@ pub(crate) fn render_test_file(library: &DartFileIr, specs: &[ClientSpec<'_>]) -
 }
 
 /// Renders imports copied from the source library with generated-test exclusions.
-fn render_imports(library: &DartFileIr, package_root: &Path, source_path: &Path) -> String {
-    rendered_imports(library, package_root, source_path)
+fn render_imports(
+    library: &DartFileIr,
+    package_root: &Path,
+    source_path: &Path,
+    source_import: &str,
+) -> String {
+    let imports = rendered_imports(library, package_root, source_path)
         .into_iter()
         .filter(|import| {
             !matches!(
@@ -98,8 +100,36 @@ fn render_imports(library: &DartFileIr, package_root: &Path, source_path: &Path)
                 "package:dio/dio.dart" | "package:test/test.dart" | "package:dust_dart/http.dart"
             )
         })
+        .chain([
+            "package:dio/dio.dart".to_owned(),
+            "package:test/test.dart".to_owned(),
+            source_import.to_owned(),
+        ])
+        .collect::<BTreeSet<_>>();
+
+    let dart = imports
+        .iter()
+        .filter(|import| import.starts_with("dart:"))
         .map(|import| format!("import '{import}';\n"))
-        .collect::<String>()
+        .collect::<String>();
+    let package = imports
+        .iter()
+        .filter(|import| import.starts_with("package:"))
+        .map(|import| format!("import '{import}';\n"))
+        .collect::<String>();
+    let other = imports
+        .iter()
+        .filter(|import| !import.starts_with("dart:") && !import.starts_with("package:"))
+        .map(|import| format!("import '{import}';\n"))
+        .collect::<String>();
+
+    [dart, package, other]
+        .into_iter()
+        .filter(|group| !group.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n")
+        .trim_end()
+        .to_owned()
 }
 
 /// Rewrites source imports so generated tests can import the same dependencies.
@@ -147,17 +177,14 @@ fn render_endpoint_test(
 ) -> Option<String> {
     let invocation = build_invocation(endpoint, fixtures)?;
 
-    let invocation_expr = format!(
-        "api.{}({})",
-        endpoint.method.name, invocation.call_arguments
-    );
+    let invocation_expr = render_call_expression(&endpoint.method.name, &invocation.arguments);
     let response = response_data(endpoint, fixtures);
     let call_line = if endpoint.return_spec.is_stream() {
-        format!("        await {invocation_expr}.drain<void>();\n")
+        format!("      await {invocation_expr}.drain<void>();")
     } else if response.completes {
-        format!("        await {invocation_expr};\n")
+        format!("      await {invocation_expr};")
     } else {
-        format!("        await expectLater({invocation_expr}, throwsA(anything));\n")
+        render_expected_throw(&invocation_expr)
     };
 
     Some(render_template(
@@ -176,7 +203,7 @@ fn render_endpoint_test(
             assertions: invocation
                 .assertions
                 .into_iter()
-                .map(|assertion| format!("      {assertion}\n"))
+                .map(|assertion| indent_block(&assertion, "      "))
                 .collect(),
         },
     ))
@@ -297,25 +324,16 @@ fn build_invocation(
     }
 
     if endpoint.request_mode == RequestMode::FormUrlEncoded {
-        data_assertion = format!(
-            "expect(request.data, equals({}));",
-            map_literal(&body_entries)
-        );
+        data_assertion = map_assertion("request.data", &body_entries);
     }
 
     let mut assertions = vec![
-        format!(
-            "expect(request.queryParameters, equals({}));",
-            map_literal(&query_entries)
+        map_assertion("request.queryParameters", &query_entries),
+        map_assertion(
+            "Map<String, dynamic>.from(request.headers)..remove('content-type')",
+            &header_entries,
         ),
-        format!(
-            "expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals({}));",
-            map_literal(&header_entries)
-        ),
-        format!(
-            "expect(request.extra, equals({}));",
-            map_literal(&extra_entries)
-        ),
+        map_assertion("request.extra", &extra_entries),
         data_assertion,
     ];
     match endpoint.request_mode {
@@ -326,18 +344,48 @@ fn build_invocation(
             .push("expect(request.contentType, Headers.multipartFormDataContentType);".to_owned()),
     }
 
-    let call_arguments = match (positional.is_empty(), named.is_empty()) {
-        (true, true) => String::new(),
-        (false, true) => positional.join(", "),
-        (true, false) => named.join(", "),
-        (false, false) => format!("{}, {}", positional.join(", "), named.join(", ")),
-    };
+    let mut arguments = positional;
+    arguments.extend(named);
 
     Some(Invocation {
-        call_arguments,
+        arguments,
         assertions,
         path_values,
     })
+}
+
+/// Renders an API call expression, wrapping long argument lists.
+fn render_call_expression(method_name: &str, arguments: &[String]) -> String {
+    let one_line = format!("api.{method_name}({})", arguments.join(", "));
+    if one_line.len() <= 72 {
+        return one_line;
+    }
+
+    let args = arguments
+        .iter()
+        .map(|argument| format!("        {argument},\n"))
+        .collect::<String>();
+    format!("api.{method_name}(\n{args}      )")
+}
+
+/// Renders an expected throwing API call with stable wrapping.
+fn render_expected_throw(invocation_expr: &str) -> String {
+    let one_line = format!("      await expectLater({invocation_expr}, throwsA(anything));");
+    if one_line.len() <= 88 && !invocation_expr.contains('\n') {
+        return one_line;
+    }
+
+    let lines = invocation_expr.lines().collect::<Vec<_>>();
+    let invocation = lines
+        .iter()
+        .enumerate()
+        .map(|(index, line)| {
+            let indent = if index == 0 { "        " } else { "  " };
+            let suffix = if index + 1 == lines.len() { "," } else { "" };
+            format!("{indent}{line}{suffix}\n")
+        })
+        .collect::<String>();
+    format!("      await expectLater(\n{invocation}        throwsA(anything),\n      );")
 }
 
 /// Returns true when a generated sample represents a nullable omitted value.
@@ -350,13 +398,25 @@ fn map_entry(key: &str, value: &str) -> String {
     format!("'{}': {value}", escape_single_quoted(key))
 }
 
-/// Renders an exact `Map<String, dynamic>` literal for generated tests.
-fn map_literal(entries: &[String]) -> String {
+/// Renders a readable exact map assertion for generated request tests.
+fn map_assertion(target: &str, entries: &[String]) -> String {
     if entries.is_empty() {
-        "const <String, dynamic>{}".to_owned()
-    } else {
-        format!("<String, dynamic>{{{}}}", entries.join(", "))
+        return format!("expect({target}, equals(const <String, dynamic>{{}}));");
     }
+
+    let body = entries
+        .iter()
+        .map(|entry| format!("    {entry},\n"))
+        .collect::<String>();
+    format!("expect(\n  {target},\n  equals(<String, dynamic>{{\n{body}  }}),\n);")
+}
+
+/// Applies the template indentation to each line in a rendered block.
+fn indent_block(block: &str, indent: &str) -> String {
+    block
+        .lines()
+        .map(|line| format!("{indent}{line}\n"))
+        .collect()
 }
 
 /// Renders the expected request path for a generated endpoint test.
@@ -389,8 +449,8 @@ fn render_expected_path(
 
 /// Generated endpoint invocation data used by test rendering.
 struct Invocation {
-    /// Comma-separated Dart call arguments.
-    call_arguments: String,
+    /// Dart call arguments in declaration order.
+    arguments: Vec<String>,
     /// Request assertions generated for the fake adapter callback.
     assertions: Vec<String>,
     /// Path placeholder values captured from argument samples.
