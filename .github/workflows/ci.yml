@@ -206,6 +206,38 @@ jobs:
         working-directory: fixtures/serde_json_app
         run: dart test
 
+  http-analyze:
+    name: HTTP analyzer fixture
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK for Dart tooling
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Pub get
+        working-directory: fixtures/http_client_app
+        run: dart pub get
+
+      - name: Dust clean build
+        run: cargo run --quiet -p dust_cli -- build --clean --root fixtures/http_client_app
+
+      - name: Analyze generated HTTP output
+        working-directory: fixtures/http_client_app
+        run: dart analyze --fatal-infos
+
+      - name: Test generated HTTP requests
+        working-directory: fixtures/http_client_app
+        run: dart test
+
   benchmark:
     name: Benchmark / benchmark_project
     runs-on: ubuntu-latest
