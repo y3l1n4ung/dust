@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:dust_flutter/route.dart' show AppRouter, RouteGuard;
+import 'package:dust_flutter/route.dart';
 
 import 'route.g.dart';
 
