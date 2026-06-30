@@ -1,0 +1,16 @@
+name: http_client_app
+description: Analyzer fixture for Dust generated HTTP client output.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+
+dependencies:
+  dio: ^5.9.2
+  dust_dart:
+    path: ../../packages/dust_dart
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.26.0
