@@ -30,20 +30,16 @@ void main() {
         ),
       );
       final api = TodoApi(dio);
-      try {
         await api.list(userId: 42, page: 42, traceId: 'dust-id');
-      } catch (_) {}
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'GET');
       expect(request.path, '/todos');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.queryParameters['userId'], equals(42));
-      expect(request.queryParameters['page'], equals(42));
-      expect(request.headers['x-trace-id'], equals('dust-id'));
-      expect(request.headers['x-api-version'], equals('2026-05'));
-      expect(request.headers['x-endpoint'], equals('todos'));
+      expect(request.queryParameters, equals(<String, dynamic>{'userId': 42, 'page': 42}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'x-trace-id': 'dust-id', 'x-api-version': '2026-05', 'x-endpoint': 'todos'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
     test('GET fetchRaw', () async {
       RequestOptions? captured;
@@ -57,16 +53,16 @@ void main() {
         ),
       );
       final api = TodoApi(dio);
-      try {
-        await api.fetchRaw('dust-id', cancelToken: null, retryable: true);
-      } catch (_) {}
+        await expectLater(api.fetchRaw('dust-id', cancelToken: null, retryable: true), throwsA(anything));
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'GET');
       expect(request.path, '/todos/dust-id');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.headers['x-api-version'], equals('2026-05'));
+      expect(request.queryParameters, equals(const <String, dynamic>{}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'x-api-version': '2026-05'}));
+      expect(request.extra, equals(<String, dynamic>{'retryable': true}));
+      expect(request.data, isNull);
     });
     test('PATCH rename', () async {
       RequestOptions? captured;
@@ -80,17 +76,17 @@ void main() {
         ),
       );
       final api = TodoApi(dio);
-      try {
-        await api.rename('dust-id', 'dust-id');
-      } catch (_) {}
+        await expectLater(api.rename('dust-id', 'dust-id'), throwsA(anything));
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'PATCH');
       expect(request.path, '/todos/dust-id');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect((request.data as Map<String, dynamic>)['title'], equals('dust-id'));
-      expect(request.headers['x-api-version'], equals('2026-05'));
+      expect(request.queryParameters, equals(const <String, dynamic>{}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'x-api-version': '2026-05'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, equals(<String, dynamic>{'title': 'dust-id'}));
+      expect(request.contentType, Headers.formUrlEncodedContentType);
     });
     test('DELETE delete', () async {
       RequestOptions? captured;
@@ -104,16 +100,16 @@ void main() {
         ),
       );
       final api = TodoApi(dio);
-      try {
         await api.delete('dust-id', audit: null);
-      } catch (_) {}
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'DELETE');
       expect(request.path, '/todos/dust-id');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.headers['x-api-version'], equals('2026-05'));
+      expect(request.queryParameters, equals(const <String, dynamic>{}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'x-api-version': '2026-05'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
   });
 }

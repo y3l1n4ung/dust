@@ -10,8 +10,7 @@
         ),
       );
       final api = {{ class_name }}(dio);
-      try {
-{{ invocation }}      } catch (_) {}
+{{ invocation }}
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, '{{ verb }}');

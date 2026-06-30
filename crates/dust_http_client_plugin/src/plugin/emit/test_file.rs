@@ -1,9 +1,10 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
-use dust_dart_emit::render_template;
+use dust_dart_emit::{DART_LIST, DART_VOID, render_template};
 use dust_ir::DartFileIr;
 use dust_ir::ParamKind;
+use dust_ir::TypeIr;
 use dust_plugin_api::GENERATED_HEADER;
 use dust_workspace::{package_import_uri, rewrite_library_import_uri};
 use serde::Serialize;
@@ -11,10 +12,10 @@ use serde::Serialize;
 use crate::plugin::emit::fixture::FixtureCatalog;
 use crate::plugin::emit::path::{PathSegment, path_segments};
 use crate::plugin::emit::test_support::{
-    fallback_sample, sample_body_assertion, sample_response_data,
+    SampleValue, fallback_sample, sample_body_assertion, sample_response_data,
 };
 use crate::plugin::model::{ClientSpec, EndpointParam, EndpointSpec, RequestMode};
-use crate::plugin::util::escape_single_quoted;
+use crate::plugin::util::{escape_single_quoted, is_response_body_type};
 
 /// Template context for a generated HTTP test file.
 #[derive(Serialize)]
@@ -150,10 +151,13 @@ fn render_endpoint_test(
         "api.{}({})",
         endpoint.method.name, invocation.call_arguments
     );
+    let response = response_data(endpoint, fixtures);
     let call_line = if endpoint.return_spec.is_stream() {
         format!("        await {invocation_expr}.drain<void>();\n")
-    } else {
+    } else if response.completes {
         format!("        await {invocation_expr};\n")
+    } else {
+        format!("        await expectLater({invocation_expr}, throwsA(anything));\n")
     };
 
     Some(render_template(
@@ -162,7 +166,7 @@ fn render_endpoint_test(
         EndpointTestContext {
             verb: endpoint.verb.as_str(),
             method_name: &endpoint.method.name,
-            response_data: sample_response_data(&endpoint.return_spec).to_owned(),
+            response_data: response.source,
             class_name: spec.class_name,
             invocation: call_line,
             expected_path: escape_single_quoted(&render_expected_path(
@@ -178,6 +182,47 @@ fn render_endpoint_test(
     ))
 }
 
+/// Rendered fake response data plus whether the generated call should complete.
+struct ResponseFixture {
+    /// Dart expression passed to the fake response.
+    source: String,
+    /// Whether the endpoint can decode the fake response successfully.
+    completes: bool,
+}
+
+/// Builds fake response data for a generated request-mapping test.
+fn response_data(endpoint: &EndpointSpec<'_>, fixtures: &FixtureCatalog<'_>) -> ResponseFixture {
+    if endpoint.return_spec.is_stream() {
+        return ResponseFixture {
+            source: sample_response_data(&endpoint.return_spec).to_owned(),
+            completes: true,
+        };
+    }
+
+    if let Some(value) = fixtures.json_value(&endpoint.return_spec.ty) {
+        return ResponseFixture {
+            source: value,
+            completes: true,
+        };
+    }
+
+    ResponseFixture {
+        source: sample_response_data(&endpoint.return_spec).to_owned(),
+        completes: fallback_response_completes(&endpoint.return_spec.ty),
+    }
+}
+
+/// Returns true when fallback response data is enough for the generated decoder.
+fn fallback_response_completes(ty: &TypeIr) -> bool {
+    match ty {
+        TypeIr::Dynamic | TypeIr::Unknown | TypeIr::Builtin { .. } => true,
+        TypeIr::Named { name, args, .. } if name.as_ref() == DART_LIST && args.len() == 1 => true,
+        TypeIr::Named { name, .. } if name.as_ref() == DART_VOID => true,
+        TypeIr::Named { .. } if is_response_body_type(ty) => true,
+        _ => false,
+    }
+}
+
 /// Builds sample call arguments and request assertions for an endpoint.
 fn build_invocation(
     endpoint: &EndpointSpec<'_>,
@@ -185,10 +230,11 @@ fn build_invocation(
 ) -> Option<Invocation> {
     let mut positional = Vec::new();
     let mut named = Vec::new();
-    let mut assertions = vec![
-        "expect(request.queryParameters, isA<Map<String, dynamic>>());".to_owned(),
-        "expect(request.headers, isA<Map<String, dynamic>>());".to_owned(),
-    ];
+    let mut query_entries = Vec::new();
+    let mut header_entries = Vec::new();
+    let mut extra_entries = Vec::new();
+    let mut body_entries = Vec::new();
+    let mut data_assertion = "expect(request.data, isNull);".to_owned();
     let mut path_values = Vec::new();
 
     for param in &endpoint.method.params {
@@ -208,27 +254,35 @@ fn build_invocation(
                 EndpointParam::Path { key, .. } => {
                     path_values.push((key.clone(), sample.path_value))
                 }
-                EndpointParam::Query { key, .. } => assertions.push(format!(
-                    "expect(request.queryParameters['{}'], equals({value_expr}));",
-                    escape_single_quoted(key)
-                )),
-                EndpointParam::Header { key, .. } => assertions.push(format!(
-                    "expect(request.headers['{}'], equals({value_expr}));",
-                    escape_single_quoted(key)
-                )),
+                EndpointParam::Query { key, .. } if !sample_is_null(&sample) => {
+                    query_entries.push(map_entry(key, &value_expr));
+                }
+                EndpointParam::Queries { .. } if !sample_is_null(&sample) => {
+                    query_entries.push(format!("...{}", sample.assertion_expression));
+                }
+                EndpointParam::Header { key, .. } if !sample_is_null(&sample) => {
+                    header_entries.push(map_entry(key, &value_expr));
+                }
+                EndpointParam::HeaderMap { .. } if !sample_is_null(&sample) => {
+                    header_entries.push(format!("...{}", sample.assertion_expression));
+                }
+                EndpointParam::Extra { key, .. } if !sample_is_null(&sample) => {
+                    extra_entries.push(map_entry(key, &value_expr));
+                }
                 EndpointParam::Body { .. } if endpoint.request_mode == RequestMode::Standard => {
-                    assertions.push(format!(
+                    data_assertion = format!(
                         "expect(request.data, equals({}));",
                         sample_body_assertion(&param.ty, &sample)
-                    ));
+                    );
                 }
                 EndpointParam::Field { key, .. }
-                    if endpoint.request_mode == RequestMode::FormUrlEncoded =>
+                    if endpoint.request_mode == RequestMode::FormUrlEncoded
+                        && !sample_is_null(&sample) =>
                 {
-                    assertions.push(format!(
-                        "expect((request.data as Map<String, dynamic>)['{}'], equals({value_expr}));",
-                        escape_single_quoted(key)
-                    ));
+                    body_entries.push(map_entry(key, &value_expr));
+                }
+                EndpointParam::Part { .. } if endpoint.request_mode == RequestMode::MultiPart => {
+                    data_assertion = "expect(request.data, isA<FormData>());".to_owned();
                 }
                 _ => {}
             }
@@ -236,11 +290,40 @@ fn build_invocation(
     }
 
     for (key, value) in &endpoint.headers {
-        assertions.push(format!(
-            "expect(request.headers['{}'], equals('{}'));",
-            escape_single_quoted(key),
-            escape_single_quoted(value)
+        header_entries.push(map_entry(
+            key,
+            &format!("'{}'", escape_single_quoted(value)),
         ));
+    }
+
+    if endpoint.request_mode == RequestMode::FormUrlEncoded {
+        data_assertion = format!(
+            "expect(request.data, equals({}));",
+            map_literal(&body_entries)
+        );
+    }
+
+    let mut assertions = vec![
+        format!(
+            "expect(request.queryParameters, equals({}));",
+            map_literal(&query_entries)
+        ),
+        format!(
+            "expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals({}));",
+            map_literal(&header_entries)
+        ),
+        format!(
+            "expect(request.extra, equals({}));",
+            map_literal(&extra_entries)
+        ),
+        data_assertion,
+    ];
+    match endpoint.request_mode {
+        RequestMode::Standard => {}
+        RequestMode::FormUrlEncoded => assertions
+            .push("expect(request.contentType, Headers.formUrlEncodedContentType);".to_owned()),
+        RequestMode::MultiPart => assertions
+            .push("expect(request.contentType, Headers.multipartFormDataContentType);".to_owned()),
     }
 
     let call_arguments = match (positional.is_empty(), named.is_empty()) {
@@ -255,6 +338,25 @@ fn build_invocation(
         assertions,
         path_values,
     })
+}
+
+/// Returns true when a generated sample represents a nullable omitted value.
+fn sample_is_null(sample: &SampleValue) -> bool {
+    sample.assertion_expression == "null"
+}
+
+/// Renders one Dart map entry for an exact generated request assertion.
+fn map_entry(key: &str, value: &str) -> String {
+    format!("'{}': {value}", escape_single_quoted(key))
+}
+
+/// Renders an exact `Map<String, dynamic>` literal for generated tests.
+fn map_literal(entries: &[String]) -> String {
+    if entries.is_empty() {
+        "const <String, dynamic>{}".to_owned()
+    } else {
+        format!("<String, dynamic>{{{}}}", entries.join(", "))
+    }
 }
 
 /// Renders the expected request path for a generated endpoint test.

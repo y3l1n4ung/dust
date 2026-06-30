@@ -36,6 +36,11 @@ impl<'a> FixtureCatalog<'a> {
         self.sample_value_inner(ty, &mut Vec::new())
     }
 
+    /// Returns a JSON literal that can decode into the given type.
+    pub(super) fn json_value(&self, ty: &TypeIr) -> Option<String> {
+        self.json_value_inner(ty, &mut Vec::new())
+    }
+
     /// Recursively renders a sample value while guarding against class cycles.
     fn sample_value_inner(&self, ty: &TypeIr, stack: &mut Vec<&'a str>) -> Option<SampleValue> {
         match ty {

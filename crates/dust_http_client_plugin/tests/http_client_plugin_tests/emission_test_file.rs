@@ -32,6 +32,7 @@ fn generates_map_body_request_fixtures() {
         .auxiliary_outputs[0]
         .source;
     assert!(generated.contains("await api.createUser({'value': 'dust'});"));
+    assert!(!generated.contains("catch (_)"));
     assert!(!generated.contains("skip: 'Dust could not synthesize fixtures"));
 }
 
@@ -66,7 +67,7 @@ fn generates_model_body_request_fixtures_from_local_serde_models() {
         .auxiliary_outputs[0]
         .source;
     assert!(
-        generated.contains("await api.createUser(UserCreate.fromJson(<String, Object?>{'name': 'dust', 'isAdmin': true}));")
+        generated.contains("await expectLater(api.createUser(UserCreate.fromJson(<String, Object?>{'name': 'dust', 'isAdmin': true})), throwsA(anything));")
     );
     assert!(
         generated.contains(

@@ -29,18 +29,16 @@ void main() {
         ),
       );
       final api = BenchmarkHttpApi(dio);
-      try {
         await api.listPosts(userId: 42, limit: 42);
-      } catch (_) {}
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'GET');
       expect(request.path, '/posts');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.queryParameters['userId'], equals(42));
-      expect(request.queryParameters['_limit'], equals(42));
-      expect(request.headers['x-suite'], equals('benchmark'));
+      expect(request.queryParameters, equals(<String, dynamic>{'userId': 42, '_limit': 42}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'x-suite': 'benchmark'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
     test('GET fetchPost', () async {
       RequestOptions? captured;
@@ -54,16 +52,16 @@ void main() {
         ),
       );
       final api = BenchmarkHttpApi(dio);
-      try {
-        await api.fetchPost(42);
-      } catch (_) {}
+        await expectLater(api.fetchPost(42), throwsA(anything));
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'GET');
       expect(request.path, '/posts/42');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.headers['x-suite'], equals('benchmark'));
+      expect(request.queryParameters, equals(const <String, dynamic>{}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'x-suite': 'benchmark'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
     test('POST createPost', () async {
       RequestOptions? captured;
@@ -72,22 +70,21 @@ void main() {
         InterceptorsWrapper(
           onRequest: (options, handler) {
             captured = options;
-            handler.resolve(Response<dynamic>(requestOptions: options, data: const <String, dynamic>{}));
+            handler.resolve(Response<dynamic>(requestOptions: options, data: <String, Object?>{'value': 'dust'}));
           },
         ),
       );
       final api = BenchmarkHttpApi(dio);
-      try {
         await api.createPost({'value': 'dust'});
-      } catch (_) {}
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'POST');
       expect(request.path, '/posts');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
+      expect(request.queryParameters, equals(const <String, dynamic>{}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'x-suite': 'benchmark'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
       expect(request.data, equals({'value': 'dust'}));
-      expect(request.headers['x-suite'], equals('benchmark'));
     });
   });
 }
