@@ -222,7 +222,7 @@ final class _$JsonPlaceholderApi implements JsonPlaceholderApi {
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     _headers['accept'] = 'application/json';
-    if (accept != null) _headers['accept_encoding'] = accept;
+    if (accept != null) _headers['accept_encoding'] = accept.toString();
     final Object? _data = null;
     final _options = Options(
       method: 'GET',

@@ -258,7 +258,11 @@ fn build_invocation(
     let mut positional = Vec::new();
     let mut named = Vec::new();
     let mut query_entries = Vec::new();
-    let mut header_entries = Vec::new();
+    let mut header_entries = endpoint
+        .headers
+        .iter()
+        .map(|(key, value)| map_entry(key, &format!("'{}'", escape_single_quoted(value))))
+        .collect::<Vec<_>>();
     let mut extra_entries = Vec::new();
     let mut body_entries = Vec::new();
     let mut data_assertion = "expect(request.data, isNull);".to_owned();
@@ -288,7 +292,8 @@ fn build_invocation(
                     query_entries.push(format!("...{}", sample.assertion_expression));
                 }
                 EndpointParam::Header { key, .. } if !sample_is_null(&sample) => {
-                    header_entries.push(map_entry(key, &value_expr));
+                    header_entries
+                        .push(map_entry(key, &format!("{}.toString()", sample.expression)));
                 }
                 EndpointParam::HeaderMap { .. } if !sample_is_null(&sample) => {
                     header_entries.push(format!("...{}", sample.assertion_expression));
@@ -314,13 +319,6 @@ fn build_invocation(
                 _ => {}
             }
         }
-    }
-
-    for (key, value) in &endpoint.headers {
-        header_entries.push(map_entry(
-            key,
-            &format!("'{}'", escape_single_quoted(value)),
-        ));
     }
 
     if endpoint.request_mode == RequestMode::FormUrlEncoded {

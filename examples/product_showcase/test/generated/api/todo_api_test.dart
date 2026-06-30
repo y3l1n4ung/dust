@@ -51,9 +51,9 @@ void main() {
       expect(
         Map<String, dynamic>.from(request.headers)..remove('content-type'),
         equals(<String, dynamic>{
-          'x-trace-id': 'dust-id',
           'x-api-version': '2026-05',
           'x-endpoint': 'todos',
+          'x-trace-id': 'dust-id'.toString(),
         }),
       );
       expect(request.extra, equals(const <String, dynamic>{}));

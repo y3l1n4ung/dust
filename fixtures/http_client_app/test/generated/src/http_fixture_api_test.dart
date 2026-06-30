@@ -52,8 +52,8 @@ void main() {
       expect(
         Map<String, dynamic>.from(request.headers)..remove('content-type'),
         equals(<String, dynamic>{
-          'x-trace-id': 'dust-id',
           'accept': 'application/json',
+          'x-trace-id': 'dust-id'.toString(),
         }),
       );
       expect(request.extra, equals(const <String, dynamic>{}));
@@ -85,12 +85,58 @@ void main() {
       expect(
         Map<String, dynamic>.from(request.headers)..remove('content-type'),
         equals(<String, dynamic>{
-          'x-trace-id': 'dust-id',
           'accept': 'application/json',
+          'x-trace-id': 'dust-id'.toString(),
         }),
       );
       expect(request.extra, equals(const <String, dynamic>{}));
       expect(request.data, equals({'value': 'dust'}));
+    });
+    test('GET encodingPolicy', () async {
+      RequestOptions? captured;
+      final dio = Dio();
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            captured = options;
+            handler.resolve(
+              Response<dynamic>(
+                requestOptions: options,
+                data: null,
+              ),
+            );
+          },
+        ),
+      );
+      final api = HttpFixtureApi(dio);
+      await api.encodingPolicy(
+        'dust-id',
+        tags: ['dust-id'],
+        filters: {'value': 'dust'},
+        page: 42,
+        headers: {'value': 'dust-id'},
+      );
+      expect(captured, isNotNull);
+      final request = captured!;
+      expect(request.method, 'GET');
+      expect(request.path, '/encoding/dust-id');
+      expect(
+        request.queryParameters,
+        equals(<String, dynamic>{
+          'tags': ['dust-id'],
+          ...{'value': 'dust'},
+        }),
+      );
+      expect(
+        Map<String, dynamic>.from(request.headers)..remove('content-type'),
+        equals(<String, dynamic>{
+          'accept': 'application/json',
+          'x-page': 42.toString(),
+          ...{'value': 'dust-id'},
+        }),
+      );
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
   });
 }

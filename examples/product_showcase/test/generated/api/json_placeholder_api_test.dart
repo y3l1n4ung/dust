@@ -196,8 +196,8 @@ void main() {
       expect(
         Map<String, dynamic>.from(request.headers)..remove('content-type'),
         equals(<String, dynamic>{
-          'accept_encoding': 'dust-id',
           'accept': 'application/json',
+          'accept_encoding': 'dust-id'.toString(),
         }),
       );
       expect(request.extra, equals(const <String, dynamic>{}));

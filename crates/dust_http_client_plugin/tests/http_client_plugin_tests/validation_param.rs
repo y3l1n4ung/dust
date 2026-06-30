@@ -32,6 +32,29 @@ fn rejects_duplicate_header_keys_across_class_and_parameters() {
 }
 
 #[test]
+fn accepts_header_maps_after_static_headers() {
+    let plugin = register_plugin();
+    let diagnostics = plugin.validate(&library_for(http_client_class(
+        vec![config(
+            "HttpClient",
+            Some("(headers: {'accept': 'application/json'})"),
+        )],
+        vec![method(
+            "listUsers",
+            future_of(TypeIr::generic("List", vec![TypeIr::named("User")])),
+            vec![config("GET", Some("('/users')"))],
+            vec![param(
+                "headers",
+                TypeIr::map_of(TypeIr::string(), TypeIr::string()),
+                vec![config("HeaderMap", Some("()"))],
+            )],
+        )],
+    )));
+
+    assert!(diagnostics.is_empty(), "{diagnostics:?}");
+}
+
+#[test]
 fn rejects_form_fields_without_form_urlencoded() {
     let plugin = register_plugin();
     let diagnostics = plugin.validate(&library_for(http_client_class(
