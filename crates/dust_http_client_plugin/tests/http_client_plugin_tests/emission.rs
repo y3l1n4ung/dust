@@ -312,7 +312,12 @@ fn emits_generate_test_auxiliary_file() {
     );
     assert!(generated.source.contains("void main() {"));
     assert!(generated.source.contains("group('Api request mapping'"));
-    assert!(generated.source.contains("await api.getUser('dust-id');"));
+    assert!(
+        generated
+            .source
+            .contains("await expectLater(api.getUser('dust-id'), throwsA(anything));")
+    );
+    assert!(!generated.source.contains("catch (_)"));
     assert!(
         generated
             .source

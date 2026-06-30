@@ -29,18 +29,16 @@ void main() {
         ),
       );
       final api = HttpFixtureApi(dio);
-      try {
-        await api.fetchUser('dust-id', includePosts: true, traceId: 'dust-id');
-      } catch (_) {}
+        await expectLater(api.fetchUser('dust-id', includePosts: true, traceId: 'dust-id'), throwsA(anything));
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'GET');
       expect(request.path, '/users/dust-id');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.queryParameters['includePosts'], equals(true));
-      expect(request.headers['x-trace-id'], equals('dust-id'));
-      expect(request.headers['accept'], equals('application/json'));
+      expect(request.queryParameters, equals(<String, dynamic>{'includePosts': true}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'x-trace-id': 'dust-id', 'accept': 'application/json'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
     test('POST createUser', () async {
       RequestOptions? captured;
@@ -49,23 +47,21 @@ void main() {
         InterceptorsWrapper(
           onRequest: (options, handler) {
             captured = options;
-            handler.resolve(Response<dynamic>(requestOptions: options, data: const <String, dynamic>{}));
+            handler.resolve(Response<dynamic>(requestOptions: options, data: <String, Object?>{'value': 'dust'}));
           },
         ),
       );
       final api = HttpFixtureApi(dio);
-      try {
         await api.createUser({'value': 'dust'}, traceId: 'dust-id');
-      } catch (_) {}
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'POST');
       expect(request.path, '/users');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
+      expect(request.queryParameters, equals(const <String, dynamic>{}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'x-trace-id': 'dust-id', 'accept': 'application/json'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
       expect(request.data, equals({'value': 'dust'}));
-      expect(request.headers['x-trace-id'], equals('dust-id'));
-      expect(request.headers['accept'], equals('application/json'));
     });
   });
 }

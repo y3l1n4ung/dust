@@ -30,18 +30,16 @@ void main() {
         ),
       );
       final api = JsonPlaceholderApi(dio);
-      try {
         await api.listPosts(userId: 42, limit: 42);
-      } catch (_) {}
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'GET');
       expect(request.path, '/posts');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.queryParameters['userId'], equals(42));
-      expect(request.queryParameters['_limit'], equals(42));
-      expect(request.headers['accept'], equals('application/json'));
+      expect(request.queryParameters, equals(<String, dynamic>{'userId': 42, '_limit': 42}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'accept': 'application/json'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
     test('GET streamPostsRaw', () async {
       RequestOptions? captured;
@@ -55,18 +53,16 @@ void main() {
         ),
       );
       final api = JsonPlaceholderApi(dio);
-      try {
         await api.streamPostsRaw(userId: 42, limit: 42);
-      } catch (_) {}
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'GET');
       expect(request.path, '/posts');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.queryParameters['userId'], equals(42));
-      expect(request.queryParameters['_limit'], equals(42));
-      expect(request.headers['accept'], equals('application/json'));
+      expect(request.queryParameters, equals(<String, dynamic>{'userId': 42, '_limit': 42}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'accept': 'application/json'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
     test('GET streamPostsBytes', () async {
       RequestOptions? captured;
@@ -80,18 +76,16 @@ void main() {
         ),
       );
       final api = JsonPlaceholderApi(dio);
-      try {
         await api.streamPostsBytes(userId: 42, limit: 42).drain<void>();
-      } catch (_) {}
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'GET');
       expect(request.path, '/posts');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.queryParameters['userId'], equals(42));
-      expect(request.queryParameters['_limit'], equals(42));
-      expect(request.headers['accept'], equals('application/json'));
+      expect(request.queryParameters, equals(<String, dynamic>{'userId': 42, '_limit': 42}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'accept': 'application/json'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
     test('GET streamPostsText', () async {
       RequestOptions? captured;
@@ -105,18 +99,16 @@ void main() {
         ),
       );
       final api = JsonPlaceholderApi(dio);
-      try {
         await api.streamPostsText(userId: 42, limit: 42).drain<void>();
-      } catch (_) {}
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'GET');
       expect(request.path, '/posts');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.queryParameters['userId'], equals(42));
-      expect(request.queryParameters['_limit'], equals(42));
-      expect(request.headers['accept'], equals('application/json'));
+      expect(request.queryParameters, equals(<String, dynamic>{'userId': 42, '_limit': 42}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'accept': 'application/json'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
     test('GET fetchPost', () async {
       RequestOptions? captured;
@@ -130,17 +122,16 @@ void main() {
         ),
       );
       final api = JsonPlaceholderApi(dio);
-      try {
-        await api.fetchPost(42, accept: 'dust-id');
-      } catch (_) {}
+        await expectLater(api.fetchPost(42, accept: 'dust-id'), throwsA(anything));
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'GET');
       expect(request.path, '/posts/42');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.headers['accept_encoding'], equals('dust-id'));
-      expect(request.headers['accept'], equals('application/json'));
+      expect(request.queryParameters, equals(const <String, dynamic>{}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'accept_encoding': 'dust-id', 'accept': 'application/json'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
     test('GET listComments', () async {
       RequestOptions? captured;
@@ -154,18 +145,16 @@ void main() {
         ),
       );
       final api = JsonPlaceholderApi(dio);
-      try {
         await api.listComments(postId: 42, limit: 42);
-      } catch (_) {}
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'GET');
       expect(request.path, '/comments');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.queryParameters['postId'], equals(42));
-      expect(request.queryParameters['_limit'], equals(42));
-      expect(request.headers['accept'], equals('application/json'));
+      expect(request.queryParameters, equals(<String, dynamic>{'postId': 42, '_limit': 42}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'accept': 'application/json'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
     test('PATCH patchPost', () async {
       RequestOptions? captured;
@@ -174,22 +163,21 @@ void main() {
         InterceptorsWrapper(
           onRequest: (options, handler) {
             captured = options;
-            handler.resolve(Response<dynamic>(requestOptions: options, data: const <String, dynamic>{}));
+            handler.resolve(Response<dynamic>(requestOptions: options, data: <String, Object?>{'value': 'dust'}));
           },
         ),
       );
       final api = JsonPlaceholderApi(dio);
-      try {
         await api.patchPost(42, {'value': 'dust'});
-      } catch (_) {}
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'PATCH');
       expect(request.path, '/posts/42');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
+      expect(request.queryParameters, equals(const <String, dynamic>{}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'accept': 'application/json'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
       expect(request.data, equals({'value': 'dust'}));
-      expect(request.headers['accept'], equals('application/json'));
     });
     test('DELETE deletePost', () async {
       RequestOptions? captured;
@@ -198,21 +186,21 @@ void main() {
         InterceptorsWrapper(
           onRequest: (options, handler) {
             captured = options;
-            handler.resolve(Response<dynamic>(requestOptions: options, data: const <String, dynamic>{}));
+            handler.resolve(Response<dynamic>(requestOptions: options, data: <String, Object?>{'value': 'dust'}));
           },
         ),
       );
       final api = JsonPlaceholderApi(dio);
-      try {
         await api.deletePost(42);
-      } catch (_) {}
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'DELETE');
       expect(request.path, '/posts/42');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.headers['accept'], equals('application/json'));
+      expect(request.queryParameters, equals(const <String, dynamic>{}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'accept': 'application/json'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isNull);
     });
     test('POST uploadPostWithFile', () async {
       RequestOptions? captured;
@@ -226,16 +214,17 @@ void main() {
         ),
       );
       final api = JsonPlaceholderApi(dio);
-      try {
-        await api.uploadPostWithFile(42, 'dust-id', 'dust-id', MultipartFile.fromBytes(<int>[1, 2, 3], filename: 'dust.txt'));
-      } catch (_) {}
+        await expectLater(api.uploadPostWithFile(42, 'dust-id', 'dust-id', MultipartFile.fromBytes(<int>[1, 2, 3], filename: 'dust.txt')), throwsA(anything));
+
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'POST');
       expect(request.path, '/posts');
-      expect(request.queryParameters, isA<Map<String, dynamic>>());
-      expect(request.headers, isA<Map<String, dynamic>>());
-      expect(request.headers['accept'], equals('application/json'));
+      expect(request.queryParameters, equals(const <String, dynamic>{}));
+      expect(Map<String, dynamic>.from(request.headers)..remove('content-type'), equals(<String, dynamic>{'accept': 'application/json'}));
+      expect(request.extra, equals(const <String, dynamic>{}));
+      expect(request.data, isA<FormData>());
+      expect(request.contentType, Headers.multipartFormDataContentType);
     });
   });
 }
