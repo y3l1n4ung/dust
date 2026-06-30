@@ -27,6 +27,7 @@ RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
   }
   return requestOptions;
 }
+
 String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   if (baseUrl == null || baseUrl.trim().isEmpty) {
     return dioBaseUrl;
@@ -37,6 +38,7 @@ String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   }
   return Uri.parse(dioBaseUrl).resolveUri(url).toString();
 }
+
 Response<T> _buildResponse<T>(Response<dynamic> response, T data) {
   return Response<T>(
     data: data,
@@ -57,7 +59,11 @@ final class _$HttpFixtureApi implements HttpFixtureApi {
   final String? _baseUrl;
 
   @override
-  Future<HttpUser> fetchUser(String id, {bool includePosts = false, String? traceId}) async {
+  Future<HttpUser> fetchUser(
+    String id, {
+    bool includePosts = false,
+    String? traceId,
+  }) async {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
@@ -93,8 +99,12 @@ final class _$HttpFixtureApi implements HttpFixtureApi {
     );
     return await Isolate.run(() => _$HttpFixtureApi_fetchUser_Decode(_result.data!));
   }
+
   @override
-  Future<Map<String, dynamic>> createUser(Map<String, dynamic> payload, {required String traceId}) async {
+  Future<Map<String, dynamic>> createUser(
+    Map<String, dynamic> payload, {
+    required String traceId,
+  }) async {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};

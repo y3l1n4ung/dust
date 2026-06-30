@@ -65,9 +65,12 @@ pub(crate) fn render_isolate_helpers(spec: &ClientSpec<'_>) -> Vec<String> {
 /// Renders shared helpers used by generated HTTP clients.
 pub(crate) fn render_shared_helpers() -> Vec<String> {
     vec![
-        render_set_stream_type_helper().to_owned(),
-        render_combine_base_urls_helper().to_owned(),
-        render_response_wrapper_helper().to_owned(),
+        [
+            render_set_stream_type_helper(),
+            render_combine_base_urls_helper(),
+            render_response_wrapper_helper(),
+        ]
+        .join("\n\n"),
     ]
 }
 

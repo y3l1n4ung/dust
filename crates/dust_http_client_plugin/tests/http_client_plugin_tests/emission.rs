@@ -241,7 +241,11 @@ fn preserves_named_parameter_defaults_in_generated_client_methods() {
   final String? _baseUrl;
 
   @override
-  Future<List<HabitTemplate>> fetchTemplates({String locale = 'en', bool isActive = true, String? category}) async {
+  Future<List<HabitTemplate>> fetchTemplates({
+    String locale = 'en',
+    bool isActive = true,
+    String? category,
+  }) async {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};

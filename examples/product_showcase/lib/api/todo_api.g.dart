@@ -27,6 +27,7 @@ RequestOptions _setStreamType<T>(RequestOptions requestOptions) {
   }
   return requestOptions;
 }
+
 String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   if (baseUrl == null || baseUrl.trim().isEmpty) {
     return dioBaseUrl;
@@ -37,6 +38,7 @@ String _combineBaseUrls(String dioBaseUrl, String? baseUrl) {
   }
   return Uri.parse(dioBaseUrl).resolveUri(url).toString();
 }
+
 Response<T> _buildResponse<T>(Response<dynamic> response, T data) {
   return Response<T>(
     data: data,
@@ -57,7 +59,11 @@ final class _$TodoApi implements TodoApi {
   final String? _baseUrl;
 
   @override
-  Future<List<Todo>> list({int? userId, int page = 1, String traceId = 'showcase-default'}) async {
+  Future<List<Todo>> list({
+    int? userId,
+    int page = 1,
+    String traceId = 'showcase-default',
+  }) async {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
@@ -95,8 +101,13 @@ final class _$TodoApi implements TodoApi {
     );
     return await Isolate.run(() => _$TodoApi_list_Decode(_result.data!));
   }
+
   @override
-  Future<Response<Todo>> fetchRaw(String id, {CancelToken? cancelToken, bool? retryable}) async {
+  Future<Response<Todo>> fetchRaw(
+    String id, {
+    CancelToken? cancelToken,
+    bool? retryable,
+  }) async {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
@@ -132,6 +143,7 @@ final class _$TodoApi implements TodoApi {
     final _value = await Isolate.run(() => _$TodoApi_fetchRaw_Decode(_result.data!));
     return _buildResponse<Todo>(_result, _value);
   }
+
   @override
   Future<Todo> create(TodoCreate request) async {
     final _queryParameters = <String, dynamic>{};
@@ -167,6 +179,7 @@ final class _$TodoApi implements TodoApi {
     );
     return await Isolate.run(() => _$TodoApi_create_Decode(_result.data!));
   }
+
   @override
   Future<Todo> rename(String id, String title) async {
     final _queryParameters = <String, dynamic>{};
@@ -204,8 +217,13 @@ final class _$TodoApi implements TodoApi {
     );
     return await Isolate.run(() => _$TodoApi_rename_Decode(_result.data!));
   }
+
   @override
-  Future<Todo> update(String id, TodoUpdate request, {Map<String, String>? headers}) async {
+  Future<Todo> update(
+    String id,
+    TodoUpdate request, {
+    Map<String, String>? headers,
+  }) async {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
@@ -240,6 +258,7 @@ final class _$TodoApi implements TodoApi {
     );
     return await Isolate.run(() => _$TodoApi_update_Decode(_result.data!));
   }
+
   @override
   Future<void> delete(String id, {Map<String, dynamic>? audit}) async {
     final _queryParameters = <String, dynamic>{};
