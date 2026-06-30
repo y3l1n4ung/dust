@@ -127,9 +127,9 @@ the router-level redirect check.
 
 > [!TIP]
 > Add one runtime routing test that starts on a protected route, changes the auth
-> view model to an expired or unauthenticated state, drains the router refresh,
-> and asserts that the current route is the expected login route with the
-> original `redirectPath`.
+> view model to an expired or unauthenticated state, awaits
+> `delegate.debugWaitForScheduledRefresh()`, and asserts that the current route
+> is the expected login route with the original `redirectPath`.
 
 ## App Setup
 
