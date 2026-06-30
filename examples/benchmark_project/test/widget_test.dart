@@ -39,6 +39,25 @@ void main() {
     expect(result, isNull);
   });
 
+  test('generated benchmark route guards are scoped and runnable', () async {
+    final refresh = ValueNotifier<int>(0);
+    addTearDown(refresh.dispose);
+    final router = BenchmarkRouter(refresh: refresh);
+
+    final homeGuards = routeGuards(const HomeRoute(), router);
+    expect(homeGuards, hasLength(1));
+    expect(homeGuards.single, isA<BenchmarkGuard>());
+    expect(
+      await RouteGuardChain<AppRoutePath>(
+        homeGuards,
+      ).canActivate(const HomeRoute()),
+      isNull,
+    );
+
+    expect(routeGuards(const NotFoundRoute(), router), isEmpty);
+    expect(routeGuards(const ModelDetailRoute(id: 42), router), isEmpty);
+  });
+
   testWidgets('benchmark app renders generated route and state APIs', (
     tester,
   ) async {

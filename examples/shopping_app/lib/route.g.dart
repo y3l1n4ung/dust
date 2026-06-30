@@ -10,6 +10,8 @@ import 'package:dust_flutter/route.dart';
 import 'route.dart';
 import 'package:dust_flutter/i18n.dart';
 import 'package:shopping_app/core/i18n/shop_i18n_keys.dart';
+import 'package:shopping_app/features/admin/views/admin_dashboard_screen.dart';
+import 'package:shopping_app/features/admin/views/staff_dashboard_screen.dart';
 import 'package:shopping_app/features/auth/models/auth_state.dart';
 import 'package:shopping_app/features/auth/models/register_request.dart';
 import 'package:shopping_app/features/auth/view_models/auth_view_model.dart';
@@ -112,6 +114,12 @@ const List<GeneratedRoute> $appRoutes = [
     guards: [],
   ),
   GeneratedRoute(
+    '/admin',
+    page: AdminDashboardScreen,
+    name: 'admin',
+    guards: [AdminGuard],
+  ),
+  GeneratedRoute(
     '/cart',
     page: CartScreen,
     name: 'cart',
@@ -183,6 +191,12 @@ const List<GeneratedRoute> $appRoutes = [
     guards: [],
   ),
   GeneratedRoute(
+    '/staff',
+    page: StaffDashboardScreen,
+    name: 'staff',
+    guards: [StaffGuard],
+  ),
+  GeneratedRoute(
     '/support',
     routes: [
       GeneratedRoute(
@@ -237,6 +251,16 @@ final class NotFoundRoute extends AppRoutePath<void> {
 
   @override
   bool get requiresAuth => false;
+}
+
+/// Typed route data for `AdminRoute`.
+final class AdminRoute extends AppRoutePath<void> {
+  const AdminRoute();
+
+  @override
+  String get location {
+    return _routePath(['admin']);
+  }
 }
 
 /// Typed route data for `CartRoute`.
@@ -381,6 +405,16 @@ final class RegisterRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
+/// Typed route data for `StaffRoute`.
+final class StaffRoute extends AppRoutePath<void> {
+  const StaffRoute();
+
+  @override
+  String get location {
+    return _routePath(['staff']);
+  }
+}
+
 /// Typed route data for `SupportChatRoute`.
 final class SupportChatRoute extends AppRoutePath<void> {
   const SupportChatRoute();
@@ -426,6 +460,8 @@ List<Object> routeGuards(
   $ShoppingRouter router,
 ) {
   return switch (route) {
+    AdminRoute() => [AdminGuard((router as ShoppingRouter).auth)],
+    StaffRoute() => [StaffGuard((router as ShoppingRouter).auth)],
     _ => const [],
   };
 }
@@ -445,6 +481,8 @@ final class AppRoutesNavigator {
 
   RouteAction<void> notFound({String path = ''}) =>
       RouteAction(_router, NotFoundRoute(path: path));
+
+  RouteAction<void> admin() => RouteAction(_router, AdminRoute());
 
   RouteAction<void> cart() => RouteAction(_router, CartRoute());
 
@@ -471,6 +509,8 @@ final class AppRoutesNavigator {
   RouteAction<void> register({String? redirectPath}) =>
       RouteAction(_router, RegisterRoute(redirectPath: redirectPath));
 
+  RouteAction<void> staff() => RouteAction(_router, StaffRoute());
+
   RouteAction<void> supportChat() => RouteAction(_router, SupportChatRoute());
 
   RouteAction<void> wishlist() => RouteAction(_router, WishlistRoute());
@@ -495,6 +535,10 @@ RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
       route,
     ],
     NotFoundRoute(path: _) => [
+      const ProductsRoute(),
+      route,
+    ],
+    AdminRoute() => [
       const ProductsRoute(),
       route,
     ],
@@ -539,6 +583,10 @@ RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
       const ProductsRoute(),
       route,
     ],
+    StaffRoute() => [
+      const ProductsRoute(),
+      route,
+    ],
     SupportChatRoute() => [
       const ProductsRoute(),
       route,
@@ -558,6 +606,9 @@ AppRoutePath parseAppRoute(Uri uri) {
   }
   if (segments.length == 1 && segments[0] == '404') {
     return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
+  }
+  if (segments.length == 1 && segments[0] == 'admin') {
+    return const AdminRoute();
   }
   if (segments.length == 1 && segments[0] == 'cart') {
     return const CartRoute();
@@ -599,6 +650,9 @@ AppRoutePath parseAppRoute(Uri uri) {
       redirectPath: uri.queryParameters['redirectPath'],
     );
   }
+  if (segments.length == 1 && segments[0] == 'staff') {
+    return const StaffRoute();
+  }
   if (segments.length == 2 && segments[0] == 'support' && segments[1] == 'chat') {
     return const SupportChatRoute();
   }
@@ -622,6 +676,7 @@ bool? _parseBool(String? value) {
 const Map<Type, Type?> _kAppliedShellsByPage = {
   ProductsScreen: null,
   NotFoundScreen: null,
+  AdminDashboardScreen: null,
   CartScreen: null,
   CheckoutScreen: null,
   DemoCartsScreen: null,
@@ -632,6 +687,7 @@ const Map<Type, Type?> _kAppliedShellsByPage = {
   ProductDetailScreen: null,
   ProfileScreen: null,
   RegisterScreen: null,
+  StaffDashboardScreen: null,
   SupportChatScreen: null,
   WishlistScreen: null,
 };
@@ -669,6 +725,14 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       fullscreenDialog: false,
       maintainState: true,
       child: NotFoundScreen(path: path),
+    ),
+    AdminRoute() => generatedPage(
+      key: key,
+      location: route.location,
+      name: 'admin',
+      fullscreenDialog: false,
+      maintainState: true,
+      child: const AdminDashboardScreen(),
     ),
     CartRoute() => generatedPage(
       key: key,
@@ -752,6 +816,14 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       fullscreenDialog: false,
       maintainState: true,
       child: RegisterScreen(redirectPath: redirectPath),
+    ),
+    StaffRoute() => generatedPage(
+      key: key,
+      location: route.location,
+      name: 'staff',
+      fullscreenDialog: false,
+      maintainState: true,
+      child: const StaffDashboardScreen(),
     ),
     SupportChatRoute() => generatedPage(
       key: key,
