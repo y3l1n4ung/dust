@@ -1,6 +1,6 @@
 /// Class-level annotation that enables HTTP client generation.
 pub(super) const HTTP_CLIENT: &str = "HttpClient";
-/// Class-level annotation that requests generated test fixtures.
+/// Legacy class-level annotation that requested generated test fixtures.
 pub(super) const GENERATE_TEST: &str = "GenerateTest";
 /// Method-level annotation that opts response parsing into isolate execution.
 pub(super) const HTTP_PARSE: &str = "HttpParse";
@@ -32,7 +32,6 @@ pub(super) const EXTRA: &str = "Extra";
 /// Fully qualified Dust symbols claimed by the HTTP plugin.
 pub(super) const CLAIMED_CONFIG_SYMBOLS: &[&str] = &[
     "dust_dart::HttpClient",
-    "dust_dart::GenerateTest",
     "dust_dart::GET",
     "dust_dart::POST",
     "dust_dart::PUT",
@@ -58,7 +57,6 @@ pub(super) const CLAIMED_CONFIG_SYMBOLS: &[&str] = &[
 /// Short annotation names supported by the HTTP plugin.
 pub(super) const SUPPORTED_ANNOTATIONS: &[&str] = &[
     HTTP_CLIENT,
-    GENERATE_TEST,
     "GET",
     "POST",
     "PUT",

@@ -104,7 +104,7 @@ class RegisterUserRequest with _$RegisterUserRequest {
 @HttpClient(
   baseUrl: 'https://fakestoreapi.com',
   headers: {'accept': 'application/json'},
-  target: DustHttpTarget.flutter,
+  target: HttpTarget.flutter,
 )
 abstract interface class ShoppingApi {
   factory ShoppingApi(Dio dio, {String? baseUrl}) = _$ShoppingApi;

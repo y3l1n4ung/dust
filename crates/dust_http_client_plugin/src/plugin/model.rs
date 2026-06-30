@@ -73,6 +73,8 @@ pub(super) struct ClientSpec<'a> {
     pub(super) base_url: Option<String>,
     /// Runtime target selected by `@HttpClient(target: ...)`.
     pub(super) target: HttpTargetMode,
+    /// Whether to render the auxiliary generated request-mapping test file.
+    pub(super) generate_test: bool,
     /// Methods that Dust can lower into generated endpoints.
     pub(super) endpoints: Vec<EndpointSpec<'a>>,
 }

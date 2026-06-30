@@ -23,12 +23,12 @@ pub(crate) fn validate_client_class(imports: &[String], class: &ClassIr) -> Vec<
     if !wants_http_client && wants_generate_test {
         diagnostics.push(
             Diagnostic::error(format!(
-                "`@GenerateTest()` requires `@HttpClient()` on class `{}`",
+                "`@GenerateTest()` has moved to `@HttpClient(generateTest: true)` on class `{}`",
                 class.name
             ))
             .with_label(label(
                 class.span,
-                "add `@HttpClient()` to generate an HTTP client test surface",
+                "use `@HttpClient(generateTest: true)` to generate an HTTP client test surface",
             )),
         );
         return diagnostics;
@@ -88,7 +88,16 @@ fn validate_class_level_configs(class: &ClassIr, diagnostics: &mut Vec<Diagnosti
             HTTP_CLIENT => {
                 let _ = parse_http_client_config(config, diagnostics);
             }
-            GENERATE_TEST => {}
+            GENERATE_TEST => diagnostics.push(
+                Diagnostic::error(format!(
+                    "`@GenerateTest()` is not supported on `@HttpClient()` classes like `{}`",
+                    class.name
+                ))
+                .with_label(label(
+                    config.span,
+                    "move this to `@HttpClient(generateTest: true)`",
+                )),
+            ),
             other => diagnostics.push(
                 Diagnostic::error(format!(
                     "`@{other}` is not supported on `@HttpClient()` classes like `{}`",

@@ -40,7 +40,7 @@ abstract interface class ApiClient {
 > [!IMPORTANT]
 > **Requirements for Generation:**
 > 1. You **must** include the `part 'filename.g.dart';` directive.
-> 2. You **must** provide a redirecting factory constructor: `factory ClassName(Dio dio) = _$ClassName;`.
+> 2. You **must** provide a redirecting factory constructor: `factory ClassName(Dio dio, {String? baseUrl}) = _$ClassName;`.
 
 ---
 
@@ -51,9 +51,10 @@ abstract interface class ApiClient {
 | Property | Type | Description |
 | :--- | :--- | :--- |
 | `baseUrl` | `String` | The base URL for all methods in this client. |
-| `target` | `DustHttpTarget` | `dart` (default) or `flutter`. Use `flutter` to enable Flutter-specific optimizations. |
-| `parseThread` | `DustParseThread` | `main` (default) or `isolate`. Use `isolate` to offload JSON decoding to a background thread. |
+| `target` | `HttpTarget` | `dart` (default) or `flutter`. Use `flutter` to enable Flutter-specific optimizations. |
+| `parseThread` | `HttpParseThread` | `main` (default) or `isolate`. Use `isolate` to offload JSON decoding to a background thread. |
 | `headers` | `Map<String, String>` | Static headers applied to every request from this client. |
+| `generateTest` | `bool` | Generates a companion request-mapping test file when set to `true`. |
 
 ### Method Annotations
 
@@ -92,7 +93,7 @@ abstract interface class ApiClient {
 For large JSON payloads, you can offload the decoding process to a background isolate.
 
 ```dart
-@HttpClient(parseThread: DustParseThread.isolate)
+@HttpClient(parseThread: HttpParseThread.isolate)
 abstract interface class BigDataApi { ... }
 ```
 
@@ -121,11 +122,10 @@ Future<void> uploadFile(@Part('file') MultipartFile file, @Part('id') String id)
 
 ## Generated Testing
 
-When `@GenerateTest()` is added to your client, Dust generates a test suite that verifies request mapping logic without requiring a real server.
+When `generateTest` is enabled on your client, Dust generates a test suite that verifies request mapping logic without requiring a real server.
 
 ```dart
-@HttpClient(baseUrl: '...')
-@GenerateTest()
+@HttpClient(baseUrl: '...', generateTest: true)
 abstract interface class ApiClient { ... }
 ```
 
@@ -167,7 +167,7 @@ class _$ApiClient implements ApiClient {
 | Main Annotation | `@RestApi()` | `@HttpClient()` |
 | Path Param | `@Path("id")` | `@Path()` (optional arg) |
 | Query Param | `@Query("q")` | `@Query("q")` (required arg) |
-| Multithreading | Optional | Built-in via `DustParseThread.isolate` |
+| Multithreading | Optional | Built-in via `HttpParseThread.isolate` |
 | Build Tool | `build_runner` | **Standalone Binary** |
 
 > [!TIP]

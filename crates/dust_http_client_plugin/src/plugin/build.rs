@@ -57,6 +57,7 @@ pub(super) fn build_client_spec<'a>(
         target,
         parse_thread,
         headers,
+        generate_test,
     } = parse_http_client_config(http_client, &mut diagnostics);
 
     let endpoints = class
@@ -72,6 +73,7 @@ pub(super) fn build_client_spec<'a>(
             class_name: &class.name,
             base_url,
             target,
+            generate_test,
             endpoints,
         })
     } else {

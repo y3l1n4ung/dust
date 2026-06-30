@@ -134,7 +134,6 @@ const DB_MODE_PASS_THROUGH_TRAITS: &[&str] = &[
 const DB_MODE_PASS_THROUGH_CONFIGS: &[&str] = &[
     "dust_dart::SerDe",
     "dust_dart::HttpClient",
-    "dust_dart::GenerateTest",
     "dust_dart::GET",
     "dust_dart::POST",
     "dust_dart::PUT",

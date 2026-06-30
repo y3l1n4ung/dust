@@ -7,8 +7,8 @@ part 'http_api.g.dart';
 @HttpClient(
   baseUrl: 'https://jsonplaceholder.typicode.com',
   headers: {'x-suite': 'benchmark'},
+  generateTest: true,
 )
-@GenerateTest()
 abstract interface class BenchmarkHttpApi {
   factory BenchmarkHttpApi(Dio dio, {String? baseUrl}) = _$BenchmarkHttpApi;
 

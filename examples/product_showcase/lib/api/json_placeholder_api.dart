@@ -8,8 +8,8 @@ part 'json_placeholder_api.g.dart';
 @HttpClient(
   baseUrl: 'https://jsonplaceholder.typicode.com',
   headers: {'accept': 'application/json'},
+  generateTest: true,
 )
-@GenerateTest()
 abstract interface class JsonPlaceholderApi {
   factory JsonPlaceholderApi(Dio dio, {String? baseUrl}) = _$JsonPlaceholderApi;
 

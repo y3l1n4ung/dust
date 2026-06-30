@@ -7,13 +7,33 @@ use super::support::{
 };
 
 #[test]
-fn rejects_generate_test_without_http_client() {
+fn rejects_legacy_generate_test_annotation() {
     let plugin = register_plugin();
     let class = http_client_class(vec![config("GenerateTest", Some("()"))], Vec::new());
     let diagnostics = plugin.validate(&library_for(class));
 
     assert_eq!(diagnostics.len(), 1);
-    assert!(diagnostics[0].message.contains("requires `@HttpClient()`"));
+    assert!(
+        diagnostics[0]
+            .message
+            .contains("has moved to `@HttpClient(generateTest: true)`")
+    );
+}
+
+#[test]
+fn rejects_non_bool_generate_test_option() {
+    let plugin = register_plugin();
+    let class = http_client_class(
+        vec![config("HttpClient", Some("(generateTest: 'yes')"))],
+        Vec::new(),
+    );
+    let diagnostics = plugin.validate(&library_for(class));
+
+    assert!(diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("`HttpClient(generateTest: ...)` expects `true` or `false`")
+    }));
 }
 
 #[test]
@@ -55,7 +75,7 @@ fn accepts_dart_isolate_decode_when_isolate_import_is_available() {
         http_client_class(
             vec![config(
                 "HttpClient",
-                Some("(parseThread: DustParseThread.isolate)"),
+                Some("(parseThread: HttpParseThread.isolate)"),
             )],
             vec![method(
                 "getUser",
@@ -76,7 +96,7 @@ fn rejects_dart_isolate_decode_without_isolate_import() {
     let diagnostics = plugin.validate(&library_for(http_client_class(
         vec![config(
             "HttpClient",
-            Some("(parseThread: DustParseThread.isolate)"),
+            Some("(parseThread: HttpParseThread.isolate)"),
         )],
         vec![method(
             "getUser",
@@ -99,7 +119,7 @@ fn rejects_flutter_isolate_decode_without_compute_import() {
     let diagnostics = plugin.validate(&library_for(http_client_class(
         vec![config(
             "HttpClient",
-            Some("(target: DustHttpTarget.flutter, parseThread: DustParseThread.isolate)"),
+            Some("(target: HttpTarget.flutter, parseThread: HttpParseThread.isolate)"),
         )],
         vec![method(
             "getUser",
@@ -122,7 +142,7 @@ fn isolate_import_is_not_required_for_main_thread_decode() {
     let diagnostics = plugin.validate(&library_for(http_client_class(
         vec![config(
             "HttpClient",
-            Some("(parseThread: DustParseThread.main)"),
+            Some("(parseThread: HttpParseThread.main)"),
         )],
         vec![method(
             "getUser",

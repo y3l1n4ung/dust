@@ -5,19 +5,19 @@ void main() {
   test('HTTP client annotations preserve constructor options', () {
     const client = HttpClient(
       baseUrl: 'https://api.example.com',
-      target: DustHttpTarget.flutter,
-      parseThread: DustParseThread.isolate,
+      target: HttpTarget.flutter,
+      parseThread: HttpParseThread.isolate,
       headers: {'x-api': 'dust'},
+      generateTest: true,
     );
-    const generatedTests = GenerateTest();
-    const parse = HttpParse(thread: DustParseThread.isolate);
+    const parse = HttpParse(thread: HttpParseThread.isolate);
 
     expect(client.baseUrl, 'https://api.example.com');
-    expect(client.target, DustHttpTarget.flutter);
-    expect(client.parseThread, DustParseThread.isolate);
+    expect(client.target, HttpTarget.flutter);
+    expect(client.parseThread, HttpParseThread.isolate);
     expect(client.headers, {'x-api': 'dust'});
-    expect(generatedTests, isA<GenerateTest>());
-    expect(parse.thread, DustParseThread.isolate);
+    expect(client.generateTest, isTrue);
+    expect(parse.thread, HttpParseThread.isolate);
   });
 
   test('HTTP method annotations expose paths', () {

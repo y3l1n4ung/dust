@@ -57,7 +57,7 @@ struct EndpointTestContext<'a> {
     assertions: String,
 }
 
-/// Renders an auxiliary generated test file for `@GenerateTest` clients.
+/// Renders an auxiliary generated test file for clients with `generateTest`.
 pub(crate) fn render_test_file(library: &DartFileIr, specs: &[ClientSpec<'_>]) -> Option<String> {
     let package_root = Path::new(&library.package_root);
     let source_path = Path::new(&library.source_path);
