@@ -54,7 +54,7 @@ pub(super) fn build_client_spec<'a>(
     };
     let ParsedHttpClientConfig {
         base_url,
-        target: _,
+        target,
         parse_thread,
         headers,
     } = parse_http_client_config(http_client, &mut diagnostics);
@@ -71,6 +71,7 @@ pub(super) fn build_client_spec<'a>(
         Ok(ClientSpec {
             class_name: &class.name,
             base_url,
+            target,
             endpoints,
         })
     } else {
