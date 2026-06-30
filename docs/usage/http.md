@@ -82,6 +82,9 @@ abstract interface class ApiClient {
 > [!NOTE]
 > For annotations marked **Required**, you must provide a string literal for the key/name. Only `@Path()` allows omitting the argument to fallback to the parameter name.
 
+> [!IMPORTANT]
+> Request bodies are supported only on `POST`, `PUT`, `PATCH`, and `DELETE`. Dust rejects `@Body()`, `@FormUrlEncoded()` fields, and `@MultiPart()` parts on `GET`, `HEAD`, and `OPTIONS`.
+
 ---
 
 ## Performance: Offloading JSON Parsing

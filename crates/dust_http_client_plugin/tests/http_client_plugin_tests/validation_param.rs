@@ -83,6 +83,116 @@ fn rejects_parts_without_multipart() {
 }
 
 #[test]
+fn rejects_body_modes_on_non_body_verbs() {
+    let plugin = register_plugin();
+    let diagnostics = plugin.validate(&library_for(http_client_class(
+        vec![config("HttpClient", Some("()"))],
+        vec![
+            method(
+                "search",
+                future_of(TypeIr::named("User")),
+                vec![config("GET", Some("('/users/search')"))],
+                vec![param(
+                    "payload",
+                    TypeIr::named("SearchRequest"),
+                    vec![config("Body", Some("()"))],
+                )],
+            ),
+            method(
+                "headForm",
+                future_of(TypeIr::named("void")),
+                vec![
+                    config("FormUrlEncoded", Some("()")),
+                    config("HEAD", Some("('/users')")),
+                ],
+                vec![param(
+                    "name",
+                    TypeIr::string(),
+                    vec![config("Field", Some("('name')"))],
+                )],
+            ),
+            method(
+                "optionsUpload",
+                future_of(TypeIr::named("void")),
+                vec![
+                    config("MultiPart", Some("()")),
+                    config("OPTIONS", Some("('/files')")),
+                ],
+                vec![param(
+                    "file",
+                    TypeIr::named("MultipartFile"),
+                    vec![config("Part", Some("('file')"))],
+                )],
+            ),
+        ],
+    )));
+
+    assert!(diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("does not allow `@Body()` for `GET` requests")
+    }));
+    assert!(diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("does not allow `@FormUrlEncoded()` for `HEAD` requests")
+    }));
+    assert!(diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("does not allow `@MultiPart()` for `OPTIONS` requests")
+    }));
+}
+
+#[test]
+fn accepts_delete_request_bodies() {
+    let plugin = register_plugin();
+    let diagnostics = plugin.validate(&library_for(http_client_class(
+        vec![config("HttpClient", Some("()"))],
+        vec![
+            method(
+                "deleteBody",
+                future_of(TypeIr::named("void")),
+                vec![config("DELETE", Some("('/users')"))],
+                vec![param(
+                    "payload",
+                    TypeIr::named("DeleteRequest"),
+                    vec![config("Body", Some("()"))],
+                )],
+            ),
+            method(
+                "deleteForm",
+                future_of(TypeIr::named("void")),
+                vec![
+                    config("FormUrlEncoded", Some("()")),
+                    config("DELETE", Some("('/users/form')")),
+                ],
+                vec![param(
+                    "reason",
+                    TypeIr::string(),
+                    vec![config("Field", Some("('reason')"))],
+                )],
+            ),
+            method(
+                "deleteMultipart",
+                future_of(TypeIr::named("void")),
+                vec![
+                    config("MultiPart", Some("()")),
+                    config("DELETE", Some("('/users/multipart')")),
+                ],
+                vec![param(
+                    "file",
+                    TypeIr::named("MultipartFile"),
+                    vec![config("Part", Some("('file')"))],
+                )],
+            ),
+        ],
+    )));
+
+    assert!(diagnostics.is_empty(), "{diagnostics:?}");
+}
+
+#[test]
 fn rejects_duplicate_prefixed_cancel_tokens() {
     let plugin = register_plugin();
     let diagnostics = plugin.validate(&library_for(http_client_class(
