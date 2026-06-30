@@ -7,7 +7,7 @@ void main() {
     final delegate = GeneratedRouterDelegate<_TestRoute>(
       _runtimeConfig(),
     );
-    await _drainInitialRefresh();
+    await delegate.debugWaitForScheduledRefresh();
 
     delegate
       ..push(const _TestRoute('/same'))
@@ -26,19 +26,15 @@ void main() {
     final delegate = GeneratedRouterDelegate<_TestRoute>(
       _runtimeConfig(),
     );
-    await _drainInitialRefresh();
+    await delegate.debugWaitForScheduledRefresh();
 
     final initialKey = delegate.debugPageKeys.single;
 
     delegate.replace(const _TestRoute('/safe'));
-    await _drainInitialRefresh();
+    await delegate.debugWaitForScheduledRefresh();
 
     expect(delegate.debugPageKeys.single, same(initialKey));
   });
-}
-
-Future<void> _drainInitialRefresh() async {
-  await Future<void>.delayed(Duration.zero);
 }
 
 RouterRuntimeConfig<_TestRoute> _runtimeConfig() {

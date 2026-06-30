@@ -65,10 +65,17 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   List<LocalKey> get debugPageKeys =>
       _entries.map((entry) => entry.key).toList(growable: false);
 
+  /// Waits for the latest route refresh scheduled by
+  /// [RouterBase.refreshListenable].
+  @visibleForTesting
+  Future<void> debugWaitForScheduledRefresh() =>
+      _scheduledRefresh ?? Future<void>.value();
+
   final List<_RouteEntry<T>> _entries = <_RouteEntry<T>>[];
   final Map<Key, int> _keyToStackIndex = <Key, int>{};
   late final RouterController<T> _controller;
   bool _refreshScheduled = false;
+  Future<void>? _scheduledRefresh;
   int _navigationEpoch = 0;
 
   /// Last route in the stack, or the configured initial route.
@@ -138,10 +145,12 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   void _scheduleRefresh() {
     if (_refreshScheduled) return;
     _refreshScheduled = true;
-    scheduleMicrotask(() {
+    final refresh = Future<void>.microtask(() {
       _refreshScheduled = false;
-      unawaited(_applyRoute(currentRoute, NavigationMode.replace));
+      return _applyRoute(currentRoute, NavigationMode.replace);
     });
+    _scheduledRefresh = refresh;
+    unawaited(refresh);
   }
 
   Future<void> _applyRoute(
