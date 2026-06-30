@@ -41,7 +41,7 @@ fn preserves_explicit_required_nullable_named_parameters() {
     final _queryParameters = <String, dynamic>{};
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
-    if (traceId != null) _headers['x-trace-id'] = traceId;
+    if (traceId != null) _headers['x-trace-id'] = traceId.toString();
     final Object? _data = null;
     final _options = Options(
       method: 'GET',

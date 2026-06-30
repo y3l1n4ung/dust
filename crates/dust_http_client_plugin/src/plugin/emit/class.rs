@@ -62,6 +62,8 @@ struct MapEntryContext<'a> {
     target: &'a str,
     /// Dart expression assigned to the entry.
     name: &'a str,
+    /// Dart expression used by the null guard.
+    guard: &'a str,
     /// Escaped string key for the map entry.
     key: String,
 }
@@ -283,8 +285,9 @@ fn render_endpoint_setup(endpoint: &EndpointSpec<'_>) -> String {
                 &param.name,
                 param.ty.is_nullable(),
             )),
-            EndpointParam::Header { param, key } => setup.push(render_map_entry(
+            EndpointParam::Header { param, key } => setup.push(render_map_entry_with_guard(
                 "_headers",
+                &format!("{}.toString()", param.name),
                 &param.name,
                 key,
                 param.ty.is_nullable(),
@@ -429,6 +432,17 @@ where
 
 /// Renders assignment for a single generated request map entry.
 fn render_map_entry(target: &str, name: &str, key: &str, nullable: bool) -> String {
+    render_map_entry_with_guard(target, name, name, key, nullable)
+}
+
+/// Renders assignment for a single generated request map entry with a custom null guard.
+fn render_map_entry_with_guard(
+    target: &str,
+    name: &str,
+    guard: &str,
+    key: &str,
+    nullable: bool,
+) -> String {
     if nullable {
         render_template(
             "map_entry_nullable",
@@ -436,6 +450,7 @@ fn render_map_entry(target: &str, name: &str, key: &str, nullable: bool) -> Stri
             MapEntryContext {
                 target,
                 name,
+                guard,
                 key: crate::plugin::util::escape_single_quoted(key),
             },
         )
@@ -446,6 +461,7 @@ fn render_map_entry(target: &str, name: &str, key: &str, nullable: bool) -> Stri
             MapEntryContext {
                 target,
                 name,
+                guard,
                 key: crate::plugin::util::escape_single_quoted(key),
             },
         )

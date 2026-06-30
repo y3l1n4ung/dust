@@ -25,6 +25,15 @@ abstract interface class HttpFixtureApi {
     @Body() Map<String, dynamic> payload, {
     @Header('x-trace-id') required String traceId,
   });
+
+  @GET('/encoding/{slug}')
+  Future<void> encodingPolicy(
+    @Path() String slug, {
+    @Query('tags') List<String> tags = const ['dust'],
+    @Queries() required Map<String, dynamic> filters,
+    @Header('x-page') int page = 1,
+    @HeaderMap() required Map<String, String> headers,
+  });
 }
 
 final class HttpUser {

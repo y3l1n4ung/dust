@@ -69,7 +69,7 @@ final class _$HttpFixtureApi implements HttpFixtureApi {
     final _extra = <String, dynamic>{};
     _headers['accept'] = 'application/json';
     _queryParameters['includePosts'] = includePosts;
-    if (traceId != null) _headers['x-trace-id'] = traceId;
+    if (traceId != null) _headers['x-trace-id'] = traceId.toString();
     final Object? _data = null;
     final _options = Options(
       method: 'GET',
@@ -109,7 +109,7 @@ final class _$HttpFixtureApi implements HttpFixtureApi {
     final _headers = <String, dynamic>{};
     final _extra = <String, dynamic>{};
     _headers['accept'] = 'application/json';
-    _headers['x-trace-id'] = traceId;
+    _headers['x-trace-id'] = traceId.toString();
     final Object? _data = payload;
     final _options = Options(
       method: 'POST',
@@ -138,6 +138,52 @@ final class _$HttpFixtureApi implements HttpFixtureApi {
       ),
     );
     return _result.data as Map<String, dynamic>;
+  }
+
+  @override
+  Future<void> encodingPolicy(
+    String slug, {
+    List<String> tags = const ['dust'],
+    required Map<String, dynamic> filters,
+    int page = 1,
+    required Map<String, String> headers,
+  }) async {
+    final _queryParameters = <String, dynamic>{};
+    final _headers = <String, dynamic>{};
+    final _extra = <String, dynamic>{};
+    _headers['accept'] = 'application/json';
+    _queryParameters['tags'] = tags;
+    _queryParameters.addAll(filters);
+    _headers['x-page'] = page.toString();
+    _headers.addAll(headers);
+    final Object? _data = null;
+    final _options = Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+      contentType: null,
+    );
+    await _dio.fetch<void>(
+      _setStreamType<void>(
+        _options
+            .compose(
+              _dio.options,
+              '/encoding/' + Uri.encodeComponent(slug.toString()),
+              queryParameters: _queryParameters,
+              data: _data,
+              cancelToken: null,
+              onSendProgress: null,
+              onReceiveProgress: null,
+            )
+            .copyWith(
+              baseUrl: _combineBaseUrls(
+                _dio.options.baseUrl,
+                _baseUrl ?? 'https://api.example.com',
+              ),
+            ),
+      ),
+    );
+    return;
   }
 }
 

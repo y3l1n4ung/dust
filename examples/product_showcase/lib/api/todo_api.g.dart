@@ -71,7 +71,7 @@ final class _$TodoApi implements TodoApi {
     _headers['x-endpoint'] = 'todos';
     if (userId != null) _queryParameters['userId'] = userId;
     _queryParameters['page'] = page;
-    _headers['x-trace-id'] = traceId;
+    _headers['x-trace-id'] = traceId.toString();
     final Object? _data = null;
     final _options = Options(
       method: 'GET',

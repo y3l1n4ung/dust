@@ -88,6 +88,39 @@ abstract interface class ApiClient {
 
 ---
 
+## Request Value Encoding
+
+Dust keeps request encoding small and predictable:
+
+- `@Path()` values are converted with `toString()` and encoded with `Uri.encodeComponent`.
+- `@Query()` values are passed to Dio unchanged so Dio can encode scalar and list values. Nullable query values are omitted when `null`.
+- `@Queries()` accepts `Map<String, ...>` and merges caller-provided query values unchanged.
+- `@Header()` values are converted with `toString()`. Nullable header values are omitted when `null`.
+- `@HeaderMap()` accepts `Map<String, ...>` and merges caller-provided header values unchanged.
+
+Static class headers are applied first, method `@Headers` are applied next, and parameter-driven headers are applied in method signature order. That means `@HeaderMap()` can override static headers when it appears later in the generated setup.
+
+```dart
+@HttpClient(headers: {'accept': 'application/json'})
+abstract interface class ApiClient {
+  factory ApiClient(Dio dio, {String? baseUrl}) = _$ApiClient;
+
+  @GET('/users/{slug}')
+  Future<void> search(
+    @Path() String slug, {
+    @Query('tags') List<String>? tags,
+    @Queries() required Map<String, dynamic> filters,
+    @Header('x-page') int page = 1,
+    @HeaderMap() required Map<String, String> headers,
+  });
+}
+```
+
+> [!TIP]
+> Use `@Queries()` and `@HeaderMap()` for caller-controlled optional sets. Use single `@Query()` or `@Header()` parameters for fixed API keys that should stay visible in the method signature.
+
+---
+
 ## Performance: Offloading JSON Parsing
 
 For large JSON payloads, you can offload the decoding process to a background isolate.
