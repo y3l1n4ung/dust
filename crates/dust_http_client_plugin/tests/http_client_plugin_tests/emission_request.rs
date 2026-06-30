@@ -78,3 +78,51 @@ fn emits_multipart_requests_with_prefixed_options_types() {
     ));
     assert!(emitted.contains("contentType: 'multipart/form-data'"));
 }
+
+#[test]
+fn emits_model_request_bodies_null_safely() {
+    let plugin = register_plugin();
+    let library = library_for(http_client_class(
+        vec![config("HttpClient", Some("()"))],
+        vec![
+            method(
+                "createUser",
+                future_of(TypeIr::named("User")),
+                vec![config("POST", Some("('/users')"))],
+                vec![param(
+                    "payload",
+                    TypeIr::named("UserCreate"),
+                    vec![config("Body", Some("()"))],
+                )],
+            ),
+            method(
+                "updateUser",
+                future_of(TypeIr::named("User")),
+                vec![config("PATCH", Some("('/users')"))],
+                vec![param(
+                    "payload",
+                    TypeIr::named("UserUpdate").nullable(),
+                    vec![config("Body", Some("()"))],
+                )],
+            ),
+            method(
+                "putMetadata",
+                future_of(TypeIr::named("User")),
+                vec![config("PUT", Some("('/users/meta')"))],
+                vec![param(
+                    "payload",
+                    TypeIr::generic("Map", vec![TypeIr::string(), TypeIr::dynamic()]).nullable(),
+                    vec![config("Body", Some("()"))],
+                )],
+            ),
+        ],
+    ));
+
+    let emitted = plugin
+        .emit(&library, &SymbolPlan::default())
+        .support_types
+        .join("\n");
+    assert!(emitted.contains("final Object? _data = payload.toJson();"));
+    assert!(emitted.contains("final Object? _data = payload?.toJson();"));
+    assert!(emitted.contains("final Object? _data = payload;"));
+}
