@@ -51,8 +51,8 @@ abstract interface class ApiClient {
 | Property | Type | Description |
 | :--- | :--- | :--- |
 | `baseUrl` | `String` | The base URL for all methods in this client. |
-| `target` | `HttpTarget` | `dart` (default) or `flutter`. Use `flutter` to enable Flutter-specific optimizations. |
-| `parseThread` | `HttpParseThread` | `main` (default) or `isolate`. Use `isolate` to offload JSON decoding to a background thread. |
+| `target` | `HttpTarget` | `HttpTarget.dart` (default) or `HttpTarget.flutter`. Use `flutter` to enable Flutter-specific optimizations. |
+| `parseThread` | `HttpParseThread` | `HttpParseThread.main` (default) or `HttpParseThread.isolate`. Use `isolate` to offload JSON decoding to a background thread. |
 | `headers` | `Map<String, String>` | Static headers applied to every request from this client. |
 | `generateTest` | `bool` | Generates a companion request-mapping test file when set to `true`. |
 
@@ -121,6 +121,29 @@ abstract interface class ApiClient {
 
 ---
 
+## JSON Model Requirements
+
+Generated HTTP clients call `value.toJson()` for custom `@Body()` models and `Type.fromJson(Map<String, Object?>)` for custom response models. Lists are checked recursively, so `Future<List<User>>` requires `User.fromJson(...)`.
+
+```dart
+@Derive([Serialize(), Deserialize()])
+class User with _$User {
+  const User({required this.id, required this.name});
+
+  final int id;
+  final String name;
+
+  factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
+}
+```
+
+Primitive values, `Map`, `List`, `dynamic`, `void`, and `ResponseBody` can be used directly. For custom classes, derive `Serialize()` for request bodies and provide a `fromJson` factory for responses.
+
+> [!IMPORTANT]
+> Dust rejects known custom HTTP models that cannot be serialized or deserialized by the generated client. Add the JSON methods or change the endpoint type before running the app.
+
+---
+
 ## Performance: Offloading JSON Parsing
 
 For large JSON payloads, you can offload the decoding process to a background isolate.
@@ -162,7 +185,7 @@ When `generateTest` is enabled on your client, Dust generates a test suite that 
 abstract interface class ApiClient { ... }
 ```
 
-Dust creates `test/generated/api/api_client_test.dart` containing assertions for path segments, query parameters, headers, and body serialization.
+Dust creates a matching file under `test/generated/...`, such as `test/generated/api/api_client_test.dart`, containing assertions for path segments, query parameters, headers, and body serialization.
 
 ---
 
