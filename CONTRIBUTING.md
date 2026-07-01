@@ -103,6 +103,22 @@ To keep Dust fast and maintainable, please follow these core principles:
 3.  **Include Commands:** In your PR description, list the exact commands you used to verify your changes.
 4.  **Performance Impact:** If your change affects the build path, report both **Cold** and **Warm** build times using the benchmark project.
 
+### AI-assisted contributions
+
+AI tools are allowed as assistants, but contributors must own the final diff. Do not open blind agent-created PRs, automated bulk rewrites, or changes with generated output you have not reviewed.
+
+Before opening an AI-assisted PR, be ready to answer:
+
+- What Dust feature, package, or example does this touch?
+- What user problem, failing test, or minimal example proves the change is needed?
+- What generated Dart output changes, if any?
+- What local commands did you run?
+- What risk or behavior change should maintainers review?
+
+For every AI-assisted PR, confirm that you personally reviewed the changed code, ran the stated checks, and can explain the design tradeoff. If you cannot answer those questions yet, open an issue first with a minimal example project, reproduction, or expected generated output.
+
+This policy is a review-quality gate only. CLA, DCO, or sign-off automation is tracked separately.
+
 ---
 
 ## 🐞 Reporting Issues
