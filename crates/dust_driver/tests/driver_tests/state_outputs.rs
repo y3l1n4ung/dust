@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, path::PathBuf};
 
 use dust_driver::{BuildRequest, run_build};
 
@@ -55,6 +55,7 @@ fn build_writes_async_state_output_for_view_model_library() {
     assert!(source.contains("final Widget Function(BuildContext context, Profile data) data"));
     assert!(!source.contains("const Profile()"));
     assert!(!source.contains("initialState:"));
+    assert_state_snapshot("async_profile_view_model.dart.snapshot", &source);
 }
 
 fn write_state_workspace(root: &std::path::Path) {
@@ -97,4 +98,17 @@ fn write_async_state_workspace(root: &std::path::Path) {
            Future<Profile> loadData() async => const Profile('Ada');\n\
          }\n",
     );
+}
+
+fn assert_state_snapshot(name: &str, actual: &str) {
+    let path = state_snapshot_path(name);
+    let expected = fs::read_to_string(&path)
+        .unwrap_or_else(|error| panic!("missing state snapshot `{}`: {error}", path.display()));
+    assert_eq!(actual, expected, "state snapshot `{name}` changed");
+}
+
+fn state_snapshot_path(name: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/driver_tests/state_outputs/snapshots")
+        .join(name)
 }
