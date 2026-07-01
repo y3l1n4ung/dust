@@ -1,3 +1,5 @@
+// coverage:ignore-file
+
 import 'package:meta/meta.dart';
 
 /// Defines the thread context for JSON parsing.
