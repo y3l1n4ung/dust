@@ -1,6 +1,10 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
-use dust_plugin_api::{AuxiliaryOutputContribution, DustPlugin, PluginContribution, SymbolPlan};
+use dust_parser_dart::ParsedDartFileSurface;
+use dust_plugin_api::{
+    AuxiliaryOutputContribution, DustPlugin, PluginContribution, SymbolPlan,
+    WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
+};
 use dust_workspace::generated_test_output_path;
 
 /// Converts parsed IR into validated HTTP client specs.
@@ -24,7 +28,7 @@ use self::emit::{
     render_client_class, render_isolate_helpers, render_shared_helpers, render_test_file,
 };
 use self::parse::has_config_named;
-use self::validate::validate_client_class;
+use self::validate::{JsonCapabilityContext, collect_workspace_analysis, validate_client_class};
 
 /// Dust plugin for generating Dio-backed HTTP clients.
 pub struct HttpClientPlugin;
@@ -60,11 +64,30 @@ impl DustPlugin for HttpClientPlugin {
         SUPPORTED_ANNOTATIONS
     }
 
+    fn collect_workspace_analysis(
+        &self,
+        _context: WorkspaceAnalysisContext<'_>,
+        library: &ParsedDartFileSurface,
+        analysis: &mut WorkspaceAnalysisBuilder,
+    ) {
+        collect_workspace_analysis(library, analysis);
+    }
+
     fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
+        let json = JsonCapabilityContext::new(library);
         library
             .classes
             .iter()
-            .flat_map(|class| validate_client_class(&library.imports, class))
+            .flat_map(|class| validate_client_class(&library.imports, class, Some(&json)))
+            .collect()
+    }
+
+    fn validate_with_plan(&self, library: &DartFileIr, plan: &SymbolPlan) -> Vec<Diagnostic> {
+        let json = JsonCapabilityContext::with_workspace(library, Some(plan.workspace_analysis()));
+        library
+            .classes
+            .iter()
+            .flat_map(|class| validate_client_class(&library.imports, class, Some(&json)))
             .collect()
     }
 

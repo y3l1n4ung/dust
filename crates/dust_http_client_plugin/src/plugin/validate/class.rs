@@ -8,10 +8,14 @@ use crate::plugin::emit::needs_isolate_helper;
 use crate::plugin::model::{HttpTargetMode, ParseThreadMode, ReturnMode};
 use crate::plugin::parse::{has_config_named, method_parse_thread, parse_http_client_config};
 use crate::plugin::util::{config_name, has_import, label, type_name_is};
-use crate::plugin::validate::validate_endpoint;
+use crate::plugin::validate::{JsonCapabilityContext, validate_endpoint};
 
 /// Validates an annotated HTTP client class and all endpoint methods.
-pub(crate) fn validate_client_class(imports: &[String], class: &ClassIr) -> Vec<Diagnostic> {
+pub(crate) fn validate_client_class(
+    imports: &[String],
+    class: &ClassIr,
+    json: Option<&JsonCapabilityContext<'_>>,
+) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let wants_http_client = has_config_named(&class.configs, HTTP_CLIENT);
     let wants_generate_test = has_config_named(&class.configs, GENERATE_TEST);
@@ -50,7 +54,7 @@ pub(crate) fn validate_client_class(imports: &[String], class: &ClassIr) -> Vec<
     validate_class_level_configs(class, &mut diagnostics);
     validate_factory_constructor(class, &mut diagnostics);
     for method in &class.methods {
-        diagnostics.extend(validate_endpoint(imports, class, method));
+        diagnostics.extend(validate_endpoint(imports, class, method, json));
     }
     validate_parse_thread_imports(imports, class, &mut diagnostics);
     diagnostics

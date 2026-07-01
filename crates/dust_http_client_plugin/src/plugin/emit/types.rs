@@ -119,7 +119,7 @@ pub(super) fn is_void_type(ty: &TypeIr) -> bool {
 }
 
 /// Returns true when a body value can be sent without calling `toJson`.
-pub(super) fn uses_direct_body_value(ty: &TypeIr) -> bool {
+pub(crate) fn uses_direct_body_value(ty: &TypeIr) -> bool {
     match ty {
         TypeIr::Dynamic | TypeIr::Unknown => true,
         TypeIr::Builtin { .. } => true,

@@ -12,6 +12,7 @@ description = "Dio HttpClient generation plugin for Dust."
 [dependencies]
 dust_dart_emit = { path = "../dust_dart_emit", version = "0.1.1" }
 dust_ir = { path = "../dust_ir", version = "0.1.1" }
+dust_parser_dart = { path = "../dust_parser_dart", version = "0.1.1" }
 dust_plugin_api = { path = "../dust_plugin_api", version = "0.1.1" }
 dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
 dust_workspace = { path = "../dust_workspace", version = "0.1.1" }
