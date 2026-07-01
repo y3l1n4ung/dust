@@ -157,6 +157,40 @@ void main() {
     expect(find.text('ccc'), findsOneWidget);
   });
 
+  testWidgets('selector ignores many unrelated state changes', (
+    tester,
+  ) async {
+    var selectorRebuilds = 0;
+    final viewModel = TestProductsViewModel(
+      ProductsViewModelArgs(repository: MockRepository()),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ProductsViewModelScope.value(
+          value: viewModel,
+          child: ProductsViewModelSelector<ProductsStatus>(
+            selector: (state) => state.status,
+            builder: (context, status, child) {
+              selectorRebuilds += 1;
+              return Text(status.name);
+            },
+          ),
+        ),
+      ),
+    );
+
+    expect(selectorRebuilds, 1);
+
+    for (var i = 0; i < 50; i += 1) {
+      viewModel.emitForTest(viewModel.state.copyWith(searchQuery: 'q$i'));
+      await tester.pump();
+    }
+
+    expect(selectorRebuilds, 1);
+    expect(find.text(ProductsStatus.initial.name), findsOneWidget);
+  });
+
   testWidgets('.value scope runs init once for external view model', (
     tester,
   ) async {
