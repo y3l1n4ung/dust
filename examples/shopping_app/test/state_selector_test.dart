@@ -269,4 +269,47 @@ void main() {
 
     expect(effects, <Object>['first', 'second']);
   });
+
+  testWidgets('listener does not rebuild child for state changes or effects', (
+    tester,
+  ) async {
+    var childBuilds = 0;
+    final effects = <Object>[];
+    final viewModel = TestProductsViewModel(
+      ProductsViewModelArgs(repository: MockRepository()),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ProductsViewModelScope.value(
+          value: viewModel,
+          child: ProductsViewModelListener(
+            listener: (context, effect) => effects.add(effect),
+            child: Builder(
+              builder: (context) {
+                childBuilds += 1;
+                return const Text('listener child');
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(childBuilds, 1);
+
+    viewModel.emitForTest(
+      viewModel.state.copyWith(status: ProductsStatus.loading),
+    );
+    await tester.pump();
+
+    expect(childBuilds, 1);
+    expect(effects, isEmpty);
+
+    viewModel.emitEffectForTest('toast');
+    await tester.pump();
+
+    expect(childBuilds, 1);
+    expect(effects, <Object>['toast']);
+  });
 }
