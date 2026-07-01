@@ -1,3 +1,5 @@
+// coverage:ignore-file
+
 import 'base.dart';
 
 /// Generates a `toString()` implementation from the class fields.

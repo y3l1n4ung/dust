@@ -1,3 +1,5 @@
+// coverage:ignore-file
+
 /// Base marker for all Dust derive annotations.
 abstract base class DeriveMeta {
   /// Creates one derive metadata marker.

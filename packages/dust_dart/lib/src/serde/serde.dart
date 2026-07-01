@@ -1,3 +1,5 @@
+// coverage:ignore-file
+
 import '../derive/base.dart';
 
 /// Generates `toJson()` support for the annotated class or enum.

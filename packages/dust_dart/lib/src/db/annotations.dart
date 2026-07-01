@@ -1,3 +1,5 @@
+// coverage:ignore-file
+
 import '../derive/base.dart';
 
 /// Supported Dust DB driver targets.

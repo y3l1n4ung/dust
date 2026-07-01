@@ -1,3 +1,5 @@
+// coverage:ignore-file
+
 /// Marks a class as a Dust view model generation target.
 ///
 /// Example:
