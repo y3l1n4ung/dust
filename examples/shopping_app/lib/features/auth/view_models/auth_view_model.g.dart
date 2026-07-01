@@ -13,9 +13,9 @@
 
 part of 'auth_view_model.dart';
 
-/// Generated base class for AuthViewModel.
+/// Base class generated for AuthViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class AuthViewModel extends $AuthViewModel {
@@ -26,9 +26,9 @@ abstract class $AuthViewModel extends ViewModelBase<AuthState, AuthViewModelArgs
   $AuthViewModel(super.args) : super(initialState: AuthState(status: AuthStatus.unauthenticated));
 }
 
-/// Typed state reader returned by `context.watchAuthViewModel()`.
+/// Reads AuthViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchAuthViewModel().value;
@@ -43,10 +43,9 @@ class _$AuthViewModelProxy {
   }
 }
 
-/// Builds from a selected AuthState value.
+/// Rebuilds when a selected AuthState value changes.
 ///
-/// The selector listens to AuthViewModel and rebuilds only when the
-/// selected value changes.
+/// Use this for widgets that depend on one field or derived value.
 class AuthViewModelSelector<R> extends StatefulWidget {
   const AuthViewModelSelector({
     super.key,
@@ -130,10 +129,10 @@ class _AuthViewModelSelectorState<R> extends State<AuthViewModelSelector<R>> {
   }
 }
 
-/// Provides AuthViewModel to descendants and owns it by default.
+/// Creates and provides AuthViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// AuthViewModelScope(
@@ -143,7 +142,7 @@ class _AuthViewModelSelectorState<R> extends State<AuthViewModelSelector<R>> {
 /// )
 /// ```
 class AuthViewModelScope extends StatefulWidget {
-  /// Creates an owned AuthViewModel from typed args.
+  /// Creates and owns AuthViewModel from typed args.
   const AuthViewModelScope({
     super.key,
     required this.args,
@@ -167,7 +166,7 @@ class AuthViewModelScope extends StatefulWidget {
   final AuthViewModel? value;
   final Widget child;
 
-  /// Reads AuthViewModel without subscribing the caller to state changes.
+  /// Reads AuthViewModel without rebuilding when state changes.
   static AuthViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_AuthViewModelInstance>()
@@ -182,7 +181,7 @@ class AuthViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches AuthViewModel and subscribes to state changes.
+  /// Watches AuthViewModel and rebuilds when state changes.
   static AuthViewModel of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<_AuthViewModelInherited>();
     if (scope == null) throw StateError('No AuthViewModelScope found in context.');
@@ -343,7 +342,7 @@ class _AuthViewModelInherited extends InheritedWidget {
   }
 }
 
-/// Listens to one-shot effects from AuthViewModel.
+/// Handles one-shot effects from AuthViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -391,7 +390,7 @@ class _AuthViewModelListenerState extends State<AuthViewModelListener> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for AuthViewModel.
+/// BuildContext helpers generated for AuthViewModel.
 ///
 /// ```dart
 /// final vm = context.readAuthViewModel();

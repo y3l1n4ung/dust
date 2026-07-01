@@ -13,9 +13,9 @@
 
 part of 'orders_view_model.dart';
 
-/// Generated base class for OrdersViewModel.
+/// Base class generated for OrdersViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class OrdersViewModel extends $OrdersViewModel {
@@ -26,9 +26,9 @@ abstract class $OrdersViewModel extends ViewModelBase<OrdersState, OrdersViewMod
   $OrdersViewModel(super.args) : super(initialState: const OrdersState());
 }
 
-/// Typed state reader returned by `context.watchOrdersViewModel()`.
+/// Reads OrdersViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchOrdersViewModel().value;
@@ -43,10 +43,9 @@ class _$OrdersViewModelProxy {
   }
 }
 
-/// Builds from a selected OrdersState value.
+/// Rebuilds when a selected OrdersState value changes.
 ///
-/// The selector listens to OrdersViewModel and rebuilds only when the
-/// selected value changes.
+/// Use this for widgets that depend on one field or derived value.
 class OrdersViewModelSelector<R> extends StatefulWidget {
   const OrdersViewModelSelector({
     super.key,
@@ -130,10 +129,10 @@ class _OrdersViewModelSelectorState<R> extends State<OrdersViewModelSelector<R>>
   }
 }
 
-/// Provides OrdersViewModel to descendants and owns it by default.
+/// Creates and provides OrdersViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// OrdersViewModelScope(
@@ -143,7 +142,7 @@ class _OrdersViewModelSelectorState<R> extends State<OrdersViewModelSelector<R>>
 /// )
 /// ```
 class OrdersViewModelScope extends StatefulWidget {
-  /// Creates an owned OrdersViewModel from typed args.
+  /// Creates and owns OrdersViewModel from typed args.
   const OrdersViewModelScope({
     super.key,
     required this.args,
@@ -167,7 +166,7 @@ class OrdersViewModelScope extends StatefulWidget {
   final OrdersViewModel? value;
   final Widget child;
 
-  /// Reads OrdersViewModel without subscribing the caller to state changes.
+  /// Reads OrdersViewModel without rebuilding when state changes.
   static OrdersViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_OrdersViewModelInstance>()
@@ -182,7 +181,7 @@ class OrdersViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches OrdersViewModel and subscribes to state changes.
+  /// Watches OrdersViewModel and rebuilds when state changes.
   static OrdersViewModel of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<_OrdersViewModelInherited>();
     if (scope == null) throw StateError('No OrdersViewModelScope found in context.');
@@ -343,7 +342,7 @@ class _OrdersViewModelInherited extends InheritedWidget {
   }
 }
 
-/// Listens to one-shot effects from OrdersViewModel.
+/// Handles one-shot effects from OrdersViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -391,7 +390,7 @@ class _OrdersViewModelListenerState extends State<OrdersViewModelListener> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for OrdersViewModel.
+/// BuildContext helpers generated for OrdersViewModel.
 ///
 /// ```dart
 /// final vm = context.readOrdersViewModel();

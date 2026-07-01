@@ -13,9 +13,9 @@
 
 part of 'benchmark_view_model.dart';
 
-/// Generated base class for BenchmarkViewModel.
+/// Base class generated for BenchmarkViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class BenchmarkViewModel extends $BenchmarkViewModel {
@@ -26,9 +26,9 @@ abstract class $BenchmarkViewModel extends ViewModelBase<BenchmarkState, Benchma
   $BenchmarkViewModel(super.args) : super(initialState: const BenchmarkState());
 }
 
-/// Typed state reader returned by `context.watchBenchmarkViewModel()`.
+/// Reads BenchmarkViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchBenchmarkViewModel().value;
@@ -43,10 +43,9 @@ class _$BenchmarkViewModelProxy {
   }
 }
 
-/// Builds from a selected BenchmarkState value.
+/// Rebuilds when a selected BenchmarkState value changes.
 ///
-/// The selector listens to BenchmarkViewModel and rebuilds only when the
-/// selected value changes.
+/// Use this for widgets that depend on one field or derived value.
 class BenchmarkViewModelSelector<R> extends StatefulWidget {
   const BenchmarkViewModelSelector({
     super.key,
@@ -130,10 +129,10 @@ class _BenchmarkViewModelSelectorState<R> extends State<BenchmarkViewModelSelect
   }
 }
 
-/// Provides BenchmarkViewModel to descendants and owns it by default.
+/// Creates and provides BenchmarkViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// BenchmarkViewModelScope(
@@ -143,7 +142,7 @@ class _BenchmarkViewModelSelectorState<R> extends State<BenchmarkViewModelSelect
 /// )
 /// ```
 class BenchmarkViewModelScope extends StatefulWidget {
-  /// Creates an owned BenchmarkViewModel from typed args.
+  /// Creates and owns BenchmarkViewModel from typed args.
   const BenchmarkViewModelScope({
     super.key,
     required this.args,
@@ -167,7 +166,7 @@ class BenchmarkViewModelScope extends StatefulWidget {
   final BenchmarkViewModel? value;
   final Widget child;
 
-  /// Reads BenchmarkViewModel without subscribing the caller to state changes.
+  /// Reads BenchmarkViewModel without rebuilding when state changes.
   static BenchmarkViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_BenchmarkViewModelInstance>()
@@ -182,7 +181,7 @@ class BenchmarkViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches BenchmarkViewModel and subscribes to state changes.
+  /// Watches BenchmarkViewModel and rebuilds when state changes.
   static BenchmarkViewModel of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<_BenchmarkViewModelInherited>();
     if (scope == null) throw StateError('No BenchmarkViewModelScope found in context.');
@@ -343,7 +342,7 @@ class _BenchmarkViewModelInherited extends InheritedWidget {
   }
 }
 
-/// Listens to one-shot effects from BenchmarkViewModel.
+/// Handles one-shot effects from BenchmarkViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -391,7 +390,7 @@ class _BenchmarkViewModelListenerState extends State<BenchmarkViewModelListener>
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for BenchmarkViewModel.
+/// BuildContext helpers generated for BenchmarkViewModel.
 ///
 /// ```dart
 /// final vm = context.readBenchmarkViewModel();

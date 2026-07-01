@@ -13,9 +13,9 @@
 
 part of 'demo_cart_api_view_model.dart';
 
-/// Generated base class for DemoCartApiViewModel.
+/// Base class generated for DemoCartApiViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class DemoCartApiViewModel extends $DemoCartApiViewModel {
@@ -26,9 +26,9 @@ abstract class $DemoCartApiViewModel extends ViewModelBase<DemoCartState, DemoCa
   $DemoCartApiViewModel(super.args) : super(initialState: const DemoCartState());
 }
 
-/// Typed state reader returned by `context.watchDemoCartApiViewModel()`.
+/// Reads DemoCartApiViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchDemoCartApiViewModel().value;
@@ -43,10 +43,9 @@ class _$DemoCartApiViewModelProxy {
   }
 }
 
-/// Builds from a selected DemoCartState value.
+/// Rebuilds when a selected DemoCartState value changes.
 ///
-/// The selector listens to DemoCartApiViewModel and rebuilds only when the
-/// selected value changes.
+/// Use this for widgets that depend on one field or derived value.
 class DemoCartApiViewModelSelector<R> extends StatefulWidget {
   const DemoCartApiViewModelSelector({
     super.key,
@@ -130,10 +129,10 @@ class _DemoCartApiViewModelSelectorState<R> extends State<DemoCartApiViewModelSe
   }
 }
 
-/// Provides DemoCartApiViewModel to descendants and owns it by default.
+/// Creates and provides DemoCartApiViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// DemoCartApiViewModelScope(
@@ -143,7 +142,7 @@ class _DemoCartApiViewModelSelectorState<R> extends State<DemoCartApiViewModelSe
 /// )
 /// ```
 class DemoCartApiViewModelScope extends StatefulWidget {
-  /// Creates an owned DemoCartApiViewModel from typed args.
+  /// Creates and owns DemoCartApiViewModel from typed args.
   const DemoCartApiViewModelScope({
     super.key,
     required this.args,
@@ -167,7 +166,7 @@ class DemoCartApiViewModelScope extends StatefulWidget {
   final DemoCartApiViewModel? value;
   final Widget child;
 
-  /// Reads DemoCartApiViewModel without subscribing the caller to state changes.
+  /// Reads DemoCartApiViewModel without rebuilding when state changes.
   static DemoCartApiViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_DemoCartApiViewModelInstance>()
@@ -182,7 +181,7 @@ class DemoCartApiViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches DemoCartApiViewModel and subscribes to state changes.
+  /// Watches DemoCartApiViewModel and rebuilds when state changes.
   static DemoCartApiViewModel of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<_DemoCartApiViewModelInherited>();
     if (scope == null) throw StateError('No DemoCartApiViewModelScope found in context.');
@@ -343,7 +342,7 @@ class _DemoCartApiViewModelInherited extends InheritedWidget {
   }
 }
 
-/// Listens to one-shot effects from DemoCartApiViewModel.
+/// Handles one-shot effects from DemoCartApiViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -391,7 +390,7 @@ class _DemoCartApiViewModelListenerState extends State<DemoCartApiViewModelListe
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for DemoCartApiViewModel.
+/// BuildContext helpers generated for DemoCartApiViewModel.
 ///
 /// ```dart
 /// final vm = context.readDemoCartApiViewModel();

@@ -175,9 +175,9 @@ final class _$BnbStateCopyWithImpl<$Res> implements _$BnbStateCopyWith<$Res> {
     );
   }
 }
-/// Generated base class for AppViewModel.
+/// Base class generated for AppViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class AppViewModel extends $AppViewModel {
@@ -188,9 +188,9 @@ abstract class $AppViewModel extends ViewModelBase<AppState, AppViewModelArgs> {
   $AppViewModel(super.args) : super(initialState: const AppState());
 }
 
-/// Typed state reader returned by `context.watchAppViewModel()`.
+/// Reads AppViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchAppViewModel().value;
@@ -205,10 +205,9 @@ class _$AppViewModelProxy {
   }
 }
 
-/// Builds from a selected AppState value.
+/// Rebuilds when a selected AppState value changes.
 ///
-/// The selector listens to AppViewModel and rebuilds only when the
-/// selected value changes.
+/// Use this for widgets that depend on one field or derived value.
 class AppViewModelSelector<R> extends StatefulWidget {
   const AppViewModelSelector({
     super.key,
@@ -292,10 +291,10 @@ class _AppViewModelSelectorState<R> extends State<AppViewModelSelector<R>> {
   }
 }
 
-/// Provides AppViewModel to descendants and owns it by default.
+/// Creates and provides AppViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// AppViewModelScope(
@@ -305,7 +304,7 @@ class _AppViewModelSelectorState<R> extends State<AppViewModelSelector<R>> {
 /// )
 /// ```
 class AppViewModelScope extends StatefulWidget {
-  /// Creates an owned AppViewModel from typed args.
+  /// Creates and owns AppViewModel from typed args.
   const AppViewModelScope({
     super.key,
     required this.args,
@@ -329,7 +328,7 @@ class AppViewModelScope extends StatefulWidget {
   final AppViewModel? value;
   final Widget child;
 
-  /// Reads AppViewModel without subscribing the caller to state changes.
+  /// Reads AppViewModel without rebuilding when state changes.
   static AppViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_AppViewModelInstance>()
@@ -344,7 +343,7 @@ class AppViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches AppViewModel and subscribes to state changes.
+  /// Watches AppViewModel and rebuilds when state changes.
   static AppViewModel of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<_AppViewModelInherited>();
     if (scope == null) throw StateError('No AppViewModelScope found in context.');
@@ -505,7 +504,7 @@ class _AppViewModelInherited extends InheritedWidget {
   }
 }
 
-/// Listens to one-shot effects from AppViewModel.
+/// Handles one-shot effects from AppViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -553,7 +552,7 @@ class _AppViewModelListenerState extends State<AppViewModelListener> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for AppViewModel.
+/// BuildContext helpers generated for AppViewModel.
 ///
 /// ```dart
 /// final vm = context.readAppViewModel();
@@ -566,9 +565,9 @@ extension AppViewModelBuildContext on BuildContext {
 
   AppViewModel readAppViewModel() => AppViewModelScope.read(this);
 }
-/// Generated base class for BnbViewModel.
+/// Base class generated for BnbViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class BnbViewModel extends $BnbViewModel {
@@ -579,9 +578,9 @@ abstract class $BnbViewModel extends ViewModelBase<BnbState, BnbViewModelArgs> {
   $BnbViewModel(super.args) : super(initialState: const BnbState());
 }
 
-/// Typed state reader returned by `context.watchBnbViewModel()`.
+/// Reads BnbViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchBnbViewModel().value;
@@ -596,10 +595,9 @@ class _$BnbViewModelProxy {
   }
 }
 
-/// Builds from a selected BnbState value.
+/// Rebuilds when a selected BnbState value changes.
 ///
-/// The selector listens to BnbViewModel and rebuilds only when the
-/// selected value changes.
+/// Use this for widgets that depend on one field or derived value.
 class BnbViewModelSelector<R> extends StatefulWidget {
   const BnbViewModelSelector({
     super.key,
@@ -683,10 +681,10 @@ class _BnbViewModelSelectorState<R> extends State<BnbViewModelSelector<R>> {
   }
 }
 
-/// Provides BnbViewModel to descendants and owns it by default.
+/// Creates and provides BnbViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// BnbViewModelScope(
@@ -696,7 +694,7 @@ class _BnbViewModelSelectorState<R> extends State<BnbViewModelSelector<R>> {
 /// )
 /// ```
 class BnbViewModelScope extends StatefulWidget {
-  /// Creates an owned BnbViewModel from typed args.
+  /// Creates and owns BnbViewModel from typed args.
   const BnbViewModelScope({
     super.key,
     required this.args,
@@ -720,7 +718,7 @@ class BnbViewModelScope extends StatefulWidget {
   final BnbViewModel? value;
   final Widget child;
 
-  /// Reads BnbViewModel without subscribing the caller to state changes.
+  /// Reads BnbViewModel without rebuilding when state changes.
   static BnbViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_BnbViewModelInstance>()
@@ -735,7 +733,7 @@ class BnbViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches BnbViewModel and subscribes to state changes.
+  /// Watches BnbViewModel and rebuilds when state changes.
   static BnbViewModel of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<_BnbViewModelInherited>();
     if (scope == null) throw StateError('No BnbViewModelScope found in context.');
@@ -896,7 +894,7 @@ class _BnbViewModelInherited extends InheritedWidget {
   }
 }
 
-/// Listens to one-shot effects from BnbViewModel.
+/// Handles one-shot effects from BnbViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -944,7 +942,7 @@ class _BnbViewModelListenerState extends State<BnbViewModelListener> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for BnbViewModel.
+/// BuildContext helpers generated for BnbViewModel.
 ///
 /// ```dart
 /// final vm = context.readBnbViewModel();
@@ -957,9 +955,9 @@ extension BnbViewModelBuildContext on BuildContext {
 
   BnbViewModel readBnbViewModel() => BnbViewModelScope.read(this);
 }
-/// Generated async base class for HomeViewModel.
+/// Async base class generated for HomeViewModel.
 ///
-/// Extend this class and implement `loadData`.
+/// Extend it from your ViewModel and implement `loadData`.
 ///
 /// ```dart
 /// final class HomeViewModel extends $HomeViewModel {
@@ -975,9 +973,9 @@ abstract class $HomeViewModel extends AsyncViewModelBase<HomePageData, HomeViewM
   $HomeViewModel(super.args);
 }
 
-/// Typed state reader returned by `context.watchHomeViewModel()`.
+/// Reads HomeViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchHomeViewModel().value;
@@ -992,10 +990,9 @@ class _$HomeViewModelProxy {
   }
 }
 
-/// Builds from a selected AsyncState<HomePageData> value.
+/// Rebuilds when a selected AsyncState<HomePageData> value changes.
 ///
-/// The selector listens to HomeViewModel and rebuilds only when the
-/// selected value changes.
+/// Use this for widgets that depend on one field or derived value.
 class HomeViewModelSelector<R> extends StatefulWidget {
   const HomeViewModelSelector({
     super.key,
@@ -1079,7 +1076,7 @@ class _HomeViewModelSelectorState<R> extends State<HomeViewModelSelector<R>> {
   }
 }
 
-/// Builds UI for HomeViewModel async state.
+/// Builds the common loading, data, and error UI for HomeViewModel.
 class HomeViewModelBuilder extends StatelessWidget {
   const HomeViewModelBuilder({
     super.key,
@@ -1115,10 +1112,10 @@ class HomeViewModelBuilder extends StatelessWidget {
   }
 }
 
-/// Provides HomeViewModel to descendants and owns it by default.
+/// Creates and provides HomeViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// HomeViewModelScope(
@@ -1128,7 +1125,7 @@ class HomeViewModelBuilder extends StatelessWidget {
 /// )
 /// ```
 class HomeViewModelScope extends StatefulWidget {
-  /// Creates an owned HomeViewModel from typed args.
+  /// Creates and owns HomeViewModel from typed args.
   const HomeViewModelScope({
     super.key,
     required this.args,
@@ -1152,7 +1149,7 @@ class HomeViewModelScope extends StatefulWidget {
   final HomeViewModel? value;
   final Widget child;
 
-  /// Reads HomeViewModel without subscribing the caller to state changes.
+  /// Reads HomeViewModel without rebuilding when state changes.
   static HomeViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_HomeViewModelInstance>()
@@ -1167,7 +1164,7 @@ class HomeViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches HomeViewModel and subscribes to state changes.
+  /// Watches HomeViewModel and rebuilds when state changes.
   static HomeViewModel of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<_HomeViewModelInherited>();
     if (scope == null) throw StateError('No HomeViewModelScope found in context.');
@@ -1328,7 +1325,7 @@ class _HomeViewModelInherited extends InheritedWidget {
   }
 }
 
-/// Listens to one-shot effects from HomeViewModel.
+/// Handles one-shot effects from HomeViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -1376,7 +1373,7 @@ class _HomeViewModelListenerState extends State<HomeViewModelListener> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for HomeViewModel.
+/// BuildContext helpers generated for HomeViewModel.
 ///
 /// ```dart
 /// final vm = context.readHomeViewModel();

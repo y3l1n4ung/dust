@@ -13,9 +13,9 @@
 
 part of 'wishlist_view_model.dart';
 
-/// Generated base class for WishlistViewModel.
+/// Base class generated for WishlistViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class WishlistViewModel extends $WishlistViewModel {
@@ -26,9 +26,9 @@ abstract class $WishlistViewModel extends ViewModelBase<WishlistState, WishlistV
   $WishlistViewModel(super.args) : super(initialState: const WishlistState());
 }
 
-/// Typed state reader returned by `context.watchWishlistViewModel()`.
+/// Reads WishlistViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchWishlistViewModel().value;
@@ -43,10 +43,9 @@ class _$WishlistViewModelProxy {
   }
 }
 
-/// Builds from a selected WishlistState value.
+/// Rebuilds when a selected WishlistState value changes.
 ///
-/// The selector listens to WishlistViewModel and rebuilds only when the
-/// selected value changes.
+/// Use this for widgets that depend on one field or derived value.
 class WishlistViewModelSelector<R> extends StatefulWidget {
   const WishlistViewModelSelector({
     super.key,
@@ -130,10 +129,10 @@ class _WishlistViewModelSelectorState<R> extends State<WishlistViewModelSelector
   }
 }
 
-/// Provides WishlistViewModel to descendants and owns it by default.
+/// Creates and provides WishlistViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// WishlistViewModelScope(
@@ -143,7 +142,7 @@ class _WishlistViewModelSelectorState<R> extends State<WishlistViewModelSelector
 /// )
 /// ```
 class WishlistViewModelScope extends StatefulWidget {
-  /// Creates an owned WishlistViewModel from typed args.
+  /// Creates and owns WishlistViewModel from typed args.
   const WishlistViewModelScope({
     super.key,
     required this.args,
@@ -167,7 +166,7 @@ class WishlistViewModelScope extends StatefulWidget {
   final WishlistViewModel? value;
   final Widget child;
 
-  /// Reads WishlistViewModel without subscribing the caller to state changes.
+  /// Reads WishlistViewModel without rebuilding when state changes.
   static WishlistViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_WishlistViewModelInstance>()
@@ -182,7 +181,7 @@ class WishlistViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches WishlistViewModel and subscribes to state changes.
+  /// Watches WishlistViewModel and rebuilds when state changes.
   static WishlistViewModel of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<_WishlistViewModelInherited>();
     if (scope == null) throw StateError('No WishlistViewModelScope found in context.');
@@ -343,7 +342,7 @@ class _WishlistViewModelInherited extends InheritedWidget {
   }
 }
 
-/// Listens to one-shot effects from WishlistViewModel.
+/// Handles one-shot effects from WishlistViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -391,7 +390,7 @@ class _WishlistViewModelListenerState extends State<WishlistViewModelListener> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for WishlistViewModel.
+/// BuildContext helpers generated for WishlistViewModel.
 ///
 /// ```dart
 /// final vm = context.readWishlistViewModel();

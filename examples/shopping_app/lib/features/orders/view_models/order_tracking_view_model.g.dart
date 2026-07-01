@@ -13,9 +13,9 @@
 
 part of 'order_tracking_view_model.dart';
 
-/// Generated base class for OrderTrackingViewModel.
+/// Base class generated for OrderTrackingViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class OrderTrackingViewModel extends $OrderTrackingViewModel {
@@ -26,9 +26,9 @@ abstract class $OrderTrackingViewModel extends ViewModelBase<OrderTrackingState,
   $OrderTrackingViewModel(super.args) : super(initialState: const OrderTrackingState());
 }
 
-/// Typed state reader returned by `context.watchOrderTrackingViewModel()`.
+/// Reads OrderTrackingViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchOrderTrackingViewModel().value;
@@ -43,10 +43,9 @@ class _$OrderTrackingViewModelProxy {
   }
 }
 
-/// Builds from a selected OrderTrackingState value.
+/// Rebuilds when a selected OrderTrackingState value changes.
 ///
-/// The selector listens to OrderTrackingViewModel and rebuilds only when the
-/// selected value changes.
+/// Use this for widgets that depend on one field or derived value.
 class OrderTrackingViewModelSelector<R> extends StatefulWidget {
   const OrderTrackingViewModelSelector({
     super.key,
@@ -130,10 +129,10 @@ class _OrderTrackingViewModelSelectorState<R> extends State<OrderTrackingViewMod
   }
 }
 
-/// Provides OrderTrackingViewModel to descendants and owns it by default.
+/// Creates and provides OrderTrackingViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// OrderTrackingViewModelScope(
@@ -143,7 +142,7 @@ class _OrderTrackingViewModelSelectorState<R> extends State<OrderTrackingViewMod
 /// )
 /// ```
 class OrderTrackingViewModelScope extends StatefulWidget {
-  /// Creates an owned OrderTrackingViewModel from typed args.
+  /// Creates and owns OrderTrackingViewModel from typed args.
   const OrderTrackingViewModelScope({
     super.key,
     required this.args,
@@ -167,7 +166,7 @@ class OrderTrackingViewModelScope extends StatefulWidget {
   final OrderTrackingViewModel? value;
   final Widget child;
 
-  /// Reads OrderTrackingViewModel without subscribing the caller to state changes.
+  /// Reads OrderTrackingViewModel without rebuilding when state changes.
   static OrderTrackingViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_OrderTrackingViewModelInstance>()
@@ -182,7 +181,7 @@ class OrderTrackingViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches OrderTrackingViewModel and subscribes to state changes.
+  /// Watches OrderTrackingViewModel and rebuilds when state changes.
   static OrderTrackingViewModel of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<_OrderTrackingViewModelInherited>();
     if (scope == null) throw StateError('No OrderTrackingViewModelScope found in context.');
@@ -343,7 +342,7 @@ class _OrderTrackingViewModelInherited extends InheritedWidget {
   }
 }
 
-/// Listens to one-shot effects from OrderTrackingViewModel.
+/// Handles one-shot effects from OrderTrackingViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -391,7 +390,7 @@ class _OrderTrackingViewModelListenerState extends State<OrderTrackingViewModelL
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for OrderTrackingViewModel.
+/// BuildContext helpers generated for OrderTrackingViewModel.
 ///
 /// ```dart
 /// final vm = context.readOrderTrackingViewModel();

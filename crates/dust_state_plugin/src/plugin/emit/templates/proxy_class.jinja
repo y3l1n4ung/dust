@@ -1,6 +1,6 @@
-/// Typed state reader returned by `context.watch{{ view_model_class }}()`.
+/// Reads {{ view_model_class }} state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watch{{ view_model_class }}().value;

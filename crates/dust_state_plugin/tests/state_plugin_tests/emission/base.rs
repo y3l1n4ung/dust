@@ -48,9 +48,9 @@ fn emits_generated_base_with_args_getters() {
     assert!(source.contains("class TaskBoardViewModelListener extends StatefulWidget"));
     assert_eq!(
         extract_doc_before(source, "abstract class $TaskBoardViewModel"),
-        r#"/// Generated base class for TaskBoardViewModel.
+        r#"/// Base class generated for TaskBoardViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class TaskBoardViewModel extends $TaskBoardViewModel {
@@ -60,9 +60,9 @@ fn emits_generated_base_with_args_getters() {
     );
     assert_eq!(
         extract_doc_before(source, "class _$TaskBoardViewModelProxy"),
-        r#"/// Typed state reader returned by `context.watchTaskBoardViewModel()`.
+        r#"/// Reads TaskBoardViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchTaskBoardViewModel().value;
@@ -70,10 +70,10 @@ fn emits_generated_base_with_args_getters() {
     );
     assert_eq!(
         extract_doc_before(source, "class TaskBoardViewModelScope"),
-        r#"/// Provides TaskBoardViewModel to descendants and owns it by default.
+        r#"/// Creates and provides TaskBoardViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// TaskBoardViewModelScope(
@@ -85,7 +85,7 @@ fn emits_generated_base_with_args_getters() {
     );
     assert_eq!(
         extract_doc_before(source, "const TaskBoardViewModelScope({"),
-        r#"  /// Creates an owned TaskBoardViewModel from typed args."#
+        r#"  /// Creates and owns TaskBoardViewModel from typed args."#
     );
     assert_eq!(
         extract_doc_before(source, "const TaskBoardViewModelScope.value({"),
@@ -93,15 +93,15 @@ fn emits_generated_base_with_args_getters() {
     );
     assert_eq!(
         extract_doc_before(source, "static TaskBoardViewModel read"),
-        r#"  /// Reads TaskBoardViewModel without subscribing the caller to state changes."#
+        r#"  /// Reads TaskBoardViewModel without rebuilding when state changes."#
     );
     assert_eq!(
         extract_doc_before(source, "static TaskBoardViewModel of"),
-        r#"  /// Watches TaskBoardViewModel and subscribes to state changes."#
+        r#"  /// Watches TaskBoardViewModel and rebuilds when state changes."#
     );
     assert_eq!(
         extract_doc_before(source, "class TaskBoardViewModelListener"),
-        r#"/// Listens to one-shot effects from TaskBoardViewModel.
+        r#"/// Handles one-shot effects from TaskBoardViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -114,7 +114,7 @@ fn emits_generated_base_with_args_getters() {
     );
     assert_eq!(
         extract_doc_before(source, "extension TaskBoardViewModelBuildContext"),
-        r#"/// Generated BuildContext helpers for TaskBoardViewModel.
+        r#"/// BuildContext helpers generated for TaskBoardViewModel.
 ///
 /// ```dart
 /// final vm = context.readTaskBoardViewModel();

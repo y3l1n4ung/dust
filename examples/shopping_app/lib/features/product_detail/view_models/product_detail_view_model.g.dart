@@ -13,9 +13,9 @@
 
 part of 'product_detail_view_model.dart';
 
-/// Generated base class for ProductDetailViewModel.
+/// Base class generated for ProductDetailViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class ProductDetailViewModel extends $ProductDetailViewModel {
@@ -26,9 +26,9 @@ abstract class $ProductDetailViewModel extends ViewModelBase<ProductDetailState,
   $ProductDetailViewModel(super.args) : super(initialState: const ProductDetailState());
 }
 
-/// Typed state reader returned by `context.watchProductDetailViewModel()`.
+/// Reads ProductDetailViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchProductDetailViewModel().value;
@@ -43,10 +43,9 @@ class _$ProductDetailViewModelProxy {
   }
 }
 
-/// Builds from a selected ProductDetailState value.
+/// Rebuilds when a selected ProductDetailState value changes.
 ///
-/// The selector listens to ProductDetailViewModel and rebuilds only when the
-/// selected value changes.
+/// Use this for widgets that depend on one field or derived value.
 class ProductDetailViewModelSelector<R> extends StatefulWidget {
   const ProductDetailViewModelSelector({
     super.key,
@@ -130,10 +129,10 @@ class _ProductDetailViewModelSelectorState<R> extends State<ProductDetailViewMod
   }
 }
 
-/// Provides ProductDetailViewModel to descendants and owns it by default.
+/// Creates and provides ProductDetailViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// ProductDetailViewModelScope(
@@ -143,7 +142,7 @@ class _ProductDetailViewModelSelectorState<R> extends State<ProductDetailViewMod
 /// )
 /// ```
 class ProductDetailViewModelScope extends StatefulWidget {
-  /// Creates an owned ProductDetailViewModel from typed args.
+  /// Creates and owns ProductDetailViewModel from typed args.
   const ProductDetailViewModelScope({
     super.key,
     required this.args,
@@ -167,7 +166,7 @@ class ProductDetailViewModelScope extends StatefulWidget {
   final ProductDetailViewModel? value;
   final Widget child;
 
-  /// Reads ProductDetailViewModel without subscribing the caller to state changes.
+  /// Reads ProductDetailViewModel without rebuilding when state changes.
   static ProductDetailViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_ProductDetailViewModelInstance>()
@@ -182,7 +181,7 @@ class ProductDetailViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches ProductDetailViewModel and subscribes to state changes.
+  /// Watches ProductDetailViewModel and rebuilds when state changes.
   static ProductDetailViewModel of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<_ProductDetailViewModelInherited>();
     if (scope == null) throw StateError('No ProductDetailViewModelScope found in context.');
@@ -343,7 +342,7 @@ class _ProductDetailViewModelInherited extends InheritedWidget {
   }
 }
 
-/// Listens to one-shot effects from ProductDetailViewModel.
+/// Handles one-shot effects from ProductDetailViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -391,7 +390,7 @@ class _ProductDetailViewModelListenerState extends State<ProductDetailViewModelL
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for ProductDetailViewModel.
+/// BuildContext helpers generated for ProductDetailViewModel.
 ///
 /// ```dart
 /// final vm = context.readProductDetailViewModel();

@@ -62,6 +62,7 @@ pub(crate) fn parse_view_model_surface(
     })
 }
 
+/// Parses a ViewModel mode expression from annotation source.
 pub(crate) fn parse_mode(source: Option<&str>) -> ViewModelMode {
     match source.map(str::trim) {
         Some(source) if source.ends_with(".async") || source == "async" => ViewModelMode::Async,
@@ -69,6 +70,7 @@ pub(crate) fn parse_mode(source: Option<&str>) -> ViewModelMode {
     }
 }
 
+/// Returns whether an annotation expression is a supported ViewModel mode.
 pub(crate) fn is_valid_mode_source(source: &str) -> bool {
     let source = source.trim();
     source == "sync" || source == "async" || source.ends_with(".sync") || source.ends_with(".async")

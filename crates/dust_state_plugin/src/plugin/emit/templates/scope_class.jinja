@@ -1,7 +1,7 @@
-/// Provides {{ view_model_class }} to descendants and owns it by default.
+/// Creates and provides {{ view_model_class }} to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// {{ scope_class }}(
@@ -11,7 +11,7 @@
 /// )
 /// ```
 class {{ scope_class }} extends StatefulWidget {
-  /// Creates an owned {{ view_model_class }} from typed args.
+  /// Creates and owns {{ view_model_class }} from typed args.
   const {{ scope_class }}({
     super.key,
     required this.args,
@@ -35,7 +35,7 @@ class {{ scope_class }} extends StatefulWidget {
   final {{ view_model_class }}? value;
   final Widget child;
 
-  /// Reads {{ view_model_class }} without subscribing the caller to state changes.
+  /// Reads {{ view_model_class }} without rebuilding when state changes.
   static {{ view_model_class }} read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<{{ instance_class }}>()
@@ -50,7 +50,7 @@ class {{ scope_class }} extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches {{ view_model_class }} and subscribes to state changes.
+  /// Watches {{ view_model_class }} and rebuilds when state changes.
   static {{ view_model_class }} of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<{{ inherited_class }}>();
     if (scope == null) throw StateError('No {{ scope_class }} found in context.');

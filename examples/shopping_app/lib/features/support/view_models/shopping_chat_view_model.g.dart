@@ -13,9 +13,9 @@
 
 part of 'shopping_chat_view_model.dart';
 
-/// Generated base class for ShoppingChatViewModel.
+/// Base class generated for ShoppingChatViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class ShoppingChatViewModel extends $ShoppingChatViewModel {
@@ -26,9 +26,9 @@ abstract class $ShoppingChatViewModel extends ViewModelBase<ChatState, ShoppingC
   $ShoppingChatViewModel(super.args) : super(initialState: const ChatState());
 }
 
-/// Typed state reader returned by `context.watchShoppingChatViewModel()`.
+/// Reads ShoppingChatViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchShoppingChatViewModel().value;
@@ -43,10 +43,9 @@ class _$ShoppingChatViewModelProxy {
   }
 }
 
-/// Builds from a selected ChatState value.
+/// Rebuilds when a selected ChatState value changes.
 ///
-/// The selector listens to ShoppingChatViewModel and rebuilds only when the
-/// selected value changes.
+/// Use this for widgets that depend on one field or derived value.
 class ShoppingChatViewModelSelector<R> extends StatefulWidget {
   const ShoppingChatViewModelSelector({
     super.key,
@@ -130,10 +129,10 @@ class _ShoppingChatViewModelSelectorState<R> extends State<ShoppingChatViewModel
   }
 }
 
-/// Provides ShoppingChatViewModel to descendants and owns it by default.
+/// Creates and provides ShoppingChatViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// ShoppingChatViewModelScope(
@@ -143,7 +142,7 @@ class _ShoppingChatViewModelSelectorState<R> extends State<ShoppingChatViewModel
 /// )
 /// ```
 class ShoppingChatViewModelScope extends StatefulWidget {
-  /// Creates an owned ShoppingChatViewModel from typed args.
+  /// Creates and owns ShoppingChatViewModel from typed args.
   const ShoppingChatViewModelScope({
     super.key,
     required this.args,
@@ -167,7 +166,7 @@ class ShoppingChatViewModelScope extends StatefulWidget {
   final ShoppingChatViewModel? value;
   final Widget child;
 
-  /// Reads ShoppingChatViewModel without subscribing the caller to state changes.
+  /// Reads ShoppingChatViewModel without rebuilding when state changes.
   static ShoppingChatViewModel read(BuildContext context) {
     final scope = context
         .getElementForInheritedWidgetOfExactType<_ShoppingChatViewModelInstance>()
@@ -182,7 +181,7 @@ class ShoppingChatViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches ShoppingChatViewModel and subscribes to state changes.
+  /// Watches ShoppingChatViewModel and rebuilds when state changes.
   static ShoppingChatViewModel of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<_ShoppingChatViewModelInherited>();
     if (scope == null) throw StateError('No ShoppingChatViewModelScope found in context.');
@@ -343,7 +342,7 @@ class _ShoppingChatViewModelInherited extends InheritedWidget {
   }
 }
 
-/// Listens to one-shot effects from ShoppingChatViewModel.
+/// Handles one-shot effects from ShoppingChatViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -391,7 +390,7 @@ class _ShoppingChatViewModelListenerState extends State<ShoppingChatViewModelLis
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for ShoppingChatViewModel.
+/// BuildContext helpers generated for ShoppingChatViewModel.
 ///
 /// ```dart
 /// final vm = context.readShoppingChatViewModel();

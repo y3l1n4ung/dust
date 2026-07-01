@@ -1,7 +1,6 @@
-/// Builds from a selected {{ state_type }} value.
+/// Rebuilds when a selected {{ state_type }} value changes.
 ///
-/// The selector listens to {{ view_model_class }} and rebuilds only when the
-/// selected value changes.
+/// Use this for widgets that depend on one field or derived value.
 class {{ selector_class }}<R> extends StatefulWidget {
   const {{ selector_class }}({
     super.key,

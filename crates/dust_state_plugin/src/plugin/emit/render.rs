@@ -338,6 +338,7 @@ fn render_async_builder(builder_class: &str, view_model_class: &str, data_type: 
     )
 }
 
+/// Returns the nullable type used by async error callbacks.
 fn previous_data_type(data_type: &str) -> String {
     if data_type.trim_end().ends_with('?') {
         data_type.to_owned()
@@ -346,6 +347,7 @@ fn previous_data_type(data_type: &str) -> String {
     }
 }
 
+/// Returns the previous-data expression passed to async data builders.
 fn previous_data_argument(data_type: &str) -> String {
     if data_type.trim_end().ends_with('?') {
         "previousData".to_owned()

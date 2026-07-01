@@ -1,8 +1,8 @@
 # State Management
 
-Dust generates small typed Flutter ViewModel helpers from `@ViewModel`.
-Dependencies go through typed `args`; UI state goes through `state`, `value`,
-or generated selector widgets.
+Dust generates typed Flutter ViewModel glue from `@ViewModel`.
+Dependencies go through `args`; UI state goes through `state`, `value`, or
+generated selector widgets.
 
 ## Installation
 
@@ -137,8 +137,8 @@ void notifySaved() {
 ## Async ViewModel
 
 Async ViewModels use the same annotation with `mode: ViewModelMode.async`.
-The `state` type is the loaded data type; the generated base wraps it in
-`AsyncState<T>`.
+The annotated `state` type is the loaded data type; the generated base wraps
+it in `AsyncState<T>`.
 
 ```dart
 @Derive([ToString(), Eq()])
@@ -178,7 +178,7 @@ class HomeViewModel extends $HomeViewModel {
 }
 ```
 
-Generated async bases provide:
+Async ViewModels get:
 
 - `load()`: clears visible data and loads fresh data.
 - `refresh()`: loads fresh data while preserving previous visible data.
@@ -222,7 +222,7 @@ return switch (context.watchHomeViewModel().value) {
 };
 ```
 
-## Generated Code Shape
+## Generated API
 
 Dust generates one support block per ViewModel:
 
