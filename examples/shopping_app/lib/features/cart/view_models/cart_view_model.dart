@@ -94,7 +94,7 @@ class CartViewModel extends $CartViewModel {
   }
 
   void clearCart() {
-    emit(const CartState());
+    invalidateSelf();
     emitEffect(
       const CartNotification(
         message: 'Cart cleared',

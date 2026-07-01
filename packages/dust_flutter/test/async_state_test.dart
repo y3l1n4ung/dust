@@ -89,6 +89,28 @@ void main() {
     expect(viewModel.data, 2);
   });
 
+  test('invalidateSelf clears async state and cancels stale load', () async {
+    final viewModel = TestAsyncViewModel();
+
+    final load = viewModel.load();
+    viewModel.loads.single.complete(7);
+    await load;
+
+    final refresh = viewModel.refresh();
+    expect(viewModel.state.hasPreviousData, isTrue);
+
+    viewModel.invalidateSelf();
+
+    expect(viewModel.state, isA<AsyncInitial<int>>());
+    expect(viewModel.visibleData, isNull);
+
+    viewModel.loads.last.complete(9);
+    await refresh;
+
+    expect(viewModel.state, isA<AsyncInitial<int>>());
+    expect(viewModel.visibleData, isNull);
+  });
+
   test('nullable data is still present data', () async {
     final viewModel = NullableAsyncViewModel();
 

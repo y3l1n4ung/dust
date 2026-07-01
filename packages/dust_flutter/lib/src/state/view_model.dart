@@ -181,11 +181,13 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     extends ValueNotifier<TState> {
   /// Creates a view model with typed [args] and [initialState].
   ViewModelBase(this.args, {required TState initialState})
-      : super(initialState);
+      : _initialState = initialState,
+        super(initialState);
 
   /// Typed dependencies for this view model.
   final TArgs args;
 
+  final TState _initialState;
   final StreamController<Object> _effects =
       StreamController<Object>.broadcast();
   final Map<Object, int> _actionVersions = <Object, int>{};
@@ -250,6 +252,13 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     _actionVersions[key] = (_actionVersions[key] ?? 0) + 1;
   }
 
+  /// Clears pending actions and returns state to the generated initial value.
+  void invalidateSelf() {
+    if (_isDisposed) return;
+    _actionVersions.clear();
+    emit(_initialState);
+  }
+
   /// Override for one-time initialization.
   @protected
   FutureOr<void> onInit() {}
@@ -298,9 +307,6 @@ abstract class AsyncViewModelBase<TData, TArgs extends ViewModelArgs>
 
   /// Retries after an error while preserving previous data when present.
   Future<void> retry() => refresh();
-
-  /// Marks current data stale and reloads without clearing visible data.
-  Future<void> invalidateSelf() => refresh();
 
   /// Current visible data.
   TData? get data => state.data;
