@@ -2,13 +2,9 @@ use dust_dart_emit::render_template;
 use dust_ir::ClassIr;
 use serde::Serialize;
 
-use super::StateFieldSpec;
-
 /// Root template context for a generated view model support block.
 #[derive(Serialize)]
 struct ViewModelOutputContext {
-    /// Rendered aspect class and selector factories.
-    aspect: String,
     /// Rendered generated base class.
     base: String,
     /// Rendered proxy object exposed from build context helpers.
@@ -21,32 +17,6 @@ struct ViewModelOutputContext {
     listener: String,
     /// Rendered build context extension.
     extension: String,
-}
-
-/// Template context for the generated inherited-model aspect type.
-#[derive(Serialize)]
-struct AspectContext<'a> {
-    /// Generated Dart aspect class name.
-    aspect_class: &'a str,
-    /// Dart state type represented by the aspect.
-    state_type: &'a str,
-}
-
-/// Template context for a generated field-specific aspect selector.
-#[derive(Serialize)]
-struct AspectSelectorContext<'a> {
-    /// Generated Dart aspect class name.
-    aspect_class: &'a str,
-    /// Dart state type represented by the selector.
-    state_type: &'a str,
-    /// Lower camel form of the view model class used in selector names.
-    vm_lower: String,
-    /// Pascal form of the field name used in selector names.
-    field_pascal: String,
-    /// Dart field name read from the state object.
-    field_name: &'a str,
-    /// Dart field type emitted for the selector result.
-    field_type: &'a str,
 }
 
 /// Template context for the generated abstract view model base class.
@@ -75,25 +45,6 @@ struct ProxyContext<'a> {
     view_model_class: &'a str,
     /// Dart state type managed by the view model.
     state_type: &'a str,
-    /// Generated aspect class name used by selectors.
-    aspect_class: &'a str,
-    /// Rendered field-specific proxy getters.
-    field_getters: String,
-}
-
-/// Template context for one field-specific proxy getter.
-#[derive(Serialize)]
-struct ProxyFieldContext<'a> {
-    /// Generated scope class name used for selection.
-    scope_class: &'a str,
-    /// Lower camel form of the selector prefix.
-    vm_lower: String,
-    /// Pascal form of the field name used in getter names.
-    field_pascal: String,
-    /// Dart field name read from the state object.
-    field_name: &'a str,
-    /// Dart field type emitted for the getter result.
-    field_type: &'a str,
 }
 
 /// Template context for the generated view model scope widget.
@@ -107,8 +58,6 @@ struct ScopeContext<'a> {
     view_model_class: &'a str,
     /// Dart args type accepted by the scope.
     args_type: &'a str,
-    /// Generated aspect class name used for inherited model notifications.
-    aspect_class: &'a str,
 }
 
 /// Template context for the generated inherited widget.
@@ -120,8 +69,6 @@ struct InheritedContext<'a> {
     view_model_class: &'a str,
     /// Dart state type exposed through the inherited widget.
     state_type: &'a str,
-    /// Generated aspect class name used for update filtering.
-    aspect_class: &'a str,
 }
 
 /// Template context for the generated listener widget.
@@ -160,7 +107,6 @@ pub(super) fn render_view_model_output(
     state_type: &str,
     args_type: &str,
     initial_source: Option<&str>,
-    state_fields: &[StateFieldSpec],
 ) -> String {
     let generated_base = format!("${}", class.name);
     let proxy_class = format!("_${}Proxy", class.name);
@@ -169,7 +115,6 @@ pub(super) fn render_view_model_output(
     let listener_class = format!("{}Listener", class.name);
     let listener_state_class = format!("_{}ListenerState", class.name);
     let extension_class = format!("{}BuildContext", class.name);
-    let aspect_class = format!("_{}Aspect", class.name);
     let watch_name = format!("watch{}", class.name);
     let read_name = format!("read{}", class.name);
     let initial_state = initial_source
@@ -182,24 +127,9 @@ pub(super) fn render_view_model_output(
         args_type,
         &initial_state,
     );
-    let aspect = render_aspect_class(&aspect_class, &class.name, state_type, state_fields);
-    let proxy = render_proxy(
-        &proxy_class,
-        &scope_class,
-        &class.name,
-        state_type,
-        &aspect_class,
-        &class.name,
-        state_fields,
-    );
-    let scope = render_scope(
-        &scope_class,
-        &inherited_class,
-        &class.name,
-        args_type,
-        &aspect_class,
-    );
-    let inherited = render_inherited(&inherited_class, &class.name, state_type, &aspect_class);
+    let proxy = render_proxy(&proxy_class, &scope_class, &class.name, state_type);
+    let scope = render_scope(&scope_class, &inherited_class, &class.name, args_type);
+    let inherited = render_inherited(&inherited_class, &class.name, state_type);
     let listener = render_listener(
         &listener_class,
         &listener_state_class,
@@ -223,7 +153,6 @@ pub(super) fn render_view_model_output(
         "view_model_output",
         include_str!("templates/view_model_output.jinja"),
         ViewModelOutputContext {
-            aspect,
             base,
             proxy,
             scope,
@@ -232,48 +161,6 @@ pub(super) fn render_view_model_output(
             extension,
         },
     )
-}
-
-/// Renders the aspect class and any field-specific selector factories.
-fn render_aspect_class(
-    aspect_class: &str,
-    view_model_class: &str,
-    state_type: &str,
-    state_fields: &[StateFieldSpec],
-) -> String {
-    let field_selectors = state_fields
-        .iter()
-        .map(|field| {
-            render_template(
-                "aspect_selector",
-                include_str!("templates/aspect_selector.jinja"),
-                AspectSelectorContext {
-                    aspect_class,
-                    state_type,
-                    vm_lower: lower_camel(view_model_class),
-                    field_pascal: pascal_case(&field.name),
-                    field_name: &field.name,
-                    field_type: &field.type_source,
-                },
-            )
-        })
-        .collect::<Vec<_>>()
-        .join("\n\n");
-    [
-        render_template(
-            "aspect_class",
-            include_str!("templates/aspect_class.jinja"),
-            AspectContext {
-                aspect_class,
-                state_type,
-            },
-        ),
-        field_selectors,
-    ]
-    .into_iter()
-    .filter(|part| !part.is_empty())
-    .collect::<Vec<_>>()
-    .join("\n\n")
 }
 
 /// Renders the abstract generated base class for a view model.
@@ -297,32 +184,13 @@ fn render_base(
     )
 }
 
-/// Renders the build context proxy and its field selectors.
+/// Renders the build context proxy.
 fn render_proxy(
     proxy_class: &str,
     scope_class: &str,
     view_model_class: &str,
     state_type: &str,
-    aspect_class: &str,
-    selector_prefix: &str,
-    state_fields: &[StateFieldSpec],
 ) -> String {
-    let field_getters = state_fields
-        .iter()
-        .map(|field| {
-            render_template(
-                "proxy_field_getter",
-                include_str!("templates/proxy_field_getter.jinja"),
-                ProxyFieldContext {
-                    scope_class,
-                    vm_lower: lower_camel(selector_prefix),
-                    field_pascal: pascal_case(&field.name),
-                    field_name: &field.name,
-                    field_type: &field.type_source,
-                },
-            )
-        })
-        .collect::<String>();
     render_template(
         "proxy_class",
         include_str!("templates/proxy_class.jinja"),
@@ -331,8 +199,6 @@ fn render_proxy(
             scope_class,
             view_model_class,
             state_type,
-            aspect_class,
-            field_getters,
         },
     )
 }
@@ -343,7 +209,6 @@ fn render_scope(
     inherited_class: &str,
     view_model_class: &str,
     args_type: &str,
-    aspect_class: &str,
 ) -> String {
     render_template(
         "scope_class",
@@ -353,18 +218,12 @@ fn render_scope(
             inherited_class,
             view_model_class,
             args_type,
-            aspect_class,
         },
     )
 }
 
-/// Renders the inherited widget used for aspect-scoped rebuilds.
-fn render_inherited(
-    inherited_class: &str,
-    view_model_class: &str,
-    state_type: &str,
-    aspect_class: &str,
-) -> String {
+/// Renders the inherited widget used for full-state rebuilds.
+fn render_inherited(inherited_class: &str, view_model_class: &str, state_type: &str) -> String {
     render_template(
         "inherited_class",
         include_str!("templates/inherited_class.jinja"),
@@ -372,7 +231,6 @@ fn render_inherited(
             inherited_class,
             view_model_class,
             state_type,
-            aspect_class,
         },
     )
 }
@@ -394,28 +252,4 @@ fn render_listener(
             view_model_class,
         },
     )
-}
-
-/// Converts a PascalCase identifier to lowerCamelCase.
-fn lower_camel(value: &str) -> String {
-    let mut chars = value.chars();
-    let Some(first) = chars.next() else {
-        return String::new();
-    };
-    first.to_ascii_lowercase().to_string() + chars.as_str()
-}
-
-/// Converts a snake_case identifier to PascalCase.
-fn pascal_case(value: &str) -> String {
-    value
-        .split('_')
-        .filter(|part| !part.is_empty())
-        .map(|part| {
-            let mut chars = part.chars();
-            let Some(first) = chars.next() else {
-                return String::new();
-            };
-            first.to_ascii_uppercase().to_string() + chars.as_str()
-        })
-        .collect::<String>()
 }

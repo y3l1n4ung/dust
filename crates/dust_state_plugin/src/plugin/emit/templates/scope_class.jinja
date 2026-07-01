@@ -41,11 +41,9 @@ class {{ scope_class }} extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches {{ view_model_class }} and optionally subscribes to one generated aspect.
-  static {{ view_model_class }} of(BuildContext context, { {{- aspect_class }}<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<{{ inherited_class }}>(
-      aspect: aspect,
-    );
+  /// Watches {{ view_model_class }} and subscribes to state changes.
+  static {{ view_model_class }} of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<{{ inherited_class }}>();
     if (scope == null) throw StateError('No {{ scope_class }} found in context.');
     return scope.viewModel;
   }

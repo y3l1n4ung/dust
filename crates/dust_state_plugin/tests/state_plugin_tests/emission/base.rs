@@ -49,12 +49,10 @@ fn emits_generated_base_with_args_getters() {
         extract_doc_before(source, "class _$TaskBoardViewModelProxy"),
         r#"/// Typed state reader returned by `context.watchTaskBoardViewModel()`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` to rebuild for the whole state.
 ///
 /// ```dart
 /// final state = context.watchTaskBoardViewModel().value;
-/// final count = context.watchTaskBoardViewModel().select((state) => state.count);
 /// ```"#
     );
     assert_eq!(
@@ -86,7 +84,7 @@ fn emits_generated_base_with_args_getters() {
     );
     assert_eq!(
         extract_doc_before(source, "static TaskBoardViewModel of"),
-        r#"  /// Watches TaskBoardViewModel and optionally subscribes to one generated aspect."#
+        r#"  /// Watches TaskBoardViewModel and subscribes to state changes."#
     );
     assert_eq!(
         extract_doc_before(source, "class TaskBoardViewModelListener"),
@@ -160,6 +158,8 @@ fn emits_value_only_proxy_for_fieldless_state() {
     let source = &contribution.support_types[0];
     assert!(!source.contains("enum _TaskBoardViewModelAspect"));
     assert!(source.contains("TaskBoardState get value"));
+    assert!(!source.contains("select<R>"));
+    assert!(!source.contains("int get count"));
     assert_eq!(
         extract_extension(source, "extension TaskBoardViewModelBuildContext"),
         r#"extension TaskBoardViewModelBuildContext on BuildContext {

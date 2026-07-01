@@ -13,26 +13,6 @@
 
 part of 'wishlist_view_model.dart';
 
-final class _WishlistViewModelAspect<R> {
-  const _WishlistViewModelAspect(this.selector);
-
-  final R Function(WishlistState state) selector;
-
-  bool hasChanged(WishlistState previous, WishlistState next) {
-    return selector(previous) != selector(next);
-  }
-}
-
-List<Object?> _wishlistViewModelSelectItems(WishlistState state) => state.items;
-final _wishlistViewModelItemsAspect = _WishlistViewModelAspect<List<Object?>>(
-  _wishlistViewModelSelectItems,
-);
-
-bool _wishlistViewModelSelectIsLoading(WishlistState state) => state.isLoading;
-final _wishlistViewModelIsLoadingAspect = _WishlistViewModelAspect<bool>(
-  _wishlistViewModelSelectIsLoading,
-);
-
 /// Generated base class for WishlistViewModel.
 ///
 /// Extend this class in the user-authored ViewModel and forward typed args:
@@ -48,12 +28,10 @@ abstract class $WishlistViewModel extends ViewModelBase<WishlistState, WishlistV
 
 /// Typed state reader returned by `context.watchWishlistViewModel()`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` to rebuild for the whole state.
 ///
 /// ```dart
 /// final state = context.watchWishlistViewModel().value;
-/// final count = context.watchWishlistViewModel().select((state) => state.count);
 /// ```
 class _$WishlistViewModelProxy {
   _$WishlistViewModelProxy(this._context);
@@ -62,25 +40,6 @@ class _$WishlistViewModelProxy {
 
   WishlistState get value {
     return WishlistViewModelScope.of(_context).value;
-  }
-
-  List<Object?> get items {
-    return WishlistViewModelScope.of(
-      _context,
-      aspect: _wishlistViewModelItemsAspect,
-    ).state.items;
-  }
-
-  bool get isLoading {
-    return WishlistViewModelScope.of(
-      _context,
-      aspect: _wishlistViewModelIsLoadingAspect,
-    ).state.isLoading;
-  }
-
-  R select<R>(R Function(WishlistState state) selector) {
-    final aspect = _WishlistViewModelAspect<R>(selector);
-    return selector(WishlistViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -127,11 +86,9 @@ class WishlistViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches WishlistViewModel and optionally subscribes to one generated aspect.
-  static WishlistViewModel of(BuildContext context, {_WishlistViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_WishlistViewModelInherited>(
-      aspect: aspect,
-    );
+  /// Watches WishlistViewModel and subscribes to state changes.
+  static WishlistViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_WishlistViewModelInherited>();
     if (scope == null) throw StateError('No WishlistViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -240,29 +197,15 @@ class _WishlistViewModelScopeState extends State<WishlistViewModelScope> {
   }
 }
 
-class _WishlistViewModelInherited extends InheritedModel<_WishlistViewModelAspect<Object?>> {
+class _WishlistViewModelInherited extends InheritedWidget {
   const _WishlistViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final WishlistViewModel viewModel;
   final WishlistState state;
 
-  /// Requires WishlistState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_WishlistViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _WishlistViewModelInherited oldWidget,
-    Set<_WishlistViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_WishlistViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 

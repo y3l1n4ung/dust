@@ -13,51 +13,6 @@
 
 part of 'checkout_view_model.dart';
 
-final class _CheckoutViewModelAspect<R> {
-  const _CheckoutViewModelAspect(this.selector);
-
-  final R Function(CheckoutState state) selector;
-
-  bool hasChanged(CheckoutState previous, CheckoutState next) {
-    return selector(previous) != selector(next);
-  }
-}
-
-CheckoutStatus _checkoutViewModelSelectStatus(CheckoutState state) => state.status;
-final _checkoutViewModelStatusAspect = _CheckoutViewModelAspect<CheckoutStatus>(
-  _checkoutViewModelSelectStatus,
-);
-
-Object? _checkoutViewModelSelectShippingAddress(CheckoutState state) => state.shippingAddress;
-final _checkoutViewModelShippingAddressAspect = _CheckoutViewModelAspect<Object?>(
-  _checkoutViewModelSelectShippingAddress,
-);
-
-String? _checkoutViewModelSelectErrorMessage(CheckoutState state) => state.errorMessage;
-final _checkoutViewModelErrorMessageAspect = _CheckoutViewModelAspect<String?>(
-  _checkoutViewModelSelectErrorMessage,
-);
-
-String? _checkoutViewModelSelectOrderId(CheckoutState state) => state.orderId;
-final _checkoutViewModelOrderIdAspect = _CheckoutViewModelAspect<String?>(
-  _checkoutViewModelSelectOrderId,
-);
-
-String? _checkoutViewModelSelectCouponCode(CheckoutState state) => state.couponCode;
-final _checkoutViewModelCouponCodeAspect = _CheckoutViewModelAspect<String?>(
-  _checkoutViewModelSelectCouponCode,
-);
-
-Object? _checkoutViewModelSelectQuote(CheckoutState state) => state.quote;
-final _checkoutViewModelQuoteAspect = _CheckoutViewModelAspect<Object?>(
-  _checkoutViewModelSelectQuote,
-);
-
-bool _checkoutViewModelSelectIsQuoteLoading(CheckoutState state) => state.isQuoteLoading;
-final _checkoutViewModelIsQuoteLoadingAspect = _CheckoutViewModelAspect<bool>(
-  _checkoutViewModelSelectIsQuoteLoading,
-);
-
 /// Generated base class for CheckoutViewModel.
 ///
 /// Extend this class in the user-authored ViewModel and forward typed args:
@@ -73,12 +28,10 @@ abstract class $CheckoutViewModel extends ViewModelBase<CheckoutState, CheckoutV
 
 /// Typed state reader returned by `context.watchCheckoutViewModel()`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` to rebuild for the whole state.
 ///
 /// ```dart
 /// final state = context.watchCheckoutViewModel().value;
-/// final count = context.watchCheckoutViewModel().select((state) => state.count);
 /// ```
 class _$CheckoutViewModelProxy {
   _$CheckoutViewModelProxy(this._context);
@@ -87,60 +40,6 @@ class _$CheckoutViewModelProxy {
 
   CheckoutState get value {
     return CheckoutViewModelScope.of(_context).value;
-  }
-
-  CheckoutStatus get status {
-    return CheckoutViewModelScope.of(
-      _context,
-      aspect: _checkoutViewModelStatusAspect,
-    ).state.status;
-  }
-
-  Object? get shippingAddress {
-    return CheckoutViewModelScope.of(
-      _context,
-      aspect: _checkoutViewModelShippingAddressAspect,
-    ).state.shippingAddress;
-  }
-
-  String? get errorMessage {
-    return CheckoutViewModelScope.of(
-      _context,
-      aspect: _checkoutViewModelErrorMessageAspect,
-    ).state.errorMessage;
-  }
-
-  String? get orderId {
-    return CheckoutViewModelScope.of(
-      _context,
-      aspect: _checkoutViewModelOrderIdAspect,
-    ).state.orderId;
-  }
-
-  String? get couponCode {
-    return CheckoutViewModelScope.of(
-      _context,
-      aspect: _checkoutViewModelCouponCodeAspect,
-    ).state.couponCode;
-  }
-
-  Object? get quote {
-    return CheckoutViewModelScope.of(
-      _context,
-      aspect: _checkoutViewModelQuoteAspect,
-    ).state.quote;
-  }
-
-  bool get isQuoteLoading {
-    return CheckoutViewModelScope.of(
-      _context,
-      aspect: _checkoutViewModelIsQuoteLoadingAspect,
-    ).state.isQuoteLoading;
-  }
-
-  R select<R>(R Function(CheckoutState state) selector) {
-    final aspect = _CheckoutViewModelAspect<R>(selector);
-    return selector(CheckoutViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -187,11 +86,9 @@ class CheckoutViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches CheckoutViewModel and optionally subscribes to one generated aspect.
-  static CheckoutViewModel of(BuildContext context, {_CheckoutViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_CheckoutViewModelInherited>(
-      aspect: aspect,
-    );
+  /// Watches CheckoutViewModel and subscribes to state changes.
+  static CheckoutViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_CheckoutViewModelInherited>();
     if (scope == null) throw StateError('No CheckoutViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -300,29 +197,15 @@ class _CheckoutViewModelScopeState extends State<CheckoutViewModelScope> {
   }
 }
 
-class _CheckoutViewModelInherited extends InheritedModel<_CheckoutViewModelAspect<Object?>> {
+class _CheckoutViewModelInherited extends InheritedWidget {
   const _CheckoutViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final CheckoutViewModel viewModel;
   final CheckoutState state;
 
-  /// Requires CheckoutState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_CheckoutViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _CheckoutViewModelInherited oldWidget,
-    Set<_CheckoutViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_CheckoutViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 

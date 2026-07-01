@@ -13,36 +13,6 @@
 
 part of 'auth_view_model.dart';
 
-final class _AuthViewModelAspect<R> {
-  const _AuthViewModelAspect(this.selector);
-
-  final R Function(AuthState state) selector;
-
-  bool hasChanged(AuthState previous, AuthState next) {
-    return selector(previous) != selector(next);
-  }
-}
-
-Object? _authViewModelSelectUser(AuthState state) => state.user;
-final _authViewModelUserAspect = _AuthViewModelAspect<Object?>(
-  _authViewModelSelectUser,
-);
-
-String? _authViewModelSelectToken(AuthState state) => state.token;
-final _authViewModelTokenAspect = _AuthViewModelAspect<String?>(
-  _authViewModelSelectToken,
-);
-
-AuthStatus _authViewModelSelectStatus(AuthState state) => state.status;
-final _authViewModelStatusAspect = _AuthViewModelAspect<AuthStatus>(
-  _authViewModelSelectStatus,
-);
-
-String? _authViewModelSelectErrorMessage(AuthState state) => state.errorMessage;
-final _authViewModelErrorMessageAspect = _AuthViewModelAspect<String?>(
-  _authViewModelSelectErrorMessage,
-);
-
 /// Generated base class for AuthViewModel.
 ///
 /// Extend this class in the user-authored ViewModel and forward typed args:
@@ -58,12 +28,10 @@ abstract class $AuthViewModel extends ViewModelBase<AuthState, AuthViewModelArgs
 
 /// Typed state reader returned by `context.watchAuthViewModel()`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` to rebuild for the whole state.
 ///
 /// ```dart
 /// final state = context.watchAuthViewModel().value;
-/// final count = context.watchAuthViewModel().select((state) => state.count);
 /// ```
 class _$AuthViewModelProxy {
   _$AuthViewModelProxy(this._context);
@@ -72,39 +40,6 @@ class _$AuthViewModelProxy {
 
   AuthState get value {
     return AuthViewModelScope.of(_context).value;
-  }
-
-  Object? get user {
-    return AuthViewModelScope.of(
-      _context,
-      aspect: _authViewModelUserAspect,
-    ).state.user;
-  }
-
-  String? get token {
-    return AuthViewModelScope.of(
-      _context,
-      aspect: _authViewModelTokenAspect,
-    ).state.token;
-  }
-
-  AuthStatus get status {
-    return AuthViewModelScope.of(
-      _context,
-      aspect: _authViewModelStatusAspect,
-    ).state.status;
-  }
-
-  String? get errorMessage {
-    return AuthViewModelScope.of(
-      _context,
-      aspect: _authViewModelErrorMessageAspect,
-    ).state.errorMessage;
-  }
-
-  R select<R>(R Function(AuthState state) selector) {
-    final aspect = _AuthViewModelAspect<R>(selector);
-    return selector(AuthViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -151,11 +86,9 @@ class AuthViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches AuthViewModel and optionally subscribes to one generated aspect.
-  static AuthViewModel of(BuildContext context, {_AuthViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_AuthViewModelInherited>(
-      aspect: aspect,
-    );
+  /// Watches AuthViewModel and subscribes to state changes.
+  static AuthViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_AuthViewModelInherited>();
     if (scope == null) throw StateError('No AuthViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -264,29 +197,15 @@ class _AuthViewModelScopeState extends State<AuthViewModelScope> {
   }
 }
 
-class _AuthViewModelInherited extends InheritedModel<_AuthViewModelAspect<Object?>> {
+class _AuthViewModelInherited extends InheritedWidget {
   const _AuthViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final AuthViewModel viewModel;
   final AuthState state;
 
-  /// Requires AuthState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_AuthViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _AuthViewModelInherited oldWidget,
-    Set<_AuthViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_AuthViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 

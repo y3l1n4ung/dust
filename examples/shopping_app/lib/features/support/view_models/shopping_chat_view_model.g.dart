@@ -13,16 +13,6 @@
 
 part of 'shopping_chat_view_model.dart';
 
-final class _ShoppingChatViewModelAspect<R> {
-  const _ShoppingChatViewModelAspect(this.selector);
-
-  final R Function(ChatState state) selector;
-
-  bool hasChanged(ChatState previous, ChatState next) {
-    return selector(previous) != selector(next);
-  }
-}
-
 /// Generated base class for ShoppingChatViewModel.
 ///
 /// Extend this class in the user-authored ViewModel and forward typed args:
@@ -38,12 +28,10 @@ abstract class $ShoppingChatViewModel extends ViewModelBase<ChatState, ShoppingC
 
 /// Typed state reader returned by `context.watchShoppingChatViewModel()`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` to rebuild for the whole state.
 ///
 /// ```dart
 /// final state = context.watchShoppingChatViewModel().value;
-/// final count = context.watchShoppingChatViewModel().select((state) => state.count);
 /// ```
 class _$ShoppingChatViewModelProxy {
   _$ShoppingChatViewModelProxy(this._context);
@@ -52,11 +40,6 @@ class _$ShoppingChatViewModelProxy {
 
   ChatState get value {
     return ShoppingChatViewModelScope.of(_context).value;
-  }
-
-  R select<R>(R Function(ChatState state) selector) {
-    final aspect = _ShoppingChatViewModelAspect<R>(selector);
-    return selector(ShoppingChatViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -103,11 +86,9 @@ class ShoppingChatViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches ShoppingChatViewModel and optionally subscribes to one generated aspect.
-  static ShoppingChatViewModel of(BuildContext context, {_ShoppingChatViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_ShoppingChatViewModelInherited>(
-      aspect: aspect,
-    );
+  /// Watches ShoppingChatViewModel and subscribes to state changes.
+  static ShoppingChatViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_ShoppingChatViewModelInherited>();
     if (scope == null) throw StateError('No ShoppingChatViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -216,29 +197,15 @@ class _ShoppingChatViewModelScopeState extends State<ShoppingChatViewModelScope>
   }
 }
 
-class _ShoppingChatViewModelInherited extends InheritedModel<_ShoppingChatViewModelAspect<Object?>> {
+class _ShoppingChatViewModelInherited extends InheritedWidget {
   const _ShoppingChatViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final ShoppingChatViewModel viewModel;
   final ChatState state;
 
-  /// Requires ChatState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_ShoppingChatViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _ShoppingChatViewModelInherited oldWidget,
-    Set<_ShoppingChatViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_ShoppingChatViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 

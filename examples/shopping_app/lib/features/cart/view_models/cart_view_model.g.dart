@@ -13,26 +13,6 @@
 
 part of 'cart_view_model.dart';
 
-final class _CartViewModelAspect<R> {
-  const _CartViewModelAspect(this.selector);
-
-  final R Function(CartState state) selector;
-
-  bool hasChanged(CartState previous, CartState next) {
-    return selector(previous) != selector(next);
-  }
-}
-
-List<Object?> _cartViewModelSelectItems(CartState state) => state.items;
-final _cartViewModelItemsAspect = _CartViewModelAspect<List<Object?>>(
-  _cartViewModelSelectItems,
-);
-
-CartNotification? _cartViewModelSelectNotification(CartState state) => state.notification;
-final _cartViewModelNotificationAspect = _CartViewModelAspect<CartNotification?>(
-  _cartViewModelSelectNotification,
-);
-
 /// Generated base class for CartViewModel.
 ///
 /// Extend this class in the user-authored ViewModel and forward typed args:
@@ -48,12 +28,10 @@ abstract class $CartViewModel extends ViewModelBase<CartState, CartViewModelArgs
 
 /// Typed state reader returned by `context.watchCartViewModel()`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` to rebuild for the whole state.
 ///
 /// ```dart
 /// final state = context.watchCartViewModel().value;
-/// final count = context.watchCartViewModel().select((state) => state.count);
 /// ```
 class _$CartViewModelProxy {
   _$CartViewModelProxy(this._context);
@@ -62,25 +40,6 @@ class _$CartViewModelProxy {
 
   CartState get value {
     return CartViewModelScope.of(_context).value;
-  }
-
-  List<Object?> get items {
-    return CartViewModelScope.of(
-      _context,
-      aspect: _cartViewModelItemsAspect,
-    ).state.items;
-  }
-
-  CartNotification? get notification {
-    return CartViewModelScope.of(
-      _context,
-      aspect: _cartViewModelNotificationAspect,
-    ).state.notification;
-  }
-
-  R select<R>(R Function(CartState state) selector) {
-    final aspect = _CartViewModelAspect<R>(selector);
-    return selector(CartViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -127,11 +86,9 @@ class CartViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches CartViewModel and optionally subscribes to one generated aspect.
-  static CartViewModel of(BuildContext context, {_CartViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_CartViewModelInherited>(
-      aspect: aspect,
-    );
+  /// Watches CartViewModel and subscribes to state changes.
+  static CartViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_CartViewModelInherited>();
     if (scope == null) throw StateError('No CartViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -240,29 +197,15 @@ class _CartViewModelScopeState extends State<CartViewModelScope> {
   }
 }
 
-class _CartViewModelInherited extends InheritedModel<_CartViewModelAspect<Object?>> {
+class _CartViewModelInherited extends InheritedWidget {
   const _CartViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final CartViewModel viewModel;
   final CartState state;
 
-  /// Requires CartState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_CartViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _CartViewModelInherited oldWidget,
-    Set<_CartViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_CartViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 

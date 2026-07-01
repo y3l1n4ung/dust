@@ -13,16 +13,6 @@
 
 part of 'order_tracking_view_model.dart';
 
-final class _OrderTrackingViewModelAspect<R> {
-  const _OrderTrackingViewModelAspect(this.selector);
-
-  final R Function(OrderTrackingState state) selector;
-
-  bool hasChanged(OrderTrackingState previous, OrderTrackingState next) {
-    return selector(previous) != selector(next);
-  }
-}
-
 /// Generated base class for OrderTrackingViewModel.
 ///
 /// Extend this class in the user-authored ViewModel and forward typed args:
@@ -38,12 +28,10 @@ abstract class $OrderTrackingViewModel extends ViewModelBase<OrderTrackingState,
 
 /// Typed state reader returned by `context.watchOrderTrackingViewModel()`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` to rebuild for the whole state.
 ///
 /// ```dart
 /// final state = context.watchOrderTrackingViewModel().value;
-/// final count = context.watchOrderTrackingViewModel().select((state) => state.count);
 /// ```
 class _$OrderTrackingViewModelProxy {
   _$OrderTrackingViewModelProxy(this._context);
@@ -52,11 +40,6 @@ class _$OrderTrackingViewModelProxy {
 
   OrderTrackingState get value {
     return OrderTrackingViewModelScope.of(_context).value;
-  }
-
-  R select<R>(R Function(OrderTrackingState state) selector) {
-    final aspect = _OrderTrackingViewModelAspect<R>(selector);
-    return selector(OrderTrackingViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -103,11 +86,9 @@ class OrderTrackingViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches OrderTrackingViewModel and optionally subscribes to one generated aspect.
-  static OrderTrackingViewModel of(BuildContext context, {_OrderTrackingViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_OrderTrackingViewModelInherited>(
-      aspect: aspect,
-    );
+  /// Watches OrderTrackingViewModel and subscribes to state changes.
+  static OrderTrackingViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_OrderTrackingViewModelInherited>();
     if (scope == null) throw StateError('No OrderTrackingViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -216,29 +197,15 @@ class _OrderTrackingViewModelScopeState extends State<OrderTrackingViewModelScop
   }
 }
 
-class _OrderTrackingViewModelInherited extends InheritedModel<_OrderTrackingViewModelAspect<Object?>> {
+class _OrderTrackingViewModelInherited extends InheritedWidget {
   const _OrderTrackingViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final OrderTrackingViewModel viewModel;
   final OrderTrackingState state;
 
-  /// Requires OrderTrackingState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_OrderTrackingViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _OrderTrackingViewModelInherited oldWidget,
-    Set<_OrderTrackingViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_OrderTrackingViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 

@@ -13,41 +13,6 @@
 
 part of 'product_detail_view_model.dart';
 
-final class _ProductDetailViewModelAspect<R> {
-  const _ProductDetailViewModelAspect(this.selector);
-
-  final R Function(ProductDetailState state) selector;
-
-  bool hasChanged(ProductDetailState previous, ProductDetailState next) {
-    return selector(previous) != selector(next);
-  }
-}
-
-int? _productDetailViewModelSelectProductId(ProductDetailState state) => state.productId;
-final _productDetailViewModelProductIdAspect = _ProductDetailViewModelAspect<int?>(
-  _productDetailViewModelSelectProductId,
-);
-
-ProductDetailStatus _productDetailViewModelSelectStatus(ProductDetailState state) => state.status;
-final _productDetailViewModelStatusAspect = _ProductDetailViewModelAspect<ProductDetailStatus>(
-  _productDetailViewModelSelectStatus,
-);
-
-List<Object?> _productDetailViewModelSelectReviews(ProductDetailState state) => state.reviews;
-final _productDetailViewModelReviewsAspect = _ProductDetailViewModelAspect<List<Object?>>(
-  _productDetailViewModelSelectReviews,
-);
-
-List<Object?> _productDetailViewModelSelectRecommendations(ProductDetailState state) => state.recommendations;
-final _productDetailViewModelRecommendationsAspect = _ProductDetailViewModelAspect<List<Object?>>(
-  _productDetailViewModelSelectRecommendations,
-);
-
-String? _productDetailViewModelSelectErrorMessage(ProductDetailState state) => state.errorMessage;
-final _productDetailViewModelErrorMessageAspect = _ProductDetailViewModelAspect<String?>(
-  _productDetailViewModelSelectErrorMessage,
-);
-
 /// Generated base class for ProductDetailViewModel.
 ///
 /// Extend this class in the user-authored ViewModel and forward typed args:
@@ -63,12 +28,10 @@ abstract class $ProductDetailViewModel extends ViewModelBase<ProductDetailState,
 
 /// Typed state reader returned by `context.watchProductDetailViewModel()`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` to rebuild for the whole state.
 ///
 /// ```dart
 /// final state = context.watchProductDetailViewModel().value;
-/// final count = context.watchProductDetailViewModel().select((state) => state.count);
 /// ```
 class _$ProductDetailViewModelProxy {
   _$ProductDetailViewModelProxy(this._context);
@@ -77,46 +40,6 @@ class _$ProductDetailViewModelProxy {
 
   ProductDetailState get value {
     return ProductDetailViewModelScope.of(_context).value;
-  }
-
-  int? get productId {
-    return ProductDetailViewModelScope.of(
-      _context,
-      aspect: _productDetailViewModelProductIdAspect,
-    ).state.productId;
-  }
-
-  ProductDetailStatus get status {
-    return ProductDetailViewModelScope.of(
-      _context,
-      aspect: _productDetailViewModelStatusAspect,
-    ).state.status;
-  }
-
-  List<Object?> get reviews {
-    return ProductDetailViewModelScope.of(
-      _context,
-      aspect: _productDetailViewModelReviewsAspect,
-    ).state.reviews;
-  }
-
-  List<Object?> get recommendations {
-    return ProductDetailViewModelScope.of(
-      _context,
-      aspect: _productDetailViewModelRecommendationsAspect,
-    ).state.recommendations;
-  }
-
-  String? get errorMessage {
-    return ProductDetailViewModelScope.of(
-      _context,
-      aspect: _productDetailViewModelErrorMessageAspect,
-    ).state.errorMessage;
-  }
-
-  R select<R>(R Function(ProductDetailState state) selector) {
-    final aspect = _ProductDetailViewModelAspect<R>(selector);
-    return selector(ProductDetailViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -163,11 +86,9 @@ class ProductDetailViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches ProductDetailViewModel and optionally subscribes to one generated aspect.
-  static ProductDetailViewModel of(BuildContext context, {_ProductDetailViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_ProductDetailViewModelInherited>(
-      aspect: aspect,
-    );
+  /// Watches ProductDetailViewModel and subscribes to state changes.
+  static ProductDetailViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_ProductDetailViewModelInherited>();
     if (scope == null) throw StateError('No ProductDetailViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -276,29 +197,15 @@ class _ProductDetailViewModelScopeState extends State<ProductDetailViewModelScop
   }
 }
 
-class _ProductDetailViewModelInherited extends InheritedModel<_ProductDetailViewModelAspect<Object?>> {
+class _ProductDetailViewModelInherited extends InheritedWidget {
   const _ProductDetailViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final ProductDetailViewModel viewModel;
   final ProductDetailState state;
 
-  /// Requires ProductDetailState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_ProductDetailViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _ProductDetailViewModelInherited oldWidget,
-    Set<_ProductDetailViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_ProductDetailViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 

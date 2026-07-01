@@ -18,11 +18,10 @@ class TestProductsViewModel extends ProductsViewModel {
 }
 
 void main() {
-  testWidgets('state aspects rebuild only when selected field changes', (
+  testWidgets('watch value rebuilds with typed state', (
     tester,
   ) async {
-    var selectRebuilds = 0;
-    var fieldRebuilds = 0;
+    var rebuilds = 0;
     final viewModel = TestProductsViewModel(
       ProductsViewModelArgs(repository: MockRepository()),
     );
@@ -35,18 +34,9 @@ void main() {
             children: [
               Builder(
                 builder: (context) {
-                  final status = context.watchProductsViewModel().select(
-                        (state) => state.status,
-                      );
-                  selectRebuilds++;
-                  return Text('Select status: $status');
-                },
-              ),
-              Builder(
-                builder: (context) {
-                  final status = context.watchProductsViewModel().status;
-                  fieldRebuilds++;
-                  return Text('Field status: $status');
+                  final state = context.watchProductsViewModel().value;
+                  rebuilds++;
+                  return Text('Status: ${state.status}');
                 },
               ),
             ],
@@ -55,25 +45,20 @@ void main() {
       ),
     );
 
-    expect(find.text('Select status: ProductsStatus.initial'), findsOneWidget);
-    expect(find.text('Field status: ProductsStatus.initial'), findsOneWidget);
-    expect(selectRebuilds, 1);
-    expect(fieldRebuilds, 1);
+    expect(find.text('Status: ProductsStatus.initial'), findsOneWidget);
+    expect(rebuilds, 1);
 
     viewModel.emitForTest(viewModel.state.copyWith(searchQuery: 'backpack'));
     await tester.pump();
 
-    expect(selectRebuilds, 1);
-    expect(fieldRebuilds, 1);
+    expect(rebuilds, 2);
 
     viewModel.emitForTest(
       viewModel.state.copyWith(status: ProductsStatus.loading),
     );
     await tester.pump();
 
-    expect(selectRebuilds, 2);
-    expect(fieldRebuilds, 2);
-    expect(find.text('Select status: ProductsStatus.loading'), findsOneWidget);
-    expect(find.text('Field status: ProductsStatus.loading'), findsOneWidget);
+    expect(rebuilds, 3);
+    expect(find.text('Status: ProductsStatus.loading'), findsOneWidget);
   });
 }

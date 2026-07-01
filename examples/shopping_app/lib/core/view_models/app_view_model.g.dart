@@ -78,21 +78,6 @@ final class _$AppStateCopyWithImpl<$Res> implements _$AppStateCopyWith<$Res> {
     );
   }
 }
-final class _AppViewModelAspect<R> {
-  const _AppViewModelAspect(this.selector);
-
-  final R Function(AppState state) selector;
-
-  bool hasChanged(AppState previous, AppState next) {
-    return selector(previous) != selector(next);
-  }
-}
-
-AppBackendMode _appViewModelSelectBackendMode(AppState state) => state.backendMode;
-final _appViewModelBackendModeAspect = _AppViewModelAspect<AppBackendMode>(
-  _appViewModelSelectBackendMode,
-);
-
 /// Generated base class for AppViewModel.
 ///
 /// Extend this class in the user-authored ViewModel and forward typed args:
@@ -108,12 +93,10 @@ abstract class $AppViewModel extends ViewModelBase<AppState, AppViewModelArgs> {
 
 /// Typed state reader returned by `context.watchAppViewModel()`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` to rebuild for the whole state.
 ///
 /// ```dart
 /// final state = context.watchAppViewModel().value;
-/// final count = context.watchAppViewModel().select((state) => state.count);
 /// ```
 class _$AppViewModelProxy {
   _$AppViewModelProxy(this._context);
@@ -122,18 +105,6 @@ class _$AppViewModelProxy {
 
   AppState get value {
     return AppViewModelScope.of(_context).value;
-  }
-
-  AppBackendMode get backendMode {
-    return AppViewModelScope.of(
-      _context,
-      aspect: _appViewModelBackendModeAspect,
-    ).state.backendMode;
-  }
-
-  R select<R>(R Function(AppState state) selector) {
-    final aspect = _AppViewModelAspect<R>(selector);
-    return selector(AppViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -180,11 +151,9 @@ class AppViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches AppViewModel and optionally subscribes to one generated aspect.
-  static AppViewModel of(BuildContext context, {_AppViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_AppViewModelInherited>(
-      aspect: aspect,
-    );
+  /// Watches AppViewModel and subscribes to state changes.
+  static AppViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_AppViewModelInherited>();
     if (scope == null) throw StateError('No AppViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -293,29 +262,15 @@ class _AppViewModelScopeState extends State<AppViewModelScope> {
   }
 }
 
-class _AppViewModelInherited extends InheritedModel<_AppViewModelAspect<Object?>> {
+class _AppViewModelInherited extends InheritedWidget {
   const _AppViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final AppViewModel viewModel;
   final AppState state;
 
-  /// Requires AppState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_AppViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _AppViewModelInherited oldWidget,
-    Set<_AppViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_AppViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 

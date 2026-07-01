@@ -13,26 +13,6 @@
 
 part of 'orders_view_model.dart';
 
-final class _OrdersViewModelAspect<R> {
-  const _OrdersViewModelAspect(this.selector);
-
-  final R Function(OrdersState state) selector;
-
-  bool hasChanged(OrdersState previous, OrdersState next) {
-    return selector(previous) != selector(next);
-  }
-}
-
-List<Object?> _ordersViewModelSelectOrders(OrdersState state) => state.orders;
-final _ordersViewModelOrdersAspect = _OrdersViewModelAspect<List<Object?>>(
-  _ordersViewModelSelectOrders,
-);
-
-bool _ordersViewModelSelectIsLoading(OrdersState state) => state.isLoading;
-final _ordersViewModelIsLoadingAspect = _OrdersViewModelAspect<bool>(
-  _ordersViewModelSelectIsLoading,
-);
-
 /// Generated base class for OrdersViewModel.
 ///
 /// Extend this class in the user-authored ViewModel and forward typed args:
@@ -48,12 +28,10 @@ abstract class $OrdersViewModel extends ViewModelBase<OrdersState, OrdersViewMod
 
 /// Typed state reader returned by `context.watchOrdersViewModel()`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` to rebuild for the whole state.
 ///
 /// ```dart
 /// final state = context.watchOrdersViewModel().value;
-/// final count = context.watchOrdersViewModel().select((state) => state.count);
 /// ```
 class _$OrdersViewModelProxy {
   _$OrdersViewModelProxy(this._context);
@@ -62,25 +40,6 @@ class _$OrdersViewModelProxy {
 
   OrdersState get value {
     return OrdersViewModelScope.of(_context).value;
-  }
-
-  List<Object?> get orders {
-    return OrdersViewModelScope.of(
-      _context,
-      aspect: _ordersViewModelOrdersAspect,
-    ).state.orders;
-  }
-
-  bool get isLoading {
-    return OrdersViewModelScope.of(
-      _context,
-      aspect: _ordersViewModelIsLoadingAspect,
-    ).state.isLoading;
-  }
-
-  R select<R>(R Function(OrdersState state) selector) {
-    final aspect = _OrdersViewModelAspect<R>(selector);
-    return selector(OrdersViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -127,11 +86,9 @@ class OrdersViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches OrdersViewModel and optionally subscribes to one generated aspect.
-  static OrdersViewModel of(BuildContext context, {_OrdersViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_OrdersViewModelInherited>(
-      aspect: aspect,
-    );
+  /// Watches OrdersViewModel and subscribes to state changes.
+  static OrdersViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_OrdersViewModelInherited>();
     if (scope == null) throw StateError('No OrdersViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -240,29 +197,15 @@ class _OrdersViewModelScopeState extends State<OrdersViewModelScope> {
   }
 }
 
-class _OrdersViewModelInherited extends InheritedModel<_OrdersViewModelAspect<Object?>> {
+class _OrdersViewModelInherited extends InheritedWidget {
   const _OrdersViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final OrdersViewModel viewModel;
   final OrdersState state;
 
-  /// Requires OrdersState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_OrdersViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _OrdersViewModelInherited oldWidget,
-    Set<_OrdersViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_OrdersViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 

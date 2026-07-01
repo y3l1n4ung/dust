@@ -13,31 +13,6 @@
 
 part of 'demo_cart_api_view_model.dart';
 
-final class _DemoCartApiViewModelAspect<R> {
-  const _DemoCartApiViewModelAspect(this.selector);
-
-  final R Function(DemoCartState state) selector;
-
-  bool hasChanged(DemoCartState previous, DemoCartState next) {
-    return selector(previous) != selector(next);
-  }
-}
-
-DemoCartStatus _demoCartApiViewModelSelectStatus(DemoCartState state) => state.status;
-final _demoCartApiViewModelStatusAspect = _DemoCartApiViewModelAspect<DemoCartStatus>(
-  _demoCartApiViewModelSelectStatus,
-);
-
-List<Object?> _demoCartApiViewModelSelectCarts(DemoCartState state) => state.carts;
-final _demoCartApiViewModelCartsAspect = _DemoCartApiViewModelAspect<List<Object?>>(
-  _demoCartApiViewModelSelectCarts,
-);
-
-String? _demoCartApiViewModelSelectErrorMessage(DemoCartState state) => state.errorMessage;
-final _demoCartApiViewModelErrorMessageAspect = _DemoCartApiViewModelAspect<String?>(
-  _demoCartApiViewModelSelectErrorMessage,
-);
-
 /// Generated base class for DemoCartApiViewModel.
 ///
 /// Extend this class in the user-authored ViewModel and forward typed args:
@@ -53,12 +28,10 @@ abstract class $DemoCartApiViewModel extends ViewModelBase<DemoCartState, DemoCa
 
 /// Typed state reader returned by `context.watchDemoCartApiViewModel()`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` to rebuild for the whole state.
 ///
 /// ```dart
 /// final state = context.watchDemoCartApiViewModel().value;
-/// final count = context.watchDemoCartApiViewModel().select((state) => state.count);
 /// ```
 class _$DemoCartApiViewModelProxy {
   _$DemoCartApiViewModelProxy(this._context);
@@ -67,32 +40,6 @@ class _$DemoCartApiViewModelProxy {
 
   DemoCartState get value {
     return DemoCartApiViewModelScope.of(_context).value;
-  }
-
-  DemoCartStatus get status {
-    return DemoCartApiViewModelScope.of(
-      _context,
-      aspect: _demoCartApiViewModelStatusAspect,
-    ).state.status;
-  }
-
-  List<Object?> get carts {
-    return DemoCartApiViewModelScope.of(
-      _context,
-      aspect: _demoCartApiViewModelCartsAspect,
-    ).state.carts;
-  }
-
-  String? get errorMessage {
-    return DemoCartApiViewModelScope.of(
-      _context,
-      aspect: _demoCartApiViewModelErrorMessageAspect,
-    ).state.errorMessage;
-  }
-
-  R select<R>(R Function(DemoCartState state) selector) {
-    final aspect = _DemoCartApiViewModelAspect<R>(selector);
-    return selector(DemoCartApiViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -139,11 +86,9 @@ class DemoCartApiViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches DemoCartApiViewModel and optionally subscribes to one generated aspect.
-  static DemoCartApiViewModel of(BuildContext context, {_DemoCartApiViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_DemoCartApiViewModelInherited>(
-      aspect: aspect,
-    );
+  /// Watches DemoCartApiViewModel and subscribes to state changes.
+  static DemoCartApiViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_DemoCartApiViewModelInherited>();
     if (scope == null) throw StateError('No DemoCartApiViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -252,29 +197,15 @@ class _DemoCartApiViewModelScopeState extends State<DemoCartApiViewModelScope> {
   }
 }
 
-class _DemoCartApiViewModelInherited extends InheritedModel<_DemoCartApiViewModelAspect<Object?>> {
+class _DemoCartApiViewModelInherited extends InheritedWidget {
   const _DemoCartApiViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final DemoCartApiViewModel viewModel;
   final DemoCartState state;
 
-  /// Requires DemoCartState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_DemoCartApiViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _DemoCartApiViewModelInherited oldWidget,
-    Set<_DemoCartApiViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_DemoCartApiViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 

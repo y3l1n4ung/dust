@@ -13,31 +13,6 @@
 
 part of 'benchmark_view_model.dart';
 
-final class _BenchmarkViewModelAspect<R> {
-  const _BenchmarkViewModelAspect(this.selector);
-
-  final R Function(BenchmarkState state) selector;
-
-  bool hasChanged(BenchmarkState previous, BenchmarkState next) {
-    return selector(previous) != selector(next);
-  }
-}
-
-BenchmarkMode _benchmarkViewModelSelectMode(BenchmarkState state) => state.mode;
-final _benchmarkViewModelModeAspect = _BenchmarkViewModelAspect<BenchmarkMode>(
-  _benchmarkViewModelSelectMode,
-);
-
-String _benchmarkViewModelSelectActiveFeature(BenchmarkState state) => state.activeFeature;
-final _benchmarkViewModelActiveFeatureAspect = _BenchmarkViewModelAspect<String>(
-  _benchmarkViewModelSelectActiveFeature,
-);
-
-int _benchmarkViewModelSelectBuildsRun(BenchmarkState state) => state.buildsRun;
-final _benchmarkViewModelBuildsRunAspect = _BenchmarkViewModelAspect<int>(
-  _benchmarkViewModelSelectBuildsRun,
-);
-
 /// Generated base class for BenchmarkViewModel.
 ///
 /// Extend this class in the user-authored ViewModel and forward typed args:
@@ -53,12 +28,10 @@ abstract class $BenchmarkViewModel extends ViewModelBase<BenchmarkState, Benchma
 
 /// Typed state reader returned by `context.watchBenchmarkViewModel()`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` to rebuild for the whole state.
 ///
 /// ```dart
 /// final state = context.watchBenchmarkViewModel().value;
-/// final count = context.watchBenchmarkViewModel().select((state) => state.count);
 /// ```
 class _$BenchmarkViewModelProxy {
   _$BenchmarkViewModelProxy(this._context);
@@ -67,32 +40,6 @@ class _$BenchmarkViewModelProxy {
 
   BenchmarkState get value {
     return BenchmarkViewModelScope.of(_context).value;
-  }
-
-  BenchmarkMode get mode {
-    return BenchmarkViewModelScope.of(
-      _context,
-      aspect: _benchmarkViewModelModeAspect,
-    ).state.mode;
-  }
-
-  String get activeFeature {
-    return BenchmarkViewModelScope.of(
-      _context,
-      aspect: _benchmarkViewModelActiveFeatureAspect,
-    ).state.activeFeature;
-  }
-
-  int get buildsRun {
-    return BenchmarkViewModelScope.of(
-      _context,
-      aspect: _benchmarkViewModelBuildsRunAspect,
-    ).state.buildsRun;
-  }
-
-  R select<R>(R Function(BenchmarkState state) selector) {
-    final aspect = _BenchmarkViewModelAspect<R>(selector);
-    return selector(BenchmarkViewModelScope.of(_context, aspect: aspect).value);
   }
 }
 
@@ -139,11 +86,9 @@ class BenchmarkViewModelScope extends StatefulWidget {
     return scope.viewModel;
   }
 
-  /// Watches BenchmarkViewModel and optionally subscribes to one generated aspect.
-  static BenchmarkViewModel of(BuildContext context, {_BenchmarkViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_BenchmarkViewModelInherited>(
-      aspect: aspect,
-    );
+  /// Watches BenchmarkViewModel and subscribes to state changes.
+  static BenchmarkViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_BenchmarkViewModelInherited>();
     if (scope == null) throw StateError('No BenchmarkViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -252,29 +197,15 @@ class _BenchmarkViewModelScopeState extends State<BenchmarkViewModelScope> {
   }
 }
 
-class _BenchmarkViewModelInherited extends InheritedModel<_BenchmarkViewModelAspect<Object?>> {
+class _BenchmarkViewModelInherited extends InheritedWidget {
   const _BenchmarkViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final BenchmarkViewModel viewModel;
   final BenchmarkState state;
 
-  /// Requires BenchmarkState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_BenchmarkViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _BenchmarkViewModelInherited oldWidget,
-    Set<_BenchmarkViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_BenchmarkViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 

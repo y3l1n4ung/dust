@@ -9,7 +9,7 @@ class BenchmarkShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeFeature = context.watchBenchmarkViewModel().activeFeature;
+    final activeFeature = context.watchBenchmarkViewModel().value.activeFeature;
     return Scaffold(
       appBar: AppBar(title: Text('Dust benchmark: $activeFeature')),
       body: child,
