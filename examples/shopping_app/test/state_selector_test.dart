@@ -12,8 +12,44 @@ class MockRepository implements ShoppingRepository {
 class TestProductsViewModel extends ProductsViewModel {
   TestProductsViewModel(super.args);
 
+  @override
+  Future<void> onInit() async {}
+
   void emitForTest(ProductsState state) {
     emit(state);
+  }
+}
+
+class InitProductsViewModel extends ProductsViewModel {
+  InitProductsViewModel(super.args, this.label);
+
+  final String label;
+
+  @override
+  Future<void> onInit() async {
+    emit(state.copyWith(searchQuery: '${state.searchQuery}$label'));
+  }
+}
+
+class TestIdentityScope extends InheritedWidget {
+  const TestIdentityScope({
+    required this.value,
+    required super.child,
+    super.key,
+  });
+
+  final String value;
+
+  static String of(BuildContext context) {
+    final scope =
+        context.dependOnInheritedWidgetOfExactType<TestIdentityScope>();
+    if (scope == null) throw StateError('No TestIdentityScope found.');
+    return scope.value;
+  }
+
+  @override
+  bool updateShouldNotify(TestIdentityScope oldWidget) {
+    return value != oldWidget.value;
   }
 }
 
@@ -60,5 +96,77 @@ void main() {
 
     expect(rebuilds, 3);
     expect(find.text('Status: ProductsStatus.loading'), findsOneWidget);
+  });
+
+  testWidgets('.value scope runs init once for external view model', (
+    tester,
+  ) async {
+    final viewModel = InitProductsViewModel(
+      ProductsViewModelArgs(repository: MockRepository()),
+      'external',
+    );
+
+    Widget build() {
+      return MaterialApp(
+        home: ProductsViewModelScope.value(
+          value: viewModel,
+          child: Builder(
+            builder: (context) {
+              final state = context.watchProductsViewModel().value;
+              return Text(state.searchQuery);
+            },
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(build());
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('external'), findsOneWidget);
+
+    await tester.pumpWidget(build());
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('external'), findsOneWidget);
+    expect(find.text('externalexternal'), findsNothing);
+  });
+
+  testWidgets('owned scope recreates when identity changes', (tester) async {
+    Widget build(String identity) {
+      return MaterialApp(
+        home: TestIdentityScope(
+          value: identity,
+          child: ProductsViewModelScope(
+            identity: TestIdentityScope.of,
+            args: (_) => ProductsViewModelArgs(repository: MockRepository()),
+            create: (context, args) {
+              return InitProductsViewModel(args, TestIdentityScope.of(context));
+            },
+            child: Builder(
+              builder: (context) {
+                final state = context.watchProductsViewModel().value;
+                return Text(state.searchQuery);
+              },
+            ),
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(build('one'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('one'), findsOneWidget);
+
+    await tester.pumpWidget(build('two'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('two'), findsOneWidget);
+    expect(find.text('one'), findsNothing);
   });
 }

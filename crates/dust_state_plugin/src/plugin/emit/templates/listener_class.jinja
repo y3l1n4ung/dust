@@ -25,7 +25,7 @@ class {{ listener_state_class }} extends State<{{ listener_class }}> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final nextViewModel = {{ scope_class }}.read(context);
+    final nextViewModel = {{ scope_class }}.of(context);
     if (_viewModel == nextViewModel) return;
     _sub?.cancel();
     _viewModel = nextViewModel;

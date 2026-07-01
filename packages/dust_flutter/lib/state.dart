@@ -3,7 +3,15 @@ library;
 
 export 'dart:async' show StreamSubscription, scheduleMicrotask;
 export 'package:flutter/widgets.dart'
-    show BuildContext, InheritedWidget, State, StatefulWidget, Widget;
+    show
+        BuildContext,
+        ErrorDescription,
+        FlutterError,
+        FlutterErrorDetails,
+        InheritedWidget,
+        State,
+        StatefulWidget,
+        Widget;
 
 export 'src/state/annotations.dart';
 export 'src/state/view_model.dart';

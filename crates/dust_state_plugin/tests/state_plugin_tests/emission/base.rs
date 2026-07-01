@@ -29,9 +29,16 @@ fn emits_generated_base_with_args_getters() {
     assert!(!source.contains("get repository => args.repository"));
     assert!(source.contains("class TaskBoardViewModelScope extends StatefulWidget"));
     assert!(source.contains("void didUpdateWidget(TaskBoardViewModelScope oldWidget)"));
-    assert!(source.contains("scheduleMicrotask(() {"));
+    assert!(source.contains("this.identity"));
+    assert!(source.contains("final Object? Function(BuildContext context)? identity;"));
+    assert!(source.contains("scheduleMicrotask(() async {"));
+    assert!(source.contains("await viewModel.init();"));
+    assert!(source.contains("FlutterError.reportError("));
+    assert!(source.contains("ErrorDescription('TaskBoardViewModelScope init failed')"));
+    assert!(source.contains("final nextViewModel = TaskBoardViewModelScope.of(context);"));
     assert!(!source.contains("ViewModelOwner<"));
     assert!(!source.contains("ListenableBuilder("));
+    assert!(!source.contains("if (ownsViewModel) {"));
     assert!(source.contains("class TaskBoardViewModelListener extends StatefulWidget"));
     assert_eq!(
         extract_doc_before(source, "abstract class $TaskBoardViewModel"),

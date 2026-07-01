@@ -62,6 +62,7 @@ class ProductsViewModelScope extends StatefulWidget {
     required this.args,
     required this.create,
     required this.child,
+    this.identity,
   }) : value = null;
 
   /// Provides an externally owned ProductsViewModel without disposing it.
@@ -70,10 +71,12 @@ class ProductsViewModelScope extends StatefulWidget {
     required ProductsViewModel this.value,
     required this.child,
   }) : args = null,
-       create = null;
+       create = null,
+       identity = null;
 
   final ProductsViewModelArgs Function(BuildContext context)? args;
   final ProductsViewModel Function(BuildContext context, ProductsViewModelArgs args)? create;
+  final Object? Function(BuildContext context)? identity;
   final ProductsViewModel? value;
   final Widget child;
 
@@ -99,13 +102,21 @@ class ProductsViewModelScope extends StatefulWidget {
 
 class _ProductsViewModelScopeState extends State<ProductsViewModelScope> {
   ProductsViewModel? _viewModel;
+  Object? _identity;
   bool _ownsViewModel = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_viewModel == null) {
-      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false, notify: false);
+      return;
+    }
+    final nextIdentity = widget.identity?.call(context);
+    if (_viewModel == null || nextIdentity != _identity) {
+      _identity = nextIdentity;
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true, notify: false);
     }
   }
 
@@ -116,12 +127,15 @@ class _ProductsViewModelScopeState extends State<ProductsViewModelScope> {
     if (external != null) {
       _replaceViewModel(external, ownsViewModel: false);
     } else if (oldWidget.value != null) {
+      _identity = widget.identity?.call(context);
       _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    } else {
+      final nextIdentity = widget.identity?.call(context);
+      if (nextIdentity != _identity) {
+        _identity = nextIdentity;
+        _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+      }
     }
-  }
-
-  ProductsViewModel _resolveViewModel() {
-    return widget.value ?? _createOwnedViewModel();
   }
 
   ProductsViewModel _createOwnedViewModel() {
@@ -153,6 +167,7 @@ class _ProductsViewModelScopeState extends State<ProductsViewModelScope> {
     final previous = _viewModel;
     if (identical(previous, nextViewModel)) {
       _ownsViewModel = ownsViewModel;
+      _scheduleInit(nextViewModel);
       if (notify && mounted) setState(() {});
       return;
     }
@@ -161,14 +176,26 @@ class _ProductsViewModelScopeState extends State<ProductsViewModelScope> {
     _viewModel = nextViewModel;
     _ownsViewModel = ownsViewModel;
     nextViewModel.addListener(_onViewModelStateChanged);
-    if (ownsViewModel) {
-      scheduleMicrotask(() {
-        if (mounted && identical(_viewModel, nextViewModel)) {
-          nextViewModel.init();
-        }
-      });
-    }
+    _scheduleInit(nextViewModel);
     if (notify && mounted) setState(() {});
+  }
+
+  void _scheduleInit(ProductsViewModel viewModel) {
+    scheduleMicrotask(() async {
+      if (!mounted || !identical(_viewModel, viewModel)) return;
+      try {
+        await viewModel.init();
+      } catch (error, stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+            library: 'dust state',
+            context: ErrorDescription('ProductsViewModelScope init failed'),
+          ),
+        );
+      }
+    });
   }
 
   void _onViewModelStateChanged() {
@@ -236,7 +263,7 @@ class _ProductsViewModelListenerState extends State<ProductsViewModelListener> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final nextViewModel = ProductsViewModelScope.read(context);
+    final nextViewModel = ProductsViewModelScope.of(context);
     if (_viewModel == nextViewModel) return;
     _sub?.cancel();
     _viewModel = nextViewModel;
