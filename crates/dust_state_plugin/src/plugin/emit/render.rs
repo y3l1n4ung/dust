@@ -4,29 +4,6 @@ use serde::Serialize;
 
 use crate::plugin::model::ViewModelMode;
 
-/// Root template context for a generated view model support block.
-#[derive(Serialize)]
-struct ViewModelOutputContext {
-    /// Rendered generated base class.
-    base: String,
-    /// Rendered proxy object exposed from build context helpers.
-    proxy: String,
-    /// Rendered selector widget.
-    selector: String,
-    /// Rendered async builder widget.
-    async_builder: String,
-    /// Rendered scope widget.
-    scope: String,
-    /// Rendered identity-only inherited widget backing listeners/selectors.
-    instance: String,
-    /// Rendered inherited widget backing the scope.
-    inherited: String,
-    /// Rendered listener widget.
-    listener: String,
-    /// Rendered build context extension.
-    extension: String,
-}
-
 /// Template context for the generated abstract view model base class.
 #[derive(Serialize)]
 struct BaseContext<'a> {
@@ -217,8 +194,12 @@ pub(super) fn render_view_model_output(
         &generated_state_type,
     );
     let async_builder = match mode {
-        ViewModelMode::Sync => String::new(),
-        ViewModelMode::Async => render_async_builder(&builder_class, &class.name, state_type),
+        ViewModelMode::Sync => None,
+        ViewModelMode::Async => Some(render_async_builder(
+            &builder_class,
+            &class.name,
+            state_type,
+        )),
     };
     let scope = render_scope(
         &scope_class,
@@ -248,21 +229,16 @@ pub(super) fn render_view_model_output(
         },
     );
 
-    render_template(
-        "view_model_output",
-        include_str!("templates/view_model_output.jinja"),
-        ViewModelOutputContext {
-            base,
-            proxy,
-            selector,
-            async_builder,
-            scope,
-            instance,
-            inherited,
-            listener,
-            extension,
-        },
-    )
+    let mut sections = vec![base, proxy, selector];
+    if let Some(async_builder) = async_builder {
+        sections.push(async_builder);
+    }
+    sections.extend([scope, instance, inherited, listener, extension]);
+    sections
+        .into_iter()
+        .map(|section| section.trim().to_owned())
+        .collect::<Vec<_>>()
+        .join("\n\n")
 }
 
 /// Renders the abstract generated base class for a view model.
