@@ -154,6 +154,30 @@ fn emits_explicit_initial_expression() {
 }
 
 #[test]
+fn emits_async_view_model_base() {
+    let plugin = register_plugin();
+    let contribution = plugin.emit(
+        &library_with_classes(vec![
+            args_class(),
+            view_model_class(
+                "ProfileViewModel",
+                "(state: Profile, args: TaskBoardArgs, mode: ViewModelMode.async)",
+            ),
+        ]),
+        &SymbolPlan::default(),
+    );
+
+    let source = &contribution.support_types[0];
+    assert!(source.contains("abstract class $ProfileViewModel"));
+    assert!(source.contains("extends AsyncViewModelBase<Profile, TaskBoardArgs>"));
+    assert!(source.contains("$ProfileViewModel(super.args);"));
+    assert!(source.contains("AsyncState<Profile> get value"));
+    assert!(source.contains("final R Function(AsyncState<Profile> state) selector;"));
+    assert!(!source.contains("const Profile()"));
+    assert!(!source.contains("initialState:"));
+}
+
+#[test]
 fn emits_value_only_proxy_for_fieldless_state() {
     let plugin = register_plugin();
     let contribution = plugin.emit(

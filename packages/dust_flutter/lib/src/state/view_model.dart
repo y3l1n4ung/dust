@@ -62,6 +62,83 @@ final class StateEffect {
   final Object value;
 }
 
+/// Lifecycle state for generated async ViewModels.
+sealed class AsyncState<T> {
+  const AsyncState();
+
+  /// Whether a load or refresh is in progress.
+  bool get isLoading;
+
+  /// Whether visible data is being refreshed.
+  bool get isRefreshing => false;
+
+  /// Current visible data, when available.
+  T? get data => null;
+
+  /// Data preserved from the previous successful load, when available.
+  T? get previousData => data;
+
+  /// Current load error, when available.
+  Object? get error => null;
+}
+
+/// No async load has started yet.
+final class AsyncInitial<T> extends AsyncState<T> {
+  /// Creates initial async state.
+  const AsyncInitial();
+
+  @override
+  bool get isLoading => false;
+}
+
+/// Async data is loading.
+final class AsyncLoading<T> extends AsyncState<T> {
+  /// Creates loading async state.
+  const AsyncLoading({this.previousData});
+
+  @override
+  final T? previousData;
+
+  @override
+  T? get data => previousData;
+
+  @override
+  bool get isLoading => true;
+
+  @override
+  bool get isRefreshing => previousData != null;
+}
+
+/// Async data loaded successfully.
+final class AsyncData<T> extends AsyncState<T> {
+  /// Creates data async state.
+  const AsyncData(this.data);
+
+  @override
+  final T data;
+
+  @override
+  bool get isLoading => false;
+}
+
+/// Async load failed.
+final class AsyncError<T> extends AsyncState<T> {
+  /// Creates error async state.
+  const AsyncError(this.error, {this.previousData});
+
+  @override
+  final Object error;
+
+  @override
+  final T? previousData;
+
+  @override
+  T? get data => previousData;
+
+  @override
+  bool get isLoading => false;
+}
+
 /// Token used by view models to ignore stale async work.
 @immutable
 final class ViewModelActionToken {
@@ -174,6 +251,53 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     _actionVersions.clear();
     unawaited(_effects.close());
     super.dispose();
+  }
+}
+
+/// Base class used by generated async Dust view model bases.
+abstract class AsyncViewModelBase<TData, TArgs extends ViewModelArgs>
+    extends ViewModelBase<AsyncState<TData>, TArgs> {
+  /// Creates an async view model.
+  AsyncViewModelBase(super.args) : super(initialState: AsyncInitial<TData>());
+
+  static const Object _loadAction = Object();
+
+  /// Loads fresh data for this view model.
+  Future<TData> loadData();
+
+  /// Starts initial loading.
+  Future<void> load() => _runLoad(preserveData: false);
+
+  /// Reloads data while preserving visible data when present.
+  Future<void> refresh() => _runLoad(preserveData: true);
+
+  /// Retries after an error while preserving previous data when present.
+  Future<void> retry() => refresh();
+
+  /// Marks current data stale and reloads without clearing visible data.
+  Future<void> invalidateSelf() => refresh();
+
+  /// Current visible data.
+  TData? get data => state.data;
+
+  /// Current or previous visible data.
+  TData? get visibleData => state.data ?? state.previousData;
+
+  @override
+  Future<void> onInit() => load();
+
+  Future<void> _runLoad({required bool preserveData}) async {
+    final token = beginAction(_loadAction);
+    final previousData = preserveData ? visibleData : null;
+    emit(AsyncLoading<TData>(previousData: previousData));
+    try {
+      final nextData = await loadData();
+      if (!isCurrentAction(token)) return;
+      emit(AsyncData<TData>(nextData));
+    } on Object catch (error) {
+      if (!isCurrentAction(token)) return;
+      emit(AsyncError<TData>(error, previousData: previousData));
+    }
   }
 }
 

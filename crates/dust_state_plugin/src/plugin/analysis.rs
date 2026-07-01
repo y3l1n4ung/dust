@@ -28,6 +28,7 @@ pub(crate) fn collect_state_workspace_analysis(
                 state_type: annotation.state_type,
                 args_type: annotation.args_type,
                 initial_source: annotation.initial_source,
+                mode: annotation.mode,
                 generated_base_class: format!("${}", class.name),
                 import_uri: import_uri(context),
             };

@@ -3,7 +3,10 @@ use std::collections::HashSet;
 use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassIr, DartFileIr};
 
-use super::parse::{parse_view_model_config, view_model_config};
+use super::{
+    model::ViewModelMode,
+    parse::{is_valid_mode_source, parse_view_model_config, view_model_config},
+};
 
 /// Validates state plugin annotations and generated-base-class contracts.
 pub(crate) fn validate_library_state(library: &DartFileIr) -> Vec<Diagnostic> {
@@ -39,6 +42,15 @@ pub(crate) fn validate_library_state(library: &DartFileIr) -> Vec<Diagnostic> {
             )));
         }
 
+        if let Some(mode_source) = annotation.mode_source.as_deref()
+            && !is_valid_mode_source(mode_source)
+        {
+            diagnostics.push(Diagnostic::error(format!(
+                "view model `{}` mode `{mode_source}` must be `ViewModelMode.sync` or `ViewModelMode.async`",
+                class.name
+            )));
+        }
+
         if !local_classes.contains(annotation.state_type.as_str())
             && !local_enums.contains(annotation.state_type.as_str())
             && !has_imports(library)
@@ -49,7 +61,15 @@ pub(crate) fn validate_library_state(library: &DartFileIr) -> Vec<Diagnostic> {
             )));
         }
 
-        if annotation.initial_source.is_none()
+        if annotation.mode == ViewModelMode::Async && annotation.initial_source.is_some() {
+            diagnostics.push(Diagnostic::error(format!(
+                "view model `{}` uses async mode, so remove `initial:`; Dust owns AsyncState initialization",
+                class.name
+            )));
+        }
+
+        if annotation.mode == ViewModelMode::Sync
+            && annotation.initial_source.is_none()
             && local_enums.contains(annotation.state_type.as_str())
         {
             diagnostics.push(Diagnostic::error(format!(
@@ -58,10 +78,11 @@ pub(crate) fn validate_library_state(library: &DartFileIr) -> Vec<Diagnostic> {
             )));
         }
 
-        if let Some(state_class) = library
-            .classes
-            .iter()
-            .find(|candidate| candidate.name == annotation.state_type)
+        if annotation.mode == ViewModelMode::Sync
+            && let Some(state_class) = library
+                .classes
+                .iter()
+                .find(|candidate| candidate.name == annotation.state_type)
             && annotation.initial_source.is_none()
         {
             validate_default_initial_state(class, state_class, &mut diagnostics);

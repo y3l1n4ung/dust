@@ -2,6 +2,8 @@ use dust_dart_emit::render_template;
 use dust_ir::ClassIr;
 use serde::Serialize;
 
+use crate::plugin::model::ViewModelMode;
+
 /// Root template context for a generated view model support block.
 #[derive(Serialize)]
 struct ViewModelOutputContext {
@@ -36,6 +38,19 @@ struct BaseContext<'a> {
     args_type: &'a str,
     /// Dart expression used to initialize state.
     initial_state: &'a str,
+}
+
+/// Template context for the generated async view model base class.
+#[derive(Serialize)]
+struct AsyncBaseContext<'a> {
+    /// Generated base class name that user view models extend.
+    generated_base: &'a str,
+    /// User-authored view model class name.
+    view_model_class: &'a str,
+    /// Dart data type loaded by the view model.
+    data_type: &'a str,
+    /// Dart args type passed to the generated base.
+    args_type: &'a str,
 }
 
 /// Template context for the generated build context proxy class.
@@ -137,6 +152,7 @@ pub(super) fn render_view_model_output(
     state_type: &str,
     args_type: &str,
     initial_source: Option<&str>,
+    mode: ViewModelMode,
 ) -> String {
     let generated_base = format!("${}", class.name);
     let proxy_class = format!("_${}Proxy", class.name);
@@ -153,20 +169,34 @@ pub(super) fn render_view_model_output(
     let initial_state = initial_source
         .map(str::to_owned)
         .unwrap_or_else(|| format!("const {state_type}()"));
-    let base = render_base(
-        &generated_base,
+    let generated_state_type = match mode {
+        ViewModelMode::Sync => state_type.to_owned(),
+        ViewModelMode::Async => format!("AsyncState<{state_type}>"),
+    };
+    let base = match mode {
+        ViewModelMode::Sync => render_base(
+            &generated_base,
+            &class.name,
+            state_type,
+            args_type,
+            &initial_state,
+        ),
+        ViewModelMode::Async => {
+            render_async_base(&generated_base, &class.name, state_type, args_type)
+        }
+    };
+    let proxy = render_proxy(
+        &proxy_class,
+        &scope_class,
         &class.name,
-        state_type,
-        args_type,
-        &initial_state,
+        &generated_state_type,
     );
-    let proxy = render_proxy(&proxy_class, &scope_class, &class.name, state_type);
     let selector = render_selector(
         &selector_class,
         &selector_state_class,
         &scope_class,
         &class.name,
-        state_type,
+        &generated_state_type,
     );
     let scope = render_scope(
         &scope_class,
@@ -176,7 +206,7 @@ pub(super) fn render_view_model_output(
         args_type,
     );
     let instance = render_instance(&instance_class, &class.name);
-    let inherited = render_inherited(&inherited_class, &class.name, state_type);
+    let inherited = render_inherited(&inherited_class, &class.name, &generated_state_type);
     let listener = render_listener(
         &listener_class,
         &listener_state_class,
@@ -229,6 +259,25 @@ fn render_base(
             state_type,
             args_type,
             initial_state,
+        },
+    )
+}
+
+/// Renders the async generated base class for a view model.
+fn render_async_base(
+    generated_base: &str,
+    view_model_class: &str,
+    data_type: &str,
+    args_type: &str,
+) -> String {
+    render_template(
+        "base_async_class",
+        include_str!("templates/base_async_class.jinja"),
+        AsyncBaseContext {
+            generated_base,
+            view_model_class,
+            data_type,
+            args_type,
         },
     )
 }

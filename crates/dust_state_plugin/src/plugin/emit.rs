@@ -35,6 +35,7 @@ pub(crate) fn emit_library_state(library: &DartFileIr, _plan: &SymbolPlan) -> Pl
             &annotation.state_type,
             &args_type,
             annotation.initial_source.as_deref(),
+            annotation.mode,
         ));
     }
     contribution
