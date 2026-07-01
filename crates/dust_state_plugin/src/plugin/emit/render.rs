@@ -9,8 +9,12 @@ struct ViewModelOutputContext {
     base: String,
     /// Rendered proxy object exposed from build context helpers.
     proxy: String,
+    /// Rendered selector widget.
+    selector: String,
     /// Rendered scope widget.
     scope: String,
+    /// Rendered identity-only inherited widget backing listeners/selectors.
+    instance: String,
     /// Rendered inherited widget backing the scope.
     inherited: String,
     /// Rendered listener widget.
@@ -47,17 +51,43 @@ struct ProxyContext<'a> {
     state_type: &'a str,
 }
 
+/// Template context for the generated selector widget.
+#[derive(Serialize)]
+struct SelectorContext<'a> {
+    /// Generated public selector widget class name.
+    selector_class: &'a str,
+    /// Generated private selector state class name.
+    selector_state_class: &'a str,
+    /// Generated scope class name used for lookups.
+    scope_class: &'a str,
+    /// User-authored view model class name.
+    view_model_class: &'a str,
+    /// Dart state type managed by the view model.
+    state_type: &'a str,
+}
+
 /// Template context for the generated view model scope widget.
 #[derive(Serialize)]
 struct ScopeContext<'a> {
     /// Generated public scope class name.
     scope_class: &'a str,
+    /// Generated private instance inherited widget class name.
+    instance_class: &'a str,
     /// Generated private inherited widget class name.
     inherited_class: &'a str,
     /// User-authored view model class name.
     view_model_class: &'a str,
     /// Dart args type accepted by the scope.
     args_type: &'a str,
+}
+
+/// Template context for the generated identity-only inherited widget.
+#[derive(Serialize)]
+struct InstanceContext<'a> {
+    /// Generated inherited widget class name.
+    instance_class: &'a str,
+    /// User-authored view model class name.
+    view_model_class: &'a str,
 }
 
 /// Template context for the generated inherited widget.
@@ -110,7 +140,10 @@ pub(super) fn render_view_model_output(
 ) -> String {
     let generated_base = format!("${}", class.name);
     let proxy_class = format!("_${}Proxy", class.name);
+    let selector_class = format!("{}Selector", class.name);
+    let selector_state_class = format!("_{}SelectorState", class.name);
     let scope_class = format!("{}Scope", class.name);
+    let instance_class = format!("_{}Instance", class.name);
     let inherited_class = format!("_{}Inherited", class.name);
     let listener_class = format!("{}Listener", class.name);
     let listener_state_class = format!("_{}ListenerState", class.name);
@@ -128,7 +161,21 @@ pub(super) fn render_view_model_output(
         &initial_state,
     );
     let proxy = render_proxy(&proxy_class, &scope_class, &class.name, state_type);
-    let scope = render_scope(&scope_class, &inherited_class, &class.name, args_type);
+    let selector = render_selector(
+        &selector_class,
+        &selector_state_class,
+        &scope_class,
+        &class.name,
+        state_type,
+    );
+    let scope = render_scope(
+        &scope_class,
+        &instance_class,
+        &inherited_class,
+        &class.name,
+        args_type,
+    );
+    let instance = render_instance(&instance_class, &class.name);
     let inherited = render_inherited(&inherited_class, &class.name, state_type);
     let listener = render_listener(
         &listener_class,
@@ -155,7 +202,9 @@ pub(super) fn render_view_model_output(
         ViewModelOutputContext {
             base,
             proxy,
+            selector,
             scope,
+            instance,
             inherited,
             listener,
             extension,
@@ -203,9 +252,31 @@ fn render_proxy(
     )
 }
 
+/// Renders the selector widget.
+fn render_selector(
+    selector_class: &str,
+    selector_state_class: &str,
+    scope_class: &str,
+    view_model_class: &str,
+    state_type: &str,
+) -> String {
+    render_template(
+        "selector_class",
+        include_str!("templates/selector_class.jinja"),
+        SelectorContext {
+            selector_class,
+            selector_state_class,
+            scope_class,
+            view_model_class,
+            state_type,
+        },
+    )
+}
+
 /// Renders the scope widget that owns a view model instance.
 fn render_scope(
     scope_class: &str,
+    instance_class: &str,
     inherited_class: &str,
     view_model_class: &str,
     args_type: &str,
@@ -215,9 +286,22 @@ fn render_scope(
         include_str!("templates/scope_class.jinja"),
         ScopeContext {
             scope_class,
+            instance_class,
             inherited_class,
             view_model_class,
             args_type,
+        },
+    )
+}
+
+/// Renders the identity-only inherited widget.
+fn render_instance(instance_class: &str, view_model_class: &str) -> String {
+    render_template(
+        "instance_class",
+        include_str!("templates/instance_class.jinja"),
+        InstanceContext {
+            instance_class,
+            view_model_class,
         },
     )
 }

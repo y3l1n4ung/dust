@@ -18,6 +18,10 @@ class TestProductsViewModel extends ProductsViewModel {
   void emitForTest(ProductsState state) {
     emit(state);
   }
+
+  void emitEffectForTest(Object effect) {
+    emitEffect(effect);
+  }
 }
 
 class InitProductsViewModel extends ProductsViewModel {
@@ -54,10 +58,11 @@ class TestIdentityScope extends InheritedWidget {
 }
 
 void main() {
-  testWidgets('watch value rebuilds with typed state', (
+  testWidgets('selector rebuilds only when selected value changes', (
     tester,
   ) async {
-    var rebuilds = 0;
+    var fullRebuilds = 0;
+    var selectorRebuilds = 0;
     final viewModel = TestProductsViewModel(
       ProductsViewModelArgs(repository: MockRepository()),
     );
@@ -71,8 +76,15 @@ void main() {
               Builder(
                 builder: (context) {
                   final state = context.watchProductsViewModel().value;
-                  rebuilds++;
-                  return Text('Status: ${state.status}');
+                  fullRebuilds++;
+                  return Text('Full: ${state.status}');
+                },
+              ),
+              ProductsViewModelSelector<ProductsStatus>(
+                selector: (state) => state.status,
+                builder: (context, status, child) {
+                  selectorRebuilds++;
+                  return Text('Selected: $status');
                 },
               ),
             ],
@@ -81,21 +93,68 @@ void main() {
       ),
     );
 
-    expect(find.text('Status: ProductsStatus.initial'), findsOneWidget);
-    expect(rebuilds, 1);
+    expect(find.text('Full: ProductsStatus.initial'), findsOneWidget);
+    expect(find.text('Selected: ProductsStatus.initial'), findsOneWidget);
+    expect(fullRebuilds, 1);
+    expect(selectorRebuilds, 1);
 
     viewModel.emitForTest(viewModel.state.copyWith(searchQuery: 'backpack'));
     await tester.pump();
 
-    expect(rebuilds, 2);
+    expect(fullRebuilds, 2);
+    expect(selectorRebuilds, 1);
 
     viewModel.emitForTest(
       viewModel.state.copyWith(status: ProductsStatus.loading),
     );
     await tester.pump();
 
-    expect(rebuilds, 3);
-    expect(find.text('Status: ProductsStatus.loading'), findsOneWidget);
+    expect(fullRebuilds, 3);
+    expect(selectorRebuilds, 2);
+    expect(find.text('Selected: ProductsStatus.loading'), findsOneWidget);
+  });
+
+  testWidgets('selector supports custom equality', (tester) async {
+    var selectorRebuilds = 0;
+    final viewModel = TestProductsViewModel(
+      ProductsViewModelArgs(repository: MockRepository()),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ProductsViewModelScope.value(
+          value: viewModel,
+          child: ProductsViewModelSelector<String>(
+            selector: (state) => state.searchQuery,
+            equals: (previous, next) => previous.length == next.length,
+            builder: (context, searchQuery, child) {
+              selectorRebuilds++;
+              return Text(searchQuery);
+            },
+          ),
+        ),
+      ),
+    );
+
+    expect(selectorRebuilds, 1);
+
+    viewModel.emitForTest(viewModel.state.copyWith(searchQuery: 'aa'));
+    await tester.pump();
+
+    expect(selectorRebuilds, 2);
+    expect(find.text('aa'), findsOneWidget);
+
+    viewModel.emitForTest(viewModel.state.copyWith(searchQuery: 'bb'));
+    await tester.pump();
+
+    expect(selectorRebuilds, 2);
+    expect(find.text('aa'), findsOneWidget);
+
+    viewModel.emitForTest(viewModel.state.copyWith(searchQuery: 'ccc'));
+    await tester.pump();
+
+    expect(selectorRebuilds, 3);
+    expect(find.text('ccc'), findsOneWidget);
   });
 
   testWidgets('.value scope runs init once for external view model', (
@@ -145,10 +204,10 @@ void main() {
             create: (context, args) {
               return InitProductsViewModel(args, TestIdentityScope.of(context));
             },
-            child: Builder(
-              builder: (context) {
-                final state = context.watchProductsViewModel().value;
-                return Text(state.searchQuery);
+            child: ProductsViewModelSelector<String>(
+              selector: (state) => state.searchQuery,
+              builder: (context, searchQuery, child) {
+                return Text(searchQuery);
               },
             ),
           ),
@@ -168,5 +227,46 @@ void main() {
 
     expect(find.text('two'), findsOneWidget);
     expect(find.text('one'), findsNothing);
+  });
+
+  testWidgets('listener resubscribes when value scope swaps view model', (
+    tester,
+  ) async {
+    final first = TestProductsViewModel(
+      ProductsViewModelArgs(repository: MockRepository()),
+    );
+    final second = TestProductsViewModel(
+      ProductsViewModelArgs(repository: MockRepository()),
+    );
+    final effects = <Object>[];
+
+    Widget build(TestProductsViewModel viewModel) {
+      return MaterialApp(
+        home: ProductsViewModelScope.value(
+          value: viewModel,
+          child: ProductsViewModelListener(
+            listener: (context, effect) => effects.add(effect),
+            child: const SizedBox.shrink(),
+          ),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(build(first));
+    await tester.pump();
+
+    first.emitEffectForTest('first');
+    await tester.pump();
+
+    expect(effects, <Object>['first']);
+
+    await tester.pumpWidget(build(second));
+    await tester.pump();
+
+    first.emitEffectForTest('stale');
+    second.emitEffectForTest('second');
+    await tester.pump();
+
+    expect(effects, <Object>['first', 'second']);
   });
 }

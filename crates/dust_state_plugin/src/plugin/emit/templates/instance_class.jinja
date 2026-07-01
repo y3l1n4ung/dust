@@ -1,0 +1,10 @@
+class {{ instance_class }} extends InheritedWidget {
+  const {{ instance_class }}({required this.viewModel, required super.child});
+
+  final {{ view_model_class }} viewModel;
+
+  @override
+  bool updateShouldNotify({{ instance_class }} oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel);
+  }
+}

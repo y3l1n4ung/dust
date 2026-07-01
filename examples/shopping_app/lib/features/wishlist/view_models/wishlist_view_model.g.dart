@@ -43,6 +43,93 @@ class _$WishlistViewModelProxy {
   }
 }
 
+/// Builds from a selected WishlistState value.
+///
+/// The selector listens to WishlistViewModel and rebuilds only when the
+/// selected value changes.
+class WishlistViewModelSelector<R> extends StatefulWidget {
+  const WishlistViewModelSelector({
+    super.key,
+    required this.selector,
+    required this.builder,
+    this.child,
+    this.equals,
+  });
+
+  final R Function(WishlistState state) selector;
+  final Widget Function(BuildContext context, R value, Widget? child) builder;
+  final Widget? child;
+  final bool Function(R previous, R next)? equals;
+
+  @override
+  State<WishlistViewModelSelector<R>> createState() => _WishlistViewModelSelectorState<R>();
+}
+
+class _WishlistViewModelSelectorState<R> extends State<WishlistViewModelSelector<R>> {
+  WishlistViewModel? _viewModel;
+  R? _selected;
+  bool _hasSelected = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextViewModel = WishlistViewModelScope._watchInstance(context);
+    if (identical(_viewModel, nextViewModel)) return;
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    _viewModel = nextViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    _selectCurrent(force: true);
+  }
+
+  @override
+  void didUpdateWidget(WishlistViewModelSelector<R> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _selectCurrent(force: true);
+  }
+
+  void _onViewModelStateChanged() {
+    _selectCurrent();
+  }
+
+  void _selectCurrent({bool force = false}) {
+    final viewModel = _viewModel;
+    if (viewModel == null) return;
+    final nextSelected = widget.selector(viewModel.value);
+    if (!_hasSelected) {
+      _selected = nextSelected;
+      _hasSelected = true;
+      return;
+    }
+    final previousSelected = _selected as R;
+    final equals = widget.equals;
+    final unchanged = equals == null
+        ? previousSelected == nextSelected
+        : equals(previousSelected, nextSelected);
+    if (!force && unchanged) return;
+    if (force || !mounted) {
+      _selected = nextSelected;
+    } else {
+      setState(() {
+        _selected = nextSelected;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasSelected) {
+      _selectCurrent(force: true);
+    }
+    return widget.builder(context, _selected as R, widget.child);
+  }
+}
+
 /// Provides WishlistViewModel to descendants and owns it by default.
 ///
 /// Use the default constructor when this scope should create and dispose the
@@ -83,8 +170,14 @@ class WishlistViewModelScope extends StatefulWidget {
   /// Reads WishlistViewModel without subscribing the caller to state changes.
   static WishlistViewModel read(BuildContext context) {
     final scope = context
-        .getElementForInheritedWidgetOfExactType<_WishlistViewModelInherited>()
-        ?.widget as _WishlistViewModelInherited?;
+        .getElementForInheritedWidgetOfExactType<_WishlistViewModelInstance>()
+        ?.widget as _WishlistViewModelInstance?;
+    if (scope == null) throw StateError('No WishlistViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  static WishlistViewModel _watchInstance(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_WishlistViewModelInstance>();
     if (scope == null) throw StateError('No WishlistViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -216,11 +309,25 @@ class _WishlistViewModelScopeState extends State<WishlistViewModelScope> {
     if (viewModel == null) {
       throw StateError('WishlistViewModelScope built before its view model was initialized.');
     }
-    return _WishlistViewModelInherited(
+    return _WishlistViewModelInstance(
       viewModel: viewModel,
-      state: viewModel.value,
-      child: widget.child,
+      child: _WishlistViewModelInherited(
+        viewModel: viewModel,
+        state: viewModel.value,
+        child: widget.child,
+      ),
     );
+  }
+}
+
+class _WishlistViewModelInstance extends InheritedWidget {
+  const _WishlistViewModelInstance({required this.viewModel, required super.child});
+
+  final WishlistViewModel viewModel;
+
+  @override
+  bool updateShouldNotify(_WishlistViewModelInstance oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel);
   }
 }
 
@@ -263,7 +370,7 @@ class _WishlistViewModelListenerState extends State<WishlistViewModelListener> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final nextViewModel = WishlistViewModelScope.of(context);
+    final nextViewModel = WishlistViewModelScope._watchInstance(context);
     if (_viewModel == nextViewModel) return;
     _sub?.cancel();
     _viewModel = nextViewModel;

@@ -43,6 +43,93 @@ class _$OrdersViewModelProxy {
   }
 }
 
+/// Builds from a selected OrdersState value.
+///
+/// The selector listens to OrdersViewModel and rebuilds only when the
+/// selected value changes.
+class OrdersViewModelSelector<R> extends StatefulWidget {
+  const OrdersViewModelSelector({
+    super.key,
+    required this.selector,
+    required this.builder,
+    this.child,
+    this.equals,
+  });
+
+  final R Function(OrdersState state) selector;
+  final Widget Function(BuildContext context, R value, Widget? child) builder;
+  final Widget? child;
+  final bool Function(R previous, R next)? equals;
+
+  @override
+  State<OrdersViewModelSelector<R>> createState() => _OrdersViewModelSelectorState<R>();
+}
+
+class _OrdersViewModelSelectorState<R> extends State<OrdersViewModelSelector<R>> {
+  OrdersViewModel? _viewModel;
+  R? _selected;
+  bool _hasSelected = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextViewModel = OrdersViewModelScope._watchInstance(context);
+    if (identical(_viewModel, nextViewModel)) return;
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    _viewModel = nextViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    _selectCurrent(force: true);
+  }
+
+  @override
+  void didUpdateWidget(OrdersViewModelSelector<R> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _selectCurrent(force: true);
+  }
+
+  void _onViewModelStateChanged() {
+    _selectCurrent();
+  }
+
+  void _selectCurrent({bool force = false}) {
+    final viewModel = _viewModel;
+    if (viewModel == null) return;
+    final nextSelected = widget.selector(viewModel.value);
+    if (!_hasSelected) {
+      _selected = nextSelected;
+      _hasSelected = true;
+      return;
+    }
+    final previousSelected = _selected as R;
+    final equals = widget.equals;
+    final unchanged = equals == null
+        ? previousSelected == nextSelected
+        : equals(previousSelected, nextSelected);
+    if (!force && unchanged) return;
+    if (force || !mounted) {
+      _selected = nextSelected;
+    } else {
+      setState(() {
+        _selected = nextSelected;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasSelected) {
+      _selectCurrent(force: true);
+    }
+    return widget.builder(context, _selected as R, widget.child);
+  }
+}
+
 /// Provides OrdersViewModel to descendants and owns it by default.
 ///
 /// Use the default constructor when this scope should create and dispose the
@@ -83,8 +170,14 @@ class OrdersViewModelScope extends StatefulWidget {
   /// Reads OrdersViewModel without subscribing the caller to state changes.
   static OrdersViewModel read(BuildContext context) {
     final scope = context
-        .getElementForInheritedWidgetOfExactType<_OrdersViewModelInherited>()
-        ?.widget as _OrdersViewModelInherited?;
+        .getElementForInheritedWidgetOfExactType<_OrdersViewModelInstance>()
+        ?.widget as _OrdersViewModelInstance?;
+    if (scope == null) throw StateError('No OrdersViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  static OrdersViewModel _watchInstance(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_OrdersViewModelInstance>();
     if (scope == null) throw StateError('No OrdersViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -216,11 +309,25 @@ class _OrdersViewModelScopeState extends State<OrdersViewModelScope> {
     if (viewModel == null) {
       throw StateError('OrdersViewModelScope built before its view model was initialized.');
     }
-    return _OrdersViewModelInherited(
+    return _OrdersViewModelInstance(
       viewModel: viewModel,
-      state: viewModel.value,
-      child: widget.child,
+      child: _OrdersViewModelInherited(
+        viewModel: viewModel,
+        state: viewModel.value,
+        child: widget.child,
+      ),
     );
+  }
+}
+
+class _OrdersViewModelInstance extends InheritedWidget {
+  const _OrdersViewModelInstance({required this.viewModel, required super.child});
+
+  final OrdersViewModel viewModel;
+
+  @override
+  bool updateShouldNotify(_OrdersViewModelInstance oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel);
   }
 }
 
@@ -263,7 +370,7 @@ class _OrdersViewModelListenerState extends State<OrdersViewModelListener> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final nextViewModel = OrdersViewModelScope.of(context);
+    final nextViewModel = OrdersViewModelScope._watchInstance(context);
     if (_viewModel == nextViewModel) return;
     _sub?.cancel();
     _viewModel = nextViewModel;

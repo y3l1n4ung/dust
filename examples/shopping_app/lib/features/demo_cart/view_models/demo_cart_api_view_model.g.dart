@@ -43,6 +43,93 @@ class _$DemoCartApiViewModelProxy {
   }
 }
 
+/// Builds from a selected DemoCartState value.
+///
+/// The selector listens to DemoCartApiViewModel and rebuilds only when the
+/// selected value changes.
+class DemoCartApiViewModelSelector<R> extends StatefulWidget {
+  const DemoCartApiViewModelSelector({
+    super.key,
+    required this.selector,
+    required this.builder,
+    this.child,
+    this.equals,
+  });
+
+  final R Function(DemoCartState state) selector;
+  final Widget Function(BuildContext context, R value, Widget? child) builder;
+  final Widget? child;
+  final bool Function(R previous, R next)? equals;
+
+  @override
+  State<DemoCartApiViewModelSelector<R>> createState() => _DemoCartApiViewModelSelectorState<R>();
+}
+
+class _DemoCartApiViewModelSelectorState<R> extends State<DemoCartApiViewModelSelector<R>> {
+  DemoCartApiViewModel? _viewModel;
+  R? _selected;
+  bool _hasSelected = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextViewModel = DemoCartApiViewModelScope._watchInstance(context);
+    if (identical(_viewModel, nextViewModel)) return;
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    _viewModel = nextViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    _selectCurrent(force: true);
+  }
+
+  @override
+  void didUpdateWidget(DemoCartApiViewModelSelector<R> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _selectCurrent(force: true);
+  }
+
+  void _onViewModelStateChanged() {
+    _selectCurrent();
+  }
+
+  void _selectCurrent({bool force = false}) {
+    final viewModel = _viewModel;
+    if (viewModel == null) return;
+    final nextSelected = widget.selector(viewModel.value);
+    if (!_hasSelected) {
+      _selected = nextSelected;
+      _hasSelected = true;
+      return;
+    }
+    final previousSelected = _selected as R;
+    final equals = widget.equals;
+    final unchanged = equals == null
+        ? previousSelected == nextSelected
+        : equals(previousSelected, nextSelected);
+    if (!force && unchanged) return;
+    if (force || !mounted) {
+      _selected = nextSelected;
+    } else {
+      setState(() {
+        _selected = nextSelected;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasSelected) {
+      _selectCurrent(force: true);
+    }
+    return widget.builder(context, _selected as R, widget.child);
+  }
+}
+
 /// Provides DemoCartApiViewModel to descendants and owns it by default.
 ///
 /// Use the default constructor when this scope should create and dispose the
@@ -83,8 +170,14 @@ class DemoCartApiViewModelScope extends StatefulWidget {
   /// Reads DemoCartApiViewModel without subscribing the caller to state changes.
   static DemoCartApiViewModel read(BuildContext context) {
     final scope = context
-        .getElementForInheritedWidgetOfExactType<_DemoCartApiViewModelInherited>()
-        ?.widget as _DemoCartApiViewModelInherited?;
+        .getElementForInheritedWidgetOfExactType<_DemoCartApiViewModelInstance>()
+        ?.widget as _DemoCartApiViewModelInstance?;
+    if (scope == null) throw StateError('No DemoCartApiViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  static DemoCartApiViewModel _watchInstance(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_DemoCartApiViewModelInstance>();
     if (scope == null) throw StateError('No DemoCartApiViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -216,11 +309,25 @@ class _DemoCartApiViewModelScopeState extends State<DemoCartApiViewModelScope> {
     if (viewModel == null) {
       throw StateError('DemoCartApiViewModelScope built before its view model was initialized.');
     }
-    return _DemoCartApiViewModelInherited(
+    return _DemoCartApiViewModelInstance(
       viewModel: viewModel,
-      state: viewModel.value,
-      child: widget.child,
+      child: _DemoCartApiViewModelInherited(
+        viewModel: viewModel,
+        state: viewModel.value,
+        child: widget.child,
+      ),
     );
+  }
+}
+
+class _DemoCartApiViewModelInstance extends InheritedWidget {
+  const _DemoCartApiViewModelInstance({required this.viewModel, required super.child});
+
+  final DemoCartApiViewModel viewModel;
+
+  @override
+  bool updateShouldNotify(_DemoCartApiViewModelInstance oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel);
   }
 }
 
@@ -263,7 +370,7 @@ class _DemoCartApiViewModelListenerState extends State<DemoCartApiViewModelListe
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final nextViewModel = DemoCartApiViewModelScope.of(context);
+    final nextViewModel = DemoCartApiViewModelScope._watchInstance(context);
     if (_viewModel == nextViewModel) return;
     _sub?.cancel();
     _viewModel = nextViewModel;

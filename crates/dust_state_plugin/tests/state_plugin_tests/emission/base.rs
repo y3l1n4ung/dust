@@ -31,11 +31,17 @@ fn emits_generated_base_with_args_getters() {
     assert!(source.contains("void didUpdateWidget(TaskBoardViewModelScope oldWidget)"));
     assert!(source.contains("this.identity"));
     assert!(source.contains("final Object? Function(BuildContext context)? identity;"));
+    assert!(source.contains("class TaskBoardViewModelSelector<R> extends StatefulWidget"));
+    assert!(source.contains("final R Function(TaskBoardState state) selector;"));
+    assert!(source.contains("final bool Function(R previous, R next)? equals;"));
+    assert!(
+        source.contains("final nextViewModel = TaskBoardViewModelScope._watchInstance(context);")
+    );
+    assert!(source.contains("class _TaskBoardViewModelInstance extends InheritedWidget"));
     assert!(source.contains("scheduleMicrotask(() async {"));
     assert!(source.contains("await viewModel.init();"));
     assert!(source.contains("FlutterError.reportError("));
     assert!(source.contains("ErrorDescription('TaskBoardViewModelScope init failed')"));
-    assert!(source.contains("final nextViewModel = TaskBoardViewModelScope.of(context);"));
     assert!(!source.contains("ViewModelOwner<"));
     assert!(!source.contains("ListenableBuilder("));
     assert!(!source.contains("if (ownsViewModel) {"));

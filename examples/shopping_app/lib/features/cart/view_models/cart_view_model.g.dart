@@ -43,6 +43,93 @@ class _$CartViewModelProxy {
   }
 }
 
+/// Builds from a selected CartState value.
+///
+/// The selector listens to CartViewModel and rebuilds only when the
+/// selected value changes.
+class CartViewModelSelector<R> extends StatefulWidget {
+  const CartViewModelSelector({
+    super.key,
+    required this.selector,
+    required this.builder,
+    this.child,
+    this.equals,
+  });
+
+  final R Function(CartState state) selector;
+  final Widget Function(BuildContext context, R value, Widget? child) builder;
+  final Widget? child;
+  final bool Function(R previous, R next)? equals;
+
+  @override
+  State<CartViewModelSelector<R>> createState() => _CartViewModelSelectorState<R>();
+}
+
+class _CartViewModelSelectorState<R> extends State<CartViewModelSelector<R>> {
+  CartViewModel? _viewModel;
+  R? _selected;
+  bool _hasSelected = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextViewModel = CartViewModelScope._watchInstance(context);
+    if (identical(_viewModel, nextViewModel)) return;
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    _viewModel = nextViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    _selectCurrent(force: true);
+  }
+
+  @override
+  void didUpdateWidget(CartViewModelSelector<R> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _selectCurrent(force: true);
+  }
+
+  void _onViewModelStateChanged() {
+    _selectCurrent();
+  }
+
+  void _selectCurrent({bool force = false}) {
+    final viewModel = _viewModel;
+    if (viewModel == null) return;
+    final nextSelected = widget.selector(viewModel.value);
+    if (!_hasSelected) {
+      _selected = nextSelected;
+      _hasSelected = true;
+      return;
+    }
+    final previousSelected = _selected as R;
+    final equals = widget.equals;
+    final unchanged = equals == null
+        ? previousSelected == nextSelected
+        : equals(previousSelected, nextSelected);
+    if (!force && unchanged) return;
+    if (force || !mounted) {
+      _selected = nextSelected;
+    } else {
+      setState(() {
+        _selected = nextSelected;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasSelected) {
+      _selectCurrent(force: true);
+    }
+    return widget.builder(context, _selected as R, widget.child);
+  }
+}
+
 /// Provides CartViewModel to descendants and owns it by default.
 ///
 /// Use the default constructor when this scope should create and dispose the
@@ -83,8 +170,14 @@ class CartViewModelScope extends StatefulWidget {
   /// Reads CartViewModel without subscribing the caller to state changes.
   static CartViewModel read(BuildContext context) {
     final scope = context
-        .getElementForInheritedWidgetOfExactType<_CartViewModelInherited>()
-        ?.widget as _CartViewModelInherited?;
+        .getElementForInheritedWidgetOfExactType<_CartViewModelInstance>()
+        ?.widget as _CartViewModelInstance?;
+    if (scope == null) throw StateError('No CartViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  static CartViewModel _watchInstance(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_CartViewModelInstance>();
     if (scope == null) throw StateError('No CartViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -216,11 +309,25 @@ class _CartViewModelScopeState extends State<CartViewModelScope> {
     if (viewModel == null) {
       throw StateError('CartViewModelScope built before its view model was initialized.');
     }
-    return _CartViewModelInherited(
+    return _CartViewModelInstance(
       viewModel: viewModel,
-      state: viewModel.value,
-      child: widget.child,
+      child: _CartViewModelInherited(
+        viewModel: viewModel,
+        state: viewModel.value,
+        child: widget.child,
+      ),
     );
+  }
+}
+
+class _CartViewModelInstance extends InheritedWidget {
+  const _CartViewModelInstance({required this.viewModel, required super.child});
+
+  final CartViewModel viewModel;
+
+  @override
+  bool updateShouldNotify(_CartViewModelInstance oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel);
   }
 }
 
@@ -263,7 +370,7 @@ class _CartViewModelListenerState extends State<CartViewModelListener> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final nextViewModel = CartViewModelScope.of(context);
+    final nextViewModel = CartViewModelScope._watchInstance(context);
     if (_viewModel == nextViewModel) return;
     _sub?.cancel();
     _viewModel = nextViewModel;

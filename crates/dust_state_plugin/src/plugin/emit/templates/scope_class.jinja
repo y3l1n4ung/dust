@@ -38,8 +38,14 @@ class {{ scope_class }} extends StatefulWidget {
   /// Reads {{ view_model_class }} without subscribing the caller to state changes.
   static {{ view_model_class }} read(BuildContext context) {
     final scope = context
-        .getElementForInheritedWidgetOfExactType<{{ inherited_class }}>()
-        ?.widget as {{ inherited_class }}?;
+        .getElementForInheritedWidgetOfExactType<{{ instance_class }}>()
+        ?.widget as {{ instance_class }}?;
+    if (scope == null) throw StateError('No {{ scope_class }} found in context.');
+    return scope.viewModel;
+  }
+
+  static {{ view_model_class }} _watchInstance(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<{{ instance_class }}>();
     if (scope == null) throw StateError('No {{ scope_class }} found in context.');
     return scope.viewModel;
   }
@@ -171,10 +177,13 @@ class _{{ scope_class }}State extends State<{{ scope_class }}> {
     if (viewModel == null) {
       throw StateError('{{ scope_class }} built before its view model was initialized.');
     }
-    return {{ inherited_class }}(
+    return {{ instance_class }}(
       viewModel: viewModel,
-      state: viewModel.value,
-      child: widget.child,
+      child: {{ inherited_class }}(
+        viewModel: viewModel,
+        state: viewModel.value,
+        child: widget.child,
+      ),
     );
   }
 }

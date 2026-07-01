@@ -43,6 +43,93 @@ class _$ShoppingChatViewModelProxy {
   }
 }
 
+/// Builds from a selected ChatState value.
+///
+/// The selector listens to ShoppingChatViewModel and rebuilds only when the
+/// selected value changes.
+class ShoppingChatViewModelSelector<R> extends StatefulWidget {
+  const ShoppingChatViewModelSelector({
+    super.key,
+    required this.selector,
+    required this.builder,
+    this.child,
+    this.equals,
+  });
+
+  final R Function(ChatState state) selector;
+  final Widget Function(BuildContext context, R value, Widget? child) builder;
+  final Widget? child;
+  final bool Function(R previous, R next)? equals;
+
+  @override
+  State<ShoppingChatViewModelSelector<R>> createState() => _ShoppingChatViewModelSelectorState<R>();
+}
+
+class _ShoppingChatViewModelSelectorState<R> extends State<ShoppingChatViewModelSelector<R>> {
+  ShoppingChatViewModel? _viewModel;
+  R? _selected;
+  bool _hasSelected = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextViewModel = ShoppingChatViewModelScope._watchInstance(context);
+    if (identical(_viewModel, nextViewModel)) return;
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    _viewModel = nextViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    _selectCurrent(force: true);
+  }
+
+  @override
+  void didUpdateWidget(ShoppingChatViewModelSelector<R> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _selectCurrent(force: true);
+  }
+
+  void _onViewModelStateChanged() {
+    _selectCurrent();
+  }
+
+  void _selectCurrent({bool force = false}) {
+    final viewModel = _viewModel;
+    if (viewModel == null) return;
+    final nextSelected = widget.selector(viewModel.value);
+    if (!_hasSelected) {
+      _selected = nextSelected;
+      _hasSelected = true;
+      return;
+    }
+    final previousSelected = _selected as R;
+    final equals = widget.equals;
+    final unchanged = equals == null
+        ? previousSelected == nextSelected
+        : equals(previousSelected, nextSelected);
+    if (!force && unchanged) return;
+    if (force || !mounted) {
+      _selected = nextSelected;
+    } else {
+      setState(() {
+        _selected = nextSelected;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasSelected) {
+      _selectCurrent(force: true);
+    }
+    return widget.builder(context, _selected as R, widget.child);
+  }
+}
+
 /// Provides ShoppingChatViewModel to descendants and owns it by default.
 ///
 /// Use the default constructor when this scope should create and dispose the
@@ -83,8 +170,14 @@ class ShoppingChatViewModelScope extends StatefulWidget {
   /// Reads ShoppingChatViewModel without subscribing the caller to state changes.
   static ShoppingChatViewModel read(BuildContext context) {
     final scope = context
-        .getElementForInheritedWidgetOfExactType<_ShoppingChatViewModelInherited>()
-        ?.widget as _ShoppingChatViewModelInherited?;
+        .getElementForInheritedWidgetOfExactType<_ShoppingChatViewModelInstance>()
+        ?.widget as _ShoppingChatViewModelInstance?;
+    if (scope == null) throw StateError('No ShoppingChatViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  static ShoppingChatViewModel _watchInstance(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_ShoppingChatViewModelInstance>();
     if (scope == null) throw StateError('No ShoppingChatViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -216,11 +309,25 @@ class _ShoppingChatViewModelScopeState extends State<ShoppingChatViewModelScope>
     if (viewModel == null) {
       throw StateError('ShoppingChatViewModelScope built before its view model was initialized.');
     }
-    return _ShoppingChatViewModelInherited(
+    return _ShoppingChatViewModelInstance(
       viewModel: viewModel,
-      state: viewModel.value,
-      child: widget.child,
+      child: _ShoppingChatViewModelInherited(
+        viewModel: viewModel,
+        state: viewModel.value,
+        child: widget.child,
+      ),
     );
+  }
+}
+
+class _ShoppingChatViewModelInstance extends InheritedWidget {
+  const _ShoppingChatViewModelInstance({required this.viewModel, required super.child});
+
+  final ShoppingChatViewModel viewModel;
+
+  @override
+  bool updateShouldNotify(_ShoppingChatViewModelInstance oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel);
   }
 }
 
@@ -263,7 +370,7 @@ class _ShoppingChatViewModelListenerState extends State<ShoppingChatViewModelLis
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final nextViewModel = ShoppingChatViewModelScope.of(context);
+    final nextViewModel = ShoppingChatViewModelScope._watchInstance(context);
     if (_viewModel == nextViewModel) return;
     _sub?.cancel();
     _viewModel = nextViewModel;
