@@ -2,9 +2,14 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::{ClassIr, MethodIr};
 
 use crate::plugin::build::classify_return_type;
+use crate::plugin::constants::BODY;
 use crate::plugin::parse::method_verbs;
+use crate::plugin::parse::param_source_names;
 use crate::plugin::util::label;
 use crate::plugin::validate::class::validate_text_stream_import;
+use crate::plugin::validate::json_capability::{
+    JsonCapabilityContext, validate_body_json_capability, validate_response_json_capability,
+};
 use crate::plugin::validate::param::ParamState;
 
 /// Validates one HTTP endpoint method and its parameters.
@@ -12,6 +17,7 @@ pub(crate) fn validate_endpoint(
     imports: &[String],
     class: &ClassIr,
     method: &MethodIr,
+    json: Option<&JsonCapabilityContext<'_>>,
 ) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
     let verbs = method_verbs(method);
@@ -67,6 +73,9 @@ pub(crate) fn validate_endpoint(
         );
     } else if let Some(spec) = return_spec {
         validate_text_stream_import(imports, class, method, spec.mode, &mut diagnostics);
+        if let Some(json) = json {
+            validate_response_json_capability(json, class, method, &spec, &mut diagnostics);
+        }
     }
 
     let mut state = ParamState::default();
@@ -76,6 +85,12 @@ pub(crate) fn validate_endpoint(
     }
     for param in &method.params {
         state.validate_param(class, method, param, &mut diagnostics);
+        if let Some(json) = json {
+            let sources = param_source_names(param);
+            if sources.len() == 1 && sources[0] == BODY {
+                validate_body_json_capability(json, class, method, param, &mut diagnostics);
+            }
+        }
     }
     state.finish(class, method, verbs[0], &mut diagnostics);
     diagnostics

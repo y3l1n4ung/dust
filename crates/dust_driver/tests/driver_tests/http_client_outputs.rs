@@ -231,3 +231,54 @@ fn build_rejects_flutter_target_isolate_decode_without_compute_import() {
     }));
     assert!(!workspace.path().join("lib/api.g.dart").exists());
 }
+
+#[test]
+fn build_rejects_imported_http_models_without_json_support() {
+    let workspace = make_workspace();
+    write_file(
+        &workspace.path().join("lib/model.dart"),
+        "part 'model.g.dart';\n\
+         @Derive([ToString()])\n\
+         class NotJson {\n\
+           const NotJson();\n\
+         }\n",
+    );
+    write_file(
+        &workspace.path().join("lib/api.dart"),
+        "import 'model.dart';\n\
+         part 'api.g.dart';\n\
+         @HttpClient()\n\
+         abstract interface class Api {\n\
+           factory Api(Dio dio, {String? baseUrl}) = _$Api;\n\
+           @POST('/items')\n\
+           Future<NotJson> save(@Body() NotJson payload);\n\
+         }\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+        db: Default::default(),
+    });
+    let messages = result
+        .diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.message.as_str())
+        .collect::<Vec<_>>();
+
+    assert!(result.has_errors(), "{:?}", result.diagnostics);
+    assert!(
+        messages.iter().any(|message| message.contains(
+            "parameter `payload` on `Api.save` uses `@Body()` with `NotJson` but generated HTTP serialization requires `NotJson.toJson()`"
+        )),
+        "{messages:?}"
+    );
+    assert!(
+        messages.iter().any(|message| message.contains(
+            "method `save` on `Api` returns `NotJson` but generated HTTP deserialization requires `NotJson.fromJson(Map<String, Object?>)`"
+        )),
+        "{messages:?}"
+    );
+    assert!(!workspace.path().join("lib/api.g.dart").exists());
+}

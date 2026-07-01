@@ -40,7 +40,7 @@ pub(super) fn build_client_spec<'a>(
         return Err(Vec::new());
     }
 
-    let mut diagnostics = validate_client_class(imports, class);
+    let mut diagnostics = validate_client_class(imports, class, None);
     if !diagnostics.is_empty() {
         return Err(diagnostics);
     }

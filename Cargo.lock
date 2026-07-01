@@ -403,6 +403,7 @@ dependencies = [
  "dust_dart_emit",
  "dust_diagnostics",
  "dust_ir",
+ "dust_parser_dart",
  "dust_plugin_api",
  "dust_text",
  "dust_workspace",
