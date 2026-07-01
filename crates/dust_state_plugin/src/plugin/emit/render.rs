@@ -13,6 +13,8 @@ struct ViewModelOutputContext {
     proxy: String,
     /// Rendered selector widget.
     selector: String,
+    /// Rendered async builder widget.
+    async_builder: String,
     /// Rendered scope widget.
     scope: String,
     /// Rendered identity-only inherited widget backing listeners/selectors.
@@ -79,6 +81,21 @@ struct SelectorContext<'a> {
     view_model_class: &'a str,
     /// Dart state type managed by the view model.
     state_type: &'a str,
+}
+
+/// Template context for the generated async builder widget.
+#[derive(Serialize)]
+struct AsyncBuilderContext<'a> {
+    /// Generated public builder widget class name.
+    builder_class: &'a str,
+    /// User-authored view model class name.
+    view_model_class: &'a str,
+    /// Dart data type loaded by the view model.
+    data_type: &'a str,
+    /// Dart type used for optional previous data.
+    previous_data_type: &'a str,
+    /// Dart expression used to pass previous data to the data builder.
+    previous_data_argument: &'a str,
 }
 
 /// Template context for the generated view model scope widget.
@@ -158,6 +175,7 @@ pub(super) fn render_view_model_output(
     let proxy_class = format!("_${}Proxy", class.name);
     let selector_class = format!("{}Selector", class.name);
     let selector_state_class = format!("_{}SelectorState", class.name);
+    let builder_class = format!("{}Builder", class.name);
     let scope_class = format!("{}Scope", class.name);
     let instance_class = format!("_{}Instance", class.name);
     let inherited_class = format!("_{}Inherited", class.name);
@@ -198,6 +216,10 @@ pub(super) fn render_view_model_output(
         &class.name,
         &generated_state_type,
     );
+    let async_builder = match mode {
+        ViewModelMode::Sync => String::new(),
+        ViewModelMode::Async => render_async_builder(&builder_class, &class.name, state_type),
+    };
     let scope = render_scope(
         &scope_class,
         &instance_class,
@@ -233,6 +255,7 @@ pub(super) fn render_view_model_output(
             base,
             proxy,
             selector,
+            async_builder,
             scope,
             instance,
             inherited,
@@ -322,6 +345,39 @@ fn render_selector(
     )
 }
 
+/// Renders the async builder widget.
+fn render_async_builder(builder_class: &str, view_model_class: &str, data_type: &str) -> String {
+    let previous_data_type = previous_data_type(data_type);
+    let previous_data_argument = previous_data_argument(data_type);
+    render_template(
+        "async_builder_class",
+        include_str!("templates/async_builder_class.jinja"),
+        AsyncBuilderContext {
+            builder_class,
+            view_model_class,
+            data_type,
+            previous_data_type: &previous_data_type,
+            previous_data_argument: &previous_data_argument,
+        },
+    )
+}
+
+fn previous_data_type(data_type: &str) -> String {
+    if data_type.trim_end().ends_with('?') {
+        data_type.to_owned()
+    } else {
+        format!("{data_type}?")
+    }
+}
+
+fn previous_data_argument(data_type: &str) -> String {
+    if data_type.trim_end().ends_with('?') {
+        "previousData".to_owned()
+    } else {
+        format!("previousData as {data_type}")
+    }
+}
+
 /// Renders the scope widget that owns a view model instance.
 fn render_scope(
     scope_class: &str,
@@ -385,4 +441,20 @@ fn render_listener(
             view_model_class,
         },
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::render_async_builder;
+
+    #[test]
+    fn async_builder_uses_nullable_previous_data_type_once() {
+        let source =
+            render_async_builder("ProfileViewModelBuilder", "ProfileViewModel", "Profile?");
+
+        assert!(source.contains("Profile? previousData"));
+        assert!(source.contains("data(context, previousData)"));
+        assert!(!source.contains("Profile??"));
+        assert!(!source.contains("previousData as Profile?"));
+    }
 }

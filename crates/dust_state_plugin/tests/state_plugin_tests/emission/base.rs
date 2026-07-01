@@ -173,6 +173,10 @@ fn emits_async_view_model_base() {
     assert!(source.contains("$ProfileViewModel(super.args);"));
     assert!(source.contains("AsyncState<Profile> get value"));
     assert!(source.contains("final R Function(AsyncState<Profile> state) selector;"));
+    assert!(source.contains("class ProfileViewModelBuilder extends StatelessWidget"));
+    assert!(source.contains("final Widget Function(BuildContext context, Profile data) data;"));
+    assert!(source.contains("AsyncLoading<Profile>("));
+    assert!(source.contains("hasPreviousData: true"));
     assert!(!source.contains("const Profile()"));
     assert!(!source.contains("initialState:"));
 }

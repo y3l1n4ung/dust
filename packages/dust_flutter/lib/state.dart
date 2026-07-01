@@ -11,6 +11,7 @@ export 'package:flutter/widgets.dart'
         InheritedWidget,
         State,
         StatefulWidget,
+        StatelessWidget,
         Widget;
 
 export 'src/state/annotations.dart';

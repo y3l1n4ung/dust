@@ -51,6 +51,8 @@ fn build_writes_async_state_output_for_view_model_library() {
     assert!(source.contains("extends AsyncViewModelBase<Profile, ProfileArgs>"));
     assert!(source.contains("AsyncState<Profile> get value"));
     assert!(source.contains("final R Function(AsyncState<Profile> state) selector"));
+    assert!(source.contains("class ProfileViewModelBuilder extends StatelessWidget"));
+    assert!(source.contains("final Widget Function(BuildContext context, Profile data) data"));
     assert!(!source.contains("const Profile()"));
     assert!(!source.contains("initialState:"));
 }

@@ -69,6 +69,12 @@ sealed class AsyncState<T> {
   /// Whether a load or refresh is in progress.
   bool get isLoading;
 
+  /// Whether current visible data is available.
+  bool get hasData => false;
+
+  /// Whether previous visible data is available.
+  bool get hasPreviousData => hasData;
+
   /// Whether visible data is being refreshed.
   bool get isRefreshing => false;
 
@@ -94,19 +100,25 @@ final class AsyncInitial<T> extends AsyncState<T> {
 /// Async data is loading.
 final class AsyncLoading<T> extends AsyncState<T> {
   /// Creates loading async state.
-  const AsyncLoading({this.previousData});
+  const AsyncLoading({this.previousData, this.hasPreviousData = false});
 
   @override
   final T? previousData;
 
   @override
+  final bool hasPreviousData;
+
+  @override
   T? get data => previousData;
+
+  @override
+  bool get hasData => hasPreviousData;
 
   @override
   bool get isLoading => true;
 
   @override
-  bool get isRefreshing => previousData != null;
+  bool get isRefreshing => hasPreviousData;
 }
 
 /// Async data loaded successfully.
@@ -118,13 +130,20 @@ final class AsyncData<T> extends AsyncState<T> {
   final T data;
 
   @override
+  bool get hasData => true;
+
+  @override
   bool get isLoading => false;
 }
 
 /// Async load failed.
 final class AsyncError<T> extends AsyncState<T> {
   /// Creates error async state.
-  const AsyncError(this.error, {this.previousData});
+  const AsyncError(
+    this.error, {
+    this.previousData,
+    this.hasPreviousData = false,
+  });
 
   @override
   final Object error;
@@ -133,7 +152,13 @@ final class AsyncError<T> extends AsyncState<T> {
   final T? previousData;
 
   @override
+  final bool hasPreviousData;
+
+  @override
   T? get data => previousData;
+
+  @override
+  bool get hasData => hasPreviousData;
 
   @override
   bool get isLoading => false;
@@ -281,7 +306,11 @@ abstract class AsyncViewModelBase<TData, TArgs extends ViewModelArgs>
   TData? get data => state.data;
 
   /// Current or previous visible data.
-  TData? get visibleData => state.data ?? state.previousData;
+  TData? get visibleData {
+    if (state.hasData) return state.data;
+    if (state.hasPreviousData) return state.previousData;
+    return null;
+  }
 
   @override
   Future<void> onInit() => load();
@@ -289,14 +318,27 @@ abstract class AsyncViewModelBase<TData, TArgs extends ViewModelArgs>
   Future<void> _runLoad({required bool preserveData}) async {
     final token = beginAction(_loadAction);
     final previousData = preserveData ? visibleData : null;
-    emit(AsyncLoading<TData>(previousData: previousData));
+    final hasPreviousData =
+        preserveData && (state.hasData || state.hasPreviousData);
+    emit(
+      AsyncLoading<TData>(
+        previousData: previousData,
+        hasPreviousData: hasPreviousData,
+      ),
+    );
     try {
       final nextData = await loadData();
       if (!isCurrentAction(token)) return;
       emit(AsyncData<TData>(nextData));
     } on Object catch (error) {
       if (!isCurrentAction(token)) return;
-      emit(AsyncError<TData>(error, previousData: previousData));
+      emit(
+        AsyncError<TData>(
+          error,
+          previousData: previousData,
+          hasPreviousData: hasPreviousData,
+        ),
+      );
     }
   }
 }

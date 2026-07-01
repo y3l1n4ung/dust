@@ -1,0 +1,35 @@
+/// Builds UI for {{ view_model_class }} async state.
+class {{ builder_class }} extends StatelessWidget {
+  const {{ builder_class }}({
+    super.key,
+    required this.loading,
+    required this.data,
+    required this.error,
+  });
+
+  final Widget Function(BuildContext context) loading;
+  final Widget Function(BuildContext context, {{ data_type }} data) data;
+  final Widget Function(
+    BuildContext context,
+    Object error,
+    {{ previous_data_type }} previousData,
+  ) error;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch{{ view_model_class }}().value;
+    return switch (state) {
+      AsyncData<{{ data_type }}>(data: final loadedData) =>
+        data(context, loadedData),
+      AsyncLoading<{{ data_type }}>(
+        hasPreviousData: true,
+        previousData: final previousData,
+      ) => data(context, {{ previous_data_argument }}),
+      AsyncError<{{ data_type }}>(
+        error: final loadError,
+        previousData: final previousData,
+      ) => error(context, loadError, previousData),
+      _ => loading(context),
+    };
+  }
+}
