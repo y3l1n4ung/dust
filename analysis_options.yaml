@@ -1,7 +1,57 @@
-include: package:lints/recommended.yaml
+include: package:very_good_analysis/analysis_options.yaml
 
 analyzer:
   exclude:
     - "lib/generated/**"
+    - "lib/generated_models/**"
     - "**/*.g.dart"
     - "**/*.freezed.dart"
+  errors:
+    public_member_api_docs: warning
+    inference_failure_on_function_invocation: ignore
+    inference_failure_on_instance_creation: ignore
+    strict_raw_type: ignore
+
+linter:
+  rules:
+    always_put_required_named_parameters_first: false
+    always_use_package_imports: false
+    avoid_redundant_argument_values: false
+    avoid_catching_errors: false
+    avoid_catches_without_on_clauses: false
+    avoid_dynamic_calls: false
+    avoid_equals_and_hash_code_on_mutable_classes: false
+    avoid_print: false
+    cascade_invocations: false
+    cast_nullable_to_non_nullable: false
+    comment_references: true
+    deprecated_consistency: false
+    directives_ordering: false
+    discarded_futures: false
+    document_ignores: false
+    lines_longer_than_80_chars: false
+    missing_whitespace_between_adjacent_strings: false
+    one_member_abstracts: false
+    only_throw_errors: false
+    package_api_docs: true
+    prefer_const_declarations: false
+    prefer_constructors_over_static_methods: false
+    prefer_const_constructors: false
+    prefer_const_literals_to_create_immutables: false
+    prefer_final_locals: false
+    prefer_foreach: false
+    prefer_if_elements_to_conditional_expressions: false
+    prefer_int_literals: false
+    prefer_single_quotes: false
+    public_member_api_docs: true
+    remove_deprecations_in_breaking_versions: false
+    require_trailing_commas: false
+    sort_constructors_first: false
+    sort_pub_dependencies: false
+    type_annotate_public_apis: false
+    unnecessary_library_directive: false
+    unnecessary_ignore: false
+    unnecessary_lambdas: false
+    unnecessary_raw_strings: false
+    unnecessary_null_checks: false
+    unawaited_futures: false

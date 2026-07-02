@@ -7,20 +7,20 @@ String renderValidationShowcaseFile() {
     fileName: validationShowcaseFile,
     imports: ["import 'package:dust_dart/derive.dart';"],
     declarations: [
-      '''
+      r'''
 @Derive([Validate()])
-class BenchmarkAddressValidation with _\$BenchmarkAddressValidation {
+class BenchmarkAddressValidation with _$BenchmarkAddressValidation {
   const BenchmarkAddressValidation({required this.city, required this.zipCode});
 
   @Validate(length: Length(min: 2, max: 64), message: 'City is invalid')
   final String city;
 
-  @Validate(regex: r'^\\d{5}\$', message: 'ZIP is invalid')
+  @Validate(regex: r'^\d{5}$', message: 'ZIP is invalid')
   final String zipCode;
 }''',
-      '''
+      r'''
 @Derive([Validate()])
-class BenchmarkSignupValidation with _\$BenchmarkSignupValidation {
+class BenchmarkSignupValidation with _$BenchmarkSignupValidation {
   const BenchmarkSignupValidation({
     required this.email,
     required this.password,
@@ -54,9 +54,9 @@ class BenchmarkSignupValidation with _\$BenchmarkSignupValidation {
   @Validate(url: true, message: 'Website is invalid')
   final String? website;
 }''',
-      '''
+      r'''
 @Derive([Validate()])
-class BenchmarkRulesValidation with _\$BenchmarkRulesValidation {
+class BenchmarkRulesValidation with _$BenchmarkRulesValidation {
   const BenchmarkRulesValidation({
     required this.email,
     required this.url,
@@ -106,7 +106,7 @@ class BenchmarkRulesValidation with _\$BenchmarkRulesValidation {
   @Validate(doesNotContain: 'bad', message: 'Does-not-contain rule')
   final String cleanText;
 
-  @Validate(regex: r'^[A-Z]{2}\\d{2}\$', message: 'Regex rule')
+  @Validate(regex: r'^[A-Z]{2}\d{2}$', message: 'Regex rule')
   final String pattern;
 
   @Validate(length: Length(min: 8), message: 'Password length rule')

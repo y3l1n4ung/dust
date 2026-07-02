@@ -7,14 +7,15 @@ environment:
 resolution: workspace
 
 dependencies:
-  flutter:
-    sdk: flutter
   dio: ^5.9.2
   dust_dart:
     path: ../../packages/dust_dart
   dust_flutter:
     path: ../../packages/dust_flutter
+  flutter:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  very_good_analysis: ^10.3.0
