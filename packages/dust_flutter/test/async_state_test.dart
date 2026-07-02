@@ -65,11 +65,12 @@ void main() {
     viewModel.loads.last.completeError(StateError('failed'));
     await refresh;
 
-    expect(viewModel.state, isA<AsyncError<int>>());
+    expect(viewModel.state, isA<AsyncFailure<int>>());
     expect(viewModel.state.hasPreviousData, isTrue);
     expect(viewModel.state.data, 7);
     expect(viewModel.state.previousData, 7);
     expect(viewModel.state.error, isA<StateError>());
+    expect(viewModel.state.stackTrace, isA<StackTrace>());
   });
 
   test('stale load result is ignored', () async {
@@ -123,7 +124,7 @@ void main() {
     viewModel.shouldFail = true;
     await viewModel.refresh();
 
-    expect(viewModel.state, isA<AsyncError<int?>>());
+    expect(viewModel.state, isA<AsyncFailure<int?>>());
     expect(viewModel.state.hasPreviousData, isTrue);
     expect(viewModel.state.previousData, isNull);
   });

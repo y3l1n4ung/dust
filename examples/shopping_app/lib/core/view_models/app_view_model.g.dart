@@ -1103,7 +1103,7 @@ class HomeViewModelBuilder extends StatelessWidget {
         hasPreviousData: true,
         previousData: final previousData,
       ) => data(context, previousData as HomePageData),
-      AsyncError<HomePageData>(
+      AsyncFailure<HomePageData>(
         error: final loadError,
         previousData: final previousData,
       ) => error(context, loadError, previousData),

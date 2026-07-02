@@ -213,7 +213,7 @@ return switch (context.watchHomeViewModel().value) {
     previousData: final previousData,
   ) =>
     HomeContent(data: previousData as HomePageData, refreshing: true),
-  AsyncError<HomePageData>(
+  AsyncFailure<HomePageData>(
     error: final error,
     previousData: final previousData,
   ) =>

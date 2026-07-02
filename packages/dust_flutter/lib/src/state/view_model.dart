@@ -85,6 +85,9 @@ sealed class AsyncState<T> {
 
   /// Current load error, when available.
   Object? get error => null;
+
+  /// Stack trace for the current load failure, when available.
+  StackTrace? get stackTrace => null;
 }
 
 /// No async load has started yet.
@@ -136,16 +139,20 @@ final class AsyncData<T> extends AsyncState<T> {
 }
 
 /// Async load failed.
-final class AsyncError<T> extends AsyncState<T> {
-  /// Creates error async state.
-  const AsyncError(
-    this.error, {
+final class AsyncFailure<T> extends AsyncState<T> {
+  /// Creates failed async state.
+  const AsyncFailure(
+    this.error,
+    this.stackTrace, {
     this.previousData,
     this.hasPreviousData = false,
   });
 
   @override
   final Object error;
+
+  @override
+  final StackTrace stackTrace;
 
   @override
   final T? previousData;
@@ -335,11 +342,12 @@ abstract class AsyncViewModelBase<TData, TArgs extends ViewModelArgs>
       final nextData = await loadData();
       if (!isCurrentAction(token)) return;
       emit(AsyncData<TData>(nextData));
-    } on Object catch (error) {
+    } on Object catch (error, stackTrace) {
       if (!isCurrentAction(token)) return;
       emit(
-        AsyncError<TData>(
+        AsyncFailure<TData>(
           error,
+          stackTrace,
           previousData: previousData,
           hasPreviousData: hasPreviousData,
         ),

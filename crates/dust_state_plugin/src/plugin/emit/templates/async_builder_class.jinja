@@ -25,7 +25,7 @@ class {{ builder_class }} extends StatelessWidget {
         hasPreviousData: true,
         previousData: final previousData,
       ) => data(context, {{ previous_data_argument }}),
-      AsyncError<{{ data_type }}>(
+      AsyncFailure<{{ data_type }}>(
         error: final loadError,
         previousData: final previousData,
       ) => error(context, loadError, previousData),

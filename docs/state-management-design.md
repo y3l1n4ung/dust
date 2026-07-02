@@ -57,10 +57,10 @@ The public lifecycle states are:
 AsyncInitial<T>
 AsyncLoading<T>
 AsyncData<T>
-AsyncError<T>
+AsyncFailure<T>
 ```
 
-`AsyncLoading<T>` and `AsyncError<T>` can carry previous data. There is no
+`AsyncLoading<T>` and `AsyncFailure<T>` can carry previous data. There is no
 separate public `refreshing` state class; refresh is `AsyncLoading` with
 `hasPreviousData == true`.
 
