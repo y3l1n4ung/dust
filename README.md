@@ -55,19 +55,36 @@ state management, and database codegen.
 
 ## 🚀 Quick Start
 
-### 1. Install the CLI
+This path clones Dust, fetches the example dependencies, runs generation, and
+verifies the generated files are current. It requires Git, Rust stable, and the
+Dart/Flutter SDK on your `PATH`.
 
-**macOS / Linux:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.sh | bash
+git clone https://github.com/y3l1n4ung/dust.git
+cd dust
 ```
 
-**Windows (PowerShell):**
-```powershell
-irm https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.ps1 | iex
+```bash
+cd examples/product_showcase
+dart pub get
+cd ../..
 ```
 
-### 2. Add Annotations
+```bash
+cargo run -p dust_cli -- build --root examples/product_showcase
+cargo run -p dust_cli -- check --root examples/product_showcase
+```
+
+The final command should report the showcase is clean:
+
+```text
+check  scanned: 25  clean: 25  stale: 0
+```
+
+### Use Dust in your project
+
+Add annotations to your Dart source:
+
 ```dart
 import 'package:dust_dart/dust_dart.dart';
 
@@ -80,10 +97,9 @@ class User with _$User {
 }
 ```
 
-### 3. Build
-```bash
-dust build
-```
+When using an installed CLI in your own package, run `dust build` from that
+package root. From a source checkout, use the same pattern with
+`cargo run -p dust_cli -- build --root path-to-your-package`.
 
 ---
 
