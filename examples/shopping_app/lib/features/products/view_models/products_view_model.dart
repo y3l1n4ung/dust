@@ -21,22 +21,27 @@ class ProductsViewModel extends $ProductsViewModel {
   /// Creates a [ProductsViewModel].
   ProductsViewModel(super.args);
 
+  static const Object _loadProductsAction = Object();
+
   @override
   Future<void> onInit() => loadProducts();
 
   /// Loads products.
   Future<void> loadProducts() async {
+    final token = beginAction(_loadProductsAction);
     logger.info('PRODUCTS', 'Loading products...');
     emit(state.copyWith(status: ProductsStatus.loading));
 
     try {
       final products = await args.repository.getProducts();
+      if (!isCurrentAction(token)) return;
       emit(state.copyWith(products: products, status: ProductsStatus.success));
       logger.info(
         'PRODUCTS',
         'Loaded ${products.length} products successfully',
       );
     } catch (e) {
+      if (!isCurrentAction(token)) return;
       logger.error('PRODUCTS', 'Failed to load products', e);
       emit(
         state.copyWith(

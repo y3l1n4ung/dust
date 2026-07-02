@@ -139,6 +139,10 @@ The state-management hardening stack is protected by:
   `examples/shopping_app/test/state_scope_lifecycle_test.dart`
 - generated async builder widget tests in
   `examples/shopping_app/test/app_view_model_test.dart`
+- external integration fixture in
+  `examples/shopping_app/lib/features/integrations/`
+- Dust HTTP, WebSocket, and platform-channel state tests in
+  `examples/shopping_app/test/state_*_integration_test.dart`
 - exact generated async output snapshot in
   `crates/dust_driver/tests/driver_tests/state_outputs/snapshots/async_profile_view_model.dart.snapshot`
 - driver output tests in
@@ -154,6 +158,7 @@ cargo test -p dust_driver --test driver_tests state_outputs::build_writes_async_
 (cd packages/dust_flutter && flutter test test/async_state_test.dart test/view_model_test.dart)
 (cd examples/shopping_app && flutter analyze --no-pub)
 (cd examples/shopping_app && flutter test test/state_selector_test.dart test/state_scope_lifecycle_test.dart test/app_view_model_test.dart)
+(cd examples/shopping_app && flutter test test/state_external_integration_test.dart test/state_http_integration_test.dart test/state_websocket_integration_test.dart)
 target/debug/dust check --root examples/shopping_app --fail-fast
 target/debug/dust check --root examples/shopping_app --db --fail-fast
 ```
