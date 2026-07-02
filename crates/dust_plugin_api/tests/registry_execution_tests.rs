@@ -83,3 +83,50 @@ fn plugin_generate_defaults_to_legacy_contribution_adapter() {
     assert_eq!(units.len(), 1);
     assert_eq!(units[0].mixin_members[0].members[0], "// generated");
 }
+
+#[test]
+fn registry_emits_generated_units_from_generate_api() {
+    struct GenerateOnlyPlugin;
+
+    impl DustPlugin for GenerateOnlyPlugin {
+        fn plugin_name(&self) -> &'static str {
+            "generate-only"
+        }
+
+        fn validate(&self, _file: &DartFileIr) -> Vec<Diagnostic> {
+            Vec::new()
+        }
+
+        fn emit(&self, _file: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
+            panic!("registry should call generate, not emit");
+        }
+
+        fn generate(
+            &self,
+            _file: &DartFileIr,
+            context: &PluginContext<'_>,
+        ) -> Vec<PluginContribution> {
+            let mut first = PluginContribution::default();
+            first.push_mixin_member("User", "// first");
+
+            let mut second = PluginContribution::default();
+            second.top_level_functions.push(format!(
+                "// symbols: {}",
+                context.symbol_plan.reserved().len()
+            ));
+
+            vec![first, second]
+        }
+    }
+
+    let file = sample_library();
+    let plan = SymbolPlan::default();
+    let mut registry = PluginRegistry::new();
+    registry.register(Box::new(GenerateOnlyPlugin)).unwrap();
+
+    let contributions = registry.emit_contributions(&file, &plan);
+
+    assert_eq!(contributions.len(), 2);
+    assert_eq!(contributions[0].mixin_members[0].members[0], "// first");
+    assert_eq!(contributions[1].top_level_functions[0], "// symbols: 0");
+}

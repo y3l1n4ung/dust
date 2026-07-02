@@ -4,7 +4,9 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::{DartFileIr, SymbolId};
 use dust_parser_dart::ParsedDartFileSurface;
 
-use crate::{DustPlugin, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
+use crate::{
+    DustPlugin, PluginContext, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
+};
 
 /// One plugin registration plus its claimed symbols.
 struct RegisteredPlugin {
@@ -180,8 +182,9 @@ impl PluginRegistry {
         plan: &SymbolPlan,
     ) -> Vec<crate::PluginContribution> {
         let mut contributions = Vec::with_capacity(self.plugins.len());
+        let context = PluginContext { symbol_plan: plan };
         for plugin in &self.plugins {
-            contributions.push(plugin.plugin.emit(file, plan));
+            contributions.extend(plugin.plugin.generate(file, &context));
         }
         contributions
     }
