@@ -119,6 +119,7 @@ package root. From a source checkout, use the same pattern with
 Dust is open-source and we welcome all contributors!
 
 - **Found a bug?** [Open an issue](https://github.com/y3l1n4ung/dust/issues)
+- **Security reports:** [Use private vulnerability reporting](SECURITY.md)
 - **Rust/Dart Setup:** [See CONTRIBUTING.md](CONTRIBUTING.md)
 - **Architecture:** [Read the Developer Guide](docs/developer.md)
 
