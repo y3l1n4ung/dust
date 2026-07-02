@@ -14,18 +14,19 @@ Flutter and Dart projects.
 
 ---
 
-## Getting Started
+## Guide Order
 
-If you are new to Dust, we recommend reading these guides in order:
+Start with the verified [root README quick start](../../README.md#quick-start),
+then use these task guides as needed:
 
-1.  **[Data Classes (Derive)](./derive.md)**: Master `ToString`, `Eq`, and `CopyWith`.
-2.  **[JSON Serialization (Serde)](./serde.md)**: High-performance encoding and decoding.
-3.  **[HTTP Client](./http.md)**: Type-safe, Dio-backed API clients.
-4.  **[Validation](./validation.md)**: Generated model and Flutter form validation.
-5.  **[State Management](./state.md)**: Boilerplate-free reactive ViewModels.
-6.  **[Typed Routing](./routing.md)**: Safe Navigator 2.0 implementation.
-7.  **[i18n](./i18n.md)**: Runtime translations, ARB assets, and namespaced keys.
-8.  **[Dust DB](./db.md)**: SQLx-style sqlite3 query validation and row mapping.
+1.  **[Generate data classes](./derive.md)**: Add `ToString`, `Eq`, and `CopyWith`.
+2.  **[Generate JSON serialization](./serde.md)**: Encode and decode typed models.
+3.  **[Generate HTTP clients](./http.md)**: Build type-safe Dio-backed clients.
+4.  **[Add validation](./validation.md)**: Generate model and Flutter form validation.
+5.  **[Build ViewModels](./state.md)**: Manage sync and async Flutter state.
+6.  **[Configure typed routing](./routing.md)**: Use Navigator 2.0 with typed routes.
+7.  **[Add i18n](./i18n.md)**: Generate ARB bootstrap and runtime lookup helpers.
+8.  **[Validate SQLite queries](./db.md)**: Use SQLx-style sqlite3 validation and row mapping.
 
 ---
 
@@ -46,33 +47,6 @@ Depending on the features you need, add the following packages to your `pubspec.
 
 > [!TIP]
 > Use `package:dust_dart/dust_dart.dart` for starter examples or mixed Dust features. Feature guides may use narrower imports for focused examples.
-
----
-
-## Quick Start
-
-### 1. Install the CLI
-```bash
-curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.sh | bash
-```
-
-### 2. Configure Dependencies
-Add the relevant packages to your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  dust_dart: ^0.1.0
-  dio: ^5.0.0
-```
-
-### 3. Generate Code
-```bash
-dart pub get
-dust build
-```
-
-> [!NOTE]
-> Dust generates code into `.g.dart` files. Ensure you have the corresponding `part` directive in your source files.
 
 ---
 
