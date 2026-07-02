@@ -129,7 +129,9 @@ SerdeFixture _$SerdeFixtureFromJson(Map<String, Object?> json) {
       (value, valueKey) =>
           JsonHelper.decodeList(value, valueKey,
               (item, itemKey) => JsonHelper.as<int>(item, itemKey, 'int')));
-  final profileValue = _$NestedProfileFromJson(JsonHelper.asMap(json['profile'], 'profile'));
+  final profileValue = _$NestedProfileFromJson(
+    JsonHelper.asMap(json['profile'], 'profile'),
+  );
   final receiptsValue = JsonHelper.decodeList(json['receipts'], 'receipts',
       (item, itemKey) => ExternalReceipt.fromJson(JsonHelper.asMap(item, itemKey)));
   final serverOnlyValue = json.containsKey('server_only')
