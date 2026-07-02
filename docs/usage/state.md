@@ -51,6 +51,28 @@ CounterViewModelScope(
 )
 ```
 
+Group multiple generated scopes with `ViewModelScopes`:
+
+```dart
+ViewModelScopes(
+  scopes: [
+    (child) => CounterViewModelScope(
+      args: (_) => const ViewModelArgs(),
+      create: (_, args) => CounterViewModel(args),
+      child: child,
+    ),
+    (child) => ProfileViewModelScope(
+      args: (_) => ProfileViewModelArgs(repository: repository),
+      create: (_, args) => ProfileViewModel(args),
+      child: child,
+    ),
+  ],
+  child: const App(),
+)
+```
+
+Scopes are nested in list order. The first scope is the outermost scope.
+
 Use the generated context helpers:
 
 ```dart
@@ -227,6 +249,7 @@ return switch (context.watchHomeViewModel().value) {
 Dust generates one support block per ViewModel:
 
 - `$CounterViewModel` / `$HomeViewModel` base class
+- `ViewModelScopes`
 - `CounterViewModelScope` / `HomeViewModelScope`
 - `context.watchCounterViewModel().value`
 - `context.readCounterViewModel()`

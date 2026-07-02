@@ -16,3 +16,4 @@ export 'package:flutter/widgets.dart'
 
 export 'src/state/annotations.dart';
 export 'src/state/view_model.dart';
+export 'src/state/view_model_scopes.dart';
