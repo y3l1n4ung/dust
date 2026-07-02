@@ -61,101 +61,107 @@ class _ShoppingAppState extends State<ShoppingApp> {
   @override
   Widget build(BuildContext context) {
     final observer = const LoggingStateObserver();
-    return AppViewModelScope(
-      args: (context) => AppViewModelArgs(
-        repository: _repository,
-        storage: widget.storage,
-        observer: observer,
-      ),
-      create: (context, args) => AppViewModel(args),
-      child: Builder(
-        builder: (context) => BnbViewModelScope(
-          args: (context) => BnbViewModelArgs(observer: observer),
-          create: (context, args) => BnbViewModel(args),
-          child: HomeViewModelScope(
-            args: (context) => HomeViewModelArgs(
-              repository: context.readAppViewModel().args.repository,
-              observer: observer,
+    return ViewModelScopes(
+      scopes: [
+        (child) => AppViewModelScope(
+              args: (context) => AppViewModelArgs(
+                repository: _repository,
+                storage: widget.storage,
+                observer: observer,
+              ),
+              create: (context, args) => AppViewModel(args),
+              child: child,
             ),
-            create: (context, args) => HomeViewModel(args),
-            child: AuthViewModelScope(
+        (child) => BnbViewModelScope(
+              args: (context) => BnbViewModelArgs(observer: observer),
+              create: (context, args) => BnbViewModel(args),
+              child: child,
+            ),
+        (child) => HomeViewModelScope(
+              args: (context) => HomeViewModelArgs(
+                repository: context.readAppViewModel().args.repository,
+                observer: observer,
+              ),
+              create: (context, args) => HomeViewModel(args),
+              child: child,
+            ),
+        (child) => AuthViewModelScope(
               args: (context) => AuthViewModelArgs(
                 repository: context.readAppViewModel().args.repository,
                 storage: context.readAppViewModel().args.storage,
                 observer: observer,
               ),
               create: (context, args) => AuthViewModel(args),
-              child: CartViewModelScope(
-                args: (context) => CartViewModelArgs(observer: observer),
-                create: (context, args) => CartViewModel(args),
-                child: CheckoutViewModelScope(
-                  args: (context) => CheckoutViewModelArgs(
-                    repository: context.readAppViewModel().args.repository,
-                    observer: observer,
-                  ),
-                  create: (context, args) => CheckoutViewModel(args),
-                  child: OrdersViewModelScope(
-                    args: (context) => OrdersViewModelArgs(observer: observer),
-                    create: (context, args) => OrdersViewModel(args),
-                    child: OrderTrackingViewModelScope(
-                      args: (context) => OrderTrackingViewModelArgs(
-                        repository: context.readAppViewModel().args.repository,
-                        observer: observer,
-                      ),
-                      create: (context, args) => OrderTrackingViewModel(args),
-                      child: ProductsViewModelScope(
-                        args: (context) => ProductsViewModelArgs(
-                          repository:
-                              context.readAppViewModel().args.repository,
-                          observer: observer,
-                        ),
-                        create: (context, args) => ProductsViewModel(args),
-                        child: ProductDetailViewModelScope(
-                          args: (context) => ProductDetailViewModelArgs(
-                            repository:
-                                context.readAppViewModel().args.repository,
-                            observer: observer,
-                          ),
-                          create: (context, args) =>
-                              ProductDetailViewModel(args),
-                          child: WishlistViewModelScope(
-                            args: (context) => WishlistViewModelArgs(
-                              storage: context.readAppViewModel().args.storage,
-                              observer: observer,
-                            ),
-                            create: (context, args) => WishlistViewModel(args),
-                            child: DemoCartApiViewModelScope(
-                              args: (context) => DemoCartApiViewModelArgs(
-                                repository:
-                                    context.readAppViewModel().args.repository,
-                                observer: observer,
-                              ),
-                              create: (context, args) =>
-                                  DemoCartApiViewModel(args),
-                              child: ShoppingChatViewModelScope(
-                                args: (context) => ShoppingChatViewModelArgs(
-                                  repository: context
-                                      .readAppViewModel()
-                                      .args
-                                      .repository,
-                                  observer: observer,
-                                ),
-                                create: (context, args) =>
-                                    ShoppingChatViewModel(args),
-                                child: const _ShoppingRouterApp(),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              child: child,
             ),
-          ),
-        ),
-      ),
+        (child) => CartViewModelScope(
+              args: (context) => CartViewModelArgs(observer: observer),
+              create: (context, args) => CartViewModel(args),
+              child: child,
+            ),
+        (child) => CheckoutViewModelScope(
+              args: (context) => CheckoutViewModelArgs(
+                repository: context.readAppViewModel().args.repository,
+                observer: observer,
+              ),
+              create: (context, args) => CheckoutViewModel(args),
+              child: child,
+            ),
+        (child) => OrdersViewModelScope(
+              args: (context) => OrdersViewModelArgs(observer: observer),
+              create: (context, args) => OrdersViewModel(args),
+              child: child,
+            ),
+        (child) => OrderTrackingViewModelScope(
+              args: (context) => OrderTrackingViewModelArgs(
+                repository: context.readAppViewModel().args.repository,
+                observer: observer,
+              ),
+              create: (context, args) => OrderTrackingViewModel(args),
+              child: child,
+            ),
+        (child) => ProductsViewModelScope(
+              args: (context) => ProductsViewModelArgs(
+                repository: context.readAppViewModel().args.repository,
+                observer: observer,
+              ),
+              create: (context, args) => ProductsViewModel(args),
+              child: child,
+            ),
+        (child) => ProductDetailViewModelScope(
+              args: (context) => ProductDetailViewModelArgs(
+                repository: context.readAppViewModel().args.repository,
+                observer: observer,
+              ),
+              create: (context, args) => ProductDetailViewModel(args),
+              child: child,
+            ),
+        (child) => WishlistViewModelScope(
+              args: (context) => WishlistViewModelArgs(
+                storage: context.readAppViewModel().args.storage,
+                observer: observer,
+              ),
+              create: (context, args) => WishlistViewModel(args),
+              child: child,
+            ),
+        (child) => DemoCartApiViewModelScope(
+              args: (context) => DemoCartApiViewModelArgs(
+                repository: context.readAppViewModel().args.repository,
+                observer: observer,
+              ),
+              create: (context, args) => DemoCartApiViewModel(args),
+              child: child,
+            ),
+        (child) => ShoppingChatViewModelScope(
+              args: (context) => ShoppingChatViewModelArgs(
+                repository: context.readAppViewModel().args.repository,
+                observer: observer,
+              ),
+              create: (context, args) => ShoppingChatViewModel(args),
+              child: child,
+            ),
+      ],
+      child: const _ShoppingRouterApp(),
     );
   }
 }
