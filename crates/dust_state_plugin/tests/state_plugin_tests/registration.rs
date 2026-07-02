@@ -1,7 +1,7 @@
-use dust_plugin_api::DustPlugin;
+use dust_plugin_api::{DustPlugin, PluginContext, SymbolPlan};
 use dust_state_plugin::register_plugin;
 
-use super::support::library_with_classes;
+use super::support::{args_class, library_with_classes, state_class, view_model_class};
 
 #[test]
 fn plugin_claims_view_model_config() {
@@ -22,4 +22,24 @@ fn plugin_contract_returns_empty_output_for_unannotated_library() {
         plugin.emit(&library, &dust_plugin_api::SymbolPlan::default()),
         dust_plugin_api::PluginContribution::default()
     );
+}
+
+#[test]
+fn plugin_generate_returns_state_generated_unit() {
+    let plugin = dust_state_plugin::StatePlugin::new();
+    let library = library_with_classes(vec![
+        state_class(),
+        args_class(),
+        view_model_class(
+            "TaskBoardViewModel",
+            "(state: TaskBoardState, args: TaskBoardArgs)",
+        ),
+    ]);
+    let plan = SymbolPlan::default();
+
+    let units = plugin.generate(&library, &PluginContext { symbol_plan: &plan });
+
+    assert_eq!(units.len(), 1);
+    assert_eq!(units[0], plugin.emit(&library, &plan));
+    assert!(units[0].support_types[0].contains("abstract class $TaskBoardViewModel"));
 }
