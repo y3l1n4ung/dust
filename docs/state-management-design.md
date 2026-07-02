@@ -24,6 +24,7 @@ ViewModels extend generated `AsyncViewModelBase<Data, Args>` support and expose
 - Generated proxies expose `.value` only.
 - Do not generate mirror getters for `state.*` or `args.*`.
 - Do not expose closure-backed `watch().select(...)`.
+- `readXViewModel()` returns the real ViewModel for command calls.
 - Use generated selector widgets for selected-value rebuilds.
 - Use generated listeners for one-shot effects; listener children must not
   rebuild for effects.
@@ -31,6 +32,42 @@ ViewModels extend generated `AsyncViewModelBase<Data, Args>` support and expose
   user id, tenant, repository, or workspace changes.
 - `invalidateSelf()` resets sync state to the generated initial state and async
   state to `AsyncInitial<T>`.
+
+## Command Access
+
+The recommended command API is direct read access:
+
+```dart
+context.readProductsViewModel().search(query);
+```
+
+`readXViewModel()` intentionally returns the user-authored ViewModel. Public
+ViewModel fields are therefore reachable from command code. Dust hides fields
+from generated watch proxies and selector APIs, not from direct command access.
+
+Real shopping-app usage:
+
+```dart
+final state = context.watchProductsViewModel().value;
+final products = state.filteredProducts;
+
+ProductsViewModelSelector<ProductsStatus>(
+  selector: (state) => state.status,
+  builder: (context, status, child) {
+    return Text(status.name);
+  },
+)
+
+TextField(
+  onChanged: context.readProductsViewModel().search,
+)
+```
+
+Rejected option: generated command proxies such as `context.counterActions()`.
+They require command filtering rules for method discovery, return types,
+inherited methods, effects, and testing. The current state generator does not
+model commands separately, and direct read matches Flutter's native controller
+and notifier style with less generated surface.
 
 ## Async Contract
 

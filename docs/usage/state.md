@@ -91,6 +91,23 @@ class CounterPage extends StatelessWidget {
 }
 ```
 
+## Commands
+
+Use `readXViewModel()` from callbacks to call ViewModel commands without
+subscribing the widget to state changes.
+
+```dart
+TextButton(
+  onPressed: context.readCounterViewModel().increment,
+  child: const Text('Increment'),
+)
+```
+
+`readXViewModel()` returns the real ViewModel. That keeps command calls simple
+and Dart-native, but public ViewModel fields are reachable from that command
+surface. Do not put UI-rendered values in public ViewModel fields. Put them in
+state and read them with `watch...().value` or selector widgets.
+
 ## Args
 
 Use `ViewModelArgs` for repositories, services, HTTP clients, sockets, storage,
@@ -277,3 +294,4 @@ Generated proxies expose `.value` only. They do not mirror `state.*`,
 > - Do not use `watch` inside callbacks; use `read`.
 > - Put repositories, HTTP clients, sockets, and storage in `args`.
 > - Put UI-changing data in state or loaded async data.
+> - Do not store UI-rendered state in public ViewModel fields.
