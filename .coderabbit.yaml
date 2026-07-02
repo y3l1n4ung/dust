@@ -1,0 +1,21 @@
+reviews:
+  path_filters:
+    - "!**/*.g.dart"
+    - "!**/*.dart.snapshot"
+    - "!**/.dart_tool/**"
+    - "!**/build/**"
+    - "!**/generated/**"
+    - "!target/**"
+  tools:
+    actionlint:
+      enabled: true
+    clippy:
+      enabled: true
+    zizmor:
+      enabled: true
+  auto_review:
+    enabled: false
+    labels:
+      - "coderabbit-review"
+    description_keyword: "coderabbit:review"
+    drafts: false
