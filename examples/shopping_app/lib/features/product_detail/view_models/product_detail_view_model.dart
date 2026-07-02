@@ -5,16 +5,22 @@ import '../models/product_detail_state.dart';
 
 part 'product_detail_view_model.g.dart';
 
+/// Product detail view model args model for the shopping app example.
 final class ProductDetailViewModelArgs extends ViewModelArgs {
+  /// Creates a [ProductDetailViewModelArgs].
   const ProductDetailViewModelArgs({required this.repository, super.observer});
 
+  /// Repository.
   final ShoppingRepository repository;
 }
 
+/// Product detail view model for the shopping app example.
 @ViewModel(state: ProductDetailState, args: ProductDetailViewModelArgs)
 class ProductDetailViewModel extends $ProductDetailViewModel {
+  /// Creates a [ProductDetailViewModel].
   ProductDetailViewModel(super.args);
 
+  /// Loads.
   Future<void> load(int productId) async {
     if (state.productId == productId &&
         state.status == ProductDetailStatus.success) {

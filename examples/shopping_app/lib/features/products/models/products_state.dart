@@ -3,19 +3,58 @@ import 'product.dart';
 
 part 'products_state.g.dart';
 
-enum ProductsStatus { initial, loading, success, error }
+/// Products status values for the shopping app example.
+enum ProductsStatus {
+  /// Initial products status.
+  initial,
 
-enum ProductSortOption { featured, priceLow, priceHigh, ratingHigh }
+  /// Loading products status.
+  loading,
 
+  /// Success products status.
+  success,
+
+  /// Error products status.
+  error,
+}
+
+/// Product sort option values for the shopping app example.
+enum ProductSortOption {
+  /// Featured product sort option.
+  featured,
+
+  /// Price low product sort option.
+  priceLow,
+
+  /// Price high product sort option.
+  priceHigh,
+
+  /// Rating high product sort option.
+  ratingHigh,
+}
+
+/// Products state for the shopping app example.
 @Derive([ToString(), CopyWith(), Eq()])
 class ProductsState with _$ProductsState {
+  /// Products.
   final List<Product> products;
+
+  /// Status.
   final ProductsStatus status;
+
+  /// Error message.
   final String? errorMessage;
+
+  /// Selected category.
   final String? selectedCategory;
+
+  /// Search query.
   final String searchQuery;
+
+  /// Sort option.
   final ProductSortOption sortOption;
 
+  /// Creates a [ProductsState].
   const ProductsState({
     this.products = const [],
     this.status = ProductsStatus.initial,
@@ -25,6 +64,7 @@ class ProductsState with _$ProductsState {
     this.sortOption = ProductSortOption.featured,
   });
 
+  /// Filtered products.
   List<Product> get filteredProducts {
     var result = selectedCategory == null || selectedCategory == 'all'
         ? products
@@ -53,6 +93,7 @@ class ProductsState with _$ProductsState {
     return result;
   }
 
+  /// Categories.
   List<String> get categories {
     final cats = products.map((p) => p.category).toSet().toList();
     cats.sort();

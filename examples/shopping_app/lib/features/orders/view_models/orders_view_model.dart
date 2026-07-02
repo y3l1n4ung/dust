@@ -6,14 +6,19 @@ import '../models/orders_state.dart';
 
 part 'orders_view_model.g.dart';
 
+/// Orders view model args model for the shopping app example.
 final class OrdersViewModelArgs extends ViewModelArgs {
+  /// Creates an [OrdersViewModelArgs].
   const OrdersViewModelArgs({super.observer});
 }
 
+/// Orders view model for the shopping app example.
 @ViewModel(state: OrdersState, args: OrdersViewModelArgs)
 class OrdersViewModel extends $OrdersViewModel {
+  /// Creates an [OrdersViewModel].
   OrdersViewModel(super.args);
 
+  /// Places order.
   void placeOrder({
     required List<CartItem> items,
     required double totalAmount,
@@ -31,6 +36,7 @@ class OrdersViewModel extends $OrdersViewModel {
     emit(state.copyWith(orders: [order, ...state.orders]));
   }
 
+  /// Updates order status.
   void updateOrderStatus(String orderId, OrderStatus status) {
     final updatedOrders = state.orders.map((order) {
       if (order.id == orderId) {

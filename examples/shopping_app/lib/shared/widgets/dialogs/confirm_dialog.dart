@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+/// Confirm dialog.
 class ConfirmDialog {
+  /// Shows the UI element.
   static Future<bool?> show({
     required BuildContext context,
     required String title,

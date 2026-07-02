@@ -9,7 +9,9 @@ import '../logging/logger.dart';
 import '../models/store_cart.dart';
 import 'shopping_repository.dart';
 
+/// Cached shopping repository model for the shopping app example.
 final class CachedShoppingRepository implements ShoppingRepository {
+  /// Creates a [CachedShoppingRepository].
   CachedShoppingRepository({
     required ShoppingRepository remote,
     required ShoppingCacheDatabase database,
@@ -19,6 +21,7 @@ final class CachedShoppingRepository implements ShoppingRepository {
   final ShoppingRepository _remote;
   final ShoppingCacheDatabase _database;
 
+  /// Closes.
   Future<void> close() async {
     await _database.pool.close();
   }

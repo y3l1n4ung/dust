@@ -8,8 +8,10 @@ import '../../../shared/widgets/snackbars/app_snackbar.dart';
 import '../../auth/models/auth_state.dart';
 import '../../auth/view_models/auth_view_model.dart';
 
+/// Profile screen.
 @AppRoute('/profile', name: 'profile')
 class ProfileScreen extends StatelessWidget {
+  /// Creates a [ProfileScreen].
   const ProfileScreen({super.key});
 
   @override

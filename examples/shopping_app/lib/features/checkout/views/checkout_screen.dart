@@ -12,6 +12,7 @@ import '../models/checkout_state.dart';
 import '../view_models/checkout_view_model.dart';
 import 'checkout_order_summary.dart';
 
+/// Checkout screen.
 @AppRoute(
   '/checkout',
   name: 'checkout',
@@ -19,6 +20,7 @@ import 'checkout_order_summary.dart';
   fullscreenDialog: true,
 )
 class CheckoutScreen extends StatefulWidget {
+  /// Creates a [CheckoutScreen].
   const CheckoutScreen({super.key});
 
   @override

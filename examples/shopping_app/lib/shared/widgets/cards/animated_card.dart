@@ -1,18 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Animated card.
 class AnimatedCard extends StatefulWidget {
+  /// Child.
   final Widget child;
+
+  /// On tap.
   final VoidCallback? onTap;
+
+  /// On long press.
   final VoidCallback? onLongPress;
+
+  /// Elevation.
   final double elevation;
+
+  /// Pressed elevation.
   final double pressedElevation;
+
+  /// Scale down.
   final double scaleDown;
+
+  /// Border radius.
   final BorderRadius? borderRadius;
+
+  /// Color.
   final Color? color;
+
+  /// Margin.
   final EdgeInsetsGeometry? margin;
+
+  /// Clip behavior.
   final Clip clipBehavior;
 
+  /// Creates an [AnimatedCard].
   const AnimatedCard({
     super.key,
     required this.child,

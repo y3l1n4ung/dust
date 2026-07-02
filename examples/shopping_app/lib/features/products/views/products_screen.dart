@@ -17,6 +17,7 @@ import '../models/product.dart';
 import '../models/products_state.dart';
 import '../view_models/products_view_model.dart';
 
+/// Products screen.
 @AppRoute(
   '/',
   name: 'products',
@@ -24,6 +25,7 @@ import '../view_models/products_view_model.dart';
   transition: FadeUpwardsPageTransitionsBuilder(),
 )
 class ProductsScreen extends StatefulWidget {
+  /// Creates a [ProductsScreen].
   const ProductsScreen({super.key});
 
   @override

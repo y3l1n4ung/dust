@@ -1,6 +1,1 @@
 include: ../../analysis_options.yaml
-
-analyzer:
-  errors:
-    # Tracked in #136; product_showcase is intentionally public example code.
-    public_member_api_docs: ignore

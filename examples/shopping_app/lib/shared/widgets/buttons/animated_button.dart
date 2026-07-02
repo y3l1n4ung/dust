@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Animated button.
 class AnimatedButton extends StatefulWidget {
+  /// Child.
   final Widget child;
+
+  /// On pressed.
   final VoidCallback? onPressed;
+
+  /// Scale down.
   final double scaleDown;
+
+  /// Duration.
   final Duration duration;
+
+  /// Enable haptic.
   final bool enableHaptic;
 
+  /// Creates an [AnimatedButton].
   const AnimatedButton({
     super.key,
     required this.child,
@@ -73,13 +84,24 @@ class _AnimatedButtonState extends State<AnimatedButton>
   }
 }
 
+/// Animated icon button.
 class AnimatedIconButton extends StatefulWidget {
+  /// Icon.
   final IconData icon;
+
+  /// On pressed.
   final VoidCallback? onPressed;
+
+  /// Color.
   final Color? color;
+
+  /// Size.
   final double size;
+
+  /// Tooltip.
   final String? tooltip;
 
+  /// Creates an [AnimatedIconButton].
   const AnimatedIconButton({
     super.key,
     required this.icon,

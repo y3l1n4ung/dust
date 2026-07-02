@@ -7,14 +7,19 @@ import '../models/cart_state.dart';
 
 part 'cart_view_model.g.dart';
 
+/// Cart view model args model for the shopping app example.
 final class CartViewModelArgs extends ViewModelArgs {
+  /// Creates a [CartViewModelArgs].
   const CartViewModelArgs({super.observer});
 }
 
+/// Cart view model for the shopping app example.
 @ViewModel(state: CartState, args: CartViewModelArgs)
 class CartViewModel extends $CartViewModel {
+  /// Creates a [CartViewModel].
   CartViewModel(super.args);
 
+  /// Adds to cart.
   void addToCart(Product product) {
     final existingIndex = state.items.indexWhere(
       (item) => item.product.id == product.id,
@@ -51,6 +56,7 @@ class CartViewModel extends $CartViewModel {
     }
   }
 
+  /// Removes from cart.
   void removeFromCart(int productId) {
     logger.userAction('remove_from_cart', {'productId': productId});
     final item = state.items.firstWhere((i) => i.product.id == productId);
@@ -71,6 +77,7 @@ class CartViewModel extends $CartViewModel {
     );
   }
 
+  /// Updates quantity.
   void updateQuantity(int productId, int quantity) {
     logger.userAction('update_cart_quantity', {
       'productId': productId,
@@ -93,6 +100,7 @@ class CartViewModel extends $CartViewModel {
     logger.debug('CART', 'Updated product $productId quantity to $quantity');
   }
 
+  /// Clears cart.
   void clearCart() {
     invalidateSelf();
     emitEffect(
@@ -103,5 +111,6 @@ class CartViewModel extends $CartViewModel {
     );
   }
 
+  /// Clears notification.
   void clearNotification() {}
 }

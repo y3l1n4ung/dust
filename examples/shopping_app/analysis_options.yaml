@@ -1,10 +1,5 @@
 include: ../../analysis_options.yaml
 
-analyzer:
-  errors:
-    # Tracked in #136; shopping_app still has public example UI/API surfaces.
-    public_member_api_docs: ignore
-
 linter:
   rules:
     unnecessary_underscores: false

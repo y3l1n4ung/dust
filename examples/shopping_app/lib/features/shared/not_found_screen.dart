@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 
 import '../../route.dart';
 
+/// Not found screen.
 @AppRoute('/404', name: 'notFound', guards: [])
 class NotFoundScreen extends StatelessWidget {
+  /// Creates a [NotFoundScreen].
   const NotFoundScreen({this.path = '', super.key});
 
+  /// Path.
   final String path;
 
   @override

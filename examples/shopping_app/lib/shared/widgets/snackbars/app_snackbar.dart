@@ -1,8 +1,23 @@
 import 'package:flutter/material.dart';
 
-enum SnackbarType { success, error, info, warning }
+/// Snackbar type values for the shopping app example.
+enum SnackbarType {
+  /// Success snackbar type.
+  success,
 
+  /// Error snackbar type.
+  error,
+
+  /// Info snackbar type.
+  info,
+
+  /// Warning snackbar type.
+  warning,
+}
+
+/// App snackbar model for the shopping app example.
 class AppSnackbar {
+  /// Show snackbar type.
   static void show({
     required BuildContext context,
     required String message,
@@ -44,6 +59,7 @@ class AppSnackbar {
     );
   }
 
+  /// Success snackbar type.
   static void success(
     BuildContext context,
     String message, {
@@ -59,6 +75,7 @@ class AppSnackbar {
     );
   }
 
+  /// Error snackbar type.
   static void error(
     BuildContext context,
     String message, {
@@ -74,6 +91,7 @@ class AppSnackbar {
     );
   }
 
+  /// Info snackbar type.
   static void info(
     BuildContext context,
     String message, {
@@ -89,6 +107,7 @@ class AppSnackbar {
     );
   }
 
+  /// Warning snackbar type.
   static void warning(
     BuildContext context,
     String message, {

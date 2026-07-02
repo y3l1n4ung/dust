@@ -6,19 +6,25 @@ import '../models/products_state.dart';
 
 part 'products_view_model.g.dart';
 
+/// Products view model args model for the shopping app example.
 final class ProductsViewModelArgs extends ViewModelArgs {
+  /// Creates a [ProductsViewModelArgs].
   const ProductsViewModelArgs({required this.repository, super.observer});
 
+  /// Repository.
   final ShoppingRepository repository;
 }
 
+/// Products view model for the shopping app example.
 @ViewModel(state: ProductsState, args: ProductsViewModelArgs)
 class ProductsViewModel extends $ProductsViewModel {
+  /// Creates a [ProductsViewModel].
   ProductsViewModel(super.args);
 
   @override
   Future<void> onInit() => loadProducts();
 
+  /// Loads products.
   Future<void> loadProducts() async {
     logger.info('PRODUCTS', 'Loading products...');
     emit(state.copyWith(status: ProductsStatus.loading));
@@ -41,6 +47,7 @@ class ProductsViewModel extends $ProductsViewModel {
     }
   }
 
+  /// Selects category.
   void selectCategory(String? category) {
     logger.userAction('select_category', {'category': category ?? 'all'});
     emit(state.copyWith(selectedCategory: category));
@@ -50,11 +57,13 @@ class ProductsViewModel extends $ProductsViewModel {
     );
   }
 
+  /// Searches products.
   void search(String query) {
     logger.userAction('search_products', {'query': query});
     emit(state.copyWith(searchQuery: query));
   }
 
+  /// Sorts products.
   void sort(ProductSortOption option) {
     logger.userAction('sort_products', {'option': option.name});
     emit(state.copyWith(sortOption: option));

@@ -9,20 +9,28 @@ import '../models/wishlist_state.dart';
 
 part 'wishlist_view_model.g.dart';
 
+/// Wishlist view model args model for the shopping app example.
 final class WishlistViewModelArgs extends ViewModelArgs {
+  /// Creates a [WishlistViewModelArgs].
   const WishlistViewModelArgs({required this.storage, super.observer});
 
+  /// Storage.
   final StorageService storage;
 }
 
+/// Wishlist effect model for the shopping app example.
 class WishlistEffect {
+  /// Creates a [WishlistEffect].
   const WishlistEffect(this.message);
 
+  /// Message.
   final String message;
 }
 
+/// Wishlist view model for the shopping app example.
 @ViewModel(state: WishlistState, args: WishlistViewModelArgs)
 class WishlistViewModel extends $WishlistViewModel {
+  /// Creates a [WishlistViewModel].
   WishlistViewModel(super.args);
 
   static const _storageKey = 'wishlist_items';
@@ -30,6 +38,7 @@ class WishlistViewModel extends $WishlistViewModel {
   @override
   Future<void> onInit() => loadWishlist();
 
+  /// Loads wishlist.
   Future<void> loadWishlist() async {
     emit(state.copyWith(isLoading: true));
     final raw = args.storage.getString(_storageKey);
@@ -53,6 +62,7 @@ class WishlistViewModel extends $WishlistViewModel {
     }
   }
 
+  /// Toggles.
   Future<void> toggle(Product product) async {
     final exists = state.containsProduct(product.id);
     final nextItems = exists
@@ -75,6 +85,7 @@ class WishlistViewModel extends $WishlistViewModel {
     );
   }
 
+  /// Removes.
   Future<void> remove(int productId) async {
     final nextItems = state.items
         .where((item) => item.product.id != productId)

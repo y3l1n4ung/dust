@@ -6,14 +6,24 @@ import '../../features/product_detail/models/product_review.dart';
 import '../../features/support/models/chat_message.dart';
 import '../../features/support/models/chat_socket.dart';
 
+/// Shopping feature backend.
 abstract interface class ShoppingFeatureBackend {
+  /// Gets product reviews.
   Future<List<ProductReview>> getProductReviews(int productId);
+
+  /// Quotes checkout.
   Future<CheckoutQuote> quoteCheckout(CheckoutQuoteRequest request);
+
+  /// Gets order tracking.
   Future<List<TrackingEvent>> getOrderTracking(String orderId);
+
+  /// Opens chat socket.
   ShoppingChatSocket openChatSocket();
 }
 
+/// Fake shopping feature backend model for the shopping app example.
 final class FakeShoppingFeatureBackend implements ShoppingFeatureBackend {
+  /// Creates a [FakeShoppingFeatureBackend].
   const FakeShoppingFeatureBackend();
 
   @override

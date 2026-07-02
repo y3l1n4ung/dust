@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
 
+/// Staggered list item model for the shopping app example.
 class StaggeredListItem extends StatefulWidget {
+  /// Child.
   final Widget child;
+
+  /// Index.
   final int index;
+
+  /// Delay.
   final Duration delay;
+
+  /// Duration.
   final Duration duration;
+
+  /// Curve.
   final Curve curve;
 
+  /// Creates a [StaggeredListItem].
   const StaggeredListItem({
     super.key,
     required this.child,
@@ -61,12 +72,21 @@ class _StaggeredListItemState extends State<StaggeredListItem>
   }
 }
 
+/// Animated grid item.
 class AnimatedGridItem extends StatefulWidget {
+  /// Child.
   final Widget child;
+
+  /// Index.
   final int index;
+
+  /// Cross axis count.
   final int crossAxisCount;
+
+  /// Stagger delay.
   final Duration staggerDelay;
 
+  /// Creates an [AnimatedGridItem].
   const AnimatedGridItem({
     super.key,
     required this.child,

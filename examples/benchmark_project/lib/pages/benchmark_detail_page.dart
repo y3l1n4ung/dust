@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../route.dart';
 import 'benchmark_shell.dart';
 
+/// Benchmark detail page.
 @AppRoute('/models/:id', name: 'modelDetail', shell: BenchmarkShell)
 class BenchmarkDetailPage extends StatelessWidget {
+  /// Creates a [BenchmarkDetailPage].
   const BenchmarkDetailPage({
     required this.id,
     this.tab,
@@ -12,8 +14,13 @@ class BenchmarkDetailPage extends StatelessWidget {
     super.key,
   });
 
+  /// Unique identifier.
   final int id;
+
+  /// Tab.
   final String? tab;
+
+  /// Archived.
   final bool? archived;
 
   @override

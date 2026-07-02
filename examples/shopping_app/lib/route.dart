@@ -8,10 +8,13 @@ import 'route.g.dart';
 export 'route.g.dart';
 export 'package:dust_flutter/route.dart';
 
+/// Shopping router model for the shopping app example.
 @AppRouter(initial: '/', notFound: '/404')
 final class ShoppingRouter extends $ShoppingRouter {
+  /// Creates a [ShoppingRouter].
   ShoppingRouter({required this.auth});
 
+  /// Auth.
   final AuthViewModel auth;
 
   @override
@@ -50,9 +53,23 @@ final class ShoppingRouter extends $ShoppingRouter {
   }
 }
 
-enum ShoppingAccessLevel { guest, customer, staff, admin }
+/// Shopping access level values for the shopping app example.
+enum ShoppingAccessLevel {
+  /// Guest shopping access level.
+  guest,
+
+  /// Customer shopping access level.
+  customer,
+
+  /// Staff shopping access level.
+  staff,
+
+  /// Admin shopping access level.
+  admin,
+}
 
 // Demo access levels. Production apps should use server-issued claims.
+/// Shopping access level shopping access level.
 ShoppingAccessLevel shoppingAccessLevel(User? user) {
   final username = user?.username.toLowerCase();
   return switch (username) {
@@ -63,9 +80,12 @@ ShoppingAccessLevel shoppingAccessLevel(User? user) {
   };
 }
 
+/// Staff guard model for the shopping app example.
 final class StaffGuard implements RouteGuard<AppRoutePath> {
+  /// Creates a [StaffGuard].
   const StaffGuard(this.auth);
 
+  /// Auth.
   final AuthViewModel auth;
 
   @override
@@ -80,9 +100,12 @@ final class StaffGuard implements RouteGuard<AppRoutePath> {
       shoppingAccessLevel(auth.state.user).index >= minimum.index;
 }
 
+/// Admin guard model for the shopping app example.
 final class AdminGuard implements RouteGuard<AppRoutePath> {
+  /// Creates an [AdminGuard].
   const AdminGuard(this.auth);
 
+  /// Auth.
   final AuthViewModel auth;
 
   @override

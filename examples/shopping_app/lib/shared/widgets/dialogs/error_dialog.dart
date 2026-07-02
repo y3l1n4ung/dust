@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+/// Error dialog.
 class ErrorDialog {
+  /// Shows the UI element.
   static Future<void> show({
     required BuildContext context,
     required String title,

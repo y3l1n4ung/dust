@@ -5,8 +5,10 @@ import '../state/benchmark_state.dart';
 import '../state/benchmark_view_model.dart';
 import 'benchmark_shell.dart';
 
+/// Benchmark features.
 const benchmarkFeatures = ['derive', 'serde', 'http', 'route', 'state'];
 
+/// Benchmark home page.
 @AppRoute(
   '/',
   name: 'home',
@@ -15,6 +17,7 @@ const benchmarkFeatures = ['derive', 'serde', 'http', 'route', 'state'];
   transition: FadeUpwardsPageTransitionsBuilder(),
 )
 class BenchmarkHomePage extends StatelessWidget {
+  /// Creates a [BenchmarkHomePage].
   const BenchmarkHomePage({super.key});
 
   @override

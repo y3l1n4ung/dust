@@ -6,8 +6,10 @@ import '../models/chat_message.dart';
 import '../models/chat_state.dart';
 import '../view_models/shopping_chat_view_model.dart';
 
+/// Support chat screen.
 @AppRoute('/support/chat', name: 'supportChat', guards: [])
 class SupportChatScreen extends StatefulWidget {
+  /// Creates a [SupportChatScreen].
   const SupportChatScreen({super.key});
 
   @override

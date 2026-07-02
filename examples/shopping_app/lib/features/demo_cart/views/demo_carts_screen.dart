@@ -5,8 +5,10 @@ import '../../../route.dart';
 import '../models/demo_cart_state.dart';
 import '../view_models/demo_cart_api_view_model.dart';
 
+/// Demo carts screen.
 @AppRoute('/demo-carts', name: 'demoCarts', guards: [])
 class DemoCartsScreen extends StatelessWidget {
+  /// Creates a [DemoCartsScreen].
   const DemoCartsScreen({super.key});
 
   @override

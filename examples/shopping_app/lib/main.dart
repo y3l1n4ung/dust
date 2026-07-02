@@ -34,14 +34,19 @@ Future<void> main() async {
   );
 }
 
+/// Shopping app.
 class ShoppingApp extends StatefulWidget {
+  /// Creates a [ShoppingApp].
   const ShoppingApp({
     required this.storage,
     this.repository,
     super.key,
   });
 
+  /// Storage.
   final StorageService storage;
+
+  /// Repository.
   final ShoppingRepository? repository;
 
   @override

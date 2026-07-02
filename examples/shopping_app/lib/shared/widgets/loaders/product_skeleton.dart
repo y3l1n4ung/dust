@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 import 'shimmer_widget.dart';
 
+/// Product card skeleton.
 class ProductCardSkeleton extends StatelessWidget {
+  /// Creates a [ProductCardSkeleton].
   const ProductCardSkeleton({super.key});
 
+  /// Product grid skeleton.
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -49,9 +52,12 @@ class ProductCardSkeleton extends StatelessWidget {
   }
 }
 
+/// Product grid skeleton.
 class ProductGridSkeleton extends StatelessWidget {
+  /// Item count.
   final int itemCount;
 
+  /// Creates a [ProductGridSkeleton].
   const ProductGridSkeleton({super.key, this.itemCount = 6});
 
   @override
@@ -71,7 +77,9 @@ class ProductGridSkeleton extends StatelessWidget {
   }
 }
 
+/// Cart item skeleton.
 class CartItemSkeleton extends StatelessWidget {
+  /// Creates a [CartItemSkeleton].
   const CartItemSkeleton({super.key});
 
   @override
