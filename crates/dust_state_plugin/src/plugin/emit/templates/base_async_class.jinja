@@ -1,0 +1,17 @@
+/// Async base class generated for {{ view_model_class }}.
+///
+/// Extend it from your ViewModel and implement `loadData`.
+///
+/// ```dart
+/// final class {{ view_model_class }} extends {{ generated_base }} {
+///   {{ view_model_class }}(super.args);
+///
+///   @override
+///   Future<{{ data_type }}> loadData() {
+///     return args.repository.load();
+///   }
+/// }
+/// ```
+abstract class {{ generated_base }} extends AsyncViewModelBase<{{ data_type }}, {{ args_type }}> {
+  {{ generated_base }}(super.args);
+}

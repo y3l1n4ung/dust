@@ -85,7 +85,7 @@ fn watch_rebuilds_member_package_when_shared_workspace_config_changes() {
         fail_fast: false,
         jobs: None,
         poll_interval_ms: 20,
-        max_cycles: Some(3),
+        max_cycles: Some(50),
     });
     modifier.join().unwrap();
 

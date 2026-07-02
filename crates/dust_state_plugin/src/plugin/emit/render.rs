@@ -2,52 +2,7 @@ use dust_dart_emit::render_template;
 use dust_ir::ClassIr;
 use serde::Serialize;
 
-use super::StateFieldSpec;
-
-/// Root template context for a generated view model support block.
-#[derive(Serialize)]
-struct ViewModelOutputContext {
-    /// Rendered aspect class and selector factories.
-    aspect: String,
-    /// Rendered generated base class.
-    base: String,
-    /// Rendered proxy object exposed from build context helpers.
-    proxy: String,
-    /// Rendered scope widget.
-    scope: String,
-    /// Rendered inherited widget backing the scope.
-    inherited: String,
-    /// Rendered listener widget.
-    listener: String,
-    /// Rendered build context extension.
-    extension: String,
-}
-
-/// Template context for the generated inherited-model aspect type.
-#[derive(Serialize)]
-struct AspectContext<'a> {
-    /// Generated Dart aspect class name.
-    aspect_class: &'a str,
-    /// Dart state type represented by the aspect.
-    state_type: &'a str,
-}
-
-/// Template context for a generated field-specific aspect selector.
-#[derive(Serialize)]
-struct AspectSelectorContext<'a> {
-    /// Generated Dart aspect class name.
-    aspect_class: &'a str,
-    /// Dart state type represented by the selector.
-    state_type: &'a str,
-    /// Lower camel form of the view model class used in selector names.
-    vm_lower: String,
-    /// Pascal form of the field name used in selector names.
-    field_pascal: String,
-    /// Dart field name read from the state object.
-    field_name: &'a str,
-    /// Dart field type emitted for the selector result.
-    field_type: &'a str,
-}
+use crate::plugin::model::ViewModelMode;
 
 /// Template context for the generated abstract view model base class.
 #[derive(Serialize)]
@@ -64,6 +19,19 @@ struct BaseContext<'a> {
     initial_state: &'a str,
 }
 
+/// Template context for the generated async view model base class.
+#[derive(Serialize)]
+struct AsyncBaseContext<'a> {
+    /// Generated base class name that user view models extend.
+    generated_base: &'a str,
+    /// User-authored view model class name.
+    view_model_class: &'a str,
+    /// Dart data type loaded by the view model.
+    data_type: &'a str,
+    /// Dart args type passed to the generated base.
+    args_type: &'a str,
+}
+
 /// Template context for the generated build context proxy class.
 #[derive(Serialize)]
 struct ProxyContext<'a> {
@@ -75,25 +43,36 @@ struct ProxyContext<'a> {
     view_model_class: &'a str,
     /// Dart state type managed by the view model.
     state_type: &'a str,
-    /// Generated aspect class name used by selectors.
-    aspect_class: &'a str,
-    /// Rendered field-specific proxy getters.
-    field_getters: String,
 }
 
-/// Template context for one field-specific proxy getter.
+/// Template context for the generated selector widget.
 #[derive(Serialize)]
-struct ProxyFieldContext<'a> {
-    /// Generated scope class name used for selection.
+struct SelectorContext<'a> {
+    /// Generated public selector widget class name.
+    selector_class: &'a str,
+    /// Generated private selector state class name.
+    selector_state_class: &'a str,
+    /// Generated scope class name used for lookups.
     scope_class: &'a str,
-    /// Lower camel form of the selector prefix.
-    vm_lower: String,
-    /// Pascal form of the field name used in getter names.
-    field_pascal: String,
-    /// Dart field name read from the state object.
-    field_name: &'a str,
-    /// Dart field type emitted for the getter result.
-    field_type: &'a str,
+    /// User-authored view model class name.
+    view_model_class: &'a str,
+    /// Dart state type managed by the view model.
+    state_type: &'a str,
+}
+
+/// Template context for the generated async builder widget.
+#[derive(Serialize)]
+struct AsyncBuilderContext<'a> {
+    /// Generated public builder widget class name.
+    builder_class: &'a str,
+    /// User-authored view model class name.
+    view_model_class: &'a str,
+    /// Dart data type loaded by the view model.
+    data_type: &'a str,
+    /// Dart type used for optional previous data.
+    previous_data_type: &'a str,
+    /// Dart expression used to pass previous data to the data builder.
+    previous_data_argument: &'a str,
 }
 
 /// Template context for the generated view model scope widget.
@@ -101,14 +80,23 @@ struct ProxyFieldContext<'a> {
 struct ScopeContext<'a> {
     /// Generated public scope class name.
     scope_class: &'a str,
+    /// Generated private instance inherited widget class name.
+    instance_class: &'a str,
     /// Generated private inherited widget class name.
     inherited_class: &'a str,
     /// User-authored view model class name.
     view_model_class: &'a str,
     /// Dart args type accepted by the scope.
     args_type: &'a str,
-    /// Generated aspect class name used for inherited model notifications.
-    aspect_class: &'a str,
+}
+
+/// Template context for the generated identity-only inherited widget.
+#[derive(Serialize)]
+struct InstanceContext<'a> {
+    /// Generated inherited widget class name.
+    instance_class: &'a str,
+    /// User-authored view model class name.
+    view_model_class: &'a str,
 }
 
 /// Template context for the generated inherited widget.
@@ -120,8 +108,6 @@ struct InheritedContext<'a> {
     view_model_class: &'a str,
     /// Dart state type exposed through the inherited widget.
     state_type: &'a str,
-    /// Generated aspect class name used for update filtering.
-    aspect_class: &'a str,
 }
 
 /// Template context for the generated listener widget.
@@ -160,46 +146,70 @@ pub(super) fn render_view_model_output(
     state_type: &str,
     args_type: &str,
     initial_source: Option<&str>,
-    state_fields: &[StateFieldSpec],
+    mode: ViewModelMode,
 ) -> String {
     let generated_base = format!("${}", class.name);
     let proxy_class = format!("_${}Proxy", class.name);
+    let selector_class = format!("{}Selector", class.name);
+    let selector_state_class = format!("_{}SelectorState", class.name);
+    let builder_class = format!("{}Builder", class.name);
     let scope_class = format!("{}Scope", class.name);
+    let instance_class = format!("_{}Instance", class.name);
     let inherited_class = format!("_{}Inherited", class.name);
     let listener_class = format!("{}Listener", class.name);
     let listener_state_class = format!("_{}ListenerState", class.name);
     let extension_class = format!("{}BuildContext", class.name);
-    let aspect_class = format!("_{}Aspect", class.name);
     let watch_name = format!("watch{}", class.name);
     let read_name = format!("read{}", class.name);
     let initial_state = initial_source
         .map(str::to_owned)
         .unwrap_or_else(|| format!("const {state_type}()"));
-    let base = render_base(
-        &generated_base,
-        &class.name,
-        state_type,
-        args_type,
-        &initial_state,
-    );
-    let aspect = render_aspect_class(&aspect_class, &class.name, state_type, state_fields);
+    let generated_state_type = match mode {
+        ViewModelMode::Sync => state_type.to_owned(),
+        ViewModelMode::Async => format!("AsyncState<{state_type}>"),
+    };
+    let base = match mode {
+        ViewModelMode::Sync => render_base(
+            &generated_base,
+            &class.name,
+            state_type,
+            args_type,
+            &initial_state,
+        ),
+        ViewModelMode::Async => {
+            render_async_base(&generated_base, &class.name, state_type, args_type)
+        }
+    };
     let proxy = render_proxy(
         &proxy_class,
         &scope_class,
         &class.name,
-        state_type,
-        &aspect_class,
-        &class.name,
-        state_fields,
+        &generated_state_type,
     );
+    let selector = render_selector(
+        &selector_class,
+        &selector_state_class,
+        &scope_class,
+        &class.name,
+        &generated_state_type,
+    );
+    let async_builder = match mode {
+        ViewModelMode::Sync => None,
+        ViewModelMode::Async => Some(render_async_builder(
+            &builder_class,
+            &class.name,
+            state_type,
+        )),
+    };
     let scope = render_scope(
         &scope_class,
+        &instance_class,
         &inherited_class,
         &class.name,
         args_type,
-        &aspect_class,
     );
-    let inherited = render_inherited(&inherited_class, &class.name, state_type, &aspect_class);
+    let instance = render_instance(&instance_class, &class.name);
+    let inherited = render_inherited(&inherited_class, &class.name, &generated_state_type);
     let listener = render_listener(
         &listener_class,
         &listener_state_class,
@@ -219,61 +229,16 @@ pub(super) fn render_view_model_output(
         },
     );
 
-    render_template(
-        "view_model_output",
-        include_str!("templates/view_model_output.jinja"),
-        ViewModelOutputContext {
-            aspect,
-            base,
-            proxy,
-            scope,
-            inherited,
-            listener,
-            extension,
-        },
-    )
-}
-
-/// Renders the aspect class and any field-specific selector factories.
-fn render_aspect_class(
-    aspect_class: &str,
-    view_model_class: &str,
-    state_type: &str,
-    state_fields: &[StateFieldSpec],
-) -> String {
-    let field_selectors = state_fields
-        .iter()
-        .map(|field| {
-            render_template(
-                "aspect_selector",
-                include_str!("templates/aspect_selector.jinja"),
-                AspectSelectorContext {
-                    aspect_class,
-                    state_type,
-                    vm_lower: lower_camel(view_model_class),
-                    field_pascal: pascal_case(&field.name),
-                    field_name: &field.name,
-                    field_type: &field.type_source,
-                },
-            )
-        })
+    let mut sections = vec![base, proxy, selector];
+    if let Some(async_builder) = async_builder {
+        sections.push(async_builder);
+    }
+    sections.extend([scope, instance, inherited, listener, extension]);
+    sections
+        .into_iter()
+        .map(|section| section.trim().to_owned())
         .collect::<Vec<_>>()
-        .join("\n\n");
-    [
-        render_template(
-            "aspect_class",
-            include_str!("templates/aspect_class.jinja"),
-            AspectContext {
-                aspect_class,
-                state_type,
-            },
-        ),
-        field_selectors,
-    ]
-    .into_iter()
-    .filter(|part| !part.is_empty())
-    .collect::<Vec<_>>()
-    .join("\n\n")
+        .join("\n\n")
 }
 
 /// Renders the abstract generated base class for a view model.
@@ -297,32 +262,32 @@ fn render_base(
     )
 }
 
-/// Renders the build context proxy and its field selectors.
+/// Renders the async generated base class for a view model.
+fn render_async_base(
+    generated_base: &str,
+    view_model_class: &str,
+    data_type: &str,
+    args_type: &str,
+) -> String {
+    render_template(
+        "base_async_class",
+        include_str!("templates/base_async_class.jinja"),
+        AsyncBaseContext {
+            generated_base,
+            view_model_class,
+            data_type,
+            args_type,
+        },
+    )
+}
+
+/// Renders the build context proxy.
 fn render_proxy(
     proxy_class: &str,
     scope_class: &str,
     view_model_class: &str,
     state_type: &str,
-    aspect_class: &str,
-    selector_prefix: &str,
-    state_fields: &[StateFieldSpec],
 ) -> String {
-    let field_getters = state_fields
-        .iter()
-        .map(|field| {
-            render_template(
-                "proxy_field_getter",
-                include_str!("templates/proxy_field_getter.jinja"),
-                ProxyFieldContext {
-                    scope_class,
-                    vm_lower: lower_camel(selector_prefix),
-                    field_pascal: pascal_case(&field.name),
-                    field_name: &field.name,
-                    field_type: &field.type_source,
-                },
-            )
-        })
-        .collect::<String>();
     render_template(
         "proxy_class",
         include_str!("templates/proxy_class.jinja"),
@@ -331,40 +296,101 @@ fn render_proxy(
             scope_class,
             view_model_class,
             state_type,
-            aspect_class,
-            field_getters,
         },
     )
+}
+
+/// Renders the selector widget.
+fn render_selector(
+    selector_class: &str,
+    selector_state_class: &str,
+    scope_class: &str,
+    view_model_class: &str,
+    state_type: &str,
+) -> String {
+    render_template(
+        "selector_class",
+        include_str!("templates/selector_class.jinja"),
+        SelectorContext {
+            selector_class,
+            selector_state_class,
+            scope_class,
+            view_model_class,
+            state_type,
+        },
+    )
+}
+
+/// Renders the async builder widget.
+fn render_async_builder(builder_class: &str, view_model_class: &str, data_type: &str) -> String {
+    let previous_data_type = previous_data_type(data_type);
+    let previous_data_argument = previous_data_argument(data_type);
+    render_template(
+        "async_builder_class",
+        include_str!("templates/async_builder_class.jinja"),
+        AsyncBuilderContext {
+            builder_class,
+            view_model_class,
+            data_type,
+            previous_data_type: &previous_data_type,
+            previous_data_argument: &previous_data_argument,
+        },
+    )
+}
+
+/// Returns the nullable type used by async error callbacks.
+fn previous_data_type(data_type: &str) -> String {
+    if data_type.trim_end().ends_with('?') {
+        data_type.to_owned()
+    } else {
+        format!("{data_type}?")
+    }
+}
+
+/// Returns the previous-data expression passed to async data builders.
+fn previous_data_argument(data_type: &str) -> String {
+    if data_type.trim_end().ends_with('?') {
+        "previousData".to_owned()
+    } else {
+        format!("previousData as {data_type}")
+    }
 }
 
 /// Renders the scope widget that owns a view model instance.
 fn render_scope(
     scope_class: &str,
+    instance_class: &str,
     inherited_class: &str,
     view_model_class: &str,
     args_type: &str,
-    aspect_class: &str,
 ) -> String {
     render_template(
         "scope_class",
         include_str!("templates/scope_class.jinja"),
         ScopeContext {
             scope_class,
+            instance_class,
             inherited_class,
             view_model_class,
             args_type,
-            aspect_class,
         },
     )
 }
 
-/// Renders the inherited widget used for aspect-scoped rebuilds.
-fn render_inherited(
-    inherited_class: &str,
-    view_model_class: &str,
-    state_type: &str,
-    aspect_class: &str,
-) -> String {
+/// Renders the identity-only inherited widget.
+fn render_instance(instance_class: &str, view_model_class: &str) -> String {
+    render_template(
+        "instance_class",
+        include_str!("templates/instance_class.jinja"),
+        InstanceContext {
+            instance_class,
+            view_model_class,
+        },
+    )
+}
+
+/// Renders the inherited widget used for full-state rebuilds.
+fn render_inherited(inherited_class: &str, view_model_class: &str, state_type: &str) -> String {
     render_template(
         "inherited_class",
         include_str!("templates/inherited_class.jinja"),
@@ -372,7 +398,6 @@ fn render_inherited(
             inherited_class,
             view_model_class,
             state_type,
-            aspect_class,
         },
     )
 }
@@ -396,26 +421,18 @@ fn render_listener(
     )
 }
 
-/// Converts a PascalCase identifier to lowerCamelCase.
-fn lower_camel(value: &str) -> String {
-    let mut chars = value.chars();
-    let Some(first) = chars.next() else {
-        return String::new();
-    };
-    first.to_ascii_lowercase().to_string() + chars.as_str()
-}
+#[cfg(test)]
+mod tests {
+    use super::render_async_builder;
 
-/// Converts a snake_case identifier to PascalCase.
-fn pascal_case(value: &str) -> String {
-    value
-        .split('_')
-        .filter(|part| !part.is_empty())
-        .map(|part| {
-            let mut chars = part.chars();
-            let Some(first) = chars.next() else {
-                return String::new();
-            };
-            first.to_ascii_uppercase().to_string() + chars.as_str()
-        })
-        .collect::<String>()
+    #[test]
+    fn async_builder_uses_nullable_previous_data_type_once() {
+        let source =
+            render_async_builder("ProfileViewModelBuilder", "ProfileViewModel", "Profile?");
+
+        assert!(source.contains("Profile? previousData"));
+        assert!(source.contains("data(context, previousData)"));
+        assert!(!source.contains("Profile??"));
+        assert!(!source.contains("previousData as Profile?"));
+    }
 }

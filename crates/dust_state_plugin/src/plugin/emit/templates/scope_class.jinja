@@ -1,7 +1,7 @@
-/// Provides {{ view_model_class }} to descendants and owns it by default.
+/// Creates and provides {{ view_model_class }} to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// {{ scope_class }}(
@@ -11,12 +11,13 @@
 /// )
 /// ```
 class {{ scope_class }} extends StatefulWidget {
-  /// Creates an owned {{ view_model_class }} from typed args.
+  /// Creates and owns {{ view_model_class }} from typed args.
   const {{ scope_class }}({
     super.key,
     required this.args,
     required this.create,
     required this.child,
+    this.identity,
   }) : value = null;
 
   /// Provides an externally owned {{ view_model_class }} without disposing it.
@@ -25,27 +26,33 @@ class {{ scope_class }} extends StatefulWidget {
     required {{ view_model_class }} this.value,
     required this.child,
   }) : args = null,
-       create = null;
+       create = null,
+       identity = null;
 
   final {{ args_type }} Function(BuildContext context)? args;
   final {{ view_model_class }} Function(BuildContext context, {{ args_type }} args)? create;
+  final Object? Function(BuildContext context)? identity;
   final {{ view_model_class }}? value;
   final Widget child;
 
-  /// Reads {{ view_model_class }} without subscribing the caller to state changes.
+  /// Reads {{ view_model_class }} without rebuilding when state changes.
   static {{ view_model_class }} read(BuildContext context) {
     final scope = context
-        .getElementForInheritedWidgetOfExactType<{{ inherited_class }}>()
-        ?.widget as {{ inherited_class }}?;
+        .getElementForInheritedWidgetOfExactType<{{ instance_class }}>()
+        ?.widget as {{ instance_class }}?;
     if (scope == null) throw StateError('No {{ scope_class }} found in context.');
     return scope.viewModel;
   }
 
-  /// Watches {{ view_model_class }} and optionally subscribes to one generated aspect.
-  static {{ view_model_class }} of(BuildContext context, { {{- aspect_class }}<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<{{ inherited_class }}>(
-      aspect: aspect,
-    );
+  static {{ view_model_class }} _watchInstance(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<{{ instance_class }}>();
+    if (scope == null) throw StateError('No {{ scope_class }} found in context.');
+    return scope.viewModel;
+  }
+
+  /// Watches {{ view_model_class }} and rebuilds when state changes.
+  static {{ view_model_class }} of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<{{ inherited_class }}>();
     if (scope == null) throw StateError('No {{ scope_class }} found in context.');
     return scope.viewModel;
   }
@@ -56,13 +63,21 @@ class {{ scope_class }} extends StatefulWidget {
 
 class _{{ scope_class }}State extends State<{{ scope_class }}> {
   {{ view_model_class }}? _viewModel;
+  Object? _identity;
   bool _ownsViewModel = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_viewModel == null) {
-      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false, notify: false);
+      return;
+    }
+    final nextIdentity = widget.identity?.call(context);
+    if (_viewModel == null || nextIdentity != _identity) {
+      _identity = nextIdentity;
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true, notify: false);
     }
   }
 
@@ -73,12 +88,15 @@ class _{{ scope_class }}State extends State<{{ scope_class }}> {
     if (external != null) {
       _replaceViewModel(external, ownsViewModel: false);
     } else if (oldWidget.value != null) {
+      _identity = widget.identity?.call(context);
       _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    } else {
+      final nextIdentity = widget.identity?.call(context);
+      if (nextIdentity != _identity) {
+        _identity = nextIdentity;
+        _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+      }
     }
-  }
-
-  {{ view_model_class }} _resolveViewModel() {
-    return widget.value ?? _createOwnedViewModel();
   }
 
   {{ view_model_class }} _createOwnedViewModel() {
@@ -110,6 +128,7 @@ class _{{ scope_class }}State extends State<{{ scope_class }}> {
     final previous = _viewModel;
     if (identical(previous, nextViewModel)) {
       _ownsViewModel = ownsViewModel;
+      _scheduleInit(nextViewModel);
       if (notify && mounted) setState(() {});
       return;
     }
@@ -118,14 +137,26 @@ class _{{ scope_class }}State extends State<{{ scope_class }}> {
     _viewModel = nextViewModel;
     _ownsViewModel = ownsViewModel;
     nextViewModel.addListener(_onViewModelStateChanged);
-    if (ownsViewModel) {
-      scheduleMicrotask(() {
-        if (mounted && identical(_viewModel, nextViewModel)) {
-          nextViewModel.init();
-        }
-      });
-    }
+    _scheduleInit(nextViewModel);
     if (notify && mounted) setState(() {});
+  }
+
+  void _scheduleInit({{ view_model_class }} viewModel) {
+    scheduleMicrotask(() async {
+      if (!mounted || !identical(_viewModel, viewModel)) return;
+      try {
+        await viewModel.init();
+      } catch (error, stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+            library: 'dust state',
+            context: ErrorDescription('{{ scope_class }} init failed'),
+          ),
+        );
+      }
+    });
   }
 
   void _onViewModelStateChanged() {
@@ -146,10 +177,13 @@ class _{{ scope_class }}State extends State<{{ scope_class }}> {
     if (viewModel == null) {
       throw StateError('{{ scope_class }} built before its view model was initialized.');
     }
-    return {{ inherited_class }}(
+    return {{ instance_class }}(
       viewModel: viewModel,
-      state: viewModel.value,
-      child: widget.child,
+      child: {{ inherited_class }}(
+        viewModel: viewModel,
+        state: viewModel.value,
+        child: widget.child,
+      ),
     );
   }
 }

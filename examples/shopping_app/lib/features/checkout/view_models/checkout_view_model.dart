@@ -60,6 +60,6 @@ class CheckoutViewModel extends $CheckoutViewModel {
   }
 
   void reset() {
-    emit(const CheckoutState());
+    invalidateSelf();
   }
 }

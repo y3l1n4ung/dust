@@ -137,7 +137,7 @@ fn collects_state_and_view_model_workspace_facts() {
     let view_models = snapshot.string_set("dust_state.view_models.v1").unwrap();
     assert_eq!(
         view_models,
-        &[r#"{"class_name":"TaskBoardViewModel","state_type":"TaskBoardState","args_type":"TaskBoardArgs","initial_source":"const TaskBoardState()","generated_base_class":"$TaskBoardViewModel","import_uri":"package:state_test/features/task_board.dart"}"#.to_owned()]
+        &[r#"{"class_name":"TaskBoardViewModel","state_type":"TaskBoardState","args_type":"TaskBoardArgs","initial_source":"const TaskBoardState()","mode":"sync","generated_base_class":"$TaskBoardViewModel","import_uri":"package:state_test/features/task_board.dart"}"#.to_owned()]
     );
 }
 
@@ -167,7 +167,7 @@ fn collects_prefixed_view_model_workspace_fact() {
 
     assert_eq!(
         snapshot.string_set("dust_state.view_models.v1").unwrap(),
-        &[r#"{"class_name":"TaskBoardViewModel","state_type":"TaskBoardState","args_type":"TaskBoardArgs","initial_source":"const TaskBoardState()","generated_base_class":"$TaskBoardViewModel","import_uri":"package:state_test/features/task_board.dart"}"#.to_owned()]
+        &[r#"{"class_name":"TaskBoardViewModel","state_type":"TaskBoardState","args_type":"TaskBoardArgs","initial_source":"const TaskBoardState()","mode":"sync","generated_base_class":"$TaskBoardViewModel","import_uri":"package:state_test/features/task_board.dart"}"#.to_owned()]
     );
 }
 

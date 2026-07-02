@@ -196,3 +196,66 @@ fn accepts_imported_state_and_args_when_library_has_imports() {
 
     assert!(diagnostics.is_empty(), "{diagnostics:?}");
 }
+
+#[test]
+fn accepts_async_state_without_default_constructor() {
+    let plugin = register_plugin();
+    let mut state = state_class();
+    state.fields = vec![FieldIr {
+        name: "name".to_owned(),
+        ty: TypeIr::named("String"),
+        span: super::support::span(20, 30),
+        has_default: false,
+        serde: None,
+        configs: Vec::new(),
+    }];
+
+    let diagnostics = plugin.validate(&library_with_classes(vec![
+        state,
+        args_class(),
+        view_model_class(
+            "ProfileViewModel",
+            "(state: TaskBoardState, args: TaskBoardArgs, mode: ViewModelMode.async)",
+        ),
+    ]));
+
+    assert!(diagnostics.is_empty(), "{diagnostics:?}");
+}
+
+#[test]
+fn rejects_async_initial_expression() {
+    let plugin = register_plugin();
+    let diagnostics = plugin.validate(&library_with_classes(vec![
+        state_class(),
+        args_class(),
+        view_model_class(
+            "ProfileViewModel",
+            "(state: TaskBoardState, args: TaskBoardArgs, mode: ViewModelMode.async, initial: const TaskBoardState())",
+        ),
+    ]));
+
+    assert!(diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("uses async mode, so remove `initial:`")
+    }));
+}
+
+#[test]
+fn rejects_unknown_view_model_mode() {
+    let plugin = register_plugin();
+    let diagnostics = plugin.validate(&library_with_classes(vec![
+        state_class(),
+        args_class(),
+        view_model_class(
+            "TaskBoardViewModel",
+            "(state: TaskBoardState, args: TaskBoardArgs, mode: FancyMode.fast)",
+        ),
+    ]));
+
+    assert!(diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("must be `ViewModelMode.sync` or `ViewModelMode.async`")
+    }));
+}

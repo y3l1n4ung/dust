@@ -13,6 +13,9 @@
 
 part of 'app_view_model.dart';
 
+const DeepCollectionEquality _homePageDataFeaturedProductsEquality = DeepCollectionEquality();
+const DeepCollectionEquality _homePageDataCategoriesEquality = DeepCollectionEquality();
+
 mixin _$AppState {
   @override
   String toString() {
@@ -50,6 +53,74 @@ mixin _$AppState {
   _$AppStateCopyWith<AppState> get copyWith => _$AppStateCopyWithImpl<AppState>(this as AppState, (value) => value);
 }
 
+mixin _$BnbState {
+  @override
+  String toString() {
+    final self = this as BnbState;
+    return 'BnbState('
+        'currentTab: ${self.currentTab}'
+        ')';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    final self = this as BnbState;
+    return identical(this, other) ||
+        other is BnbState &&
+            runtimeType == other.runtimeType &&
+            other.currentTab == self.currentTab;
+  }
+
+  @override
+  int get hashCode {
+    final self = this as BnbState;
+    return Object.hashAll([
+      runtimeType,
+      self.currentTab,
+    ]);
+  }
+
+  /// Creates a copy of this `BnbState` with selected fields replaced.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final updated = bnbState.copyWith();
+  /// ```
+  @pragma('vm:prefer-inline')
+  _$BnbStateCopyWith<BnbState> get copyWith => _$BnbStateCopyWithImpl<BnbState>(this as BnbState, (value) => value);
+}
+
+mixin _$HomePageData {
+  @override
+  String toString() {
+    final self = this as HomePageData;
+    return 'HomePageData('
+        'featuredProducts: ${self.featuredProducts}, '
+        'categories: ${self.categories}'
+        ')';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    final self = this as HomePageData;
+    return identical(this, other) ||
+        other is HomePageData &&
+            runtimeType == other.runtimeType &&
+            _homePageDataFeaturedProductsEquality.equals(other.featuredProducts, self.featuredProducts) &&
+            _homePageDataCategoriesEquality.equals(other.categories, self.categories);
+  }
+
+  @override
+  int get hashCode {
+    final self = this as HomePageData;
+    return Object.hashAll([
+      runtimeType,
+      _homePageDataFeaturedProductsEquality.hash(self.featuredProducts),
+      _homePageDataCategoriesEquality.hash(self.categories),
+    ]);
+  }
+}
+
 // CopyWith API inspired by Freezed.
 
 /// @nodoc
@@ -78,24 +149,35 @@ final class _$AppStateCopyWithImpl<$Res> implements _$AppStateCopyWith<$Res> {
     );
   }
 }
-final class _AppViewModelAspect<R> {
-  const _AppViewModelAspect(this.selector);
-
-  final R Function(AppState state) selector;
-
-  bool hasChanged(AppState previous, AppState next) {
-    return selector(previous) != selector(next);
-  }
+/// @nodoc
+abstract class _$BnbStateCopyWith<$Res> {
+  $Res call({
+    BnbTab? currentTab,
+  });
 }
 
-AppBackendMode _appViewModelSelectBackendMode(AppState state) => state.backendMode;
-final _appViewModelBackendModeAspect = _AppViewModelAspect<AppBackendMode>(
-  _appViewModelSelectBackendMode,
-);
+/// @nodoc
+final class _$BnbStateCopyWithImpl<$Res> implements _$BnbStateCopyWith<$Res> {
+  const _$BnbStateCopyWithImpl(this._self, this._then);
 
-/// Generated base class for AppViewModel.
+  final BnbState _self;
+  final $Res Function(BnbState) _then;
+
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? currentTab = null,
+  }) {
+    return _then(
+      BnbState(
+        currentTab: currentTab == null ? _self.currentTab : currentTab as BnbTab,
+      )
+    );
+  }
+}
+/// Base class generated for AppViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class AppViewModel extends $AppViewModel {
@@ -106,14 +188,12 @@ abstract class $AppViewModel extends ViewModelBase<AppState, AppViewModelArgs> {
   $AppViewModel(super.args) : super(initialState: const AppState());
 }
 
-/// Typed state reader returned by `context.watchAppViewModel()`.
+/// Reads AppViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchAppViewModel().value;
-/// final count = context.watchAppViewModel().select((state) => state.count);
 /// ```
 class _$AppViewModelProxy {
   _$AppViewModelProxy(this._context);
@@ -123,24 +203,98 @@ class _$AppViewModelProxy {
   AppState get value {
     return AppViewModelScope.of(_context).value;
   }
+}
 
-  AppBackendMode get backendMode {
-    return AppViewModelScope.of(
-      _context,
-      aspect: _appViewModelBackendModeAspect,
-    ).state.backendMode;
+/// Rebuilds when a selected AppState value changes.
+///
+/// Use this for widgets that depend on one field or derived value.
+class AppViewModelSelector<R> extends StatefulWidget {
+  const AppViewModelSelector({
+    super.key,
+    required this.selector,
+    required this.builder,
+    this.child,
+    this.equals,
+  });
+
+  final R Function(AppState state) selector;
+  final Widget Function(BuildContext context, R value, Widget? child) builder;
+  final Widget? child;
+  final bool Function(R previous, R next)? equals;
+
+  @override
+  State<AppViewModelSelector<R>> createState() => _AppViewModelSelectorState<R>();
+}
+
+class _AppViewModelSelectorState<R> extends State<AppViewModelSelector<R>> {
+  AppViewModel? _viewModel;
+  R? _selected;
+  bool _hasSelected = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextViewModel = AppViewModelScope._watchInstance(context);
+    if (identical(_viewModel, nextViewModel)) return;
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    _viewModel = nextViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    _selectCurrent(force: true);
   }
 
-  R select<R>(R Function(AppState state) selector) {
-    final aspect = _AppViewModelAspect<R>(selector);
-    return selector(AppViewModelScope.of(_context, aspect: aspect).value);
+  @override
+  void didUpdateWidget(AppViewModelSelector<R> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _selectCurrent(force: true);
+  }
+
+  void _onViewModelStateChanged() {
+    _selectCurrent();
+  }
+
+  void _selectCurrent({bool force = false}) {
+    final viewModel = _viewModel;
+    if (viewModel == null) return;
+    final nextSelected = widget.selector(viewModel.value);
+    if (!_hasSelected) {
+      _selected = nextSelected;
+      _hasSelected = true;
+      return;
+    }
+    final previousSelected = _selected as R;
+    final equals = widget.equals;
+    final unchanged = equals == null
+        ? previousSelected == nextSelected
+        : equals(previousSelected, nextSelected);
+    if (!force && unchanged) return;
+    if (force || !mounted) {
+      _selected = nextSelected;
+    } else {
+      setState(() {
+        _selected = nextSelected;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasSelected) {
+      _selectCurrent(force: true);
+    }
+    return widget.builder(context, _selected as R, widget.child);
   }
 }
 
-/// Provides AppViewModel to descendants and owns it by default.
+/// Creates and provides AppViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// AppViewModelScope(
@@ -150,12 +304,13 @@ class _$AppViewModelProxy {
 /// )
 /// ```
 class AppViewModelScope extends StatefulWidget {
-  /// Creates an owned AppViewModel from typed args.
+  /// Creates and owns AppViewModel from typed args.
   const AppViewModelScope({
     super.key,
     required this.args,
     required this.create,
     required this.child,
+    this.identity,
   }) : value = null;
 
   /// Provides an externally owned AppViewModel without disposing it.
@@ -164,27 +319,33 @@ class AppViewModelScope extends StatefulWidget {
     required AppViewModel this.value,
     required this.child,
   }) : args = null,
-       create = null;
+       create = null,
+       identity = null;
 
   final AppViewModelArgs Function(BuildContext context)? args;
   final AppViewModel Function(BuildContext context, AppViewModelArgs args)? create;
+  final Object? Function(BuildContext context)? identity;
   final AppViewModel? value;
   final Widget child;
 
-  /// Reads AppViewModel without subscribing the caller to state changes.
+  /// Reads AppViewModel without rebuilding when state changes.
   static AppViewModel read(BuildContext context) {
     final scope = context
-        .getElementForInheritedWidgetOfExactType<_AppViewModelInherited>()
-        ?.widget as _AppViewModelInherited?;
+        .getElementForInheritedWidgetOfExactType<_AppViewModelInstance>()
+        ?.widget as _AppViewModelInstance?;
     if (scope == null) throw StateError('No AppViewModelScope found in context.');
     return scope.viewModel;
   }
 
-  /// Watches AppViewModel and optionally subscribes to one generated aspect.
-  static AppViewModel of(BuildContext context, {_AppViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_AppViewModelInherited>(
-      aspect: aspect,
-    );
+  static AppViewModel _watchInstance(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_AppViewModelInstance>();
+    if (scope == null) throw StateError('No AppViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  /// Watches AppViewModel and rebuilds when state changes.
+  static AppViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_AppViewModelInherited>();
     if (scope == null) throw StateError('No AppViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -195,13 +356,21 @@ class AppViewModelScope extends StatefulWidget {
 
 class _AppViewModelScopeState extends State<AppViewModelScope> {
   AppViewModel? _viewModel;
+  Object? _identity;
   bool _ownsViewModel = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_viewModel == null) {
-      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false, notify: false);
+      return;
+    }
+    final nextIdentity = widget.identity?.call(context);
+    if (_viewModel == null || nextIdentity != _identity) {
+      _identity = nextIdentity;
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true, notify: false);
     }
   }
 
@@ -212,12 +381,15 @@ class _AppViewModelScopeState extends State<AppViewModelScope> {
     if (external != null) {
       _replaceViewModel(external, ownsViewModel: false);
     } else if (oldWidget.value != null) {
+      _identity = widget.identity?.call(context);
       _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    } else {
+      final nextIdentity = widget.identity?.call(context);
+      if (nextIdentity != _identity) {
+        _identity = nextIdentity;
+        _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+      }
     }
-  }
-
-  AppViewModel _resolveViewModel() {
-    return widget.value ?? _createOwnedViewModel();
   }
 
   AppViewModel _createOwnedViewModel() {
@@ -249,6 +421,7 @@ class _AppViewModelScopeState extends State<AppViewModelScope> {
     final previous = _viewModel;
     if (identical(previous, nextViewModel)) {
       _ownsViewModel = ownsViewModel;
+      _scheduleInit(nextViewModel);
       if (notify && mounted) setState(() {});
       return;
     }
@@ -257,14 +430,26 @@ class _AppViewModelScopeState extends State<AppViewModelScope> {
     _viewModel = nextViewModel;
     _ownsViewModel = ownsViewModel;
     nextViewModel.addListener(_onViewModelStateChanged);
-    if (ownsViewModel) {
-      scheduleMicrotask(() {
-        if (mounted && identical(_viewModel, nextViewModel)) {
-          nextViewModel.init();
-        }
-      });
-    }
+    _scheduleInit(nextViewModel);
     if (notify && mounted) setState(() {});
+  }
+
+  void _scheduleInit(AppViewModel viewModel) {
+    scheduleMicrotask(() async {
+      if (!mounted || !identical(_viewModel, viewModel)) return;
+      try {
+        await viewModel.init();
+      } catch (error, stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+            library: 'dust state',
+            context: ErrorDescription('AppViewModelScope init failed'),
+          ),
+        );
+      }
+    });
   }
 
   void _onViewModelStateChanged() {
@@ -285,41 +470,41 @@ class _AppViewModelScopeState extends State<AppViewModelScope> {
     if (viewModel == null) {
       throw StateError('AppViewModelScope built before its view model was initialized.');
     }
-    return _AppViewModelInherited(
+    return _AppViewModelInstance(
       viewModel: viewModel,
-      state: viewModel.value,
-      child: widget.child,
+      child: _AppViewModelInherited(
+        viewModel: viewModel,
+        state: viewModel.value,
+        child: widget.child,
+      ),
     );
   }
 }
 
-class _AppViewModelInherited extends InheritedModel<_AppViewModelAspect<Object?>> {
+class _AppViewModelInstance extends InheritedWidget {
+  const _AppViewModelInstance({required this.viewModel, required super.child});
+
+  final AppViewModel viewModel;
+
+  @override
+  bool updateShouldNotify(_AppViewModelInstance oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel);
+  }
+}
+
+class _AppViewModelInherited extends InheritedWidget {
   const _AppViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final AppViewModel viewModel;
   final AppState state;
 
-  /// Requires AppState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_AppViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _AppViewModelInherited oldWidget,
-    Set<_AppViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_AppViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 
-/// Listens to one-shot effects from AppViewModel.
+/// Handles one-shot effects from AppViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -346,7 +531,7 @@ class _AppViewModelListenerState extends State<AppViewModelListener> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final nextViewModel = AppViewModelScope.read(context);
+    final nextViewModel = AppViewModelScope._watchInstance(context);
     if (_viewModel == nextViewModel) return;
     _sub?.cancel();
     _viewModel = nextViewModel;
@@ -367,7 +552,7 @@ class _AppViewModelListenerState extends State<AppViewModelListener> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for AppViewModel.
+/// BuildContext helpers generated for AppViewModel.
 ///
 /// ```dart
 /// final vm = context.readAppViewModel();
@@ -379,4 +564,825 @@ extension AppViewModelBuildContext on BuildContext {
   }
 
   AppViewModel readAppViewModel() => AppViewModelScope.read(this);
+}
+/// Base class generated for BnbViewModel.
+///
+/// Extend it from your ViewModel and forward typed args:
+///
+/// ```dart
+/// final class BnbViewModel extends $BnbViewModel {
+///   BnbViewModel(super.args);
+/// }
+/// ```
+abstract class $BnbViewModel extends ViewModelBase<BnbState, BnbViewModelArgs> {
+  $BnbViewModel(super.args) : super(initialState: const BnbState());
+}
+
+/// Reads BnbViewModel state from `BuildContext`.
+///
+/// Read `value` when the widget should rebuild for any state change.
+///
+/// ```dart
+/// final state = context.watchBnbViewModel().value;
+/// ```
+class _$BnbViewModelProxy {
+  _$BnbViewModelProxy(this._context);
+
+  final BuildContext _context;
+
+  BnbState get value {
+    return BnbViewModelScope.of(_context).value;
+  }
+}
+
+/// Rebuilds when a selected BnbState value changes.
+///
+/// Use this for widgets that depend on one field or derived value.
+class BnbViewModelSelector<R> extends StatefulWidget {
+  const BnbViewModelSelector({
+    super.key,
+    required this.selector,
+    required this.builder,
+    this.child,
+    this.equals,
+  });
+
+  final R Function(BnbState state) selector;
+  final Widget Function(BuildContext context, R value, Widget? child) builder;
+  final Widget? child;
+  final bool Function(R previous, R next)? equals;
+
+  @override
+  State<BnbViewModelSelector<R>> createState() => _BnbViewModelSelectorState<R>();
+}
+
+class _BnbViewModelSelectorState<R> extends State<BnbViewModelSelector<R>> {
+  BnbViewModel? _viewModel;
+  R? _selected;
+  bool _hasSelected = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextViewModel = BnbViewModelScope._watchInstance(context);
+    if (identical(_viewModel, nextViewModel)) return;
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    _viewModel = nextViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    _selectCurrent(force: true);
+  }
+
+  @override
+  void didUpdateWidget(BnbViewModelSelector<R> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _selectCurrent(force: true);
+  }
+
+  void _onViewModelStateChanged() {
+    _selectCurrent();
+  }
+
+  void _selectCurrent({bool force = false}) {
+    final viewModel = _viewModel;
+    if (viewModel == null) return;
+    final nextSelected = widget.selector(viewModel.value);
+    if (!_hasSelected) {
+      _selected = nextSelected;
+      _hasSelected = true;
+      return;
+    }
+    final previousSelected = _selected as R;
+    final equals = widget.equals;
+    final unchanged = equals == null
+        ? previousSelected == nextSelected
+        : equals(previousSelected, nextSelected);
+    if (!force && unchanged) return;
+    if (force || !mounted) {
+      _selected = nextSelected;
+    } else {
+      setState(() {
+        _selected = nextSelected;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasSelected) {
+      _selectCurrent(force: true);
+    }
+    return widget.builder(context, _selected as R, widget.child);
+  }
+}
+
+/// Creates and provides BnbViewModel to descendants.
+///
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
+///
+/// ```dart
+/// BnbViewModelScope(
+///   args: (context) => BnbViewModelArgs(...),
+///   create: (context, args) => BnbViewModel(args),
+///   child: const FeaturePage(),
+/// )
+/// ```
+class BnbViewModelScope extends StatefulWidget {
+  /// Creates and owns BnbViewModel from typed args.
+  const BnbViewModelScope({
+    super.key,
+    required this.args,
+    required this.create,
+    required this.child,
+    this.identity,
+  }) : value = null;
+
+  /// Provides an externally owned BnbViewModel without disposing it.
+  const BnbViewModelScope.value({
+    super.key,
+    required BnbViewModel this.value,
+    required this.child,
+  }) : args = null,
+       create = null,
+       identity = null;
+
+  final BnbViewModelArgs Function(BuildContext context)? args;
+  final BnbViewModel Function(BuildContext context, BnbViewModelArgs args)? create;
+  final Object? Function(BuildContext context)? identity;
+  final BnbViewModel? value;
+  final Widget child;
+
+  /// Reads BnbViewModel without rebuilding when state changes.
+  static BnbViewModel read(BuildContext context) {
+    final scope = context
+        .getElementForInheritedWidgetOfExactType<_BnbViewModelInstance>()
+        ?.widget as _BnbViewModelInstance?;
+    if (scope == null) throw StateError('No BnbViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  static BnbViewModel _watchInstance(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_BnbViewModelInstance>();
+    if (scope == null) throw StateError('No BnbViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  /// Watches BnbViewModel and rebuilds when state changes.
+  static BnbViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_BnbViewModelInherited>();
+    if (scope == null) throw StateError('No BnbViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  @override
+  State<BnbViewModelScope> createState() => _BnbViewModelScopeState();
+}
+
+class _BnbViewModelScopeState extends State<BnbViewModelScope> {
+  BnbViewModel? _viewModel;
+  Object? _identity;
+  bool _ownsViewModel = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false, notify: false);
+      return;
+    }
+    final nextIdentity = widget.identity?.call(context);
+    if (_viewModel == null || nextIdentity != _identity) {
+      _identity = nextIdentity;
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true, notify: false);
+    }
+  }
+
+  @override
+  void didUpdateWidget(BnbViewModelScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false);
+    } else if (oldWidget.value != null) {
+      _identity = widget.identity?.call(context);
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    } else {
+      final nextIdentity = widget.identity?.call(context);
+      if (nextIdentity != _identity) {
+        _identity = nextIdentity;
+        _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+      }
+    }
+  }
+
+  BnbViewModel _createOwnedViewModel() {
+    final argsFactory = widget.args;
+    final create = widget.create;
+    if (argsFactory == null || create == null) {
+      throw StateError('Owned BnbViewModelScope requires args and create.');
+    }
+    late final BnbViewModel created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        StateError(
+          'BnbViewModelScope failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
+    return created;
+  }
+
+  void _replaceViewModel(
+    BnbViewModel nextViewModel, {
+    required bool ownsViewModel,
+    bool notify = true,
+  }) {
+    final previous = _viewModel;
+    if (identical(previous, nextViewModel)) {
+      _ownsViewModel = ownsViewModel;
+      _scheduleInit(nextViewModel);
+      if (notify && mounted) setState(() {});
+      return;
+    }
+    previous?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) previous?.dispose();
+    _viewModel = nextViewModel;
+    _ownsViewModel = ownsViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    _scheduleInit(nextViewModel);
+    if (notify && mounted) setState(() {});
+  }
+
+  void _scheduleInit(BnbViewModel viewModel) {
+    scheduleMicrotask(() async {
+      if (!mounted || !identical(_viewModel, viewModel)) return;
+      try {
+        await viewModel.init();
+      } catch (error, stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+            library: 'dust state',
+            context: ErrorDescription('BnbViewModelScope init failed'),
+          ),
+        );
+      }
+    });
+  }
+
+  void _onViewModelStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    final viewModel = _viewModel;
+    viewModel?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) viewModel?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = _viewModel;
+    if (viewModel == null) {
+      throw StateError('BnbViewModelScope built before its view model was initialized.');
+    }
+    return _BnbViewModelInstance(
+      viewModel: viewModel,
+      child: _BnbViewModelInherited(
+        viewModel: viewModel,
+        state: viewModel.value,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+class _BnbViewModelInstance extends InheritedWidget {
+  const _BnbViewModelInstance({required this.viewModel, required super.child});
+
+  final BnbViewModel viewModel;
+
+  @override
+  bool updateShouldNotify(_BnbViewModelInstance oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel);
+  }
+}
+
+class _BnbViewModelInherited extends InheritedWidget {
+  const _BnbViewModelInherited({required this.viewModel, required this.state, required super.child});
+
+  final BnbViewModel viewModel;
+  final BnbState state;
+
+  @override
+  bool updateShouldNotify(_BnbViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
+  }
+}
+
+/// Handles one-shot effects from BnbViewModel.
+///
+/// Effects are delivered without changing state and do not rebuild `child`.
+///
+/// ```dart
+/// BnbViewModelListener(
+///   listener: onEffect,
+///   child: const FeaturePage(),
+/// )
+/// ```
+class BnbViewModelListener extends StatefulWidget {
+  const BnbViewModelListener({super.key, required this.listener, required this.child});
+
+  final void Function(BuildContext context, Object effect) listener;
+  final Widget child;
+
+  @override
+  State<BnbViewModelListener> createState() => _BnbViewModelListenerState();
+}
+
+class _BnbViewModelListenerState extends State<BnbViewModelListener> {
+  StreamSubscription<Object>? _sub;
+  BnbViewModel? _viewModel;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextViewModel = BnbViewModelScope._watchInstance(context);
+    if (_viewModel == nextViewModel) return;
+    _sub?.cancel();
+    _viewModel = nextViewModel;
+    _sub = nextViewModel.effects.listen(_onEffect);
+  }
+
+  void _onEffect(Object effect) {
+    if (mounted) widget.listener(context, effect);
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// BuildContext helpers generated for BnbViewModel.
+///
+/// ```dart
+/// final vm = context.readBnbViewModel();
+/// final state = context.watchBnbViewModel().value;
+/// ```
+extension BnbViewModelBuildContext on BuildContext {
+  _$BnbViewModelProxy watchBnbViewModel() {
+    return _$BnbViewModelProxy(this);
+  }
+
+  BnbViewModel readBnbViewModel() => BnbViewModelScope.read(this);
+}
+/// Async base class generated for HomeViewModel.
+///
+/// Extend it from your ViewModel and implement `loadData`.
+///
+/// ```dart
+/// final class HomeViewModel extends $HomeViewModel {
+///   HomeViewModel(super.args);
+///
+///   @override
+///   Future<HomePageData> loadData() {
+///     return args.repository.load();
+///   }
+/// }
+/// ```
+abstract class $HomeViewModel extends AsyncViewModelBase<HomePageData, HomeViewModelArgs> {
+  $HomeViewModel(super.args);
+}
+
+/// Reads HomeViewModel state from `BuildContext`.
+///
+/// Read `value` when the widget should rebuild for any state change.
+///
+/// ```dart
+/// final state = context.watchHomeViewModel().value;
+/// ```
+class _$HomeViewModelProxy {
+  _$HomeViewModelProxy(this._context);
+
+  final BuildContext _context;
+
+  AsyncState<HomePageData> get value {
+    return HomeViewModelScope.of(_context).value;
+  }
+}
+
+/// Rebuilds when a selected AsyncState<HomePageData> value changes.
+///
+/// Use this for widgets that depend on one field or derived value.
+class HomeViewModelSelector<R> extends StatefulWidget {
+  const HomeViewModelSelector({
+    super.key,
+    required this.selector,
+    required this.builder,
+    this.child,
+    this.equals,
+  });
+
+  final R Function(AsyncState<HomePageData> state) selector;
+  final Widget Function(BuildContext context, R value, Widget? child) builder;
+  final Widget? child;
+  final bool Function(R previous, R next)? equals;
+
+  @override
+  State<HomeViewModelSelector<R>> createState() => _HomeViewModelSelectorState<R>();
+}
+
+class _HomeViewModelSelectorState<R> extends State<HomeViewModelSelector<R>> {
+  HomeViewModel? _viewModel;
+  R? _selected;
+  bool _hasSelected = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextViewModel = HomeViewModelScope._watchInstance(context);
+    if (identical(_viewModel, nextViewModel)) return;
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    _viewModel = nextViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    _selectCurrent(force: true);
+  }
+
+  @override
+  void didUpdateWidget(HomeViewModelSelector<R> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _selectCurrent(force: true);
+  }
+
+  void _onViewModelStateChanged() {
+    _selectCurrent();
+  }
+
+  void _selectCurrent({bool force = false}) {
+    final viewModel = _viewModel;
+    if (viewModel == null) return;
+    final nextSelected = widget.selector(viewModel.value);
+    if (!_hasSelected) {
+      _selected = nextSelected;
+      _hasSelected = true;
+      return;
+    }
+    final previousSelected = _selected as R;
+    final equals = widget.equals;
+    final unchanged = equals == null
+        ? previousSelected == nextSelected
+        : equals(previousSelected, nextSelected);
+    if (!force && unchanged) return;
+    if (force || !mounted) {
+      _selected = nextSelected;
+    } else {
+      setState(() {
+        _selected = nextSelected;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasSelected) {
+      _selectCurrent(force: true);
+    }
+    return widget.builder(context, _selected as R, widget.child);
+  }
+}
+
+/// Builds the common loading, data, and error UI for HomeViewModel.
+class HomeViewModelBuilder extends StatelessWidget {
+  const HomeViewModelBuilder({
+    super.key,
+    required this.loading,
+    required this.data,
+    required this.error,
+  });
+
+  final Widget Function(BuildContext context) loading;
+  final Widget Function(BuildContext context, HomePageData data) data;
+  final Widget Function(
+    BuildContext context,
+    Object error,
+    HomePageData? previousData,
+  ) error;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watchHomeViewModel().value;
+    return switch (state) {
+      AsyncData<HomePageData>(data: final loadedData) =>
+        data(context, loadedData),
+      AsyncLoading<HomePageData>(
+        hasPreviousData: true,
+        previousData: final previousData,
+      ) => data(context, previousData as HomePageData),
+      AsyncFailure<HomePageData>(
+        error: final loadError,
+        previousData: final previousData,
+      ) => error(context, loadError, previousData),
+      _ => loading(context),
+    };
+  }
+}
+
+/// Creates and provides HomeViewModel to descendants.
+///
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
+///
+/// ```dart
+/// HomeViewModelScope(
+///   args: (context) => HomeViewModelArgs(...),
+///   create: (context, args) => HomeViewModel(args),
+///   child: const FeaturePage(),
+/// )
+/// ```
+class HomeViewModelScope extends StatefulWidget {
+  /// Creates and owns HomeViewModel from typed args.
+  const HomeViewModelScope({
+    super.key,
+    required this.args,
+    required this.create,
+    required this.child,
+    this.identity,
+  }) : value = null;
+
+  /// Provides an externally owned HomeViewModel without disposing it.
+  const HomeViewModelScope.value({
+    super.key,
+    required HomeViewModel this.value,
+    required this.child,
+  }) : args = null,
+       create = null,
+       identity = null;
+
+  final HomeViewModelArgs Function(BuildContext context)? args;
+  final HomeViewModel Function(BuildContext context, HomeViewModelArgs args)? create;
+  final Object? Function(BuildContext context)? identity;
+  final HomeViewModel? value;
+  final Widget child;
+
+  /// Reads HomeViewModel without rebuilding when state changes.
+  static HomeViewModel read(BuildContext context) {
+    final scope = context
+        .getElementForInheritedWidgetOfExactType<_HomeViewModelInstance>()
+        ?.widget as _HomeViewModelInstance?;
+    if (scope == null) throw StateError('No HomeViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  static HomeViewModel _watchInstance(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_HomeViewModelInstance>();
+    if (scope == null) throw StateError('No HomeViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  /// Watches HomeViewModel and rebuilds when state changes.
+  static HomeViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_HomeViewModelInherited>();
+    if (scope == null) throw StateError('No HomeViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  @override
+  State<HomeViewModelScope> createState() => _HomeViewModelScopeState();
+}
+
+class _HomeViewModelScopeState extends State<HomeViewModelScope> {
+  HomeViewModel? _viewModel;
+  Object? _identity;
+  bool _ownsViewModel = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false, notify: false);
+      return;
+    }
+    final nextIdentity = widget.identity?.call(context);
+    if (_viewModel == null || nextIdentity != _identity) {
+      _identity = nextIdentity;
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true, notify: false);
+    }
+  }
+
+  @override
+  void didUpdateWidget(HomeViewModelScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false);
+    } else if (oldWidget.value != null) {
+      _identity = widget.identity?.call(context);
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    } else {
+      final nextIdentity = widget.identity?.call(context);
+      if (nextIdentity != _identity) {
+        _identity = nextIdentity;
+        _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+      }
+    }
+  }
+
+  HomeViewModel _createOwnedViewModel() {
+    final argsFactory = widget.args;
+    final create = widget.create;
+    if (argsFactory == null || create == null) {
+      throw StateError('Owned HomeViewModelScope requires args and create.');
+    }
+    late final HomeViewModel created;
+    try {
+      created = create(context, argsFactory(context));
+    } catch (error, stackTrace) {
+      Error.throwWithStackTrace(
+        StateError(
+          'HomeViewModelScope failed to create its view model. Check the generated '
+          'scope args/create dependency injection. Original error: $error',
+        ),
+        stackTrace,
+      );
+    }
+    return created;
+  }
+
+  void _replaceViewModel(
+    HomeViewModel nextViewModel, {
+    required bool ownsViewModel,
+    bool notify = true,
+  }) {
+    final previous = _viewModel;
+    if (identical(previous, nextViewModel)) {
+      _ownsViewModel = ownsViewModel;
+      _scheduleInit(nextViewModel);
+      if (notify && mounted) setState(() {});
+      return;
+    }
+    previous?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) previous?.dispose();
+    _viewModel = nextViewModel;
+    _ownsViewModel = ownsViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    _scheduleInit(nextViewModel);
+    if (notify && mounted) setState(() {});
+  }
+
+  void _scheduleInit(HomeViewModel viewModel) {
+    scheduleMicrotask(() async {
+      if (!mounted || !identical(_viewModel, viewModel)) return;
+      try {
+        await viewModel.init();
+      } catch (error, stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+            library: 'dust state',
+            context: ErrorDescription('HomeViewModelScope init failed'),
+          ),
+        );
+      }
+    });
+  }
+
+  void _onViewModelStateChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    final viewModel = _viewModel;
+    viewModel?.removeListener(_onViewModelStateChanged);
+    if (_ownsViewModel) viewModel?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = _viewModel;
+    if (viewModel == null) {
+      throw StateError('HomeViewModelScope built before its view model was initialized.');
+    }
+    return _HomeViewModelInstance(
+      viewModel: viewModel,
+      child: _HomeViewModelInherited(
+        viewModel: viewModel,
+        state: viewModel.value,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+class _HomeViewModelInstance extends InheritedWidget {
+  const _HomeViewModelInstance({required this.viewModel, required super.child});
+
+  final HomeViewModel viewModel;
+
+  @override
+  bool updateShouldNotify(_HomeViewModelInstance oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel);
+  }
+}
+
+class _HomeViewModelInherited extends InheritedWidget {
+  const _HomeViewModelInherited({required this.viewModel, required this.state, required super.child});
+
+  final HomeViewModel viewModel;
+  final AsyncState<HomePageData> state;
+
+  @override
+  bool updateShouldNotify(_HomeViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
+  }
+}
+
+/// Handles one-shot effects from HomeViewModel.
+///
+/// Effects are delivered without changing state and do not rebuild `child`.
+///
+/// ```dart
+/// HomeViewModelListener(
+///   listener: onEffect,
+///   child: const FeaturePage(),
+/// )
+/// ```
+class HomeViewModelListener extends StatefulWidget {
+  const HomeViewModelListener({super.key, required this.listener, required this.child});
+
+  final void Function(BuildContext context, Object effect) listener;
+  final Widget child;
+
+  @override
+  State<HomeViewModelListener> createState() => _HomeViewModelListenerState();
+}
+
+class _HomeViewModelListenerState extends State<HomeViewModelListener> {
+  StreamSubscription<Object>? _sub;
+  HomeViewModel? _viewModel;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextViewModel = HomeViewModelScope._watchInstance(context);
+    if (_viewModel == nextViewModel) return;
+    _sub?.cancel();
+    _viewModel = nextViewModel;
+    _sub = nextViewModel.effects.listen(_onEffect);
+  }
+
+  void _onEffect(Object effect) {
+    if (mounted) widget.listener(context, effect);
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// BuildContext helpers generated for HomeViewModel.
+///
+/// ```dart
+/// final vm = context.readHomeViewModel();
+/// final state = context.watchHomeViewModel().value;
+/// ```
+extension HomeViewModelBuildContext on BuildContext {
+  _$HomeViewModelProxy watchHomeViewModel() {
+    return _$HomeViewModelProxy(this);
+  }
+
+  HomeViewModel readHomeViewModel() => HomeViewModelScope.read(this);
 }

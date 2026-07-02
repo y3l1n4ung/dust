@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 
 /// Shared dependency bundle base for generated view models.
 base class ViewModelArgs {
@@ -62,6 +61,115 @@ final class StateEffect {
   final Object value;
 }
 
+/// Lifecycle state for generated async ViewModels.
+sealed class AsyncState<T> {
+  const AsyncState();
+
+  /// Whether a load or refresh is in progress.
+  bool get isLoading;
+
+  /// Whether current visible data is available.
+  bool get hasData => false;
+
+  /// Whether previous visible data is available.
+  bool get hasPreviousData => hasData;
+
+  /// Whether visible data is being refreshed.
+  bool get isRefreshing => false;
+
+  /// Current visible data, when available.
+  T? get data => null;
+
+  /// Data preserved from the previous successful load, when available.
+  T? get previousData => data;
+
+  /// Current load error, when available.
+  Object? get error => null;
+
+  /// Stack trace for the current load failure, when available.
+  StackTrace? get stackTrace => null;
+}
+
+/// No async load has started yet.
+final class AsyncInitial<T> extends AsyncState<T> {
+  /// Creates initial async state.
+  const AsyncInitial();
+
+  @override
+  bool get isLoading => false;
+}
+
+/// Async data is loading.
+final class AsyncLoading<T> extends AsyncState<T> {
+  /// Creates loading async state.
+  const AsyncLoading({this.previousData, this.hasPreviousData = false});
+
+  @override
+  final T? previousData;
+
+  @override
+  final bool hasPreviousData;
+
+  @override
+  T? get data => previousData;
+
+  @override
+  bool get hasData => hasPreviousData;
+
+  @override
+  bool get isLoading => true;
+
+  @override
+  bool get isRefreshing => hasPreviousData;
+}
+
+/// Async data loaded successfully.
+final class AsyncData<T> extends AsyncState<T> {
+  /// Creates data async state.
+  const AsyncData(this.data);
+
+  @override
+  final T data;
+
+  @override
+  bool get hasData => true;
+
+  @override
+  bool get isLoading => false;
+}
+
+/// Async load failed.
+final class AsyncFailure<T> extends AsyncState<T> {
+  /// Creates failed async state.
+  const AsyncFailure(
+    this.error,
+    this.stackTrace, {
+    this.previousData,
+    this.hasPreviousData = false,
+  });
+
+  @override
+  final Object error;
+
+  @override
+  final StackTrace stackTrace;
+
+  @override
+  final T? previousData;
+
+  @override
+  final bool hasPreviousData;
+
+  @override
+  T? get data => previousData;
+
+  @override
+  bool get hasData => hasPreviousData;
+
+  @override
+  bool get isLoading => false;
+}
+
 /// Token used by view models to ignore stale async work.
 @immutable
 final class ViewModelActionToken {
@@ -79,11 +187,13 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     extends ValueNotifier<TState> {
   /// Creates a view model with typed [args] and [initialState].
   ViewModelBase(this.args, {required TState initialState})
-      : super(initialState);
+      : _initialState = initialState,
+        super(initialState);
 
   /// Typed dependencies for this view model.
   final TArgs args;
 
+  final TState _initialState;
   final StreamController<Object> _effects =
       StreamController<Object>.broadcast();
   final Map<Object, int> _actionVersions = <Object, int>{};
@@ -148,6 +258,13 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     _actionVersions[key] = (_actionVersions[key] ?? 0) + 1;
   }
 
+  /// Clears pending actions and returns state to the generated initial value.
+  void invalidateSelf() {
+    if (_isDisposed) return;
+    _actionVersions.clear();
+    emit(_initialState);
+  }
+
   /// Override for one-time initialization.
   @protected
   FutureOr<void> onInit() {}
@@ -177,114 +294,64 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
   }
 }
 
-/// Creates args for a generated view model scope.
-typedef ViewModelArgsFactory<TArgs extends ViewModelArgs> = TArgs Function(
-  BuildContext context,
-);
+/// Base class used by generated async Dust view model bases.
+abstract class AsyncViewModelBase<TData, TArgs extends ViewModelArgs>
+    extends ViewModelBase<AsyncState<TData>, TArgs> {
+  /// Creates an async view model.
+  AsyncViewModelBase(super.args) : super(initialState: AsyncInitial<TData>());
 
-/// Creates a view model for a generated scope.
-typedef ViewModelFactory<TViewModel extends ViewModelBase<dynamic, dynamic>,
-        TArgs extends ViewModelArgs>
-    = TViewModel Function(
-  BuildContext context,
-  TArgs args,
-);
+  static const Object _loadAction = Object();
 
-/// Generic owner used by generated scopes.
-///
-/// Generated code should wrap this with typed APIs instead of exposing it
-/// directly to app code.
-class ViewModelOwner<TViewModel extends ViewModelBase<dynamic, dynamic>,
-    TArgs extends ViewModelArgs> extends StatefulWidget {
-  /// Creates an owner that constructs and disposes the view model.
-  const ViewModelOwner({
-    required this.args,
-    required this.create,
-    required this.builder,
-    super.key,
-    this.debugName,
-  }) : value = null;
+  /// Loads fresh data for this view model.
+  Future<TData> loadData();
 
-  /// Creates a provider for an externally owned view model.
-  const ViewModelOwner.value({
-    required TViewModel this.value,
-    required this.builder,
-    super.key,
-    this.debugName,
-  })  : args = null,
-        create = null;
+  /// Starts initial loading.
+  Future<void> load() => _runLoad(preserveData: false);
 
-  /// Args factory for the owned constructor.
-  final ViewModelArgsFactory<TArgs>? args;
+  /// Reloads data while preserving visible data when present.
+  Future<void> refresh() => _runLoad(preserveData: true);
 
-  /// Human-readable scope name used in dependency-injection errors.
-  final String? debugName;
+  /// Retries after an error while preserving previous data when present.
+  Future<void> retry() => refresh();
 
-  /// View model factory for the owned constructor.
-  final ViewModelFactory<TViewModel, TArgs>? create;
+  /// Current visible data.
+  TData? get data => state.data;
 
-  /// External view model for `.value` usage.
-  final TViewModel? value;
-
-  /// Builds the subtree with a ready view model.
-  final Widget Function(BuildContext context, TViewModel viewModel) builder;
-
-  @override
-  State<ViewModelOwner<TViewModel, TArgs>> createState() =>
-      _ViewModelOwnerState<TViewModel, TArgs>();
-}
-
-class _ViewModelOwnerState<TViewModel extends ViewModelBase<dynamic, dynamic>,
-        TArgs extends ViewModelArgs>
-    extends State<ViewModelOwner<TViewModel, TArgs>> {
-  TViewModel? _owned;
-
-  TViewModel get _viewModel {
-    final value = widget.value;
-    if (value != null) return value;
-    final owned = _owned;
-    if (owned == null) {
-      throw StateError('ViewModelOwner was read before initialization.');
-    }
-    return owned;
+  /// Current or previous visible data.
+  TData? get visibleData {
+    if (state.hasData) return state.data;
+    if (state.hasPreviousData) return state.previousData;
+    return null;
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (widget.value != null || _owned != null) return;
-    final argsFactory = widget.args;
-    final create = widget.create;
-    if (argsFactory == null || create == null) {
-      throw StateError('Owned ViewModelOwner requires args and create.');
-    }
-    late final TViewModel created;
+  Future<void> onInit() => load();
+
+  Future<void> _runLoad({required bool preserveData}) async {
+    final token = beginAction(_loadAction);
+    final previousData = preserveData ? visibleData : null;
+    final hasPreviousData =
+        preserveData && (state.hasData || state.hasPreviousData);
+    emit(
+      AsyncLoading<TData>(
+        previousData: previousData,
+        hasPreviousData: hasPreviousData,
+      ),
+    );
     try {
-      created = create(context, argsFactory(context));
-    } catch (error, stackTrace) {
-      final ownerName = widget.debugName ?? 'ViewModelOwner<$TViewModel>';
-      Error.throwWithStackTrace(
-        StateError(
-          '$ownerName failed to create its view model. Check the generated '
-          'scope args/create dependency injection. Original error: $error',
+      final nextData = await loadData();
+      if (!isCurrentAction(token)) return;
+      emit(AsyncData<TData>(nextData));
+    } on Object catch (error, stackTrace) {
+      if (!isCurrentAction(token)) return;
+      emit(
+        AsyncFailure<TData>(
+          error,
+          stackTrace,
+          previousData: previousData,
+          hasPreviousData: hasPreviousData,
         ),
-        stackTrace,
       );
     }
-    _owned = created;
-    scheduleMicrotask(() {
-      if (mounted && identical(_owned, created)) {
-        unawaited(created.init());
-      }
-    });
   }
-
-  @override
-  void dispose() {
-    _owned?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.builder(context, _viewModel);
 }

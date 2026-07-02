@@ -1,97 +1,83 @@
 # State Management
 
-Dust provides state management generated from annotations. It uses explicit typed arguments for dependencies and provides convenient scoping and access via BuildContext.
-
----
+Dust generates typed Flutter ViewModel glue from `@ViewModel`.
+Dependencies go through `args`; UI state goes through `state`, `value`, or
+generated selector widgets.
 
 ## Installation
 
-Add the state management package to your `pubspec.yaml`:
-
 ```yaml
 dependencies:
+  dust_dart: ^0.1.0
   dust_flutter: ^0.1.0
 ```
 
----
-
-## Basic Example
-
-### 1. Define the ViewModel
-Annotate your class with `@ViewModel` and extend the generated base class.
+## Sync ViewModel
 
 ```dart
+import 'package:dust_dart/derive.dart';
 import 'package:dust_flutter/state.dart';
 
 part 'counter_view_model.g.dart';
+
+@Derive([ToString(), Eq(), CopyWith()])
+class CounterState with _$CounterState {
+  const CounterState({this.count = 0});
+
+  final int count;
+}
 
 @ViewModel(state: CounterState)
 class CounterViewModel extends $CounterViewModel {
   CounterViewModel(super.args);
 
   void increment() {
-    // Access state via the 'state' property
     emit(state.copyWith(count: state.count + 1));
   }
-}
 
-class CounterState {
-  const CounterState({this.count = 0});
-  final int count;
-
-  CounterState copyWith({int? count}) => CounterState(count: count ?? this.count);
+  void reset() {
+    invalidateSelf();
+  }
 }
 ```
 
-### 2. Provide the Scope
+Provide the generated scope:
+
 ```dart
 CounterViewModelScope(
-  args: (context) => const EmptyArgs(),
-  create: (context, args) => CounterViewModel(args),
+  args: (_) => const ViewModelArgs(),
+  create: (_, args) => CounterViewModel(args),
   child: const CounterPage(),
 )
 ```
 
-### 3. Consume in UI
+Use the generated context helpers:
+
 ```dart
 class CounterPage extends StatelessWidget {
+  const CounterPage({super.key});
+
   @override
   Widget build(BuildContext context) {
-    // Access state via .value
     final count = context.watchCounterViewModel().value.count;
 
-    return Scaffold(
-      body: Center(child: Text('Count: $count')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.readCounterViewModel().increment(),
-        child: const Icon(Icons.add),
-      ),
+    return TextButton(
+      onPressed: context.readCounterViewModel().increment,
+      child: Text('Count: $count'),
     );
   }
 }
 ```
 
----
+## Args
 
-## Configuration Reference
-
-### `@ViewModel` Options
-
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `state` | `Type` | **Required.** The class used for the ViewModel's state. |
-| `args` | `Type` | Optional: A custom class (extending `ViewModelArgs`) for dependency injection. |
-| `initial` | `Object` | Optional: The initial state source code. Defaults to `const State()`. |
-
----
-
-## Dependency Injection (`ViewModelArgs`)
-
-For complex dependencies (Repositories, Services), use a custom `args` class.
+Use `ViewModelArgs` for repositories, services, HTTP clients, sockets, storage,
+and observers. Do not generate mirror getters for dependencies.
 
 ```dart
 final class ProfileArgs extends ViewModelArgs {
-  const ProfileArgs({required this.repository});
+  const ProfileArgs({required this.repository, super.observer});
+
   final ProfileRepository repository;
 }
 
@@ -99,104 +85,172 @@ final class ProfileArgs extends ViewModelArgs {
 class ProfileViewModel extends $ProfileViewModel {
   ProfileViewModel(super.args);
 
-  // Access dependencies via the 'args' property
-  void load() => args.repository.fetch();
+  Future<void> save() {
+    return args.repository.save(state.profile);
+  }
 }
 ```
 
----
+## Selectors
 
-## Key Concepts
-
-### Side Effects (`ViewModelListener`)
-Use `ViewModelListener` to handle one-time events like navigation or showing snackbars.
+`context.watchProfileViewModel().value` rebuilds for the whole state. For
+fine-grained rebuilds, use the generated selector widget.
 
 ```dart
-CounterViewModelListener(
-  listener: (context, effect) {
-    if (effect is ShowCelebration) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Yay!')));
-    }
+ProfileViewModelSelector<ProfileStatus>(
+  selector: (state) => state.status,
+  builder: (context, status, child) {
+    return ProfileStatusBadge(status: status);
   },
-  child: const CounterPage(),
 )
 ```
 
-### Context Extensions
-Dust generates extensions on `BuildContext` for easy access:
+Selector widgets are covered by rebuild-count tests in the shopping app: they
+do not rebuild when unrelated state fields change.
 
-*   `context.watchClassName()`: Rebuilds the widget when state changes. Returns a proxy to access `.value`.
-*   `context.readClassName()`: Returns the ViewModel instance. Does not trigger rebuilds.
-*   `context.watchClassName().select(...)`: Rebuilds only when the selected value changes.
+## Effects
 
----
-
-## Migration Guide
-
-**Coming from `Bloc` or `Provider`?**
-
-| Feature | `flutter_bloc` | `provider` | Dust |
-| :--- | :--- | :--- | :--- |
-| Core Logic | `Bloc` / `Cubit` | `ChangeNotifier` | `ViewModel` |
-| Scoping | `BlocProvider` | `Provider` | `ViewModelScope` |
-| UI Binding | `BlocBuilder` | `context.watch` | `context.watchViewModel().value` |
-| State Access | `state` | `this` | `state` |
-| Dependencies | `repository` | `this.repo` | `args.repo` |
-
----
-
-## Generated Code Preview
-
-Dust generates documented public helpers in the `.g.dart` file. App code does
-not edit this file; the comments are there to make generated APIs discoverable
-in IDEs.
+Use the generated listener for one-shot effects. Listeners do not rebuild their
+child when effects arrive.
 
 ```dart
-// counter_view_model.g.dart (simplified)
-/// Generated base class for CounterViewModel.
-///
-/// Extend this class in the user-authored ViewModel and forward typed args:
-///
-/// ```dart
-/// final class CounterViewModel extends $CounterViewModel {
-///   CounterViewModel(super.args);
-/// }
-/// ```
-abstract class $CounterViewModel extends ViewModelBase<CounterState, EmptyArgs> {
-  $CounterViewModel(super.args) : super(initialState: const CounterState());
-}
+ProfileViewModelListener(
+  listener: (context, effect) {
+    if (effect is ShowProfileSaved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Saved')),
+      );
+    }
+  },
+  child: const ProfilePage(),
+)
+```
 
-/// Provides CounterViewModel to descendants and owns it by default.
-///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
-class CounterViewModelScope extends StatefulWidget {
-  /// Creates an owned CounterViewModel from typed args.
-  const CounterViewModelScope({
-    super.key,
-    required this.args,
-    required this.create,
-    required this.child,
-  });
+Emit effects from the ViewModel:
 
-  /// Reads CounterViewModel without subscribing the caller to state changes.
-  static CounterViewModel read(BuildContext context);
-}
-
-/// Generated BuildContext helpers for CounterViewModel.
-extension CounterViewModelBuildContext on BuildContext {
-  _$CounterViewModelProxy watchCounterViewModel();
-
-  CounterViewModel readCounterViewModel();
+```dart
+void notifySaved() {
+  emitEffect(const ShowProfileSaved());
 }
 ```
 
----
+## Async ViewModel
 
-## Best Practices
+Async ViewModels use the same annotation with `mode: ViewModelMode.async`.
+The annotated `state` type is the loaded data type; the generated base wraps
+it in `AsyncState<T>`.
+
+```dart
+@Derive([ToString(), Eq()])
+class HomePageData with _$HomePageData {
+  const HomePageData({
+    required this.featuredProducts,
+    required this.categories,
+  });
+
+  final List<Product> featuredProducts;
+  final List<String> categories;
+}
+
+final class HomeViewModelArgs extends ViewModelArgs {
+  const HomeViewModelArgs({required this.repository, super.observer});
+
+  final ShoppingRepository repository;
+}
+
+@ViewModel(
+  state: HomePageData,
+  args: HomeViewModelArgs,
+  mode: ViewModelMode.async,
+)
+class HomeViewModel extends $HomeViewModel {
+  HomeViewModel(super.args);
+
+  @override
+  Future<HomePageData> loadData() async {
+    final products = await args.repository.getProductsPage(limit: 6);
+    final categories = await args.repository.getCategories();
+    return HomePageData(
+      featuredProducts: products,
+      categories: categories,
+    );
+  }
+}
+```
+
+Async ViewModels get:
+
+- `load()`: clears visible data and loads fresh data.
+- `refresh()`: loads fresh data while preserving previous visible data.
+- `retry()`: aliases `refresh()`.
+- `invalidateSelf()`: clears pending work and resets to `AsyncInitial<T>`.
+- `data`: current visible data, if present.
+- `visibleData`: current or previous data, if present.
+
+Use the generated async builder for the common loading/data/error UI:
+
+```dart
+HomeViewModelBuilder(
+  loading: (_) => const CircularProgressIndicator(),
+  data: (context, data) => HomeContent(data: data),
+  error: (context, error, previousData) {
+    return HomeErrorView(
+      error: error,
+      previousData: previousData,
+      onRetry: context.readHomeViewModel().retry,
+    );
+  },
+)
+```
+
+Use a raw switch only when the UI needs every lifecycle detail:
+
+```dart
+return switch (context.watchHomeViewModel().value) {
+  AsyncData<HomePageData>(data: final data) => HomeContent(data: data),
+  AsyncLoading<HomePageData>(
+    hasPreviousData: true,
+    previousData: final previousData,
+  ) =>
+    HomeContent(data: previousData as HomePageData, refreshing: true),
+  AsyncFailure<HomePageData>(
+    error: final error,
+    previousData: final previousData,
+  ) =>
+    HomeErrorView(error: error, previousData: previousData),
+  _ => const CircularProgressIndicator(),
+};
+```
+
+## Generated API
+
+Dust generates one support block per ViewModel:
+
+- `$CounterViewModel` / `$HomeViewModel` base class
+- `CounterViewModelScope` / `HomeViewModelScope`
+- `context.watchCounterViewModel().value`
+- `context.readCounterViewModel()`
+- `CounterViewModelSelector<R>`
+- `CounterViewModelListener`
+- async-only `HomeViewModelBuilder`
+
+Generated proxies expose `.value` only. They do not mirror `state.*`,
+`args.*`, or closure-backed `watch().select(...)`.
+
+## Configuration Reference
+
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| `state` | `Type` | Required. Sync state type or async loaded data type. |
+| `args` | `Type` | Optional `ViewModelArgs` subtype. Defaults to `ViewModelArgs`. |
+| `initial` | Expression | Optional sync initial state. Not allowed with async mode. |
+| `mode` | `ViewModelMode` | `ViewModelMode.sync` or `ViewModelMode.async`. Defaults to sync. |
+
+## Rules
 
 > [!WARNING]
-> **Anti-Patterns to Avoid:**
-> - **Don't** call async actions directly in `build()`.
-> - **Don't** use `watch()` inside callbacks (use `read()` instead).
-> - **Don't** mutate state lists or maps in place (always use `copyWith`).
+> - Do not mutate state collections in place. Use immutable snapshots and `copyWith`.
+> - Do not call async actions directly from `build()`.
+> - Do not use `watch` inside callbacks; use `read`.
+> - Put repositories, HTTP clients, sockets, and storage in `args`.
+> - Put UI-changing data in state or loaded async data.

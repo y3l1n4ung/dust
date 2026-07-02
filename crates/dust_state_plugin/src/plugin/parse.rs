@@ -6,7 +6,10 @@ use dust_ir::SpanIr;
 #[cfg(test)]
 use dust_text::{FileId, TextRange};
 
-use super::{constants::VIEW_MODEL, model::ViewModelAnnotation};
+use super::{
+    constants::VIEW_MODEL,
+    model::{ViewModelAnnotation, ViewModelMode},
+};
 
 /// Finds the first `@ViewModel` config application in a class config list.
 pub(crate) fn view_model_config(configs: &[ConfigApplicationIr]) -> Option<&ConfigApplicationIr> {
@@ -28,10 +31,14 @@ pub(crate) fn parse_view_model_config(config: &ConfigApplicationIr) -> Option<Vi
         .or_else(|| config.positional_type(0))?;
     let args_type = config.named_type("args");
     let initial_source = config.named_expression_source("initial");
+    let mode_source = config.named_expression_source("mode");
+    let mode = parse_mode(mode_source.as_deref());
     Some(ViewModelAnnotation {
         state_type,
         args_type,
         initial_source,
+        mode_source,
+        mode,
     })
 }
 
@@ -44,11 +51,29 @@ pub(crate) fn parse_view_model_surface(
         .or_else(|| annotation.positional_type(0))?;
     let args_type = annotation.named_type("args");
     let initial_source = annotation.named_expression_source("initial");
+    let mode_source = annotation.named_expression_source("mode");
+    let mode = parse_mode(mode_source.as_deref());
     Some(ViewModelAnnotation {
         state_type,
         args_type,
         initial_source,
+        mode_source,
+        mode,
     })
+}
+
+/// Parses a ViewModel mode expression from annotation source.
+pub(crate) fn parse_mode(source: Option<&str>) -> ViewModelMode {
+    match source.map(str::trim) {
+        Some(source) if source.ends_with(".async") || source == "async" => ViewModelMode::Async,
+        _ => ViewModelMode::Sync,
+    }
+}
+
+/// Returns whether an annotation expression is a supported ViewModel mode.
+pub(crate) fn is_valid_mode_source(source: &str) -> bool {
+    let source = source.trim();
+    source == "sync" || source == "async" || source.ends_with(".sync") || source.ends_with(".async")
 }
 
 /// Returns the final unqualified segment of a config symbol identifier.
@@ -78,6 +103,18 @@ mod tests {
         assert_eq!(annotation.state_type, "TaskBoardState");
         assert_eq!(annotation.args_type.as_deref(), Some("TaskBoardArgs"));
         assert_eq!(annotation.initial_source, None);
+        assert_eq!(annotation.mode, super::ViewModelMode::Sync);
+    }
+
+    #[test]
+    fn parses_async_mode() {
+        let annotation = parse_view_model_annotation(Some(
+            "(state: Profile, args: ProfileArgs, mode: ViewModelMode.async)",
+        ))
+        .unwrap();
+        assert_eq!(annotation.state_type, "Profile");
+        assert_eq!(annotation.args_type.as_deref(), Some("ProfileArgs"));
+        assert_eq!(annotation.mode, super::ViewModelMode::Async);
     }
 }
 

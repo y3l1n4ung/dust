@@ -1,4 +1,4 @@
-/// Listens to one-shot effects from {{ view_model_class }}.
+/// Handles one-shot effects from {{ view_model_class }}.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -25,7 +25,7 @@ class {{ listener_state_class }} extends State<{{ listener_class }}> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final nextViewModel = {{ scope_class }}.read(context);
+    final nextViewModel = {{ scope_class }}._watchInstance(context);
     if (_viewModel == nextViewModel) return;
     _sub?.cancel();
     _viewModel = nextViewModel;

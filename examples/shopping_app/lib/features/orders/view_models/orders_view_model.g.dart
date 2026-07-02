@@ -13,29 +13,9 @@
 
 part of 'orders_view_model.dart';
 
-final class _OrdersViewModelAspect<R> {
-  const _OrdersViewModelAspect(this.selector);
-
-  final R Function(OrdersState state) selector;
-
-  bool hasChanged(OrdersState previous, OrdersState next) {
-    return selector(previous) != selector(next);
-  }
-}
-
-List<Object?> _ordersViewModelSelectOrders(OrdersState state) => state.orders;
-final _ordersViewModelOrdersAspect = _OrdersViewModelAspect<List<Object?>>(
-  _ordersViewModelSelectOrders,
-);
-
-bool _ordersViewModelSelectIsLoading(OrdersState state) => state.isLoading;
-final _ordersViewModelIsLoadingAspect = _OrdersViewModelAspect<bool>(
-  _ordersViewModelSelectIsLoading,
-);
-
-/// Generated base class for OrdersViewModel.
+/// Base class generated for OrdersViewModel.
 ///
-/// Extend this class in the user-authored ViewModel and forward typed args:
+/// Extend it from your ViewModel and forward typed args:
 ///
 /// ```dart
 /// final class OrdersViewModel extends $OrdersViewModel {
@@ -46,14 +26,12 @@ abstract class $OrdersViewModel extends ViewModelBase<OrdersState, OrdersViewMod
   $OrdersViewModel(super.args) : super(initialState: const OrdersState());
 }
 
-/// Typed state reader returned by `context.watchOrdersViewModel()`.
+/// Reads OrdersViewModel state from `BuildContext`.
 ///
-/// Read `value` to rebuild for the whole state, or call `select` to rebuild only
-/// when the selected value changes.
+/// Read `value` when the widget should rebuild for any state change.
 ///
 /// ```dart
 /// final state = context.watchOrdersViewModel().value;
-/// final count = context.watchOrdersViewModel().select((state) => state.count);
 /// ```
 class _$OrdersViewModelProxy {
   _$OrdersViewModelProxy(this._context);
@@ -63,31 +41,98 @@ class _$OrdersViewModelProxy {
   OrdersState get value {
     return OrdersViewModelScope.of(_context).value;
   }
+}
 
-  List<Object?> get orders {
-    return OrdersViewModelScope.of(
-      _context,
-      aspect: _ordersViewModelOrdersAspect,
-    ).state.orders;
+/// Rebuilds when a selected OrdersState value changes.
+///
+/// Use this for widgets that depend on one field or derived value.
+class OrdersViewModelSelector<R> extends StatefulWidget {
+  const OrdersViewModelSelector({
+    super.key,
+    required this.selector,
+    required this.builder,
+    this.child,
+    this.equals,
+  });
+
+  final R Function(OrdersState state) selector;
+  final Widget Function(BuildContext context, R value, Widget? child) builder;
+  final Widget? child;
+  final bool Function(R previous, R next)? equals;
+
+  @override
+  State<OrdersViewModelSelector<R>> createState() => _OrdersViewModelSelectorState<R>();
+}
+
+class _OrdersViewModelSelectorState<R> extends State<OrdersViewModelSelector<R>> {
+  OrdersViewModel? _viewModel;
+  R? _selected;
+  bool _hasSelected = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final nextViewModel = OrdersViewModelScope._watchInstance(context);
+    if (identical(_viewModel, nextViewModel)) return;
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    _viewModel = nextViewModel;
+    nextViewModel.addListener(_onViewModelStateChanged);
+    _selectCurrent(force: true);
   }
 
-  bool get isLoading {
-    return OrdersViewModelScope.of(
-      _context,
-      aspect: _ordersViewModelIsLoadingAspect,
-    ).state.isLoading;
+  @override
+  void didUpdateWidget(OrdersViewModelSelector<R> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _selectCurrent(force: true);
   }
 
-  R select<R>(R Function(OrdersState state) selector) {
-    final aspect = _OrdersViewModelAspect<R>(selector);
-    return selector(OrdersViewModelScope.of(_context, aspect: aspect).value);
+  void _onViewModelStateChanged() {
+    _selectCurrent();
+  }
+
+  void _selectCurrent({bool force = false}) {
+    final viewModel = _viewModel;
+    if (viewModel == null) return;
+    final nextSelected = widget.selector(viewModel.value);
+    if (!_hasSelected) {
+      _selected = nextSelected;
+      _hasSelected = true;
+      return;
+    }
+    final previousSelected = _selected as R;
+    final equals = widget.equals;
+    final unchanged = equals == null
+        ? previousSelected == nextSelected
+        : equals(previousSelected, nextSelected);
+    if (!force && unchanged) return;
+    if (force || !mounted) {
+      _selected = nextSelected;
+    } else {
+      setState(() {
+        _selected = nextSelected;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _viewModel?.removeListener(_onViewModelStateChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasSelected) {
+      _selectCurrent(force: true);
+    }
+    return widget.builder(context, _selected as R, widget.child);
   }
 }
 
-/// Provides OrdersViewModel to descendants and owns it by default.
+/// Creates and provides OrdersViewModel to descendants.
 ///
-/// Use the default constructor when this scope should create and dispose the
-/// ViewModel. Use `.value` only for externally owned ViewModels.
+/// The default constructor owns the ViewModel. Use `.value` for externally
+/// owned ViewModels.
 ///
 /// ```dart
 /// OrdersViewModelScope(
@@ -97,12 +142,13 @@ class _$OrdersViewModelProxy {
 /// )
 /// ```
 class OrdersViewModelScope extends StatefulWidget {
-  /// Creates an owned OrdersViewModel from typed args.
+  /// Creates and owns OrdersViewModel from typed args.
   const OrdersViewModelScope({
     super.key,
     required this.args,
     required this.create,
     required this.child,
+    this.identity,
   }) : value = null;
 
   /// Provides an externally owned OrdersViewModel without disposing it.
@@ -111,27 +157,33 @@ class OrdersViewModelScope extends StatefulWidget {
     required OrdersViewModel this.value,
     required this.child,
   }) : args = null,
-       create = null;
+       create = null,
+       identity = null;
 
   final OrdersViewModelArgs Function(BuildContext context)? args;
   final OrdersViewModel Function(BuildContext context, OrdersViewModelArgs args)? create;
+  final Object? Function(BuildContext context)? identity;
   final OrdersViewModel? value;
   final Widget child;
 
-  /// Reads OrdersViewModel without subscribing the caller to state changes.
+  /// Reads OrdersViewModel without rebuilding when state changes.
   static OrdersViewModel read(BuildContext context) {
     final scope = context
-        .getElementForInheritedWidgetOfExactType<_OrdersViewModelInherited>()
-        ?.widget as _OrdersViewModelInherited?;
+        .getElementForInheritedWidgetOfExactType<_OrdersViewModelInstance>()
+        ?.widget as _OrdersViewModelInstance?;
     if (scope == null) throw StateError('No OrdersViewModelScope found in context.');
     return scope.viewModel;
   }
 
-  /// Watches OrdersViewModel and optionally subscribes to one generated aspect.
-  static OrdersViewModel of(BuildContext context, {_OrdersViewModelAspect<Object?>? aspect}) {
-    final scope = context.dependOnInheritedWidgetOfExactType<_OrdersViewModelInherited>(
-      aspect: aspect,
-    );
+  static OrdersViewModel _watchInstance(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_OrdersViewModelInstance>();
+    if (scope == null) throw StateError('No OrdersViewModelScope found in context.');
+    return scope.viewModel;
+  }
+
+  /// Watches OrdersViewModel and rebuilds when state changes.
+  static OrdersViewModel of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_OrdersViewModelInherited>();
     if (scope == null) throw StateError('No OrdersViewModelScope found in context.');
     return scope.viewModel;
   }
@@ -142,13 +194,21 @@ class OrdersViewModelScope extends StatefulWidget {
 
 class _OrdersViewModelScopeState extends State<OrdersViewModelScope> {
   OrdersViewModel? _viewModel;
+  Object? _identity;
   bool _ownsViewModel = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_viewModel == null) {
-      _replaceViewModel(_resolveViewModel(), ownsViewModel: widget.value == null, notify: false);
+    final external = widget.value;
+    if (external != null) {
+      _replaceViewModel(external, ownsViewModel: false, notify: false);
+      return;
+    }
+    final nextIdentity = widget.identity?.call(context);
+    if (_viewModel == null || nextIdentity != _identity) {
+      _identity = nextIdentity;
+      _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true, notify: false);
     }
   }
 
@@ -159,12 +219,15 @@ class _OrdersViewModelScopeState extends State<OrdersViewModelScope> {
     if (external != null) {
       _replaceViewModel(external, ownsViewModel: false);
     } else if (oldWidget.value != null) {
+      _identity = widget.identity?.call(context);
       _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+    } else {
+      final nextIdentity = widget.identity?.call(context);
+      if (nextIdentity != _identity) {
+        _identity = nextIdentity;
+        _replaceViewModel(_createOwnedViewModel(), ownsViewModel: true);
+      }
     }
-  }
-
-  OrdersViewModel _resolveViewModel() {
-    return widget.value ?? _createOwnedViewModel();
   }
 
   OrdersViewModel _createOwnedViewModel() {
@@ -196,6 +259,7 @@ class _OrdersViewModelScopeState extends State<OrdersViewModelScope> {
     final previous = _viewModel;
     if (identical(previous, nextViewModel)) {
       _ownsViewModel = ownsViewModel;
+      _scheduleInit(nextViewModel);
       if (notify && mounted) setState(() {});
       return;
     }
@@ -204,14 +268,26 @@ class _OrdersViewModelScopeState extends State<OrdersViewModelScope> {
     _viewModel = nextViewModel;
     _ownsViewModel = ownsViewModel;
     nextViewModel.addListener(_onViewModelStateChanged);
-    if (ownsViewModel) {
-      scheduleMicrotask(() {
-        if (mounted && identical(_viewModel, nextViewModel)) {
-          nextViewModel.init();
-        }
-      });
-    }
+    _scheduleInit(nextViewModel);
     if (notify && mounted) setState(() {});
+  }
+
+  void _scheduleInit(OrdersViewModel viewModel) {
+    scheduleMicrotask(() async {
+      if (!mounted || !identical(_viewModel, viewModel)) return;
+      try {
+        await viewModel.init();
+      } catch (error, stackTrace) {
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: error,
+            stack: stackTrace,
+            library: 'dust state',
+            context: ErrorDescription('OrdersViewModelScope init failed'),
+          ),
+        );
+      }
+    });
   }
 
   void _onViewModelStateChanged() {
@@ -232,41 +308,41 @@ class _OrdersViewModelScopeState extends State<OrdersViewModelScope> {
     if (viewModel == null) {
       throw StateError('OrdersViewModelScope built before its view model was initialized.');
     }
-    return _OrdersViewModelInherited(
+    return _OrdersViewModelInstance(
       viewModel: viewModel,
-      state: viewModel.value,
-      child: widget.child,
+      child: _OrdersViewModelInherited(
+        viewModel: viewModel,
+        state: viewModel.value,
+        child: widget.child,
+      ),
     );
   }
 }
 
-class _OrdersViewModelInherited extends InheritedModel<_OrdersViewModelAspect<Object?>> {
+class _OrdersViewModelInstance extends InheritedWidget {
+  const _OrdersViewModelInstance({required this.viewModel, required super.child});
+
+  final OrdersViewModel viewModel;
+
+  @override
+  bool updateShouldNotify(_OrdersViewModelInstance oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel);
+  }
+}
+
+class _OrdersViewModelInherited extends InheritedWidget {
   const _OrdersViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final OrdersViewModel viewModel;
   final OrdersState state;
 
-  /// Requires OrdersState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_OrdersViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _OrdersViewModelInherited oldWidget,
-    Set<_OrdersViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_OrdersViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }
 
-/// Listens to one-shot effects from OrdersViewModel.
+/// Handles one-shot effects from OrdersViewModel.
 ///
 /// Effects are delivered without changing state and do not rebuild `child`.
 ///
@@ -293,7 +369,7 @@ class _OrdersViewModelListenerState extends State<OrdersViewModelListener> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final nextViewModel = OrdersViewModelScope.read(context);
+    final nextViewModel = OrdersViewModelScope._watchInstance(context);
     if (_viewModel == nextViewModel) return;
     _sub?.cancel();
     _viewModel = nextViewModel;
@@ -314,7 +390,7 @@ class _OrdersViewModelListenerState extends State<OrdersViewModelListener> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Generated BuildContext helpers for OrdersViewModel.
+/// BuildContext helpers generated for OrdersViewModel.
 ///
 /// ```dart
 /// final vm = context.readOrdersViewModel();

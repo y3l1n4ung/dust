@@ -7,7 +7,7 @@ use super::support::extract_class;
 use crate::support::{args_class, library_with_classes, view_model_class};
 
 #[test]
-fn emits_state_fields_from_workspace_analysis() {
+fn ignores_state_fields_from_workspace_analysis() {
     let plugin = register_plugin();
     let mut builder = WorkspaceAnalysisBuilder::default();
     builder.add_string_set_value(
@@ -33,9 +33,9 @@ fn emits_state_fields_from_workspace_analysis() {
     );
 
     let source = &contribution.support_types[0];
-    assert!(source.contains("final class _TaskBoardViewModelAspect<R>"));
-    assert!(source.contains("final _taskBoardViewModelCountAspect"));
-    assert!(source.contains("final _taskBoardViewModelMessageAspect"));
+    assert!(!source.contains("_TaskBoardViewModelAspect"));
+    assert!(!source.contains("_taskBoardViewModelCountAspect"));
+    assert!(!source.contains("_taskBoardViewModelMessageAspect"));
     assert!(!source.contains("get count => state.count"));
     assert!(!source.contains("get message => state.message"));
     assert!(!source.contains("get repository => args.repository"));
@@ -50,59 +50,26 @@ fn emits_state_fields_from_workspace_analysis() {
   TaskBoardState get value {
     return TaskBoardViewModelScope.of(_context).value;
   }
-
-  int get count {
-    return TaskBoardViewModelScope.of(
-      _context,
-      aspect: _taskBoardViewModelCountAspect,
-    ).state.count;
-  }
-
-  String? get message {
-    return TaskBoardViewModelScope.of(
-      _context,
-      aspect: _taskBoardViewModelMessageAspect,
-    ).state.message;
-  }
-
-  R select<R>(R Function(TaskBoardState state) selector) {
-    final aspect = _TaskBoardViewModelAspect<R>(selector);
-    return selector(TaskBoardViewModelScope.of(_context, aspect: aspect).value);
-  }
 }"#
     );
     assert_eq!(
         extract_class(source, "class _TaskBoardViewModelInherited"),
-        r#"class _TaskBoardViewModelInherited extends InheritedModel<_TaskBoardViewModelAspect<Object?>> {
+        r#"class _TaskBoardViewModelInherited extends InheritedWidget {
   const _TaskBoardViewModelInherited({required this.viewModel, required this.state, required super.child});
 
   final TaskBoardViewModel viewModel;
   final TaskBoardState state;
 
-  /// Requires TaskBoardState to implement == and hashCode. Without value equality,
-  /// every emitted state is treated as changed and granular rebuilds degrade to
-  /// full dependent subtree rebuilds.
   @override
-  bool updateShouldNotify(_TaskBoardViewModelInherited oldWidget) => state != oldWidget.state;
-
-  @override
-  bool updateShouldNotifyDependent(
-    _TaskBoardViewModelInherited oldWidget,
-    Set<_TaskBoardViewModelAspect<Object?>> dependencies,
-  ) {
-    for (final aspect in dependencies) {
-      if (aspect.hasChanged(oldWidget.state, state)) {
-        return true;
-      }
-    }
-    return false;
+  bool updateShouldNotify(_TaskBoardViewModelInherited oldWidget) {
+    return !identical(viewModel, oldWidget.viewModel) || state != oldWidget.state;
   }
 }"#
     );
 }
 
 #[test]
-fn emits_many_state_fields_without_base_getter_import_leaks() {
+fn ignores_many_state_fields_without_import_leaks() {
     let plugin = register_plugin();
     let fields = (0..120)
         .map(|index| format!(r#"{{"name":"field{index}","type_source":"int"}}"#))
@@ -128,8 +95,9 @@ fn emits_many_state_fields_without_base_getter_import_leaks() {
     );
     let source = &contribution.support_types[0];
 
-    assert!(source.contains("final _taskBoardViewModelField119Aspect"));
-    assert!(source.contains("int get field119 {"));
+    assert!(!source.contains("_taskBoardViewModelField119Aspect"));
+    assert!(!source.contains("int get field119 {"));
+    assert!(!source.contains("R select<R>"));
     assert!(!source.contains("int get field119 => state.field119;"));
     assert!(!source.contains("get repository => args.repository"));
 }
