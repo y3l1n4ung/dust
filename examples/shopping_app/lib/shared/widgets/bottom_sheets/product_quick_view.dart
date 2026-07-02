@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 
 import '../../../features/products/models/product.dart';
 
+/// Product quick view model for the shopping app example.
 class ProductQuickView {
+  /// Shows the UI element.
   static Future<void> show({
     required BuildContext context,
     required Product product,

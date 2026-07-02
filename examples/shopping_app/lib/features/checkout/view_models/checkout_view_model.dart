@@ -8,20 +8,27 @@ import '../models/checkout_state.dart';
 
 part 'checkout_view_model.g.dart';
 
+/// Checkout view model args model for the shopping app example.
 final class CheckoutViewModelArgs extends ViewModelArgs {
+  /// Creates a [CheckoutViewModelArgs].
   const CheckoutViewModelArgs({required this.repository, super.observer});
 
+  /// Repository.
   final ShoppingRepository repository;
 }
 
+/// Checkout view model for the shopping app example.
 @ViewModel(state: CheckoutState, args: CheckoutViewModelArgs)
 class CheckoutViewModel extends $CheckoutViewModel {
+  /// Creates a [CheckoutViewModel].
   CheckoutViewModel(super.args);
 
+  /// Updates shipping address.
   void updateShippingAddress(ShippingAddress address) {
     emit(state.copyWith(shippingAddress: address));
   }
 
+  /// Applies coupon.
   Future<void> applyCoupon({
     required double subtotal,
     required String couponCode,
@@ -35,6 +42,7 @@ class CheckoutViewModel extends $CheckoutViewModel {
     emit(state.copyWith(quote: quote, isQuoteLoading: false));
   }
 
+  /// Processes checkout.
   Future<String?> processCheckout(
     List<CartItem> items,
     double totalAmount,
@@ -59,6 +67,7 @@ class CheckoutViewModel extends $CheckoutViewModel {
     return orderId;
   }
 
+  /// Resets state.
   void reset() {
     invalidateSelf();
   }

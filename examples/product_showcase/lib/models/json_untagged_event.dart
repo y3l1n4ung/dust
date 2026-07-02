@@ -2,6 +2,7 @@ import 'package:dust_dart/serde.dart';
 
 part 'json_untagged_event.g.dart';
 
+/// JSON untagged event model for the product showcase example.
 @Derive([Serialize(), Deserialize()])
 @SerDe(untagged: true)
 sealed class JsonUntaggedEvent with _$JsonUntaggedEvent {

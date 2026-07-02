@@ -8,6 +8,7 @@ import '../../../shared/widgets/snackbars/app_snackbar.dart';
 import '../models/cart_state.dart';
 import '../view_models/cart_view_model.dart';
 
+/// Cart screen.
 @AppRoute(
   '/cart',
   name: 'cart',
@@ -15,6 +16,7 @@ import '../view_models/cart_view_model.dart';
   transition: BottomToTopPageTransitionsBuilder(),
 )
 class CartScreen extends StatefulWidget {
+  /// Creates a [CartScreen].
   const CartScreen({super.key});
 
   @override

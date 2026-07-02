@@ -7,19 +7,25 @@ import '../models/chat_state.dart';
 
 part 'shopping_chat_view_model.g.dart';
 
+/// Shopping chat view model args model for the shopping app example.
 final class ShoppingChatViewModelArgs extends ViewModelArgs {
+  /// Creates a [ShoppingChatViewModelArgs].
   const ShoppingChatViewModelArgs({required this.repository, super.observer});
 
+  /// Repository.
   final ShoppingRepository repository;
 }
 
+/// Shopping chat view model for the shopping app example.
 @ViewModel(state: ChatState, args: ShoppingChatViewModelArgs)
 class ShoppingChatViewModel extends $ShoppingChatViewModel {
+  /// Creates a [ShoppingChatViewModel].
   ShoppingChatViewModel(super.args);
 
   ShoppingChatSocket? _socket;
   StreamSubscription<ChatResponse>? _socketSub;
 
+  /// Sends.
   @override
   void onInit() {
     _connectSocket();
@@ -40,6 +46,7 @@ class ShoppingChatViewModel extends $ShoppingChatViewModel {
     }
   }
 
+  /// Sends a support chat message.
   Future<void> send(String text) async {
     final message = text.trim();
     if (message.isEmpty || state.status == ChatStatus.sending) return;

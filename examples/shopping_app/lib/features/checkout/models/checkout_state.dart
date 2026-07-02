@@ -4,18 +4,46 @@ import 'checkout_quote.dart';
 
 part 'checkout_state.g.dart';
 
-enum CheckoutStatus { initial, processing, success, error }
+/// Checkout status values for the shopping app example.
+enum CheckoutStatus {
+  /// Initial checkout status.
+  initial,
 
+  /// Processing checkout status.
+  processing,
+
+  /// Success checkout status.
+  success,
+
+  /// Error checkout status.
+  error,
+}
+
+/// Checkout state for the shopping app example.
 @Derive([ToString(), CopyWith(), Eq()])
 class CheckoutState with _$CheckoutState {
+  /// Status.
   final CheckoutStatus status;
+
+  /// Shipping address.
   final ShippingAddress? shippingAddress;
+
+  /// Error message.
   final String? errorMessage;
+
+  /// Order ID.
   final String? orderId;
+
+  /// Coupon code.
   final String? couponCode;
+
+  /// Quote.
   final CheckoutQuote? quote;
+
+  /// Is quote loading.
   final bool isQuoteLoading;
 
+  /// Creates a [CheckoutState].
   const CheckoutState({
     this.status = CheckoutStatus.initial,
     this.shippingAddress,

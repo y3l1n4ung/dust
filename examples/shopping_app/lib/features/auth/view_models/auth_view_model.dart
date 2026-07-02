@@ -10,23 +10,30 @@ import '../models/user.dart';
 
 part 'auth_view_model.g.dart';
 
+/// Auth view model args model for the shopping app example.
 final class AuthViewModelArgs extends ViewModelArgs {
+  /// Creates an [AuthViewModelArgs].
   const AuthViewModelArgs({
     required this.repository,
     required this.storage,
     super.observer,
   });
 
+  /// Repository.
   final ShoppingRepository repository;
+
+  /// Storage.
   final StorageService storage;
 }
 
+/// Auth view model for the shopping app example.
 @ViewModel(
   state: AuthState,
   args: AuthViewModelArgs,
   initial: AuthState(status: AuthStatus.unauthenticated),
 )
 class AuthViewModel extends $AuthViewModel {
+  /// Creates an [AuthViewModel].
   AuthViewModel(super.args);
 
   @override
@@ -66,6 +73,7 @@ class AuthViewModel extends $AuthViewModel {
     await args.storage.remove(StorageService.authUserKey);
   }
 
+  /// Logs in.
   Future<void> login(String username, String password) async {
     logger.userAction('login_attempt', {'username': username});
     emit(state.copyWith(status: AuthStatus.loading, errorMessage: null));
@@ -92,6 +100,7 @@ class AuthViewModel extends $AuthViewModel {
     }
   }
 
+  /// Registers.
   Future<void> register({
     required String email,
     required String username,
@@ -139,6 +148,7 @@ class AuthViewModel extends $AuthViewModel {
     }
   }
 
+  /// Logs out.
   Future<void> logout() async {
     logger.userAction('logout');
     await _clearSession();

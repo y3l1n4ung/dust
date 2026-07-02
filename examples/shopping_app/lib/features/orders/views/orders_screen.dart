@@ -6,8 +6,10 @@ import '../../../route.dart';
 import '../models/order.dart';
 import '../view_models/orders_view_model.dart';
 
+/// Orders screen.
 @AppRoute('/orders', name: 'orders')
 class OrdersScreen extends StatelessWidget {
+  /// Creates an [OrdersScreen].
   const OrdersScreen({super.key});
 
   @override

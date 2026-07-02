@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+/// Loading dialog.
 class LoadingDialog {
+  /// Shows the UI element.
   static Future<void> show({
     required BuildContext context,
     String message = 'Please wait...',
@@ -12,6 +14,7 @@ class LoadingDialog {
     );
   }
 
+  /// Hides the UI element.
   static void hide(BuildContext context) {
     Navigator.of(context).pop();
   }

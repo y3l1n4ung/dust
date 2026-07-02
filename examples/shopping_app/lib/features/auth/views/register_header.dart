@@ -1,7 +1,9 @@
 import 'package:dust_flutter/i18n.dart';
 import 'package:flutter/material.dart';
 
+/// Register header model for the shopping app example.
 class RegisterHeader extends StatelessWidget {
+  /// Creates a [RegisterHeader].
   const RegisterHeader({super.key});
 
   @override

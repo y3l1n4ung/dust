@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 
+/// Order confirmation screen.
 @AppRoute(
   '/order-confirmation/:orderId',
   name: 'orderConfirmation',
@@ -10,8 +11,10 @@ import '../../../route.dart';
   transition: ZoomPageTransitionsBuilder(),
 )
 class OrderConfirmationScreen extends StatelessWidget {
+  /// Order ID.
   final String orderId;
 
+  /// Creates an [OrderConfirmationScreen].
   const OrderConfirmationScreen({super.key, required this.orderId});
 
   @override

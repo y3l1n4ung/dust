@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 
+/// Shimmer widget.
 class ShimmerWidget extends StatefulWidget {
+  /// Child.
   final Widget child;
+
+  /// Base color.
   final Color baseColor;
+
+  /// Highlight color.
   final Color highlightColor;
+
+  /// Duration.
   final Duration duration;
 
+  /// Creates a [ShimmerWidget].
   const ShimmerWidget({
     super.key,
     required this.child,
@@ -78,11 +87,18 @@ class _SlidingGradientTransform extends GradientTransform {
   }
 }
 
+/// Shimmer box.
 class ShimmerBox extends StatelessWidget {
+  /// Width.
   final double width;
+
+  /// Height.
   final double height;
+
+  /// Border radius.
   final double borderRadius;
 
+  /// Creates a [ShimmerBox].
   const ShimmerBox({
     super.key,
     required this.width,
@@ -105,10 +121,15 @@ class ShimmerBox extends StatelessWidget {
   }
 }
 
+/// Shimmer line.
 class ShimmerLine extends StatelessWidget {
+  /// Width.
   final double width;
+
+  /// Height.
   final double height;
 
+  /// Creates a [ShimmerLine].
   const ShimmerLine({
     super.key,
     this.width = double.infinity,

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../route.dart';
 
+/// Staff dashboard screen.
 @AppRoute('/staff', name: 'staff', guards: [StaffGuard])
 class StaffDashboardScreen extends StatelessWidget {
+  /// Creates a [StaffDashboardScreen].
   const StaffDashboardScreen({super.key});
 
   @override

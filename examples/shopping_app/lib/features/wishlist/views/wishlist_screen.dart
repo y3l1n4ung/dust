@@ -7,8 +7,10 @@ import '../../cart/view_models/cart_view_model.dart';
 import '../models/wishlist_item.dart';
 import '../view_models/wishlist_view_model.dart';
 
+/// Wishlist screen.
 @AppRoute('/wishlist', name: 'wishlist', guards: [])
 class WishlistScreen extends StatelessWidget {
+  /// Creates a [WishlistScreen].
   const WishlistScreen({super.key});
 
   @override

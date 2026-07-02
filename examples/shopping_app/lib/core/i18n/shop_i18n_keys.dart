@@ -1,7 +1,9 @@
+/// Shop category key.
 String shopCategoryKey(String category) {
   return 'shop_category_${shopI18nKeySegment(category)}';
 }
 
+/// Shop i18n key segment.
 String shopI18nKeySegment(String value) {
   final buffer = StringBuffer();
   var previousWasSeparator = false;

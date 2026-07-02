@@ -10,18 +10,23 @@ export 'shopping_cache_rows.dart';
 
 part 'shopping_cache_database.g.dart';
 
+/// Shopping cache database model for the shopping app example.
 @SqlxDatabase(type: SqlxDatabaseType.sqlite, migrations: './migrations')
 abstract class ShoppingCacheDatabase {
+  /// Creates a [ShoppingCacheDatabase] client.
   factory ShoppingCacheDatabase.open(String path) =
       _$ShoppingCacheDatabase.open;
 
+  /// Pool.
   Pool get pool;
 }
 
+/// Shopping cache DAO.
 @SqlxDao()
 abstract final class ShoppingCacheDao {
   const factory ShoppingCacheDao(Executor db) = _$ShoppingCacheDao;
 
+  /// Finds cached product.
   @Query(r'''
 SELECT id, title, price, description, category, image,
        rating_rate, rating_count, payload, source
@@ -30,6 +35,7 @@ WHERE id = $1
 ''')
   Future<Result<CachedProductRow?, SqlxError>> findCachedProduct(int id);
 
+  /// Lists cached products.
   @Query(r'''
 SELECT id, title, price, description, category, image,
        rating_rate, rating_count, payload, source
@@ -38,9 +44,11 @@ ORDER BY title
 ''')
   Future<Result<List<CachedProductRow>, SqlxError>> listCachedProducts();
 
+  /// Counts cached products.
   @Query(r'''SELECT COUNT(*) FROM product_cache''')
   Future<Result<int, SqlxError>> countCachedProducts();
 
+  /// Saves product row.
   @Query(r'''
 INSERT OR REPLACE INTO product_cache (
   id, title, price, description, category, image,
@@ -60,6 +68,7 @@ INSERT OR REPLACE INTO product_cache (
     String source,
   );
 
+  /// Saves wishlist.
   @Query(r'''
 INSERT OR REPLACE INTO wishlist_cache (product_id, title, saved_at)
 VALUES ($1, $2, $3)
@@ -70,6 +79,7 @@ VALUES ($1, $2, $3)
     String savedAt,
   );
 
+  /// Lists wishlist.
   @Query(r'''
 SELECT product_id, title, saved_at
 FROM wishlist_cache
@@ -78,19 +88,24 @@ ORDER BY saved_at DESC
   Future<Result<List<CachedWishlistRow>, SqlxError>> listWishlist();
 }
 
+/// Shopping cache queries.
 extension ShoppingCacheQueries on Executor {
+  /// Finds cached product.
   Future<CachedProductRow?> findCachedProduct(int id) {
     return _unwrapSqlx(ShoppingCacheDao(this).findCachedProduct(id));
   }
 
+  /// Lists cached products.
   Future<List<CachedProductRow>> listCachedProducts() {
     return _unwrapSqlx(ShoppingCacheDao(this).listCachedProducts());
   }
 
+  /// Counts cached products.
   Future<int> countCachedProducts() {
     return _unwrapSqlx(ShoppingCacheDao(this).countCachedProducts());
   }
 
+  /// Saves product.
   Future<ExecResult> saveProduct(Product product) {
     return _unwrapSqlx(
       ShoppingCacheDao(this).saveProductRow(
@@ -111,18 +126,22 @@ extension ShoppingCacheQueries on Executor {
     );
   }
 
+  /// Saves wishlist.
   Future<ExecResult> saveWishlist(int productId, String title, String savedAt) {
     return _unwrapSqlx(
       ShoppingCacheDao(this).saveWishlist(productId, title, savedAt),
     );
   }
 
+  /// Lists wishlist.
   Future<List<CachedWishlistRow>> listWishlist() {
     return _unwrapSqlx(ShoppingCacheDao(this).listWishlist());
   }
 }
 
+/// Shopping product cache queries.
 extension ShoppingProductCacheQueries on Executor {
+  /// Replaces product cache.
   Future<void> replaceProductCache(List<Product> products) {
     return transaction((tx) async {
       for (final product in products) {

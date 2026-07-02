@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 
 import '../models/auth_state.dart';
 
+/// Register auth error model for the shopping app example.
 class RegisterAuthError extends StatelessWidget {
+  /// Creates a [RegisterAuthError].
   const RegisterAuthError({required this.state, super.key});
 
+  /// State.
   final AuthState state;
 
   @override

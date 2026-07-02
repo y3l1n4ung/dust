@@ -6,10 +6,13 @@ import '../../../route.dart';
 import '../models/auth_state.dart';
 import '../view_models/auth_view_model.dart';
 
+/// Login screen.
 @AppRoute('/login', name: 'login', guards: [])
 class LoginScreen extends StatefulWidget {
+  /// Redirect path.
   final String? redirectPath;
 
+  /// Creates a [LoginScreen].
   const LoginScreen({super.key, this.redirectPath});
 
   @override

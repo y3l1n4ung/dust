@@ -2,20 +2,31 @@ import 'package:dust_dart/serde.dart';
 
 part 'json_enhanced_enum_bundle.g.dart';
 
+/// Vehicle values for the product showcase example.
 @Derive([Serialize(), Deserialize()])
 enum Vehicle {
+  /// Car vehicle.
   car(tires: 4),
+
+  /// Bicycle vehicle.
   bicycle(tires: 2),
+
+  /// Unicycle vehicle.
   unicycle(tires: 1);
 
+  /// Creates a [Vehicle].
   const Vehicle({required this.tires});
 
+  /// Tires.
   final int tires;
 
+  /// Whether the value is motorized.
   bool get isMotorized => this == Vehicle.car;
 }
 
+/// Vehicle index codec model for the product showcase example.
 final class VehicleIndexCodec implements SerDeCodec<Vehicle, int> {
+  /// Creates a [VehicleIndexCodec].
   const VehicleIndexCodec();
 
   @override
@@ -34,8 +45,10 @@ final class VehicleIndexCodec implements SerDeCodec<Vehicle, int> {
       };
 }
 
+/// Vehicle index list codec for the product showcase example.
 final class VehicleIndexListCodec
     implements SerDeCodec<List<Vehicle>, List<int>> {
+  /// Creates a [VehicleIndexListCodec].
   const VehicleIndexListCodec();
 
   @override
@@ -47,26 +60,35 @@ final class VehicleIndexListCodec
       value.map(vehicleIndexCodec.deserialize).toList(growable: false);
 }
 
+/// Vehicle index codec.
 const vehicleIndexCodec = VehicleIndexCodec();
+
+/// Vehicle index list codec.
 const vehicleIndexListCodec = VehicleIndexListCodec();
 
+/// JSON enhanced enum bundle model for the product showcase example.
 @Derive([ToString(), Eq(), Serialize(), Deserialize()])
 class JsonEnhancedEnumBundle with _$JsonEnhancedEnumBundle {
+  /// Creates a [JsonEnhancedEnumBundle].
   const JsonEnhancedEnumBundle({
     required this.primaryVehicle,
     required this.fallbackVehicle,
     required this.fleet,
   });
 
+  /// Creates a [JsonEnhancedEnumBundle] from JSON.
   factory JsonEnhancedEnumBundle.fromJson(Map<String, Object?> json) =>
       _$JsonEnhancedEnumBundleFromJson(json);
 
+  /// Primary vehicle.
   @SerDe(using: vehicleIndexCodec)
   final Vehicle primaryVehicle;
 
+  /// Fallback vehicle.
   @SerDe(using: vehicleIndexCodec)
   final Vehicle? fallbackVehicle;
 
+  /// Fleet.
   @SerDe(using: vehicleIndexListCodec)
   final List<Vehicle> fleet;
 }

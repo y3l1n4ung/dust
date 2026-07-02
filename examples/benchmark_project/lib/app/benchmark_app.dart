@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../route.dart';
 import '../state/benchmark_view_model.dart';
 
+/// Benchmark app.
 class BenchmarkApp extends StatelessWidget {
+  /// Creates a [BenchmarkApp].
   const BenchmarkApp({super.key});
 
   @override

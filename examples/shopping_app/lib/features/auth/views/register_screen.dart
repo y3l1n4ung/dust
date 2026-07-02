@@ -9,10 +9,13 @@ import 'register_actions.dart';
 import 'register_auth_error.dart';
 import 'register_header.dart';
 
+/// Register screen.
 @AppRoute('/register', name: 'register', guards: [])
 class RegisterScreen extends StatefulWidget {
+  /// Redirect path.
   final String? redirectPath;
 
+  /// Creates a [RegisterScreen].
   const RegisterScreen({super.key, this.redirectPath});
 
   @override

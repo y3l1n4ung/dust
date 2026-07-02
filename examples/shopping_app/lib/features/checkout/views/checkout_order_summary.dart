@@ -5,7 +5,9 @@ import '../../cart/models/cart_state.dart';
 import '../models/checkout_quote.dart';
 import '../models/checkout_state.dart';
 
+/// Checkout order summary model for the shopping app example.
 class CheckoutOrderSummary extends StatelessWidget {
+  /// Creates a [CheckoutOrderSummary].
   const CheckoutOrderSummary({
     required this.cartState,
     required this.checkoutState,
@@ -14,9 +16,16 @@ class CheckoutOrderSummary extends StatelessWidget {
     super.key,
   });
 
+  /// Cart state.
   final CartState cartState;
+
+  /// Checkout state.
   final CheckoutState checkoutState;
+
+  /// Coupon controller.
   final TextEditingController couponController;
+
+  /// Function.
   final Future<void> Function() onApplyCoupon;
 
   @override

@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import '../../../route.dart';
 import '../models/auth_state.dart';
 
+/// Register actions model for the shopping app example.
 class RegisterActions extends StatelessWidget {
+  /// Creates a [RegisterActions].
   const RegisterActions({
     required this.status,
     required this.redirectPath,
@@ -12,8 +14,13 @@ class RegisterActions extends StatelessWidget {
     super.key,
   });
 
+  /// Status.
   final AuthStatus status;
+
+  /// Redirect path.
   final String? redirectPath;
+
+  /// On register.
   final VoidCallback onRegister;
 
   @override

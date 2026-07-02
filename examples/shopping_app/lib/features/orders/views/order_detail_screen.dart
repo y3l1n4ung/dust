@@ -8,10 +8,13 @@ import '../models/order_tracking_state.dart';
 import '../view_models/order_tracking_view_model.dart';
 import '../view_models/orders_view_model.dart';
 
+/// Order detail screen.
 @AppRoute('/orders/:orderId', name: 'orderDetail')
 class OrderDetailScreen extends StatefulWidget {
+  /// Creates an [OrderDetailScreen].
   const OrderDetailScreen({required this.orderId, super.key});
 
+  /// Order ID.
   final String orderId;
 
   @override

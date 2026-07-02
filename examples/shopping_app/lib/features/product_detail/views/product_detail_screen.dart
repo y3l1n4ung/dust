@@ -12,10 +12,13 @@ import '../models/product_detail_state.dart';
 import '../models/product_review.dart';
 import '../view_models/product_detail_view_model.dart';
 
+/// Product detail screen.
 @AppRoute('/product/:productId', name: 'productDetail', guards: [])
 class ProductDetailScreen extends StatefulWidget {
+  /// Product ID.
   final int productId;
 
+  /// Creates a [ProductDetailScreen].
   const ProductDetailScreen({super.key, required this.productId});
 
   @override

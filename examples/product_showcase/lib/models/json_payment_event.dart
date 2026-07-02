@@ -2,6 +2,7 @@ import 'package:dust_dart/serde.dart';
 
 part 'json_payment_event.g.dart';
 
+/// JSON payment event model for the product showcase example.
 @Derive([Serialize(), Deserialize()])
 @SerDe(tag: 'type', renameAll: SerDeRename.snakeCase)
 sealed class JsonPaymentEvent with _$JsonPaymentEvent {
