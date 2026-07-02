@@ -98,6 +98,8 @@ The state-management hardening stack is protected by:
 - sync invalidation tests in `packages/dust_flutter/test/view_model_test.dart`
 - generated selector/listener widget tests in
   `examples/shopping_app/test/state_selector_test.dart`
+- generated scope lifecycle tests in
+  `examples/shopping_app/test/state_scope_lifecycle_test.dart`
 - generated async builder widget tests in
   `examples/shopping_app/test/app_view_model_test.dart`
 - exact generated async output snapshot in
@@ -114,7 +116,7 @@ cargo test -p dust_state_plugin --test state_plugin_tests
 cargo test -p dust_driver --test driver_tests state_outputs::build_writes_async_state_output_for_view_model_library -- --exact
 (cd packages/dust_flutter && flutter test test/async_state_test.dart test/view_model_test.dart)
 (cd examples/shopping_app && flutter analyze --no-pub)
-(cd examples/shopping_app && flutter test test/state_selector_test.dart test/app_view_model_test.dart)
+(cd examples/shopping_app && flutter test test/state_selector_test.dart test/state_scope_lifecycle_test.dart test/app_view_model_test.dart)
 target/debug/dust check --root examples/shopping_app --fail-fast
 target/debug/dust check --root examples/shopping_app --db --fail-fast
 ```
