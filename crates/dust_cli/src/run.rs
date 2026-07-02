@@ -44,13 +44,14 @@ fn run_parsed_cli(parsed: Result<ParsedCli, clap::Error>) -> CliRun {
     };
 
     let command = parsed.command.clone();
-    let progress = create_progress_handle(&command);
+    let ai_mode = ai_mode_enabled();
+    let progress = create_progress_handle(&command, ai_mode);
     let result = run_command(parsed, progress.as_ref());
     if let Some(progress) = &progress {
         finish_progress(progress);
     }
     let exit_code = ExitCode::from_result(&command, &result) as i32;
-    let rendered = render_result(&command, &result);
+    let rendered = render_result(&command, &result, ai_mode);
 
     let (stdout, stderr) = split_output(exit_code, rendered);
     CliRun {
@@ -138,6 +139,16 @@ fn command_root(parsed: &ParsedCli) -> PathBuf {
         .unwrap_or_else(|| env::current_dir().expect("current directory must be available"))
 }
 
+/// Returns whether compact AI-oriented output is enabled.
+fn ai_mode_enabled() -> bool {
+    ai_mode_value_enabled(env::var("AI_MODE").ok().as_deref())
+}
+
+/// Interprets the `AI_MODE` environment value.
+fn ai_mode_value_enabled(value: Option<&str>) -> bool {
+    matches!(value, Some("true"))
+}
+
 /// Converts a Clap error into process output and exit code.
 fn cli_error_output(error: clap::Error) -> CliRun {
     let output = ensure_trailing_newline(error.to_string());
@@ -205,5 +216,14 @@ mod tests {
     fn ensure_trailing_newline_appends_once() {
         assert_eq!(ensure_trailing_newline("hello".to_owned()), "hello\n");
         assert_eq!(ensure_trailing_newline("hello\n".to_owned()), "hello\n");
+    }
+
+    #[test]
+    fn ai_mode_env_parsing_only_accepts_true() {
+        assert!(ai_mode_value_enabled(Some("true")));
+        assert!(!ai_mode_value_enabled(Some("false")));
+        assert!(!ai_mode_value_enabled(Some("TRUE")));
+        assert!(!ai_mode_value_enabled(Some("1")));
+        assert!(!ai_mode_value_enabled(None));
     }
 }

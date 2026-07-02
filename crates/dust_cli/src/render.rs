@@ -12,10 +12,12 @@ fn render_banner() -> &'static str {
 }
 
 /// Renders a complete command result for stdout or stderr.
-pub(crate) fn render_result(command: &CliCommand, result: &CommandResult) -> String {
+pub(crate) fn render_result(command: &CliCommand, result: &CommandResult, ai_mode: bool) -> String {
     let mut lines = Vec::new();
-    lines.push(render_banner().to_owned());
-    lines.push(String::new());
+    if !ai_mode {
+        lines.push(render_banner().to_owned());
+        lines.push(String::new());
+    }
 
     match command {
         CliCommand::Build => {
@@ -272,6 +274,7 @@ mod tests {
                 elapsed_ms: 18,
                 ..CommandResult::default()
             },
+            false,
         );
         let doctor = render_result(
             &CliCommand::Doctor,
@@ -288,6 +291,7 @@ mod tests {
                 elapsed_ms: 9,
                 ..CommandResult::default()
             },
+            false,
         );
 
         assert!(clean.contains("clean  scanned: 4  removed: 3  cache: cleared  time: 18ms"));
@@ -299,31 +303,30 @@ mod tests {
 
     #[test]
     fn render_watch_and_diagnostics() {
-        let rendered = render_result(
-            &CliCommand::Watch,
-            &CommandResult {
-                watch: Some(WatchReport {
-                    cycles: 2,
-                    rebuild_batches: 1,
-                    rebuilt_libraries: vec![PathBuf::from("lib/user.dart")],
-                }),
-                cache: Some(CacheReport::default()),
-                diagnostic_files: vec![DiagnosticFile::new(
+        let result = CommandResult {
+            watch: Some(WatchReport {
+                cycles: 2,
+                rebuild_batches: 1,
+                rebuilt_libraries: vec![PathBuf::from("lib/user.dart")],
+            }),
+            cache: Some(CacheReport::default()),
+            diagnostic_files: vec![DiagnosticFile::new(
+                FileId::new(4),
+                PathBuf::from("/tmp/example/user.dart"),
+                "@Derive([ToString(), UnknownTrait()])\n",
+            )],
+            elapsed_ms: 22,
+            diagnostics: vec![Diagnostic::warning("something happened").with_label(
+                SourceLabel::new(
                     FileId::new(4),
-                    PathBuf::from("/tmp/example/user.dart"),
-                    "@Derive([ToString(), UnknownTrait()])\n",
-                )],
-                elapsed_ms: 22,
-                diagnostics: vec![Diagnostic::warning("something happened").with_label(
-                    SourceLabel::new(
-                        FileId::new(4),
-                        TextRange::new(22_u32, 27_u32),
-                        "this annotation name is not registered",
-                    ),
-                )],
-                ..CommandResult::default()
-            },
-        );
+                    TextRange::new(22_u32, 27_u32),
+                    "this annotation name is not registered",
+                ),
+            )],
+            ..CommandResult::default()
+        };
+        let rendered = render_result(&CliCommand::Watch, &result, false);
+        let compact = render_result(&CliCommand::Watch, &result, true);
 
         assert!(
             rendered.contains("watch  scanned: 0  generated: 0  cached: 0  skipped: 0  time: 22ms")
@@ -334,5 +337,35 @@ mod tests {
         assert!(rendered.contains("  --> /tmp/example/user.dart:1:23"));
         assert!(rendered.contains("1 | @Derive([ToString(), UnknownTrait()])"));
         assert!(rendered.contains("^^^^^ this annotation name is not registered"));
+        assert!(!compact.contains(render_banner()));
+        assert!(compact.contains("diagnostics  errors: 0  warnings: 1  notes: 0"));
+        assert!(compact.contains("warning: something happened"));
+    }
+
+    #[test]
+    fn ai_mode_omits_banner_but_keeps_summary() {
+        let normal = render_result(
+            &CliCommand::Build,
+            &CommandResult {
+                elapsed_ms: 7,
+                ..CommandResult::default()
+            },
+            false,
+        );
+        let compact = render_result(
+            &CliCommand::Build,
+            &CommandResult {
+                elapsed_ms: 7,
+                ..CommandResult::default()
+            },
+            true,
+        );
+
+        assert!(normal.starts_with(render_banner()));
+        assert!(!compact.contains(render_banner()));
+        assert_eq!(
+            compact,
+            "build  scanned: 0  generated: 0  cached: 0  skipped: 0  time: 7ms\n"
+        );
     }
 }

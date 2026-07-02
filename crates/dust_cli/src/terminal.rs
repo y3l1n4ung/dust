@@ -12,7 +12,14 @@ use crate::args::CliCommand;
 pub(crate) type ProgressHandle = Arc<Mutex<TerminalProgress>>;
 
 /// Creates a progress handle when stdout is interactive and command supports progress.
-pub(crate) fn create_progress_handle(command: &CliCommand) -> Option<ProgressHandle> {
+pub(crate) fn create_progress_handle(
+    command: &CliCommand,
+    ai_mode: bool,
+) -> Option<ProgressHandle> {
+    if ai_mode {
+        return None;
+    }
+
     if !std::io::stdout().is_terminal() {
         return None;
     }
@@ -264,5 +271,10 @@ mod tests {
         progress.finish();
         assert!(!progress.active);
         assert_eq!(progress.last_len, 0);
+    }
+
+    #[test]
+    fn ai_mode_disables_progress_handle() {
+        assert!(create_progress_handle(&CliCommand::Build, true).is_none());
     }
 }
