@@ -84,6 +84,25 @@ scripts/test.sh --scope packages
 
 ---
 
+## 📚 Documentation Rules
+
+Documentation PRs should keep the page's primary reader intent clear:
+
+- **Tutorials:** give beginners a prescriptive path to a first successful result.
+- **How-to guides:** solve one named task and assume the reader knows the basics.
+- **Reference:** provide dry, structured facts such as flags, types, config, generated files, and schemas.
+- **Explanation:** describe design reasons, trade-offs, and background context.
+
+Before opening a docs PR:
+
+- Verify the README quick start can be completed in about 5 minutes.
+- Copy-paste each README command or code block into a real shell/project before claiming it works.
+- Use literal placeholders such as `your-api-token-here`; avoid ambiguous placeholders such as `<token>`.
+- Document breaking syntax or API changes in `CHANGELOG.md` or in a clearly linked migration section.
+- Keep docs changes scoped and reviewable. If a page mixes tutorial, how-to, reference, and explanation content, split the content or make the primary role explicit.
+
+---
+
 ## ⚖️ Engineering Rules
 
 To keep Dust fast and maintainable, please follow these core principles:
