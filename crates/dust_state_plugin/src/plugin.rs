@@ -2,7 +2,8 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
 use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{
-    DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
+    DustPlugin, GeneratedUnit, PluginContext, PluginContribution, SymbolPlan,
+    WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
 };
 
 /// Workspace-wide fact collection for state and view model declarations.
@@ -72,5 +73,9 @@ impl DustPlugin for StatePlugin {
 
     fn emit(&self, library: &DartFileIr, plan: &SymbolPlan) -> PluginContribution {
         emit_library_state(library, plan)
+    }
+
+    fn generate(&self, library: &DartFileIr, context: &PluginContext<'_>) -> Vec<GeneratedUnit> {
+        vec![emit_library_state(library, context.symbol_plan)]
     }
 }
