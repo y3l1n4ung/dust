@@ -7,6 +7,7 @@ import 'package:shopping_app/features/integrations/services/external_integration
 import 'package:shopping_app/features/integrations/view_models/external_integration_view_model.dart';
 import 'package:shopping_app/features/products/models/product.dart';
 import 'package:shopping_app/features/support/models/chat_message.dart';
+import 'package:shopping_app/features/support/models/chat_socket.dart';
 
 void main() {
   test('ViewModel uses WebSocket factory and closes socket on dispose',
@@ -40,6 +41,51 @@ void main() {
     viewModel.dispose();
     await server.waitForClose();
   });
+
+  test('concurrent sends share one WebSocket open', () async {
+    final factory = _DeferredChatSocketFactory();
+    final viewModel = _viewModelWith(factory);
+    addTearDown(viewModel.dispose);
+
+    final first = viewModel.sendChat('one');
+    final second = viewModel.sendChat('two');
+
+    expect(factory.openCalls, 1);
+
+    final socket = _FakeChatSocket();
+    factory.complete(socket);
+    await Future.wait([first, second]);
+
+    expect(socket.sent.map((request) => request.message), ['one', 'two']);
+  });
+
+  test('socket opened after dispose is closed without listening', () async {
+    final factory = _DeferredChatSocketFactory();
+    final viewModel = _viewModelWith(factory);
+
+    final connect = viewModel.connectChat();
+    expect(factory.openCalls, 1);
+
+    viewModel.dispose();
+    final socket = _FakeChatSocket();
+    factory.complete(socket);
+    await connect;
+
+    expect(socket.listenCalls, 0);
+    expect(socket.closeCalls, 1);
+  });
+}
+
+ExternalIntegrationViewModel _viewModelWith(
+  ExternalChatSocketFactory chatSocketFactory,
+) {
+  return ExternalIntegrationViewModel(
+    ExternalIntegrationViewModelArgs(
+      productsClient: const _UnusedProductsClient(),
+      platformClient: const _UnusedPlatformClient(),
+      chatSocketFactory: chatSocketFactory,
+    ),
+  );
 }
 
 final class _UnusedProductsClient implements ExternalProductsClient {
@@ -57,6 +103,49 @@ final class _UnusedPlatformClient implements ExternalPlatformClient {
   @override
   Future<String> loadMessage() {
     throw UnimplementedError();
+  }
+}
+
+final class _DeferredChatSocketFactory implements ExternalChatSocketFactory {
+  final List<Completer<ShoppingChatSocket>> _pending = [];
+
+  int get openCalls => _pending.length;
+
+  @override
+  Future<ShoppingChatSocket> open() {
+    final completer = Completer<ShoppingChatSocket>();
+    _pending.add(completer);
+    return completer.future;
+  }
+
+  void complete(ShoppingChatSocket socket) {
+    _pending.last.complete(socket);
+  }
+}
+
+final class _FakeChatSocket implements ShoppingChatSocket {
+  final StreamController<ChatResponse> _responses =
+      StreamController<ChatResponse>.broadcast();
+
+  final List<ChatRequest> sent = [];
+  var closeCalls = 0;
+  var listenCalls = 0;
+
+  @override
+  Stream<ChatResponse> get responses {
+    listenCalls += 1;
+    return _responses.stream;
+  }
+
+  @override
+  void send(ChatRequest request) {
+    sent.add(request);
+  }
+
+  @override
+  Future<void> close() async {
+    closeCalls += 1;
+    await _responses.close();
   }
 }
 
