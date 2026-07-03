@@ -73,6 +73,30 @@ void main() {
     expect(viewModel.state.stackTrace, isA<StackTrace>());
   });
 
+  test('retry preserves previous data on error', () async {
+    final viewModel = TestAsyncViewModel();
+
+    final load = viewModel.load();
+    viewModel.loads.single.complete(7);
+    await load;
+
+    final retry = viewModel.retry();
+    expect(viewModel.state, isA<AsyncLoading<int>>());
+    expect(viewModel.state.isRefreshing, isTrue);
+    expect(viewModel.state.hasPreviousData, isTrue);
+    expect(viewModel.state.data, 7);
+
+    viewModel.loads.last.completeError(StateError('failed'));
+    await retry;
+
+    expect(viewModel.state, isA<AsyncFailure<int>>());
+    expect(viewModel.state.hasPreviousData, isTrue);
+    expect(viewModel.state.data, 7);
+    expect(viewModel.state.previousData, 7);
+    expect(viewModel.state.error, isA<StateError>());
+    expect(viewModel.state.stackTrace, isA<StackTrace>());
+  });
+
   test('stale load result is ignored', () async {
     final viewModel = TestAsyncViewModel();
 
@@ -86,6 +110,27 @@ void main() {
 
     viewModel.loads[0].complete(1);
     await first;
+
+    expect(viewModel.data, 2);
+  });
+
+  test('stale retry result is ignored', () async {
+    final viewModel = TestAsyncViewModel();
+
+    final load = viewModel.load();
+    viewModel.loads.single.complete(7);
+    await load;
+
+    final retry = viewModel.retry();
+    final refresh = viewModel.refresh();
+
+    viewModel.loads.last.complete(2);
+    await refresh;
+
+    expect(viewModel.data, 2);
+
+    viewModel.loads[1].complete(1);
+    await retry;
 
     expect(viewModel.data, 2);
   });
