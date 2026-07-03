@@ -1,7 +1,7 @@
 name: shopping_app
 description: Dust shopping app example using Dust router, state, HTTP client, and serde.
 publish_to: none
-version: 0.1.0+1
+version: 0.1.0
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
