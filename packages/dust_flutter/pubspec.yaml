@@ -4,7 +4,7 @@ version: 0.1.0
 homepage: https://github.com/y3l1n4ung/dust
 repository: https://github.com/y3l1n4ung/dust
 issue_tracker: https://github.com/y3l1n4ung/dust/issues
-documentation: https://github.com/y3l1n4ung/dust/tree/main/docs/usage
+documentation: https://github.com/y3l1n4ung/dust/tree/main/packages/dust_flutter#readme
 topics:
   - codegen
   - flutter
