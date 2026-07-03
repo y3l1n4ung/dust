@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:dust_flutter/state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shopping_app/core/data/shopping_repository.dart';
 import 'package:shopping_app/core/view_models/app_view_model.dart';
+import 'package:shopping_app/features/products/models/product.dart';
 
 import 'support/fake_shopping_repository.dart';
 
@@ -18,6 +21,39 @@ final class ControlledHomeViewModel extends HomeViewModel {
     loads.add(completer);
     return completer.future;
   }
+}
+
+final class ControlledHomeRepository implements ShoppingRepository {
+  final productPageLoads = <Completer<List<Product>>>[];
+  final categoryLoads = <Completer<List<String>>>[];
+
+  int get productPageCalls => productPageLoads.length;
+  int get categoryCalls => categoryLoads.length;
+
+  @override
+  Future<List<Product>> getProductsPage({int? limit, String? sort}) {
+    final completer = Completer<List<Product>>();
+    productPageLoads.add(completer);
+    return completer.future;
+  }
+
+  @override
+  Future<List<String>> getCategories() {
+    final completer = Completer<List<String>>();
+    categoryLoads.add(completer);
+    return completer.future;
+  }
+
+  void completeProducts() {
+    productPageLoads.single.complete(FakeShoppingRepository.products);
+  }
+
+  void completeCategories() {
+    categoryLoads.single.complete(const ['bags', 'clothing']);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 const homeData = HomePageData(
@@ -93,4 +129,140 @@ void main() {
 
     expect(find.text('error:2'), findsOneWidget);
   });
+
+  testWidgets('bnb shell keeps async home state across tab switches', (
+    tester,
+  ) async {
+    final repository = ControlledHomeRepository();
+    final bnbViewModels = <BnbViewModel>[];
+    final homeViewModels = <HomeViewModel>[];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ViewModelScopes(
+          scopes: [
+            (child) => BnbViewModelScope(
+                  args: (_) => const BnbViewModelArgs(),
+                  create: (context, args) {
+                    final viewModel = BnbViewModel(args);
+                    bnbViewModels.add(viewModel);
+                    return viewModel;
+                  },
+                  child: child,
+                ),
+            (child) => HomeViewModelScope(
+                  args: (_) => HomeViewModelArgs(repository: repository),
+                  create: (context, args) {
+                    final viewModel = HomeViewModel(args);
+                    homeViewModels.add(viewModel);
+                    return viewModel;
+                  },
+                  child: child,
+                ),
+          ],
+          child: const _BnbShellFixture(),
+        ),
+      ),
+    );
+
+    expect(find.text('home:loading'), findsOneWidget);
+    expect(bnbViewModels.single.state.currentTab, BnbTab.home);
+
+    await tester.pump();
+
+    expect(repository.productPageCalls, 1);
+    expect(repository.categoryCalls, 0);
+
+    repository.completeProducts();
+    await tester.pump();
+
+    expect(repository.categoryCalls, 1);
+
+    repository.completeCategories();
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('home:2:bags,clothing'), findsOneWidget);
+    expect(homeViewModels, hasLength(1));
+
+    await tester.tap(find.byKey(const ValueKey<String>('bnb-cart')));
+    await tester.pump();
+
+    expect(bnbViewModels.single.state.currentTab, BnbTab.cart);
+    expect(find.text('cart tab'), findsOneWidget);
+    expect(find.text('home:2:bags,clothing'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey<String>('bnb-home')));
+    await tester.pump();
+
+    expect(bnbViewModels.single.state.currentTab, BnbTab.home);
+    expect(find.text('home:2:bags,clothing'), findsOneWidget);
+    expect(repository.productPageCalls, 1);
+    expect(repository.categoryCalls, 1);
+    expect(homeViewModels, hasLength(1));
+  });
+}
+
+final class _BnbShellFixture extends StatelessWidget {
+  const _BnbShellFixture();
+
+  @override
+  Widget build(BuildContext context) {
+    final tab = context.watchBnbViewModel().value.currentTab;
+    return Scaffold(
+      body: switch (tab) {
+        BnbTab.home => const _HomeTabFixture(),
+        BnbTab.products => const Center(child: Text('products tab')),
+        BnbTab.cart => const Center(child: Text('cart tab')),
+        BnbTab.orders => const Center(child: Text('orders tab')),
+        BnbTab.profile => const Center(child: Text('profile tab')),
+      },
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: tab.index,
+        onTap: context.readBnbViewModel().selectIndex,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home, key: ValueKey<String>('bnb-home')),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.storefront, key: ValueKey<String>('bnb-products')),
+            label: 'Products',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart, key: ValueKey<String>('bnb-cart')),
+            label: 'Cart',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long, key: ValueKey<String>('bnb-orders')),
+            label: 'Orders',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person, key: ValueKey<String>('bnb-profile')),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+final class _HomeTabFixture extends StatelessWidget {
+  const _HomeTabFixture();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: HomeViewModelBuilder(
+        loading: (context) => const Text('home:loading'),
+        data: (context, data) => Text(
+          'home:${data.featuredProducts.length}:${data.categories.join(',')}',
+        ),
+        error: (context, error, previousData) => Text(
+          'home:error:${previousData?.featuredProducts.length ?? 0}',
+        ),
+      ),
+    );
+  }
 }
