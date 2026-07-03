@@ -261,7 +261,9 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
   /// Clears pending actions and returns state to the generated initial value.
   void invalidateSelf() {
     if (_isDisposed) return;
-    _actionVersions.clear();
+    for (final key in _actionVersions.keys.toList()) {
+      cancelAction(key);
+    }
     emit(_initialState);
   }
 
