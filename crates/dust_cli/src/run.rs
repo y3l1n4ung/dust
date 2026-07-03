@@ -66,7 +66,7 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
     let cwd = command_root(&parsed);
 
     match parsed.command {
-        CliCommand::Build => {
+        CliCommand::Build | CliCommand::DbBuild => {
             if parsed.options.clean {
                 let clean = run(CommandRequest::Clean(CleanRequest { cwd: cwd.clone() }));
                 if clean.has_errors() {

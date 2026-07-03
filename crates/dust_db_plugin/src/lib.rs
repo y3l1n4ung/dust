@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
-#![doc = "Dust DB plugin for SQLx-validated sqlite3 generation."]
+#![doc = "DustDB plugin for SQLx-validated sqlite3 generation."]
 
 /// DB plugin implementation and registration surface.
 mod plugin;

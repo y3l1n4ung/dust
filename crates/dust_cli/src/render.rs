@@ -23,6 +23,9 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult, ai_mod
         CliCommand::Build => {
             append_generation_summary(&mut lines, "build", result);
         }
+        CliCommand::DbBuild => {
+            append_generation_summary(&mut lines, "db build", result);
+        }
         CliCommand::Clean => {
             if let Some(clean) = &result.clean {
                 let cache = if clean.cache_cleared {

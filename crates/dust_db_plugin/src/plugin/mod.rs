@@ -22,7 +22,7 @@ use self::constants::{
 use self::emit::emit_db_library;
 use self::validate::validate_db_library;
 
-/// Runtime options for the Dust DB plugin.
+/// Runtime options for the DustDB plugin.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DbPluginOptions {
     /// Whether SQL validation must use cached metadata only.
@@ -73,12 +73,12 @@ impl Default for DbPlugin {
     }
 }
 
-/// Creates the default Dust DB plugin.
+/// Creates the default DustDB plugin.
 pub fn register_plugin() -> DbPlugin {
     DbPlugin::new()
 }
 
-/// Creates the Dust DB plugin with explicit options.
+/// Creates the DustDB plugin with explicit options.
 pub fn register_plugin_with_options(offline: bool, write_metadata: bool) -> DbPlugin {
     DbPlugin::with_options(DbPluginOptions {
         offline,
@@ -87,7 +87,7 @@ pub fn register_plugin_with_options(offline: bool, write_metadata: bool) -> DbPl
     })
 }
 
-/// Creates the Dust DB plugin in row-mapper-only mode.
+/// Creates the DustDB plugin in row-mapper-only mode.
 pub fn register_row_plugin() -> DbPlugin {
     DbPlugin::with_options(DbPluginOptions {
         offline: false,

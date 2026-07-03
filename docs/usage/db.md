@@ -1,6 +1,6 @@
-# Dust DB
+# DustDB
 
-Dust DB is a SQLx-style raw SQL layer for Dart and Flutter. It is not an ORM and does not provide a query builder. App code writes raw SQL in `@Query`, Dust validates it during `dust build --db`, and generated DAO code calls typed `Executor` fetch/execute methods directly.
+DustDB is a SQLx-style raw SQL layer for Dart and Flutter. It is not an ORM and does not provide a query builder. App code writes raw SQL in `@Query`, Dust validates it during `dust db build`, and generated DAO code calls typed `Executor` fetch/execute methods directly.
 
 ## Packages
 
@@ -144,7 +144,7 @@ final class _$UserDao implements UserDao {
 Placeholder rules:
 
 - `@Query` SQL uses SQLx placeholders such as `$1` and `$2`.
-- `dust build --db` validates `@Query` SQL with Rust SQLx.
+- `dust db build` validates `@Query` SQL with Rust SQLx.
 - Generated SQLite DAO code emits SQLite placeholders.
 
 ```dart
@@ -238,8 +238,8 @@ await postgres.raw.fetch(r'SELECT * FROM users WHERE id = $1', [id]);
 Final rule:
 
 ```text
-Simple query       -> @Query(raw SQL) checked by dust build --db
-Complex query      -> @Query(raw SQL) checked by dust build --db
+Simple query       -> @Query(raw SQL) checked by dust db build
+Complex query      -> @Query(raw SQL) checked by dust db build
 Dynamic/admin SQL  -> db.raw.fetch(...) runtime only, unchecked
 ```
 
@@ -248,7 +248,14 @@ Dynamic/admin SQL  -> db.raw.fetch(...) runtime only, unchecked
 Run DB validation and DB generation with:
 
 ```sh
-dust build --db
+dust db build
+```
+
+Use cached SQL metadata only when CI or local development must avoid live SQLx
+schema validation:
+
+```sh
+dust db build --offline
 ```
 
 Normal `dust build` does not run SQLx validation.
@@ -259,7 +266,7 @@ SQLite migrations are applied in sorted file-name order and recorded in `__dust_
 
 ## Pipeline Split
 
-Dust DB has two separate generation paths.
+DustDB has two separate generation paths.
 
 Normal `dust build` owns DTO/row mapper generation:
 
@@ -284,7 +291,7 @@ Keep row DTOs and database/DAO roots in separate Dart libraries when possible:
 lib/db/app_database.dart      -> @SqlxDatabase, @SqlxDao, @Query
 lib/db/user_row.dart          -> @Derive([FromRow()])
 lib/db/user_row.g.dart        -> normal dust build output
-lib/db/app_database.g.dart    -> dust build --db output
+lib/db/app_database.g.dart    -> dust db build output
 ```
 
-This keeps the normal build and `--db` build from owning the same generated file.
+This keeps the normal build and `db build` from owning the same generated file.

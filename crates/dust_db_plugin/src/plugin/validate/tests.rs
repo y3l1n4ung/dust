@@ -207,8 +207,8 @@ fn query_shape_validation_rejects_non_static_sql_and_non_list_params() {
     assert_eq!(
         messages,
         vec![
-            "Dust DB query SQL must be a static string literal",
-            "Dust DB query parameters must be a List literal in v1",
+            "DustDB query SQL must be a static string literal",
+            "DustDB query parameters must be a List literal in v1",
         ]
     );
 }

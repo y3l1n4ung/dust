@@ -25,7 +25,7 @@ how-to, reference, and explanation content in one place.
 | Type | Reader intent | Pages |
 | :--- | :--- | :--- |
 | Tutorial | Learn by following a strict path to a first successful result. | [README quick start](../README.md#quick-start), [product showcase](../examples/product_showcase/README.md), [shopping app](../examples/shopping_app/README.md) |
-| How-to guide | Solve one named task after learning the basics. | [Derive](./usage/derive.md), [Serde](./usage/serde.md), [Validation](./usage/validation.md), [HttpClient](./usage/http.md), [State Management](./usage/state.md), [Routing](./usage/routing.md), [i18n](./usage/i18n.md), [Dust DB](./usage/db.md) |
+| How-to guide | Solve one named task after learning the basics. | [Derive](./usage/derive.md), [Serde](./usage/serde.md), [Validation](./usage/validation.md), [HttpClient](./usage/http.md), [State Management](./usage/state.md), [Routing](./usage/routing.md), [i18n](./usage/i18n.md), [DustDB](./usage/db.md) |
 | Reference | Look up exact facts: packages, flags, config, generated files, schemas, and release steps. | [Package installation](./usage/README.md#package-installation), [release runbook](./release-0.1.0.md), [dust_dart](../packages/dust_dart/README.md), [dust_flutter](../packages/dust_flutter/README.md), [dust_db_sqlite3](../packages/dust_db_sqlite3/README.md) |
 | Explanation | Understand design choices, constraints, and trade-offs. | [Developer guide](./developer.md), [Plugin guide](./plugin-guide.md), [State management design](./state-management-design.md) |
 
@@ -42,7 +42,7 @@ how-to, reference, and explanation content in one place.
 | [State Management](./usage/state.md) | How-to + reference | Build sync and async ViewModels; generated API and rules are reference sections. |
 | [Routing](./usage/routing.md) | How-to + reference | Configure typed Navigator 2.0 routing; parameters and guards are reference sections. |
 | [i18n](./usage/i18n.md) | How-to + reference | Configure ARB build, runtime lookup, and overrides. |
-| [Dust DB](./usage/db.md) | How-to + reference | Configure SQLx-style sqlite3 validation; pipeline split is reference. |
+| [DustDB](./usage/db.md) | How-to + reference | Configure SQLx-style sqlite3 validation; pipeline split is reference. |
 | [Developer guide](./developer.md) | Explanation | Architecture, pipeline, and engineering trade-offs. |
 | [Plugin guide](./plugin-guide.md) | How-to + explanation | Plugin implementation steps with design constraints. |
 | [State management design](./state-management-design.md) | Explanation | State API rationale and hardening notes. |

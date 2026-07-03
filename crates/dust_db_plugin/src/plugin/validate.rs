@@ -60,7 +60,7 @@ fn validate_databases(
         }
         if matches!(db.driver, DbDriver::Postgres) {
             diagnostics.push(
-                Diagnostic::error("Driver.postgres is reserved for a future Dust DB release")
+                Diagnostic::error("Driver.postgres is reserved for a future DustDB release")
                     .with_label(dust_diagnostics::SourceLabel::new(
                         db.class.span.file_id,
                         db.class.span.range,

@@ -1,4 +1,4 @@
-/// Base class for Dust DB SQLx-style runtime errors.
+/// Base class for DustDB SQLx-style runtime errors.
 sealed class SqlxError {
   /// Creates one SQLx error.
   const SqlxError();

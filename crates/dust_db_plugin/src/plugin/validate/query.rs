@@ -12,14 +12,14 @@ pub(super) fn validate_query_shape(query: &QuerySpec, diagnostics: &mut Vec<Diag
     if !query.sql_source_static {
         diagnostics.push(query_error(
             query,
-            "Dust DB query SQL must be a static string literal",
+            "DustDB query SQL must be a static string literal",
         ));
         return;
     }
     if !query.params_source_is_list {
         diagnostics.push(query_error(
             query,
-            "Dust DB query parameters must be a List literal in v1",
+            "DustDB query parameters must be a List literal in v1",
         ));
     }
     if let Err(error) = validate_placeholders(&query.sql, query.parameter_count) {
@@ -56,7 +56,7 @@ pub(super) fn query_error(query: &QuerySpec, message: impl Into<String>) -> Diag
     Diagnostic::error(message.into()).with_label(SourceLabel::new(
         query.span.file_id,
         query.span.range,
-        "invalid Dust DB query",
+        "invalid DustDB query",
     ))
 }
 

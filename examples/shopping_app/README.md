@@ -14,7 +14,7 @@ A Flutter commerce showcase for Dust code generation: router, state, HTTP client
 - Checkout quote preview with fake coupon support (`DUST10`, `SHIPFREE`).
 - Order tracking route with fake timeline events.
 - Support chat over a local socket-style stream with fake responses so tests stay deterministic.
-- Dust DB proof with sqlx-style `@SqlxDatabase`, `@SqlxDao`, `@Query`, and `@Derive([FromRow()])` mapping, flattened rating rows, JSON payloads, try-from decoding, transactions, and offline query metadata.
+- DustDB proof with sqlx-style `@SqlxDatabase`, `@SqlxDao`, `@Query`, and `@Derive([FromRow()])` mapping, flattened rating rows, JSON payloads, try-from decoding, transactions, and offline query metadata.
 - Path URL strategy on web, so deep links use clean paths like `/product/7`.
 
 ## Run
@@ -24,7 +24,7 @@ cd examples/shopping_app
 flutter pub get
 cd ../..
 cargo run -p dust_cli -- build --root examples/shopping_app --fail-fast
-cargo run -p dust_cli -- build --root examples/shopping_app --db --fail-fast
+cargo run -p dust_cli -- db build --root examples/shopping_app --fail-fast
 cd examples/shopping_app
 flutter run
 ```
@@ -33,7 +33,7 @@ flutter run
 
 ```bash
 cargo run -p dust_cli -- build --root examples/shopping_app --fail-fast
-cargo run -p dust_cli -- build --root examples/shopping_app --db --fail-fast
+cargo run -p dust_cli -- db build --root examples/shopping_app --fail-fast
 cd examples/shopping_app
 flutter analyze
 flutter test
@@ -48,7 +48,7 @@ flutter build web
   stay protected by default through generated `requiresAuth`.
 - ViewModels use `@ViewModel` with typed args, for example `AppViewModelArgs(repository, storage)`.
 - Data models use `@Derive` for copy/equality/serde output.
-- `ShoppingCacheDatabase` uses `@SqlxDatabase`; `ShoppingCacheDao` uses `@SqlxDao` and checked raw SQL `@Query` methods against `migrations/0001_shopping_cache.sql`; run `dust build --db` for SQLite validation and generated DAO output.
+- `ShoppingCacheDatabase` uses `@SqlxDatabase`; `ShoppingCacheDao` uses `@SqlxDao` and checked raw SQL `@Query` methods against `migrations/0001_shopping_cache.sql`; run `dust db build` for SQLite validation and generated DAO output.
 - `ShoppingApi` uses Dust HTTP annotations and only declares real FakeStore endpoints.
 - `dust.yaml` configures i18n locales; `lib/i18n/app_i18n.g.dart` is generated.
 - i18n keys use namespace-prefixed ARB-safe names such as `shop_title`; the

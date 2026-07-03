@@ -10,7 +10,7 @@ import 'package:shopping_app/features/products/models/product.dart';
 
 void main() {
   test(
-    'Dust DB generated shopping cache database maps rows and transactions',
+    'DustDB generated shopping cache database maps rows and transactions',
     () async {
       final app = ShoppingCacheDatabase.open(':memory:');
       addTearDown(() async {
