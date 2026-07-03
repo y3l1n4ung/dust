@@ -60,6 +60,32 @@ void main() {
     expect(find.byKey(const ValueKey<String>('second')), findsNothing);
     expect(find.text('child'), findsOneWidget);
   });
+
+  testWidgets('preserves child state across equivalent scope rebuilds', (
+    tester,
+  ) async {
+    Widget build() {
+      return ViewModelScopes(
+        scopes: [
+          (child) => _TestScope(name: 'first', child: child),
+        ],
+        child: const _CounterChild(),
+      );
+    }
+
+    await tester.pumpWidget(build());
+
+    expect(find.text('count:0'), findsOneWidget);
+
+    await tester.tap(find.text('count:0'));
+    await tester.pump();
+
+    expect(find.text('count:1'), findsOneWidget);
+
+    await tester.pumpWidget(build());
+
+    expect(find.text('count:1'), findsOneWidget);
+  });
 }
 
 final class _TestScope extends StatelessWidget {
@@ -73,6 +99,27 @@ final class _TestScope extends StatelessWidget {
     return KeyedSubtree(
       key: ValueKey<String>(name),
       child: child,
+    );
+  }
+}
+
+final class _CounterChild extends StatefulWidget {
+  const _CounterChild();
+
+  @override
+  State<_CounterChild> createState() => _CounterChildState();
+}
+
+final class _CounterChildState extends State<_CounterChild> {
+  var count = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => setState(() {
+        count += 1;
+      }),
+      child: Text('count:$count', textDirection: TextDirection.ltr),
     );
   }
 }
