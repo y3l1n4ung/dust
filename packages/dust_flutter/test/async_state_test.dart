@@ -90,6 +90,25 @@ void main() {
     expect(viewModel.data, 2);
   });
 
+  test('stale load error is ignored', () async {
+    final viewModel = TestAsyncViewModel();
+
+    final first = viewModel.load();
+    final second = viewModel.refresh();
+
+    viewModel.loads[1].complete(2);
+    await second;
+
+    expect(viewModel.state, isA<AsyncData<int>>());
+    expect(viewModel.data, 2);
+
+    viewModel.loads[0].completeError(StateError('stale'));
+    await first;
+
+    expect(viewModel.state, isA<AsyncData<int>>());
+    expect(viewModel.data, 2);
+  });
+
   test('invalidateSelf clears async state and cancels stale load', () async {
     final viewModel = TestAsyncViewModel();
 
