@@ -8,8 +8,18 @@ final class TestArgs extends ViewModelArgs {
 final class CounterViewModel extends ViewModelBase<int, TestArgs> {
   CounterViewModel() : super(const TestArgs(), initialState: 0);
 
+  static const Object testAction = Object();
+
   void setCount(int next) {
     emit(next);
+  }
+
+  ViewModelActionToken beginTestAction() {
+    return beginAction(testAction);
+  }
+
+  bool isCurrentTestAction(ViewModelActionToken token) {
+    return isCurrentAction(token);
   }
 }
 
@@ -20,5 +30,20 @@ void main() {
       ..invalidateSelf();
 
     expect(viewModel.state, 0);
+  });
+
+  test('invalidateSelf keeps old action tokens stale after action restarts',
+      () {
+    final viewModel = CounterViewModel();
+    final oldToken = viewModel.beginTestAction();
+
+    viewModel
+      ..setCount(3)
+      ..invalidateSelf();
+
+    final newToken = viewModel.beginTestAction();
+
+    expect(viewModel.isCurrentTestAction(oldToken), isFalse);
+    expect(viewModel.isCurrentTestAction(newToken), isTrue);
   });
 }
