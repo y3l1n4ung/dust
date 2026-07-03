@@ -37,9 +37,11 @@ class ExternalIntegrationViewModel extends $ExternalIntegrationViewModel {
   ExternalIntegrationViewModel(super.args);
 
   static const Object _loadProductsAction = Object();
+  static const Object _connectChatAction = Object();
 
   ShoppingChatSocket? _socket;
   StreamSubscription<ChatResponse>? _socketSub;
+  Future<void>? _connectChatFuture;
 
   /// Loads product titles through the injected HTTP client.
   Future<void> loadProducts() async {
@@ -79,13 +81,26 @@ class ExternalIntegrationViewModel extends $ExternalIntegrationViewModel {
   }
 
   /// Connects the injected WebSocket-backed chat socket.
-  Future<void> connectChat() async {
-    if (_socket != null) return;
-    final socket = await args.chatSocketFactory.open();
-    _socket = socket;
-    _socketSub = socket.responses.listen((response) {
-      emit(state.copyWith(socketReply: response.message.text));
-    });
+  Future<void> connectChat() {
+    if (_socket != null) return Future<void>.value();
+    return _connectChatFuture ??= _openChat();
+  }
+
+  Future<void> _openChat() async {
+    final token = beginAction(_connectChatAction);
+    try {
+      final socket = await args.chatSocketFactory.open();
+      if (!isCurrentAction(token)) {
+        await socket.close();
+        return;
+      }
+      _socket = socket;
+      _socketSub = socket.responses.listen((response) {
+        emit(state.copyWith(socketReply: response.message.text));
+      });
+    } finally {
+      _connectChatFuture = null;
+    }
   }
 
   /// Sends a chat request through the injected WebSocket.
@@ -96,6 +111,8 @@ class ExternalIntegrationViewModel extends $ExternalIntegrationViewModel {
 
   @override
   void dispose() {
+    cancelAction(_connectChatAction);
+    _connectChatFuture = null;
     _socketSub?.cancel();
     _socketSub = null;
     _socket?.close();
