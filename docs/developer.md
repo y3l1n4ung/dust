@@ -25,7 +25,7 @@ This document provides a deep dive into the Dust workspace layout, internal buil
 | :--- | :--- |
 | `dust_dart` | Dart-only annotations and runtime: derive, serde, HTTP, and DB base APIs. |
 | `dust_flutter` | Flutter-only annotations and runtime: routing and state management. |
-| `dust_db_sqlite3` | sqlite3 driver implementation for Dust DB. |
+| `dust_db_sqlite3` | sqlite3 driver implementation for DustDB. |
 
 ---
 

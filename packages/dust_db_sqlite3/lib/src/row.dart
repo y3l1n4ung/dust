@@ -1,6 +1,6 @@
 part of 'sqlite_pool.dart';
 
-/// SQLite implementation of the Dust DB row interface.
+/// SQLite implementation of the DustDB row interface.
 final class Sqlite3Row implements Row {
   /// Creates a typed view over one native sqlite3 result row.
   const Sqlite3Row(this._row);

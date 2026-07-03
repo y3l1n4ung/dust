@@ -28,7 +28,7 @@ pub struct ParsedDartFileSurface {
     pub variables: Vec<ParsedTopLevelVariableSurface>,
     /// Top-level typedefs that were extracted from the source.
     pub typedefs: Vec<ParsedTypedefSurface>,
-    /// Dust DB query helper calls found in the source.
+    /// DustDB query helper calls found in the source.
     pub query_calls: Vec<ParsedQueryCallSurface>,
 }
 

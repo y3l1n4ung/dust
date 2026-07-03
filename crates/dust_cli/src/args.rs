@@ -17,6 +17,8 @@ pub enum CliCommand {
     Clean,
     /// Run a no-write freshness check.
     Check,
+    /// Run a writing DustDB build.
+    DbBuild,
     /// Report workspace and plugin readiness.
     Doctor,
     /// Reconcile scanned i18n keys into ARB assets.
@@ -38,9 +40,9 @@ pub struct CliOptions {
     pub fail_fast: bool,
     /// The optional parallel worker count for build/check/watch.
     pub jobs: Option<usize>,
-    /// Whether only Dust DB generation/validation should run.
+    /// Whether only DustDB generation/validation should run.
     pub db: bool,
-    /// Whether Dust DB should use offline query metadata only.
+    /// Whether DustDB should use offline query metadata only.
     pub db_offline: bool,
     /// Whether build should remove Dust outputs and cache before generation.
     pub clean: bool,
@@ -82,7 +84,7 @@ pub struct ParsedCli {
     long_about = None,
     arg_required_else_help = true,
     propagate_version = true,
-    after_help = "Examples:\n  dust build\n  dust check --fail-fast\n  dust watch --poll-ms 100 --jobs 4"
+    after_help = "Examples:\n  dust build\n  dust db build\n  dust check --fail-fast\n  dust watch --poll-ms 100 --jobs 4"
 )]
 /// Clap-owned representation of the top-level Dust CLI.
 struct RawCli {
@@ -102,10 +104,46 @@ enum RawCommand {
     Check(BuildOptions),
     /// Report workspace and plugin readiness.
     Doctor(RootOptions),
+    /// DustDB utilities.
+    Db(DbCommandOptions),
     /// i18n utilities.
     I18n(I18nCommandOptions),
     /// Run initial build and then watch for changes.
     Watch(WatchOptions),
+}
+
+/// Options for the `db` command group.
+#[derive(Debug, Clone, PartialEq, Eq, Args)]
+struct DbCommandOptions {
+    /// Selected DB subcommand.
+    #[command(subcommand)]
+    command: DbCommand,
+}
+
+/// DustDB subcommands parsed by Clap.
+#[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
+enum DbCommand {
+    /// Run DustDB generation and SQL validation.
+    Build(DbBuildOptions),
+}
+
+/// Build-like options for DustDB generation and SQL validation.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Args)]
+struct DbBuildOptions {
+    /// Shared workspace root option.
+    #[command(flatten)]
+    root: RootOptions,
+    /// Stop after the first observed worker error diagnostic.
+    ///
+    /// Parallel builds do not guarantee that this is the lexically first file.
+    #[arg(long, default_value_t = false)]
+    fail_fast: bool,
+    /// The optional parallel worker count.
+    #[arg(long, value_name = "N")]
+    jobs: Option<NonZeroUsize>,
+    /// Use DustDB offline query metadata.
+    #[arg(long, default_value_t = false)]
+    offline: bool,
 }
 
 /// Options for the `i18n` command group.
@@ -160,10 +198,10 @@ struct BuildOptions {
     /// The optional parallel worker count.
     #[arg(long, value_name = "N")]
     jobs: Option<NonZeroUsize>,
-    /// Run only Dust DB generation and SQL validation.
+    /// Run only DustDB generation and SQL validation.
     #[arg(long, default_value_t = false)]
     db: bool,
-    /// Use Dust DB offline query metadata.
+    /// Use DustDB offline query metadata.
     #[arg(long, requires = "db", default_value_t = false)]
     offline: bool,
 }
@@ -209,9 +247,18 @@ impl From<RawCommand> for ParsedCli {
             RawCommand::Build(options) => ParsedCli::new(CliCommand::Build, options),
             RawCommand::Clean(options) => ParsedCli::new(CliCommand::Clean, options),
             RawCommand::Check(options) => ParsedCli::new(CliCommand::Check, options),
+            RawCommand::Db(options) => options.into(),
             RawCommand::Doctor(options) => ParsedCli::new(CliCommand::Doctor, options),
             RawCommand::I18n(options) => options.into(),
             RawCommand::Watch(options) => ParsedCli::new(CliCommand::Watch, options),
+        }
+    }
+}
+
+impl From<DbCommandOptions> for ParsedCli {
+    fn from(value: DbCommandOptions) -> Self {
+        match value.command {
+            DbCommand::Build(options) => ParsedCli::new(CliCommand::DbBuild, options),
         }
     }
 }
@@ -266,6 +313,19 @@ impl From<BuildOptions> for CliOptions {
             fail_fast: value.fail_fast,
             jobs: value.jobs.map(NonZeroUsize::get),
             db: value.db,
+            db_offline: value.offline,
+            ..Self::default()
+        }
+    }
+}
+
+impl From<DbBuildOptions> for CliOptions {
+    fn from(value: DbBuildOptions) -> Self {
+        Self {
+            root: value.root.root,
+            fail_fast: value.fail_fast,
+            jobs: value.jobs.map(NonZeroUsize::get),
+            db: true,
             db_offline: value.offline,
             ..Self::default()
         }

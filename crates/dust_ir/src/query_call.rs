@@ -1,6 +1,6 @@
 use crate::{SpanIr, TypeIr};
 
-/// One lowered Dust DB query helper call.
+/// One lowered DustDB query helper call.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QueryCallIr {
     /// The query helper function shape.
@@ -23,7 +23,7 @@ pub struct QueryCallIr {
     pub span: SpanIr,
 }
 
-/// Dust DB query helper function shapes.
+/// DustDB query helper function shapes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum QueryFunctionIr {
     /// `queryAs<T>(...)`.

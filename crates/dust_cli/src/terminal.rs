@@ -24,7 +24,10 @@ pub(crate) fn create_progress_handle(
         return None;
     }
 
-    if !matches!(command, CliCommand::Build | CliCommand::Watch) {
+    if !matches!(
+        command,
+        CliCommand::Build | CliCommand::DbBuild | CliCommand::Watch
+    ) {
         return None;
     }
 

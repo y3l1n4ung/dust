@@ -63,6 +63,36 @@ fn parses_build_db_offline_flags() {
 }
 
 #[test]
+fn parses_db_build_with_root_fail_fast_and_jobs() {
+    let parsed = parse_cli_args([
+        "db",
+        "build",
+        "--root",
+        "/tmp/work",
+        "--fail-fast",
+        "--jobs",
+        "4",
+    ])
+    .unwrap();
+
+    assert_eq!(parsed.command, CliCommand::DbBuild);
+    assert_eq!(parsed.options.root, Some(PathBuf::from("/tmp/work")));
+    assert!(parsed.options.fail_fast);
+    assert_eq!(parsed.options.jobs, Some(4));
+    assert!(parsed.options.db);
+    assert!(!parsed.options.db_offline);
+}
+
+#[test]
+fn parses_db_build_offline_without_db_flag() {
+    let parsed = parse_cli_args(["db", "build", "--offline"]).unwrap();
+
+    assert_eq!(parsed.command, CliCommand::DbBuild);
+    assert!(parsed.options.db);
+    assert!(parsed.options.db_offline);
+}
+
+#[test]
 fn parses_i18n_scan_with_root() {
     let parsed = parse_cli_args(["i18n", "scan", "--root", "/tmp/work"]).unwrap();
 
@@ -100,6 +130,17 @@ fn rejects_clean_without_build() {
 
     assert_eq!(error.kind(), ErrorKind::UnknownArgument);
     assert!(error.to_string().contains("--clean"));
+}
+
+#[test]
+fn rejects_build_only_flags_on_db_build() {
+    let clean = parse_cli_args(["db", "build", "--clean"]).unwrap_err();
+    assert_eq!(clean.kind(), ErrorKind::UnknownArgument);
+    assert!(clean.to_string().contains("--clean"));
+
+    let db = parse_cli_args(["db", "build", "--db"]).unwrap_err();
+    assert_eq!(db.kind(), ErrorKind::UnknownArgument);
+    assert!(db.to_string().contains("--db"));
 }
 
 #[test]

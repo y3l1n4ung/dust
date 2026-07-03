@@ -25,7 +25,7 @@ Specialized modules that navigate the AST to find generation-relevant declaratio
 - Type shapes and compatibility `type_source` values from tree-sitter type nodes.
 - Preserved expression source spans for syntax Dust intentionally does not interpret.
 - Constructor signatures.
-- Dust DB query helper calls.
+- DustDB query helper calls.
 
 ## 🛡️ Design Principles
 
