@@ -1,14 +1,16 @@
 name: dust_flutter
-description: Annotations and runtime support for generating Flutter code with dust.
+description: Flutter annotations and runtime APIs for Dust-generated routing, state management, and i18n.
 version: 0.1.0
+homepage: https://github.com/y3l1n4ung/dust
 repository: https://github.com/y3l1n4ung/dust
 issue_tracker: https://github.com/y3l1n4ung/dust/issues
+documentation: https://github.com/y3l1n4ung/dust/tree/main/docs/usage
 topics:
   - codegen
-  - annotations
+  - flutter
   - routing
   - state-management
-  - flutter
+  - localization
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
