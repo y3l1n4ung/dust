@@ -10,8 +10,8 @@ homepage.workspace = true
 description = "Shared Dart code emission helpers for Dust plugins."
 
 [dependencies]
-dust_dart_syntax = { path = "../dust_dart_syntax", version = "0.1.1" }
-dust_ir = { path = "../dust_ir", version = "0.1.1" }
+dust_dart_syntax = { path = "../dust_dart_syntax", version = "0.1.0" }
+dust_ir = { path = "../dust_ir", version = "0.1.0" }
 heck = { workspace = true }
 minijinja = { workspace = true }
 serde = { workspace = true }
