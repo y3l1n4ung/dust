@@ -1,17 +1,42 @@
 # dust_flutter
 
-Flutter runtime and annotations for Dust generated routing, state, and i18n code.
+Flutter annotations and runtime APIs for Dust-generated routing, state
+management, and i18n.
 
 You focus on product. We focus on performance.
 
-## Our Promise
+## Status
 
-- Routing, state management, and i18n APIs are beta and may still be refined
-  before stabilization.
+- `0.1.0` is the first public Flutter runtime release.
+- Routing, state management, and i18n APIs are beta and may still receive
+  compatibility-preserving refinements before stabilization.
 - Generated code can improve while app widgets and product logic stay focused.
 - No external routing or state-management package is required by Dust.
 
-## Public surfaces
+## Install
+
+Add `dust_flutter` to Flutter apps that use Dust-generated Flutter code:
+
+```yaml
+dependencies:
+  dust_flutter: ^0.1.0
+```
+
+Most projects also use `dust_dart` for model derives and serialization:
+
+```yaml
+dependencies:
+  dust_dart: ^0.1.0
+  dust_flutter: ^0.1.0
+```
+
+Run Dust from your package root after adding annotations:
+
+```sh
+dust build
+```
+
+## Imports
 
 - `package:dust_flutter/route.dart`: Navigator 2.0 annotations and runtime.
 - `package:dust_flutter/state.dart`: ViewModel annotations and runtime.
@@ -79,6 +104,8 @@ Runtime keys use a namespace prefix followed by an underscore. For example,
 `home_title` loads from `assets/i18n/{locale}/home.arb` and reads the ARB
 message key `title`. `home_title_name` reads the `title_name` key from the same
 file.
+
+## Documentation
 
 See the canonical guides in `docs/usage/routing.md`, `docs/usage/state.md`,
 and `docs/usage/i18n.md`.
