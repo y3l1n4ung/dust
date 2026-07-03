@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dust_flutter/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -23,6 +25,21 @@ final class CounterViewModel extends ViewModelBase<int, TestArgs> {
   }
 }
 
+final class InitViewModel extends ViewModelBase<int, TestArgs> {
+  InitViewModel() : super(const TestArgs(), initialState: 0);
+
+  final initCompleters = <Completer<void>>[];
+  var initCalls = 0;
+
+  @override
+  Future<void> onInit() {
+    initCalls += 1;
+    final completer = Completer<void>();
+    initCompleters.add(completer);
+    return completer.future;
+  }
+}
+
 void main() {
   test('invalidateSelf resets sync state to initial state', () {
     final viewModel = CounterViewModel()
@@ -45,5 +62,42 @@ void main() {
 
     expect(viewModel.isCurrentTestAction(oldToken), isFalse);
     expect(viewModel.isCurrentTestAction(newToken), isTrue);
+  });
+
+  test('init runs onInit once for concurrent calls', () async {
+    final viewModel = InitViewModel();
+
+    final first = viewModel.init();
+    final second = viewModel.init();
+
+    expect(viewModel.initCalls, 1);
+
+    viewModel.initCompleters.single.complete();
+    await Future.wait([first, second]);
+
+    await viewModel.init();
+
+    expect(viewModel.initCalls, 1);
+  });
+
+  test('init retries after onInit failure', () async {
+    final viewModel = InitViewModel();
+
+    final first = viewModel.init();
+    viewModel.initCompleters.single.completeError(StateError('failed'));
+
+    await expectLater(first, throwsA(isA<StateError>()));
+    expect(viewModel.initCalls, 1);
+
+    final second = viewModel.init();
+
+    expect(viewModel.initCalls, 2);
+
+    viewModel.initCompleters.last.complete();
+    await second;
+
+    await viewModel.init();
+
+    expect(viewModel.initCalls, 2);
   });
 }
