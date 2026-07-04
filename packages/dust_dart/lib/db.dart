@@ -1,4 +1,4 @@
-/// SQLx-style DB annotations and runtime for Dust.
+/// Beta SQLx-style DB annotations and runtime for Dust.
 library;
 
 export 'core.dart';
