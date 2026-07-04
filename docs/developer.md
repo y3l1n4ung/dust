@@ -120,6 +120,10 @@ awk 'BEGIN{lf=lh=0} /^LF:/{v=$0; sub("LF:","",v); lf+=v} /^LH:/{v=$0; sub("LH:",
 the analyzer gate passes. Remove generated `.dart_tool`, `build`, `coverage`,
 and ignored lockfile artifacts before final status checks.
 
+Dust owns generated-code functional contracts. Do not add `fpdart`, `dartz`, or
+another external functional package for generated-code `Option` or `Result`
+handling.
+
 ---
 
 ## 🛠️ Contribution Scenarios

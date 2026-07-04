@@ -1,4 +1,4 @@
-/// Dart-only core primitives for Dust runtimes and generated code.
+/// Beta compatibility export for Dart-only Dust functional primitives.
 library;
 
 export 'fp.dart';
