@@ -11,7 +11,6 @@ You focus on product. We focus on performance.
 - DB APIs are beta and may still be refined before stabilization.
 - Generated code and runtime helpers can improve without forcing app-code
   rewrites.
-- No external functional dependency for core generated-code contracts.
 
 ## Public surfaces
 
@@ -23,15 +22,13 @@ You focus on product. We focus on performance.
 - `package:dust_dart/db.dart`: SQLx-style DB annotations and runtime contracts.
 - `package:dust_dart/dust_dart.dart`: convenience export for all Dart-only APIs.
 
-Dust owns its functional primitives. Do not add `fpdart`, `dartz`, or another external functional package for generated-code `Option` or `Result` handling.
-
 ## Stability
 
 | Library | Status | Public contract |
 | --- | --- | --- |
-| `fp.dart` | Stable for 0.1.x | `Option`, `None`, `Some`, `Result`, `Ok`, `Err`, `Unit`, and `unit`. |
-| `core.dart` | Stable for 0.1.x | Compatibility export for `fp.dart`. |
-| `derive.dart` | Stable for 0.1.x | `Derive`, derive traits, validation annotations, validation result types, and generated-code helper imports. |
+| `fp.dart` | Beta | `Option`, `None`, `Some`, `Result`, `Ok`, `Err`, `Unit`, and `unit`. These primitives are available for generated-code contracts, but app-facing ergonomics still need improvement before stabilization. |
+| `core.dart` | Beta | Compatibility export for `fp.dart`; follows the `fp.dart` stability level. |
+| `derive.dart` | Stable for 0.1.x | `Derive`, derive traits, validation annotations, validation result types, and documented generated-code imports. It re-exports `fp.dart` for generated-code compatibility. |
 | `serde.dart` | Stable for 0.1.x | JSON derive annotations, `SerDe`, `SerDeCodec`, `SerDeRename`, and `JsonHelper`. |
 | `http.dart` | Stable for 0.1.x | HTTP client annotations, parse-target enums, Dio runtime types, and `dart:convert` export used by generated clients. |
 | `db.dart` | Beta | SQLx-style annotations and runtime contracts. Generated code may rely on them, but app-facing DB ergonomics can still be refined before DB stabilization. |
@@ -39,8 +36,8 @@ Dust owns its functional primitives. Do not add `fpdart`, `dartz`, or another ex
 
 Stable surfaces avoid breaking app authoring APIs during `0.1.x`. Generated
 code and private helpers can still improve when the documented imports and
-runtime contracts keep working. DB APIs remain beta until the DustDB release
-gate is closed.
+runtime contracts keep working. `fp.dart`, `core.dart`, and DB APIs remain beta
+until their stabilization gates are closed.
 
 ## Option
 
