@@ -47,6 +47,33 @@ void main() {
       );
     });
 
+    test('decodes list set and map values with nested keys', () {
+      expect(
+        JsonHelper.decodeList<int>(
+          <Object?>[1, 2],
+          'items',
+          (item, itemKey) => JsonHelper.as<int>(item, itemKey, 'int'),
+        ),
+        <int>[1, 2],
+      );
+      expect(
+        JsonHelper.decodeSet<int>(
+          <Object?>[1, 1, 2],
+          'items',
+          (item, itemKey) => JsonHelper.as<int>(item, itemKey, 'int'),
+        ),
+        <int>{1, 2},
+      );
+      expect(
+        JsonHelper.decodeMap<int>(
+          <String, Object?>{'first': 1, 'second': 2},
+          'items',
+          (item, itemKey) => JsonHelper.as<int>(item, itemKey, 'int'),
+        ),
+        <String, int>{'first': 1, 'second': 2},
+      );
+    });
+
     test('rejects maps with non-string keys', () {
       expect(
         () => JsonHelper.asMap(<Object?, Object?>{1: 'bad'}, 'payload'),
