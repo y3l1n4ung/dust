@@ -25,6 +25,23 @@ You focus on product. We focus on performance.
 
 Dust owns its functional primitives. Do not add `fpdart`, `dartz`, or another external functional package for generated-code `Option` or `Result` handling.
 
+## Stability
+
+| Library | Status | Public contract |
+| --- | --- | --- |
+| `fp.dart` | Stable for 0.1.x | `Option`, `None`, `Some`, `Result`, `Ok`, `Err`, `Unit`, and `unit`. |
+| `core.dart` | Stable for 0.1.x | Compatibility export for `fp.dart`. |
+| `derive.dart` | Stable for 0.1.x | `Derive`, derive traits, validation annotations, validation result types, and generated-code helper imports. |
+| `serde.dart` | Stable for 0.1.x | JSON derive annotations, `SerDe`, `SerDeCodec`, `SerDeRename`, and `JsonHelper`. |
+| `http.dart` | Stable for 0.1.x | HTTP client annotations, parse-target enums, Dio runtime types, and `dart:convert` export used by generated clients. |
+| `db.dart` | Beta | SQLx-style annotations and runtime contracts. Generated code may rely on them, but app-facing DB ergonomics can still be refined before DB stabilization. |
+| `dust_dart.dart` | Stable barrel, mixed contents | Convenience export for Dart-only APIs. It includes the beta DB surface for generated-code compatibility. |
+
+Stable surfaces avoid breaking app authoring APIs during `0.1.x`. Generated
+code and private helpers can still improve when the documented imports and
+runtime contracts keep working. DB APIs remain beta until the DustDB release
+gate is closed.
+
 ## Option
 
 `Option<T>` is Rust-style: `None()` means no value, and `Some(value)` means a
