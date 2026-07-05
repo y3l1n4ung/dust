@@ -73,6 +73,30 @@ ViewModelScopes(
 
 Scopes are nested in list order. The first scope is the outermost scope.
 
+When app-level dependencies change, key the owner scope so Flutter replaces the
+owned ViewModel tree:
+
+```dart
+AppViewModelScope(
+  key: ObjectKey(repository),
+  args: (_) => AppViewModelArgs(repository: repository),
+  create: (_, args) => AppViewModel(args),
+  child: const App(),
+)
+```
+
+Child scopes can then read typed dependencies from the parent ViewModel args:
+
+```dart
+HomeViewModelScope(
+  args: (context) => HomeViewModelArgs(
+    repository: context.readAppViewModel().args.repository,
+  ),
+  create: (_, args) => HomeViewModel(args),
+  child: const HomePage(),
+)
+```
+
 Use the generated context helpers:
 
 ```dart

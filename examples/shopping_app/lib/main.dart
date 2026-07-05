@@ -54,12 +54,48 @@ class ShoppingApp extends StatefulWidget {
 }
 
 class _ShoppingAppState extends State<ShoppingApp> {
-  late final ShoppingRepository _repository =
-      widget.repository ?? createDefaultShoppingRepository();
+  late ShoppingRepository _repository;
+  late bool _ownsRepository;
+  int _dependencyVersion = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _setRepositoryFromWidget();
+  }
+
+  @override
+  void didUpdateWidget(ShoppingApp oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final repositoryChanged = !identical(
+      widget.repository,
+      oldWidget.repository,
+    );
+    final storageChanged = !identical(widget.storage, oldWidget.storage);
+    if (repositoryChanged) {
+      final previous = _repository;
+      final ownedPrevious = _ownsRepository;
+      _setRepositoryFromWidget();
+      if (ownedPrevious) {
+        unawaited(closeDefaultShoppingRepository(previous));
+      }
+    }
+    if (repositoryChanged || storageChanged) {
+      _dependencyVersion += 1;
+    }
+  }
+
+  void _setRepositoryFromWidget() {
+    final repository = widget.repository;
+    _repository = repository ?? createDefaultShoppingRepository();
+    _ownsRepository = repository == null;
+  }
 
   @override
   void dispose() {
-    unawaited(closeDefaultShoppingRepository(_repository));
+    if (_ownsRepository) {
+      unawaited(closeDefaultShoppingRepository(_repository));
+    }
     super.dispose();
   }
 
@@ -69,6 +105,7 @@ class _ShoppingAppState extends State<ShoppingApp> {
     return ViewModelScopes(
       scopes: [
         (child) => AppViewModelScope(
+              key: ValueKey(_dependencyVersion),
               args: (context) => AppViewModelArgs(
                 repository: _repository,
                 storage: widget.storage,

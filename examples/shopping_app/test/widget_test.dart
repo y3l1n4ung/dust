@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shopping_app/core/services/storage_service.dart';
 import 'package:shopping_app/features/checkout/models/checkout_quote.dart';
+import 'package:shopping_app/features/products/models/product.dart';
 import 'package:shopping_app/features/support/models/chat_message.dart';
 import 'package:shopping_app/i18n/app_i18n.g.dart';
 import 'package:shopping_app/main.dart';
@@ -42,6 +44,67 @@ void main() {
     expect(find.text('အိတ်များ'), findsWidgets);
     expect(find.text(r'US$ 42.00'), findsOneWidget);
     expect(find.text('4.8 (12)'), findsOneWidget);
+  });
+
+  testWidgets('Shopping app replaces scoped repository dependencies', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final storage = StorageService(prefs);
+
+    Widget build(FakeShoppingRepository repository) {
+      return AppI18n(
+        child: ShoppingApp(
+          storage: storage,
+          repository: repository,
+        ),
+      );
+    }
+
+    await tester.pumpWidget(
+      build(
+        FakeShoppingRepository(
+          products: const [
+            Product(
+              id: 1,
+              title: 'First Scoped Backpack',
+              price: 42,
+              description: 'First repository product.',
+              category: 'bags',
+              image: 'https://example.com/first.png',
+              rating: Rating(rate: 4.8, count: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('First Scoped Backpack'), findsOneWidget);
+    expect(find.text('Second Scoped Backpack'), findsNothing);
+
+    await tester.pumpWidget(
+      build(
+        FakeShoppingRepository(
+          products: const [
+            Product(
+              id: 2,
+              title: 'Second Scoped Backpack',
+              price: 64,
+              description: 'Second repository product.',
+              category: 'bags',
+              image: 'https://example.com/second.png',
+              rating: Rating(rate: 4.9, count: 18),
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Second Scoped Backpack'), findsOneWidget);
+    expect(find.text('First Scoped Backpack'), findsNothing);
   });
 
   test('generated routes include new shopping showcase destinations', () {
