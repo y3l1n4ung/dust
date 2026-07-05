@@ -1,9 +1,8 @@
-/// Beta functional primitives for Dust runtimes and generated code.
+/// Stable functional primitives for Dust runtimes and generated code.
 ///
 /// Import this library when app code wants Dust-owned `Option`, `Result`, or
 /// `Unit` types without taking a dependency on an external functional package.
-/// The generated-code contract is available, but app-facing ergonomics can
-/// still be refined before this library is marked stable.
+/// Dust keeps this contract stable during `0.1.x`.
 ///
 /// ```dart
 /// import 'package:dust_dart/fp.dart';
