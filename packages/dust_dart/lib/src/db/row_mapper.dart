@@ -20,7 +20,7 @@ abstract final class RowMapperRegistry {
     final mapper = _mappers[T];
     if (mapper == null) {
       throw StateError(
-        'No DustDB FromRow mapper registered for $T. '
+        'No Database FromRow mapper registered for $T. '
         'Add @Derive([FromRow()]) and import the generated part file.',
       );
     }

@@ -65,19 +65,19 @@ pub(super) fn validate_from_query_cache(
     let cache_path = query_cache_path(library);
     let cache_source = fs::read_to_string(&cache_path).map_err(|error| {
         format!(
-            "DustDB offline query metadata cache is missing or unreadable at `{}`: {error}",
+            "Database offline query metadata cache is missing or unreadable at `{}`: {error}",
             cache_path.display()
         )
     })?;
     let cache: QueryCache = serde_json::from_str(&cache_source).map_err(|error| {
         format!(
-            "DustDB offline query metadata cache `{}` is invalid: {error}",
+            "Database offline query metadata cache `{}` is invalid: {error}",
             cache_path.display()
         )
     })?;
     if cache.version != QUERY_CACHE_VERSION {
         return Err(format!(
-            "DustDB offline query metadata cache `{}` uses unsupported version {}; run `dust db build` online first",
+            "Database offline query metadata cache `{}` uses unsupported version {}; run `dust db build` online first",
             cache_path.display(),
             cache.version
         ));
@@ -123,18 +123,18 @@ pub(super) fn write_query_cache(
     });
 
     let source = serde_json::to_string_pretty(&cache)
-        .map_err(|error| format!("failed to encode DustDB query cache: {error}"))?;
+        .map_err(|error| format!("failed to encode Database query cache: {error}"))?;
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|error| {
             format!(
-                "failed to create DustDB query cache directory `{}`: {error}",
+                "failed to create Database query cache directory `{}`: {error}",
                 parent.display()
             )
         })?;
     }
     fs::write(&path, format!("{source}\n")).map_err(|error| {
         format!(
-            "failed to write DustDB query cache `{}`: {error}",
+            "failed to write Database query cache `{}`: {error}",
             path.display()
         )
     })
@@ -229,7 +229,7 @@ fn validate_cached_query(
             && entry.row_type == query.row_type
     }) else {
         return Err(format!(
-            "DustDB offline query metadata cache is missing entry for `{}`; run `dust db build` online first",
+            "Database offline query metadata cache is missing entry for `{}`; run `dust db build` online first",
             query.display_name()
         ));
     };

@@ -2,7 +2,7 @@
 
 import '../derive/base.dart';
 
-/// Supported DustDB driver targets.
+/// Supported Database driver targets.
 enum Driver {
   /// SQLite through `package:sqlite3`.
   sqlite3,

@@ -42,9 +42,9 @@ pub const DART_RESULT: &str = "Result";
 pub const DART_RESPONSE_BODY: &str = "ResponseBody";
 /// Dio `Response` type spelling.
 pub const DART_RESPONSE: &str = "Response";
-/// DustDB `Row` type spelling.
+/// Database `Row` type spelling.
 pub const DART_ROW: &str = "Row";
-/// DustDB `Unit` type spelling.
+/// Database `Unit` type spelling.
 pub const DART_UNIT: &str = "Unit";
-/// DustDB `ExecResult` type spelling.
+/// Database `ExecResult` type spelling.
 pub const DART_EXEC_RESULT: &str = "ExecResult";

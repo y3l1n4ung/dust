@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 
-/// DustDB execution options for build/check commands.
+/// Database execution options for build/check commands.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct DbRequestOptions {
-    /// Whether only DustDB generation/validation should run.
+    /// Whether only Database generation/validation should run.
     pub only_db: bool,
-    /// Whether DustDB should use offline query metadata only.
+    /// Whether Database should use offline query metadata only.
     pub offline: bool,
 }
 
@@ -20,7 +20,7 @@ pub struct BuildRequest {
     ///
     /// `None` lets the driver choose its default execution policy.
     pub jobs: Option<usize>,
-    /// Optional DustDB focused mode.
+    /// Optional Database focused mode.
     pub db: DbRequestOptions,
 }
 
@@ -35,7 +35,7 @@ pub struct CheckRequest {
     ///
     /// `None` lets the driver choose its default execution policy.
     pub jobs: Option<usize>,
-    /// Optional DustDB focused mode.
+    /// Optional Database focused mode.
     pub db: DbRequestOptions,
 }
 

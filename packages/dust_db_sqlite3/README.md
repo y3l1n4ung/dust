@@ -1,15 +1,15 @@
 # dust_db_sqlite3
 
-SQLite runtime for DustDB code generation.
+SQLite runtime for generated Database code.
 
 You focus on product. We focus on performance.
 
 ## Status
 
-- `0.1.0` is the first public SQLite driver release for DustDB.
+- `0.1.0` is the first public SQLite driver release for Database.
 - The package provides a SQLite-backed `Executor` for generated DAO code from
   `package:dust_dart/db.dart`.
-- DustDB is raw SQL first. It is not an ORM and does not provide a query
+- Database is raw SQL first. It is not an ORM and does not provide a query
   builder.
 - Publish order matters: publish `dust_dart` before this package.
 
@@ -56,7 +56,7 @@ Applied migration names are stored in `__dust_schema_migrations`.
 
 ## Transactions
 
-Use the shared DustDB transaction contract:
+Use the shared Database transaction contract:
 
 ```dart
 final result = await pool.transaction((tx) {

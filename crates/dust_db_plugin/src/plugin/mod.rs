@@ -22,7 +22,7 @@ use self::constants::{
 use self::emit::emit_db_library;
 use self::validate::validate_db_library;
 
-/// Runtime options for the DustDB plugin.
+/// Runtime options for the Database plugin.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DbPluginOptions {
     /// Whether SQL validation must use cached metadata only.
@@ -73,12 +73,12 @@ impl Default for DbPlugin {
     }
 }
 
-/// Creates the default DustDB plugin.
+/// Creates the default Database plugin.
 pub fn register_plugin() -> DbPlugin {
     DbPlugin::new()
 }
 
-/// Creates the DustDB plugin with explicit options.
+/// Creates the Database plugin with explicit options.
 pub fn register_plugin_with_options(offline: bool, write_metadata: bool) -> DbPlugin {
     DbPlugin::with_options(DbPluginOptions {
         offline,
@@ -87,7 +87,7 @@ pub fn register_plugin_with_options(offline: bool, write_metadata: bool) -> DbPl
     })
 }
 
-/// Creates the DustDB plugin in row-mapper-only mode.
+/// Creates the Database plugin in row-mapper-only mode.
 pub fn register_row_plugin() -> DbPlugin {
     DbPlugin::with_options(DbPluginOptions {
         offline: false,
@@ -98,7 +98,7 @@ pub fn register_row_plugin() -> DbPlugin {
 
 impl DustPlugin for DbPlugin {
     fn plugin_name(&self) -> &'static str {
-        "DustDb"
+        "Database"
     }
 
     fn claimed_traits(&self) -> &'static [&'static str] {
@@ -183,7 +183,7 @@ mod tests {
     #[test]
     fn database_and_row_modes_claim_different_symbols() {
         let database = register_plugin();
-        assert_eq!(database.plugin_name(), "DustDb");
+        assert_eq!(database.plugin_name(), "Database");
         assert!(
             database
                 .claimed_configs()

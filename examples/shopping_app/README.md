@@ -14,7 +14,7 @@ A Flutter commerce showcase for Dust code generation: router, state, HTTP client
 - Checkout quote preview with fake coupon support (`DUST10`, `SHIPFREE`).
 - Order tracking route with fake timeline events.
 - Support chat over a local socket-style stream with fake responses so tests stay deterministic.
-- DustDB proof with sqlx-style `@SqlxDatabase`, `@SqlxDao`, `@Query`, and `@Derive([FromRow()])` mapping, flattened rating rows, JSON payloads, try-from decoding, transactions, and offline query metadata.
+- Database proof with sqlx-style `@SqlxDatabase`, `@SqlxDao`, `@Query`, and `@Derive([FromRow()])` mapping, flattened rating rows, JSON payloads, try-from decoding, transactions, and offline query metadata.
 - Path URL strategy on web, so deep links use clean paths like `/product/7`.
 
 ## Run
