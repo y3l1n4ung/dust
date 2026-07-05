@@ -15,6 +15,7 @@ jobs:
   build-binaries:
     name: ${{ matrix.asset_name }}
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -24,12 +25,12 @@ jobs:
             archive_ext: tar.gz
             asset_name: dust-x86_64-unknown-linux-gnu.tar.gz
             binary_name: dust
-          - runner: macos-13
+          - runner: macos-15-intel
             target: x86_64-apple-darwin
             archive_ext: tar.gz
             asset_name: dust-x86_64-apple-darwin.tar.gz
             binary_name: dust
-          - runner: macos-14
+          - runner: macos-15
             target: aarch64-apple-darwin
             archive_ext: tar.gz
             asset_name: dust-aarch64-apple-darwin.tar.gz
@@ -98,6 +99,7 @@ jobs:
     name: Publish release
     needs: build-binaries
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
