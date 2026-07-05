@@ -53,6 +53,7 @@ flutter pub publish --dry-run
 cd ../dust_db_sqlite3
 dart analyze
 dart test
+dart pub publish --dry-run
 ```
 
 ## Publish Policy
@@ -60,9 +61,15 @@ dart test
 Skip crates.io for Rust crates. Release the `dust` CLI from GitHub binary
 artifacts and installers.
 
-Publish `dust_dart` and `dust_flutter` to pub.dev after their dry-runs and CI
-pass. Track `dust_db_sqlite3` in #77 and publish it after `dust_dart` v0.1.0 is
-live on pub.dev.
+Publish Dart packages to pub.dev in dependency order after their dry-runs and
+CI pass:
+
+1. `dust_dart`
+2. `dust_flutter`
+3. `dust_db_sqlite3`
+
+Do not publish `dust_db_sqlite3` until `dust_dart` v0.1.0 is live on pub.dev;
+the SQLite driver depends on the hosted `dust_dart: ^0.1.0` package.
 
 ## GitHub Release
 
