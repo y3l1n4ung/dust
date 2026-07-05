@@ -9,34 +9,52 @@ import 'package:dust_dart/db.dart';
 import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 ```
 
+## Migration Files
+
+Create SQL migration files in your app package. Dust reads the directory from
+`@SqlxDatabase(migrations: ...)`, validates DAO queries against those files, and
+embeds the SQL into the generated database opener.
+
+You can create the first migration with
+[SQLx CLI](https://github.com/launchbadge/sqlx/blob/main/sqlx-cli/README.md):
+
+```sh
+cargo install sqlx-cli
+sqlx migrate add create_users
+```
+
+Dust `0.1.x` expects SQLx's default simple migration files
+(`<timestamp>_<name>.sql`) rather than reversible `*.up.sql` / `*.down.sql`
+pairs.
+
+Example migration:
+
+```sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL
+);
+```
+
 ## Database
 
 ```dart
-@SqlxDatabase(type: SqlxDatabaseType.sqlite)
-final class AppDatabase {
-  AppDatabase._(this._db);
+part 'app_database.g.dart';
 
-  final Executor _db;
+@SqlxDatabase(type: SqlxDatabaseType.sqlite, migrations: './migrations')
+abstract class AppDatabase {
+  factory AppDatabase.open(String path) = _$AppDatabase.open;
 
-  late final UserDao users = UserDao(_db);
-  late final RawSqlx raw = RawSqlx(_db);
-
-  static Future<AppDatabase> connect(Executor db) async {
-    return AppDatabase._(db);
-  }
-
-  Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(AppDatabase tx) callback,
-  ) {
-    return _db.transaction((tx) {
-      return callback(AppDatabase._(tx));
-    });
-  }
-
-  Future<Result<Unit, SqlxError>> close() {
-    return _db.close();
-  }
+  Pool get pool;
 }
+```
+
+Open the generated database and create DAOs from its pool:
+
+```dart
+final app = AppDatabase.open('app.db');
+final users = UserDao(app.pool);
 ```
 
 ## Row Mapping
@@ -59,7 +77,7 @@ final class UserRow {
 }
 ```
 
-Generated mapper shape:
+Generated mapper:
 
 ```dart
 extension UserRowFromRow on UserRow {
@@ -106,12 +124,12 @@ abstract final class UserDao {
   @Query(r'SELECT COUNT(*) FROM users')
   Future<Result<int, SqlxError>> count();
 
-  @Query(r'INSERT INTO users (email) VALUES ($1)')
-  Future<Result<ExecResult, SqlxError>> create(String email);
+  @Query(r'INSERT INTO users (email, name) VALUES ($1, $2)')
+  Future<Result<ExecResult, SqlxError>> create(String email, String name);
 }
 ```
 
-Generated SQLite shape:
+Generated SQLite code:
 
 ```dart
 final class _$UserDao implements UserDao {
@@ -219,7 +237,7 @@ No query builder. No ORM filters. Use the database engine SQL directly.
 Dynamic/admin SQL is explicit and unchecked:
 
 ```dart
-final result = await db.raw.fetch(
+final result = await app.pool.raw.fetch(
   'SELECT * FROM $tableName WHERE id = ?',
   [id],
 );
@@ -229,10 +247,10 @@ Raw SQL is driver-native because Dust does not validate or rewrite it:
 
 ```dart
 // SQLite raw SQL uses `?`.
-await db.raw.fetch('SELECT * FROM users WHERE id = ?', [id]);
+await app.pool.raw.fetch('SELECT * FROM users WHERE id = ?', [id]);
 
 // Future Postgres raw SQL keeps `$1`.
-await postgres.raw.fetch(r'SELECT * FROM users WHERE id = $1', [id]);
+await postgresPool.raw.fetch(r'SELECT * FROM users WHERE id = $1', [id]);
 ```
 
 Final rule:
@@ -240,7 +258,7 @@ Final rule:
 ```text
 Simple query       -> @Query(raw SQL) checked by dust db build
 Complex query      -> @Query(raw SQL) checked by dust db build
-Dynamic/admin SQL  -> db.raw.fetch(...) runtime only, unchecked
+Dynamic/admin SQL  -> pool.raw.fetch(...) runtime only, unchecked
 ```
 
 ## Validation
@@ -260,7 +278,7 @@ dust db build --offline
 
 Normal `dust build` does not run SQLx validation.
 
-Dust validates SQL syntax, migrations, table/column existence, placeholder count, result shape, nullability, `FromRow` compatibility, and `Result<T, SqlxError>` return shape.
+Dust validates SQL syntax, migrations, table/column existence, placeholder count, result columns, nullability, `FromRow` compatibility, and `Result<T, SqlxError>` return types.
 
 SQLite migrations are applied in sorted file-name order and recorded in `__dust_schema_migrations`, so reopening a Flutter app database skips already applied migrations and applies only new upgrade files.
 

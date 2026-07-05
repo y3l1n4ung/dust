@@ -1,6 +1,6 @@
 // coverage:ignore-file
 
-/// Selects the generated ViewModel base shape.
+/// Selects the generated ViewModel API.
 enum ViewModelMode {
   /// Synchronous state managed directly by the ViewModel.
   sync,

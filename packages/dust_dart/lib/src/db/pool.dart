@@ -10,7 +10,7 @@ import 'sqlx_error.dart';
 ///
 /// This mirrors sqlx's `Executor` role: generated DAO code receives an
 /// executor and calls `fetchOptional`, `fetchAll`, `fetchOne`, `fetchScalar`,
-/// or `execute` depending on the annotated method return shape.
+/// or `execute` depending on the annotated method return type.
 abstract interface class Executor {
   /// Database driver used by this SQLx driver.
   Driver get driver;
