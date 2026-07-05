@@ -23,6 +23,25 @@ You focus on product. We focus on performance.
 - `package:dust_dart/db.dart`: SQLx-style DB annotations and runtime contracts.
 - `package:dust_dart/dust_dart.dart`: convenience export for all Dart-only APIs.
 
+## How to annotate
+
+Use the focused imports for the feature you are enabling:
+
+```dart
+import 'package:dust_dart/derive.dart';
+import 'package:dust_dart/serde.dart';
+import 'package:dust_dart/http.dart';
+import 'package:dust_dart/db.dart';
+```
+
+Canonical annotation guides:
+
+- [Data classes and copyWith](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/derive.md)
+- [JSON serialization](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/serde.md)
+- [Validation](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/validation.md)
+- [HTTP clients](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/http.md)
+- [Database annotations](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/db.md)
+
 ## Stability
 
 | Library | Status | Public contract |

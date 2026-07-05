@@ -23,10 +23,10 @@ final class Validate<T> extends DeriveTrait {
     this.message,
   });
 
-  /// Validates that a string field has email shape.
+  /// Validates that a string field uses email format.
   final bool email;
 
-  /// Validates that a string field has URL shape.
+  /// Validates that a string field uses URL format.
   final bool url;
 
   /// Validates string or collection length.
@@ -199,7 +199,7 @@ final class ValidationException implements Exception {
 abstract final class ValidationHelper {
   static final RegExp _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
-  /// Returns `true` when [value] has a basic email shape.
+  /// Returns `true` when [value] uses a basic email format.
   static bool isEmail(String value) => _emailPattern.hasMatch(value);
 
   /// Returns `true` when [value] is an absolute URL with scheme and host.

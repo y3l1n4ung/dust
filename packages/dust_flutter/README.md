@@ -44,6 +44,61 @@ dust build
 - `package:dust_flutter/dust_flutter.dart`: convenience export for all
   Flutter-only APIs.
 
+## How to annotate
+
+Use normal Flutter widgets and ViewModel classes, then add Dust annotations:
+
+```dart
+import 'package:dust_flutter/route.dart';
+import 'package:dust_flutter/state.dart';
+import 'package:flutter/widgets.dart';
+
+part 'app.g.dart';
+
+class CounterState {
+  const CounterState({this.count = 0});
+
+  final int count;
+
+  CounterState copyWith({int? count}) {
+    return CounterState(count: count ?? this.count);
+  }
+}
+
+@AppRoute('/products/:id', name: 'product')
+final class ProductPage extends StatelessWidget {
+  const ProductPage({required this.id, this.tab, super.key});
+
+  final int id;
+  final String? tab;
+
+  @override
+  Widget build(BuildContext context) => Text('Product $id ${tab ?? ''}');
+}
+
+@ViewModel(state: CounterState)
+final class CounterViewModel extends $CounterViewModel {
+  CounterViewModel(super.args);
+
+  void increment() {
+    emit(state.copyWith(count: state.count + 1));
+  }
+}
+```
+
+Run generation from the app package root:
+
+```sh
+dust build
+```
+
+Full guides:
+
+- [State management annotations](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/state.md)
+- [Typed routing annotations](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/routing.md)
+- [i18n runtime setup](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/i18n.md)
+- [Package example](https://github.com/y3l1n4ung/dust/blob/main/packages/dust_flutter/example/dust_flutter_example.dart)
+
 ## Routing
 
 ```dart
@@ -107,5 +162,5 @@ file.
 
 ## Documentation
 
-See the canonical guides in `docs/usage/routing.md`, `docs/usage/state.md`,
-and `docs/usage/i18n.md`.
+See the canonical Dust usage docs at
+[github.com/y3l1n4ung/dust/tree/main/docs/usage](https://github.com/y3l1n4ung/dust/tree/main/docs/usage).
