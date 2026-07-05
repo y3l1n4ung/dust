@@ -29,6 +29,10 @@ dev_dependencies:
     sdk: flutter
   very_good_analysis: ^10.3.0
 
+dependency_overrides:
+  dust_dart:
+    path: ../../packages/dust_dart
+
 flutter:
   uses-material-design: true
   assets:
