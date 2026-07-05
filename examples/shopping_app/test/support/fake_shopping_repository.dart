@@ -9,10 +9,12 @@ import 'package:shopping_app/features/products/models/product.dart';
 import 'package:shopping_app/features/support/models/chat_socket.dart';
 
 final class FakeShoppingRepository implements ShoppingRepository {
-  FakeShoppingRepository();
+  FakeShoppingRepository({List<Product>? products})
+      : _products = products ?? FakeShoppingRepository.products;
 
   int registerCalls = 0;
   String? lastRegisteredEmail;
+  final List<Product> _products;
 
   static const products = [
     Product(
@@ -36,14 +38,14 @@ final class FakeShoppingRepository implements ShoppingRepository {
   ];
 
   @override
-  Future<List<Product>> getProducts() async => products;
+  Future<List<Product>> getProducts() async => _products;
 
   @override
   Future<List<Product>> getProductsPage({int? limit, String? sort}) async =>
-      products.take(limit ?? products.length).toList();
+      _products.take(limit ?? _products.length).toList();
 
   @override
-  Future<Product> getProduct(int id) async => products.first;
+  Future<Product> getProduct(int id) async => _products.first;
 
   @override
   Future<List<Product>> getProductsByCategory(
@@ -51,9 +53,9 @@ final class FakeShoppingRepository implements ShoppingRepository {
     int? limit,
     String? sort,
   }) async =>
-      products
+      _products
           .where((product) => product.category == category)
-          .take(limit ?? products.length)
+          .take(limit ?? _products.length)
           .toList();
 
   @override
@@ -116,7 +118,7 @@ final class FakeShoppingRepository implements ShoppingRepository {
       ];
 
   @override
-  Future<List<Product>> getRecommendations(int productId) async => products
+  Future<List<Product>> getRecommendations(int productId) async => _products
       .where((product) => product.id != productId)
       .toList(growable: false);
 
