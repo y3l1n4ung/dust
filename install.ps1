@@ -12,7 +12,7 @@ try {
     $Arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
     switch ($Arch) {
         "x64" { $Asset = "dust-x86_64-pc-windows-msvc.zip" }
-        "arm64" { $Asset = "dust-aarch64-pc-windows-msvc.zip" }
+        "arm64" { throw "unsupported architecture: $Arch (Windows arm64 release asset is not available yet)" }
         default { throw "unsupported architecture: $Arch" }
     }
 

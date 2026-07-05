@@ -89,11 +89,9 @@ After Dart package validation and Rust binary checks succeed:
    ```
 4. Wait for `.github/workflows/release.yml` to attach:
    - `dust-x86_64-unknown-linux-gnu.tar.gz`
-   - `dust-aarch64-unknown-linux-gnu.tar.gz`
    - `dust-x86_64-apple-darwin.tar.gz`
    - `dust-aarch64-apple-darwin.tar.gz`
    - `dust-x86_64-pc-windows-msvc.zip`
-   - `dust-aarch64-pc-windows-msvc.zip`
    - `SHA256SUMS.txt`
 5. Verify `install.sh` and `install.ps1` against the tagged release.
 
