@@ -52,6 +52,18 @@ void main() {
     expect(result.toString(), 'Err(bad)');
   });
 
+  test('Result equality is symmetric across generic variance', () {
+    const preciseOk = Ok<int, String>(2);
+    const widerOk = Ok<num, Object>(2);
+    const preciseErr = Err<int, String>('bad');
+    const widerErr = Err<num, Object>('bad');
+
+    expect(preciseOk == widerOk, isTrue);
+    expect(widerOk == preciseOk, isTrue);
+    expect(preciseErr == widerErr, isTrue);
+    expect(widerErr == preciseErr, isTrue);
+  });
+
   test('Unit is a stable empty success value', () {
     expect(unit, const Unit());
     expect(unit.hashCode, const Unit().hashCode);

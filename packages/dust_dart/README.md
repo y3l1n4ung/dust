@@ -8,6 +8,7 @@ You focus on product. We focus on performance.
 
 - Stable Dart authoring APIs for data classes, JSON, validation, and HTTP
   client generation.
+- Stable functional primitives used by generated code and app boundaries.
 - DB APIs are beta and may still be refined before stabilization.
 - Generated code and runtime helpers can improve without forcing app-code
   rewrites.
@@ -26,8 +27,8 @@ You focus on product. We focus on performance.
 
 | Library | Status | Public contract |
 | --- | --- | --- |
-| `fp.dart` | Beta | `Option`, `None`, `Some`, `Result`, `Ok`, `Err`, `Unit`, and `unit`. These primitives are available for generated-code contracts, but app-facing ergonomics still need improvement before stabilization. |
-| `core.dart` | Beta | Compatibility export for `fp.dart`; follows the `fp.dart` stability level. |
+| `fp.dart` | Stable for 0.1.x | `Option`, `None`, `Some`, `Result`, `Ok`, `Err`, `Unit`, and `unit`, including switch patterns, equality, `map`, `andThen`, `match`, and unwrap helpers. |
+| `core.dart` | Stable for 0.1.x | Compatibility export for `fp.dart`. |
 | `derive.dart` | Stable for 0.1.x | `Derive`, derive traits, validation annotations, validation result types, and documented generated-code imports. It re-exports `fp.dart` for generated-code compatibility. |
 | `serde.dart` | Stable for 0.1.x | JSON derive annotations, `SerDe`, `SerDeCodec`, `SerDeRename`, and `JsonHelper`. |
 | `http.dart` | Stable for 0.1.x | HTTP client annotations, parse-target enums, Dio runtime types, and `dart:convert` export used by generated clients. |
@@ -36,8 +37,8 @@ You focus on product. We focus on performance.
 
 Stable surfaces avoid breaking app authoring APIs during `0.1.x`. Generated
 code and private helpers can still improve when the documented imports and
-runtime contracts keep working. `fp.dart`, `core.dart`, and DB APIs remain beta
-until their stabilization gates are closed.
+runtime contracts keep working. DB APIs remain beta until their stabilization
+gates are closed.
 
 ## Option
 
@@ -71,6 +72,20 @@ final label = switch (parseCount('21')) {
   None<int>() => 'missing',
   Some<int>(:final value) => 'count=$value',
 };
+```
+
+Use `match`, `map`, `andThen`, and unwrapping helpers at app boundaries:
+
+```dart
+final count = parseCount('21')
+    .andThen((value) => value > 0 ? Some<int>(value) : const None<int>())
+    .map((value) => value * 2)
+    .unwrapOr(0);
+
+final message = parseCount('bad').match(
+  some: (value) => 'count=$value',
+  none: () => 'missing',
+);
 ```
 
 ## Generated copyWith

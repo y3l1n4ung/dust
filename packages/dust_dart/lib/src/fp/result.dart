@@ -183,7 +183,7 @@ final class Ok<T, E> extends Result<T, E> {
 
   @override
   bool operator ==(Object other) {
-    return other is Ok<T, E> && other.value == value;
+    return other is Ok<Object?, Object?> && other.value == value;
   }
 
   @override
@@ -253,7 +253,7 @@ final class Err<T, E> extends Result<T, E> {
 
   @override
   bool operator ==(Object other) {
-    return other is Err<T, E> && other.error == error;
+    return other is Err<Object?, Object?> && other.error == error;
   }
 
   @override
