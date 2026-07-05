@@ -1,6 +1,6 @@
 use dust_text::TextRange;
 
-/// One supported DustDB query helper call found in a Dart library.
+/// One supported Database query helper call found in a Dart library.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParsedQueryCallSurface {
     /// The query helper function name.
@@ -21,7 +21,7 @@ pub struct ParsedQueryCallSurface {
     pub span: TextRange,
 }
 
-/// DustDB query helper function shapes.
+/// Database query helper function shapes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParsedQueryFunction {
     /// `queryAs<T>(...)`.

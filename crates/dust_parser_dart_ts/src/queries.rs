@@ -5,7 +5,7 @@ use tree_sitter::Node;
 
 use crate::syntax::{node_text, text_range};
 
-/// Extracts supported DustDB query helper calls from a tree-sitter Dart tree.
+/// Extracts supported Database query helper calls from a tree-sitter Dart tree.
 pub(crate) fn extract_query_calls(
     root: Node<'_>,
     source: &SourceText,

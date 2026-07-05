@@ -1,6 +1,6 @@
-# DustDB
+# Database
 
-DustDB is a SQLx-style raw SQL layer for Dart and Flutter. It is not an ORM and does not provide a query builder. App code writes raw SQL in `@Query`, Dust validates it during `dust db build`, and generated DAO code calls typed `Executor` fetch/execute methods directly.
+Database is Dust's SQLx-style raw SQL layer for Dart and Flutter. It is not an ORM and does not provide a query builder. App code writes raw SQL in `@Query`, Dust validates it during `dust db build`, and generated DAO code calls typed `Executor` fetch/execute methods directly.
 
 ## Packages
 
@@ -266,7 +266,7 @@ SQLite migrations are applied in sorted file-name order and recorded in `__dust_
 
 ## Pipeline Split
 
-DustDB has two separate generation paths.
+Database has two separate generation paths.
 
 Normal `dust build` owns DTO/row mapper generation:
 

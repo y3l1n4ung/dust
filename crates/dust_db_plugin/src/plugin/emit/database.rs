@@ -40,7 +40,7 @@ pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>
             format!("Sqlite3Driver.open(\n      path,\n      migrations: {migrations_name},\n    )")
         }
         DbDriver::Postgres => {
-            "throw UnsupportedError('Driver.postgres is not supported in DustDB v1')".to_owned()
+            "throw UnsupportedError('Driver.postgres is not supported in Database v1')".to_owned()
         }
     };
     let migrations = render_migrations_map(library, &db.migrations, &migrations_name);
@@ -239,7 +239,7 @@ const Map<String, String> _$appDatabaseMigrations = <String, String>{
   _$AppDatabase._(this.pool);
 
   factory _$AppDatabase.open(String path) {
-    final pool = throw UnsupportedError('Driver.postgres is not supported in DustDB v1');
+    final pool = throw UnsupportedError('Driver.postgres is not supported in Database v1');
     return _$AppDatabase._(pool);
   }
 

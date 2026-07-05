@@ -17,7 +17,7 @@ pub enum CliCommand {
     Clean,
     /// Run a no-write freshness check.
     Check,
-    /// Run a writing DustDB build.
+    /// Run a writing Database build.
     DbBuild,
     /// Report workspace and plugin readiness.
     Doctor,
@@ -40,9 +40,9 @@ pub struct CliOptions {
     pub fail_fast: bool,
     /// The optional parallel worker count for build/check/watch.
     pub jobs: Option<usize>,
-    /// Whether only DustDB generation/validation should run.
+    /// Whether only Database generation/validation should run.
     pub db: bool,
-    /// Whether DustDB should use offline query metadata only.
+    /// Whether Database should use offline query metadata only.
     pub db_offline: bool,
     /// Whether build should remove Dust outputs and cache before generation.
     pub clean: bool,
@@ -104,7 +104,7 @@ enum RawCommand {
     Check(BuildOptions),
     /// Report workspace and plugin readiness.
     Doctor(RootOptions),
-    /// DustDB utilities.
+    /// Database utilities.
     Db(DbCommandOptions),
     /// i18n utilities.
     I18n(I18nCommandOptions),
@@ -120,14 +120,14 @@ struct DbCommandOptions {
     command: DbCommand,
 }
 
-/// DustDB subcommands parsed by Clap.
+/// Database subcommands parsed by Clap.
 #[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
 enum DbCommand {
-    /// Run DustDB generation and SQL validation.
+    /// Run Database generation and SQL validation.
     Build(DbBuildOptions),
 }
 
-/// Build-like options for DustDB generation and SQL validation.
+/// Build-like options for Database generation and SQL validation.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Args)]
 struct DbBuildOptions {
     /// Shared workspace root option.
@@ -141,7 +141,7 @@ struct DbBuildOptions {
     /// The optional parallel worker count.
     #[arg(long, value_name = "N")]
     jobs: Option<NonZeroUsize>,
-    /// Use DustDB offline query metadata.
+    /// Use Database offline query metadata.
     #[arg(long, default_value_t = false)]
     offline: bool,
 }
@@ -198,10 +198,10 @@ struct BuildOptions {
     /// The optional parallel worker count.
     #[arg(long, value_name = "N")]
     jobs: Option<NonZeroUsize>,
-    /// Run only DustDB generation and SQL validation.
+    /// Run only Database generation and SQL validation.
     #[arg(long, default_value_t = false)]
     db: bool,
-    /// Use DustDB offline query metadata.
+    /// Use Database offline query metadata.
     #[arg(long, requires = "db", default_value_t = false)]
     offline: bool,
 }

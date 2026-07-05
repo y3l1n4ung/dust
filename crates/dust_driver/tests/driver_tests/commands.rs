@@ -78,7 +78,7 @@ fn doctor_reports_workspace_and_registered_plugins() {
             "HttpClient".to_owned(),
             "Route".to_owned(),
             "ViewModel".to_owned(),
-            "DustDb".to_owned(),
+            "Database".to_owned(),
         ]
     );
     assert_eq!(

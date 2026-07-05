@@ -46,7 +46,7 @@ state management, and database codegen.
 | **HTTP Client** | Stable public API. API will not change. | Type-safe, Dio-backed API client generation from annotations. | [Read Guide →](docs/usage/http.md) |
 | **Routing** | Beta. API may still be refined. | Boilerplate-free Navigator 2.0 routing with typed parameters. | [Read Guide →](docs/usage/routing.md) |
 | **State Management** | Beta. API may still be refined. | Lightweight, high-performance state containers with action generation. | [Read Guide →](docs/usage/state.md) |
-| **DustDB** | Beta. API may still be refined. | SQLx-style sqlite3 query validation, DAOs, and row mapping. | [Read Guide →](docs/usage/db.md) |
+| **Database** | Beta. API may still be refined. | SQLx-style sqlite3 query validation, DAOs, and row mapping. | [Read Guide →](docs/usage/db.md) |
 | **Firebase** | Coming soon. | Typed Firebase integration and generated data access helpers. | _(Coming Soon)_ |
 | **Supabase** | Coming soon. | Typed Supabase integration and generated data access helpers. | _(Coming Soon)_ |
 | **i18n** | Beta. API may still be refined. | Flutter i18n runtime, ARB assets, static scanning, generated bootstrap, and translation checks. | [Read Guide →](docs/usage/i18n.md) |
