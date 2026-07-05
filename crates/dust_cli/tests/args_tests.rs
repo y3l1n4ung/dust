@@ -154,7 +154,7 @@ fn empty_args_show_generated_help() {
     assert!(
         error
             .to_string()
-            .contains("Fast Dart code generation without build_runner")
+            .contains("Rust-powered code generation for Dart and Flutter")
     );
 }
 
