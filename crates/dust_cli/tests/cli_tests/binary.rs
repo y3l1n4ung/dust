@@ -7,7 +7,7 @@ fn binary_help_smoke_test() {
 
     assert!(output.status.success());
     let stdout = String::from_utf8(output.stdout).unwrap();
-    assert!(stdout.contains("Fast Dart code generation without build_runner"));
+    assert!(stdout.contains("Rust-powered code generation for Dart and Flutter"));
     assert!(stdout.contains("Usage: dust <COMMAND>"));
     assert!(stdout.contains("build"));
     assert!(stdout.contains("check"));

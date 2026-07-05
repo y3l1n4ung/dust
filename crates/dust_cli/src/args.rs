@@ -80,7 +80,7 @@ pub struct ParsedCli {
 #[command(
     name = "dust",
     version,
-    about = "Fast Dart code generation without build_runner",
+    about = "Rust-powered code generation for Dart and Flutter",
     long_about = None,
     arg_required_else_help = true,
     propagate_version = true,
