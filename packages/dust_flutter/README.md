@@ -8,6 +8,7 @@ You focus on product. We focus on performance.
 ## Status
 
 - `0.1.0` is the first public Flutter runtime release.
+- `0.1.1` adds opt-in `AppRouter` debug diagnostics for generated routing.
 - Routing, state management, and i18n APIs are beta and may still receive
   compatibility-preserving refinements before stabilization.
 - Generated code can improve while app widgets and product logic stay focused.
@@ -19,7 +20,7 @@ Add `dust_flutter` to Flutter apps that use Dust-generated Flutter code:
 
 ```yaml
 dependencies:
-  dust_flutter: ^0.1.0
+  dust_flutter: ^0.1.1
 ```
 
 Most projects also use `dust_dart` for model derives and serialization:
@@ -27,7 +28,7 @@ Most projects also use `dust_dart` for model derives and serialization:
 ```yaml
 dependencies:
   dust_dart: ^0.1.0
-  dust_flutter: ^0.1.0
+  dust_flutter: ^0.1.1
 ```
 
 Run Dust from your package root after adding annotations:
@@ -119,6 +120,9 @@ final class RootRouter extends $RootRouter {
   }
 }
 ```
+
+Override `debugLogDiagnostics` to print `AppRouter:` route-table, redirect,
+guard, and stack diagnostics while debugging.
 
 ## State
 

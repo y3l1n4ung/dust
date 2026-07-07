@@ -23,6 +23,7 @@ import 'route.dart';
       resolveGuards: (route) => routeGuards(route, this),
       buildPage: buildAppRoutePage,
       restoreStack: restoreAppRouteStack,
+      debugRoutes: $appRoutes,
     );
     final delegate = GeneratedRouterDelegate<AppRoutePath>(runtimeConfig);
     return RouterConfig<AppRoutePath>(

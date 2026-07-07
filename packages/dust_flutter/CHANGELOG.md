@@ -1,3 +1,9 @@
+## 0.1.1
+
+- Add opt-in `AppRouter` debug diagnostics for generated routing.
+- Print generated route tables, named route paths, redirects, guards,
+  navigation actions, and stack changes when diagnostics are enabled.
+
 ## 0.1.0
 
 - Initial public release of Dust Flutter annotations and runtime APIs.

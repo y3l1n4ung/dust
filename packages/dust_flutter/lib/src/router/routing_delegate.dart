@@ -49,6 +49,8 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     _controller = RouterController<T>._(this);
     _entries.add(_RouteEntry(config.initialRoute));
     _rebuildPageKeyMap();
+    _logKnownRoutes();
+    _log('setting initial route ${_debugRoute(config.initialRoute)}');
     config.router.refreshListenable?.addListener(_scheduleRefresh);
     _scheduleRefresh();
   }
@@ -103,8 +105,10 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
           final key = page.key;
           final index = key == null ? null : _keyToStackIndex[key];
           if (index != null && index >= 0 && index < _entries.length) {
-            _entries.removeAt(index);
+            final removed = _entries.removeAt(index);
             _rebuildPageKeyMap();
+            _log('remove ${_debugRoute(removed.route)}');
+            _log('stack ${_debugStack()}');
             notifyListeners();
           }
         },
@@ -120,8 +124,10 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   @override
   Future<bool> popRoute() async {
     if (_entries.length <= 1) return false;
-    _entries.removeLast();
+    final removed = _entries.removeLast();
     _rebuildPageKeyMap();
+    _log('pop ${_debugRoute(removed.route)}');
+    _log('stack ${_debugStack()}');
     notifyListeners();
     return true;
   }
@@ -145,6 +151,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   void _scheduleRefresh() {
     if (_refreshScheduled) return;
     _refreshScheduled = true;
+    _log('refreshing ${_debugRoute(currentRoute)}');
     final refresh = Future<void>.microtask(() {
       _refreshScheduled = false;
       return _applyRoute(currentRoute, NavigationMode.replace);
@@ -160,6 +167,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   ]) async {
     final epoch = ++_navigationEpoch;
     var candidate = requested;
+    _log('${_debugMode(mode)} ${_debugRoute(requested)}');
 
     if (guardRedirects >= maxRedirects) {
       throw StateError(
@@ -176,6 +184,10 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
           config.routeLocation(redirected) == config.routeLocation(candidate)) {
         break;
       }
+      _log(
+        'redirecting ${_debugRoute(candidate)} => '
+        '${_debugRoute(redirected)}',
+      );
       candidate = redirected;
     }
     if (redirects >= maxRedirects) {
@@ -194,11 +206,16 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
 
     final guards = config.resolveGuards(candidate);
     if (guards.isNotEmpty) {
+      _log('guards ${guards.length} for ${_debugRoute(candidate)}');
       final redirected = await RouteGuardChain<T>(
         guards,
       ).canActivate(candidate);
       if (epoch != _navigationEpoch) return;
       if (redirected != null) {
+        _log(
+          'guard redirect ${_debugRoute(candidate)} => '
+          '${_debugRoute(redirected)}',
+        );
         await _applyRoute(redirected, mode, guardRedirects + 1);
         return;
       }
@@ -234,6 +251,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
           );
     }
     _rebuildPageKeyMap();
+    _log('stack ${_debugStack()}');
     notifyListeners();
   }
 
@@ -253,6 +271,75 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
           return MapEntry<Key, int>(routeEntry.key, index);
         }),
       );
+  }
+
+  void _log(String message) {
+    if (!config.router.debugLogDiagnostics) return;
+    debugPrint('AppRouter: $message');
+  }
+
+  void _logKnownRoutes() {
+    if (!config.router.debugLogDiagnostics || config.debugRoutes.isEmpty) {
+      return;
+    }
+    final routes = _debugRoutes(config.debugRoutes).toList(growable: false);
+    if (routes.isEmpty) return;
+
+    _log(
+      'Full paths for routes:\n'
+      '${routes.map((route) => '           => ${route.path}').join('\n')}',
+    );
+
+    final namedRoutes =
+        routes.where((route) => route.name != null).toList(growable: false);
+    if (namedRoutes.isEmpty) return;
+
+    _log(
+      'known full paths for route names:\n'
+      '${namedRoutes.map((route) {
+        return '           ${route.name} => ${route.path}';
+      }).join('\n')}',
+    );
+  }
+
+  Iterable<({String path, String? name})> _debugRoutes(
+    List<GeneratedRoute> routes, [
+    String parent = '',
+  ]) sync* {
+    for (final route in routes) {
+      final path = _joinDebugPath(parent, route.path);
+      if (route.page != null) {
+        yield (path: path, name: route.name);
+      }
+      yield* _debugRoutes(route.routes, path);
+    }
+  }
+
+  String _joinDebugPath(String parent, String path) {
+    if (path.startsWith('/')) return path;
+    if (parent.isEmpty || parent == '/') return '/$path';
+    return '$parent/$path';
+  }
+
+  String _debugMode(NavigationMode mode) {
+    return switch (mode) {
+      NavigationMode.go => 'go',
+      NavigationMode.push => 'push',
+      NavigationMode.replace => 'replace',
+      NavigationMode.restore => 'restoring',
+    };
+  }
+
+  String _debugRoute(T route) {
+    try {
+      return config.routeLocation(route);
+    } catch (_) {
+      return route.toString();
+    }
+  }
+
+  String _debugStack() {
+    return '[${_entries.map((entry) => _debugRoute(entry.route)).join(', ')}]';
   }
 }
 
