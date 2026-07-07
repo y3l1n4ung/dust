@@ -1,6 +1,14 @@
 # Changelog
 
 All notable changes to Dust are documented in this file.
+
+## [v0.1.1] - 2026-07-07
+
+### Added
+
+- Add opt-in `AppRouter` debug diagnostics for generated routing.
+- Include generated route-table metadata in routing runtime configuration.
+
 ## [v0.1.0] - 2026-05-08
 
 

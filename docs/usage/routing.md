@@ -8,7 +8,7 @@ is imported by the hand-written `lib/route.dart` entrypoint.
 
 ```yaml
 dependencies:
-  dust_flutter: ^0.1.0
+  dust_flutter: ^0.1.1
 ```
 
 ## Import Pattern
