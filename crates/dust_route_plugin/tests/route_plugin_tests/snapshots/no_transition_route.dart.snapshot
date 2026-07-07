@@ -36,6 +36,7 @@ class _NoTransitionBuilder extends PageTransitionsBuilder {
       resolveGuards: (route) => routeGuards(route, this),
       buildPage: buildAppRoutePage,
       restoreStack: restoreAppRouteStack,
+      debugRoutes: $appRoutes,
     );
     final delegate = GeneratedRouterDelegate<AppRoutePath>(runtimeConfig);
     return RouterConfig<AppRoutePath>(

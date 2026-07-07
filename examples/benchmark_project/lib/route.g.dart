@@ -30,6 +30,7 @@ abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
       resolveGuards: (route) => routeGuards(route, this),
       buildPage: buildAppRoutePage,
       restoreStack: restoreAppRouteStack,
+      debugRoutes: $appRoutes,
     );
     final delegate = GeneratedRouterDelegate<AppRoutePath>(runtimeConfig);
     return RouterConfig<AppRoutePath>(

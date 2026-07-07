@@ -32,6 +32,9 @@ abstract class RouterBase<T extends Object> {
   /// Optional listenable that triggers redirect and guard reevaluation.
   Listenable? get refreshListenable => null;
 
+  /// Whether generated routing should print runtime diagnostics.
+  bool get debugLogDiagnostics => false;
+
   /// Returns a replacement route before guards run, or `null` to continue.
   T? redirect(T route) => null;
 }
@@ -48,6 +51,7 @@ final class RouterRuntimeConfig<T extends Object> {
     required this.resolveGuards,
     required this.buildPage,
     this.restoreStack,
+    this.debugRoutes = const [],
   });
 
   /// User-owned router instance.
@@ -73,6 +77,9 @@ final class RouterRuntimeConfig<T extends Object> {
 
   /// Optional stack builder used for browser refresh and deep links.
   final RouteStackRestorer<T>? restoreStack;
+
+  /// Generated route metadata printed when diagnostics are enabled.
+  final List<GeneratedRoute> debugRoutes;
 }
 
 /// Inherited scope used by generated BuildContext extensions.

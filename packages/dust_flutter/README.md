@@ -120,6 +120,9 @@ final class RootRouter extends $RootRouter {
 }
 ```
 
+Override `debugLogDiagnostics` to print `AppRouter:` route-table, redirect,
+guard, and stack diagnostics while debugging.
+
 ## State
 
 ```dart

@@ -139,6 +139,42 @@ MaterialApp.router(
 );
 ```
 
+## Debug Diagnostics
+
+Routing diagnostics are off by default. Enable them on your generated router
+while debugging route restoration, redirects, guards, stack changes, or
+pop/remove behavior:
+
+```dart
+@AppRouter(initial: '/', notFound: '/404')
+final class RootRouter extends $RootRouter {
+  @override
+  bool get debugLogDiagnostics => true;
+}
+```
+
+Diagnostics are printed through Flutter `debugPrint` with an `AppRouter:` prefix:
+
+```text
+AppRouter: Full paths for routes:
+           => /
+           => /products
+           => /products/:id
+           => /checkout
+           => /login
+AppRouter: known full paths for route names:
+           home => /
+           products => /products
+           productDetail => /products/:id
+           checkout => /checkout
+           login => /login
+AppRouter: setting initial route /
+AppRouter: redirecting /checkout => /login?from=%2Fcheckout
+AppRouter: go /products
+AppRouter: push /products/42
+AppRouter: stack [/products, /products/42]
+```
+
 ## Navigation
 
 ```dart

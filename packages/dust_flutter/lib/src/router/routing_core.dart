@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'route_annotations.dart';
+
 part 'routing_controller.dart';
 part 'routing_delegate.dart';
 part 'routing_guards.dart';

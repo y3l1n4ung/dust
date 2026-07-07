@@ -3,6 +3,82 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('router diagnostics are disabled by default', () async {
+    final messages = <String>[];
+    final previousDebugPrint = debugPrint;
+    debugPrint = (message, {wrapWidth}) {
+      if (message != null) messages.add(message);
+    };
+
+    try {
+      final delegate = GeneratedRouterDelegate<_TestRoute>(_runtimeConfig());
+      await delegate.debugWaitForScheduledRefresh();
+      await delegate.setNewRoutePath(const _TestRoute('/private'));
+
+      expect(messages, isEmpty);
+    } finally {
+      debugPrint = previousDebugPrint;
+    }
+  });
+
+  test('router diagnostics log redirects guards and commits', () async {
+    final messages = <String>[];
+    final previousDebugPrint = debugPrint;
+    debugPrint = (message, {wrapWidth}) {
+      if (message != null) messages.add(message);
+    };
+
+    try {
+      final delegate = GeneratedRouterDelegate<_TestRoute>(
+        _runtimeConfig(
+          router: _DebugRouter(),
+          resolveGuards: (route) {
+            if (route.location != '/guard-private') return const [];
+            return [const _LoginGuard()];
+          },
+        ),
+      );
+      await delegate.debugWaitForScheduledRefresh();
+      await delegate.setNewRoutePath(const _TestRoute('/private'));
+      await delegate.setNewRoutePath(const _TestRoute('/guard-private'));
+
+      const fullPathsLog = 'AppRouter: Full paths for routes:\n'
+          '           => /safe\n'
+          '           => /private\n'
+          '           => /guard-private\n'
+          '           => /login\n'
+          '           => /nested/:id';
+      const namedPathsLog = 'AppRouter: known full paths for route names:\n'
+          '           safe => /safe\n'
+          '           private => /private\n'
+          '           guardPrivate => /guard-private\n'
+          '           login => /login\n'
+          '           nestedDetail => /nested/:id';
+
+      expect(
+        messages,
+        containsAllInOrder([
+          fullPathsLog,
+          namedPathsLog,
+          'AppRouter: setting initial route /safe',
+          'AppRouter: refreshing /safe',
+          'AppRouter: replace /safe',
+          'AppRouter: stack [/safe]',
+          'AppRouter: restoring /private',
+          'AppRouter: redirecting /private => /login',
+          'AppRouter: stack [/login]',
+          'AppRouter: restoring /guard-private',
+          'AppRouter: guards 1 for /guard-private',
+          'AppRouter: guard redirect /guard-private => /login',
+          'AppRouter: restoring /login',
+          'AppRouter: stack [/login]',
+        ]),
+      );
+    } finally {
+      debugPrint = previousDebugPrint;
+    }
+  });
+
   test('router redirects throw StateError after the redirect cap', () async {
     final delegate = GeneratedRouterDelegate<_TestRoute>(
       _runtimeConfig(
@@ -63,6 +139,18 @@ RouterRuntimeConfig<_TestRoute> _runtimeConfig({
       key: key,
       child: const SizedBox(),
     ),
+    debugRoutes: const [
+      GeneratedRoute('/safe', page: SizedBox, name: 'safe'),
+      GeneratedRoute('/private', page: SizedBox, name: 'private'),
+      GeneratedRoute('/guard-private', page: SizedBox, name: 'guardPrivate'),
+      GeneratedRoute('/login', page: SizedBox, name: 'login'),
+      GeneratedRoute(
+        '/nested',
+        routes: [
+          GeneratedRoute(':id', page: SizedBox, name: 'nestedDetail'),
+        ],
+      ),
+    ],
   );
 }
 
@@ -74,6 +162,16 @@ final class _TestRoute {
 
 final class _NoRedirectRouter extends RouterBase<_TestRoute> {}
 
+final class _DebugRouter extends RouterBase<_TestRoute> {
+  @override
+  bool get debugLogDiagnostics => true;
+
+  @override
+  _TestRoute? redirect(_TestRoute route) {
+    return route.location == '/private' ? const _TestRoute('/login') : null;
+  }
+}
+
 final class _RouterRedirectCycle extends RouterBase<_TestRoute> {
   @override
   _TestRoute? redirect(_TestRoute route) {
@@ -83,6 +181,13 @@ final class _RouterRedirectCycle extends RouterBase<_TestRoute> {
       _ => null,
     };
   }
+}
+
+final class _LoginGuard implements RouteGuard<_TestRoute> {
+  const _LoginGuard();
+
+  @override
+  _TestRoute? canActivate(_TestRoute route) => const _TestRoute('/login');
 }
 
 final class _GuardRedirectCycle implements RouteGuard<_TestRoute> {
