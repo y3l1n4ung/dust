@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::{collections::BTreeMap, fs, path::Path};
 
 use dust_diagnostics::Diagnostic;
 use serde::Deserialize;
@@ -8,6 +8,12 @@ use serde::Deserialize;
 struct Pubspec {
     /// Optional package name from `pubspec.yaml`.
     name: Option<String>,
+    /// Package dependencies.
+    #[serde(default)]
+    dependencies: BTreeMap<String, serde_yaml::Value>,
+    /// Package development dependencies.
+    #[serde(default)]
+    dev_dependencies: BTreeMap<String, serde_yaml::Value>,
     /// Optional Flutter-specific configuration.
     flutter: Option<FlutterPubspec>,
 }
@@ -65,6 +71,15 @@ pub fn load_flutter_assets(package_root: &Path) -> Result<Vec<String>, Diagnosti
         })
         .unwrap_or_default();
     Ok(assets)
+}
+
+/// Returns whether `pubspec.yaml` describes a Flutter package.
+pub fn load_is_flutter_package(package_root: &Path) -> Result<bool, Diagnostic> {
+    let path = package_root.join("pubspec.yaml");
+    let parsed = parse_pubspec(&path)?;
+    Ok(parsed.flutter.is_some()
+        || parsed.dependencies.contains_key("flutter")
+        || parsed.dev_dependencies.contains_key("flutter"))
 }
 
 /// Parses `pubspec.yaml`.

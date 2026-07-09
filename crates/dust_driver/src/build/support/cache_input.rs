@@ -63,11 +63,18 @@ pub(crate) fn load_library_input(
 pub(crate) fn read_workspace_config_hash(
     package_config_path: &Path,
     dust_config_path: Option<&Path>,
+    pubspec_path: &Path,
 ) -> Result<u64, Diagnostic> {
     let package_config = fs::read_to_string(package_config_path).map_err(|error| {
         Diagnostic::error(format!(
             "failed to read package configuration `{}`: {error}",
             package_config_path.display()
+        ))
+    })?;
+    let pubspec = fs::read_to_string(pubspec_path).map_err(|error| {
+        Diagnostic::error(format!(
+            "failed to read pubspec `{}`: {error}",
+            pubspec_path.display()
         ))
     })?;
     let dust_config = match dust_config_path {
@@ -82,6 +89,8 @@ pub(crate) fn read_workspace_config_hash(
 
     let mut combined = String::new();
     combined.push_str(&package_config);
+    combined.push('\0');
+    combined.push_str(&pubspec);
     combined.push('\0');
     if let Some(dust_config) = dust_config {
         combined.push_str(&dust_config);

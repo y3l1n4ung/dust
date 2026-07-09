@@ -5,14 +5,15 @@ use crate::features::{
     clone_copy_with::{emit_copy_with, plan_copy_with},
     debug::emit_debug_mixin,
     eq_hash::{emit_eq, emit_hash_code, plan_equality},
-    validate::emit_validate,
+    validate::{emit_flutter_form_helpers, emit_validate},
 };
 
 /// Emits all derive-generated mixin members and support types for a library.
-pub(crate) fn emit_library(library: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
+pub(crate) fn emit_library(library: &DartFileIr, plan: &SymbolPlan) -> PluginContribution {
     let mut contribution = PluginContribution::default();
     let equality = plan_equality(library);
     let copy_with_plan = plan_copy_with(library);
+    let emit_form_helpers = emit_flutter_form_helpers(plan);
     contribution
         .shared_helpers
         .extend(equality.declarations().iter().cloned());
@@ -36,7 +37,7 @@ pub(crate) fn emit_library(library: &DartFileIr, _plan: &SymbolPlan) -> PluginCo
             contribution.support_types.push(copy_with.support_type);
             copy_with_credit_pending = false;
         }
-        if let Some(validate) = emit_validate(library, class) {
+        if let Some(validate) = emit_validate(library, class, emit_form_helpers) {
             contribution.push_mixin_member(&class.name, validate.mixin_member);
             contribution.support_types.push(validate.support_type);
         }

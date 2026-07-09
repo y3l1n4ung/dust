@@ -40,7 +40,7 @@ struct FieldContext {
     self_name: String,
     /// Local validation error list variable name.
     errors_name: String,
-    /// Local parsed TextFormField input variable name.
+    /// Local parsed Flutter form input variable name.
     parsed_name: String,
     /// Local nested validation result variable name.
     nested_validation_name: String,
@@ -52,9 +52,9 @@ struct FieldContext {
     custom_error_name: String,
     /// Private validation helper method name.
     helper_name: String,
-    /// Private TextFormField input helper method name.
+    /// Private Flutter form input helper method name.
     input_helper_name: String,
-    /// Public top-level TextFormField validator helper name.
+    /// Public top-level Flutter form validator helper name.
     public_input_helper_name: String,
     /// Private validation helper signature.
     helper_signature: String,
@@ -66,9 +66,9 @@ struct FieldContext {
     type_source: String,
     /// Whether the field type is nullable.
     nullable: bool,
-    /// Whether TextFormField input validation can be generated.
+    /// Whether Flutter form input validation can be generated.
     can_validate_input: bool,
-    /// Parser kind for TextFormField input validation.
+    /// Parser kind for Flutter form input validation.
     input_kind: Option<&'static str>,
     /// Error message used when parsing input fails.
     parse_error_message: String,
@@ -119,12 +119,16 @@ pub(crate) struct ValidateEmission {
 }
 
 /// Emits validation support for a class that derives `Validate`.
-pub(crate) fn emit_validate(_library: &DartFileIr, class: &ClassIr) -> Option<ValidateEmission> {
+pub(crate) fn emit_validate(
+    library: &DartFileIr,
+    class: &ClassIr,
+    emit_form_helpers: bool,
+) -> Option<ValidateEmission> {
     if !has_validate_trait(class) {
         return None;
     }
 
-    let mut allocator = NameAllocator::new(library_declaration_names(_library));
+    let mut allocator = NameAllocator::new(library_declaration_names(library));
     let extension_name = allocator.allocate(format!("_{}Validation", class.name));
     let mut method_allocator = NameAllocator::new(std::iter::empty::<&str>());
     let self_name = method_allocator.allocate("self");
@@ -132,7 +136,7 @@ pub(crate) fn emit_validate(_library: &DartFileIr, class: &ClassIr) -> Option<Va
     let result_name = method_allocator.allocate("result");
     let mut throw_allocator = NameAllocator::new(std::iter::empty::<&str>());
     let invalid_errors_name = throw_allocator.allocate("errors");
-    let fields = render_fields(class);
+    let fields = render_fields(class, emit_form_helpers);
     let context = ValidateContext {
         class_name: &class.name,
         extension_name,
@@ -187,11 +191,12 @@ fn collapse_excess_blank_lines(mut value: String) -> String {
 }
 
 /// Builds template contexts for all validated fields on a class.
-fn render_fields(class: &ClassIr) -> Vec<FieldContext> {
+fn render_fields(class: &ClassIr, emit_form_helpers: bool) -> Vec<FieldContext> {
     field_validations(class)
         .into_iter()
         .map(|validation| {
             let input_kind = input_kind(&validation.field.ty);
+            let can_validate_input = emit_form_helpers && input_kind.is_some();
             let uses_self = validation
                 .annotations
                 .iter()
@@ -252,7 +257,7 @@ fn render_fields(class: &ClassIr) -> Vec<FieldContext> {
                 public_input_helper_name,
                 type_source: field_type,
                 nullable: validation.field.ty.is_nullable(),
-                can_validate_input: input_kind.is_some(),
+                can_validate_input,
                 input_kind,
                 parse_error_message: parse_error_message(&validation.annotations),
                 uses_self,
@@ -287,7 +292,7 @@ fn helper_signature(
     }
 }
 
-/// Renders the private TextFormField input helper signature.
+/// Renders the private Flutter form input helper signature.
 fn input_signature(
     input_helper_name: &str,
     class_name: &str,
@@ -303,7 +308,7 @@ fn input_signature(
     }
 }
 
-/// Renders the public TextFormField validator helper signature.
+/// Renders the public Flutter form validator helper signature.
 fn public_input_signature(
     public_input_helper_name: &str,
     class_name: &str,
@@ -316,7 +321,7 @@ fn public_input_signature(
     }
 }
 
-/// Renders the parse-error message for numeric TextFormField inputs.
+/// Renders the parse-error message for numeric Flutter form inputs.
 fn parse_error_message(configs: &[ValidateConfig]) -> String {
     let message = configs
         .iter()

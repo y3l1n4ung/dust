@@ -42,7 +42,7 @@ state management, and database codegen.
 | :--- | :--- | :--- | :--- |
 | **Data Classes** | Stable public API. API will not change. | `ToString`, `Eq`, `HashCode`, and `CopyWith` generation. | [Read Guide →](docs/usage/derive.md) |
 | **JSON Serialization** | Stable public API. API will not change. | Blazing fast JSON encode/decode with support for renames and custom codecs. | [Read Guide →](docs/usage/serde.md) |
-| **Validation** | Stable public API. API will not change. | Generated model and Flutter form validation from typed field rules. | [Read Guide →](docs/usage/validation.md) |
+| **Validation** | Stable public API. API will not change. | Dart model validation plus Flutter-only form validators from typed field rules. | [Read Guide →](docs/usage/validation.md) |
 | **HTTP Client** | Stable public API. API will not change. | Type-safe, Dio-backed API client generation from annotations. | [Read Guide →](docs/usage/http.md) |
 | **Routing** | Beta. API may still be refined. | Boilerplate-free Navigator 2.0 routing with typed parameters. | [Read Guide →](docs/usage/routing.md) |
 | **State Management** | Beta. API may still be refined. | Lightweight, high-performance state containers with action generation. | [Read Guide →](docs/usage/state.md) |

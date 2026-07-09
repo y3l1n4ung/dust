@@ -61,6 +61,7 @@ fn run_watch_inner(
     let mut package_config_hash = match read_workspace_config_hash(
         &workspace.package_config.path,
         workspace.dust_config.path.as_deref(),
+        &workspace.package_root.join("pubspec.yaml"),
     ) {
         Ok(hash) => hash,
         Err(diagnostic) => {
@@ -88,6 +89,7 @@ fn run_watch_inner(
             cache_root: &workspace.cache_root,
             package_root: &workspace.package_root,
             package_name: &workspace.package_name,
+            is_flutter_package: workspace.is_flutter_package,
             package_config_hash,
             tool_hash,
             cache: &cache,
@@ -160,6 +162,7 @@ fn run_watch_inner(
                 cache_root: &workspace.cache_root,
                 package_root: &workspace.package_root,
                 package_name: &workspace.package_name,
+                is_flutter_package: workspace.is_flutter_package,
                 package_config_hash,
                 tool_hash,
                 cache: &cache,

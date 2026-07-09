@@ -39,6 +39,7 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
             cache_root: &workspace.cache_root,
             package_root: &workspace.package_root,
             package_name: &workspace.package_name,
+            is_flutter_package: workspace.is_flutter_package,
             package_config_hash,
             tool_hash,
             cache: &cache,

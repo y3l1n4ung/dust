@@ -28,7 +28,7 @@ pub(crate) fn render_type(ty: &TypeIr) -> String {
     }
 }
 
-/// Returns the TextFormField input parser kind supported by a type.
+/// Returns the Flutter form input parser kind supported by a type.
 pub(crate) fn input_kind(ty: &TypeIr) -> Option<&'static str> {
     if ty.is_named(DART_STRING) {
         Some("string")
