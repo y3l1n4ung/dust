@@ -10,11 +10,11 @@ description = "Command-line interface for the Dust Dart code generation tool."
 
 [dependencies]
 clap.workspace = true
-dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.0" }
-dust_driver = { path = "../dust_driver", version = "0.1.0" }
+dust_diagnostics = { path = "../dust_diagnostics", version = "0.1.1" }
+dust_driver = { path = "../dust_driver", version = "0.1.1" }
 
 [dev-dependencies]
-dust_text = { path = "../dust_text", version = "0.1.0" }
+dust_text = { path = "../dust_text", version = "0.1.1" }
 tempfile = "3.27.0"
 
 [lib]
