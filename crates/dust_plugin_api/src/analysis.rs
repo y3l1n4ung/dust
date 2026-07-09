@@ -5,6 +5,12 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+/// Workspace analysis key for package-level feature flags.
+pub const PACKAGE_FEATURES_ANALYSIS_KEY: &str = "dust_workspace.package_features.v1";
+
+/// Package feature value used for Flutter packages.
+pub const PACKAGE_FEATURE_FLUTTER: &str = "flutter";
+
 /// One cached per-library analysis snapshot produced during the workspace scan phase.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct LibraryAnalysisSnapshot {
@@ -40,6 +46,12 @@ impl WorkspaceAnalysis {
     /// Returns the workspace-wide string-set values recorded for one analysis key.
     pub fn string_set(&self, key: &str) -> Option<&[String]> {
         self.string_sets.get(key).map(|values| values.as_slice())
+    }
+
+    /// Returns whether one string-set bucket contains `value`.
+    pub fn contains_string_value(&self, key: &str, value: &str) -> bool {
+        self.string_set(key)
+            .is_some_and(|values| values.iter().any(|entry| entry == value))
     }
 }
 

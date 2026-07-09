@@ -163,89 +163,11 @@ final class _$LatestDartProductCardCopyWithImpl<$Res> implements _$LatestDartPro
     );
   }
 }
-/// TextFormField validator for `LatestDartProductCard.id`.
-///
-/// Usage:
-/// ```dart
-/// TextFormField(
-///   validator: validateLatestDartProductCardIdInput,
-/// )
-/// ```
-String? validateLatestDartProductCardIdInput(String? value) {
-  return _LatestDartProductCardValidation.validateIdInput(value);
-}
-
-/// TextFormField validator for `LatestDartProductCard.title`.
-///
-/// Usage:
-/// ```dart
-/// TextFormField(
-///   validator: validateLatestDartProductCardTitleInput,
-/// )
-/// ```
-String? validateLatestDartProductCardTitleInput(String? value) {
-  return _LatestDartProductCardValidation.validateTitleInput(value);
-}
-
-/// TextFormField validator for `LatestDartProductCard.productUrl`.
-///
-/// Usage:
-/// ```dart
-/// TextFormField(
-///   validator: validateLatestDartProductCardProductUrlInput,
-/// )
-/// ```
-String? validateLatestDartProductCardProductUrlInput(String? value) {
-  return _LatestDartProductCardValidation.validateProductUrlInput(value);
-}
-
-/// TextFormField validator for `LatestDartProductCard.priceCents`.
-///
-/// Usage:
-/// ```dart
-/// TextFormField(
-///   validator: validateLatestDartProductCardPriceCentsInput,
-/// )
-/// ```
-String? validateLatestDartProductCardPriceCentsInput(String? value) {
-  return _LatestDartProductCardValidation.validatePriceCentsInput(value);
-}
-
-/// TextFormField validator for `LatestDartProductCard.rating`.
-///
-/// Usage:
-/// ```dart
-/// TextFormField(
-///   validator: validateLatestDartProductCardRatingInput,
-/// )
-/// ```
-String? validateLatestDartProductCardRatingInput(String? value) {
-  return _LatestDartProductCardValidation.validateRatingInput(value);
-}
-
-/// TextFormField validator for `LatestDartProductCard.stockCount`.
-///
-/// Usage:
-/// ```dart
-/// TextFormField(
-///   validator: validateLatestDartProductCardStockCountInput,
-/// )
-/// ```
-String? validateLatestDartProductCardStockCountInput(String? value) {
-  return _LatestDartProductCardValidation.validateStockCountInput(value);
-}
-
 extension _LatestDartProductCardValidation on LatestDartProductCard {
   static void _validateId(String id, List<ValidationError> errors) {
     if (id.length < 3) {
       errors.add(ValidationError(field: 'id', message: 'Product id is required'));
     }
-  }
-
-  static String? validateIdInput(String? value) {
-    final errors = <ValidationError>[];
-    _validateId(value ?? '', errors);
-    return errors.isEmpty ? null : errors.first.message;
   }
 
   static void _validateTitle(String title, List<ValidationError> errors) {
@@ -257,39 +179,16 @@ extension _LatestDartProductCardValidation on LatestDartProductCard {
     }
   }
 
-  static String? validateTitleInput(String? value) {
-    final errors = <ValidationError>[];
-    _validateTitle(value ?? '', errors);
-    return errors.isEmpty ? null : errors.first.message;
-  }
-
   static void _validateProductUrl(String productUrl, List<ValidationError> errors) {
     if (!ValidationHelper.isUrl(productUrl)) {
       errors.add(ValidationError(field: 'productUrl', message: 'Product URL must be absolute'));
     }
   }
 
-  static String? validateProductUrlInput(String? value) {
-    final errors = <ValidationError>[];
-    _validateProductUrl(value ?? '', errors);
-    return errors.isEmpty ? null : errors.first.message;
-  }
-
   static void _validatePriceCents(int priceCents, List<ValidationError> errors) {
     if (priceCents < 1) {
       errors.add(ValidationError(field: 'priceCents', message: 'Price must be positive'));
     }
-  }
-
-  static String? validatePriceCentsInput(String? value) {
-    final errors = <ValidationError>[];
-    final priceCents = int.tryParse(value ?? '');
-    if (priceCents == null) {
-      errors.add(ValidationError(field: 'priceCents', message: 'Price must be positive'));
-    } else {
-      _validatePriceCents(priceCents, errors);
-    }
-    return errors.isEmpty ? null : errors.first.message;
   }
 
   static void _validateRating(double rating, List<ValidationError> errors) {
@@ -301,32 +200,10 @@ extension _LatestDartProductCardValidation on LatestDartProductCard {
     }
   }
 
-  static String? validateRatingInput(String? value) {
-    final errors = <ValidationError>[];
-    final rating = double.tryParse(value ?? '');
-    if (rating == null) {
-      errors.add(ValidationError(field: 'rating', message: 'Rating must be 0-5'));
-    } else {
-      _validateRating(rating, errors);
-    }
-    return errors.isEmpty ? null : errors.first.message;
-  }
-
   static void _validateStockCount(int stockCount, List<ValidationError> errors) {
     if (stockCount < 0) {
       errors.add(ValidationError(field: 'stockCount', message: 'Stock cannot be negative'));
     }
-  }
-
-  static String? validateStockCountInput(String? value) {
-    final errors = <ValidationError>[];
-    final stockCount = int.tryParse(value ?? '');
-    if (stockCount == null) {
-      errors.add(ValidationError(field: 'stockCount', message: 'Stock cannot be negative'));
-    } else {
-      _validateStockCount(stockCount, errors);
-    }
-    return errors.isEmpty ? null : errors.first.message;
   }
 
 }

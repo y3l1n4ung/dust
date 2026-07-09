@@ -9,7 +9,7 @@ use crate::{
     analysis::collect_workspace_analysis,
     emit::emit_library,
     features::{COPY_WITH_SYMBOL, DEBUG_SYMBOL, EQ_SYMBOL, TO_STRING_SYMBOL, VALIDATE_SYMBOL},
-    validate::validate_library,
+    validate::{validate_library, validate_library_with_plan},
 };
 
 /// The built-in plugin that implements Dust's core derive traits.
@@ -68,6 +68,10 @@ impl DustPlugin for DerivePlugin {
 
     fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
         validate_library(library)
+    }
+
+    fn validate_with_plan(&self, library: &DartFileIr, plan: &SymbolPlan) -> Vec<Diagnostic> {
+        validate_library_with_plan(library, plan)
     }
 
     fn emit(&self, library: &DartFileIr, plan: &SymbolPlan) -> PluginContribution {

@@ -40,6 +40,7 @@ pub(crate) fn build_snapshot(cwd: &Path) -> Result<WorkspaceSnapshot, Diagnostic
     let package_config_hash = read_workspace_config_hash(
         &workspace.package_config.path,
         workspace.dust_config.path.as_deref(),
+        &workspace.package_root.join("pubspec.yaml"),
     )
     .ok();
 
@@ -284,5 +285,36 @@ mod tests {
         assert!(snapshot.package_config_hash.is_some());
         assert_eq!(snapshot.libraries.len(), 1);
         assert!(snapshot.libraries.contains_key(&lib.join("user.dart")));
+    }
+
+    #[test]
+    fn build_snapshot_hash_changes_when_pubspec_changes() {
+        let temp = tempdir().unwrap();
+        let root = temp.path();
+        let dart_tool = root.join(".dart_tool");
+        let lib = root.join("lib");
+        fs::create_dir_all(&dart_tool).unwrap();
+        fs::create_dir_all(&lib).unwrap();
+        fs::write(root.join("pubspec.yaml"), "name: sample\n").unwrap();
+        fs::write(
+            dart_tool.join("package_config.json"),
+            r#"{"configVersion":2,"packages":[]}"#,
+        )
+        .unwrap();
+        fs::write(
+            lib.join("user.dart"),
+            "import 'package:dust_dart/derive.dart';\npart 'user.g.dart';\n@Derive([Validate()])\nclass User with _$User { const User(); }\n",
+        )
+        .unwrap();
+
+        let first = build_snapshot(root).unwrap().package_config_hash;
+        fs::write(
+            root.join("pubspec.yaml"),
+            "name: sample\ndependencies:\n  flutter:\n    sdk: flutter\n",
+        )
+        .unwrap();
+        let next = build_snapshot(root).unwrap().package_config_hash;
+
+        assert_ne!(first, next);
     }
 }

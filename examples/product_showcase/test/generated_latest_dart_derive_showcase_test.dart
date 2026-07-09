@@ -80,7 +80,7 @@ void main() {
     expect(LatestDartProductCard.fromJson(json), card);
   });
 
-  test('latest Dart showcase validates model and form input', () {
+  test('latest Dart showcase validates model rules', () {
     final invalid = LatestDartProductCard(
       id: 'x',
       title: 'R',
@@ -108,24 +108,6 @@ void main() {
           message: 'Stock cannot be negative',
         ),
       ]),
-    );
-    expect(validateLatestDartProductCardIdInput('x'), 'Product id is required');
-    expect(
-      validateLatestDartProductCardTitleInput('R'),
-      'Title must be 2-80 chars',
-    );
-    expect(
-      validateLatestDartProductCardProductUrlInput('not-absolute'),
-      'Product URL must be absolute',
-    );
-    expect(
-      validateLatestDartProductCardPriceCentsInput('0'),
-      'Price must be positive',
-    );
-    expect(validateLatestDartProductCardRatingInput('6'), 'Rating must be 0-5');
-    expect(
-      validateLatestDartProductCardStockCountInput('-1'),
-      'Stock cannot be negative',
     );
   });
 

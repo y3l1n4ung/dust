@@ -231,20 +231,9 @@ final class _$RequestCopyWithImpl<$Res> implements _$RequestCopyWith<$Res> {
 }
 
 #[test]
-fn build_writes_validate_output_for_form_request() {
+fn build_writes_dart_validate_output_without_form_helpers() {
     let workspace = make_workspace();
-    write_file(
-        &workspace.path().join("lib/signup.dart"),
-        "part 'signup.g.dart';\n\
-         @Derive([Validate()])\n\
-         class SignupRequest with _$SignupRequest {\n\
-           const SignupRequest({required this.email, required this.age});\n\
-           @Validate(email: true)\n\
-           final String email;\n\
-           @Validate(range: Range(min: 18, max: 120), message: 'Adult only')\n\
-           final int age;\n\
-         }\n",
-    );
+    write_signup_request(workspace.path());
 
     let result = run_build(BuildRequest {
         cwd: workspace.path().to_path_buf(),
@@ -292,41 +281,11 @@ mixin _$SignupRequest {
   }
 }
 
-/// TextFormField validator for `SignupRequest.email`.
-///
-/// Usage:
-/// ```dart
-/// TextFormField(
-///   validator: validateSignupRequestEmailInput,
-/// )
-/// ```
-String? validateSignupRequestEmailInput(String? value) {
-  return _SignupRequestValidation.validateEmailInput(value);
-}
-
-/// TextFormField validator for `SignupRequest.age`.
-///
-/// Usage:
-/// ```dart
-/// TextFormField(
-///   validator: validateSignupRequestAgeInput,
-/// )
-/// ```
-String? validateSignupRequestAgeInput(String? value) {
-  return _SignupRequestValidation.validateAgeInput(value);
-}
-
 extension _SignupRequestValidation on SignupRequest {
   static void _validateEmail(String email, List<ValidationError> errors) {
     if (!ValidationHelper.isEmail(email)) {
       errors.add(ValidationError(field: 'email', message: 'Invalid email'));
     }
-  }
-
-  static String? validateEmailInput(String? value) {
-    final errors = <ValidationError>[];
-    _validateEmail(value ?? '', errors);
-    return errors.isEmpty ? null : errors.first.message;
   }
 
   static void _validateAge(int age, List<ValidationError> errors) {
@@ -338,19 +297,46 @@ extension _SignupRequestValidation on SignupRequest {
     }
   }
 
-  static String? validateAgeInput(String? value) {
-    final errors = <ValidationError>[];
-    final age = int.tryParse(value ?? '');
-    if (age == null) {
-      errors.add(ValidationError(field: 'age', message: 'Adult only'));
-    } else {
-      _validateAge(age, errors);
-    }
-    return errors.isEmpty ? null : errors.first.message;
-  }
-
 }
 "#
         )
+    );
+}
+
+#[test]
+fn build_writes_flutter_form_helpers_for_flutter_packages() {
+    let workspace = make_workspace();
+    write_file(
+        &workspace.path().join("pubspec.yaml"),
+        "name: dust_test\ndependencies:\n  flutter:\n    sdk: flutter\n",
+    );
+    write_signup_request(workspace.path());
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+        db: Default::default(),
+    });
+    let output = fs::read_to_string(workspace.path().join("lib/signup.g.dart")).unwrap();
+
+    assert_eq!(result.diagnostics, vec![]);
+    assert!(output.contains("/// TextFormField validator for `SignupRequest.email`."));
+    assert!(output.contains("String? validateSignupRequestEmailInput(String? value)"));
+    assert!(output.contains("static String? validateEmailInput(String? value)"));
+}
+
+fn write_signup_request(root: &std::path::Path) {
+    write_file(
+        &root.join("lib/signup.dart"),
+        "part 'signup.g.dart';\n\
+         @Derive([Validate()])\n\
+         class SignupRequest with _$SignupRequest {\n\
+           const SignupRequest({required this.email, required this.age});\n\
+           @Validate(email: true)\n\
+           final String email;\n\
+           @Validate(range: Range(min: 18, max: 120), message: 'Adult only')\n\
+           final int age;\n\
+         }\n",
     );
 }

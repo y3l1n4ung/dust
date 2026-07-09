@@ -13,6 +13,7 @@ use std::{
 };
 
 use dust_cache::WorkspaceCache;
+use dust_plugin_api::{PACKAGE_FEATURE_FLUTTER, PACKAGE_FEATURES_ANALYSIS_KEY};
 use dust_text::FileId;
 use dust_workspace::SourceLibrary;
 
@@ -47,6 +48,8 @@ pub(crate) struct BatchConfig<'a> {
     pub(crate) package_root: &'a Path,
     /// Dart package name used by plugin workspace analysis.
     pub(crate) package_name: &'a str,
+    /// Whether the package is a Flutter package.
+    pub(crate) is_flutter_package: bool,
     /// Hash of package and Dust configuration files.
     pub(crate) package_config_hash: u64,
     /// Hash of Dust codegen logic and active plugin set.
@@ -86,6 +89,10 @@ pub(crate) fn prepare_and_process_batch(
     let route_analysis_changed = route_analysis_changed(&loaded_results, libraries, &config);
     let mut outcomes = Vec::with_capacity(libraries.len());
     let mut workspace_analysis = dust_plugin_api::WorkspaceAnalysisBuilder::default();
+    if config.is_flutter_package {
+        workspace_analysis
+            .add_string_set_value(PACKAGE_FEATURES_ANALYSIS_KEY, PACKAGE_FEATURE_FLUTTER);
+    }
     let mut pending = Vec::with_capacity(libraries.len());
 
     for (index, input_result) in loaded_results.into_iter().enumerate() {

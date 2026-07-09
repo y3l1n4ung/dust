@@ -22,7 +22,7 @@ then use these task guides as needed:
 1.  **[Generate data classes](./derive.md)**: Add `ToString`, `Eq`, and `CopyWith`.
 2.  **[Generate JSON serialization](./serde.md)**: Encode and decode typed models.
 3.  **[Generate HTTP clients](./http.md)**: Build type-safe Dio-backed clients.
-4.  **[Add validation](./validation.md)**: Generate model and Flutter form validation.
+4.  **[Add validation](./validation.md)**: Generate Dart model validation and Flutter-only form validators.
 5.  **[Build ViewModels](./state.md)**: Manage sync and async Flutter state.
 6.  **[Configure typed routing](./routing.md)**: Use Navigator 2.0 with typed routes.
 7.  **[Add i18n](./i18n.md)**: Generate ARB bootstrap and runtime lookup helpers.

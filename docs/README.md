@@ -37,7 +37,7 @@ how-to, reference, and explanation content in one place.
 | [Usage overview](./usage/README.md) | Reference | Guide order, package map, and links to runnable examples. |
 | [Derive](./usage/derive.md) | How-to + reference | Generate data-class helpers; trait table is the reference section. |
 | [Serde](./usage/serde.md) | How-to + reference | Generate JSON codecs; option tables are the reference sections. |
-| [Validation](./usage/validation.md) | How-to + reference | Add model and form validation; rule tables are reference sections. |
+| [Validation](./usage/validation.md) | How-to + reference | Add Dart model validation and Flutter-only form validators; rule tables are reference sections. |
 | [HttpClient](./usage/http.md) | How-to + reference | Generate Dio clients; annotation tables are reference sections. |
 | [State Management](./usage/state.md) | How-to + reference | Build sync and async ViewModels; generated API and rules are reference sections. |
 | [Routing](./usage/routing.md) | How-to + reference | Configure typed Navigator 2.0 routing; parameters and guards are reference sections. |

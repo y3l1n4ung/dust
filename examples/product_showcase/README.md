@@ -13,7 +13,7 @@ Read the canonical guides in:
 
 - derive generation such as `ToString()`, `Eq()`, and `CopyWith()`
 - serde generation such as `Serialize()`, `Deserialize()`, enum values, tagged sealed classes, rename rules, defaults, aliases, and codecs
-- validation generation such as `Validate()`, `Length`, `Range`, and generated form-field validator functions
+- validation generation such as `Validate()`, `Length`, `Range`, and typed model validation results
 - DB row mapping generation through DB-owned `FromRow()`
 - latest Dart-style source syntax that keeps generated code behavior unchanged, including final classes, records, switch expressions, and pattern matching
 - generated Dio HTTP clients

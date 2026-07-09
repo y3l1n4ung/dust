@@ -16,13 +16,19 @@ use crate::features::{
 };
 
 /// Validates `Validate` derive usage for one class.
-pub(crate) fn validate_validate(library: &DartFileIr, class: &ClassIr) -> Vec<Diagnostic> {
+pub(crate) fn validate_validate(
+    library: &DartFileIr,
+    class: &ClassIr,
+    emit_form_helpers: bool,
+) -> Vec<Diagnostic> {
     if !has_validate_trait(class) {
         return Vec::new();
     }
 
     let mut diagnostics = Vec::new();
-    validate_public_validator_names(library, class, &mut diagnostics);
+    if emit_form_helpers {
+        validate_public_validator_names(library, class, &mut diagnostics);
+    }
     for validation in field_validations(class) {
         for config in &validation.annotations {
             validate_field_config(library, class, validation.field, config, &mut diagnostics);

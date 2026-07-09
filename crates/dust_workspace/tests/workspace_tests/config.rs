@@ -1,5 +1,6 @@
 use dust_workspace::{
-    I18nConfig, PackageConfigKind, load_dust_config, load_flutter_assets, load_package_config,
+    I18nConfig, PackageConfigKind, load_dust_config, load_flutter_assets, load_is_flutter_package,
+    load_package_config,
 };
 use tempfile::tempdir;
 
@@ -184,4 +185,33 @@ fn load_flutter_assets_defaults_to_empty_assets() {
     let assets = load_flutter_assets(root.path()).unwrap();
 
     assert!(assets.is_empty());
+}
+
+#[test]
+fn load_is_flutter_package_detects_flutter_dependency_or_section() {
+    let root = tempdir().unwrap();
+    write_file(
+        &root.path().join("pubspec.yaml"),
+        "name: dust_test\ndependencies:\n  flutter:\n    sdk: flutter\n",
+    );
+
+    assert!(load_is_flutter_package(root.path()).unwrap());
+
+    write_file(
+        &root.path().join("pubspec.yaml"),
+        "name: dust_test\nflutter:\n  assets: []\n",
+    );
+
+    assert!(load_is_flutter_package(root.path()).unwrap());
+}
+
+#[test]
+fn load_is_flutter_package_is_false_for_dart_packages() {
+    let root = tempdir().unwrap();
+    write_file(
+        &root.path().join("pubspec.yaml"),
+        "name: dust_test\ndependencies:\n  dust_dart: ^0.1.0\n",
+    );
+
+    assert!(!load_is_flutter_package(root.path()).unwrap());
 }

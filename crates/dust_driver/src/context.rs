@@ -72,6 +72,7 @@ impl CachedDriverContext {
         let package_config_hash = read_workspace_config_hash(
             &workspace.package_config.path,
             workspace.dust_config.path.as_deref(),
+            &workspace.package_root.join("pubspec.yaml"),
         )?;
         let cache = load_workspace_cache(&workspace)?;
         let cache_report = CacheReport {

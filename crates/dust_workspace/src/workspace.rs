@@ -4,7 +4,7 @@ use dust_diagnostics::Diagnostic;
 
 use crate::{
     DustConfig, PackageConfig, SupportedAnnotations, detect_workspace_root, discover_libraries,
-    load_dust_config, load_package_config, load_package_name,
+    load_dust_config, load_is_flutter_package, load_package_config, load_package_name,
 };
 
 /// One source library selected for Dust processing.
@@ -25,6 +25,8 @@ pub struct WorkspacePlan {
     pub cache_root: PathBuf,
     /// The resolved Dart package name from `pubspec.yaml`.
     pub package_name: String,
+    /// Whether the package is a Flutter package.
+    pub is_flutter_package: bool,
     /// The loaded package configuration.
     pub package_config: PackageConfig,
     /// The loaded Dust output policy configuration.
@@ -40,12 +42,14 @@ pub fn discover_workspace(
 ) -> Result<WorkspacePlan, Diagnostic> {
     let package_root = detect_workspace_root(cwd)?;
     let package_name = load_package_name(&package_root)?;
+    let is_flutter_package = load_is_flutter_package(&package_root)?;
     let package_config = load_package_config(&package_root)?;
     let dust_config = load_dust_config(&package_root)?;
     let libraries = discover_libraries(&package_root, supported_annotations)?;
 
     Ok(WorkspacePlan {
         cache_root: package_root.clone(),
+        is_flutter_package,
         package_name,
         package_root,
         package_config,

@@ -13,7 +13,10 @@ mod registry;
 /// Generated symbol planning.
 mod symbols;
 
-pub use analysis::{LibraryAnalysisSnapshot, WorkspaceAnalysis, WorkspaceAnalysisBuilder};
+pub use analysis::{
+    LibraryAnalysisSnapshot, PACKAGE_FEATURE_FLUTTER, PACKAGE_FEATURES_ANALYSIS_KEY,
+    WorkspaceAnalysis, WorkspaceAnalysisBuilder,
+};
 pub use contribution::{AuxiliaryOutputContribution, ClassMixinContribution, PluginContribution};
 pub use plugin::{DustPlugin, GeneratedUnit, PluginContext, WorkspaceAnalysisContext};
 pub use registry::PluginRegistry;

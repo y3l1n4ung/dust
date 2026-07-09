@@ -1,8 +1,8 @@
 # Validation
 
 Dust can generate model validation from field-level `@Validate(...)` annotations.
-Use this for request models, form models, checkout models, and other DTOs where
-validation should live beside the data contract.
+Use this for request models, checkout models, and other DTOs where validation
+should live beside the data contract.
 
 ---
 
@@ -40,10 +40,10 @@ Generated usage:
 
 ```dart
 final request = SignupRequest(
-  email: emailController.text,
-  password: passwordController.text,
-  confirmPassword: confirmPasswordController.text,
-  age: int.parse(ageController.text),
+  email: 'ada@example.com',
+  password: 'correct horse',
+  confirmPassword: 'correct horse',
+  age: 36,
 );
 
 final result = request.validate();
@@ -63,23 +63,20 @@ For each `@Derive([Validate()])` class, Dust generates:
 ```dart
 ValidationResult validate();
 void validateOrThrow();
-String? validateSignupRequestEmailInput(String? value);
-String? validateSignupRequestPasswordInput(String? value);
-String? validateSignupRequestAgeInput(String? value);
-String? validateSignupRequestConfirmPasswordInput(
-  SignupRequest self,
-  String? value,
-);
 ```
 
-`validate()` checks the typed object. `validateClassFieldInput(...)` checks raw
-text input for Flutter `TextFormField` usage.
+`validate()` checks the typed object. `validateOrThrow()` throws
+`ValidationException` when the object is invalid.
 
 ---
 
-## Flutter Form Usage
+## Flutter Form Validators
 
-Keep form code small by using generated top-level validators directly.
+Flutter packages also get generated `String? Function(String?)` validators for
+`TextFormField.validator`. A package is treated as Flutter when its
+`pubspec.yaml` has a `flutter:` section or a `flutter` dependency.
+
+Pure Dart packages do not emit these form helpers.
 
 ```dart
 final _emailController = TextEditingController();
@@ -239,7 +236,11 @@ void _validateSignupRequestEmail(String email, List<ValidationError> errors) {
     errors.add(ValidationError(field: 'email', message: 'Invalid email'));
   }
 }
+```
 
+In Flutter packages, Dust also emits form helper functions:
+
+```dart
 String? validateSignupRequestEmailInput(String? value) {
   final errors = <ValidationError>[];
   _validateSignupRequestEmail(value ?? '', errors);
