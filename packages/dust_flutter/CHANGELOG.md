@@ -1,4 +1,4 @@
-## Unreleased
+## 0.1.2
 
 - Make generated route `push()` calls awaitable and complete them when the
   pushed route is popped, including optional pop results.

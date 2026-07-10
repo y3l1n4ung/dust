@@ -10,7 +10,7 @@ homepage.workspace = true
 description = "Diagnostics rendering and source labeling for Dust."
 
 [dependencies]
-dust_text = { path = "../dust_text", version = "0.1.1" }
+dust_text = { path = "../dust_text", version = "0.1.2" }
 
 [lib]
 path = "src/lib.rs"

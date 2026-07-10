@@ -9,7 +9,7 @@ generated selector widgets.
 ```yaml
 dependencies:
   dust_dart: ^0.1.0
-  dust_flutter: ^0.1.1
+  dust_flutter: ^0.1.2
 ```
 
 ## Sync ViewModel
