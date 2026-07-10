@@ -98,6 +98,24 @@ Route paths are absolute. Path segments like `:id` map to required constructor
 parameters. Nullable or defaulted non-path constructor parameters become query
 parameters.
 
+## Route Options
+
+```dart
+@AppRoute(
+  '/checkout',
+  name: 'checkout',
+  transition: BottomToTopPageTransitionsBuilder(),
+  fullscreenDialog: true,
+)
+final class CheckoutPage extends StatelessWidget {
+  const CheckoutPage({super.key});
+}
+```
+
+`transition` accepts a Flutter `PageTransitionsBuilder` and is applied by the
+generated page route. Use this for route-specific slide, fade, zoom, or
+no-transition navigation without hand-written `PageRouteBuilder` calls.
+
 ## Auth Semantics
 
 Routes are protected by default. If a route omits `guards:`, its generated

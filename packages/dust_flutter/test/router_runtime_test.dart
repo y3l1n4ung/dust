@@ -181,12 +181,54 @@ void main() {
 
     await expectLater(result, completion('saved'));
   });
+
+  testWidgets('generated page transition runs at the route boundary', (
+    tester,
+  ) async {
+    final transition = _RecordingPageTransitionsBuilder();
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(
+        transitionForRoute: (route) =>
+            route.location == '/detail' ? transition : null,
+        buildChild: (context, route) => Text(route.location),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        routerConfig: RouterConfig<_TestRoute>(
+          routeInformationProvider: PlatformRouteInformationProvider(
+            initialRouteInformation: RouteInformation(
+              uri: Uri.parse('/safe'),
+            ),
+          ),
+          routeInformationParser: GeneratedRouteInformationParser<_TestRoute>(
+            parseRoute: (uri) => _TestRoute(uri.toString()),
+            routeLocation: (route) => route.location,
+          ),
+          routerDelegate: delegate,
+          backButtonDispatcher: RootBackButtonDispatcher(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final result = delegate.push<void>(const _TestRoute('/detail'));
+    await tester.pump();
+
+    expect(transition.calls, greaterThan(0));
+    expect(transition.routeNames, contains('/detail'));
+
+    await delegate.popRoute();
+    await expectLater(result, completion(isNull));
+  });
 }
 
 RouterRuntimeConfig<_TestRoute> _runtimeConfig({
   RouterBase<_TestRoute>? router,
   RouteGuardResolver<_TestRoute>? resolveGuards,
   Widget Function(BuildContext context, _TestRoute route)? buildChild,
+  PageTransitionsBuilder? Function(_TestRoute route)? transitionForRoute,
 }) {
   return RouterRuntimeConfig<_TestRoute>(
     router: router ?? _NoRedirectRouter(),
@@ -195,10 +237,12 @@ RouterRuntimeConfig<_TestRoute> _runtimeConfig({
     routeLocation: (route) => route.location,
     requiresAuth: (_) => false,
     resolveGuards: resolveGuards ?? (_) => const [],
-    buildPage: (route, key, onPopInvoked) => MaterialPage<Object?>(
+    buildPage: (route, key, onPopInvoked) => generatedPage<Object?>(
       key: key,
+      location: route.location,
       name: route.location,
       onPopInvoked: onPopInvoked,
+      transition: transitionForRoute?.call(route),
       child: Builder(
         builder: (context) =>
             buildChild?.call(context, route) ?? const SizedBox(),
@@ -223,6 +267,24 @@ final class _TestRoute {
   const _TestRoute(this.location);
 
   final String location;
+}
+
+final class _RecordingPageTransitionsBuilder extends PageTransitionsBuilder {
+  int calls = 0;
+  final List<String?> routeNames = [];
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    calls += 1;
+    routeNames.add(route.settings.name);
+    return child;
+  }
 }
 
 final class _NoRedirectRouter extends RouterBase<_TestRoute> {}
