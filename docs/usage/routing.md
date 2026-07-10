@@ -179,13 +179,16 @@ AppRouter: stack [/products, /products/42]
 
 ```dart
 context.navigator.home().go();
-context.navigator.modelDetail(id: 42, tab: 'perf').push();
+final result = await context.navigator.modelDetail(id: 42, tab: 'perf').push();
 context.navigator.login().replace();
 context.navigator.pop();
 ```
 
 Dust generates one method per route name. Each method returns `RouteAction<R>`
-with `go`, `push`, and `replace`.
+with `go`, `push`, and `replace`. `push()` returns a `Future<R?>` that
+completes when the pushed route is popped, so app code can await route lifetime
+or typed pop results. Existing fire-and-forget calls can ignore the returned
+future.
 
 ## Guards
 

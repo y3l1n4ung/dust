@@ -1,3 +1,8 @@
+## Unreleased
+
+- Make generated route `push()` calls awaitable and complete them when the
+  pushed route is popped, including optional pop results.
+
 ## 0.1.1
 
 - Add opt-in `AppRouter` debug diagnostics for generated routing.

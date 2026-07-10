@@ -13,6 +13,7 @@ typedef RouteParser<T extends Object> = T Function(Uri uri);
 typedef RoutePageBuilder<T extends Object> = Page<dynamic> Function(
   T route,
   LocalKey key,
+  PopInvokedWithResultCallback<Object?> onPopInvoked,
 );
 
 /// Resolves route-level guards for one typed route object.

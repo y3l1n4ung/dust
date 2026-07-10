@@ -122,11 +122,71 @@ void main() {
       ),
     );
   });
+
+  test('push future completes when delegate pops the route', () async {
+    final delegate = GeneratedRouterDelegate<_TestRoute>(_runtimeConfig());
+    await delegate.debugWaitForScheduledRefresh();
+
+    final result = delegate.push<void>(const _TestRoute('/detail'));
+
+    expect(delegate.stack.map((route) => route.location), [
+      '/safe',
+      '/detail',
+    ]);
+
+    await delegate.popRoute();
+
+    await expectLater(result, completion(isNull));
+  });
+
+  testWidgets('push future completes with the Navigator pop result', (
+    tester,
+  ) async {
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(
+        buildChild: (context, route) {
+          if (route.location != '/detail') return Text(route.location);
+          return TextButton(
+            onPressed: () => Navigator.of(context).pop('saved'),
+            child: const Text('close detail'),
+          );
+        },
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        routerConfig: RouterConfig<_TestRoute>(
+          routeInformationProvider: PlatformRouteInformationProvider(
+            initialRouteInformation: RouteInformation(
+              uri: Uri.parse('/safe'),
+            ),
+          ),
+          routeInformationParser: GeneratedRouteInformationParser<_TestRoute>(
+            parseRoute: (uri) => _TestRoute(uri.toString()),
+            routeLocation: (route) => route.location,
+          ),
+          routerDelegate: delegate,
+          backButtonDispatcher: RootBackButtonDispatcher(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final result = delegate.push<String>(const _TestRoute('/detail'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('close detail'));
+    await tester.pumpAndSettle();
+
+    await expectLater(result, completion('saved'));
+  });
 }
 
 RouterRuntimeConfig<_TestRoute> _runtimeConfig({
   RouterBase<_TestRoute>? router,
   RouteGuardResolver<_TestRoute>? resolveGuards,
+  Widget Function(BuildContext context, _TestRoute route)? buildChild,
 }) {
   return RouterRuntimeConfig<_TestRoute>(
     router: router ?? _NoRedirectRouter(),
@@ -135,9 +195,14 @@ RouterRuntimeConfig<_TestRoute> _runtimeConfig({
     routeLocation: (route) => route.location,
     requiresAuth: (_) => false,
     resolveGuards: resolveGuards ?? (_) => const [],
-    buildPage: (route, key) => MaterialPage<void>(
+    buildPage: (route, key, onPopInvoked) => MaterialPage<Object?>(
       key: key,
-      child: const SizedBox(),
+      name: route.location,
+      onPopInvoked: onPopInvoked,
+      child: Builder(
+        builder: (context) =>
+            buildChild?.call(context, route) ?? const SizedBox(),
+      ),
     ),
     debugRoutes: const [
       GeneratedRoute('/safe', page: SizedBox, name: 'safe'),

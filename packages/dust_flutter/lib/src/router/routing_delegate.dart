@@ -99,13 +99,16 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
         key: navigatorKey,
         pages: [
           for (final entry in _entries)
-            config.buildPage(entry.route, entry.key),
+            config.buildPage(entry.route, entry.key, (didPop, result) {
+              if (didPop) entry.complete(result);
+            }),
         ],
         onDidRemovePage: (page) {
           final key = page.key;
           final index = key == null ? null : _keyToStackIndex[key];
           if (index != null && index >= 0 && index < _entries.length) {
             final removed = _entries.removeAt(index);
+            removed.complete(null);
             _rebuildPageKeyMap();
             _log('remove ${_debugRoute(removed.route)}');
             _log('stack ${_debugStack()}');
@@ -117,14 +120,15 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   }
 
   @override
-  Future<void> setNewRoutePath(T configuration) {
-    return _applyRoute(configuration, NavigationMode.restore);
+  Future<void> setNewRoutePath(T configuration) async {
+    await _applyRoute(configuration, NavigationMode.restore);
   }
 
   @override
   Future<bool> popRoute() async {
     if (_entries.length <= 1) return false;
     final removed = _entries.removeLast();
+    removed.complete(null);
     _rebuildPageKeyMap();
     _log('pop ${_debugRoute(removed.route)}');
     _log('stack ${_debugStack()}');
@@ -136,7 +140,11 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   void go(T route) => unawaited(_applyRoute(route, NavigationMode.go));
 
   /// Pushes [route] on top of the current stack.
-  void push(T route) => unawaited(_applyRoute(route, NavigationMode.push));
+  Future<R?> push<R>(T route) async {
+    final entry = await _applyRoute(route, NavigationMode.push);
+    if (entry == null) return null;
+    return entry.popped.then((result) => result as R?);
+  }
 
   /// Replaces the current top route with [route].
   void replace(T route) =>
@@ -152,15 +160,15 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     if (_refreshScheduled) return;
     _refreshScheduled = true;
     _log('refreshing ${_debugRoute(currentRoute)}');
-    final refresh = Future<void>.microtask(() {
+    final refresh = Future<void>.microtask(() async {
       _refreshScheduled = false;
-      return _applyRoute(currentRoute, NavigationMode.replace);
+      await _applyRoute(currentRoute, NavigationMode.replace);
     });
     _scheduledRefresh = refresh;
     unawaited(refresh);
   }
 
-  Future<void> _applyRoute(
+  Future<_RouteEntry<T>?> _applyRoute(
     T requested,
     NavigationMode mode, [
     int guardRedirects = 0,
@@ -202,7 +210,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
       '"${config.routeLocation(requested)}". Check for a redirect cycle.',
     );
 
-    if (epoch != _navigationEpoch) return;
+    if (epoch != _navigationEpoch) return null;
 
     final guards = config.resolveGuards(candidate);
     if (guards.isNotEmpty) {
@@ -210,49 +218,59 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
       final redirected = await RouteGuardChain<T>(
         guards,
       ).canActivate(candidate);
-      if (epoch != _navigationEpoch) return;
+      if (epoch != _navigationEpoch) return null;
       if (redirected != null) {
         _log(
           'guard redirect ${_debugRoute(candidate)} => '
           '${_debugRoute(redirected)}',
         );
-        await _applyRoute(redirected, mode, guardRedirects + 1);
-        return;
+        return _applyRoute(redirected, mode, guardRedirects + 1);
       }
     }
 
-    _commitRoute(candidate, mode);
+    return _commitRoute(candidate, mode);
   }
 
-  void _commitRoute(T route, NavigationMode mode) {
+  _RouteEntry<T> _commitRoute(T route, NavigationMode mode) {
+    late final _RouteEntry<T> committed;
     switch (mode) {
       case NavigationMode.go:
+        _completeEntries(_entries);
+        committed = _RouteEntry(route);
         _entries
           ..clear()
-          ..add(_RouteEntry(route));
+          ..add(committed);
       case NavigationMode.push:
-        _entries.add(_RouteEntry(route));
+        committed = _RouteEntry(route, tracksPop: true);
+        _entries.add(committed);
       case NavigationMode.replace:
         if (_entries.isEmpty) {
-          _entries.add(_RouteEntry(route));
+          committed = _RouteEntry(route);
+          _entries.add(committed);
         } else {
-          _entries[_entries.length - 1] = _entryForReplacement(
-            _entries.last,
-            route,
-          );
+          final previous = _entries.last;
+          final sameLocation = config.routeLocation(previous.route) ==
+              config.routeLocation(route);
+          committed = _entryForReplacement(previous, route);
+          if (!sameLocation) {
+            previous.complete(null);
+          }
+          _entries[_entries.length - 1] = committed;
         }
       case NavigationMode.restore:
         final restored = config.restoreStack?.call(route);
+        _completeEntries(_entries);
+        final routes =
+            restored == null || restored.isEmpty ? <T>[route] : restored;
         _entries
           ..clear()
-          ..addAll(
-            (restored == null || restored.isEmpty ? <T>[route] : restored)
-                .map(_RouteEntry<T>.new),
-          );
+          ..addAll(routes.map(_RouteEntry<T>.new));
+        committed = _entries.last;
     }
     _rebuildPageKeyMap();
     _log('stack ${_debugStack()}');
     notifyListeners();
+    return committed;
   }
 
   _RouteEntry<T> _entryForReplacement(_RouteEntry<T> previous, T route) {
@@ -260,6 +278,12 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
       return previous.withRoute(route);
     }
     return _RouteEntry(route);
+  }
+
+  void _completeEntries(Iterable<_RouteEntry<T>> entries) {
+    for (final entry in entries) {
+      entry.complete(null);
+    }
   }
 
   void _rebuildPageKeyMap() {
@@ -344,12 +368,26 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
 }
 
 final class _RouteEntry<T extends Object> {
-  _RouteEntry(T route) : this._(route, UniqueKey());
+  _RouteEntry(T route, {bool tracksPop = false})
+      : this._(
+          route,
+          UniqueKey(),
+          tracksPop ? Completer<Object?>() : null,
+        );
 
-  const _RouteEntry._(this.route, this.key);
+  _RouteEntry._(this.route, this.key, this._popped);
 
   final T route;
   final LocalKey key;
+  final Completer<Object?>? _popped;
 
-  _RouteEntry<T> withRoute(T route) => _RouteEntry<T>._(route, key);
+  Future<Object?> get popped => _popped?.future ?? Future<Object?>.value();
+
+  void complete(Object? result) {
+    final popped = _popped;
+    if (popped == null || popped.isCompleted) return;
+    popped.complete(result);
+  }
+
+  _RouteEntry<T> withRoute(T route) => _RouteEntry<T>._(route, key, _popped);
 }

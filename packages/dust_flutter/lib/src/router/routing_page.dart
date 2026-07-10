@@ -6,6 +6,7 @@ Page<R> generatedPage<R>({
   required String location,
   required String name,
   required Widget child,
+  PopInvokedWithResultCallback<Object?>? onPopInvoked,
   PageTransitionsBuilder? transition,
   bool fullscreenDialog = false,
   bool maintainState = true,
@@ -13,6 +14,7 @@ Page<R> generatedPage<R>({
   return MaterialPage<R>(
     key: key,
     name: name,
+    onPopInvoked: (didPop, result) => onPopInvoked?.call(didPop, result),
     fullscreenDialog: fullscreenDialog,
     maintainState: maintainState,
     child: transition == null

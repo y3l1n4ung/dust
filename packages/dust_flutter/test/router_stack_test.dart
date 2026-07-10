@@ -45,10 +45,11 @@ RouterRuntimeConfig<_TestRoute> _runtimeConfig() {
     routeLocation: (route) => route.location,
     requiresAuth: (_) => false,
     resolveGuards: (_) => const [],
-    buildPage: (route, key) {
-      return MaterialPage<void>(
+    buildPage: (route, key, onPopInvoked) {
+      return MaterialPage<Object?>(
         key: key,
         name: route.location,
+        onPopInvoked: onPopInvoked,
         child: const SizedBox(),
       );
     },

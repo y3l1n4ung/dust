@@ -42,6 +42,6 @@ final class RouteAction<R> {
   final AppRoutePath<R> route;
 
   void go() => _router.go(route);
-  void push() => _router.push(route);
+  Future<R?> push() => _router.push<R>(route);
   void replace() => _router.replace(route);
 }
