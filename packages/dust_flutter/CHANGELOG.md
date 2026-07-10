@@ -1,3 +1,10 @@
+## 0.1.2
+
+- Make generated route `push()` calls awaitable and complete them when the
+  pushed route is popped, including optional pop results.
+- Apply generated route `transition:` annotations at the page route boundary so
+  custom and no-transition builders control the actual navigation animation.
+
 ## 0.1.1
 
 - Add opt-in `AppRouter` debug diagnostics for generated routing.

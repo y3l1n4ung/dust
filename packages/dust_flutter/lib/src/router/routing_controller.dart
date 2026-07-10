@@ -23,7 +23,7 @@ final class RouterController<T extends Object> {
   void go(T route) => _delegate.go(route);
 
   /// Pushes [route] on top of the current stack.
-  void push(T route) => _delegate.push(route);
+  Future<R?> push<R>(T route) => _delegate.push<R>(route);
 
   /// Replaces the current top route with [route].
   void replace(T route) => _delegate.replace(route);

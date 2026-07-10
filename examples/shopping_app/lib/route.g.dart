@@ -526,7 +526,7 @@ final class RouteAction<R> {
   final AppRoutePath<R> route;
 
   void go() => _router.go(route);
-  void push() => _router.push(route);
+  Future<R?> push() => _router.push<R>(route);
   void replace() => _router.replace(route);
 }
 
@@ -704,7 +704,11 @@ bool _shellConsistencyCheck() {
   return $appRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
+Page<dynamic> buildAppRoutePage(
+  AppRoutePath route,
+  LocalKey key,
+  PopInvokedWithResultCallback<Object?> onPopInvoked,
+) {
   assert(
     _shellConsistencyCheck(),
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
@@ -714,6 +718,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'products',
+      onPopInvoked: onPopInvoked,
       transition: FadeUpwardsPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
@@ -723,6 +728,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'notFound',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: NotFoundScreen(path: path),
@@ -731,6 +737,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'admin',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: const AdminDashboardScreen(),
@@ -739,6 +746,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'cart',
+      onPopInvoked: onPopInvoked,
       transition: BottomToTopPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
@@ -748,6 +756,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'checkout',
+      onPopInvoked: onPopInvoked,
       transition: BottomToTopPageTransitionsBuilder(),
       fullscreenDialog: true,
       maintainState: true,
@@ -757,6 +766,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'demoCarts',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: const DemoCartsScreen(),
@@ -765,6 +775,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'login',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: LoginScreen(redirectPath: redirectPath),
@@ -773,6 +784,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'orderConfirmation',
+      onPopInvoked: onPopInvoked,
       transition: ZoomPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
@@ -782,6 +794,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'orders',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: const OrdersScreen(),
@@ -790,6 +803,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'orderDetail',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: OrderDetailScreen(orderId: orderId),
@@ -798,6 +812,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'productDetail',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: ProductDetailScreen(productId: productId),
@@ -806,6 +821,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'profile',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: const ProfileScreen(),
@@ -814,6 +830,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'register',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: RegisterScreen(redirectPath: redirectPath),
@@ -822,6 +839,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'staff',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: const StaffDashboardScreen(),
@@ -830,6 +848,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'supportChat',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: const SupportChatScreen(),
@@ -838,6 +857,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'wishlist',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: const WishlistScreen(),

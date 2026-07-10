@@ -1,4 +1,8 @@
-Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
+Page<dynamic> buildAppRoutePage(
+  AppRoutePath route,
+  LocalKey key,
+  PopInvokedWithResultCallback<Object?> onPopInvoked,
+) {
   assert(
     _shellConsistencyCheck(),
     'Shell mismatch between \$appRoutes and buildAppRoutePage',

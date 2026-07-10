@@ -192,7 +192,7 @@ final class RouteAction<R> {
   final AppRoutePath<R> route;
 
   void go() => _router.go(route);
-  void push() => _router.push(route);
+  Future<R?> push() => _router.push<R>(route);
   void replace() => _router.replace(route);
 }
 
@@ -263,7 +263,11 @@ bool _shellConsistencyCheck() {
   return $appRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
+Page<dynamic> buildAppRoutePage(
+  AppRoutePath route,
+  LocalKey key,
+  PopInvokedWithResultCallback<Object?> onPopInvoked,
+) {
   assert(
     _shellConsistencyCheck(),
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
@@ -273,6 +277,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'home',
+      onPopInvoked: onPopInvoked,
       transition: FadeUpwardsPageTransitionsBuilder(),
       fullscreenDialog: false,
       maintainState: true,
@@ -282,6 +287,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'notFound',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: BenchmarkShell(child: BenchmarkNotFoundPage(path: path)),
@@ -290,6 +296,7 @@ Page<dynamic> buildAppRoutePage(AppRoutePath route, LocalKey key) {
       key: key,
       location: route.location,
       name: 'modelDetail',
+      onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
       child: BenchmarkShell(child: BenchmarkDetailPage(id: id, tab: tab, archived: archived)),

@@ -8,7 +8,7 @@ is imported by the hand-written `lib/route.dart` entrypoint.
 
 ```yaml
 dependencies:
-  dust_flutter: ^0.1.1
+  dust_flutter: ^0.1.2
 ```
 
 ## Import Pattern
@@ -98,6 +98,24 @@ Route paths are absolute. Path segments like `:id` map to required constructor
 parameters. Nullable or defaulted non-path constructor parameters become query
 parameters.
 
+## Route Options
+
+```dart
+@AppRoute(
+  '/checkout',
+  name: 'checkout',
+  transition: BottomToTopPageTransitionsBuilder(),
+  fullscreenDialog: true,
+)
+final class CheckoutPage extends StatelessWidget {
+  const CheckoutPage({super.key});
+}
+```
+
+`transition` accepts a Flutter `PageTransitionsBuilder` and is applied by the
+generated page route. Use this for route-specific slide, fade, zoom, or
+no-transition navigation without hand-written `PageRouteBuilder` calls.
+
 ## Auth Semantics
 
 Routes are protected by default. If a route omits `guards:`, its generated
@@ -179,13 +197,16 @@ AppRouter: stack [/products, /products/42]
 
 ```dart
 context.navigator.home().go();
-context.navigator.modelDetail(id: 42, tab: 'perf').push();
+final result = await context.navigator.modelDetail(id: 42, tab: 'perf').push();
 context.navigator.login().replace();
 context.navigator.pop();
 ```
 
 Dust generates one method per route name. Each method returns `RouteAction<R>`
-with `go`, `push`, and `replace`.
+with `go`, `push`, and `replace`. `push()` returns a `Future<R?>` that
+completes when the pushed route is popped, so app code can await route lifetime
+or typed pop results. Existing fire-and-forget calls can ignore the returned
+future.
 
 ## Guards
 
