@@ -37,7 +37,7 @@ fn lowers_parser_top_level_declaration_surfaces_into_dart_file_ir() {
     let list_string_type = parsed_type("List<String>", 30);
     let map_type = parsed_type("Map<String, User>", 40);
 
-    let library = ResolvedLibrary {
+    let mut library = ResolvedLibrary {
         source_path: "lib/declarations.dart".to_owned(),
         output_path: "lib/declarations.g.dart".to_owned(),
         span: span(0, 400),
@@ -110,7 +110,7 @@ fn lowers_parser_top_level_declaration_surfaces_into_dart_file_ir() {
         query_calls: Vec::new(),
     };
 
-    let outcome = lower_library(&library);
+    let outcome = lower_library(&mut library);
 
     assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
     let file = outcome.value;
@@ -172,7 +172,7 @@ fn lowers_explicit_required_method_parameter_state() {
         params: vec![param.clone()],
         span: range(10, 50),
     };
-    let library = ResolvedLibrary {
+    let mut library = ResolvedLibrary {
         source_path: "lib/api.dart".to_owned(),
         output_path: "lib/api.g.dart".to_owned(),
         span: span(0, 100),
@@ -213,7 +213,7 @@ fn lowers_explicit_required_method_parameter_state() {
         query_calls: Vec::new(),
     };
 
-    let outcome = lower_library(&library);
+    let outcome = lower_library(&mut library);
 
     assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
     assert!(outcome.value.classes[0].methods[0].params[0].is_required);

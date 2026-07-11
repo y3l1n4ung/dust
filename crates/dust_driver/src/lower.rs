@@ -43,20 +43,20 @@ use self::{
 
 /// Lowers one resolved library into semantic IR.
 #[cfg(test)]
-pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<DartFileIr> {
+pub(crate) fn lower_library(library: &mut ResolvedLibrary) -> LoweringOutcome<DartFileIr> {
     lower_library_with_catalog(library, &SymbolCatalog::new())
 }
 
 /// Lowers one resolved library and attaches registered annotation symbols.
 pub(crate) fn lower_library_with_catalog(
-    library: &ResolvedLibrary,
+    library: &mut ResolvedLibrary,
     catalog: &SymbolCatalog,
 ) -> LoweringOutcome<DartFileIr> {
     let mut diagnostics = Vec::new();
     let required_classes = lowering_required_class_names(library);
     let mut classes = library
         .classes
-        .iter()
+        .iter_mut()
         .filter(|class| required_classes.contains(class.name.as_str()))
         .map(|class| {
             let outcome = lower_class(class);
@@ -66,7 +66,7 @@ pub(crate) fn lower_library_with_catalog(
         .collect::<Vec<_>>();
     let enums = library
         .enums
-        .iter()
+        .iter_mut()
         .map(|e| {
             let outcome = lower_enum(e);
             diagnostics.extend(outcome.diagnostics);
@@ -135,12 +135,12 @@ pub(crate) fn lower_library_with_catalog(
 }
 
 /// Returns classes that must be lowered because plugins or converters reference them.
-fn lowering_required_class_names(library: &ResolvedLibrary) -> HashSet<&str> {
+fn lowering_required_class_names(library: &ResolvedLibrary) -> HashSet<String> {
     let mut names = library
         .classes
         .iter()
         .filter(|class| !class.traits.is_empty() || !class.configs.is_empty())
-        .map(|class| class.name.as_str())
+        .map(|class| class.name.clone())
         .collect::<HashSet<_>>();
 
     for class in &library.classes {
@@ -154,14 +154,14 @@ fn lowering_required_class_names(library: &ResolvedLibrary) -> HashSet<&str> {
                     .named_argument_source("tryFrom")
                     .and_then(try_from_converter_name)
                 {
-                    names.insert(converter);
+                    names.insert(converter.to_owned());
                 }
             }
         }
         if class_has_serde {
             for constructor in &class.constructors {
                 if let Some(target) = constructor.surface.redirected_target_name.as_deref() {
-                    names.insert(target);
+                    names.insert(target.to_owned());
                 }
             }
         }
@@ -709,18 +709,18 @@ fn lower_name_ir(file_id: dust_text::FileId, source: &str, span: dust_text::Text
 }
 
 /// Lowers one resolved enum into semantic IR.
-fn lower_enum(e: &dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
+fn lower_enum(e: &mut dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
     let mut diagnostics: Vec<Diagnostic> = Vec::new();
     let serde = e
         .serde
-        .clone()
+        .take()
         .or_else(|| lower_class_serde_config(&e.name, &e.configs, &mut diagnostics));
     let variants: Vec<EnumVariantIr> =
         e.variants
-            .iter()
+            .iter_mut()
             .map(|v| EnumVariantIr {
                 name: v.name.clone(),
-                serde: v.serde.clone().or_else(|| {
+                serde: v.serde.take().or_else(|| {
                     lower_enum_variant_serde_config(&v.name, &v.configs, &mut diagnostics)
                 }),
                 span: v.span,
@@ -739,16 +739,16 @@ fn lower_enum(e: &dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
 }
 
 /// Lowers one resolved class into semantic IR.
-fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
+fn lower_class(class: &mut ResolvedClass) -> LoweringOutcome<ClassIr> {
     let mut diagnostics = Vec::new();
-    let serde = class.serde.clone().or_else(|| {
+    let serde = class.serde.take().or_else(|| {
         // Compatibility for resolver fixtures while callers migrate to normalized output.
         lower_class_serde_config(&class.name, &class.configs, &mut diagnostics)
     });
 
     let fields = class
         .fields
-        .iter()
+        .iter_mut()
         .map(|field| {
             let outcome = lower_type(field.parsed_type.as_ref(), field.type_source.as_deref());
             diagnostics.extend(outcome.diagnostics);
@@ -757,7 +757,9 @@ fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
                 ty: outcome.value,
                 span: field.span,
                 has_default: field.has_default,
-                serde: lower_field_serde_config(&field.name, &field.configs, &mut diagnostics),
+                serde: field.serde.take().or_else(|| {
+                    lower_field_serde_config(&field.name, &field.configs, &mut diagnostics)
+                }),
                 configs: field.configs.clone(),
             }
         })

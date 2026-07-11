@@ -125,7 +125,7 @@ fn resolve_and_lower_library(
 ) -> Option<dust_ir::DartFileIr> {
     let partless_configs = processing.registry.all_partless_configs();
     let ResolveResult {
-        library: resolved_library,
+        library: mut resolved_library,
         diagnostics: resolve_diagnostics,
     } = dust_resolver::resolve_library_with_partless_configs(
         file_id,
@@ -140,7 +140,7 @@ fn resolve_and_lower_library(
     let LoweringOutcome {
         value: mut lowered_library,
         diagnostics: lower_diagnostics,
-    } = lower_library_with_catalog(&resolved_library, processing.catalog);
+    } = lower_library_with_catalog(&mut resolved_library, processing.catalog);
     diagnostics.extend(lower_diagnostics);
     lowered_library.package_root = processing.package_root.to_string_lossy().into_owned();
     lowered_library.package_name = processing.package_name.to_owned();

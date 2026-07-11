@@ -10,7 +10,7 @@ use dust_text::{FileId, TextRange};
 
 use crate::{
     ResolvedConstructor, ResolvedField, ResolvedMethod, ResolvedMethodParam, SymbolCatalog,
-    SymbolKind, annotations::annotation_argument_values,
+    SymbolKind, annotations::annotation_argument_values, serde::normalize_field_serde,
 };
 
 /// Positional and named annotation argument values.
@@ -264,6 +264,7 @@ pub(crate) fn resolve_field(
         ));
     }
 
+    let serde = normalize_field_serde(&field.name, &configs, diagnostics);
     ResolvedField {
         name: field.name.clone(),
         type_source: field.type_source.clone(),
@@ -271,6 +272,7 @@ pub(crate) fn resolve_field(
         has_default: field.has_default,
         span: SpanIr::new(file_id, field.span),
         configs,
+        serde,
     }
 }
 
