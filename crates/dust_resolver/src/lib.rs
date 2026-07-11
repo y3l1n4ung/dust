@@ -12,6 +12,8 @@ mod resolve;
 mod resolve_support;
 /// Resolved library result types.
 mod result;
+/// Resolver-owned SerDe normalization.
+mod serde;
 
 pub use annotations::{annotation_ir_from_parsed, resolve_annotation_ir};
 pub use catalog::{ResolvedSymbol, SymbolCatalog, SymbolKind};

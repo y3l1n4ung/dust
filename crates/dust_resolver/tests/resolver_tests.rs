@@ -1,6 +1,6 @@
 //! Integration tests for resolver symbol ownership and annotation resolution.
 
-use dust_ir::{AnnotationValueIr, ClassKindIr, SymbolId};
+use dust_ir::{AnnotationValueIr, ClassKindIr, SerdeRenameRuleIr, SymbolId};
 use dust_parser_dart::{ParseBackend, ParseOptions, ParsedAnnotation};
 use dust_parser_dart_ts::TreeSitterDartBackend;
 use dust_resolver::{
@@ -113,6 +113,13 @@ class User {
     assert_eq!(resolved.library.classes.len(), 1);
     assert_eq!(resolved.library.classes[0].traits.len(), 3);
     assert_eq!(resolved.library.classes[0].configs.len(), 1);
+    assert_eq!(
+        resolved.library.classes[0]
+            .serde
+            .as_ref()
+            .and_then(|serde| serde.rename_all),
+        Some(SerdeRenameRuleIr::SnakeCase)
+    );
     assert_eq!(
         resolved.library.classes[0].configs[0]
             .arguments_source
