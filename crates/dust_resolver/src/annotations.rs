@@ -113,7 +113,12 @@ fn annotation_value_ir(file_id: FileId, value: &ParsedAnnotationValue) -> Annota
                 ParsedAnnotationNumberKind::Double => AnnotationNumberKindIr::Double,
             },
         },
-        ParsedAnnotationValueRootKind::List => AnnotationValueIr::List(Vec::new()),
+        ParsedAnnotationValueRootKind::List(values) => AnnotationValueIr::List(
+            values
+                .iter()
+                .map(|value| annotation_value_ir(file_id, value))
+                .collect(),
+        ),
         ParsedAnnotationValueRootKind::Set => AnnotationValueIr::Set(Vec::new()),
         ParsedAnnotationValueRootKind::Map => AnnotationValueIr::Map(Vec::new()),
         ParsedAnnotationValueRootKind::Record => AnnotationValueIr::Record(Vec::new()),

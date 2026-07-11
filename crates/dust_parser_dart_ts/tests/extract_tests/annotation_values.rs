@@ -51,7 +51,17 @@ class User {}
         kind(args, "ratio"),
         &ParsedAnnotationValueRootKind::Number(ParsedAnnotationNumberKind::Double)
     );
-    assert_eq!(kind(args, "list"), &ParsedAnnotationValueRootKind::List);
+    assert!(matches!(
+        kind(args, "list"),
+        ParsedAnnotationValueRootKind::List(_)
+    ));
+    let ParsedAnnotationValueRootKind::List(items) = kind(args, "list") else {
+        unreachable!();
+    };
+    assert_eq!(
+        items.first().map(|item| &item.kind),
+        Some(&ParsedAnnotationValueRootKind::String("a".to_owned()))
+    );
     assert_eq!(kind(args, "set"), &ParsedAnnotationValueRootKind::Set);
     assert_eq!(kind(args, "map"), &ParsedAnnotationValueRootKind::Map);
     assert_eq!(kind(args, "record"), &ParsedAnnotationValueRootKind::Record);

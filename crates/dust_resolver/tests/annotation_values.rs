@@ -44,7 +44,9 @@ class User {
     );
     assert_eq!(
         config.named_argument_value("aliases"),
-        Some(&AnnotationValueIr::List(Vec::new()))
+        Some(&AnnotationValueIr::List(vec![AnnotationValueIr::String(
+            "id".to_owned(),
+        )]))
     );
     assert_eq!(
         config.named_argument_value("retryable"),

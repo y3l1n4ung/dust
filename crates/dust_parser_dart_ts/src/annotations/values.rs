@@ -59,7 +59,7 @@ fn annotation_value(
             "string_literal" => ParsedAnnotationValueRootKind::String(
                 parse_string_literal(&value_source).unwrap_or_else(|| value_source.clone()),
             ),
-            "list_literal" => ParsedAnnotationValueRootKind::List,
+            "list_literal" => ParsedAnnotationValueRootKind::List(collection_values(node, source)),
             "set_or_map_literal" => set_or_map_kind(node, source),
             "record_literal" => ParsedAnnotationValueRootKind::Record,
             "const_object_expression" | "constructor_invocation" => {
@@ -79,6 +79,64 @@ fn annotation_value(
         span: value_span,
         kind,
     }
+}
+
+/// Parses direct collection elements without reparsing their source text.
+fn collection_values(node: Node<'_>, source: &SourceText) -> Vec<ParsedAnnotationValue> {
+    let mut cursor = node.walk();
+    let children = node
+        .children(&mut cursor)
+        .filter(|child| child.is_named() && child.kind() != "type_arguments")
+        .collect::<Vec<_>>();
+    let mut values = Vec::new();
+    let mut index = 0;
+
+    while let Some(child) = children.get(index).copied() {
+        if matches!(child.kind(), "identifier" | "qualified") {
+            let mut end = index + 1;
+            while children
+                .get(end)
+                .is_some_and(|selector| selector.kind() == "selector")
+            {
+                end += 1;
+            }
+            if end > index + 1 {
+                let last = children[end - 1];
+                let span = TextRange::new(text_range(child).start(), text_range(last).end());
+                let value_source = source.slice(span).unwrap_or_default().to_owned();
+                let kind = if value_source.contains('(') {
+                    ParsedAnnotationValueRootKind::Constructor {
+                        name: value_source
+                            .split_once('(')
+                            .map_or(value_source.as_str(), |(name, _)| name)
+                            .trim()
+                            .to_owned(),
+                    }
+                } else {
+                    ParsedAnnotationValueRootKind::Member(value_source.clone())
+                };
+                values.push(ParsedAnnotationValue {
+                    source: value_source,
+                    span,
+                    kind,
+                });
+                index = end;
+                continue;
+            }
+        }
+
+        let span = text_range(child);
+        values.push(annotation_value(
+            child,
+            source,
+            node_text(child, source),
+            span,
+            false,
+        ));
+        index += 1;
+    }
+
+    values
 }
 
 /// Returns whether the value is an identifier followed only by selectors.
