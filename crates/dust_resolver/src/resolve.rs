@@ -12,6 +12,7 @@ use crate::{
         first_part_uri, resolve_constructor, resolve_declaration_annotations, resolve_field,
         resolve_method,
     },
+    serde::normalize_class_serde,
 };
 
 /// Resolves one parsed library against a symbol catalog.
@@ -283,6 +284,8 @@ fn resolve_class(
         .map(|constructor| resolve_constructor(file_id, constructor, catalog, diagnostics))
         .collect();
 
+    let serde = normalize_class_serde(&class.name, &configs, diagnostics);
+
     ResolvedClass {
         kind: match class.kind {
             ParsedClassKind::Class => ClassKindIr::Class,
@@ -299,5 +302,6 @@ fn resolve_class(
         methods,
         traits,
         configs,
+        serde,
     }
 }

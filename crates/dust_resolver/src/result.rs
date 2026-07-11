@@ -1,5 +1,5 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ClassKindIr, ConfigApplicationIr, SpanIr, TraitApplicationIr};
+use dust_ir::{ClassKindIr, ConfigApplicationIr, SerdeClassConfigIr, SpanIr, TraitApplicationIr};
 use dust_parser_dart::{
     ParsedConstructorSurface, ParsedDirective, ParsedExtensionSurface, ParsedExtensionTypeSurface,
     ParsedFunctionSurface, ParsedMethodParamSurface, ParsedMethodSurface, ParsedMixinSurface,
@@ -110,6 +110,8 @@ pub struct ResolvedClass {
     pub traits: Vec<TraitApplicationIr>,
     /// Resolved config applications.
     pub configs: Vec<ConfigApplicationIr>,
+    /// Resolver-normalized class-level SerDe configuration.
+    pub serde: Option<SerdeClassConfigIr>,
 }
 
 /// One resolved library ready for lowering into semantic IR.

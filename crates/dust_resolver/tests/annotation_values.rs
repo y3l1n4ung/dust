@@ -13,7 +13,7 @@ fn resolves_parser_owned_annotation_values_into_ir() {
         r#"
 part 'user.g.dart';
 
-@SerDe(defaultValue: null, aliases: ['id'], retryable: false, count: 1, ratio: 1.5)
+@Meta(defaultValue: null, aliases: ['id'], retryable: false, count: 1, ratio: 1.5)
 class User {
   const User();
 }
@@ -22,7 +22,7 @@ class User {
     let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
     assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
     let mut catalog = SymbolCatalog::new();
-    catalog.register_config("SerDe", "dust_dart::SerDe");
+    catalog.register_config("Meta", "test::Meta");
 
     let resolved = resolve_library(
         FileId::new(41),

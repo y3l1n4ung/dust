@@ -736,7 +736,10 @@ fn lower_enum(e: &dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
 /// Lowers one resolved class into semantic IR.
 fn lower_class(class: &ResolvedClass) -> LoweringOutcome<ClassIr> {
     let mut diagnostics = Vec::new();
-    let serde = lower_class_serde_config(&class.name, &class.configs, &mut diagnostics);
+    let serde = class.serde.clone().or_else(|| {
+        // Compatibility for resolver fixtures while callers migrate to normalized output.
+        lower_class_serde_config(&class.name, &class.configs, &mut diagnostics)
+    });
 
     let fields = class
         .fields

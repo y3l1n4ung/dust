@@ -48,6 +48,7 @@ fn empty_class(name: &str, kind: ClassKindIr) -> ResolvedClass {
         methods: Vec::new(),
         traits: Vec::new(),
         configs: Vec::new(),
+        serde: None,
     }
 }
 
@@ -146,6 +147,7 @@ fn lowers_serde_configs_into_ir() {
             1,
             10,
         )],
+        serde: None,
     };
 
     let outcome = lower_class(&class);
@@ -437,6 +439,7 @@ fn invalid_serde_options_produce_lowering_diagnostics() {
             1,
             10,
         )],
+        serde: None,
     };
 
     let outcome = lower_class(&class);
@@ -521,6 +524,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
         methods: Vec::new(),
         traits: Vec::new(),
         configs: Vec::new(),
+        serde: None,
     };
 
     let outcome = lower_class(&class);
