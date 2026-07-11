@@ -207,15 +207,18 @@ fn lowers_enum_variant_serde_metadata() {
                 name: "pendingReview".to_owned(),
                 span: span(20, 35),
                 configs: vec![serde_config("(rename: 'pending')", 20, 35)],
+                serde: None,
             },
             ResolvedEnumVariant {
                 name: "legacyFailed".to_owned(),
                 span: span(40, 55),
                 configs: vec![serde_config("(skip: true)", 40, 55)],
+                serde: None,
             },
         ],
         traits: Vec::new(),
         configs: Vec::new(),
+        serde: None,
     }]));
 
     assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
