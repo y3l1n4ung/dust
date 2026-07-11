@@ -29,7 +29,7 @@ use dust_ir::{
 use dust_parser_dart::{
     ParameterKind, ParsedAnnotation, ParsedDirective, ParsedFieldSurface, ParsedMethodParamSurface,
 };
-use dust_resolver::{ResolvedClass, ResolvedLibrary};
+use dust_resolver::{ResolvedClass, ResolvedLibrary, SymbolCatalog};
 
 use self::{
     inheritance::{infer_param_type, merged_fields_for_class, resolve_constructor_param_types},
@@ -42,7 +42,16 @@ use self::{
 };
 
 /// Lowers one resolved library into semantic IR.
+#[cfg(test)]
 pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<DartFileIr> {
+    lower_library_with_catalog(library, &SymbolCatalog::new())
+}
+
+/// Lowers one resolved library and attaches registered annotation symbols.
+pub(crate) fn lower_library_with_catalog(
+    library: &ResolvedLibrary,
+    catalog: &SymbolCatalog,
+) -> LoweringOutcome<DartFileIr> {
     let mut diagnostics = Vec::new();
     let required_classes = lowering_required_class_names(library);
     let mut classes = library
@@ -105,19 +114,19 @@ pub(crate) fn lower_library(library: &ResolvedLibrary) -> LoweringOutcome<DartFi
             output_path: library.output_path.clone(),
             imports: library_imports(library),
             library: lower_library_directive(library),
-            library_annotations: lower_library_annotations(library),
+            library_annotations: lower_library_annotations(library, catalog),
             import_directives: lower_import_directives(library),
             export_directives: lower_export_directives(library),
             part_directives: lower_part_directives(library),
             part_of: lower_part_of_directive(library),
             span: library.span,
             classes,
-            mixins: lower_mixins(library, &mut diagnostics),
-            extensions: lower_extensions(library, &mut diagnostics),
-            extension_types: lower_extension_types(library, &mut diagnostics),
-            functions: lower_functions(library, &mut diagnostics),
-            variables: lower_variables(library, &mut diagnostics),
-            typedefs: lower_typedefs(library, &mut diagnostics),
+            mixins: lower_mixins(library, catalog, &mut diagnostics),
+            extensions: lower_extensions(library, catalog, &mut diagnostics),
+            extension_types: lower_extension_types(library, catalog, &mut diagnostics),
+            functions: lower_functions(library, catalog, &mut diagnostics),
+            variables: lower_variables(library, catalog, &mut diagnostics),
+            typedefs: lower_typedefs(library, catalog, &mut diagnostics),
             enums,
             query_calls: lower_query_calls(library, &mut diagnostics),
         },
@@ -318,7 +327,10 @@ fn lower_library_directive(library: &ResolvedLibrary) -> Option<LibraryDeclIr> {
 }
 
 /// Lowers annotations attached to the Dart `library` directive.
-fn lower_library_annotations(library: &ResolvedLibrary) -> Vec<AnnotationIr> {
+fn lower_library_annotations(
+    library: &ResolvedLibrary,
+    catalog: &SymbolCatalog,
+) -> Vec<AnnotationIr> {
     let file_id = library.span.file_id;
     library
         .directives
@@ -329,7 +341,7 @@ fn lower_library_annotations(library: &ResolvedLibrary) -> Vec<AnnotationIr> {
         })
         .into_iter()
         .flatten()
-        .map(|annotation| lower_annotation_ir(file_id, annotation))
+        .map(|annotation| lower_annotation_ir(file_id, annotation, catalog))
         .collect()
 }
 
@@ -415,7 +427,11 @@ fn lower_part_of_directive(library: &ResolvedLibrary) -> Option<PartOfIr> {
 }
 
 /// Lowers parsed mixins and their unresolved fields.
-fn lower_mixins(library: &ResolvedLibrary, diagnostics: &mut Vec<Diagnostic>) -> Vec<MixinIr> {
+fn lower_mixins(
+    library: &ResolvedLibrary,
+    catalog: &SymbolCatalog,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Vec<MixinIr> {
     let file_id = library.span.file_id;
     library
         .mixins
@@ -425,7 +441,7 @@ fn lower_mixins(library: &ResolvedLibrary, diagnostics: &mut Vec<Diagnostic>) ->
             annotations: mixin
                 .annotations
                 .iter()
-                .map(|annotation| lower_annotation_ir(file_id, annotation))
+                .map(|annotation| lower_annotation_ir(file_id, annotation, catalog))
                 .collect(),
             fields: mixin
                 .fields
@@ -440,6 +456,7 @@ fn lower_mixins(library: &ResolvedLibrary, diagnostics: &mut Vec<Diagnostic>) ->
 /// Lowers parsed extensions and their `on` type.
 fn lower_extensions(
     library: &ResolvedLibrary,
+    catalog: &SymbolCatalog,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<ExtensionIr> {
     let file_id = library.span.file_id;
@@ -462,7 +479,7 @@ fn lower_extensions(
                 annotations: extension
                     .annotations
                     .iter()
-                    .map(|annotation| lower_annotation_ir(file_id, annotation))
+                    .map(|annotation| lower_annotation_ir(file_id, annotation, catalog))
                     .collect(),
                 span: SpanIr::new(file_id, extension.span),
             }
@@ -473,6 +490,7 @@ fn lower_extensions(
 /// Lowers parsed extension types and their representation field.
 fn lower_extension_types(
     library: &ResolvedLibrary,
+    catalog: &SymbolCatalog,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<ExtensionTypeIr> {
     let file_id = library.span.file_id;
@@ -491,7 +509,7 @@ fn lower_extension_types(
                 annotations: extension_type
                     .annotations
                     .iter()
-                    .map(|annotation| lower_annotation_ir(file_id, annotation))
+                    .map(|annotation| lower_annotation_ir(file_id, annotation, catalog))
                     .collect(),
                 representation: FieldIr {
                     name: extension_type.representation_name.clone(),
@@ -510,6 +528,7 @@ fn lower_extension_types(
 /// Lowers parsed top-level functions and their parameters.
 fn lower_functions(
     library: &ResolvedLibrary,
+    catalog: &SymbolCatalog,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<FunctionIr> {
     let file_id = library.span.file_id;
@@ -530,7 +549,7 @@ fn lower_functions(
                 annotations: function
                     .annotations
                     .iter()
-                    .map(|annotation| lower_annotation_ir(file_id, annotation))
+                    .map(|annotation| lower_annotation_ir(file_id, annotation, catalog))
                     .collect(),
                 span: SpanIr::new(file_id, function.span),
             }
@@ -541,6 +560,7 @@ fn lower_functions(
 /// Lowers parsed top-level variables and initializers.
 fn lower_variables(
     library: &ResolvedLibrary,
+    catalog: &SymbolCatalog,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<TopLevelVariableIr> {
     let file_id = library.span.file_id;
@@ -570,7 +590,7 @@ fn lower_variables(
                 annotations: variable
                     .annotations
                     .iter()
-                    .map(|annotation| lower_annotation_ir(file_id, annotation))
+                    .map(|annotation| lower_annotation_ir(file_id, annotation, catalog))
                     .collect(),
                 span: SpanIr::new(file_id, variable.span),
             }
@@ -579,7 +599,11 @@ fn lower_variables(
 }
 
 /// Lowers parsed typedefs and aliased type sources.
-fn lower_typedefs(library: &ResolvedLibrary, diagnostics: &mut Vec<Diagnostic>) -> Vec<TypedefIr> {
+fn lower_typedefs(
+    library: &ResolvedLibrary,
+    catalog: &SymbolCatalog,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Vec<TypedefIr> {
     let file_id = library.span.file_id;
     library
         .typedefs
@@ -597,7 +621,7 @@ fn lower_typedefs(library: &ResolvedLibrary, diagnostics: &mut Vec<Diagnostic>) 
                 annotations: typedef
                     .annotations
                     .iter()
-                    .map(|annotation| lower_annotation_ir(file_id, annotation))
+                    .map(|annotation| lower_annotation_ir(file_id, annotation, catalog))
                     .collect(),
                 span: SpanIr::new(file_id, typedef.span),
             }
@@ -660,8 +684,12 @@ fn lower_parameter_kind(kind: ParameterKind) -> ParamKind {
 }
 
 /// Lowers a parsed annotation into resolver-compatible annotation IR.
-fn lower_annotation_ir(file_id: dust_text::FileId, annotation: &ParsedAnnotation) -> AnnotationIr {
-    dust_resolver::annotation_ir_from_parsed(file_id, annotation, None)
+fn lower_annotation_ir(
+    file_id: dust_text::FileId,
+    annotation: &ParsedAnnotation,
+    catalog: &SymbolCatalog,
+) -> AnnotationIr {
+    dust_resolver::resolve_annotation_ir(file_id, annotation, catalog)
 }
 
 /// Builds a name IR value from raw source and source span.

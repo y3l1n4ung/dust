@@ -6,7 +6,7 @@ use dust_parser_dart::{
     ParsedAnnotation, ParsedAnnotationArgument, ParsedAnnotationArguments,
     ParsedAnnotationNamedArgument, ParsedDirective,
 };
-use dust_resolver::ResolvedLibrary;
+use dust_resolver::{ResolvedLibrary, SymbolCatalog};
 use dust_text::{FileId, TextRange};
 
 fn span(start: u32, end: u32) -> SpanIr {
@@ -113,5 +113,46 @@ fn lowers_parser_directives_into_dart_file_ir() {
             .and_then(|part_of| part_of.library_name.as_ref())
             .map(|name| name.source.as_str()),
         Some("models.user")
+    );
+}
+
+#[test]
+fn attaches_resolved_symbols_to_lowered_annotations() {
+    let annotation = ParsedAnnotation {
+        name: "SerDe".to_owned(),
+        prefix: None,
+        qualified_name: "SerDe".to_owned(),
+        arguments_source: None,
+        parsed_arguments: None,
+        span: TextRange::new(0_u32, 6_u32),
+    };
+    let library = ResolvedLibrary {
+        source_path: "lib/user.dart".to_owned(),
+        output_path: "lib/user.g.dart".to_owned(),
+        span: span(0, 20),
+        directives: vec![ParsedDirective::Library {
+            name: None,
+            annotations: vec![annotation],
+            span: TextRange::new(7_u32, 20_u32),
+        }],
+        part_uri: None,
+        classes: Vec::new(),
+        enums: Vec::new(),
+        mixins: Vec::new(),
+        extensions: Vec::new(),
+        extension_types: Vec::new(),
+        functions: Vec::new(),
+        variables: Vec::new(),
+        typedefs: Vec::new(),
+        query_calls: Vec::new(),
+    };
+    let mut catalog = SymbolCatalog::new();
+    catalog.register_config("SerDe", "dust_dart::SerDe");
+
+    let file = super::lower_library_with_catalog(&library, &catalog).value;
+
+    assert_eq!(
+        file.library_annotations[0].resolved_symbol,
+        Some(dust_ir::SymbolId::new("dust_dart::SerDe"))
     );
 }

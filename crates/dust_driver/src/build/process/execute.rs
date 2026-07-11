@@ -9,7 +9,7 @@ use dust_resolver::ResolveResult;
 use dust_text::{FileId, SourceText};
 use dust_workspace::SourceLibrary;
 
-use crate::lower::lower_library;
+use crate::lower::lower_library_with_catalog;
 
 use super::{
     BuildOutcome, PendingLibrary, ProcessingConfig, build_diagnostic_file, emit_or_write_library,
@@ -140,7 +140,7 @@ fn resolve_and_lower_library(
     let LoweringOutcome {
         value: mut lowered_library,
         diagnostics: lower_diagnostics,
-    } = lower_library(&resolved_library);
+    } = lower_library_with_catalog(&resolved_library, processing.catalog);
     diagnostics.extend(lower_diagnostics);
     lowered_library.package_root = processing.package_root.to_string_lossy().into_owned();
     lowered_library.package_name = processing.package_name.to_owned();
