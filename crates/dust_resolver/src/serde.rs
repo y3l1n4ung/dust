@@ -1,5 +1,7 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ConfigApplicationIr, SerdeClassConfigIr, SerdeRenameRuleIr};
+use dust_ir::{
+    ConfigApplicationIr, SerdeClassConfigIr, SerdeEnumVariantConfigIr, SerdeRenameRuleIr,
+};
 
 /// Normalizes class-level SerDe configuration after symbol resolution.
 pub(crate) fn normalize_class_serde(
@@ -97,4 +99,40 @@ fn rename_rule(source: &str) -> Option<SerdeRenameRuleIr> {
         "screamingKebabCase" => Some(SerdeRenameRuleIr::ScreamingKebabCase),
         _ => None,
     }
+}
+
+/// Normalizes enum-variant SerDe configuration after symbol resolution.
+pub(crate) fn normalize_enum_variant_serde(
+    variant_name: &str,
+    configs: &[ConfigApplicationIr],
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Option<SerdeEnumVariantConfigIr> {
+    let mut serde = SerdeEnumVariantConfigIr::default();
+    let mut saw_serde = false;
+    for config in configs
+        .iter()
+        .filter(|config| config.symbol.0 == "dust_dart::SerDe")
+    {
+        saw_serde = true;
+        for key in config.named_args.keys().map(String::as_str) {
+            match key {
+                "rename" => match config.named_string(key) {
+                    Some(value) => serde.rename = Some(value),
+                    None => diagnostics.push(Diagnostic::error(format!(
+                        "enum variant `{variant_name}` uses a non-string `SerDe(rename: ...)` value"
+                    ))),
+                },
+                "skip" => match config.named_bool(key) {
+                    Some(value) => serde.skip = value,
+                    None => diagnostics.push(Diagnostic::error(format!(
+                        "enum variant `{variant_name}` uses a non-boolean `SerDe(skip: ...)` value"
+                    ))),
+                },
+                unknown => diagnostics.push(Diagnostic::error(format!(
+                    "enum variant `{variant_name}` does not support `SerDe({unknown}: ...)`"
+                ))),
+            }
+        }
+    }
+    saw_serde.then_some(serde)
 }

@@ -12,7 +12,7 @@ use crate::{
         first_part_uri, resolve_constructor, resolve_declaration_annotations, resolve_field,
         resolve_method,
     },
-    serde::normalize_class_serde,
+    serde::{normalize_class_serde, normalize_enum_variant_serde},
 };
 
 /// Resolves one parsed library against a symbol catalog.
@@ -203,6 +203,7 @@ fn resolve_enum(
             ResolvedEnumVariant {
                 name: variant.name.clone(),
                 span: SpanIr::new(file_id, variant.span),
+                serde: normalize_enum_variant_serde(&variant.name, &variant_configs, diagnostics),
                 configs: variant_configs,
             }
         })
@@ -213,6 +214,7 @@ fn resolve_enum(
         span: SpanIr::new(file_id, enum_surface.span),
         variants,
         traits,
+        serde: normalize_class_serde(&enum_surface.name, &configs, diagnostics),
         configs,
     }
 }

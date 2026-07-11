@@ -247,8 +247,21 @@ enum Status {
     assert_eq!(enum_.configs.len(), 1);
     assert_eq!(enum_.variants.len(), 2);
     assert_eq!(enum_.variants[0].configs.len(), 1);
+    assert_eq!(
+        enum_.variants[0]
+            .serde
+            .as_ref()
+            .and_then(|serde| serde.rename.as_deref()),
+        Some("pending")
+    );
     assert_named_string(&enum_.variants[0].configs[0], "rename", "pending");
     assert_eq!(enum_.variants[1].configs.len(), 1);
+    assert!(
+        enum_.variants[1]
+            .serde
+            .as_ref()
+            .is_some_and(|serde| serde.skip)
+    );
     assert_named_bool(&enum_.variants[1].configs[0], "skip", true);
 }
 

@@ -711,16 +711,21 @@ fn lower_name_ir(file_id: dust_text::FileId, source: &str, span: dust_text::Text
 /// Lowers one resolved enum into semantic IR.
 fn lower_enum(e: &dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
     let mut diagnostics: Vec<Diagnostic> = Vec::new();
-    let serde = lower_class_serde_config(&e.name, &e.configs, &mut diagnostics);
-    let variants: Vec<EnumVariantIr> = e
-        .variants
-        .iter()
-        .map(|v| EnumVariantIr {
-            name: v.name.clone(),
-            serde: lower_enum_variant_serde_config(&v.name, &v.configs, &mut diagnostics),
-            span: v.span,
-        })
-        .collect();
+    let serde = e
+        .serde
+        .clone()
+        .or_else(|| lower_class_serde_config(&e.name, &e.configs, &mut diagnostics));
+    let variants: Vec<EnumVariantIr> =
+        e.variants
+            .iter()
+            .map(|v| EnumVariantIr {
+                name: v.name.clone(),
+                serde: v.serde.clone().or_else(|| {
+                    lower_enum_variant_serde_config(&v.name, &v.configs, &mut diagnostics)
+                }),
+                span: v.span,
+            })
+            .collect();
     LoweringOutcome {
         value: EnumIr {
             name: e.name.clone(),
