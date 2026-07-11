@@ -124,7 +124,8 @@ pub(crate) fn resolve_declaration_annotations(
 ) {
     for annotation in annotations {
         if annotation.is_named("Derive") {
-            for name in annotation.positional_constructor_names() {
+            let (positional, _) = annotation_argument_values(file_id, annotation);
+            for name in derive_member_names(&positional) {
                 match catalog.resolve_trait(&name) {
                     Some(resolved) => push_resolved_symbol(
                         file_id,
@@ -166,6 +167,21 @@ pub(crate) fn resolve_declaration_annotations(
             );
         }
     }
+}
+
+/// Returns constructor names from structured `Derive` positional values.
+fn derive_member_names(values: &[AnnotationValueIr]) -> Vec<String> {
+    values
+        .iter()
+        .flat_map(|value| match value {
+            AnnotationValueIr::List(items) => items.as_slice(),
+            value => std::slice::from_ref(value),
+        })
+        .filter_map(|value| match value {
+            AnnotationValueIr::Constructor { name, .. } => Some(name.short.clone()),
+            _ => None,
+        })
+        .collect()
 }
 
 /// Resolves constructor-level Dust config annotations.
@@ -288,5 +304,37 @@ fn push_resolved_symbol(
                 SpanIr::new(file_id, application.span),
             ));
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeMap;
+
+    use super::derive_member_names;
+    use dust_ir::{AnnotationValueIr, NameIr, SpanIr};
+    use dust_text::{FileId, TextRange};
+
+    #[test]
+    fn derive_members_come_from_structured_constructor_values() {
+        let span = SpanIr::new(FileId::new(1), TextRange::new(0_u32, 10_u32));
+        let values = vec![AnnotationValueIr::List(vec![
+            AnnotationValueIr::Constructor {
+                name: NameIr {
+                    source: "d.ToString".to_owned(),
+                    short: "ToString".to_owned(),
+                    prefix: Some("d".to_owned()),
+                    span,
+                },
+                positional_args: Vec::new(),
+                named_args: BTreeMap::new(),
+            },
+            AnnotationValueIr::Expression(dust_ir::ExprSourceIr {
+                source: "Unknown()".to_owned(),
+                span,
+            }),
+        ])];
+
+        assert_eq!(derive_member_names(&values), ["ToString"]);
     }
 }

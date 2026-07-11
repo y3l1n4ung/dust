@@ -397,8 +397,8 @@ pub enum ParsedAnnotationValueRootKind {
     String(String),
     /// A numeric literal.
     Number(ParsedAnnotationNumberKind),
-    /// A list literal.
-    List,
+    /// A list literal and its directly parsed elements.
+    List(Vec<ParsedAnnotationValue>),
     /// A set literal.
     Set,
     /// A map literal.
