@@ -1,10 +1,12 @@
 //! Integration tests for resolver symbol ownership and annotation resolution.
 
 use dust_ir::{AnnotationValueIr, ClassKindIr, SymbolId};
-use dust_parser_dart::{ParseBackend, ParseOptions};
+use dust_parser_dart::{ParseBackend, ParseOptions, ParsedAnnotation};
 use dust_parser_dart_ts::TreeSitterDartBackend;
-use dust_resolver::{SymbolCatalog, SymbolKind, resolve_library, validate_generated_part_uri};
-use dust_text::{FileId, SourceText};
+use dust_resolver::{
+    SymbolCatalog, SymbolKind, resolve_annotation_ir, resolve_library, validate_generated_part_uri,
+};
+use dust_text::{FileId, SourceText, TextRange};
 
 #[test]
 fn symbol_catalog_registers_traits_and_configs() {
@@ -33,6 +35,27 @@ fn symbol_catalog_supports_same_surface_name_for_trait_and_config() {
     assert_eq!(
         catalog.resolve_config("Validate").unwrap().kind,
         SymbolKind::Config
+    );
+}
+
+#[test]
+fn resolves_registered_annotation_into_canonical_ir() {
+    let annotation = ParsedAnnotation {
+        name: "SerDe".to_owned(),
+        prefix: None,
+        qualified_name: "SerDe".to_owned(),
+        arguments_source: None,
+        parsed_arguments: None,
+        span: TextRange::new(0_u32, 6_u32),
+    };
+    let mut catalog = SymbolCatalog::new();
+    catalog.register_config("SerDe", "dust_dart::SerDe");
+
+    let annotation = resolve_annotation_ir(FileId::new(2), &annotation, &catalog);
+
+    assert_eq!(
+        annotation.resolved_symbol,
+        Some(SymbolId::new("dust_dart::SerDe"))
     );
 }
 

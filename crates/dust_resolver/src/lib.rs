@@ -13,7 +13,7 @@ mod resolve_support;
 /// Resolved library result types.
 mod result;
 
-pub use annotations::annotation_ir_from_parsed;
+pub use annotations::{annotation_ir_from_parsed, resolve_annotation_ir};
 pub use catalog::{ResolvedSymbol, SymbolCatalog, SymbolKind};
 pub use resolve::{
     resolve_library, resolve_library_with_partless_configs, validate_generated_part_uri,

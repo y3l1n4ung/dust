@@ -9,6 +9,20 @@ use dust_parser_dart::{
 };
 use dust_text::{FileId, TextRange};
 
+use crate::SymbolCatalog;
+
+/// Converts one parsed annotation into semantic IR and resolves registered symbols.
+pub fn resolve_annotation_ir(
+    file_id: FileId,
+    annotation: &ParsedAnnotation,
+    catalog: &SymbolCatalog,
+) -> AnnotationIr {
+    let resolved_symbol = catalog
+        .resolve(&annotation.name)
+        .map(|resolved| resolved.symbol.clone());
+    annotation_ir_from_parsed(file_id, annotation, resolved_symbol)
+}
+
 /// Converts one parsed annotation into semantic IR, optionally attaching a resolved symbol.
 pub fn annotation_ir_from_parsed(
     file_id: FileId,
