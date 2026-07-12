@@ -5,6 +5,7 @@ use dust_parser_dart::{
 use dust_text::{SourceText, TextRange};
 use tree_sitter::Node;
 
+use super::extract_annotation_arguments;
 use crate::syntax::{direct_named_child, has_descendant_kind, node_text, text_range};
 
 /// Converts an annotation argument container into a parser-owned value.
@@ -14,6 +15,22 @@ pub(super) fn annotation_value_from_container(
     value_span: TextRange,
     source: &SourceText,
 ) -> Option<ParsedAnnotationValue> {
+    if is_member_selector_chain(container) && has_descendant_kind(container, "arguments") {
+        let name = value_source
+            .split_once('(')
+            .map_or(value_source.as_str(), |(name, _)| name)
+            .trim()
+            .to_owned();
+        return Some(ParsedAnnotationValue {
+            source: value_source,
+            span: value_span,
+            kind: ParsedAnnotationValueRootKind::Constructor {
+                name,
+                arguments: constructor_arguments(container, source),
+            },
+        });
+    }
+
     let value_node = annotation_argument_value_node(container, value_span)?;
     Some(annotation_value(
         value_node,
@@ -65,6 +82,7 @@ fn annotation_value(
             "const_object_expression" | "constructor_invocation" => {
                 ParsedAnnotationValueRootKind::Constructor {
                     name: constructor_name(node, source).unwrap_or_else(|| value_source.clone()),
+                    arguments: constructor_arguments(node, source),
                 }
             }
             "identifier" | "qualified" | "selector" => {
@@ -111,6 +129,7 @@ fn collection_values(node: Node<'_>, source: &SourceText) -> Vec<ParsedAnnotatio
                             .map_or(value_source.as_str(), |(name, _)| name)
                             .trim()
                             .to_owned(),
+                        arguments: constructor_arguments(last, source),
                     }
                 } else {
                     ParsedAnnotationValueRootKind::Member(value_source.clone())
@@ -137,6 +156,19 @@ fn collection_values(node: Node<'_>, source: &SourceText) -> Vec<ParsedAnnotatio
     }
 
     values
+}
+
+/// Extracts structured arguments from a constructor node or selector.
+fn constructor_arguments(
+    node: Node<'_>,
+    source: &SourceText,
+) -> Box<dust_parser_dart::ParsedAnnotationArguments> {
+    let arguments = node
+        .child_by_field_name("arguments")
+        .or_else(|| crate::syntax::find_first_descendant(node, "arguments"));
+    Box::new(arguments.map_or_else(Default::default, |arguments| {
+        extract_annotation_arguments(arguments, source)
+    }))
 }
 
 /// Returns whether the value is an identifier followed only by selectors.

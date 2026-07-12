@@ -13,7 +13,14 @@ fn resolves_parser_owned_annotation_values_into_ir() {
         r#"
 part 'user.g.dart';
 
-@Meta(defaultValue: null, aliases: ['id'], retryable: false, count: 1, ratio: 1.5)
+@Meta(
+  defaultValue: null,
+  aliases: ['id'],
+  retryable: false,
+  count: 1,
+  ratio: 1.5,
+  length: Length(2, max: 8)
+)
 class User {
   const User();
 }
@@ -64,6 +71,29 @@ class User {
         Some(&AnnotationValueIr::Number {
             source: "1.5".to_owned(),
             kind: AnnotationNumberKindIr::Double,
+        })
+    );
+    let Some(AnnotationValueIr::Constructor {
+        name,
+        positional_args,
+        named_args,
+    }) = config.named_argument_value("length")
+    else {
+        panic!("expected structured constructor");
+    };
+    assert_eq!(name.short, "Length");
+    assert_eq!(
+        positional_args,
+        &[AnnotationValueIr::Number {
+            source: "2".to_owned(),
+            kind: AnnotationNumberKindIr::Int,
+        }]
+    );
+    assert_eq!(
+        named_args.get("max"),
+        Some(&AnnotationValueIr::Number {
+            source: "8".to_owned(),
+            kind: AnnotationNumberKindIr::Int,
         })
     );
 }
