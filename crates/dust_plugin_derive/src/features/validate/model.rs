@@ -1,4 +1,4 @@
-use dust_ir::{ClassIr, ConfigApplicationIr, FieldIr};
+use dust_ir::{AnnotationValueIr, ClassIr, ConfigApplicationIr, FieldIr};
 use dust_parser_dart::{AnnotationValue, parse_annotation_named_values};
 
 use crate::features::{VALIDATE_SYMBOL, eq_hash::has_trait};
@@ -85,6 +85,15 @@ pub(crate) fn field_validations(class: &ClassIr) -> Vec<FieldValidation<'_>> {
 
 /// Parses one `@Validate` config application.
 pub(crate) fn parse_validate_config(config: &ConfigApplicationIr) -> Option<ValidateConfig> {
+    if !config.named_args.is_empty()
+        && !config
+            .named_args
+            .keys()
+            .any(|name| matches!(name.as_str(), "length" | "range"))
+    {
+        return Some(parse_structured_validate_config(config));
+    }
+
     let values = parse_config_named_values(config)?;
     let mut parsed = ValidateConfig::default();
     for (name, value) in values {
@@ -113,6 +122,33 @@ pub(crate) fn parse_validate_config(config: &ConfigApplicationIr) -> Option<Vali
         }
     }
     Some(parsed)
+}
+
+/// Parses scalar Validate options directly from canonical annotation values.
+fn parse_structured_validate_config(config: &ConfigApplicationIr) -> ValidateConfig {
+    let mut parsed = ValidateConfig::default();
+    for (name, value) in &config.named_args {
+        match (name.as_str(), value) {
+            ("email", AnnotationValueIr::Bool(value)) => parsed.email = *value,
+            ("url", AnnotationValueIr::Bool(value)) => parsed.url = *value,
+            ("contains", AnnotationValueIr::String(value)) => parsed.contains = Some(value.clone()),
+            ("doesNotContain", AnnotationValueIr::String(value)) => {
+                parsed.does_not_contain = Some(value.clone());
+            }
+            ("regex", AnnotationValueIr::String(value)) => parsed.regex = Some(value.clone()),
+            ("mustMatch", AnnotationValueIr::String(value)) => {
+                parsed.must_match = Some(value.clone());
+            }
+            ("nested", AnnotationValueIr::Bool(value)) => parsed.nested = *value,
+            ("custom", AnnotationValueIr::Member(value)) => {
+                parsed.custom = Some(value.source.clone());
+            }
+            ("required", AnnotationValueIr::Bool(value)) => parsed.required = *value,
+            ("message", AnnotationValueIr::String(value)) => parsed.message = Some(value.clone()),
+            _ => {}
+        }
+    }
+    parsed
 }
 
 /// Parses normalized annotation arguments into named values.
@@ -172,5 +208,37 @@ fn range(min: Option<&str>, max: Option<&str>) -> RangeRule {
     RangeRule {
         min: min.map(str::to_owned),
         max: max.map(str::to_owned),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeMap;
+
+    use dust_ir::{AnnotationValueIr, ConfigApplicationIr, SpanIr, SymbolId};
+    use dust_text::{FileId, TextRange};
+
+    use super::parse_validate_config;
+
+    #[test]
+    fn structured_scalar_config_does_not_require_raw_argument_parsing() {
+        let config = ConfigApplicationIr::with_arguments(
+            SymbolId::new("dust_dart::Validate"),
+            Some("(not valid Dart".to_owned()),
+            Vec::new(),
+            BTreeMap::from([
+                ("email".to_owned(), AnnotationValueIr::Bool(true)),
+                (
+                    "message".to_owned(),
+                    AnnotationValueIr::String("bad email".to_owned()),
+                ),
+            ]),
+            SpanIr::new(FileId::new(1), TextRange::new(0_u32, 10_u32)),
+        );
+
+        let parsed = parse_validate_config(&config).expect("structured config should parse");
+
+        assert!(parsed.email);
+        assert_eq!(parsed.message.as_deref(), Some("bad email"));
     }
 }
