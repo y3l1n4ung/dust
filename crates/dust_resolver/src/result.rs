@@ -1,7 +1,7 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
-    ClassKindIr, ConfigApplicationIr, SerdeClassConfigIr, SerdeEnumVariantConfigIr, SpanIr,
-    TraitApplicationIr,
+    ClassKindIr, ConfigApplicationIr, SerdeClassConfigIr, SerdeEnumVariantConfigIr,
+    SerdeFieldConfigIr, SpanIr, TraitApplicationIr,
 };
 use dust_parser_dart::{
     ParsedConstructorSurface, ParsedDirective, ParsedExtensionSurface, ParsedExtensionTypeSurface,
@@ -24,6 +24,8 @@ pub struct ResolvedField {
     pub span: SpanIr,
     /// Resolved config applications attached to the field.
     pub configs: Vec<ConfigApplicationIr>,
+    /// Resolver-normalized field SerDe configuration.
+    pub serde: Option<SerdeFieldConfigIr>,
 }
 
 /// One resolved method plus its method-level Dust configuration.

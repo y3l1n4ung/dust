@@ -15,7 +15,7 @@ fn span(start: u32, end: u32) -> SpanIr {
 
 #[test]
 fn lowers_parser_directives_into_dart_file_ir() {
-    let library = ResolvedLibrary {
+    let mut library = ResolvedLibrary {
         source_path: "lib/user.dart".to_owned(),
         output_path: "lib/user.g.dart".to_owned(),
         span: span(0, 160),
@@ -80,7 +80,7 @@ fn lowers_parser_directives_into_dart_file_ir() {
         query_calls: Vec::new(),
     };
 
-    let outcome = lower_library(&library);
+    let outcome = lower_library(&mut library);
 
     assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
     let file = outcome.value;
@@ -126,7 +126,7 @@ fn attaches_resolved_symbols_to_lowered_annotations() {
         parsed_arguments: None,
         span: TextRange::new(0_u32, 6_u32),
     };
-    let library = ResolvedLibrary {
+    let mut library = ResolvedLibrary {
         source_path: "lib/user.dart".to_owned(),
         output_path: "lib/user.g.dart".to_owned(),
         span: span(0, 20),
@@ -149,7 +149,7 @@ fn attaches_resolved_symbols_to_lowered_annotations() {
     let mut catalog = SymbolCatalog::new();
     catalog.register_config("SerDe", "dust_dart::SerDe");
 
-    let file = super::lower_library_with_catalog(&library, &catalog).value;
+    let file = super::lower_library_with_catalog(&mut library, &catalog).value;
 
     assert_eq!(
         file.library_annotations[0].resolved_symbol,

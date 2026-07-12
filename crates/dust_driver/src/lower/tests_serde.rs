@@ -121,7 +121,7 @@ fn enum_library(enums: Vec<ResolvedEnum>) -> ResolvedLibrary {
 
 #[test]
 fn lowers_serde_configs_into_ir() {
-    let class = ResolvedClass {
+    let mut class = ResolvedClass {
         kind: ClassKindIr::Class,
         name: "User".to_owned(),
         is_abstract: false,
@@ -129,6 +129,7 @@ fn lowers_serde_configs_into_ir() {
         superclass_name: None,
         span: span(0, 100),
         fields: vec![ResolvedField {
+            serde: None,
             name: "name".to_owned(),
             type_source: Some("String".to_owned()),
             parsed_type: None,
@@ -150,7 +151,7 @@ fn lowers_serde_configs_into_ir() {
         serde: None,
     };
 
-    let outcome = lower_class(&class);
+    let outcome = lower_class(&mut class);
     assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
     assert_eq!(
         outcome
@@ -199,7 +200,7 @@ fn lowers_serde_configs_into_ir() {
 
 #[test]
 fn lowers_enum_variant_serde_metadata() {
-    let outcome = lower_library(&enum_library(vec![ResolvedEnum {
+    let outcome = lower_library(&mut enum_library(vec![ResolvedEnum {
         name: "Status".to_owned(),
         span: span(0, 100),
         variants: vec![
@@ -258,7 +259,7 @@ fn lowers_sealed_serde_variant_metadata_from_redirecting_factories() {
     let mut failed = empty_class("PaymentFailed", ClassKindIr::Class);
     failed.superclass_name = Some("PaymentStatus".to_owned());
 
-    let outcome = lower_library(&library(vec![base, paid, failed]));
+    let outcome = lower_library(&mut library(vec![base, paid, failed]));
 
     assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
     let class = outcome
@@ -296,7 +297,7 @@ fn lowers_sealed_serde_variant_params_without_source_target_class() {
         ],
     )];
 
-    let outcome = lower_library(&library(vec![base]));
+    let outcome = lower_library(&mut library(vec![base]));
 
     assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
     let class = outcome
@@ -328,7 +329,7 @@ fn lowers_sealed_serde_variant_metadata_without_explicit_representation() {
     let mut paid = empty_class("PaymentPaid", ClassKindIr::Class);
     paid.superclass_name = Some("PaymentStatus".to_owned());
 
-    let outcome = lower_library(&library(vec![base, paid]));
+    let outcome = lower_library(&mut library(vec![base, paid]));
 
     assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
     let class = outcome
@@ -350,7 +351,7 @@ fn non_sealed_serde_without_variant_options_does_not_require_factories() {
     let mut user = empty_class("User", ClassKindIr::Class);
     user.configs = vec![serde_config("(renameAll: SerDeRename.snakeCase)", 1, 10)];
 
-    let outcome = lower_library(&library(vec![user]));
+    let outcome = lower_library(&mut library(vec![user]));
 
     assert!(outcome.diagnostics.is_empty(), "{:?}", outcome.diagnostics);
     let class = outcome
@@ -366,7 +367,7 @@ fn non_sealed_serde_without_variant_options_does_not_require_factories() {
 fn invalid_sealed_serde_class_options_produce_lowering_diagnostics() {
     let mut content_only = empty_class("ContentOnly", ClassKindIr::Class);
     content_only.configs = vec![serde_config("(content: 'data')", 1, 10)];
-    let content_outcome = lower_class(&content_only);
+    let content_outcome = lower_class(&mut content_only);
     assert!(content_outcome.diagnostics.iter().any(|diagnostic| {
         diagnostic
             .message
@@ -375,7 +376,7 @@ fn invalid_sealed_serde_class_options_produce_lowering_diagnostics() {
 
     let mut conflicting = empty_class("Conflicting", ClassKindIr::Class);
     conflicting.configs = vec![serde_config("(tag: 'type', untagged: true)", 11, 20)];
-    let conflicting_outcome = lower_class(&conflicting);
+    let conflicting_outcome = lower_class(&mut conflicting);
     assert!(conflicting_outcome.diagnostics.iter().any(|diagnostic| {
         diagnostic
             .message
@@ -384,7 +385,7 @@ fn invalid_sealed_serde_class_options_produce_lowering_diagnostics() {
 
     let mut empty_sealed = empty_class("EmptyStatus", ClassKindIr::SealedClass);
     empty_sealed.configs = vec![serde_config("(tag: 'type')", 21, 30)];
-    let empty_outcome = lower_library(&library(vec![empty_sealed]));
+    let empty_outcome = lower_library(&mut library(vec![empty_sealed]));
     assert!(empty_outcome.diagnostics.iter().any(|diagnostic| {
         diagnostic
             .message
@@ -397,7 +398,7 @@ fn invalid_sealed_serde_class_options_produce_lowering_diagnostics() {
         factory_constructor("paid", "Paid", Vec::new()),
         factory_constructor("paid", "DuplicatePaid", Vec::new()),
     ];
-    let duplicate_outcome = lower_library(&library(vec![duplicate_tags]));
+    let duplicate_outcome = lower_library(&mut library(vec![duplicate_tags]));
     assert!(duplicate_outcome.diagnostics.iter().any(|diagnostic| {
         diagnostic
             .message
@@ -409,7 +410,7 @@ fn invalid_sealed_serde_class_options_produce_lowering_diagnostics() {
     invalid_target.constructors = vec![factory_constructor("paid", "PaymentPaid", Vec::new())];
     let mut paid = empty_class("PaymentPaid", ClassKindIr::Class);
     paid.superclass_name = Some("OtherStatus".to_owned());
-    let invalid_target_outcome = lower_library(&library(vec![invalid_target, paid]));
+    let invalid_target_outcome = lower_library(&mut library(vec![invalid_target, paid]));
     assert!(invalid_target_outcome.diagnostics.iter().any(|diagnostic| {
         diagnostic
             .message
@@ -419,7 +420,7 @@ fn invalid_sealed_serde_class_options_produce_lowering_diagnostics() {
 
 #[test]
 fn invalid_serde_options_produce_lowering_diagnostics() {
-    let class = ResolvedClass {
+    let mut class = ResolvedClass {
         kind: ClassKindIr::Class,
         name: "User".to_owned(),
         is_abstract: false,
@@ -427,6 +428,7 @@ fn invalid_serde_options_produce_lowering_diagnostics() {
         superclass_name: None,
         span: span(0, 100),
         fields: vec![ResolvedField {
+            serde: None,
             name: "name".to_owned(),
             type_source: Some("String".to_owned()),
             parsed_type: None,
@@ -445,7 +447,7 @@ fn invalid_serde_options_produce_lowering_diagnostics() {
         serde: None,
     };
 
-    let outcome = lower_class(&class);
+    let outcome = lower_class(&mut class);
     assert_eq!(outcome.diagnostics.len(), 3);
     assert!(outcome.diagnostics.iter().any(|diagnostic| {
         diagnostic
@@ -466,7 +468,7 @@ fn invalid_serde_options_produce_lowering_diagnostics() {
 
 #[test]
 fn invalid_serde_using_values_produce_lowering_diagnostics() {
-    let class = ResolvedClass {
+    let mut class = ResolvedClass {
         kind: ClassKindIr::Class,
         name: "User".to_owned(),
         is_abstract: false,
@@ -475,6 +477,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
         span: span(0, 100),
         fields: vec![
             ResolvedField {
+                serde: None,
                 name: "emptyCodec".to_owned(),
                 type_source: Some("DateTime".to_owned()),
                 parsed_type: None,
@@ -483,6 +486,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
                 configs: vec![serde_config("(using: )", 18, 30)],
             },
             ResolvedField {
+                serde: None,
                 name: "stringCodec".to_owned(),
                 type_source: Some("DateTime".to_owned()),
                 parsed_type: None,
@@ -491,6 +495,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
                 configs: vec![serde_config("(using: 'codec')", 31, 40)],
             },
             ResolvedField {
+                serde: None,
                 name: "nullCodec".to_owned(),
                 type_source: Some("DateTime".to_owned()),
                 parsed_type: None,
@@ -499,6 +504,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
                 configs: vec![serde_config("(using: null)", 41, 50)],
             },
             ResolvedField {
+                serde: None,
                 name: "lambdaCodec".to_owned(),
                 type_source: Some("DateTime".to_owned()),
                 parsed_type: None,
@@ -507,6 +513,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
                 configs: vec![serde_config("(using: () => const DateTimeCodec())", 51, 60)],
             },
             ResolvedField {
+                serde: None,
                 name: "typeCodec".to_owned(),
                 type_source: Some("DateTime".to_owned()),
                 parsed_type: None,
@@ -515,6 +522,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
                 configs: vec![serde_config("(using: DateTimeCodec)", 61, 70)],
             },
             ResolvedField {
+                serde: None,
                 name: "validCodec".to_owned(),
                 type_source: Some("DateTime".to_owned()),
                 parsed_type: None,
@@ -530,7 +538,7 @@ fn invalid_serde_using_values_produce_lowering_diagnostics() {
         serde: None,
     };
 
-    let outcome = lower_class(&class);
+    let outcome = lower_class(&mut class);
 
     assert_eq!(outcome.diagnostics.len(), 5);
     assert!(outcome.diagnostics.iter().any(|diagnostic| {
