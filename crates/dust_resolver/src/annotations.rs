@@ -4,7 +4,7 @@ use dust_ir::{
     AnnotationIr, AnnotationNumberKindIr, AnnotationValueIr, ExprSourceIr, NameIr, SpanIr, SymbolId,
 };
 use dust_parser_dart::{
-    ParsedAnnotation, ParsedAnnotationNumberKind, ParsedAnnotationValue,
+    ParsedAnnotation, ParsedAnnotationArguments, ParsedAnnotationNumberKind, ParsedAnnotationValue,
     ParsedAnnotationValueRootKind,
 };
 use dust_text::{FileId, TextRange};
@@ -49,32 +49,7 @@ pub(crate) fn annotation_argument_values(
     annotation: &ParsedAnnotation,
 ) -> (Vec<AnnotationValueIr>, BTreeMap<String, AnnotationValueIr>) {
     if let Some(arguments) = &annotation.parsed_arguments {
-        let positional = arguments
-            .positional
-            .iter()
-            .map(|argument| match &argument.value {
-                Some(value) => annotation_value_ir(file_id, value),
-                None => expression_value(file_id, argument.source.clone(), argument.span),
-            })
-            .collect();
-        let named = arguments
-            .named
-            .iter()
-            .map(|argument| {
-                (
-                    argument.name.clone(),
-                    match &argument.value {
-                        Some(value) => annotation_value_ir(file_id, value),
-                        None => expression_value(
-                            file_id,
-                            argument.value_source.clone(),
-                            argument.value_span,
-                        ),
-                    },
-                )
-            })
-            .collect();
-        return (positional, named);
+        return parsed_argument_values(file_id, arguments);
     }
 
     let mut positional = Vec::new();
@@ -94,6 +69,39 @@ pub(crate) fn annotation_argument_values(
             (
                 name.to_owned(),
                 expression_value(file_id, source.to_owned(), annotation.span),
+            )
+        })
+        .collect();
+    (positional, named)
+}
+
+/// Converts parser-owned argument facts into semantic IR values.
+fn parsed_argument_values(
+    file_id: FileId,
+    arguments: &ParsedAnnotationArguments,
+) -> (Vec<AnnotationValueIr>, BTreeMap<String, AnnotationValueIr>) {
+    let positional = arguments
+        .positional
+        .iter()
+        .map(|argument| match &argument.value {
+            Some(value) => annotation_value_ir(file_id, value),
+            None => expression_value(file_id, argument.source.clone(), argument.span),
+        })
+        .collect();
+    let named = arguments
+        .named
+        .iter()
+        .map(|argument| {
+            (
+                argument.name.clone(),
+                match &argument.value {
+                    Some(value) => annotation_value_ir(file_id, value),
+                    None => expression_value(
+                        file_id,
+                        argument.value_source.clone(),
+                        argument.value_span,
+                    ),
+                },
             )
         })
         .collect();
@@ -122,11 +130,14 @@ fn annotation_value_ir(file_id: FileId, value: &ParsedAnnotationValue) -> Annota
         ParsedAnnotationValueRootKind::Set => AnnotationValueIr::Set(Vec::new()),
         ParsedAnnotationValueRootKind::Map => AnnotationValueIr::Map(Vec::new()),
         ParsedAnnotationValueRootKind::Record => AnnotationValueIr::Record(Vec::new()),
-        ParsedAnnotationValueRootKind::Constructor { name } => AnnotationValueIr::Constructor {
-            name: name_ir(file_id, name, value.span),
-            positional_args: Vec::new(),
-            named_args: BTreeMap::new(),
-        },
+        ParsedAnnotationValueRootKind::Constructor { name, arguments } => {
+            let (positional_args, named_args) = parsed_argument_values(file_id, arguments);
+            AnnotationValueIr::Constructor {
+                name: name_ir(file_id, name, value.span),
+                positional_args,
+                named_args,
+            }
+        }
         ParsedAnnotationValueRootKind::Member(name) => {
             AnnotationValueIr::Member(name_ir(file_id, name, value.span))
         }

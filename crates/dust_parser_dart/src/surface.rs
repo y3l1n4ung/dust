@@ -409,6 +409,8 @@ pub enum ParsedAnnotationValueRootKind {
     Constructor {
         /// Constructor/type source.
         name: String,
+        /// Structured constructor arguments.
+        arguments: Box<ParsedAnnotationArguments>,
     },
     /// A member, type, or function reference.
     Member(String),
