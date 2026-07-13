@@ -1,7 +1,10 @@
+use std::collections::BTreeMap;
+
 use dust_ir::{
-    ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, FieldIr, LibraryIr, SymbolId,
-    TraitApplicationIr, TypeIr,
+    AnnotationNumberKindIr, AnnotationValueIr, ClassIr, ClassKindIr, ConfigApplicationIr,
+    ConstructorIr, ExprSourceIr, FieldIr, LibraryIr, NameIr, SymbolId, TraitApplicationIr, TypeIr,
 };
+use dust_parser_dart::{AnnotationValue, parse_annotation_named_values};
 
 use crate::support::span;
 
@@ -70,9 +73,66 @@ pub(super) fn field(name: &str, ty: TypeIr, configs: Vec<ConfigApplicationIr>) -
 }
 
 pub(super) fn validate(arguments: &str) -> ConfigApplicationIr {
-    ConfigApplicationIr::new(
+    let named_args = parse_annotation_named_values(arguments)
+        .expect("validate fixture arguments should parse")
+        .into_iter()
+        .map(|(name, value)| (name, annotation_value_ir(value)))
+        .collect();
+    ConfigApplicationIr::with_arguments(
         SymbolId::new("dust_dart::Validate"),
         Some(arguments.to_owned()),
+        Vec::new(),
+        named_args,
         span(20, 30),
     )
+}
+
+fn annotation_value_ir(value: AnnotationValue) -> AnnotationValueIr {
+    match value {
+        AnnotationValue::Bool(value) => AnnotationValueIr::Bool(value),
+        AnnotationValue::String(value) => AnnotationValueIr::String(value),
+        AnnotationValue::Number(source) => AnnotationValueIr::Number {
+            kind: if source.contains('.') {
+                AnnotationNumberKindIr::Double
+            } else {
+                AnnotationNumberKindIr::Int
+            },
+            source,
+        },
+        AnnotationValue::List(values) => {
+            AnnotationValueIr::List(values.into_iter().map(annotation_value_ir).collect())
+        }
+        AnnotationValue::Record(values) => AnnotationValueIr::Record(
+            values
+                .into_iter()
+                .map(|(name, value)| (name, annotation_value_ir(value)))
+                .collect(),
+        ),
+        AnnotationValue::Constructor { name, named } => AnnotationValueIr::Constructor {
+            name: name_ir(name),
+            positional_args: Vec::new(),
+            named_args: named
+                .into_iter()
+                .map(|(name, value)| (name, annotation_value_ir(value)))
+                .collect::<BTreeMap<_, _>>(),
+        },
+        AnnotationValue::Member(name) => AnnotationValueIr::Member(name_ir(name)),
+        AnnotationValue::Expression(source) => AnnotationValueIr::Expression(ExprSourceIr {
+            source,
+            span: span(20, 30),
+        }),
+    }
+}
+
+fn name_ir(source: String) -> NameIr {
+    let (prefix, short) = source
+        .rsplit_once('.')
+        .map(|(prefix, short)| (Some(prefix.to_owned()), short.to_owned()))
+        .unwrap_or_else(|| (None, source.clone()));
+    NameIr {
+        source,
+        short,
+        prefix,
+        span: span(20, 30),
+    }
 }

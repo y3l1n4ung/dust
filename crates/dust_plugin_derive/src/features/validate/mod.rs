@@ -6,6 +6,8 @@ mod model;
 mod rule_snippets;
 /// Validates validation annotation shapes.
 mod rules;
+/// Validates structured validation annotation configuration.
+mod shape;
 /// Renders Dart type source and input kind metadata.
 mod type_source;
 

@@ -1,5 +1,4 @@
 use dust_ir::{AnnotationValueIr, ClassIr, ConfigApplicationIr, FieldIr};
-use dust_parser_dart::{AnnotationValue, parse_annotation_named_values};
 
 use crate::features::{VALIDATE_SYMBOL, eq_hash::has_trait};
 
@@ -85,52 +84,39 @@ pub(crate) fn field_validations(class: &ClassIr) -> Vec<FieldValidation<'_>> {
 
 /// Parses one `@Validate` config application.
 pub(crate) fn parse_validate_config(config: &ConfigApplicationIr) -> Option<ValidateConfig> {
-    if !config.named_args.is_empty()
-        && !config
-            .named_args
-            .keys()
-            .any(|name| matches!(name.as_str(), "length" | "range"))
-    {
-        return Some(parse_structured_validate_config(config));
+    if !config.positional_args.is_empty() {
+        return None;
     }
-
-    let values = parse_config_named_values(config)?;
-    let mut parsed = ValidateConfig::default();
-    for (name, value) in values {
-        match (name.as_str(), value) {
-            ("email", AnnotationValue::Bool(value)) => parsed.email = value,
-            ("url", AnnotationValue::Bool(value)) => parsed.url = value,
-            ("length", AnnotationValue::Constructor { name, named })
-                if is_named(&name, "Length") =>
-            {
-                parsed.length = parse_length(named);
-            }
-            ("range", AnnotationValue::Constructor { name, named }) if is_named(&name, "Range") => {
-                parsed.range = parse_range(named);
-            }
-            ("contains", AnnotationValue::String(value)) => parsed.contains = Some(value),
-            ("doesNotContain", AnnotationValue::String(value)) => {
-                parsed.does_not_contain = Some(value);
-            }
-            ("regex", AnnotationValue::String(value)) => parsed.regex = Some(value),
-            ("mustMatch", AnnotationValue::String(value)) => parsed.must_match = Some(value),
-            ("nested", AnnotationValue::Bool(value)) => parsed.nested = value,
-            ("custom", AnnotationValue::Member(value)) => parsed.custom = Some(value),
-            ("required", AnnotationValue::Bool(value)) => parsed.required = value,
-            ("message", AnnotationValue::String(value)) => parsed.message = Some(value),
-            _ => {}
-        }
-    }
-    Some(parsed)
+    Some(parse_structured_validate_config(config))
 }
 
-/// Parses scalar Validate options directly from canonical annotation values.
+/// Parses Validate options directly from canonical annotation values.
 fn parse_structured_validate_config(config: &ConfigApplicationIr) -> ValidateConfig {
     let mut parsed = ValidateConfig::default();
     for (name, value) in &config.named_args {
         match (name.as_str(), value) {
             ("email", AnnotationValueIr::Bool(value)) => parsed.email = *value,
             ("url", AnnotationValueIr::Bool(value)) => parsed.url = *value,
+            (
+                "length",
+                AnnotationValueIr::Constructor {
+                    name,
+                    positional_args,
+                    named_args,
+                },
+            ) if name.short == "Length" && positional_args.is_empty() => {
+                parsed.length = parse_length(named_args);
+            }
+            (
+                "range",
+                AnnotationValueIr::Constructor {
+                    name,
+                    positional_args,
+                    named_args,
+                },
+            ) if name.short == "Range" && positional_args.is_empty() => {
+                parsed.range = parse_range(named_args);
+            }
             ("contains", AnnotationValueIr::String(value)) => parsed.contains = Some(value.clone()),
             ("doesNotContain", AnnotationValueIr::String(value)) => {
                 parsed.does_not_contain = Some(value.clone());
@@ -151,27 +137,16 @@ fn parse_structured_validate_config(config: &ConfigApplicationIr) -> ValidateCon
     parsed
 }
 
-/// Parses normalized annotation arguments into named values.
-pub(crate) fn parse_config_named_values(
-    config: &ConfigApplicationIr,
-) -> Option<Vec<(String, AnnotationValue)>> {
-    let source = format!("({})", config.normalized_arguments()?);
-    parse_annotation_named_values(&source)
-}
-
-/// Returns true when a constructor/member name matches a simple name.
-fn is_named(value: &str, expected: &str) -> bool {
-    value == expected || value.ends_with(&format!(".{expected}"))
-}
-
 /// Parses a `Length(...)` annotation value.
-fn parse_length(values: Vec<(String, AnnotationValue)>) -> Option<LengthRule> {
+fn parse_length(
+    values: &std::collections::BTreeMap<String, AnnotationValueIr>,
+) -> Option<LengthRule> {
     let mut rule = length(None, None, None);
     for (key, value) in values {
-        let AnnotationValue::Number(value) = value else {
+        let AnnotationValueIr::Number { source, .. } = value else {
             return None;
         };
-        let value = value.parse::<i64>().ok()?;
+        let value = source.parse::<i64>().ok()?;
         match key.as_str() {
             "min" => rule.min = Some(value),
             "max" => rule.max = Some(value),
@@ -183,15 +158,17 @@ fn parse_length(values: Vec<(String, AnnotationValue)>) -> Option<LengthRule> {
 }
 
 /// Parses a `Range(...)` annotation value.
-fn parse_range(values: Vec<(String, AnnotationValue)>) -> Option<RangeRule> {
+fn parse_range(
+    values: &std::collections::BTreeMap<String, AnnotationValueIr>,
+) -> Option<RangeRule> {
     let mut rule = range(None, None);
     for (key, value) in values {
-        let AnnotationValue::Number(value) = value else {
+        let AnnotationValueIr::Number { source, .. } = value else {
             return None;
         };
         match key.as_str() {
-            "min" => rule.min = Some(value),
-            "max" => rule.max = Some(value),
+            "min" => rule.min = Some(source.clone()),
+            "max" => rule.max = Some(source.clone()),
             _ => return None,
         }
     }
@@ -215,13 +192,16 @@ fn range(min: Option<&str>, max: Option<&str>) -> RangeRule {
 mod tests {
     use std::collections::BTreeMap;
 
-    use dust_ir::{AnnotationValueIr, ConfigApplicationIr, SpanIr, SymbolId};
+    use dust_ir::{
+        AnnotationNumberKindIr, AnnotationValueIr, ConfigApplicationIr, NameIr, SpanIr, SymbolId,
+    };
     use dust_text::{FileId, TextRange};
 
     use super::parse_validate_config;
 
     #[test]
-    fn structured_scalar_config_does_not_require_raw_argument_parsing() {
+    fn structured_config_does_not_require_raw_argument_parsing() {
+        let span = SpanIr::new(FileId::new(1), TextRange::new(0_u32, 10_u32));
         let config = ConfigApplicationIr::with_arguments(
             SymbolId::new("dust_dart::Validate"),
             Some("(not valid Dart".to_owned()),
@@ -232,13 +212,56 @@ mod tests {
                     "message".to_owned(),
                     AnnotationValueIr::String("bad email".to_owned()),
                 ),
+                (
+                    "length".to_owned(),
+                    AnnotationValueIr::Constructor {
+                        name: NameIr {
+                            source: "Length".to_owned(),
+                            short: "Length".to_owned(),
+                            prefix: None,
+                            span,
+                        },
+                        positional_args: Vec::new(),
+                        named_args: BTreeMap::from([(
+                            "min".to_owned(),
+                            AnnotationValueIr::Number {
+                                source: "2".to_owned(),
+                                kind: AnnotationNumberKindIr::Int,
+                            },
+                        )]),
+                    },
+                ),
+                (
+                    "range".to_owned(),
+                    AnnotationValueIr::Constructor {
+                        name: NameIr {
+                            source: "Range".to_owned(),
+                            short: "Range".to_owned(),
+                            prefix: None,
+                            span,
+                        },
+                        positional_args: Vec::new(),
+                        named_args: BTreeMap::from([(
+                            "min".to_owned(),
+                            AnnotationValueIr::Number {
+                                source: "-2".to_owned(),
+                                kind: AnnotationNumberKindIr::Int,
+                            },
+                        )]),
+                    },
+                ),
             ]),
-            SpanIr::new(FileId::new(1), TextRange::new(0_u32, 10_u32)),
+            span,
         );
 
         let parsed = parse_validate_config(&config).expect("structured config should parse");
 
         assert!(parsed.email);
         assert_eq!(parsed.message.as_deref(), Some("bad email"));
+        assert_eq!(parsed.length.and_then(|rule| rule.min), Some(2));
+        assert_eq!(
+            parsed.range.and_then(|rule| rule.min),
+            Some("-2".to_owned())
+        );
     }
 }
