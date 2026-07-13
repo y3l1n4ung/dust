@@ -2,7 +2,7 @@
 
 use std::{sync::Arc, time::Instant};
 
-use dust_ir::{ClassIr, ClassKindIr, ConfigApplicationIr, LibraryIr, SpanIr, SymbolId};
+use dust_ir::{ClassIr, ClassKindIr, ConfigApplicationIr, DartFileIr, SpanIr, SymbolId};
 use dust_plugin_api::{DustPlugin, SymbolPlan, WorkspaceAnalysisBuilder};
 use dust_state_plugin::register_plugin;
 use dust_text::{FileId, TextRange};
@@ -50,7 +50,7 @@ fn main() {
     );
     let mut plan = SymbolPlan::default();
     plan.set_workspace_analysis(Arc::new(builder.build()));
-    let library = LibraryIr {
+    let library = DartFileIr {
         package_root: ".".to_owned(),
         package_name: "bench".to_owned(),
         source_path: "lib/bench.dart".to_owned(),
@@ -79,7 +79,14 @@ fn main() {
     let started = Instant::now();
     let mut bytes = 0usize;
     for _ in 0..ITERS {
-        let contribution = plugin.emit(&library, &plan);
+        let contribution = plugin
+            .generate(
+                &library,
+                &dust_plugin_api::PluginContext { symbol_plan: &plan },
+            )
+            .into_iter()
+            .next()
+            .expect("plugin must generate one contribution");
         bytes += contribution
             .support_types
             .iter()

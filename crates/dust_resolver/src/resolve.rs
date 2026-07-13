@@ -8,11 +8,15 @@ use dust_text::FileId;
 use crate::{
     ResolveResult, ResolvedClass, ResolvedEnum, ResolvedEnumVariant, ResolvedLibrary,
     SymbolCatalog,
+    db::normalize_db,
+    http::normalize_http,
     resolve_support::{
         first_part_uri, resolve_constructor, resolve_declaration_annotations, resolve_field,
         resolve_method,
     },
+    route::normalize_route,
     serde::{normalize_class_serde, normalize_enum_variant_serde},
+    state::normalize_state,
 };
 
 /// Resolves one parsed library against a symbol catalog.
@@ -268,25 +272,29 @@ fn resolve_class(
         &mut configs,
     );
 
-    let fields = class
+    let mut fields: Vec<crate::ResolvedField> = class
         .fields
         .iter()
         .map(|field| resolve_field(file_id, field, catalog, diagnostics))
         .collect();
 
-    let methods = class
+    let mut methods: Vec<crate::ResolvedMethod> = class
         .methods
         .iter()
         .map(|method| resolve_method(file_id, method, catalog, diagnostics))
         .collect();
 
-    let constructors = class
+    let mut constructors: Vec<crate::ResolvedConstructor> = class
         .constructors
         .iter()
         .map(|constructor| resolve_constructor(file_id, constructor, catalog, diagnostics))
         .collect();
 
     let serde = normalize_class_serde(&class.name, &configs, diagnostics);
+    normalize_route(&mut configs);
+    normalize_state(&mut configs);
+    normalize_http(&mut configs, &mut methods);
+    normalize_db(&mut configs, &mut fields, &mut constructors, &mut methods);
 
     ResolvedClass {
         kind: match class.kind {

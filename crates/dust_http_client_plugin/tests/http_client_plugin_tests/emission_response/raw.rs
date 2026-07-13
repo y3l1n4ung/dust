@@ -20,7 +20,16 @@ fn emits_raw_response_wrappers_for_prefixed_response_types() {
         )],
     ));
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let emitted = contribution.support_types.join("\n");
     let helpers = contribution.shared_helpers.join("\n");
 

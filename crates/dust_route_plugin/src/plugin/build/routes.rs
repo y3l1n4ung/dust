@@ -7,13 +7,12 @@ use dust_plugin_api::SymbolPlan;
 use crate::plugin::{
     constants::ROUTES_ANALYSIS_KEY,
     model::{RouteFact, RouteParamSpec, RouteSpec},
-    parse::{parse_route_config, route_config},
+    parse::{route_annotation, route_config},
 };
 
 /// Builds a local route spec from a lowered page class.
 pub(super) fn build_route_spec(class: &ClassIr) -> Option<RouteSpec> {
-    let config = route_config(&class.configs)?;
-    let annotation = parse_route_config(config)?;
+    let annotation = route_annotation(route_config(&class.configs)?);
     let name = annotation
         .name
         .clone()

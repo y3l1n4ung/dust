@@ -17,7 +17,16 @@ fn generates_to_json_mixin_member() {
         vec![],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let members = members_for_class(&contribution, "User");
 
     assert_eq!(members.len(), 1);
@@ -40,7 +49,16 @@ fn wraps_long_to_json_mixin_member_like_dart_format() {
         vec![],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let members = members_for_class(&contribution, "JsonPaymentSuccess");
 
     assert_eq!(members.len(), 1);
@@ -67,7 +85,16 @@ fn generates_to_json_helper() {
         vec![],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let helper = &contribution.top_level_functions[0];
 
     assert_eq!(
@@ -105,7 +132,16 @@ fn wraps_from_json_constructor_return_like_dart_format() {
         vec![],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let helper = &contribution.top_level_functions[0];
 
     assert_eq!(
@@ -151,7 +187,16 @@ fn generates_from_json_helper() {
         vec![],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let helper = &contribution.top_level_functions[0];
 
     assert_eq!(contribution.shared_helpers, Vec::<String>::new());

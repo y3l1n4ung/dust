@@ -6,8 +6,8 @@ use dust_plugin_api::SymbolPlan;
 
 use super::{
     constants::{ROUTER, ROUTERS_ANALYSIS_KEY},
-    model::{RouteSpec, RouterFieldSpec, RouterSpec},
-    parse::parse_router_config,
+    model::{RouteSpec, RouterAnnotation, RouterFieldSpec, RouterSpec},
+    parse::router_config,
 };
 
 /// Builds guard specs and router-field injections.
@@ -33,11 +33,15 @@ pub(crate) fn build_router_spec(
         )]);
     }
 
-    let router_config = router_class
-        .configs
-        .iter()
-        .find(|config| config.symbol.0.rsplit("::").next() == Some(ROUTER));
-    let router_annotation = parse_router_config(router_config);
+    let router_annotation = router_config(&router_class.configs)
+        .map(|config| RouterAnnotation {
+            initial: config.initial.clone(),
+            not_found: config.not_found.clone(),
+        })
+        .unwrap_or(RouterAnnotation {
+            initial: None,
+            not_found: None,
+        });
     let mut routes = local_and_workspace_routes(library, plan);
     routes.sort_by(|a, b| a.path.cmp(&b.path).then_with(|| a.name.cmp(&b.name)));
 

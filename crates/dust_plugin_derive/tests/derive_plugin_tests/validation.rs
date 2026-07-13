@@ -1,5 +1,5 @@
 use dust_ir::{
-    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, FieldIr, LibraryIr, ParamKind,
+    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, DartFileIr, FieldIr, ParamKind,
     SymbolId, TraitApplicationIr, TypeIr,
 };
 use dust_plugin_api::DustPlugin;
@@ -10,7 +10,7 @@ use super::support::span;
 #[test]
 fn copywith_requires_reconstructible_constructor() {
     let plugin = register_plugin();
-    let broken = LibraryIr {
+    let broken = DartFileIr {
         package_root: ".".to_owned(),
         package_name: "dust_test".to_owned(),
         source_path: "lib/user.dart".to_owned(),
@@ -94,7 +94,7 @@ fn copywith_requires_reconstructible_constructor() {
 #[test]
 fn copywith_rejects_abstract_classes() {
     let plugin = register_plugin();
-    let abstract_library = LibraryIr {
+    let abstract_library = DartFileIr {
         package_root: ".".to_owned(),
         package_name: "dust_test".to_owned(),
         source_path: "lib/entity.dart".to_owned(),
@@ -168,7 +168,7 @@ fn copywith_rejects_abstract_classes() {
 #[test]
 fn rejects_mixin_class_targets() {
     let plugin = register_plugin();
-    let mixin_class_library = LibraryIr {
+    let mixin_class_library = DartFileIr {
         package_root: ".".to_owned(),
         package_name: "dust_test".to_owned(),
         source_path: "lib/mixin_target.dart".to_owned(),

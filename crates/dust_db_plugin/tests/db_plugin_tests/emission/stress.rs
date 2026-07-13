@@ -25,8 +25,16 @@ fn emits_many_dao_queries_with_static_mapper_references() {
         })
         .collect();
 
-    let contribution =
-        register_plugin().emit(&library(vec![row_class(), dao]), &SymbolPlan::default());
+    let contribution = register_plugin()
+        .generate(
+            &library(vec![row_class(), dao]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let source = &contribution.support_types[0];
 
     assert!(source.contains("Future<Result<UserProfile?, SqlxError>> findById99(int id)"));

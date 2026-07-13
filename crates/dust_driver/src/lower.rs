@@ -21,15 +21,22 @@ use std::collections::{HashMap, HashSet};
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
-    AnnotationIr, ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, DartFileIr, EnumIr,
-    EnumVariantIr, ExportIr, ExprSourceIr, ExtensionIr, ExtensionTypeIr, FieldIr, FunctionIr,
-    ImportIr, LibraryDeclIr, LoweringOutcome, MethodIr, MethodParamIr, MixinIr, NameIr, ParamKind,
-    PartIr, PartOfIr, SerdeVariantConfigIr, SpanIr, TopLevelVariableIr, TypeIr, TypedefIr,
+    AnnotationIr, ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr,
+    DartFileIr, EnumIr, EnumVariantIr, ExportIr, ExprSourceIr, ExtensionIr, ExtensionTypeIr,
+    FieldIr, FunctionIr, ImportIr, LibraryDeclIr, LoweringOutcome, MethodIr, MethodParamIr,
+    MixinIr, NameIr, ParamKind, PartIr, PartOfIr, SerdeClassConfigIr, SerdeVariantConfigIr, SpanIr,
+    TopLevelVariableIr, TraitApplicationIr, TypeIr, TypedefIr,
 };
 use dust_parser_dart::{
-    ParameterKind, ParsedAnnotation, ParsedDirective, ParsedFieldSurface, ParsedMethodParamSurface,
+    ParameterKind, ParsedAnnotation, ParsedDirective, ParsedExtensionSurface,
+    ParsedExtensionTypeSurface, ParsedFieldSurface, ParsedFunctionSurface,
+    ParsedMethodParamSurface, ParsedMixinSurface, ParsedTopLevelVariableSurface,
+    ParsedTypedefSurface,
 };
-use dust_resolver::{ResolvedClass, ResolvedLibrary, SymbolCatalog};
+use dust_resolver::{
+    ResolvedClass, ResolvedConstructor, ResolvedField, ResolvedLibrary, ResolvedMethod,
+    SymbolCatalog,
+};
 
 use self::{
     inheritance::{infer_param_type, merged_fields_for_class, resolve_constructor_param_types},
@@ -53,13 +60,26 @@ pub(crate) fn lower_library_with_catalog(
     catalog: &SymbolCatalog,
 ) -> LoweringOutcome<DartFileIr> {
     let mut diagnostics = Vec::new();
-    let required_classes = lowering_required_class_names(library);
+    let required_classes = lowering_required_class_names(&library.classes);
     let mut classes = library
         .classes
         .iter_mut()
         .filter(|class| required_classes.contains(class.name.as_str()))
         .map(|class| {
-            let outcome = lower_class(class);
+            let outcome = lower_class_from_parts(ClassLoweringInput {
+                kind: class.kind,
+                name: &class.name,
+                is_abstract: class.is_abstract,
+                is_interface: class.is_interface,
+                superclass_name: class.superclass_name.as_deref(),
+                span: class.span,
+                fields: &mut class.fields,
+                constructors: &class.constructors,
+                methods: &class.methods,
+                traits: &class.traits,
+                configs: &class.configs,
+                serde_value: &mut class.serde,
+            });
             diagnostics.extend(outcome.diagnostics);
             outcome.value
         })
@@ -82,7 +102,7 @@ pub(crate) fn lower_library_with_catalog(
     let resolved_by_name = library
         .classes
         .iter()
-        .map(|class| (class.name.as_str(), class))
+        .map(|class| (class.name.as_str(), class.constructors.as_slice()))
         .collect::<HashMap<_, _>>();
     lower_sealed_serde_variants(
         &mut classes,
@@ -112,38 +132,75 @@ pub(crate) fn lower_library_with_catalog(
             package_name: String::new(),
             source_path: library.source_path.clone(),
             output_path: library.output_path.clone(),
-            imports: library_imports(library),
-            library: lower_library_directive(library),
-            library_annotations: lower_library_annotations(library, catalog),
-            import_directives: lower_import_directives(library),
-            export_directives: lower_export_directives(library),
-            part_directives: lower_part_directives(library),
-            part_of: lower_part_of_directive(library),
+            imports: library_imports(&library.directives),
+            library: lower_library_directive(library.span.file_id, &library.directives),
+            library_annotations: lower_library_annotations(
+                library.span.file_id,
+                &library.directives,
+                catalog,
+            ),
+            import_directives: lower_import_directives(library.span.file_id, &library.directives),
+            export_directives: lower_export_directives(library.span.file_id, &library.directives),
+            part_directives: lower_part_directives(library.span.file_id, &library.directives),
+            part_of: lower_part_of_directive(library.span.file_id, &library.directives),
             span: library.span,
             classes,
-            mixins: lower_mixins(library, catalog, &mut diagnostics),
-            extensions: lower_extensions(library, catalog, &mut diagnostics),
-            extension_types: lower_extension_types(library, catalog, &mut diagnostics),
-            functions: lower_functions(library, catalog, &mut diagnostics),
-            variables: lower_variables(library, catalog, &mut diagnostics),
-            typedefs: lower_typedefs(library, catalog, &mut diagnostics),
+            mixins: lower_mixins(
+                library.span.file_id,
+                &library.mixins,
+                catalog,
+                &mut diagnostics,
+            ),
+            extensions: lower_extensions(
+                library.span.file_id,
+                &library.extensions,
+                catalog,
+                &mut diagnostics,
+            ),
+            extension_types: lower_extension_types(
+                library.span.file_id,
+                &library.extension_types,
+                catalog,
+                &mut diagnostics,
+            ),
+            functions: lower_functions(
+                library.span.file_id,
+                &library.functions,
+                catalog,
+                &mut diagnostics,
+            ),
+            variables: lower_variables(
+                library.span.file_id,
+                &library.variables,
+                catalog,
+                &mut diagnostics,
+            ),
+            typedefs: lower_typedefs(
+                library.span.file_id,
+                &library.typedefs,
+                catalog,
+                &mut diagnostics,
+            ),
             enums,
-            query_calls: lower_query_calls(library, &mut diagnostics),
+            query_calls: lower_query_calls(
+                library.span.file_id,
+                &library.query_calls,
+                &mut diagnostics,
+            ),
         },
         diagnostics,
     }
 }
 
 /// Returns classes that must be lowered because plugins or converters reference them.
-fn lowering_required_class_names(library: &ResolvedLibrary) -> HashSet<String> {
-    let mut names = library
-        .classes
+fn lowering_required_class_names(classes: &[ResolvedClass]) -> HashSet<String> {
+    let mut names = classes
         .iter()
         .filter(|class| !class.traits.is_empty() || !class.configs.is_empty())
         .map(|class| class.name.clone())
         .collect::<HashSet<_>>();
 
-    for class in &library.classes {
+    for class in classes {
         let class_has_serde = class
             .configs
             .iter()
@@ -174,7 +231,7 @@ fn lowering_required_class_names(library: &ResolvedLibrary) -> HashSet<String> {
 fn lower_sealed_serde_variants(
     classes: &mut [ClassIr],
     index_by_name: &HashMap<String, usize>,
-    resolved_by_name: &HashMap<&str, &ResolvedClass>,
+    constructors_by_name: &HashMap<&str, &[ResolvedConstructor]>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     for index in 0..classes.len() {
@@ -203,9 +260,9 @@ fn lower_sealed_serde_variants(
             .as_ref()
             .and_then(|serde| serde.rename_all);
         let mut variants = Vec::new();
-        let constructors = resolved_by_name
+        let constructors = constructors_by_name
             .get(base_name.as_str())
-            .map(|class| class.constructors.as_slice())
+            .copied()
             .unwrap_or_default();
         let mut seen_tags = HashSet::new();
 
@@ -298,9 +355,8 @@ fn try_from_converter_name(source: &str) -> Option<&str> {
 }
 
 /// Collects import URIs for backwards-compatible plugin input.
-fn library_imports(library: &ResolvedLibrary) -> Vec<String> {
-    library
-        .directives
+fn library_imports(directives: &[ParsedDirective]) -> Vec<String> {
+    directives
         .iter()
         .filter_map(|directive| match directive {
             ParsedDirective::Import { uri, .. } => Some(uri.clone()),
@@ -310,30 +366,28 @@ fn library_imports(library: &ResolvedLibrary) -> Vec<String> {
 }
 
 /// Lowers the Dart `library` directive, if present.
-fn lower_library_directive(library: &ResolvedLibrary) -> Option<LibraryDeclIr> {
-    let file_id = library.span.file_id;
-    library
-        .directives
-        .iter()
-        .find_map(|directive| match directive {
-            ParsedDirective::Library { name, span, .. } => Some(LibraryDeclIr {
-                name: name
-                    .as_deref()
-                    .map(|name| lower_name_ir(file_id, name, *span)),
-                span: SpanIr::new(file_id, *span),
-            }),
-            _ => None,
-        })
+fn lower_library_directive(
+    file_id: dust_text::FileId,
+    directives: &[ParsedDirective],
+) -> Option<LibraryDeclIr> {
+    directives.iter().find_map(|directive| match directive {
+        ParsedDirective::Library { name, span, .. } => Some(LibraryDeclIr {
+            name: name
+                .as_deref()
+                .map(|name| lower_name_ir(file_id, name, *span)),
+            span: SpanIr::new(file_id, *span),
+        }),
+        _ => None,
+    })
 }
 
 /// Lowers annotations attached to the Dart `library` directive.
 fn lower_library_annotations(
-    library: &ResolvedLibrary,
+    file_id: dust_text::FileId,
+    directives: &[ParsedDirective],
     catalog: &SymbolCatalog,
 ) -> Vec<AnnotationIr> {
-    let file_id = library.span.file_id;
-    library
-        .directives
+    directives
         .iter()
         .find_map(|directive| match directive {
             ParsedDirective::Library { annotations, .. } => Some(annotations),
@@ -346,10 +400,11 @@ fn lower_library_annotations(
 }
 
 /// Lowers Dart import directives including combinators and deferred prefixes.
-fn lower_import_directives(library: &ResolvedLibrary) -> Vec<ImportIr> {
-    let file_id = library.span.file_id;
-    library
-        .directives
+fn lower_import_directives(
+    file_id: dust_text::FileId,
+    directives: &[ParsedDirective],
+) -> Vec<ImportIr> {
+    directives
         .iter()
         .filter_map(|directive| match directive {
             ParsedDirective::Import {
@@ -373,10 +428,11 @@ fn lower_import_directives(library: &ResolvedLibrary) -> Vec<ImportIr> {
 }
 
 /// Lowers Dart export directives.
-fn lower_export_directives(library: &ResolvedLibrary) -> Vec<ExportIr> {
-    let file_id = library.span.file_id;
-    library
-        .directives
+fn lower_export_directives(
+    file_id: dust_text::FileId,
+    directives: &[ParsedDirective],
+) -> Vec<ExportIr> {
+    directives
         .iter()
         .filter_map(|directive| match directive {
             ParsedDirective::Export { uri, span } => Some(ExportIr {
@@ -389,10 +445,11 @@ fn lower_export_directives(library: &ResolvedLibrary) -> Vec<ExportIr> {
 }
 
 /// Lowers Dart part directives.
-fn lower_part_directives(library: &ResolvedLibrary) -> Vec<PartIr> {
-    let file_id = library.span.file_id;
-    library
-        .directives
+fn lower_part_directives(
+    file_id: dust_text::FileId,
+    directives: &[ParsedDirective],
+) -> Vec<PartIr> {
+    directives
         .iter()
         .filter_map(|directive| match directive {
             ParsedDirective::Part { uri, span } => Some(PartIr {
@@ -405,36 +462,34 @@ fn lower_part_directives(library: &ResolvedLibrary) -> Vec<PartIr> {
 }
 
 /// Lowers the Dart part-of directive, if present.
-fn lower_part_of_directive(library: &ResolvedLibrary) -> Option<PartOfIr> {
-    let file_id = library.span.file_id;
-    library
-        .directives
-        .iter()
-        .find_map(|directive| match directive {
-            ParsedDirective::PartOf {
-                library_name,
-                uri,
-                span,
-            } => Some(PartOfIr {
-                library_name: library_name
-                    .as_deref()
-                    .map(|name| lower_name_ir(file_id, name, *span)),
-                uri: uri.clone(),
-                span: SpanIr::new(file_id, *span),
-            }),
-            _ => None,
-        })
+fn lower_part_of_directive(
+    file_id: dust_text::FileId,
+    directives: &[ParsedDirective],
+) -> Option<PartOfIr> {
+    directives.iter().find_map(|directive| match directive {
+        ParsedDirective::PartOf {
+            library_name,
+            uri,
+            span,
+        } => Some(PartOfIr {
+            library_name: library_name
+                .as_deref()
+                .map(|name| lower_name_ir(file_id, name, *span)),
+            uri: uri.clone(),
+            span: SpanIr::new(file_id, *span),
+        }),
+        _ => None,
+    })
 }
 
 /// Lowers parsed mixins and their unresolved fields.
 fn lower_mixins(
-    library: &ResolvedLibrary,
+    file_id: dust_text::FileId,
+    mixins: &[ParsedMixinSurface],
     catalog: &SymbolCatalog,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<MixinIr> {
-    let file_id = library.span.file_id;
-    library
-        .mixins
+    mixins
         .iter()
         .map(|mixin| MixinIr {
             name: lower_name_ir(file_id, &mixin.name, mixin.span),
@@ -455,13 +510,12 @@ fn lower_mixins(
 
 /// Lowers parsed extensions and their `on` type.
 fn lower_extensions(
-    library: &ResolvedLibrary,
+    file_id: dust_text::FileId,
+    extensions: &[ParsedExtensionSurface],
     catalog: &SymbolCatalog,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<ExtensionIr> {
-    let file_id = library.span.file_id;
-    library
-        .extensions
+    extensions
         .iter()
         .map(|extension| {
             let on_type = lower_type(
@@ -489,13 +543,12 @@ fn lower_extensions(
 
 /// Lowers parsed extension types and their representation field.
 fn lower_extension_types(
-    library: &ResolvedLibrary,
+    file_id: dust_text::FileId,
+    extension_types: &[ParsedExtensionTypeSurface],
     catalog: &SymbolCatalog,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<ExtensionTypeIr> {
-    let file_id = library.span.file_id;
-    library
-        .extension_types
+    extension_types
         .iter()
         .map(|extension_type| {
             let representation_type = lower_type(
@@ -527,13 +580,12 @@ fn lower_extension_types(
 
 /// Lowers parsed top-level functions and their parameters.
 fn lower_functions(
-    library: &ResolvedLibrary,
+    file_id: dust_text::FileId,
+    functions: &[ParsedFunctionSurface],
     catalog: &SymbolCatalog,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<FunctionIr> {
-    let file_id = library.span.file_id;
-    library
-        .functions
+    functions
         .iter()
         .map(|function| {
             let return_type = lower_type(
@@ -559,13 +611,12 @@ fn lower_functions(
 
 /// Lowers parsed top-level variables and initializers.
 fn lower_variables(
-    library: &ResolvedLibrary,
+    file_id: dust_text::FileId,
+    variables: &[ParsedTopLevelVariableSurface],
     catalog: &SymbolCatalog,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<TopLevelVariableIr> {
-    let file_id = library.span.file_id;
-    library
-        .variables
+    variables
         .iter()
         .map(|variable| {
             let ty = lower_type(
@@ -600,13 +651,12 @@ fn lower_variables(
 
 /// Lowers parsed typedefs and aliased type sources.
 fn lower_typedefs(
-    library: &ResolvedLibrary,
+    file_id: dust_text::FileId,
+    typedefs: &[ParsedTypedefSurface],
     catalog: &SymbolCatalog,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<TypedefIr> {
-    let file_id = library.span.file_id;
-    library
-        .typedefs
+    typedefs
         .iter()
         .map(|typedef| {
             let aliased_type = lower_type(
@@ -739,15 +789,104 @@ fn lower_enum(e: &mut dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
 }
 
 /// Lowers one resolved class into semantic IR.
-fn lower_class(class: &mut ResolvedClass) -> LoweringOutcome<ClassIr> {
+struct ClassLoweringInput<'a> {
+    /// Declaration kind.
+    kind: ClassKindIr,
+    /// Class name.
+    name: &'a str,
+    /// Whether the class is abstract.
+    is_abstract: bool,
+    /// Whether the class is an interface class.
+    is_interface: bool,
+    /// Immediate superclass name.
+    superclass_name: Option<&'a str>,
+    /// Class source span.
+    span: SpanIr,
+    /// Resolved fields.
+    fields: &'a mut [ResolvedField],
+    /// Resolved constructors.
+    constructors: &'a [ResolvedConstructor],
+    /// Resolved methods.
+    methods: &'a [ResolvedMethod],
+    /// Resolved trait applications.
+    traits: &'a [TraitApplicationIr],
+    /// Resolved configuration applications.
+    configs: &'a [ConfigApplicationIr],
+    /// Resolver-normalized SerDe configuration.
+    serde_value: &'a mut Option<SerdeClassConfigIr>,
+}
+
+/// Lowers explicit class inputs into semantic IR.
+fn lower_class_from_parts(input: ClassLoweringInput<'_>) -> LoweringOutcome<ClassIr> {
+    let ClassLoweringInput {
+        kind,
+        name,
+        is_abstract,
+        is_interface,
+        superclass_name,
+        span,
+        fields,
+        constructors,
+        methods,
+        traits,
+        configs,
+        serde_value,
+    } = input;
     let mut diagnostics = Vec::new();
-    let serde = class.serde.take().or_else(|| {
+    let serde = serde_value.take().or_else(|| {
         // Compatibility for resolver fixtures while callers migrate to normalized output.
-        lower_class_serde_config(&class.name, &class.configs, &mut diagnostics)
+        lower_class_serde_config(name, configs, &mut diagnostics)
     });
 
-    let fields = class
-        .fields
+    let fields = lower_resolved_fields(fields, &mut diagnostics);
+    let methods = lower_resolved_methods(methods, &mut diagnostics);
+    let constructors =
+        lower_resolved_constructors(span.file_id, constructors, &fields, &mut diagnostics);
+
+    LoweringOutcome {
+        value: ClassIr {
+            kind,
+            name: name.to_owned(),
+            is_abstract,
+            is_interface,
+            superclass_name: superclass_name.map(str::to_owned),
+            span,
+            fields,
+            constructors,
+            methods,
+            traits: traits.to_vec(),
+            configs: configs.to_vec(),
+            serde,
+        },
+        diagnostics,
+    }
+}
+
+/// Test-only compatibility entrypoint for class lowering fixtures.
+#[cfg(test)]
+fn lower_class(class: &mut ResolvedClass) -> LoweringOutcome<ClassIr> {
+    lower_class_from_parts(ClassLoweringInput {
+        kind: class.kind,
+        name: &class.name,
+        is_abstract: class.is_abstract,
+        is_interface: class.is_interface,
+        superclass_name: class.superclass_name.as_deref(),
+        span: class.span,
+        fields: &mut class.fields,
+        constructors: &class.constructors,
+        methods: &class.methods,
+        traits: &class.traits,
+        configs: &class.configs,
+        serde_value: &mut class.serde,
+    })
+}
+
+/// Lowers resolved fields without requiring the owning class model.
+fn lower_resolved_fields(
+    fields: &mut [ResolvedField],
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Vec<FieldIr> {
+    fields
         .iter_mut()
         .map(|field| {
             let outcome = lower_type(field.parsed_type.as_ref(), field.type_source.as_deref());
@@ -757,42 +896,43 @@ fn lower_class(class: &mut ResolvedClass) -> LoweringOutcome<ClassIr> {
                 ty: outcome.value,
                 span: field.span,
                 has_default: field.has_default,
-                serde: field.serde.take().or_else(|| {
-                    lower_field_serde_config(&field.name, &field.configs, &mut diagnostics)
-                }),
+                serde: field
+                    .serde
+                    .take()
+                    .or_else(|| lower_field_serde_config(&field.name, &field.configs, diagnostics)),
                 configs: field.configs.clone(),
             }
         })
-        .collect::<Vec<_>>();
+        .collect()
+}
 
-    let methods = class
-        .methods
+/// Lowers resolved methods without requiring the owning class model.
+fn lower_resolved_methods(
+    methods: &[ResolvedMethod],
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Vec<MethodIr> {
+    methods
         .iter()
         .map(|method| {
-            let return_type_outcome = lower_type(
+            let return_type = lower_type(
                 method.surface.parsed_return_type.as_ref(),
                 method.surface.return_type_source.as_deref(),
             );
-            diagnostics.extend(return_type_outcome.diagnostics);
-
+            diagnostics.extend(return_type.diagnostics);
             let params = method
                 .params
                 .iter()
                 .map(|param| {
-                    let type_outcome = lower_type(
+                    let ty = lower_type(
                         param.surface.parsed_type.as_ref(),
                         param.surface.type_source.as_deref(),
                     );
-                    diagnostics.extend(type_outcome.diagnostics);
-
+                    diagnostics.extend(ty.diagnostics);
                     MethodParamIr {
                         name: param.surface.name.clone(),
-                        ty: type_outcome.value,
+                        ty: ty.value,
                         span: param.span,
-                        kind: match param.surface.kind {
-                            ParameterKind::Positional => ParamKind::Positional,
-                            ParameterKind::Named => ParamKind::Named,
-                        },
+                        kind: lower_parameter_kind(param.surface.kind),
                         is_required: param.surface.is_required,
                         has_default: param.surface.has_default,
                         default_value_source: param.surface.default_value_source.clone(),
@@ -801,12 +941,11 @@ fn lower_class(class: &mut ResolvedClass) -> LoweringOutcome<ClassIr> {
                     }
                 })
                 .collect();
-
             MethodIr {
                 name: method.surface.name.clone(),
                 is_static: method.surface.is_static,
                 is_external: method.surface.is_external,
-                return_type: return_type_outcome.value,
+                return_type: return_type.value,
                 has_body: method.surface.has_body,
                 body_source: method.surface.body_source.clone(),
                 params,
@@ -815,10 +954,17 @@ fn lower_class(class: &mut ResolvedClass) -> LoweringOutcome<ClassIr> {
                 configs: method.configs.clone(),
             }
         })
-        .collect();
+        .collect()
+}
 
-    let constructors = class
-        .constructors
+/// Lowers resolved constructors using lowered fields for type inference.
+fn lower_resolved_constructors(
+    file_id: dust_text::FileId,
+    constructors: &[ResolvedConstructor],
+    fields: &[FieldIr],
+    diagnostics: &mut Vec<Diagnostic>,
+) -> Vec<ConstructorIr> {
+    constructors
         .iter()
         .map(|constructor| {
             let params = constructor
@@ -826,52 +972,30 @@ fn lower_class(class: &mut ResolvedClass) -> LoweringOutcome<ClassIr> {
                 .params
                 .iter()
                 .map(|param| {
-                    let outcome = param
+                    let ty = param
                         .type_source
                         .as_deref()
                         .map(|source| lower_type(param.parsed_type.as_ref(), Some(source)))
-                        .unwrap_or_else(|| infer_param_type(param.name.as_str(), &fields));
-                    diagnostics.extend(outcome.diagnostics);
+                        .unwrap_or_else(|| infer_param_type(param.name.as_str(), fields));
+                    diagnostics.extend(ty.diagnostics);
                     ConstructorParamIr {
                         name: param.name.clone(),
-                        ty: outcome.value,
-                        span: SpanIr::new(class.span.file_id, param.span),
-                        kind: match param.kind {
-                            ParameterKind::Positional => ParamKind::Positional,
-                            ParameterKind::Named => ParamKind::Named,
-                        },
+                        ty: ty.value,
+                        span: SpanIr::new(file_id, param.span),
+                        kind: lower_parameter_kind(param.kind),
                         has_default: param.has_default,
                         default_value_source: param.default_value_source.clone(),
                     }
                 })
                 .collect();
-
             ConstructorIr {
                 name: constructor.surface.name.clone(),
                 is_factory: constructor.surface.is_factory,
                 redirected_target_source: constructor.surface.redirected_target_source.clone(),
                 redirected_target_name: constructor.surface.redirected_target_name.clone(),
-                span: SpanIr::new(class.span.file_id, constructor.surface.span),
+                span: SpanIr::new(file_id, constructor.surface.span),
                 params,
             }
         })
-        .collect();
-
-    LoweringOutcome {
-        value: ClassIr {
-            kind: class.kind,
-            name: class.name.clone(),
-            is_abstract: class.is_abstract,
-            is_interface: class.is_interface,
-            superclass_name: class.superclass_name.clone(),
-            span: class.span,
-            fields,
-            constructors,
-            methods,
-            traits: class.traits.clone(),
-            configs: class.configs.clone(),
-            serde,
-        },
-        diagnostics,
-    }
+        .collect()
 }

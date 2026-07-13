@@ -175,8 +175,8 @@ impl PluginRegistry {
         diagnostics
     }
 
-    /// Collects plugin contributions in registration order using one shared symbol plan.
-    pub fn emit_contributions(
+    /// Collects generated plugin contributions in registration order using one shared symbol plan.
+    pub fn generate_units(
         &self,
         file: &DartFileIr,
         plan: &SymbolPlan,

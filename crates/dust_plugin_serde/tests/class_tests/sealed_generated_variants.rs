@@ -12,7 +12,16 @@ fn generates_missing_concrete_variant_classes_from_factories() {
     let plugin = register_plugin();
     let library = library(vec![payment_event_base()], vec![]);
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(
         contribution.support_types,
@@ -42,7 +51,16 @@ fn does_not_generate_source_defined_variant_classes() {
         vec![],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(contribution.support_types, Vec::<String>::new());
 }
@@ -52,7 +70,16 @@ fn renders_empty_positional_nullable_and_defaulted_variant_params() {
     let plugin = register_plugin();
     let library = library(vec![shape_event_base()], vec![]);
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(contribution.support_types, vec![shape_variant_support()]);
 }

@@ -28,7 +28,15 @@ fn generates_map_body_request_fixtures() {
     ));
 
     let generated = &plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .auxiliary_outputs[0]
         .source;
     assert!(generated.contains("await api.createUser({'value': 'dust'});"));
@@ -63,7 +71,15 @@ fn generates_model_body_request_fixtures_from_local_serde_models() {
     ]);
 
     let generated = &plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .auxiliary_outputs[0]
         .source;
     assert!(generated.contains(
@@ -98,7 +114,16 @@ fn omits_model_body_request_fixtures_without_local_model_ir() {
         )],
     ));
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     assert!(contribution.auxiliary_outputs.is_empty());
 }
 
@@ -116,7 +141,15 @@ fn generates_stream_response_body_fixtures() {
     ));
 
     let generated = &plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .auxiliary_outputs[0]
         .source;
     assert!(generated.contains("ResponseBody.fromString('{}', 200)"));
@@ -136,7 +169,15 @@ fn drains_generated_byte_stream_invocations() {
     ));
 
     let generated = &plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .auxiliary_outputs[0]
         .source;
     assert!(generated.contains("await api.streamUsers().drain<void>();"));
@@ -159,7 +200,15 @@ fn drains_generated_text_stream_invocations() {
     );
 
     let generated = &plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .auxiliary_outputs[0]
         .source;
     assert!(generated.contains("await api.streamUsers().drain<void>();"));

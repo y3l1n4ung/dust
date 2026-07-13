@@ -9,10 +9,16 @@ use crate::support::*;
 #[test]
 fn emits_sqlx_style_dao_redirecting_factory_impl() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &library(vec![row_class(), dao_class()]),
-        &SymbolPlan::default(),
-    );
+    let contribution = plugin
+        .generate(
+            &library(vec![row_class(), dao_class()]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(contribution.support_types[0], expected_default_dao_output());
 }
@@ -47,8 +53,16 @@ fn emits_driver_method_for_each_query_cardinality() {
         ),
     ];
 
-    let contribution =
-        register_plugin().emit(&library(vec![row_class(), dao]), &SymbolPlan::default());
+    let contribution = register_plugin()
+        .generate(
+            &library(vec![row_class(), dao]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(contribution.support_types[0], expected_cardinality_output());
 }
@@ -64,15 +78,21 @@ fn emits_dao_mapper_for_imported_from_row_return_type() {
     .unwrap();
 
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &library_with_imports(
-            &root,
-            "lib/dao/user_dao.dart",
-            vec!["../models/user_profile.dart"],
-            vec![dao_class()],
-        ),
-        &SymbolPlan::default(),
-    );
+    let contribution = plugin
+        .generate(
+            &library_with_imports(
+                &root,
+                "lib/dao/user_dao.dart",
+                vec!["../models/user_profile.dart"],
+                vec![dao_class()],
+            ),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(
         contribution.support_types[0],
@@ -95,10 +115,16 @@ fn emits_sqlite_query_with_repeated_and_reordered_args() {
         "(r'SELECT id, display_name FROM users WHERE org_id = $2 OR id = $1 OR backup_id = $1')",
     )];
 
-    let contribution = register_plugin().emit(
-        &library(vec![simple_user_row_class(), dao]),
-        &SymbolPlan::default(),
-    );
+    let contribution = register_plugin()
+        .generate(
+            &library(vec![simple_user_row_class(), dao]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(
         contribution.support_types[0],

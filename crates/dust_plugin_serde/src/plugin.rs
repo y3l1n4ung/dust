@@ -2,7 +2,8 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
 use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{
-    DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
+    DustPlugin, PluginContext, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder,
+    WorkspaceAnalysisContext,
 };
 
 use crate::{
@@ -112,11 +113,15 @@ impl DustPlugin for SerdePlugin {
         validate_library_with_workspace(library, plan.workspace_analysis())
     }
 
-    /// Performs the actual code emission for the plugin.
+    /// Generates the plugin's code contribution.
     ///
     /// The plugin contributes mixins for `toJson` and top-level private helpers
     /// for the actual JSON mapping logic.
-    fn emit(&self, library: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
-        emit_library(library)
+    fn generate(
+        &self,
+        library: &DartFileIr,
+        _context: &PluginContext<'_>,
+    ) -> Vec<PluginContribution> {
+        vec![emit_library(library)]
     }
 }

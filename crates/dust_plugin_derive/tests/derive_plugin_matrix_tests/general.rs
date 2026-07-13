@@ -7,15 +7,21 @@ use dust_ir::{ParamKind, TypeIr};
 #[test]
 fn emits_debug_eq_and_hash_for_zero_field_class() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &library(vec![class(
-            "Unit",
-            Vec::new(),
-            vec![constructor(None, Vec::new())],
-            &["dust_dart::ToString", "dust_dart::Eq"],
-        )]),
-        &SymbolPlan::default(),
-    );
+    let contribution = plugin
+        .generate(
+            &library(vec![class(
+                "Unit",
+                Vec::new(),
+                vec![constructor(None, Vec::new())],
+                &["dust_dart::ToString", "dust_dart::Eq"],
+            )]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let members = members_for_class(&contribution, "Unit");
 
     assert_eq!(contribution.mixin_members.len(), 1);
@@ -108,37 +114,43 @@ fn requested_symbols_are_deduped_for_multiple_copywith_classes() {
 #[test]
 fn emits_fragments_for_multiple_classes_in_stable_feature_order() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &library(vec![
-            class(
-                "User",
-                vec![field("id", TypeIr::string())],
-                vec![constructor(
-                    None,
-                    vec![constructor_param(
-                        "id",
-                        TypeIr::string(),
-                        ParamKind::Positional,
+    let contribution = plugin
+        .generate(
+            &library(vec![
+                class(
+                    "User",
+                    vec![field("id", TypeIr::string())],
+                    vec![constructor(
+                        None,
+                        vec![constructor_param(
+                            "id",
+                            TypeIr::string(),
+                            ParamKind::Positional,
+                        )],
                     )],
-                )],
-                &["dust_dart::ToString", "dust_dart::Eq"],
-            ),
-            class(
-                "Team",
-                vec![field("name", TypeIr::string())],
-                vec![constructor(
-                    None,
-                    vec![constructor_param(
-                        "name",
-                        TypeIr::string(),
-                        ParamKind::Positional,
+                    &["dust_dart::ToString", "dust_dart::Eq"],
+                ),
+                class(
+                    "Team",
+                    vec![field("name", TypeIr::string())],
+                    vec![constructor(
+                        None,
+                        vec![constructor_param(
+                            "name",
+                            TypeIr::string(),
+                            ParamKind::Positional,
+                        )],
                     )],
-                )],
-                &["dust_dart::CopyWith"],
-            ),
-        ]),
-        &SymbolPlan::default(),
-    );
+                    &["dust_dart::CopyWith"],
+                ),
+            ]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let user_members = members_for_class(&contribution, "User");
     let team_members = members_for_class(&contribution, "Team");
 

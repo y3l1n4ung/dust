@@ -30,7 +30,7 @@ pub use surface::{
     ParsedAnnotationValueRootKind, ParsedClassKind, ParsedClassSurface,
     ParsedConstructorParamSurface, ParsedConstructorSurface, ParsedDartFileSurface,
     ParsedDirective, ParsedEnumSurface, ParsedEnumVariantSurface, ParsedExtensionSurface,
-    ParsedExtensionTypeSurface, ParsedFieldSurface, ParsedFunctionSurface, ParsedLibrarySurface,
+    ParsedExtensionTypeSurface, ParsedFieldSurface, ParsedFunctionSurface,
     ParsedMethodParamSurface, ParsedMethodSurface, ParsedMixinSurface,
     ParsedTopLevelVariableSurface, ParsedTypedefSurface,
 };

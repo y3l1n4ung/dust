@@ -20,7 +20,16 @@ fn emits_stream_fetches_for_response_body_payloads() {
         )],
     ));
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let emitted = contribution.support_types.join("\n");
     let helpers = contribution.shared_helpers.join("\n");
 
@@ -89,7 +98,15 @@ fn returns_raw_stream_response_without_rewrapping() {
     ));
 
     let emitted = plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .support_types
         .join("\n");
 
@@ -154,7 +171,15 @@ fn emits_direct_byte_stream_methods() {
     ));
 
     let emitted = plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .support_types
         .join("\n");
 
@@ -224,7 +249,15 @@ fn emits_direct_text_stream_methods() {
     );
 
     let emitted = plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .support_types
         .join("\n");
 

@@ -9,31 +9,37 @@ use super::support::{
 #[test]
 fn copywith_uses_named_arguments_without_braces_in_constructor_calls() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &library(vec![class(
-            "Request",
-            vec![
-                field("path", TypeIr::string()),
-                field(
-                    "headers",
-                    TypeIr::map_of(TypeIr::string(), TypeIr::string()),
-                ),
-            ],
-            vec![constructor(
-                Some("create"),
+    let contribution = plugin
+        .generate(
+            &library(vec![class(
+                "Request",
                 vec![
-                    constructor_param("path", TypeIr::string(), ParamKind::Named),
-                    constructor_param(
+                    field("path", TypeIr::string()),
+                    field(
                         "headers",
                         TypeIr::map_of(TypeIr::string(), TypeIr::string()),
-                        ParamKind::Named,
                     ),
                 ],
-            )],
-            &["dust_dart::CopyWith"],
-        )]),
-        &SymbolPlan::default(),
-    );
+                vec![constructor(
+                    Some("create"),
+                    vec![
+                        constructor_param("path", TypeIr::string(), ParamKind::Named),
+                        constructor_param(
+                            "headers",
+                            TypeIr::map_of(TypeIr::string(), TypeIr::string()),
+                            ParamKind::Named,
+                        ),
+                    ],
+                )],
+                &["dust_dart::CopyWith"],
+            )]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let members = members_for_class(&contribution, "Request");
 
     assert_eq!(contribution.mixin_members.len(), 1);
@@ -92,40 +98,46 @@ final class _$RequestCopyWithImpl<$Res> implements _$RequestCopyWith<$Res> {
 #[test]
 fn copywith_renders_nested_generic_and_dynamic_casts() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &library(vec![class(
-            "Payload",
-            vec![
-                field("items", TypeIr::list_of(TypeIr::string()).nullable()),
-                field("extra", TypeIr::dynamic()),
-                field("transform", TypeIr::function("void Function(String, int)")),
-                field("summary", TypeIr::record("(String, int)")),
-            ],
-            vec![constructor(
-                None,
+    let contribution = plugin
+        .generate(
+            &library(vec![class(
+                "Payload",
                 vec![
-                    constructor_param(
-                        "items",
-                        TypeIr::list_of(TypeIr::string()).nullable(),
-                        ParamKind::Positional,
-                    ),
-                    constructor_param("extra", TypeIr::dynamic(), ParamKind::Positional),
-                    constructor_param(
-                        "transform",
-                        TypeIr::function("void Function(String, int)"),
-                        ParamKind::Positional,
-                    ),
-                    constructor_param(
-                        "summary",
-                        TypeIr::record("(String, int)"),
-                        ParamKind::Positional,
-                    ),
+                    field("items", TypeIr::list_of(TypeIr::string()).nullable()),
+                    field("extra", TypeIr::dynamic()),
+                    field("transform", TypeIr::function("void Function(String, int)")),
+                    field("summary", TypeIr::record("(String, int)")),
                 ],
-            )],
-            &["dust_dart::CopyWith"],
-        )]),
-        &SymbolPlan::default(),
-    );
+                vec![constructor(
+                    None,
+                    vec![
+                        constructor_param(
+                            "items",
+                            TypeIr::list_of(TypeIr::string()).nullable(),
+                            ParamKind::Positional,
+                        ),
+                        constructor_param("extra", TypeIr::dynamic(), ParamKind::Positional),
+                        constructor_param(
+                            "transform",
+                            TypeIr::function("void Function(String, int)"),
+                            ParamKind::Positional,
+                        ),
+                        constructor_param(
+                            "summary",
+                            TypeIr::record("(String, int)"),
+                            ParamKind::Positional,
+                        ),
+                    ],
+                )],
+                &["dust_dart::CopyWith"],
+            )]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     let members = members_for_class(&contribution, "Payload");
     assert_eq!(
@@ -203,31 +215,37 @@ final class _$PayloadCopyWithImpl<$Res> implements _$PayloadCopyWith<$Res> {
 #[test]
 fn copywith_uses_option_update_for_option_and_unknown_fields() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &library(vec![class(
-            "Profile",
-            vec![
-                field(
-                    "nickname",
-                    TypeIr::generic("Option", vec![TypeIr::string()]),
-                ),
-                field("metadata", TypeIr::unknown()),
-            ],
-            vec![constructor(
-                None,
+    let contribution = plugin
+        .generate(
+            &library(vec![class(
+                "Profile",
                 vec![
-                    constructor_param(
+                    field(
                         "nickname",
                         TypeIr::generic("Option", vec![TypeIr::string()]),
-                        ParamKind::Named,
                     ),
-                    constructor_param("metadata", TypeIr::unknown(), ParamKind::Named),
+                    field("metadata", TypeIr::unknown()),
                 ],
-            )],
-            &["dust_dart::CopyWith"],
-        )]),
-        &SymbolPlan::default(),
-    );
+                vec![constructor(
+                    None,
+                    vec![
+                        constructor_param(
+                            "nickname",
+                            TypeIr::generic("Option", vec![TypeIr::string()]),
+                            ParamKind::Named,
+                        ),
+                        constructor_param("metadata", TypeIr::unknown(), ParamKind::Named),
+                    ],
+                )],
+                &["dust_dart::CopyWith"],
+            )]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     let members = members_for_class(&contribution, "Profile");
     assert_eq!(
@@ -297,40 +315,49 @@ final class _$ProfileCopyWithImpl<$Res> implements _$ProfileCopyWith<$Res> {
 #[test]
 fn copywith_uses_stable_temp_bindings_for_nested_types() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &library(vec![super::support::class(
-            "Complex",
-            vec![
-                field(
-                    "left",
-                    TypeIr::map_of(TypeIr::string(), TypeIr::list_of(TypeIr::named("Node")))
-                        .nullable(),
-                ),
-                field(
-                    "right",
-                    TypeIr::generic("Set", vec![TypeIr::list_of(TypeIr::string())]),
-                ),
-            ],
-            vec![super::support::constructor(
-                None,
+    let contribution = plugin
+        .generate(
+            &library(vec![super::support::class(
+                "Complex",
                 vec![
-                    constructor_param(
+                    field(
                         "left",
                         TypeIr::map_of(TypeIr::string(), TypeIr::list_of(TypeIr::named("Node")))
                             .nullable(),
-                        ParamKind::Positional,
                     ),
-                    constructor_param(
+                    field(
                         "right",
                         TypeIr::generic("Set", vec![TypeIr::list_of(TypeIr::string())]),
-                        ParamKind::Positional,
                     ),
                 ],
-            )],
-            &["dust_dart::CopyWith"],
-        )]),
-        &SymbolPlan::default(),
-    );
+                vec![super::support::constructor(
+                    None,
+                    vec![
+                        constructor_param(
+                            "left",
+                            TypeIr::map_of(
+                                TypeIr::string(),
+                                TypeIr::list_of(TypeIr::named("Node")),
+                            )
+                            .nullable(),
+                            ParamKind::Positional,
+                        ),
+                        constructor_param(
+                            "right",
+                            TypeIr::generic("Set", vec![TypeIr::list_of(TypeIr::string())]),
+                            ParamKind::Positional,
+                        ),
+                    ],
+                )],
+                &["dust_dart::CopyWith"],
+            )]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let members = members_for_class(&contribution, "Complex");
     assert_eq!(
         members,
@@ -351,32 +378,38 @@ _$ComplexCopyWith<Complex> get copyWith => _$ComplexCopyWithImpl<Complex>(this a
 #[test]
 fn copywith_allocates_locals_around_field_name_collisions() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &library(vec![class(
-            "Collision",
-            vec![
-                field("_self", TypeIr::string()),
-                field("_then", TypeIr::string()),
-                field("value", TypeIr::string()),
-                field("items", TypeIr::list_of(TypeIr::string()).nullable()),
-            ],
-            vec![constructor(
-                None,
+    let contribution = plugin
+        .generate(
+            &library(vec![class(
+                "Collision",
                 vec![
-                    constructor_param("_self", TypeIr::string(), ParamKind::Positional),
-                    constructor_param("_then", TypeIr::string(), ParamKind::Positional),
-                    constructor_param("value", TypeIr::string(), ParamKind::Positional),
-                    constructor_param(
-                        "items",
-                        TypeIr::list_of(TypeIr::string()).nullable(),
-                        ParamKind::Positional,
-                    ),
+                    field("_self", TypeIr::string()),
+                    field("_then", TypeIr::string()),
+                    field("value", TypeIr::string()),
+                    field("items", TypeIr::list_of(TypeIr::string()).nullable()),
                 ],
-            )],
-            &["dust_dart::CopyWith"],
-        )]),
-        &SymbolPlan::default(),
-    );
+                vec![constructor(
+                    None,
+                    vec![
+                        constructor_param("_self", TypeIr::string(), ParamKind::Positional),
+                        constructor_param("_then", TypeIr::string(), ParamKind::Positional),
+                        constructor_param("value", TypeIr::string(), ParamKind::Positional),
+                        constructor_param(
+                            "items",
+                            TypeIr::list_of(TypeIr::string()).nullable(),
+                            ParamKind::Positional,
+                        ),
+                    ],
+                )],
+                &["dust_dart::CopyWith"],
+            )]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     let members = members_for_class(&contribution, "Collision");
     assert_eq!(
@@ -442,51 +475,61 @@ final class _$CollisionCopyWithImpl<$Res> implements _$CollisionCopyWith<$Res> {
 #[test]
 fn copywith_emits_nullable_nested_model_helper() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &library(vec![
-            class(
-                "Address",
-                vec![field("city", TypeIr::string())],
-                vec![constructor(
-                    None,
-                    vec![constructor_param(
-                        "city",
-                        TypeIr::string(),
-                        ParamKind::Named,
+    let contribution = plugin
+        .generate(
+            &library(vec![
+                class(
+                    "Address",
+                    vec![field("city", TypeIr::string())],
+                    vec![constructor(
+                        None,
+                        vec![constructor_param(
+                            "city",
+                            TypeIr::string(),
+                            ParamKind::Named,
+                        )],
                     )],
-                )],
-                &["dust_dart::CopyWith"],
-            ),
-            class(
-                "Profile",
-                vec![
-                    field("name", TypeIr::string()),
-                    field("nickname", TypeIr::string().nullable()),
-                    field("address", TypeIr::named("Address")),
-                    field("mailingAddress", TypeIr::named("Address").nullable()),
-                ],
-                vec![constructor(
-                    None,
+                    &["dust_dart::CopyWith"],
+                ),
+                class(
+                    "Profile",
                     vec![
-                        constructor_param("name", TypeIr::string(), ParamKind::Named),
-                        constructor_param(
-                            "nickname",
-                            TypeIr::string().nullable(),
-                            ParamKind::Named,
-                        ),
-                        constructor_param("address", TypeIr::named("Address"), ParamKind::Named),
-                        constructor_param(
-                            "mailingAddress",
-                            TypeIr::named("Address").nullable(),
-                            ParamKind::Named,
-                        ),
+                        field("name", TypeIr::string()),
+                        field("nickname", TypeIr::string().nullable()),
+                        field("address", TypeIr::named("Address")),
+                        field("mailingAddress", TypeIr::named("Address").nullable()),
                     ],
-                )],
-                &["dust_dart::CopyWith"],
-            ),
-        ]),
-        &SymbolPlan::default(),
-    );
+                    vec![constructor(
+                        None,
+                        vec![
+                            constructor_param("name", TypeIr::string(), ParamKind::Named),
+                            constructor_param(
+                                "nickname",
+                                TypeIr::string().nullable(),
+                                ParamKind::Named,
+                            ),
+                            constructor_param(
+                                "address",
+                                TypeIr::named("Address"),
+                                ParamKind::Named,
+                            ),
+                            constructor_param(
+                                "mailingAddress",
+                                TypeIr::named("Address").nullable(),
+                                ParamKind::Named,
+                            ),
+                        ],
+                    )],
+                    &["dust_dart::CopyWith"],
+                ),
+            ]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     let members = members_for_class(&contribution, "Profile");
     assert_eq!(
@@ -621,37 +664,43 @@ final class _$ProfileCopyWithImpl<$Res> implements _$ProfileCopyWith<$Res> {
 #[test]
 fn copywith_handles_named_model_collections_without_aliasing() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &library(vec![
-            class(
-                "Node",
-                vec![field("id", TypeIr::string())],
-                vec![constructor(
-                    None,
-                    vec![constructor_param(
-                        "id",
-                        TypeIr::string(),
-                        ParamKind::Positional,
+    let contribution = plugin
+        .generate(
+            &library(vec![
+                class(
+                    "Node",
+                    vec![field("id", TypeIr::string())],
+                    vec![constructor(
+                        None,
+                        vec![constructor_param(
+                            "id",
+                            TypeIr::string(),
+                            ParamKind::Positional,
+                        )],
                     )],
-                )],
-                &["dust_dart::CopyWith"],
-            ),
-            class(
-                "Graph",
-                vec![field("nodes", TypeIr::list_of(TypeIr::named("Node")))],
-                vec![constructor(
-                    None,
-                    vec![constructor_param(
-                        "nodes",
-                        TypeIr::list_of(TypeIr::named("Node")),
-                        ParamKind::Positional,
+                    &["dust_dart::CopyWith"],
+                ),
+                class(
+                    "Graph",
+                    vec![field("nodes", TypeIr::list_of(TypeIr::named("Node")))],
+                    vec![constructor(
+                        None,
+                        vec![constructor_param(
+                            "nodes",
+                            TypeIr::list_of(TypeIr::named("Node")),
+                            ParamKind::Positional,
+                        )],
                     )],
-                )],
-                &["dust_dart::CopyWith"],
-            ),
-        ]),
-        &SymbolPlan::default(),
-    );
+                    &["dust_dart::CopyWith"],
+                ),
+            ]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     let members = members_for_class(&contribution, "Graph");
     assert_eq!(

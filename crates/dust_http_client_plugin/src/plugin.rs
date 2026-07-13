@@ -2,7 +2,7 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
 use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{
-    AuxiliaryOutputContribution, DustPlugin, PluginContribution, SymbolPlan,
+    AuxiliaryOutputContribution, DustPlugin, PluginContext, PluginContribution, SymbolPlan,
     WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
 };
 use dust_workspace::generated_test_output_path;
@@ -91,7 +91,11 @@ impl DustPlugin for HttpClientPlugin {
             .collect()
     }
 
-    fn emit(&self, library: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
+    fn generate(
+        &self,
+        library: &DartFileIr,
+        _context: &PluginContext<'_>,
+    ) -> Vec<PluginContribution> {
         let mut contribution = PluginContribution::default();
         let mut generated_any = false;
         let mut generated_test_specs = Vec::new();
@@ -135,6 +139,6 @@ impl DustPlugin for HttpClientPlugin {
             }
         }
 
-        contribution
+        vec![contribution]
     }
 }

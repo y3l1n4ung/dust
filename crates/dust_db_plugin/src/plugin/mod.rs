@@ -1,6 +1,6 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
-use dust_plugin_api::{DustPlugin, PluginContribution, SymbolPlan};
+use dust_plugin_api::{DustPlugin, PluginContext, PluginContribution};
 
 /// Shared annotation names and claimed symbol lists.
 mod constants;
@@ -125,8 +125,12 @@ impl DustPlugin for DbPlugin {
         validate_db_library(library, self.options)
     }
 
-    fn emit(&self, library: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
-        emit_db_library(library, self.options)
+    fn generate(
+        &self,
+        library: &DartFileIr,
+        _context: &PluginContext<'_>,
+    ) -> Vec<PluginContribution> {
+        vec![emit_db_library(library, self.options)]
     }
 }
 
@@ -206,7 +210,16 @@ mod tests {
 
         assert!(plugin.validate(&library).is_empty());
         assert_eq!(
-            plugin.emit(&library, &SymbolPlan::default()),
+            plugin
+                .generate(
+                    &library,
+                    &dust_plugin_api::PluginContext {
+                        symbol_plan: &SymbolPlan::default()
+                    }
+                )
+                .into_iter()
+                .next()
+                .expect("plugin must generate one contribution"),
             dust_plugin_api::PluginContribution::default()
         );
 

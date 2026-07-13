@@ -4,10 +4,10 @@
 mod library;
 
 use dust_diagnostics::Diagnostic;
-use dust_ir::LibraryIr;
-use dust_parser_dart::ParsedLibrarySurface;
+use dust_ir::DartFileIr;
+use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{
-    DustPlugin, PluginContribution, PluginRegistry, SymbolPlan, WorkspaceAnalysisBuilder,
+    DustPlugin, PluginContext, PluginContribution, PluginRegistry, WorkspaceAnalysisBuilder,
     WorkspaceAnalysisContext,
 };
 use dust_text::TextRange;
@@ -24,24 +24,28 @@ impl DustPlugin for SymbolPlugin {
         self.name
     }
 
-    fn requested_symbols(&self, _library: &LibraryIr) -> Vec<String> {
+    fn requested_symbols(&self, _library: &DartFileIr) -> Vec<String> {
         self.requested
             .iter()
             .map(|name| (*name).to_owned())
             .collect()
     }
 
-    fn validate(&self, _library: &LibraryIr) -> Vec<Diagnostic> {
+    fn validate(&self, _library: &DartFileIr) -> Vec<Diagnostic> {
         Vec::new()
     }
 
-    fn emit(&self, _library: &LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
-        PluginContribution::default()
+    fn generate(
+        &self,
+        _library: &DartFileIr,
+        _context: &PluginContext<'_>,
+    ) -> Vec<PluginContribution> {
+        vec![PluginContribution::default()]
     }
 }
 
-fn sample_parsed_library() -> ParsedLibrarySurface {
-    ParsedLibrarySurface {
+fn sample_parsed_library() -> ParsedDartFileSurface {
+    ParsedDartFileSurface {
         span: TextRange::new(0_u32, 100_u32),
         directives: Vec::new(),
         classes: Vec::new(),
@@ -99,18 +103,22 @@ fn registry_collects_workspace_analysis_in_registration_order() {
         fn collect_workspace_analysis(
             &self,
             _context: WorkspaceAnalysisContext<'_>,
-            _library: &ParsedLibrarySurface,
+            _library: &ParsedDartFileSurface,
             analysis: &mut WorkspaceAnalysisBuilder,
         ) {
             analysis.add_string_set_value(self.key, self.value);
         }
 
-        fn validate(&self, _library: &dust_ir::LibraryIr) -> Vec<dust_diagnostics::Diagnostic> {
+        fn validate(&self, _library: &dust_ir::DartFileIr) -> Vec<dust_diagnostics::Diagnostic> {
             Vec::new()
         }
 
-        fn emit(&self, _library: &dust_ir::LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
-            PluginContribution::default()
+        fn generate(
+            &self,
+            _library: &dust_ir::DartFileIr,
+            _context: &PluginContext<'_>,
+        ) -> Vec<PluginContribution> {
+            vec![PluginContribution::default()]
         }
     }
 

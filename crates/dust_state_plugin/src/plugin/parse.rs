@@ -1,4 +1,4 @@
-use dust_ir::{ConfigApplicationIr, SymbolId};
+use dust_ir::{ConfigApplicationIr, NormalizedConfigIr, StateModeIr, SymbolId};
 use dust_parser_dart::ParsedAnnotation;
 
 #[cfg(test)]
@@ -26,19 +26,18 @@ pub(crate) fn parse_view_model_annotation(args: Option<&str>) -> Option<ViewMode
 
 /// Extracts state, args, and initial values from resolved view model config IR.
 pub(crate) fn parse_view_model_config(config: &ConfigApplicationIr) -> Option<ViewModelAnnotation> {
-    let state_type = config
-        .named_type("state")
-        .or_else(|| config.positional_type(0))?;
-    let args_type = config.named_type("args");
-    let initial_source = config.named_expression_source("initial");
-    let mode_source = config.named_expression_source("mode");
-    let mode = parse_mode(mode_source.as_deref());
+    let Some(NormalizedConfigIr::State(state)) = config.normalized.as_ref() else {
+        return None;
+    };
     Some(ViewModelAnnotation {
-        state_type,
-        args_type,
-        initial_source,
-        mode_source,
-        mode,
+        state_type: state.state_type.clone(),
+        args_type: state.args_type.clone(),
+        initial_source: state.initial_source.clone(),
+        mode_source: state.mode_source.clone(),
+        mode: match state.mode {
+            StateModeIr::Sync => ViewModelMode::Sync,
+            StateModeIr::Async => ViewModelMode::Async,
+        },
     })
 }
 
@@ -84,11 +83,27 @@ fn config_name(symbol: &SymbolId) -> &str {
 #[cfg(test)]
 /// Builds a resolved config IR value around a raw annotation argument list.
 fn test_config(args: Option<&str>) -> ConfigApplicationIr {
-    ConfigApplicationIr::new(
+    let mut config = ConfigApplicationIr::new(
         SymbolId::new(VIEW_MODEL),
         args.map(str::to_owned),
         SpanIr::new(FileId::default(), TextRange::default()),
-    )
+    );
+    config.normalized = Some(NormalizedConfigIr::State(dust_ir::StateConfigIr {
+        state_type: config
+            .named_type("state")
+            .or_else(|| config.positional_type(0))
+            .unwrap_or_default(),
+        args_type: config.named_type("args"),
+        initial_source: config.named_expression_source("initial"),
+        mode_source: config.named_expression_source("mode"),
+        mode: match config.named_expression_source("mode").as_deref() {
+            Some(source) if source.ends_with(".async") || source == "async" => {
+                dust_ir::StateModeIr::Async
+            }
+            _ => dust_ir::StateModeIr::Sync,
+        },
+    }));
+    config
 }
 
 #[cfg(test)]

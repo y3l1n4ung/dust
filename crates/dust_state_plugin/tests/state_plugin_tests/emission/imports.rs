@@ -28,7 +28,14 @@ fn imported_state_fields_do_not_generate_proxy_getters() {
         .imports
         .push("../models/products_state.dart".to_owned());
 
-    let contribution = plugin.emit(&library, &plan);
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext { symbol_plan: &plan },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let source = &contribution.support_types[0];
 
     assert!(!source.contains("_ProductsViewModelAspect"));
@@ -65,7 +72,14 @@ fn workspace_state_facts_cannot_leak_imported_field_types() {
         .imports
         .push("../models/products_state.dart".to_owned());
 
-    let contribution = plugin.emit(&library, &plan);
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext { symbol_plan: &plan },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let source = &contribution.support_types[0];
 
     assert!(!source.contains("_ProductsViewModelAspect"));

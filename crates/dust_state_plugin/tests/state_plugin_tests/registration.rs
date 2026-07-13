@@ -19,7 +19,16 @@ fn plugin_contract_returns_empty_output_for_unannotated_library() {
 
     assert!(plugin.validate(&library).is_empty());
     assert_eq!(
-        plugin.emit(&library, &dust_plugin_api::SymbolPlan::default()),
+        plugin
+            .generate(
+                &library,
+                &dust_plugin_api::PluginContext {
+                    symbol_plan: &dust_plugin_api::SymbolPlan::default()
+                }
+            )
+            .into_iter()
+            .next()
+            .expect("plugin must generate one contribution"),
         dust_plugin_api::PluginContribution::default()
     );
 }
@@ -40,6 +49,16 @@ fn plugin_generate_returns_state_generated_unit() {
     let units = plugin.generate(&library, &PluginContext { symbol_plan: &plan });
 
     assert_eq!(units.len(), 1);
-    assert_eq!(units[0], plugin.emit(&library, &plan));
+    assert_eq!(
+        units[0],
+        plugin
+            .generate(
+                &library,
+                &dust_plugin_api::PluginContext { symbol_plan: &plan }
+            )
+            .into_iter()
+            .next()
+            .expect("plugin must generate one contribution")
+    );
     assert!(units[0].support_types[0].contains("abstract class $TaskBoardViewModel"));
 }

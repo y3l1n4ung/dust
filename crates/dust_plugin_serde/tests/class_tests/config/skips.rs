@@ -45,7 +45,16 @@ fn supports_skipping_fields() {
     );
 
     let library = library(vec![user_class], vec![]);
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(
         &contribution.top_level_functions[0],

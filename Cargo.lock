@@ -500,6 +500,7 @@ dependencies = [
  "dust_diagnostics",
  "dust_ir",
  "dust_parser_dart",
+ "dust_parser_dart_ts",
  "dust_plugin_api",
  "dust_text",
  "serde",

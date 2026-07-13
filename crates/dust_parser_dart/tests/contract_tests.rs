@@ -4,7 +4,7 @@ use dust_diagnostics::Diagnostic;
 use dust_parser_dart::{
     AnnotationValue, ParameterKind, ParseBackend, ParseOptions, ParseResult, ParsedAnnotation,
     ParsedClassKind, ParsedClassSurface, ParsedConstructorParamSurface, ParsedConstructorSurface,
-    ParsedDirective, ParsedFieldSurface, ParsedLibrarySurface, SourceKind,
+    ParsedDartFileSurface, ParsedDirective, ParsedFieldSurface, SourceKind,
     parse_annotation_named_values, parse_file_with_backend,
 };
 use dust_text::{FileId, SourceText, TextRange};
@@ -14,7 +14,7 @@ struct FakeBackend;
 impl ParseBackend for FakeBackend {
     fn parse_file(&self, _source: &SourceText, options: ParseOptions) -> ParseResult {
         ParseResult {
-            library: ParsedLibrarySurface {
+            library: ParsedDartFileSurface {
                 span: TextRange::new(0_u32, 32_u32),
                 directives: vec![ParsedDirective::Part {
                     uri: "user.g.dart".to_owned(),
@@ -95,7 +95,7 @@ fn parse_options_default_to_library_mode() {
 #[test]
 fn parse_result_reports_presence_of_diagnostics() {
     let result = ParseResult {
-        library: ParsedLibrarySurface {
+        library: ParsedDartFileSurface {
             span: TextRange::new(0_u32, 0_u32),
             directives: Vec::new(),
             classes: Vec::new(),
@@ -147,7 +147,7 @@ fn directive_span_accessor_returns_stored_span() {
 
 #[test]
 fn parsed_surface_helpers_cover_empty_and_mixin_class_cases() {
-    let library = ParsedLibrarySurface {
+    let library = ParsedDartFileSurface {
         span: TextRange::new(0_u32, 0_u32),
         directives: Vec::new(),
         classes: Vec::new(),

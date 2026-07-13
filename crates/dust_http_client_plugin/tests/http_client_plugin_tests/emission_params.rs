@@ -24,7 +24,15 @@ fn preserves_explicit_required_nullable_named_parameters() {
     ));
 
     let emitted = plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .support_types
         .join("\n");
 

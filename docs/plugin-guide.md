@@ -61,14 +61,13 @@ impl DustPlugin for MyPlugin {
     fn validate(&self, file: &DartFileIr) -> Vec<Diagnostic> { ... }
 
     // PASS 4: Generate code from canonical file IR
-    fn generate(&self, file: &DartFileIr, context: &PluginContext<'_>) -> Vec<GeneratedUnit> { ... }
+    fn generate(&self, file: &DartFileIr, context: &PluginContext<'_>) -> Vec<PluginContribution> { ... }
 }
 ```
 
-`LibraryIr`, `ParsedLibrarySurface`, and `emit` remain available only as
-temporary compatibility shims during the parser architecture refactor tracked in
-[Issue #43](https://github.com/y3l1n4ung/dust/issues/43). New plugin work
-should target `DartFileIr`, `ParsedDartFileSurface`, and `generate`.
+New plugin work must target `DartFileIr`, `ParsedDartFileSurface`, and
+`generate`. The former `LibraryIr` and `ParsedLibrarySurface` compatibility
+shims have been removed.
 
 ### 3. Register the Plugin
 Wire your new crate into the `dust_driver` orchestrator.
@@ -95,7 +94,7 @@ Plugins run in parallel worker threads. A single `panic!()` will crash the entir
 
 ### 🔄 Use Shared Analysis
 If your plugin needs to know about other files (e.g., "Find all classes marked with X"), use `collect_workspace_analysis`.
-*   **Do not** perform custom file I/O or manual Dart source scanning inside `emit()` or `generate()`.
+*   **Do not** perform custom file I/O or manual Dart source scanning inside `generate()`.
 *   Read normalized parser/IR facts and the deterministic plan/context provided by the driver.
 
 ---

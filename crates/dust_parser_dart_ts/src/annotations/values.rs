@@ -1,4 +1,4 @@
-use dust_dart_syntax::parse_string_literal;
+use dust_dart_syntax::parse_static_dart_string_literal;
 use dust_parser_dart::{
     ParsedAnnotationNumberKind, ParsedAnnotationValue, ParsedAnnotationValueRootKind,
 };
@@ -77,11 +77,12 @@ fn annotation_value(
                 .map(ParsedAnnotationValueRootKind::Number)
                 .unwrap_or(ParsedAnnotationValueRootKind::Expression),
             "string_literal" => ParsedAnnotationValueRootKind::String(
-                parse_string_literal(&value_source).unwrap_or_else(|| value_source.clone()),
+                parse_static_dart_string_literal(&value_source)
+                    .unwrap_or_else(|| value_source.clone()),
             ),
             "list_literal" => ParsedAnnotationValueRootKind::List(collection_values(node, source)),
             "set_or_map_literal" => set_or_map_kind(node, source),
-            "record_literal" => ParsedAnnotationValueRootKind::Record,
+            "record_literal" => ParsedAnnotationValueRootKind::Record(record_values(node, source)),
             "const_object_expression" | "constructor_invocation" => {
                 ParsedAnnotationValueRootKind::Constructor {
                     name: constructor_name(node, source).unwrap_or_else(|| value_source.clone()),
@@ -175,6 +176,86 @@ fn collection_values(node: Node<'_>, source: &SourceText) -> Vec<ParsedAnnotatio
     values
 }
 
+/// Parses direct values from a set literal.
+fn set_values(node: Node<'_>, source: &SourceText) -> Vec<ParsedAnnotationValue> {
+    collection_values(node, source)
+}
+
+/// Parses direct key/value pairs from a map literal.
+fn map_values(
+    node: Node<'_>,
+    source: &SourceText,
+) -> Vec<(ParsedAnnotationValue, ParsedAnnotationValue)> {
+    let mut cursor = node.walk();
+    node.children(&mut cursor)
+        .filter(|child| child.is_named() && child.kind() == "pair")
+        .filter_map(|pair| {
+            let mut pair_cursor = pair.walk();
+            let values = pair
+                .children(&mut pair_cursor)
+                .filter(|child| child.is_named())
+                .collect::<Vec<_>>();
+            let [key, value, ..] = values.as_slice() else {
+                return None;
+            };
+            Some((
+                annotation_value(
+                    *key,
+                    source,
+                    node_text(*key, source),
+                    text_range(*key),
+                    false,
+                ),
+                annotation_value(
+                    *value,
+                    source,
+                    node_text(*value, source),
+                    text_range(*value),
+                    false,
+                ),
+            ))
+        })
+        .collect()
+}
+
+/// Parses named fields from a record literal.
+fn record_values(node: Node<'_>, source: &SourceText) -> Vec<(String, ParsedAnnotationValue)> {
+    let mut cursor = node.walk();
+    let children = node
+        .children(&mut cursor)
+        .filter(|child| child.is_named())
+        .collect::<Vec<_>>();
+    let mut fields = Vec::new();
+    let mut index = 0;
+
+    while let Some(label) = children.get(index).copied() {
+        if label.kind() != "label" {
+            index += 1;
+            continue;
+        }
+        let name = node_text(label, source)
+            .trim_end_matches(':')
+            .trim()
+            .to_owned();
+        let Some(value) = children.get(index + 1).copied() else {
+            break;
+        };
+        fields.push((
+            name,
+            annotation_value(
+                value,
+                source,
+                node_text(value, source),
+                text_range(value),
+                false,
+            ),
+        ));
+        index += 2;
+    }
+
+    fields
+}
+
 /// Extracts structured arguments from a constructor node or selector.
 fn constructor_arguments(
     node: Node<'_>,
@@ -217,19 +298,24 @@ fn is_member_selector_chain(node: Node<'_>) -> bool {
 
 /// Classifies Dart's shared set/map literal node.
 fn set_or_map_kind(node: Node<'_>, source: &SourceText) -> ParsedAnnotationValueRootKind {
-    if has_descendant_kind(node, ":") {
-        return ParsedAnnotationValueRootKind::Map;
+    let has_pairs = {
+        let mut cursor = node.walk();
+        node.children(&mut cursor)
+            .any(|child| child.is_named() && child.kind() == "pair")
+    };
+    if has_pairs {
+        return ParsedAnnotationValueRootKind::Map(map_values(node, source));
     }
 
     let value_source = node_text(node, source);
     if type_argument_source(node, source).is_some_and(|args| args.contains(',')) {
-        return ParsedAnnotationValueRootKind::Map;
+        return ParsedAnnotationValueRootKind::Map(map_values(node, source));
     }
     if literal_body(&value_source).is_empty() && type_argument_source(node, source).is_none() {
-        return ParsedAnnotationValueRootKind::Map;
+        return ParsedAnnotationValueRootKind::Map(map_values(node, source));
     }
 
-    ParsedAnnotationValueRootKind::Set
+    ParsedAnnotationValueRootKind::Set(set_values(node, source))
 }
 
 /// Returns the source inside a collection literal's braces.

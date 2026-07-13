@@ -1,8 +1,8 @@
 //! Integration tests that model Dart examples with Dust IR structures.
 
 use dust_ir::{
-    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, FieldIr, LibraryIr, ParamKind, SpanIr,
-    SymbolId, TraitApplicationIr, TypeIr,
+    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, DartFileIr, FieldIr, ParamKind,
+    SpanIr, SymbolId, TraitApplicationIr, TypeIr,
 };
 use dust_text::{FileId, TextRange};
 
@@ -12,7 +12,7 @@ fn span(file_id: u32, start: u32, end: u32) -> SpanIr {
 
 #[test]
 fn models_real_dart_data_class_shapes() {
-    let library = LibraryIr {
+    let library = DartFileIr {
         package_root: ".".to_owned(),
         package_name: "dust_test".to_owned(),
         source_path: "lib/user_profile.dart".to_owned(),

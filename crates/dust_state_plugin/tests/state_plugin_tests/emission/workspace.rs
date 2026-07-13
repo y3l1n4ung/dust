@@ -21,16 +21,20 @@ fn ignores_state_fields_from_workspace_analysis() {
     let mut plan = SymbolPlan::default();
     plan.set_workspace_analysis(Arc::new(builder.build()));
 
-    let contribution = plugin.emit(
-        &library_with_classes(vec![
-            args_class(),
-            view_model_class(
-                "TaskBoardViewModel",
-                "(state: TaskBoardState, args: TaskBoardArgs)",
-            ),
-        ]),
-        &plan,
-    );
+    let contribution = plugin
+        .generate(
+            &library_with_classes(vec![
+                args_class(),
+                view_model_class(
+                    "TaskBoardViewModel",
+                    "(state: TaskBoardState, args: TaskBoardArgs)",
+                ),
+            ]),
+            &dust_plugin_api::PluginContext { symbol_plan: &plan },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     let source = &contribution.support_types[0];
     assert!(!source.contains("_TaskBoardViewModelAspect"));
@@ -83,16 +87,20 @@ fn ignores_many_state_fields_without_import_leaks() {
     let mut plan = SymbolPlan::default();
     plan.set_workspace_analysis(Arc::new(builder.build()));
 
-    let contribution = plugin.emit(
-        &library_with_classes(vec![
-            args_class(),
-            view_model_class(
-                "TaskBoardViewModel",
-                "(state: TaskBoardState, args: TaskBoardArgs)",
-            ),
-        ]),
-        &plan,
-    );
+    let contribution = plugin
+        .generate(
+            &library_with_classes(vec![
+                args_class(),
+                view_model_class(
+                    "TaskBoardViewModel",
+                    "(state: TaskBoardState, args: TaskBoardArgs)",
+                ),
+            ]),
+            &dust_plugin_api::PluginContext { symbol_plan: &plan },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let source = &contribution.support_types[0];
 
     assert!(!source.contains("_taskBoardViewModelField119Aspect"));

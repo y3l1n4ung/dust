@@ -2,7 +2,8 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
 use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{
-    DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
+    DustPlugin, PluginContext, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder,
+    WorkspaceAnalysisContext,
 };
 
 use crate::{
@@ -74,7 +75,11 @@ impl DustPlugin for DerivePlugin {
         validate_library_with_plan(library, plan)
     }
 
-    fn emit(&self, library: &DartFileIr, plan: &SymbolPlan) -> PluginContribution {
-        emit_library(library, plan)
+    fn generate(
+        &self,
+        library: &DartFileIr,
+        context: &PluginContext<'_>,
+    ) -> Vec<PluginContribution> {
+        vec![emit_library(library, context.symbol_plan)]
     }
 }

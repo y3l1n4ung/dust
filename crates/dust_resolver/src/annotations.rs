@@ -127,9 +127,29 @@ fn annotation_value_ir(file_id: FileId, value: &ParsedAnnotationValue) -> Annota
                 .map(|value| annotation_value_ir(file_id, value))
                 .collect(),
         ),
-        ParsedAnnotationValueRootKind::Set => AnnotationValueIr::Set(Vec::new()),
-        ParsedAnnotationValueRootKind::Map => AnnotationValueIr::Map(Vec::new()),
-        ParsedAnnotationValueRootKind::Record => AnnotationValueIr::Record(Vec::new()),
+        ParsedAnnotationValueRootKind::Set(values) => AnnotationValueIr::Set(
+            values
+                .iter()
+                .map(|value| annotation_value_ir(file_id, value))
+                .collect(),
+        ),
+        ParsedAnnotationValueRootKind::Map(entries) => AnnotationValueIr::Map(
+            entries
+                .iter()
+                .map(|(key, value)| {
+                    (
+                        annotation_value_ir(file_id, key),
+                        annotation_value_ir(file_id, value),
+                    )
+                })
+                .collect(),
+        ),
+        ParsedAnnotationValueRootKind::Record(fields) => AnnotationValueIr::Record(
+            fields
+                .iter()
+                .map(|(name, value)| (name.clone(), annotation_value_ir(file_id, value)))
+                .collect(),
+        ),
         ParsedAnnotationValueRootKind::Constructor { name, arguments } => {
             let (positional_args, named_args) = parsed_argument_values(file_id, arguments);
             AnnotationValueIr::Constructor {

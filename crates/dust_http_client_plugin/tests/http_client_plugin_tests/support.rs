@@ -1,6 +1,6 @@
 use dust_ir::{
-    ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, FieldIr,
-    LibraryIr, MethodIr, MethodParamIr, ParamKind, SpanIr, SymbolId, TypeIr,
+    ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, DartFileIr,
+    FieldIr, MethodIr, MethodParamIr, ParamKind, SpanIr, SymbolId, TypeIr,
 };
 use dust_text::{FileId, TextRange};
 
@@ -105,23 +105,23 @@ pub(crate) fn http_client_class(
     }
 }
 
-pub(crate) fn library_for(class: ClassIr) -> LibraryIr {
+pub(crate) fn library_for(class: ClassIr) -> DartFileIr {
     library_with_classes(vec![class])
 }
 
-pub(crate) fn library_for_with_imports(class: ClassIr, imports: Vec<&str>) -> LibraryIr {
+pub(crate) fn library_for_with_imports(class: ClassIr, imports: Vec<&str>) -> DartFileIr {
     library_with_classes_and_imports(vec![class], imports)
 }
 
-pub(crate) fn library_with_classes(classes: Vec<ClassIr>) -> LibraryIr {
+pub(crate) fn library_with_classes(classes: Vec<ClassIr>) -> DartFileIr {
     library_with_classes_and_imports(classes, Vec::new())
 }
 
 pub(crate) fn library_with_classes_and_imports(
     classes: Vec<ClassIr>,
     imports: Vec<&str>,
-) -> LibraryIr {
-    LibraryIr {
+) -> DartFileIr {
+    DartFileIr {
         package_root: ".".to_owned(),
         package_name: "dust_test".to_owned(),
         source_path: "lib/api.dart".to_owned(),

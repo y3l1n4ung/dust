@@ -4,7 +4,7 @@ use dust_db_plugin::{
 };
 use dust_diagnostics::Diagnostic;
 use dust_http_client_plugin::register_plugin as register_http_client_plugin;
-use dust_plugin_api::{DustPlugin, PluginContribution, PluginRegistry, SymbolPlan};
+use dust_plugin_api::{DustPlugin, PluginContext, PluginContribution, PluginRegistry};
 use dust_plugin_derive::register_plugin as register_derive_plugin;
 use dust_plugin_serde::register_plugin as register_serde_plugin;
 use dust_route_plugin::register_plugin as register_route_plugin;
@@ -176,7 +176,11 @@ impl DustPlugin for DbModePassThroughPlugin {
         Vec::new()
     }
 
-    fn emit(&self, _library: &dust_ir::DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
-        PluginContribution::default()
+    fn generate(
+        &self,
+        _library: &dust_ir::DartFileIr,
+        _context: &PluginContext<'_>,
+    ) -> Vec<PluginContribution> {
+        vec![PluginContribution::default()]
     }
 }

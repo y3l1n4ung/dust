@@ -31,7 +31,15 @@ fn emits_form_urlencoded_request_bodies() {
     ));
 
     let emitted = plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .support_types
         .join("\n");
     assert!(emitted.contains("final _data = <String, dynamic>{"));
@@ -68,7 +76,15 @@ fn emits_multipart_requests_with_prefixed_options_types() {
     ));
 
     let emitted = plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .support_types
         .join("\n");
     assert!(emitted.contains("final _data = FormData.fromMap(<String, dynamic>{"));
@@ -120,7 +136,15 @@ fn emits_model_request_bodies_null_safely() {
     ));
 
     let emitted = plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .support_types
         .join("\n");
     assert!(emitted.contains("final Object? _data = payload.toJson();"));
@@ -174,7 +198,15 @@ fn emits_documented_request_encoding_policy() {
     ));
 
     let emitted = plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .support_types
         .join("\n");
     assert!(emitted.contains("'/users/' + Uri.encodeComponent(slug.toString())"));

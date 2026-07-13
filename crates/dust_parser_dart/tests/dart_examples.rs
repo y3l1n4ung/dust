@@ -2,14 +2,14 @@
 
 use dust_parser_dart::{
     ParameterKind, ParsedAnnotation, ParsedClassKind, ParsedClassSurface,
-    ParsedConstructorParamSurface, ParsedConstructorSurface, ParsedDirective, ParsedFieldSurface,
-    ParsedLibrarySurface,
+    ParsedConstructorParamSurface, ParsedConstructorSurface, ParsedDartFileSurface,
+    ParsedDirective, ParsedFieldSurface,
 };
 use dust_text::TextRange;
 
 #[test]
 fn parse_surface_can_model_real_dart_library_shapes() {
-    let library = ParsedLibrarySurface {
+    let library = ParsedDartFileSurface {
         span: TextRange::new(0_u32, 180_u32),
         directives: vec![
             ParsedDirective::Import {

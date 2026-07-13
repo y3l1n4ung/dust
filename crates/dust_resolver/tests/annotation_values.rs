@@ -16,6 +16,9 @@ part 'user.g.dart';
 @Meta(
   defaultValue: null,
   aliases: ['id'],
+  tags: <String>{'id'},
+  weights: {'id': 1},
+  labels: (primary: 'id'),
   retryable: false,
   count: 1,
   ratio: 1.5,
@@ -54,6 +57,29 @@ class User {
         Some(&AnnotationValueIr::List(vec![AnnotationValueIr::String(
             "id".to_owned(),
         )]))
+    );
+    assert_eq!(
+        config.named_argument_value("tags"),
+        Some(&AnnotationValueIr::Set(vec![AnnotationValueIr::String(
+            "id".to_owned(),
+        )]))
+    );
+    assert_eq!(
+        config.named_argument_value("weights"),
+        Some(&AnnotationValueIr::Map(vec![(
+            AnnotationValueIr::String("id".to_owned()),
+            AnnotationValueIr::Number {
+                source: "1".to_owned(),
+                kind: AnnotationNumberKindIr::Int,
+            },
+        )]))
+    );
+    assert_eq!(
+        config.named_argument_value("labels"),
+        Some(&AnnotationValueIr::Record(vec![(
+            "primary".to_owned(),
+            AnnotationValueIr::String("id".to_owned())
+        ),]))
     );
     assert_eq!(
         config.named_argument_value("retryable"),

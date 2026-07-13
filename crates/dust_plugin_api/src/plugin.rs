@@ -6,15 +6,12 @@ use dust_parser_dart::ParsedDartFileSurface;
 
 use crate::{PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder};
 
-/// Context available to future generated-unit based plugin APIs.
+/// Context available while generating plugin output.
 #[derive(Debug, Clone, Copy)]
 pub struct PluginContext<'a> {
     /// The deterministic symbol plan for the current file.
     pub symbol_plan: &'a SymbolPlan,
 }
-
-/// Compatibility generated-unit type while plugins still return one merged contribution.
-pub type GeneratedUnit = PluginContribution;
 
 /// Source context available while collecting parse-only workspace facts.
 #[derive(Debug, Clone, Copy)]
@@ -77,11 +74,6 @@ pub trait DustPlugin: Send + Sync {
         self.validate(file)
     }
 
-    /// Produces generated fragments for this plugin.
-    fn emit(&self, file: &DartFileIr, plan: &SymbolPlan) -> PluginContribution;
-
-    /// Produces generated units for the future plugin API.
-    fn generate(&self, file: &DartFileIr, context: &PluginContext<'_>) -> Vec<GeneratedUnit> {
-        vec![self.emit(file, context.symbol_plan)]
-    }
+    /// Produces generated contributions for this plugin.
+    fn generate(&self, file: &DartFileIr, context: &PluginContext<'_>) -> Vec<PluginContribution>;
 }

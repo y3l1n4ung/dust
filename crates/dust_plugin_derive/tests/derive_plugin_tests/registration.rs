@@ -110,7 +110,16 @@ fn emits_full_fragments_for_matching_traits() {
         "dust_dart::Eq",
         "dust_dart::CopyWith",
     ]);
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let members = members_for_class(&contribution, "User");
     let expected = vec![
         r#"@override
@@ -209,10 +218,16 @@ final class _$UserCopyWithImpl<$Res> implements _$UserCopyWith<$Res> {
 #[test]
 fn legacy_debug_symbol_still_emits_tostring() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &sample_library(&["dust_dart::Debug"]),
-        &SymbolPlan::default(),
-    );
+    let contribution = plugin
+        .generate(
+            &sample_library(&["dust_dart::Debug"]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let members = members_for_class(&contribution, "User");
 
     assert_eq!(
@@ -233,7 +248,16 @@ String toString() {
 #[test]
 fn emits_eq_and_hash_fragments_when_eq_is_present() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(&sample_library(&["dust_dart::Eq"]), &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &sample_library(&["dust_dart::Eq"]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let members = members_for_class(&contribution, "User");
 
     assert_eq!(contribution.mixin_members.len(), 1);
