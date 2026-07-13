@@ -30,7 +30,16 @@ fn handles_enum_fields_in_classes() {
         )],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 
@@ -77,7 +86,16 @@ fn handles_nullable_enum_fields() {
         )],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 
@@ -131,7 +149,16 @@ fn handles_enums_in_collections() {
         )],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 

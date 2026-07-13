@@ -2,14 +2,14 @@ use std::collections::BTreeMap;
 
 use dust_ir::{
     AnnotationNumberKindIr, AnnotationValueIr, ClassIr, ClassKindIr, ConfigApplicationIr,
-    ConstructorIr, ExprSourceIr, FieldIr, LibraryIr, NameIr, SymbolId, TraitApplicationIr, TypeIr,
+    ConstructorIr, DartFileIr, ExprSourceIr, FieldIr, NameIr, SymbolId, TraitApplicationIr, TypeIr,
 };
 use dust_parser_dart::{AnnotationValue, parse_annotation_named_values};
 
 use crate::support::span;
 
-pub(super) fn library(classes: Vec<ClassIr>) -> LibraryIr {
-    LibraryIr {
+pub(super) fn library(classes: Vec<ClassIr>) -> DartFileIr {
+    DartFileIr {
         package_root: ".".to_owned(),
         package_name: "dust_test".to_owned(),
         source_path: "lib/model.dart".to_owned(),

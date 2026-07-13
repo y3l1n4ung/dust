@@ -23,7 +23,15 @@ fn emits_direct_map_casts_for_map_payload_responses() {
     ));
 
     let emitted = plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .support_types
         .join("\n");
     assert_eq!(

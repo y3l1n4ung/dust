@@ -4,8 +4,8 @@ use std::time::Instant;
 
 use dust_db_plugin::register_plugin;
 use dust_ir::{
-    ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, FieldIr,
-    LibraryIr, MethodIr, MethodParamIr, ParamKind, SpanIr, SymbolId, TraitApplicationIr, TypeIr,
+    ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, DartFileIr,
+    FieldIr, MethodIr, MethodParamIr, ParamKind, SpanIr, SymbolId, TraitApplicationIr, TypeIr,
 };
 use dust_plugin_api::{DustPlugin, SymbolPlan};
 use dust_text::{FileId, TextRange};
@@ -126,7 +126,7 @@ fn main() {
         configs: vec![config("dust_dart::SqlxDao", "()")],
         serde: None,
     };
-    let library = LibraryIr {
+    let library = DartFileIr {
         package_root: ".".to_owned(),
         package_name: "bench".to_owned(),
         source_path: "lib/bench.dart".to_owned(),
@@ -153,7 +153,16 @@ fn main() {
     let started = Instant::now();
     let mut bytes = 0usize;
     for _ in 0..ITERS {
-        let contribution = plugin.emit(&library, &SymbolPlan::default());
+        let contribution = plugin
+            .generate(
+                &library,
+                &dust_plugin_api::PluginContext {
+                    symbol_plan: &SymbolPlan::default(),
+                },
+            )
+            .into_iter()
+            .next()
+            .expect("plugin must generate one contribution");
         bytes += contribution
             .support_types
             .iter()

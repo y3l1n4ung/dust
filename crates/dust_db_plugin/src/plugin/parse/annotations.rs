@@ -1,5 +1,8 @@
 use dust_dart_emit::apply_rename_rule;
-use dust_ir::{ConfigApplicationIr, SerdeRenameRuleIr, SymbolId};
+use dust_ir::{
+    ConfigApplicationIr, DbConfigIr, DbDriverIr, DbRenameRuleIr, NormalizedConfigIr,
+    SerdeRenameRuleIr, SymbolId,
+};
 use dust_plugin_api::short_symbol_name;
 
 use crate::plugin::{
@@ -24,6 +27,18 @@ pub(crate) fn sqlx_config(configs: &[ConfigApplicationIr]) -> SqlxConfig {
     let mut out = SqlxConfig::default();
     for config in configs {
         if config_name(&config.symbol) != SQLX {
+            continue;
+        }
+        if let Some(NormalizedConfigIr::Db(DbConfigIr::Sqlx(normalized))) =
+            config.normalized.as_ref()
+        {
+            out.rename = normalized.rename.clone();
+            out.rename_all = normalized.rename_all.map(rename_from_ir);
+            out.flatten = normalized.flatten;
+            out.default_value_source = normalized.default_value_source.clone();
+            out.skip = normalized.skip;
+            out.json = normalized.json;
+            out.try_from_source = normalized.try_from_source.clone();
             continue;
         }
         for (key, value) in config.named_arguments() {
@@ -72,6 +87,17 @@ pub(super) struct DatabaseConfig {
 
 /// Parses `@Database` or `@SqlxDatabase` options.
 pub(super) fn parse_database_config(config: &ConfigApplicationIr) -> Option<DatabaseConfig> {
+    if let Some(NormalizedConfigIr::Db(DbConfigIr::Database(normalized))) =
+        config.normalized.as_ref()
+    {
+        return Some(DatabaseConfig {
+            driver: match normalized.driver {
+                DbDriverIr::Sqlite3 => DbDriver::Sqlite3,
+                DbDriverIr::Postgres => DbDriver::Postgres,
+            },
+            migrations: normalized.migrations.clone(),
+        });
+    }
     let mut driver = DbDriver::Sqlite3;
     let mut migrations = "./migrations".to_owned();
     if let Some(parsed) = config
@@ -92,6 +118,20 @@ pub(super) fn parse_database_config(config: &ConfigApplicationIr) -> Option<Data
         migrations = parsed;
     }
     Some(DatabaseConfig { driver, migrations })
+}
+
+/// Converts normalized DB rename rules into the plugin model.
+fn rename_from_ir(rule: DbRenameRuleIr) -> SqlxRenameRule {
+    match rule {
+        DbRenameRuleIr::Lower => SqlxRenameRule::Lower,
+        DbRenameRuleIr::Upper => SqlxRenameRule::Upper,
+        DbRenameRuleIr::Pascal => SqlxRenameRule::Pascal,
+        DbRenameRuleIr::Camel => SqlxRenameRule::Camel,
+        DbRenameRuleIr::Snake => SqlxRenameRule::Snake,
+        DbRenameRuleIr::ScreamingSnake => SqlxRenameRule::ScreamingSnake,
+        DbRenameRuleIr::Kebab => SqlxRenameRule::Kebab,
+        DbRenameRuleIr::ScreamingKebab => SqlxRenameRule::ScreamingKebab,
+    }
 }
 
 /// Returns true for database class annotation names.

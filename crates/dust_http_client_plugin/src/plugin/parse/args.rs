@@ -1,5 +1,8 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ConfigApplicationIr, MethodParamIr, SpanIr};
+use dust_ir::{
+    ConfigApplicationIr, HttpConfigIr, HttpParameterConfigIr, MethodParamIr, NormalizedConfigIr,
+    SpanIr,
+};
 
 use crate::plugin::util::{config_name, label};
 
@@ -34,6 +37,21 @@ pub(crate) fn parse_optional_string_argument(
         .configs
         .iter()
         .find(|config| config_name(&config.symbol.0) == annotation_name)?;
+    if let Some(NormalizedConfigIr::Http(HttpConfigIr::Parameter(binding))) =
+        config.normalized.as_ref()
+    {
+        return match binding {
+            HttpParameterConfigIr::Path(key) => key.clone(),
+            HttpParameterConfigIr::Query(key)
+            | HttpParameterConfigIr::Header(key)
+            | HttpParameterConfigIr::Field(key)
+            | HttpParameterConfigIr::Part(key)
+            | HttpParameterConfigIr::Extra(key) => Some(key.clone()),
+            HttpParameterConfigIr::Queries
+            | HttpParameterConfigIr::HeaderMap
+            | HttpParameterConfigIr::Body => None,
+        };
+    }
     parse_config_string_argument(config, diagnostics, annotation_name)
 }
 
@@ -43,7 +61,11 @@ pub(crate) fn parse_config_string_argument(
     diagnostics: &mut Vec<Diagnostic>,
     label_name: &str,
 ) -> Option<String> {
-    let _ = config.positional_argument_source(0)?;
+    if config.positional_argument_value(0).is_none()
+        && config.positional_argument_source(0).is_none()
+    {
+        return None;
+    }
     match config.positional_string(0) {
         Some(value) => Some(value),
         None => {
@@ -62,10 +84,9 @@ pub(crate) fn parse_config_map_argument(
     diagnostics: &mut Vec<Diagnostic>,
     label_name: &str,
 ) -> Vec<(String, String)> {
-    let Some(source) = config.positional_argument_source(0).map(str::trim) else {
-        return Vec::new();
-    };
-    if source.is_empty() {
+    if config.positional_argument_value(0).is_none()
+        && config.positional_argument_source(0).is_none()
+    {
         return Vec::new();
     }
     match config.positional_string_map(0) {

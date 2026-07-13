@@ -1,5 +1,8 @@
 use dust_diagnostics::Diagnostic;
-use dust_ir::{ConfigApplicationIr, MethodIr, MethodParamIr};
+use dust_ir::{
+    ConfigApplicationIr, HttpConfigIr, HttpParameterConfigIr, HttpParseThreadIr, MethodIr,
+    MethodParamIr, NormalizedConfigIr,
+};
 
 use crate::plugin::constants::{
     BODY, EXTRA, FIELD, FORM_URL_ENCODED, HEADER, HEADER_MAP, HEADERS, HTTP_PARSE, MULTI_PART,
@@ -31,6 +34,23 @@ pub(crate) fn parse_http_client_config(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> ParsedHttpClientConfig {
+    if let Some(NormalizedConfigIr::Http(HttpConfigIr::Client(normalized))) =
+        config.normalized.as_ref()
+    {
+        return ParsedHttpClientConfig {
+            base_url: normalized.base_url.clone(),
+            target: match normalized.target {
+                dust_ir::HttpTargetIr::Dart => HttpTargetMode::Dart,
+                dust_ir::HttpTargetIr::Flutter => HttpTargetMode::Flutter,
+            },
+            parse_thread: match normalized.parse_thread {
+                HttpParseThreadIr::Main => ParseThreadMode::Main,
+                HttpParseThreadIr::Isolate => ParseThreadMode::Isolate,
+            },
+            headers: normalized.headers.clone(),
+            generate_test: normalized.generate_test,
+        };
+    }
     let mut parsed = ParsedHttpClientConfig {
         base_url: None,
         target: HttpTargetMode::Dart,
@@ -84,6 +104,11 @@ pub(crate) fn parse_http_client_headers(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<(String, String)> {
+    if let Some(NormalizedConfigIr::Http(HttpConfigIr::Client(normalized))) =
+        config.normalized.as_ref()
+    {
+        return normalized.headers.clone();
+    }
     match config.named_string_map("headers") {
         Some(values) => values,
         None => {
@@ -98,6 +123,11 @@ pub(crate) fn parse_headers_config(
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<(String, String)> {
+    if let Some(NormalizedConfigIr::Http(HttpConfigIr::Headers(values))) =
+        config.normalized.as_ref()
+    {
+        return values.clone();
+    }
     parse_config_map_argument(config, diagnostics, "Headers")
 }
 
@@ -122,6 +152,14 @@ pub(crate) fn method_parse_thread(
 ) -> ParseThreadMode {
     for config in &method.configs {
         if config_name(&config.symbol.0) == HTTP_PARSE {
+            if let Some(NormalizedConfigIr::Http(HttpConfigIr::Parse(parse))) =
+                config.normalized.as_ref()
+            {
+                return match parse.thread {
+                    HttpParseThreadIr::Main => ParseThreadMode::Main,
+                    HttpParseThreadIr::Isolate => ParseThreadMode::Isolate,
+                };
+            }
             return parse_http_parse_config(config, diagnostics);
         }
     }
@@ -149,6 +187,17 @@ pub(crate) fn parse_http_parse_config(
 
 /// Resolves the request encoding mode for a method.
 pub(crate) fn method_request_mode(method: &MethodIr) -> RequestMode {
+    for config in &method.configs {
+        if let Some(NormalizedConfigIr::Http(HttpConfigIr::RequestMode(mode))) =
+            config.normalized.as_ref()
+        {
+            return match mode {
+                dust_ir::HttpRequestModeIr::Standard => RequestMode::Standard,
+                dust_ir::HttpRequestModeIr::FormUrlEncoded => RequestMode::FormUrlEncoded,
+                dust_ir::HttpRequestModeIr::MultiPart => RequestMode::MultiPart,
+            };
+        }
+    }
     if method
         .configs
         .iter()
@@ -168,6 +217,25 @@ pub(crate) fn method_request_mode(method: &MethodIr) -> RequestMode {
 
 /// Returns all HTTP verb annotations attached to a method.
 pub(crate) fn method_verbs(method: &MethodIr) -> Vec<HttpVerb> {
+    let normalized = method
+        .configs
+        .iter()
+        .filter_map(|config| match config.normalized.as_ref() {
+            Some(NormalizedConfigIr::Http(HttpConfigIr::Verb { verb, .. })) => Some(match verb {
+                dust_ir::HttpVerbIr::Get => HttpVerb::Get,
+                dust_ir::HttpVerbIr::Post => HttpVerb::Post,
+                dust_ir::HttpVerbIr::Put => HttpVerb::Put,
+                dust_ir::HttpVerbIr::Patch => HttpVerb::Patch,
+                dust_ir::HttpVerbIr::Delete => HttpVerb::Delete,
+                dust_ir::HttpVerbIr::Head => HttpVerb::Head,
+                dust_ir::HttpVerbIr::Options => HttpVerb::Options,
+            }),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    if !normalized.is_empty() {
+        return normalized;
+    }
     method
         .configs
         .iter()
@@ -189,6 +257,11 @@ pub(crate) fn method_path(method: &MethodIr, diagnostics: &mut Vec<Diagnostic>) 
     for config in &method.configs {
         match config_name(&config.symbol.0) {
             "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS" => {
+                if let Some(NormalizedConfigIr::Http(HttpConfigIr::Verb { path, .. })) =
+                    config.normalized.as_ref()
+                {
+                    return Some(path.clone());
+                }
                 return parse_config_string_argument(config, diagnostics, "HTTP verb path");
             }
             _ => {}
@@ -206,6 +279,29 @@ pub(crate) fn has_config_named(configs: &[ConfigApplicationIr], expected: &str) 
 
 /// Returns HTTP source annotations attached to a parameter.
 pub(crate) fn param_source_names(param: &MethodParamIr) -> Vec<&str> {
+    let normalized = param
+        .configs
+        .iter()
+        .filter_map(|config| match config.normalized.as_ref() {
+            Some(NormalizedConfigIr::Http(HttpConfigIr::Parameter(binding))) => {
+                Some(match binding {
+                    HttpParameterConfigIr::Path(_) => PATH,
+                    HttpParameterConfigIr::Query(_) => QUERY,
+                    HttpParameterConfigIr::Queries => QUERIES,
+                    HttpParameterConfigIr::Header(_) => HEADER,
+                    HttpParameterConfigIr::HeaderMap => HEADER_MAP,
+                    HttpParameterConfigIr::Body => BODY,
+                    HttpParameterConfigIr::Field(_) => FIELD,
+                    HttpParameterConfigIr::Part(_) => PART,
+                    HttpParameterConfigIr::Extra(_) => EXTRA,
+                })
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    if !normalized.is_empty() {
+        return normalized;
+    }
     param
         .configs
         .iter()

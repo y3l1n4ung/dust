@@ -20,7 +20,16 @@ fn handles_nested_serializable_models() {
         vec![],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let user_to_json = &contribution.top_level_functions[0];
 
     assert_eq!(
@@ -61,7 +70,16 @@ fn handles_nested_deserializable_models() {
         vec![],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let user_from_json = &contribution.top_level_functions[0];
 
     assert_eq!(
@@ -108,7 +126,16 @@ fn wraps_long_nested_deserializable_model_decode() {
         vec![],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let envelope_from_json = &contribution.top_level_functions[0];
 
     assert_eq!(

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use dust_ir::{FunctionIr, LibraryIr, NameIr, TypeIr};
+use dust_ir::{DartFileIr, FunctionIr, NameIr, TypeIr};
 use dust_plugin_api::{
     DustPlugin, PACKAGE_FEATURE_FLUTTER, PACKAGE_FEATURES_ANALYSIS_KEY, SymbolPlan,
     WorkspaceAnalysisBuilder,
@@ -16,7 +16,16 @@ use crate::{
 #[test]
 fn emits_validate_for_string_number_and_matching_fields() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(&validation_library(), &flutter_symbol_plan());
+    let contribution = plugin
+        .generate(
+            &validation_library(),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &flutter_symbol_plan(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let members = members_for_class(&contribution, "SignupRequest");
 
     assert_eq!(
@@ -212,7 +221,16 @@ fn rejects_public_validator_name_collisions() {
 #[test]
 fn dart_validation_omits_flutter_form_helpers() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(&validation_library(), &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &validation_library(),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(
         contribution.support_types,
@@ -277,7 +295,16 @@ fn dart_validation_allows_form_helper_name_collisions() {
 #[test]
 fn emits_nullable_nested_custom_and_class_validation() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(&nested_library(), &flutter_symbol_plan());
+    let contribution = plugin
+        .generate(
+            &nested_library(),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &flutter_symbol_plan(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let members = members_for_class(&contribution, "Profile");
 
     assert_eq!(
@@ -414,7 +441,7 @@ extension _ProfileValidation on Profile {
     );
 }
 
-fn validation_library() -> LibraryIr {
+fn validation_library() -> DartFileIr {
     let mut class = class("SignupRequest");
     class.fields = vec![
         field("email", TypeIr::string(), vec![validate("(email: true)")]),
@@ -440,7 +467,7 @@ fn validation_library() -> LibraryIr {
     library(vec![class])
 }
 
-fn nested_library() -> LibraryIr {
+fn nested_library() -> DartFileIr {
     let mut address = class("Address");
     address.fields = vec![field(
         "zip",

@@ -16,8 +16,7 @@ The canonical root container for a single `.dart` file. It carries:
 - Parser-owned directives, annotations, query calls, and declaration containers.
 - Source spans for high-quality diagnostics.
 
-`LibraryIr` is a temporary compatibility alias for older tests and external
-callers; production crates should use `DartFileIr`.
+`DartFileIr` is the only supported file-level IR type.
 
 ### `TypeIr`
 A powerful, recursive representation of Dart types. It handles:
@@ -30,6 +29,8 @@ A powerful, recursive representation of Dart types. It handles:
 Parser-owned annotation/type facts are normalized into IR before plugins run.
 Instead of plugins parsing raw annotation strings, resolver/lowering fills
 specialized IR structures such as `SerdeFieldConfigIr`.
+Structured annotation collections (lists, sets, maps, and records) retain their
+typed nested values in `AnnotationValueIr` for accessor and feature use.
 
 ## 🛡️ Design Goals
 

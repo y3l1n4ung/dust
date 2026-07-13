@@ -24,10 +24,14 @@ fn registry_runs_validation_and_emission_in_registration_order() {
             vec![Diagnostic::note(format!("validated by {}", self.name))]
         }
 
-        fn emit(&self, _library: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
+        fn generate(
+            &self,
+            _library: &DartFileIr,
+            _context: &PluginContext<'_>,
+        ) -> Vec<PluginContribution> {
             let mut contribution = PluginContribution::default();
             contribution.push_mixin_member("User", format!("// {}", self.name));
-            contribution
+            vec![contribution]
         }
     }
 
@@ -42,7 +46,7 @@ fn registry_runs_validation_and_emission_in_registration_order() {
 
     let diagnostics = registry.validate_library(&library);
     let plan = registry.build_symbol_plan(&library);
-    let contributions = registry.emit_contributions(&library, &plan);
+    let contributions = registry.generate_units(&library, &plan);
 
     assert_eq!(
         diagnostics
@@ -57,7 +61,7 @@ fn registry_runs_validation_and_emission_in_registration_order() {
 }
 
 #[test]
-fn plugin_generate_defaults_to_legacy_contribution_adapter() {
+fn plugin_generate_returns_contribution_units() {
     struct GeneratePlugin;
 
     impl DustPlugin for GeneratePlugin {
@@ -69,10 +73,14 @@ fn plugin_generate_defaults_to_legacy_contribution_adapter() {
             Vec::new()
         }
 
-        fn emit(&self, _file: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
+        fn generate(
+            &self,
+            _file: &DartFileIr,
+            _context: &PluginContext<'_>,
+        ) -> Vec<PluginContribution> {
             let mut contribution = PluginContribution::default();
             contribution.push_mixin_member("User", "// generated");
-            contribution
+            vec![contribution]
         }
     }
 
@@ -95,10 +103,6 @@ fn registry_emits_generated_units_from_generate_api() {
 
         fn validate(&self, _file: &DartFileIr) -> Vec<Diagnostic> {
             Vec::new()
-        }
-
-        fn emit(&self, _file: &DartFileIr, _plan: &SymbolPlan) -> PluginContribution {
-            panic!("registry should call generate, not emit");
         }
 
         fn generate(
@@ -124,7 +128,7 @@ fn registry_emits_generated_units_from_generate_api() {
     let mut registry = PluginRegistry::new();
     registry.register(Box::new(GenerateOnlyPlugin)).unwrap();
 
-    let contributions = registry.emit_contributions(&file, &plan);
+    let contributions = registry.generate_units(&file, &plan);
 
     assert_eq!(contributions.len(), 2);
     assert_eq!(contributions[0].mixin_members[0].members[0], "// first");

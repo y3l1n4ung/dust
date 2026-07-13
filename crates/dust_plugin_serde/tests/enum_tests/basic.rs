@@ -18,7 +18,16 @@ fn generates_serde_for_enums() {
         )],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     assert_eq!(contribution.top_level_functions.len(), 2);
 
     let to_json = &contribution.top_level_functions[0];
@@ -56,7 +65,16 @@ fn supports_enum_renaming() {
             SerdeRenameRuleIr::SnakeCase,
         )],
     );
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
@@ -98,7 +116,16 @@ fn supports_enum_variant_rename_and_skip() {
         )],
     );
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let to_json = &contribution.top_level_functions[0];
     let from_json = &contribution.top_level_functions[1];
 

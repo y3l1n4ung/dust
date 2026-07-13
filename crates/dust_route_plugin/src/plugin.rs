@@ -2,7 +2,8 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
 use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{
-    DustPlugin, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
+    DustPlugin, PluginContext, PluginContribution, WorkspaceAnalysisBuilder,
+    WorkspaceAnalysisContext,
 };
 
 /// Collects route, router, and guard facts across the workspace.
@@ -77,20 +78,24 @@ impl DustPlugin for RoutePlugin {
         validate_library_routes(library)
     }
 
-    fn emit(&self, library: &DartFileIr, plan: &SymbolPlan) -> PluginContribution {
-        let spec = match build_router_spec(library, plan) {
+    fn generate(
+        &self,
+        library: &DartFileIr,
+        context: &PluginContext<'_>,
+    ) -> Vec<PluginContribution> {
+        let spec = match build_router_spec(library, context.symbol_plan) {
             Ok(Some(spec)) => spec,
-            Ok(None) => return PluginContribution::default(),
+            Ok(None) => return vec![PluginContribution::default()],
             Err(diagnostics) => {
-                return PluginContribution {
+                return vec![PluginContribution {
                     diagnostics,
                     ..PluginContribution::default()
-                };
+                }];
             }
         };
-        PluginContribution {
+        vec![PluginContribution {
             primary_source: Some(render_route_generated(library, &spec)),
             ..PluginContribution::default()
-        }
+        }]
     }
 }

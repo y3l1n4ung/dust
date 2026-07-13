@@ -9,44 +9,50 @@ use super::support::{
 #[test]
 fn emits_deep_equality_and_hash_for_collection_fields() {
     let plugin = register_plugin();
-    let contribution = plugin.emit(
-        &library(vec![class(
-            "Catalog",
-            vec![
-                field("products", TypeIr::list_of(TypeIr::named("Product"))),
-                field(
-                    "bySku",
-                    TypeIr::map_of(TypeIr::string(), TypeIr::named("Product")),
-                ),
-                field(
-                    "featuredSkus",
-                    TypeIr::generic("Set", vec![TypeIr::string()]),
-                ),
-            ],
-            vec![constructor(
-                None,
+    let contribution = plugin
+        .generate(
+            &library(vec![class(
+                "Catalog",
                 vec![
-                    constructor_param(
-                        "products",
-                        TypeIr::list_of(TypeIr::named("Product")),
-                        ParamKind::Positional,
-                    ),
-                    constructor_param(
+                    field("products", TypeIr::list_of(TypeIr::named("Product"))),
+                    field(
                         "bySku",
                         TypeIr::map_of(TypeIr::string(), TypeIr::named("Product")),
-                        ParamKind::Positional,
                     ),
-                    constructor_param(
+                    field(
                         "featuredSkus",
                         TypeIr::generic("Set", vec![TypeIr::string()]),
-                        ParamKind::Positional,
                     ),
                 ],
-            )],
-            &["dust_dart::Eq"],
-        )]),
-        &SymbolPlan::default(),
-    );
+                vec![constructor(
+                    None,
+                    vec![
+                        constructor_param(
+                            "products",
+                            TypeIr::list_of(TypeIr::named("Product")),
+                            ParamKind::Positional,
+                        ),
+                        constructor_param(
+                            "bySku",
+                            TypeIr::map_of(TypeIr::string(), TypeIr::named("Product")),
+                            ParamKind::Positional,
+                        ),
+                        constructor_param(
+                            "featuredSkus",
+                            TypeIr::generic("Set", vec![TypeIr::string()]),
+                            ParamKind::Positional,
+                        ),
+                    ],
+                )],
+                &["dust_dart::Eq"],
+            )]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(
         contribution.shared_helpers,
@@ -115,7 +121,16 @@ fn suffixes_deep_equality_helper_when_private_name_collides() {
         span: span(100, 130),
     });
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(
         contribution.shared_helpers,

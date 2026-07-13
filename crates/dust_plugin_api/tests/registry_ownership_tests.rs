@@ -1,8 +1,8 @@
 //! Integration tests for plugin registry symbol ownership validation.
 
 use dust_diagnostics::Diagnostic;
-use dust_ir::LibraryIr;
-use dust_plugin_api::{DustPlugin, PluginContribution, PluginRegistry, SymbolPlan};
+use dust_ir::DartFileIr;
+use dust_plugin_api::{DustPlugin, PluginContext, PluginContribution, PluginRegistry};
 
 struct FakePlugin {
     name: &'static str,
@@ -23,12 +23,16 @@ impl DustPlugin for FakePlugin {
         self.configs
     }
 
-    fn validate(&self, _library: &LibraryIr) -> Vec<Diagnostic> {
+    fn validate(&self, _library: &DartFileIr) -> Vec<Diagnostic> {
         Vec::new()
     }
 
-    fn emit(&self, _library: &LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
-        PluginContribution::default()
+    fn generate(
+        &self,
+        _library: &DartFileIr,
+        _context: &PluginContext<'_>,
+    ) -> Vec<PluginContribution> {
+        vec![PluginContribution::default()]
     }
 }
 

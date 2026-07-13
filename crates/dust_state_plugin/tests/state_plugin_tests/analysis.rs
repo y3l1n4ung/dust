@@ -1,6 +1,6 @@
 use dust_parser_dart::{
-    ParsedAnnotation, ParsedClassKind, ParsedClassSurface, ParsedEnumSurface, ParsedFieldSurface,
-    ParsedLibrarySurface,
+    ParsedAnnotation, ParsedClassKind, ParsedClassSurface, ParsedDartFileSurface,
+    ParsedEnumSurface, ParsedFieldSurface,
 };
 use dust_plugin_api::{DustPlugin, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
 use dust_state_plugin::register_plugin;
@@ -61,15 +61,15 @@ fn class(
     }
 }
 
-fn parsed_library(classes: Vec<ParsedClassSurface>) -> ParsedLibrarySurface {
+fn parsed_library(classes: Vec<ParsedClassSurface>) -> ParsedDartFileSurface {
     parsed_library_with_enums(classes, Vec::new())
 }
 
 fn parsed_library_with_enums(
     classes: Vec<ParsedClassSurface>,
     enums: Vec<ParsedEnumSurface>,
-) -> ParsedLibrarySurface {
-    ParsedLibrarySurface {
+) -> ParsedDartFileSurface {
+    ParsedDartFileSurface {
         span: TextRange::new(0_u32, 100_u32),
         directives: Vec::new(),
         classes,

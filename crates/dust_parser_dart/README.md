@@ -7,8 +7,12 @@ Backend-neutral parser contracts and extracted Dart file surfaces.
 - `ParseBackend`
 - `ParseOptions`
 - `ParseResult`
-- `ParsedDartFileSurface` and temporary `ParsedLibrarySurface` compatibility alias
+- `ParsedDartFileSurface`
 - parsed directive, class, enum, field, method, constructor, annotation, and query-call facts
+
+Annotation values remain parser-owned facts, including nested lists, sets, maps,
+records, constructors, and member references, so downstream IR and plugins do
+not need to re-parse Dart source text.
 
 ## Used by
 

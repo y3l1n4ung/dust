@@ -20,7 +20,15 @@ fn omits_result_binding_for_void_methods() {
     ));
 
     let emitted = plugin
-        .emit(&library, &SymbolPlan::default())
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution")
         .support_types
         .join("\n");
     assert_eq!(

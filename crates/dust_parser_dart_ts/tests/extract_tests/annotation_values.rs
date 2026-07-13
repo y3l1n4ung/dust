@@ -69,9 +69,35 @@ class User {}
         items.first().map(|item| &item.kind),
         Some(&ParsedAnnotationValueRootKind::String("a".to_owned()))
     );
-    assert_eq!(kind(args, "set"), &ParsedAnnotationValueRootKind::Set);
-    assert_eq!(kind(args, "map"), &ParsedAnnotationValueRootKind::Map);
-    assert_eq!(kind(args, "record"), &ParsedAnnotationValueRootKind::Record);
+    let ParsedAnnotationValueRootKind::Set(items) = kind(args, "set") else {
+        panic!("expected structured set");
+    };
+    assert_eq!(items.len(), 1);
+    assert_eq!(
+        items[0].kind,
+        ParsedAnnotationValueRootKind::String("a".to_owned())
+    );
+    let ParsedAnnotationValueRootKind::Map(entries) = kind(args, "map") else {
+        panic!("expected structured map");
+    };
+    assert_eq!(entries.len(), 1);
+    assert_eq!(
+        entries[0].0.kind,
+        ParsedAnnotationValueRootKind::String("a".to_owned())
+    );
+    assert_eq!(
+        entries[0].1.kind,
+        ParsedAnnotationValueRootKind::Number(ParsedAnnotationNumberKind::Int)
+    );
+    let ParsedAnnotationValueRootKind::Record(fields) = kind(args, "record") else {
+        panic!("expected structured record");
+    };
+    assert_eq!(fields.len(), 1);
+    assert_eq!(fields[0].0, "label");
+    assert_eq!(
+        fields[0].1.kind,
+        ParsedAnnotationValueRootKind::String("a".to_owned())
+    );
     let ParsedAnnotationValueRootKind::Constructor { name, arguments } = kind(args, "constructed")
     else {
         panic!("expected structured constructor");

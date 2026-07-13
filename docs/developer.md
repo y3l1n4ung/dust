@@ -49,8 +49,7 @@ Dust-owned parser facts. Tree-sitter nodes do not cross the
 The engine resolves imports, types, annotations, and Dust-owned symbols against
 the workspace catalog. The result is the canonical **Dust IR**
 (`DartFileIr`), a simplified, language-neutral model that is safe for plugins
-to consume. `LibraryIr` exists only as a temporary compatibility alias while the
-last external/test callers migrate.
+to consume. `DartFileIr` is the only supported file-level IR name.
 
 ### Pass 4: Validation & Emission
 1.  **Validation:** Every plugin runs semantic checks on `DartFileIr` (e.g., "Does this `@Path` param exist in the URL?").

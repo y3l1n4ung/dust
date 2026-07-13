@@ -6,7 +6,16 @@ use crate::support::{library, row_class};
 #[test]
 fn emits_sqlx_style_from_row_mapper() {
     let plugin = register_row_plugin();
-    let contribution = plugin.emit(&library(vec![row_class()]), &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library(vec![row_class()]),
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(
         contribution.support_types[0],

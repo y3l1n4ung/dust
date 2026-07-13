@@ -1,6 +1,6 @@
 use dust_ir::{
-    AnnotationValueIr, ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, EnumIr, FieldIr,
-    LibraryIr, MethodIr, MethodParamIr, ParamKind, SerdeFieldConfigIr, SpanIr, SymbolId,
+    AnnotationValueIr, ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, DartFileIr, EnumIr,
+    FieldIr, MethodIr, MethodParamIr, ParamKind, SerdeFieldConfigIr, SpanIr, SymbolId,
     TraitApplicationIr, TypeIr,
 };
 use dust_text::{FileId, TextRange};
@@ -129,8 +129,8 @@ pub(crate) fn class(
 }
 
 /// Builds a library fixture for validation tests.
-pub(crate) fn library(classes: Vec<ClassIr>, enums: Vec<EnumIr>) -> LibraryIr {
-    LibraryIr {
+pub(crate) fn library(classes: Vec<ClassIr>, enums: Vec<EnumIr>) -> DartFileIr {
+    DartFileIr {
         package_root: ".".to_owned(),
         package_name: "dust_test".to_owned(),
         source_path: "lib/models.dart".to_owned(),

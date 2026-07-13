@@ -7,7 +7,7 @@ use dust_ir::{
 
 use super::{
     model::RouteAnnotation,
-    parse::{parse_route_config, route_config},
+    parse::{route_annotation, route_config},
 };
 
 /// Validates all `@AppRoute` pages in a lowered Dart library.
@@ -22,16 +22,21 @@ pub(crate) fn validate_library_routes(library: &DartFileIr) -> Vec<Diagnostic> {
         .collect::<HashSet<_>>();
 
     for class in &library.classes {
-        let Some(config) = route_config(&class.configs) else {
+        let has_route = class
+            .configs
+            .iter()
+            .any(|config| config.symbol.0 == "dust_flutter::AppRoute");
+        if !has_route {
             continue;
-        };
-        let Some(route) = parse_route_config(config) else {
+        }
+        let Some(config) = route_config(&class.configs) else {
             diagnostics.push(Diagnostic::error(format!(
                 "`@AppRoute` on `{}` requires a string path argument",
                 class.name
             )));
             continue;
         };
+        let route = route_annotation(config);
 
         if !route.path.starts_with('/') {
             diagnostics.push(Diagnostic::error(format!(

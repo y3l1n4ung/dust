@@ -1,6 +1,6 @@
 use dust_ir::{
-    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, EnumIr, FieldIr, LibraryIr, ParamKind,
-    SpanIr, SymbolId, TraitApplicationIr, TypeIr,
+    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, DartFileIr, EnumIr, FieldIr,
+    ParamKind, SpanIr, SymbolId, TraitApplicationIr, TypeIr,
 };
 use dust_text::{FileId, TextRange};
 
@@ -73,8 +73,8 @@ pub(crate) fn class(
     }
 }
 
-pub(crate) fn library(classes: Vec<ClassIr>, enums: Vec<EnumIr>) -> LibraryIr {
-    LibraryIr {
+pub(crate) fn library(classes: Vec<ClassIr>, enums: Vec<EnumIr>) -> DartFileIr {
+    DartFileIr {
         package_root: ".".to_owned(),
         package_name: "dust_test".to_owned(),
         source_path: "lib/models.dart".to_owned(),

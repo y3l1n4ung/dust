@@ -2,7 +2,7 @@ use std::fs;
 
 use dust_diagnostics::Diagnostic;
 use dust_emitter::write_library;
-use dust_ir::{ClassIr, ClassKindIr, LibraryIr, ParamKind, TypeIr};
+use dust_ir::{ClassIr, ClassKindIr, DartFileIr, ParamKind, TypeIr};
 use dust_plugin_api::{PluginContribution, PluginRegistry};
 use dust_plugin_derive::register_plugin;
 use tempfile::tempdir;
@@ -69,7 +69,7 @@ fn write_library_skips_output_when_validation_has_errors() {
 fn emitter_generates_real_multi_class_output_with_derive_plugin() {
     let temp = tempdir().unwrap();
     let output_path = temp.path().join("lib/models.g.dart");
-    let library = LibraryIr {
+    let library = DartFileIr {
         package_root: ".".to_owned(),
         package_name: "dust_test".to_owned(),
         source_path: "lib/models.dart".to_owned(),

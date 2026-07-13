@@ -48,9 +48,6 @@ impl ParsedDartFileSurface {
     }
 }
 
-/// Compatibility alias while parser callers migrate to `ParsedDartFileSurface`.
-pub type ParsedLibrarySurface = ParsedDartFileSurface;
-
 /// One top-level Dart directive extracted from a library.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParsedDirective {
@@ -399,12 +396,12 @@ pub enum ParsedAnnotationValueRootKind {
     Number(ParsedAnnotationNumberKind),
     /// A list literal and its directly parsed elements.
     List(Vec<ParsedAnnotationValue>),
-    /// A set literal.
-    Set,
-    /// A map literal.
-    Map,
-    /// A record literal.
-    Record,
+    /// A set literal and its directly parsed elements.
+    Set(Vec<ParsedAnnotationValue>),
+    /// A map literal and its directly parsed key/value pairs.
+    Map(Vec<(ParsedAnnotationValue, ParsedAnnotationValue)>),
+    /// A named record literal and its directly parsed fields.
+    Record(Vec<(String, ParsedAnnotationValue)>),
     /// A constructor invocation.
     Constructor {
         /// Constructor/type source.

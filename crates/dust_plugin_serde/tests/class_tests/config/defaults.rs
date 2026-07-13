@@ -32,7 +32,16 @@ fn supports_default_values_during_deserialization() {
     );
 
     let library = library(vec![user_class], vec![]);
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(
         &contribution.top_level_functions[0],
@@ -75,7 +84,16 @@ fn keeps_defaulted_double_decode_syntax_valid() {
     );
 
     let library = library(vec![quote_class], vec![]);
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert_eq!(
         &contribution.top_level_functions[0],

@@ -1,17 +1,17 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::{QueryCallIr, QueryFunctionIr, SpanIr};
-use dust_parser_dart::ParsedQueryFunction;
-use dust_resolver::ResolvedLibrary;
+use dust_parser_dart::{ParsedQueryCallSurface, ParsedQueryFunction};
+use dust_text::FileId;
 
 use super::type_parse::lower_type;
 
 /// Lowers parsed SQL query helper calls into DB plugin IR.
 pub(super) fn lower_query_calls(
-    library: &ResolvedLibrary,
+    file_id: FileId,
+    query_calls: &[ParsedQueryCallSurface],
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<QueryCallIr> {
-    library
-        .query_calls
+    query_calls
         .iter()
         .map(|query| {
             let type_outcome = lower_type(None, query.type_arg_source.as_deref());
@@ -30,7 +30,7 @@ pub(super) fn lower_query_calls(
                 parameter_count: query.parameter_count,
                 params_source_is_list: query.params_source_is_list,
                 fetch_method: query.fetch_method.clone(),
-                span: SpanIr::new(library.span.file_id, query.span),
+                span: SpanIr::new(file_id, query.span),
             }
         })
         .collect()

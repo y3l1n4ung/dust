@@ -1,12 +1,13 @@
-//! Integration tests for Dust IR helpers and compatibility surfaces.
+//! Integration tests for Dust IR helpers and canonical file surfaces.
+
+use std::collections::BTreeMap;
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
     AnnotationIr, AnnotationValueIr, BuiltinType, ClassIr, ClassKindIr, ConfigApplicationIr,
     ConstructorIr, ConstructorParamIr, DartFileIr, ExportIr, ExprSourceIr, FieldIr, ImportIr,
-    LibraryDeclIr, LibraryIr, LoweringOutcome, NameIr, ParamKind, PartIr, PartOfIr,
-    SerdeClassConfigIr, SerdeFieldConfigIr, SerdeRenameRuleIr, SpanIr, SymbolId, TypeIr,
-    WorkspaceIr,
+    LibraryDeclIr, LoweringOutcome, NameIr, ParamKind, PartIr, PartOfIr, SerdeClassConfigIr,
+    SerdeFieldConfigIr, SerdeRenameRuleIr, SpanIr, SymbolId, TypeIr, WorkspaceIr,
 };
 use dust_text::{FileId, TextRange};
 
@@ -230,10 +231,10 @@ fn dart_file_ir_is_the_canonical_library_model() {
     );
     file.imports
         .push("package:dust_dart/dust_dart.dart".to_owned());
-    let legacy: LibraryIr = file.clone();
+    let copy: DartFileIr = file.clone();
 
-    assert_eq!(legacy.source_path, "lib/user.dart");
-    assert_eq!(legacy.imports, ["package:dust_dart/dust_dart.dart"]);
+    assert_eq!(copy.source_path, "lib/user.dart");
+    assert_eq!(copy.imports, ["package:dust_dart/dust_dart.dart"]);
 }
 
 #[test]
@@ -401,4 +402,66 @@ fn config_application_ir_preserves_structured_arguments() {
     assert!(config.positional_args.is_empty());
     assert!(config.arguments_source.is_none());
     assert!(compat.named_args.is_empty());
+}
+
+#[test]
+fn config_accessors_prefer_structured_annotation_values() {
+    let mut named_args = BTreeMap::new();
+    named_args.insert("enabled".to_owned(), AnnotationValueIr::Bool(true));
+    named_args.insert(
+        "tags".to_owned(),
+        AnnotationValueIr::List(vec![
+            AnnotationValueIr::String("one".to_owned()),
+            AnnotationValueIr::String("two".to_owned()),
+        ]),
+    );
+    named_args.insert(
+        "headers".to_owned(),
+        AnnotationValueIr::Map(vec![(
+            AnnotationValueIr::String("Accept".to_owned()),
+            AnnotationValueIr::String("application/json".to_owned()),
+        )]),
+    );
+    named_args.insert(
+        "codec".to_owned(),
+        AnnotationValueIr::Member(NameIr {
+            source: "UserCodec".to_owned(),
+            short: "UserCodec".to_owned(),
+            prefix: None,
+            span: span(0, 8),
+        }),
+    );
+    named_args.insert(
+        "guards".to_owned(),
+        AnnotationValueIr::List(vec![AnnotationValueIr::Member(NameIr {
+            source: "AuthGuard".to_owned(),
+            short: "AuthGuard".to_owned(),
+            prefix: None,
+            span: span(0, 9),
+        })]),
+    );
+
+    let config = ConfigApplicationIr::with_arguments(
+        SymbolId::new("dust.TestConfig"),
+        None,
+        vec![AnnotationValueIr::String("query".to_owned())],
+        named_args,
+        span(0, 1),
+    );
+
+    assert_eq!(config.positional_string(0).as_deref(), Some("query"));
+    assert_eq!(config.named_bool("enabled"), Some(true));
+    assert_eq!(
+        config.named_string_list("tags"),
+        Some(vec!["one".to_owned(), "two".to_owned()])
+    );
+    assert_eq!(
+        config.named_string_map("headers"),
+        Some(vec![("Accept".to_owned(), "application/json".to_owned(),)])
+    );
+    assert_eq!(config.named_member("codec"), Some("UserCodec".to_owned()));
+    assert_eq!(
+        config.named_type_list("guards"),
+        Some(vec!["AuthGuard".to_owned()])
+    );
 }

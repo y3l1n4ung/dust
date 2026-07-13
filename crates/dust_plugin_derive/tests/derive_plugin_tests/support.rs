@@ -1,6 +1,6 @@
 use dust_ir::{
-    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, FieldIr, LibraryIr, ParamKind, SpanIr,
-    SymbolId, TraitApplicationIr, TypeIr,
+    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, DartFileIr, FieldIr, ParamKind,
+    SpanIr, SymbolId, TraitApplicationIr, TypeIr,
 };
 use dust_plugin_api::PluginContribution;
 use dust_text::{FileId, TextRange};
@@ -73,8 +73,8 @@ pub(crate) fn class_with_traits(name: &str, traits: &[&str]) -> ClassIr {
     }
 }
 
-pub(crate) fn sample_library(traits: &[&str]) -> LibraryIr {
-    LibraryIr {
+pub(crate) fn sample_library(traits: &[&str]) -> DartFileIr {
+    DartFileIr {
         package_root: ".".to_owned(),
         package_name: "dust_test".to_owned(),
         source_path: "lib/user.dart".to_owned(),

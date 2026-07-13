@@ -81,54 +81,76 @@ fn tree_sitter_nodes_stay_backend_private() {
 }
 
 #[test]
-fn compatibility_aliases_stay_in_canonical_modules() {
+fn compatibility_aliases_are_removed() {
     let root = workspace_root();
     let mut violations = Vec::new();
 
-    assert_alias_defined_once(
-        &root.join("crates/dust_ir/src/library.rs"),
-        "pub type LibraryIr = DartFileIr;",
-    );
-    assert_alias_defined_once(
-        &root.join("crates/dust_parser_dart/src/surface.rs"),
-        "pub type ParsedLibrarySurface = ParsedDartFileSurface;",
-    );
-
     for entry in fs::read_dir(root.join("crates")).expect("crates directory exists") {
         let path = entry.expect("crate entry is readable").path();
-        scan_dir_with_exclusions(
+        scan_dir(
             &path.join("src"),
-            &compatibility_alias_patterns(),
-            &[
-                root.join("crates/dust_ir/src/library.rs"),
-                root.join("crates/dust_parser_dart/src/surface.rs"),
-            ],
+            &["LibraryIr", "ParsedLibrarySurface"],
             &mut violations,
         );
     }
 
     assert!(
         violations.is_empty(),
-        "compatibility aliases must only be defined at their canonical shims:\n{}",
+        "removed parser compatibility aliases must not return to production source:\n{}",
         violations.join("\n")
     );
 }
 
 #[test]
-fn production_code_uses_canonical_file_model_names() {
+fn production_plugins_use_generate_api() {
     let root = workspace_root();
     let mut violations = Vec::new();
 
-    for entry in fs::read_dir(root.join("crates")).expect("crates directory exists") {
-        let path = entry.expect("crate entry is readable").path();
-        scan_dir_with_exclusions(
-            &path.join("src"),
-            &["LibraryIr", "ParsedLibrarySurface"],
+    for dir in [
+        "crates/dust_plugin_api/src",
+        "crates/dust_plugin_derive/src",
+        "crates/dust_plugin_serde/src",
+        "crates/dust_http_client_plugin/src",
+        "crates/dust_route_plugin/src",
+        "crates/dust_state_plugin/src",
+        "crates/dust_db_plugin/src",
+        "crates/dust_driver/src",
+    ] {
+        scan_dir(
+            &root.join(dir),
+            &["fn emit(", "GeneratedUnit", "emit_contributions"],
+            &mut violations,
+        );
+    }
+
+    assert!(
+        violations.is_empty(),
+        "production plugins must use the generate API without legacy emit adapters:\n{}",
+        violations.join("\n")
+    );
+}
+
+#[test]
+fn feature_plugins_do_not_parse_raw_dart_sources() {
+    let root = workspace_root();
+    let mut violations = Vec::new();
+
+    for dir in [
+        "crates/dust_db_plugin/src",
+        "crates/dust_plugin_derive/src",
+        "crates/dust_http_client_plugin/src",
+        "crates/dust_route_plugin/src",
+        "crates/dust_state_plugin/src",
+    ] {
+        scan_dir(
+            &root.join(dir),
             &[
-                root.join("crates/dust_ir/src/library.rs"),
-                root.join("crates/dust_ir/src/lib.rs"),
-                root.join("crates/dust_parser_dart/src/surface.rs"),
-                root.join("crates/dust_parser_dart/src/lib.rs"),
+                "source.as_str().find",
+                "source.find(\"@",
+                "parse_named_arguments",
+                "parse_type_name",
+                "split_top_level_items",
+                "split_top_level_once",
             ],
             &mut violations,
         );
@@ -136,7 +158,7 @@ fn production_code_uses_canonical_file_model_names() {
 
     assert!(
         violations.is_empty(),
-        "production code must use DartFileIr and ParsedDartFileSurface outside compatibility shims:\n{}",
+        "feature plugins must consume parser/IR facts instead of raw Dart parsing:\n{}",
         violations.join("\n")
     );
 }
@@ -393,10 +415,6 @@ fn tree_sitter_public_boundary_patterns() -> Vec<&'static str> {
     ]
 }
 
-fn compatibility_alias_patterns() -> Vec<&'static str> {
-    vec!["pub type LibraryIr", "pub type ParsedLibrarySurface"]
-}
-
 fn scan_dir(dir: &Path, patterns: &[&str], violations: &mut Vec<String>) {
     let Ok(entries) = fs::read_dir(dir) else {
         return;
@@ -432,31 +450,6 @@ fn collect_files(dir: &Path) -> Vec<std::path::PathBuf> {
     files
 }
 
-fn scan_dir_with_exclusions(
-    dir: &Path,
-    patterns: &[&str],
-    excluded_files: &[std::path::PathBuf],
-    violations: &mut Vec<String>,
-) {
-    let Ok(entries) = fs::read_dir(dir) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if excluded_files.iter().any(|excluded| excluded == &path) {
-            continue;
-        }
-        if path.is_dir() {
-            scan_dir_with_exclusions(&path, patterns, excluded_files, violations);
-            continue;
-        }
-        if path.extension().and_then(|ext| ext.to_str()) != Some("rs") {
-            continue;
-        }
-        scan_file(&path, patterns, violations);
-    }
-}
-
 fn scan_file(path: &Path, patterns: &[&str], violations: &mut Vec<String>) {
     let Ok(source) = fs::read_to_string(path) else {
         return;
@@ -473,17 +466,4 @@ fn scan_file(path: &Path, patterns: &[&str], violations: &mut Vec<String>) {
             }
         }
     }
-}
-
-fn assert_alias_defined_once(path: &Path, alias: &str) {
-    let source = fs::read_to_string(path).unwrap_or_else(|error| {
-        panic!("{} should be readable: {error}", path.display());
-    });
-    let count = source.match_indices(alias).count();
-    assert_eq!(
-        count,
-        1,
-        "{} should define `{alias}` exactly once",
-        path.display()
-    );
 }

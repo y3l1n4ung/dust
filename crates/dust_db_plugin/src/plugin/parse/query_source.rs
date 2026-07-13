@@ -2,7 +2,7 @@ use dust_dart_emit::{
     DART_BOOL, DART_DATE_TIME, DART_DOUBLE, DART_EXEC_RESULT, DART_FUTURE, DART_INT, DART_LIST,
     DART_NUM, DART_RESULT, DART_ROW, DART_STRING, DART_UNIT,
 };
-use dust_ir::{ConfigApplicationIr, TypeIr};
+use dust_ir::{ConfigApplicationIr, DbConfigIr, NormalizedConfigIr, TypeIr};
 
 use crate::plugin::model::{FetchMode, QueryFunction};
 
@@ -10,10 +10,14 @@ use dust_dart_syntax::parse_static_dart_string_literal;
 
 /// Parses SQL source from a `@Query` annotation.
 pub(super) fn parse_query_config(config: &ConfigApplicationIr) -> (String, bool) {
-    if let Some(sql) = config
-        .positional_argument_source(0)
-        .and_then(parse_static_dart_string_literal)
+    if let Some(NormalizedConfigIr::Db(DbConfigIr::Query(normalized))) = config.normalized.as_ref()
     {
+        return (normalized.sql.clone(), normalized.sql_source_static);
+    }
+    if let Some(sql) = config.positional_string(0) {
+        return (sql, true);
+    }
+    if let Some(sql) = config.named_string("sql") {
         return (sql, true);
     }
     if let Some(value) = config.named_expression_source("sql") {

@@ -1,4 +1,4 @@
-use dust_ir::{ImportIr, LibraryIr, TypeIr};
+use dust_ir::{DartFileIr, ImportIr, TypeIr};
 use dust_plugin_api::DustPlugin;
 use dust_route_plugin::register_plugin;
 
@@ -217,7 +217,7 @@ fn diagnostic_messages(diagnostics: &[dust_diagnostics::Diagnostic]) -> Vec<&str
         .collect()
 }
 
-fn add_import(library: &mut LibraryIr, uri: &str, show: &[&str], hide: &[&str]) {
+fn add_import(library: &mut DartFileIr, uri: &str, show: &[&str], hide: &[&str]) {
     library.imports.push(uri.to_owned());
     library.import_directives.push(ImportIr {
         uri: uri.to_owned(),

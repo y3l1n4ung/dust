@@ -1,11 +1,13 @@
 use dust_ir::{
-    ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, LibraryIr,
-    ParamKind, SpanIr, SymbolId, TypeIr,
+    ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, DartFileIr,
+    NormalizedConfigIr, ParamKind, RouteConfigIr, RouterConfigIr, SpanIr, SymbolId, TypeIr,
 };
 use dust_parser_dart::{
-    ParsedAnnotation, ParsedClassKind, ParsedClassSurface, ParsedLibrarySurface,
+    ParseBackend, ParseOptions, ParsedAnnotation, ParsedClassKind, ParsedClassSurface,
+    ParsedDartFileSurface,
 };
-use dust_text::{FileId, TextRange};
+use dust_parser_dart_ts::TreeSitterDartBackend;
+use dust_text::{FileId, SourceText, TextRange};
 
 pub(crate) fn span(start: u32, end: u32) -> SpanIr {
     SpanIr::new(FileId::new(1), TextRange::new(start, end))
@@ -24,6 +26,8 @@ pub(crate) fn route_page_class(
     route_args: &str,
     params: Vec<ConstructorParamIr>,
 ) -> ClassIr {
+    let mut route_config = config("AppRoute", Some(route_args));
+    route_config.normalized = typed_route_config(&route_config).map(NormalizedConfigIr::Route);
     ClassIr {
         kind: ClassKindIr::Class,
         name: name.to_owned(),
@@ -42,9 +46,22 @@ pub(crate) fn route_page_class(
         }],
         methods: Vec::new(),
         traits: Vec::new(),
-        configs: vec![config("AppRoute", Some(route_args))],
+        configs: vec![route_config],
         serde: None,
     }
+}
+
+fn typed_route_config(config: &ConfigApplicationIr) -> Option<RouteConfigIr> {
+    Some(RouteConfigIr {
+        path: config.positional_string(0)?,
+        name: config.named_string("name"),
+        shell: config.named_type("shell"),
+        guards: config.named_type_list("guards").unwrap_or_default(),
+        guards_configured: config.has_named_argument("guards"),
+        transition: config.named_expression_source("transition"),
+        fullscreen_dialog: config.named_bool("fullscreenDialog").unwrap_or(false),
+        maintain_state: config.named_bool("maintainState").unwrap_or(true),
+    })
 }
 
 pub(crate) fn guard_class(name: &str, params: Vec<ConstructorParamIr>) -> ClassIr {
@@ -78,6 +95,11 @@ pub(crate) fn named_constructor_guard_class(name: &str) -> ClassIr {
 }
 
 pub(crate) fn router_class(args: &str) -> ClassIr {
+    let mut router_config = config("AppRouter", Some(args));
+    router_config.normalized = Some(NormalizedConfigIr::Router(RouterConfigIr {
+        initial: router_config.named_string("initial"),
+        not_found: router_config.named_string("notFound"),
+    }));
     ClassIr {
         kind: ClassKindIr::Class,
         name: "TestRouter".to_owned(),
@@ -89,7 +111,7 @@ pub(crate) fn router_class(args: &str) -> ClassIr {
         constructors: Vec::new(),
         methods: Vec::new(),
         traits: Vec::new(),
-        configs: vec![config("AppRouter", Some(args))],
+        configs: vec![router_config],
         serde: None,
     }
 }
@@ -113,7 +135,7 @@ pub(crate) fn defaulted_param(name: &str, ty: TypeIr) -> ConstructorParamIr {
     }
 }
 
-pub(crate) fn library_with_classes(mut classes: Vec<ClassIr>) -> LibraryIr {
+pub(crate) fn library_with_classes(mut classes: Vec<ClassIr>) -> DartFileIr {
     if classes.iter().any(|class| {
         class
             .configs
@@ -128,7 +150,7 @@ pub(crate) fn library_with_classes(mut classes: Vec<ClassIr>) -> LibraryIr {
         ));
     }
 
-    LibraryIr {
+    DartFileIr {
         package_root: ".".to_owned(),
         package_name: "route_test".to_owned(),
         source_path: "lib/route.dart".to_owned(),
@@ -164,8 +186,8 @@ fn string_default_param(name: &str, default_value: &str) -> ConstructorParamIr {
 pub(crate) fn parsed_library_with_annotations(
     class_name: &str,
     annotations: Vec<ParsedAnnotation>,
-) -> ParsedLibrarySurface {
-    ParsedLibrarySurface {
+) -> ParsedDartFileSurface {
+    ParsedDartFileSurface {
         span: TextRange::new(0_u32, 100_u32),
         directives: Vec::new(),
         classes: vec![ParsedClassSurface {
@@ -200,14 +222,14 @@ pub(crate) fn parsed_prefixed_annotation(prefix: &str, name: &str, args: &str) -
 }
 
 fn parsed_qualified_annotation(prefix: Option<&str>, name: &str, args: &str) -> ParsedAnnotation {
-    ParsedAnnotation {
-        name: name.to_owned(),
-        prefix: prefix.map(str::to_owned),
-        qualified_name: prefix
-            .map(|prefix| format!("{prefix}.{name}"))
-            .unwrap_or_else(|| name.to_owned()),
-        arguments_source: Some(args.to_owned()),
-        parsed_arguments: None,
-        span: TextRange::new(1_u32, 2_u32),
-    }
+    let qualified_name = prefix
+        .map(|prefix| format!("{prefix}.{name}"))
+        .unwrap_or_else(|| name.to_owned());
+    let source = SourceText::new(
+        FileId::new(2),
+        format!("@{qualified_name}{args}\nclass Fixture {{}}"),
+    );
+    let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+    parsed.library.classes[0].annotations[0].clone()
 }

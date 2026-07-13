@@ -35,7 +35,16 @@ fn emits_standalone_route_and_core_outputs() {
         ),
     ]);
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
     assert!(
@@ -66,7 +75,16 @@ fn emits_no_transition_builder_only_when_referenced() {
         ),
     ]);
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
     assert_snapshot("no_transition_route.dart.snapshot", &primary);
@@ -87,7 +105,16 @@ fn emits_guard_helpers_with_custom_router_base_name() {
         ),
     ]);
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
     assert!(primary.contains("DashboardRoute() => [BenchmarkGuard()]"));
@@ -108,7 +135,16 @@ fn rejects_guard_without_unnamed_constructor() {
         named_constructor_guard_class("AuthGuard"),
     ]);
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert!(contribution.primary_source.is_none());
     assert_eq!(
@@ -138,7 +174,16 @@ fn rejects_guard_required_dependency_with_unresolvable_type() {
         ),
     ]);
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert!(contribution.primary_source.is_none());
     assert_eq!(
@@ -161,7 +206,16 @@ fn rejects_duplicate_path_params_before_emitting_parser() {
         ),
     ]);
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert!(contribution.primary_source.is_none());
     assert_eq!(
@@ -189,7 +243,16 @@ fn rejects_static_and_dynamic_route_siblings_before_emitting_parser() {
         ),
     ]);
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert!(contribution.primary_source.is_none());
     assert_eq!(
@@ -217,7 +280,16 @@ fn allows_deeper_static_route_beside_shorter_dynamic_route() {
         ),
     ]);
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
 
     assert!(
         contribution.diagnostics.is_empty(),
@@ -275,7 +347,14 @@ fn emits_workspace_page_imports_and_query_defaults() {
     let mut plan = SymbolPlan::default();
     plan.set_workspace_analysis(Arc::new(analysis.build()));
 
-    let contribution = plugin.emit(&library, &plan);
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext { symbol_plan: &plan },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
     assert_snapshot("workspace_default_route.dart.snapshot", &primary);
@@ -330,7 +409,14 @@ fn emits_shell_import_from_route_page_library_imports() {
     let mut plan = SymbolPlan::default();
     plan.set_workspace_analysis(Arc::new(analysis.build()));
 
-    let contribution = plugin.emit(&library, &plan);
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext { symbol_plan: &plan },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
     assert_snapshot("workspace_shell_route.dart.snapshot", &primary);
@@ -349,7 +435,16 @@ fn emits_large_route_sets_without_excessive_output_growth() {
     }
     let library = library_with_classes(classes);
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
     assert_snapshot("large_route_set.dart.snapshot", &primary);
@@ -373,7 +468,16 @@ fn emits_deep_nested_route_tree_metadata() {
         ),
     ]);
 
-    let contribution = plugin.emit(&library, &SymbolPlan::default());
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
     assert_snapshot("deep_nested_route.dart.snapshot", &primary);

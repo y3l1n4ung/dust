@@ -17,8 +17,8 @@ The primary interface for all features. It defines three distinct phases:
 - `validate`: static analysis of `DartFileIr` before any code is generated.
 - `generate`: rendering `DartFileIr` into generated units using `PluginContext`.
 
-`emit` remains as a compatibility adapter while existing plugins migrate to
-`generate`.
+`generate` is the only output hook. It receives the shared `PluginContext` and
+returns ordered `PluginContribution` units.
 
 ### `WorkspaceAnalysis`
 A multi-threaded, append-only collection system.
@@ -26,10 +26,9 @@ A multi-threaded, append-only collection system.
 - **Snapshot**: A serialized, per-file subset used for incremental build caching.
 - **Immutable Analysis**: The final set of global facts provided to plugins during emission.
 
-### `GeneratedUnit`
-The future unit of generated output. Today this is a compatibility alias for
-`PluginContribution`; plugins still return fragments that the `dust_emitter`
-merges into the final `.g.dart` file.
+### `PluginContribution`
+One ordered generated unit returned by `generate`. The `dust_emitter` merges
+these contributions into the final `.g.dart` file.
 
 ### `SymbolPlan`
 A deterministic registry of reserved names (e.g., `_$User`, `_undefined`). It ensures that multiple plugins can safely generate code into the same scope without clobbering each other.

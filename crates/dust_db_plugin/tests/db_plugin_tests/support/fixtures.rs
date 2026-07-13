@@ -1,5 +1,5 @@
 use dust_ir::{
-    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, LibraryIr, MethodIr, ParamKind,
+    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, DartFileIr, MethodIr, ParamKind,
     QueryCallIr, TypeIr,
 };
 
@@ -149,8 +149,8 @@ pub(crate) fn database_class() -> ClassIr {
     }
 }
 
-pub(crate) fn library(classes: Vec<ClassIr>) -> LibraryIr {
-    LibraryIr {
+pub(crate) fn library(classes: Vec<ClassIr>) -> DartFileIr {
+    DartFileIr {
         package_root: String::new(),
         package_name: "example".to_owned(),
         source_path: "lib/user.dart".to_owned(),
@@ -180,8 +180,8 @@ pub(crate) fn library_with_imports(
     source_path: &str,
     imports: Vec<&str>,
     classes: Vec<ClassIr>,
-) -> LibraryIr {
-    LibraryIr {
+) -> DartFileIr {
+    DartFileIr {
         package_root: root.display().to_string(),
         source_path: source_path.to_owned(),
         imports: imports.into_iter().map(str::to_owned).collect(),
@@ -193,8 +193,8 @@ pub(crate) fn library_with_queries(
     root: &std::path::Path,
     classes: Vec<ClassIr>,
     query_calls: Vec<QueryCallIr>,
-) -> LibraryIr {
-    LibraryIr {
+) -> DartFileIr {
+    DartFileIr {
         package_root: root.display().to_string(),
         source_path: "lib/db.dart".to_owned(),
         query_calls,

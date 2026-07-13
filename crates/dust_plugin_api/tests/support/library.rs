@@ -1,8 +1,8 @@
-use dust_ir::{ClassIr, ClassKindIr, LibraryIr, SpanIr};
+use dust_ir::{ClassIr, ClassKindIr, DartFileIr, SpanIr};
 use dust_text::{FileId, TextRange};
 
-pub(crate) fn sample_library() -> LibraryIr {
-    LibraryIr {
+pub(crate) fn sample_library() -> DartFileIr {
+    DartFileIr {
         package_root: ".".to_owned(),
         package_name: "dust_test".to_owned(),
         source_path: "lib/user.dart".to_owned(),

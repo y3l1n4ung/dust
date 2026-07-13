@@ -103,6 +103,3 @@ impl DartFileIr {
         }
     }
 }
-
-/// Compatibility alias while the migration from `LibraryIr` to `DartFileIr` is in progress.
-pub type LibraryIr = DartFileIr;

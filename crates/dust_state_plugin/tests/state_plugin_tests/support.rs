@@ -1,6 +1,6 @@
 use dust_ir::{
-    ClassIr, ClassKindIr, ConfigApplicationIr, EnumIr, EnumVariantIr, FieldIr, LibraryIr, SpanIr,
-    SymbolId, TypeIr,
+    ClassIr, ClassKindIr, ConfigApplicationIr, DartFileIr, EnumIr, EnumVariantIr, FieldIr,
+    NormalizedConfigIr, SpanIr, StateConfigIr, StateModeIr, SymbolId, TypeIr,
 };
 use dust_text::{FileId, TextRange};
 
@@ -9,11 +9,30 @@ pub(crate) fn span(start: u32, end: u32) -> SpanIr {
 }
 
 pub(crate) fn config(args: Option<&str>) -> ConfigApplicationIr {
-    ConfigApplicationIr::new(
+    let mut config = ConfigApplicationIr::new(
         SymbolId::new("dust_flutter::ViewModel"),
         args.map(str::to_owned),
         span(1, 2),
-    )
+    );
+    if let Some(state_type) = config
+        .named_type("state")
+        .or_else(|| config.positional_type(0))
+    {
+        let mode_source = config.named_expression_source("mode");
+        config.normalized = Some(NormalizedConfigIr::State(StateConfigIr {
+            state_type,
+            args_type: config.named_type("args"),
+            initial_source: config.named_expression_source("initial"),
+            mode_source: mode_source.clone(),
+            mode: match mode_source.as_deref() {
+                Some(source) if source.ends_with(".async") || source == "async" => {
+                    StateModeIr::Async
+                }
+                _ => StateModeIr::Sync,
+            },
+        }));
+    }
+    config
 }
 
 pub(crate) fn view_model_class(name: &str, args: &str) -> ClassIr {
@@ -74,8 +93,8 @@ pub(crate) fn state_class() -> ClassIr {
     }
 }
 
-pub(crate) fn library_with_classes(classes: Vec<ClassIr>) -> LibraryIr {
-    LibraryIr {
+pub(crate) fn library_with_classes(classes: Vec<ClassIr>) -> DartFileIr {
+    DartFileIr {
         package_root: ".".to_owned(),
         package_name: "state_test".to_owned(),
         source_path: "lib/task_board_view_model.dart".to_owned(),
@@ -120,8 +139,8 @@ pub(crate) fn enum_type(name: &str, variants: &[&str]) -> EnumIr {
 pub(crate) fn library_with_classes_and_enums(
     classes: Vec<ClassIr>,
     enums: Vec<EnumIr>,
-) -> LibraryIr {
-    LibraryIr {
+) -> DartFileIr {
+    DartFileIr {
         enums,
         ..library_with_classes(classes)
     }

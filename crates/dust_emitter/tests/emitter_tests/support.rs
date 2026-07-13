@@ -1,11 +1,11 @@
 use dust_diagnostics::Diagnostic;
 use dust_emitter::emit_library;
 use dust_ir::{
-    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, FieldIr, LibraryIr, ParamKind, SpanIr,
-    SymbolId, TraitApplicationIr, TypeIr,
+    ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, DartFileIr, FieldIr, ParamKind,
+    SpanIr, SymbolId, TraitApplicationIr, TypeIr,
 };
 use dust_plugin_api::{
-    DustPlugin, GENERATED_HEADER, PluginContribution, PluginRegistry, SymbolPlan,
+    DustPlugin, GENERATED_HEADER, PluginContext, PluginContribution, PluginRegistry,
 };
 use dust_text::{FileId, TextRange};
 
@@ -74,8 +74,8 @@ pub(crate) fn trait_app(symbol: &str) -> TraitApplicationIr {
     }
 }
 
-pub(crate) fn sample_library(output_path: String) -> LibraryIr {
-    LibraryIr {
+pub(crate) fn sample_library(output_path: String) -> DartFileIr {
+    DartFileIr {
         package_root: ".".to_owned(),
         package_name: "dust_test".to_owned(),
         source_path: "lib/user.dart".to_owned(),
@@ -116,24 +116,28 @@ impl DustPlugin for FakePlugin {
         self.name
     }
 
-    fn validate(&self, _library: &LibraryIr) -> Vec<Diagnostic> {
+    fn validate(&self, _library: &DartFileIr) -> Vec<Diagnostic> {
         self.diagnostics.clone()
     }
 
-    fn requested_symbols(&self, _library: &LibraryIr) -> Vec<String> {
+    fn requested_symbols(&self, _library: &DartFileIr) -> Vec<String> {
         self.requested
             .iter()
             .map(|name| (*name).to_owned())
             .collect()
     }
 
-    fn emit(&self, _library: &LibraryIr, _plan: &SymbolPlan) -> PluginContribution {
-        self.contribution.clone()
+    fn generate(
+        &self,
+        _library: &DartFileIr,
+        _context: &PluginContext<'_>,
+    ) -> Vec<PluginContribution> {
+        vec![self.contribution.clone()]
     }
 }
 
 pub(crate) fn emit_with_registry(
-    library: &LibraryIr,
+    library: &DartFileIr,
     registry: &PluginRegistry,
     previous: Option<&str>,
 ) -> dust_emitter::EmitResult {

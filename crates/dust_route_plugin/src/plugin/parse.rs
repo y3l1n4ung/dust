@@ -1,65 +1,74 @@
-use dust_ir::{ConfigApplicationIr, SymbolId};
-use dust_parser_dart::ParsedAnnotation;
-
-#[cfg(test)]
-use dust_ir::SpanIr;
-#[cfg(test)]
-use dust_text::{FileId, TextRange};
-
-use super::{
-    constants::ROUTE,
-    model::{RouteAnnotation, RouterAnnotation},
+use dust_ir::{ConfigApplicationIr, NormalizedConfigIr, RouteConfigIr, RouterConfigIr};
+use dust_parser_dart::{
+    ParsedAnnotation, ParsedAnnotationNamedArgument, ParsedAnnotationValue,
+    ParsedAnnotationValueRootKind,
 };
 
-/// Returns the `@AppRoute` config from a lowered class, if present.
-pub(crate) fn route_config(configs: &[ConfigApplicationIr]) -> Option<&ConfigApplicationIr> {
-    configs
-        .iter()
-        .find(|config| config_name(&config.symbol) == ROUTE)
+use super::model::{RouteAnnotation, RouterAnnotation};
+
+/// Returns resolver-normalized `AppRoute` configuration.
+pub(crate) fn route_config(configs: &[ConfigApplicationIr]) -> Option<&RouteConfigIr> {
+    configs.iter().find_map(|config| match &config.normalized {
+        Some(NormalizedConfigIr::Route(route)) => Some(route),
+        _ => None,
+    })
 }
 
-#[cfg(test)]
-/// Parses route annotation arguments in parser unit tests.
-pub(crate) fn parse_route_annotation(args: Option<&str>) -> Option<RouteAnnotation> {
-    parse_route_config(&test_config(ROUTE, args))
+/// Copies resolver-normalized route configuration into a plugin route fact.
+pub(crate) fn route_annotation(config: &RouteConfigIr) -> RouteAnnotation {
+    RouteAnnotation {
+        path: config.path.clone(),
+        name: config.name.clone(),
+        shell: config.shell.clone(),
+        guards: config.guards.clone(),
+        guards_configured: config.guards_configured,
+        transition: config.transition.clone(),
+        fullscreen_dialog: config.fullscreen_dialog,
+        maintain_state: config.maintain_state,
+    }
 }
 
-/// Parses a lowered `@AppRoute` annotation.
-pub(crate) fn parse_route_config(config: &ConfigApplicationIr) -> Option<RouteAnnotation> {
-    let path = config.positional_string(0)?;
-    let name = config.named_string("name");
-    let shell = config.named_type("shell");
-    let guards_configured = config.has_named_argument("guards");
-    let guards = config.named_type_list("guards").unwrap_or_default();
-    let transition = config
-        .named_expression_source("transition")
-        .map(normalize_transition_source);
-    let fullscreen_dialog = config.named_bool("fullscreenDialog").unwrap_or(false);
-    let maintain_state = config.named_bool("maintainState").unwrap_or(true);
-    Some(RouteAnnotation {
-        path,
-        name,
-        shell,
-        guards,
-        guards_configured,
-        transition,
-        fullscreen_dialog,
-        maintain_state,
+/// Returns resolver-normalized `AppRouter` configuration.
+pub(crate) fn router_config(configs: &[ConfigApplicationIr]) -> Option<&RouterConfigIr> {
+    configs.iter().find_map(|config| match &config.normalized {
+        Some(NormalizedConfigIr::Router(router)) => Some(router),
+        _ => None,
     })
 }
 
 /// Parses a source-surface `@AppRoute` annotation for workspace analysis.
 pub(crate) fn parse_route_surface(annotation: &ParsedAnnotation) -> Option<RouteAnnotation> {
-    let path = annotation.positional_string(0)?;
-    let name = annotation.named_string("name");
-    let shell = annotation.named_type("shell");
-    let guards_configured = annotation.has_named_argument("guards");
-    let guards = annotation.named_type_list("guards").unwrap_or_default();
-    let transition = annotation
-        .named_expression_source("transition")
-        .map(normalize_transition_source);
-    let fullscreen_dialog = annotation.named_bool("fullscreenDialog").unwrap_or(false);
-    let maintain_state = annotation.named_bool("maintainState").unwrap_or(true);
+    let arguments = annotation.parsed_arguments.as_ref()?;
+    let path = parsed_string(arguments.positional.first()?.value.as_ref()?)?.to_owned();
+    let named = |name| {
+        arguments
+            .named
+            .iter()
+            .find(|argument| argument.name == name)
+    };
+    let name = named("name")
+        .and_then(parsed_value)
+        .and_then(parsed_string)
+        .map(str::to_owned);
+    let shell = named("shell")
+        .and_then(parsed_value)
+        .and_then(parsed_member)
+        .map(str::to_owned);
+    let guards_configured = named("guards").is_some();
+    let guards = named("guards")
+        .and_then(parsed_value)
+        .map(parsed_member_list)
+        .unwrap_or_default();
+    let transition = named("transition")
+        .map(|argument| normalize_transition_source(argument.value_source.clone()));
+    let fullscreen_dialog = named("fullscreenDialog")
+        .and_then(parsed_value)
+        .and_then(parsed_bool)
+        .unwrap_or(false);
+    let maintain_state = named("maintainState")
+        .and_then(parsed_value)
+        .and_then(parsed_bool)
+        .unwrap_or(true);
     Some(RouteAnnotation {
         path,
         name,
@@ -72,24 +81,44 @@ pub(crate) fn parse_route_surface(annotation: &ParsedAnnotation) -> Option<Route
     })
 }
 
-#[cfg(test)]
-/// Parses router annotation arguments in parser unit tests.
-pub(crate) fn parse_router_annotation(args: Option<&str>) -> RouterAnnotation {
-    parse_router_config(Some(&test_config("AppRouter", args)))
+/// Returns the parser-owned value for one named argument.
+fn parsed_value(argument: &ParsedAnnotationNamedArgument) -> Option<&ParsedAnnotationValue> {
+    argument.value.as_ref()
 }
 
-/// Parses a lowered `@AppRouter` annotation.
-pub(crate) fn parse_router_config(config: Option<&ConfigApplicationIr>) -> RouterAnnotation {
-    let Some(config) = config else {
-        return RouterAnnotation {
-            initial: None,
-            not_found: None,
-        };
-    };
+/// Returns a parser-owned string literal value.
+fn parsed_string(value: &ParsedAnnotationValue) -> Option<&str> {
+    match &value.kind {
+        ParsedAnnotationValueRootKind::String(value) => Some(value),
+        _ => None,
+    }
+}
 
-    RouterAnnotation {
-        initial: config.named_string("initial"),
-        not_found: config.named_string("notFound"),
+/// Returns a parser-owned member reference.
+fn parsed_member(value: &ParsedAnnotationValue) -> Option<&str> {
+    match &value.kind {
+        ParsedAnnotationValueRootKind::Member(value) => Some(value),
+        _ => None,
+    }
+}
+
+/// Returns member references from a parser-owned list literal.
+fn parsed_member_list(value: &ParsedAnnotationValue) -> Vec<String> {
+    match &value.kind {
+        ParsedAnnotationValueRootKind::List(values) => values
+            .iter()
+            .filter_map(parsed_member)
+            .map(str::to_owned)
+            .collect(),
+        _ => Vec::new(),
+    }
+}
+
+/// Returns a parser-owned boolean literal value.
+fn parsed_bool(value: &ParsedAnnotationValue) -> Option<bool> {
+    match value.kind {
+        ParsedAnnotationValueRootKind::Bool(value) => Some(value),
+        _ => None,
     }
 }
 
@@ -99,11 +128,6 @@ pub(crate) fn parse_router_surface(annotation: &ParsedAnnotation) -> RouterAnnot
         initial: annotation.named_string("initial"),
         not_found: annotation.named_string("notFound"),
     }
-}
-
-/// Returns the simple name for a resolved annotation symbol.
-fn config_name(symbol: &SymbolId) -> &str {
-    symbol.0.rsplit("::").next().unwrap_or(symbol.0.as_str())
 }
 
 /// Normalizes transition builder source captured from annotation arguments.
@@ -118,75 +142,4 @@ fn normalize_transition_source(source: String) -> String {
         }
     }
     source.to_owned()
-}
-
-#[cfg(test)]
-/// Builds a lowered config for parser unit tests.
-fn test_config(name: &str, args: Option<&str>) -> ConfigApplicationIr {
-    ConfigApplicationIr::new(
-        SymbolId::new(name),
-        args.map(str::to_owned),
-        SpanIr::new(FileId::default(), TextRange::default()),
-    )
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{parse_route_annotation, parse_router_annotation};
-
-    #[test]
-    fn parses_route_metadata() {
-        let route = parse_route_annotation(Some(
-            "('/projects/:id', name: 'project', shell: AppShell, guards: [AuthGuard], transition: FadeUpwardsPageTransitionsBuilder(), fullscreenDialog: true)",
-        ))
-        .unwrap();
-        assert_eq!(route.path, "/projects/:id");
-        assert_eq!(route.name.as_deref(), Some("project"));
-        assert_eq!(route.shell.as_deref(), Some("AppShell"));
-        assert_eq!(route.guards, vec!["AuthGuard".to_string()]);
-        assert!(route.guards_configured);
-        assert_eq!(
-            route.transition.as_deref(),
-            Some("FadeUpwardsPageTransitionsBuilder()")
-        );
-        assert!(route.fullscreen_dialog);
-        assert!(route.maintain_state);
-    }
-
-    #[test]
-    fn parses_router_initial_and_not_found() {
-        let router = parse_router_annotation(Some("(initial: '/', notFound: '/404')"));
-        assert_eq!(router.initial.as_deref(), Some("/"));
-        assert_eq!(router.not_found.as_deref(), Some("/404"));
-    }
-
-    #[test]
-    fn parses_named_values_only_at_top_level() {
-        let route = parse_route_annotation(Some(
-            r#"('/search?name:ignored', name: 'search', transition: SharedAxisPageTransitionsBuilder(label: 'name:still ignored'), guards: [AuthGuard, BillingGuard])"#,
-        ))
-        .unwrap();
-        assert_eq!(route.path, "/search?name:ignored");
-        assert_eq!(route.name.as_deref(), Some("search"));
-        assert_eq!(
-            route.transition.as_deref(),
-            Some("SharedAxisPageTransitionsBuilder(label: 'name:still ignored')")
-        );
-        assert_eq!(
-            route.guards,
-            vec!["AuthGuard".to_string(), "BillingGuard".to_string()]
-        );
-    }
-
-    #[test]
-    fn normalizes_known_flutter_transition_prefixes() {
-        let route = parse_route_annotation(Some(
-            "('/login', transition: const cupertino.CupertinoPageTransitionsBuilder())",
-        ))
-        .unwrap();
-        assert_eq!(
-            route.transition.as_deref(),
-            Some("CupertinoPageTransitionsBuilder()")
-        );
-    }
 }
