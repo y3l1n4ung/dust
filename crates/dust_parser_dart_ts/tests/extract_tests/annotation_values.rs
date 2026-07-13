@@ -14,6 +14,7 @@ fn extracts_annotation_value_root_kinds_from_tree_sitter_nodes() {
   enabled: true,
   name: 'dust',
   count: 1,
+  negative: -2,
   ratio: 1.5,
   list: ['a'],
   set: <String>{'a'},
@@ -48,6 +49,11 @@ class User {}
         kind(args, "count"),
         &ParsedAnnotationValueRootKind::Number(ParsedAnnotationNumberKind::Int)
     );
+    assert_eq!(
+        kind(args, "negative"),
+        &ParsedAnnotationValueRootKind::Number(ParsedAnnotationNumberKind::Int)
+    );
+    assert_eq!(source(args, "negative"), "-2");
     assert_eq!(
         kind(args, "ratio"),
         &ParsedAnnotationValueRootKind::Number(ParsedAnnotationNumberKind::Double)

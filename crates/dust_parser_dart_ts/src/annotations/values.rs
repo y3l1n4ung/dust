@@ -73,6 +73,9 @@ fn annotation_value(
             "decimal_floating_point_literal" => {
                 ParsedAnnotationValueRootKind::Number(ParsedAnnotationNumberKind::Double)
             }
+            "unary_expression" => signed_number_kind(node)
+                .map(ParsedAnnotationValueRootKind::Number)
+                .unwrap_or(ParsedAnnotationValueRootKind::Expression),
             "string_literal" => ParsedAnnotationValueRootKind::String(
                 parse_string_literal(&value_source).unwrap_or_else(|| value_source.clone()),
             ),
@@ -97,6 +100,20 @@ fn annotation_value(
         span: value_span,
         kind,
     }
+}
+
+/// Returns the numeric kind for a directly signed numeric literal.
+fn signed_number_kind(node: Node<'_>) -> Option<ParsedAnnotationNumberKind> {
+    let mut cursor = node.walk();
+    node.children(&mut cursor)
+        .filter(|child| child.is_named())
+        .find_map(|child| match child.kind() {
+            "decimal_integer_literal" | "hex_integer_literal" => {
+                Some(ParsedAnnotationNumberKind::Int)
+            }
+            "decimal_floating_point_literal" => Some(ParsedAnnotationNumberKind::Double),
+            _ => None,
+        })
 }
 
 /// Parses direct collection elements without reparsing their source text.

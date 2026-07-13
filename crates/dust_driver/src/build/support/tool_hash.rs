@@ -100,6 +100,7 @@ const DERIVE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
     include_str!("../../../../dust_plugin_derive/src/features/validate/model.rs"),
     include_str!("../../../../dust_plugin_derive/src/features/validate/rule_snippets.rs"),
     include_str!("../../../../dust_plugin_derive/src/features/validate/rules.rs"),
+    include_str!("../../../../dust_plugin_derive/src/features/validate/shape.rs"),
     include_str!("../../../../dust_plugin_derive/src/features/validate/type_source.rs"),
     include_str!(
         "../../../../dust_plugin_derive/src/features/validate/templates/validate_mixin.jinja"
