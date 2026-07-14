@@ -18,7 +18,7 @@ pub(crate) fn normalize_class_serde(
         .filter(|config| config.symbol.0 == "dust_dart::SerDe")
     {
         saw_serde = true;
-        if config.named_args.len() != config.argument_items().len() {
+        if !config.positional_args.is_empty() {
             diagnostics.push(Diagnostic::error(
                 "SerDe config arguments must use parenthesized named arguments",
             ));
@@ -151,7 +151,8 @@ pub(crate) fn normalize_field_serde(
         .filter(|config| config.symbol.0 == "dust_dart::SerDe")
     {
         saw_serde = true;
-        for (key, source) in config.named_arguments() {
+        for key in config.named_args.keys().map(String::as_str) {
+            let source = config.named_argument_source(key).unwrap_or_default();
             match key {
                 "rename" => match config.named_string(key) {
                     Some(value) => serde.rename = Some(value),
