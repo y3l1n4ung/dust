@@ -147,6 +147,60 @@ class User {
 }
 
 #[test]
+fn normalizes_serde_from_structured_values_without_rescanning_raw_source() {
+    let source = SourceText::new(
+        FileId::new(7),
+        r#"
+part 'user.g.dart';
+
+@SerDe(renameAll: SerDeRename.snakeCase)
+class User {
+  @SerDe(rename: 'full_name')
+  final String name;
+
+  const User(this.name);
+}
+"#,
+    );
+
+    let mut parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+    parsed.library.classes[0].annotations[0].arguments_source = Some("not valid".to_owned());
+    parsed.library.classes[0].fields[0].annotations[0].arguments_source =
+        Some("also not valid".to_owned());
+
+    let mut catalog = SymbolCatalog::new();
+    catalog.register_config("SerDe", "dust_dart::SerDe");
+
+    let resolved = resolve_library(
+        FileId::new(7),
+        "lib/user.dart",
+        "lib/user.g.dart",
+        &parsed.library,
+        &catalog,
+    );
+
+    assert!(
+        resolved.diagnostics.is_empty(),
+        "{:?}",
+        resolved.diagnostics
+    );
+    assert_eq!(
+        resolved.library.classes[0]
+            .serde
+            .as_ref()
+            .and_then(|serde| serde.rename_all),
+        Some(SerdeRenameRuleIr::SnakeCase)
+    );
+    assert_eq!(
+        resolved.library.classes[0].fields[0]
+            .serde
+            .as_ref()
+            .and_then(|serde| serde.rename.as_deref()),
+        Some("full_name")
+    );
+}
+
+#[test]
 fn resolves_constructor_configs_for_sealed_factory_variants() {
     let source = SourceText::new(
         FileId::new(7),
