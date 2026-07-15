@@ -12,6 +12,7 @@ use self::{
 };
 use crate::{
     i18n_assets::{I18nAssetSeverity, validate_i18n_asset_declarations},
+    i18n_ios::check_ios_info_plist,
     i18n_keys::{I18nPlannedEntry, plan_i18n_entries},
     i18n_scan::scan_workspace_sources,
     request::I18nCheckRequest,
@@ -78,6 +79,15 @@ pub fn run_i18n_check(request: I18nCheckRequest) -> CommandResult {
         Err(diagnostic) => result.diagnostics.push(diagnostic),
     }
     result.i18n_scan = Some(scan);
+
+    match check_ios_info_plist(&package_root, i18n_config) {
+        Ok(Some(status)) if status.changed => result.diagnostics.push(Diagnostic::error(format!(
+            "iOS Info.plist `{}` is out of date; run `dust i18n build`",
+            status.path.display()
+        ))),
+        Ok(Some(_)) | Ok(None) => {}
+        Err(diagnostic) => result.diagnostics.push(diagnostic),
+    }
 
     result.elapsed_ms = started.elapsed().as_millis();
     result

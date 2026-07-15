@@ -33,6 +33,17 @@ pub struct OutputConfig {
 pub struct I18nConfig {
     /// Locale codes supported by generated i18n bootstrap.
     pub locales: Vec<String>,
+    /// Optional native iOS bundle metadata integration.
+    pub ios: Option<I18nIosConfig>,
+}
+
+/// Native iOS metadata settings for i18n generation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct I18nIosConfig {
+    /// Info.plist path, relative to the package root.
+    pub info_plist: PathBuf,
+    /// Whether to replace CFBundleDevelopmentRegion with the fallback locale.
+    pub sync_development_region: bool,
 }
 
 impl I18nConfig {
@@ -71,6 +82,18 @@ struct RawOutputConfig {
 struct RawI18nConfig {
     /// Locale codes used by generated i18n bootstrap.
     locales: Option<Vec<String>>,
+    /// Optional native iOS metadata settings.
+    ios: Option<RawI18nIosConfig>,
+}
+
+/// Deserialized native iOS metadata settings.
+#[derive(Debug, Default, Deserialize)]
+struct RawI18nIosConfig {
+    /// Info.plist path relative to the package root.
+    info_plist: Option<PathBuf>,
+    /// Whether to synchronize the development region.
+    #[serde(default)]
+    sync_development_region: bool,
 }
 
 /// Loads `dust.yaml` when present, otherwise returns the default output policy.
@@ -119,7 +142,43 @@ fn parse_i18n_config(
         return Err(invalid_config(path, "i18n.locales is required"));
     };
     validate_i18n_locales(&locales, path)?;
-    Ok(Some(I18nConfig { locales }))
+    let ios = raw.ios.map(|ios| {
+        let info_plist = ios
+            .info_plist
+            .unwrap_or_else(|| PathBuf::from("ios/Runner/Info.plist"));
+        (info_plist, ios.sync_development_region)
+    });
+    if let Some((info_plist, _)) = &ios {
+        validate_i18n_ios_path(info_plist, path)?;
+    }
+    Ok(Some(I18nConfig {
+        locales,
+        ios: ios.map(|(info_plist, sync_development_region)| I18nIosConfig {
+            info_plist,
+            sync_development_region,
+        }),
+    }))
+}
+
+/// Validates the optional iOS plist path.
+fn validate_i18n_ios_path(path_value: &Path, config_path: &Path) -> Result<(), Diagnostic> {
+    if path_value.is_absolute()
+        || path_value
+            .components()
+            .any(|component| matches!(component, std::path::Component::ParentDir))
+    {
+        return Err(invalid_config(
+            config_path,
+            "i18n.ios.info_plist must be a relative path inside the package",
+        ));
+    }
+    if path_value.extension().and_then(|value| value.to_str()) != Some("plist") {
+        return Err(invalid_config(
+            config_path,
+            "i18n.ios.info_plist must point to a `.plist` file",
+        ));
+    }
+    Ok(())
 }
 
 /// Validates configured i18n locale codes.

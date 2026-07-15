@@ -1,6 +1,6 @@
 use dust_workspace::{
-    I18nConfig, PackageConfigKind, load_dust_config, load_flutter_assets, load_is_flutter_package,
-    load_package_config,
+    I18nConfig, I18nIosConfig, PackageConfigKind, load_dust_config, load_flutter_assets,
+    load_is_flutter_package, load_package_config,
 };
 use tempfile::tempdir;
 
@@ -147,7 +147,31 @@ fn load_dust_config_reads_i18n_locales() {
     assert_eq!(
         config.i18n,
         Some(I18nConfig {
-            locales: vec!["en".to_owned(), "my".to_owned()]
+            locales: vec!["en".to_owned(), "my".to_owned()],
+            ios: None,
+        })
+    );
+}
+
+#[test]
+fn load_dust_config_reads_opt_in_ios_i18n_settings() {
+    let root = tempdir().unwrap();
+    write_file(&root.path().join("pubspec.yaml"), "name: dust_test\n");
+    write_file(
+        &root.path().join("dust.yaml"),
+        "i18n:\n  locales: [en, my, zh_Hans_CN]\n  ios:\n    info_plist: ios/Runner/Info.plist\n    sync_development_region: true\n",
+    );
+
+    let config = load_dust_config(root.path()).unwrap();
+
+    assert_eq!(
+        config.i18n,
+        Some(I18nConfig {
+            locales: vec!["en".to_owned(), "my".to_owned(), "zh_Hans_CN".to_owned()],
+            ios: Some(I18nIosConfig {
+                info_plist: "ios/Runner/Info.plist".into(),
+                sync_development_region: true,
+            }),
         })
     );
 }

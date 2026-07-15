@@ -7,6 +7,7 @@ use crate::{
     i18n_arb::write_i18n_arb_files,
     i18n_assets::{I18nAssetSeverity, validate_i18n_asset_declarations},
     i18n_bootstrap::build_i18n_bootstrap,
+    i18n_ios::sync_ios_info_plist,
     i18n_keys::plan_i18n_entries,
     i18n_scan::scan_workspace_sources,
     request::I18nBuildRequest,
@@ -80,6 +81,13 @@ pub fn run_i18n_build(request: I18nBuildRequest) -> CommandResult {
         }
     }
     result.i18n_scan = Some(scan);
+
+    if !result.has_errors() {
+        match sync_ios_info_plist(&package_root, i18n_config, true) {
+            Ok(Some(_)) | Ok(None) => {}
+            Err(diagnostic) => result.diagnostics.push(diagnostic),
+        }
+    }
 
     if !result.has_errors() {
         match build_i18n_bootstrap(&package_root, &dust_config) {
