@@ -14,7 +14,10 @@ which consume canonical `DartFileIr`. Its primary job is to answer the question:
 ## 🔑 Key Components
 
 ### `SymbolCatalog`
-The central registry of "known" symbols. It maps short, surface-level annotation names (e.g., `Serialize`) to their fully qualified, unique internal IDs (e.g., `dust_dart::Serialize`).
+The central registry of "known" symbols. Resolver lookups prefer a canonical
+fully qualified symbol identity (e.g., `dust_dart::Serialize`) and retain
+short, surface-level annotation names (e.g., `Serialize`) as a compatibility
+fallback.
 - Supports **Traits**: Symbols that change class behavior (e.g., `Eq`).
 - Supports **Configs**: Symbols that provide settings (e.g., `SerDe`).
 

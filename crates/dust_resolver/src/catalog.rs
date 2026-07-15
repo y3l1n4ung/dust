@@ -80,6 +80,42 @@ impl SymbolCatalog {
             .or_else(|| self.resolve_config(annotation_name))
     }
 
+    /// Looks up a canonical symbol name before surface-name compatibility.
+    pub fn resolve_qualified(&self, symbol_name: &str) -> Option<&ResolvedSymbol> {
+        self.by_name.values().find_map(|symbols| {
+            symbols
+                .config_symbol
+                .as_ref()
+                .filter(|symbol| symbol.symbol.0 == symbol_name)
+                .or_else(|| {
+                    symbols
+                        .trait_symbol
+                        .as_ref()
+                        .filter(|symbol| symbol.symbol.0 == symbol_name)
+                })
+        })
+    }
+
+    /// Looks up a canonical config symbol name.
+    pub fn resolve_qualified_config(&self, symbol_name: &str) -> Option<&ResolvedSymbol> {
+        self.by_name.values().find_map(|symbols| {
+            symbols
+                .config_symbol
+                .as_ref()
+                .filter(|symbol| symbol.symbol.0 == symbol_name)
+        })
+    }
+
+    /// Looks up a canonical trait symbol name.
+    pub fn resolve_qualified_trait(&self, symbol_name: &str) -> Option<&ResolvedSymbol> {
+        self.by_name.values().find_map(|symbols| {
+            symbols
+                .trait_symbol
+                .as_ref()
+                .filter(|symbol| symbol.symbol.0 == symbol_name)
+        })
+    }
+
     /// Looks up one annotation name as a trait symbol.
     pub fn resolve_trait(&self, annotation_name: &str) -> Option<&ResolvedSymbol> {
         self.by_name
