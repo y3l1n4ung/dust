@@ -109,6 +109,14 @@ fn registry_collects_workspace_analysis_in_registration_order() {
             analysis.add_string_set_value(self.key, self.value);
         }
 
+        fn collect_workspace_analysis_ir(
+            &self,
+            _library: &DartFileIr,
+            analysis: &mut WorkspaceAnalysisBuilder,
+        ) {
+            analysis.add_string_set_value(format!("ir_{}", self.key), self.value);
+        }
+
         fn validate(&self, _library: &dust_ir::DartFileIr) -> Vec<dust_diagnostics::Diagnostic> {
             Vec::new()
         }
@@ -150,6 +158,14 @@ fn registry_collects_workspace_analysis_in_registration_order() {
 
     assert_eq!(
         analysis.string_set("a"),
+        Some(&["Team".to_owned(), "User".to_owned()][..])
+    );
+
+    let mut ir_analysis = WorkspaceAnalysisBuilder::default();
+    registry.collect_workspace_analysis_ir(&sample_library(), &mut ir_analysis);
+    let ir_analysis = ir_analysis.build();
+    assert_eq!(
+        ir_analysis.string_set("ir_a"),
         Some(&["Team".to_owned(), "User".to_owned()][..])
     );
 }

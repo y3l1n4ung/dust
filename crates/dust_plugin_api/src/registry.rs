@@ -157,6 +157,17 @@ impl PluginRegistry {
         }
     }
 
+    /// Collects canonical IR workspace facts from all registered plugins.
+    pub fn collect_workspace_analysis_ir(
+        &self,
+        file: &DartFileIr,
+        analysis: &mut WorkspaceAnalysisBuilder,
+    ) {
+        for plugin in &self.plugins {
+            plugin.plugin.collect_workspace_analysis_ir(file, analysis);
+        }
+    }
+
     /// Runs validation across all registered plugins in registration order.
     pub fn validate_library(&self, file: &DartFileIr) -> Vec<Diagnostic> {
         self.validate_library_with_plan(file, &SymbolPlan::default())
