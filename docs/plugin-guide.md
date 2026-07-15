@@ -49,11 +49,10 @@ impl DustPlugin for MyPlugin {
         &["my_package::MyTrait"]
     }
 
-    // PASS 2: Collect parser/IR-backed workspace facts (optional)
-    fn collect_workspace_analysis(
+    // PASS 2: Collect canonical-IR workspace facts (optional)
+    fn collect_workspace_analysis_ir(
         &self,
-        context: WorkspaceAnalysisContext<'_>,
-        file: &ParsedDartFileSurface,
+        file: &DartFileIr,
         analysis: &mut WorkspaceAnalysisBuilder,
     ) { ... }
 
@@ -65,9 +64,9 @@ impl DustPlugin for MyPlugin {
 }
 ```
 
-New plugin work must target `DartFileIr`, `ParsedDartFileSurface`, and
-`generate`. The former `LibraryIr` and `ParsedLibrarySurface` compatibility
-shims have been removed.
+New plugin work must target `DartFileIr`, `collect_workspace_analysis_ir`, and
+`generate`. Parser-owned surfaces stay inside the parser crates; the former
+`LibraryIr` and `ParsedLibrarySurface` compatibility shims have been removed.
 
 ### 3. Register the Plugin
 Wire your new crate into the `dust_driver` orchestrator.
