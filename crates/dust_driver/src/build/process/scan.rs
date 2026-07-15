@@ -4,9 +4,7 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
 use dust_parser_dart::{ParseOptions, ParsedDartFileSurface, parse_file_with_backend};
 use dust_parser_dart_ts::TreeSitterDartBackend;
-use dust_plugin_api::{
-    LibraryAnalysisSnapshot, PluginRegistry, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
-};
+use dust_plugin_api::{LibraryAnalysisSnapshot, PluginRegistry, WorkspaceAnalysisBuilder};
 use dust_resolver::SymbolCatalog;
 use dust_text::SourceText;
 
@@ -74,16 +72,7 @@ pub(crate) fn collect_workspace_analysis(
                         lowering,
                     );
                     if let Some(lowered) = lowered.as_ref() {
-                        registry.collect_workspace_analysis_ir_with_compatibility(
-                            WorkspaceAnalysisContext {
-                                package_name,
-                                package_root,
-                                source_path: &pending.library.source_path,
-                            },
-                            &parsed.library,
-                            lowered,
-                            &mut library_analysis,
-                        );
+                        registry.collect_workspace_analysis_ir(lowered, &mut library_analysis);
                     }
                     let analysis_snapshot = library_analysis.snapshot();
                     local_analysis.merge(library_analysis);

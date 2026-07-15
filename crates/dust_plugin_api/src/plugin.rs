@@ -77,11 +77,6 @@ pub trait DustPlugin: Send + Sync {
     ) {
     }
 
-    /// Returns whether this plugin's IR workspace analysis fully replaces its parser adapter.
-    fn supports_workspace_analysis_ir(&self) -> bool {
-        false
-    }
-
     /// Validates the Dart file from this plugin's point of view.
     fn validate(&self, file: &DartFileIr) -> Vec<Diagnostic>;
 
