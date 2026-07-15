@@ -41,10 +41,7 @@ pub(crate) fn resolve_method(
     let mut configs = Vec::new();
 
     for annotation in &method.annotations {
-        let Some(resolved) = catalog
-            .resolve_config(&annotation.name)
-            .or_else(|| catalog.resolve_trait(&annotation.name))
-        else {
+        let Some(resolved) = resolve_annotation(catalog, annotation) else {
             continue;
         };
 
@@ -87,7 +84,7 @@ fn resolve_method_param(
     let mut configs = Vec::new();
 
     for annotation in &param.annotations {
-        let Some(resolved) = catalog.resolve(&annotation.name) else {
+        let Some(resolved) = resolve_annotation(catalog, annotation) else {
             continue;
         };
 
@@ -149,10 +146,7 @@ pub(crate) fn resolve_declaration_annotations(
                     ),
                 }
             }
-        } else if let Some(resolved) = catalog
-            .resolve_config(&annotation.name)
-            .or_else(|| catalog.resolve_trait(&annotation.name))
-        {
+        } else if let Some(resolved) = resolve_annotation(catalog, annotation) {
             push_resolved_symbol(
                 file_id,
                 ResolvedAnnotationSymbol {
@@ -194,8 +188,10 @@ pub(crate) fn resolve_constructor(
     let mut configs = Vec::new();
 
     for annotation in &constructor.annotations {
-        let Some(resolved) = catalog.resolve_config(&annotation.name) else {
-            if catalog.resolve_trait(&annotation.name).is_some() {
+        let Some(resolved) = resolve_annotation(catalog, annotation)
+            .filter(|resolved| resolved.kind == SymbolKind::Config)
+        else {
+            if resolve_annotation_trait(catalog, annotation).is_some() {
                 diagnostics.push(
                     Diagnostic::warning(format!(
                         "trait annotation `{}` is not supported on constructors",
@@ -237,8 +233,10 @@ pub(crate) fn resolve_field(
     let mut configs = Vec::new();
 
     for annotation in &field.annotations {
-        let Some(resolved) = catalog.resolve_config(&annotation.name) else {
-            if catalog.resolve_trait(&annotation.name).is_some() {
+        let Some(resolved) = resolve_annotation(catalog, annotation)
+            .filter(|resolved| resolved.kind == SymbolKind::Config)
+        else {
+            if resolve_annotation_trait(catalog, annotation).is_some() {
                 diagnostics.push(
                     Diagnostic::warning(format!(
                         "trait annotation `{}` is not supported on fields",
@@ -274,6 +272,28 @@ pub(crate) fn resolve_field(
         configs,
         serde,
     }
+}
+
+/// Resolves an annotation by canonical symbol identity, then short-name compatibility.
+fn resolve_annotation<'a>(
+    catalog: &'a SymbolCatalog,
+    annotation: &ParsedAnnotation,
+) -> Option<&'a crate::ResolvedSymbol> {
+    catalog
+        .resolve_qualified_config(&annotation.qualified_name)
+        .or_else(|| catalog.resolve_config(&annotation.name))
+        .or_else(|| catalog.resolve_qualified_trait(&annotation.qualified_name))
+        .or_else(|| catalog.resolve_trait(&annotation.name))
+}
+
+/// Resolves a trait annotation by canonical name, then short-name compatibility.
+fn resolve_annotation_trait<'a>(
+    catalog: &'a SymbolCatalog,
+    annotation: &ParsedAnnotation,
+) -> Option<&'a crate::ResolvedSymbol> {
+    catalog
+        .resolve_qualified_trait(&annotation.qualified_name)
+        .or_else(|| catalog.resolve_trait(&annotation.name))
 }
 
 /// Returns the first generated part URI from parsed directives.

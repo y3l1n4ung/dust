@@ -18,7 +18,8 @@ pub fn resolve_annotation_ir(
     catalog: &SymbolCatalog,
 ) -> AnnotationIr {
     let resolved_symbol = catalog
-        .resolve(&annotation.name)
+        .resolve_qualified(&annotation.qualified_name)
+        .or_else(|| catalog.resolve(&annotation.name))
         .map(|resolved| resolved.symbol.clone());
     annotation_ir_from_parsed(file_id, annotation, resolved_symbol)
 }

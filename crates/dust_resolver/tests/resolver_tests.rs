@@ -60,6 +60,27 @@ fn resolves_registered_annotation_into_canonical_ir() {
 }
 
 #[test]
+fn resolves_registered_annotation_by_canonical_symbol_name() {
+    let annotation = ParsedAnnotation {
+        name: "SerDe".to_owned(),
+        prefix: Some("dust_dart".to_owned()),
+        qualified_name: "dust_dart::SerDe".to_owned(),
+        arguments_source: None,
+        parsed_arguments: None,
+        span: TextRange::new(0_u32, 6_u32),
+    };
+    let mut catalog = SymbolCatalog::new();
+    catalog.register_config("SerDe", "dust_dart::SerDe");
+
+    let resolved = resolve_annotation_ir(FileId::new(3), &annotation, &catalog);
+
+    assert_eq!(
+        resolved.resolved_symbol,
+        Some(SymbolId::new("dust_dart::SerDe"))
+    );
+}
+
+#[test]
 fn validate_generated_part_uri_rejects_wrong_file_name() {
     let diagnostic = validate_generated_part_uri("lib/user.g.dart", "team.g.dart").unwrap_err();
 
