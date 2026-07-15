@@ -2,8 +2,6 @@
 #![deny(missing_docs)]
 #![doc = "First-party derive plugin for ToString, Eq, and CopyWith."]
 
-/// Workspace analysis for copyWith-capable types.
-mod analysis;
 /// Orchestrates derive feature emission.
 mod emit;
 /// Individual derive feature implementations.
