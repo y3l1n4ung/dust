@@ -1,12 +1,8 @@
 use std::collections::HashMap;
 
+use crate::{DustPlugin, PluginContext, SymbolPlan, WorkspaceAnalysisBuilder};
 use dust_diagnostics::Diagnostic;
 use dust_ir::{DartFileIr, SymbolId};
-use dust_parser_dart::ParsedDartFileSurface;
-
-use crate::{
-    DustPlugin, PluginContext, SymbolPlan, WorkspaceAnalysisBuilder, WorkspaceAnalysisContext,
-};
 
 /// One plugin registration plus its claimed symbols.
 struct RegisteredPlugin {
@@ -141,20 +137,6 @@ impl PluginRegistry {
             }
         }
         plan
-    }
-
-    /// Collects parse-only workspace facts from all plugins in registration order.
-    pub fn collect_workspace_analysis(
-        &self,
-        context: WorkspaceAnalysisContext<'_>,
-        file: &ParsedDartFileSurface,
-        analysis: &mut WorkspaceAnalysisBuilder,
-    ) {
-        for plugin in &self.plugins {
-            plugin
-                .plugin
-                .collect_workspace_analysis(context, file, analysis);
-        }
     }
 
     /// Collects canonical IR workspace facts from all registered plugins.

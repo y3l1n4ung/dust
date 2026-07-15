@@ -2,12 +2,7 @@ use dust_ir::{
     ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, DartFileIr,
     NormalizedConfigIr, ParamKind, RouteConfigIr, RouterConfigIr, SpanIr, SymbolId, TypeIr,
 };
-use dust_parser_dart::{
-    ParseBackend, ParseOptions, ParsedAnnotation, ParsedClassKind, ParsedClassSurface,
-    ParsedDartFileSurface,
-};
-use dust_parser_dart_ts::TreeSitterDartBackend;
-use dust_text::{FileId, SourceText, TextRange};
+use dust_text::{FileId, TextRange};
 
 pub(crate) fn span(start: u32, end: u32) -> SpanIr {
     SpanIr::new(FileId::new(1), TextRange::new(start, end))
@@ -181,55 +176,4 @@ fn string_default_param(name: &str, default_value: &str) -> ConstructorParamIr {
         default_value_source: Some(default_value.to_owned()),
         ..constructor_param(name, TypeIr::string())
     }
-}
-
-pub(crate) fn parsed_library_with_annotations(
-    class_name: &str,
-    annotations: Vec<ParsedAnnotation>,
-) -> ParsedDartFileSurface {
-    ParsedDartFileSurface {
-        span: TextRange::new(0_u32, 100_u32),
-        directives: Vec::new(),
-        classes: vec![ParsedClassSurface {
-            kind: ParsedClassKind::Class,
-            name: class_name.to_owned(),
-            is_abstract: false,
-            is_interface: false,
-            superclass_name: None,
-            annotations,
-            fields: Vec::new(),
-            constructors: Vec::new(),
-            methods: Vec::new(),
-            span: TextRange::new(10_u32, 90_u32),
-        }],
-        enums: Vec::new(),
-        mixins: Vec::new(),
-        extensions: Vec::new(),
-        extension_types: Vec::new(),
-        functions: Vec::new(),
-        variables: Vec::new(),
-        typedefs: Vec::new(),
-        query_calls: Vec::new(),
-    }
-}
-
-pub(crate) fn parsed_annotation(name: &str, args: &str) -> ParsedAnnotation {
-    parsed_qualified_annotation(None, name, args)
-}
-
-pub(crate) fn parsed_prefixed_annotation(prefix: &str, name: &str, args: &str) -> ParsedAnnotation {
-    parsed_qualified_annotation(Some(prefix), name, args)
-}
-
-fn parsed_qualified_annotation(prefix: Option<&str>, name: &str, args: &str) -> ParsedAnnotation {
-    let qualified_name = prefix
-        .map(|prefix| format!("{prefix}.{name}"))
-        .unwrap_or_else(|| name.to_owned());
-    let source = SourceText::new(
-        FileId::new(2),
-        format!("@{qualified_name}{args}\nclass Fixture {{}}"),
-    );
-    let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
-    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
-    parsed.library.classes[0].annotations[0].clone()
 }

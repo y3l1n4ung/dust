@@ -1,10 +1,6 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
-use dust_parser_dart::ParsedDartFileSurface;
-use dust_plugin_api::{
-    DustPlugin, PluginContext, PluginContribution, WorkspaceAnalysisBuilder,
-    WorkspaceAnalysisContext,
-};
+use dust_plugin_api::{DustPlugin, PluginContext, PluginContribution, WorkspaceAnalysisBuilder};
 
 /// Collects route, router, and guard facts across the workspace.
 mod analysis;
@@ -21,7 +17,7 @@ mod parse;
 /// Validates route pages and router configuration.
 mod validate;
 
-use self::analysis::{collect_route_workspace_analysis, collect_route_workspace_analysis_ir};
+use self::analysis::collect_route_workspace_analysis_ir;
 use self::build::build_router_spec;
 use self::constants::{CLAIMED_CONFIG_SYMBOLS, SUPPORTED_ANNOTATIONS};
 use self::emit::render_route_generated;
@@ -63,15 +59,6 @@ impl DustPlugin for RoutePlugin {
 
     fn supported_annotations(&self) -> &'static [&'static str] {
         SUPPORTED_ANNOTATIONS
-    }
-
-    fn collect_workspace_analysis(
-        &self,
-        context: WorkspaceAnalysisContext<'_>,
-        library: &ParsedDartFileSurface,
-        analysis: &mut WorkspaceAnalysisBuilder,
-    ) {
-        collect_route_workspace_analysis(context, library, analysis);
     }
 
     fn collect_workspace_analysis_ir(

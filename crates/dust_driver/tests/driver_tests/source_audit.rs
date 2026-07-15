@@ -102,6 +102,38 @@ fn compatibility_aliases_are_removed() {
 }
 
 #[test]
+fn production_plugins_use_canonical_ir_workspace_analysis() {
+    let root = workspace_root();
+    let mut violations = Vec::new();
+
+    for dir in [
+        "crates/dust_plugin_api/src",
+        "crates/dust_plugin_derive/src",
+        "crates/dust_plugin_serde/src",
+        "crates/dust_http_client_plugin/src",
+        "crates/dust_route_plugin/src",
+        "crates/dust_state_plugin/src",
+        "crates/dust_db_plugin/src",
+    ] {
+        scan_dir(
+            &root.join(dir),
+            &[
+                "ParsedDartFileSurface",
+                "WorkspaceAnalysisContext",
+                "collect_workspace_analysis(",
+            ],
+            &mut violations,
+        );
+    }
+
+    assert!(
+        violations.is_empty(),
+        "production plugins must collect workspace facts from canonical DartFileIr:\n{}",
+        violations.join("\n")
+    );
+}
+
+#[test]
 fn production_plugins_use_generate_api() {
     let root = workspace_root();
     let mut violations = Vec::new();

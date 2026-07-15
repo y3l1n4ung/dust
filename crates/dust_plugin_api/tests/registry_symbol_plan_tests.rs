@@ -5,12 +5,9 @@ mod library;
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
-use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{
     DustPlugin, PluginContext, PluginContribution, PluginRegistry, WorkspaceAnalysisBuilder,
-    WorkspaceAnalysisContext,
 };
-use dust_text::TextRange;
 
 use self::library::sample_library;
 
@@ -44,22 +41,6 @@ impl DustPlugin for SymbolPlugin {
     }
 }
 
-fn sample_parsed_library() -> ParsedDartFileSurface {
-    ParsedDartFileSurface {
-        span: TextRange::new(0_u32, 100_u32),
-        directives: Vec::new(),
-        classes: Vec::new(),
-        enums: Vec::new(),
-        mixins: Vec::new(),
-        extensions: Vec::new(),
-        extension_types: Vec::new(),
-        functions: Vec::new(),
-        variables: Vec::new(),
-        typedefs: Vec::new(),
-        query_calls: Vec::new(),
-    }
-}
-
 #[test]
 fn symbol_plan_preserves_first_seen_order_and_dedupes() {
     let library = sample_library();
@@ -89,7 +70,7 @@ fn symbol_plan_preserves_first_seen_order_and_dedupes() {
 }
 
 #[test]
-fn registry_collects_workspace_analysis_in_registration_order() {
+fn registry_collects_ir_workspace_analysis_in_registration_order() {
     struct AnalysisPlugin {
         key: &'static str,
         value: &'static str,
@@ -98,15 +79,6 @@ fn registry_collects_workspace_analysis_in_registration_order() {
     impl DustPlugin for AnalysisPlugin {
         fn plugin_name(&self) -> &'static str {
             self.key
-        }
-
-        fn collect_workspace_analysis(
-            &self,
-            _context: WorkspaceAnalysisContext<'_>,
-            _library: &ParsedDartFileSurface,
-            analysis: &mut WorkspaceAnalysisBuilder,
-        ) {
-            analysis.add_string_set_value(self.key, self.value);
         }
 
         fn collect_workspace_analysis_ir(
@@ -143,23 +115,6 @@ fn registry_collects_workspace_analysis_in_registration_order() {
             value: "Team",
         }))
         .unwrap();
-
-    let mut analysis = WorkspaceAnalysisBuilder::default();
-    registry.collect_workspace_analysis(
-        WorkspaceAnalysisContext {
-            package_name: "test_app",
-            package_root: std::path::Path::new("."),
-            source_path: std::path::Path::new("lib/test.dart"),
-        },
-        &sample_parsed_library(),
-        &mut analysis,
-    );
-    let analysis = analysis.build();
-
-    assert_eq!(
-        analysis.string_set("a"),
-        Some(&["Team".to_owned(), "User".to_owned()][..])
-    );
 
     let mut ir_analysis = WorkspaceAnalysisBuilder::default();
     registry.collect_workspace_analysis_ir(&sample_library(), &mut ir_analysis);

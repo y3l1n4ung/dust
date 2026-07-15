@@ -1,5 +1,4 @@
 use dust_ir::{ConfigApplicationIr, NormalizedConfigIr, StateModeIr, SymbolId};
-use dust_parser_dart::ParsedAnnotation;
 
 #[cfg(test)]
 use dust_ir::SpanIr;
@@ -39,34 +38,6 @@ pub(crate) fn parse_view_model_config(config: &ConfigApplicationIr) -> Option<Vi
             StateModeIr::Async => ViewModelMode::Async,
         },
     })
-}
-
-/// Extracts state, args, and initial values from parser-level annotation data.
-pub(crate) fn parse_view_model_surface(
-    annotation: &ParsedAnnotation,
-) -> Option<ViewModelAnnotation> {
-    let state_type = annotation
-        .named_type("state")
-        .or_else(|| annotation.positional_type(0))?;
-    let args_type = annotation.named_type("args");
-    let initial_source = annotation.named_expression_source("initial");
-    let mode_source = annotation.named_expression_source("mode");
-    let mode = parse_mode(mode_source.as_deref());
-    Some(ViewModelAnnotation {
-        state_type,
-        args_type,
-        initial_source,
-        mode_source,
-        mode,
-    })
-}
-
-/// Parses a ViewModel mode expression from annotation source.
-pub(crate) fn parse_mode(source: Option<&str>) -> ViewModelMode {
-    match source.map(str::trim) {
-        Some(source) if source.ends_with(".async") || source == "async" => ViewModelMode::Async,
-        _ => ViewModelMode::Sync,
-    }
 }
 
 /// Returns whether an annotation expression is a supported ViewModel mode.
