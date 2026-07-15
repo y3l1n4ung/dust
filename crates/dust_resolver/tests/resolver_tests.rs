@@ -475,6 +475,37 @@ class User {
 }
 
 #[test]
+fn reports_annotation_prefixes_without_matching_imports() {
+    let source = SourceText::new(
+        FileId::new(8),
+        r#"
+part 'user.g.dart';
+
+@dust.SerDe(rename: 'user')
+class User {}
+"#,
+    );
+
+    let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+    let mut catalog = SymbolCatalog::new();
+    catalog.register_config("SerDe", "dust_dart::SerDe");
+
+    let resolved = resolve_library(
+        FileId::new(8),
+        "lib/user.dart",
+        "lib/user.g.dart",
+        &parsed.library,
+        &catalog,
+    );
+
+    assert!(resolved.diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("annotation prefix `dust` is not declared by an import")
+    }));
+}
+
+#[test]
 fn missing_generated_part_is_reported_when_dust_symbols_are_present() {
     let source = SourceText::new(
         FileId::new(2),
