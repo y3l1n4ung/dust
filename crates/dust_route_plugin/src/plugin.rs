@@ -21,7 +21,7 @@ mod parse;
 /// Validates route pages and router configuration.
 mod validate;
 
-use self::analysis::collect_route_workspace_analysis;
+use self::analysis::{collect_route_workspace_analysis, collect_route_workspace_analysis_ir};
 use self::build::build_router_spec;
 use self::constants::{CLAIMED_CONFIG_SYMBOLS, SUPPORTED_ANNOTATIONS};
 use self::emit::render_route_generated;
@@ -72,6 +72,14 @@ impl DustPlugin for RoutePlugin {
         analysis: &mut WorkspaceAnalysisBuilder,
     ) {
         collect_route_workspace_analysis(context, library, analysis);
+    }
+
+    fn collect_workspace_analysis_ir(
+        &self,
+        library: &DartFileIr,
+        analysis: &mut WorkspaceAnalysisBuilder,
+    ) {
+        collect_route_workspace_analysis_ir(library, analysis);
     }
 
     fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
