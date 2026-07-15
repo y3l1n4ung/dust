@@ -1,13 +1,8 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
-use dust_parser_dart::ParsedDartFileSurface;
-use dust_plugin_api::{
-    DustPlugin, PluginContext, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder,
-    WorkspaceAnalysisContext,
-};
+use dust_plugin_api::{DustPlugin, PluginContext, PluginContribution, SymbolPlan};
 
 use crate::{
-    analysis::collect_workspace_analysis,
     emit::emit_library,
     features::{COPY_WITH_SYMBOL, DEBUG_SYMBOL, EQ_SYMBOL, TO_STRING_SYMBOL, VALIDATE_SYMBOL},
     validate::{validate_library, validate_library_with_plan},
@@ -56,15 +51,6 @@ impl DustPlugin for DerivePlugin {
 
     fn requested_symbols(&self, _library: &DartFileIr) -> Vec<String> {
         Vec::new()
-    }
-
-    fn collect_workspace_analysis(
-        &self,
-        _context: WorkspaceAnalysisContext<'_>,
-        library: &ParsedDartFileSurface,
-        analysis: &mut WorkspaceAnalysisBuilder,
-    ) {
-        collect_workspace_analysis(library, analysis);
     }
 
     fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {

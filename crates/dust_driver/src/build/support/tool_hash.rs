@@ -79,7 +79,6 @@ const CODEGEN_CORE_FINGERPRINT_INPUT: &str = concat!(
 
 /// Source inputs that affect generated derive behavior.
 const DERIVE_PLUGIN_FINGERPRINT_INPUT: &str = concat!(
-    include_str!("../../../../dust_plugin_derive/src/analysis.rs"),
     include_str!("../../../../dust_plugin_derive/src/emit.rs"),
     include_str!("../../../../dust_plugin_derive/src/features/mod.rs"),
     include_str!("../../../../dust_plugin_derive/src/plugin.rs"),
