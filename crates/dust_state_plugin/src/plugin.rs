@@ -19,7 +19,7 @@ mod parse;
 /// Validation diagnostics for invalid view model declarations.
 mod validate;
 
-use self::analysis::collect_state_workspace_analysis;
+use self::analysis::{collect_state_workspace_analysis, collect_state_workspace_analysis_ir};
 use self::constants::{CLAIMED_CONFIG_SYMBOLS, SUPPORTED_ANNOTATIONS};
 use self::emit::emit_library_state;
 use self::validate::validate_library_state;
@@ -65,6 +65,14 @@ impl DustPlugin for StatePlugin {
         analysis: &mut WorkspaceAnalysisBuilder,
     ) {
         collect_state_workspace_analysis(context, library, analysis);
+    }
+
+    fn collect_workspace_analysis_ir(
+        &self,
+        library: &DartFileIr,
+        analysis: &mut WorkspaceAnalysisBuilder,
+    ) {
+        collect_state_workspace_analysis_ir(library, analysis);
     }
 
     fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {

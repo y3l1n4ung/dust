@@ -1,4 +1,4 @@
-use dust_plugin_api::{DustPlugin, PluginContext, SymbolPlan};
+use dust_plugin_api::{DustPlugin, PluginContext, SymbolPlan, WorkspaceAnalysisBuilder};
 use dust_state_plugin::register_plugin;
 
 use super::support::{args_class, library_with_classes, state_class, view_model_class};
@@ -10,6 +10,35 @@ fn plugin_claims_view_model_config() {
     assert_eq!(plugin.plugin_name(), "ViewModel");
     assert_eq!(plugin.claimed_configs(), vec!["dust_flutter::ViewModel"]);
     assert_eq!(plugin.supported_annotations(), vec!["ViewModel"]);
+}
+
+#[test]
+fn collects_workspace_facts_from_canonical_ir() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        state_class(),
+        args_class(),
+        view_model_class(
+            "TaskBoardViewModel",
+            "(state: TaskBoardState, args: TaskBoardArgs)",
+        ),
+    ]);
+    let mut analysis = WorkspaceAnalysisBuilder::default();
+
+    plugin.collect_workspace_analysis_ir(&library, &mut analysis);
+    let snapshot = analysis.snapshot();
+
+    assert!(
+        snapshot
+            .string_set("dust_state.states.v1")
+            .expect("state facts")
+            .iter()
+            .any(|value| value.contains(r#""class_name":"TaskBoardArgs""#))
+    );
+    assert_eq!(
+        snapshot.string_set("dust_state.view_models.v1").unwrap(),
+        &[r#"{"class_name":"TaskBoardViewModel","state_type":"TaskBoardState","args_type":"TaskBoardArgs","initial_source":null,"mode":"sync","generated_base_class":"$TaskBoardViewModel","import_uri":"lib/task_board_view_model.dart"}"#.to_owned()]
+    );
 }
 
 #[test]
