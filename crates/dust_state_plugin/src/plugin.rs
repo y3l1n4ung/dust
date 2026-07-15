@@ -1,10 +1,6 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
-use dust_parser_dart::ParsedDartFileSurface;
-use dust_plugin_api::{
-    DustPlugin, PluginContext, PluginContribution, WorkspaceAnalysisBuilder,
-    WorkspaceAnalysisContext,
-};
+use dust_plugin_api::{DustPlugin, PluginContext, PluginContribution, WorkspaceAnalysisBuilder};
 
 /// Workspace-wide fact collection for state and view model declarations.
 mod analysis;
@@ -19,7 +15,7 @@ mod parse;
 /// Validation diagnostics for invalid view model declarations.
 mod validate;
 
-use self::analysis::{collect_state_workspace_analysis, collect_state_workspace_analysis_ir};
+use self::analysis::collect_state_workspace_analysis_ir;
 use self::constants::{CLAIMED_CONFIG_SYMBOLS, SUPPORTED_ANNOTATIONS};
 use self::emit::emit_library_state;
 use self::validate::validate_library_state;
@@ -56,15 +52,6 @@ impl DustPlugin for StatePlugin {
 
     fn supported_annotations(&self) -> &'static [&'static str] {
         SUPPORTED_ANNOTATIONS
-    }
-
-    fn collect_workspace_analysis(
-        &self,
-        context: WorkspaceAnalysisContext<'_>,
-        library: &ParsedDartFileSurface,
-        analysis: &mut WorkspaceAnalysisBuilder,
-    ) {
-        collect_state_workspace_analysis(context, library, analysis);
     }
 
     fn collect_workspace_analysis_ir(

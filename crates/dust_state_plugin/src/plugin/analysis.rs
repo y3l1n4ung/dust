@@ -5,41 +5,12 @@ use dust_dart_emit::{
     DART_OBJECT, DART_OBJECT_NULLABLE, DART_STRING, DART_VOID, DYNAMIC_TYPES,
 };
 use dust_ir::DartFileIr;
-use dust_parser_dart::{ParsedClassSurface, ParsedDartFileSurface};
-use dust_plugin_api::{WorkspaceAnalysisBuilder, WorkspaceAnalysisContext};
+use dust_plugin_api::WorkspaceAnalysisBuilder;
 
 use super::{
-    constants::{STATES_ANALYSIS_KEY, VIEW_MODEL, VIEW_MODELS_ANALYSIS_KEY},
+    constants::{STATES_ANALYSIS_KEY, VIEW_MODELS_ANALYSIS_KEY},
     model::{StateFact, StateFieldFact, ViewModelFact},
-    parse::parse_view_model_surface,
 };
-
-/// Collects state and view model facts for later cross-library emission.
-pub(crate) fn collect_state_workspace_analysis(
-    context: WorkspaceAnalysisContext<'_>,
-    library: &ParsedDartFileSurface,
-    analysis: &mut WorkspaceAnalysisBuilder,
-) {
-    let declared_type_names = declared_type_names(library);
-    for class in &library.classes {
-        collect_state_fact(class, &declared_type_names, analysis);
-        if let Some(annotation) = view_model_annotation(class) {
-            let fact = ViewModelFact {
-                class_name: class.name.clone(),
-                state_type: annotation.state_type,
-                args_type: annotation.args_type,
-                initial_source: annotation.initial_source,
-                mode: annotation.mode,
-                generated_base_class: format!("${}", class.name),
-                import_uri: import_uri(context),
-            };
-            if let Ok(value) = serde_json::to_string(&fact) {
-                analysis.add_string_set_value(VIEW_MODELS_ANALYSIS_KEY, value);
-            }
-        }
-    }
-}
-
 /// Collects state and view model facts from canonical IR.
 pub(crate) fn collect_state_workspace_analysis_ir(
     library: &DartFileIr,
@@ -72,33 +43,6 @@ pub(crate) fn collect_state_workspace_analysis_ir(
     }
 }
 
-/// Records field metadata for a parsed Dart class as a possible state class.
-fn collect_state_fact(
-    class: &ParsedClassSurface,
-    declared_type_names: &[String],
-    analysis: &mut WorkspaceAnalysisBuilder,
-) {
-    let fields = class
-        .fields
-        .iter()
-        .map(|field| StateFieldFact {
-            name: field.name.clone(),
-            type_source: field
-                .type_source
-                .as_deref()
-                .map(|source| sanitize_type_source(source, declared_type_names))
-                .unwrap_or_else(|| DART_DYNAMIC.to_owned()),
-        })
-        .collect::<Vec<_>>();
-    let fact = StateFact {
-        class_name: class.name.clone(),
-        fields,
-    };
-    if let Ok(value) = serde_json::to_string(&fact) {
-        analysis.add_string_set_value(STATES_ANALYSIS_KEY, value);
-    }
-}
-
 /// Records field metadata for a canonical IR class as a possible state class.
 fn collect_state_fact_ir(
     class: &dust_ir::ClassIr,
@@ -123,25 +67,6 @@ fn collect_state_fact_ir(
     if let Ok(value) = serde_json::to_string(&fact) {
         analysis.add_string_set_value(STATES_ANALYSIS_KEY, value);
     }
-}
-
-/// Returns the parsed view model annotation attached to a class, if present.
-fn view_model_annotation(class: &ParsedClassSurface) -> Option<super::model::ViewModelAnnotation> {
-    class
-        .annotations
-        .iter()
-        .find(|annotation| annotation.is_named(VIEW_MODEL))
-        .and_then(parse_view_model_surface)
-}
-
-/// Lists local type names that can be referenced safely from generated code.
-fn declared_type_names(library: &ParsedDartFileSurface) -> Vec<String> {
-    library
-        .classes
-        .iter()
-        .map(|class| class.name.clone())
-        .chain(library.enums.iter().map(|enum_| enum_.name.clone()))
-        .collect()
 }
 
 /// Rewrites unavailable Dart type sources to nullable `Object` fallbacks.
@@ -181,15 +106,6 @@ fn is_visible_type(type_name: &str, declared_type_names: &[String]) -> bool {
             | DART_DYNAMIC
             | DART_VOID
     ) || declared_type_names.iter().any(|name| name == type_name)
-}
-
-/// Builds the import URI for a source file relative to the package root.
-fn import_uri(context: WorkspaceAnalysisContext<'_>) -> String {
-    import_uri_from_paths(
-        context.package_name,
-        context.package_root,
-        context.source_path,
-    )
 }
 
 /// Builds an import URI from canonical file metadata.

@@ -3,10 +3,6 @@ use std::collections::{HashMap, HashSet};
 use dust_dart_emit::{DART_LIST, DART_MAP, DART_VOID};
 use dust_diagnostics::Diagnostic;
 use dust_ir::{BuiltinType, ClassIr, DartFileIr, MethodIr, MethodParamIr, ParamKind, TypeIr};
-use dust_parser_dart::{
-    ParameterKind, ParsedAnnotation, ParsedClassSurface, ParsedDartFileSurface, ParsedTypeKind,
-    ParsedTypeSurface,
-};
 use dust_plugin_api::{WorkspaceAnalysis, WorkspaceAnalysisBuilder};
 
 use crate::plugin::emit::uses_direct_body_value;
@@ -92,26 +88,6 @@ impl<'a> JsonCapabilityContext<'a> {
                     || contains_sorted_string(self.workspace_from_json_types, name)
             }
         }
-    }
-}
-
-/// Collects parse-only workspace JSON facts used by HTTP validation.
-pub(crate) fn collect_workspace_analysis(
-    library: &ParsedDartFileSurface,
-    analysis: &mut WorkspaceAnalysisBuilder,
-) {
-    for class in &library.classes {
-        analysis.add_string_set_value(HTTP_JSON_TYPES_KEY, class.name.clone());
-        if class_has_serialize(class) || parsed_has_to_json_method(class) {
-            analysis.add_string_set_value(HTTP_JSON_SERIALIZABLE_TYPES_KEY, class.name.clone());
-        }
-        if parsed_has_from_json_factory(class) {
-            analysis.add_string_set_value(HTTP_JSON_FROM_JSON_TYPES_KEY, class.name.clone());
-        }
-    }
-
-    for enum_ in &library.enums {
-        analysis.add_string_set_value(HTTP_JSON_TYPES_KEY, enum_.name.clone());
     }
 }
 
@@ -277,59 +253,4 @@ fn is_json_map_type(ty: &TypeIr) -> bool {
     type_name_is(ty, DART_MAP)
         && ty.args().len() == 2
         && ty.args()[0].is_builtin(BuiltinType::String)
-}
-
-/// Returns whether a parsed class asks Dust to generate serialization support.
-fn class_has_serialize(class: &ParsedClassSurface) -> bool {
-    annotations_have_trait(&class.annotations, "Serialize")
-}
-
-/// Returns whether parsed annotations include a direct trait or `@Derive([...])` member.
-fn annotations_have_trait(annotations: &[ParsedAnnotation], trait_name: &str) -> bool {
-    annotations.iter().any(|annotation| {
-        annotation.is_named(trait_name)
-            || (annotation.is_named("Derive")
-                && annotation
-                    .positional_constructor_names()
-                    .iter()
-                    .any(|name| name == trait_name))
-    })
-}
-
-/// Returns whether a parsed class declares a usable instance `toJson()` method.
-fn parsed_has_to_json_method(class: &ParsedClassSurface) -> bool {
-    class.methods.iter().any(|method| {
-        method.name == "toJson"
-            && !method.is_static
-            && method.params.is_empty()
-            && parsed_is_json_map_type(method.parsed_return_type.as_ref())
-    })
-}
-
-/// Returns whether a parsed class declares a usable factory `fromJson(...)` constructor.
-fn parsed_has_from_json_factory(class: &ParsedClassSurface) -> bool {
-    class.constructors.iter().any(|constructor| {
-        constructor.name.as_deref() == Some("fromJson")
-            && constructor.is_factory
-            && constructor.params.len() == 1
-            && constructor.params[0].kind == ParameterKind::Positional
-            && parsed_is_json_map_type(constructor.params[0].parsed_type.as_ref())
-    })
-}
-
-/// Returns whether a parsed type is a string-keyed JSON object map.
-fn parsed_is_json_map_type(ty: Option<&ParsedTypeSurface>) -> bool {
-    let Some(ty) = ty else {
-        return false;
-    };
-    let ParsedTypeKind::Named { name, args } = &ty.kind else {
-        return false;
-    };
-
-    name == DART_MAP && args.len() == 2 && parsed_is_string_type(&args[0])
-}
-
-/// Returns whether a parsed type is `String`.
-fn parsed_is_string_type(ty: &ParsedTypeSurface) -> bool {
-    matches!(&ty.kind, ParsedTypeKind::Builtin(name) if name == "String")
 }

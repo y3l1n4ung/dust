@@ -1,8 +1,5 @@
-use std::path::Path;
-
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
-use dust_parser_dart::ParsedDartFileSurface;
 
 use crate::{PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder};
 
@@ -11,17 +8,6 @@ use crate::{PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder};
 pub struct PluginContext<'a> {
     /// The deterministic symbol plan for the current file.
     pub symbol_plan: &'a SymbolPlan,
-}
-
-/// Source context available while collecting parse-only workspace facts.
-#[derive(Debug, Clone, Copy)]
-pub struct WorkspaceAnalysisContext<'a> {
-    /// The package name for the library being scanned.
-    pub package_name: &'a str,
-    /// The package root directory for the library being scanned.
-    pub package_root: &'a Path,
-    /// The source file path for the library being scanned.
-    pub source_path: &'a Path,
 }
 
 /// The contract implemented by every Dust generation plugin.
@@ -57,19 +43,7 @@ pub trait DustPlugin: Send + Sync {
         Vec::new()
     }
 
-    /// Collects parse-only workspace facts for this plugin during the shared scan phase.
-    fn collect_workspace_analysis(
-        &self,
-        _context: WorkspaceAnalysisContext<'_>,
-        _file: &ParsedDartFileSurface,
-        _analysis: &mut WorkspaceAnalysisBuilder,
-    ) {
-    }
-
-    /// Collects workspace facts from canonical IR during the staged plugin migration.
-    ///
-    /// The parser-surface method remains available as a compatibility adapter until
-    /// every plugin has moved to this IR-only hook.
+    /// Collects workspace facts from canonical IR during the shared scan phase.
     fn collect_workspace_analysis_ir(
         &self,
         _file: &DartFileIr,

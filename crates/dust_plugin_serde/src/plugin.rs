@@ -1,13 +1,11 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
-use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{
     DustPlugin, PluginContext, PluginContribution, SymbolPlan, WorkspaceAnalysisBuilder,
-    WorkspaceAnalysisContext,
 };
 
 use crate::{
-    analysis::{collect_workspace_analysis, collect_workspace_analysis_ir},
+    analysis::collect_workspace_analysis_ir,
     emit::emit_library,
     validate::{validate_library, validate_library_with_workspace},
 };
@@ -89,15 +87,6 @@ impl DustPlugin for SerdePlugin {
             }
         }
         symbols
-    }
-
-    fn collect_workspace_analysis(
-        &self,
-        _context: WorkspaceAnalysisContext<'_>,
-        library: &ParsedDartFileSurface,
-        analysis: &mut WorkspaceAnalysisBuilder,
-    ) {
-        collect_workspace_analysis(library, analysis);
     }
 
     fn collect_workspace_analysis_ir(
