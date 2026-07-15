@@ -84,6 +84,10 @@ impl DustPlugin for HttpClientPlugin {
         collect_workspace_analysis_ir(library, analysis);
     }
 
+    fn supports_workspace_analysis_ir(&self) -> bool {
+        true
+    }
+
     fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
         let json = JsonCapabilityContext::new(library);
         library

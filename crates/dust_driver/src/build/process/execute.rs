@@ -12,7 +12,8 @@ use dust_workspace::SourceLibrary;
 use crate::lower::lower_library_with_catalog;
 
 use super::{
-    BuildOutcome, PendingLibrary, ProcessingConfig, build_diagnostic_file, emit_or_write_library,
+    BuildOutcome, LoweringConfig, PendingLibrary, PreprocessedLibrary, ProcessingConfig,
+    build_diagnostic_file, emit_or_write_library,
 };
 
 /// Processes one pending library and reports progress when it finishes.
@@ -27,6 +28,7 @@ pub(crate) fn process_pending_library(
         library,
         input,
         pre_parsed,
+        pre_lowered,
         analysis_snapshot,
     } = pending;
     let super::LoadedLibraryInput {
@@ -42,7 +44,10 @@ pub(crate) fn process_pending_library(
         file_id,
         &library,
         source,
-        pre_parsed,
+        PreprocessedLibrary {
+            parsed: pre_parsed,
+            lowered: pre_lowered,
+        },
         previous_output_hash,
         &backend,
         processing,
@@ -79,7 +84,7 @@ pub(crate) fn process_library_from_source(
     file_id: FileId,
     library: &SourceLibrary,
     source: Arc<str>,
-    pre_parsed: Option<ParsedDartFileSurface>,
+    preprocessed: PreprocessedLibrary,
     previous_output_hash: Option<Option<u64>>,
     backend: &TreeSitterDartBackend,
     processing: &ProcessingConfig<'_>,
@@ -88,17 +93,26 @@ pub(crate) fn process_library_from_source(
     let source_text = SourceText::new(file_id, Arc::clone(&source));
     let diagnostic_file =
         build_diagnostic_file(file_id, library, source, source_text.line_index().clone());
-    let parsed = pre_parsed.unwrap_or_else(|| {
-        let parsed = parse_file_with_backend(backend, &source_text, ParseOptions::default());
-        diagnostics.extend(parsed.diagnostics);
-        parsed.library
-    });
+    let lowered_library = if let Some(lowered) = preprocessed.lowered {
+        lowered
+    } else {
+        let parsed = preprocessed.parsed.unwrap_or_else(|| {
+            let parsed = parse_file_with_backend(backend, &source_text, ParseOptions::default());
+            diagnostics.extend(parsed.diagnostics);
+            parsed.library
+        });
 
-    let lowered_library =
-        match resolve_and_lower_library(file_id, library, &parsed, processing, &mut diagnostics) {
+        let lowering = LoweringConfig {
+            package_root: processing.package_root,
+            package_name: processing.package_name,
+            catalog: processing.catalog,
+            registry: processing.registry,
+        };
+        match resolve_and_lower_library(file_id, library, &parsed, &lowering, &mut diagnostics) {
             Some(library) => library,
             None => return BuildOutcome::failed(library, diagnostics, Some(diagnostic_file)),
-        };
+        }
+    };
 
     let output =
         match emit_library_output(library, &lowered_library, previous_output_hash, processing) {
@@ -116,23 +130,23 @@ pub(crate) fn process_library_from_source(
 }
 
 /// Resolves parser output and lowers it into Dust IR.
-fn resolve_and_lower_library(
+pub(crate) fn resolve_and_lower_library(
     file_id: FileId,
     library: &SourceLibrary,
     parsed: &ParsedDartFileSurface,
-    processing: &ProcessingConfig<'_>,
+    lowering: &LoweringConfig<'_>,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Option<dust_ir::DartFileIr> {
-    let partless_configs = processing.registry.all_partless_configs();
+    let partless_configs = lowering.registry.all_partless_configs();
     let ResolveResult {
         library: mut resolved_library,
         diagnostics: resolve_diagnostics,
     } = dust_resolver::resolve_library_with_partless_configs(
         file_id,
-        &workspace_relative_path(processing.package_root, &library.source_path),
-        &workspace_relative_path(processing.package_root, &library.output_path),
+        &workspace_relative_path(lowering.package_root, &library.source_path),
+        &workspace_relative_path(lowering.package_root, &library.output_path),
         parsed,
-        processing.catalog,
+        lowering.catalog,
         &partless_configs,
     );
     diagnostics.extend(resolve_diagnostics);
@@ -140,10 +154,10 @@ fn resolve_and_lower_library(
     let LoweringOutcome {
         value: mut lowered_library,
         diagnostics: lower_diagnostics,
-    } = lower_library_with_catalog(&mut resolved_library, processing.catalog);
+    } = lower_library_with_catalog(&mut resolved_library, lowering.catalog);
     diagnostics.extend(lower_diagnostics);
-    lowered_library.package_root = processing.package_root.to_string_lossy().into_owned();
-    lowered_library.package_name = processing.package_name.to_owned();
+    lowered_library.package_root = lowering.package_root.to_string_lossy().into_owned();
+    lowered_library.package_name = lowering.package_name.to_owned();
 
     (!diagnostics.iter().any(|diagnostic| diagnostic.is_error())).then_some(lowered_library)
 }

@@ -8,6 +8,7 @@ mod scan;
 use std::sync::Arc;
 
 use dust_diagnostics::Diagnostic;
+use dust_ir::DartFileIr;
 use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{LibraryAnalysisSnapshot, WorkspaceAnalysis};
 use dust_text::{FileId, LineIndex};
@@ -35,6 +36,26 @@ pub(crate) struct ProcessingConfig<'a> {
     pub(crate) workspace_analysis: Arc<WorkspaceAnalysis>,
     /// Whether generated output should be written to disk.
     pub(crate) write_output: bool,
+}
+
+/// Parser and canonical IR results collected before per-library processing.
+pub(crate) struct PreprocessedLibrary {
+    /// Parsed library surface, retained for fallback diagnostics.
+    pub(crate) parsed: Option<ParsedDartFileSurface>,
+    /// Lowered canonical library ready for plugin analysis and emission.
+    pub(crate) lowered: Option<DartFileIr>,
+}
+
+/// Inputs shared by parser resolution and IR lowering.
+pub(crate) struct LoweringConfig<'a> {
+    /// Root of the Dart package being generated.
+    pub(crate) package_root: &'a std::path::Path,
+    /// Dart package name.
+    pub(crate) package_name: &'a str,
+    /// Resolver catalog built from plugin symbol ownership.
+    pub(crate) catalog: &'a dust_resolver::SymbolCatalog,
+    /// Active plugin registry used for partless config resolution.
+    pub(crate) registry: &'a dust_plugin_api::PluginRegistry,
 }
 
 /// Result of processing one source library through Dust code generation.
@@ -128,6 +149,8 @@ pub(crate) struct PendingLibrary {
     pub(crate) input: LoadedLibraryInput,
     /// Parsed library surface collected during workspace analysis, if available.
     pub(crate) pre_parsed: Option<ParsedDartFileSurface>,
+    /// Lowered canonical library collected during workspace analysis, if available.
+    pub(crate) pre_lowered: Option<DartFileIr>,
     /// Plugin workspace analysis facts for this library.
     pub(crate) analysis_snapshot: LibraryAnalysisSnapshot,
 }
@@ -146,6 +169,7 @@ impl PendingLibrary {
             library,
             input,
             pre_parsed: None,
+            pre_lowered: None,
             analysis_snapshot: LibraryAnalysisSnapshot::default(),
         }
     }

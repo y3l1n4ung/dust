@@ -153,19 +153,22 @@ pub(crate) fn prepare_and_process_batch(
         ));
     }
 
-    let (pending_analysis, pre_parsed_libraries, analysis_snapshots) = collect_workspace_analysis(
+    let workspace_result = collect_workspace_analysis(
         &pending,
         config.package_root,
         config.package_name,
+        config.catalog,
         config.registry,
     );
-    workspace_analysis.merge(pending_analysis);
-    for ((pending, pre_parsed), analysis_snapshot) in pending
+    workspace_analysis.merge(workspace_result.analysis);
+    for (((pending, pre_parsed), pre_lowered), analysis_snapshot) in pending
         .iter_mut()
-        .zip(pre_parsed_libraries)
-        .zip(analysis_snapshots)
+        .zip(workspace_result.pre_parsed)
+        .zip(workspace_result.pre_lowered)
+        .zip(workspace_result.snapshots)
     {
         pending.pre_parsed = pre_parsed;
+        pending.pre_lowered = pre_lowered;
         pending.analysis_snapshot = analysis_snapshot;
     }
 
