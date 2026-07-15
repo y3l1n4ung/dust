@@ -1,1 +1,5 @@
-    return '/404?path=${Uri.encodeComponent(path)}';
+    return _routePath(
+      const ['404'],
+      queryParameters: {'path': path},
+      uriExtras: _routeUriExtrasOf(this),
+    );

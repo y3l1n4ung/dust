@@ -1,4 +1,4 @@
   if ({{ condition }}) {
-{{ decoders }}{{ null_checks }}    return {{ route_instance }};
+{{ decoders }}{{ null_checks }}    final route = {{ route_instance }};
+    return _withRouteUriExtras(route, uri, {{ known_query_parameters }});
   }
-

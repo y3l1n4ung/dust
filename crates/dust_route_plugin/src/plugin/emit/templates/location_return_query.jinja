@@ -1,4 +1,5 @@
     return _routePath(
       {{ segments }},
       queryParameters: query.isEmpty ? null : query,
+      uriExtras: _routeUriExtrasOf(this),
     );

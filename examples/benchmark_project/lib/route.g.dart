@@ -96,7 +96,10 @@ final class HomeRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return '/';
+    return _routePath(
+      const [],
+      uriExtras: _routeUriExtrasOf(this),
+    );
   }
 }
 
@@ -108,7 +111,11 @@ final class NotFoundRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return '/404?path=${Uri.encodeComponent(path)}';
+    return _routePath(
+      const ['404'],
+      queryParameters: {'path': path},
+      uriExtras: _routeUriExtrasOf(this),
+    );
   }
 
   @override
@@ -135,18 +142,60 @@ final class ModelDetailRoute extends AppRoutePath<void> {
     return _routePath(
       ['models', id.toString()],
       queryParameters: query.isEmpty ? null : query,
+      uriExtras: _routeUriExtrasOf(this),
     );
   }
 }
 
 String routeLocation(AppRoutePath route) => route.location;
 
+final class _RouteUriExtras {
+  const _RouteUriExtras({
+    required this.queryParameters,
+    required this.fragment,
+  });
+
+  final Map<String, List<String>> queryParameters;
+  final String fragment;
+}
+
+final Expando<_RouteUriExtras> _routeUriExtras = Expando<_RouteUriExtras>();
+
+_RouteUriExtras? _routeUriExtrasOf(Object route) => _routeUriExtras[route];
+
+T _withRouteUriExtras<T extends AppRoutePath>(
+  T route,
+  Uri uri,
+  Set<String> knownQueryParameters,
+) {
+  final queryParameters = <String, List<String>>{};
+  for (final entry in uri.queryParametersAll.entries) {
+    if (!knownQueryParameters.contains(entry.key)) {
+      queryParameters[entry.key] = List.unmodifiable(entry.value);
+    }
+  }
+  if (queryParameters.isEmpty && uri.fragment.isEmpty) return route;
+  _routeUriExtras[route] = _RouteUriExtras(
+    queryParameters: Map.unmodifiable(queryParameters),
+    fragment: uri.fragment,
+  );
+  return route;
+}
+
 String _routePath(
   List<String> segments, {
-  Map<String, String>? queryParameters,
+  Map<String, dynamic>? queryParameters,
+  _RouteUriExtras? uriExtras,
 }) {
-  final query = queryParameters?.isEmpty ?? true ? null : queryParameters;
-  final text = Uri(pathSegments: segments, queryParameters: query).toString();
+  final query = <String, dynamic>{
+    ...?queryParameters,
+    ...?uriExtras?.queryParameters,
+  };
+  final text = Uri(
+    pathSegments: segments,
+    queryParameters: query.isEmpty ? null : query,
+    fragment: uriExtras?.fragment.isEmpty ?? true ? null : uriExtras!.fragment,
+  ).toString();
   if (text.isEmpty) return '/';
   return text.startsWith('/') ? text : '/$text';
 }
@@ -216,21 +265,24 @@ AppRoutePath parseAppRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
-    return const HomeRoute();
+    final route = HomeRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == '404') {
-    return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    return _withRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 2 && segments[0] == 'models') {
     final id = int.tryParse(segments[1]);
     if (id == null) {
       return _notFoundRoute(uri);
     }
-    return ModelDetailRoute(
+    final route = ModelDetailRoute(
       id: id,
       tab: uri.queryParameters['tab'],
       archived: _parseBool(uri.queryParameters['archived']),
     );
+    return _withRouteUriExtras(route, uri, const <String>{'tab', 'archived'});
   }
   return _notFoundRoute(uri);
 }

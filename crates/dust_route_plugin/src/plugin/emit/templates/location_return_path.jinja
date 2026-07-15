@@ -1,1 +1,4 @@
-    return _routePath({{ segments }});
+    return _routePath(
+      {{ segments }},
+      uriExtras: _routeUriExtrasOf(this),
+    );

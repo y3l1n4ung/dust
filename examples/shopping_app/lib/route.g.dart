@@ -232,7 +232,10 @@ final class ProductsRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return '/';
+    return _routePath(
+      const [],
+      uriExtras: _routeUriExtrasOf(this),
+    );
   }
 
   @override
@@ -247,7 +250,11 @@ final class NotFoundRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return '/404?path=${Uri.encodeComponent(path)}';
+    return _routePath(
+      const ['404'],
+      queryParameters: {'path': path},
+      uriExtras: _routeUriExtrasOf(this),
+    );
   }
 
   @override
@@ -260,7 +267,7 @@ final class AdminRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['admin']);
+    return _routePath(['admin'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -270,7 +277,7 @@ final class CartRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['cart']);
+    return _routePath(['cart'], uriExtras: _routeUriExtrasOf(this));
   }
 
   @override
@@ -283,7 +290,7 @@ final class CheckoutRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['checkout']);
+    return _routePath(['checkout'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -293,7 +300,7 @@ final class DemoCartsRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['demo-carts']);
+    return _routePath(['demo-carts'], uriExtras: _routeUriExtrasOf(this));
   }
 
   @override
@@ -315,6 +322,7 @@ final class LoginRoute extends AppRoutePath<void> {
     return _routePath(
       ['login'],
       queryParameters: query.isEmpty ? null : query,
+      uriExtras: _routeUriExtrasOf(this),
     );
   }
 
@@ -330,7 +338,10 @@ final class OrderConfirmationRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['order-confirmation', orderId]);
+    return _routePath(
+      ['order-confirmation', orderId],
+      uriExtras: _routeUriExtrasOf(this),
+    );
   }
 
   @override
@@ -343,7 +354,7 @@ final class OrdersRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['orders']);
+    return _routePath(['orders'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -355,7 +366,7 @@ final class OrderDetailRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['orders', orderId]);
+    return _routePath(['orders', orderId], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -367,7 +378,10 @@ final class ProductDetailRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['product', productId.toString()]);
+    return _routePath(
+      ['product', productId.toString()],
+      uriExtras: _routeUriExtrasOf(this),
+    );
   }
 
   @override
@@ -380,7 +394,7 @@ final class ProfileRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['profile']);
+    return _routePath(['profile'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -399,6 +413,7 @@ final class RegisterRoute extends AppRoutePath<void> {
     return _routePath(
       ['register'],
       queryParameters: query.isEmpty ? null : query,
+      uriExtras: _routeUriExtrasOf(this),
     );
   }
 
@@ -412,7 +427,7 @@ final class StaffRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['staff']);
+    return _routePath(['staff'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -422,7 +437,7 @@ final class SupportChatRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['support', 'chat']);
+    return _routePath(['support', 'chat'], uriExtras: _routeUriExtrasOf(this));
   }
 
   @override
@@ -435,7 +450,7 @@ final class WishlistRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['wishlist']);
+    return _routePath(['wishlist'], uriExtras: _routeUriExtrasOf(this));
   }
 
   @override
@@ -444,12 +459,53 @@ final class WishlistRoute extends AppRoutePath<void> {
 
 String routeLocation(AppRoutePath route) => route.location;
 
+final class _RouteUriExtras {
+  const _RouteUriExtras({
+    required this.queryParameters,
+    required this.fragment,
+  });
+
+  final Map<String, List<String>> queryParameters;
+  final String fragment;
+}
+
+final Expando<_RouteUriExtras> _routeUriExtras = Expando<_RouteUriExtras>();
+
+_RouteUriExtras? _routeUriExtrasOf(Object route) => _routeUriExtras[route];
+
+T _withRouteUriExtras<T extends AppRoutePath>(
+  T route,
+  Uri uri,
+  Set<String> knownQueryParameters,
+) {
+  final queryParameters = <String, List<String>>{};
+  for (final entry in uri.queryParametersAll.entries) {
+    if (!knownQueryParameters.contains(entry.key)) {
+      queryParameters[entry.key] = List.unmodifiable(entry.value);
+    }
+  }
+  if (queryParameters.isEmpty && uri.fragment.isEmpty) return route;
+  _routeUriExtras[route] = _RouteUriExtras(
+    queryParameters: Map.unmodifiable(queryParameters),
+    fragment: uri.fragment,
+  );
+  return route;
+}
+
 String _routePath(
   List<String> segments, {
-  Map<String, String>? queryParameters,
+  Map<String, dynamic>? queryParameters,
+  _RouteUriExtras? uriExtras,
 }) {
-  final query = queryParameters?.isEmpty ?? true ? null : queryParameters;
-  final text = Uri(pathSegments: segments, queryParameters: query).toString();
+  final query = <String, dynamic>{
+    ...?queryParameters,
+    ...?uriExtras?.queryParameters,
+  };
+  final text = Uri(
+    pathSegments: segments,
+    queryParameters: query.isEmpty ? null : query,
+    fragment: uriExtras?.fragment.isEmpty ?? true ? null : uriExtras!.fragment,
+  ).toString();
   if (text.isEmpty) return '/';
   return text.startsWith('/') ? text : '/$text';
 }
@@ -603,62 +659,78 @@ AppRoutePath parseAppRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
-    return const ProductsRoute();
+    final route = ProductsRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == '404') {
-    return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    return _withRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 1 && segments[0] == 'admin') {
-    return const AdminRoute();
+    final route = AdminRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'cart') {
-    return const CartRoute();
+    final route = CartRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'checkout') {
-    return const CheckoutRoute();
+    final route = CheckoutRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'demo-carts') {
-    return const DemoCartsRoute();
+    final route = DemoCartsRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'login') {
-    return LoginRoute(
+    final route = LoginRoute(
       redirectPath: uri.queryParameters['redirectPath'],
     );
+    return _withRouteUriExtras(route, uri, const <String>{'redirectPath'});
   }
   if (segments.length == 2 && segments[0] == 'order-confirmation') {
     final orderId = segments[1];
-    return OrderConfirmationRoute(orderId: orderId);
+    final route = OrderConfirmationRoute(orderId: orderId);
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'orders') {
-    return const OrdersRoute();
+    final route = OrdersRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'orders') {
     final orderId = segments[1];
-    return OrderDetailRoute(orderId: orderId);
+    final route = OrderDetailRoute(orderId: orderId);
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'product') {
     final productId = int.tryParse(segments[1]);
     if (productId == null) {
       return _notFoundRoute(uri);
     }
-    return ProductDetailRoute(productId: productId);
+    final route = ProductDetailRoute(productId: productId);
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'profile') {
-    return const ProfileRoute();
+    final route = ProfileRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'register') {
-    return RegisterRoute(
+    final route = RegisterRoute(
       redirectPath: uri.queryParameters['redirectPath'],
     );
+    return _withRouteUriExtras(route, uri, const <String>{'redirectPath'});
   }
   if (segments.length == 1 && segments[0] == 'staff') {
-    return const StaffRoute();
+    final route = StaffRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'support' && segments[1] == 'chat') {
-    return const SupportChatRoute();
+    final route = SupportChatRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'wishlist') {
-    return const WishlistRoute();
+    final route = WishlistRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   return _notFoundRoute(uri);
 }
