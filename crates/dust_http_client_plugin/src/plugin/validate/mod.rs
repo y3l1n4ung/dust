@@ -13,4 +13,6 @@ mod param;
 
 pub(super) use class::validate_client_class;
 pub(super) use endpoint::validate_endpoint;
-pub(super) use json_capability::{JsonCapabilityContext, collect_workspace_analysis};
+pub(super) use json_capability::{
+    JsonCapabilityContext, collect_workspace_analysis, collect_workspace_analysis_ir,
+};

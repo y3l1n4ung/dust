@@ -28,7 +28,10 @@ use self::emit::{
     render_client_class, render_isolate_helpers, render_shared_helpers, render_test_file,
 };
 use self::parse::has_config_named;
-use self::validate::{JsonCapabilityContext, collect_workspace_analysis, validate_client_class};
+use self::validate::{
+    JsonCapabilityContext, collect_workspace_analysis, collect_workspace_analysis_ir,
+    validate_client_class,
+};
 
 /// Dust plugin for generating Dio-backed HTTP clients.
 pub struct HttpClientPlugin;
@@ -71,6 +74,14 @@ impl DustPlugin for HttpClientPlugin {
         analysis: &mut WorkspaceAnalysisBuilder,
     ) {
         collect_workspace_analysis(library, analysis);
+    }
+
+    fn collect_workspace_analysis_ir(
+        &self,
+        library: &DartFileIr,
+        analysis: &mut WorkspaceAnalysisBuilder,
+    ) {
+        collect_workspace_analysis_ir(library, analysis);
     }
 
     fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {

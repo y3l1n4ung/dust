@@ -66,6 +66,17 @@ pub trait DustPlugin: Send + Sync {
     ) {
     }
 
+    /// Collects workspace facts from canonical IR during the staged plugin migration.
+    ///
+    /// The parser-surface method remains available as a compatibility adapter until
+    /// every plugin has moved to this IR-only hook.
+    fn collect_workspace_analysis_ir(
+        &self,
+        _file: &DartFileIr,
+        _analysis: &mut WorkspaceAnalysisBuilder,
+    ) {
+    }
+
     /// Validates the Dart file from this plugin's point of view.
     fn validate(&self, file: &DartFileIr) -> Vec<Diagnostic>;
 

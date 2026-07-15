@@ -115,6 +115,26 @@ pub(crate) fn collect_workspace_analysis(
     }
 }
 
+/// Collects workspace JSON facts from canonical IR.
+pub(crate) fn collect_workspace_analysis_ir(
+    library: &DartFileIr,
+    analysis: &mut WorkspaceAnalysisBuilder,
+) {
+    for class in &library.classes {
+        analysis.add_string_set_value(HTTP_JSON_TYPES_KEY, class.name.clone());
+        if wants_serialize(class) || has_to_json_method(class) {
+            analysis.add_string_set_value(HTTP_JSON_SERIALIZABLE_TYPES_KEY, class.name.clone());
+        }
+        if has_from_json_factory(class) {
+            analysis.add_string_set_value(HTTP_JSON_FROM_JSON_TYPES_KEY, class.name.clone());
+        }
+    }
+
+    for enum_ in &library.enums {
+        analysis.add_string_set_value(HTTP_JSON_TYPES_KEY, enum_.name.clone());
+    }
+}
+
 /// Validates the JSON support required by a generated `@Body()` expression.
 pub(super) fn validate_body_json_capability(
     context: &JsonCapabilityContext<'_>,
