@@ -135,16 +135,22 @@ fn workspace_analysis_uses_canonical_ir_before_emission() {
     let root = workspace_root();
     let scan = fs::read_to_string(root.join("crates/dust_driver/src/build/process/scan.rs"))
         .expect("workspace scan source should be readable");
+    let lower = fs::read_to_string(root.join("crates/dust_driver/src/lower.rs"))
+        .expect("lowering source should be readable");
     let execute = fs::read_to_string(root.join("crates/dust_driver/src/build/process/execute.rs"))
         .expect("library execution source should be readable");
 
     assert!(
-        scan.contains("collect_workspace_analysis_ir_with_compatibility"),
+        scan.contains("collect_workspace_analysis_ir"),
         "workspace scan must dispatch plugin analysis from canonical IR"
     );
     assert!(
         !scan.contains("registry.collect_workspace_analysis("),
         "workspace scan must not dispatch parser-only workspace analysis"
+    );
+    assert!(
+        !lower.contains(".filter(|class| required_classes.contains"),
+        "canonical IR workspace analysis must retain unannotated declarations"
     );
     assert!(
         scan.contains("lower_for_workspace_analysis"),

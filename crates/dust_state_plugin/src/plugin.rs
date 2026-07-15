@@ -75,10 +75,6 @@ impl DustPlugin for StatePlugin {
         collect_state_workspace_analysis_ir(library, analysis);
     }
 
-    fn supports_workspace_analysis_ir(&self) -> bool {
-        true
-    }
-
     fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
         validate_library_state(library)
     }

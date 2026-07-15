@@ -64,8 +64,8 @@ pub(crate) fn lower_library_with_catalog(
     let mut classes = library
         .classes
         .iter_mut()
-        .filter(|class| required_classes.contains(class.name.as_str()))
         .map(|class| {
+            let collect_diagnostics = required_classes.contains(class.name.as_str());
             let outcome = lower_class_from_parts(ClassLoweringInput {
                 kind: class.kind,
                 name: &class.name,
@@ -80,7 +80,9 @@ pub(crate) fn lower_library_with_catalog(
                 configs: &class.configs,
                 serde_value: &mut class.serde,
             });
-            diagnostics.extend(outcome.diagnostics);
+            if collect_diagnostics {
+                diagnostics.extend(outcome.diagnostics);
+            }
             outcome.value
         })
         .collect::<Vec<_>>();
@@ -123,7 +125,11 @@ pub(crate) fn lower_library_with_catalog(
             &mut diagnostics,
         );
         classes[index].fields = merged_fields;
-        resolve_constructor_param_types(&mut classes[index], &mut diagnostics);
+        let mut constructor_diagnostics = Vec::new();
+        resolve_constructor_param_types(&mut classes[index], &mut constructor_diagnostics);
+        if required_classes.contains(classes[index].name.as_str()) {
+            diagnostics.extend(constructor_diagnostics);
+        }
     }
 
     LoweringOutcome {
@@ -192,7 +198,7 @@ pub(crate) fn lower_library_with_catalog(
     }
 }
 
-/// Returns classes that must be lowered because plugins or converters reference them.
+/// Returns classes that must report lowering diagnostics because plugins or converters reference them.
 fn lowering_required_class_names(classes: &[ResolvedClass]) -> HashSet<String> {
     let mut names = classes
         .iter()

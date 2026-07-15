@@ -7,7 +7,7 @@ use dust_plugin_api::{
 };
 
 use crate::{
-    analysis::collect_workspace_analysis,
+    analysis::{collect_workspace_analysis, collect_workspace_analysis_ir},
     emit::emit_library,
     validate::{validate_library, validate_library_with_workspace},
 };
@@ -98,6 +98,14 @@ impl DustPlugin for SerdePlugin {
         analysis: &mut WorkspaceAnalysisBuilder,
     ) {
         collect_workspace_analysis(library, analysis);
+    }
+
+    fn collect_workspace_analysis_ir(
+        &self,
+        library: &DartFileIr,
+        analysis: &mut WorkspaceAnalysisBuilder,
+    ) {
+        collect_workspace_analysis_ir(library, analysis);
     }
 
     /// Validates that the library is suitable for SerDe generation.
