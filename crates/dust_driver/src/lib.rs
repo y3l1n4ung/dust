@@ -24,6 +24,8 @@ mod i18n_bootstrap;
 mod i18n_build;
 /// Workspace i18n ARB validation command.
 mod i18n_check;
+/// Native iOS locale metadata integration.
+mod i18n_ios;
 /// Shared i18n key planning helpers.
 mod i18n_keys;
 /// Workspace i18n source scanning.
