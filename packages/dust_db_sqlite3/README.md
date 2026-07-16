@@ -2,8 +2,6 @@
 
 SQLite runtime for generated Database code.
 
-You focus on product. We focus on performance.
-
 ## Status
 
 - `0.1.0` is the first public SQLite driver release for Database.

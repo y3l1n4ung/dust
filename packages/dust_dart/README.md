@@ -2,8 +2,6 @@
 
 Dart-only runtime and annotations for Dust generated code.
 
-You focus on product. We focus on performance.
-
 ## Our Promise
 
 - Stable Dart authoring APIs for data classes, JSON, validation, and HTTP

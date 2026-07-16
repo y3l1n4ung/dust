@@ -3,8 +3,6 @@
 Flutter annotations and runtime APIs for Dust-generated routing, state
 management, and i18n.
 
-You focus on product. We focus on performance.
-
 ## Status
 
 - `0.1.0` is the first public Flutter runtime release.

@@ -62,8 +62,6 @@ to consume. `DartFileIr` is the only supported file-level IR name.
 
 ### Product Promise
 
-You focus on product. We focus on performance.
-
 App-facing APIs marked stable should not change. When possible, improvements
 belong in generated code, runtime internals, or the Rust engine rather than in
 migration work for handwritten product code. Features marked beta can still

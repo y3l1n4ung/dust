@@ -1,7 +1,5 @@
 # Documentation
 
-**You focus on product. We focus on performance.**
-
 ## Our Promise
 
 - Stable public APIs for features marked stable.
@@ -26,7 +24,7 @@ how-to, reference, and explanation content in one place.
 | :--- | :--- | :--- |
 | Tutorial | Learn by following a strict path to a first successful result. | [README quick start](../README.md#quick-start), [product showcase](../examples/product_showcase/README.md), [shopping app](../examples/shopping_app/README.md) |
 | How-to guide | Solve one named task after learning the basics. | [Derive](./usage/derive.md), [Serde](./usage/serde.md), [Validation](./usage/validation.md), [HttpClient](./usage/http.md), [State Management](./usage/state.md), [Routing](./usage/routing.md), [i18n](./usage/i18n.md), [Database](./usage/db.md) |
-| Reference | Look up exact facts: packages, flags, config, generated files, schemas, and release steps. | [Package installation](./usage/README.md#package-installation), [release runbook](./release-0.1.0.md), [dust_dart](../packages/dust_dart/README.md), [dust_flutter](../packages/dust_flutter/README.md), [dust_db_sqlite3](../packages/dust_db_sqlite3/README.md) |
+| Reference | Look up exact facts: packages, flags, config, generated files, and schemas. | [Package installation](./usage/README.md#package-installation), [dust_dart](../packages/dust_dart/README.md), [dust_flutter](../packages/dust_flutter/README.md), [dust_db_sqlite3](../packages/dust_db_sqlite3/README.md) |
 | Explanation | Understand design choices, constraints, and trade-offs. | [Developer guide](./developer.md), [Plugin guide](./plugin-guide.md), [State management design](./state-management-design.md) |
 
 ## Page Audit
@@ -46,7 +44,6 @@ how-to, reference, and explanation content in one place.
 | [Developer guide](./developer.md) | Explanation | Architecture, pipeline, and engineering trade-offs. |
 | [Plugin guide](./plugin-guide.md) | How-to + explanation | Plugin implementation steps with design constraints. |
 | [State management design](./state-management-design.md) | Explanation | State API rationale and hardening notes. |
-| [Release runbook](./release-0.1.0.md) | Reference | Release checklist, publish policy, and install verification. |
 | [Product showcase](../examples/product_showcase/README.md) | Tutorial | Runnable example backing the usage guides. |
 | [Benchmark project](../examples/benchmark_project/README.md) | Reference | Scale/performance fixture. |
 | [Shopping app](../examples/shopping_app/README.md) | Tutorial | End-to-end Flutter proof app. |
@@ -71,7 +68,6 @@ These pages are backed by the runnable example package in
 - [Developer guide](./developer.md)
 - [Plugin guide](./plugin-guide.md)
 - [State management design](./state-management-design.md)
-- [Release runbook](./release-0.1.0.md)
 - [Roadmap and milestones](https://github.com/y3l1n4ung/dust/milestones)
 
 ## Example Packages

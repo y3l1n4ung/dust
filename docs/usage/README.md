@@ -1,7 +1,5 @@
 # Usage Guides
 
-You focus on product. We focus on performance.
-
 This section provides the canonical documentation for using Dust in your
 Flutter and Dart projects.
 
