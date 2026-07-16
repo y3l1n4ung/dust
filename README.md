@@ -6,9 +6,9 @@
 [![Release](https://img.shields.io/github/v/release/y3l1n4ung/dust?logo=github&color=blue)](https://github.com/y3l1n4ung/dust/releases)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-Dust is Rust-powered code generation for Dart and Flutter. It uses incremental
-generation and persistent caching to generate typed APIs for data classes,
-JSON, validation, HTTP clients, routing, state, i18n, and databases.
+Dust is Rust-powered code generation for Dart and Flutter, built for human
+developers and AI coding agents. It handles repetitive and complex code so you
+can focus on your product.
 
 ## How Dust Works
 
@@ -40,7 +40,13 @@ dust --version
 
 ## Quick Start
 
-Add the Dart runtime package from your application directory:
+Dust has two main runtime packages:
+
+- `dust_dart` provides data classes, JSON, validation, HTTP clients, and
+  database annotations.
+- `dust_flutter` provides Flutter routing, state management, and i18n.
+
+Start with `dust_dart` from your application directory:
 
 ```bash
 dart pub add dust_dart
@@ -68,8 +74,14 @@ dust build
 dust check
 ```
 
-For Flutter routing, state, or i18n, add `dust_flutter` and follow the
-[Flutter package guide](packages/dust_flutter/README.md).
+Flutter apps can add `dust_flutter` too:
+
+```bash
+flutter pub add dust_flutter
+```
+
+See the [Flutter package guide](packages/dust_flutter/README.md) for routing,
+state, and i18n setup.
 
 ## Features
 
@@ -116,4 +128,4 @@ Stable features keep their documented authoring APIs compatible throughout
 
 ## License
 
-Dust is available under the [MIT License](LICENSE).
+[MIT License](LICENSE).
