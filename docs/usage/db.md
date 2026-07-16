@@ -1,33 +1,27 @@
 # Database
 
-Database is Dust's SQLx-style raw SQL layer for Dart and Flutter. It is not an ORM and does not provide a query builder. App code writes raw SQL in `@Query`, Dust validates it during `dust db build`, and generated DAO code calls typed `Executor` fetch/execute methods directly.
+Dust Database generates typed SQLite access from raw SQL and validates static
+queries against your migrations with Rust SQLx. It is not an ORM or query
+builder.
 
-## Packages
+Database is currently beta. SQLite through `package:sqlite3` is the supported
+runtime; PostgreSQL annotations are reserved for future support.
 
-```dart
-import 'package:dust_dart/db.dart';
-import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
+## Add the Packages
+
+Install the Dust CLI from the [root guide](../../README.md#installation), then
+add the annotations and SQLite runtime:
+
+```bash
+dart pub add dust_dart dust_db_sqlite3
 ```
 
-## Migration Files
+The SQLite package uses native libraries through Dart FFI and is intended for
+native Dart and Flutter targets, not web.
 
-Create SQL migration files in your app package. Dust reads the directory from
-`@SqlxDatabase(migrations: ...)`, validates DAO queries against those files, and
-embeds the SQL into the generated database opener.
+## Quick Start
 
-You can create the first migration with
-[SQLx CLI](https://github.com/launchbadge/sqlx/blob/main/sqlx-cli/README.md):
-
-```sh
-cargo install sqlx-cli
-sqlx migrate add create_users
-```
-
-Dust `0.1.x` expects SQLx's default simple migration files
-(`<timestamp>_<name>.sql`) rather than reversible `*.up.sql` / `*.down.sql`
-pairs.
-
-Example migration:
+Create a forward-only migration at `migrations/0001_create_users.sql`:
 
 ```sql
 CREATE TABLE users (
@@ -37,29 +31,11 @@ CREATE TABLE users (
 );
 ```
 
-## Database
+Define row models in their own Dart library:
 
 ```dart
-part 'app_database.g.dart';
+import 'package:dust_dart/db.dart';
 
-@SqlxDatabase(type: SqlxDatabaseType.sqlite, migrations: './migrations')
-abstract class AppDatabase {
-  factory AppDatabase.open(String path) = _$AppDatabase.open;
-
-  Pool get pool;
-}
-```
-
-Open the generated database and create DAOs from its pool:
-
-```dart
-final app = AppDatabase.open('app.db');
-final users = UserDao(app.pool);
-```
-
-## Row Mapping
-
-```dart
 part 'user_row.g.dart';
 
 @Derive([FromRow()])
@@ -77,239 +53,227 @@ final class UserRow {
 }
 ```
 
-Generated mapper:
+Define the database and DAO in `app_database.dart`:
 
 ```dart
-extension UserRowFromRow on UserRow {
-  static UserRow fromRow(Row row) {
-    return UserRow(
-      id: row.read<int>('id'),
-      email: row.read<String>('email'),
-      name: row.read<String>('name'),
-    );
-  }
+import 'package:dust_dart/db.dart';
+import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
+
+import 'user_row.dart';
+
+part 'app_database.g.dart';
+
+@SqlxDatabase(
+  type: SqlxDatabaseType.sqlite,
+  migrations: './migrations',
+)
+abstract class AppDatabase {
+  factory AppDatabase.open(String path) = _$AppDatabase.open;
+
+  Pool get pool;
 }
-```
 
-`Row` is a driver-agnostic interface. Driver packages own concrete adapters such as `Sqlite3Row`, while generated mappers only depend on `Row`. Generated mappers use column-name reads, matching sqlx `FromRow` behavior.
-
-Supported shared reads:
-
-```dart
-row.read<int>('id');
-row.readNullable<String>('nickname');
-row.readBool('active');
-row.readBoolNullable('verified');
-row.readDateTime('created_at');
-row.readDateTimeNullable('deleted_at');
-row.readIndex<int>(0); // scalar/raw escape hatches only
-```
-
-## DAO Queries
-
-Every DAO uses a redirecting const factory constructor.
-
-```dart
 @SqlxDao()
 abstract final class UserDao {
   const factory UserDao(Executor db) = _$UserDao;
 
-  @Query(r'''
-  SELECT id, email, name
-  FROM users
-  WHERE id = $1
-  ''')
+  @Query(r'SELECT id, email, name FROM users WHERE id = $1')
   Future<Result<UserRow?, SqlxError>> findById(int id);
 
+  @Query(r'SELECT id, email, name FROM users ORDER BY name')
+  Future<Result<List<UserRow>, SqlxError>> listUsers();
+
   @Query(r'SELECT COUNT(*) FROM users')
-  Future<Result<int, SqlxError>> count();
+  Future<Result<int, SqlxError>> countUsers();
 
   @Query(r'INSERT INTO users (email, name) VALUES ($1, $2)')
-  Future<Result<ExecResult, SqlxError>> create(String email, String name);
+  Future<Result<ExecResult, SqlxError>> createUser(
+    String email,
+    String name,
+  );
 }
 ```
 
-Generated SQLite code:
+Generate row mappers, then validate SQL and generate the database code:
 
-```dart
-final class _$UserDao implements UserDao {
-  const _$UserDao(this._db);
-
-  final Executor _db;
-
-  @override
-  Future<Result<UserRow?, SqlxError>> findById(int id) {
-    return _db.fetchOptional<UserRow>(
-      r'''
-  SELECT id, email, name
-  FROM users
-  WHERE id = ?
-  ''',
-      [id],
-      UserRowFromRow.fromRow,
-    );
-  }
-}
+```bash
+dust build
+dust db build
 ```
 
-## SQLx API Mapping
-
-- `@QueryAs` style returns map to `fetchOptional`, `fetchAll`, or `fetchOne` based on Dart return type.
-- `@QueryScalar` style returns map to `fetchScalar` and read column index zero.
-- `@Query` statements map to `execute` and return `ExecResult`.
-- `@Derive([FromRow()])` generates a static `RowMapper<T>` reference: `UserRowFromRow.fromRow`.
-
-Placeholder rules:
-
-- `@Query` SQL uses SQLx placeholders such as `$1` and `$2`.
-- `dust db build` validates `@Query` SQL with Rust SQLx.
-- Generated SQLite DAO code emits SQLite placeholders.
+Open the database and pass its pool to a DAO:
 
 ```dart
-@Query(r'SELECT id FROM users WHERE id = $1 OR owner_id = $1')
+final database = AppDatabase.open('app.db');
+final users = UserDao(database.pool);
+
+final result = await users.findById(42);
+result.match(
+  ok: (user) => print(user?.name),
+  err: (error) => print('Database error: $error'),
+);
+
+await database.pool.close();
+```
+
+> [!IMPORTANT]
+> Keep row models and database roots in separate libraries. `dust build` owns
+> normal derives such as `FromRow`; `dust db build` owns `@SqlxDatabase`,
+> `@SqlxDao`, and `@Query` output.
+
+## Migrations
+
+Dust reads every `.sql` file in the configured directory in sorted filename
+order. DB generation embeds those files into the generated opener. At runtime,
+SQLite records applied filenames in `__dust_schema_migrations` and runs only
+new files.
+
+Use names that sort in application order:
+
+```text
+migrations/
+  0001_create_users.sql
+  0002_add_user_avatar.sql
+```
+
+> [!IMPORTANT]
+> Do not edit or rename a migration after it ships. Existing installations have
+> already recorded its filename; add a new migration for every schema change.
+
+## DAO Return Types
+
+The success type inside `Future<Result<T, SqlxError>>` selects the generated
+executor call:
+
+| Success type | Generated behavior |
+| :--- | :--- |
+| `RowType` | Requires exactly one row and maps it with `FromRow`. |
+| `RowType?` | Returns zero or one mapped row. |
+| `List<RowType>` | Maps every returned row. |
+| `String`, `int`, `double`, `num`, `bool`, or `DateTime` | Reads one scalar from column zero. |
+| `List<Row>` | Returns raw driver-agnostic rows. |
+| `ExecResult` | Executes the statement and returns affected rows and last insert ID. |
+| `Unit` | Executes the statement and discards execution metadata. |
+
+DAO query methods must be abstract, return the exact `Future<Result<...,
+SqlxError>>` shape, and use required positional parameters.
+
+## SQL Placeholders
+
+Write checked `@Query` SQL with SQLx-style placeholders:
+
+```dart
+@Query(r'SELECT id, email, name FROM users WHERE id = $1 OR owner_id = $1')
 Future<Result<List<UserRow>, SqlxError>> byIdOrOwner(int id);
 ```
 
-SQLite generated call:
+For SQLite, Dust rewrites `$1` to `?` and repeats the matching Dart argument
+when a placeholder appears more than once. Placeholder numbers must match the
+DAO method's positional arguments.
 
-```dart
-return _db.fetchAll<UserRow>(
-  r'''SELECT id FROM users WHERE id = ? OR owner_id = ?''',
-  [id, id],
-  UserRowFromRow.fromRow,
-);
+Both simple and complex static SQL belong in `@Query`; CTEs, joins, grouping,
+ordering, limits, and offsets are passed to SQLite and SQLx as written.
+
+## Row Mapping
+
+`@Derive([FromRow()])` generates a `TypeFromRow.fromRow(Row row)` mapper. The
+mapper reads columns by name through the driver-independent `Row` interface.
+
+`@Sqlx` supports these mapping options:
+
+| Option | Behavior |
+| :--- | :--- |
+| `renameAll` | Applies a naming rule to every field in the row class. |
+| `rename` | Maps one field to an explicit column name. |
+| `flatten` | Builds a nested `FromRow` type from the same row. |
+| `skip` | Ignores a field; the field or annotation must supply a default. |
+| `defaultValue` | Uses a value when the selected column is null. |
+| `json` | Decodes a text column through `Type.fromJson(...)`. |
+| `tryFrom` | Decodes a database value with a `SqlxTryFrom` converter. |
+
+Directly supported field types are `String`, `int`, `double`, `num`, `bool`,
+`DateTime`, and nullable variants. Use `json` or `tryFrom` for custom values.
+
+## Validation
+
+`dust db build` applies migrations to an in-memory SQLite database by default,
+asks SQLx to describe each static query, writes generated Dart, and caches query
+metadata at:
+
+```text
+.dart_tool/dust/db_query_cache_v2.json
 ```
 
-Future Postgres generated DAO code keeps SQLx placeholders when that driver is enabled.
+It validates migration SQL, placeholders, static query syntax, scalar column
+count, known row columns, supported return types, and DAO method shapes.
 
-## Native SQLite Access
+Use a no-write check in CI:
 
-Use checked DAOs by default. For advanced SQLite operations, cast to `Sqlite3Executor` and use the native `package:sqlite3` database directly.
-
-```dart
-final sqlite = (app.pool as Sqlite3Executor).database;
-final version = sqlite.select('SELECT sqlite_version()').single[0];
+```bash
+dust check --db
 ```
 
-Native access also works inside transactions:
+Set `DUST_DATABASE_URL` only when validation must use another SQLite database.
+
+> [!WARNING]
+> DB validation applies the configured migrations to `DUST_DATABASE_URL`. Never
+> point it at a production or user database.
+
+## Offline Validation
+
+After a successful online `dust db build`, validation can reuse matching cached
+metadata without opening a validation database:
+
+```bash
+dust db build --offline
+dust check --db --offline
+```
+
+Offline mode rejects missing entries, changed migrations, changed SQL, changed
+fetch shapes, and unsupported cache versions.
+
+> [!NOTE]
+> The metadata file lives under `.dart_tool`, so a clean CI runner must restore
+> that cache before using `--offline`. Run online validation when no trusted
+> cache is available.
+
+## Transactions
+
+Return `Ok` to commit and `Err` to roll back:
 
 ```dart
-await app.pool.transaction((tx) async {
-  final sqlite = (tx as Sqlite3Executor).database;
-  sqlite.execute('PRAGMA foreign_keys = ON');
-  return const Ok(unit);
+final result = await database.pool.transaction((tx) async {
+  return UserDao(tx).createUser('ada@example.com', 'Ada');
 });
 ```
 
-## Complex SQL
-
-Simple and complex checked queries both use `@Query(raw SQL)`.
-
-```dart
-@Query(r'''
-WITH recent_orders AS (
-  SELECT user_id, COUNT(*) AS order_count
-  FROM orders
-  WHERE created_at >= $1
-  GROUP BY user_id
-)
-SELECT
-  u.id,
-  u.email,
-  ro.order_count
-FROM users u
-LEFT JOIN recent_orders ro ON ro.user_id = u.id
-WHERE u.active = true
-ORDER BY ro.order_count DESC
-LIMIT $2 OFFSET $3
-''')
-Future<Result<List<UserStatsRow>, SqlxError>> topUsers(
-  DateTime since,
-  int limit,
-  int offset,
-);
-```
-
-No query builder. No ORM filters. Use the database engine SQL directly.
+Thrown exceptions also roll back and return a `SqlxDriverError`.
 
 ## Dynamic SQL
 
-Dynamic/admin SQL is explicit and unchecked:
+Use `raw` only when SQL cannot be static, such as an admin-selected table. Raw
+SQL is unchecked and uses native SQLite placeholders:
 
 ```dart
-final result = await app.pool.raw.fetch(
-  'SELECT * FROM $tableName WHERE id = ?',
+final result = await database.pool.raw.fetch(
+  'SELECT * FROM users WHERE id = ?',
   [id],
 );
 ```
 
-Raw SQL is driver-native because Dust does not validate or rewrite it:
+For advanced SQLite-specific operations, access the native database explicitly:
 
 ```dart
-// SQLite raw SQL uses `?`.
-await app.pool.raw.fetch('SELECT * FROM users WHERE id = ?', [id]);
-
-// Future Postgres raw SQL keeps `$1`.
-await postgresPool.raw.fetch(r'SELECT * FROM users WHERE id = $1', [id]);
+final sqlite = (database.pool as Sqlite3Executor).database;
+final version = sqlite.select('SELECT sqlite_version()').single[0];
 ```
 
-Final rule:
+> [!TIP]
+> Prefer generated DAOs for product queries. Keep `raw` and native access small
+> because neither path receives Dust's build-time SQL validation.
 
-```text
-Simple query       -> @Query(raw SQL) checked by dust db build
-Complex query      -> @Query(raw SQL) checked by dust db build
-Dynamic/admin SQL  -> pool.raw.fetch(...) runtime only, unchecked
-```
+## Example
 
-## Validation
-
-Run DB validation and DB generation with:
-
-```sh
-dust db build
-```
-
-Use cached SQL metadata only when CI or local development must avoid live SQLx
-schema validation:
-
-```sh
-dust db build --offline
-```
-
-Normal `dust build` does not run SQLx validation.
-
-Dust validates SQL syntax, migrations, table/column existence, placeholder count, result columns, nullability, `FromRow` compatibility, and `Result<T, SqlxError>` return types.
-
-SQLite migrations are applied in sorted file-name order and recorded in `__dust_schema_migrations`, so reopening a Flutter app database skips already applied migrations and applies only new upgrade files.
-
-## Pipeline Split
-
-Database has two separate generation paths.
-
-Normal `dust build` owns DTO/row mapper generation:
-
-- reads `@Derive([FromRow()])`;
-- emits `UserRowFromRow.fromRow`;
-- emits row mapper registration;
-- does not generate `@SqlxDatabase`, `@SqlxDao`, or `@Query` output;
-- does not run SQLx validation.
-
-DB mode owns database and DAO generation:
-
-- reads `@SqlxDatabase`;
-- reads `@SqlxDao`;
-- reads `@Query`;
-- validates SQL with SQLx;
-- emits database open code and DAO implementations;
-- does not emit DTO row mappers.
-
-Keep row DTOs and database/DAO roots in separate Dart libraries when possible:
-
-```text
-lib/db/app_database.dart      -> @SqlxDatabase, @SqlxDao, @Query
-lib/db/user_row.dart          -> @Derive([FromRow()])
-lib/db/user_row.g.dart        -> normal dust build output
-lib/db/app_database.g.dart    -> dust db build output
-```
-
-This keeps the normal build and `db build` from owning the same generated file.
+The [shopping app database](../../examples/shopping_app/lib/core/db/shopping_cache_database.dart)
+demonstrates generated DAOs, migrations, typed rows, JSON columns, converters,
+transactions, and cache-backed repository behavior.
