@@ -1,23 +1,20 @@
-# Data Classes (Derive)
+# Data Classes
 
-Dust makes working with immutable data classes in Dart effortless. By annotating your classes with `@Derive`, you can automatically generate essential boilerplate like `toString`, equality checks, and `copyWith` methods.
+Dust generates `toString`, value equality, and typed `copyWith` APIs for Dart
+classes.
 
----
+## Add the Package
 
-## Installation
+Install the Dust CLI from the [root guide](../../README.md#installation), then
+add the Dart runtime package:
 
-Add the core annotation package to your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  dust_dart: ^0.1.0
+```bash
+dart pub add dust_dart
 ```
 
----
+## Quick Start
 
-## Basic Example
-
-Add the `@Derive` annotation with the specific traits you want to generate.
+Choose the traits you want with `@Derive`:
 
 ```dart
 import 'package:dust_dart/derive.dart';
@@ -38,83 +35,95 @@ class Product with _$Product {
 }
 ```
 
-> [!IMPORTANT]
-> **Requirements for Generation:**
-> 1. You **must** include the `part 'filename.g.dart';` directive.
-> 2. You **must** add the `with _$ClassName` mixin to your class.
-> 3. Your fields should typically be `final` to ensure immutability.
+Generate the part file from your package root:
 
----
-
-## Available Traits
-
-| Trait | What it Generates | Description |
-| :--- | :--- | :--- |
-| `ToString()` | `toString()` | Returns a string representation including all field names and values. |
-| `Eq()` | `==` and `hashCode` | Implements value-based equality. Supports deep equality for collections. |
-| `CopyWith()` | `copyWith(...)` | Generates a method to create a new instance with specific fields updated. |
-
----
-
-## Deep Equality
-
-When using `Eq()`, Dust automatically handles deep equality for standard collection types:
-- `List<T>`
-- `Set<T>`
-- `Map<K, V>`
-
-> [!TIP]
-> This removes the need for manual loops or external packages like `collection` when comparing data classes containing nested lists or maps.
-
----
-
-## Generation Output
-
-Dust generates these members as a Dart mixin. The generated code is injected into your class via the `with` keyword.
-
-```dart
-// product.g.dart (Simplified)
-mixin _$Product on Product {
-  @override
-  String toString() => 'Product(id: $id, name: $name, priceCents: $priceCents)';
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Product &&
-          id == other.id &&
-          name == other.name &&
-          priceCents == other.priceCents;
-
-  @override
-  int get hashCode => Object.hash(id, name, priceCents);
-
-  Product copyWith({
-    String? id,
-    String? name,
-    int? priceCents,
-  }) {
-    return Product(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      priceCents: priceCents ?? this.priceCents,
-    );
-  }
-}
+```bash
+dust build
 ```
 
----
+You can now use the generated members normally:
 
-## Migration Guide
+```dart
+const product = Product(id: 'p1', name: 'Desk', priceCents: 12000);
 
-**Coming from `freezed` or `equatable`?**
+print(product);
+final renamed = product.copyWith(name: 'Standing desk');
+final sameValue = product ==
+    const Product(id: 'p1', name: 'Desk', priceCents: 12000);
+```
 
-| Feature | `freezed` | `equatable` | Dust |
-| :--- | :--- | :--- | :--- |
-| Equality | Default | `extends Equatable` | `@Derive([Eq()])` |
-| toString | Default | `stringify: true` | `@Derive([ToString()])` |
-| CopyWith | Default | N/A | `@Derive([CopyWith()])` |
-| Performance | Fast | Medium | **Instant (Rust Engine)** |
+## Traits
 
-> [!NOTE]
-> Dust is designed for performance at scale. In large monorepos (500+ models), Dust completes full rebuilds in the time it takes `build_runner` to initialize.
+| Trait | Generated API |
+| :--- | :--- |
+| `ToString()` | A `toString()` implementation containing the class name, field names, and values. |
+| `Eq()` | Value-based `operator ==` and a matching `hashCode`. |
+| `CopyWith()` | A typed, callable `copyWith` API for replacing selected fields. |
+
+Use only the traits needed by the class.
+
+## Class Requirements
+
+- Add a `part 'filename.g.dart';` directive matching the source filename.
+- Add the generated `_$ClassName` mixin to the class.
+- A class using `CopyWith()` must be concrete and have a constructor that
+  accepts every field.
+- Existing superclasses and mixins are supported; place the generated mixin in
+  the normal mixin list.
+- Dust does not generate derive members for `mixin class` targets.
+
+Fields are usually `final` for data-class usage, but Dust does not require
+immutability.
+
+## Value Equality
+
+`Eq()` compares the runtime type and every field. Collections are compared by
+contents:
+
+- `List` and `Iterable` compare elements in order.
+- `Map` compares keys and values by content.
+- `Set` uses unordered deep equality.
+- Generated `hashCode` uses the same collection rules.
+
+Nested model fields use their own equality implementation.
+
+## CopyWith Behavior
+
+`CopyWith()` keeps omitted fields and replaces only the arguments you pass:
+
+```dart
+final renamed = product.copyWith(name: 'Standing desk');
+```
+
+Nullable fields can be cleared explicitly:
+
+```dart
+final cleared = note.copyWith(note: null);
+```
+
+Copying is shallow. Dust keeps existing object and collection references when
+you do not replace them, and it stores replacement values without cloning them.
+
+When a field is another model that also derives `CopyWith()`, Dust generates a
+chained helper:
+
+```dart
+final moved = profile.copyWith.address(city: 'London');
+```
+
+## Generated Files
+
+Dust writes the implementation to the declared `.g.dart` part. Do not edit the
+generated file directly.
+
+Use the no-write check in CI:
+
+```bash
+dust check
+```
+
+Runnable examples:
+
+- [Product showcase models](../../examples/product_showcase/lib/models)
+- [Generated derive tests](../../examples/product_showcase/test/generated_derive_models_test.dart)
+- [Generated copyWith tests](../../examples/product_showcase/test/generated_copywith_test.dart)
