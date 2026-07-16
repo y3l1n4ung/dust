@@ -3,6 +3,14 @@
 Dust generates `toString`, value equality, and typed `copyWith` APIs for Dart
 classes.
 
+## Rust Inspiration
+
+Dust's `@Derive([...])` follows the idea behind
+[Rust's `#[derive(...)]`](https://doc.rust-lang.org/book/appendix-03-derivable-traits.html):
+each type opts into the generated traits it needs. Rust expands derives through
+the compiler and macros; Dust writes a Dart `.g.dart` part and exposes the
+generated behavior through a mixin.
+
 ## Add the Package
 
 Install the Dust CLI from the [root guide](../../README.md#installation), then
@@ -60,12 +68,16 @@ final sameValue = product ==
 | `Eq()` | Value-based `operator ==` and a matching `hashCode`. |
 | `CopyWith()` | A typed, callable `copyWith` API for replacing selected fields. |
 
-Use only the traits needed by the class.
+> [!TIP]
+> Derive only the traits the class needs. Each trait adds only its corresponding
+> generated API.
 
 ## Class Requirements
 
-- Add a `part 'filename.g.dart';` directive matching the source filename.
-- Add the generated `_$ClassName` mixin to the class.
+> [!IMPORTANT]
+> Every derived class needs a `part 'filename.g.dart';` directive and the
+> generated `_$ClassName` mixin shown in the Quick Start.
+
 - A class using `CopyWith()` must be concrete and have a constructor that
   accepts every field.
 - Existing superclasses and mixins are supported; place the generated mixin in
@@ -101,8 +113,10 @@ Nullable fields can be cleared explicitly:
 final cleared = note.copyWith(note: null);
 ```
 
-Copying is shallow. Dust keeps existing object and collection references when
-you do not replace them, and it stores replacement values without cloning them.
+> [!NOTE]
+> Copying is shallow. Dust keeps existing object and collection references when
+> you do not replace them, and it stores replacement values without cloning
+> them.
 
 When a field is another model that also derives `CopyWith()`, Dust generates a
 chained helper:
@@ -111,18 +125,7 @@ chained helper:
 final moved = profile.copyWith.address(city: 'London');
 ```
 
-## Generated Files
-
-Dust writes the implementation to the declared `.g.dart` part. Do not edit the
-generated file directly.
-
-Use the no-write check in CI:
-
-```bash
-dust check
-```
-
-Runnable examples:
+## Examples
 
 - [Product showcase models](../../examples/product_showcase/lib/models)
 - [Generated derive tests](../../examples/product_showcase/test/generated_derive_models_test.dart)

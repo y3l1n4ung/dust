@@ -1,102 +1,114 @@
-# JSON Serialization (Serde)
+# JSON Serialization
 
-Dust provides JSON encoding and decoding through `dust_dart`. It generates type-safe codecs by analyzing your class definitions and applied annotations.
+Dust generates typed JSON encoding and decoding for Dart classes and enums.
 
----
+## Rust Serde Inspiration
 
-## Installation
+Dust's JSON API is inspired by [Rust Serde](https://serde.rs/derive.html).
+Both systems let a type opt into separate serialization and deserialization,
+then customize declarations, variants, and fields with
+[attributes](https://serde.rs/attributes.html).
 
-Add the package to your `pubspec.yaml`:
+Dust adapts familiar concepts such as rename rules, aliases, defaults, skipped
+fields, strict keys, custom codecs, and
+[tagged enum representations](https://serde.rs/enum-representations.html) to
+Dart annotations and generated `.g.dart` files.
 
-```yaml
-dependencies:
-  dust_dart: ^0.1.0
+## Add the Package
+
+Install the Dust CLI from the [root guide](../../README.md#installation), then
+add the Dart runtime package:
+
+```bash
+dart pub add dust_dart
 ```
 
 > [!TIP]
-> `package:dust_dart/serde.dart` re-exports the core derive traits, so you only need one import for both basic traits and JSON features.
+> The focused `package:dust_dart/serde.dart` import also exports `@Derive` and
+> the core derive traits, so one import is enough for data and JSON traits.
 
----
+## Quick Start
 
-## Basic Example
-
-To enable JSON support, add `Serialize()` and `Deserialize()` to your `@Derive` list.
+Add `Serialize()` and `Deserialize()` to the traits needed by the model:
 
 ```dart
 import 'package:dust_dart/serde.dart';
 
 part 'user_profile.g.dart';
 
-@Derive([ToString(), Eq(), Serialize(), Deserialize()])
-@SerDe(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)
+@Derive([Serialize(), Deserialize()])
+@SerDe(renameAll: SerDeRename.snakeCase)
 class UserProfile with _$UserProfile {
-  const UserProfile({
-    required this.id,
-    this.displayName,
-    this.tags = const ['new-user'],
-  });
+  const UserProfile({required this.id, this.displayName});
 
   factory UserProfile.fromJson(Map<String, Object?> json) =>
       _$UserProfileFromJson(json);
 
   final String id;
-
-  @SerDe(rename: 'display_name', aliases: ['name', 'handle'])
   final String? displayName;
-
-  @SerDe(defaultValue: ['new-user'])
-  final List<String> tags;
 }
 ```
 
+Generate the part file:
+
+```bash
+dust build
+```
+
+Use the generated APIs normally:
+
+```dart
+final profile = UserProfile.fromJson({
+  'id': 'u1',
+  'display_name': 'Jane',
+});
+
+final json = profile.toJson();
+```
+
+`Serialize()` generates `toJson()`. `Deserialize()` generates the private
+`_$TypeFromJson(...)` helper; a class must expose a forwarding `fromJson`
+factory as shown above. The two traits can be used independently.
+
 > [!IMPORTANT]
-> **Requirements for Generation:**
-> 1. You **must** include the `part 'filename.g.dart';` directive.
-> 2. You **must** add the `with _$ClassName` mixin to your class.
-> 3. For deserialization, you **must** provide a `fromJson` factory that forwards to the generated `_$ClassNameFromJson` helper.
+> Generation requires the matching `part` directive and generated mixin.
+> Deserialization also requires the forwarding `fromJson` factory shown above.
 
----
+## Configuration
 
-## Configuration Reference
+Apply `@SerDe` to a class, enum, enum variant, or field.
 
-The `@SerDe` annotation can be applied to both **classes** and **individual fields**.
+### Declaration and Variant Options
 
-### Class-Level Options
+| Option | Behavior |
+| :--- | :--- |
+| `rename` | Sets one explicit JSON name. |
+| `renameAll` | Applies a naming strategy to fields or enum variants. |
+| `disallowUnrecognizedKeys` | Rejects input keys that do not map to a deserialized field or alias. |
+| `tag` | Sets the discriminator key for sealed variants. |
+| `content` | Adds a payload key for adjacent tagging. |
+| `untagged` | Tries sealed variants in declaration order without a discriminator. |
 
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `renameAll` | `SerDeRename` | Automatically renames all fields (e.g., `snakeCase`, `camelCase`). |
-| `disallowUnrecognizedKeys` | `bool` | If `true`, deserialization throws an error if the JSON contains keys not mapped to a field. |
-| `tag` | `String` | JSON discriminator key for sealed class variants. |
-| `content` | `String` | Optional payload key for adjacent-tagged sealed class variants. |
-| `untagged` | `bool` | Try sealed class variants in factory declaration order without a discriminator key. |
+### Field Options
 
-### Field-Level Options
+| Option | Behavior |
+| :--- | :--- |
+| `rename` | Sets the primary JSON key. |
+| `aliases` | Accepts additional keys during decoding. |
+| `defaultValue` | Supplies a value when the input key is absent. |
+| `skip` | Omits the field in both directions. |
+| `skipSerializing` | Omits the field from `toJson()`. |
+| `skipDeserializing` | Omits the field from `fromJson()`. |
+| `using` | Uses a `SerDeCodec` for the field. |
 
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `rename` | `String` | Manually set the JSON key name for this field. |
-| `aliases` | `List<String>` | Additional JSON keys that will be accepted during deserialization. |
-| `defaultValue` | `Object` | The value used if the key is missing from the JSON input. Required when a field is skipped for deserialization. |
-| `skip` | `bool` | Excludes the field from both `toJson()` and `fromJson()`. In strict mode, the key is rejected. |
-| `skipSerializing` | `bool` | Excludes the field from `toJson()`. The field is still read by `fromJson()`. |
-| `skipDeserializing` | `bool` | Excludes the field from `fromJson()`. In strict mode, the key is rejected. |
-| `using` | `SerDeCodec` | Specifies a custom field codec. Dust handles nullability outside the codec. |
+> [!IMPORTANT]
+> Fields skipped during deserialization must have a `defaultValue` so Dust can
+> still call the model constructor. In strict-key mode, skipped input keys are
+> rejected rather than silently ignored.
 
-### Strict Keys
+## Rename Strategies
 
-`disallowUnrecognizedKeys: true` accepts only primary field keys and aliases
-that participate in deserialization. Fields marked `skip` or
-`skipDeserializing` are not accepted as input keys, even if they have
-`defaultValue`.
-
----
-
-## Naming Strategies (`SerDeRename`)
-
-When using `renameAll`, the following strategies are available:
-
-| Strategy | Output Example (`createdAt`) |
+| Strategy | `createdAt` becomes |
 | :--- | :--- |
 | `lowerCase` | `createdat` |
 | `upperCase` | `CREATEDAT` |
@@ -107,63 +119,51 @@ When using `renameAll`, the following strategies are available:
 | `kebabCase` | `created-at` |
 | `screamingKebabCase` | `CREATED-AT` |
 
----
+## Supported Types
+
+Dust provides built-in mapping for:
+
+- `String`, `int`, `bool`, `double`, `num`, `Object`, and `dynamic`
+- `DateTime`, `Uri`, and `BigInt`
+- nullable values
+- `List<T>`, `Set<T>`, and `Map<String, T>`
+- Dust SerDe classes and enums
+- models with compatible `toJson()` or `fromJson(Map<String, Object?>)` APIs
+- fields with a custom `SerDeCodec`
+
+Records, function types, and generic named models such as `Page<User>` require
+a custom codec. Dust validates JSON capability for types declared in the
+current workspace; external package types are checked later by the Dart
+analyzer.
 
 ## Enums
 
-Dust supports full serialization for enums. Rename rules applied at the enum level affect all variants.
+Enums can derive both directions and use declaration or variant renames:
 
 ```dart
 @Derive([Serialize(), Deserialize()])
 @SerDe(renameAll: SerDeRename.kebabCase)
 enum UserRole {
-  admin, // "admin"
-  moderator, // "moderator"
+  admin,
+  moderator,
   @SerDe(rename: 'root')
-  superUser, // "root"
+  superUser,
   @SerDe(skip: true)
   legacy,
 }
 ```
 
 > [!NOTE]
-> Skipped enum variants remain valid Dart values, but generated JSON helpers
-> reject them during serialization and do not accept them during decoding.
-
----
-
-## Supported Field Types
-
-Dust currently generates built-in JSON mapping for:
-
-- Dart scalars: `String`, `int`, `bool`, `double`, `num`, `Object`, `dynamic`
-- JSON-friendly named scalars: `DateTime`, `Uri`, `BigInt`
-- `List<T>`, `Set<T>`, and `Map<String, T>`
-- Dust SerDe enums and models
-- imported models that expose `toJson()` / `fromJson(Map<String, Object?>)`
-- fields with `@SerDe(using: someCodec)`
-
-Records, function types, and generic named models such as `Page<User>` are not
-generated by the built-in mapper yet. Use a field codec for those fields.
-
-Dust checks model capability across the current workspace. Classes or enums
-declared in workspace source must derive SerDe support, expose a compatible
-JSON member, or use a field codec. Types outside the workspace are trusted and
-may still be caught later by the Dart analyzer if their JSON API is missing.
-
----
+> A skipped enum value remains valid Dart, but generated JSON helpers reject it
+> for both encoding and decoding.
 
 ## Sealed Classes
 
-Dust supports Rust-style tagged sealed classes through redirecting factories.
-If the redirected target class is not written in source, Dust generates it in
-the `.g.dart` part.
+Redirecting factories define sealed variants. `tag` creates an internal
+discriminator, `tag` plus `content` creates adjacent tagging, and `untagged`
+tries each variant in declaration order.
 
 ```dart
-import 'package:dust_dart/serde.dart';
-
-part 'payment_event.g.dart';
-
 @Derive([Serialize(), Deserialize()])
 @SerDe(tag: 'type', renameAll: SerDeRename.snakeCase)
 sealed class PaymentEvent with _$PaymentEvent {
@@ -185,121 +185,43 @@ sealed class PaymentEvent with _$PaymentEvent {
 }
 ```
 
-The generated part contains `PaymentSuccess` and `PaymentFailed` as concrete
-`final class` variants, plus variant-specific `fromJson` helpers. The base
-`toJson()` mixin still handles serialization for all variants.
-
-Use an explicit source class instead of generated variants when the variant
-needs extra derives such as `CopyWith()` or `Eq()`, custom methods, custom
-interfaces, or nullable named parameters that must still be marked `required`.
-
-For adjacent tagging, add `content`:
-
-```dart
-@SerDe(tag: 'kind', content: 'payload', renameAll: SerDeRename.snakeCase)
-sealed class PaymentEvent with _$PaymentEvent {
-  const PaymentEvent();
-}
-```
-
-For untagged sealed payloads, set `untagged: true`; decoding tries redirecting
-factory variants in declaration order and fails if no variant matches.
-
----
+If a redirect target is not declared in source, Dust generates a final concrete
+class in the `.g.dart` file. Define the target class yourself when you need to
+control its implementation; it must still satisfy the redirecting factory and
+Serde requirements.
 
 ## Custom Codecs
 
-Use a `SerDeCodec` when the JSON representation differs from your Dart type.
+Use `SerDeCodec<DartT, JsonT>` when the JSON representation differs from the
+Dart type:
 
 ```dart
-final class DateTimeCodec implements SerDeCodec<DateTime, int> {
-  const DateTimeCodec();
+final class UnixEpochCodec implements SerDeCodec<DateTime, int> {
+  const UnixEpochCodec();
 
   @override
   int serialize(DateTime value) => value.millisecondsSinceEpoch;
 
   @override
-  DateTime deserialize(int value) => DateTime.fromMillisecondsSinceEpoch(value);
+  DateTime deserialize(int value) =>
+      DateTime.fromMillisecondsSinceEpoch(value, isUtc: true);
 }
 
-// Usage
-@SerDe(using: DateTimeCodec())
+const unixEpochCodec = UnixEpochCodec();
+
+@SerDe(using: unixEpochCodec)
 final DateTime createdAt;
 ```
 
-Generic containers use the same escape hatch in v1. Dust does not generate
-`Page<T>` callbacks yet, so the field codec owns that container mapping:
-
-```dart
-final class Page<T> {
-  const Page({required this.items, required this.total});
-
-  final List<T> items;
-  final int total;
-}
-
-final class UserPageCodec
-    implements SerDeCodec<Page<User>, Map<String, Object?>> {
-  const UserPageCodec();
-
-  @override
-  Map<String, Object?> serialize(Page<User> value) => {
-        'items': value.items.map((item) => item.toJson()).toList(),
-        'total': value.total,
-      };
-
-  @override
-  Page<User> deserialize(Map<String, Object?> value) => Page(
-        items: JsonHelper.decodeList(
-          value['items'],
-          'items',
-          (item, key) => User.fromJson(JsonHelper.asMap(item, key)),
-        ),
-        total: JsonHelper.as<int>(value['total'], 'total', 'int'),
-      );
-}
-
-const userPageCodec = UserPageCodec();
-
-@SerDe(using: userPageCodec)
-final Page<User> users;
-```
-
 > [!TIP]
-> Custom codecs are ideal for handling legacy API formats or complex object transformations while keeping your data class clean.
+> Dust handles field nullability outside the codec. The codec converts only the
+> non-null value. Custom codecs are also the escape hatch for generic
+> containers and legacy API formats.
 
----
+## Examples
 
-## Generation Output
-
-Dust generates a private mixin and a helper function. Below is a preview of the generated code structure:
-
-```dart
-// user_profile.g.dart (Simplified)
-mixin _$UserProfile on UserProfile {
-  Map<String, Object?> toJson() => {
-    'id': id,
-    'display_name': displayName,
-    'tags': tags,
-  };
-}
-
-UserProfile _$UserProfileFromJson(Map<String, Object?> json) => UserProfile(
-  id: json['id'] as String,
-  displayName: json['display_name'] as String?,
-  tags: (json['tags'] as List?)?.cast<String>() ?? const ['new-user'],
-);
-```
-
----
-
-## Migration Guide
-
-**Coming from `json_serializable`?**
-
-| Feature | `json_serializable` | Dust |
-| :--- | :--- | :--- |
-| Annotation | `@JsonSerializable()` | `@Derive([Serialize(), Deserialize()])` |
-| Key Rename | `@JsonKey(name: '...')` | `@SerDe(rename: '...')` |
-| Defaults | `@JsonKey(defaultValue: ...)` | `@SerDe(defaultValue: ...)` |
-| Unknown Keys | `disallowUnrecognizedKeys: true` | `@SerDe(disallowUnrecognizedKeys: true)` |
+- [Class options and strict keys](../../examples/product_showcase/lib/models/json_serde_options.dart)
+- [Enums](../../examples/product_showcase/lib/models/json_enum_bundle.dart)
+- [Sealed classes](../../examples/product_showcase/lib/models/json_payment_event.dart)
+- [Custom codecs](../../examples/product_showcase/lib/models/json_codec_bundle.dart)
+- [Serde tests](../../examples/product_showcase/test/generated_serde_scalars_test.dart)
