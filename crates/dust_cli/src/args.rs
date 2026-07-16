@@ -50,6 +50,10 @@ pub struct CliOptions {
     pub poll_interval_ms: u64,
     /// The optional maximum number of watch cycles.
     pub max_cycles: Option<u32>,
+    /// Whether i18n build may sync existing fallback-locale messages.
+    pub i18n_sync_source: bool,
+    /// Whether i18n source sync should only preview planned writes.
+    pub i18n_dry_run: bool,
 }
 
 impl Default for CliOptions {
@@ -63,6 +67,8 @@ impl Default for CliOptions {
             clean: false,
             poll_interval_ms: DEFAULT_POLL_INTERVAL_MS,
             max_cycles: None,
+            i18n_sync_source: false,
+            i18n_dry_run: false,
         }
     }
 }
@@ -158,11 +164,25 @@ struct I18nCommandOptions {
 #[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
 enum I18nCommand {
     /// Reconcile static translation keys into ARB files.
-    Build(RootOptions),
+    Build(I18nBuildOptions),
     /// Validate ARB files against static translation keys.
     Check(RootOptions),
     /// Scan static translation API calls.
     Scan(RootOptions),
+}
+
+/// Options accepted by the writing i18n build command.
+#[derive(Debug, Clone, PartialEq, Eq, Args)]
+struct I18nBuildOptions {
+    /// Shared workspace root option.
+    #[command(flatten)]
+    root: RootOptions,
+    /// Update existing fallback-locale messages from current `defaultText`.
+    #[arg(long = "sync-source", default_value_t = false)]
+    sync_source: bool,
+    /// Preview source-locale sync without writing ARB or generated files.
+    #[arg(long, requires = "sync_source", default_value_t = false)]
+    dry_run: bool,
 }
 
 /// Options accepted only by the writing build command.
@@ -292,6 +312,17 @@ impl From<RootOptions> for CliOptions {
     fn from(value: RootOptions) -> Self {
         Self {
             root: value.root,
+            ..Self::default()
+        }
+    }
+}
+
+impl From<I18nBuildOptions> for CliOptions {
+    fn from(value: I18nBuildOptions) -> Self {
+        Self {
+            root: value.root.root,
+            i18n_sync_source: value.sync_source,
+            i18n_dry_run: value.dry_run,
             ..Self::default()
         }
     }

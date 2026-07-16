@@ -18,6 +18,7 @@ fn i18n_build_handles_ten_thousand_static_keys() {
 
     let result = run_i18n_build(I18nBuildRequest {
         cwd: workspace.path().to_path_buf(),
+        ..Default::default()
     });
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);

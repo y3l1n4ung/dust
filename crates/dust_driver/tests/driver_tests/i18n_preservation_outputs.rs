@@ -61,6 +61,7 @@ void build(count) {
 
     let result = run_i18n_build(I18nBuildRequest {
         cwd: workspace.path().to_path_buf(),
+        ..Default::default()
     });
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
@@ -83,6 +84,41 @@ void build(count) {
             }
         })
     );
+
+    let preview = run_i18n_build(I18nBuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        sync_source: true,
+        dry_run: true,
+    });
+    assert!(!preview.has_errors(), "{:?}", preview.diagnostics);
+    assert_eq!(preview.i18n_build.as_ref().unwrap().synced_messages, 1);
+    assert!(preview.i18n_build.as_ref().unwrap().dry_run);
+    assert_eq!(
+        read_arb(&workspace.path().join("assets/i18n/en/ppg.arb"))["no_recording"],
+        "No recording yet"
+    );
+
+    let synced = run_i18n_build(I18nBuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        sync_source: true,
+        dry_run: false,
+    });
+    assert!(!synced.has_errors(), "{:?}", synced.diagnostics);
+    assert_eq!(synced.i18n_build.as_ref().unwrap().synced_messages, 1);
+    let en = read_arb(&workspace.path().join("assets/i18n/en/ppg.arb"));
+    let zh = read_arb(&workspace.path().join("assets/i18n/zh/ppg.arb"));
+    assert_eq!(en["no_recording"], "No recordings available");
+    assert_eq!(zh["no_recording"], "还没有录音");
+
+    let no_op = run_i18n_build(I18nBuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        sync_source: true,
+        dry_run: false,
+    });
+    assert!(!no_op.has_errors(), "{:?}", no_op.diagnostics);
+    let report = no_op.i18n_build.as_ref().unwrap();
+    assert_eq!(report.synced_messages, 0);
+    assert_eq!(report.changed_files, 0);
 }
 
 fn read_arb(path: &std::path::Path) -> Value {

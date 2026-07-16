@@ -24,23 +24,28 @@ pub(crate) fn write_i18n_arb_files(
     config: &I18nConfig,
     scanned_files: usize,
     entries: &[I18nScanEntry],
+    sync_source: bool,
+    dry_run: bool,
 ) -> Result<I18nBuildReport, Diagnostic> {
     let planned = plan_i18n_entries(entries)?;
     let grouped = group_i18n_entries(&planned);
     let mut report = I18nBuildReport {
         scanned_files,
         keys: planned.len(),
+        dry_run,
         ..I18nBuildReport::default()
     };
-    let updates = plan_updates(package_root, config, &grouped, &mut report)?;
+    let updates = plan_updates(package_root, config, &grouped, sync_source, &mut report)?;
 
-    for update in updates {
-        write_atomic(&update.path, &update.source).map_err(|error| {
-            Diagnostic::error(format!(
-                "failed to write `{}`: {error}",
-                update.path.display()
-            ))
-        })?;
+    if !dry_run {
+        for update in updates {
+            write_atomic(&update.path, &update.source).map_err(|error| {
+                Diagnostic::error(format!(
+                    "failed to write `{}`: {error}",
+                    update.path.display()
+                ))
+            })?;
+        }
     }
 
     Ok(report)
@@ -60,6 +65,7 @@ fn plan_updates(
     package_root: &Path,
     config: &I18nConfig,
     grouped: &std::collections::BTreeMap<String, Vec<I18nPlannedEntry>>,
+    sync_source: bool,
     report: &mut I18nBuildReport,
 ) -> Result<Vec<ArbUpdate>, Diagnostic> {
     let mut updates = Vec::new();
@@ -73,6 +79,7 @@ fn plan_updates(
                 locale,
                 locale == config.fallback_locale(),
                 entries,
+                sync_source,
                 report,
             )? {
                 updates.push(update);
@@ -89,6 +96,7 @@ fn plan_file_update(
     locale: &str,
     is_fallback: bool,
     entries: &[I18nPlannedEntry],
+    sync_source: bool,
     report: &mut I18nBuildReport,
 ) -> Result<Option<ArbUpdate>, Diagnostic> {
     let previous = read_optional(path)?;
@@ -97,10 +105,16 @@ fn plan_file_update(
     changed |= ensure_context(&mut arb, namespace);
 
     for entry in entries {
-        let added = ensure_message(&mut arb, entry, is_fallback, path)?;
-        changed |= added;
-        if added {
-            report.added_messages += 1;
+        match ensure_message(&mut arb, entry, is_fallback, sync_source, path)? {
+            MessageUpdate::Added => {
+                changed = true;
+                report.added_messages += 1;
+            }
+            MessageUpdate::Synced => {
+                changed = true;
+                report.synced_messages += 1;
+            }
+            MessageUpdate::None => {}
         }
         changed |= ensure_metadata(&mut arb, entry);
     }
@@ -171,11 +185,20 @@ fn ensure_message(
     arb: &mut Map<String, Value>,
     entry: &I18nPlannedEntry,
     is_fallback: bool,
+    sync_source: bool,
     path: &Path,
-) -> Result<bool, Diagnostic> {
+) -> Result<MessageUpdate, Diagnostic> {
     if let Some(existing) = arb.get(&entry.local_key) {
         if existing.is_string() {
-            return Ok(false);
+            if sync_source && is_fallback {
+                if let Some(default_text) = &entry.default_text {
+                    if existing.as_str() != Some(default_text) {
+                        arb.insert(entry.local_key.clone(), Value::String(default_text.clone()));
+                        return Ok(MessageUpdate::Synced);
+                    }
+                }
+            }
+            return Ok(MessageUpdate::None);
         }
         return Err(Diagnostic::error(format!(
             "`{}` key `{}` must be a string",
@@ -193,5 +216,16 @@ fn ensure_message(
         String::new()
     };
     arb.insert(entry.local_key.clone(), Value::String(value));
-    Ok(true)
+    Ok(MessageUpdate::Added)
+}
+
+/// Describes how one ARB message changed during reconciliation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum MessageUpdate {
+    /// The existing value and metadata were preserved.
+    None,
+    /// A missing message was added.
+    Added,
+    /// An existing fallback-locale value was synced from `defaultText`.
+    Synced,
 }

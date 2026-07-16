@@ -71,11 +71,13 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult, ai_mod
         CliCommand::I18nBuild => {
             if let Some(build) = &result.i18n_build {
                 lines.push(format!(
-                    "i18n build  files: {}  changed: {}  keys: {}  added: {}  time: {}ms",
+                    "i18n build  files: {}  changed: {}  keys: {}  added: {}  synced: {}  preview: {}  time: {}ms",
                     build.arb_files,
                     build.changed_files,
                     build.keys,
                     build.added_messages,
+                    build.synced_messages,
+                    build.dry_run,
                     result.elapsed_ms
                 ));
             }

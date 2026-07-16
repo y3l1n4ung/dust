@@ -109,6 +109,23 @@ fn parses_i18n_build_with_root() {
 }
 
 #[test]
+fn parses_i18n_source_sync_preview_flags() {
+    let parsed = parse_cli_args([
+        "i18n",
+        "build",
+        "--sync-source",
+        "--dry-run",
+        "--root",
+        "/tmp/work",
+    ])
+    .unwrap();
+
+    assert_eq!(parsed.command, CliCommand::I18nBuild);
+    assert!(parsed.options.i18n_sync_source);
+    assert!(parsed.options.i18n_dry_run);
+}
+
+#[test]
 fn parses_i18n_check_with_root() {
     let parsed = parse_cli_args(["i18n", "check", "--root", "/tmp/work"]).unwrap();
 

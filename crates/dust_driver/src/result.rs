@@ -131,10 +131,14 @@ pub struct I18nBuildReport {
     pub keys: usize,
     /// Number of ARB files inspected for configured locales and namespaces.
     pub arb_files: usize,
-    /// Number of ARB files changed on disk.
+    /// Number of ARB files changed, or planned in preview mode.
     pub changed_files: usize,
     /// Number of message entries added across all ARB files.
     pub added_messages: usize,
+    /// Number of existing fallback-locale messages synced from `defaultText`.
+    pub synced_messages: usize,
+    /// Whether the build only previewed changes without writing files.
+    pub dry_run: bool,
 }
 
 /// Workspace i18n ARB check report.

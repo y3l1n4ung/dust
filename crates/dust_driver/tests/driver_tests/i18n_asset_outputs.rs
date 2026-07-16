@@ -9,6 +9,7 @@ fn i18n_build_warns_when_pubspec_misses_generated_assets() {
 
     let result = run_i18n_build(I18nBuildRequest {
         cwd: workspace.path().to_path_buf(),
+        ..Default::default()
     });
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
@@ -25,6 +26,7 @@ fn i18n_build_warns_when_pubspec_assets_cannot_be_read() {
 
     let result = run_i18n_build(I18nBuildRequest {
         cwd: workspace.path().to_path_buf(),
+        ..Default::default()
     });
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);

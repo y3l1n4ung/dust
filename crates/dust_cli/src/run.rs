@@ -93,7 +93,11 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
             db: db_options(&parsed),
         })),
         CliCommand::Doctor => run(CommandRequest::Doctor(DoctorRequest { cwd })),
-        CliCommand::I18nBuild => run(CommandRequest::I18nBuild(I18nBuildRequest { cwd })),
+        CliCommand::I18nBuild => run(CommandRequest::I18nBuild(I18nBuildRequest {
+            cwd,
+            sync_source: parsed.options.i18n_sync_source,
+            dry_run: parsed.options.i18n_dry_run,
+        })),
         CliCommand::I18nCheck => run(CommandRequest::I18nCheck(I18nCheckRequest { cwd })),
         CliCommand::I18nScan => run(CommandRequest::I18nScan(I18nScanRequest { cwd })),
         CliCommand::Watch => {
