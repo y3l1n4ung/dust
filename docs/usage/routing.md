@@ -284,3 +284,9 @@ Unsupported route parameter types are rejected during generation.
 | `/` | `HomeRoute()` |
 | `/models/42?tab=perf` | `ModelDetailRoute(id: 42, tab: 'perf')` |
 | `/404?path=%2Fbad%2Fpath` | `NotFoundRoute(path: '/bad/path')` |
+
+When a deep link contains query parameters that are not declared on the typed
+route, or contains a fragment, Dust preserves them in `route.location`. Typed
+parameters remain decoded into route fields, while unknown query values and the
+fragment round-trip unchanged. This keeps auth redirects and browser restore
+flows from silently dropping URI data.

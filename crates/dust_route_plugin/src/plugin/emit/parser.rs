@@ -26,6 +26,8 @@ struct ParseCaseContext {
     decoders: String,
     /// Rendered null checks for failed decodes.
     null_checks: String,
+    /// Query parameter names represented by typed route fields.
+    known_query_parameters: String,
     /// Route instance returned by the branch.
     route_instance: String,
 }
@@ -186,6 +188,13 @@ fn render_parse_case(route: &RouteSpec) -> String {
             args.push(format!("{}: {}", param.name, decode_query_expr(param)));
         }
     }
+    let known_query_parameters = route
+        .params
+        .iter()
+        .filter(|param| !param.is_path)
+        .map(|param| format!("'{}'", param.name))
+        .collect::<Vec<_>>()
+        .join(", ");
     render_template(
         "route_parse_case",
         include_str!("templates/route_parse_case.jinja"),
@@ -193,6 +202,7 @@ fn render_parse_case(route: &RouteSpec) -> String {
             condition: condition_expr(&conditions),
             decoders: join_chunks(decoders),
             null_checks: join_chunks(null_checks),
+            known_query_parameters: format!("const <String>{{{known_query_parameters}}}"),
             route_instance: route_instance_expr(&route.route_class, &args),
         },
     )
@@ -210,7 +220,7 @@ fn condition_expr(conditions: &[String]) -> String {
 /// Renders a route instance expression, wrapping long argument lists.
 fn route_instance_expr(route_class: &str, args: &[String]) -> String {
     if args.is_empty() {
-        return format!("const {route_class}()");
+        return format!("{route_class}()");
     }
     let inline = format!("{route_class}({})", args.join(", "));
     if inline.len() <= 60 {

@@ -826,7 +826,11 @@ final class NotFoundRoute extends AppRoutePath<void> {
 
   @override
   String get location {
-    return '/404?path=${Uri.encodeComponent(path)}';
+    return _routePath(
+      const ['404'],
+      queryParameters: {'path': path},
+      uriExtras: _routeUriExtrasOf(this),
+    );
   }
 
   @override
@@ -839,7 +843,7 @@ final class Route0Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '0']);
+    return _routePath(['section', '0'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -849,7 +853,7 @@ final class Route1Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '1']);
+    return _routePath(['section', '1'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -859,7 +863,7 @@ final class Route10Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '10']);
+    return _routePath(['section', '10'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -869,7 +873,7 @@ final class Route100Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '100']);
+    return _routePath(['section', '100'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -879,7 +883,7 @@ final class Route101Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '101']);
+    return _routePath(['section', '101'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -889,7 +893,7 @@ final class Route102Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '102']);
+    return _routePath(['section', '102'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -899,7 +903,7 @@ final class Route103Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '103']);
+    return _routePath(['section', '103'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -909,7 +913,7 @@ final class Route104Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '104']);
+    return _routePath(['section', '104'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -919,7 +923,7 @@ final class Route105Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '105']);
+    return _routePath(['section', '105'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -929,7 +933,7 @@ final class Route106Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '106']);
+    return _routePath(['section', '106'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -939,7 +943,7 @@ final class Route107Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '107']);
+    return _routePath(['section', '107'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -949,7 +953,7 @@ final class Route108Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '108']);
+    return _routePath(['section', '108'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -959,7 +963,7 @@ final class Route109Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '109']);
+    return _routePath(['section', '109'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -969,7 +973,7 @@ final class Route11Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '11']);
+    return _routePath(['section', '11'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -979,7 +983,7 @@ final class Route110Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '110']);
+    return _routePath(['section', '110'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -989,7 +993,7 @@ final class Route111Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '111']);
+    return _routePath(['section', '111'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -999,7 +1003,7 @@ final class Route112Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '112']);
+    return _routePath(['section', '112'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1009,7 +1013,7 @@ final class Route113Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '113']);
+    return _routePath(['section', '113'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1019,7 +1023,7 @@ final class Route114Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '114']);
+    return _routePath(['section', '114'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1029,7 +1033,7 @@ final class Route115Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '115']);
+    return _routePath(['section', '115'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1039,7 +1043,7 @@ final class Route116Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '116']);
+    return _routePath(['section', '116'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1049,7 +1053,7 @@ final class Route117Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '117']);
+    return _routePath(['section', '117'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1059,7 +1063,7 @@ final class Route118Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '118']);
+    return _routePath(['section', '118'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1069,7 +1073,7 @@ final class Route119Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '119']);
+    return _routePath(['section', '119'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1079,7 +1083,7 @@ final class Route12Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '12']);
+    return _routePath(['section', '12'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1089,7 +1093,7 @@ final class Route120Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '120']);
+    return _routePath(['section', '120'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1099,7 +1103,7 @@ final class Route121Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '121']);
+    return _routePath(['section', '121'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1109,7 +1113,7 @@ final class Route122Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '122']);
+    return _routePath(['section', '122'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1119,7 +1123,7 @@ final class Route123Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '123']);
+    return _routePath(['section', '123'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1129,7 +1133,7 @@ final class Route124Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '124']);
+    return _routePath(['section', '124'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1139,7 +1143,7 @@ final class Route125Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '125']);
+    return _routePath(['section', '125'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1149,7 +1153,7 @@ final class Route126Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '126']);
+    return _routePath(['section', '126'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1159,7 +1163,7 @@ final class Route127Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '127']);
+    return _routePath(['section', '127'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1169,7 +1173,7 @@ final class Route128Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '128']);
+    return _routePath(['section', '128'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1179,7 +1183,7 @@ final class Route129Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '129']);
+    return _routePath(['section', '129'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1189,7 +1193,7 @@ final class Route13Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '13']);
+    return _routePath(['section', '13'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1199,7 +1203,7 @@ final class Route130Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '130']);
+    return _routePath(['section', '130'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1209,7 +1213,7 @@ final class Route131Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '131']);
+    return _routePath(['section', '131'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1219,7 +1223,7 @@ final class Route132Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '132']);
+    return _routePath(['section', '132'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1229,7 +1233,7 @@ final class Route133Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '133']);
+    return _routePath(['section', '133'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1239,7 +1243,7 @@ final class Route134Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '134']);
+    return _routePath(['section', '134'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1249,7 +1253,7 @@ final class Route135Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '135']);
+    return _routePath(['section', '135'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1259,7 +1263,7 @@ final class Route136Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '136']);
+    return _routePath(['section', '136'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1269,7 +1273,7 @@ final class Route137Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '137']);
+    return _routePath(['section', '137'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1279,7 +1283,7 @@ final class Route138Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '138']);
+    return _routePath(['section', '138'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1289,7 +1293,7 @@ final class Route139Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '139']);
+    return _routePath(['section', '139'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1299,7 +1303,7 @@ final class Route14Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '14']);
+    return _routePath(['section', '14'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1309,7 +1313,7 @@ final class Route140Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '140']);
+    return _routePath(['section', '140'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1319,7 +1323,7 @@ final class Route141Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '141']);
+    return _routePath(['section', '141'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1329,7 +1333,7 @@ final class Route142Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '142']);
+    return _routePath(['section', '142'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1339,7 +1343,7 @@ final class Route143Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '143']);
+    return _routePath(['section', '143'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1349,7 +1353,7 @@ final class Route144Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '144']);
+    return _routePath(['section', '144'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1359,7 +1363,7 @@ final class Route145Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '145']);
+    return _routePath(['section', '145'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1369,7 +1373,7 @@ final class Route146Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '146']);
+    return _routePath(['section', '146'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1379,7 +1383,7 @@ final class Route147Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '147']);
+    return _routePath(['section', '147'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1389,7 +1393,7 @@ final class Route148Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '148']);
+    return _routePath(['section', '148'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1399,7 +1403,7 @@ final class Route149Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '149']);
+    return _routePath(['section', '149'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1409,7 +1413,7 @@ final class Route15Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '15']);
+    return _routePath(['section', '15'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1419,7 +1423,7 @@ final class Route16Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '16']);
+    return _routePath(['section', '16'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1429,7 +1433,7 @@ final class Route17Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '17']);
+    return _routePath(['section', '17'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1439,7 +1443,7 @@ final class Route18Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '18']);
+    return _routePath(['section', '18'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1449,7 +1453,7 @@ final class Route19Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '19']);
+    return _routePath(['section', '19'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1459,7 +1463,7 @@ final class Route2Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '2']);
+    return _routePath(['section', '2'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1469,7 +1473,7 @@ final class Route20Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '20']);
+    return _routePath(['section', '20'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1479,7 +1483,7 @@ final class Route21Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '21']);
+    return _routePath(['section', '21'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1489,7 +1493,7 @@ final class Route22Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '22']);
+    return _routePath(['section', '22'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1499,7 +1503,7 @@ final class Route23Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '23']);
+    return _routePath(['section', '23'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1509,7 +1513,7 @@ final class Route24Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '24']);
+    return _routePath(['section', '24'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1519,7 +1523,7 @@ final class Route25Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '25']);
+    return _routePath(['section', '25'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1529,7 +1533,7 @@ final class Route26Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '26']);
+    return _routePath(['section', '26'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1539,7 +1543,7 @@ final class Route27Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '27']);
+    return _routePath(['section', '27'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1549,7 +1553,7 @@ final class Route28Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '28']);
+    return _routePath(['section', '28'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1559,7 +1563,7 @@ final class Route29Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '29']);
+    return _routePath(['section', '29'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1569,7 +1573,7 @@ final class Route3Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '3']);
+    return _routePath(['section', '3'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1579,7 +1583,7 @@ final class Route30Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '30']);
+    return _routePath(['section', '30'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1589,7 +1593,7 @@ final class Route31Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '31']);
+    return _routePath(['section', '31'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1599,7 +1603,7 @@ final class Route32Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '32']);
+    return _routePath(['section', '32'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1609,7 +1613,7 @@ final class Route33Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '33']);
+    return _routePath(['section', '33'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1619,7 +1623,7 @@ final class Route34Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '34']);
+    return _routePath(['section', '34'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1629,7 +1633,7 @@ final class Route35Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '35']);
+    return _routePath(['section', '35'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1639,7 +1643,7 @@ final class Route36Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '36']);
+    return _routePath(['section', '36'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1649,7 +1653,7 @@ final class Route37Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '37']);
+    return _routePath(['section', '37'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1659,7 +1663,7 @@ final class Route38Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '38']);
+    return _routePath(['section', '38'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1669,7 +1673,7 @@ final class Route39Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '39']);
+    return _routePath(['section', '39'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1679,7 +1683,7 @@ final class Route4Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '4']);
+    return _routePath(['section', '4'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1689,7 +1693,7 @@ final class Route40Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '40']);
+    return _routePath(['section', '40'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1699,7 +1703,7 @@ final class Route41Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '41']);
+    return _routePath(['section', '41'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1709,7 +1713,7 @@ final class Route42Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '42']);
+    return _routePath(['section', '42'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1719,7 +1723,7 @@ final class Route43Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '43']);
+    return _routePath(['section', '43'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1729,7 +1733,7 @@ final class Route44Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '44']);
+    return _routePath(['section', '44'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1739,7 +1743,7 @@ final class Route45Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '45']);
+    return _routePath(['section', '45'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1749,7 +1753,7 @@ final class Route46Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '46']);
+    return _routePath(['section', '46'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1759,7 +1763,7 @@ final class Route47Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '47']);
+    return _routePath(['section', '47'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1769,7 +1773,7 @@ final class Route48Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '48']);
+    return _routePath(['section', '48'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1779,7 +1783,7 @@ final class Route49Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '49']);
+    return _routePath(['section', '49'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1789,7 +1793,7 @@ final class Route5Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '5']);
+    return _routePath(['section', '5'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1799,7 +1803,7 @@ final class Route50Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '50']);
+    return _routePath(['section', '50'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1809,7 +1813,7 @@ final class Route51Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '51']);
+    return _routePath(['section', '51'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1819,7 +1823,7 @@ final class Route52Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '52']);
+    return _routePath(['section', '52'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1829,7 +1833,7 @@ final class Route53Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '53']);
+    return _routePath(['section', '53'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1839,7 +1843,7 @@ final class Route54Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '54']);
+    return _routePath(['section', '54'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1849,7 +1853,7 @@ final class Route55Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '55']);
+    return _routePath(['section', '55'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1859,7 +1863,7 @@ final class Route56Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '56']);
+    return _routePath(['section', '56'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1869,7 +1873,7 @@ final class Route57Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '57']);
+    return _routePath(['section', '57'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1879,7 +1883,7 @@ final class Route58Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '58']);
+    return _routePath(['section', '58'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1889,7 +1893,7 @@ final class Route59Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '59']);
+    return _routePath(['section', '59'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1899,7 +1903,7 @@ final class Route6Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '6']);
+    return _routePath(['section', '6'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1909,7 +1913,7 @@ final class Route60Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '60']);
+    return _routePath(['section', '60'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1919,7 +1923,7 @@ final class Route61Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '61']);
+    return _routePath(['section', '61'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1929,7 +1933,7 @@ final class Route62Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '62']);
+    return _routePath(['section', '62'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1939,7 +1943,7 @@ final class Route63Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '63']);
+    return _routePath(['section', '63'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1949,7 +1953,7 @@ final class Route64Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '64']);
+    return _routePath(['section', '64'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1959,7 +1963,7 @@ final class Route65Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '65']);
+    return _routePath(['section', '65'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1969,7 +1973,7 @@ final class Route66Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '66']);
+    return _routePath(['section', '66'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1979,7 +1983,7 @@ final class Route67Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '67']);
+    return _routePath(['section', '67'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1989,7 +1993,7 @@ final class Route68Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '68']);
+    return _routePath(['section', '68'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -1999,7 +2003,7 @@ final class Route69Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '69']);
+    return _routePath(['section', '69'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2009,7 +2013,7 @@ final class Route7Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '7']);
+    return _routePath(['section', '7'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2019,7 +2023,7 @@ final class Route70Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '70']);
+    return _routePath(['section', '70'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2029,7 +2033,7 @@ final class Route71Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '71']);
+    return _routePath(['section', '71'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2039,7 +2043,7 @@ final class Route72Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '72']);
+    return _routePath(['section', '72'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2049,7 +2053,7 @@ final class Route73Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '73']);
+    return _routePath(['section', '73'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2059,7 +2063,7 @@ final class Route74Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '74']);
+    return _routePath(['section', '74'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2069,7 +2073,7 @@ final class Route75Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '75']);
+    return _routePath(['section', '75'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2079,7 +2083,7 @@ final class Route76Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '76']);
+    return _routePath(['section', '76'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2089,7 +2093,7 @@ final class Route77Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '77']);
+    return _routePath(['section', '77'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2099,7 +2103,7 @@ final class Route78Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '78']);
+    return _routePath(['section', '78'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2109,7 +2113,7 @@ final class Route79Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '79']);
+    return _routePath(['section', '79'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2119,7 +2123,7 @@ final class Route8Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '8']);
+    return _routePath(['section', '8'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2129,7 +2133,7 @@ final class Route80Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '80']);
+    return _routePath(['section', '80'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2139,7 +2143,7 @@ final class Route81Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '81']);
+    return _routePath(['section', '81'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2149,7 +2153,7 @@ final class Route82Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '82']);
+    return _routePath(['section', '82'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2159,7 +2163,7 @@ final class Route83Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '83']);
+    return _routePath(['section', '83'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2169,7 +2173,7 @@ final class Route84Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '84']);
+    return _routePath(['section', '84'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2179,7 +2183,7 @@ final class Route85Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '85']);
+    return _routePath(['section', '85'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2189,7 +2193,7 @@ final class Route86Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '86']);
+    return _routePath(['section', '86'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2199,7 +2203,7 @@ final class Route87Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '87']);
+    return _routePath(['section', '87'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2209,7 +2213,7 @@ final class Route88Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '88']);
+    return _routePath(['section', '88'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2219,7 +2223,7 @@ final class Route89Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '89']);
+    return _routePath(['section', '89'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2229,7 +2233,7 @@ final class Route9Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '9']);
+    return _routePath(['section', '9'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2239,7 +2243,7 @@ final class Route90Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '90']);
+    return _routePath(['section', '90'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2249,7 +2253,7 @@ final class Route91Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '91']);
+    return _routePath(['section', '91'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2259,7 +2263,7 @@ final class Route92Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '92']);
+    return _routePath(['section', '92'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2269,7 +2273,7 @@ final class Route93Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '93']);
+    return _routePath(['section', '93'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2279,7 +2283,7 @@ final class Route94Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '94']);
+    return _routePath(['section', '94'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2289,7 +2293,7 @@ final class Route95Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '95']);
+    return _routePath(['section', '95'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2299,7 +2303,7 @@ final class Route96Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '96']);
+    return _routePath(['section', '96'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2309,7 +2313,7 @@ final class Route97Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '97']);
+    return _routePath(['section', '97'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2319,7 +2323,7 @@ final class Route98Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '98']);
+    return _routePath(['section', '98'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
@@ -2329,18 +2333,59 @@ final class Route99Route extends AppRoutePath<void> {
 
   @override
   String get location {
-    return _routePath(['section', '99']);
+    return _routePath(['section', '99'], uriExtras: _routeUriExtrasOf(this));
   }
 }
 
 String routeLocation(AppRoutePath route) => route.location;
 
+final class _RouteUriExtras {
+  const _RouteUriExtras({
+    required this.queryParameters,
+    required this.fragment,
+  });
+
+  final Map<String, List<String>> queryParameters;
+  final String fragment;
+}
+
+final Expando<_RouteUriExtras> _routeUriExtras = Expando<_RouteUriExtras>();
+
+_RouteUriExtras? _routeUriExtrasOf(Object route) => _routeUriExtras[route];
+
+T _withRouteUriExtras<T extends AppRoutePath>(
+  T route,
+  Uri uri,
+  Set<String> knownQueryParameters,
+) {
+  final queryParameters = <String, List<String>>{};
+  for (final entry in uri.queryParametersAll.entries) {
+    if (!knownQueryParameters.contains(entry.key)) {
+      queryParameters[entry.key] = List.unmodifiable(entry.value);
+    }
+  }
+  if (queryParameters.isEmpty && uri.fragment.isEmpty) return route;
+  _routeUriExtras[route] = _RouteUriExtras(
+    queryParameters: Map.unmodifiable(queryParameters),
+    fragment: uri.fragment,
+  );
+  return route;
+}
+
 String _routePath(
   List<String> segments, {
-  Map<String, String>? queryParameters,
+  Map<String, dynamic>? queryParameters,
+  _RouteUriExtras? uriExtras,
 }) {
-  final query = queryParameters?.isEmpty ?? true ? null : queryParameters;
-  final text = Uri(pathSegments: segments, queryParameters: query).toString();
+  final query = <String, dynamic>{
+    ...?queryParameters,
+    ...?uriExtras?.queryParameters,
+  };
+  final text = Uri(
+    pathSegments: segments,
+    queryParameters: query.isEmpty ? null : query,
+    fragment: uriExtras?.fragment.isEmpty ?? true ? null : uriExtras!.fragment,
+  ).toString();
   if (text.isEmpty) return '/';
   return text.startsWith('/') ? text : '/$text';
 }
@@ -3296,457 +3341,608 @@ AppRoutePath parseAppRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.length == 1 && segments[0] == '404') {
-    return NotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    return _withRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '0') {
-    return const Route0Route();
+    final route = Route0Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '1') {
-    return const Route1Route();
+    final route = Route1Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '10') {
-    return const Route10Route();
+    final route = Route10Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '100') {
-    return const Route100Route();
+    final route = Route100Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '101') {
-    return const Route101Route();
+    final route = Route101Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '102') {
-    return const Route102Route();
+    final route = Route102Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '103') {
-    return const Route103Route();
+    final route = Route103Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '104') {
-    return const Route104Route();
+    final route = Route104Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '105') {
-    return const Route105Route();
+    final route = Route105Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '106') {
-    return const Route106Route();
+    final route = Route106Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '107') {
-    return const Route107Route();
+    final route = Route107Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '108') {
-    return const Route108Route();
+    final route = Route108Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '109') {
-    return const Route109Route();
+    final route = Route109Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '11') {
-    return const Route11Route();
+    final route = Route11Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '110') {
-    return const Route110Route();
+    final route = Route110Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '111') {
-    return const Route111Route();
+    final route = Route111Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '112') {
-    return const Route112Route();
+    final route = Route112Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '113') {
-    return const Route113Route();
+    final route = Route113Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '114') {
-    return const Route114Route();
+    final route = Route114Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '115') {
-    return const Route115Route();
+    final route = Route115Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '116') {
-    return const Route116Route();
+    final route = Route116Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '117') {
-    return const Route117Route();
+    final route = Route117Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '118') {
-    return const Route118Route();
+    final route = Route118Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '119') {
-    return const Route119Route();
+    final route = Route119Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '12') {
-    return const Route12Route();
+    final route = Route12Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '120') {
-    return const Route120Route();
+    final route = Route120Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '121') {
-    return const Route121Route();
+    final route = Route121Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '122') {
-    return const Route122Route();
+    final route = Route122Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '123') {
-    return const Route123Route();
+    final route = Route123Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '124') {
-    return const Route124Route();
+    final route = Route124Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '125') {
-    return const Route125Route();
+    final route = Route125Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '126') {
-    return const Route126Route();
+    final route = Route126Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '127') {
-    return const Route127Route();
+    final route = Route127Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '128') {
-    return const Route128Route();
+    final route = Route128Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '129') {
-    return const Route129Route();
+    final route = Route129Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '13') {
-    return const Route13Route();
+    final route = Route13Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '130') {
-    return const Route130Route();
+    final route = Route130Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '131') {
-    return const Route131Route();
+    final route = Route131Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '132') {
-    return const Route132Route();
+    final route = Route132Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '133') {
-    return const Route133Route();
+    final route = Route133Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '134') {
-    return const Route134Route();
+    final route = Route134Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '135') {
-    return const Route135Route();
+    final route = Route135Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '136') {
-    return const Route136Route();
+    final route = Route136Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '137') {
-    return const Route137Route();
+    final route = Route137Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '138') {
-    return const Route138Route();
+    final route = Route138Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '139') {
-    return const Route139Route();
+    final route = Route139Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '14') {
-    return const Route14Route();
+    final route = Route14Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '140') {
-    return const Route140Route();
+    final route = Route140Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '141') {
-    return const Route141Route();
+    final route = Route141Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '142') {
-    return const Route142Route();
+    final route = Route142Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '143') {
-    return const Route143Route();
+    final route = Route143Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '144') {
-    return const Route144Route();
+    final route = Route144Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '145') {
-    return const Route145Route();
+    final route = Route145Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '146') {
-    return const Route146Route();
+    final route = Route146Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '147') {
-    return const Route147Route();
+    final route = Route147Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '148') {
-    return const Route148Route();
+    final route = Route148Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '149') {
-    return const Route149Route();
+    final route = Route149Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '15') {
-    return const Route15Route();
+    final route = Route15Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '16') {
-    return const Route16Route();
+    final route = Route16Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '17') {
-    return const Route17Route();
+    final route = Route17Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '18') {
-    return const Route18Route();
+    final route = Route18Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '19') {
-    return const Route19Route();
+    final route = Route19Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '2') {
-    return const Route2Route();
+    final route = Route2Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '20') {
-    return const Route20Route();
+    final route = Route20Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '21') {
-    return const Route21Route();
+    final route = Route21Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '22') {
-    return const Route22Route();
+    final route = Route22Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '23') {
-    return const Route23Route();
+    final route = Route23Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '24') {
-    return const Route24Route();
+    final route = Route24Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '25') {
-    return const Route25Route();
+    final route = Route25Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '26') {
-    return const Route26Route();
+    final route = Route26Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '27') {
-    return const Route27Route();
+    final route = Route27Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '28') {
-    return const Route28Route();
+    final route = Route28Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '29') {
-    return const Route29Route();
+    final route = Route29Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '3') {
-    return const Route3Route();
+    final route = Route3Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '30') {
-    return const Route30Route();
+    final route = Route30Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '31') {
-    return const Route31Route();
+    final route = Route31Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '32') {
-    return const Route32Route();
+    final route = Route32Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '33') {
-    return const Route33Route();
+    final route = Route33Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '34') {
-    return const Route34Route();
+    final route = Route34Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '35') {
-    return const Route35Route();
+    final route = Route35Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '36') {
-    return const Route36Route();
+    final route = Route36Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '37') {
-    return const Route37Route();
+    final route = Route37Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '38') {
-    return const Route38Route();
+    final route = Route38Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '39') {
-    return const Route39Route();
+    final route = Route39Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '4') {
-    return const Route4Route();
+    final route = Route4Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '40') {
-    return const Route40Route();
+    final route = Route40Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '41') {
-    return const Route41Route();
+    final route = Route41Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '42') {
-    return const Route42Route();
+    final route = Route42Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '43') {
-    return const Route43Route();
+    final route = Route43Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '44') {
-    return const Route44Route();
+    final route = Route44Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '45') {
-    return const Route45Route();
+    final route = Route45Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '46') {
-    return const Route46Route();
+    final route = Route46Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '47') {
-    return const Route47Route();
+    final route = Route47Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '48') {
-    return const Route48Route();
+    final route = Route48Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '49') {
-    return const Route49Route();
+    final route = Route49Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '5') {
-    return const Route5Route();
+    final route = Route5Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '50') {
-    return const Route50Route();
+    final route = Route50Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '51') {
-    return const Route51Route();
+    final route = Route51Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '52') {
-    return const Route52Route();
+    final route = Route52Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '53') {
-    return const Route53Route();
+    final route = Route53Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '54') {
-    return const Route54Route();
+    final route = Route54Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '55') {
-    return const Route55Route();
+    final route = Route55Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '56') {
-    return const Route56Route();
+    final route = Route56Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '57') {
-    return const Route57Route();
+    final route = Route57Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '58') {
-    return const Route58Route();
+    final route = Route58Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '59') {
-    return const Route59Route();
+    final route = Route59Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '6') {
-    return const Route6Route();
+    final route = Route6Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '60') {
-    return const Route60Route();
+    final route = Route60Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '61') {
-    return const Route61Route();
+    final route = Route61Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '62') {
-    return const Route62Route();
+    final route = Route62Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '63') {
-    return const Route63Route();
+    final route = Route63Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '64') {
-    return const Route64Route();
+    final route = Route64Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '65') {
-    return const Route65Route();
+    final route = Route65Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '66') {
-    return const Route66Route();
+    final route = Route66Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '67') {
-    return const Route67Route();
+    final route = Route67Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '68') {
-    return const Route68Route();
+    final route = Route68Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '69') {
-    return const Route69Route();
+    final route = Route69Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '7') {
-    return const Route7Route();
+    final route = Route7Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '70') {
-    return const Route70Route();
+    final route = Route70Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '71') {
-    return const Route71Route();
+    final route = Route71Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '72') {
-    return const Route72Route();
+    final route = Route72Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '73') {
-    return const Route73Route();
+    final route = Route73Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '74') {
-    return const Route74Route();
+    final route = Route74Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '75') {
-    return const Route75Route();
+    final route = Route75Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '76') {
-    return const Route76Route();
+    final route = Route76Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '77') {
-    return const Route77Route();
+    final route = Route77Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '78') {
-    return const Route78Route();
+    final route = Route78Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '79') {
-    return const Route79Route();
+    final route = Route79Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '8') {
-    return const Route8Route();
+    final route = Route8Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '80') {
-    return const Route80Route();
+    final route = Route80Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '81') {
-    return const Route81Route();
+    final route = Route81Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '82') {
-    return const Route82Route();
+    final route = Route82Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '83') {
-    return const Route83Route();
+    final route = Route83Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '84') {
-    return const Route84Route();
+    final route = Route84Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '85') {
-    return const Route85Route();
+    final route = Route85Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '86') {
-    return const Route86Route();
+    final route = Route86Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '87') {
-    return const Route87Route();
+    final route = Route87Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '88') {
-    return const Route88Route();
+    final route = Route88Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '89') {
-    return const Route89Route();
+    final route = Route89Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '9') {
-    return const Route9Route();
+    final route = Route9Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '90') {
-    return const Route90Route();
+    final route = Route90Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '91') {
-    return const Route91Route();
+    final route = Route91Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '92') {
-    return const Route92Route();
+    final route = Route92Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '93') {
-    return const Route93Route();
+    final route = Route93Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '94') {
-    return const Route94Route();
+    final route = Route94Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '95') {
-    return const Route95Route();
+    final route = Route95Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '96') {
-    return const Route96Route();
+    final route = Route96Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '97') {
-    return const Route97Route();
+    final route = Route97Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '98') {
-    return const Route98Route();
+    final route = Route98Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'section' && segments[1] == '99') {
-    return const Route99Route();
+    final route = Route99Route();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   return _notFoundRoute(uri);
 }

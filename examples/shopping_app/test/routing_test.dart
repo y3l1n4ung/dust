@@ -39,6 +39,16 @@ void main() {
     );
   });
 
+  test('typed deep links preserve undeclared query and fragment data', () {
+    final route = parseAppRoute(
+      Uri.parse('/product/7?campaign=spring&campaign=launch#reviews'),
+    );
+
+    expect(route, isA<ProductDetailRoute>());
+    expect(
+        route.location, '/product/7?campaign=spring&campaign=launch#reviews');
+  });
+
   test('invalid typed path values become not-found routes with source path',
       () {
     final route =
@@ -146,7 +156,9 @@ void main() {
 
   test('shopping router redirects through real auth state safely', () async {
     final router = await _shoppingRouter();
-    const deepLink = OrderDetailRoute(orderId: 'ORDER 1/2');
+    final deepLink = parseAppRoute(
+            Uri.parse('/orders/ORDER%201%2F2?campaign=spring#receipt'))
+        as OrderDetailRoute;
 
     expect(
       router.redirect(const CheckoutRoute()),

@@ -224,14 +224,22 @@ fn render_location_body(route: &RouteSpec) -> String {
             (),
         ));
     } else {
+        let inline_return = format!(
+            "    return _routePath({inline_segments}, uriExtras: _routeUriExtrasOf(this));"
+        );
         let segment_expr = if inline_segments.len() <= 60 {
             inline_segments
         } else {
             multiline_segments
         };
+        let template = if inline_return.len() <= 80 {
+            include_str!("templates/location_return_path_inline.jinja")
+        } else {
+            include_str!("templates/location_return_path.jinja")
+        };
         body.push(render_template(
             "location_return_path",
-            include_str!("templates/location_return_path.jinja"),
+            template,
             LocationReturnContext {
                 segments: segment_expr,
             },
