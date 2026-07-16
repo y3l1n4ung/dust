@@ -79,6 +79,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   bool _refreshScheduled = false;
   Future<void>? _scheduledRefresh;
   int _navigationEpoch = 0;
+  bool _disposed = false;
 
   /// Last route in the stack, or the configured initial route.
   T get currentRoute =>
@@ -104,6 +105,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
             }),
         ],
         onDidRemovePage: (page) {
+          if (_disposed) return;
           final key = page.key;
           final index = key == null ? null : _keyToStackIndex[key];
           if (index != null && index >= 0 && index < _entries.length) {
@@ -121,11 +123,13 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
 
   @override
   Future<void> setNewRoutePath(T configuration) async {
+    if (_disposed) return;
     await _applyRoute(configuration, NavigationMode.restore);
   }
 
   @override
   Future<bool> popRoute() async {
+    if (_disposed) return false;
     if (_entries.length <= 1) return false;
     final removed = _entries.removeLast();
     removed.complete(null);
@@ -152,16 +156,21 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
 
   @override
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
+    _navigationEpoch += 1;
     config.router.refreshListenable?.removeListener(_scheduleRefresh);
+    _completeEntries(_entries);
     super.dispose();
   }
 
   void _scheduleRefresh() {
-    if (_refreshScheduled) return;
+    if (_disposed || _refreshScheduled) return;
     _refreshScheduled = true;
     _log('refreshing ${_debugRoute(currentRoute)}');
     final refresh = Future<void>.microtask(() async {
       _refreshScheduled = false;
+      if (_disposed) return;
       await _applyRoute(currentRoute, NavigationMode.replace);
     });
     _scheduledRefresh = refresh;
@@ -173,6 +182,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     NavigationMode mode, [
     int guardRedirects = 0,
   ]) async {
+    if (_disposed) return null;
     final epoch = ++_navigationEpoch;
     var candidate = requested;
     _log('${_debugMode(mode)} ${_debugRoute(requested)}');
