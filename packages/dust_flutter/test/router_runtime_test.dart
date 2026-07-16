@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dust_flutter/route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -137,6 +139,58 @@ void main() {
     await delegate.popRoute();
 
     await expectLater(result, completion(isNull));
+  });
+
+  test('disposing the delegate completes pending push futures with null',
+      () async {
+    final delegate = GeneratedRouterDelegate<_TestRoute>(_runtimeConfig());
+    await delegate.debugWaitForScheduledRefresh();
+
+    final result = delegate.push<void>(const _TestRoute('/detail'));
+    delegate.dispose();
+
+    await expectLater(
+      result.timeout(const Duration(seconds: 1)),
+      completion(isNull),
+    );
+  });
+
+  test('async guard completion after disposal cannot commit a route', () async {
+    final guardResult = Completer<_TestRoute?>();
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(
+        resolveGuards: (route) => route.location == '/detail'
+            ? [_BlockingGuard(guardResult.future)]
+            : const [],
+      ),
+    );
+    await delegate.debugWaitForScheduledRefresh();
+
+    final result = delegate.push<void>(const _TestRoute('/detail'));
+    delegate.dispose();
+    guardResult.complete(null);
+
+    await expectLater(
+      result.timeout(const Duration(seconds: 1)),
+      completion(isNull),
+    );
+    expect(delegate.stack.map((route) => route.location), ['/safe']);
+  });
+
+  test('scheduled refresh after disposal does not notify listeners', () async {
+    final router = _RefreshRouter();
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(router: router),
+    );
+    await delegate.debugWaitForScheduledRefresh();
+
+    var notifications = 0;
+    delegate.addListener(() => notifications += 1);
+    router.refreshNotifier.notifyListeners();
+    delegate.dispose();
+    await delegate.debugWaitForScheduledRefresh();
+
+    expect(notifications, 0);
   });
 
   testWidgets('push future completes with the Navigator pop result', (
@@ -289,6 +343,13 @@ final class _RecordingPageTransitionsBuilder extends PageTransitionsBuilder {
 
 final class _NoRedirectRouter extends RouterBase<_TestRoute> {}
 
+final class _RefreshRouter extends RouterBase<_TestRoute> {
+  final refreshNotifier = ChangeNotifier();
+
+  @override
+  Listenable get refreshListenable => refreshNotifier;
+}
+
 final class _DebugRouter extends RouterBase<_TestRoute> {
   @override
   bool get debugLogDiagnostics => true;
@@ -326,4 +387,13 @@ final class _GuardRedirectCycle implements RouteGuard<_TestRoute> {
       _ => null,
     };
   }
+}
+
+final class _BlockingGuard implements AsyncRouteGuard<_TestRoute> {
+  const _BlockingGuard(this.result);
+
+  final Future<_TestRoute?> result;
+
+  @override
+  Future<_TestRoute?> canActivate(_TestRoute route) => result;
 }
