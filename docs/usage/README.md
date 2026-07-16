@@ -1,84 +1,80 @@
 # Usage Guides
 
-This section provides the canonical documentation for using Dust in your
-Flutter and Dart projects.
+Use these guides after completing the [root Quick Start](../../README.md#quick-start).
+Each guide shows the handwritten API first and links to a working example.
 
-## Our Promise
+## Feature Guides
 
-- Stable authoring APIs for features marked stable.
-- Generated code can improve without forcing handwritten product-code churn.
-- Features marked beta may still receive API refinements before stabilization.
-- Performance is part of the product contract, not a best-effort optimization.
+| Task | Guide | Package |
+| :--- | :--- | :--- |
+| Generate data-class helpers | [Derive](./derive.md) | `dust_dart` |
+| Encode and decode JSON | [Serde](./serde.md) | `dust_dart` |
+| Validate models and Flutter forms | [Validation](./validation.md) | `dust_dart` |
+| Generate Dio clients | [HTTP](./http.md) | `dust_dart` |
+| Build typed ViewModels | [State](./state.md) | `dust_flutter` |
+| Configure Navigator 2.0 routing | [Routing](./routing.md) | `dust_flutter` |
+| Maintain ARB translations | [Internationalization](./i18n.md) | `dust_flutter` |
+| Validate SQLite queries | [Database](./db.md) | `dust_dart`, `dust_db_sqlite3` |
 
----
-
-## Guide Order
-
-Start with the verified [root README quick start](../../README.md#quick-start),
-then use these task guides as needed:
-
-1.  **[Generate data classes](./derive.md)**: Add `ToString`, `Eq`, and `CopyWith`.
-2.  **[Generate JSON serialization](./serde.md)**: Encode and decode typed models.
-3.  **[Generate HTTP clients](./http.md)**: Build type-safe Dio-backed clients.
-4.  **[Add validation](./validation.md)**: Generate Dart model validation and Flutter-only form validators.
-5.  **[Build ViewModels](./state.md)**: Manage sync and async Flutter state.
-6.  **[Configure typed routing](./routing.md)**: Use Navigator 2.0 with typed routes.
-7.  **[Add i18n](./i18n.md)**: Generate ARB bootstrap and runtime lookup helpers.
-8.  **[Validate SQLite queries](./db.md)**: Use SQLx-style sqlite3 validation and row mapping.
-
----
-
-## Package Installation
-
-Install the `dust` CLI from the [root installation guide](../../README.md#installation)
-before running `dust build`, `dust check`, or feature-specific commands.
-
-Depending on the features you need, add the following packages to your `pubspec.yaml`:
-
-| Feature | Required Packages |
-| :--- | :--- |
-| **Basic Traits** | `dust_dart` |
-| **Validation** | `dust_dart` |
-| **JSON Support** | `dust_dart` |
-| **Networking** | `dust_dart`, `dio` |
-| **State** | `dust_flutter` |
-| **Routing** | `dust_flutter` |
-| **i18n** | `dust_flutter`, `flutter_localizations` |
-| **Database** | `dust_dart`, `dust_db_sqlite3` |
-
-For the current published package versions and package-specific setup, see the
-[dust_dart README](../../packages/dust_dart/README.md),
-[dust_flutter README](../../packages/dust_flutter/README.md), and
-[dust_db_sqlite3 README](../../packages/dust_db_sqlite3/README.md).
-
-> [!TIP]
-> Use `package:dust_dart/dust_dart.dart` for starter examples or mixed Dust features. Feature guides may use narrower imports for focused examples.
-
----
+Install the CLI from the [installation guide](../../README.md#installation).
+Each feature guide contains its exact package command and setup requirements.
 
 ## CLI Overview
 
 | Command | Behavior |
 | :--- | :--- |
-| `dust build` | Generates Dust-owned outputs. |
-| `dust check` | Checks generated-file freshness without writing. |
-| `dust watch` | Runs an initial build and watches for source changes. |
-| `dust clean` | Removes Dust-generated outputs and cache state. |
+| `dust build` | Writes normal generated Dart outputs. |
+| `dust check` | Checks normal generated outputs without writing. |
+| `dust watch` | Runs an initial build, then rebuilds after source changes. |
+| `dust clean` | Removes Dust-owned generated outputs and cache state. |
 | `dust doctor` | Reports workspace and plugin readiness. |
-| `dust db build` | Generates database code and validates SQL queries. |
+| `dust db build` | Validates static SQLite queries and writes database/DAO output. |
+| `dust check --db` | Checks database/DAO output and SQL without writing. |
 | `dust i18n scan` | Reports statically discoverable translation calls. |
-| `dust i18n build` | Reconciles static translation keys into ARB files. |
-| `dust i18n check` | Validates ARB files without writing. |
+| `dust i18n build` | Reconciles ARB files and refreshes the Flutter bootstrap. |
+| `dust i18n check` | Validates ARB files and localization setup without writing. |
 
-Run `dust --help` or `dust <command> --help` for current options and examples.
+Run `dust --help` or `dust <command> --help` for the current options.
 
----
+> [!NOTE]
+> Normal `dust build` does not generate `@SqlxDatabase` or `@SqlxDao` output.
+> Database projects run `dust build` for row derives and `dust db build` for
+> database and DAO generation.
 
-## Learning from Examples
+## Typical Workflow
 
-The guides in this directory reference real-world implementations found in the [Product Showcase Example](../../examples/product_showcase). This example includes automated tests and provides a "Golden Standard" for Dust usage.
+For normal Dart and Flutter generation:
 
-If you have the repository cloned, you can build the showcase manually:
 ```bash
-cargo run -p dust_cli -- build --root examples/product_showcase
+dust build
+dust check
 ```
+
+For Database projects:
+
+```bash
+dust build
+dust db build
+dust check
+dust check --db
+```
+
+For translation maintenance:
+
+```bash
+dust i18n scan
+dust i18n build
+dust i18n check
+```
+
+## Runnable Examples
+
+- [Product showcase](../../examples/product_showcase): Dart derives, JSON,
+  validation, and HTTP generation.
+- [Shopping app](../../examples/shopping_app): Flutter state, routing, i18n,
+  HTTP, and Database integration.
+- [Benchmark project](../../examples/benchmark_project): large generated input
+  used for build and cache measurements.
+
+Contributor checkout and Rust development commands live in
+[CONTRIBUTING.md](../../CONTRIBUTING.md).
