@@ -61,6 +61,8 @@ pub fn run_i18n_build(request: I18nBuildRequest) -> CommandResult {
         i18n_config,
         scan.scanned_files,
         &scan.entries,
+        request.sync_source,
+        request.dry_run,
     ) {
         Ok(report) => result.i18n_build = Some(report),
         Err(diagnostic) => result.diagnostics.push(diagnostic),
@@ -82,14 +84,14 @@ pub fn run_i18n_build(request: I18nBuildRequest) -> CommandResult {
     }
     result.i18n_scan = Some(scan);
 
-    if !result.has_errors() {
+    if !result.has_errors() && !request.dry_run {
         match sync_ios_info_plist(&package_root, i18n_config, true) {
             Ok(Some(_)) | Ok(None) => {}
             Err(diagnostic) => result.diagnostics.push(diagnostic),
         }
     }
 
-    if !result.has_errors() {
+    if !result.has_errors() && !request.dry_run {
         match build_i18n_bootstrap(&package_root, &dust_config) {
             Ok(Some(artifact)) => result.build_artifacts.push(artifact),
             Ok(None) => {}

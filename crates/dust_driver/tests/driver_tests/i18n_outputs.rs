@@ -179,6 +179,7 @@ fn i18n_build_synchronizes_opt_in_ios_plist_without_touching_custom_keys() {
 
     let result = run_i18n_build(I18nBuildRequest {
         cwd: workspace.path().to_path_buf(),
+        ..Default::default()
     });
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
 
@@ -235,6 +236,7 @@ void build(count) {
 
     let result = run_i18n_build(I18nBuildRequest {
         cwd: workspace.path().to_path_buf(),
+        ..Default::default()
     });
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
@@ -321,6 +323,7 @@ void build() {
 
     let result = run_i18n_build(I18nBuildRequest {
         cwd: workspace.path().to_path_buf(),
+        ..Default::default()
     });
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
@@ -365,6 +368,7 @@ void build() {
 
     let result = run_i18n_build(I18nBuildRequest {
         cwd: workspace.path().to_path_buf(),
+        ..Default::default()
     });
 
     assert!(result.has_errors());

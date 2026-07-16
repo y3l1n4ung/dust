@@ -54,10 +54,14 @@ pub struct I18nScanRequest {
 }
 
 /// One i18n build request.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct I18nBuildRequest {
     /// The working directory used to discover the Dart workspace.
     pub cwd: PathBuf,
+    /// Whether existing fallback-locale messages may be synced from `defaultText`.
+    pub sync_source: bool,
+    /// Whether to preview planned sync changes without writing files.
+    pub dry_run: bool,
 }
 
 /// One i18n check request.
