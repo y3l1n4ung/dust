@@ -1,156 +1,177 @@
-# Developer Guide: Dust Architecture
+# Developer Guide
 
-This document provides a deep dive into the Dust workspace layout, internal build pipeline, and core engineering principles. It is the primary resource for contributors working on the Rust engine or core plugins.
+This page describes Dust's internal architecture and the boundaries contributors
+should preserve. For checkout, toolchain, and pull-request setup, start with
+[CONTRIBUTING.md](../CONTRIBUTING.md).
 
----
+## Workspace Map
 
-## 📂 Workspace Layout
-
-### Rust Engine (`crates/`)
+### Core Engine
 
 | Crate | Responsibility |
 | :--- | :--- |
-| `dust_driver` | **The Orchestrator.** Manages the build lifecycle, caching, and worker threads. |
-| `dust_parser_dart_ts` | Tree-sitter backend for high-fidelity Dart parsing. Tree-sitter nodes stay private to this crate. |
-| `dust_resolver` | Enriches parsed Dart file IR with imports, symbols, annotation identities, and normalized feature config. |
-| `dust_ir` | The canonical `DartFileIr` model used as the contract between the engine and plugins. |
-| `dust_emitter` | Merges plugin contributions and writes deterministic `.g.dart` files. |
-| `dust_diagnostics` | High-quality error reporting with source context and terminal formatting. |
-| `dust_plugin_api` | Defines the `DustPlugin` trait and shared workspace analysis contracts. |
-| `dust_cli` | The user-facing CLI binary. |
+| `dust_workspace` | Finds the package root, reads configuration, and discovers candidate Dart libraries. |
+| `dust_cache` | Stores persistent per-library fingerprints and workspace-analysis snapshots. |
+| `dust_text` | Owns source text, file IDs, ranges, and line indexes. |
+| `dust_diagnostics` | Builds source-labelled errors and warnings. |
+| `dust_dart_syntax` | Parses shared Dart literal and syntax fragments without owning a full parser. |
+| `dust_parser_dart` | Defines the parser backend contract and parser-facing Dart surface. |
+| `dust_parser_dart_ts` | Implements that contract with tree-sitter. Tree-sitter nodes stay inside this crate. |
+| `dust_resolver` | Resolves imports, annotation identities, symbols, and normalized feature configuration. |
+| `dust_ir` | Defines the canonical `DartFileIr` consumed by plugins. |
+| `dust_plugin_api` | Defines plugin ownership, workspace analysis, symbol planning, and generated contributions. |
+| `dust_dart_emit` | Provides shared Dart names, type rendering, rename rules, and emission helpers. |
+| `dust_emitter` | Validates plugins, merges contributions, formats output, and assembles deterministic `.g.dart` files. |
+| `dust_driver` | Orchestrates build, check, watch, caching, workers, i18n, and DB modes. |
+| `dust_cli` | Parses commands and renders user-facing results. |
 
-### Dart Environment (`packages/`)
+Feature generation lives in:
+
+- `dust_plugin_derive`
+- `dust_plugin_serde`
+- `dust_http_client_plugin`
+- `dust_route_plugin`
+- `dust_state_plugin`
+- `dust_db_plugin`
+
+### Dart and Flutter Packages
 
 | Package | Responsibility |
 | :--- | :--- |
-| `dust_dart` | Dart-only annotations and runtime: derive, serde, HTTP, and DB base APIs. |
-| `dust_flutter` | Flutter-only annotations and runtime: routing and state management. |
-| `dust_db_sqlite3` | sqlite3 driver implementation for Database. |
+| `dust_dart` | Dart-only annotations and runtime APIs for derives, JSON, validation, HTTP, and Database. |
+| `dust_flutter` | Flutter-only state, routing, form validation, and i18n APIs. |
+| `dust_db_sqlite3` | Native SQLite `Executor` implementation for generated Database code. |
 
----
+## Build Pipeline
 
-## 🏗️ The 4-Pass Build Pipeline
+### 1. Discover and fingerprint
 
-Every file processed by Dust follows a strict, deterministic sequence to ensure performance and cross-file correctness.
+The workspace layer finds Dart libraries containing supported annotations and
+assigns their `.g.dart` output paths. The driver fingerprints source text,
+`pubspec.yaml`, package configuration, `dust.yaml`, active codegen sources, and
+the previous primary and auxiliary outputs.
 
-### Pass 1: Discovery & Hashing
-The driver resolves the package configuration and calculates a **Build Fingerprint**. This fingerprint includes source text, plugin versions, and tool configuration. If the hash matches the cache, the file is skipped.
+A library is a cache hit only when those inputs and its generated output set
+still match.
 
-### Pass 2: Parse & Shared Workspace Analysis
-The tree-sitter backend parses each Dart source file and lowers the syntax into
-Dust-owned parser facts. Tree-sitter nodes do not cross the
-`dust_parser_dart_ts` crate boundary.
-*   **Example:** The Route plugin gathers route facts from parsed/IR data to
-    build the unified navigation tree.
-*   **Constraint:** Plugins may collect cross-file facts, but they must not
-    manually scan raw Dart source or depend on `tree_sitter::Node`.
+### 2. Collect workspace analysis
 
-### Pass 3: Resolution & Lowering
-The engine resolves imports, types, annotations, and Dust-owned symbols against
-the workspace catalog. The result is the canonical **Dust IR**
-(`DartFileIr`), a simplified, language-neutral model that is safe for plugins
-to consume. `DartFileIr` is the only supported file-level IR name.
+Cache hits contribute their saved analysis snapshots. Pending libraries are
+parsed, resolved, and lowered to `DartFileIr` in parallel. Plugins collect
+cross-file facts from that canonical IR into one immutable workspace analysis.
 
-### Pass 4: Validation & Emission
-1.  **Validation:** Every plugin runs semantic checks on `DartFileIr` (e.g., "Does this `@Path` param exist in the URL?").
-2.  **Generation:** Plugins return generated units/fragments of Dart code from normalized IR and a deterministic symbol plan.
-3.  **Assembly:** The `dust_emitter` assembles all fragments into the final `.g.dart` file.
+Routing adds one dependency rule: when route declarations change, a cached
+router library is rebuilt even when the router source itself did not change.
 
----
+### 3. Process pending libraries
 
-## ⚖️ Engineering Standards
+Workers reuse the pre-lowered IR, build a deterministic symbol plan, run every
+plugin's semantic validation, and ask each plugin for generated contributions.
+`--fail-fast` stops after the first observed worker error while preserving
+parallel execution.
 
-### Product Promise
+### 4. Assemble and persist
 
-App-facing APIs marked stable should not change. When possible, improvements
-belong in generated code, runtime internals, or the Rust engine rather than in
-migration work for handwritten product code. Features marked beta can still
-refine app-facing APIs before stabilization.
+The emitter merges contributions in registry order, formats the generated Dart,
+and hashes the primary plus auxiliary output set. `dust build` writes changed
+outputs; `dust check` runs the same generation path without writing and reports
+stale files.
+
+Successful results update the persistent cache at:
+
+```text
+.dart_tool/dust/build_cache_v1.json
+```
+
+## Plugin Contract
+
+A plugin should:
+
+1. Claim the fully qualified traits and configuration annotations it owns.
+2. Read normalized `DartFileIr`, not raw source strings or tree-sitter nodes.
+3. Collect cross-file facts through `collect_workspace_analysis_ir` when needed.
+4. Return source-labelled diagnostics for invalid user code.
+5. Reserve shared helper names through the symbol plan.
+6. Return `PluginContribution` values for the shared emitter to assemble.
+
+See the [Plugin Guide](./plugin-guide.md) for a focused implementation path.
 
 > [!IMPORTANT]
-> **Performance is a Requirement:**
-> All core logic must be validated against the `benchmark_project` (5,000+ files). We target sub-second "warm" rebuild times for any project size.
+> Add new parser or resolver facts before adding plugin-local source parsing.
+> Parser syntax belongs in the parser crates; normalized meaning belongs in the
+> resolver and IR; feature behavior belongs in a plugin.
 
-### 🚫 No-Panic Policy
-Never use `.unwrap()` or `.expect()` in plugin code or lowering logic. If an edge case is encountered, emit a `Diagnostic::error` or `Diagnostic::warning`. This ensures a single malformed file doesn't crash the entire build process.
+## Engineering Boundaries
 
-### 🔄 Determinism
-The output of `dust build` must be byte-for-byte identical across different machines and runs. Always use `BTreeMap` or sorted collections when iterating over fields or symbols to maintain stable output order.
+### Public API ownership
 
-### ⚡ Fail-Fast Semantics
-`--fail-fast` keeps parallel workers enabled. It stops after the first observed worker error, not necessarily the lexically first source file. Requiring strict lexical fail-fast ordering would force serial processing and keep large invalidated builds slower.
+- Keep `dust_dart` free of Flutter imports.
+- Keep Flutter-only annotations and runtime code in `dust_flutter`.
+- Keep database drivers in separate packages such as `dust_db_sqlite3`.
+- Prefer generated-code or internal changes before changing stable handwritten
+  application APIs.
 
-### Dust Dart Runtime Gates
-Changes to `packages/dust_dart`, `crates/dust_dart_syntax`, or
-`crates/dust_dart_emit` must keep the Dart runtime and shared Dart helper crates
-fully covered and documented.
+### Diagnostics and failures
 
-Rust helper crates:
+Malformed Dart, invalid annotations, unsupported types, and filesystem failures
+must become diagnostics or returned errors. Do not unwrap user-controlled
+input. Use `expect` only for an internal invariant whose violation is a Dust
+bug and whose contract is covered by tests.
 
-```bash
-rtk cargo llvm-cov clean --workspace
-rtk cargo llvm-cov --no-report -p dust_dart_syntax -p dust_dart_emit
-rtk cargo llvm-cov report --summary-only \
-  --ignore-filename-regex 'crates/(dust_ir|dust_diagnostics|dust_text)' \
-  --fail-under-lines 100 \
-  --fail-under-functions 100 \
-  --fail-under-regions 100
-```
+### Deterministic output
 
-Dart runtime package:
+- Sort data whose source order is not part of the public contract.
+- Use shared emitters or templates instead of plugin-local formatting.
+- Keep generated output analyzer-safe without running `dart format` as a repair
+  step.
+- Use `.dart.snapshot` for generator fixtures and exact snapshot assertions for
+  generated contracts.
 
-```bash
-dart format --set-exit-if-changed packages/dust_dart/lib packages/dust_dart/test
-dart analyze packages/dust_dart
-dart --enable-asserts test --coverage=packages/dust_dart/coverage packages/dust_dart/test
-dart run coverage:format_coverage --check-ignore \
-  --packages=.dart_tool/package_config.json \
-  --report-on=packages/dust_dart/lib \
-  --in=packages/dust_dart/coverage \
-  --out=packages/dust_dart/coverage/lcov.info \
-  --lcov
-awk 'BEGIN{lf=lh=0} /^LF:/{v=$0; sub("LF:","",v); lf+=v} /^LH:/{v=$0; sub("LH:","",v); lh+=v} END{printf("TOTAL LH=%d LF=%d %.2f%%\n", lh, lf, (lf?100*lh/lf:100)); exit(lh==lf && lf>0 ? 0 : 1)}' packages/dust_dart/coverage/lcov.info
-```
+### Cross-file features
 
-`packages/dust_dart/analysis_options.yaml` enables
-`public_member_api_docs`, so every public runtime API must have Dartdoc before
-the analyzer gate passes. Remove generated `.dart_tool`, `build`, `coverage`,
-and ignored lockfile artifacts before final status checks.
+Do not add a second workspace scan inside a plugin. Extend shared workspace
+analysis and persist the minimum facts needed by cached libraries. Any new
+cross-file dependency also needs an explicit cache invalidation rule.
 
-Dust owns generated-code functional contracts. Do not add `fpdart`, `dartz`, or
-another external functional package for generated-code `Option` or `Result`
-handling.
+## Where to Make a Change
 
----
-
-## 🛠️ Contribution Scenarios
-
-| If you want to... | Edit these crates |
+| Change | Start here |
 | :--- | :--- |
-| Support new Dart syntax | `dust_parser_dart_ts`, `dust_parser_dart` |
-| Add a new annotation | `packages/`, `dust_ir`, `dust_resolver`, and a plugin crate. |
-| Change how code is formatted | `dust_emitter` (Writer/Format modules). |
-| Improve error messages | `dust_diagnostics` or the specific plugin's `validate.rs`. |
-| Speed up the build | `dust_driver` (caching/worker logic) or `dust_cache`. |
+| New Dart syntax support | `dust_parser_dart_ts`, then resolver/IR tests. |
+| New annotation or option | Runtime package, resolver/IR, then the owning plugin. |
+| Generated Dart behavior | Owning plugin and exact snapshots. |
+| Shared Dart rendering | `dust_dart_emit` or `dust_emitter`. |
+| Cross-file feature facts | Plugin analysis plus driver cache dependency review. |
+| Scheduling, watch, or cache behavior | `dust_driver`, `dust_cache`, and benchmark tests. |
+| CLI command or output | `dust_cli` and driver request/result types. |
+| Runtime behavior | The package under `packages/` plus Dart or Flutter tests. |
 
----
+## Validation
 
-## 🚀 Scale Testing
-
-Before submitting changes, run the benchmark test suite to verify there are no performance regressions:
+Use focused commands while developing:
 
 ```bash
-# 1. Generate 5,000 models
-cd examples/benchmark_project
-./generate.sh --count 5000
-
-# 2. Benchmark Cold Build
-cd ../..
-cargo run -p dust_cli -- build --root examples/benchmark_project
-
-# 3. Verify Cache Speed
-cargo run -p dust_cli -- build --root examples/benchmark_project
-
-# 4. Verify Invalidated Rebuild Speed
-cargo test -p dust_cli benchmark_project_release_build_benchmark -- --ignored --nocapture
+cargo nextest run -p dust_driver
+cargo clippy -p dust_driver --all-targets -- -D warnings
+cargo fmt --all -- --check
 ```
+
+Run the repository scripts before handoff:
+
+```bash
+./scripts/lint.sh
+./scripts/test.sh
+```
+
+Changes affecting discovery, caching, workers, parsing, resolution, or emission
+must also run the ignored release benchmark:
+
+```bash
+cargo test -p dust_cli benchmark_project_release_build_benchmark \
+  -- --ignored --nocapture
+```
+
+The benchmark creates a 5,000-file fixture and checks cold, warm, and
+single-file-invalidated builds. See the
+[benchmark project](../examples/benchmark_project/README.md) for manual setup
+and threshold overrides.
