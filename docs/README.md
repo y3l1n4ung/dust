@@ -55,7 +55,6 @@ and contributor documentation.
 - [Contributing](../CONTRIBUTING.md)
 - [Developer guide](./developer.md)
 - [Plugin guide](./plugin-guide.md)
-- [State management design](./state-management-design.md)
 - [Code of Conduct](../CODE_OF_CONDUCT.md)
 - [Security policy](../SECURITY.md)
 - [Roadmap and milestones](https://github.com/y3l1n4ung/dust/milestones)
