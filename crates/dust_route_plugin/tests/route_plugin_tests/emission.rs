@@ -123,6 +123,43 @@ fn emits_guard_helpers_with_custom_router_base_name() {
 }
 
 #[test]
+fn emits_nested_guarded_route_restore_fixture() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/', notFound: '/404')"),
+        route_page_class("HomePage", "('/', name: 'home', guards: [])", Vec::new()),
+        route_page_class(
+            "WorkspacePage",
+            "('/workspace', name: 'workspace', guards: [AuthGuard])",
+            Vec::new(),
+        ),
+        route_page_class(
+            "WorkspaceDetailsPage",
+            "('/workspace/details', name: 'workspaceDetails')",
+            Vec::new(),
+        ),
+        guard_class("AuthGuard", Vec::new()),
+    ]);
+
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
+    let primary = contribution.primary_source.expect("primary route output");
+
+    assert!(primary.contains("WorkspaceRoute() => [AuthGuard()],"));
+    assert!(primary.contains(
+        "WorkspaceDetailsRoute() => [\n      const HomeRoute(),\n      const WorkspaceRoute(),\n      route,\n    ],"
+    ));
+}
+
+#[test]
 fn rejects_guard_without_unnamed_constructor() {
     let plugin = register_plugin();
     let library = library_with_classes(vec![

@@ -125,6 +125,94 @@ void main() {
     );
   });
 
+  test('deep-link restoration guards restored ancestors in stack order',
+      () async {
+    final calls = <String>[];
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(
+        restoreStack: (route) => route.location == '/child'
+            ? [
+                const _TestRoute('/safe'),
+                const _TestRoute('/parent'),
+                route,
+              ]
+            : [route],
+        resolveGuards: (route) => switch (route.location) {
+          '/parent' || '/child' => [_RecordingGuard(route.location, calls)],
+          _ => const [],
+        },
+      ),
+    );
+    await delegate.debugWaitForScheduledRefresh();
+
+    await delegate.setNewRoutePath(const _TestRoute('/child'));
+
+    expect(calls, ['/parent', '/child']);
+    expect(delegate.stack.map((route) => route.location), [
+      '/safe',
+      '/parent',
+      '/child',
+    ]);
+  });
+
+  test('direct navigation does not re-run guards for restored ancestors',
+      () async {
+    final calls = <String>[];
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(
+        restoreStack: (route) => [
+          const _TestRoute('/safe'),
+          const _TestRoute('/parent'),
+          route,
+        ],
+        resolveGuards: (route) => switch (route.location) {
+          '/parent' || '/child' => [_RecordingGuard(route.location, calls)],
+          _ => const [],
+        },
+      ),
+    );
+    await delegate.debugWaitForScheduledRefresh();
+
+    final result = delegate.push<void>(const _TestRoute('/child'));
+    await Future<void>.delayed(Duration.zero);
+    expect(calls, ['/child']);
+    await delegate.popRoute();
+    await expectLater(result, completion(isNull));
+  });
+
+  test('ancestor guard redirect prevents unauthorized child restoration',
+      () async {
+    final calls = <String>[];
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(
+        restoreStack: (route) => route.location == '/child'
+            ? [
+                const _TestRoute('/safe'),
+                const _TestRoute('/parent'),
+                route,
+              ]
+            : [route],
+        resolveGuards: (route) => switch (route.location) {
+          '/parent' => [
+              _RedirectRecordingGuard(
+                route.location,
+                calls,
+                const _TestRoute('/login'),
+              ),
+            ],
+          '/child' => [_RecordingGuard(route.location, calls)],
+          _ => const [],
+        },
+      ),
+    );
+    await delegate.debugWaitForScheduledRefresh();
+
+    await delegate.setNewRoutePath(const _TestRoute('/child'));
+
+    expect(calls, ['/parent']);
+    expect(delegate.stack.map((route) => route.location), ['/login']);
+  });
+
   test('push future completes when delegate pops the route', () async {
     final delegate = GeneratedRouterDelegate<_TestRoute>(_runtimeConfig());
     await delegate.debugWaitForScheduledRefresh();
@@ -281,6 +369,7 @@ void main() {
 RouterRuntimeConfig<_TestRoute> _runtimeConfig({
   RouterBase<_TestRoute>? router,
   RouteGuardResolver<_TestRoute>? resolveGuards,
+  RouteStackRestorer<_TestRoute>? restoreStack,
   Widget Function(BuildContext context, _TestRoute route)? buildChild,
   PageTransitionsBuilder? Function(_TestRoute route)? transitionForRoute,
 }) {
@@ -291,6 +380,7 @@ RouterRuntimeConfig<_TestRoute> _runtimeConfig({
     routeLocation: (route) => route.location,
     requiresAuth: (_) => false,
     resolveGuards: resolveGuards ?? (_) => const [],
+    restoreStack: restoreStack,
     buildPage: (route, key, onPopInvoked) => generatedPage<Object?>(
       key: key,
       location: route.location,
@@ -396,4 +486,31 @@ final class _BlockingGuard implements AsyncRouteGuard<_TestRoute> {
 
   @override
   Future<_TestRoute?> canActivate(_TestRoute route) => result;
+}
+
+final class _RecordingGuard implements RouteGuard<_TestRoute> {
+  const _RecordingGuard(this.location, this.calls);
+
+  final String location;
+  final List<String> calls;
+
+  @override
+  _TestRoute? canActivate(_TestRoute route) {
+    calls.add(location);
+    return null;
+  }
+}
+
+final class _RedirectRecordingGuard implements RouteGuard<_TestRoute> {
+  const _RedirectRecordingGuard(this.location, this.calls, this.redirect);
+
+  final String location;
+  final List<String> calls;
+  final _TestRoute redirect;
+
+  @override
+  _TestRoute? canActivate(_TestRoute route) {
+    calls.add(location);
+    return redirect;
+  }
 }

@@ -222,26 +222,50 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
 
     if (epoch != _navigationEpoch) return null;
 
-    final guards = config.resolveGuards(candidate);
-    if (guards.isNotEmpty) {
-      _log('guards ${guards.length} for ${_debugRoute(candidate)}');
-      final redirected = await RouteGuardChain<T>(
-        guards,
-      ).canActivate(candidate);
-      if (epoch != _navigationEpoch) return null;
-      if (redirected != null) {
-        _log(
-          'guard redirect ${_debugRoute(candidate)} => '
-          '${_debugRoute(redirected)}',
-        );
-        return _applyRoute(redirected, mode, guardRedirects + 1);
+    if (mode == NavigationMode.restore) {
+      final restored = config.restoreStack?.call(candidate);
+      final routes =
+          restored == null || restored.isEmpty ? <T>[candidate] : restored;
+      for (final route in routes) {
+        final guardFuture = _runGuards(route);
+        final redirected = guardFuture == null ? null : await guardFuture;
+        if (epoch != _navigationEpoch) return null;
+        if (redirected != null) {
+          _log(
+            'guard redirect ${_debugRoute(route)} => '
+            '${_debugRoute(redirected)}',
+          );
+          return _applyRoute(redirected, mode, guardRedirects + 1);
+        }
       }
+      return _commitRoute(candidate, mode, routes);
     }
 
+    final guardFuture = _runGuards(candidate);
+    final redirected = guardFuture == null ? null : await guardFuture;
+    if (epoch != _navigationEpoch) return null;
+    if (redirected != null) {
+      _log(
+        'guard redirect ${_debugRoute(candidate)} => '
+        '${_debugRoute(redirected)}',
+      );
+      return _applyRoute(redirected, mode, guardRedirects + 1);
+    }
     return _commitRoute(candidate, mode);
   }
 
-  _RouteEntry<T> _commitRoute(T route, NavigationMode mode) {
+  Future<T?>? _runGuards(T route) {
+    final guards = config.resolveGuards(route);
+    if (guards.isEmpty) return null;
+    _log('guards ${guards.length} for ${_debugRoute(route)}');
+    return RouteGuardChain<T>(guards).canActivate(route);
+  }
+
+  _RouteEntry<T> _commitRoute(
+    T route,
+    NavigationMode mode, [
+    RouteStack<T>? restored,
+  ]) {
     late final _RouteEntry<T> committed;
     switch (mode) {
       case NavigationMode.go:
@@ -268,10 +292,8 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
           _entries[_entries.length - 1] = committed;
         }
       case NavigationMode.restore:
-        final restored = config.restoreStack?.call(route);
         _completeEntries(_entries);
-        final routes =
-            restored == null || restored.isEmpty ? <T>[route] : restored;
+        final routes = restored ?? <T>[route];
         _entries
           ..clear()
           ..addAll(routes.map(_RouteEntry<T>.new));
