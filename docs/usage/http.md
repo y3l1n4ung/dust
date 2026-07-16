@@ -193,21 +193,55 @@ use `toString()`.
 
 ## Isolate Decoding
 
-Use isolate decoding globally or for one endpoint:
+Dio fetches the response first. Dust then converts the response data into the
+declared Dart type. `HttpParseThread.isolate` moves only that generated model
+conversion to another isolate.
+
+For example, Dust converts a JSON map with `Product.fromJson(...)` and converts
+a JSON list by calling `Product.fromJson(...)` for every item. Those operations
+can run in an isolate:
 
 ```dart
 @HttpClient(parseThread: HttpParseThread.isolate)
 abstract interface class CatalogApi {
   factory CatalogApi(Dio dio, {String? baseUrl}) = _$CatalogApi;
 
-  @GET('/catalog')
-  Future<List<Product>> getCatalog();
+  // Product.fromJson runs in the isolate.
+  @GET('/products/{id}')
+  Future<Product> getProduct(@Path() int id);
 
+  // List mapping and every Product.fromJson call run in the isolate.
+  @GET('/products')
+  Future<List<Product>> getProducts();
+
+  // The map is returned directly, so Dust has no model conversion to move.
+  @GET('/summary')
+  Future<Map<String, dynamic>> getSummary();
+
+  // Raw response bodies and streams remain on their normal Dio path.
+  @GET('/export')
+  Future<ResponseBody> downloadExport();
+
+  @GET('/export')
+  Stream<List<int>> streamExport();
+
+  // Override the client default for one model endpoint.
   @HttpParse(thread: HttpParseThread.main)
   @GET('/featured')
   Future<Product> getFeatured();
 }
 ```
+
+| Return payload | Uses the isolate? | Dust operation |
+| :--- | :--- | :--- |
+| `Product` | Yes | Calls `Product.fromJson(...)`. |
+| `List<Product>` | Yes | Maps the list through `Product.fromJson(...)`. |
+| `Response<Product>` | Yes | Converts `Product`, then rebuilds the typed `Response`. |
+| `String`, `int`, `double`, `bool` | No | Casts or converts the primitive directly. |
+| `Map<String, dynamic>` | No | Returns the typed map directly. |
+| `List<int>` or `List<Map<String, dynamic>>` | No | No custom model constructor is called. |
+| `ResponseBody` | No | Preserves Dio's raw response body. |
+| `Stream<List<int>>` or `Stream<String>` | No | Uses the generated streaming path. |
 
 Dart-targeted clients use `Isolate.run` and require:
 
@@ -225,9 +259,10 @@ Set `target: HttpTarget.flutter` with the Flutter import. The method-level
 annotation can also return decoding to `HttpParseThread.main` when the client
 default is isolate decoding.
 
-> [!NOTE]
-> Isolate decoding applies to custom JSON models and lists of those models. It
-> does not move primitive, map, raw-body, or stream handling to an isolate.
+> [!TIP]
+> Consider isolate decoding for endpoints that construct many custom model
+> objects. It does not move the network request or every kind of response
+> handling to a background isolate.
 
 ## Generated Request Tests
 
