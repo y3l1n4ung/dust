@@ -1,12 +1,23 @@
 # Validation
 
-Dust can generate model validation from field-level `@Validate(...)` annotations.
-Use this for request models, checkout models, and other DTOs where validation
-should live beside the data contract.
+Dust generates typed model validation from field-level `@Validate(...)`
+annotations.
 
----
+## Add the Package
 
-## Basic Example
+Install the Dust CLI from the [root guide](../../README.md#installation), then
+add the Dart runtime package:
+
+```bash
+dart pub add dust_dart
+```
+
+The focused validation API is available from
+`package:dust_dart/derive.dart`.
+
+## Quick Start
+
+Derive `Validate()` on the model and place rules on its fields:
 
 ```dart
 import 'package:dust_dart/derive.dart';
@@ -22,183 +33,117 @@ class SignupRequest with _$SignupRequest {
     required this.age,
   });
 
-  @Validate(email: true, message: 'Invalid email')
+  @Validate(email: true, message: 'Enter a valid email')
   final String email;
 
-  @Validate(length: Length(min: 8), message: 'Min 8 characters')
+  @Validate(length: Length(min: 8), message: 'Use at least 8 characters')
   final String password;
 
   @Validate(mustMatch: 'password', message: 'Passwords do not match')
   final String confirmPassword;
 
-  @Validate(range: Range(min: 18, max: 120), message: 'Must be 18-120')
+  @Validate(range: Range(min: 18), message: 'You must be 18 or older')
   final int age;
 }
 ```
 
-Generated usage:
+Generate the implementation:
+
+```bash
+dust build
+```
+
+Validate without throwing:
 
 ```dart
-final request = SignupRequest(
-  email: 'ada@example.com',
-  password: 'correct horse',
-  confirmPassword: 'correct horse',
-  age: 36,
-);
-
 final result = request.validate();
-if (result case Invalid(:final errors)) {
-  // Render or log errors.
-}
 
-request.validateOrThrow();
-```
-
----
-
-## Generated API
-
-For each `@Derive([Validate()])` class, Dust generates:
-
-```dart
-ValidationResult validate();
-void validateOrThrow();
-```
-
-`validate()` checks the typed object. `validateOrThrow()` throws
-`ValidationException` when the object is invalid.
-
----
-
-## Flutter Form Validators
-
-Flutter packages also get generated `String? Function(String?)` validators for
-`TextFormField.validator`. A package is treated as Flutter when its
-`pubspec.yaml` has a `flutter:` section or a `flutter` dependency.
-
-Pure Dart packages do not emit these form helpers.
-
-```dart
-final _emailController = TextEditingController();
-final _passwordController = TextEditingController();
-final _confirmPasswordController = TextEditingController();
-final _ageController = TextEditingController();
-
-SignupRequest _request() {
-  return SignupRequest(
-    email: _emailController.text,
-    password: _passwordController.text,
-    confirmPassword: _confirmPasswordController.text,
-    age: int.tryParse(_ageController.text) ?? 0,
-  );
+switch (result) {
+  case Valid():
+    submit(request);
+  case Invalid(:final errors):
+    showErrors(errors);
 }
 ```
 
-Then wire fields directly:
+Use `request.validateOrThrow()` when an exception is the better control flow.
+It throws `ValidationException` with the same error list.
+
+> [!IMPORTANT]
+> The model needs the matching `part` directive and generated mixin. Field
+> annotations do not generate validation unless the class derives `Validate()`.
+
+## Validation Result
+
+`validate()` returns one of two typed results:
+
+| Result | Meaning |
+| :--- | :--- |
+| `Valid` | No rule failed. `errors` is empty and `isValid` is `true`. |
+| `Invalid` | One or more rules failed. `errors` contains `ValidationError` values. |
+
+Each error contains a field path and message. Nested paths use dot notation,
+such as `address.zipCode`.
+
+## Rules
+
+| Rule | Supported field types |
+| :--- | :--- |
+| `email: true` | `String`, `String?` |
+| `url: true` | `String`, `String?` |
+| `length: Length(...)` | `String`, `List`, `Set`, `Map`, including nullable forms |
+| `range: Range(...)` | `int`, `double`, `num`, including nullable forms |
+| `contains` | `String`, `String?` |
+| `doesNotContain` | `String`, `String?` |
+| `regex` | `String`, `String?` |
+| `mustMatch` | Another field with the same type |
+| `nested: true` | A model with generated validation |
+| `custom` | A matching `FieldValidator<T>` callback |
+| `required: true` | Nullable fields |
+
+`Length` accepts `min`, `max`, or `exact`. `Range` accepts `min` and `max`.
+Dust rejects incompatible field types, invalid bounds, empty `Length()` or
+`Range()` rules, and `Length(exact: ...)` combined with `min` or `max` during
+generation.
+
+> [!NOTE]
+> Rules on nullable fields ignore `null` by default. Add `required: true` when
+> `null` should produce an error.
+
+## Multiple Rules
+
+Place multiple annotations on one field when each rule needs its own message:
 
 ```dart
-TextFormField(
-  controller: _emailController,
-  validator: validateSignupRequestEmailInput,
-)
-
-TextFormField(
-  controller: _passwordController,
-  validator: validateSignupRequestPasswordInput,
-)
-
-TextFormField(
-  controller: _ageController,
-  validator: validateSignupRequestAgeInput,
-)
-
-TextFormField(
-  controller: _confirmPasswordController,
-  validator: (value) {
-    return validateSignupRequestConfirmPasswordInput(_request(), value);
-  },
-)
-```
-
-Numeric form validators parse `String?` input before applying `Range(...)`.
-If parsing fails, the field returns that rule's `message` when present.
-
----
-
-## Supported Rules
-
-| Rule | Field Type | Example |
-| :--- | :--- | :--- |
-| `email` | `String`, `String?` | `@Validate(email: true)` |
-| `url` | `String`, `String?` | `@Validate(url: true)` |
-| `length` | `String`, `List`, `Set`, `Map` | `@Validate(length: Length(min: 1, max: 64))` |
-| `range` | `int`, `double`, `num` | `@Validate(range: Range(min: 18, max: 120))` |
-| `contains` | `String`, `String?` | `@Validate(contains: '@')` |
-| `doesNotContain` | `String`, `String?` | `@Validate(doesNotContain: 'password')` |
-| `regex` | `String`, `String?` | `@Validate(regex: r'^\\d{5}$')` |
-| `mustMatch` | same field type | `@Validate(mustMatch: 'password')` |
-| `nested` | `@Derive([Validate()])` type | `@Validate(nested: true)` |
-| `custom` | callback type | `@Validate<String>(custom: validateEmailDomain)` |
-| `required` | nullable fields | `@Validate(required: true)` |
-
----
-
-## Length And Range
-
-Use typed config objects, not records or maps.
-
-```dart
-@Validate(length: Length(min: 1), message: 'Required')
-final String name;
-
-@Validate(length: Length(exact: 5), message: 'ZIP must be 5 digits')
-final String zipCode;
-
-@Validate(range: Range(min: 18, max: 120), message: 'Must be 18-120')
-final int age;
-```
-
-Dust validates these at generation time:
-
-- `Length(...)` only supports integer `min`, `max`, and `exact`.
-- `Length(exact: ...)` cannot be combined with `min` or `max`.
-- `Range(...)` only supports numeric `min` and `max`.
-- `min` must be less than or equal to `max`.
-- Raw records such as `length: (min: 1)` are rejected.
-
----
-
-## Custom Field Validator
-
-Custom validators are field-level and type-safe.
-
-```dart
-@Validate<String>(custom: validateBusinessEmail)
+@Validate(length: Length(min: 1), message: 'Enter an email')
+@Validate(email: true, message: 'Enter a valid email')
 final String email;
-
-ValidationError? validateBusinessEmail(String value) {
-  if (value.endsWith('@blocked.example')) {
-    return const ValidationError(
-      field: 'email',
-      message: 'Blocked email domain',
-    );
-  }
-  return null;
-}
 ```
 
----
+Rules run in annotation order and all failures are returned. When one
+annotation contains multiple rules, its `message` applies to each rule.
+
+## Cross-Field Validation
+
+`mustMatch` compares the annotated field with another field on the same model:
+
+```dart
+@Validate(mustMatch: 'password', message: 'Passwords do not match')
+final String confirmPassword;
+```
+
+Dust verifies that the referenced field exists and has the same type.
 
 ## Nested Validation
 
-Nested objects must also derive `Validate()`.
+Both models derive `Validate()`, then the parent opts into nested validation:
 
 ```dart
 @Derive([Validate()])
 class Address with _$Address {
   const Address({required this.zipCode});
 
-  @Validate(length: Length(exact: 5), message: 'ZIP is invalid')
+  @Validate(regex: r'^\d{5}$', message: 'Invalid ZIP code')
   final String zipCode;
 }
 
@@ -211,39 +156,62 @@ class Profile with _$Profile {
 }
 ```
 
-Nested errors use dot paths, for example `address.zipCode`.
+An `Address.zipCode` failure is returned as `address.zipCode` on `Profile`.
 
----
+## Custom Validators
 
-## Generated Shape
-
-Simplified generated output:
+A custom validator returns one error or `null`:
 
 ```dart
-mixin _$SignupRequest {
-  ValidationResult validate() {
-    final self = this as SignupRequest;
-    final errors = <ValidationError>[];
-    _validateSignupRequestEmail(self.email, errors);
-    _validateSignupRequestPassword(self.password, errors);
-    _validateSignupRequestAge(self.age, errors);
-    return errors.isEmpty ? const Valid() : Invalid(errors);
-  }
-}
+@Validate<String>(custom: validateBusinessEmail)
+final String email;
 
-void _validateSignupRequestEmail(String email, List<ValidationError> errors) {
-  if (!ValidationHelper.isEmail(email)) {
-    errors.add(ValidationError(field: 'email', message: 'Invalid email'));
+ValidationError? validateBusinessEmail(String value) {
+  if (value.endsWith('@blocked.example')) {
+    return const ValidationError(
+      field: 'email',
+      message: 'Email domain is blocked',
+    );
   }
+  return null;
 }
 ```
 
-In Flutter packages, Dust also emits form helper functions:
+> [!TIP]
+> Use built-in rules for common checks and custom validators for product or
+> domain rules that do not belong in the generator.
+
+## Flutter Forms
+
+In Flutter packages, Dust also generates `TextFormField.validator` helpers for
+validated `String`, `int`, `double`, and `num` fields:
 
 ```dart
-String? validateSignupRequestEmailInput(String? value) {
-  final errors = <ValidationError>[];
-  _validateSignupRequestEmail(value ?? '', errors);
-  return errors.isEmpty ? null : errors.first.message;
-}
+TextFormField(
+  controller: emailController,
+  validator: validateSignupRequestEmailInput,
+)
 ```
+
+Cross-field rules receive the current model:
+
+```dart
+TextFormField(
+  controller: confirmPasswordController,
+  validator: (value) =>
+      validateSignupRequestConfirmPasswordInput(currentRequest(), value),
+)
+```
+
+Numeric helpers parse the text before applying range rules. A parse failure
+uses the annotation message when available, otherwise `Invalid number`.
+Pure Dart packages generate model validation without Flutter form helpers.
+
+## Examples
+
+- [Product showcase validation model](../../examples/product_showcase/lib/models/latest_dart_derive_showcase.dart)
+- [Product showcase validation test](../../examples/product_showcase/test/generated_latest_dart_derive_showcase_test.dart)
+- [Complete validation rule fixture](../../examples/benchmark_project/tool/src/validate_templates.dart)
+- [Complete validation rule tests](../../examples/benchmark_project/test/validation_rules_test.dart)
+- [Shopping app registration model](../../examples/shopping_app/lib/features/auth/models/register_request.dart)
+- [Shopping app form integration](../../examples/shopping_app/lib/features/auth/views/register_screen.dart)
