@@ -58,6 +58,24 @@ For the current published package versions and package-specific setup, see the
 
 ---
 
+## CLI Overview
+
+| Command | Behavior |
+| :--- | :--- |
+| `dust build` | Generates Dust-owned outputs. |
+| `dust check` | Checks generated-file freshness without writing. |
+| `dust watch` | Runs an initial build and watches for source changes. |
+| `dust clean` | Removes Dust-generated outputs and cache state. |
+| `dust doctor` | Reports workspace and plugin readiness. |
+| `dust db build` | Generates database code and validates SQL queries. |
+| `dust i18n scan` | Reports statically discoverable translation calls. |
+| `dust i18n build` | Reconciles static translation keys into ARB files. |
+| `dust i18n check` | Validates ARB files without writing. |
+
+Run `dust --help` or `dust <command> --help` for current options and examples.
+
+---
+
 ## Learning from Examples
 
 The guides in this directory reference real-world implementations found in the [Product Showcase Example](../../examples/product_showcase). This example includes automated tests and provides a "Golden Standard" for Dust usage.

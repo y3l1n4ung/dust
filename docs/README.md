@@ -33,7 +33,7 @@ how-to, reference, and explanation content in one place.
 
 | Page | Primary role | Notes |
 | :--- | :--- | :--- |
-| [Root README](../README.md) | Tutorial | Verified clone-to-check quick start plus project overview. |
+| [Root README](../README.md) | Tutorial | Landing page, release installation, and first successful app generation. |
 | [Usage overview](./usage/README.md) | Reference | Guide order, package map, and links to runnable examples. |
 | [Derive](./usage/derive.md) | How-to + reference | Generate data-class helpers; trait table is the reference section. |
 | [Serde](./usage/serde.md) | How-to + reference | Generate JSON codecs; option tables are the reference sections. |
