@@ -32,6 +32,9 @@ then use these task guides as needed:
 
 ## Package Installation
 
+Install the `dust` CLI from the [root installation guide](../../README.md#installation)
+before running `dust build`, `dust check`, or feature-specific commands.
+
 Depending on the features you need, add the following packages to your `pubspec.yaml`:
 
 | Feature | Required Packages |
@@ -44,6 +47,11 @@ Depending on the features you need, add the following packages to your `pubspec.
 | **Routing** | `dust_flutter` |
 | **i18n** | `dust_flutter`, `flutter_localizations` |
 | **Database** | `dust_dart`, `dust_db_sqlite3` |
+
+For the current published package versions and package-specific setup, see the
+[dust_dart README](../../packages/dust_dart/README.md),
+[dust_flutter README](../../packages/dust_flutter/README.md), and
+[dust_db_sqlite3 README](../../packages/dust_db_sqlite3/README.md).
 
 > [!TIP]
 > Use `package:dust_dart/dust_dart.dart` for starter examples or mixed Dust features. Feature guides may use narrower imports for focused examples.

@@ -23,6 +23,19 @@ You focus on product. We focus on performance.
 - `package:dust_dart/db.dart`: SQLx-style DB annotations and runtime contracts.
 - `package:dust_dart/dust_dart.dart`: convenience export for all Dart-only APIs.
 
+## Install
+
+Add the published runtime package to your Dart or Flutter application:
+
+```yaml
+dependencies:
+  dust_dart: ^0.1.0
+```
+
+Install the Dust CLI separately from the
+[release installation guide](https://github.com/y3l1n4ung/dust#installation),
+then run `dust build` from the application package root.
+
 ## How to annotate
 
 Use the focused imports for the feature you are enabling:

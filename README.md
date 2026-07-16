@@ -21,6 +21,39 @@ state management, and database codegen.
 > [!IMPORTANT]
 > **Tired of waiting for your code to generate?** Dust is built to handle the large Flutter projects with near-instant rebuilds.
 
+## 📦 Installation
+
+Dust CLI release `v0.1.2` is distributed from GitHub release artifacts, not
+crates.io. The installer selects the supported platform archive and verifies
+its entry in `SHA256SUMS.txt` before installing the binary.
+
+### macOS and Linux
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/v0.1.2/install.sh \
+  | DUST_VERSION=v0.1.2 bash
+```
+
+The default install directory is `$HOME/.local/bin`. Set
+`DUST_INSTALL_DIR` to use another directory.
+
+### Windows PowerShell
+
+```powershell
+$env:DUST_VERSION = "v0.1.2"
+irm https://raw.githubusercontent.com/y3l1n4ung/dust/v0.1.2/install.ps1 | iex
+```
+
+The Windows installer currently supports x64 release artifacts. Verify that
+the chosen install directory is on `PATH`, then run:
+
+```text
+dust --version
+```
+
+For a source checkout or an unsupported release platform, use the
+[release runbook](docs/release-0.1.0.md) and build the CLI locally with Rust.
+
 ---
 
 ## ✨ Why Dust?
@@ -41,7 +74,7 @@ state management, and database codegen.
 | Feature | Stability | Description | Documentation |
 | :--- | :--- | :--- | :--- |
 | **Data Classes** | Stable public API. API will not change. | `ToString`, `Eq`, `HashCode`, and `CopyWith` generation. | [Read Guide →](docs/usage/derive.md) |
-| **JSON Serialization** | Stable public API. API will not change. | Blazing fast JSON encode/decode with support for renames and custom codecs. | [Read Guide →](docs/usage/serde.md) |
+| **JSON Serialization** | Stable public API. API will not change. | Typed JSON encode/decode with field renames and custom codecs. | [Read Guide →](docs/usage/serde.md) |
 | **Validation** | Stable public API. API will not change. | Dart model validation plus Flutter-only form validators from typed field rules. | [Read Guide →](docs/usage/validation.md) |
 | **HTTP Client** | Stable public API. API will not change. | Type-safe, Dio-backed API client generation from annotations. | [Read Guide →](docs/usage/http.md) |
 | **Routing** | Beta. API may still be refined. | Boilerplate-free Navigator 2.0 routing with typed parameters. | [Read Guide →](docs/usage/routing.md) |
@@ -111,6 +144,10 @@ package root. From a source checkout, use the same pattern with
 | `dust watch` | High-performance file watcher for instant rebuilds. |
 | `dust check` | CI mode: Verifies if generated files are up to date. |
 | `dust clean` | Clears all generated files and persistent caches. |
+| `dust doctor` | Reports workspace, package, and plugin readiness. |
+| `dust db build` | Generates Database code and validates SQL queries. |
+| `dust i18n build` | Scans translation calls and reconciles ARB assets. |
+| `dust i18n check` | Validates ARB assets without writing files. |
 
 ---
 
