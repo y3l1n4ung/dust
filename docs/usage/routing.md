@@ -130,6 +130,12 @@ must remain reachable before auth succeeds.
 Routes with one or more guards stay protected and run their guard chain after
 the router-level redirect check.
 
+When a browser deep link restores multiple pages, Dust evaluates route guards
+for each restored entry in stack order, from the initial route through the
+requested child. A redirect from an ancestor stops restoration and becomes the
+new navigation target, so a guarded parent cannot be exposed behind an
+unauthorized child.
+
 > [!IMPORTANT]
 > Use router-level `redirect` for global auth state: unauthenticated users,
 > login/register bounce-back, expired sessions, and safe redirect-path handling.
