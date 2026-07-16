@@ -1,6 +1,6 @@
 # 🌪️ Dust
 
-**You focus on product. We focus on performance.**
+**Built to make developers and AI agents happy.**
 
 [![CI](https://github.com/y3l1n4ung/dust/actions/workflows/ci.yml/badge.svg)](https://github.com/y3l1n4ung/dust/actions)
 [![Release](https://img.shields.io/github/v/release/y3l1n4ung/dust?logo=github&color=blue)](https://github.com/y3l1n4ung/dust/releases)
