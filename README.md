@@ -23,36 +23,26 @@ state management, and database codegen.
 
 ## 📦 Installation
 
-Dust CLI release `v0.1.2` is distributed from GitHub release artifacts, not
-crates.io. The installer selects the supported platform archive and verifies
-its entry in `SHA256SUMS.txt` before installing the binary.
-
-### macOS and Linux
+Install the latest Dust CLI release:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/v0.1.2/install.sh \
-  | DUST_VERSION=v0.1.2 bash
+curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.sh | bash
 ```
 
-The default install directory is `$HOME/.local/bin`. Set
-`DUST_INSTALL_DIR` to use another directory.
-
-### Windows PowerShell
+Windows PowerShell:
 
 ```powershell
-$env:DUST_VERSION = "v0.1.2"
-irm https://raw.githubusercontent.com/y3l1n4ung/dust/v0.1.2/install.ps1 | iex
+irm https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.ps1 | iex
 ```
 
-The Windows installer currently supports x64 release artifacts. Verify that
-the chosen install directory is on `PATH`, then run:
+The installers verify release checksums and install the matching platform
+artifact. Then run:
 
-```text
+```bash
 dust --version
 ```
 
-For a source checkout or an unsupported release platform, use the
-[release runbook](docs/release-0.1.0.md) and build the CLI locally with Rust.
+For Dart and Flutter packages, see the [package installation guide](docs/usage/README.md#package-installation).
 
 ---
 
