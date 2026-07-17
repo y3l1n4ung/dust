@@ -13,8 +13,67 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Change classification
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.classify.outputs.docs_only }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect docs-only change
+        id: classify
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            head="${{ github.event.pull_request.head.sha }}"
+          else
+            base="${{ github.event.before }}"
+            head="${{ github.sha }}"
+          fi
+
+          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+            base="$(git rev-list --max-parents=0 "$head")"
+          fi
+
+          mapfile -t changed_files < <(git diff --name-only "$base" "$head")
+          docs_only=true
+
+          if [[ "${#changed_files[@]}" -eq 0 ]]; then
+            docs_only=false
+          fi
+
+          for file in "${changed_files[@]}"; do
+            case "$file" in
+              docs/*|release-notes/*|*.md|llms.txt)
+                ;;
+              *)
+                docs_only=false
+                ;;
+            esac
+          done
+
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+          printf 'docs_only=%s\n' "$docs_only"
+
+  docs-only:
+    name: Docs-only / heavy CI skipped
+    needs: changes
+    if: needs.changes.outputs.docs_only == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report
+        run: echo "Docs-only change detected; heavy CI jobs are skipped."
+
   installers:
     name: Installers / ${{ matrix.os }}
+    needs: changes
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -25,16 +84,21 @@ jobs:
           - os: windows-latest
             shell: pwsh
     steps:
+      - name: Skip docs-only change
+        if: needs.changes.outputs.docs_only == 'true'
+        run: echo "Docs-only change detected; skipping installer validation."
+
       - name: Checkout
+        if: needs.changes.outputs.docs_only != 'true'
         uses: actions/checkout@v4
 
       - name: Validate Bash installer
-        if: matrix.shell == 'bash'
+        if: needs.changes.outputs.docs_only != 'true' && matrix.shell == 'bash'
         shell: bash
         run: bash -n install.sh
 
       - name: Validate PowerShell installer
-        if: matrix.shell == 'pwsh'
+        if: needs.changes.outputs.docs_only != 'true' && matrix.shell == 'pwsh'
         shell: pwsh
         run: |
           $source = Get-Content -Raw install.ps1
@@ -42,30 +106,42 @@ jobs:
 
   rust:
     name: Rust
+    needs: changes
     runs-on: ubuntu-latest
     steps:
+      - name: Skip docs-only change
+        if: needs.changes.outputs.docs_only == 'true'
+        run: echo "Docs-only change detected; skipping Rust validation."
+
       - name: Checkout
+        if: needs.changes.outputs.docs_only != 'true'
         uses: actions/checkout@v4
 
       - name: Install Rust toolchain
+        if: needs.changes.outputs.docs_only != 'true'
         run: |
           rustup toolchain install stable --profile minimal --component rustfmt,clippy
           rustup default stable
 
       - name: Format check
+        if: needs.changes.outputs.docs_only != 'true'
         run: ./scripts/rust/format.sh --check
 
       - name: Install cargo-nextest
+        if: needs.changes.outputs.docs_only != 'true'
         uses: taiki-e/install-action@16a76bb73558798e4218983c40c25fee9f2f99a8 # nextest
 
       - name: Test
+        if: needs.changes.outputs.docs_only != 'true'
         run: ./scripts/rust/test.sh
 
       - name: Clippy
+        if: needs.changes.outputs.docs_only != 'true'
         run: ./scripts/rust/lint.sh
 
   dart-packages:
     name: Dart / ${{ matrix.name }}
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -81,38 +157,48 @@ jobs:
             path: examples/product_showcase
             dust_check: examples/product_showcase
     steps:
+      - name: Skip docs-only change
+        if: needs.changes.outputs.docs_only == 'true'
+        run: echo "Docs-only change detected; skipping Dart package validation."
+
       - name: Checkout
+        if: needs.changes.outputs.docs_only != 'true'
         uses: actions/checkout@v4
 
       - name: Setup Flutter SDK for mixed workspace resolution
+        if: needs.changes.outputs.docs_only != 'true'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
       - name: Install Rust toolchain
-        if: matrix.dust_check != ''
+        if: needs.changes.outputs.docs_only != 'true' && matrix.dust_check != ''
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
 
       - name: Pub get
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: ${{ matrix.path }}
         run: dart pub get
 
       - name: Dust clean build
-        if: matrix.dust_check != ''
+        if: needs.changes.outputs.docs_only != 'true' && matrix.dust_check != ''
         run: cargo run --quiet -p dust_cli -- build --clean --root ${{ matrix.dust_check }}
 
       - name: Analyze
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: ${{ matrix.path }}
         run: dart analyze --fatal-infos
 
       - name: Test
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: ${{ matrix.path }}
         run: dart test
 
   flutter-packages:
     name: Flutter / ${{ matrix.name }}
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -131,142 +217,186 @@ jobs:
             dust_check: examples/shopping_app
             db_check: true
     steps:
+      - name: Skip docs-only change
+        if: needs.changes.outputs.docs_only == 'true'
+        run: echo "Docs-only change detected; skipping Flutter package validation."
+
       - name: Checkout
+        if: needs.changes.outputs.docs_only != 'true'
         uses: actions/checkout@v4
 
       - name: Setup Flutter
+        if: needs.changes.outputs.docs_only != 'true'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
       - name: Install Rust toolchain
-        if: matrix.dust_check != '' || matrix.db_check
+        if: needs.changes.outputs.docs_only != 'true' && (matrix.dust_check != '' || matrix.db_check)
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
 
       - name: Pub get
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: ${{ matrix.path }}
         run: flutter pub get
 
       - name: Generate benchmark fixtures
-        if: matrix.path == 'examples/benchmark_project'
+        if: needs.changes.outputs.docs_only != 'true' && matrix.path == 'examples/benchmark_project'
         working-directory: examples/benchmark_project
         run: dart tool/generate.dart --count 10
 
       - name: Build benchmark generated outputs
-        if: matrix.path == 'examples/benchmark_project'
+        if: needs.changes.outputs.docs_only != 'true' && matrix.path == 'examples/benchmark_project'
         run: cargo run --quiet -p dust_cli -- build --clean --root examples/benchmark_project
 
       - name: Dust clean build
-        if: matrix.dust_check != '' && matrix.path != 'examples/benchmark_project'
+        if: needs.changes.outputs.docs_only != 'true' && matrix.dust_check != '' && matrix.path != 'examples/benchmark_project'
         run: cargo run --quiet -p dust_cli -- build --clean --root ${{ matrix.dust_check }}
 
       - name: Dust DB build
-        if: matrix.db_check
+        if: needs.changes.outputs.docs_only != 'true' && matrix.db_check
         run: cargo run --quiet -p dust_cli -- build --root ${{ matrix.path }} --db
 
       - name: Analyze
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: ${{ matrix.path }}
         run: flutter analyze --no-pub
 
       - name: Test
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: ${{ matrix.path }}
         run: flutter test
 
   serde-analyze:
     name: SerDe analyzer fixture
+    needs: changes
     runs-on: ubuntu-latest
     steps:
+      - name: Skip docs-only change
+        if: needs.changes.outputs.docs_only == 'true'
+        run: echo "Docs-only change detected; skipping SerDe analyzer fixture."
+
       - name: Checkout
+        if: needs.changes.outputs.docs_only != 'true'
         uses: actions/checkout@v4
 
       - name: Setup Flutter SDK for Dart tooling
+        if: needs.changes.outputs.docs_only != 'true'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
       - name: Install Rust toolchain
+        if: needs.changes.outputs.docs_only != 'true'
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
 
       - name: Pub get
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: fixtures/serde_json_app
         run: dart pub get
 
       - name: Dust clean build
+        if: needs.changes.outputs.docs_only != 'true'
         run: cargo run --quiet -p dust_cli -- build --clean --root fixtures/serde_json_app
 
       - name: Analyze generated SerDe output
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: fixtures/serde_json_app
         run: dart analyze --fatal-infos
 
       - name: Test generated SerDe runtime
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: fixtures/serde_json_app
         run: dart test
 
   http-analyze:
     name: HTTP analyzer fixture
+    needs: changes
     runs-on: ubuntu-latest
     steps:
+      - name: Skip docs-only change
+        if: needs.changes.outputs.docs_only == 'true'
+        run: echo "Docs-only change detected; skipping HTTP analyzer fixture."
+
       - name: Checkout
+        if: needs.changes.outputs.docs_only != 'true'
         uses: actions/checkout@v4
 
       - name: Setup Flutter SDK for Dart tooling
+        if: needs.changes.outputs.docs_only != 'true'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
       - name: Install Rust toolchain
+        if: needs.changes.outputs.docs_only != 'true'
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
 
       - name: Pub get
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: fixtures/http_client_app
         run: dart pub get
 
       - name: Dust clean build
+        if: needs.changes.outputs.docs_only != 'true'
         run: cargo run --quiet -p dust_cli -- build --clean --root fixtures/http_client_app
 
       - name: Analyze generated HTTP output
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: fixtures/http_client_app
         run: dart analyze --fatal-infos
 
       - name: Test generated HTTP requests
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: fixtures/http_client_app
         run: dart test
 
   benchmark:
     name: Benchmark / benchmark_project
+    needs: changes
     runs-on: ubuntu-latest
     env:
       DUST_PERF_COLD_MAX_MS: 3500
       DUST_PERF_WARM_MAX_MS: 1500
       DUST_PERF_INVALIDATED_MAX_MS: 3000
     steps:
+      - name: Skip docs-only change
+        if: needs.changes.outputs.docs_only == 'true'
+        run: echo "Docs-only change detected; skipping benchmark."
+
       - name: Checkout
+        if: needs.changes.outputs.docs_only != 'true'
         uses: actions/checkout@v4
 
       - name: Setup Flutter
+        if: needs.changes.outputs.docs_only != 'true'
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
       - name: Install Rust toolchain
+        if: needs.changes.outputs.docs_only != 'true'
         run: |
           rustup toolchain install stable --profile minimal
           rustup default stable
 
       - name: Pub get
+        if: needs.changes.outputs.docs_only != 'true'
         working-directory: examples/benchmark_project
         run: flutter pub get
 
       - name: Build release CLI
+        if: needs.changes.outputs.docs_only != 'true'
         run: cargo build --quiet -p dust_cli --release
 
       - name: Run ignored perf test
+        if: needs.changes.outputs.docs_only != 'true'
         env:
           DUST_PERF_CLI_BIN: target/release/dust
         run: cargo test -p dust_cli benchmark_project_release_build_benchmark -- --ignored --nocapture
