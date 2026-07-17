@@ -3,8 +3,8 @@ import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 
 /// Opens an in-memory SQLite database and uses Dust's DB runtime helpers.
 Future<void> main() async {
-  final db = SqlitePool.open(
-    ':memory:',
+  final db = Sqlite3Driver.connect(
+    const SqliteConnectOptions.memory(foreignKeys: true),
     migrations: const {
       '0001_create_users.sql': '''
 CREATE TABLE users (

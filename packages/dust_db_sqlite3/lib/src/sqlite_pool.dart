@@ -1,6 +1,7 @@
 import 'package:dust_dart/db.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 
+part 'connect_options.dart';
 part 'migrations.dart';
 part 'raw_sql.dart';
 part 'row.dart';
@@ -21,9 +22,23 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
   factory Sqlite3Driver.open(
     String path, {
     Map<String, String> migrations = const <String, String>{},
+    SqliteConnectOptions? options,
   }) {
-    final database = sqlite.sqlite3.open(path);
+    return Sqlite3Driver.connect(
+      (options ?? const SqliteConnectOptions())._withPath(path),
+      migrations: migrations,
+    );
+  }
+
+  /// Opens a database from explicit SQLite connection [options].
+  factory Sqlite3Driver.connect(
+    SqliteConnectOptions options, {
+    Map<String, String> migrations = const <String, String>{},
+  }) {
+    options._validate(hasMigrations: migrations.isNotEmpty);
+    final database = _openDatabase(options);
     try {
+      _applyConnectOptions(database, options);
       _applyMigrations(database, migrations);
       return Sqlite3Driver._(database, ownsDatabase: true);
     } catch (_) {
@@ -246,6 +261,34 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
       );
     } finally {
       statement.close();
+    }
+  }
+
+  static sqlite.Database _openDatabase(SqliteConnectOptions options) {
+    try {
+      if (options.inMemory) return sqlite.sqlite3.openInMemory();
+      return sqlite.sqlite3.open(options.path!, mode: options._openMode);
+    } catch (error) {
+      throw SqlxError.driver(
+        'SQLite database open failed for `${options._label}`.',
+        cause: error,
+      );
+    }
+  }
+
+  static void _applyConnectOptions(
+    sqlite.Database database,
+    SqliteConnectOptions options,
+  ) {
+    for (final statement in options._pragmaStatements()) {
+      try {
+        database.execute(statement);
+      } catch (error) {
+        throw SqlxError.driver(
+          'SQLite connection option failed: `$statement`.',
+          cause: error,
+        );
+      }
     }
   }
 }

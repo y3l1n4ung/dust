@@ -39,9 +39,9 @@ pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>
     let generated_name = format!("_${class_name}");
     let migrations_name = format!("_${}Migrations", lower_first(class_name));
     let open_expr = match db.driver {
-        DbDriver::Sqlite3 => {
-            format!("Sqlite3Driver.open(\n      path,\n      migrations: {migrations_name},\n    )")
-        }
+        DbDriver::Sqlite3 => format!(
+            "Sqlite3Driver.open(\n      path,\n      migrations: {migrations_name},\n      options: options,\n    )"
+        ),
         DbDriver::Postgres => {
             "throw UnsupportedError('Driver.postgres is not supported in Database v1')".to_owned()
         }
@@ -223,10 +223,14 @@ mod tests {
     const EXPECTED_SQLITE_DATABASE: &str = r#"final class _$AppDatabase implements AppDatabase {
   _$AppDatabase._(this.connection);
 
-  factory _$AppDatabase.open(String path) {
+  factory _$AppDatabase.open(
+    String path, {
+    SqliteConnectOptions? options,
+  }) {
     final connection = Sqlite3Driver.open(
       path,
       migrations: _$appDatabaseMigrations,
+      options: options,
     );
     return _$AppDatabase._(connection);
   }
@@ -245,7 +249,10 @@ const Map<String, String> _$appDatabaseMigrations = <String, String>{
     const EXPECTED_POSTGRES_DATABASE: &str = r#"final class _$AppDatabase implements AppDatabase {
   _$AppDatabase._(this.connection);
 
-  factory _$AppDatabase.open(String path) {
+  factory _$AppDatabase.open(
+    String path, {
+    SqliteConnectOptions? options,
+  }) {
     final connection = throw UnsupportedError('Driver.postgres is not supported in Database v1');
     return _$AppDatabase._(connection);
   }

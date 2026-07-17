@@ -16,10 +16,14 @@ part of 'shopping_cache_database.dart';
 final class _$ShoppingCacheDatabase implements ShoppingCacheDatabase {
   _$ShoppingCacheDatabase._(this.connection);
 
-  factory _$ShoppingCacheDatabase.open(String path) {
+  factory _$ShoppingCacheDatabase.open(
+    String path, {
+    SqliteConnectOptions? options,
+  }) {
     final connection = Sqlite3Driver.open(
       path,
       migrations: _$shoppingCacheDatabaseMigrations,
+      options: options,
     );
     return _$ShoppingCacheDatabase._(connection);
   }

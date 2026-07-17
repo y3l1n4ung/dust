@@ -67,7 +67,7 @@ pub(crate) fn write_static_sql_validation_workspace(root: &std::path::Path, quer
              part 'app_database.g.dart';\n\
              @Database(driver: Driver.sqlite3, migrations: './migrations')\n\
              abstract class AppDatabase {{\n\
-               factory AppDatabase.open(String path) = _$AppDatabase.open;\n\
+               factory AppDatabase.open(String path, {{SqliteConnectOptions? options}}) = _$AppDatabase.open;\n\
                Pool get pool;\n\
              }}\n\
              extension UserQueries on Pool {{\n\
@@ -98,7 +98,7 @@ pub(crate) fn write_query_validation_workspace(root: &std::path::Path, query_met
              }}\n\
              @Database(driver: Driver.sqlite3, migrations: './migrations')\n\
              abstract class AppDatabase {{\n\
-               factory AppDatabase.open(String path) = _$AppDatabase.open;\n\
+               factory AppDatabase.open(String path, {{SqliteConnectOptions? options}}) = _$AppDatabase.open;\n\
                Pool get pool;\n\
              }}\n\
              extension UserQueries on Pool {{\n\
@@ -143,7 +143,7 @@ pub(crate) fn write_db_workspace(root: &std::path::Path, include_derive: bool) {
              }}\n\
              @Database(driver: Driver.sqlite3, migrations: './migrations')\n\
              abstract class AppDatabase {{\n\
-               factory AppDatabase.open(String path) = _$AppDatabase.open;\n\
+               factory AppDatabase.open(String path, {{SqliteConnectOptions? options}}) = _$AppDatabase.open;\n\
                Pool get pool;\n\
              }}\n\
              extension UserQueries on Pool {{\n\
@@ -187,7 +187,7 @@ pub(crate) fn write_dao_workspace(root: &std::path::Path) {
          }\n\
          @SqlxDatabase(type: SqlxDatabaseType.sqlite, migrations: './migrations')\n\
          abstract class AppDatabase {\n\
-           factory AppDatabase.open(String path) = _$AppDatabase.open;\n\
+           factory AppDatabase.open(String path, {SqliteConnectOptions? options}) = _$AppDatabase.open;\n\
            Pool get pool;\n\
          }\n\
          @SqlxDao()\n\
@@ -223,7 +223,7 @@ pub(crate) fn write_split_pipeline_workspace(root: &std::path::Path) {
          part 'app_database.g.dart';\n\
          @SqlxDatabase(type: SqlxDatabaseType.sqlite, migrations: './migrations')\n\
          abstract class AppDatabase {\n\
-           factory AppDatabase.open(String path) = _$AppDatabase.open;\n\
+           factory AppDatabase.open(String path, {SqliteConnectOptions? options}) = _$AppDatabase.open;\n\
            Pool get pool;\n\
          }\n\
          @SqlxDao()\n\
