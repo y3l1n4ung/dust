@@ -15,8 +15,14 @@ abstract interface class Sqlite3Executor implements Executor {
 
 /// SQLite driver backed by one `package:sqlite3` database connection.
 final class Sqlite3Driver implements Pool, Sqlite3Executor {
-  Sqlite3Driver._(this._database, {required bool ownsDatabase})
-      : _ownsDatabase = ownsDatabase;
+  Sqlite3Driver._(
+    this._database, {
+    required bool ownsDatabase,
+    _TransactionCoordinator? transactions,
+    _TransactionScope? transactionScope,
+  })  : _ownsDatabase = ownsDatabase,
+        _transactions = transactions ?? _TransactionCoordinator(),
+        _transactionScope = transactionScope;
 
   /// Opens a database at [path] and applies unapplied migrations in name order.
   factory Sqlite3Driver.open(
@@ -49,6 +55,8 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
 
   final sqlite.Database _database;
   final bool _ownsDatabase;
+  final _TransactionCoordinator _transactions;
+  final _TransactionScope? _transactionScope;
   var _closed = false;
 
   @override
@@ -168,28 +176,7 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
   Future<Result<T, SqlxError>> transaction<T>(
     Future<Result<T, SqlxError>> Function(Executor tx) fn,
   ) async {
-    _checkOpen();
-    if (!_ownsDatabase) return fn(this);
-    _database.execute('BEGIN');
-    final tx = _SingleConnectionPool(_database);
-    try {
-      final result = await fn(tx);
-      return result.match(
-        ok: (value) {
-          _database.execute('COMMIT');
-          return Ok<T, SqlxError>(value);
-        },
-        err: (error) {
-          _database.execute('ROLLBACK');
-          return Err<T, SqlxError>(error);
-        },
-      );
-    } catch (error) {
-      _database.execute('ROLLBACK');
-      return Err<T, SqlxError>(
-        SqlxError.driver('SQLite transaction failed.', cause: error),
-      );
-    }
+    return _runTransaction(fn);
   }
 
   @override
@@ -206,6 +193,8 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
   ) {
     try {
       return Ok<List<Row>, SqlxError>(_queryUnchecked(sql, parameters));
+    } on SqlxError catch (error) {
+      return Err<List<Row>, SqlxError>(error);
     } catch (error) {
       return Err<List<Row>, SqlxError>(
         SqlxError.driver('SQLite query failed.', cause: error),
@@ -219,6 +208,8 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
   ) {
     try {
       return Ok<ExecResult, SqlxError>(_executeUnchecked(sql, parameters));
+    } on SqlxError catch (error) {
+      return Err<ExecResult, SqlxError>(error);
     } catch (error) {
       return Err<ExecResult, SqlxError>(
         SqlxError.driver('SQLite execute failed.', cause: error),
@@ -239,9 +230,17 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
   }
 
   void _checkOpen() {
-    if (_closed) {
-      throw StateError('Sqlite3Driver is closed.');
+    final error = _closedError();
+    if (error != null) throw error;
+  }
+
+  SqlxError? _closedError() {
+    if (_closed) return SqlxError.driver('SQLite connection is closed.');
+    final scope = _transactionScope;
+    if (scope != null && !scope.active) {
+      return SqlxError.driver('SQLite transaction is closed.');
     }
+    return null;
   }
 
   List<Row> _queryUnchecked(String sql, List<Object?> parameters) {

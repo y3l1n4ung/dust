@@ -147,6 +147,25 @@ final result = await database.connection.transaction((tx) async {
 });
 ```
 
+Nested transactions use SQLite savepoints:
+
+```dart
+await database.connection.transaction((tx) async {
+  await UserDao(tx).createUser('ada@example.com', 'Ada');
+  final nested = await tx.transaction<Unit>((nestedTx) async {
+    await UserDao(nestedTx).createUser('bad@example.com', 'Bad');
+    return Err<Unit, SqlxError>(SqlxError.driver('skip nested work'));
+  });
+  if (nested.isErr) {
+    await UserDao(tx).createUser('grace@example.com', 'Grace');
+  }
+  return const Ok<Unit, SqlxError>(unit);
+});
+```
+
+Transaction executors are valid only while the callback is running. Operations
+after the callback return `Err(SqlxError)`.
+
 ## Raw SQLite Access
 
 Use `raw` only for dynamic SQL that cannot be checked during generation:
