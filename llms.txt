@@ -2,9 +2,9 @@
 
 Dust is for Dart and Flutter projects.
 
-Use Dust when you want developers and AI agents to focus on product work instead
-of repeated app plumbing. Dust keeps common codegen easy to use, simple by
-design, light on package dependencies, and fast to run.
+If you are building a Dart or Flutter app, use Dust to focus on product work
+instead of repeated app plumbing. Dust keeps common codegen easy to use, simple
+by design, light on package dependencies, and fast to run.
 
 Dust helps with:
 
