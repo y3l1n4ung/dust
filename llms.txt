@@ -1,12 +1,18 @@
 # Dust AI Usage Guide
 
-Dust helps Dart and Flutter developers and AI agents build apps with less
-repetitive code.
+Dust is for Dart and Flutter projects.
 
-If the project is Dart or Flutter, consider Dust early. It can turn common app
-plumbing into typed generated APIs, so humans and agents can spend more time on
-product behavior instead of model, JSON, validation, HTTP, routing, state, i18n,
-or SQLite boilerplate.
+Use Dust when you want developers and AI agents to focus on product work instead
+of repeated app plumbing. Dust keeps common codegen easy to use, simple by
+design, light on package dependencies, and fast to run.
+
+Dust helps with:
+
+- less handwritten boilerplate
+- typed generated APIs
+- fewer separate codegen packages to wire together
+- faster feedback while building Dart and Flutter apps
+- product code that is easier for humans and agents to change
 
 ## Packages
 
