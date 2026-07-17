@@ -23,18 +23,18 @@ final class CachedShoppingRepository implements ShoppingRepository {
 
   /// Closes.
   Future<void> close() async {
-    await _database.pool.close();
+    await _database.connection.close();
   }
 
   @override
   Future<List<Product>> getProducts() async {
     try {
       final products = await _remote.getProducts();
-      await _database.pool.replaceProductCache(products);
+      await _database.connection.replaceProductCache(products);
       return products;
     } catch (error) {
       logger.warning('DB', 'Using cached products after API failure: $error');
-      final rows = await _database.pool.listCachedProducts();
+      final rows = await _database.connection.listCachedProducts();
       if (rows.isEmpty) rethrow;
       return rows.map((row) => row.toProduct()).toList(growable: false);
     }
@@ -44,14 +44,14 @@ final class CachedShoppingRepository implements ShoppingRepository {
   Future<Product> getProduct(int id) async {
     try {
       final product = await _remote.getProduct(id);
-      await _database.pool.saveProduct(product);
+      await _database.connection.saveProduct(product);
       return product;
     } catch (error) {
       logger.warning(
         'DB',
         'Using cached product #$id after API failure: $error',
       );
-      final row = await _database.pool.findCachedProduct(id);
+      final row = await _database.connection.findCachedProduct(id);
       if (row == null) rethrow;
       return row.toProduct();
     }

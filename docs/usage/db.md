@@ -67,15 +67,16 @@ part 'app_database.g.dart';
   type: SqlxDatabaseType.sqlite,
   migrations: './migrations',
 )
-abstract class AppDatabase {
+abstract class AppDatabase implements DatabaseClient {
   factory AppDatabase.open(String path) = _$AppDatabase.open;
 
-  Pool get pool;
+  @override
+  DatabaseConnection get connection;
 }
 
 @SqlxDao()
 abstract final class UserDao {
-  const factory UserDao(Executor db) = _$UserDao;
+  const factory UserDao(DatabaseExecutor db) = _$UserDao;
 
   @Query(r'SELECT id, email, name FROM users WHERE id = $1')
   Future<Result<UserRow?, SqlxError>> findById(int id);
@@ -101,11 +102,11 @@ dust build
 dust db build
 ```
 
-Open the database and pass its pool to a DAO:
+Open the database and pass its connection to a DAO:
 
 ```dart
 final database = AppDatabase.open('app.db');
-final users = UserDao(database.pool);
+final users = UserDao(database.connection);
 
 final result = await users.findById(42);
 result.match(
@@ -113,7 +114,7 @@ result.match(
   err: (error) => print('Database error: $error'),
 );
 
-await database.pool.close();
+await database.connection.close();
 ```
 
 > [!IMPORTANT]
@@ -282,7 +283,7 @@ fetch shapes, and unsupported cache versions.
 Return `Ok` to commit and `Err` to roll back:
 
 ```dart
-final result = await database.pool.transaction((tx) async {
+final result = await database.connection.transaction((tx) async {
   return UserDao(tx).createUser('ada@example.com', 'Ada');
 });
 ```
@@ -292,7 +293,8 @@ Thrown exceptions also roll back and return a `SqlxDriverError`.
 ## Dynamic SQL
 
 Use `raw` only when SQL cannot be static, such as an admin-selected table. Raw
-SQL is unchecked and uses native SQLite placeholders:
+SQL is an advanced escape hatch. It is unchecked and uses native SQLite
+placeholders:
 
 ```dart
 final result = await database.pool.raw.fetch(
@@ -309,8 +311,9 @@ final version = sqlite.select('SELECT sqlite_version()').single[0];
 ```
 
 > [!TIP]
-> Prefer generated DAOs for product queries. Keep `raw` and native access small
-> because neither path receives Dust's build-time SQL validation.
+> Prefer `database.connection` plus generated DAOs for product queries. Keep
+> `pool.raw` and native access small because neither path receives Dust's
+> build-time SQL validation.
 
 ## Example
 

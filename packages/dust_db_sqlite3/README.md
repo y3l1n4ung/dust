@@ -83,14 +83,14 @@ dust db build
 dust check --db
 ```
 
-Open the generated database and pass its pool to generated DAOs:
+Open the generated database and pass its connection to generated DAOs:
 
 ```dart
 final database = AppDatabase.open('app.db');
-final users = UserDao(database.pool);
+final users = UserDao(database.connection);
 
 final result = await users.findById(42);
-await database.pool.close();
+await database.connection.close();
 ```
 
 See the [Database guide](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/db.md)
@@ -102,14 +102,14 @@ validation.
 Transactions commit on `Ok` and roll back on `Err` or a thrown exception:
 
 ```dart
-final result = await database.pool.transaction((tx) async {
+final result = await database.connection.transaction((tx) async {
   return UserDao(tx).createUser('ada@example.com', 'Ada');
 });
 ```
 
 ## Raw SQLite Access
 
-Use `raw` for dynamic SQL that cannot be checked during generation:
+Use `raw` only for dynamic SQL that cannot be checked during generation:
 
 ```dart
 final rows = await database.pool.raw.fetch(
@@ -125,8 +125,8 @@ operations:
 final sqlite = (database.pool as Sqlite3Executor).database;
 ```
 
-Prefer generated DAOs for product queries because raw and native access do not
-receive Dust's build-time SQL validation.
+Prefer `database.connection` plus generated DAOs for product queries because
+raw and native access do not receive Dust's build-time SQL validation.
 
 ## Documentation
 

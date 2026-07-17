@@ -16,21 +16,21 @@ final class QueryAs<T> {
   final List<Object?> parameters;
 
   /// Fetches exactly one row and maps it as [T].
-  Future<T> fetchOne(Executor db) async {
+  Future<T> fetchOne(DatabaseExecutor db) async {
     return _unwrap(
       await db.fetchOne<T>(sql, parameters, RowMapperRegistry.map<T>),
     );
   }
 
   /// Fetches zero or one row and maps it as [T] when present.
-  Future<T?> fetchOptional(Executor db) async {
+  Future<T?> fetchOptional(DatabaseExecutor db) async {
     return _unwrap(
       await db.fetchOptional<T>(sql, parameters, RowMapperRegistry.map<T>),
     );
   }
 
   /// Fetches all rows and maps each as [T].
-  Future<List<T>> fetchAll(Executor db) async {
+  Future<List<T>> fetchAll(DatabaseExecutor db) async {
     return _unwrap(
       await db.fetchAll<T>(sql, parameters, RowMapperRegistry.map<T>),
     );
@@ -49,12 +49,12 @@ final class QueryScalar<T> {
   final List<Object?> parameters;
 
   /// Fetches exactly one scalar value.
-  Future<T> fetchOne(Executor db) async {
+  Future<T> fetchOne(DatabaseExecutor db) async {
     return _unwrap(await db.fetchScalar<T>(sql, parameters));
   }
 
   /// Fetches zero or one scalar value.
-  Future<T?> fetchOptional(Executor db) async {
+  Future<T?> fetchOptional(DatabaseExecutor db) async {
     return _unwrap(await db.fetchScalar<T?>(sql, parameters));
   }
 }
@@ -88,7 +88,7 @@ final class QueryExecute {
   final List<Object?> parameters;
 
   /// Executes this statement and returns execution metadata.
-  Future<ExecResult> execute(Executor db) async {
+  Future<ExecResult> execute(DatabaseExecutor db) async {
     return _unwrap(await db.execute(sql, parameters));
   }
 }

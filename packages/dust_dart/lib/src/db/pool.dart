@@ -5,18 +5,15 @@ import 'exec_result.dart';
 import 'row_mapper.dart';
 import 'sqlx_error.dart';
 
-/// Executes typed SQLx-style queries against a database pool, connection,
+/// Executes typed SQLx-style queries against a database connection,
 /// transaction, or driver.
 ///
-/// This mirrors sqlx's `Executor` role: generated DAO code receives an
-/// executor and calls `fetchOptional`, `fetchAll`, `fetchOne`, `fetchScalar`,
-/// or `execute` depending on the annotated method return type.
-abstract interface class Executor {
-  /// Database driver used by this SQLx driver.
+/// Generated DAO code receives a [DatabaseExecutor] and calls `fetchOptional`,
+/// `fetchAll`, `fetchOne`, `fetchScalar`, or `execute` depending on the
+/// annotated method return type.
+abstract interface class DatabaseExecutor {
+  /// Database driver used by this executor.
   Driver get driver;
-
-  /// Explicit unchecked SQL access for dynamic/admin queries.
-  RawSql get raw;
 
   /// Runs a checked row query that returns zero or one row.
   Future<Result<T?, SqlxError>> fetchOptional<T>(
@@ -60,17 +57,56 @@ abstract interface class Executor {
   Future<Result<Unit, SqlxError>> close();
 }
 
+/// Open generated application database facade.
+abstract interface class DatabaseClient {
+  /// Open database connection used by generated DAOs.
+  DatabaseConnection get connection;
+}
+
+/// Convenience methods for generated application database facades.
+extension DatabaseClientExecution on DatabaseClient {
+  /// Typed query executor for this database.
+  DatabaseExecutor get executor => connection;
+
+  /// Runs [fn] inside a database transaction.
+  Future<Result<T, SqlxError>> transaction<T>(
+    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+  ) {
+    return connection.transaction(fn);
+  }
+
+  /// Closes resources owned by this database connection.
+  Future<Result<Unit, SqlxError>> close() {
+    return connection.close();
+  }
+}
+
+/// Legacy name for [DatabaseExecutor] with explicit raw SQL access.
+///
+/// New generated DAO code should depend on [DatabaseExecutor]. Use [Executor]
+/// only when an advanced raw SQL escape hatch is required.
+abstract interface class Executor implements DatabaseExecutor {
+  /// Explicit unchecked SQL access for dynamic/admin queries.
+  RawSql get raw;
+}
+
 /// Backwards-compatible name for the DB execution contract.
-typedef SqlxDriver = Executor;
+typedef SqlxDriver = DatabaseExecutor;
 
-/// Long-lived database pool.
-abstract interface class Pool implements Executor {}
+/// Open database connection.
+abstract interface class DatabaseConnection implements DatabaseExecutor {}
 
-/// Single database connection.
-abstract interface class Connection implements Executor {}
+/// Transaction-scoped database executor.
+abstract interface class DatabaseTransaction implements DatabaseExecutor {}
 
-/// Transaction-scoped SQLx driver.
-abstract interface class Transaction implements Executor {}
+/// Backwards-compatible long-lived database pool name.
+abstract interface class Pool implements DatabaseConnection, Executor {}
+
+/// Backwards-compatible single database connection name.
+abstract interface class Connection implements DatabaseConnection, Executor {}
+
+/// Backwards-compatible transaction-scoped executor name.
+abstract interface class Transaction implements DatabaseTransaction, Executor {}
 
 /// Explicit unchecked SQL access.
 abstract interface class RawSql {

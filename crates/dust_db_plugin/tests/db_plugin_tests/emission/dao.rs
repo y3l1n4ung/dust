@@ -171,7 +171,7 @@ final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserP
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final Executor _db;
+  final DatabaseExecutor _db;
 
   @override
   Future<Result<UserProfile?, SqlxError>> findById(int id) {
@@ -219,7 +219,7 @@ final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserP
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final Executor _db;
+  final DatabaseExecutor _db;
 
   @override
   Future<Result<UserProfile, SqlxError>> findRequired(int id) {
@@ -263,7 +263,7 @@ fn expected_imported_dao_output() -> &'static str {
     r#"final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final Executor _db;
+  final DatabaseExecutor _db;
 
   @override
   Future<Result<UserProfile?, SqlxError>> findById(int id) {
@@ -307,7 +307,7 @@ final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserP
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final Executor _db;
+  final DatabaseExecutor _db;
 
   @override
   Future<Result<UserProfile?, SqlxError>> findForOrg(int id, int orgId) {

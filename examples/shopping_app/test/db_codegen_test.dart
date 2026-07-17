@@ -14,10 +14,12 @@ void main() {
     () async {
       final app = ShoppingCacheDatabase.open(':memory:');
       addTearDown(() async {
-        await app.pool.close();
+        await app.close();
       });
 
-      await app.pool.seedProductCache();
+      expect(app.connection, isA<DatabaseConnection>());
+
+      await app.connection.seedProductCache();
       expect(
         (app.pool as Sqlite3Executor)
             .database
@@ -27,9 +29,9 @@ void main() {
         1,
       );
 
-      expect(await app.pool.countCachedProducts(), 1);
+      expect(await app.connection.countCachedProducts(), 1);
 
-      final product = await app.pool.findCachedProduct(7);
+      final product = await app.connection.findCachedProduct(7);
       expect(product, isNotNull);
       expect(product!.id, 7);
       expect(product.imageUrl, 'https://example.test/sneaker.png');
@@ -40,16 +42,16 @@ void main() {
       expect(product.payload.syncedBy, 'dust');
       expect(product.source, CacheSource.fakeStore);
 
-      final products = await app.pool.listCachedProducts();
+      final products = await app.connection.listCachedProducts();
       expect(products.map((row) => row.title), <String>['Dust Runner']);
 
       const savedAt = '2026-05-26T10:30:00.000Z';
-      await app.pool.transaction((tx) async {
+      await app.transaction((tx) async {
         await tx.saveWishlist(7, 'Dust Runner', savedAt);
         return const Ok<void, SqlxError>(null);
       });
 
-      final wishlist = await app.pool.listWishlist();
+      final wishlist = await app.connection.listWishlist();
       expect(wishlist, hasLength(1));
       expect(wishlist.single.productId, 7);
       expect(wishlist.single.title, 'Dust Runner');
@@ -60,7 +62,7 @@ void main() {
   test('shopping cache applies reversible up migrations only', () async {
     final app = ShoppingCacheDatabase.open(':memory:');
     addTearDown(() async {
-      await app.pool.close();
+      await app.close();
     });
 
     final columns = await queryRaw(
@@ -85,7 +87,7 @@ void main() {
   test('cached repository uses generated DB in product load flow', () async {
     final app = ShoppingCacheDatabase.open(':memory:');
     addTearDown(() async {
-      await app.pool.close();
+      await app.close();
     });
 
     final remote = _FlakyProductRepository();
@@ -93,7 +95,7 @@ void main() {
 
     final liveProducts = await repository.getProducts();
     expect(liveProducts.single.title, 'Dust Runner');
-    expect(await app.pool.countCachedProducts(), 1);
+    expect(await app.connection.countCachedProducts(), 1);
 
     remote.failProducts = true;
     final cachedProducts = await repository.getProducts();
@@ -106,7 +108,7 @@ void main() {
   });
 }
 
-extension _ShoppingSeedQueries on Executor {
+extension _ShoppingSeedQueries on DatabaseExecutor {
   Future<void> seedProductCache() async {
     await queryExecute(
       r'INSERT INTO product_cache (id, title, price, description, category, image, rating_rate, rating_count, payload, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',

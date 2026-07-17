@@ -50,9 +50,10 @@ void main() {
     expect(() => decodeJsonObject('[1]'), throwsA(isA<FormatException>()));
   });
 
-  test('query helpers delegate to Executor fetch methods', () async {
+  test('query helpers delegate to DatabaseExecutor fetch methods', () async {
     registerRowMapper<_User>(_UserFromRow.fromRow);
     final executor = _FakeExecutor();
+    final client = _FakeDatabaseClient(executor);
 
     final one = await queryAs<_User>('one', const []).fetchOne(executor);
     final optional = await queryAs<_User>(
@@ -73,6 +74,10 @@ void main() {
     final rawx = await RawSqlx(executor).fetch('rawx', const []);
     final rawxExec = await RawSqlx(executor).execute('rawxExec', const []);
 
+    expect(executor, isA<DatabaseExecutor>());
+    expect(executor, isA<DatabaseConnection>());
+    expect(executor, isA<Executor>());
+    expect(client.executor, same(executor));
     expect(one.id, 1);
     expect(optional?.id, 2);
     expect(all.map((user) => user.id), <int>[3, 4]);
@@ -128,7 +133,14 @@ extension _UserFromRow on _User {
   static _User fromRow(Row row) => _User(row.read<int>('id'));
 }
 
-final class _FakeExecutor implements Executor {
+final class _FakeDatabaseClient implements DatabaseClient {
+  const _FakeDatabaseClient(this.connection);
+
+  @override
+  final DatabaseConnection connection;
+}
+
+final class _FakeExecutor implements Pool {
   _FakeExecutor({this.fail = false});
 
   final bool fail;

@@ -14,18 +14,19 @@
 part of 'shopping_cache_database.dart';
 
 final class _$ShoppingCacheDatabase implements ShoppingCacheDatabase {
-  _$ShoppingCacheDatabase._(this.pool);
+  _$ShoppingCacheDatabase._(this.connection);
 
   factory _$ShoppingCacheDatabase.open(String path) {
-    final pool = Sqlite3Driver.open(
+    final connection = Sqlite3Driver.open(
       path,
       migrations: _$shoppingCacheDatabaseMigrations,
     );
-    return _$ShoppingCacheDatabase._(pool);
+    return _$ShoppingCacheDatabase._(connection);
   }
 
-  @override
-  final Pool pool;
+  final DatabaseConnection connection;
+
+  Pool get pool => connection as Pool;
 }
 
 const Map<String, String> _$shoppingCacheDatabaseMigrations = <String, String>{
@@ -36,7 +37,7 @@ const Map<String, String> _$shoppingCacheDatabaseMigrations = <String, String>{
 final class _$ShoppingCacheDao implements ShoppingCacheDao {
   const _$ShoppingCacheDao(this._db);
 
-  final Executor _db;
+  final DatabaseExecutor _db;
 
   @override
   Future<Result<CachedProductRow?, SqlxError>> findCachedProduct(int id) {
