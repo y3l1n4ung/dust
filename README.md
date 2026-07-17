@@ -1,130 +1,131 @@
 # 🌪️ Dust
 
-**You focus on product. We focus on performance.**
+**Built to make developers and AI agents happy.**
 
 [![CI](https://github.com/y3l1n4ung/dust/actions/workflows/ci.yml/badge.svg)](https://github.com/y3l1n4ung/dust/actions)
 [![Release](https://img.shields.io/github/v/release/y3l1n4ung/dust?logo=github&color=blue)](https://github.com/y3l1n4ung/dust/releases)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-Dust is a high-performance alternative to `build_runner`. It offers built-in
-support for data classes, validation, JSON serialization, HTTP clients, routing,
-state management, and database codegen.
+Dust is Rust-powered code generation for Dart and Flutter, built for human
+developers and AI coding agents. It handles repetitive and complex code so you
+can focus on your product.
 
-## Our Promise
+## How Dust Works
 
-- Stable public APIs for features marked stable.
-- Performance and quality improvements should change generated code, the Rust
-  engine, and runtime internals first.
-- Features marked beta may still receive API refinements before stabilization.
-- Your handwritten product code should stay focused on product logic.
+1. Add Dust annotations to normal Dart or Flutter code.
+2. Run `dust build` to generate the typed implementation.
+3. Use the generated API from your application code.
 
-> [!IMPORTANT]
-> **Tired of waiting for your code to generate?** Dust is built to handle the large Flutter projects with near-instant rebuilds.
+## Installation
 
----
-
-## ✨ Why Dust?
-
-- 🚀 **Performance:** Written in Rust. Generates thousands of files in seconds. 
-- 🎯 **Product Focus:** We handle code generation so you focus only on product.
-- 🧱 **Stable By Design:** Public APIs are designed to stay stable; improvements
-  should land in generated code and internals first.
-- 🧩 **All-in-One:** Data classes, JSON, validation, HTTP clients, routing,
-  state, and DB codegen in one unified tool.
-- 🔄 **Incremental:** Intelligent watch mode only rebuilds the specific files you edited.
-- 🛡️ **Type Safe:** Advanced validation catches errors before you even run your app.
-
----
-
-## 🏗️ Supported Features
-
-| Feature | Stability | Description | Documentation |
-| :--- | :--- | :--- | :--- |
-| **Data Classes** | Stable public API. API will not change. | `ToString`, `Eq`, `HashCode`, and `CopyWith` generation. | [Read Guide →](docs/usage/derive.md) |
-| **JSON Serialization** | Stable public API. API will not change. | Blazing fast JSON encode/decode with support for renames and custom codecs. | [Read Guide →](docs/usage/serde.md) |
-| **Validation** | Stable public API. API will not change. | Dart model validation plus Flutter-only form validators from typed field rules. | [Read Guide →](docs/usage/validation.md) |
-| **HTTP Client** | Stable public API. API will not change. | Type-safe, Dio-backed API client generation from annotations. | [Read Guide →](docs/usage/http.md) |
-| **Routing** | Beta. API may still be refined. | Boilerplate-free Navigator 2.0 routing with typed parameters. | [Read Guide →](docs/usage/routing.md) |
-| **State Management** | Beta. API may still be refined. | Lightweight, high-performance state containers with action generation. | [Read Guide →](docs/usage/state.md) |
-| **Database** | Beta. API may still be refined. | SQLx-style sqlite3 query validation, DAOs, and row mapping. | [Read Guide →](docs/usage/db.md) |
-| **Firebase** | Coming soon. | Typed Firebase integration and generated data access helpers. | _(Coming Soon)_ |
-| **Supabase** | Coming soon. | Typed Supabase integration and generated data access helpers. | _(Coming Soon)_ |
-| **i18n** | Beta. API may still be refined. | Flutter i18n runtime, ARB assets, static scanning, generated bootstrap, and translation checks. | [Read Guide →](docs/usage/i18n.md) |
-
----
-
-## 🚀 Quick Start
-
-This path clones Dust, fetches the example dependencies, runs generation, and
-verifies the generated files are current. It requires Git, Rust stable, and the
-Dart/Flutter SDK on your `PATH`.
+macOS and Linux:
 
 ```bash
-git clone https://github.com/y3l1n4ung/dust.git
-cd dust
+curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.sh | bash
 ```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.ps1 | iex
+```
+
+The installers download the latest release, verify its SHA-256 checksum, and
+place `dust` in `$HOME/.local/bin`. Add that directory to your `PATH`, then
+verify the installation:
 
 ```bash
-cd examples/product_showcase
-dart pub get
-cd ../..
+dust --version
 ```
+
+## Quick Start
+
+Dust has two main runtime packages:
+
+- `dust_dart` provides data classes, JSON, validation, HTTP clients, and
+  database annotations.
+- `dust_flutter` provides Flutter routing, state management, and i18n.
+
+Start with `dust_dart` from your application directory:
 
 ```bash
-cargo run -p dust_cli -- build --root examples/product_showcase
-cargo run -p dust_cli -- check --root examples/product_showcase
+dart pub add dust_dart
 ```
 
-The final command should report the showcase is clean:
-
-```text
-check  scanned: 25  clean: 25  stale: 0
-```
-
-### Use Dust in your project
-
-Add annotations to your Dart source:
+Annotate a model:
 
 ```dart
-import 'package:dust_dart/dust_dart.dart';
+import 'package:dust_dart/derive.dart';
 
 part 'user.g.dart';
 
-@Derive([ToString(), CopyWith(), Serialize()])
+@Derive([ToString(), CopyWith()])
 class User with _$User {
-  final String name;
   const User(this.name);
+
+  final String name;
 }
 ```
 
-When using an installed CLI in your own package, run `dust build` from that
-package root. From a source checkout, use the same pattern with
-`cargo run -p dust_cli -- build --root path-to-your-package`.
+Generate `user.g.dart`, then verify generated files are current:
 
----
+```bash
+dust build
+dust check
+```
 
-## 🛠️ Commands
+Flutter apps can add `dust_flutter` too:
 
-| Command | Description |
-| :--- | :--- |
-| `dust build` | Run a full project generation. |
-| `dust watch` | High-performance file watcher for instant rebuilds. |
-| `dust check` | CI mode: Verifies if generated files are up to date. |
-| `dust clean` | Clears all generated files and persistent caches. |
+```bash
+flutter pub add dust_flutter
+```
 
----
+See the [Flutter package guide](packages/dust_flutter/README.md) for routing,
+state, and i18n setup.
 
-## 🤝 Contributing
+## Features
 
-Dust is open-source and we welcome all contributors!
+| Feature | Status | Documentation |
+| :--- | :--- | :--- |
+| Data classes | Stable | [Derive guide](docs/usage/derive.md) |
+| JSON serialization | Stable | [JSON guide](docs/usage/serde.md) |
+| Validation | Stable | [Validation guide](docs/usage/validation.md) |
+| HTTP clients | Stable | [HTTP guide](docs/usage/http.md) |
+| Routing | Beta | [Routing guide](docs/usage/routing.md) |
+| State management | Beta | [State guide](docs/usage/state.md) |
+| i18n | Beta | [i18n guide](docs/usage/i18n.md) |
+| Database | Beta | [Database guide](docs/usage/db.md) |
+| Firebase | Planned | — |
+| Supabase | Planned | — |
 
-- **Found a bug?** [Open an issue](https://github.com/y3l1n4ung/dust/issues)
-- **Security reports:** [Use private vulnerability reporting](SECURITY.md)
-- **Rust/Dart Setup:** [See CONTRIBUTING.md](CONTRIBUTING.md)
-- **Architecture:** [Read the Developer Guide](docs/developer.md)
+Stable features keep their documented authoring APIs compatible throughout
+`0.1.x`. Beta features may still receive API refinements.
 
----
+## Documentation
 
-## 📜 License
+- [Usage guides](docs/usage/README.md)
+- [Dart package](packages/dust_dart/README.md)
+- [Flutter package](packages/dust_flutter/README.md)
+- [Database runtime](packages/dust_db_sqlite3/README.md)
+- [Contributor guide](CONTRIBUTING.md)
+- [Architecture and internals](docs/developer.md)
 
-MIT. See [LICENSE](LICENSE). Copyright (c) 2026 [Ye Lin Aung](https://github.com/y3l1n4ung).
+## Examples
+
+- [Product showcase](examples/product_showcase/README.md): Dart models, JSON,
+  validation, HTTP clients, and row mapping.
+- [Shopping app](examples/shopping_app/README.md): end-to-end Flutter routing,
+  state, i18n, and database integration.
+- [Benchmark project](examples/benchmark_project/README.md): scale and
+  performance regression fixture.
+
+## Support and Contributing
+
+- [Open an issue](https://github.com/y3l1n4ung/dust/issues) for bugs and feature
+  requests.
+- Follow [CONTRIBUTING.md](CONTRIBUTING.md) to build and test Dust from source.
+- Report vulnerabilities through [private security reporting](SECURITY.md).
+
+## License
+
+[MIT License](LICENSE).

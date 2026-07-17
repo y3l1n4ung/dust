@@ -2,8 +2,6 @@
 
 The `dust` command-line interface.
 
-You focus on product. We focus on performance.
-
 Dust CLI is the binary users run for generation. It should keep app-facing
 commands stable while engine, cache, and generated-code quality improve behind
 the same command surface.

@@ -1,18 +1,20 @@
 # State Management
 
-Dust generates typed Flutter ViewModel glue from `@ViewModel`.
-Dependencies go through `args`; UI state goes through `state`, `value`, or
-generated selector widgets.
+Dust generates typed Flutter ViewModel scopes, selectors, listeners, and async
+state helpers from `@ViewModel`.
 
-## Installation
+## Add the Packages
 
-```yaml
-dependencies:
-  dust_dart: ^0.1.0
-  dust_flutter: ^0.1.2
+Install the Dust CLI from the [root guide](../../README.md#installation), then
+add the Flutter runtime and Dart derives used by the examples:
+
+```bash
+flutter pub add dust_flutter dust_dart
 ```
 
-## Sync ViewModel
+## Quick Start
+
+Define an immutable state and a ViewModel that extends its generated base:
 
 ```dart
 import 'package:dust_dart/derive.dart';
@@ -20,7 +22,7 @@ import 'package:dust_flutter/state.dart';
 
 part 'counter_view_model.g.dart';
 
-@Derive([ToString(), Eq(), CopyWith()])
+@Derive([Eq(), CopyWith()])
 class CounterState with _$CounterState {
   const CounterState({this.count = 0});
 
@@ -31,17 +33,17 @@ class CounterState with _$CounterState {
 class CounterViewModel extends $CounterViewModel {
   CounterViewModel(super.args);
 
-  void increment() {
-    emit(state.copyWith(count: state.count + 1));
-  }
-
-  void reset() {
-    invalidateSelf();
-  }
+  void increment() => emit(state.copyWith(count: state.count + 1));
 }
 ```
 
-Provide the generated scope:
+Generate the typed Flutter surface:
+
+```bash
+dust build
+```
+
+Provide the ViewModel above the widgets that use it:
 
 ```dart
 CounterViewModelScope(
@@ -51,53 +53,7 @@ CounterViewModelScope(
 )
 ```
 
-Group multiple generated scopes with `ViewModelScopes`:
-
-```dart
-ViewModelScopes(
-  scopes: [
-    (child) => CounterViewModelScope(
-      args: (_) => const ViewModelArgs(),
-      create: (_, args) => CounterViewModel(args),
-      child: child,
-    ),
-    (child) => ProfileViewModelScope(
-      args: (_) => ProfileViewModelArgs(repository: repository),
-      create: (_, args) => ProfileViewModel(args),
-      child: child,
-    ),
-  ],
-  child: const App(),
-)
-```
-
-Scopes are nested in list order. The first scope is the outermost scope.
-
-When app-level dependencies change, key the owner scope so Flutter replaces the
-owned ViewModel tree:
-
-```dart
-AppViewModelScope(
-  key: ObjectKey(repository),
-  args: (_) => AppViewModelArgs(repository: repository),
-  create: (_, args) => AppViewModel(args),
-  child: const App(),
-)
-```
-
-Child scopes can then read typed dependencies from the parent ViewModel args:
-
-```dart
-HomeViewModelScope(
-  args: (context) => HomeViewModelArgs(
-    repository: context.readAppViewModel().args.repository,
-  ),
-  create: (_, args) => HomeViewModel(args),
-  child: const HomePage(),
-)
-```
-
-Use the generated context helpers:
+Read state during `build` and call commands without subscribing:
 
 ```dart
 class CounterPage extends StatelessWidget {
@@ -115,49 +71,104 @@ class CounterPage extends StatelessWidget {
 }
 ```
 
-## Commands
+> [!IMPORTANT]
+> Use `watchXViewModel().value` only where UI should rebuild. Use
+> `readXViewModel()` in callbacks, lifecycle methods, and dependency factories.
 
-Use `readXViewModel()` from callbacks to call ViewModel commands without
-subscribing the widget to state changes.
+## State and Dependencies
 
-```dart
-TextButton(
-  onPressed: context.readCounterViewModel().increment,
-  child: const Text('Increment'),
-)
-```
-
-`readXViewModel()` returns the real ViewModel. That keeps command calls simple
-and Dart-native, but public ViewModel fields are reachable from that command
-surface. Do not put UI-rendered values in public ViewModel fields. Put them in
-state and read them with `watch...().value` or selector widgets.
-
-## Args
-
-Use `ViewModelArgs` for repositories, services, HTTP clients, sockets, storage,
-and observers. Do not generate mirror getters for dependencies.
+Keep UI-changing values in the state type. Put repositories, clients, storage,
+and observers in a typed `ViewModelArgs` subclass:
 
 ```dart
-final class ProfileArgs extends ViewModelArgs {
-  const ProfileArgs({required this.repository, super.observer});
+final class ProfileViewModelArgs extends ViewModelArgs {
+  const ProfileViewModelArgs({required this.repository, super.observer});
 
   final ProfileRepository repository;
 }
 
-@ViewModel(state: ProfileState, args: ProfileArgs)
+@ViewModel(state: ProfileState, args: ProfileViewModelArgs)
 class ProfileViewModel extends $ProfileViewModel {
   ProfileViewModel(super.args);
 
-  Future<void> save() {
-    return args.repository.save(state.profile);
-  }
+  Future<void> save() => args.repository.save(state.profile);
 }
 ```
 
+For synchronous state, Dust uses `const StateType()` as the initial value when
+possible. Supply `initial:` for enums, imported state values, or constructors
+that need arguments:
+
+```dart
+@ViewModel(state: AppTab, initial: AppTab.home)
+class AppViewModel extends $AppViewModel {
+  AppViewModel(super.args);
+}
+```
+
+## Scope Lifecycle
+
+The default generated scope owns the ViewModel, calls `init()`, and disposes it.
+Override `onInit()` for one-time synchronous or asynchronous setup:
+
+```dart
+@override
+Future<void> onInit() => loadProfile();
+```
+
+Use `identity` when a dependency change must replace the owned ViewModel:
+
+```dart
+ProfileViewModelScope(
+  identity: (_) => repository,
+  args: (_) => ProfileViewModelArgs(repository: repository),
+  create: (_, args) => ProfileViewModel(args),
+  child: const ProfilePage(),
+)
+```
+
+> [!NOTE]
+> Rebuilding a scope with a new `args` closure does not by itself replace its
+> ViewModel. Change `identity` or the widget key when dependencies change.
+
+Use `.value` for an externally owned ViewModel. The scope initializes and
+listens to it but does not dispose it:
+
+```dart
+ProfileViewModelScope.value(
+  value: profileViewModel,
+  child: const ProfilePage(),
+)
+```
+
+Group scopes without manual nesting:
+
+```dart
+ViewModelScopes(
+  scopes: [
+    (child) => AppViewModelScope(
+      args: (_) => AppViewModelArgs(repository: repository),
+      create: (_, args) => AppViewModel(args),
+      child: child,
+    ),
+    (child) => ProfileViewModelScope(
+      args: (context) => ProfileViewModelArgs(
+        repository: context.readAppViewModel().args.repository,
+      ),
+      create: (_, args) => ProfileViewModel(args),
+      child: child,
+    ),
+  ],
+  child: const App(),
+)
+```
+
+Scopes are nested in list order; the first entry is outermost.
+
 ## Selectors
 
-`context.watchProfileViewModel().value` rebuilds for the whole state. For
-fine-grained rebuilds, use the generated selector widget.
+Watching `.value` rebuilds for every state change. Use the generated selector
+when a widget depends on one value:
 
 ```dart
 ProfileViewModelSelector<ProfileStatus>(
@@ -168,18 +179,23 @@ ProfileViewModelSelector<ProfileStatus>(
 )
 ```
 
-Selector widgets are covered by rebuild-count tests in the shopping app: they
-do not rebuild when unrelated state fields change.
+Selectors compare with `==` by default. Pass `equals` for custom comparison and
+`child` for a subtree that should not be rebuilt.
 
 ## Effects
 
-Use the generated listener for one-shot effects. Listeners do not rebuild their
-child when effects arrive.
+Use effects for one-shot UI work such as snackbars or navigation:
+
+```dart
+void saveCompleted() => emitEffect(const ProfileSaved());
+```
+
+Listen with the generated widget:
 
 ```dart
 ProfileViewModelListener(
   listener: (context, effect) {
-    if (effect is ShowProfileSaved) {
+    if (effect is ProfileSaved) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Saved')),
       );
@@ -189,38 +205,15 @@ ProfileViewModelListener(
 )
 ```
 
-Emit effects from the ViewModel:
+Effects do not change state, and the listener does not rebuild its child when
+an effect arrives.
+
+## Async ViewModels
+
+Async mode treats the annotated `state` type as loaded data and wraps it in
+`AsyncState<T>`:
 
 ```dart
-void notifySaved() {
-  emitEffect(const ShowProfileSaved());
-}
-```
-
-## Async ViewModel
-
-Async ViewModels use the same annotation with `mode: ViewModelMode.async`.
-The annotated `state` type is the loaded data type; the generated base wraps
-it in `AsyncState<T>`.
-
-```dart
-@Derive([ToString(), Eq()])
-class HomePageData with _$HomePageData {
-  const HomePageData({
-    required this.featuredProducts,
-    required this.categories,
-  });
-
-  final List<Product> featuredProducts;
-  final List<String> categories;
-}
-
-final class HomeViewModelArgs extends ViewModelArgs {
-  const HomeViewModelArgs({required this.repository, super.observer});
-
-  final ShoppingRepository repository;
-}
-
 @ViewModel(
   state: HomePageData,
   args: HomeViewModelArgs,
@@ -230,92 +223,78 @@ class HomeViewModel extends $HomeViewModel {
   HomeViewModel(super.args);
 
   @override
-  Future<HomePageData> loadData() async {
-    final products = await args.repository.getProductsPage(limit: 6);
-    final categories = await args.repository.getCategories();
-    return HomePageData(
-      featuredProducts: products,
-      categories: categories,
-    );
-  }
+  Future<HomePageData> loadData() => args.repository.loadHomePage();
 }
 ```
 
-Async ViewModels get:
+The scope automatically calls `load()` through `onInit()`.
 
-- `load()`: clears visible data and loads fresh data.
-- `refresh()`: loads fresh data while preserving previous visible data.
-- `retry()`: aliases `refresh()`.
-- `invalidateSelf()`: clears pending work and resets to `AsyncInitial<T>`.
-- `data`: current visible data, if present.
-- `visibleData`: current or previous data, if present.
+| API | Behavior |
+| :--- | :--- |
+| `load()` | Loads fresh data without preserving visible data. |
+| `refresh()` | Reloads while preserving visible data when available. |
+| `retry()` | Calls `refresh()`. |
+| `data` | Returns currently visible data when available. |
+| `visibleData` | Returns current or preserved previous data. |
+| `invalidateSelf()` | Cancels stale work and resets to `AsyncInitial<T>`. |
 
-Use the generated async builder for the common loading/data/error UI:
+The generated builder handles the common lifecycle:
 
 ```dart
 HomeViewModelBuilder(
-  loading: (_) => const CircularProgressIndicator(),
+  loading: (context) => const CircularProgressIndicator(),
   data: (context, data) => HomeContent(data: data),
-  error: (context, error, previousData) {
-    return HomeErrorView(
-      error: error,
-      previousData: previousData,
-      onRetry: context.readHomeViewModel().retry,
-    );
-  },
+  error: (context, error, previousData) => HomeErrorView(
+    error: error,
+    previousData: previousData,
+    onRetry: context.readHomeViewModel().retry,
+  ),
 )
 ```
 
-Use a raw switch only when the UI needs every lifecycle detail:
+During refresh, the builder continues to use the `data` callback with the
+preserved value. Read `AsyncState<T>` directly when the UI must distinguish
+`AsyncInitial`, `AsyncLoading`, `AsyncData`, and `AsyncFailure`.
+
+## Stale Async Actions
+
+For asynchronous commands on a synchronous ViewModel, action tokens prevent an
+older request from overwriting newer state:
 
 ```dart
-return switch (context.watchHomeViewModel().value) {
-  AsyncData<HomePageData>(data: final data) => HomeContent(data: data),
-  AsyncLoading<HomePageData>(
-    hasPreviousData: true,
-    previousData: final previousData,
-  ) =>
-    HomeContent(data: previousData as HomePageData, refreshing: true),
-  AsyncFailure<HomePageData>(
-    error: final error,
-    previousData: final previousData,
-  ) =>
-    HomeErrorView(error: error, previousData: previousData),
-  _ => const CircularProgressIndicator(),
-};
+static const _loadProducts = 'load-products';
+
+Future<void> loadProducts() async {
+  final token = beginAction(_loadProducts);
+  final products = await args.repository.loadProducts();
+  if (!isCurrentAction(token)) return;
+  emit(state.copyWith(products: products));
+}
 ```
 
-## Generated API
+Starting the same action key supersedes its previous token. Use
+`cancelAction(key)` to invalidate one action. `invalidateSelf()` invalidates all
+pending action tokens and restores the generated initial state.
 
-Dust generates one support block per ViewModel:
+## Configuration
 
-- `$CounterViewModel` / `$HomeViewModel` base class
-- `ViewModelScopes`
-- `CounterViewModelScope` / `HomeViewModelScope`
-- `context.watchCounterViewModel().value`
-- `context.readCounterViewModel()`
-- `CounterViewModelSelector<R>`
-- `CounterViewModelListener`
-- async-only `HomeViewModelBuilder`
+| Option | Behavior |
+| :--- | :--- |
+| `state` | Required sync state type or async loaded-data type. |
+| `args` | Optional `ViewModelArgs` subtype; defaults to `ViewModelArgs`. |
+| `initial` | Optional sync initial expression; not allowed in async mode. |
+| `mode` | `ViewModelMode.sync` or `ViewModelMode.async`. |
 
-Generated proxies expose `.value` only. They do not mirror `state.*`,
-`args.*`, or closure-backed `watch().select(...)`.
+> [!TIP]
+> Generated watch proxies expose only `.value`. Read dependencies through
+> `viewModel.args` and state through `state` or the generated watch/selector
+> APIs; Dust does not generate mirror getters for either.
 
-## Configuration Reference
+## Examples
 
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `state` | `Type` | Required. Sync state type or async loaded data type. |
-| `args` | `Type` | Optional `ViewModelArgs` subtype. Defaults to `ViewModelArgs`. |
-| `initial` | Expression | Optional sync initial state. Not allowed with async mode. |
-| `mode` | `ViewModelMode` | `ViewModelMode.sync` or `ViewModelMode.async`. Defaults to sync. |
-
-## Rules
-
-> [!WARNING]
-> - Do not mutate state collections in place. Use immutable snapshots and `copyWith`.
-> - Do not call async actions directly from `build()`.
-> - Do not use `watch` inside callbacks; use `read`.
-> - Put repositories, HTTP clients, sockets, and storage in `args`.
-> - Put UI-changing data in state or loaded async data.
-> - Do not store UI-rendered state in public ViewModel fields.
+- [Flutter package example](../../packages/dust_flutter/example/dust_flutter_example.dart)
+- [Shopping app ViewModels](../../examples/shopping_app/lib/core/view_models/app_view_model.dart)
+- [Shopping app scope composition](../../examples/shopping_app/lib/main.dart)
+- [Async action tokens](../../examples/shopping_app/lib/features/products/view_models/products_view_model.dart)
+- [Selector and listener tests](../../examples/shopping_app/test/state_selector_test.dart)
+- [Scope lifecycle tests](../../examples/shopping_app/test/state_scope_realworld_lifecycle_test.dart)

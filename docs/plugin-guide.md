@@ -1,107 +1,186 @@
-# Plugin Guide: Extending Dust
+# Plugin Guide
 
-This guide covers the concrete steps for adding a new annotation plugin to the Dust engine without breaking the shared pipeline rules.
+Dust plugins are Rust crates compiled into the CLI. They claim Dart annotation
+symbols, validate canonical `DartFileIr`, and return generated contributions for
+the shared emitter. Dust does not currently load third-party plugins at runtime.
 
----
+For the complete build pipeline and crate map, see the
+[Developer Guide](developer.md).
 
-## Use A New Plugin Only When...
+## When to Add a Plugin
 
-*   The feature has its own distinct **Dart annotation surface**.
-*   The generation logic is complex enough to require its own **ownership boundary**.
-*   The feature needs **shared workspace analysis** (Pass 2) to gather facts across files.
+Add a plugin when a feature owns a distinct annotation surface and generation
+boundary. Extend an existing plugin when the change belongs to annotations it
+already owns.
 
 > [!TIP]
-> If you're adding a new behavior to an existing annotation (like adding a new property to `@SerDe`), extend the existing `dust_plugin_serde` crate instead of creating a new one.
+> A runtime-only Dart or Flutter feature does not need a Rust plugin. Add a
+> plugin only when Dust must inspect source or generate code.
 
----
+## Recommended Structure
 
-## 🏗️ Recommended Crate Structure
+Use the smallest structure that keeps parsing, validation, and emission separate:
 
-To maintain consistency across the engine, all plugins should follow this module split:
-
-| Module | Responsibility |
+| Path | Responsibility |
 | :--- | :--- |
-| `plugin.rs` | Implementation of the `DustPlugin` trait and registration entrypoint. |
-| `validate.rs` | Semantic validation (e.g., "Are these annotation arguments valid?"). |
-| `emit.rs` | Logic for generating Dart code fragments and class members. |
-| `analysis.rs` | Logic for Pass 2 workspace facts collected from parser/IR data. |
-| `tests/` | Focused integration tests verifying IR-to-Dart emission. |
+| `src/lib.rs` | Public plugin type and registration export. |
+| `src/plugin.rs` | `DustPlugin` implementation and module wiring. |
+| `src/plugin/constants.rs` | Claimed symbols, supported annotation names, and analysis keys. |
+| `src/plugin/model.rs` | Feature-specific models shared across phases. |
+| `src/plugin/parse.rs` | Converts normalized IR into feature models. |
+| `src/plugin/validate.rs` | Returns diagnostics for invalid source. |
+| `src/plugin/emit.rs` | Produces `PluginContribution` values. |
+| `src/plugin/analysis.rs` | Optional cross-file fact collection. |
+| `tests/` | Registration, validation, analysis, and exact-output tests. |
 
----
+Small plugins may combine modules. Do not create empty layers only to match this
+table.
 
-## 🚀 Step-by-Step Implementation
+## 1. Add the Dart Annotation
 
-### 1. Add the Public Dart API
-Create a new package under `packages/` (or extend an existing one).
-*   Define the annotation class (e.g., `@MyFeature`).
-*   Ensure it uses the standard `DeriveTrait` or `DeriveConfig` base classes.
-*   Add Dartdoc and run `dart analyze` to ensure a clean public surface.
+Place Dart-only annotations in `packages/dust_dart` and Flutter-dependent
+annotations in `packages/dust_flutter`.
 
-### 2. Implement the `DustPlugin` Trait
-In your Rust crate, implement the core plugin contract:
+Derive-style traits and configuration extend `DeriveTrait` or `DeriveConfig`.
+Other features may use a standalone const annotation class, as routing and state
+do. Keep the public API small and document the generated contract.
+
+Run `dart analyze` for a Dart package or `flutter analyze` for a Flutter package.
+
+## 2. Implement `DustPlugin`
+
+Every plugin consumes canonical IR. Parser nodes and source-string parsing stay
+inside the parser and resolver layers.
 
 ```rust
-impl DustPlugin for MyPlugin {
-    fn plugin_name(&self) -> &'static str { "dust_plugin_my_feature" }
+use dust_diagnostics::Diagnostic;
+use dust_ir::DartFileIr;
+use dust_plugin_api::{DustPlugin, PluginContext, PluginContribution};
 
-    // Claim your annotations so no other plugin can use them
-    fn claimed_traits(&self) -> &'static [&'static str] {
-        &["my_package::MyTrait"]
+pub struct MyPlugin;
+
+impl DustPlugin for MyPlugin {
+    fn plugin_name(&self) -> &'static str {
+        "MyFeature"
     }
 
-    // PASS 2: Collect canonical-IR workspace facts (optional)
-    fn collect_workspace_analysis_ir(
+    fn claimed_configs(&self) -> &'static [&'static str] {
+        &["dust_dart::MyFeature"]
+    }
+
+    fn supported_annotations(&self) -> &'static [&'static str] {
+        &["MyFeature"]
+    }
+
+    fn validate(&self, file: &DartFileIr) -> Vec<Diagnostic> {
+        validate_my_feature(file)
+    }
+
+    fn generate(
         &self,
         file: &DartFileIr,
-        analysis: &mut WorkspaceAnalysisBuilder,
-    ) { ... }
-
-    // PASS 4: Validate canonical file IR
-    fn validate(&self, file: &DartFileIr) -> Vec<Diagnostic> { ... }
-
-    // PASS 4: Generate code from canonical file IR
-    fn generate(&self, file: &DartFileIr, context: &PluginContext<'_>) -> Vec<PluginContribution> { ... }
+        context: &PluginContext<'_>,
+    ) -> Vec<PluginContribution> {
+        vec![emit_my_feature(file, context.symbol_plan)]
+    }
 }
 ```
 
-New plugin work must target `DartFileIr`, `collect_workspace_analysis_ir`, and
-`generate`. Parser-owned surfaces stay inside the parser crates; the former
-`LibraryIr` and `ParsedLibrarySurface` compatibility shims have been removed.
+Use `claimed_traits()` for annotations placed inside `@Derive([...])` and
+`claimed_configs()` for configuration annotations. Fully qualified names become
+the resolver's canonical symbol IDs. Duplicate ownership fails during registry
+construction.
 
-### 3. Register the Plugin
-Wire your new crate into the `dust_driver` orchestrator.
-*   **File:** `crates/dust_driver/src/build/support.rs`
-*   **Action:** Add your plugin to the `default_registry()` function.
+`supported_annotations()` contains the short surface names used by workspace
+discovery. Claiming a symbol does not add its short name automatically.
+
+Use `partless_configs()` only when an annotation is valid without a source
+`part '<name>.g.dart';` declaration.
+
+## 3. Return Contributions
+
+`PluginContribution` supports these output sections:
+
+- `mixin_members` for members attached to a source class
+- `shared_helpers` and `support_types` for generated declarations
+- `top_level_functions` for library-level functions
+- `primary_source` when a feature owns the complete primary output
+- `auxiliary_outputs` for additional generated files
+- `diagnostics` found while preparing output
+
+The emitter merges contributions in registry order. Use shared rendering helpers
+from `dust_dart_emit`, choose deterministic names, and keep all collection order
+stable. Reserve generated names in `requested_symbols()` when another plugin or
+validation phase needs to see them through `SymbolPlan`.
 
 > [!IMPORTANT]
-> **Don't Forget the Fingerprint:**
-> Update `CODEGEN_FINGERPRINT_INPUT` in the driver to include your plugin's source files. This ensures users get a fresh rebuild when you update the plugin's Rust code.
+> Return diagnostics for invalid user source. Do not use `unwrap()` or `expect()`
+> on values derived from Dart input.
 
----
+## 4. Collect Cross-File Facts
 
-## ⚖️ Best Practices for Plugin Authors
+When generation depends on declarations in other libraries, implement
+`collect_workspace_analysis_ir()` and add deterministic values to a versioned
+analysis key:
 
-### 🛡️ Isolation & Namespacing
-Because the `dust_emitter` merges all plugin contributions into a single file scope, you **must** namespace your private generated helpers.
-*   **Bad:** `_parseJson(json)`
-*   **Good:** `_$MyPlugin_parseJson(json)`
+```rust
+fn collect_workspace_analysis_ir(
+    &self,
+    file: &DartFileIr,
+    analysis: &mut WorkspaceAnalysisBuilder,
+) {
+    collect_my_feature_facts(file, analysis);
+}
+```
 
-### 🚫 Panic Safety
-Plugins run in parallel worker threads. A single `panic!()` will crash the entire build process.
-*   **Always** return a `Vec<Diagnostic>` for errors found during validation.
-*   **Never** use `.unwrap()` or `.expect()` on data derived from user source code.
+The driver merges facts from pending libraries with cached per-library snapshots.
+Generators read the immutable result through
+`context.symbol_plan.workspace_analysis()` or `workspace_string_set()`.
 
-### 🔄 Use Shared Analysis
-If your plugin needs to know about other files (e.g., "Find all classes marked with X"), use `collect_workspace_analysis`.
-*   **Do not** perform custom file I/O or manual Dart source scanning inside `generate()`.
-*   Read normalized parser/IR facts and the deterministic plan/context provided by the driver.
+Do not scan workspace files or reopen Dart source inside `generate()`.
 
----
+## 5. Register the Plugin
 
-## ✅ Pre-Commit Checklist
+Wire the crate through all compiled surfaces:
 
-- [ ] `cargo fmt --all -- --check` passes.
-- [ ] Targeted `cargo test -p ...` runs pass for affected crates.
-- [ ] `cargo clippy --workspace --all-targets -- -D warnings` is clean.
-- [ ] New feature is used in `examples/product_showcase` and verified with `dart analyze`.
-- [ ] Documentation updated in `docs/usage/` if the public API changed.
+1. Add the crate to the root Cargo workspace.
+2. Add it as a dependency of `dust_driver`.
+3. Export a `register_plugin()` function from the plugin crate.
+4. Register it in
+   `crates/dust_driver/src/build/support/registry.rs` in the intended order.
+5. Add every generation-affecting source and template to the plugin's fingerprint
+   input in `crates/dust_driver/src/build/support/tool_hash.rs`.
+
+The fingerprint step is required. Without it, existing cache entries can hide a
+change to generated output.
+
+## 6. Test the Contract
+
+Cover the boundaries that the plugin owns:
+
+- registration, claimed symbols, and supported annotation names
+- valid and invalid normalized IR
+- diagnostics with useful source spans
+- workspace analysis and cached-fact behavior when applicable
+- exact emitted output, including imports and helper names
+- driver integration for discovery, cache invalidation, and generated files
+- one real example using the public Dart or Flutter API
+
+Generated Dart fixture snapshots use `.dart.snapshot`, not `.dart` or
+`.g.dart`. Prefer exact snapshot equality over partial `contains` assertions for
+generated output.
+
+## Validation
+
+Run the narrow plugin checks first, then the repository gates appropriate to the
+change:
+
+```bash
+cargo fmt --all -- --check
+cargo test -p dust_plugin_my_feature
+cargo clippy -p dust_plugin_my_feature --all-targets -- -D warnings
+```
+
+Also analyze and test the affected Dart package or Flutter example. Public
+behavior changes require an update to the relevant [usage guide](usage/README.md)
+and example.

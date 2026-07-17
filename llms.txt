@@ -1,0 +1,114 @@
+# Dust
+
+Dust is Rust-powered code generation for Dart and Flutter. It helps humans and
+AI coding agents build app features with typed generated APIs instead of
+handwritten repetitive plumbing.
+
+Primary users: Dart developers, Flutter developers, and coding agents editing
+Dart or Flutter apps.
+
+Repository: https://github.com/y3l1n4ung/dust
+License: MIT
+
+## Install
+
+macOS/Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.sh | bash
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.ps1 | iex
+```
+
+Installers place `dust` in `$HOME/.local/bin`. Add that directory to `PATH`.
+
+## Packages
+
+- `dust_dart`: Dart annotations/runtime for derives, JSON, validation, HTTP,
+  and Database annotations.
+- `dust_flutter`: Flutter annotations/runtime for routing, state, and i18n.
+- `dust_db_sqlite3`: native SQLite runtime for generated Database code.
+
+## Feature Status
+
+- Stable: data classes, JSON, validation, HTTP clients.
+- Beta: routing, state management, i18n, Database.
+- Planned: Firebase, Supabase.
+
+Stable `0.1.x` authoring APIs should stay compatible. Beta APIs can still be
+refined.
+
+## Common Commands
+
+```bash
+dust build
+dust check
+dust watch
+dust clean
+dust doctor
+dust db build
+dust check --db
+dust i18n scan
+dust i18n build
+dust i18n check
+```
+
+Run `dust --help` and `dust <command> --help` for current options.
+
+## Generated Files
+
+- Normal generated Dart files use `.g.dart`.
+- Do not edit generated files by hand.
+- Run `dust build` to write generated files.
+- Run `dust check` in CI to verify generated files are current.
+- Database code uses `dust db build` and `dust check --db`.
+
+## Main Docs
+
+- README: `README.md`
+- Usage index: `docs/usage/README.md`
+- Derive guide: `docs/usage/derive.md`
+- JSON guide: `docs/usage/serde.md`
+- Validation guide: `docs/usage/validation.md`
+- HTTP guide: `docs/usage/http.md`
+- Routing guide: `docs/usage/routing.md`
+- State guide: `docs/usage/state.md`
+- i18n guide: `docs/usage/i18n.md`
+- Database guide: `docs/usage/db.md`
+- Developer guide: `docs/developer.md`
+- Plugin guide: `docs/plugin-guide.md`
+- Contributing: `CONTRIBUTING.md`
+
+## Examples
+
+- `examples/product_showcase`: Dart derives, JSON, validation, HTTP, and row
+  mapping.
+- `examples/shopping_app`: Flutter routing, state, i18n, HTTP, and Database.
+- `examples/benchmark_project`: large generated input for build and cache
+  measurements.
+
+## Repo Map
+
+- `crates/dust_cli`: `dust` command-line interface.
+- `crates/dust_driver`: build/check/watch orchestration.
+- `crates/dust_parser_dart*`: Dart parsing.
+- `crates/dust_resolver`: imports, symbols, annotations, and type resolution.
+- `crates/dust_ir`: normalized plugin-facing IR.
+- `crates/dust_plugin_*`: feature generators.
+- `crates/dust_emitter`: final `.g.dart` assembly.
+- `packages/`: public Dart and Flutter runtime packages.
+- `examples/`: real proof apps.
+
+## Agent Rules
+
+- Read `AGENTS.md` before making repo changes.
+- Never start implementation work on `main`.
+- Keep docs factual; do not add unsupported benchmark or release claims.
+- Prefer parser/IR facts over plugin-local source-string parsing.
+- Keep `dust_dart` Dart-only and `dust_flutter` Flutter-only.
+- Routing uses Navigator 2.0 without an external routing package.
+- Database is raw SQL with build-time validation, not an ORM.

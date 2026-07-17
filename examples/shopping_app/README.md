@@ -1,87 +1,66 @@
-# Dust Shopping App
+# Shopping App
 
-A Flutter commerce showcase for Dust code generation: router, state, HTTP client, serde, and database mapping.
+End-to-end Flutter example for Dust router, state, HTTP, JSON, i18n, and
+Database generation.
 
-## Features
+This app is the main regression surface for using Dust in a real Flutter app
+instead of isolated model fixtures.
 
-- FakeStore-backed product catalog, categories, auth, users, and remote cart demo.
-- Generated app-level dependency scope with `AppViewModelScope`.
-- Product discovery with search, category filtering, and sorting.
-- Local wishlist with serde persistence.
-- Generated `AppI18n` bootstrap with English and Burmese ARB assets plus an
-  in-app language toggle.
-- Product detail reviews and recommendations from deterministic fake feature responses.
-- Checkout quote preview with fake coupon support (`DUST10`, `SHIPFREE`).
-- Order tracking route with fake timeline events.
-- Support chat over a local socket-style stream with fake responses so tests stay deterministic.
-- Database proof with sqlx-style `@SqlxDatabase`, `@SqlxDao`, `@Query`, and `@Derive([FromRow()])` mapping, flattened rating rows, JSON payloads, try-from decoding, transactions, and offline query metadata.
-- Path URL strategy on web, so deep links use clean paths like `/product/7`.
+## What It Shows
 
-## Run
+| Area | Where to look |
+| :--- | :--- |
+| Routing and guards | [`lib/route.dart`](lib/route.dart), [`lib/route.g.dart`](lib/route.g.dart) |
+| ViewModel scopes | [`lib/main.dart`](lib/main.dart), [`lib/core/view_models/app_view_model.dart`](lib/core/view_models/app_view_model.dart) |
+| HTTP client | [`lib/core/api/shopping_api.dart`](lib/core/api/shopping_api.dart) |
+| JSON models | [`lib/features/products/models/product.dart`](lib/features/products/models/product.dart), [`lib/features/cart/models/cart_state.dart`](lib/features/cart/models/cart_state.dart) |
+| i18n | [`dust.yaml`](dust.yaml), [`assets/i18n/en/shop.arb`](assets/i18n/en/shop.arb), [`assets/i18n/my/shop.arb`](assets/i18n/my/shop.arb) |
+| Database | [`lib/core/db/shopping_cache_database.dart`](lib/core/db/shopping_cache_database.dart), [`migrations/0001_shopping_cache.sql`](migrations/0001_shopping_cache.sql) |
+
+The app uses live FakeStore endpoints for core catalog/auth/cart data and local
+fake responses for showcase-only flows such as checkout quotes, order tracking,
+wishlist persistence, and support chat.
+
+## Run It
+
+From the repository root:
 
 ```bash
+cargo run -q -p dust_cli -- build --root examples/shopping_app --fail-fast
+cargo run -q -p dust_cli -- db build --root examples/shopping_app --fail-fast
 cd examples/shopping_app
 flutter pub get
-cd ../..
-cargo run -p dust_cli -- build --root examples/shopping_app --fail-fast
-cargo run -p dust_cli -- db build --root examples/shopping_app --fail-fast
-cd examples/shopping_app
 flutter run
 ```
 
-## Verify
+## Validate
 
 ```bash
-cargo run -p dust_cli -- build --root examples/shopping_app --fail-fast
-cargo run -p dust_cli -- db build --root examples/shopping_app --fail-fast
+cargo run -q -p dust_cli -- check --root examples/shopping_app --fail-fast
+cargo run -q -p dust_cli -- db build --root examples/shopping_app --fail-fast
 cd examples/shopping_app
 flutter analyze
 flutter test
 flutter build web
 ```
 
-## Codegen Contract
+## Generated Surfaces
 
-- `lib/route.dart` owns `@AppRouter`; `lib/route.g.dart` is generated.
-- Pages use `@AppRoute` directly on normal Flutter widgets.
-- Routes with `guards: []` are intentionally public; routes that omit `guards:`
-  stay protected by default through generated `requiresAuth`.
-- ViewModels use `@ViewModel` with typed args, for example `AppViewModelArgs(repository, storage)`.
-- Data models use `@Derive` for copy/equality/serde output.
-- `ShoppingCacheDatabase` uses `@SqlxDatabase`; `ShoppingCacheDao` uses `@SqlxDao` and checked raw SQL `@Query` methods against `migrations/0001_shopping_cache.sql`; run `dust db build` for SQLite validation and generated DAO output.
-- `ShoppingApi` uses Dust HTTP annotations and only declares real FakeStore endpoints.
-- `dust.yaml` configures i18n locales; `lib/i18n/app_i18n.g.dart` is generated.
-- i18n keys use namespace-prefixed ARB-safe names such as `shop_title`; the
-  `shop` namespace loads from `assets/i18n/{locale}/shop.arb`.
-
-## API Split
-
-Existing behavior stays live FakeStore by default through `LiveShoppingRepository`.
-
-FakeStore supports:
-
-- `/products`
-- `/products/{id}`
-- `/products/category/{category}`
-- `/products/categories`
-- `/carts`
-- `/carts/{id}`
-- `/carts/user/{userId}`
-- `/auth/login`
-- `/users/{id}`
-- `/users`
-
-Fake local responses support showcase-only features that FakeStore does not provide:
-
-- reviews
-- wishlist persistence
-- checkout quote and coupons
-- order tracking
-- support chat
+- `@AppRouter` generates typed route classes and parser helpers in
+  [`lib/route.g.dart`](lib/route.g.dart).
+- `@AppRoute` on Flutter pages declares paths, route parameters, and guards.
+- `@ViewModel` generates scopes, typed args, readers, and watchers.
+- `@Derive` generates copy, equality, JSON, validation, and row-mapping helpers
+  for app models.
+- `@HttpClient` generates a Dio-backed FakeStore client.
+- `@SqlxDatabase`, `@SqlxDao`, and `@Query` generate checked SQLite access for
+  the shopping cache.
+- Dust i18n generates [`lib/i18n/app_i18n.g.dart`](lib/i18n/app_i18n.g.dart)
+  from the configured ARB locales.
 
 ## Main Routes
 
-- `/` products
+- `/`
 - `/cart`
 - `/checkout`
 - `/wishlist`
@@ -91,4 +70,16 @@ Fake local responses support showcase-only features that FakeStore does not prov
 - `/product/:productId`
 - `/support/chat`
 
-The Flutter app calls `usePathUrlStrategy()` at startup. Configure static web hosting to serve `index.html` for unknown paths before deploying these deep links outside `flutter run`.
+The app calls `usePathUrlStrategy()` at startup. For deployed web builds,
+configure the host to serve `index.html` for unknown paths so direct deep links
+such as `/product/7` load the Flutter app.
+
+## More Docs
+
+- [Root README](../../README.md)
+- [Usage guide](../../docs/usage/README.md)
+- [Routing guide](../../docs/usage/routing.md)
+- [State guide](../../docs/usage/state.md)
+- [HTTP guide](../../docs/usage/http.md)
+- [i18n guide](../../docs/usage/i18n.md)
+- [Database guide](../../docs/usage/db.md)

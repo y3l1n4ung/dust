@@ -1,230 +1,288 @@
-# HTTP Client Generation
+# HTTP Clients
 
-Dust generates Dio-backed API clients from abstract interfaces. It automates request mapping, header injection, and JSON parsing based on annotations.
+Dust generates typed Dio clients from annotated Dart interfaces.
 
----
+## Add the Package
 
-## Installation
+Install the Dust CLI from the [root guide](../../README.md#installation), then
+add the Dart runtime package:
 
-Add the required packages to your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  dio: ^5.0.0
-  dust_dart: ^0.1.0
+```bash
+dart pub add dust_dart
 ```
 
----
+`package:dust_dart/http.dart` exports the HTTP annotations, Serde API, and Dio
+types used by generated clients.
 
-## Basic Example
+## Quick Start
 
-Define an `abstract interface class` and annotate it with `@HttpClient`.
+Define an `abstract interface class` with a redirecting factory:
 
 ```dart
 import 'package:dust_dart/http.dart';
 
-part 'api_client.g.dart';
+part 'user_api.g.dart';
+
+@Derive([Serialize(), Deserialize()])
+class User with _$User {
+  const User({required this.id, required this.name});
+
+  factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
+
+  final int id;
+  final String name;
+}
 
 @HttpClient(baseUrl: 'https://api.example.com')
-abstract interface class ApiClient {
-  factory ApiClient(Dio dio, {String? baseUrl}) = _$ApiClient;
+abstract interface class UserApi {
+  factory UserApi(Dio dio, {String? baseUrl}) = _$UserApi;
 
   @GET('/users/{id}')
-  Future<User> getUser(@Path() String id);
+  Future<User> getUser(@Path() int id);
 
   @POST('/users')
   Future<User> createUser(@Body() User user);
 }
 ```
 
-> [!IMPORTANT]
-> **Requirements for Generation:**
-> 1. You **must** include the `part 'filename.g.dart';` directive.
-> 2. You **must** provide a redirecting factory constructor: `factory ClassName(Dio dio, {String? baseUrl}) = _$ClassName;`.
+Generate and use the client:
 
----
-
-## Configuration Reference
-
-### `@HttpClient` (Class Level)
-
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| `baseUrl` | `String` | The base URL for all methods in this client. |
-| `target` | `HttpTarget` | `HttpTarget.dart` (default) or `HttpTarget.flutter`. Use `flutter` to enable Flutter-specific optimizations. |
-| `parseThread` | `HttpParseThread` | `HttpParseThread.main` (default) or `HttpParseThread.isolate`. Use `isolate` to offload JSON decoding to a background thread. |
-| `headers` | `Map<String, String>` | Static headers applied to every request from this client. |
-| `generateTest` | `bool` | Generates a companion request-mapping test file when set to `true`. |
-
-### Method Annotations
-
-| Annotation | Description |
-| :--- | :--- |
-| `@GET(path)`, `@POST(path)`, etc. | Defines the HTTP verb and relative path. |
-| `@Headers({...})` | Sets static headers for a specific method. |
-| `@FormUrlEncoded()` | Sets the content-type to `application/x-www-form-urlencoded`. |
-| `@MultiPart()` | Sets the content-type to `multipart/form-data`. |
-| `@HttpParse(thread: ...)` | Overrides the class-level `parseThread` strategy for this specific method. |
-
-### Parameter Annotations
-
-| Annotation | Description |
-| :--- | :--- |
-| `@Path([name])` | Maps a parameter to a `{name}` in the path. If name is omitted, uses the parameter name. |
-| `@Query(key)` | **Required.** Maps a parameter to a URL query key. |
-| `@Queries()` | Maps a `Map<String, dynamic>` parameter to multiple query keys. |
-| `@Body()` | Encodes the parameter as the request body (auto-serialized to JSON). |
-| `@Header(key)` | **Required.** Maps a parameter to a specific HTTP header. |
-| `@HeaderMap()` | Maps a `Map<String, String>` parameter to multiple request headers. |
-| `@Field(name)` | **Required.** Maps a parameter to a form field (requires `@FormUrlEncoded`). |
-| `@Part(name)` | **Required.** Maps a parameter to a multipart part (requires `@MultiPart`). |
-| `@Extra(key)` | **Required.** Maps a parameter to Dio's `RequestOptions.extra` map. |
-
-> [!NOTE]
-> For annotations marked **Required**, you must provide a string literal for the key/name. Only `@Path()` allows omitting the argument to fallback to the parameter name.
-
-> [!IMPORTANT]
-> Request bodies are supported only on `POST`, `PUT`, `PATCH`, and `DELETE`. Dust rejects `@Body()`, `@FormUrlEncoded()` fields, and `@MultiPart()` parts on `GET`, `HEAD`, and `OPTIONS`.
-
----
-
-## Request Value Encoding
-
-Dust keeps request encoding small and predictable:
-
-- `@Path()` values are converted with `toString()` and encoded with `Uri.encodeComponent`.
-- `@Query()` values are passed to Dio unchanged so Dio can encode scalar and list values. Nullable query values are omitted when `null`.
-- `@Queries()` accepts `Map<String, ...>` and merges caller-provided query values unchanged.
-- `@Header()` values are converted with `toString()`. Nullable header values are omitted when `null`.
-- `@HeaderMap()` accepts `Map<String, ...>` and merges caller-provided header values unchanged.
-
-Static class headers are applied first, method `@Headers` are applied next, and parameter-driven headers are applied in method signature order. That means `@HeaderMap()` can override static headers when it appears later in the generated setup.
+```bash
+dust build
+```
 
 ```dart
-@HttpClient(headers: {'accept': 'application/json'})
-abstract interface class ApiClient {
-  factory ApiClient(Dio dio, {String? baseUrl}) = _$ApiClient;
-
-  @GET('/users/{slug}')
-  Future<void> search(
-    @Path() String slug, {
-    @Query('tags') List<String>? tags,
-    @Queries() required Map<String, dynamic> filters,
-    @Header('x-page') int page = 1,
-    @HeaderMap() required Map<String, String> headers,
-  });
-}
+final api = UserApi(Dio());
+final user = await api.getUser(42);
 ```
+
+> [!IMPORTANT]
+> The source needs the matching `part` directive. The client must be an
+> `abstract interface class` with the factory shape shown above.
+
+## Client Configuration
+
+| Option | Behavior |
+| :--- | :--- |
+| `baseUrl` | Default URL for every endpoint. |
+| `headers` | Static headers applied to every endpoint. |
+| `target` | Selects `HttpTarget.dart` or `HttpTarget.flutter`. |
+| `parseThread` | Selects main-isolate or background-isolate JSON decoding. |
+| `generateTest` | Generates request-mapping tests under `test/generated`. |
+
+The factory's `baseUrl` overrides the annotation value. An absolute value
+replaces `Dio.options.baseUrl`; a relative value resolves against it. When
+neither override nor annotation supplies a URL, the client uses
+`Dio.options.baseUrl`.
+
+## Endpoints
+
+Every client method must have exactly one supported HTTP verb annotation:
+
+```dart
+@GET('/users')
+@POST('/users')
+@PUT('/users/{id}')
+@PATCH('/users/{id}')
+@DELETE('/users/{id}')
+@HEAD('/users/{id}')
+@OPTIONS('/users')
+```
+
+Method-level configuration:
+
+| Annotation | Behavior |
+| :--- | :--- |
+| `@Headers({...})` | Adds static headers for one endpoint. |
+| `@FormUrlEncoded()` | Builds an `application/x-www-form-urlencoded` body from `@Field` parameters. |
+| `@MultiPart()` | Builds `FormData` from `@Part` parameters. |
+| `@HttpParse(thread: ...)` | Overrides the client parse-thread setting for one endpoint. |
+
+## Parameters
+
+| Annotation | Request mapping |
+| :--- | :--- |
+| `@Path([name])` | Replaces a matching `{name}` path segment. The parameter name is used when omitted. |
+| `@Query(name)` | Adds one query value. Nullable values are omitted when `null`. |
+| `@Queries()` | Merges a `Map<String, ...>` into the query map. |
+| `@Header(name)` | Adds one header. Nullable values are omitted when `null`. |
+| `@HeaderMap()` | Merges a `Map<String, ...>` into the headers. |
+| `@Body()` | Sends one value as the request body. |
+| `@Field(name)` | Adds one form-url-encoded field. |
+| `@Part(name)` | Adds one multipart field or file. |
+| `@Extra(key)` | Adds one value to Dio's request `extra` map. |
+
+`@Query`, `@Header`, `@Field`, `@Part`, and `@Extra` require an explicit string
+key. Dust checks duplicate keys and verifies that every path placeholder has
+one matching `@Path` parameter.
 
 > [!TIP]
-> Use `@Queries()` and `@HeaderMap()` for caller-controlled optional sets. Use single `@Query()` or `@Header()` parameters for fixed API keys that should stay visible in the method signature.
+> Use `@Queries()` and `@HeaderMap()` for caller-controlled sets. Keep fixed API
+> keys visible with individual `@Query` and `@Header` parameters.
 
----
+Dio transport parameters need no annotation:
 
-## JSON Model Requirements
+- `CancelToken`
+- `Options`
+- `ProgressCallback onSendProgress`
+- `ProgressCallback onReceiveProgress`
 
-Generated HTTP clients call `value.toJson()` for custom `@Body()` models and `Type.fromJson(Map<String, Object?>)` for custom response models. Lists are checked recursively, so `Future<List<User>>` requires `User.fromJson(...)`.
+## Request Bodies
+
+Standard bodies use one `@Body()` parameter:
 
 ```dart
-@Derive([Serialize(), Deserialize()])
-class User with _$User {
-  const User({required this.id, required this.name});
-
-  final int id;
-  final String name;
-
-  factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
-}
+@POST('/users')
+Future<User> createUser(@Body() User user);
 ```
 
-Primitive values, `Map`, `List`, `dynamic`, `void`, and `ResponseBody` can be used directly. For custom classes, derive `Serialize()` for request bodies and provide a `fromJson` factory for responses.
+Primitive values, `Map`, `List`, `Object`, and `dynamic` are sent directly.
+Custom models must provide `toJson()`; deriving `Serialize()` satisfies that
+requirement.
+
+Form and multipart bodies use their matching parameter annotations:
+
+```dart
+@FormUrlEncoded()
+@PATCH('/users/{id}')
+Future<User> rename(
+  @Path() int id,
+  @Field('name') String name,
+);
+
+@MultiPart()
+@POST('/uploads')
+Future<void> upload(
+  @Part('file') MultipartFile file,
+  @Part('label') String? label,
+);
+```
 
 > [!IMPORTANT]
-> Dust rejects known custom HTTP models that cannot be serialized or deserialized by the generated client. Add the JSON methods or change the endpoint type before running the app.
+> `GET`, `HEAD`, and `OPTIONS` cannot have standard, form, or multipart bodies.
+> Form and multipart modes cannot be combined with each other or with
+> `@Body()`.
 
----
+## Response Types
 
-## Performance: Offloading JSON Parsing
+Supported method shapes include:
 
-For large JSON payloads, you can offload the decoding process to a background isolate.
+- `Future<T>`
+- `Future<Response<T>>`
+- `Future<ResponseBody>`
+- `Stream<List<int>>` for response bytes
+- `Stream<String>` for decoded response text
+
+`T` may be a primitive, `Map<String, ...>`, `List<T>`, `dynamic`, `void`, or a
+custom model. Custom response models must provide
+`factory Type.fromJson(Map<String, Object?> json)`; deriving `Deserialize()`
+and adding the forwarding factory satisfies that requirement.
+
+Dust checks known workspace request and response models during generation.
+Types from external packages remain subject to Dart analysis.
+
+## Headers and Request Values
+
+Class headers are applied first, followed by method `@Headers`, then parameter
+headers in signature order. Later values replace earlier values with the same
+key.
+
+Path values use `toString()` and `Uri.encodeComponent`. Query values are passed
+to Dio so scalar and list encoding follows Dio's configuration. Header values
+use `toString()`.
+
+## Isolate Decoding
+
+Dio fetches the response first. Dust then converts the response data into the
+declared Dart type. `HttpParseThread.isolate` moves only that generated model
+conversion to another isolate.
+
+For example, Dust converts a JSON map with `Product.fromJson(...)` and converts
+a JSON list by calling `Product.fromJson(...)` for every item. Those operations
+can run in an isolate:
 
 ```dart
 @HttpClient(parseThread: HttpParseThread.isolate)
-abstract interface class BigDataApi { ... }
-```
+abstract interface class CatalogApi {
+  factory CatalogApi(Dio dio, {String? baseUrl}) = _$CatalogApi;
 
-> [!IMPORTANT]
-> Dart-targeted clients use `Isolate.run`, so add `import 'dart:isolate';` when isolate parsing is enabled. Flutter-targeted clients use Flutter's `compute` helper, so add `import 'package:flutter/foundation.dart' show compute;` when Flutter targeting and isolate parsing are enabled.
+  // Product.fromJson runs in the isolate.
+  @GET('/products/{id}')
+  Future<Product> getProduct(@Path() int id);
 
-> [!TIP]
-> Use `HttpParse` to enable isolates only for specific heavy endpoints while keeping lightweight calls on the main thread. This provides granular control over resource usage.
+  // List mapping and every Product.fromJson call run in the isolate.
+  @GET('/products')
+  Future<List<Product>> getProducts();
 
----
+  // The map is returned directly, so Dust has no model conversion to move.
+  @GET('/summary')
+  Future<Map<String, dynamic>> getSummary();
 
-## Multipart Requests
+  // Raw response bodies and streams remain on their normal Dio path.
+  @GET('/export')
+  Future<ResponseBody> downloadExport();
 
-To upload files or mixed data, use `@MultiPart` and `@Part`.
+  @GET('/export')
+  Stream<List<int>> streamExport();
 
-```dart
-@POST('/upload')
-@MultiPart()
-Future<void> uploadFile(@Part('file') MultipartFile file, @Part('id') String id);
-```
-
-> [!WARNING]
-> When using `@MultiPart`, ensure all non-file parameters are also annotated with `@Part`. Standard `@Query` or `@Body` annotations may not behave as expected within a multipart request depending on the server implementation.
-
----
-
-## Generated Testing
-
-When `generateTest` is enabled on your client, Dust generates a test suite that verifies request mapping logic without requiring a real server.
-
-```dart
-@HttpClient(baseUrl: '...', generateTest: true)
-abstract interface class ApiClient { ... }
-```
-
-Dust creates a matching file under `test/generated/...`, such as `test/generated/api/api_client_test.dart`, containing assertions for path segments, query parameters, headers, and body serialization.
-
----
-
-## Generation Output
-
-Dust generates a concrete implementation class (`_$ClassName`) that utilizes Dio.
-
-```dart
-// api_client.g.dart (Simplified)
-class _$ApiClient implements ApiClient {
-  _$ApiClient(this._dio, {this.baseUrl});
-
-  final Dio _dio;
-  String? baseUrl;
-
-  @override
-  Future<User> getUser(String id) async {
-    final _result = await _dio.fetch<Map<String, dynamic>>(
-      _setStreamType<User>(Options(method: 'GET'))
-        .compose(baseUrl: baseUrl, path: '/users/$id'),
-    );
-    return User.fromJson(_result.data!);
-  }
+  // Override the client default for one model endpoint.
+  @HttpParse(thread: HttpParseThread.main)
+  @GET('/featured')
+  Future<Product> getFeatured();
 }
 ```
 
----
-
-## Migration Guide
-
-**Coming from `retrofit`?**
-
-| Feature | `retrofit` | Dust |
+| Return payload | Uses the isolate? | Dust operation |
 | :--- | :--- | :--- |
-| Main Annotation | `@RestApi()` | `@HttpClient()` |
-| Path Param | `@Path("id")` | `@Path()` (optional arg) |
-| Query Param | `@Query("q")` | `@Query("q")` (required arg) |
-| Multithreading | Optional | Built-in via `HttpParseThread.isolate` |
-| Build Tool | `build_runner` | **Standalone Binary** |
+| `Product` | Yes | Calls `Product.fromJson(...)`. |
+| `List<Product>` | Yes | Maps the list through `Product.fromJson(...)`. |
+| `Response<Product>` | Yes | Converts `Product`, then rebuilds the typed `Response`. |
+| `String`, `int`, `double`, `bool` | No | Casts or converts the primitive directly. |
+| `Map<String, dynamic>` | No | Returns the typed map directly. |
+| `List<int>` or `List<Map<String, dynamic>>` | No | No custom model constructor is called. |
+| `ResponseBody` | No | Preserves Dio's raw response body. |
+| `Stream<List<int>>` or `Stream<String>` | No | Uses the generated streaming path. |
+
+Dart-targeted clients use `Isolate.run` and require:
+
+```dart
+import 'dart:isolate';
+```
+
+Flutter-targeted clients use `compute` and require:
+
+```dart
+import 'package:flutter/foundation.dart' show compute;
+```
+
+Set `target: HttpTarget.flutter` with the Flutter import. The method-level
+annotation can also return decoding to `HttpParseThread.main` when the client
+default is isolate decoding.
 
 > [!TIP]
-> If you are migrating a large codebase, use `dust build` regularly to catch mismatched path parameters or unsupported return types early via the built-in diagnostic engine.
+> Consider isolate decoding for endpoints that construct many custom model
+> objects. It does not move the network request or every kind of response
+> handling to a background isolate.
+
+## Generated Request Tests
+
+Set `generateTest: true` to generate request-mapping tests under
+`test/generated`. These tests intercept Dio requests and verify the method,
+path, query values, headers, extras, and body without calling a real server.
+
+```dart
+@HttpClient(
+  baseUrl: 'https://api.example.com',
+  generateTest: true,
+)
+abstract interface class UserApi {
+  // ...
+}
+```
+
+## Examples
+
+- [Complete API contract](../../examples/product_showcase/lib/api/todo_api.dart)
+- [Streaming and multipart API](../../examples/product_showcase/lib/api/json_placeholder_api.dart)
+- [Generated request tests](../../examples/product_showcase/test/generated/api/todo_api_test.dart)
+- [Runtime HTTP tests](../../examples/product_showcase/test/http_client_showcase_test.dart)
