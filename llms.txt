@@ -1,114 +1,129 @@
-# Dust
+# Dust AI Usage Guide
 
-Dust is Rust-powered code generation for Dart and Flutter. It helps humans and
-AI coding agents build app features with typed generated APIs instead of
-handwritten repetitive plumbing.
+Dust is Rust-powered code generation for Dart and Flutter apps. Use it to
+replace repetitive app plumbing with typed generated APIs.
 
-Primary users: Dart developers, Flutter developers, and coding agents editing
-Dart or Flutter apps.
-
-Repository: https://github.com/y3l1n4ung/dust
-License: MIT
-
-## Install
-
-macOS/Linux:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.sh | bash
-```
-
-Windows PowerShell:
-
-```powershell
-irm https://raw.githubusercontent.com/y3l1n4ung/dust/main/install.ps1 | iex
-```
-
-Installers place `dust` in `$HOME/.local/bin`. Add that directory to `PATH`.
+AI agent goal: edit normal Dart/Flutter source, add Dust annotations, run Dust,
+then use generated APIs. Do not edit `.g.dart` files by hand.
 
 ## Packages
 
-- `dust_dart`: Dart annotations/runtime for derives, JSON, validation, HTTP,
-  and Database annotations.
-- `dust_flutter`: Flutter annotations/runtime for routing, state, and i18n.
-- `dust_db_sqlite3`: native SQLite runtime for generated Database code.
+- `dust_dart`: Dart models, JSON, validation, HTTP, Database annotations.
+- `dust_flutter`: Flutter routing, state, i18n.
+- `dust_db_sqlite3`: native SQLite runtime for Dust Database.
 
-## Feature Status
+## What Dust Replaces
 
-- Stable: data classes, JSON, validation, HTTP clients.
-- Beta: routing, state management, i18n, Database.
-- Planned: Firebase, Supabase.
+| Existing app code | Dust replacement |
+| :--- | :--- |
+| Manual `toString`, equality, `hashCode`, `copyWith` | `@Derive([ToString(), Eq(), CopyWith()])` |
+| Manual `toJson` / `fromJson` | `@Derive([Serialize(), Deserialize()])` |
+| Repeated model/form validation | `@Derive([Validate()])` and field `@Validate(...)` |
+| Handwritten Dio clients | `@HttpClient`, `@GET`, `@POST`, `@Body`, `@Path`, `@Query` |
+| String route names and path parsing | `@AppRouter` and `@AppRoute` |
+| ViewModel provider/scope boilerplate | `@ViewModel` |
+| Manual ARB/bootstrap wiring | `TranslatedText` plus `dust i18n build` |
+| Handwritten SQLite DAO bridge code | `@SqlxDatabase`, `@SqlxDao`, `@Query`, `FromRow()` |
 
-Stable `0.1.x` authoring APIs should stay compatible. Beta APIs can still be
-refined.
+Dust does not replace UI design, business rules, backend API design, database
+schema design, or app architecture decisions.
 
-## Common Commands
+## When To Use Each Feature
+
+| Need | Use | Package | Status |
+| :--- | :--- | :--- | :--- |
+| Value/model helpers | Derive | `dust_dart` | Stable |
+| JSON API payloads | SerDe | `dust_dart` | Stable |
+| Form/model checks | Validation | `dust_dart` | Stable |
+| Typed REST calls | HTTP | `dust_dart` | Stable |
+| Deep links and guards | Routing | `dust_flutter` | Beta |
+| Typed UI state | State | `dust_flutter` | Beta |
+| ARB translations | i18n | `dust_flutter` | Beta |
+| Checked SQLite queries | Database | `dust_dart`, `dust_db_sqlite3` | Beta |
+
+Stable `0.1.x` authoring APIs should stay compatible. Beta APIs may change.
+
+## Migration Pattern
+
+For any Dust migration:
+
+1. Keep the app-facing class/interface/page names stable.
+2. Add the correct Dust annotation and `part '<file>.g.dart';`.
+3. Add generated mixins/factories only where the guide requires them.
+4. Run the correct Dust command.
+5. Replace handwritten boilerplate with generated APIs.
+6. Add or update tests for the behavior the app depends on.
+
+Feature-specific notes:
+
+- Derive: keep fields and constructors; add `with _$ClassName` when generated
+  instance members are needed.
+- JSON: add `Serialize()`/`Deserialize()`, call `_$ClassNameFromJson(json)`,
+  and use generated `toJson()`.
+- HTTP: define an abstract API, annotate methods/params, inject the generated
+  Dio-backed client.
+- Routing: use one `route.dart` entrypoint, generated route classes, and tests
+  for important deep links.
+- State: put durable UI data in state, dependencies in args, and use generated
+  scopes/readers/watchers. Do not add mirror getters for `state.*` or `args.*`.
+- i18n: keep stable keys; `defaultText` is source-locale fallback, not the
+  source of truth for translated locales.
+- Database: write migrations first, keep SQL static in `@Query`, map rows with
+  `FromRow()`, and treat Dust DB as raw SQL, not an ORM.
+
+## Commands
+
+Normal generation:
 
 ```bash
 dust build
 dust check
-dust watch
-dust clean
-dust doctor
+```
+
+Database:
+
+```bash
+dust build
 dust db build
+dust check
 dust check --db
+```
+
+i18n:
+
+```bash
 dust i18n scan
 dust i18n build
 dust i18n check
 ```
 
-Run `dust --help` and `dust <command> --help` for current options.
+Helpers:
+
+```bash
+dust watch
+dust clean
+dust doctor
+```
 
 ## Generated Files
 
-- Normal generated Dart files use `.g.dart`.
-- Do not edit generated files by hand.
-- Run `dust build` to write generated files.
-- Run `dust check` in CI to verify generated files are current.
-- Database code uses `dust db build` and `dust check --db`.
+- Generated Dart files use `.g.dart`.
+- Never edit generated files directly.
+- Run `dust build` after changing annotations or source models.
+- Run `dust check` in CI to catch stale generated files.
+- Database output also needs `dust db build` and `dust check --db`.
 
-## Main Docs
+## Docs To Open
 
-- README: `README.md`
+- Overview/install: `README.md`
 - Usage index: `docs/usage/README.md`
-- Derive guide: `docs/usage/derive.md`
-- JSON guide: `docs/usage/serde.md`
-- Validation guide: `docs/usage/validation.md`
-- HTTP guide: `docs/usage/http.md`
-- Routing guide: `docs/usage/routing.md`
-- State guide: `docs/usage/state.md`
-- i18n guide: `docs/usage/i18n.md`
-- Database guide: `docs/usage/db.md`
-- Developer guide: `docs/developer.md`
-- Plugin guide: `docs/plugin-guide.md`
-- Contributing: `CONTRIBUTING.md`
-
-## Examples
-
-- `examples/product_showcase`: Dart derives, JSON, validation, HTTP, and row
-  mapping.
-- `examples/shopping_app`: Flutter routing, state, i18n, HTTP, and Database.
-- `examples/benchmark_project`: large generated input for build and cache
-  measurements.
-
-## Repo Map
-
-- `crates/dust_cli`: `dust` command-line interface.
-- `crates/dust_driver`: build/check/watch orchestration.
-- `crates/dust_parser_dart*`: Dart parsing.
-- `crates/dust_resolver`: imports, symbols, annotations, and type resolution.
-- `crates/dust_ir`: normalized plugin-facing IR.
-- `crates/dust_plugin_*`: feature generators.
-- `crates/dust_emitter`: final `.g.dart` assembly.
-- `packages/`: public Dart and Flutter runtime packages.
-- `examples/`: real proof apps.
-
-## Agent Rules
-
-- Read `AGENTS.md` before making repo changes.
-- Never start implementation work on `main`.
-- Keep docs factual; do not add unsupported benchmark or release claims.
-- Prefer parser/IR facts over plugin-local source-string parsing.
-- Keep `dust_dart` Dart-only and `dust_flutter` Flutter-only.
-- Routing uses Navigator 2.0 without an external routing package.
-- Database is raw SQL with build-time validation, not an ORM.
+- Data classes: `docs/usage/derive.md`
+- JSON: `docs/usage/serde.md`
+- Validation: `docs/usage/validation.md`
+- HTTP: `docs/usage/http.md`
+- Routing: `docs/usage/routing.md`
+- State: `docs/usage/state.md`
+- i18n: `docs/usage/i18n.md`
+- Database: `docs/usage/db.md`
+- Dart example: `examples/product_showcase`
+- Flutter example: `examples/shopping_app`
