@@ -1,4 +1,5 @@
 import 'pool.dart';
+import 'sqlx_error.dart';
 
 /// Converts one database row into a typed Dart object.
 typedef RowMapper<T> = T Function(Row row);
@@ -19,9 +20,11 @@ abstract final class RowMapperRegistry {
     if (T == Row) return row as T;
     final mapper = _mappers[T];
     if (mapper == null) {
-      throw StateError(
+      throw SqlxError.decode(
         'No Database FromRow mapper registered for $T. '
-        'Add @Derive([FromRow()]) and import the generated part file.',
+        'Pass a RowMapper directly or add @Derive([FromRow()]) and import '
+        'the generated part file.',
+        operation: 'RowMapperRegistry.map<$T>',
       );
     }
     return mapper(row) as T;

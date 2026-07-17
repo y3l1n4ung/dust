@@ -24,7 +24,16 @@ void main() {
       () => RowMapperRegistry.map<_StandaloneUser>(
         _MapRow(const <String, Object?>{}),
       ),
-      throwsA(isA<StateError>()),
+      throwsA(
+        isA<SqlxDecodeError>()
+            .having(
+                (error) => error.category, 'category', SqlxErrorCategory.decode)
+            .having(
+              (error) => error.operation,
+              'operation',
+              'RowMapperRegistry.map<_StandaloneUser>',
+            ),
+      ),
     );
   });
 

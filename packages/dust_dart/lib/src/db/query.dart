@@ -7,7 +7,8 @@ import 'sqlx_error.dart';
 /// Typed row query.
 final class QueryAs<T> {
   /// Creates one typed row query.
-  const QueryAs(this.sql, this.parameters);
+  const QueryAs(this.sql, this.parameters, {RowMapper<T>? mapper})
+      : _mapper = mapper;
 
   /// Static SQL source.
   final String sql;
@@ -15,26 +16,29 @@ final class QueryAs<T> {
   /// Positional SQL parameter values.
   final List<Object?> parameters;
 
+  final RowMapper<T>? _mapper;
+
   /// Fetches exactly one row and maps it as [T].
   Future<T> fetchOne(DatabaseExecutor db) async {
-    return _unwrap(
-      await db.fetchOne<T>(sql, parameters, RowMapperRegistry.map<T>),
-    );
+    return _unwrap(await db.fetchOne<T>(sql, parameters, _rowMapper));
   }
 
   /// Fetches zero or one row and maps it as [T] when present.
   Future<T?> fetchOptional(DatabaseExecutor db) async {
-    return _unwrap(
-      await db.fetchOptional<T>(sql, parameters, RowMapperRegistry.map<T>),
-    );
+    return _unwrap(await db.fetchOptional<T>(sql, parameters, _rowMapper));
   }
 
   /// Fetches all rows and maps each as [T].
   Future<List<T>> fetchAll(DatabaseExecutor db) async {
-    return _unwrap(
-      await db.fetchAll<T>(sql, parameters, RowMapperRegistry.map<T>),
-    );
+    return _unwrap(await db.fetchAll<T>(sql, parameters, _rowMapper));
   }
+
+  /// Returns a copy that maps rows with [mapper].
+  QueryAs<T> withMapper(RowMapper<T> mapper) {
+    return QueryAs<T>(sql, parameters, mapper: mapper);
+  }
+
+  RowMapper<T> get _rowMapper => _mapper ?? RowMapperRegistry.map<T>;
 }
 
 /// Scalar query returning the first selected column.
@@ -94,8 +98,12 @@ final class QueryExecute {
 }
 
 /// Creates a typed row query helper.
-QueryAs<T> queryAs<T>(String sql, List<Object?> parameters) {
-  return QueryAs<T>(sql, parameters);
+QueryAs<T> queryAs<T>(
+  String sql,
+  List<Object?> parameters, {
+  RowMapper<T>? mapper,
+}) {
+  return QueryAs<T>(sql, parameters, mapper: mapper);
 }
 
 /// Creates a scalar query helper.

@@ -45,7 +45,11 @@ final class _TransactionCoordinator {
       );
       if (rollback != null) return Err<T, SqlxError>(rollback);
       return Err<T, SqlxError>(
-        SqlxError.driver('SQLite transaction failed.', cause: error),
+        _sqliteTransactionError(
+          'SQLite transaction failed.',
+          cause: error,
+          operation: 'transaction callback',
+        ),
       );
     } finally {
       tx._deactivate();
@@ -87,7 +91,11 @@ final class _TransactionCoordinator {
       final rollback = _rollbackSavepoint(database, name);
       if (rollback != null) return Err<T, SqlxError>(rollback);
       return Err<T, SqlxError>(
-        SqlxError.driver('SQLite transaction failed.', cause: error),
+        _sqliteTransactionError(
+          'SQLite transaction failed.',
+          cause: error,
+          operation: name,
+        ),
       );
     } finally {
       tx._deactivate();
@@ -226,6 +234,10 @@ SqlxError? _executeControl(
     database.execute(sql);
     return null;
   } catch (error) {
-    return SqlxError.driver(message, cause: error);
+    return _sqliteTransactionError(
+      message,
+      cause: error,
+      operation: sql,
+    );
   }
 }

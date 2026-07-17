@@ -262,6 +262,8 @@ ordering, limits, and offsets are passed to SQLite and SQLx as written.
 
 `@Derive([FromRow()])` generates a `TypeFromRow.fromRow(Row row)` mapper. The
 mapper reads columns by name through the driver-independent `Row` interface.
+Generated DAO methods pass that mapper directly, so normal generated database
+code does not depend on side-effect registration or import order.
 
 `@Sqlx` supports these mapping options:
 
@@ -277,6 +279,31 @@ mapper reads columns by name through the driver-independent `Row` interface.
 
 Directly supported field types are `String`, `int`, `double`, `num`, `bool`,
 `DateTime`, and nullable variants. Use `json` or `tryFrom` for custom values.
+
+For manual typed queries outside generated DAOs, pass a mapper directly:
+
+```dart
+final user = await queryAs<UserRow>(
+  'SELECT id, email, name FROM users WHERE id = ?',
+  [id],
+  mapper: UserRowFromRow.fromRow,
+).fetchOne(database.connection);
+```
+
+## Error Context
+
+DB calls return `Result<T, SqlxError>`. The error string stays short for app
+developers, and the error also carries structured fields for logs and tests:
+
+- `category`, such as `connection`, `migration`, `query`, `decode`,
+  `cardinality`, or `transaction`
+- `driver`, when known
+- `operation`, such as the SQL string, migration name, or transaction command
+- `cause`, when the lower-level driver provided one
+
+Generated DAOs and the SQLite runtime use these categories for common failures:
+missing tables, migration errors, decode failures, wrong row counts, closed
+connections, and transaction control failures.
 
 ## Validation
 
