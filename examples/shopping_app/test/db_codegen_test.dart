@@ -104,6 +104,21 @@ void main() {
     expect(await app.connection.countCachedProducts(), 1);
   });
 
+  test(
+    'shopping cache surfaces invalid connect options through the generated factory',
+    () {
+      expect(
+        () => ShoppingCacheDatabase.open(
+          ':memory:',
+          options: const SqliteConnectOptions(
+            busyTimeout: Duration(milliseconds: -1),
+          ),
+        ),
+        throwsA(isA<SqlxDriverError>()),
+      );
+    },
+  );
+
   test('cached repository uses generated DB in product load flow', () async {
     final app = ShoppingCacheDatabase.open(':memory:');
     addTearDown(() async {

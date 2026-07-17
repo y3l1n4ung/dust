@@ -115,6 +115,213 @@ CREATE TABLE children (
       throwsA(isA<SqlxDriverError>()),
     );
   });
+
+  group('SqliteConnectOptions constructors', () {
+    test('default constructor uses write mode without a fixed path', () {
+      const options = SqliteConnectOptions();
+      expect(options.path, isNull);
+      expect(options.inMemory, isFalse);
+      expect(options.createIfMissing, isTrue);
+      expect(options.readOnly, isFalse);
+      expect(options.pragmas, isEmpty);
+    });
+
+    test('path constructor fixes the path and keeps write defaults', () {
+      const options = SqliteConnectOptions.path('app.db', foreignKeys: true);
+      expect(options.path, 'app.db');
+      expect(options.inMemory, isFalse);
+      expect(options.createIfMissing, isTrue);
+      expect(options.readOnly, isFalse);
+      expect(options.foreignKeys, isTrue);
+    });
+
+    test('readOnly constructor disables create-if-missing and enables read-only', () {
+      const options = SqliteConnectOptions.readOnly('app.db');
+      expect(options.path, 'app.db');
+      expect(options.inMemory, isFalse);
+      expect(options.readOnly, isTrue);
+      expect(options.createIfMissing, isFalse);
+    });
+
+    test('memory constructor has no path and uses write mode', () {
+      const options = SqliteConnectOptions.memory();
+      expect(options.path, isNull);
+      expect(options.inMemory, isTrue);
+      expect(options.createIfMissing, isTrue);
+      expect(options.readOnly, isFalse);
+    });
+  });
+
+  test('connect requires a path when not using an in-memory database', () {
+    expect(
+      () => Sqlite3Driver.connect(const SqliteConnectOptions()),
+      throwsA(
+        isA<SqlxDriverError>().having(
+          (error) => error.message,
+          'message',
+          contains('SQLite path is required'),
+        ),
+      ),
+    );
+  });
+
+  test('open rejects explicit options with a path that conflicts with the open path', () {
+    expect(
+      () => Sqlite3Driver.open(
+        'a.db',
+        options: SqliteConnectOptions.path('b.db'),
+      ),
+      throwsA(
+        isA<SqlxDriverError>().having(
+          (error) => error.message,
+          'message',
+          contains('does not match'),
+        ),
+      ),
+    );
+  });
+
+  test('connect rejects a negative busyTimeout before opening the database', () {
+    expect(
+      () => Sqlite3Driver.connect(
+        const SqliteConnectOptions.memory(
+          busyTimeout: Duration(milliseconds: -1),
+        ),
+      ),
+      throwsA(
+        isA<SqlxDriverError>().having(
+          (error) => error.message,
+          'message',
+          contains('busyTimeout must not be negative'),
+        ),
+      ),
+    );
+  });
+
+  test('connect rejects pragma values that are not bool, num, or String', () {
+    expect(
+      () => Sqlite3Driver.connect(
+        const SqliteConnectOptions.memory(
+          pragmas: <String, Object>{'bad_value': <int>[1]},
+        ),
+      ),
+      throwsA(
+        isA<SqlxDriverError>().having(
+          (error) => error.message,
+          'message',
+          contains('Invalid SQLite pragma value'),
+        ),
+      ),
+    );
+  });
+
+  test('connect applies custom string pragma values', () async {
+    final db = Sqlite3Driver.connect(
+      const SqliteConnectOptions.memory(
+        pragmas: <String, Object>{'temp_store': 'FILE'},
+      ),
+    );
+    addTearDown(() async {
+      await db.close();
+    });
+
+    expect(db.database.select('PRAGMA temp_store').single.columnAt(0), 1);
+  });
+
+  test('connect escapes embedded quotes in custom string pragma values', () async {
+    final db = Sqlite3Driver.connect(
+      const SqliteConnectOptions.memory(
+        pragmas: <String, Object>{'dust_test_marker': "O'Brien"},
+      ),
+    );
+    addTearDown(() async {
+      await db.close();
+    });
+
+    // `dust_test_marker` is not a real SQLite pragma; SQLite treats unknown
+    // pragmas as no-ops rather than errors. This confirms the generated
+    // `PRAGMA dust_test_marker = 'O''Brien'` statement is syntactically
+    // valid and does not throw.
+    expect(db.database.select('SELECT 1').single.columnAt(0), 1);
+  });
+
+  test('connect applies the requested journal mode for file-based databases', () async {
+    final directory = await Directory.systemTemp.createTemp('dust_sqlite_');
+    addTearDown(() async {
+      await directory.delete(recursive: true);
+    });
+
+    const expected = <SqliteJournalMode, String>{
+      SqliteJournalMode.delete: 'delete',
+      SqliteJournalMode.truncate: 'truncate',
+      SqliteJournalMode.persist: 'persist',
+      SqliteJournalMode.memory: 'memory',
+      SqliteJournalMode.wal: 'wal',
+      SqliteJournalMode.off: 'off',
+    };
+
+    for (final entry in expected.entries) {
+      final path = '${directory.path}/${entry.key.name}.db';
+      final db = Sqlite3Driver.connect(
+        SqliteConnectOptions.path(path, journalMode: entry.key),
+      );
+      expect(
+        db.database.select('PRAGMA journal_mode').single.columnAt(0),
+        entry.value,
+        reason: 'journal mode ${entry.key}',
+      );
+      await db.close();
+    }
+  });
+
+  test('connect applies the requested synchronous mode', () async {
+    final directory = await Directory.systemTemp.createTemp('dust_sqlite_');
+    addTearDown(() async {
+      await directory.delete(recursive: true);
+    });
+
+    const expected = <SqliteSynchronousMode, int>{
+      SqliteSynchronousMode.off: 0,
+      SqliteSynchronousMode.normal: 1,
+      SqliteSynchronousMode.full: 2,
+      SqliteSynchronousMode.extra: 3,
+    };
+
+    for (final entry in expected.entries) {
+      final path = '${directory.path}/${entry.key.name}.db';
+      final db = Sqlite3Driver.connect(
+        SqliteConnectOptions.path(path, synchronous: entry.key),
+      );
+      expect(
+        db.database.select('PRAGMA synchronous').single.columnAt(0),
+        entry.value,
+        reason: 'synchronous mode ${entry.key}',
+      );
+      await db.close();
+    }
+  });
+
+  test('open reports a descriptive error when the underlying sqlite open fails', () async {
+    final directory = await Directory.systemTemp.createTemp('dust_sqlite_');
+    addTearDown(() async {
+      await directory.delete(recursive: true);
+    });
+    final path = '${directory.path}/missing.db';
+
+    expect(
+      () => Sqlite3Driver.open(
+        path,
+        options: const SqliteConnectOptions(createIfMissing: false),
+      ),
+      throwsA(
+        isA<SqlxDriverError>().having(
+          (error) => error.message,
+          'message',
+          contains('SQLite database open failed'),
+        ),
+      ),
+    );
+  });
 }
 
 int _pragmaInt(Sqlite3Driver db, String name) {

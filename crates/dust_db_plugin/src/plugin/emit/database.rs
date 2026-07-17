@@ -220,6 +220,22 @@ mod tests {
         );
     }
 
+    #[test]
+    fn emits_sqlite_database_with_options_param_and_no_migrations_dir() {
+        let db_class = class("AppDatabase");
+        let library = library(std::path::Path::new(""), vec![db_class.clone()]);
+        let db = DatabaseClass {
+            class: &db_class,
+            driver: DbDriver::Sqlite3,
+            migrations: "migrations".to_owned(),
+        };
+
+        assert_eq!(
+            render_database_class(&library, &db),
+            EXPECTED_SQLITE_DATABASE_WITHOUT_MIGRATIONS
+        );
+    }
+
     const EXPECTED_SQLITE_DATABASE: &str = r#"final class _$AppDatabase implements AppDatabase {
   _$AppDatabase._(this.connection);
 
@@ -254,6 +270,28 @@ const Map<String, String> _$appDatabaseMigrations = <String, String>{
     SqliteConnectOptions? options,
   }) {
     final connection = throw UnsupportedError('Driver.postgres is not supported in Database v1');
+    return _$AppDatabase._(connection);
+  }
+
+  final DatabaseConnection connection;
+
+  Pool get pool => connection as Pool;
+}
+
+const Map<String, String> _$appDatabaseMigrations = <String, String>{};"#;
+
+    const EXPECTED_SQLITE_DATABASE_WITHOUT_MIGRATIONS: &str = r#"final class _$AppDatabase implements AppDatabase {
+  _$AppDatabase._(this.connection);
+
+  factory _$AppDatabase.open(
+    String path, {
+    SqliteConnectOptions? options,
+  }) {
+    final connection = Sqlite3Driver.open(
+      path,
+      migrations: _$appDatabaseMigrations,
+      options: options,
+    );
     return _$AppDatabase._(connection);
   }
 
