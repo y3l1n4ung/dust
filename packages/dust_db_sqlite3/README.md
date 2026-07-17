@@ -166,6 +166,18 @@ await database.connection.transaction((tx) async {
 Transaction executors are valid only while the callback is running. Operations
 after the callback return `Err(SqlxError)`.
 
+## Error Context
+
+SQLite operations return `Result<T, SqlxError>`. Error strings stay concise, and
+errors also expose structured context for logging:
+
+- `category`: connection, migration, query, decode, cardinality, or transaction
+- `driver`: `Driver.sqlite3` when the SQLite runtime produced the error
+- `operation`: SQL string, migration name, transaction command, or read action
+- `cause`: lower-level driver error when available
+
+Generated DAOs pass `TypeFromRow.fromRow` mappers directly.
+
 ## Raw SQLite Access
 
 Use `raw` only for dynamic SQL that cannot be checked during generation:

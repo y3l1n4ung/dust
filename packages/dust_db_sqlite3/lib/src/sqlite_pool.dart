@@ -2,7 +2,9 @@ import 'package:dust_dart/db.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 
 part 'connect_options.dart';
+part 'errors.dart';
 part 'migrations.dart';
+part 'operations.dart';
 part 'raw_sql.dart';
 part 'row.dart';
 part 'transaction.dart';
@@ -99,7 +101,11 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
           return Err<List<T>, SqlxError>(error);
         } catch (error) {
           return Err<List<T>, SqlxError>(
-            SqlxError.decode('SQLite row decode failed.', cause: error),
+            _sqliteDecodeError(
+              'SQLite row decode failed.',
+              cause: error,
+              operation: sql,
+            ),
           );
         }
       },
@@ -116,10 +122,12 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     final rows = _queryResult(sql, parameters);
     return rows.match(
       ok: (rows) {
-        if (rows.isEmpty) return Err<T, SqlxError>(SqlxError.noRows(sql));
+        if (rows.isEmpty) {
+          return Err<T, SqlxError>(_sqliteNoRows(sql));
+        }
         if (rows.length > 1) {
           return Err<T, SqlxError>(
-            SqlxError.tooManyRows(expected: 1, actual: rows.length, query: sql),
+            _sqliteTooManyRows(expected: 1, actual: rows.length, query: sql),
           );
         }
         return _mapRow<T>(sql, rows.single, mapper);
@@ -138,11 +146,11 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
       ok: (rows) {
         if (rows.isEmpty) {
           if (null is T) return Ok<T, SqlxError>(null as T);
-          return Err<T, SqlxError>(SqlxError.noRows(sql));
+          return Err<T, SqlxError>(_sqliteNoRows(sql));
         }
         if (rows.length > 1) {
           return Err<T, SqlxError>(
-            SqlxError.tooManyRows(expected: 1, actual: rows.length, query: sql),
+            _sqliteTooManyRows(expected: 1, actual: rows.length, query: sql),
           );
         }
         try {
@@ -156,7 +164,11 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
           return Err<T, SqlxError>(error);
         } catch (error) {
           return Err<T, SqlxError>(
-            SqlxError.decode('SQLite scalar decode failed.', cause: error),
+            _sqliteDecodeError(
+              'SQLite scalar decode failed.',
+              cause: error,
+              operation: sql,
+            ),
           );
         }
       },
@@ -183,8 +195,18 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
   Future<Result<Unit, SqlxError>> close() async {
     if (!_ownsDatabase || _closed) return const Ok<Unit, SqlxError>(unit);
     _closed = true;
-    _database.close();
-    return const Ok<Unit, SqlxError>(unit);
+    try {
+      _database.close();
+      return const Ok<Unit, SqlxError>(unit);
+    } catch (error) {
+      return Err<Unit, SqlxError>(
+        _sqliteConnectionError(
+          'SQLite connection close failed.',
+          cause: error,
+          operation: 'close',
+        ),
+      );
+    }
   }
 
   Result<List<Row>, SqlxError> _queryResult(
@@ -197,7 +219,11 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
       return Err<List<Row>, SqlxError>(error);
     } catch (error) {
       return Err<List<Row>, SqlxError>(
-        SqlxError.driver('SQLite query failed.', cause: error),
+        _sqliteQueryError(
+          'SQLite query failed.',
+          cause: error,
+          operation: sql,
+        ),
       );
     }
   }
@@ -207,12 +233,18 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     List<Object?> parameters,
   ) {
     try {
-      return Ok<ExecResult, SqlxError>(_executeUnchecked(sql, parameters));
+      return Ok<ExecResult, SqlxError>(
+        _executeUnchecked(sql, parameters),
+      );
     } on SqlxError catch (error) {
       return Err<ExecResult, SqlxError>(error);
     } catch (error) {
       return Err<ExecResult, SqlxError>(
-        SqlxError.driver('SQLite execute failed.', cause: error),
+        _sqliteQueryError(
+          'SQLite execute failed.',
+          cause: error,
+          operation: sql,
+        ),
       );
     }
   }
@@ -224,7 +256,11 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
       return Err<T, SqlxError>(error);
     } catch (error) {
       return Err<T, SqlxError>(
-        SqlxError.decode('SQLite row decode failed for `$sql`.', cause: error),
+        _sqliteDecodeError(
+          'SQLite row decode failed.',
+          cause: error,
+          operation: sql,
+        ),
       );
     }
   }
@@ -235,60 +271,20 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
   }
 
   SqlxError? _closedError() {
-    if (_closed) return SqlxError.driver('SQLite connection is closed.');
+    if (_closed) {
+      return _sqliteConnectionError(
+        'SQLite connection is closed.',
+        operation: 'checkOpen',
+      );
+    }
     final scope = _transactionScope;
     if (scope != null && !scope.active) {
-      return SqlxError.driver('SQLite transaction is closed.');
+      return _sqliteTransactionError(
+        'SQLite transaction is closed.',
+        operation: 'checkTransactionOpen',
+      );
     }
     return null;
-  }
-
-  List<Row> _queryUnchecked(String sql, List<Object?> parameters) {
-    _checkOpen();
-    final result = _database.select(sql, parameters);
-    return <Row>[for (final row in result) Sqlite3Row(row)];
-  }
-
-  ExecResult _executeUnchecked(String sql, List<Object?> parameters) {
-    _checkOpen();
-    final statement = _database.prepare(sql);
-    try {
-      statement.execute(parameters);
-      return ExecResult(
-        rowsAffected: _database.updatedRows,
-        lastInsertId: _database.lastInsertRowId,
-      );
-    } finally {
-      statement.close();
-    }
-  }
-
-  static sqlite.Database _openDatabase(SqliteConnectOptions options) {
-    try {
-      if (options.inMemory) return sqlite.sqlite3.openInMemory();
-      return sqlite.sqlite3.open(options.path!, mode: options._openMode);
-    } catch (error) {
-      throw SqlxError.driver(
-        'SQLite database open failed for `${options._label}`.',
-        cause: error,
-      );
-    }
-  }
-
-  static void _applyConnectOptions(
-    sqlite.Database database,
-    SqliteConnectOptions options,
-  ) {
-    for (final statement in options._pragmaStatements()) {
-      try {
-        database.execute(statement);
-      } catch (error) {
-        throw SqlxError.driver(
-          'SQLite connection option failed: `$statement`.',
-          cause: error,
-        );
-      }
-    }
   }
 }
 

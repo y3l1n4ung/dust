@@ -11,7 +11,7 @@ final class Sqlite3Row implements Row {
   T read<T>(String column) {
     final value = readNullable<T>(column);
     if (value == null) {
-      throw SqlxError.nullColumn(column);
+      throw _sqliteNullColumn(column, 'read:$column');
     }
     return value;
   }
@@ -25,7 +25,7 @@ final class Sqlite3Row implements Row {
   T readIndex<T>(int index) {
     final value = readIndexNullable<T>(index);
     if (value == null) {
-      throw SqlxError.nullColumn('index $index');
+      throw _sqliteNullColumn('index $index', 'readIndex:$index');
     }
     return value;
   }
@@ -40,7 +40,7 @@ final class Sqlite3Row implements Row {
   bool readBool(String column) {
     final value = readBoolNullable(column);
     if (value == null) {
-      throw SqlxError.nullColumn(column);
+      throw _sqliteNullColumn(column, 'readBool:$column');
     }
     return value;
   }
@@ -55,17 +55,23 @@ final class Sqlite3Row implements Row {
       return switch (value.toLowerCase()) {
         'true' || '1' => true,
         'false' || '0' => false,
-        _ => throw SqlxError.decode('Column `$column` cannot be read as bool.'),
+        _ => throw _sqliteDecodeError(
+            'Column `$column` cannot be read as bool.',
+            operation: 'readBool:$column',
+          ),
       };
     }
-    throw SqlxError.decode('Column `$column` cannot be read as bool.');
+    throw _sqliteDecodeError(
+      'Column `$column` cannot be read as bool.',
+      operation: 'readBool:$column',
+    );
   }
 
   @override
   DateTime readDateTime(String column) {
     final value = readDateTimeNullable(column);
     if (value == null) {
-      throw SqlxError.nullColumn(column);
+      throw _sqliteNullColumn(column, 'readDateTime:$column');
     }
     return value;
   }
@@ -79,13 +85,17 @@ final class Sqlite3Row implements Row {
       try {
         return DateTime.parse(value).toUtc();
       } on FormatException catch (error) {
-        throw SqlxError.decode(
+        throw _sqliteDecodeError(
           'Column `$column` cannot be read as DateTime.',
           cause: error,
+          operation: 'readDateTime:$column',
         );
       }
     }
-    throw SqlxError.decode('Column `$column` cannot be read as DateTime.');
+    throw _sqliteDecodeError(
+      'Column `$column` cannot be read as DateTime.',
+      operation: 'readDateTime:$column',
+    );
   }
 
   static T? _coerce<T>(Object? value, String column) {
@@ -93,6 +103,9 @@ final class Sqlite3Row implements Row {
     if (T == double && value is int) return value.toDouble() as T;
     if (T == num && value is num) return value as T;
     if (value is T) return value as T;
-    throw SqlxError.decode('Column `$column` cannot be read as $T.');
+    throw _sqliteDecodeError(
+      'Column `$column` cannot be read as $T.',
+      operation: 'read:$column',
+    );
   }
 }
