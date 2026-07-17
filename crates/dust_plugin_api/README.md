@@ -1,44 +1,34 @@
-# 🧩 dust_plugin_api
+# dust_plugin_api
 
-The foundational contract and integration layer for Dust plugins. This crate defines the interfaces that allow independent feature generators (like SerDe, Routing, or Data Classes) to communicate with the core build driver and the final emitter.
+Shared contract between Dust plugins, the driver, and the emitter.
 
-## 🏗️ Architectural Role
+Plugins implement `DustPlugin` to collect workspace facts, validate IR, and
+return generated contributions.
 
-`dust_plugin_api` acts as the **mediator** in the 4-pass pipeline. It provides:
-1. **Abstraction**: Decouples specific generator logic from the build orchestration.
-2. **Global Context**: Mechanisms for plugins to share "facts" across files (e.g., "Class X is copyable").
-3. **Symbol Management**: A reservation system to prevent name collisions in generated code.
+## Owns
 
-## 🔑 Key Components
+- `DustPlugin`
+- plugin validation and generation result types
+- workspace analysis containers
+- generated contribution structures
+- symbol reservation helpers
+- shared generated-file header constants
 
-### `DustPlugin` Trait
-The primary interface for all features. It defines three distinct phases:
-- `collect_workspace_analysis`: global fact gathering from parser/IR-backed file data.
-- `validate`: static analysis of `DartFileIr` before any code is generated.
-- `generate`: rendering `DartFileIr` into generated units using `PluginContext`.
+## Plugin Flow
 
-`generate` is the only output hook. It receives the shared `PluginContext` and
-returns ordered `PluginContribution` units.
+1. `collect_workspace_analysis` records cross-file facts.
+2. `validate` reports feature-specific diagnostics before output is written.
+3. `generate` returns ordered `PluginContribution` values for the emitter.
 
-### `WorkspaceAnalysis`
-A multi-threaded, append-only collection system.
-- **Builder**: Used during scanning to record facts keyed by strings.
-- **Snapshot**: A serialized, per-file subset used for incremental build caching.
-- **Immutable Analysis**: The final set of global facts provided to plugins during emission.
+`generate` is the only output hook. Plugins should generate from `DartFileIr`
+and `PluginContext`, not by reparsing raw Dart source.
 
-### `PluginContribution`
-One ordered generated unit returned by `generate`. The `dust_emitter` merges
-these contributions into the final `.g.dart` file.
+## Design Rules
 
-### `SymbolPlan`
-A deterministic registry of reserved names (e.g., `_$User`, `_undefined`). It ensures that multiple plugins can safely generate code into the same scope without clobbering each other.
+- Keep plugin output deterministic.
+- Put shared cross-file facts in workspace analysis.
+- Reserve generated names through the shared symbol plan.
+- Keep feature-specific logic inside the owning plugin crate.
 
-## 🛠️ Implementation Rules
-
-- **Deterministic**: Plugins must be pure functions of `(DartFileIr, PluginContext)`. No side effects or non-deterministic string generation.
-- **Lazy**: Heavy computation should happen during `generate`, not `validate`.
-- **Surgical**: Plugins should only generate code for classes/enums they "own" (i.e., those carrying their specific annotations).
-- **Parse-Free**: Plugins should use normalized IR/config data, not parser surfaces or raw Dart source scanning.
-
----
-*For a step-by-step guide on creating new plugins, see [../../docs/plugin-guide.md](../../docs/plugin-guide.md).*
+See [`../../docs/plugin-guide.md`](../../docs/plugin-guide.md) for adding a new
+plugin.

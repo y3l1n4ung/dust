@@ -1,39 +1,37 @@
-# 💾 dust_cache
+# dust_cache
 
-The persistent caching layer for the Dust engine. This crate manages the `.dart_tool/dust` directory, storing fingerprints and pre-parsed snapshots to enable high-speed incremental builds.
+Persistent cache support for the Dust engine.
 
-## 🏗️ Architectural Role
+This crate owns the `.dart_tool/dust` cache data used by `dust_driver` to skip
+unchanged analysis and generation work.
 
-`dust_cache` is the **memory** of the engine. It allows Pass 1 (Discovery) and Pass 2 (Analyze) to skip work for files that haven't changed. By storing expensive-to-compute data like content hashes and analysis snapshots, it reduces subsequent build times from seconds to milliseconds.
+## Owns
 
-## 🔑 Key Concepts
+- source fingerprints
+- generated output fingerprints
+- per-library analysis snapshots
+- config and tool identity data used for invalidation
+- atomic cache reads and writes
 
-### `WorkspaceCache`
-The primary handle for cache operations.
-- **Atomic Access**: Ensures that concurrent build processes don't corrupt the cache.
-- **Key-Value Storage**: Maps source file paths to `CacheEntry` structures.
+## Cache Validity
 
-### `CacheEntry`
-A serialized snapshot of a file's state at the time of the last build. It includes:
-- **Source Hash**: BLAKE3 hash of the original `.dart` content.
-- **Output Hash**: Hash of the previously generated `.g.dart` content.
-- **Analysis Snapshot**: The plugin facts (Pass 2 output) extracted from the file.
-- **Config Hash**: A hash of the project's configuration (e.g., `pubspec.yaml`), ensuring the cache is invalidated if global settings change.
+A cache entry is reusable only when the current inputs match the persisted
+entry:
 
-## 🛡️ Cache Invalidation Strategy
+- source content hash
+- relevant package/config hash
+- Dust tool identity
+- generated output set
+- global dependency rules tracked by `dust_driver`
 
-A cache entry is considered valid only if:
-1. The current source file content matches the stored `source_hash`.
-2. The project's configuration matches the stored `config_hash`.
-3. The Dust tool binary version/hashes match (Pass 1 tool integrity).
-4. No dependent global facts have changed (handled by `dust_driver`).
+Routing, state, i18n, and DB features can add cross-file dependency rules. Those
+rules belong in the driver or plugin analysis layer, not in ad hoc cache reads.
 
-## 🚀 Performance Impact
+## Edit Here When
 
-On a project with 5,000 files:
-- **Cold Build**: ~1.3 seconds (full parsing and analysis).
-- **Warm Build (No Changes)**: **~50ms** (metadata check only).
-- **Incremental Build (1 File Change)**: ~150ms (re-parse only the changed file and its dependents).
+- cache schema changes
+- persisted fingerprints change
+- build/check/watch invalidation changes need new cache data
+- concurrent cache access behavior changes
 
----
-*The `dust_cache` uses the `bincode` and `serde` crates for high-speed binary serialization.*
+See [`../dust_driver`](../dust_driver) for scheduling and invalidation policy.
