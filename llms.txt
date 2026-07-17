@@ -1,10 +1,12 @@
 # Dust AI Usage Guide
 
-Dust is Rust-powered code generation for Dart and Flutter apps. Use it to
-replace repetitive app plumbing with typed generated APIs.
+Dust generates typed Dart and Flutter code from annotations.
 
-AI agent goal: edit normal Dart/Flutter source, add Dust annotations, run Dust,
-then use generated APIs. Do not edit `.g.dart` files by hand.
+Use it when app code has repeated model, JSON, validation, HTTP, routing, state,
+i18n, or SQLite boilerplate.
+
+AI agent rule: edit normal `.dart` files, run Dust, then use the generated APIs.
+Do not edit `.g.dart` files by hand.
 
 ## Packages
 
@@ -30,18 +32,16 @@ schema design, or app architecture decisions.
 
 ## When To Use Each Feature
 
-| Need | Use | Package | Status |
-| :--- | :--- | :--- | :--- |
-| Value/model helpers | Derive | `dust_dart` | Stable |
-| JSON API payloads | SerDe | `dust_dart` | Stable |
-| Form/model checks | Validation | `dust_dart` | Stable |
-| Typed REST calls | HTTP | `dust_dart` | Stable |
-| Deep links and guards | Routing | `dust_flutter` | Beta |
-| Typed UI state | State | `dust_flutter` | Beta |
-| ARB translations | i18n | `dust_flutter` | Beta |
-| Checked SQLite queries | Database | `dust_dart`, `dust_db_sqlite3` | Beta |
-
-Stable `0.1.x` authoring APIs should stay compatible. Beta APIs may change.
+| Need | Use | Package |
+| :--- | :--- | :--- |
+| Value/model helpers | Derive | `dust_dart` |
+| JSON API payloads | SerDe | `dust_dart` |
+| Form/model checks | Validation | `dust_dart` |
+| Typed REST calls | HTTP | `dust_dart` |
+| Deep links and guards | Routing | `dust_flutter` |
+| Typed UI state | State | `dust_flutter` |
+| ARB translations | i18n | `dust_flutter` |
+| Checked SQLite queries | Database | `dust_dart`, `dust_db_sqlite3` |
 
 ## Migration Pattern
 
@@ -76,34 +76,37 @@ Feature-specific notes:
 Normal generation:
 
 ```bash
-dust build
-dust check
+AI_MODE=true dust build
+AI_MODE=true dust check
 ```
 
 Database:
 
 ```bash
-dust build
-dust db build
-dust check
-dust check --db
+AI_MODE=true dust build
+AI_MODE=true dust db build
+AI_MODE=true dust check
+AI_MODE=true dust check --db
 ```
 
 i18n:
 
 ```bash
-dust i18n scan
-dust i18n build
-dust i18n check
+AI_MODE=true dust i18n scan
+AI_MODE=true dust i18n build
+AI_MODE=true dust i18n check
 ```
 
 Helpers:
 
 ```bash
-dust watch
-dust clean
-dust doctor
+AI_MODE=true dust watch
+AI_MODE=true dust clean
+AI_MODE=true dust doctor
 ```
+
+`AI_MODE=true` uses compact command output for agents: no banner and no
+interactive progress line, but summaries and diagnostics stay visible.
 
 ## Generated Files
 
