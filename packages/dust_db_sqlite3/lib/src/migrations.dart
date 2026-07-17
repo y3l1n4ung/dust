@@ -7,7 +7,9 @@ void _applyMigrations(
   Map<String, String> migrations,
 ) {
   if (migrations.isEmpty) return;
-  final pending = migrations.entries.toList()
+  final pending = migrations.entries
+      .where((migration) => !migration.key.endsWith('.down.sql'))
+      .toList()
     ..sort((left, right) => left.key.compareTo(right.key));
 
   database.execute('BEGIN');

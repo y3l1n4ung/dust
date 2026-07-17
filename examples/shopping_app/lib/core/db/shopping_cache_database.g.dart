@@ -30,6 +30,7 @@ final class _$ShoppingCacheDatabase implements ShoppingCacheDatabase {
 
 const Map<String, String> _$shoppingCacheDatabaseMigrations = <String, String>{
   '0001_shopping_cache.sql': 'CREATE TABLE product_cache (\n  id INTEGER PRIMARY KEY,\n  title TEXT NOT NULL,\n  price REAL NOT NULL,\n  description TEXT NOT NULL,\n  category TEXT NOT NULL,\n  image TEXT NOT NULL,\n  rating_rate REAL NOT NULL,\n  rating_count INTEGER NOT NULL,\n  payload TEXT NOT NULL,\n  source TEXT NOT NULL\n);\n\nCREATE TABLE wishlist_cache (\n  product_id INTEGER PRIMARY KEY,\n  title TEXT NOT NULL,\n  saved_at TEXT NOT NULL\n);\n',
+  '0002_product_cache_sync_metadata.up.sql': 'ALTER TABLE product_cache ADD COLUMN last_synced_at TEXT;\n\nCREATE INDEX IF NOT EXISTS idx_product_cache_last_synced_at\nON product_cache(last_synced_at);\n',
 };
 
 final class _$ShoppingCacheDao implements ShoppingCacheDao {

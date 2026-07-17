@@ -21,7 +21,7 @@ native Dart and Flutter targets, not web.
 
 ## Quick Start
 
-Create a forward-only migration at `migrations/0001_create_users.sql`:
+Create a simple migration at `migrations/0001_create_users.sql`:
 
 ```sql
 CREATE TABLE users (
@@ -123,18 +123,58 @@ await database.pool.close();
 
 ## Migrations
 
-Dust reads every `.sql` file in the configured directory in sorted filename
-order. DB generation embeds those files into the generated opener. At runtime,
-SQLite records applied filenames in `__dust_schema_migrations` and runs only
-new files.
+Dust reads migration files in the configured directory in sorted filename order.
+DB generation embeds the files that should run during normal startup. At
+runtime, SQLite records applied filenames in `__dust_schema_migrations` and
+runs only new files.
 
-Use names that sort in application order:
+Simple forward migrations use plain `.sql` names:
 
 ```text
 migrations/
   0001_create_users.sql
   0002_add_user_avatar.sql
 ```
+
+SQLx reversible migrations are also supported:
+
+```text
+migrations/
+  0001_create_users.up.sql
+  0001_create_users.down.sql
+  0002_add_user_avatar.up.sql
+  0002_add_user_avatar.down.sql
+```
+
+Example reversible pair:
+
+```sql
+-- migrations/0002_add_user_avatar.up.sql
+ALTER TABLE users ADD COLUMN avatar_url TEXT;
+```
+
+```sql
+-- migrations/0002_add_user_avatar.down.sql
+CREATE TABLE users_new (
+  id INTEGER PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL
+);
+
+INSERT INTO users_new (id, email, name)
+SELECT id, email, name FROM users;
+
+DROP TABLE users;
+ALTER TABLE users_new RENAME TO users;
+```
+
+For reversible pairs, Dust validates the pair but applies and embeds only the
+`.up.sql` file during normal build and runtime startup. `.down.sql` files are
+never applied automatically. Every `.up.sql` file must have a matching
+`.down.sql` file, and orphan `.down.sql` files are rejected.
+
+Do not mix `0001_name.sql` with `0001_name.up.sql` or `0001_name.down.sql`.
+Use one migration style per migration name.
 
 > [!IMPORTANT]
 > Do not edit or rename a migration after it ships. Existing installations have

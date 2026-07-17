@@ -57,6 +57,31 @@ void main() {
     },
   );
 
+  test('shopping cache applies reversible up migrations only', () async {
+    final app = ShoppingCacheDatabase.open(':memory:');
+    addTearDown(() async {
+      await app.pool.close();
+    });
+
+    final columns = await queryRaw(
+      'PRAGMA table_info(product_cache)',
+      const [],
+    ).fetch(app.pool);
+    expect(
+      columns.map((row) => row.read<String>('name')),
+      contains('last_synced_at'),
+    );
+
+    final migrations = await queryRaw(
+      'SELECT name FROM __dust_schema_migrations ORDER BY name',
+      const [],
+    ).fetch(app.pool);
+    expect(migrations.map((row) => row.read<String>('name')), <String>[
+      '0001_shopping_cache.sql',
+      '0002_product_cache_sync_metadata.up.sql',
+    ]);
+  });
+
   test('cached repository uses generated DB in product load flow', () async {
     final app = ShoppingCacheDatabase.open(':memory:');
     addTearDown(() async {

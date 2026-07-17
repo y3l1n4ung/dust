@@ -9,12 +9,15 @@ use dust_text::{FileId, TextRange};
 
 use super::{
     cache::{
-        QUERY_CACHE_VERSION, QueryCache, QueryCacheEntry, migration_files, query_cache_path,
-        schema_hash, validate_cached_columns, validate_from_query_cache,
+        QUERY_CACHE_VERSION, QueryCache, QueryCacheEntry, query_cache_path, schema_hash,
+        validate_cached_columns, validate_from_query_cache,
     },
     query::{validate_placeholders, validate_query_shape},
 };
-use crate::plugin::model::{FetchMode, QueryFunction, QuerySpec};
+use crate::plugin::{
+    migrations::applied_migration_files,
+    model::{FetchMode, QueryFunction, QuerySpec},
+};
 
 /// Builds a small source span for validation test fixtures.
 fn span() -> SpanIr {
@@ -220,10 +223,10 @@ fn migration_files_are_sorted_and_schema_hash_is_stable() {
     fs::write(root.join("migrations/002_second.sql"), "SELECT 2;\n").unwrap();
     fs::write(root.join("migrations/001_first.sql"), "SELECT 1;\n").unwrap();
 
-    let files = migration_files(&root.join("migrations")).unwrap();
+    let files = applied_migration_files(&root.join("migrations")).unwrap();
     let names = files
         .iter()
-        .map(|path| path.file_name().unwrap().to_string_lossy().to_string())
+        .map(|migration| migration.name.clone())
         .collect::<Vec<_>>();
     assert_eq!(names, vec!["001_first.sql", "002_second.sql"]);
     assert_eq!(
@@ -231,6 +234,96 @@ fn migration_files_are_sorted_and_schema_hash_is_stable() {
         schema_hash(&root.join("migrations")).unwrap()
     );
 
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn reversible_migration_files_apply_only_up_files() {
+    let root = temp_root("reversible_migrations");
+    fs::create_dir_all(root.join("migrations")).unwrap();
+    fs::write(
+        root.join("migrations/001_create_users.up.sql"),
+        "CREATE TABLE users(id INTEGER PRIMARY KEY);\n",
+    )
+    .unwrap();
+    fs::write(
+        root.join("migrations/001_create_users.down.sql"),
+        "DROP TABLE users;\n",
+    )
+    .unwrap();
+    fs::write(root.join("migrations/002_seed.sql"), "SELECT 1;\n").unwrap();
+
+    let files = applied_migration_files(&root.join("migrations")).unwrap();
+    let names = files
+        .iter()
+        .map(|migration| migration.name.clone())
+        .collect::<Vec<_>>();
+    assert_eq!(names, vec!["001_create_users.up.sql", "002_seed.sql"]);
+
+    let schema = schema_hash(&root.join("migrations")).unwrap();
+    fs::write(
+        root.join("migrations/001_create_users.down.sql"),
+        "DROP TABLE users; SELECT 1;\n",
+    )
+    .unwrap();
+    assert_eq!(schema_hash(&root.join("migrations")).unwrap(), schema);
+
+    fs::write(
+        root.join("migrations/001_create_users.up.sql"),
+        "CREATE TABLE users(id INTEGER PRIMARY KEY, name TEXT);\n",
+    )
+    .unwrap();
+    assert_ne!(schema_hash(&root.join("migrations")).unwrap(), schema);
+
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn reversible_migration_files_reject_incomplete_pairs() {
+    let root = temp_root("orphan_down");
+    fs::create_dir_all(root.join("migrations")).unwrap();
+    fs::write(
+        root.join("migrations/001_create_users.down.sql"),
+        "DROP TABLE users;\n",
+    )
+    .unwrap();
+
+    assert!(
+        applied_migration_files(&root.join("migrations"))
+            .unwrap_err()
+            .contains(".down.sql file without matching .up.sql file")
+    );
+    let _ = fs::remove_dir_all(root);
+
+    let root = temp_root("orphan_up");
+    fs::create_dir_all(root.join("migrations")).unwrap();
+    fs::write(
+        root.join("migrations/001_create_users.up.sql"),
+        "CREATE TABLE users(id INTEGER PRIMARY KEY);\n",
+    )
+    .unwrap();
+
+    assert!(
+        applied_migration_files(&root.join("migrations"))
+            .unwrap_err()
+            .contains(".up.sql file without matching .down.sql file")
+    );
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn reversible_migration_files_reject_simple_duplicate_ids() {
+    let root = temp_root("duplicate_migrations");
+    fs::create_dir_all(root.join("migrations")).unwrap();
+    fs::write(root.join("migrations/001_users.sql"), "SELECT 1;\n").unwrap();
+    fs::write(root.join("migrations/001_users.up.sql"), "SELECT 2;\n").unwrap();
+    fs::write(root.join("migrations/001_users.down.sql"), "SELECT 3;\n").unwrap();
+
+    assert!(
+        applied_migration_files(&root.join("migrations"))
+            .unwrap_err()
+            .contains("both simple and reversible files")
+    );
     let _ = fs::remove_dir_all(root);
 }
 
