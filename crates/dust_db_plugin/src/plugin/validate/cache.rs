@@ -6,7 +6,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::plugin::model::QuerySpec;
+use crate::plugin::{migrations::applied_migration_files, model::QuerySpec};
 
 use super::query::{query_row_type, validate_placeholders};
 
@@ -165,31 +165,16 @@ pub(super) fn validate_cached_columns(
     Ok(())
 }
 
-/// Returns sorted `.sql` migration files from a migrations directory.
-pub(super) fn migration_files(path: &Path) -> Result<Vec<PathBuf>, String> {
-    let mut files = fs::read_dir(path)
-        .map_err(|error| format!("failed to read migrations `{}`: {error}", path.display()))?
-        .filter_map(Result::ok)
-        .map(|entry| entry.path())
-        .filter(|path| path.extension().and_then(|ext| ext.to_str()) == Some("sql"))
-        .collect::<Vec<_>>();
-    files.sort();
-    Ok(files)
-}
-
 /// Computes a stable schema hash from migration file names and contents.
 pub(super) fn schema_hash(migrations_path: &Path) -> Result<String, String> {
     let mut hash = StableHash::new();
-    for migration in migration_files(migrations_path)? {
-        let relative_path = migration
-            .strip_prefix(migrations_path)
-            .unwrap_or(&migration);
-        hash.update(relative_path.to_string_lossy().as_bytes());
+    for migration in applied_migration_files(migrations_path)? {
+        hash.update(migration.name.as_bytes());
         hash.update(b"\0");
-        let source = fs::read(&migration).map_err(|error| {
+        let source = fs::read(&migration.path).map_err(|error| {
             format!(
                 "failed to read migration `{}`: {error}",
-                migration.display()
+                migration.path.display()
             )
         })?;
         hash.update(&source);

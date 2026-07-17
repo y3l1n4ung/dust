@@ -6,6 +6,8 @@ use dust_plugin_api::{DustPlugin, PluginContext, PluginContribution};
 mod constants;
 /// Renders generated DB, DAO, and row-mapping Dart code.
 mod emit;
+/// Shared migration discovery rules.
+mod migrations;
 /// Internal DB plugin model used by parsing, validation, and emission.
 mod model;
 /// Parses DB annotations and query call sites.

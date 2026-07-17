@@ -4,7 +4,10 @@ use dust_dart_emit::render_template;
 use dust_ir::DartFileIr;
 use serde::Serialize;
 
-use crate::plugin::model::{DatabaseClass, DbDriver};
+use crate::plugin::{
+    migrations::applied_migration_files,
+    model::{DatabaseClass, DbDriver},
+};
 
 use super::shared::{escape_dart_string, lower_first};
 
@@ -60,23 +63,15 @@ pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>
 /// Renders a deterministic migration map from SQL files on disk.
 fn render_migrations_map(library: &DartFileIr, migrations: &str, name: &str) -> String {
     let path = Path::new(&library.package_root).join(migrations);
-    let mut files = fs::read_dir(&path)
-        .ok()
-        .into_iter()
-        .flat_map(|entries| entries.filter_map(Result::ok))
-        .map(|entry| entry.path())
-        .filter(|path| path.extension().and_then(|ext| ext.to_str()) == Some("sql"))
-        .collect::<Vec<_>>();
-    files.sort();
+    let files = applied_migration_files(&path).unwrap_or_default();
 
     let entries = files
         .iter()
         .filter_map(|file| {
-            let source = fs::read_to_string(file).ok()?;
-            let key = file.file_name()?.to_str()?;
+            let source = fs::read_to_string(&file.path).ok()?;
             Some(format!(
                 "  '{}': '{}',",
-                escape_dart_string(key),
+                escape_dart_string(&file.name),
                 escape_dart_string(&source)
             ))
         })
@@ -179,6 +174,16 @@ mod tests {
         )
         .unwrap();
         fs::write(
+            migrations.join("003_reversible.up.sql"),
+            "ALTER TABLE logs ADD COLUMN tag TEXT;\n",
+        )
+        .unwrap();
+        fs::write(
+            migrations.join("003_reversible.down.sql"),
+            "ALTER TABLE logs DROP COLUMN tag;\n",
+        )
+        .unwrap();
+        fs::write(
             migrations.join("001_schema.sql"),
             "CREATE TABLE logs(message TEXT);\n",
         )
@@ -233,6 +238,7 @@ mod tests {
 const Map<String, String> _$appDatabaseMigrations = <String, String>{
   '001_schema.sql': 'CREATE TABLE logs(message TEXT);\n',
   '002_quote.sql': 'INSERT INTO logs(message) VALUES(\'cost \$1\');\n',
+  '003_reversible.up.sql': 'ALTER TABLE logs ADD COLUMN tag TEXT;\n',
 };"#;
 
     const EXPECTED_POSTGRES_DATABASE: &str = r#"final class _$AppDatabase implements AppDatabase {

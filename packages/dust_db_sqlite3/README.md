@@ -62,10 +62,15 @@ CREATE TABLE users (
 }
 ```
 
-Migrations run in sorted filename order. Applied names are stored in
-`__dust_schema_migrations`, so reopening the database applies only new files.
-Generated `@SqlxDatabase` openers embed the configured migration directory and
-create the same `Sqlite3Driver` automatically.
+Migrations run in sorted filename order. Simple `.sql` files and SQLx
+reversible `.up.sql` / `.down.sql` pairs are supported. For reversible pairs,
+only `.up.sql` files run during normal startup; `.down.sql` files are never
+applied automatically.
+
+Applied names are stored in `__dust_schema_migrations`, so reopening the
+database applies only new files. Generated `@SqlxDatabase` openers embed the
+configured migration directory and create the same `Sqlite3Driver`
+automatically.
 
 ## Generated Database Code
 

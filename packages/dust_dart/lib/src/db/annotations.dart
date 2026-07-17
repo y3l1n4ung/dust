@@ -35,7 +35,7 @@ final class SqlxDatabase {
   /// SQLx database type used by the generated database.
   final SqlxDatabaseType type;
 
-  /// Directory containing user-owned `.sql` migration files.
+  /// Directory containing user-owned `.sql` or SQLx reversible migrations.
   final String migrations;
 }
 

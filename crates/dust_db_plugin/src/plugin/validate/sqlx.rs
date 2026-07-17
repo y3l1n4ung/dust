@@ -10,13 +10,13 @@ use sqlx::{Column, Connection, Executor, sqlite::SqliteConnection};
 
 use crate::plugin::{
     DbPluginOptions,
+    migrations::applied_migration_files,
     model::{DatabaseClass, DbDriver, QueryFunction, QuerySpec},
 };
 
 use super::{
     cache::{
-        QueryCacheEntry, migration_files, schema_hash, stable_hash_hex, validate_from_query_cache,
-        write_query_cache,
+        QueryCacheEntry, schema_hash, stable_hash_hex, validate_from_query_cache, write_query_cache,
     },
     query::{query_row_type, validate_placeholders},
 };
@@ -112,17 +112,17 @@ async fn apply_migrations(
     conn: &mut SqliteConnection,
     migrations_path: &Path,
 ) -> Result<(), String> {
-    for migration in migration_files(migrations_path)? {
-        let sql = fs::read_to_string(&migration).map_err(|error| {
+    for migration in applied_migration_files(migrations_path)? {
+        let sql = fs::read_to_string(&migration.path).map_err(|error| {
             format!(
                 "failed to read migration `{}`: {error}",
-                migration.display()
+                migration.path.display()
             )
         })?;
         conn.execute(sql.as_str()).await.map_err(|error| {
             format!(
                 "failed to apply migration `{}`: {error}",
-                migration.display()
+                migration.path.display()
             )
         })?;
     }

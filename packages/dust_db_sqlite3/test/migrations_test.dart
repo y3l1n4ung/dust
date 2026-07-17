@@ -102,4 +102,43 @@ INSERT INTO users (id, name, active) VALUES (2, 'Grace', 0);
       '0001_create.sql',
     ]);
   });
+
+  test('sqlite migrations skip reversible down files during startup', () async {
+    final directory = await Directory.systemTemp.createTemp('dust_sqlite_');
+    addTearDown(() async {
+      await directory.delete(recursive: true);
+    });
+    final path = '${directory.path}/app.db';
+
+    final pool = SqlitePool.open(
+      path,
+      migrations: const <String, String>{
+        '0001_create_users.down.sql': 'DROP TABLE users;',
+        '0001_create_users.up.sql': '''
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL
+);
+INSERT INTO users (id, name) VALUES (1, 'Ada');
+''',
+      },
+    );
+    addTearDown(() async {
+      await pool.close();
+    });
+
+    final users = await queryRaw(
+      'SELECT id, name FROM users ORDER BY id',
+      const [],
+    ).fetch(pool);
+    expect(users.map((row) => row.read<String>('name')), <String>['Ada']);
+
+    final migrations = await queryRaw(
+      'SELECT name FROM __dust_schema_migrations ORDER BY name',
+      const [],
+    ).fetch(pool);
+    expect(migrations.map((row) => row.read<String>('name')), <String>[
+      '0001_create_users.up.sql',
+    ]);
+  });
 }
