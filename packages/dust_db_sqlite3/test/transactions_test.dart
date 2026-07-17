@@ -109,6 +109,117 @@ void main() {
     expect(rows, isEmpty);
   });
 
+  test('sqlite nested transaction rolls back only its savepoint', () async {
+    final pool = _userPool();
+    addTearDown(() async {
+      await pool.close();
+    });
+
+    final result = await pool.transaction<Unit>((tx) async {
+      await _insertUser(tx, 1, 'Ada');
+      final nested = await tx.transaction<Unit>((nestedTx) async {
+        await _insertUser(nestedTx, 2, 'Grace');
+        return Err<Unit, SqlxError>(SqlxError.driver('nested abort'));
+      });
+      expect(nested, isA<Err<Unit, SqlxError>>());
+      await _insertUser(tx, 3, 'Linus');
+      return const Ok<Unit, SqlxError>(unit);
+    });
+    expect(result, isA<Ok<Unit, SqlxError>>());
+
+    final rows = await queryRaw('SELECT id FROM users ORDER BY id', []).fetch(
+      pool,
+    );
+    expect(rows.map((row) => row.read<int>('id')), <int>[1, 3]);
+  });
+
+  test('sqlite nested transaction rolls back savepoint on throw', () async {
+    final pool = _userPool();
+    addTearDown(() async {
+      await pool.close();
+    });
+
+    final result = await pool.transaction<Unit>((tx) async {
+      await _insertUser(tx, 1, 'Ada');
+      final nested = await tx.transaction<Unit>((nestedTx) async {
+        await _insertUser(nestedTx, 2, 'Grace');
+        throw StateError('nested boom');
+      });
+      expect(nested, isA<Err<Unit, SqlxError>>());
+      await _insertUser(tx, 3, 'Linus');
+      return const Ok<Unit, SqlxError>(unit);
+    });
+    expect(result, isA<Ok<Unit, SqlxError>>());
+
+    final rows = await queryRaw('SELECT id FROM users ORDER BY id', []).fetch(
+      pool,
+    );
+    expect(rows.map((row) => row.read<int>('id')), <int>[1, 3]);
+  });
+
+  test('sqlite closed connection operations return Result errors', () async {
+    final pool = _userPool();
+    await pool.close();
+
+    final execute = await pool.execute(
+      r'INSERT INTO users (id, name) VALUES (?, ?)',
+      const [1, 'Ada'],
+    );
+    final scalar = await pool.fetchScalar<int>(
+      'SELECT COUNT(*) FROM users',
+      const [],
+    );
+    final transaction = await pool.transaction<Unit>(
+      (_) async => const Ok<Unit, SqlxError>(unit),
+    );
+
+    expect(execute, isA<Err<ExecResult, SqlxError>>());
+    expect(scalar, isA<Err<int, SqlxError>>());
+    expect(transaction, isA<Err<Unit, SqlxError>>());
+  });
+
+  test('sqlite transaction handle is closed after callback', () async {
+    final pool = _userPool();
+    addTearDown(() async {
+      await pool.close();
+    });
+
+    late Executor captured;
+    final result = await pool.transaction<Unit>((tx) async {
+      captured = tx;
+      await _insertUser(tx, 1, 'Ada');
+      return const Ok<Unit, SqlxError>(unit);
+    });
+    expect(result, isA<Ok<Unit, SqlxError>>());
+
+    final execute = await captured.execute(
+      r'INSERT INTO users (id, name) VALUES (?, ?)',
+      const [2, 'Grace'],
+    );
+    final nested = await captured.transaction<Unit>(
+      (_) async => const Ok<Unit, SqlxError>(unit),
+    );
+
+    expect(execute, isA<Err<ExecResult, SqlxError>>());
+    expect(nested, isA<Err<Unit, SqlxError>>());
+  });
+
+  test('sqlite transaction control failures return Result errors', () async {
+    final pool = _userPool();
+    addTearDown(() async {
+      await pool.close();
+    });
+
+    final result = await pool.transaction<Unit>((tx) async {
+      await _insertUser(tx, 1, 'Ada');
+      final manualRollback = await tx.raw.execute('ROLLBACK', const []);
+      expect(manualRollback, isA<Ok<ExecResult, SqlxError>>());
+      return const Ok<Unit, SqlxError>(unit);
+    });
+
+    expect(result, isA<Err<Unit, SqlxError>>());
+  });
+
   test('sqlite raw channel reports driver errors without throwing', () async {
     final pool = SqlitePool.open(':memory:');
     addTearDown(() async {
@@ -134,4 +245,13 @@ SqlitePool _userPool() {
           'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL);',
     },
   );
+}
+
+Future<void> _insertUser(DatabaseExecutor db, int id, String name) async {
+  final result =
+      await db.execute(r'INSERT INTO users (id, name) VALUES (?, ?)', [
+    id,
+    name,
+  ]);
+  expect(result, isA<Ok<ExecResult, SqlxError>>());
 }

@@ -104,6 +104,20 @@ void main() {
     expect(await app.connection.countCachedProducts(), 1);
   });
 
+  test('shopping cache generated DAO works inside transaction', () async {
+    final app = ShoppingCacheDatabase.open(':memory:');
+    addTearDown(() async {
+      await app.close();
+    });
+
+    final result = await app.transaction<int>((tx) async {
+      await tx.seedProductCache();
+      return ShoppingCacheDao(tx).countCachedProducts();
+    });
+
+    expect(result.match(ok: (count) => count, err: (_) => -1), 1);
+  });
+
   test('cached repository uses generated DB in product load flow', () async {
     final app = ShoppingCacheDatabase.open(':memory:');
     addTearDown(() async {

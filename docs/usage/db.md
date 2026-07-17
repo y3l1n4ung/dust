@@ -331,7 +331,28 @@ final result = await database.connection.transaction((tx) async {
 });
 ```
 
-Thrown exceptions also roll back and return a `SqlxDriverError`.
+Thrown exceptions also roll back and return a `SqlxDriverError`. Nested SQLite
+transactions use savepoints, so an inner rollback does not undo outer work that
+later commits.
+
+```dart
+await database.connection.transaction((tx) async {
+  await UserDao(tx).createUser('ada@example.com', 'Ada');
+
+  final nested = await tx.transaction<Unit>((nestedTx) async {
+    await UserDao(nestedTx).createUser('bad@example.com', 'Bad');
+    return Err<Unit, SqlxError>(SqlxError.driver('skip nested work'));
+  });
+
+  if (nested.isErr) {
+    await UserDao(tx).createUser('grace@example.com', 'Grace');
+  }
+  return const Ok<Unit, SqlxError>(unit);
+});
+```
+
+Transaction executors are scope-bound. Do not store `tx` and use it after the
+callback returns; operations on a closed transaction return `Err(SqlxError)`.
 
 ## Dynamic SQL
 
