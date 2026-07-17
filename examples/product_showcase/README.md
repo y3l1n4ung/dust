@@ -1,84 +1,79 @@
 # Product Showcase
 
-This package is the runnable reference project behind the main Dust usage docs.
+Runnable Dart package that demonstrates Dust's core generated APIs.
 
-Read the canonical guides in:
+Use this example when you want to see annotations, generated files, and tests in
+one small package without Flutter app code around it.
 
-- [../../docs/usage/README.md](../../docs/usage/README.md)
-- [../../docs/usage/derive.md](../../docs/usage/derive.md)
-- [../../docs/usage/serde.md](../../docs/usage/serde.md)
-- [../../docs/usage/http.md](../../docs/usage/http.md)
+## What It Covers
 
-## What This Package Covers
+| Area | Example files |
+| :--- | :--- |
+| Data classes | [`lib/models/product.dart`](lib/models/product.dart), [`lib/models/price.dart`](lib/models/price.dart) |
+| JSON | [`lib/models/json_profile.dart`](lib/models/json_profile.dart), [`lib/models/json_codec_bundle.dart`](lib/models/json_codec_bundle.dart) |
+| Sealed JSON | [`lib/models/json_payment_event.dart`](lib/models/json_payment_event.dart), [`lib/models/json_untagged_event.dart`](lib/models/json_untagged_event.dart) |
+| Validation | [`lib/models/latest_dart_derive_showcase.dart`](lib/models/latest_dart_derive_showcase.dart) |
+| DB row mapping | [`lib/models/latest_dart_derive_showcase.dart`](lib/models/latest_dart_derive_showcase.dart) |
+| HTTP clients | [`lib/api/todo_api.dart`](lib/api/todo_api.dart), [`lib/api/json_placeholder_api.dart`](lib/api/json_placeholder_api.dart) |
 
-- derive generation such as `ToString()`, `Eq()`, and `CopyWith()`
-- serde generation such as `Serialize()`, `Deserialize()`, enum values, tagged sealed classes, rename rules, defaults, aliases, and codecs
-- validation generation such as `Validate()`, `Length`, `Range`, and typed model validation results
-- DB row mapping generation through DB-owned `FromRow()`
-- latest Dart-style source syntax that keeps generated code behavior unchanged, including final classes, records, switch expressions, and pattern matching
-- generated Dio HTTP clients
-- generated request-mapping tests under `test/generated/..._test.dart`
-- a real fake-online API example against `https://jsonplaceholder.typicode.com`
+The generated files are committed so the package can be inspected without
+running Dust first.
 
-## Build
+## Run It
 
-Inside this package:
+From this package:
 
 ```bash
 dart pub get
 dust build
+dust check
+dart analyze
+dart test
 ```
 
 From the repository root:
 
 ```bash
-cargo run -p dust_cli -- build --root examples/product_showcase
+cargo run -q -p dust_cli -- build --root examples/product_showcase
+cargo run -q -p dust_cli -- check --root examples/product_showcase
 ```
 
-## Validate
-
-```bash
-dart analyze
-dart test
-```
-
-Optional live smoke coverage:
+The normal test suite is offline. To run the live JSONPlaceholder smoke test:
 
 ```bash
 DUST_RUN_ONLINE_HTTP_TESTS=1 dart test test/json_placeholder_api_test.dart
 ```
 
-## Key Reference Files
+## Generated HTTP Tests
 
-- [lib/models/price.dart](lib/models/price.dart)
-- [lib/models/json_profile.dart](lib/models/json_profile.dart)
-- [lib/models/json_enum_bundle.dart](lib/models/json_enum_bundle.dart)
-- [lib/models/json_payment_event.dart](lib/models/json_payment_event.dart)
-- [lib/models/json_codec_bundle.dart](lib/models/json_codec_bundle.dart)
-- [lib/models/latest_dart_derive_showcase.dart](lib/models/latest_dart_derive_showcase.dart)
-- [lib/api/json_placeholder_api.dart](lib/api/json_placeholder_api.dart)
-- [lib/api/todo_api.dart](lib/api/todo_api.dart)
+The HTTP examples enable `generateTest: true`, so Dust also writes request
+mapping tests under [`test/generated`](test/generated). These tests verify URL,
+method, path, query, header, body, form, multipart, and streaming behavior
+without calling the network.
 
-## Latest Dart Derive Showcase
+## Latest Dart Syntax
 
-`lib/models/latest_dart_derive_showcase.dart` proves the current generated code
-style works with newer Dart source syntax while using all public derive surfaces:
+[`lib/models/latest_dart_derive_showcase.dart`](lib/models/latest_dart_derive_showcase.dart)
+keeps one model that combines:
 
 - `ToString()`
-- `Eq()` with generated `hashCode`
+- `Eq()`
 - `CopyWith()`
 - `Serialize()`
 - `Deserialize()`
 - `Validate()`
-- DB-owned `FromRow()`
+- `FromRow()`
 
-The showcase intentionally does not change generated code style. Primary
-constructor syntax is tracked separately because the local Puro `3.44.1`
-environment currently reports Dart `3.12.1`; primary constructors require later
-Dart language support.
+It also uses final classes, records, switch expressions, and pattern matching in
+handwritten Dart code. That proves the parser accepts modern Dart source around
+Dust annotations while generated behavior stays normal.
 
-## Related Docs
+## More Docs
 
-- [../../README.md](../../README.md)
-- [../../docs/developer.md](../../docs/developer.md)
-- [../benchmark_project/README.md](../benchmark_project/README.md)
+- [Root README](../../README.md)
+- [Usage guide](../../docs/usage/README.md)
+- [Data class guide](../../docs/usage/derive.md)
+- [JSON guide](../../docs/usage/serde.md)
+- [HTTP guide](../../docs/usage/http.md)
+- [Database guide](../../docs/usage/db.md)
+- [Benchmark project](../benchmark_project/README.md)
