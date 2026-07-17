@@ -68,7 +68,10 @@ part 'app_database.g.dart';
   migrations: './migrations',
 )
 abstract class AppDatabase implements DatabaseClient {
-  factory AppDatabase.open(String path) = _$AppDatabase.open;
+  factory AppDatabase.open(
+    String path, {
+    SqliteConnectOptions? options,
+  }) = _$AppDatabase.open;
 
   @override
   DatabaseConnection get connection;
@@ -180,6 +183,46 @@ Use one migration style per migration name.
 > [!IMPORTANT]
 > Do not edit or rename a migration after it ships. Existing installations have
 > already recorded its filename; add a new migration for every schema change.
+
+## SQLite Connection Options
+
+`SqliteConnectOptions` keeps production connection behavior explicit without
+exposing `package:sqlite3` open-mode types in application code.
+
+Common path-based production settings:
+
+```dart
+final database = AppDatabase.open(
+  'app.db',
+  options: const SqliteConnectOptions(
+    foreignKeys: true,
+    busyTimeout: Duration(seconds: 5),
+    journalMode: SqliteJournalMode.wal,
+    synchronous: SqliteSynchronousMode.normal,
+  ),
+);
+```
+
+In tests, use an in-memory database without creating files:
+
+```dart
+final database = AppDatabase.open(
+  ':memory:',
+  options: const SqliteConnectOptions.memory(foreignKeys: true),
+);
+```
+
+For an existing read-only file, open without migrations:
+
+```dart
+final connection = Sqlite3Driver.connect(
+  SqliteConnectOptions.readOnly('snapshot.db'),
+);
+```
+
+Supported options include create-if-missing, read-only open mode, busy timeout,
+foreign keys, journal mode, synchronous mode, and custom pragmas. Custom pragma
+names are validated before opening the database.
 
 ## DAO Return Types
 

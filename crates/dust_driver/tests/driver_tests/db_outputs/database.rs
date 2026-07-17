@@ -42,10 +42,14 @@ final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserP
 final class _$AppDatabase implements AppDatabase {
   _$AppDatabase._(this.connection);
 
-  factory _$AppDatabase.open(String path) {
+  factory _$AppDatabase.open(
+    String path, {
+    SqliteConnectOptions? options,
+  }) {
     final connection = Sqlite3Driver.open(
       path,
       migrations: _$appDatabaseMigrations,
+      options: options,
     );
     return _$AppDatabase._(connection);
   }

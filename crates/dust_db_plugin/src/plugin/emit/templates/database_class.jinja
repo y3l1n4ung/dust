@@ -1,7 +1,10 @@
 final class {{ generated_name }} implements {{ class_name }} {
   {{ generated_name }}._(this.connection);
 
-  factory {{ generated_name }}.open(String path) {
+  factory {{ generated_name }}.open(
+    String path, {
+    SqliteConnectOptions? options,
+  }) {
     final connection = {{ open_expr }};
     return {{ generated_name }}._(connection);
   }

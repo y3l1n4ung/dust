@@ -84,6 +84,26 @@ void main() {
     ]);
   });
 
+  test('shopping cache accepts explicit SQLite connect options', () async {
+    final app = ShoppingCacheDatabase.open(
+      ':memory:',
+      options: const SqliteConnectOptions.memory(
+        foreignKeys: true,
+        busyTimeout: Duration(milliseconds: 100),
+      ),
+    );
+    addTearDown(() async {
+      await app.close();
+    });
+
+    final database = (app.pool as Sqlite3Executor).database;
+    expect(database.select('PRAGMA foreign_keys').single.columnAt(0), 1);
+    expect(database.select('PRAGMA busy_timeout').single.columnAt(0), 100);
+
+    await app.connection.seedProductCache();
+    expect(await app.connection.countCachedProducts(), 1);
+  });
+
   test('cached repository uses generated DB in product load flow', () async {
     final app = ShoppingCacheDatabase.open(':memory:');
     addTearDown(() async {

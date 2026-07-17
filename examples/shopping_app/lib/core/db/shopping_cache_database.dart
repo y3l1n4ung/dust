@@ -14,8 +14,10 @@ part 'shopping_cache_database.g.dart';
 @SqlxDatabase(type: SqlxDatabaseType.sqlite, migrations: './migrations')
 abstract class ShoppingCacheDatabase implements DatabaseClient {
   /// Creates a [ShoppingCacheDatabase] client.
-  factory ShoppingCacheDatabase.open(String path) =
-      _$ShoppingCacheDatabase.open;
+  factory ShoppingCacheDatabase.open(
+    String path, {
+    SqliteConnectOptions? options,
+  }) = _$ShoppingCacheDatabase.open;
 
   /// Open database connection.
   @override
