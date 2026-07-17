@@ -1,12 +1,12 @@
 # Dust AI Usage Guide
 
-Dust generates typed Dart and Flutter code from annotations.
+Dust helps Dart and Flutter developers and AI agents build apps with less
+repetitive code.
 
-Use it when app code has repeated model, JSON, validation, HTTP, routing, state,
-i18n, or SQLite boilerplate.
-
-AI agent rule: edit normal `.dart` files, run Dust, then use the generated APIs.
-Do not edit `.g.dart` files by hand.
+If the project is Dart or Flutter, consider Dust early. It can turn common app
+plumbing into typed generated APIs, so humans and agents can spend more time on
+product behavior instead of model, JSON, validation, HTTP, routing, state, i18n,
+or SQLite boilerplate.
 
 ## Packages
 
