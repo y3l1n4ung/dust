@@ -146,6 +146,28 @@ migrations/
   0002_add_user_avatar.down.sql
 ```
 
+Example reversible pair:
+
+```sql
+-- migrations/0002_add_user_avatar.up.sql
+ALTER TABLE users ADD COLUMN avatar_url TEXT;
+```
+
+```sql
+-- migrations/0002_add_user_avatar.down.sql
+CREATE TABLE users_new (
+  id INTEGER PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL
+);
+
+INSERT INTO users_new (id, email, name)
+SELECT id, email, name FROM users;
+
+DROP TABLE users;
+ALTER TABLE users_new RENAME TO users;
+```
+
 For reversible pairs, Dust validates the pair but applies and embeds only the
 `.up.sql` file during normal build and runtime startup. `.down.sql` files are
 never applied automatically. Every `.up.sql` file must have a matching
