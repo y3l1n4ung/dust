@@ -12,19 +12,23 @@ part 'shopping_cache_database.g.dart';
 
 /// Shopping cache database model for the shopping app example.
 @SqlxDatabase(type: SqlxDatabaseType.sqlite, migrations: './migrations')
-abstract class ShoppingCacheDatabase {
+abstract class ShoppingCacheDatabase implements DatabaseClient {
   /// Creates a [ShoppingCacheDatabase] client.
   factory ShoppingCacheDatabase.open(String path) =
       _$ShoppingCacheDatabase.open;
 
-  /// Pool.
+  /// Open database connection.
+  @override
+  DatabaseConnection get connection;
+
+  /// Backwards-compatible pool accessor.
   Pool get pool;
 }
 
 /// Shopping cache DAO.
 @SqlxDao()
 abstract final class ShoppingCacheDao {
-  const factory ShoppingCacheDao(Executor db) = _$ShoppingCacheDao;
+  const factory ShoppingCacheDao(DatabaseExecutor db) = _$ShoppingCacheDao;
 
   /// Finds cached product.
   @Query(r'''
@@ -89,7 +93,7 @@ ORDER BY saved_at DESC
 }
 
 /// Shopping cache queries.
-extension ShoppingCacheQueries on Executor {
+extension ShoppingCacheQueries on DatabaseExecutor {
   /// Finds cached product.
   Future<CachedProductRow?> findCachedProduct(int id) {
     return _unwrapSqlx(ShoppingCacheDao(this).findCachedProduct(id));
@@ -140,7 +144,7 @@ extension ShoppingCacheQueries on Executor {
 }
 
 /// Shopping product cache queries.
-extension ShoppingProductCacheQueries on Executor {
+extension ShoppingProductCacheQueries on DatabaseExecutor {
   /// Replaces product cache.
   Future<void> replaceProductCache(List<Product> products) {
     return transaction((tx) async {

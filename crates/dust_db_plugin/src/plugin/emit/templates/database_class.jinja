@@ -1,13 +1,14 @@
 final class {{ generated_name }} implements {{ class_name }} {
-  {{ generated_name }}._(this.pool);
+  {{ generated_name }}._(this.connection);
 
   factory {{ generated_name }}.open(String path) {
-    final pool = {{ open_expr }};
-    return {{ generated_name }}._(pool);
+    final connection = {{ open_expr }};
+    return {{ generated_name }}._(connection);
   }
 
-  @override
-  final Pool pool;
+  final DatabaseConnection connection;
+
+  Pool get pool => connection as Pool;
 }
 
 {{ migrations }}

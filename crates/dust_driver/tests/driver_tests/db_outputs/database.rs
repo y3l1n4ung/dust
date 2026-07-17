@@ -40,18 +40,19 @@ extension UserProfileFromRow on UserProfile {
 final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
 
 final class _$AppDatabase implements AppDatabase {
-  _$AppDatabase._(this.pool);
+  _$AppDatabase._(this.connection);
 
   factory _$AppDatabase.open(String path) {
-    final pool = Sqlite3Driver.open(
+    final connection = Sqlite3Driver.open(
       path,
       migrations: _$appDatabaseMigrations,
     );
-    return _$AppDatabase._(pool);
+    return _$AppDatabase._(connection);
   }
 
-  @override
-  final Pool pool;
+  final DatabaseConnection connection;
+
+  Pool get pool => connection as Pool;
 }
 
 const Map<String, String> _$appDatabaseMigrations = <String, String>{
