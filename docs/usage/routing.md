@@ -276,6 +276,27 @@ final class CheckoutPage extends StatelessWidget {
 Without `transition`, Dust uses `MaterialPage`. With one, Dust creates a page
 route that runs the selected builder at the navigation boundary.
 
+## Observe Route Changes
+
+Override `didChangeRouteStack` on the generated router to record analytics,
+breadcrumbs, or debug traces from typed routes:
+
+```dart
+@AppRouter(initial: '/', notFound: '/404')
+final class RootRouter extends $RootRouter {
+  @override
+  void didChangeRouteStack(
+    RouteStack<AppRoutePath> previous,
+    RouteStack<AppRoutePath> next,
+  ) {
+    analytics.screenView(next.last.location);
+  }
+}
+```
+
+Dust calls this after a route stack is committed. Refreshes and same-location
+replacements are ignored so observers do not receive duplicate events.
+
 ## Diagnostics
 
 Enable runtime logs while debugging parsing, redirects, guards, and stack

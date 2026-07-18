@@ -52,6 +52,14 @@ fn emits_standalone_route_and_core_outputs() {
         "generated router config should be cached per router instance"
     );
     assert!(
+        primary.contains("abstract class $TestRouter extends RouterBase<AppRoutePath>"),
+        "generated router base should expose RouterBase overrides such as route stack observers"
+    );
+    assert!(
+        primary.contains("router: this,"),
+        "generated router should pass user overrides into the runtime config"
+    );
+    assert!(
         primary.contains("RouterConfig<AppRoutePath> _buildConfig() {"),
         "generated router config should move construction into a private builder"
     );
