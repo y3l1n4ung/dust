@@ -7,6 +7,8 @@ pub struct RouteConfigIr {
     pub name: Option<String>,
     /// Optional shell widget class wrapping the page.
     pub shell: Option<String>,
+    /// Optional navigation result type returned by `push()`.
+    pub result_type: Option<String>,
     /// Guard class names applied to the route.
     pub guards: Vec<String>,
     /// Whether the `guards:` argument was present.

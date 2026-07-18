@@ -104,6 +104,37 @@ If `name` is omitted, Dust derives it from the widget class name. For example,
 `ProductDetailsScreen` becomes `productDetails()` and
 `ProductDetailsRoute`.
 
+## Route Results
+
+Routes return `void` by default. Add `result:` when a pushed route should
+return a typed value after it closes:
+
+```dart
+@AppRoute('/support/chat', name: 'supportChat', result: bool, guards: [])
+final class SupportChatScreen extends StatefulWidget {
+  const SupportChatScreen({super.key});
+}
+```
+
+The generated helper returns `Future<bool?>`:
+
+```dart
+final sentMessage = await context.navigator.supportChat().push();
+if (sentMessage == true) {
+  showSupportThanks();
+}
+```
+
+Return the value with Flutter navigation:
+
+```dart
+Navigator.of(context).pop<bool>(true);
+```
+
+`push()` returns `null` when the route is popped without a value or removed by
+`go()`/`replace()`. Use a non-null result type in the annotation; the generated
+`Future<T?>` already models cancellation.
+
 ## Route Parameters
 
 Path parameters match required, non-nullable constructor parameters. Other

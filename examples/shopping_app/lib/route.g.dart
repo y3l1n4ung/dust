@@ -432,7 +432,7 @@ final class StaffRoute extends AppRoutePath<void> {
 }
 
 /// Typed route data for `SupportChatRoute`.
-final class SupportChatRoute extends AppRoutePath<void> {
+final class SupportChatRoute extends AppRoutePath<bool> {
   const SupportChatRoute();
 
   @override
@@ -568,7 +568,7 @@ final class AppRoutesNavigator {
 
   RouteAction<void> staff() => RouteAction(_router, StaffRoute());
 
-  RouteAction<void> supportChat() => RouteAction(_router, SupportChatRoute());
+  RouteAction<bool> supportChat() => RouteAction(_router, SupportChatRoute());
 
   RouteAction<void> wishlist() => RouteAction(_router, WishlistRoute());
 

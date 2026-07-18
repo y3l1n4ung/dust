@@ -99,6 +99,41 @@ fn emits_no_transition_builder_only_when_referenced() {
 }
 
 #[test]
+fn emits_typed_route_result_for_push_helpers() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/', notFound: '/404')"),
+        route_page_class("HomePage", "('/', name: 'home', guards: [])", Vec::new()),
+        route_page_class(
+            "PickerPage",
+            "('/picker', name: 'picker', result: String, guards: [])",
+            Vec::new(),
+        ),
+        route_page_class(
+            "NotFoundPage",
+            "('/404', name: 'notFound', guards: [])",
+            Vec::new(),
+        ),
+    ]);
+
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
+    let primary = contribution.primary_source.expect("primary route output");
+
+    assert!(primary.contains("final class HomeRoute extends AppRoutePath<void>"));
+    assert!(primary.contains("final class PickerRoute extends AppRoutePath<String>"));
+    assert!(primary.contains("RouteAction<String> picker()"));
+}
+
+#[test]
 fn emits_guard_helpers_with_custom_router_base_name() {
     let plugin = register_plugin();
     let mut router = router_class("(initial: '/', notFound: '/404')");

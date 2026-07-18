@@ -55,6 +55,7 @@ class AppRoute {
     this.path, {
     this.name,
     this.shell,
+    this.result,
     this.guards = const [],
     this.transition,
     this.fullscreenDialog = false,
@@ -69,6 +70,9 @@ class AppRoute {
 
   /// Optional layout widget type that wraps this page.
   final Type? shell;
+
+  /// Optional result type returned by `push()` when this route is popped.
+  final Type? result;
 
   /// Route-specific guard types evaluated after router-level redirects.
   final List<Type> guards;

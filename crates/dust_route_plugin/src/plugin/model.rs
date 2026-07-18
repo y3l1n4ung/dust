@@ -102,6 +102,8 @@ pub(crate) struct RouteAnnotation {
     pub(crate) name: Option<String>,
     /// Optional shell widget class wrapping the page.
     pub(crate) shell: Option<String>,
+    /// Optional navigation result type returned by `push()`.
+    pub(crate) result_type: Option<String>,
     /// Guard class names applied to the route.
     pub(crate) guards: Vec<String>,
     /// Whether the `guards:` argument was present.

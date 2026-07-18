@@ -134,7 +134,8 @@ fn render_route_factories(spec: &RouterSpec) -> String {
 fn render_route_factory(route: &RouteSpec) -> String {
     let route_ctor = format!("{}({})", route.route_class, render_route_args(route));
     let params = render_factory_params(route);
-    let factory = format!("RouteAction<void> {}({params})", route.name);
+    let result_type = route_result_type(route);
+    let factory = format!("RouteAction<{result_type}> {}({params})", route.name);
     let body = format!("RouteAction(_router, {route_ctor})");
     render_template(
         if factory.len() + body.len() + 7 <= 80 {
@@ -149,6 +150,11 @@ fn render_route_factory(route: &RouteSpec) -> String {
         },
         FactoryContext { factory, body },
     )
+}
+
+/// Returns the generated route action result type.
+fn route_result_type(route: &RouteSpec) -> &str {
+    route.annotation.result_type.as_deref().unwrap_or("void")
 }
 
 /// Renders factory parameters for a route action.

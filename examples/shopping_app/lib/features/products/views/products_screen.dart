@@ -37,6 +37,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
     await context.readProductsViewModel().loadProducts();
   }
 
+  Future<void> _openSupportChat() async {
+    final sentMessage = await context.navigator.supportChat().push();
+    if (!mounted || sentMessage != true) return;
+    AppSnackbar.info(
+      context,
+      context.tr(
+        'shop_support_message_sent',
+        defaultText: 'Support message sent',
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watchProductsViewModel().value;
@@ -58,7 +70,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               defaultText: 'Support Chat',
             ),
             icon: const Icon(Icons.support_agent),
-            onPressed: () => context.navigator.supportChat().push(),
+            onPressed: _openSupportChat,
           ),
           _CartIconButton(itemCount: cartState.itemCount),
         ],
