@@ -8,6 +8,8 @@ mod annotations;
 mod class_shapes;
 #[path = "extract_tests/constructors.rs"]
 mod constructors;
+#[path = "extract_tests/dart_versions.rs"]
+mod dart_versions;
 #[path = "extract_tests/declarations.rs"]
 mod declarations;
 #[path = "extract_tests/diagnostics.rs"]
