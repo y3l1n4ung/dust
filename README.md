@@ -38,6 +38,17 @@ verify the installation:
 dust --version
 ```
 
+To check for a newer CLI and upgrade the installed binary later:
+
+```bash
+dust upgrade --check
+dust upgrade
+```
+
+`dust upgrade` downloads Dust release assets and `SHA256SUMS.txt` from this
+GitHub repository, verifies the archive checksum, and updates the CLI binary
+only. It does not change Dart or Flutter package dependencies.
+
 ## Quick Start
 
 Dust has two main runtime packages:

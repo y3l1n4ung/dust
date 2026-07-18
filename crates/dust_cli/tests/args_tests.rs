@@ -134,6 +134,34 @@ fn parses_i18n_check_with_root() {
 }
 
 #[test]
+fn parses_upgrade_check() {
+    let parsed = parse_cli_args(["upgrade", "--check"]).unwrap();
+
+    assert_eq!(parsed.command, CliCommand::Upgrade);
+    assert!(parsed.options.upgrade_check);
+    assert!(!parsed.options.upgrade_dry_run);
+    assert_eq!(parsed.options.upgrade_tag, None);
+}
+
+#[test]
+fn parses_upgrade_dry_run_with_tag() {
+    let parsed = parse_cli_args(["upgrade", "--dry-run", "--tag", "v0.1.3"]).unwrap();
+
+    assert_eq!(parsed.command, CliCommand::Upgrade);
+    assert!(!parsed.options.upgrade_check);
+    assert!(parsed.options.upgrade_dry_run);
+    assert_eq!(parsed.options.upgrade_tag.as_deref(), Some("v0.1.3"));
+}
+
+#[test]
+fn rejects_upgrade_check_and_dry_run_together() {
+    let error = parse_cli_args(["upgrade", "--check", "--dry-run"]).unwrap_err();
+
+    assert_eq!(error.kind(), ErrorKind::ArgumentConflict);
+    assert!(error.to_string().contains("--check"));
+}
+
+#[test]
 fn rejects_offline_without_db() {
     let error = parse_cli_args(["check", "--offline"]).unwrap_err();
 

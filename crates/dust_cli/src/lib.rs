@@ -12,6 +12,8 @@ mod render;
 mod run;
 /// Interactive terminal progress rendering.
 mod terminal;
+/// Binary self-upgrade support.
+mod upgrade;
 
 pub use args::{CliCommand, CliOptions, ParsedCli, parse_cli_args, parse_cli_from_env};
 pub use run::{CliRun, run_cli, run_from_env};
