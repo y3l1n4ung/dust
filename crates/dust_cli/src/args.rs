@@ -29,6 +29,8 @@ pub enum CliCommand {
     I18nScan,
     /// Run initial build and then watch for changes.
     Watch,
+    /// Update the installed Dust CLI binary from GitHub release artifacts.
+    Upgrade,
 }
 
 /// Shared CLI options understood by Dust commands.
@@ -54,6 +56,12 @@ pub struct CliOptions {
     pub i18n_sync_source: bool,
     /// Whether i18n source sync should only preview planned writes.
     pub i18n_dry_run: bool,
+    /// Whether upgrade should only check for an available release.
+    pub upgrade_check: bool,
+    /// Whether upgrade should verify the selected release without replacing the binary.
+    pub upgrade_dry_run: bool,
+    /// Explicit GitHub release tag selected for upgrade.
+    pub upgrade_tag: Option<String>,
 }
 
 impl Default for CliOptions {
@@ -69,6 +77,9 @@ impl Default for CliOptions {
             max_cycles: None,
             i18n_sync_source: false,
             i18n_dry_run: false,
+            upgrade_check: false,
+            upgrade_dry_run: false,
+            upgrade_tag: None,
         }
     }
 }
@@ -90,7 +101,7 @@ pub struct ParsedCli {
     long_about = None,
     arg_required_else_help = true,
     propagate_version = true,
-    after_help = "Examples:\n  dust build\n  dust db build\n  dust check --fail-fast\n  dust watch --poll-ms 100 --jobs 4"
+    after_help = "Examples:\n  dust build\n  dust db build\n  dust check --fail-fast\n  dust watch --poll-ms 100 --jobs 4\n  dust upgrade --check"
 )]
 /// Clap-owned representation of the top-level Dust CLI.
 struct RawCli {
@@ -116,6 +127,22 @@ enum RawCommand {
     I18n(I18nCommandOptions),
     /// Run initial build and then watch for changes.
     Watch(WatchOptions),
+    /// Update the installed Dust CLI binary from GitHub release artifacts.
+    Upgrade(UpgradeOptions),
+}
+
+/// Options accepted by the binary upgrade command.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Args)]
+struct UpgradeOptions {
+    /// Check whether a newer release is available without downloading assets.
+    #[arg(long, default_value_t = false, conflicts_with = "dry_run")]
+    check: bool,
+    /// Download and verify the selected release without replacing the binary.
+    #[arg(long = "dry-run", default_value_t = false, conflicts_with = "check")]
+    dry_run: bool,
+    /// Upgrade to a specific release tag such as `v0.1.3`.
+    #[arg(long, value_name = "TAG")]
+    tag: Option<String>,
 }
 
 /// Options for the `db` command group.
@@ -271,6 +298,7 @@ impl From<RawCommand> for ParsedCli {
             RawCommand::Doctor(options) => ParsedCli::new(CliCommand::Doctor, options),
             RawCommand::I18n(options) => options.into(),
             RawCommand::Watch(options) => ParsedCli::new(CliCommand::Watch, options),
+            RawCommand::Upgrade(options) => ParsedCli::new(CliCommand::Upgrade, options),
         }
     }
 }
@@ -345,6 +373,17 @@ impl From<BuildOptions> for CliOptions {
             jobs: value.jobs.map(NonZeroUsize::get),
             db: value.db,
             db_offline: value.offline,
+            ..Self::default()
+        }
+    }
+}
+
+impl From<UpgradeOptions> for CliOptions {
+    fn from(value: UpgradeOptions) -> Self {
+        Self {
+            upgrade_check: value.check,
+            upgrade_dry_run: value.dry_run,
+            upgrade_tag: value.tag,
             ..Self::default()
         }
     }

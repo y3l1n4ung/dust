@@ -11,6 +11,7 @@ use crate::{
     exit_code::ExitCode,
     render::render_result,
     terminal::{ProgressHandle, create_progress_handle, finish_progress, handle_progress},
+    upgrade::run_upgrade,
 };
 
 /// The fully rendered result of running the CLI.
@@ -42,6 +43,15 @@ fn run_parsed_cli(parsed: Result<ParsedCli, clap::Error>) -> CliRun {
             return cli_error_output(error);
         }
     };
+
+    if parsed.command == CliCommand::Upgrade {
+        let output = run_upgrade(&parsed.options);
+        return CliRun {
+            exit_code: output.exit_code,
+            stdout: output.stdout,
+            stderr: output.stderr,
+        };
+    }
 
     let command = parsed.command.clone();
     let ai_mode = ai_mode_enabled();
@@ -114,6 +124,7 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
                 run(CommandRequest::Watch(request))
             }
         }
+        CliCommand::Upgrade => unreachable!("upgrade is handled before driver dispatch"),
     }
 }
 

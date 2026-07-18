@@ -28,6 +28,7 @@ Each feature guide contains its exact package command and setup requirements.
 | `dust watch` | Runs an initial build, then rebuilds after source changes. |
 | `dust clean` | Removes Dust-owned generated outputs and cache state. |
 | `dust doctor` | Reports workspace and plugin readiness. |
+| `dust upgrade` | Checks, verifies, and upgrades the installed CLI binary. |
 | `dust db build` | Validates static SQLite queries and writes database/DAO output. |
 | `dust check --db` | Checks database/DAO output and SQL without writing. |
 | `dust i18n scan` | Reports statically discoverable translation calls. |
@@ -35,6 +36,10 @@ Each feature guide contains its exact package command and setup requirements.
 | `dust i18n check` | Validates ARB files and localization setup without writing. |
 
 Run `dust --help` or `dust <command> --help` for the current options.
+
+`dust upgrade --check` reads release metadata only. `dust upgrade --dry-run`
+downloads and verifies the selected release without replacing the installed
+binary.
 
 > [!NOTE]
 > Normal `dust build` does not generate `@SqlxDatabase` or `@SqlxDao` output.

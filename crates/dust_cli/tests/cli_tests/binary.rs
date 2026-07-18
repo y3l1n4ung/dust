@@ -13,6 +13,7 @@ fn binary_help_smoke_test() {
     assert!(stdout.contains("check"));
     assert!(stdout.contains("doctor"));
     assert!(stdout.contains("watch"));
+    assert!(stdout.contains("upgrade"));
     assert!(stdout.contains("--version"));
 }
 

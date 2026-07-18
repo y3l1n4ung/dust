@@ -128,6 +128,7 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult, ai_mod
                 ));
             }
         }
+        CliCommand::Upgrade => {}
     }
 
     if !result.diagnostics.is_empty() {

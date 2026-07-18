@@ -17,6 +17,7 @@ artifacts, installers, or a local workspace build.
 - command parsing
 - terminal output and compact summaries
 - banner/help rendering
+- installed CLI upgrade UX
 - CLI integration and perf tests
 
 ## Used by
