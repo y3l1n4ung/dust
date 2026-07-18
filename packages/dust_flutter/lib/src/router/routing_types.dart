@@ -38,6 +38,13 @@ abstract class RouterBase<T extends Object> {
 
   /// Returns a replacement route before guards run, or `null` to continue.
   T? redirect(T route) => null;
+
+  /// Called after the generated router commits a route stack change.
+  ///
+  /// [previous] and [next] are immutable snapshots of the typed route stack.
+  /// The callback is not called for refreshes or replacements that keep the
+  /// same route locations.
+  void didChangeRouteStack(RouteStack<T> previous, RouteStack<T> next) {}
 }
 
 /// Runtime configuration generated for one router.

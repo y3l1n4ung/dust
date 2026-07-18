@@ -109,12 +109,11 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
           final key = page.key;
           final index = key == null ? null : _keyToStackIndex[key];
           if (index != null && index >= 0 && index < _entries.length) {
+            final previous = _stackSnapshot();
             final removed = _entries.removeAt(index);
             removed.complete(null);
-            _rebuildPageKeyMap();
             _log('remove ${_debugRoute(removed.route)}');
-            _log('stack ${_debugStack()}');
-            notifyListeners();
+            _finishStackCommit(previous);
           }
         },
       ),
@@ -131,12 +130,11 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   Future<bool> popRoute() async {
     if (_disposed) return false;
     if (_entries.length <= 1) return false;
+    final previous = _stackSnapshot();
     final removed = _entries.removeLast();
     removed.complete(null);
-    _rebuildPageKeyMap();
     _log('pop ${_debugRoute(removed.route)}');
-    _log('stack ${_debugStack()}');
-    notifyListeners();
+    _finishStackCommit(previous);
     return true;
   }
 
@@ -266,6 +264,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     NavigationMode mode, [
     RouteStack<T>? restored,
   ]) {
+    final previous = _stackSnapshot();
     late final _RouteEntry<T> committed;
     switch (mode) {
       case NavigationMode.go:
@@ -299,9 +298,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
           ..addAll(routes.map(_RouteEntry<T>.new));
         committed = _entries.last;
     }
-    _rebuildPageKeyMap();
-    _log('stack ${_debugStack()}');
-    notifyListeners();
+    _finishStackCommit(previous);
     return committed;
   }
 
@@ -316,6 +313,30 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     for (final entry in entries) {
       entry.complete(null);
     }
+  }
+
+  RouteStack<T> _stackSnapshot() =>
+      List<T>.unmodifiable(_entries.map((entry) => entry.route));
+
+  void _finishStackCommit(RouteStack<T> previous) {
+    _rebuildPageKeyMap();
+    _log('stack ${_debugStack()}');
+    final next = _stackSnapshot();
+    notifyListeners();
+    if (_routeLocationsChanged(previous, next)) {
+      config.router.didChangeRouteStack(previous, next);
+    }
+  }
+
+  bool _routeLocationsChanged(RouteStack<T> previous, RouteStack<T> next) {
+    if (previous.length != next.length) return true;
+    for (var index = 0; index < previous.length; index += 1) {
+      if (config.routeLocation(previous[index]) !=
+          config.routeLocation(next[index])) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void _rebuildPageKeyMap() {

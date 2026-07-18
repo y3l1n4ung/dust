@@ -213,6 +213,48 @@ void main() {
     expect(delegate.stack.map((route) => route.location), ['/login']);
   });
 
+  test('route stack observer records committed stack changes once', () async {
+    final router = _RecordingRouter();
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(router: router),
+    );
+    await delegate.debugWaitForScheduledRefresh();
+
+    expect(router.stackChanges, isEmpty);
+
+    final result = delegate.push<void>(const _TestRoute('/detail'));
+    delegate.replace(const _TestRoute('/detail'));
+    await Future<void>.delayed(Duration.zero);
+    await delegate.popRoute();
+    await expectLater(result, completion(isNull));
+    await delegate.setNewRoutePath(const _TestRoute('/private'));
+
+    expect(router.stackChanges, [
+      '[/safe] => [/safe, /detail]',
+      '[/safe, /detail] => [/safe]',
+      '[/safe] => [/private]',
+    ]);
+  });
+
+  test('route stack observer records final guard redirect stack once',
+      () async {
+    final router = _RecordingRouter();
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(
+        router: router,
+        resolveGuards: (route) => route.location == '/guard-private'
+            ? [const _LoginGuard()]
+            : const [],
+      ),
+    );
+    await delegate.debugWaitForScheduledRefresh();
+
+    await delegate.setNewRoutePath(const _TestRoute('/guard-private'));
+
+    expect(delegate.stack.map((route) => route.location), ['/login']);
+    expect(router.stackChanges, ['[/safe] => [/login]']);
+  });
+
   test('push future completes when delegate pops the route', () async {
     final delegate = GeneratedRouterDelegate<_TestRoute>(_runtimeConfig());
     await delegate.debugWaitForScheduledRefresh();
@@ -432,6 +474,22 @@ final class _RecordingPageTransitionsBuilder extends PageTransitionsBuilder {
 }
 
 final class _NoRedirectRouter extends RouterBase<_TestRoute> {}
+
+final class _RecordingRouter extends RouterBase<_TestRoute> {
+  final stackChanges = <String>[];
+
+  @override
+  void didChangeRouteStack(
+    RouteStack<_TestRoute> previous,
+    RouteStack<_TestRoute> next,
+  ) {
+    stackChanges.add('${_locations(previous)} => ${_locations(next)}');
+  }
+
+  String _locations(RouteStack<_TestRoute> stack) {
+    return '[${stack.map((route) => route.location).join(', ')}]';
+  }
+}
 
 final class _RefreshRouter extends RouterBase<_TestRoute> {
   final refreshNotifier = ChangeNotifier();
