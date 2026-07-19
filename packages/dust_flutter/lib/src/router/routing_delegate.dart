@@ -127,12 +127,15 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   }
 
   @override
-  Future<bool> popRoute() async {
+  Future<bool> popRoute() => pop();
+
+  /// Pops the top route and completes its pending `push()` with [result].
+  Future<bool> pop<R>([R? result]) async {
     if (_disposed) return false;
     if (_entries.length <= 1) return false;
     final previous = _stackSnapshot();
     final removed = _entries.removeLast();
-    removed.complete(null);
+    removed.complete(result);
     _log('pop ${_debugRoute(removed.route)}');
     _finishStackCommit(previous);
     return true;

@@ -2715,7 +2715,7 @@ final class AppRoutesNavigator {
 
   RouteAction<void> route99() => RouteAction(_router, Route99Route());
 
-  void pop() => _router.pop();
+  void pop<R>([R? result]) => _router.pop<R>(result);
 }
 
 final class RouteAction<R> {

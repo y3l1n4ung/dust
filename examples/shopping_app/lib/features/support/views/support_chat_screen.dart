@@ -38,7 +38,7 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop<bool>(_sentMessage),
+            onPressed: () => context.navigator.pop(_sentMessage),
             child: const TranslatedText('shop_done', defaultText: 'Done'),
           ),
         ],

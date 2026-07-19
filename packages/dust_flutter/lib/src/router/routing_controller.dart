@@ -28,6 +28,6 @@ final class RouterController<T extends Object> {
   /// Replaces the current top route with [route].
   void replace(T route) => _delegate.replace(route);
 
-  /// Pops the top route if possible.
-  void pop() => _delegate.popRoute();
+  /// Pops the top route and completes its pending `push()` with [result].
+  void pop<R>([R? result]) => unawaited(_delegate.pop<R>(result));
 }

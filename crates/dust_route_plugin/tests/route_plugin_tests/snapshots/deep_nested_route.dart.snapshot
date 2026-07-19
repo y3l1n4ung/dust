@@ -217,7 +217,7 @@ final class AppRoutesNavigator {
   RouteAction<void> report({required int orgId, required int projectId, required int reportId}) =>
       RouteAction(_router, ReportRoute(orgId: orgId, projectId: projectId, reportId: reportId));
 
-  void pop() => _router.pop();
+  void pop<R>([R? result]) => _router.pop<R>(result);
 }
 
 final class RouteAction<R> {

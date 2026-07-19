@@ -366,6 +366,17 @@ void main() {
     await expectLater(result, completion('saved'));
   });
 
+  test('push future completes with the controller pop result', () async {
+    final delegate = GeneratedRouterDelegate<_TestRoute>(_runtimeConfig());
+    await delegate.debugWaitForScheduledRefresh();
+
+    final result = delegate.push<bool>(const _TestRoute('/detail'));
+    await Future<void>.delayed(Duration.zero);
+    await delegate.pop<bool>(true);
+
+    await expectLater(result, completion(isTrue));
+  });
+
   testWidgets('generated page transition runs at the route boundary', (
     tester,
   ) async {

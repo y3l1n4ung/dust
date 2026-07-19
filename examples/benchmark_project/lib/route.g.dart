@@ -231,7 +231,7 @@ final class AppRoutesNavigator {
   RouteAction<void> modelDetail({required int id, String? tab, bool? archived}) =>
       RouteAction(_router, ModelDetailRoute(id: id, tab: tab, archived: archived));
 
-  void pop() => _router.pop();
+  void pop<R>([R? result]) => _router.pop<R>(result);
 }
 
 final class RouteAction<R> {

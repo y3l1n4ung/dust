@@ -125,10 +125,10 @@ if (sentMessage == true) {
 }
 ```
 
-Return the value with Flutter navigation:
+Return the value with the generated navigator:
 
 ```dart
-Navigator.of(context).pop<bool>(true);
+context.navigator.pop(true);
 ```
 
 `push()` returns `null` when the route is popped without a value or removed by

@@ -131,6 +131,7 @@ fn emits_typed_route_result_for_push_helpers() {
     assert!(primary.contains("final class HomeRoute extends AppRoutePath<void>"));
     assert!(primary.contains("final class PickerRoute extends AppRoutePath<String>"));
     assert!(primary.contains("RouteAction<String> picker()"));
+    assert!(primary.contains("void pop<R>([R? result]) => _router.pop<R>(result);"));
 }
 
 #[test]

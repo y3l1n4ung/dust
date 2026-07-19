@@ -572,7 +572,7 @@ final class AppRoutesNavigator {
 
   RouteAction<void> wishlist() => RouteAction(_router, WishlistRoute());
 
-  void pop() => _router.pop();
+  void pop<R>([R? result]) => _router.pop<R>(result);
 }
 
 final class RouteAction<R> {

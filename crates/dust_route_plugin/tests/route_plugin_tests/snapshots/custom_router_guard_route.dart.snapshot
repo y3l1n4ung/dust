@@ -182,7 +182,7 @@ final class AppRoutesNavigator {
   RouteAction<void> notFound({String path = ''}) =>
       RouteAction(_router, NotFoundRoute(path: path));
 
-  void pop() => _router.pop();
+  void pop<R>([R? result]) => _router.pop<R>(result);
 }
 
 final class RouteAction<R> {
