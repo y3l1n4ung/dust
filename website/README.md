@@ -34,9 +34,9 @@ Flutter and the related logo are trademarks of Google LLC. Dart and the related
 logo are trademarks of Google LLC. Dust is not endorsed by or affiliated with
 Google LLC.
 
-## Benchmark panel
+## Command evidence
 
-The homepage terminal uses output captured from a real release build after
+The homepage and workflow use output captured from real Dust commands after
 generating 5,000 benchmark source files:
 
 ```bash
@@ -46,8 +46,10 @@ dart run tool/generate.dart --count 5000
 cd ../..
 target/release/dust build --root examples/benchmark_project
 target/release/dust build --root examples/benchmark_project
+target/release/dust check --root examples/product_showcase
 ```
 
 The first run generated 5,010 outputs in 991 ms. The immediate warm run reused
-5,007 cached outputs and finished in 251 ms. These figures are a captured local
-run, not a universal performance guarantee.
+5,007 cached outputs and finished in 251 ms. The product showcase check scanned
+25 files with no stale output in 30 ms. These figures are a captured local run,
+not a universal performance guarantee.

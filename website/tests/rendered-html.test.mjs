@@ -34,6 +34,7 @@ test("server-renders the Dust project homepage", async () => {
   assert.match(html, /dart-logo\.svg/);
   assert.match(html, /scanned: 5010[\s\S]*generated: 5010[\s\S]*time: 991ms/);
   assert.match(html, /cached: 5007[\s\S]*time: 251ms/);
+  assert.match(html, /clean: 25[\s\S]*stale: 0[\s\S]*time: 30ms/);
   assert.doesNotMatch(html, /codex-preview|SkeletonPreview|react-loading-skeleton/);
 });
 
@@ -54,5 +55,7 @@ test("keeps project copy and branding assets intentional", async () => {
   assert.ok(page.includes(description));
   assert.ok(layout.includes(description));
   assert.match(page, /trademarks of Google LLC/);
+  assert.equal((page.match(/dust build --root examples\/benchmark_project/g) ?? []).length, 1);
+  assert.equal((page.match(/cached: 5007  skipped: 0  time: 251ms/g) ?? []).length, 1);
   assert.doesNotMatch(packageJson, /react-loading-skeleton|drizzle/);
 });

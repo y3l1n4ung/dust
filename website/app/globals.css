@@ -128,6 +128,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--amber-hot); out
 .step-number { color: var(--amber); font: 700 12px var(--mono); }
 .workflow h3 { margin: 0 0 8px; font: 650 22px var(--mono); }
 .workflow p { max-width: 380px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.workflow pre { font-size: 11px; }
+.workflow code { white-space: pre-wrap; }
 pre { margin: 0; padding: 22px; border: 1px solid var(--line); background: var(--ink); overflow-x: auto; color: var(--muted); font: 500 12px/1.7 var(--mono); }
 .code-accent, .code-prompt { color: var(--amber); }
 .code-ok { color: var(--green); }
@@ -180,6 +182,7 @@ pre { margin: 0; padding: 22px; border: 1px solid var(--line); background: var(-
   .feature { min-height: 230px; }
   .workflow li { grid-template-columns: 42px 1fr; padding-block: 28px; }
   .workflow li pre { grid-column: 2; width: 100%; }
+  .workflow pre { font-size: 9px; }
   .packages { padding-block: 82px; }
   .packages > div { grid-column: auto; }
   .open-source { grid-template-columns: 1fr; gap: 28px; padding: 34px 24px; }

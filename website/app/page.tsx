@@ -109,17 +109,14 @@ export default function Home() {
             <div className="terminal-body">
               <p><span className="prompt">$</span> dart run tool/generate.dart --count 5000</p>
               <p className="terminal-muted">generated 5000 source files in lib/generated_models</p>
-              <p><span className="prompt">$</span> dust build --root examples/benchmark_project</p>
-              <pre className="benchmark-output" aria-label="Dust cold and warm build results">{`    ____             __
+              <p className="terminal-muted"># cold release build</p>
+              <pre className="benchmark-output" aria-label="Dust cold build result">{`    ____             __
    / __ \\__  _______/ /_
   / / / / / / / ___/ __/
  / /_/ / /_/ (__  ) /_
 /_____/\\__,_/____/\\__/
 
-build  scanned: 5010  generated: 5010  cached: 0  skipped: 0  time: 991ms
-
-$ dust build --root examples/benchmark_project
-build  scanned: 5010  generated: 3  cached: 5007  skipped: 0  time: 251ms`}</pre>
+build  scanned: 5010  generated: 5010  cached: 0  skipped: 0  time: 991ms`}</pre>
               <p className="terminal-cursor"><span className="prompt">$</span> <span /></p>
             </div>
             <div className="terminal-footer">
@@ -175,17 +172,17 @@ build  scanned: 5010  generated: 3  cached: 5007  skipped: 0  time: 251ms`}</pre
               <li>
                 <span className="step-number">01</span>
                 <div><h3>Annotate</h3><p>Describe the behavior beside the type you already own.</p></div>
-                <pre><code><span className="code-accent">@Derive</span>([ToString(), CopyWith()]){"\n"}class User with _$User {"{"} … {"}"}</code></pre>
+                <pre><code><span className="code-accent">@Derive</span>([ToString(), CopyWith(),{"\n"}  Serialize(), Deserialize()]){"\n"}class HttpPost with _$HttpPost {"{"} … {"}"}</code></pre>
               </li>
               <li>
                 <span className="step-number">02</span>
                 <div><h3>Generate</h3><p>Run one fast command across the project or workspace.</p></div>
-                <pre><code><span className="code-prompt">$</span> dust build{"\n"}<span className="code-ok">✓</span> user.g.dart</code></pre>
+                <pre><code><span className="code-prompt">$</span> dust build --root examples/benchmark_project{"\n"}<span className="code-ok">build</span>  scanned: 5010  generated: 3  cached: 5007  skipped: 0  time: 251ms</code></pre>
               </li>
               <li>
                 <span className="step-number">03</span>
                 <div><h3>Ship</h3><p>Use typed output and verify it stays current in CI.</p></div>
-                <pre><code><span className="code-prompt">$</span> dust check{"\n"}<span className="code-ok">✓</span> current</code></pre>
+                <pre><code><span className="code-prompt">$</span> dust check --root examples/product_showcase{"\n"}<span className="code-ok">check</span>  scanned: 25  clean: 25  stale: 0  time: 30ms</code></pre>
               </li>
             </ol>
           </div>
