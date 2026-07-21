@@ -29,7 +29,11 @@ test("server-renders the Dust project homepage", async () => {
   assert.match(html, /AI agents happy\./);
   assert.match(html, /Dust is Rust-powered code generation for Dart and Flutter/);
   assert.match(html, /https:\/\/github\.com\/y3l1n4ung\/dust/);
-  assert.match(html, /ferris-happy\.png/);
+  assert.match(html, /ferris-happy\.svg/);
+  assert.match(html, /flutter-logo\.svg/);
+  assert.match(html, /dart-logo\.svg/);
+  assert.match(html, /scanned: 5010[\s\S]*generated: 5010[\s\S]*time: 991ms/);
+  assert.match(html, /cached: 5007[\s\S]*time: 251ms/);
   assert.doesNotMatch(html, /codex-preview|SkeletonPreview|react-loading-skeleton/);
 });
 
@@ -38,7 +42,9 @@ test("keeps project copy and branding assets intentional", async () => {
     readFile(new URL("app/page.tsx", root), "utf8"),
     readFile(new URL("app/layout.tsx", root), "utf8"),
     readFile(new URL("package.json", root), "utf8"),
-    access(new URL("public/ferris-happy.png", root)),
+    access(new URL("public/ferris-happy.svg", root)),
+    access(new URL("public/flutter-logo.svg", root)),
+    access(new URL("public/dart-logo.svg", root)),
   ]);
 
   const description =
@@ -47,5 +53,6 @@ test("keeps project copy and branding assets intentional", async () => {
   assert.match(page, /Built to make developers and/);
   assert.ok(page.includes(description));
   assert.ok(layout.includes(description));
+  assert.match(page, /trademarks of Google LLC/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton|drizzle/);
 });

@@ -25,6 +25,29 @@ homepage, repository copy, links, and required branding assets.
 
 ## Artwork
 
-The site uses the Happy Ferris PNG from
+The site uses the exact Happy Ferris SVG from
 [Rustacean.net](https://rustacean.net/). Karen Rustad Tölva has waived copyright
-and related rights to Ferris under CC0.
+and related rights to Ferris under CC0. The mascot composition places the
+official Flutter and Dart marks in Ferris's raised claws.
+
+Flutter and the related logo are trademarks of Google LLC. Dart and the related
+logo are trademarks of Google LLC. Dust is not endorsed by or affiliated with
+Google LLC.
+
+## Benchmark panel
+
+The homepage terminal uses output captured from a real release build after
+generating 5,000 benchmark source files:
+
+```bash
+cd examples/benchmark_project
+dart run tool/generate.dart --count 5000
+
+cd ../..
+target/release/dust build --root examples/benchmark_project
+target/release/dust build --root examples/benchmark_project
+```
+
+The first run generated 5,010 outputs in 991 ms. The immediate warm run reused
+5,007 cached outputs and finished in 251 ms. These figures are a captured local
+run, not a universal performance guarantee.

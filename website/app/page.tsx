@@ -1,3 +1,4 @@
+import { DustMascot } from "./dust-mascot";
 import { InstallCommand } from "./install-command";
 
 const github = "https://github.com/y3l1n4ung/dust";
@@ -61,7 +62,7 @@ export default function Home() {
       <header className="site-header">
         <nav className="shell nav" aria-label="Primary navigation">
           <a className="brand" href="#top" aria-label="Dust home">
-            <span className="brand-mark" aria-hidden="true"><img src="/ferris-happy.png" alt="" /></span>
+            <DustMascot className="brand-mark" />
             <span>dust</span>
             <span className="brand-version">open source</span>
           </a>
@@ -100,26 +101,30 @@ export default function Home() {
             </dl>
           </div>
 
-          <div className="terminal" aria-label="Dust build example">
+          <div className="terminal" aria-label="Real Dust 5000-file benchmark output">
             <div className="terminal-bar">
-              <span className="terminal-title">~/my_flutter_app</span>
+              <span className="terminal-title">~/dust/examples/benchmark_project</span>
               <span className="terminal-controls" aria-hidden="true">● ● ●</span>
             </div>
             <div className="terminal-body">
-              <p><span className="prompt">$</span> dart pub add dust_dart</p>
-              <p className="terminal-muted">Resolving dependencies... done</p>
-              <p><span className="prompt">$</span> dust build</p>
-              <div className="terminal-output">
-                <p><span className="ok">✓</span> parsed lib/models/user.dart</p>
-                <p><span className="ok">✓</span> generated lib/models/user.g.dart</p>
-              </div>
-              <p><span className="prompt">$</span> dust check</p>
-              <p><span className="ok">✓</span> generated files are current</p>
+              <p><span className="prompt">$</span> dart run tool/generate.dart --count 5000</p>
+              <p className="terminal-muted">generated 5000 source files in lib/generated_models</p>
+              <p><span className="prompt">$</span> dust build --root examples/benchmark_project</p>
+              <pre className="benchmark-output" aria-label="Dust cold and warm build results">{`    ____             __
+   / __ \\__  _______/ /_
+  / / / / / / / ___/ __/
+ / /_/ / /_/ (__  ) /_
+/_____/\\__,_/____/\\__/
+
+build  scanned: 5010  generated: 5010  cached: 0  skipped: 0  time: 991ms
+
+$ dust build --root examples/benchmark_project
+build  scanned: 5010  generated: 3  cached: 5007  skipped: 0  time: 251ms`}</pre>
               <p className="terminal-cursor"><span className="prompt">$</span> <span /></p>
             </div>
             <div className="terminal-footer">
-              <span><i aria-hidden="true" /> deterministic output</span>
-              <span>Rust engine · Dart APIs</span>
+              <span><i aria-hidden="true" /> measured release build</span>
+              <span>5,000 generated source files</span>
             </div>
           </div>
         </section>
@@ -204,7 +209,10 @@ export default function Home() {
         </section>
 
         <section className="shell open-source">
-          <img className="open-source-mark" src="/ferris-happy.png" alt="Happy Ferris, the Rust mascot" />
+          <DustMascot
+            className="open-source-mark"
+            label="Happy Ferris holding the Flutter and Dart logos"
+          />
           <div>
             <p className="section-kicker">Built in the open</p>
             <h2>Inspect every generated line.</h2>
@@ -219,7 +227,7 @@ export default function Home() {
 
       <footer className="site-footer">
         <div className="shell footer-layout">
-          <a className="brand" href="#top"><span className="brand-mark" aria-hidden="true"><img src="/ferris-happy.png" alt="" /></span><span>dust</span></a>
+          <a className="brand" href="#top"><DustMascot className="brand-mark" /><span>dust</span></a>
           <p>Built to make developers and AI agents happy.</p>
           <div>
             <a href={github + "/releases"}>Releases</a>
@@ -228,6 +236,9 @@ export default function Home() {
             <a href="https://rustacean.net/">Happy Ferris artwork</a>
           </div>
         </div>
+        <p className="shell trademark-notice">
+          Flutter and the related logo are trademarks of Google LLC. Dart and the related logo are trademarks of Google LLC. Dust is not endorsed by or affiliated with Google LLC.
+        </p>
       </footer>
     </div>
   );

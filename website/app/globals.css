@@ -40,10 +40,15 @@ button { color: inherit; font: inherit; }
 .nav, .footer-layout { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
 .brand { display: inline-flex; align-items: center; gap: 11px; font: 700 18px var(--mono); }
 .brand-mark {
-  display: grid; place-items: center; width: 68px; height: 42px; overflow: hidden;
+  width: 76px; height: auto; overflow: hidden;
   border: 1px solid var(--line-bright); border-radius: 6px; background: var(--ink);
 }
-.brand-mark img { width: 100%; height: 100%; object-fit: contain; }
+.dust-mascot { position: relative; display: block; aspect-ratio: 3 / 2; }
+.dust-mascot img { position: absolute; display: block; object-fit: contain; pointer-events: none; }
+.mascot-ferris { inset: 0; width: 100%; height: 100%; }
+.mascot-flutter, .mascot-dart { z-index: 1; top: 2%; width: 18%; height: 34%; filter: drop-shadow(0 2px 2px rgba(0,0,0,.45)); }
+.mascot-flutter { left: 5%; transform: rotate(-5deg); }
+.mascot-dart { right: 5%; transform: rotate(5deg); }
 .brand-version, .status {
   padding: 4px 7px; border: 1px solid var(--line); border-radius: 999px;
   color: var(--quiet); font: 500 10px var(--mono); letter-spacing: .08em; text-transform: uppercase;
@@ -86,10 +91,10 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--amber-hot); out
 .terminal-bar, .terminal-footer { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--line); color: var(--quiet); font: 500 10px var(--mono); }
 .terminal-bar { height: 49px; }
 .terminal-controls { color: var(--line-bright); letter-spacing: 5px; }
-.terminal-body { min-height: 340px; padding: 28px 30px; font: 500 13px/1.75 var(--mono); }
+.terminal-body { min-height: 420px; padding: 25px 27px; font: 500 12px/1.65 var(--mono); }
 .terminal-body p { margin: 0 0 12px; }
 .terminal-muted { color: var(--quiet); }
-.terminal-output { margin: 2px 0 18px 16px; padding-left: 17px; border-left: 1px solid var(--line); color: var(--muted); }
+.benchmark-output { margin: 5px 0 13px; padding: 0; border: 0; background: transparent; color: var(--muted); font: inherit; line-height: 1.42; }
 .prompt { color: var(--amber); margin-right: 9px; }
 .ok { color: var(--green); margin-right: 9px; }
 .terminal-cursor span:last-child { display: inline-block; width: 8px; height: 15px; background: var(--amber); vertical-align: -2px; animation: blink 1.1s steps(1) infinite; }
@@ -133,11 +138,13 @@ pre { margin: 0; padding: 22px; border: 1px solid var(--line); background: var(-
 .package span { grid-column: 1/-1; align-self: end; color: var(--muted); font-size: 14px; line-height: 1.55; }
 .package b { color: var(--quiet); }
 .open-source { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 42px; padding: 56px; border: 1px solid var(--amber); background: linear-gradient(110deg, rgba(255,182,41,.1), rgba(13,15,13,.72)); }
-.open-source-mark { width: 180px; height: 108px; object-fit: contain; }
+.open-source-mark { width: 210px; }
 .open-source p:not(.section-kicker) { max-width: 680px; margin: 18px 0 0; color: var(--muted); line-height: 1.65; }
 .open-source-actions { display: flex; gap: 12px; }
-.site-footer { height: 150px; margin-top: 112px; border-top: 1px solid var(--line); color: var(--quiet); font: 500 11px var(--mono); }
+.site-footer { min-height: 180px; margin-top: 112px; border-top: 1px solid var(--line); color: var(--quiet); font: 500 11px var(--mono); }
+.site-footer .footer-layout { height: 132px; }
 .footer-layout > div { display: flex; gap: 24px; }
+.trademark-notice { margin-block: 0 24px; font-size: 9px; line-height: 1.5; }
 
 @keyframes blink { 50% { opacity: 0; } }
 @media (max-width: 1080px) {
@@ -162,7 +169,7 @@ pre { margin: 0; padding: 22px; border: 1px solid var(--line); background: var(-
   h1 { font-size: clamp(44px,14vw,66px); }
   .hero-copy { font-size: 17px; }
   .hero-facts { gap: 18px; justify-content: space-between; }
-  .terminal-body { min-height: 310px; padding: 24px 18px; font-size: 11px; }
+  .terminal-body { min-height: 390px; padding: 22px 16px; font-size: 9px; }
   .terminal-footer { padding-inline: 14px; }
   .install-layout, .section-heading { grid-template-columns: 1fr; gap: 28px; }
   .install-layout { padding-block: 42px; }
@@ -178,6 +185,8 @@ pre { margin: 0; padding: 22px; border: 1px solid var(--line); background: var(-
   .open-source { grid-template-columns: 1fr; gap: 28px; padding: 34px 24px; }
   .open-source-actions { grid-column: auto; flex-wrap: wrap; }
   .site-footer { height: auto; padding-block: 44px; margin-top: 82px; }
+  .site-footer .footer-layout { height: auto; }
+  .trademark-notice { margin: 24px 0 0; }
   .footer-layout { align-items: flex-start; flex-direction: column; }
   .footer-layout > div { flex-wrap: wrap; }
 }

@@ -12,8 +12,8 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Dust — Built to make developers and AI agents happy",
     description: "Dust is Rust-powered code generation for Dart and Flutter, built for human developers and AI coding agents. It handles repetitive and complex code so you can focus on your product.",
     icons: {
-      icon: "/ferris-happy.png",
-      apple: "/ferris-happy.png",
+      icon: "/ferris-happy.svg",
+      apple: "/ferris-happy.svg",
     },
     openGraph: {
       title: "Dust — Built to make developers and AI agents happy",
