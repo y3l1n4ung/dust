@@ -29,17 +29,16 @@ test("server-renders the Dust project homepage", async () => {
   assert.match(html, /AI agents happy\./);
   assert.match(html, /Dust is Rust-powered code generation for Dart and Flutter/);
   assert.match(html, /https:\/\/github\.com\/y3l1n4ung\/dust/);
-  assert.match(html, /dust-mascot\.png/);
+  assert.match(html, /ferris-happy\.png/);
   assert.doesNotMatch(html, /codex-preview|SkeletonPreview|react-loading-skeleton/);
 });
 
-test("keeps project copy and social assets intentional", async () => {
+test("keeps project copy and branding assets intentional", async () => {
   const [page, layout, packageJson] = await Promise.all([
     readFile(new URL("app/page.tsx", root), "utf8"),
     readFile(new URL("app/layout.tsx", root), "utf8"),
     readFile(new URL("package.json", root), "utf8"),
-    access(new URL("public/dust-mascot.png", root)),
-    access(new URL("public/og.png", root)),
+    access(new URL("public/ferris-happy.png", root)),
   ]);
 
   const description =

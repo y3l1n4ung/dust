@@ -21,4 +21,10 @@ npm test
 ```
 
 This builds the Cloudflare Worker-compatible output and verifies the rendered
-homepage, repository copy, links, and required social assets.
+homepage, repository copy, links, and required branding assets.
+
+## Artwork
+
+The site uses the Happy Ferris PNG from
+[Rustacean.net](https://rustacean.net/). Karen Rustad Tölva has waived copyright
+and related rights to Ferris under CC0.

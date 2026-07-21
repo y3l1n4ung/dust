@@ -40,10 +40,10 @@ button { color: inherit; font: inherit; }
 .nav, .footer-layout { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 28px; }
 .brand { display: inline-flex; align-items: center; gap: 11px; font: 700 18px var(--mono); }
 .brand-mark {
-  display: grid; place-items: center; width: 42px; height: 42px; overflow: hidden;
+  display: grid; place-items: center; width: 68px; height: 42px; overflow: hidden;
   border: 1px solid var(--line-bright); border-radius: 6px; background: var(--ink);
 }
-.brand-mark img { width: 100%; height: 100%; object-fit: cover; }
+.brand-mark img { width: 100%; height: 100%; object-fit: contain; }
 .brand-version, .status {
   padding: 4px 7px; border: 1px solid var(--line); border-radius: 999px;
   color: var(--quiet); font: 500 10px var(--mono); letter-spacing: .08em; text-transform: uppercase;
@@ -133,7 +133,7 @@ pre { margin: 0; padding: 22px; border: 1px solid var(--line); background: var(-
 .package span { grid-column: 1/-1; align-self: end; color: var(--muted); font-size: 14px; line-height: 1.55; }
 .package b { color: var(--quiet); }
 .open-source { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 42px; padding: 56px; border: 1px solid var(--amber); background: linear-gradient(110deg, rgba(255,182,41,.1), rgba(13,15,13,.72)); }
-.open-source-mark { width: 108px; height: 108px; object-fit: cover; border: 1px solid rgba(255,182,41,.3); border-radius: 8px; }
+.open-source-mark { width: 180px; height: 108px; object-fit: contain; }
 .open-source p:not(.section-kicker) { max-width: 680px; margin: 18px 0 0; color: var(--muted); line-height: 1.65; }
 .open-source-actions { display: flex; gap: 12px; }
 .site-footer { height: 150px; margin-top: 112px; border-top: 1px solid var(--line); color: var(--quiet); font: 500 11px var(--mono); }

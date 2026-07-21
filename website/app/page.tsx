@@ -61,7 +61,7 @@ export default function Home() {
       <header className="site-header">
         <nav className="shell nav" aria-label="Primary navigation">
           <a className="brand" href="#top" aria-label="Dust home">
-            <span className="brand-mark" aria-hidden="true"><img src="/dust-mascot.png" alt="" /></span>
+            <span className="brand-mark" aria-hidden="true"><img src="/ferris-happy.png" alt="" /></span>
             <span>dust</span>
             <span className="brand-version">open source</span>
           </a>
@@ -204,7 +204,7 @@ export default function Home() {
         </section>
 
         <section className="shell open-source">
-          <img className="open-source-mark" src="/dust-mascot.png" alt="Rust-style crab holding Flutter and Dart symbols" />
+          <img className="open-source-mark" src="/ferris-happy.png" alt="Happy Ferris, the Rust mascot" />
           <div>
             <p className="section-kicker">Built in the open</p>
             <h2>Inspect every generated line.</h2>
@@ -219,12 +219,13 @@ export default function Home() {
 
       <footer className="site-footer">
         <div className="shell footer-layout">
-          <a className="brand" href="#top"><span className="brand-mark" aria-hidden="true"><img src="/dust-mascot.png" alt="" /></span><span>dust</span></a>
+          <a className="brand" href="#top"><span className="brand-mark" aria-hidden="true"><img src="/ferris-happy.png" alt="" /></span><span>dust</span></a>
           <p>Built to make developers and AI agents happy.</p>
           <div>
             <a href={github + "/releases"}>Releases</a>
             <a href={github + "/issues"}>Issues</a>
             <a href={github + "/security"}>Security</a>
+            <a href="https://rustacean.net/">Happy Ferris artwork</a>
           </div>
         </div>
       </footer>
