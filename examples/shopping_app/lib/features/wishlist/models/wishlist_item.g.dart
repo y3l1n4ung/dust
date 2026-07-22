@@ -94,18 +94,12 @@ final class $WishlistItemSerializer implements Serializer<WishlistItem, Map<Stri
 
   @override
   Map<String, Object?> serialize(WishlistItem value) => _$WishlistItemSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(WishlistItem value) => serialize(value);
 }
 final class $WishlistItemDeserializer implements Deserializer<WishlistItem, Map<String, Object?>> {
   const $WishlistItemDeserializer();
 
   @override
   WishlistItem deserialize(Map<String, Object?> json) => _$WishlistItemDeserialize(json);
-
-  @override
-  WishlistItem fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$WishlistItemSerialize(WishlistItem instance) {

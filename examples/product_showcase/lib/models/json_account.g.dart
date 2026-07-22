@@ -102,18 +102,12 @@ final class $JsonAccountSerializer implements Serializer<JsonAccount, Map<String
 
   @override
   Map<String, Object?> serialize(JsonAccount value) => _$JsonAccountSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonAccount value) => serialize(value);
 }
 final class $JsonAccountDeserializer implements Deserializer<JsonAccount, Map<String, Object?>> {
   const $JsonAccountDeserializer();
 
   @override
   JsonAccount deserialize(Map<String, Object?> json) => _$JsonAccountDeserialize(json);
-
-  @override
-  JsonAccount fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$JsonAccountSerialize(JsonAccount instance) {

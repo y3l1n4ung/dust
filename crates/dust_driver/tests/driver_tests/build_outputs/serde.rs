@@ -68,18 +68,12 @@ final class $ProfileSerializer implements Serializer<Profile, Map<String, Object
 
   @override
   Map<String, Object?> serialize(Profile value) => _$ProfileSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(Profile value) => serialize(value);
 }
 final class $ProfileDeserializer implements Deserializer<Profile, Map<String, Object?>> {
   const $ProfileDeserializer();
 
   @override
   Profile deserialize(Map<String, Object?> json) => _$ProfileDeserialize(json);
-
-  @override
-  Profile fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$ProfileSerialize(Profile instance) {
@@ -145,18 +139,12 @@ final class $AccountSerializer implements Serializer<Account, Map<String, Object
 
   @override
   Map<String, Object?> serialize(Account value) => _$AccountSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(Account value) => serialize(value);
 }
 final class $AccountDeserializer implements Deserializer<Account, Map<String, Object?>> {
   const $AccountDeserializer();
 
   @override
   Account deserialize(Map<String, Object?> json) => _$AccountDeserialize(json);
-
-  @override
-  Account fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$AccountSerialize(Account instance) {

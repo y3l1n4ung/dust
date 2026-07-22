@@ -30,41 +30,33 @@ abstract interface class Serializable {
 abstract interface class Serializer<DartT, JsonT> {
   /// Converts [value] into its JSON representation.
   JsonT serialize(DartT value);
-
-  /// Dart ecosystem mirror for [serialize].
-  JsonT toJson(DartT value);
 }
 
 /// Directional conversion contract for generated and custom deserializers.
 abstract interface class Deserializer<DartT, JsonT> {
   /// Converts [json] into a Dart value.
   DartT deserialize(JsonT json);
-
-  /// Dart ecosystem mirror for [deserialize].
-  DartT fromJson(JsonT json);
 }
 
 /// Field-level conversion contract for custom Dust serde handling.
 ///
 /// Dust owns nullability around the field. Codecs only serialize and
 /// deserialize the non-null value itself.
-abstract interface class SerDeCodec<DartT, JsonT> {
+abstract interface class SerDeCodec<DartT, JsonT>
+    implements Serializer<DartT, JsonT>, Deserializer<DartT, JsonT> {
   /// Creates one codec contract object.
   const SerDeCodec(); // coverage:ignore-line
-
-  /// Converts [value] into its JSON representation.
-  JsonT serialize(DartT value);
-
-  /// Converts [json] into a Dart value.
-  DartT deserialize(JsonT json);
 }
 
-/// Dart ecosystem mirrors for custom serde codecs.
-extension SerDeCodecMirrors<DartT, JsonT> on SerDeCodec<DartT, JsonT> {
-  /// Dart ecosystem mirror for [SerDeCodec.serialize].
+/// Dart ecosystem mirrors for serializers.
+extension SerializerJsonMirror<DartT, JsonT> on Serializer<DartT, JsonT> {
+  /// Dart ecosystem mirror for [Serializer.serialize].
   JsonT toJson(DartT value) => serialize(value);
+}
 
-  /// Dart ecosystem mirror for [SerDeCodec.deserialize].
+/// Dart ecosystem mirrors for deserializers.
+extension DeserializerJsonMirror<DartT, JsonT> on Deserializer<DartT, JsonT> {
+  /// Dart ecosystem mirror for [Deserializer.deserialize].
   DartT fromJson(JsonT json) => deserialize(json);
 }
 

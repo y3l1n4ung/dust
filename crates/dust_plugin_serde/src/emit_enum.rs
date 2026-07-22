@@ -76,9 +76,6 @@ pub(crate) fn emit_enum_serializer_support_type(enum_name: &str) -> String {
 
   @override
   Object? serialize({enum_name} value) => _${enum_name}Serialize(value);
-
-  @override
-  Object? toJson({enum_name} value) => serialize(value);
 }}"#
     )
 }
@@ -91,9 +88,6 @@ pub(crate) fn emit_enum_deserializer_support_type(enum_name: &str) -> String {
 
   @override
   {enum_name} deserialize(Object? json) => _${enum_name}Deserialize(json);
-
-  @override
-  {enum_name} fromJson(Object? json) => deserialize(json);
 }}"#
     )
 }

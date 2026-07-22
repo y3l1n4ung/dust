@@ -57,18 +57,12 @@ final class $JsonCodecBundleSerializer implements Serializer<JsonCodecBundle, Ma
 
   @override
   Map<String, Object?> serialize(JsonCodecBundle value) => _$JsonCodecBundleSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonCodecBundle value) => serialize(value);
 }
 final class $JsonCodecBundleDeserializer implements Deserializer<JsonCodecBundle, Map<String, Object?>> {
   const $JsonCodecBundleDeserializer();
 
   @override
   JsonCodecBundle deserialize(Map<String, Object?> json) => _$JsonCodecBundleDeserialize(json);
-
-  @override
-  JsonCodecBundle fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$JsonCodecBundleSerialize(JsonCodecBundle instance) {

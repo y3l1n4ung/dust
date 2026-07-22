@@ -196,36 +196,24 @@ final class $UserSerializer implements Serializer<User, Map<String, Object?>> {
 
   @override
   Map<String, Object?> serialize(User value) => _$UserSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(User value) => serialize(value);
 }
 final class $UserDeserializer implements Deserializer<User, Map<String, Object?>> {
   const $UserDeserializer();
 
   @override
   User deserialize(Map<String, Object?> json) => _$UserDeserialize(json);
-
-  @override
-  User fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $NameSerializer implements Serializer<Name, Map<String, Object?>> {
   const $NameSerializer();
 
   @override
   Map<String, Object?> serialize(Name value) => _$NameSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(Name value) => serialize(value);
 }
 final class $NameDeserializer implements Deserializer<Name, Map<String, Object?>> {
   const $NameDeserializer();
 
   @override
   Name deserialize(Map<String, Object?> json) => _$NameDeserialize(json);
-
-  @override
-  Name fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$UserSerialize(User instance) {

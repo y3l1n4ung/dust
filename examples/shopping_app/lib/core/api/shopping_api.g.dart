@@ -642,126 +642,84 @@ final class $LoginRequestSerializer implements Serializer<LoginRequest, Map<Stri
 
   @override
   Map<String, Object?> serialize(LoginRequest value) => _$LoginRequestSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(LoginRequest value) => serialize(value);
 }
 final class $LoginRequestDeserializer implements Deserializer<LoginRequest, Map<String, Object?>> {
   const $LoginRequestDeserializer();
 
   @override
   LoginRequest deserialize(Map<String, Object?> json) => _$LoginRequestDeserialize(json);
-
-  @override
-  LoginRequest fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $LoginResponseSerializer implements Serializer<LoginResponse, Map<String, Object?>> {
   const $LoginResponseSerializer();
 
   @override
   Map<String, Object?> serialize(LoginResponse value) => _$LoginResponseSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(LoginResponse value) => serialize(value);
 }
 final class $LoginResponseDeserializer implements Deserializer<LoginResponse, Map<String, Object?>> {
   const $LoginResponseDeserializer();
 
   @override
   LoginResponse deserialize(Map<String, Object?> json) => _$LoginResponseDeserialize(json);
-
-  @override
-  LoginResponse fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $RegisterUserResponseSerializer implements Serializer<RegisterUserResponse, Map<String, Object?>> {
   const $RegisterUserResponseSerializer();
 
   @override
   Map<String, Object?> serialize(RegisterUserResponse value) => _$RegisterUserResponseSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(RegisterUserResponse value) => serialize(value);
 }
 final class $RegisterUserResponseDeserializer implements Deserializer<RegisterUserResponse, Map<String, Object?>> {
   const $RegisterUserResponseDeserializer();
 
   @override
   RegisterUserResponse deserialize(Map<String, Object?> json) => _$RegisterUserResponseDeserialize(json);
-
-  @override
-  RegisterUserResponse fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $RegisterNameSerializer implements Serializer<RegisterName, Map<String, Object?>> {
   const $RegisterNameSerializer();
 
   @override
   Map<String, Object?> serialize(RegisterName value) => _$RegisterNameSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(RegisterName value) => serialize(value);
 }
 final class $RegisterNameDeserializer implements Deserializer<RegisterName, Map<String, Object?>> {
   const $RegisterNameDeserializer();
 
   @override
   RegisterName deserialize(Map<String, Object?> json) => _$RegisterNameDeserialize(json);
-
-  @override
-  RegisterName fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $RegisterGeolocationSerializer implements Serializer<RegisterGeolocation, Map<String, Object?>> {
   const $RegisterGeolocationSerializer();
 
   @override
   Map<String, Object?> serialize(RegisterGeolocation value) => _$RegisterGeolocationSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(RegisterGeolocation value) => serialize(value);
 }
 final class $RegisterGeolocationDeserializer implements Deserializer<RegisterGeolocation, Map<String, Object?>> {
   const $RegisterGeolocationDeserializer();
 
   @override
   RegisterGeolocation deserialize(Map<String, Object?> json) => _$RegisterGeolocationDeserialize(json);
-
-  @override
-  RegisterGeolocation fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $RegisterAddressSerializer implements Serializer<RegisterAddress, Map<String, Object?>> {
   const $RegisterAddressSerializer();
 
   @override
   Map<String, Object?> serialize(RegisterAddress value) => _$RegisterAddressSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(RegisterAddress value) => serialize(value);
 }
 final class $RegisterAddressDeserializer implements Deserializer<RegisterAddress, Map<String, Object?>> {
   const $RegisterAddressDeserializer();
 
   @override
   RegisterAddress deserialize(Map<String, Object?> json) => _$RegisterAddressDeserialize(json);
-
-  @override
-  RegisterAddress fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $RegisterUserRequestSerializer implements Serializer<RegisterUserRequest, Map<String, Object?>> {
   const $RegisterUserRequestSerializer();
 
   @override
   Map<String, Object?> serialize(RegisterUserRequest value) => _$RegisterUserRequestSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(RegisterUserRequest value) => serialize(value);
 }
 final class $RegisterUserRequestDeserializer implements Deserializer<RegisterUserRequest, Map<String, Object?>> {
   const $RegisterUserRequestDeserializer();
 
   @override
   RegisterUserRequest deserialize(Map<String, Object?> json) => _$RegisterUserRequestDeserialize(json);
-
-  @override
-  RegisterUserRequest fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class _$ShoppingApi implements ShoppingApi {
   _$ShoppingApi(this._dio, {String? baseUrl}) : _baseUrl = baseUrl;

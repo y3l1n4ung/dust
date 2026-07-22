@@ -56,9 +56,11 @@ final json = renamed.serialize();
 final dartJson = renamed.toJson(); // Dart ecosystem mirror.
 ```
 
-Generated JSON support also includes directional
+Generated JSON support also includes source-only
 `Serializer<DartT, JsonT>` and `Deserializer<DartT, JsonT>` objects for call
 sites that want reusable conversion objects instead of instance methods.
+`serde.dart` provides `toJson` and `fromJson` extension mirrors for Dart
+ecosystem naming.
 
 ## Libraries
 

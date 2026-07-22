@@ -69,18 +69,12 @@ final class $JsonScalarBundleSerializer implements Serializer<JsonScalarBundle, 
 
   @override
   Map<String, Object?> serialize(JsonScalarBundle value) => _$JsonScalarBundleSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonScalarBundle value) => serialize(value);
 }
 final class $JsonScalarBundleDeserializer implements Deserializer<JsonScalarBundle, Map<String, Object?>> {
   const $JsonScalarBundleDeserializer();
 
   @override
   JsonScalarBundle deserialize(Map<String, Object?> json) => _$JsonScalarBundleDeserialize(json);
-
-  @override
-  JsonScalarBundle fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$JsonScalarBundleSerialize(JsonScalarBundle instance) {

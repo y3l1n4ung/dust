@@ -25,36 +25,24 @@ final class $JsonWorkspaceAccountSerializer implements Serializer<JsonWorkspaceA
 
   @override
   Map<String, Object?> serialize(JsonWorkspaceAccount value) => _$JsonWorkspaceAccountSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonWorkspaceAccount value) => serialize(value);
 }
 final class $JsonWorkspaceAccountDeserializer implements Deserializer<JsonWorkspaceAccount, Map<String, Object?>> {
   const $JsonWorkspaceAccountDeserializer();
 
   @override
   JsonWorkspaceAccount deserialize(Map<String, Object?> json) => _$JsonWorkspaceAccountDeserialize(json);
-
-  @override
-  JsonWorkspaceAccount fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $JsonWorkspaceKindSerializer implements Serializer<JsonWorkspaceKind, Object?> {
   const $JsonWorkspaceKindSerializer();
 
   @override
   Object? serialize(JsonWorkspaceKind value) => _$JsonWorkspaceKindSerialize(value);
-
-  @override
-  Object? toJson(JsonWorkspaceKind value) => serialize(value);
 }
 final class $JsonWorkspaceKindDeserializer implements Deserializer<JsonWorkspaceKind, Object?> {
   const $JsonWorkspaceKindDeserializer();
 
   @override
   JsonWorkspaceKind deserialize(Object? json) => _$JsonWorkspaceKindDeserialize(json);
-
-  @override
-  JsonWorkspaceKind fromJson(Object? json) => deserialize(json);
 }
 
 Map<String, Object?> _$JsonWorkspaceAccountSerialize(JsonWorkspaceAccount instance) {

@@ -85,7 +85,9 @@ final profileAgain = deserializer.deserialize(json);
 
 These implement `Serializer<UserProfile, Map<String, Object?>>` and
 `Deserializer<UserProfile, Map<String, Object?>>`. They are useful when a
-framework, registry, or helper wants conversion behavior as a value.
+framework, registry, or helper wants conversion behavior as a value. Those
+contracts require only the Dust source verbs; the `serde.dart` import provides
+`toJson` and `fromJson` extension mirrors for Dart ecosystem naming.
 
 > [!IMPORTANT]
 > Generation requires the matching `part` directive and generated mixin.

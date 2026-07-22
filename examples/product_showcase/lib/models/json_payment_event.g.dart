@@ -25,18 +25,12 @@ final class $JsonPaymentEventSerializer implements Serializer<JsonPaymentEvent, 
 
   @override
   Map<String, Object?> serialize(JsonPaymentEvent value) => _$JsonPaymentEventSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonPaymentEvent value) => serialize(value);
 }
 final class $JsonPaymentEventDeserializer implements Deserializer<JsonPaymentEvent, Map<String, Object?>> {
   const $JsonPaymentEventDeserializer();
 
   @override
   JsonPaymentEvent deserialize(Map<String, Object?> json) => _$JsonPaymentEventDeserialize(json);
-
-  @override
-  JsonPaymentEvent fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class JsonPaymentSuccess extends JsonPaymentEvent {
   const JsonPaymentSuccess({
@@ -72,36 +66,24 @@ final class $JsonPaymentSuccessSerializer implements Serializer<JsonPaymentSucce
 
   @override
   Map<String, Object?> serialize(JsonPaymentSuccess value) => _$JsonPaymentSuccessSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonPaymentSuccess value) => serialize(value);
 }
 final class $JsonPaymentSuccessDeserializer implements Deserializer<JsonPaymentSuccess, Map<String, Object?>> {
   const $JsonPaymentSuccessDeserializer();
 
   @override
   JsonPaymentSuccess deserialize(Map<String, Object?> json) => _$JsonPaymentSuccessDeserialize(json);
-
-  @override
-  JsonPaymentSuccess fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $JsonPaymentFailedSerializer implements Serializer<JsonPaymentFailed, Map<String, Object?>> {
   const $JsonPaymentFailedSerializer();
 
   @override
   Map<String, Object?> serialize(JsonPaymentFailed value) => _$JsonPaymentFailedSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonPaymentFailed value) => serialize(value);
 }
 final class $JsonPaymentFailedDeserializer implements Deserializer<JsonPaymentFailed, Map<String, Object?>> {
   const $JsonPaymentFailedDeserializer();
 
   @override
   JsonPaymentFailed deserialize(Map<String, Object?> json) => _$JsonPaymentFailedDeserialize(json);
-
-  @override
-  JsonPaymentFailed fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$JsonPaymentEventSerialize(JsonPaymentEvent instance) {

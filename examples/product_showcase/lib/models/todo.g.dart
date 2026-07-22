@@ -194,54 +194,36 @@ final class $TodoSerializer implements Serializer<Todo, Map<String, Object?>> {
 
   @override
   Map<String, Object?> serialize(Todo value) => _$TodoSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(Todo value) => serialize(value);
 }
 final class $TodoDeserializer implements Deserializer<Todo, Map<String, Object?>> {
   const $TodoDeserializer();
 
   @override
   Todo deserialize(Map<String, Object?> json) => _$TodoDeserialize(json);
-
-  @override
-  Todo fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $TodoCreateSerializer implements Serializer<TodoCreate, Map<String, Object?>> {
   const $TodoCreateSerializer();
 
   @override
   Map<String, Object?> serialize(TodoCreate value) => _$TodoCreateSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(TodoCreate value) => serialize(value);
 }
 final class $TodoCreateDeserializer implements Deserializer<TodoCreate, Map<String, Object?>> {
   const $TodoCreateDeserializer();
 
   @override
   TodoCreate deserialize(Map<String, Object?> json) => _$TodoCreateDeserialize(json);
-
-  @override
-  TodoCreate fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $TodoUpdateSerializer implements Serializer<TodoUpdate, Map<String, Object?>> {
   const $TodoUpdateSerializer();
 
   @override
   Map<String, Object?> serialize(TodoUpdate value) => _$TodoUpdateSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(TodoUpdate value) => serialize(value);
 }
 final class $TodoUpdateDeserializer implements Deserializer<TodoUpdate, Map<String, Object?>> {
   const $TodoUpdateDeserializer();
 
   @override
   TodoUpdate deserialize(Map<String, Object?> json) => _$TodoUpdateDeserialize(json);
-
-  @override
-  TodoUpdate fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$TodoSerialize(Todo instance) {

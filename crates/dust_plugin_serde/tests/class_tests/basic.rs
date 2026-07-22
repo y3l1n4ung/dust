@@ -49,9 +49,6 @@ fn generates_to_json_mixin_member() {
 
   @override
   Map<String, Object?> serialize(User value) => _$UserSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(User value) => serialize(value);
 }"#
         ]
     );
@@ -249,9 +246,6 @@ User _$UserFromJson(Map<String, Object?> json) =>
 
   @override
   User deserialize(Map<String, Object?> json) => _$UserDeserialize(json);
-
-  @override
-  User fromJson(Map<String, Object?> json) => deserialize(json);
 }"#
         ]
     );

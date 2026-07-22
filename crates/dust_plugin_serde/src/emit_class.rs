@@ -95,9 +95,6 @@ pub(crate) fn emit_serializer_support_type(class_name: &str) -> String {
 
   @override
   Map<String, Object?> serialize({class_name} value) => _${class_name}Serialize(value);
-
-  @override
-  Map<String, Object?> toJson({class_name} value) => serialize(value);
 }}"#
     )
 }
@@ -159,9 +156,6 @@ pub(crate) fn emit_deserializer_support_type(class_name: &str) -> String {
 
   @override
   {class_name} deserialize(Map<String, Object?> json) => _${class_name}Deserialize(json);
-
-  @override
-  {class_name} fromJson(Map<String, Object?> json) => deserialize(json);
 }}"#
     )
 }

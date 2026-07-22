@@ -181,36 +181,24 @@ final class $StoreCartSerializer implements Serializer<StoreCart, Map<String, Ob
 
   @override
   Map<String, Object?> serialize(StoreCart value) => _$StoreCartSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(StoreCart value) => serialize(value);
 }
 final class $StoreCartDeserializer implements Deserializer<StoreCart, Map<String, Object?>> {
   const $StoreCartDeserializer();
 
   @override
   StoreCart deserialize(Map<String, Object?> json) => _$StoreCartDeserialize(json);
-
-  @override
-  StoreCart fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $StoreCartProductSerializer implements Serializer<StoreCartProduct, Map<String, Object?>> {
   const $StoreCartProductSerializer();
 
   @override
   Map<String, Object?> serialize(StoreCartProduct value) => _$StoreCartProductSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(StoreCartProduct value) => serialize(value);
 }
 final class $StoreCartProductDeserializer implements Deserializer<StoreCartProduct, Map<String, Object?>> {
   const $StoreCartProductDeserializer();
 
   @override
   StoreCartProduct deserialize(Map<String, Object?> json) => _$StoreCartProductDeserialize(json);
-
-  @override
-  StoreCartProduct fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$StoreCartSerialize(StoreCart instance) {
