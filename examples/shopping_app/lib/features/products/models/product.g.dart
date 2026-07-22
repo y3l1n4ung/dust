@@ -13,7 +13,7 @@
 
 part of 'product.dart';
 
-mixin _$Product {
+mixin _$Product implements Serializable {
   @override
   String toString() {
     final self = this as Product;
@@ -68,10 +68,12 @@ mixin _$Product {
   @pragma('vm:prefer-inline')
   _$ProductCopyWith<Product> get copyWith => _$ProductCopyWithImpl<Product>(this as Product, (value) => value);
 
-  Map<String, Object?> toJson() => _$ProductToJson(this as Product);
+  Map<String, Object?> serialize() => _$ProductSerialize(this as Product);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$Rating {
+mixin _$Rating implements Serializable {
   @override
   String toString() {
     final self = this as Rating;
@@ -110,7 +112,9 @@ mixin _$Rating {
   @pragma('vm:prefer-inline')
   _$RatingCopyWith<Rating> get copyWith => _$RatingCopyWithImpl<Rating>(this as Rating, (value) => value);
 
-  Map<String, Object?> toJson() => _$RatingToJson(this as Rating);
+  Map<String, Object?> serialize() => _$RatingSerialize(this as Rating);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -199,8 +203,44 @@ final class _$RatingCopyWithImpl<$Res> implements _$RatingCopyWith<$Res> {
     );
   }
 }
+final class $ProductSerializer implements Serializer<Product, Map<String, Object?>> {
+  const $ProductSerializer();
 
-Map<String, Object?> _$ProductToJson(Product instance) {
+  @override
+  Map<String, Object?> serialize(Product value) => _$ProductSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(Product value) => serialize(value);
+}
+final class $ProductDeserializer implements Deserializer<Product, Map<String, Object?>> {
+  const $ProductDeserializer();
+
+  @override
+  Product deserialize(Map<String, Object?> json) => _$ProductDeserialize(json);
+
+  @override
+  Product fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $RatingSerializer implements Serializer<Rating, Map<String, Object?>> {
+  const $RatingSerializer();
+
+  @override
+  Map<String, Object?> serialize(Rating value) => _$RatingSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(Rating value) => serialize(value);
+}
+final class $RatingDeserializer implements Deserializer<Rating, Map<String, Object?>> {
+  const $RatingDeserializer();
+
+  @override
+  Rating deserialize(Map<String, Object?> json) => _$RatingDeserialize(json);
+
+  @override
+  Rating fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$ProductSerialize(Product instance) {
   return <String, Object?>{
     'id': instance.id,
     'title': instance.title,
@@ -208,12 +248,15 @@ Map<String, Object?> _$ProductToJson(Product instance) {
     'description': instance.description,
     'category': instance.category,
     'image': instance.image,
-    'rating': _$RatingToJson(instance.rating),
+    'rating': _$RatingSerialize(instance.rating),
   };
 }
 
+Map<String, Object?> _$ProductToJson(Product instance) =>
+    _$ProductSerialize(instance);
+
 // factory Product.fromJson(Map<String, Object?> json) => _$ProductFromJson(json);
-Product _$ProductFromJson(Map<String, Object?> json) {
+Product _$ProductDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
   final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
   final priceValue = JsonHelper.as<num>(json['price'], 'price', 'num').toDouble();
@@ -228,7 +271,7 @@ Product _$ProductFromJson(Map<String, Object?> json) {
     'String',
   );
   final imageValue = JsonHelper.as<String>(json['image'], 'image', 'String');
-  final ratingValue = _$RatingFromJson(
+  final ratingValue = _$RatingDeserialize(
     JsonHelper.asMap(json['rating'], 'rating'),
   );
 
@@ -243,17 +286,26 @@ Product _$ProductFromJson(Map<String, Object?> json) {
   );
 }
 
-Map<String, Object?> _$RatingToJson(Rating instance) {
+Product _$ProductFromJson(Map<String, Object?> json) =>
+    _$ProductDeserialize(json);
+
+Map<String, Object?> _$RatingSerialize(Rating instance) {
   return <String, Object?>{
     'rate': instance.rate,
     'count': instance.count,
   };
 }
 
+Map<String, Object?> _$RatingToJson(Rating instance) =>
+    _$RatingSerialize(instance);
+
 // factory Rating.fromJson(Map<String, Object?> json) => _$RatingFromJson(json);
-Rating _$RatingFromJson(Map<String, Object?> json) {
+Rating _$RatingDeserialize(Map<String, Object?> json) {
   final rateValue = JsonHelper.as<num>(json['rate'], 'rate', 'num').toDouble();
   final countValue = JsonHelper.as<int>(json['count'], 'count', 'int');
 
   return Rating(rate: rateValue, count: countValue);
 }
+
+Rating _$RatingFromJson(Map<String, Object?> json) =>
+    _$RatingDeserialize(json);

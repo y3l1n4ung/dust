@@ -52,7 +52,7 @@ Response<T> _buildResponse<T>(Response<dynamic> response, T data) {
   );
 }
 
-mixin _$LoginRequest {
+mixin _$LoginRequest implements Serializable {
   @override
   String toString() {
     final self = this as LoginRequest;
@@ -91,10 +91,13 @@ mixin _$LoginRequest {
   @pragma('vm:prefer-inline')
   _$LoginRequestCopyWith<LoginRequest> get copyWith => _$LoginRequestCopyWithImpl<LoginRequest>(this as LoginRequest, (value) => value);
 
-  Map<String, Object?> toJson() => _$LoginRequestToJson(this as LoginRequest);
+  Map<String, Object?> serialize() =>
+      _$LoginRequestSerialize(this as LoginRequest);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$LoginResponse {
+mixin _$LoginResponse implements Serializable {
   @override
   String toString() {
     final self = this as LoginResponse;
@@ -130,10 +133,13 @@ mixin _$LoginResponse {
   @pragma('vm:prefer-inline')
   _$LoginResponseCopyWith<LoginResponse> get copyWith => _$LoginResponseCopyWithImpl<LoginResponse>(this as LoginResponse, (value) => value);
 
-  Map<String, Object?> toJson() => _$LoginResponseToJson(this as LoginResponse);
+  Map<String, Object?> serialize() =>
+      _$LoginResponseSerialize(this as LoginResponse);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$RegisterUserResponse {
+mixin _$RegisterUserResponse implements Serializable {
   @override
   String toString() {
     final self = this as RegisterUserResponse;
@@ -169,11 +175,13 @@ mixin _$RegisterUserResponse {
   @pragma('vm:prefer-inline')
   _$RegisterUserResponseCopyWith<RegisterUserResponse> get copyWith => _$RegisterUserResponseCopyWithImpl<RegisterUserResponse>(this as RegisterUserResponse, (value) => value);
 
-  Map<String, Object?> toJson() =>
-      _$RegisterUserResponseToJson(this as RegisterUserResponse);
+  Map<String, Object?> serialize() =>
+      _$RegisterUserResponseSerialize(this as RegisterUserResponse);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$RegisterName {
+mixin _$RegisterName implements Serializable {
   @override
   String toString() {
     final self = this as RegisterName;
@@ -212,10 +220,13 @@ mixin _$RegisterName {
   @pragma('vm:prefer-inline')
   _$RegisterNameCopyWith<RegisterName> get copyWith => _$RegisterNameCopyWithImpl<RegisterName>(this as RegisterName, (value) => value);
 
-  Map<String, Object?> toJson() => _$RegisterNameToJson(this as RegisterName);
+  Map<String, Object?> serialize() =>
+      _$RegisterNameSerialize(this as RegisterName);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$RegisterGeolocation {
+mixin _$RegisterGeolocation implements Serializable {
   @override
   String toString() {
     final self = this as RegisterGeolocation;
@@ -254,11 +265,13 @@ mixin _$RegisterGeolocation {
   @pragma('vm:prefer-inline')
   _$RegisterGeolocationCopyWith<RegisterGeolocation> get copyWith => _$RegisterGeolocationCopyWithImpl<RegisterGeolocation>(this as RegisterGeolocation, (value) => value);
 
-  Map<String, Object?> toJson() =>
-      _$RegisterGeolocationToJson(this as RegisterGeolocation);
+  Map<String, Object?> serialize() =>
+      _$RegisterGeolocationSerialize(this as RegisterGeolocation);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$RegisterAddress {
+mixin _$RegisterAddress implements Serializable {
   @override
   String toString() {
     final self = this as RegisterAddress;
@@ -307,11 +320,13 @@ mixin _$RegisterAddress {
   @pragma('vm:prefer-inline')
   _$RegisterAddressCopyWith<RegisterAddress> get copyWith => _$RegisterAddressCopyWithImpl<RegisterAddress>(this as RegisterAddress, (value) => value);
 
-  Map<String, Object?> toJson() =>
-      _$RegisterAddressToJson(this as RegisterAddress);
+  Map<String, Object?> serialize() =>
+      _$RegisterAddressSerialize(this as RegisterAddress);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$RegisterUserRequest {
+mixin _$RegisterUserRequest implements Serializable {
   @override
   String toString() {
     final self = this as RegisterUserRequest;
@@ -363,8 +378,10 @@ mixin _$RegisterUserRequest {
   @pragma('vm:prefer-inline')
   _$RegisterUserRequestCopyWith<RegisterUserRequest> get copyWith => _$RegisterUserRequestCopyWithImpl<RegisterUserRequest>(this as RegisterUserRequest, (value) => value);
 
-  Map<String, Object?> toJson() =>
-      _$RegisterUserRequestToJson(this as RegisterUserRequest);
+  Map<String, Object?> serialize() =>
+      _$RegisterUserRequestSerialize(this as RegisterUserRequest);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -619,6 +636,132 @@ final class _$RegisterUserRequestCopyWithImpl<$Res> implements _$RegisterUserReq
       (value) => call(address: value),
     );
   }
+}
+final class $LoginRequestSerializer implements Serializer<LoginRequest, Map<String, Object?>> {
+  const $LoginRequestSerializer();
+
+  @override
+  Map<String, Object?> serialize(LoginRequest value) => _$LoginRequestSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(LoginRequest value) => serialize(value);
+}
+final class $LoginRequestDeserializer implements Deserializer<LoginRequest, Map<String, Object?>> {
+  const $LoginRequestDeserializer();
+
+  @override
+  LoginRequest deserialize(Map<String, Object?> json) => _$LoginRequestDeserialize(json);
+
+  @override
+  LoginRequest fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $LoginResponseSerializer implements Serializer<LoginResponse, Map<String, Object?>> {
+  const $LoginResponseSerializer();
+
+  @override
+  Map<String, Object?> serialize(LoginResponse value) => _$LoginResponseSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(LoginResponse value) => serialize(value);
+}
+final class $LoginResponseDeserializer implements Deserializer<LoginResponse, Map<String, Object?>> {
+  const $LoginResponseDeserializer();
+
+  @override
+  LoginResponse deserialize(Map<String, Object?> json) => _$LoginResponseDeserialize(json);
+
+  @override
+  LoginResponse fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $RegisterUserResponseSerializer implements Serializer<RegisterUserResponse, Map<String, Object?>> {
+  const $RegisterUserResponseSerializer();
+
+  @override
+  Map<String, Object?> serialize(RegisterUserResponse value) => _$RegisterUserResponseSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(RegisterUserResponse value) => serialize(value);
+}
+final class $RegisterUserResponseDeserializer implements Deserializer<RegisterUserResponse, Map<String, Object?>> {
+  const $RegisterUserResponseDeserializer();
+
+  @override
+  RegisterUserResponse deserialize(Map<String, Object?> json) => _$RegisterUserResponseDeserialize(json);
+
+  @override
+  RegisterUserResponse fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $RegisterNameSerializer implements Serializer<RegisterName, Map<String, Object?>> {
+  const $RegisterNameSerializer();
+
+  @override
+  Map<String, Object?> serialize(RegisterName value) => _$RegisterNameSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(RegisterName value) => serialize(value);
+}
+final class $RegisterNameDeserializer implements Deserializer<RegisterName, Map<String, Object?>> {
+  const $RegisterNameDeserializer();
+
+  @override
+  RegisterName deserialize(Map<String, Object?> json) => _$RegisterNameDeserialize(json);
+
+  @override
+  RegisterName fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $RegisterGeolocationSerializer implements Serializer<RegisterGeolocation, Map<String, Object?>> {
+  const $RegisterGeolocationSerializer();
+
+  @override
+  Map<String, Object?> serialize(RegisterGeolocation value) => _$RegisterGeolocationSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(RegisterGeolocation value) => serialize(value);
+}
+final class $RegisterGeolocationDeserializer implements Deserializer<RegisterGeolocation, Map<String, Object?>> {
+  const $RegisterGeolocationDeserializer();
+
+  @override
+  RegisterGeolocation deserialize(Map<String, Object?> json) => _$RegisterGeolocationDeserialize(json);
+
+  @override
+  RegisterGeolocation fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $RegisterAddressSerializer implements Serializer<RegisterAddress, Map<String, Object?>> {
+  const $RegisterAddressSerializer();
+
+  @override
+  Map<String, Object?> serialize(RegisterAddress value) => _$RegisterAddressSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(RegisterAddress value) => serialize(value);
+}
+final class $RegisterAddressDeserializer implements Deserializer<RegisterAddress, Map<String, Object?>> {
+  const $RegisterAddressDeserializer();
+
+  @override
+  RegisterAddress deserialize(Map<String, Object?> json) => _$RegisterAddressDeserialize(json);
+
+  @override
+  RegisterAddress fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $RegisterUserRequestSerializer implements Serializer<RegisterUserRequest, Map<String, Object?>> {
+  const $RegisterUserRequestSerializer();
+
+  @override
+  Map<String, Object?> serialize(RegisterUserRequest value) => _$RegisterUserRequestSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(RegisterUserRequest value) => serialize(value);
+}
+final class $RegisterUserRequestDeserializer implements Deserializer<RegisterUserRequest, Map<String, Object?>> {
+  const $RegisterUserRequestDeserializer();
+
+  @override
+  RegisterUserRequest deserialize(Map<String, Object?> json) => _$RegisterUserRequestDeserialize(json);
+
+  @override
+  RegisterUserRequest fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class _$ShoppingApi implements ShoppingApi {
   _$ShoppingApi(this._dio, {String? baseUrl}) : _baseUrl = baseUrl;
@@ -1047,15 +1190,18 @@ final class _$ShoppingApi implements ShoppingApi {
   }
 }
 
-Map<String, Object?> _$LoginRequestToJson(LoginRequest instance) {
+Map<String, Object?> _$LoginRequestSerialize(LoginRequest instance) {
   return <String, Object?>{
     'username': instance.username,
     'password': instance.password,
   };
 }
 
+Map<String, Object?> _$LoginRequestToJson(LoginRequest instance) =>
+    _$LoginRequestSerialize(instance);
+
 // factory LoginRequest.fromJson(Map<String, Object?> json) => _$LoginRequestFromJson(json);
-LoginRequest _$LoginRequestFromJson(Map<String, Object?> json) {
+LoginRequest _$LoginRequestDeserialize(Map<String, Object?> json) {
   final usernameValue = JsonHelper.as<String>(
     json['username'],
     'username',
@@ -1070,41 +1216,59 @@ LoginRequest _$LoginRequestFromJson(Map<String, Object?> json) {
   return LoginRequest(username: usernameValue, password: passwordValue);
 }
 
-Map<String, Object?> _$LoginResponseToJson(LoginResponse instance) {
+LoginRequest _$LoginRequestFromJson(Map<String, Object?> json) =>
+    _$LoginRequestDeserialize(json);
+
+Map<String, Object?> _$LoginResponseSerialize(LoginResponse instance) {
   return <String, Object?>{
     'token': instance.token,
   };
 }
 
+Map<String, Object?> _$LoginResponseToJson(LoginResponse instance) =>
+    _$LoginResponseSerialize(instance);
+
 // factory LoginResponse.fromJson(Map<String, Object?> json) => _$LoginResponseFromJson(json);
-LoginResponse _$LoginResponseFromJson(Map<String, Object?> json) {
+LoginResponse _$LoginResponseDeserialize(Map<String, Object?> json) {
   final tokenValue = JsonHelper.as<String>(json['token'], 'token', 'String');
 
   return LoginResponse(token: tokenValue);
 }
 
-Map<String, Object?> _$RegisterUserResponseToJson(RegisterUserResponse instance) {
+LoginResponse _$LoginResponseFromJson(Map<String, Object?> json) =>
+    _$LoginResponseDeserialize(json);
+
+Map<String, Object?> _$RegisterUserResponseSerialize(RegisterUserResponse instance) {
   return <String, Object?>{
     'id': instance.id,
   };
 }
 
+Map<String, Object?> _$RegisterUserResponseToJson(RegisterUserResponse instance) =>
+    _$RegisterUserResponseSerialize(instance);
+
 // factory RegisterUserResponse.fromJson(Map<String, Object?> json) => _$RegisterUserResponseFromJson(json);
-RegisterUserResponse _$RegisterUserResponseFromJson(Map<String, Object?> json) {
+RegisterUserResponse _$RegisterUserResponseDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
 
   return RegisterUserResponse(id: idValue);
 }
 
-Map<String, Object?> _$RegisterNameToJson(RegisterName instance) {
+RegisterUserResponse _$RegisterUserResponseFromJson(Map<String, Object?> json) =>
+    _$RegisterUserResponseDeserialize(json);
+
+Map<String, Object?> _$RegisterNameSerialize(RegisterName instance) {
   return <String, Object?>{
     'firstname': instance.firstname,
     'lastname': instance.lastname,
   };
 }
 
+Map<String, Object?> _$RegisterNameToJson(RegisterName instance) =>
+    _$RegisterNameSerialize(instance);
+
 // factory RegisterName.fromJson(Map<String, Object?> json) => _$RegisterNameFromJson(json);
-RegisterName _$RegisterNameFromJson(Map<String, Object?> json) {
+RegisterName _$RegisterNameDeserialize(Map<String, Object?> json) {
   final firstnameValue = JsonHelper.as<String>(
     json['firstname'],
     'firstname',
@@ -1119,33 +1283,45 @@ RegisterName _$RegisterNameFromJson(Map<String, Object?> json) {
   return RegisterName(firstname: firstnameValue, lastname: lastnameValue);
 }
 
-Map<String, Object?> _$RegisterGeolocationToJson(RegisterGeolocation instance) {
+RegisterName _$RegisterNameFromJson(Map<String, Object?> json) =>
+    _$RegisterNameDeserialize(json);
+
+Map<String, Object?> _$RegisterGeolocationSerialize(RegisterGeolocation instance) {
   return <String, Object?>{
     'lat': instance.lat,
     'long': instance.long,
   };
 }
 
+Map<String, Object?> _$RegisterGeolocationToJson(RegisterGeolocation instance) =>
+    _$RegisterGeolocationSerialize(instance);
+
 // factory RegisterGeolocation.fromJson(Map<String, Object?> json) => _$RegisterGeolocationFromJson(json);
-RegisterGeolocation _$RegisterGeolocationFromJson(Map<String, Object?> json) {
+RegisterGeolocation _$RegisterGeolocationDeserialize(Map<String, Object?> json) {
   final latValue = JsonHelper.as<String>(json['lat'], 'lat', 'String');
   final longValue = JsonHelper.as<String>(json['long'], 'long', 'String');
 
   return RegisterGeolocation(lat: latValue, long: longValue);
 }
 
-Map<String, Object?> _$RegisterAddressToJson(RegisterAddress instance) {
+RegisterGeolocation _$RegisterGeolocationFromJson(Map<String, Object?> json) =>
+    _$RegisterGeolocationDeserialize(json);
+
+Map<String, Object?> _$RegisterAddressSerialize(RegisterAddress instance) {
   return <String, Object?>{
     'city': instance.city,
     'street': instance.street,
     'number': instance.number,
     'zipcode': instance.zipcode,
-    'geolocation': _$RegisterGeolocationToJson(instance.geolocation),
+    'geolocation': _$RegisterGeolocationSerialize(instance.geolocation),
   };
 }
 
+Map<String, Object?> _$RegisterAddressToJson(RegisterAddress instance) =>
+    _$RegisterAddressSerialize(instance);
+
 // factory RegisterAddress.fromJson(Map<String, Object?> json) => _$RegisterAddressFromJson(json);
-RegisterAddress _$RegisterAddressFromJson(Map<String, Object?> json) {
+RegisterAddress _$RegisterAddressDeserialize(Map<String, Object?> json) {
   final cityValue = JsonHelper.as<String>(json['city'], 'city', 'String');
   final streetValue = JsonHelper.as<String>(json['street'], 'street', 'String');
   final numberValue = JsonHelper.as<int>(json['number'], 'number', 'int');
@@ -1154,7 +1330,7 @@ RegisterAddress _$RegisterAddressFromJson(Map<String, Object?> json) {
     'zipcode',
     'String',
   );
-  final geolocationValue = _$RegisterGeolocationFromJson(
+  final geolocationValue = _$RegisterGeolocationDeserialize(
     JsonHelper.asMap(json['geolocation'], 'geolocation'),
   );
 
@@ -1167,19 +1343,25 @@ RegisterAddress _$RegisterAddressFromJson(Map<String, Object?> json) {
   );
 }
 
-Map<String, Object?> _$RegisterUserRequestToJson(RegisterUserRequest instance) {
+RegisterAddress _$RegisterAddressFromJson(Map<String, Object?> json) =>
+    _$RegisterAddressDeserialize(json);
+
+Map<String, Object?> _$RegisterUserRequestSerialize(RegisterUserRequest instance) {
   return <String, Object?>{
     'email': instance.email,
     'username': instance.username,
     'password': instance.password,
-    'name': _$RegisterNameToJson(instance.name),
+    'name': _$RegisterNameSerialize(instance.name),
     'phone': instance.phone,
-    'address': _$RegisterAddressToJson(instance.address),
+    'address': _$RegisterAddressSerialize(instance.address),
   };
 }
 
+Map<String, Object?> _$RegisterUserRequestToJson(RegisterUserRequest instance) =>
+    _$RegisterUserRequestSerialize(instance);
+
 // factory RegisterUserRequest.fromJson(Map<String, Object?> json) => _$RegisterUserRequestFromJson(json);
-RegisterUserRequest _$RegisterUserRequestFromJson(Map<String, Object?> json) {
+RegisterUserRequest _$RegisterUserRequestDeserialize(Map<String, Object?> json) {
   final emailValue = JsonHelper.as<String>(json['email'], 'email', 'String');
   final usernameValue = JsonHelper.as<String>(
     json['username'],
@@ -1191,11 +1373,11 @@ RegisterUserRequest _$RegisterUserRequestFromJson(Map<String, Object?> json) {
     'password',
     'String',
   );
-  final nameValue = _$RegisterNameFromJson(
+  final nameValue = _$RegisterNameDeserialize(
     JsonHelper.asMap(json['name'], 'name'),
   );
   final phoneValue = JsonHelper.as<String>(json['phone'], 'phone', 'String');
-  final addressValue = _$RegisterAddressFromJson(
+  final addressValue = _$RegisterAddressDeserialize(
     JsonHelper.asMap(json['address'], 'address'),
   );
 
@@ -1208,3 +1390,6 @@ RegisterUserRequest _$RegisterUserRequestFromJson(Map<String, Object?> json) {
     address: addressValue,
   );
 }
+
+RegisterUserRequest _$RegisterUserRequestFromJson(Map<String, Object?> json) =>
+    _$RegisterUserRequestDeserialize(json);

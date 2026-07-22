@@ -46,13 +46,19 @@ dust build
 dust check
 ```
 
-The model now has typed `copyWith`, equality, `toJson`, and `fromJson` support:
+The model now has typed `copyWith`, equality, `serialize`, `toJson`, and
+`fromJson` support:
 
 ```dart
 final user = User.fromJson({'id': '1', 'name': 'Aye'});
 final renamed = user.copyWith(name: 'Moe');
-final json = renamed.toJson();
+final json = renamed.serialize();
+final dartJson = renamed.toJson(); // Dart ecosystem mirror.
 ```
+
+Generated JSON support also includes directional
+`Serializer<DartT, JsonT>` and `Deserializer<DartT, JsonT>` objects for call
+sites that want reusable conversion objects instead of instance methods.
 
 ## Libraries
 

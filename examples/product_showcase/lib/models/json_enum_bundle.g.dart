@@ -17,7 +17,7 @@ const DeepCollectionEquality _jsonEnumBundleLevelsEquality = DeepCollectionEqual
 const DeepCollectionEquality _jsonEnumBundleStateByRegionEquality = DeepCollectionEquality();
 const DeepCollectionEquality _jsonEnumBundleStatesEquality = DeepCollectionEquality.unordered();
 
-mixin _$JsonEnumBundle {
+mixin _$JsonEnumBundle implements Serializable {
   @override
   String toString() {
     final self = this as JsonEnumBundle;
@@ -56,29 +56,89 @@ mixin _$JsonEnumBundle {
     ]);
   }
 
-  Map<String, Object?> toJson() =>
-      _$JsonEnumBundleToJson(this as JsonEnumBundle);
+  Map<String, Object?> serialize() =>
+      _$JsonEnumBundleSerialize(this as JsonEnumBundle);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-Map<String, Object?> _$JsonEnumBundleToJson(JsonEnumBundle instance) {
+final class $JsonEnumBundleSerializer implements Serializer<JsonEnumBundle, Map<String, Object?>> {
+  const $JsonEnumBundleSerializer();
+
+  @override
+  Map<String, Object?> serialize(JsonEnumBundle value) => _$JsonEnumBundleSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonEnumBundle value) => serialize(value);
+}
+final class $JsonEnumBundleDeserializer implements Deserializer<JsonEnumBundle, Map<String, Object?>> {
+  const $JsonEnumBundleDeserializer();
+
+  @override
+  JsonEnumBundle deserialize(Map<String, Object?> json) => _$JsonEnumBundleDeserialize(json);
+
+  @override
+  JsonEnumBundle fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $AccessLevelSerializer implements Serializer<AccessLevel, Object?> {
+  const $AccessLevelSerializer();
+
+  @override
+  Object? serialize(AccessLevel value) => _$AccessLevelSerialize(value);
+
+  @override
+  Object? toJson(AccessLevel value) => serialize(value);
+}
+final class $AccessLevelDeserializer implements Deserializer<AccessLevel, Object?> {
+  const $AccessLevelDeserializer();
+
+  @override
+  AccessLevel deserialize(Object? json) => _$AccessLevelDeserialize(json);
+
+  @override
+  AccessLevel fromJson(Object? json) => deserialize(json);
+}
+final class $ReviewStateSerializer implements Serializer<ReviewState, Object?> {
+  const $ReviewStateSerializer();
+
+  @override
+  Object? serialize(ReviewState value) => _$ReviewStateSerialize(value);
+
+  @override
+  Object? toJson(ReviewState value) => serialize(value);
+}
+final class $ReviewStateDeserializer implements Deserializer<ReviewState, Object?> {
+  const $ReviewStateDeserializer();
+
+  @override
+  ReviewState deserialize(Object? json) => _$ReviewStateDeserialize(json);
+
+  @override
+  ReviewState fromJson(Object? json) => deserialize(json);
+}
+
+Map<String, Object?> _$JsonEnumBundleSerialize(JsonEnumBundle instance) {
   return <String, Object?>{
-    'primary_level': _$AccessLevelToJson(instance.primaryLevel),
+    'primary_level': _$AccessLevelSerialize(instance.primaryLevel),
     'fallbackState': instance.fallbackState == null
         ? null
-        : _$ReviewStateToJson((instance.fallbackState!)),
+        : _$ReviewStateSerialize((instance.fallbackState!)),
     'levels': instance.levels
-        .map((item) => _$AccessLevelToJson(item))
+        .map((item) => _$AccessLevelSerialize(item))
         .toList(),
     'stateByRegion': instance.stateByRegion
-        .map((key, value) => MapEntry(key, _$ReviewStateToJson(value))),
+        .map((key, value) => MapEntry(key, _$ReviewStateSerialize(value))),
     'states': instance.states
-        .map((item) => _$ReviewStateToJson(item))
+        .map((item) => _$ReviewStateSerialize(item))
         .toList(),
   };
 }
 
+Map<String, Object?> _$JsonEnumBundleToJson(JsonEnumBundle instance) =>
+    _$JsonEnumBundleSerialize(instance);
+
 // factory JsonEnumBundle.fromJson(Map<String, Object?> json) => _$JsonEnumBundleFromJson(json);
-JsonEnumBundle _$JsonEnumBundleFromJson(Map<String, Object?> json) {
+JsonEnumBundle _$JsonEnumBundleDeserialize(Map<String, Object?> json) {
   var rawPrimaryLevelKey = 'primary_level';
   Object? rawPrimaryLevel;
   if (json.containsKey('primary_level')) {
@@ -87,19 +147,19 @@ JsonEnumBundle _$JsonEnumBundleFromJson(Map<String, Object?> json) {
     rawPrimaryLevelKey = 'primaryLevel';
     rawPrimaryLevel = json['primaryLevel'];
   }
-  final primaryLevelValue = _$AccessLevelFromJson(
+  final primaryLevelValue = _$AccessLevelDeserialize(
     rawPrimaryLevel,
     rawPrimaryLevelKey,
   );
   final fallbackStateValue = json['fallbackState'] == null
       ? null
-      : _$ReviewStateFromJson(json['fallbackState'], 'fallbackState');
+      : _$ReviewStateDeserialize(json['fallbackState'], 'fallbackState');
   final levelsValue = JsonHelper.decodeList(json['levels'], 'levels',
-      (item, itemKey) => _$AccessLevelFromJson(item, itemKey));
+      (item, itemKey) => _$AccessLevelDeserialize(item, itemKey));
   final stateByRegionValue = JsonHelper.decodeMap(json['stateByRegion'], 'stateByRegion',
-      (value, valueKey) => _$ReviewStateFromJson(value, valueKey));
+      (value, valueKey) => _$ReviewStateDeserialize(value, valueKey));
   final statesValue = JsonHelper.decodeSet(json['states'], 'states',
-      (item, itemKey) => _$ReviewStateFromJson(item, itemKey));
+      (item, itemKey) => _$ReviewStateDeserialize(item, itemKey));
 
   return JsonEnumBundle(
     primaryLevel: primaryLevelValue,
@@ -110,7 +170,10 @@ JsonEnumBundle _$JsonEnumBundleFromJson(Map<String, Object?> json) {
   );
 }
 
-Object? _$AccessLevelToJson(AccessLevel instance) {
+JsonEnumBundle _$JsonEnumBundleFromJson(Map<String, Object?> json) =>
+    _$JsonEnumBundleDeserialize(json);
+
+Object? _$AccessLevelSerialize(AccessLevel instance) {
   return switch (instance) {
     AccessLevel.superAdmin => 'owner',
     AccessLevel.guestUser => 'guest-user',
@@ -119,7 +182,10 @@ Object? _$AccessLevelToJson(AccessLevel instance) {
   };
 }
 
-AccessLevel _$AccessLevelFromJson(Object? json, [String key = 'json']) {
+Object? _$AccessLevelToJson(AccessLevel instance) =>
+    _$AccessLevelSerialize(instance);
+
+AccessLevel _$AccessLevelDeserialize(Object? json, [String key = 'json']) {
   return switch (json) {
     'owner' => AccessLevel.superAdmin,
     'guest-user' => AccessLevel.guestUser,
@@ -128,7 +194,10 @@ AccessLevel _$AccessLevelFromJson(Object? json, [String key = 'json']) {
   };
 }
 
-Object? _$ReviewStateToJson(ReviewState instance) {
+AccessLevel _$AccessLevelFromJson(Object? json, [String key = 'json']) =>
+    _$AccessLevelDeserialize(json, key);
+
+Object? _$ReviewStateSerialize(ReviewState instance) {
   return switch (instance) {
     ReviewState.pending => 'pending',
     ReviewState.approved => 'approved',
@@ -136,7 +205,10 @@ Object? _$ReviewStateToJson(ReviewState instance) {
   };
 }
 
-ReviewState _$ReviewStateFromJson(Object? json, [String key = 'json']) {
+Object? _$ReviewStateToJson(ReviewState instance) =>
+    _$ReviewStateSerialize(instance);
+
+ReviewState _$ReviewStateDeserialize(Object? json, [String key = 'json']) {
   return switch (json) {
     'pending' => ReviewState.pending,
     'approved' => ReviewState.approved,
@@ -144,3 +216,6 @@ ReviewState _$ReviewStateFromJson(Object? json, [String key = 'json']) {
     _ => throw ArgumentError.value(json, key, 'unknown value for ReviewState at $key'),
   };
 }
+
+ReviewState _$ReviewStateFromJson(Object? json, [String key = 'json']) =>
+    _$ReviewStateDeserialize(json, key);

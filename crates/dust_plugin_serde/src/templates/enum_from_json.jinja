@@ -1,6 +1,9 @@
-{{ enum_name }} _${{ enum_name }}FromJson(Object? json, [String key = 'json']) {
+{{ enum_name }} _${{ enum_name }}Deserialize(Object? json, [String key = 'json']) {
   return switch (json) {
 {{ cases }}
     _ => throw ArgumentError.value(json, key, 'unknown value for {{ enum_name }} at $key'),
   };
 }
+
+{{ enum_name }} _${{ enum_name }}FromJson(Object? json, [String key = 'json']) =>
+    _${{ enum_name }}Deserialize(json, key);

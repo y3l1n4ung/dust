@@ -36,7 +36,7 @@ fn generates_disallow_unrecognized_keys_check() {
     assert_eq!(
         &contribution.top_level_functions[0],
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
-User _$UserFromJson(Map<String, Object?> json) {
+User _$UserDeserialize(Map<String, Object?> json) {
   const allowedKeys = <String>{'id'};
   for (final key in json.keys) {
     if (!allowedKeys.contains(key)) {
@@ -47,7 +47,10 @@ User _$UserFromJson(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
 
   return User(id: idValue);
-}"#
+}
+
+User _$UserFromJson(Map<String, Object?> json) =>
+    _$UserDeserialize(json);"#
     );
 }
 
@@ -111,7 +114,7 @@ fn strict_keys_allow_aliases_but_reject_deserialize_skipped_fields() {
     assert_eq!(
         &contribution.top_level_functions[0],
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
-User _$UserFromJson(Map<String, Object?> json) {
+User _$UserDeserialize(Map<String, Object?> json) {
   const allowedKeys = <String>{'id', 'user_id'};
   for (final key in json.keys) {
     if (!allowedKeys.contains(key)) {
@@ -131,6 +134,9 @@ User _$UserFromJson(Map<String, Object?> json) {
   final tokenValue = '';
 
   return User(id: idValue, token: tokenValue);
-}"#
+}
+
+User _$UserFromJson(Map<String, Object?> json) =>
+    _$UserDeserialize(json);"#
     );
 }

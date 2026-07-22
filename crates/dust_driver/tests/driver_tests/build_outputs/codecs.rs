@@ -44,11 +44,32 @@ fn build_writes_custom_serde_codec_outputs() {
         generated_output(
             r#"part of 'audit.dart';
 
-mixin _$Audit {
-  Map<String, Object?> toJson() => _$AuditToJson(this as Audit);
+mixin _$Audit implements Serializable {
+  Map<String, Object?> serialize() => _$AuditSerialize(this as Audit);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-Map<String, Object?> _$AuditToJson(Audit instance) {
+final class $AuditSerializer implements Serializer<Audit, Map<String, Object?>> {
+  const $AuditSerializer();
+
+  @override
+  Map<String, Object?> serialize(Audit value) => _$AuditSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(Audit value) => serialize(value);
+}
+final class $AuditDeserializer implements Deserializer<Audit, Map<String, Object?>> {
+  const $AuditDeserializer();
+
+  @override
+  Audit deserialize(Map<String, Object?> json) => _$AuditDeserialize(json);
+
+  @override
+  Audit fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$AuditSerialize(Audit instance) {
   return <String, Object?>{
     'createdAt': unixEpochDateTimeCodec.serialize(instance.createdAt),
     'updatedAt': instance.updatedAt == null
@@ -57,8 +78,11 @@ Map<String, Object?> _$AuditToJson(Audit instance) {
   };
 }
 
+Map<String, Object?> _$AuditToJson(Audit instance) =>
+    _$AuditSerialize(instance);
+
 // factory Audit.fromJson(Map<String, Object?> json) => _$AuditFromJson(json);
-Audit _$AuditFromJson(Map<String, Object?> json) {
+Audit _$AuditDeserialize(Map<String, Object?> json) {
   final createdAtValue = JsonHelper.decodeWithCodec<DateTime>(
     unixEpochDateTimeCodec,
     json['createdAt'],
@@ -70,6 +94,9 @@ Audit _$AuditFromJson(Map<String, Object?> json) {
 
   return Audit(createdAt: createdAtValue, updatedAt: updatedAtValue);
 }
+
+Audit _$AuditFromJson(Map<String, Object?> json) =>
+    _$AuditDeserialize(json);
 "#
         )
     );

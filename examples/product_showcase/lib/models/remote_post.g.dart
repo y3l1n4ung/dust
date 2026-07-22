@@ -13,7 +13,7 @@
 
 part of 'remote_post.dart';
 
-mixin _$RemotePost {
+mixin _$RemotePost implements Serializable {
   @override
   String toString() {
     final self = this as RemotePost;
@@ -34,10 +34,12 @@ mixin _$RemotePost {
   @pragma('vm:prefer-inline')
   _$RemotePostCopyWith<RemotePost> get copyWith => _$RemotePostCopyWithImpl<RemotePost>(this as RemotePost, (value) => value);
 
-  Map<String, Object?> toJson() => _$RemotePostToJson(this as RemotePost);
+  Map<String, Object?> serialize() => _$RemotePostSerialize(this as RemotePost);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$RemotePostDraft {
+mixin _$RemotePostDraft implements Serializable {
   @override
   String toString() {
     final self = this as RemotePostDraft;
@@ -57,8 +59,10 @@ mixin _$RemotePostDraft {
   @pragma('vm:prefer-inline')
   _$RemotePostDraftCopyWith<RemotePostDraft> get copyWith => _$RemotePostDraftCopyWithImpl<RemotePostDraft>(this as RemotePostDraft, (value) => value);
 
-  Map<String, Object?> toJson() =>
-      _$RemotePostDraftToJson(this as RemotePostDraft);
+  Map<String, Object?> serialize() =>
+      _$RemotePostDraftSerialize(this as RemotePostDraft);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -130,8 +134,44 @@ final class _$RemotePostDraftCopyWithImpl<$Res> implements _$RemotePostDraftCopy
     );
   }
 }
+final class $RemotePostSerializer implements Serializer<RemotePost, Map<String, Object?>> {
+  const $RemotePostSerializer();
 
-Map<String, Object?> _$RemotePostToJson(RemotePost instance) {
+  @override
+  Map<String, Object?> serialize(RemotePost value) => _$RemotePostSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(RemotePost value) => serialize(value);
+}
+final class $RemotePostDeserializer implements Deserializer<RemotePost, Map<String, Object?>> {
+  const $RemotePostDeserializer();
+
+  @override
+  RemotePost deserialize(Map<String, Object?> json) => _$RemotePostDeserialize(json);
+
+  @override
+  RemotePost fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $RemotePostDraftSerializer implements Serializer<RemotePostDraft, Map<String, Object?>> {
+  const $RemotePostDraftSerializer();
+
+  @override
+  Map<String, Object?> serialize(RemotePostDraft value) => _$RemotePostDraftSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(RemotePostDraft value) => serialize(value);
+}
+final class $RemotePostDraftDeserializer implements Deserializer<RemotePostDraft, Map<String, Object?>> {
+  const $RemotePostDraftDeserializer();
+
+  @override
+  RemotePostDraft deserialize(Map<String, Object?> json) => _$RemotePostDraftDeserialize(json);
+
+  @override
+  RemotePostDraft fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$RemotePostSerialize(RemotePost instance) {
   return <String, Object?>{
     'userId': instance.userId,
     'id': instance.id,
@@ -140,8 +180,11 @@ Map<String, Object?> _$RemotePostToJson(RemotePost instance) {
   };
 }
 
+Map<String, Object?> _$RemotePostToJson(RemotePost instance) =>
+    _$RemotePostSerialize(instance);
+
 // factory RemotePost.fromJson(Map<String, Object?> json) => _$RemotePostFromJson(json);
-RemotePost _$RemotePostFromJson(Map<String, Object?> json) {
+RemotePost _$RemotePostDeserialize(Map<String, Object?> json) {
   final userIdValue = JsonHelper.as<int>(json['userId'], 'userId', 'int');
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
   final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
@@ -155,7 +198,10 @@ RemotePost _$RemotePostFromJson(Map<String, Object?> json) {
   );
 }
 
-Map<String, Object?> _$RemotePostDraftToJson(RemotePostDraft instance) {
+RemotePost _$RemotePostFromJson(Map<String, Object?> json) =>
+    _$RemotePostDeserialize(json);
+
+Map<String, Object?> _$RemotePostDraftSerialize(RemotePostDraft instance) {
   return <String, Object?>{
     'userId': instance.userId,
     'title': instance.title,
@@ -163,8 +209,11 @@ Map<String, Object?> _$RemotePostDraftToJson(RemotePostDraft instance) {
   };
 }
 
+Map<String, Object?> _$RemotePostDraftToJson(RemotePostDraft instance) =>
+    _$RemotePostDraftSerialize(instance);
+
 // factory RemotePostDraft.fromJson(Map<String, Object?> json) => _$RemotePostDraftFromJson(json);
-RemotePostDraft _$RemotePostDraftFromJson(Map<String, Object?> json) {
+RemotePostDraft _$RemotePostDraftDeserialize(Map<String, Object?> json) {
   final userIdValue = JsonHelper.as<int>(json['userId'], 'userId', 'int');
   final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
   final bodyValue = JsonHelper.as<String>(json['body'], 'body', 'String');
@@ -175,3 +224,6 @@ RemotePostDraft _$RemotePostDraftFromJson(Map<String, Object?> json) {
     body: bodyValue,
   );
 }
+
+RemotePostDraft _$RemotePostDraftFromJson(Map<String, Object?> json) =>
+    _$RemotePostDraftDeserialize(json);

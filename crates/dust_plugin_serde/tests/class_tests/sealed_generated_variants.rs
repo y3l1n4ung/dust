@@ -23,21 +23,32 @@ fn generates_missing_concrete_variant_classes_from_factories() {
         .next()
         .expect("plugin must generate one contribution");
 
-    assert_eq!(
-        contribution.support_types,
-        vec![payment_event_variant_support()]
+    assert!(support_types_contain(
+        &contribution.support_types,
+        &payment_event_variant_support()
+    ));
+    assert!(
+        support_type_for(&contribution.support_types, "$JsonPaymentEventSerializer")
+            .contains("implements Serializer<JsonPaymentEvent, Map<String, Object?>>")
+    );
+    assert!(
+        support_type_for(
+            &contribution.support_types,
+            "$JsonPaymentSuccessDeserializer"
+        )
+        .contains("implements Deserializer<JsonPaymentSuccess, Map<String, Object?>>")
     );
     assert_eq!(
         function_for(
             &contribution.top_level_functions,
-            "_$JsonPaymentEventToJson",
+            "_$JsonPaymentEventSerialize",
         ),
         payment_event_to_json()
     );
     assert_eq!(
         function_for(
             &contribution.top_level_functions,
-            "_$JsonPaymentSuccessToJson",
+            "_$JsonPaymentSuccessSerialize",
         ),
         success_to_json()
     );
@@ -62,7 +73,14 @@ fn does_not_generate_source_defined_variant_classes() {
         .next()
         .expect("plugin must generate one contribution");
 
-    assert_eq!(contribution.support_types, Vec::<String>::new());
+    assert!(!support_types_contain(
+        &contribution.support_types,
+        &payment_event_variant_support()
+    ));
+    assert!(
+        support_type_for(&contribution.support_types, "$JsonPaymentSuccessSerializer")
+            .contains("implements Serializer<JsonPaymentSuccess, Map<String, Object?>>")
+    );
 }
 
 #[test]
@@ -81,7 +99,26 @@ fn renders_empty_positional_nullable_and_defaulted_variant_params() {
         .next()
         .expect("plugin must generate one contribution");
 
-    assert_eq!(contribution.support_types, vec![shape_variant_support()]);
+    assert!(support_types_contain(
+        &contribution.support_types,
+        &shape_variant_support()
+    ));
+    assert!(
+        support_type_for(&contribution.support_types, "$EmptyVariantSerializer")
+            .contains("implements Serializer<EmptyVariant, Map<String, Object?>>")
+    );
+}
+
+fn support_types_contain(support_types: &[String], expected: &str) -> bool {
+    support_types.iter().any(|support| support == expected)
+}
+
+fn support_type_for<'a>(support_types: &'a [String], name: &str) -> &'a str {
+    support_types
+        .iter()
+        .find(|support| support.contains(&format!("final class {name} ")))
+        .map(String::as_str)
+        .unwrap_or("")
 }
 
 fn payment_event_base() -> ClassIr {
@@ -262,26 +299,32 @@ final class MixedVariant extends VariantShapeEvent {
 }
 
 fn payment_event_to_json() -> &'static str {
-    r#"Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) {
+    r#"Map<String, Object?> _$JsonPaymentEventSerialize(JsonPaymentEvent instance) {
   return switch (instance) {
     JsonPaymentSuccess value => <String, Object?>{
-      ..._$JsonPaymentSuccessToJson(value),
+      ..._$JsonPaymentSuccessSerialize(value),
       'type': 'payment_success',
     },
     JsonPaymentFailed value => <String, Object?>{
-      ..._$JsonPaymentFailedToJson(value),
+      ..._$JsonPaymentFailedSerialize(value),
       'type': 'payment_failed',
     },
   };
-}"#
+}
+
+Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) =>
+    _$JsonPaymentEventSerialize(instance);"#
 }
 
 fn success_to_json() -> &'static str {
-    r#"Map<String, Object?> _$JsonPaymentSuccessToJson(JsonPaymentSuccess instance) {
+    r#"Map<String, Object?> _$JsonPaymentSuccessSerialize(JsonPaymentSuccess instance) {
   return <String, Object?>{
     'id': instance.id,
     'cents': instance.cents,
     'currency': instance.currency,
   };
-}"#
+}
+
+Map<String, Object?> _$JsonPaymentSuccessToJson(JsonPaymentSuccess instance) =>
+    _$JsonPaymentSuccessSerialize(instance);"#
 }

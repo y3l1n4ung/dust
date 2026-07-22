@@ -43,23 +43,29 @@ fn handles_special_builtin_types() {
 
     assert_eq!(
         to_json,
-        r#"Map<String, Object?> _$SpecialsToJson(Specials instance) {
+        r#"Map<String, Object?> _$SpecialsSerialize(Specials instance) {
   return <String, Object?>{
     'dt': instance.dt.toIso8601String(),
     'u': instance.u.toString(),
     'bi': instance.bi.toString(),
   };
-}"#
+}
+
+Map<String, Object?> _$SpecialsToJson(Specials instance) =>
+    _$SpecialsSerialize(instance);"#
     );
     assert_eq!(
         from_json,
         r#"// factory Specials.fromJson(Map<String, Object?> json) => _$SpecialsFromJson(json);
-Specials _$SpecialsFromJson(Map<String, Object?> json) {
+Specials _$SpecialsDeserialize(Map<String, Object?> json) {
   final dtValue = JsonHelper.asDateTime(json['dt'], 'dt');
   final uValue = JsonHelper.asUri(json['u'], 'u');
   final biValue = JsonHelper.asBigInt(json['bi'], 'bi');
 
   return Specials(dt: dtValue, u: uValue, bi: biValue);
-}"#
+}
+
+Specials _$SpecialsFromJson(Map<String, Object?> json) =>
+    _$SpecialsDeserialize(json);"#
     );
 }

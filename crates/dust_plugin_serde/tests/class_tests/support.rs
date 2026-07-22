@@ -112,16 +112,33 @@ pub(crate) fn members_for_class<'a>(
         .unwrap_or(&[])
 }
 
+pub(crate) fn interfaces_for_class<'a>(
+    contribution: &'a PluginContribution,
+    class_name: &str,
+) -> &'a [String] {
+    contribution
+        .mixin_members
+        .iter()
+        .find(|entry| entry.class_name == class_name)
+        .map(|entry| entry.interfaces.as_slice())
+        .unwrap_or(&[])
+}
+
 pub(crate) fn function_for<'a>(functions: &'a [String], name: &str) -> &'a str {
     functions
         .iter()
-        .find(|function| top_level_function_name(function) == Some(name))
+        .find(|function| top_level_function_names(function).contains(&name))
         .map(String::as_str)
         .unwrap_or("")
 }
 
-fn top_level_function_name(source: &str) -> Option<&str> {
-    let signature = source.lines().find(|line| !line.starts_with("//"))?;
-    let before_params = signature.split_once('(')?.0;
-    before_params.rsplit_once(' ').map(|(_, name)| name)
+fn top_level_function_names(source: &str) -> Vec<&str> {
+    source
+        .lines()
+        .filter(|line| !line.starts_with("//") && line.contains('('))
+        .filter_map(|signature| {
+            let before_params = signature.split_once('(')?.0;
+            before_params.rsplit_once(' ').map(|(_, name)| name)
+        })
+        .collect()
 }

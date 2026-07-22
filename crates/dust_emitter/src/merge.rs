@@ -50,6 +50,15 @@ impl MergedSections {
             .map(|entry| entry.members.as_slice())
             .unwrap_or(&[])
     }
+
+    /// Returns generated mixin interfaces for the named class.
+    pub(crate) fn interfaces_for_class(&self, class_name: &str) -> &[String] {
+        self.mixin_members
+            .iter()
+            .find(|entry| entry.class_name == class_name)
+            .map(|entry| entry.interfaces.as_slice())
+            .unwrap_or(&[])
+    }
 }
 
 /// Merges one class mixin contribution into existing merged sections.
@@ -59,6 +68,15 @@ fn merge_mixin_members(merged: &mut MergedSections, mixin: ClassMixinContributio
         .iter_mut()
         .find(|entry| entry.class_name == mixin.class_name)
     {
+        for interface in mixin.interfaces {
+            if !existing
+                .interfaces
+                .iter()
+                .any(|current| current == &interface)
+            {
+                existing.interfaces.push(interface);
+            }
+        }
         existing.members.extend(mixin.members);
         return;
     }

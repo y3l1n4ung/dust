@@ -51,7 +51,7 @@ fn handles_scalar_builtin_types() {
 
     assert_eq!(
         to_json,
-        r#"Map<String, Object?> _$ScalarsToJson(Scalars instance) {
+        r#"Map<String, Object?> _$ScalarsSerialize(Scalars instance) {
   return <String, Object?>{
     's': instance.s,
     'i': instance.i,
@@ -61,12 +61,15 @@ fn handles_scalar_builtin_types() {
     'o': instance.o,
     'dyn': instance.dyn,
   };
-}"#
+}
+
+Map<String, Object?> _$ScalarsToJson(Scalars instance) =>
+    _$ScalarsSerialize(instance);"#
     );
     assert_eq!(
         from_json,
         r#"// factory Scalars.fromJson(Map<String, Object?> json) => _$ScalarsFromJson(json);
-Scalars _$ScalarsFromJson(Map<String, Object?> json) {
+Scalars _$ScalarsDeserialize(Map<String, Object?> json) {
   final sValue = JsonHelper.as<String>(json['s'], 's', 'String');
   final iValue = JsonHelper.as<int>(json['i'], 'i', 'int');
   final bValue = JsonHelper.as<bool>(json['b'], 'b', 'bool');
@@ -84,6 +87,9 @@ Scalars _$ScalarsFromJson(Map<String, Object?> json) {
     o: oValue,
     dyn: dynValue,
   );
-}"#
+}
+
+Scalars _$ScalarsFromJson(Map<String, Object?> json) =>
+    _$ScalarsDeserialize(json);"#
     );
 }

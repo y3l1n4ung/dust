@@ -15,7 +15,7 @@ part of 'json_serde_options.dart';
 
 const DeepCollectionEquality _jsonSerdeOptionsTagsEquality = DeepCollectionEquality();
 
-mixin _$JsonSerdeOptions {
+mixin _$JsonSerdeOptions implements Serializable {
   @override
   String toString() {
     final self = this as JsonSerdeOptions;
@@ -60,14 +60,53 @@ mixin _$JsonSerdeOptions {
     ]);
   }
 
-  Map<String, Object?> toJson() =>
-      _$JsonSerdeOptionsToJson(this as JsonSerdeOptions);
+  Map<String, Object?> serialize() =>
+      _$JsonSerdeOptionsSerialize(this as JsonSerdeOptions);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-Map<String, Object?> _$JsonSerdeOptionsToJson(JsonSerdeOptions instance) {
+final class $JsonSerdeOptionsSerializer implements Serializer<JsonSerdeOptions, Map<String, Object?>> {
+  const $JsonSerdeOptionsSerializer();
+
+  @override
+  Map<String, Object?> serialize(JsonSerdeOptions value) => _$JsonSerdeOptionsSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonSerdeOptions value) => serialize(value);
+}
+final class $JsonSerdeOptionsDeserializer implements Deserializer<JsonSerdeOptions, Map<String, Object?>> {
+  const $JsonSerdeOptionsDeserializer();
+
+  @override
+  JsonSerdeOptions deserialize(Map<String, Object?> json) => _$JsonSerdeOptionsDeserialize(json);
+
+  @override
+  JsonSerdeOptions fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $MyEnumSerializer implements Serializer<MyEnum, Object?> {
+  const $MyEnumSerializer();
+
+  @override
+  Object? serialize(MyEnum value) => _$MyEnumSerialize(value);
+
+  @override
+  Object? toJson(MyEnum value) => serialize(value);
+}
+final class $MyEnumDeserializer implements Deserializer<MyEnum, Object?> {
+  const $MyEnumDeserializer();
+
+  @override
+  MyEnum deserialize(Object? json) => _$MyEnumDeserialize(json);
+
+  @override
+  MyEnum fromJson(Object? json) => deserialize(json);
+}
+
+Map<String, Object?> _$JsonSerdeOptionsSerialize(JsonSerdeOptions instance) {
   return <String, Object?>{
     'id': instance.id,
-    'e': _$MyEnumToJson(instance.e),
+    'e': _$MyEnumSerialize(instance.e),
     'display_name': instance.displayName,
     'tags': instance.tags
         .map((item) => item)
@@ -76,8 +115,11 @@ Map<String, Object?> _$JsonSerdeOptionsToJson(JsonSerdeOptions instance) {
   };
 }
 
+Map<String, Object?> _$JsonSerdeOptionsToJson(JsonSerdeOptions instance) =>
+    _$JsonSerdeOptionsSerialize(instance);
+
 // factory JsonSerdeOptions.fromJson(Map<String, Object?> json) => _$JsonSerdeOptionsFromJson(json);
-JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
+JsonSerdeOptions _$JsonSerdeOptionsDeserialize(Map<String, Object?> json) {
   const allowedKeys = <String>{
     'id',
     'e',
@@ -93,7 +135,7 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
   }
 
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
-  final eValue = _$MyEnumFromJson(json['e'], 'e');
+  final eValue = _$MyEnumDeserialize(json['e'], 'e');
   var rawDisplayNameKey = 'display_name';
   Object? rawDisplayName;
   if (json.containsKey('display_name')) {
@@ -128,17 +170,26 @@ JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) {
   );
 }
 
-Object? _$MyEnumToJson(MyEnum instance) {
+JsonSerdeOptions _$JsonSerdeOptionsFromJson(Map<String, Object?> json) =>
+    _$JsonSerdeOptionsDeserialize(json);
+
+Object? _$MyEnumSerialize(MyEnum instance) {
   return switch (instance) {
     MyEnum.A => 'A',
     MyEnum.B => 'B',
   };
 }
 
-MyEnum _$MyEnumFromJson(Object? json, [String key = 'json']) {
+Object? _$MyEnumToJson(MyEnum instance) =>
+    _$MyEnumSerialize(instance);
+
+MyEnum _$MyEnumDeserialize(Object? json, [String key = 'json']) {
   return switch (json) {
     'A' => MyEnum.A,
     'B' => MyEnum.B,
     _ => throw ArgumentError.value(json, key, 'unknown value for MyEnum at $key'),
   };
 }
+
+MyEnum _$MyEnumFromJson(Object? json, [String key = 'json']) =>
+    _$MyEnumDeserialize(json, key);

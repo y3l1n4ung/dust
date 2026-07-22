@@ -4,11 +4,13 @@ Built-in plugin for JSON serialization and deserialization generation.
 
 ## Owns
 
-- class `toJson()` and `_$TypeFromJson(...)` generation
+- class `serialize()` / `deserialize(...)` source helper generation
+- Dart ecosystem `toJson()` / `fromJson(...)` mirror helper generation
+- typed `Serializer<DartT, JsonT>` and `Deserializer<DartT, JsonT>` support classes
 - enum JSON mapping
 - tagged sealed class dispatch and generated concrete variant classes
 - serde field options such as rename, aliases, defaults, and skip rules
-- `SerDeCodec` integration
+- `SerDeCodec<DartT, JsonT>` integration
 
 ## Used by
 

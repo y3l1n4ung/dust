@@ -58,7 +58,7 @@ fn handles_collection_types() {
 
     assert_eq!(
         to_json,
-        r#"Map<String, Object?> _$CollectionsToJson(Collections instance) {
+        r#"Map<String, Object?> _$CollectionsSerialize(Collections instance) {
   return <String, Object?>{
     'l': instance.l
         .map((item) => item)
@@ -69,12 +69,15 @@ fn handles_collection_types() {
     'm': instance.m
         .map((key, value) => MapEntry(key, value)),
   };
-}"#
+}
+
+Map<String, Object?> _$CollectionsToJson(Collections instance) =>
+    _$CollectionsSerialize(instance);"#
     );
     assert_eq!(
         from_json,
         r#"// factory Collections.fromJson(Map<String, Object?> json) => _$CollectionsFromJson(json);
-Collections _$CollectionsFromJson(Map<String, Object?> json) {
+Collections _$CollectionsDeserialize(Map<String, Object?> json) {
   final lValue = JsonHelper.decodeList(json['l'], 'l',
       (item, itemKey) => JsonHelper.as<String>(item, itemKey, 'String'));
   final sValue = JsonHelper.decodeSet(json['s'], 's',
@@ -83,6 +86,9 @@ Collections _$CollectionsFromJson(Map<String, Object?> json) {
       (value, valueKey) => JsonHelper.as<String>(value, valueKey, 'String'));
 
   return Collections(l: lValue, s: sValue, m: mValue);
-}"#
+}
+
+Collections _$CollectionsFromJson(Map<String, Object?> json) =>
+    _$CollectionsDeserialize(json);"#
     );
 }

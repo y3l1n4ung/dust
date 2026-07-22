@@ -13,7 +13,7 @@
 
 part of 'product_review.dart';
 
-mixin _$ProductReview {
+mixin _$ProductReview implements Serializable {
   @override
   String toString() {
     final self = this as ProductReview;
@@ -67,7 +67,10 @@ mixin _$ProductReview {
   @pragma('vm:prefer-inline')
   _$ProductReviewCopyWith<ProductReview> get copyWith => _$ProductReviewCopyWithImpl<ProductReview>(this as ProductReview, (value) => value);
 
-  Map<String, Object?> toJson() => _$ProductReviewToJson(this as ProductReview);
+  Map<String, Object?> serialize() =>
+      _$ProductReviewSerialize(this as ProductReview);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -116,8 +119,26 @@ final class _$ProductReviewCopyWithImpl<$Res> implements _$ProductReviewCopyWith
     );
   }
 }
+final class $ProductReviewSerializer implements Serializer<ProductReview, Map<String, Object?>> {
+  const $ProductReviewSerializer();
 
-Map<String, Object?> _$ProductReviewToJson(ProductReview instance) {
+  @override
+  Map<String, Object?> serialize(ProductReview value) => _$ProductReviewSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(ProductReview value) => serialize(value);
+}
+final class $ProductReviewDeserializer implements Deserializer<ProductReview, Map<String, Object?>> {
+  const $ProductReviewDeserializer();
+
+  @override
+  ProductReview deserialize(Map<String, Object?> json) => _$ProductReviewDeserialize(json);
+
+  @override
+  ProductReview fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$ProductReviewSerialize(ProductReview instance) {
   return <String, Object?>{
     'id': instance.id,
     'productId': instance.productId,
@@ -129,8 +150,11 @@ Map<String, Object?> _$ProductReviewToJson(ProductReview instance) {
   };
 }
 
+Map<String, Object?> _$ProductReviewToJson(ProductReview instance) =>
+    _$ProductReviewSerialize(instance);
+
 // factory ProductReview.fromJson(Map<String, Object?> json) => _$ProductReviewFromJson(json);
-ProductReview _$ProductReviewFromJson(Map<String, Object?> json) {
+ProductReview _$ProductReviewDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
   final productIdValue = JsonHelper.as<int>(
     json['productId'],
@@ -165,3 +189,6 @@ ProductReview _$ProductReviewFromJson(Map<String, Object?> json) {
     verifiedPurchase: verifiedPurchaseValue,
   );
 }
+
+ProductReview _$ProductReviewFromJson(Map<String, Object?> json) =>
+    _$ProductReviewDeserialize(json);

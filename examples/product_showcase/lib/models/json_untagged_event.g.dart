@@ -13,11 +13,31 @@
 
 part of 'json_untagged_event.dart';
 
-mixin _$JsonUntaggedEvent {
-  Map<String, Object?> toJson() =>
-      _$JsonUntaggedEventToJson(this as JsonUntaggedEvent);
+mixin _$JsonUntaggedEvent implements Serializable {
+  Map<String, Object?> serialize() =>
+      _$JsonUntaggedEventSerialize(this as JsonUntaggedEvent);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
+final class $JsonUntaggedEventSerializer implements Serializer<JsonUntaggedEvent, Map<String, Object?>> {
+  const $JsonUntaggedEventSerializer();
+
+  @override
+  Map<String, Object?> serialize(JsonUntaggedEvent value) => _$JsonUntaggedEventSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonUntaggedEvent value) => serialize(value);
+}
+final class $JsonUntaggedEventDeserializer implements Deserializer<JsonUntaggedEvent, Map<String, Object?>> {
+  const $JsonUntaggedEventDeserializer();
+
+  @override
+  JsonUntaggedEvent deserialize(Map<String, Object?> json) => _$JsonUntaggedEventDeserialize(json);
+
+  @override
+  JsonUntaggedEvent fromJson(Map<String, Object?> json) => deserialize(json);
+}
 final class JsonSignupEvent extends JsonUntaggedEvent {
   const JsonSignupEvent({
     required this.id,
@@ -43,23 +63,62 @@ final class JsonArchiveEvent extends JsonUntaggedEvent {
   final String id;
   final String reason;
 }
+final class $JsonSignupEventSerializer implements Serializer<JsonSignupEvent, Map<String, Object?>> {
+  const $JsonSignupEventSerializer();
 
-Map<String, Object?> _$JsonUntaggedEventToJson(JsonUntaggedEvent instance) {
+  @override
+  Map<String, Object?> serialize(JsonSignupEvent value) => _$JsonSignupEventSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonSignupEvent value) => serialize(value);
+}
+final class $JsonSignupEventDeserializer implements Deserializer<JsonSignupEvent, Map<String, Object?>> {
+  const $JsonSignupEventDeserializer();
+
+  @override
+  JsonSignupEvent deserialize(Map<String, Object?> json) => _$JsonSignupEventDeserialize(json);
+
+  @override
+  JsonSignupEvent fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $JsonArchiveEventSerializer implements Serializer<JsonArchiveEvent, Map<String, Object?>> {
+  const $JsonArchiveEventSerializer();
+
+  @override
+  Map<String, Object?> serialize(JsonArchiveEvent value) => _$JsonArchiveEventSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonArchiveEvent value) => serialize(value);
+}
+final class $JsonArchiveEventDeserializer implements Deserializer<JsonArchiveEvent, Map<String, Object?>> {
+  const $JsonArchiveEventDeserializer();
+
+  @override
+  JsonArchiveEvent deserialize(Map<String, Object?> json) => _$JsonArchiveEventDeserialize(json);
+
+  @override
+  JsonArchiveEvent fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$JsonUntaggedEventSerialize(JsonUntaggedEvent instance) {
   return switch (instance) {
-    JsonSignupEvent value => _$JsonSignupEventToJson(value),
-    JsonArchiveEvent value => _$JsonArchiveEventToJson(value),
+    JsonSignupEvent value => _$JsonSignupEventSerialize(value),
+    JsonArchiveEvent value => _$JsonArchiveEventSerialize(value),
   };
 }
 
+Map<String, Object?> _$JsonUntaggedEventToJson(JsonUntaggedEvent instance) =>
+    _$JsonUntaggedEventSerialize(instance);
+
 // factory JsonUntaggedEvent.fromJson(Map<String, Object?> json) => _$JsonUntaggedEventFromJson(json);
-JsonUntaggedEvent _$JsonUntaggedEventFromJson(Map<String, Object?> json) {
+JsonUntaggedEvent _$JsonUntaggedEventDeserialize(Map<String, Object?> json) {
   try {
-    return _$JsonSignupEventFromJson(json);
+    return _$JsonSignupEventDeserialize(json);
   } on Object {
     // Try the next untagged SerDe variant.
   }
   try {
-    return _$JsonArchiveEventFromJson(json);
+    return _$JsonArchiveEventDeserialize(json);
   } on Object {
     // Try the next untagged SerDe variant.
   }
@@ -70,32 +129,47 @@ JsonUntaggedEvent _$JsonUntaggedEventFromJson(Map<String, Object?> json) {
   );
 }
 
-Map<String, Object?> _$JsonSignupEventToJson(JsonSignupEvent instance) {
+JsonUntaggedEvent _$JsonUntaggedEventFromJson(Map<String, Object?> json) =>
+    _$JsonUntaggedEventDeserialize(json);
+
+Map<String, Object?> _$JsonSignupEventSerialize(JsonSignupEvent instance) {
   return <String, Object?>{
     'id': instance.id,
     'email': instance.email,
   };
 }
 
+Map<String, Object?> _$JsonSignupEventToJson(JsonSignupEvent instance) =>
+    _$JsonSignupEventSerialize(instance);
+
 // factory JsonSignupEvent.fromJson(Map<String, Object?> json) => _$JsonSignupEventFromJson(json);
-JsonSignupEvent _$JsonSignupEventFromJson(Map<String, Object?> json) {
+JsonSignupEvent _$JsonSignupEventDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
   final emailValue = JsonHelper.as<String>(json['email'], 'email', 'String');
 
   return JsonSignupEvent(id: idValue, email: emailValue);
 }
 
-Map<String, Object?> _$JsonArchiveEventToJson(JsonArchiveEvent instance) {
+JsonSignupEvent _$JsonSignupEventFromJson(Map<String, Object?> json) =>
+    _$JsonSignupEventDeserialize(json);
+
+Map<String, Object?> _$JsonArchiveEventSerialize(JsonArchiveEvent instance) {
   return <String, Object?>{
     'id': instance.id,
     'reason': instance.reason,
   };
 }
 
+Map<String, Object?> _$JsonArchiveEventToJson(JsonArchiveEvent instance) =>
+    _$JsonArchiveEventSerialize(instance);
+
 // factory JsonArchiveEvent.fromJson(Map<String, Object?> json) => _$JsonArchiveEventFromJson(json);
-JsonArchiveEvent _$JsonArchiveEventFromJson(Map<String, Object?> json) {
+JsonArchiveEvent _$JsonArchiveEventDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
   final reasonValue = JsonHelper.as<String>(json['reason'], 'reason', 'String');
 
   return JsonArchiveEvent(id: idValue, reason: reasonValue);
 }
+
+JsonArchiveEvent _$JsonArchiveEventFromJson(Map<String, Object?> json) =>
+    _$JsonArchiveEventDeserialize(json);

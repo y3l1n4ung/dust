@@ -26,18 +26,23 @@ struct ClassTemplateContext<'a> {
     body: String,
 }
 
-/// Renders the generated `toJson` mixin member for a class.
-pub(crate) fn emit_to_json_mixin(helper_class_name: &str) -> String {
+/// Renders the generated `serialize` and `toJson` mixin members for a class.
+pub(crate) fn emit_serialize_mixin_members(helper_class_name: &str) -> Vec<String> {
     let inline = format!(
-        "Map<String, Object?> toJson() => _${helper_class_name}ToJson(this as {helper_class_name});"
+        "Map<String, Object?> serialize() => _${helper_class_name}Serialize(this as {helper_class_name});"
     );
-    if inline.len() <= MIXIN_MEMBER_WIDTH {
-        return inline;
-    }
+    let serialize = if inline.len() <= MIXIN_MEMBER_WIDTH {
+        inline
+    } else {
+        format!(
+            "Map<String, Object?> serialize() =>\n    _${helper_class_name}Serialize(this as {helper_class_name});"
+        )
+    };
 
-    format!(
-        "Map<String, Object?> toJson() =>\n    _${helper_class_name}ToJson(this as {helper_class_name});"
-    )
+    vec![
+        serialize,
+        "Map<String, Object?> toJson() => serialize();".to_owned(),
+    ]
 }
 
 /// Renders the top-level helper that serializes a class instance.
@@ -79,6 +84,21 @@ pub(crate) fn emit_to_json_helper(
             class_name: &class.name,
             body,
         },
+    )
+}
+
+/// Renders the generated serializer support class for a class.
+pub(crate) fn emit_serializer_support_type(class_name: &str) -> String {
+    format!(
+        r#"final class ${class_name}Serializer implements Serializer<{class_name}, Map<String, Object?>> {{
+  const ${class_name}Serializer();
+
+  @override
+  Map<String, Object?> serialize({class_name} value) => _${class_name}Serialize(value);
+
+  @override
+  Map<String, Object?> toJson({class_name} value) => serialize(value);
+}}"#
     )
 }
 
@@ -129,6 +149,21 @@ pub(crate) fn emit_from_json_helper(
             body: lines.join("\n"),
         },
     ))
+}
+
+/// Renders the generated deserializer support class for a class.
+pub(crate) fn emit_deserializer_support_type(class_name: &str) -> String {
+    format!(
+        r#"final class ${class_name}Deserializer implements Deserializer<{class_name}, Map<String, Object?>> {{
+  const ${class_name}Deserializer();
+
+  @override
+  {class_name} deserialize(Map<String, Object?> json) => _${class_name}Deserialize(json);
+
+  @override
+  {class_name} fromJson(Map<String, Object?> json) => deserialize(json);
+}}"#
+    )
 }
 
 /// Emits runtime validation for allowed JSON keys.

@@ -58,16 +58,19 @@ fn supports_skipping_fields() {
 
     assert_eq!(
         &contribution.top_level_functions[0],
-        r#"Map<String, Object?> _$UserToJson(User instance) {
+        r#"Map<String, Object?> _$UserSerialize(User instance) {
   return <String, Object?>{
     'token': instance.token,
   };
-}"#
+}
+
+Map<String, Object?> _$UserToJson(User instance) =>
+    _$UserSerialize(instance);"#
     );
     assert_eq!(
         &contribution.top_level_functions[1],
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
-User _$UserFromJson(Map<String, Object?> json) {
+User _$UserDeserialize(Map<String, Object?> json) {
   final passwordValue = JsonHelper.as<String>(
     json['password'],
     'password',
@@ -76,6 +79,9 @@ User _$UserFromJson(Map<String, Object?> json) {
   final tokenValue = '';
 
   return User(password: passwordValue, token: tokenValue);
-}"#
+}
+
+User _$UserFromJson(Map<String, Object?> json) =>
+    _$UserDeserialize(json);"#
     );
 }

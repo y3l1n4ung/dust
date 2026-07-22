@@ -34,11 +34,14 @@ fn handles_nested_serializable_models() {
 
     assert_eq!(
         user_to_json,
-        r#"Map<String, Object?> _$UserToJson(User instance) {
+        r#"Map<String, Object?> _$UserSerialize(User instance) {
   return <String, Object?>{
-    'profile': _$ProfileToJson(instance.profile),
+    'profile': _$ProfileSerialize(instance.profile),
   };
-}"#
+}
+
+Map<String, Object?> _$UserToJson(User instance) =>
+    _$UserSerialize(instance);"#
     );
 }
 
@@ -85,13 +88,16 @@ fn handles_nested_deserializable_models() {
     assert_eq!(
         user_from_json,
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
-User _$UserFromJson(Map<String, Object?> json) {
-  final profileValue = _$ProfileFromJson(
+User _$UserDeserialize(Map<String, Object?> json) {
+  final profileValue = _$ProfileDeserialize(
     JsonHelper.asMap(json['profile'], 'profile'),
   );
 
   return User(profile: profileValue);
-}"#
+}
+
+User _$UserFromJson(Map<String, Object?> json) =>
+    _$UserDeserialize(json);"#
     );
 }
 
@@ -141,8 +147,8 @@ fn wraps_long_nested_deserializable_model_decode() {
     assert_eq!(
         envelope_from_json,
         r#"// factory CheckoutEnvelope.fromJson(Map<String, Object?> json) => _$CheckoutEnvelopeFromJson(json);
-CheckoutEnvelope _$CheckoutEnvelopeFromJson(Map<String, Object?> json) {
-  final deeplyNestedBillingProfileValue = _$ExtremelyVerboseBillingProfileSnapshotFromJson(
+CheckoutEnvelope _$CheckoutEnvelopeDeserialize(Map<String, Object?> json) {
+  final deeplyNestedBillingProfileValue = _$ExtremelyVerboseBillingProfileSnapshotDeserialize(
     JsonHelper.asMap(
       json['deeplyNestedBillingProfile'],
       'deeplyNestedBillingProfile',
@@ -152,6 +158,9 @@ CheckoutEnvelope _$CheckoutEnvelopeFromJson(Map<String, Object?> json) {
   return CheckoutEnvelope(
     deeplyNestedBillingProfile: deeplyNestedBillingProfileValue,
   );
-}"#
+}
+
+CheckoutEnvelope _$CheckoutEnvelopeFromJson(Map<String, Object?> json) =>
+    _$CheckoutEnvelopeDeserialize(json);"#
     );
 }

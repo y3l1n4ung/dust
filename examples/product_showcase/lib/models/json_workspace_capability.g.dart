@@ -13,20 +13,62 @@
 
 part of 'json_workspace_capability.dart';
 
-mixin _$JsonWorkspaceAccount {
-  Map<String, Object?> toJson() =>
-      _$JsonWorkspaceAccountToJson(this as JsonWorkspaceAccount);
+mixin _$JsonWorkspaceAccount implements Serializable {
+  Map<String, Object?> serialize() =>
+      _$JsonWorkspaceAccountSerialize(this as JsonWorkspaceAccount);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-Map<String, Object?> _$JsonWorkspaceAccountToJson(JsonWorkspaceAccount instance) {
+final class $JsonWorkspaceAccountSerializer implements Serializer<JsonWorkspaceAccount, Map<String, Object?>> {
+  const $JsonWorkspaceAccountSerializer();
+
+  @override
+  Map<String, Object?> serialize(JsonWorkspaceAccount value) => _$JsonWorkspaceAccountSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonWorkspaceAccount value) => serialize(value);
+}
+final class $JsonWorkspaceAccountDeserializer implements Deserializer<JsonWorkspaceAccount, Map<String, Object?>> {
+  const $JsonWorkspaceAccountDeserializer();
+
+  @override
+  JsonWorkspaceAccount deserialize(Map<String, Object?> json) => _$JsonWorkspaceAccountDeserialize(json);
+
+  @override
+  JsonWorkspaceAccount fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $JsonWorkspaceKindSerializer implements Serializer<JsonWorkspaceKind, Object?> {
+  const $JsonWorkspaceKindSerializer();
+
+  @override
+  Object? serialize(JsonWorkspaceKind value) => _$JsonWorkspaceKindSerialize(value);
+
+  @override
+  Object? toJson(JsonWorkspaceKind value) => serialize(value);
+}
+final class $JsonWorkspaceKindDeserializer implements Deserializer<JsonWorkspaceKind, Object?> {
+  const $JsonWorkspaceKindDeserializer();
+
+  @override
+  JsonWorkspaceKind deserialize(Object? json) => _$JsonWorkspaceKindDeserialize(json);
+
+  @override
+  JsonWorkspaceKind fromJson(Object? json) => deserialize(json);
+}
+
+Map<String, Object?> _$JsonWorkspaceAccountSerialize(JsonWorkspaceAccount instance) {
   return <String, Object?>{
     'profile': instance.profile.toJson(),
     'active': instance.active,
   };
 }
 
+Map<String, Object?> _$JsonWorkspaceAccountToJson(JsonWorkspaceAccount instance) =>
+    _$JsonWorkspaceAccountSerialize(instance);
+
 // factory JsonWorkspaceAccount.fromJson(Map<String, Object?> json) => _$JsonWorkspaceAccountFromJson(json);
-JsonWorkspaceAccount _$JsonWorkspaceAccountFromJson(Map<String, Object?> json) {
+JsonWorkspaceAccount _$JsonWorkspaceAccountDeserialize(Map<String, Object?> json) {
   final profileValue = JsonWorkspaceProfile.fromJson(
     JsonHelper.asMap(json['profile'], 'profile'),
   );
@@ -35,17 +77,26 @@ JsonWorkspaceAccount _$JsonWorkspaceAccountFromJson(Map<String, Object?> json) {
   return JsonWorkspaceAccount(profile: profileValue, active: activeValue);
 }
 
-Object? _$JsonWorkspaceKindToJson(JsonWorkspaceKind instance) {
+JsonWorkspaceAccount _$JsonWorkspaceAccountFromJson(Map<String, Object?> json) =>
+    _$JsonWorkspaceAccountDeserialize(json);
+
+Object? _$JsonWorkspaceKindSerialize(JsonWorkspaceKind instance) {
   return switch (instance) {
     JsonWorkspaceKind.retail => 'retail',
     JsonWorkspaceKind.wholesale => 'wholesale',
   };
 }
 
-JsonWorkspaceKind _$JsonWorkspaceKindFromJson(Object? json, [String key = 'json']) {
+Object? _$JsonWorkspaceKindToJson(JsonWorkspaceKind instance) =>
+    _$JsonWorkspaceKindSerialize(instance);
+
+JsonWorkspaceKind _$JsonWorkspaceKindDeserialize(Object? json, [String key = 'json']) {
   return switch (json) {
     'retail' => JsonWorkspaceKind.retail,
     'wholesale' => JsonWorkspaceKind.wholesale,
     _ => throw ArgumentError.value(json, key, 'unknown value for JsonWorkspaceKind at $key'),
   };
 }
+
+JsonWorkspaceKind _$JsonWorkspaceKindFromJson(Object? json, [String key = 'json']) =>
+    _$JsonWorkspaceKindDeserialize(json, key);

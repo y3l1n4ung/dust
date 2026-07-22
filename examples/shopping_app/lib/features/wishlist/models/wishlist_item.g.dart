@@ -13,7 +13,7 @@
 
 part of 'wishlist_item.dart';
 
-mixin _$WishlistItem {
+mixin _$WishlistItem implements Serializable {
   @override
   String toString() {
     final self = this as WishlistItem;
@@ -52,7 +52,10 @@ mixin _$WishlistItem {
   @pragma('vm:prefer-inline')
   _$WishlistItemCopyWith<WishlistItem> get copyWith => _$WishlistItemCopyWithImpl<WishlistItem>(this as WishlistItem, (value) => value);
 
-  Map<String, Object?> toJson() => _$WishlistItemToJson(this as WishlistItem);
+  Map<String, Object?> serialize() =>
+      _$WishlistItemSerialize(this as WishlistItem);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -86,16 +89,37 @@ final class _$WishlistItemCopyWithImpl<$Res> implements _$WishlistItemCopyWith<$
     );
   }
 }
+final class $WishlistItemSerializer implements Serializer<WishlistItem, Map<String, Object?>> {
+  const $WishlistItemSerializer();
 
-Map<String, Object?> _$WishlistItemToJson(WishlistItem instance) {
+  @override
+  Map<String, Object?> serialize(WishlistItem value) => _$WishlistItemSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(WishlistItem value) => serialize(value);
+}
+final class $WishlistItemDeserializer implements Deserializer<WishlistItem, Map<String, Object?>> {
+  const $WishlistItemDeserializer();
+
+  @override
+  WishlistItem deserialize(Map<String, Object?> json) => _$WishlistItemDeserialize(json);
+
+  @override
+  WishlistItem fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$WishlistItemSerialize(WishlistItem instance) {
   return <String, Object?>{
     'product': instance.product.toJson(),
     'savedAt': instance.savedAt.toIso8601String(),
   };
 }
 
+Map<String, Object?> _$WishlistItemToJson(WishlistItem instance) =>
+    _$WishlistItemSerialize(instance);
+
 // factory WishlistItem.fromJson(Map<String, Object?> json) => _$WishlistItemFromJson(json);
-WishlistItem _$WishlistItemFromJson(Map<String, Object?> json) {
+WishlistItem _$WishlistItemDeserialize(Map<String, Object?> json) {
   final productValue = Product.fromJson(
     JsonHelper.asMap(json['product'], 'product'),
   );
@@ -103,3 +127,6 @@ WishlistItem _$WishlistItemFromJson(Map<String, Object?> json) {
 
   return WishlistItem(product: productValue, savedAt: savedAtValue);
 }
+
+WishlistItem _$WishlistItemFromJson(Map<String, Object?> json) =>
+    _$WishlistItemDeserialize(json);

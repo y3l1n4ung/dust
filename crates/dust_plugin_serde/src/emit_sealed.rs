@@ -15,7 +15,7 @@ pub(crate) fn emit_sealed_to_json_helper(
 
     let mut lines = vec![
         format!(
-            "Map<String, Object?> _${}ToJson({} instance) {{",
+            "Map<String, Object?> _${}Serialize({} instance) {{",
             class.name, class.name
         ),
         "  return switch (instance) {".to_owned(),
@@ -35,6 +35,12 @@ pub(crate) fn emit_sealed_to_json_helper(
     }
     lines.push("  };".to_owned());
     lines.push("}".to_owned());
+    lines.push(String::new());
+    lines.push(format!(
+        "Map<String, Object?> _${}ToJson({} instance) =>",
+        class.name, class.name
+    ));
+    lines.push(format!("    _${}Serialize(instance);", class.name));
     Some(lines.join("\n"))
 }
 
@@ -61,7 +67,7 @@ pub(crate) fn emit_sealed_from_json_helper(
             class.name, class.name
         ),
         format!(
-            "{} _${}FromJson(Map<String, Object?> json) {{",
+            "{} _${}Deserialize(Map<String, Object?> json) {{",
             class.name, class.name
         ),
         format!(
@@ -94,6 +100,12 @@ pub(crate) fn emit_sealed_from_json_helper(
     lines.push("    _ => throw ArgumentError('Unknown SerDe variant tag: $tagValue'),".to_owned());
     lines.push("  };".to_owned());
     lines.push("}".to_owned());
+    lines.push(String::new());
+    lines.push(format!(
+        "{} _${}FromJson(Map<String, Object?> json) =>",
+        class.name, class.name
+    ));
+    lines.push(format!("    _${}Deserialize(json);", class.name));
     Some(lines.join("\n"))
 }
 
@@ -150,7 +162,7 @@ fn emit_untagged_from_json_helper(
             class.name, class.name
         ),
         format!(
-            "{} _${}FromJson(Map<String, Object?> json) {{",
+            "{} _${}Deserialize(Map<String, Object?> json) {{",
             class.name, class.name
         ),
     ];
@@ -173,6 +185,12 @@ fn emit_untagged_from_json_helper(
     ));
     lines.push("  );".to_owned());
     lines.push("}".to_owned());
+    lines.push(String::new());
+    lines.push(format!(
+        "{} _${}FromJson(Map<String, Object?> json) =>",
+        class.name, class.name
+    ));
+    lines.push(format!("    _${}Deserialize(json);", class.name));
     lines.join("\n")
 }
 
@@ -183,7 +201,7 @@ fn variant_to_json_expr(
     serializable_classes: &[&str],
 ) -> String {
     if contains_symbol(serializable_classes, &variant.target_class_name) {
-        format!("_${}ToJson({value_name})", variant.target_class_name)
+        format!("_${}Serialize({value_name})", variant.target_class_name)
     } else {
         format!("{value_name}.toJson()")
     }
@@ -196,7 +214,7 @@ fn variant_from_json_expr(
     deserializable_classes: &[&str],
 ) -> String {
     if contains_symbol(deserializable_classes, &variant.target_class_name) {
-        format!("_${}FromJson({json_name})", variant.target_class_name)
+        format!("_${}Deserialize({json_name})", variant.target_class_name)
     } else {
         format!("{}.fromJson({json_name})", variant.target_class_name)
     }

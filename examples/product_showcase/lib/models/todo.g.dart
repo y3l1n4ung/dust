@@ -19,7 +19,7 @@ final class _TodoUpdateCopyWithUnset {
 
 const _todoUpdateCopyWithUnset = _TodoUpdateCopyWithUnset();
 
-mixin _$Todo {
+mixin _$Todo implements Serializable {
   @override
   String toString() {
     final self = this as Todo;
@@ -39,10 +39,12 @@ mixin _$Todo {
   @pragma('vm:prefer-inline')
   _$TodoCopyWith<Todo> get copyWith => _$TodoCopyWithImpl<Todo>(this as Todo, (value) => value);
 
-  Map<String, Object?> toJson() => _$TodoToJson(this as Todo);
+  Map<String, Object?> serialize() => _$TodoSerialize(this as Todo);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$TodoCreate {
+mixin _$TodoCreate implements Serializable {
   @override
   String toString() {
     final self = this as TodoCreate;
@@ -61,10 +63,12 @@ mixin _$TodoCreate {
   @pragma('vm:prefer-inline')
   _$TodoCreateCopyWith<TodoCreate> get copyWith => _$TodoCreateCopyWithImpl<TodoCreate>(this as TodoCreate, (value) => value);
 
-  Map<String, Object?> toJson() => _$TodoCreateToJson(this as TodoCreate);
+  Map<String, Object?> serialize() => _$TodoCreateSerialize(this as TodoCreate);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$TodoUpdate {
+mixin _$TodoUpdate implements Serializable {
   @override
   String toString() {
     final self = this as TodoUpdate;
@@ -84,7 +88,9 @@ mixin _$TodoUpdate {
   @pragma('vm:prefer-inline')
   _$TodoUpdateCopyWith<TodoUpdate> get copyWith => _$TodoUpdateCopyWithImpl<TodoUpdate>(this as TodoUpdate, (value) => value);
 
-  Map<String, Object?> toJson() => _$TodoUpdateToJson(this as TodoUpdate);
+  Map<String, Object?> serialize() => _$TodoUpdateSerialize(this as TodoUpdate);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -183,8 +189,62 @@ final class _$TodoUpdateCopyWithImpl<$Res> implements _$TodoUpdateCopyWith<$Res>
     );
   }
 }
+final class $TodoSerializer implements Serializer<Todo, Map<String, Object?>> {
+  const $TodoSerializer();
 
-Map<String, Object?> _$TodoToJson(Todo instance) {
+  @override
+  Map<String, Object?> serialize(Todo value) => _$TodoSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(Todo value) => serialize(value);
+}
+final class $TodoDeserializer implements Deserializer<Todo, Map<String, Object?>> {
+  const $TodoDeserializer();
+
+  @override
+  Todo deserialize(Map<String, Object?> json) => _$TodoDeserialize(json);
+
+  @override
+  Todo fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $TodoCreateSerializer implements Serializer<TodoCreate, Map<String, Object?>> {
+  const $TodoCreateSerializer();
+
+  @override
+  Map<String, Object?> serialize(TodoCreate value) => _$TodoCreateSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(TodoCreate value) => serialize(value);
+}
+final class $TodoCreateDeserializer implements Deserializer<TodoCreate, Map<String, Object?>> {
+  const $TodoCreateDeserializer();
+
+  @override
+  TodoCreate deserialize(Map<String, Object?> json) => _$TodoCreateDeserialize(json);
+
+  @override
+  TodoCreate fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $TodoUpdateSerializer implements Serializer<TodoUpdate, Map<String, Object?>> {
+  const $TodoUpdateSerializer();
+
+  @override
+  Map<String, Object?> serialize(TodoUpdate value) => _$TodoUpdateSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(TodoUpdate value) => serialize(value);
+}
+final class $TodoUpdateDeserializer implements Deserializer<TodoUpdate, Map<String, Object?>> {
+  const $TodoUpdateDeserializer();
+
+  @override
+  TodoUpdate deserialize(Map<String, Object?> json) => _$TodoUpdateDeserialize(json);
+
+  @override
+  TodoUpdate fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$TodoSerialize(Todo instance) {
   return <String, Object?>{
     'id': instance.id,
     'title': instance.title,
@@ -192,8 +252,11 @@ Map<String, Object?> _$TodoToJson(Todo instance) {
   };
 }
 
+Map<String, Object?> _$TodoToJson(Todo instance) =>
+    _$TodoSerialize(instance);
+
 // factory Todo.fromJson(Map<String, Object?> json) => _$TodoFromJson(json);
-Todo _$TodoFromJson(Map<String, Object?> json) {
+Todo _$TodoDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
   final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
   final isCompletedValue = JsonHelper.as<bool>(
@@ -205,15 +268,21 @@ Todo _$TodoFromJson(Map<String, Object?> json) {
   return Todo(id: idValue, title: titleValue, isCompleted: isCompletedValue);
 }
 
-Map<String, Object?> _$TodoCreateToJson(TodoCreate instance) {
+Todo _$TodoFromJson(Map<String, Object?> json) =>
+    _$TodoDeserialize(json);
+
+Map<String, Object?> _$TodoCreateSerialize(TodoCreate instance) {
   return <String, Object?>{
     'title': instance.title,
     'isCompleted': instance.isCompleted,
   };
 }
 
+Map<String, Object?> _$TodoCreateToJson(TodoCreate instance) =>
+    _$TodoCreateSerialize(instance);
+
 // factory TodoCreate.fromJson(Map<String, Object?> json) => _$TodoCreateFromJson(json);
-TodoCreate _$TodoCreateFromJson(Map<String, Object?> json) {
+TodoCreate _$TodoCreateDeserialize(Map<String, Object?> json) {
   final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
   final isCompletedValue = JsonHelper.as<bool>(
     json['isCompleted'],
@@ -224,15 +293,21 @@ TodoCreate _$TodoCreateFromJson(Map<String, Object?> json) {
   return TodoCreate(title: titleValue, isCompleted: isCompletedValue);
 }
 
-Map<String, Object?> _$TodoUpdateToJson(TodoUpdate instance) {
+TodoCreate _$TodoCreateFromJson(Map<String, Object?> json) =>
+    _$TodoCreateDeserialize(json);
+
+Map<String, Object?> _$TodoUpdateSerialize(TodoUpdate instance) {
   return <String, Object?>{
     'title': instance.title,
     'isCompleted': instance.isCompleted,
   };
 }
 
+Map<String, Object?> _$TodoUpdateToJson(TodoUpdate instance) =>
+    _$TodoUpdateSerialize(instance);
+
 // factory TodoUpdate.fromJson(Map<String, Object?> json) => _$TodoUpdateFromJson(json);
-TodoUpdate _$TodoUpdateFromJson(Map<String, Object?> json) {
+TodoUpdate _$TodoUpdateDeserialize(Map<String, Object?> json) {
   final titleValue = json['title'] == null
       ? null
       : JsonHelper.as<String>(json['title'], 'title', 'String');
@@ -242,3 +317,6 @@ TodoUpdate _$TodoUpdateFromJson(Map<String, Object?> json) {
 
   return TodoUpdate(title: titleValue, isCompleted: isCompletedValue);
 }
+
+TodoUpdate _$TodoUpdateFromJson(Map<String, Object?> json) =>
+    _$TodoUpdateDeserialize(json);

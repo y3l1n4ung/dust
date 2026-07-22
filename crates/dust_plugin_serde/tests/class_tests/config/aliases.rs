@@ -46,7 +46,7 @@ fn supports_field_aliases_during_deserialization() {
     assert_eq!(
         &contribution.top_level_functions[0],
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
-User _$UserFromJson(Map<String, Object?> json) {
+User _$UserDeserialize(Map<String, Object?> json) {
   var rawNameKey = 'name';
   Object? rawName;
   if (json.containsKey('name')) {
@@ -61,6 +61,9 @@ User _$UserFromJson(Map<String, Object?> json) {
   final nameValue = JsonHelper.as<String>(rawName, rawNameKey, 'String');
 
   return User(name: nameValue);
-}"#
+}
+
+User _$UserFromJson(Map<String, Object?> json) =>
+    _$UserDeserialize(json);"#
     );
 }

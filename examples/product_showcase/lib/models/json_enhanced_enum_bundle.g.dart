@@ -15,7 +15,7 @@ part of 'json_enhanced_enum_bundle.dart';
 
 const DeepCollectionEquality _jsonEnhancedEnumBundleFleetEquality = DeepCollectionEquality();
 
-mixin _$JsonEnhancedEnumBundle {
+mixin _$JsonEnhancedEnumBundle implements Serializable {
   @override
   String toString() {
     final self = this as JsonEnhancedEnumBundle;
@@ -48,11 +48,50 @@ mixin _$JsonEnhancedEnumBundle {
     ]);
   }
 
-  Map<String, Object?> toJson() =>
-      _$JsonEnhancedEnumBundleToJson(this as JsonEnhancedEnumBundle);
+  Map<String, Object?> serialize() =>
+      _$JsonEnhancedEnumBundleSerialize(this as JsonEnhancedEnumBundle);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-Map<String, Object?> _$JsonEnhancedEnumBundleToJson(JsonEnhancedEnumBundle instance) {
+final class $JsonEnhancedEnumBundleSerializer implements Serializer<JsonEnhancedEnumBundle, Map<String, Object?>> {
+  const $JsonEnhancedEnumBundleSerializer();
+
+  @override
+  Map<String, Object?> serialize(JsonEnhancedEnumBundle value) => _$JsonEnhancedEnumBundleSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonEnhancedEnumBundle value) => serialize(value);
+}
+final class $JsonEnhancedEnumBundleDeserializer implements Deserializer<JsonEnhancedEnumBundle, Map<String, Object?>> {
+  const $JsonEnhancedEnumBundleDeserializer();
+
+  @override
+  JsonEnhancedEnumBundle deserialize(Map<String, Object?> json) => _$JsonEnhancedEnumBundleDeserialize(json);
+
+  @override
+  JsonEnhancedEnumBundle fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $VehicleSerializer implements Serializer<Vehicle, Object?> {
+  const $VehicleSerializer();
+
+  @override
+  Object? serialize(Vehicle value) => _$VehicleSerialize(value);
+
+  @override
+  Object? toJson(Vehicle value) => serialize(value);
+}
+final class $VehicleDeserializer implements Deserializer<Vehicle, Object?> {
+  const $VehicleDeserializer();
+
+  @override
+  Vehicle deserialize(Object? json) => _$VehicleDeserialize(json);
+
+  @override
+  Vehicle fromJson(Object? json) => deserialize(json);
+}
+
+Map<String, Object?> _$JsonEnhancedEnumBundleSerialize(JsonEnhancedEnumBundle instance) {
   return <String, Object?>{
     'primaryVehicle': vehicleIndexCodec.serialize(instance.primaryVehicle),
     'fallbackVehicle': instance.fallbackVehicle == null
@@ -62,8 +101,11 @@ Map<String, Object?> _$JsonEnhancedEnumBundleToJson(JsonEnhancedEnumBundle insta
   };
 }
 
+Map<String, Object?> _$JsonEnhancedEnumBundleToJson(JsonEnhancedEnumBundle instance) =>
+    _$JsonEnhancedEnumBundleSerialize(instance);
+
 // factory JsonEnhancedEnumBundle.fromJson(Map<String, Object?> json) => _$JsonEnhancedEnumBundleFromJson(json);
-JsonEnhancedEnumBundle _$JsonEnhancedEnumBundleFromJson(Map<String, Object?> json) {
+JsonEnhancedEnumBundle _$JsonEnhancedEnumBundleDeserialize(Map<String, Object?> json) {
   final primaryVehicleValue = JsonHelper.decodeWithCodec<Vehicle>(
     vehicleIndexCodec,
     json['primaryVehicle'],
@@ -85,7 +127,10 @@ JsonEnhancedEnumBundle _$JsonEnhancedEnumBundleFromJson(Map<String, Object?> jso
   );
 }
 
-Object? _$VehicleToJson(Vehicle instance) {
+JsonEnhancedEnumBundle _$JsonEnhancedEnumBundleFromJson(Map<String, Object?> json) =>
+    _$JsonEnhancedEnumBundleDeserialize(json);
+
+Object? _$VehicleSerialize(Vehicle instance) {
   return switch (instance) {
     Vehicle.car => 'car',
     Vehicle.bicycle => 'bicycle',
@@ -93,7 +138,10 @@ Object? _$VehicleToJson(Vehicle instance) {
   };
 }
 
-Vehicle _$VehicleFromJson(Object? json, [String key = 'json']) {
+Object? _$VehicleToJson(Vehicle instance) =>
+    _$VehicleSerialize(instance);
+
+Vehicle _$VehicleDeserialize(Object? json, [String key = 'json']) {
   return switch (json) {
     'car' => Vehicle.car,
     'bicycle' => Vehicle.bicycle,
@@ -101,3 +149,6 @@ Vehicle _$VehicleFromJson(Object? json, [String key = 'json']) {
     _ => throw ArgumentError.value(json, key, 'unknown value for Vehicle at $key'),
   };
 }
+
+Vehicle _$VehicleFromJson(Object? json, [String key = 'json']) =>
+    _$VehicleDeserialize(json, key);

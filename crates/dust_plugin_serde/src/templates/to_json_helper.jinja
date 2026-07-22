@@ -1,3 +1,6 @@
-Map<String, Object?> _${{ class_name }}ToJson({{ class_name }} instance) {
+Map<String, Object?> _${{ class_name }}Serialize({{ class_name }} instance) {
 {{ body }}
 }
+
+Map<String, Object?> _${{ class_name }}ToJson({{ class_name }} instance) =>
+    _${{ class_name }}Serialize(instance);

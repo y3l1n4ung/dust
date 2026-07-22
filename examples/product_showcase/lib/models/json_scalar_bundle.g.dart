@@ -16,7 +16,7 @@ part of 'json_scalar_bundle.dart';
 const DeepCollectionEquality _jsonScalarBundleEndpointsEquality = DeepCollectionEquality.unordered();
 const DeepCollectionEquality _jsonScalarBundleCheckpointsEquality = DeepCollectionEquality();
 
-mixin _$JsonScalarBundle {
+mixin _$JsonScalarBundle implements Serializable {
   @override
   String toString() {
     final self = this as JsonScalarBundle;
@@ -58,11 +58,32 @@ mixin _$JsonScalarBundle {
     ]);
   }
 
-  Map<String, Object?> toJson() =>
-      _$JsonScalarBundleToJson(this as JsonScalarBundle);
+  Map<String, Object?> serialize() =>
+      _$JsonScalarBundleSerialize(this as JsonScalarBundle);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-Map<String, Object?> _$JsonScalarBundleToJson(JsonScalarBundle instance) {
+final class $JsonScalarBundleSerializer implements Serializer<JsonScalarBundle, Map<String, Object?>> {
+  const $JsonScalarBundleSerializer();
+
+  @override
+  Map<String, Object?> serialize(JsonScalarBundle value) => _$JsonScalarBundleSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonScalarBundle value) => serialize(value);
+}
+final class $JsonScalarBundleDeserializer implements Deserializer<JsonScalarBundle, Map<String, Object?>> {
+  const $JsonScalarBundleDeserializer();
+
+  @override
+  JsonScalarBundle deserialize(Map<String, Object?> json) => _$JsonScalarBundleDeserialize(json);
+
+  @override
+  JsonScalarBundle fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$JsonScalarBundleSerialize(JsonScalarBundle instance) {
   return <String, Object?>{
     'createdAt': instance.createdAt.toIso8601String(),
     'updatedAt': instance.updatedAt == null
@@ -78,8 +99,11 @@ Map<String, Object?> _$JsonScalarBundleToJson(JsonScalarBundle instance) {
   };
 }
 
+Map<String, Object?> _$JsonScalarBundleToJson(JsonScalarBundle instance) =>
+    _$JsonScalarBundleSerialize(instance);
+
 // factory JsonScalarBundle.fromJson(Map<String, Object?> json) => _$JsonScalarBundleFromJson(json);
-JsonScalarBundle _$JsonScalarBundleFromJson(Map<String, Object?> json) {
+JsonScalarBundle _$JsonScalarBundleDeserialize(Map<String, Object?> json) {
   final createdAtValue = JsonHelper.asDateTime(json['createdAt'], 'createdAt');
   final updatedAtValue = json['updatedAt'] == null
       ? null
@@ -103,3 +127,6 @@ JsonScalarBundle _$JsonScalarBundleFromJson(Map<String, Object?> json) {
     checkpoints: checkpointsValue,
   );
 }
+
+JsonScalarBundle _$JsonScalarBundleFromJson(Map<String, Object?> json) =>
+    _$JsonScalarBundleDeserialize(json);

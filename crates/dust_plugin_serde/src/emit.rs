@@ -4,8 +4,14 @@ use dust_ir::{ClassIr, DartFileIr, EnumIr};
 use dust_plugin_api::PluginContribution;
 
 use crate::{
-    emit_class::{emit_from_json_helper, emit_to_json_helper, emit_to_json_mixin},
-    emit_enum::{emit_enum_from_json_helper, emit_enum_to_json_helper},
+    emit_class::{
+        emit_deserializer_support_type, emit_from_json_helper, emit_serialize_mixin_members,
+        emit_serializer_support_type, emit_to_json_helper,
+    },
+    emit_enum::{
+        emit_enum_deserializer_support_type, emit_enum_from_json_helper,
+        emit_enum_serializer_support_type, emit_enum_to_json_helper,
+    },
     emit_sealed::{
         emit_sealed_from_json_helper, emit_sealed_to_json_helper, is_sealed_serde_class,
     },
@@ -66,12 +72,21 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
                 .get(class.name.as_str())
                 .copied()
                 .unwrap_or(class.name.as_str());
-            contribution.push_mixin_member(&class.name, emit_to_json_mixin(helper_class_name));
+            contribution.push_mixin_interface(&class.name, "Serializable");
+            for member in emit_serialize_mixin_members(helper_class_name) {
+                contribution.push_mixin_member(&class.name, member);
+            }
             if is_sealed_serde_class(class) {
                 if let Some(helper) = emit_sealed_to_json_helper(class, &serializable_classes) {
+                    contribution
+                        .support_types
+                        .push(emit_serializer_support_type(&class.name));
                     contribution.top_level_functions.push(helper);
                 }
             } else {
+                contribution
+                    .support_types
+                    .push(emit_serializer_support_type(&class.name));
                 contribution.top_level_functions.push(emit_to_json_helper(
                     class,
                     &serializable_classes,
@@ -80,14 +95,22 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
             }
         }
         if wants_deserialize(class) {
+            let mut emitted_helper = false;
             if is_sealed_serde_class(class) {
                 if let Some(helper) = emit_sealed_from_json_helper(class, &deserializable_classes) {
                     contribution.top_level_functions.push(helper);
+                    emitted_helper = true;
                 }
             } else if let Some(helper) =
                 emit_from_json_helper(class, &deserializable_classes, &deserializable_enums)
             {
                 contribution.top_level_functions.push(helper);
+                emitted_helper = true;
+            }
+            if emitted_helper {
+                contribution
+                    .support_types
+                    .push(emit_deserializer_support_type(&class.name));
             }
         }
     }
@@ -103,6 +126,9 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
 
     for variant in &generated_variants {
         if variant.serializable {
+            contribution
+                .support_types
+                .push(emit_serializer_support_type(&variant.class.name));
             contribution.top_level_functions.push(emit_to_json_helper(
                 &variant.class,
                 &serializable_classes,
@@ -117,6 +143,9 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
             ) {
                 contribution.top_level_functions.push(helper);
             }
+            contribution
+                .support_types
+                .push(emit_deserializer_support_type(&variant.class.name));
         }
     }
 
@@ -124,10 +153,16 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
     for e in &library.enums {
         if wants_serialize_enum(e) {
             contribution
+                .support_types
+                .push(emit_enum_serializer_support_type(&e.name));
+            contribution
                 .top_level_functions
                 .push(emit_enum_to_json_helper(e));
         }
         if wants_deserialize_enum(e) {
+            contribution
+                .support_types
+                .push(emit_enum_deserializer_support_type(&e.name));
             contribution
                 .top_level_functions
                 .push(emit_enum_from_json_helper(e));

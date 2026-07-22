@@ -13,25 +13,87 @@
 
 part of 'serde_workspace_capability.dart';
 
-mixin _$BenchmarkWorkspaceAccount {
-  Map<String, Object?> toJson() =>
-      _$BenchmarkWorkspaceAccountToJson(this as BenchmarkWorkspaceAccount);
+mixin _$BenchmarkWorkspaceAccount implements Serializable {
+  Map<String, Object?> serialize() =>
+      _$BenchmarkWorkspaceAccountSerialize(this as BenchmarkWorkspaceAccount);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$BenchmarkWorkspacePageEnvelope {
-  Map<String, Object?> toJson() =>
-      _$BenchmarkWorkspacePageEnvelopeToJson(this as BenchmarkWorkspacePageEnvelope);
+mixin _$BenchmarkWorkspacePageEnvelope implements Serializable {
+  Map<String, Object?> serialize() =>
+      _$BenchmarkWorkspacePageEnvelopeSerialize(this as BenchmarkWorkspacePageEnvelope);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-Map<String, Object?> _$BenchmarkWorkspaceAccountToJson(BenchmarkWorkspaceAccount instance) {
+final class $BenchmarkWorkspaceAccountSerializer implements Serializer<BenchmarkWorkspaceAccount, Map<String, Object?>> {
+  const $BenchmarkWorkspaceAccountSerializer();
+
+  @override
+  Map<String, Object?> serialize(BenchmarkWorkspaceAccount value) => _$BenchmarkWorkspaceAccountSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(BenchmarkWorkspaceAccount value) => serialize(value);
+}
+final class $BenchmarkWorkspaceAccountDeserializer implements Deserializer<BenchmarkWorkspaceAccount, Map<String, Object?>> {
+  const $BenchmarkWorkspaceAccountDeserializer();
+
+  @override
+  BenchmarkWorkspaceAccount deserialize(Map<String, Object?> json) => _$BenchmarkWorkspaceAccountDeserialize(json);
+
+  @override
+  BenchmarkWorkspaceAccount fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $BenchmarkWorkspacePageEnvelopeSerializer implements Serializer<BenchmarkWorkspacePageEnvelope, Map<String, Object?>> {
+  const $BenchmarkWorkspacePageEnvelopeSerializer();
+
+  @override
+  Map<String, Object?> serialize(BenchmarkWorkspacePageEnvelope value) => _$BenchmarkWorkspacePageEnvelopeSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(BenchmarkWorkspacePageEnvelope value) => serialize(value);
+}
+final class $BenchmarkWorkspacePageEnvelopeDeserializer implements Deserializer<BenchmarkWorkspacePageEnvelope, Map<String, Object?>> {
+  const $BenchmarkWorkspacePageEnvelopeDeserializer();
+
+  @override
+  BenchmarkWorkspacePageEnvelope deserialize(Map<String, Object?> json) => _$BenchmarkWorkspacePageEnvelopeDeserialize(json);
+
+  @override
+  BenchmarkWorkspacePageEnvelope fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $BenchmarkWorkspaceKindSerializer implements Serializer<BenchmarkWorkspaceKind, Object?> {
+  const $BenchmarkWorkspaceKindSerializer();
+
+  @override
+  Object? serialize(BenchmarkWorkspaceKind value) => _$BenchmarkWorkspaceKindSerialize(value);
+
+  @override
+  Object? toJson(BenchmarkWorkspaceKind value) => serialize(value);
+}
+final class $BenchmarkWorkspaceKindDeserializer implements Deserializer<BenchmarkWorkspaceKind, Object?> {
+  const $BenchmarkWorkspaceKindDeserializer();
+
+  @override
+  BenchmarkWorkspaceKind deserialize(Object? json) => _$BenchmarkWorkspaceKindDeserialize(json);
+
+  @override
+  BenchmarkWorkspaceKind fromJson(Object? json) => deserialize(json);
+}
+
+Map<String, Object?> _$BenchmarkWorkspaceAccountSerialize(BenchmarkWorkspaceAccount instance) {
   return <String, Object?>{
     'profile': instance.profile.toJson(),
     'score': instance.score,
   };
 }
 
+Map<String, Object?> _$BenchmarkWorkspaceAccountToJson(BenchmarkWorkspaceAccount instance) =>
+    _$BenchmarkWorkspaceAccountSerialize(instance);
+
 // factory BenchmarkWorkspaceAccount.fromJson(Map<String, Object?> json) => _$BenchmarkWorkspaceAccountFromJson(json);
-BenchmarkWorkspaceAccount _$BenchmarkWorkspaceAccountFromJson(Map<String, Object?> json) {
+BenchmarkWorkspaceAccount _$BenchmarkWorkspaceAccountDeserialize(Map<String, Object?> json) {
   final profileValue = BenchmarkWorkspaceProfile.fromJson(
     JsonHelper.asMap(json['profile'], 'profile'),
   );
@@ -40,14 +102,20 @@ BenchmarkWorkspaceAccount _$BenchmarkWorkspaceAccountFromJson(Map<String, Object
   return BenchmarkWorkspaceAccount(profile: profileValue, score: scoreValue);
 }
 
-Map<String, Object?> _$BenchmarkWorkspacePageEnvelopeToJson(BenchmarkWorkspacePageEnvelope instance) {
+BenchmarkWorkspaceAccount _$BenchmarkWorkspaceAccountFromJson(Map<String, Object?> json) =>
+    _$BenchmarkWorkspaceAccountDeserialize(json);
+
+Map<String, Object?> _$BenchmarkWorkspacePageEnvelopeSerialize(BenchmarkWorkspacePageEnvelope instance) {
   return <String, Object?>{
     'page': benchmarkWorkspaceProfilePageCodec.serialize(instance.page),
   };
 }
 
+Map<String, Object?> _$BenchmarkWorkspacePageEnvelopeToJson(BenchmarkWorkspacePageEnvelope instance) =>
+    _$BenchmarkWorkspacePageEnvelopeSerialize(instance);
+
 // factory BenchmarkWorkspacePageEnvelope.fromJson(Map<String, Object?> json) => _$BenchmarkWorkspacePageEnvelopeFromJson(json);
-BenchmarkWorkspacePageEnvelope _$BenchmarkWorkspacePageEnvelopeFromJson(Map<String, Object?> json) {
+BenchmarkWorkspacePageEnvelope _$BenchmarkWorkspacePageEnvelopeDeserialize(Map<String, Object?> json) {
   final pageValue = JsonHelper.decodeWithCodec<BenchmarkPage<BenchmarkWorkspaceProfile>>(
     benchmarkWorkspaceProfilePageCodec,
     json['page'],
@@ -57,17 +125,26 @@ BenchmarkWorkspacePageEnvelope _$BenchmarkWorkspacePageEnvelopeFromJson(Map<Stri
   return BenchmarkWorkspacePageEnvelope(page: pageValue);
 }
 
-Object? _$BenchmarkWorkspaceKindToJson(BenchmarkWorkspaceKind instance) {
+BenchmarkWorkspacePageEnvelope _$BenchmarkWorkspacePageEnvelopeFromJson(Map<String, Object?> json) =>
+    _$BenchmarkWorkspacePageEnvelopeDeserialize(json);
+
+Object? _$BenchmarkWorkspaceKindSerialize(BenchmarkWorkspaceKind instance) {
   return switch (instance) {
     BenchmarkWorkspaceKind.primary => 'primary',
     BenchmarkWorkspaceKind.fallback => 'fallback',
   };
 }
 
-BenchmarkWorkspaceKind _$BenchmarkWorkspaceKindFromJson(Object? json, [String key = 'json']) {
+Object? _$BenchmarkWorkspaceKindToJson(BenchmarkWorkspaceKind instance) =>
+    _$BenchmarkWorkspaceKindSerialize(instance);
+
+BenchmarkWorkspaceKind _$BenchmarkWorkspaceKindDeserialize(Object? json, [String key = 'json']) {
   return switch (json) {
     'primary' => BenchmarkWorkspaceKind.primary,
     'fallback' => BenchmarkWorkspaceKind.fallback,
     _ => throw ArgumentError.value(json, key, 'unknown value for BenchmarkWorkspaceKind at $key'),
   };
 }
+
+BenchmarkWorkspaceKind _$BenchmarkWorkspaceKindFromJson(Object? json, [String key = 'json']) =>
+    _$BenchmarkWorkspaceKindDeserialize(json, key);

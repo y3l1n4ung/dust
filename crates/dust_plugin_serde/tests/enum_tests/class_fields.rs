@@ -45,20 +45,26 @@ fn handles_enum_fields_in_classes() {
 
     assert_eq!(
         to_json,
-        r#"Map<String, Object?> _$UserToJson(User instance) {
+        r#"Map<String, Object?> _$UserSerialize(User instance) {
   return <String, Object?>{
-    'status': _$StatusToJson(instance.status),
+    'status': _$StatusSerialize(instance.status),
   };
-}"#
+}
+
+Map<String, Object?> _$UserToJson(User instance) =>
+    _$UserSerialize(instance);"#
     );
     assert_eq!(
         from_json,
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
-User _$UserFromJson(Map<String, Object?> json) {
-  final statusValue = _$StatusFromJson(json['status'], 'status');
+User _$UserDeserialize(Map<String, Object?> json) {
+  final statusValue = _$StatusDeserialize(json['status'], 'status');
 
   return User(status: statusValue);
-}"#
+}
+
+User _$UserFromJson(Map<String, Object?> json) =>
+    _$UserDeserialize(json);"#
     );
 }
 
@@ -101,24 +107,30 @@ fn handles_nullable_enum_fields() {
 
     assert_eq!(
         to_json,
-        r#"Map<String, Object?> _$UserToJson(User instance) {
+        r#"Map<String, Object?> _$UserSerialize(User instance) {
   return <String, Object?>{
     'status': instance.status == null
         ? null
-        : _$StatusToJson((instance.status!)),
+        : _$StatusSerialize((instance.status!)),
   };
-}"#
+}
+
+Map<String, Object?> _$UserToJson(User instance) =>
+    _$UserSerialize(instance);"#
     );
     assert_eq!(
         from_json,
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
-User _$UserFromJson(Map<String, Object?> json) {
+User _$UserDeserialize(Map<String, Object?> json) {
   final statusValue = json['status'] == null
       ? null
-      : _$StatusFromJson(json['status'], 'status');
+      : _$StatusDeserialize(json['status'], 'status');
 
   return User(status: statusValue);
-}"#
+}
+
+User _$UserFromJson(Map<String, Object?> json) =>
+    _$UserDeserialize(json);"#
     );
 }
 
@@ -164,22 +176,28 @@ fn handles_enums_in_collections() {
 
     assert_eq!(
         to_json,
-        r#"Map<String, Object?> _$BundleToJson(Bundle instance) {
+        r#"Map<String, Object?> _$BundleSerialize(Bundle instance) {
   return <String, Object?>{
     'roles': instance.roles
-        .map((item) => _$RoleToJson(item))
+        .map((item) => _$RoleSerialize(item))
         .toList(),
   };
-}"#
+}
+
+Map<String, Object?> _$BundleToJson(Bundle instance) =>
+    _$BundleSerialize(instance);"#
     );
     assert_eq!(
         from_json,
         r#"// factory Bundle.fromJson(Map<String, Object?> json) => _$BundleFromJson(json);
-Bundle _$BundleFromJson(Map<String, Object?> json) {
+Bundle _$BundleDeserialize(Map<String, Object?> json) {
   final rolesValue = JsonHelper.decodeList(json['roles'], 'roles',
-      (item, itemKey) => _$RoleFromJson(item, itemKey));
+      (item, itemKey) => _$RoleDeserialize(item, itemKey));
 
   return Bundle(roles: rolesValue);
-}"#
+}
+
+Bundle _$BundleFromJson(Map<String, Object?> json) =>
+    _$BundleDeserialize(json);"#
     );
 }

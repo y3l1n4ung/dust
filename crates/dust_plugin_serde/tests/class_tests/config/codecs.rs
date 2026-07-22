@@ -45,16 +45,19 @@ fn supports_custom_field_codecs() {
 
     assert_eq!(
         &contribution.top_level_functions[0],
-        r#"Map<String, Object?> _$UserToJson(User instance) {
+        r#"Map<String, Object?> _$UserSerialize(User instance) {
   return <String, Object?>{
     'createdAt': (const UnixEpochCodec()).serialize(instance.createdAt),
   };
-}"#
+}
+
+Map<String, Object?> _$UserToJson(User instance) =>
+    _$UserSerialize(instance);"#
     );
     assert_eq!(
         &contribution.top_level_functions[1],
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
-User _$UserFromJson(Map<String, Object?> json) {
+User _$UserDeserialize(Map<String, Object?> json) {
   final createdAtValue = JsonHelper.decodeWithCodec<DateTime>(
     (const UnixEpochCodec()),
     json['createdAt'],
@@ -62,6 +65,9 @@ User _$UserFromJson(Map<String, Object?> json) {
   );
 
   return User(createdAt: createdAtValue);
-}"#
+}
+
+User _$UserFromJson(Map<String, Object?> json) =>
+    _$UserDeserialize(json);"#
     );
 }
