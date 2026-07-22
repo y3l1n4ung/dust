@@ -223,36 +223,24 @@ final class $CheckoutQuoteRequestSerializer implements Serializer<CheckoutQuoteR
 
   @override
   Map<String, Object?> serialize(CheckoutQuoteRequest value) => _$CheckoutQuoteRequestSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(CheckoutQuoteRequest value) => serialize(value);
 }
 final class $CheckoutQuoteRequestDeserializer implements Deserializer<CheckoutQuoteRequest, Map<String, Object?>> {
   const $CheckoutQuoteRequestDeserializer();
 
   @override
   CheckoutQuoteRequest deserialize(Map<String, Object?> json) => _$CheckoutQuoteRequestDeserialize(json);
-
-  @override
-  CheckoutQuoteRequest fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $CheckoutQuoteSerializer implements Serializer<CheckoutQuote, Map<String, Object?>> {
   const $CheckoutQuoteSerializer();
 
   @override
   Map<String, Object?> serialize(CheckoutQuote value) => _$CheckoutQuoteSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(CheckoutQuote value) => serialize(value);
 }
 final class $CheckoutQuoteDeserializer implements Deserializer<CheckoutQuote, Map<String, Object?>> {
   const $CheckoutQuoteDeserializer();
 
   @override
   CheckoutQuote deserialize(Map<String, Object?> json) => _$CheckoutQuoteDeserialize(json);
-
-  @override
-  CheckoutQuote fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$CheckoutQuoteRequestSerialize(CheckoutQuoteRequest instance) {

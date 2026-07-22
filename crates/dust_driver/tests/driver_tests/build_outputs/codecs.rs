@@ -55,18 +55,12 @@ final class $AuditSerializer implements Serializer<Audit, Map<String, Object?>> 
 
   @override
   Map<String, Object?> serialize(Audit value) => _$AuditSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(Audit value) => serialize(value);
 }
 final class $AuditDeserializer implements Deserializer<Audit, Map<String, Object?>> {
   const $AuditDeserializer();
 
   @override
   Audit deserialize(Map<String, Object?> json) => _$AuditDeserialize(json);
-
-  @override
-  Audit fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$AuditSerialize(Audit instance) {

@@ -86,18 +86,12 @@ final class $RemoteCommentSerializer implements Serializer<RemoteComment, Map<St
 
   @override
   Map<String, Object?> serialize(RemoteComment value) => _$RemoteCommentSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(RemoteComment value) => serialize(value);
 }
 final class $RemoteCommentDeserializer implements Deserializer<RemoteComment, Map<String, Object?>> {
   const $RemoteCommentDeserializer();
 
   @override
   RemoteComment deserialize(Map<String, Object?> json) => _$RemoteCommentDeserialize(json);
-
-  @override
-  RemoteComment fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$RemoteCommentSerialize(RemoteComment instance) {

@@ -223,54 +223,36 @@ final class $OrderSerializer implements Serializer<Order, Map<String, Object?>> 
 
   @override
   Map<String, Object?> serialize(Order value) => _$OrderSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(Order value) => serialize(value);
 }
 final class $OrderDeserializer implements Deserializer<Order, Map<String, Object?>> {
   const $OrderDeserializer();
 
   @override
   Order deserialize(Map<String, Object?> json) => _$OrderDeserialize(json);
-
-  @override
-  Order fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $ShippingAddressSerializer implements Serializer<ShippingAddress, Map<String, Object?>> {
   const $ShippingAddressSerializer();
 
   @override
   Map<String, Object?> serialize(ShippingAddress value) => _$ShippingAddressSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(ShippingAddress value) => serialize(value);
 }
 final class $ShippingAddressDeserializer implements Deserializer<ShippingAddress, Map<String, Object?>> {
   const $ShippingAddressDeserializer();
 
   @override
   ShippingAddress deserialize(Map<String, Object?> json) => _$ShippingAddressDeserialize(json);
-
-  @override
-  ShippingAddress fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $OrderStatusSerializer implements Serializer<OrderStatus, Object?> {
   const $OrderStatusSerializer();
 
   @override
   Object? serialize(OrderStatus value) => _$OrderStatusSerialize(value);
-
-  @override
-  Object? toJson(OrderStatus value) => serialize(value);
 }
 final class $OrderStatusDeserializer implements Deserializer<OrderStatus, Object?> {
   const $OrderStatusDeserializer();
 
   @override
   OrderStatus deserialize(Object? json) => _$OrderStatusDeserialize(json);
-
-  @override
-  OrderStatus fromJson(Object? json) => deserialize(json);
 }
 
 Map<String, Object?> _$OrderSerialize(Order instance) {

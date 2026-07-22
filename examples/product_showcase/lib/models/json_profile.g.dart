@@ -59,18 +59,12 @@ final class $JsonProfileSerializer implements Serializer<JsonProfile, Map<String
 
   @override
   Map<String, Object?> serialize(JsonProfile value) => _$JsonProfileSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonProfile value) => serialize(value);
 }
 final class $JsonProfileDeserializer implements Deserializer<JsonProfile, Map<String, Object?>> {
   const $JsonProfileDeserializer();
 
   @override
   JsonProfile deserialize(Map<String, Object?> json) => _$JsonProfileDeserialize(json);
-
-  @override
-  JsonProfile fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$JsonProfileSerialize(JsonProfile instance) {

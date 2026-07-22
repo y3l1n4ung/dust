@@ -124,18 +124,12 @@ final class $TrackingEventSerializer implements Serializer<TrackingEvent, Map<St
 
   @override
   Map<String, Object?> serialize(TrackingEvent value) => _$TrackingEventSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(TrackingEvent value) => serialize(value);
 }
 final class $TrackingEventDeserializer implements Deserializer<TrackingEvent, Map<String, Object?>> {
   const $TrackingEventDeserializer();
 
   @override
   TrackingEvent deserialize(Map<String, Object?> json) => _$TrackingEventDeserialize(json);
-
-  @override
-  TrackingEvent fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$TrackingEventSerialize(TrackingEvent instance) {

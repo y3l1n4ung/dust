@@ -32,54 +32,36 @@ final class $BenchmarkWorkspaceAccountSerializer implements Serializer<Benchmark
 
   @override
   Map<String, Object?> serialize(BenchmarkWorkspaceAccount value) => _$BenchmarkWorkspaceAccountSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(BenchmarkWorkspaceAccount value) => serialize(value);
 }
 final class $BenchmarkWorkspaceAccountDeserializer implements Deserializer<BenchmarkWorkspaceAccount, Map<String, Object?>> {
   const $BenchmarkWorkspaceAccountDeserializer();
 
   @override
   BenchmarkWorkspaceAccount deserialize(Map<String, Object?> json) => _$BenchmarkWorkspaceAccountDeserialize(json);
-
-  @override
-  BenchmarkWorkspaceAccount fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $BenchmarkWorkspacePageEnvelopeSerializer implements Serializer<BenchmarkWorkspacePageEnvelope, Map<String, Object?>> {
   const $BenchmarkWorkspacePageEnvelopeSerializer();
 
   @override
   Map<String, Object?> serialize(BenchmarkWorkspacePageEnvelope value) => _$BenchmarkWorkspacePageEnvelopeSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(BenchmarkWorkspacePageEnvelope value) => serialize(value);
 }
 final class $BenchmarkWorkspacePageEnvelopeDeserializer implements Deserializer<BenchmarkWorkspacePageEnvelope, Map<String, Object?>> {
   const $BenchmarkWorkspacePageEnvelopeDeserializer();
 
   @override
   BenchmarkWorkspacePageEnvelope deserialize(Map<String, Object?> json) => _$BenchmarkWorkspacePageEnvelopeDeserialize(json);
-
-  @override
-  BenchmarkWorkspacePageEnvelope fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $BenchmarkWorkspaceKindSerializer implements Serializer<BenchmarkWorkspaceKind, Object?> {
   const $BenchmarkWorkspaceKindSerializer();
 
   @override
   Object? serialize(BenchmarkWorkspaceKind value) => _$BenchmarkWorkspaceKindSerialize(value);
-
-  @override
-  Object? toJson(BenchmarkWorkspaceKind value) => serialize(value);
 }
 final class $BenchmarkWorkspaceKindDeserializer implements Deserializer<BenchmarkWorkspaceKind, Object?> {
   const $BenchmarkWorkspaceKindDeserializer();
 
   @override
   BenchmarkWorkspaceKind deserialize(Object? json) => _$BenchmarkWorkspaceKindDeserialize(json);
-
-  @override
-  BenchmarkWorkspaceKind fromJson(Object? json) => deserialize(json);
 }
 
 Map<String, Object?> _$BenchmarkWorkspaceAccountSerialize(BenchmarkWorkspaceAccount instance) {

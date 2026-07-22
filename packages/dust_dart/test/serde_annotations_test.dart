@@ -82,9 +82,6 @@ final class _UserSerializer
 
   @override
   Map<String, Object?> serialize(_SerializableUser value) => value.serialize();
-
-  @override
-  Map<String, Object?> toJson(_SerializableUser value) => serialize(value);
 }
 
 final class _UserDeserializer
@@ -94,9 +91,6 @@ final class _UserDeserializer
   @override
   _SerializableUser deserialize(Map<String, Object?> json) =>
       _SerializableUser(JsonHelper.as<String>(json['id'], 'id', 'String'));
-
-  @override
-  _SerializableUser fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 final class _StringCodec implements SerDeCodec<String, String> {

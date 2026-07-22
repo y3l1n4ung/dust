@@ -124,18 +124,12 @@ final class $ProductReviewSerializer implements Serializer<ProductReview, Map<St
 
   @override
   Map<String, Object?> serialize(ProductReview value) => _$ProductReviewSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(ProductReview value) => serialize(value);
 }
 final class $ProductReviewDeserializer implements Deserializer<ProductReview, Map<String, Object?>> {
   const $ProductReviewDeserializer();
 
   @override
   ProductReview deserialize(Map<String, Object?> json) => _$ProductReviewDeserialize(json);
-
-  @override
-  ProductReview fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$ProductReviewSerialize(ProductReview instance) {

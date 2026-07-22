@@ -139,36 +139,24 @@ final class $RemotePostSerializer implements Serializer<RemotePost, Map<String, 
 
   @override
   Map<String, Object?> serialize(RemotePost value) => _$RemotePostSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(RemotePost value) => serialize(value);
 }
 final class $RemotePostDeserializer implements Deserializer<RemotePost, Map<String, Object?>> {
   const $RemotePostDeserializer();
 
   @override
   RemotePost deserialize(Map<String, Object?> json) => _$RemotePostDeserialize(json);
-
-  @override
-  RemotePost fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $RemotePostDraftSerializer implements Serializer<RemotePostDraft, Map<String, Object?>> {
   const $RemotePostDraftSerializer();
 
   @override
   Map<String, Object?> serialize(RemotePostDraft value) => _$RemotePostDraftSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(RemotePostDraft value) => serialize(value);
 }
 final class $RemotePostDraftDeserializer implements Deserializer<RemotePostDraft, Map<String, Object?>> {
   const $RemotePostDraftDeserializer();
 
   @override
   RemotePostDraft deserialize(Map<String, Object?> json) => _$RemotePostDraftDeserialize(json);
-
-  @override
-  RemotePostDraft fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$RemotePostSerialize(RemotePost instance) {

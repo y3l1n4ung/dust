@@ -208,36 +208,24 @@ final class $ProductSerializer implements Serializer<Product, Map<String, Object
 
   @override
   Map<String, Object?> serialize(Product value) => _$ProductSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(Product value) => serialize(value);
 }
 final class $ProductDeserializer implements Deserializer<Product, Map<String, Object?>> {
   const $ProductDeserializer();
 
   @override
   Product deserialize(Map<String, Object?> json) => _$ProductDeserialize(json);
-
-  @override
-  Product fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $RatingSerializer implements Serializer<Rating, Map<String, Object?>> {
   const $RatingSerializer();
 
   @override
   Map<String, Object?> serialize(Rating value) => _$RatingSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(Rating value) => serialize(value);
 }
 final class $RatingDeserializer implements Deserializer<Rating, Map<String, Object?>> {
   const $RatingDeserializer();
 
   @override
   Rating deserialize(Map<String, Object?> json) => _$RatingDeserialize(json);
-
-  @override
-  Rating fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$ProductSerialize(Product instance) {

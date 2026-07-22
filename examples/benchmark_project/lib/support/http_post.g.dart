@@ -81,18 +81,12 @@ final class $HttpPostSerializer implements Serializer<HttpPost, Map<String, Obje
 
   @override
   Map<String, Object?> serialize(HttpPost value) => _$HttpPostSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(HttpPost value) => serialize(value);
 }
 final class $HttpPostDeserializer implements Deserializer<HttpPost, Map<String, Object?>> {
   const $HttpPostDeserializer();
 
   @override
   HttpPost deserialize(Map<String, Object?> json) => _$HttpPostDeserialize(json);
-
-  @override
-  HttpPost fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$HttpPostSerialize(HttpPost instance) {

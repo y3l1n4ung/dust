@@ -66,18 +66,12 @@ Status _$StatusFromJson(Object? json, [String key = 'json']) =>
 
   @override
   Object? serialize(Status value) => _$StatusSerialize(value);
-
-  @override
-  Object? toJson(Status value) => serialize(value);
 }"#,
             r#"final class $StatusDeserializer implements Deserializer<Status, Object?> {
   const $StatusDeserializer();
 
   @override
   Status deserialize(Object? json) => _$StatusDeserialize(json);
-
-  @override
-  Status fromJson(Object? json) => deserialize(json);
 }"#
         ]
     );

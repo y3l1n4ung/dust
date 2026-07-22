@@ -268,72 +268,48 @@ final class $ChatMessageSerializer implements Serializer<ChatMessage, Map<String
 
   @override
   Map<String, Object?> serialize(ChatMessage value) => _$ChatMessageSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(ChatMessage value) => serialize(value);
 }
 final class $ChatMessageDeserializer implements Deserializer<ChatMessage, Map<String, Object?>> {
   const $ChatMessageDeserializer();
 
   @override
   ChatMessage deserialize(Map<String, Object?> json) => _$ChatMessageDeserialize(json);
-
-  @override
-  ChatMessage fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $ChatRequestSerializer implements Serializer<ChatRequest, Map<String, Object?>> {
   const $ChatRequestSerializer();
 
   @override
   Map<String, Object?> serialize(ChatRequest value) => _$ChatRequestSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(ChatRequest value) => serialize(value);
 }
 final class $ChatRequestDeserializer implements Deserializer<ChatRequest, Map<String, Object?>> {
   const $ChatRequestDeserializer();
 
   @override
   ChatRequest deserialize(Map<String, Object?> json) => _$ChatRequestDeserialize(json);
-
-  @override
-  ChatRequest fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $ChatResponseSerializer implements Serializer<ChatResponse, Map<String, Object?>> {
   const $ChatResponseSerializer();
 
   @override
   Map<String, Object?> serialize(ChatResponse value) => _$ChatResponseSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(ChatResponse value) => serialize(value);
 }
 final class $ChatResponseDeserializer implements Deserializer<ChatResponse, Map<String, Object?>> {
   const $ChatResponseDeserializer();
 
   @override
   ChatResponse deserialize(Map<String, Object?> json) => _$ChatResponseDeserialize(json);
-
-  @override
-  ChatResponse fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $ChatRoleSerializer implements Serializer<ChatRole, Object?> {
   const $ChatRoleSerializer();
 
   @override
   Object? serialize(ChatRole value) => _$ChatRoleSerialize(value);
-
-  @override
-  Object? toJson(ChatRole value) => serialize(value);
 }
 final class $ChatRoleDeserializer implements Deserializer<ChatRole, Object?> {
   const $ChatRoleDeserializer();
 
   @override
   ChatRole deserialize(Object? json) => _$ChatRoleDeserialize(json);
-
-  @override
-  ChatRole fromJson(Object? json) => deserialize(json);
 }
 
 Map<String, Object?> _$ChatMessageSerialize(ChatMessage instance) {

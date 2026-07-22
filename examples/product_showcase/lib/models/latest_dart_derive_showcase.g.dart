@@ -214,18 +214,12 @@ final class $LatestDartProductCardSerializer implements Serializer<LatestDartPro
 
   @override
   Map<String, Object?> serialize(LatestDartProductCard value) => _$LatestDartProductCardSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(LatestDartProductCard value) => serialize(value);
 }
 final class $LatestDartProductCardDeserializer implements Deserializer<LatestDartProductCard, Map<String, Object?>> {
   const $LatestDartProductCardDeserializer();
 
   @override
   LatestDartProductCard deserialize(Map<String, Object?> json) => _$LatestDartProductCardDeserialize(json);
-
-  @override
-  LatestDartProductCard fromJson(Map<String, Object?> json) => deserialize(json);
 }
 extension LatestDartProductCardFromRow on LatestDartProductCard {
   static LatestDartProductCard fromRow(Row row) {

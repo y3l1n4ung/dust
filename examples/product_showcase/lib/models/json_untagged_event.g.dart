@@ -25,18 +25,12 @@ final class $JsonUntaggedEventSerializer implements Serializer<JsonUntaggedEvent
 
   @override
   Map<String, Object?> serialize(JsonUntaggedEvent value) => _$JsonUntaggedEventSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonUntaggedEvent value) => serialize(value);
 }
 final class $JsonUntaggedEventDeserializer implements Deserializer<JsonUntaggedEvent, Map<String, Object?>> {
   const $JsonUntaggedEventDeserializer();
 
   @override
   JsonUntaggedEvent deserialize(Map<String, Object?> json) => _$JsonUntaggedEventDeserialize(json);
-
-  @override
-  JsonUntaggedEvent fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class JsonSignupEvent extends JsonUntaggedEvent {
   const JsonSignupEvent({
@@ -68,36 +62,24 @@ final class $JsonSignupEventSerializer implements Serializer<JsonSignupEvent, Ma
 
   @override
   Map<String, Object?> serialize(JsonSignupEvent value) => _$JsonSignupEventSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonSignupEvent value) => serialize(value);
 }
 final class $JsonSignupEventDeserializer implements Deserializer<JsonSignupEvent, Map<String, Object?>> {
   const $JsonSignupEventDeserializer();
 
   @override
   JsonSignupEvent deserialize(Map<String, Object?> json) => _$JsonSignupEventDeserialize(json);
-
-  @override
-  JsonSignupEvent fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $JsonArchiveEventSerializer implements Serializer<JsonArchiveEvent, Map<String, Object?>> {
   const $JsonArchiveEventSerializer();
 
   @override
   Map<String, Object?> serialize(JsonArchiveEvent value) => _$JsonArchiveEventSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonArchiveEvent value) => serialize(value);
 }
 final class $JsonArchiveEventDeserializer implements Deserializer<JsonArchiveEvent, Map<String, Object?>> {
   const $JsonArchiveEventDeserializer();
 
   @override
   JsonArchiveEvent deserialize(Map<String, Object?> json) => _$JsonArchiveEventDeserialize(json);
-
-  @override
-  JsonArchiveEvent fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$JsonUntaggedEventSerialize(JsonUntaggedEvent instance) {

@@ -71,36 +71,24 @@ final class $JsonSerdeOptionsSerializer implements Serializer<JsonSerdeOptions, 
 
   @override
   Map<String, Object?> serialize(JsonSerdeOptions value) => _$JsonSerdeOptionsSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonSerdeOptions value) => serialize(value);
 }
 final class $JsonSerdeOptionsDeserializer implements Deserializer<JsonSerdeOptions, Map<String, Object?>> {
   const $JsonSerdeOptionsDeserializer();
 
   @override
   JsonSerdeOptions deserialize(Map<String, Object?> json) => _$JsonSerdeOptionsDeserialize(json);
-
-  @override
-  JsonSerdeOptions fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $MyEnumSerializer implements Serializer<MyEnum, Object?> {
   const $MyEnumSerializer();
 
   @override
   Object? serialize(MyEnum value) => _$MyEnumSerialize(value);
-
-  @override
-  Object? toJson(MyEnum value) => serialize(value);
 }
 final class $MyEnumDeserializer implements Deserializer<MyEnum, Object?> {
   const $MyEnumDeserializer();
 
   @override
   MyEnum deserialize(Object? json) => _$MyEnumDeserialize(json);
-
-  @override
-  MyEnum fromJson(Object? json) => deserialize(json);
 }
 
 Map<String, Object?> _$JsonSerdeOptionsSerialize(JsonSerdeOptions instance) {

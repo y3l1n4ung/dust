@@ -59,36 +59,24 @@ final class $JsonEnhancedEnumBundleSerializer implements Serializer<JsonEnhanced
 
   @override
   Map<String, Object?> serialize(JsonEnhancedEnumBundle value) => _$JsonEnhancedEnumBundleSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonEnhancedEnumBundle value) => serialize(value);
 }
 final class $JsonEnhancedEnumBundleDeserializer implements Deserializer<JsonEnhancedEnumBundle, Map<String, Object?>> {
   const $JsonEnhancedEnumBundleDeserializer();
 
   @override
   JsonEnhancedEnumBundle deserialize(Map<String, Object?> json) => _$JsonEnhancedEnumBundleDeserialize(json);
-
-  @override
-  JsonEnhancedEnumBundle fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $VehicleSerializer implements Serializer<Vehicle, Object?> {
   const $VehicleSerializer();
 
   @override
   Object? serialize(Vehicle value) => _$VehicleSerialize(value);
-
-  @override
-  Object? toJson(Vehicle value) => serialize(value);
 }
 final class $VehicleDeserializer implements Deserializer<Vehicle, Object?> {
   const $VehicleDeserializer();
 
   @override
   Vehicle deserialize(Object? json) => _$VehicleDeserialize(json);
-
-  @override
-  Vehicle fromJson(Object? json) => deserialize(json);
 }
 
 Map<String, Object?> _$JsonEnhancedEnumBundleSerialize(JsonEnhancedEnumBundle instance) {

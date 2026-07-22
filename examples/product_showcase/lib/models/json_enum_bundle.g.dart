@@ -67,54 +67,36 @@ final class $JsonEnumBundleSerializer implements Serializer<JsonEnumBundle, Map<
 
   @override
   Map<String, Object?> serialize(JsonEnumBundle value) => _$JsonEnumBundleSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(JsonEnumBundle value) => serialize(value);
 }
 final class $JsonEnumBundleDeserializer implements Deserializer<JsonEnumBundle, Map<String, Object?>> {
   const $JsonEnumBundleDeserializer();
 
   @override
   JsonEnumBundle deserialize(Map<String, Object?> json) => _$JsonEnumBundleDeserialize(json);
-
-  @override
-  JsonEnumBundle fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $AccessLevelSerializer implements Serializer<AccessLevel, Object?> {
   const $AccessLevelSerializer();
 
   @override
   Object? serialize(AccessLevel value) => _$AccessLevelSerialize(value);
-
-  @override
-  Object? toJson(AccessLevel value) => serialize(value);
 }
 final class $AccessLevelDeserializer implements Deserializer<AccessLevel, Object?> {
   const $AccessLevelDeserializer();
 
   @override
   AccessLevel deserialize(Object? json) => _$AccessLevelDeserialize(json);
-
-  @override
-  AccessLevel fromJson(Object? json) => deserialize(json);
 }
 final class $ReviewStateSerializer implements Serializer<ReviewState, Object?> {
   const $ReviewStateSerializer();
 
   @override
   Object? serialize(ReviewState value) => _$ReviewStateSerialize(value);
-
-  @override
-  Object? toJson(ReviewState value) => serialize(value);
 }
 final class $ReviewStateDeserializer implements Deserializer<ReviewState, Object?> {
   const $ReviewStateDeserializer();
 
   @override
   ReviewState deserialize(Object? json) => _$ReviewStateDeserialize(json);
-
-  @override
-  ReviewState fromJson(Object? json) => deserialize(json);
 }
 
 Map<String, Object?> _$JsonEnumBundleSerialize(JsonEnumBundle instance) {

@@ -93,18 +93,12 @@ final class $CartItemSerializer implements Serializer<CartItem, Map<String, Obje
 
   @override
   Map<String, Object?> serialize(CartItem value) => _$CartItemSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(CartItem value) => serialize(value);
 }
 final class $CartItemDeserializer implements Deserializer<CartItem, Map<String, Object?>> {
   const $CartItemDeserializer();
 
   @override
   CartItem deserialize(Map<String, Object?> json) => _$CartItemDeserialize(json);
-
-  @override
-  CartItem fromJson(Map<String, Object?> json) => deserialize(json);
 }
 
 Map<String, Object?> _$CartItemSerialize(CartItem instance) {

@@ -100,36 +100,24 @@ final class $BenchmarkStateSerializer implements Serializer<BenchmarkState, Map<
 
   @override
   Map<String, Object?> serialize(BenchmarkState value) => _$BenchmarkStateSerialize(value);
-
-  @override
-  Map<String, Object?> toJson(BenchmarkState value) => serialize(value);
 }
 final class $BenchmarkStateDeserializer implements Deserializer<BenchmarkState, Map<String, Object?>> {
   const $BenchmarkStateDeserializer();
 
   @override
   BenchmarkState deserialize(Map<String, Object?> json) => _$BenchmarkStateDeserialize(json);
-
-  @override
-  BenchmarkState fromJson(Map<String, Object?> json) => deserialize(json);
 }
 final class $BenchmarkModeSerializer implements Serializer<BenchmarkMode, Object?> {
   const $BenchmarkModeSerializer();
 
   @override
   Object? serialize(BenchmarkMode value) => _$BenchmarkModeSerialize(value);
-
-  @override
-  Object? toJson(BenchmarkMode value) => serialize(value);
 }
 final class $BenchmarkModeDeserializer implements Deserializer<BenchmarkMode, Object?> {
   const $BenchmarkModeDeserializer();
 
   @override
   BenchmarkMode deserialize(Object? json) => _$BenchmarkModeDeserialize(json);
-
-  @override
-  BenchmarkMode fromJson(Object? json) => deserialize(json);
 }
 
 Map<String, Object?> _$BenchmarkStateSerialize(BenchmarkState instance) {
