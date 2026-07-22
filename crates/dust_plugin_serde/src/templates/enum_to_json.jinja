@@ -1,5 +1,8 @@
-Object? _${{ enum_name }}ToJson({{ enum_name }} instance) {
+Object? _${{ enum_name }}Serialize({{ enum_name }} instance) {
   return switch (instance) {
 {{ cases }}
   };
 }
+
+Object? _${{ enum_name }}ToJson({{ enum_name }} instance) =>
+    _${{ enum_name }}Serialize(instance);

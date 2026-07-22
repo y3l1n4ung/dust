@@ -13,7 +13,7 @@
 
 part of 'cart_item.dart';
 
-mixin _$CartItem {
+mixin _$CartItem implements Serializable {
   @override
   String toString() {
     final self = this as CartItem;
@@ -52,7 +52,9 @@ mixin _$CartItem {
   @pragma('vm:prefer-inline')
   _$CartItemCopyWith<CartItem> get copyWith => _$CartItemCopyWithImpl<CartItem>(this as CartItem, (value) => value);
 
-  Map<String, Object?> toJson() => _$CartItemToJson(this as CartItem);
+  Map<String, Object?> serialize() => _$CartItemSerialize(this as CartItem);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -86,16 +88,37 @@ final class _$CartItemCopyWithImpl<$Res> implements _$CartItemCopyWith<$Res> {
     );
   }
 }
+final class $CartItemSerializer implements Serializer<CartItem, Map<String, Object?>> {
+  const $CartItemSerializer();
 
-Map<String, Object?> _$CartItemToJson(CartItem instance) {
+  @override
+  Map<String, Object?> serialize(CartItem value) => _$CartItemSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(CartItem value) => serialize(value);
+}
+final class $CartItemDeserializer implements Deserializer<CartItem, Map<String, Object?>> {
+  const $CartItemDeserializer();
+
+  @override
+  CartItem deserialize(Map<String, Object?> json) => _$CartItemDeserialize(json);
+
+  @override
+  CartItem fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$CartItemSerialize(CartItem instance) {
   return <String, Object?>{
     'product': instance.product.toJson(),
     'quantity': instance.quantity,
   };
 }
 
+Map<String, Object?> _$CartItemToJson(CartItem instance) =>
+    _$CartItemSerialize(instance);
+
 // factory CartItem.fromJson(Map<String, Object?> json) => _$CartItemFromJson(json);
-CartItem _$CartItemFromJson(Map<String, Object?> json) {
+CartItem _$CartItemDeserialize(Map<String, Object?> json) {
   final productValue = Product.fromJson(
     JsonHelper.asMap(json['product'], 'product'),
   );
@@ -103,3 +126,6 @@ CartItem _$CartItemFromJson(Map<String, Object?> json) {
 
   return CartItem(product: productValue, quantity: quantityValue);
 }
+
+CartItem _$CartItemFromJson(Map<String, Object?> json) =>
+    _$CartItemDeserialize(json);

@@ -68,6 +68,36 @@ pub(crate) fn emit_enum_to_json_helper(e: &EnumIr) -> String {
     )
 }
 
+/// Renders the generated serializer support class for an enum.
+pub(crate) fn emit_enum_serializer_support_type(enum_name: &str) -> String {
+    format!(
+        r#"final class ${enum_name}Serializer implements Serializer<{enum_name}, Object?> {{
+  const ${enum_name}Serializer();
+
+  @override
+  Object? serialize({enum_name} value) => _${enum_name}Serialize(value);
+
+  @override
+  Object? toJson({enum_name} value) => serialize(value);
+}}"#
+    )
+}
+
+/// Renders the generated deserializer support class for an enum.
+pub(crate) fn emit_enum_deserializer_support_type(enum_name: &str) -> String {
+    format!(
+        r#"final class ${enum_name}Deserializer implements Deserializer<{enum_name}, Object?> {{
+  const ${enum_name}Deserializer();
+
+  @override
+  {enum_name} deserialize(Object? json) => _${enum_name}Deserialize(json);
+
+  @override
+  {enum_name} fromJson(Object? json) => deserialize(json);
+}}"#
+    )
+}
+
 /// Resolves the wire value for an enum variant.
 pub(crate) fn variant_wire_name(e: &EnumIr, variant: &EnumVariantIr) -> Option<String> {
     let serde = variant.serde.as_ref();

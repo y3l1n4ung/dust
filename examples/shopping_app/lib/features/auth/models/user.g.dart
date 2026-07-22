@@ -13,7 +13,7 @@
 
 part of 'user.dart';
 
-mixin _$User {
+mixin _$User implements Serializable {
   @override
   String toString() {
     final self = this as User;
@@ -62,10 +62,12 @@ mixin _$User {
   @pragma('vm:prefer-inline')
   _$UserCopyWith<User> get copyWith => _$UserCopyWithImpl<User>(this as User, (value) => value);
 
-  Map<String, Object?> toJson() => _$UserToJson(this as User);
+  Map<String, Object?> serialize() => _$UserSerialize(this as User);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$Name {
+mixin _$Name implements Serializable {
   @override
   String toString() {
     final self = this as Name;
@@ -104,7 +106,9 @@ mixin _$Name {
   @pragma('vm:prefer-inline')
   _$NameCopyWith<Name> get copyWith => _$NameCopyWithImpl<Name>(this as Name, (value) => value);
 
-  Map<String, Object?> toJson() => _$NameToJson(this as Name);
+  Map<String, Object?> serialize() => _$NameSerialize(this as Name);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -187,19 +191,58 @@ final class _$NameCopyWithImpl<$Res> implements _$NameCopyWith<$Res> {
     );
   }
 }
+final class $UserSerializer implements Serializer<User, Map<String, Object?>> {
+  const $UserSerializer();
 
-Map<String, Object?> _$UserToJson(User instance) {
+  @override
+  Map<String, Object?> serialize(User value) => _$UserSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(User value) => serialize(value);
+}
+final class $UserDeserializer implements Deserializer<User, Map<String, Object?>> {
+  const $UserDeserializer();
+
+  @override
+  User deserialize(Map<String, Object?> json) => _$UserDeserialize(json);
+
+  @override
+  User fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $NameSerializer implements Serializer<Name, Map<String, Object?>> {
+  const $NameSerializer();
+
+  @override
+  Map<String, Object?> serialize(Name value) => _$NameSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(Name value) => serialize(value);
+}
+final class $NameDeserializer implements Deserializer<Name, Map<String, Object?>> {
+  const $NameDeserializer();
+
+  @override
+  Name deserialize(Map<String, Object?> json) => _$NameDeserialize(json);
+
+  @override
+  Name fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$UserSerialize(User instance) {
   return <String, Object?>{
     'id': instance.id,
     'email': instance.email,
     'username': instance.username,
-    'name': _$NameToJson(instance.name),
+    'name': _$NameSerialize(instance.name),
     'phone': instance.phone,
   };
 }
 
+Map<String, Object?> _$UserToJson(User instance) =>
+    _$UserSerialize(instance);
+
 // factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
-User _$UserFromJson(Map<String, Object?> json) {
+User _$UserDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
   final emailValue = JsonHelper.as<String>(json['email'], 'email', 'String');
   final usernameValue = JsonHelper.as<String>(
@@ -207,7 +250,7 @@ User _$UserFromJson(Map<String, Object?> json) {
     'username',
     'String',
   );
-  final nameValue = _$NameFromJson(JsonHelper.asMap(json['name'], 'name'));
+  final nameValue = _$NameDeserialize(JsonHelper.asMap(json['name'], 'name'));
   final phoneValue = JsonHelper.as<String>(json['phone'], 'phone', 'String');
 
   return User(
@@ -219,15 +262,21 @@ User _$UserFromJson(Map<String, Object?> json) {
   );
 }
 
-Map<String, Object?> _$NameToJson(Name instance) {
+User _$UserFromJson(Map<String, Object?> json) =>
+    _$UserDeserialize(json);
+
+Map<String, Object?> _$NameSerialize(Name instance) {
   return <String, Object?>{
     'firstname': instance.firstname,
     'lastname': instance.lastname,
   };
 }
 
+Map<String, Object?> _$NameToJson(Name instance) =>
+    _$NameSerialize(instance);
+
 // factory Name.fromJson(Map<String, Object?> json) => _$NameFromJson(json);
-Name _$NameFromJson(Map<String, Object?> json) {
+Name _$NameDeserialize(Map<String, Object?> json) {
   final firstnameValue = JsonHelper.as<String>(
     json['firstname'],
     'firstname',
@@ -241,3 +290,6 @@ Name _$NameFromJson(Map<String, Object?> json) {
 
   return Name(firstname: firstnameValue, lastname: lastnameValue);
 }
+
+Name _$NameFromJson(Map<String, Object?> json) =>
+    _$NameDeserialize(json);

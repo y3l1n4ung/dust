@@ -5,6 +5,8 @@ use std::path::PathBuf;
 pub struct ClassMixinContribution {
     /// The source class this mixin targets.
     pub class_name: String,
+    /// Interfaces implemented by the generated mixin.
+    pub interfaces: Vec<String>,
     /// The generated members to place inside the mixin.
     pub members: Vec<String>,
 }
@@ -55,7 +57,34 @@ impl PluginContribution {
         } else {
             self.mixin_members.push(ClassMixinContribution {
                 class_name,
+                interfaces: Vec::new(),
                 members: vec![member],
+            });
+        }
+    }
+
+    /// Appends one generated interface to the mixin block for the given class.
+    pub fn push_mixin_interface(
+        &mut self,
+        class_name: impl Into<String>,
+        interface: impl Into<String>,
+    ) {
+        let class_name = class_name.into();
+        let interface = interface.into();
+
+        if let Some(existing) = self
+            .mixin_members
+            .iter_mut()
+            .find(|entry| entry.class_name == class_name)
+        {
+            if !existing.interfaces.iter().any(|item| item == &interface) {
+                existing.interfaces.push(interface);
+            }
+        } else {
+            self.mixin_members.push(ClassMixinContribution {
+                class_name,
+                interfaces: vec![interface],
+                members: Vec::new(),
             });
         }
     }

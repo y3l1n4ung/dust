@@ -24,7 +24,7 @@ final class _CheckoutQuoteCopyWithUnset {
 
 const _checkoutQuoteCopyWithUnset = _CheckoutQuoteCopyWithUnset();
 
-mixin _$CheckoutQuoteRequest {
+mixin _$CheckoutQuoteRequest implements Serializable {
   @override
   String toString() {
     final self = this as CheckoutQuoteRequest;
@@ -64,11 +64,13 @@ mixin _$CheckoutQuoteRequest {
   @pragma('vm:prefer-inline')
   _$CheckoutQuoteRequestCopyWith<CheckoutQuoteRequest> get copyWith => _$CheckoutQuoteRequestCopyWithImpl<CheckoutQuoteRequest>(this as CheckoutQuoteRequest, (value) => value);
 
-  Map<String, Object?> toJson() =>
-      _$CheckoutQuoteRequestToJson(this as CheckoutQuoteRequest);
+  Map<String, Object?> serialize() =>
+      _$CheckoutQuoteRequestSerialize(this as CheckoutQuoteRequest);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$CheckoutQuote {
+mixin _$CheckoutQuote implements Serializable {
   @override
   String toString() {
     final self = this as CheckoutQuote;
@@ -126,7 +128,10 @@ mixin _$CheckoutQuote {
   @pragma('vm:prefer-inline')
   _$CheckoutQuoteCopyWith<CheckoutQuote> get copyWith => _$CheckoutQuoteCopyWithImpl<CheckoutQuote>(this as CheckoutQuote, (value) => value);
 
-  Map<String, Object?> toJson() => _$CheckoutQuoteToJson(this as CheckoutQuote);
+  Map<String, Object?> serialize() =>
+      _$CheckoutQuoteSerialize(this as CheckoutQuote);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -213,16 +218,55 @@ final class _$CheckoutQuoteCopyWithImpl<$Res> implements _$CheckoutQuoteCopyWith
     );
   }
 }
+final class $CheckoutQuoteRequestSerializer implements Serializer<CheckoutQuoteRequest, Map<String, Object?>> {
+  const $CheckoutQuoteRequestSerializer();
 
-Map<String, Object?> _$CheckoutQuoteRequestToJson(CheckoutQuoteRequest instance) {
+  @override
+  Map<String, Object?> serialize(CheckoutQuoteRequest value) => _$CheckoutQuoteRequestSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(CheckoutQuoteRequest value) => serialize(value);
+}
+final class $CheckoutQuoteRequestDeserializer implements Deserializer<CheckoutQuoteRequest, Map<String, Object?>> {
+  const $CheckoutQuoteRequestDeserializer();
+
+  @override
+  CheckoutQuoteRequest deserialize(Map<String, Object?> json) => _$CheckoutQuoteRequestDeserialize(json);
+
+  @override
+  CheckoutQuoteRequest fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $CheckoutQuoteSerializer implements Serializer<CheckoutQuote, Map<String, Object?>> {
+  const $CheckoutQuoteSerializer();
+
+  @override
+  Map<String, Object?> serialize(CheckoutQuote value) => _$CheckoutQuoteSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(CheckoutQuote value) => serialize(value);
+}
+final class $CheckoutQuoteDeserializer implements Deserializer<CheckoutQuote, Map<String, Object?>> {
+  const $CheckoutQuoteDeserializer();
+
+  @override
+  CheckoutQuote deserialize(Map<String, Object?> json) => _$CheckoutQuoteDeserialize(json);
+
+  @override
+  CheckoutQuote fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$CheckoutQuoteRequestSerialize(CheckoutQuoteRequest instance) {
   return <String, Object?>{
     'subtotal': instance.subtotal,
     'couponCode': instance.couponCode,
   };
 }
 
+Map<String, Object?> _$CheckoutQuoteRequestToJson(CheckoutQuoteRequest instance) =>
+    _$CheckoutQuoteRequestSerialize(instance);
+
 // factory CheckoutQuoteRequest.fromJson(Map<String, Object?> json) => _$CheckoutQuoteRequestFromJson(json);
-CheckoutQuoteRequest _$CheckoutQuoteRequestFromJson(Map<String, Object?> json) {
+CheckoutQuoteRequest _$CheckoutQuoteRequestDeserialize(Map<String, Object?> json) {
   final subtotalValue = JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble();
   final couponCodeValue = json['couponCode'] == null
       ? null
@@ -234,7 +278,10 @@ CheckoutQuoteRequest _$CheckoutQuoteRequestFromJson(Map<String, Object?> json) {
   );
 }
 
-Map<String, Object?> _$CheckoutQuoteToJson(CheckoutQuote instance) {
+CheckoutQuoteRequest _$CheckoutQuoteRequestFromJson(Map<String, Object?> json) =>
+    _$CheckoutQuoteRequestDeserialize(json);
+
+Map<String, Object?> _$CheckoutQuoteSerialize(CheckoutQuote instance) {
   return <String, Object?>{
     'subtotal': instance.subtotal,
     'discount': instance.discount,
@@ -247,8 +294,11 @@ Map<String, Object?> _$CheckoutQuoteToJson(CheckoutQuote instance) {
   };
 }
 
+Map<String, Object?> _$CheckoutQuoteToJson(CheckoutQuote instance) =>
+    _$CheckoutQuoteSerialize(instance);
+
 // factory CheckoutQuote.fromJson(Map<String, Object?> json) => _$CheckoutQuoteFromJson(json);
-CheckoutQuote _$CheckoutQuoteFromJson(Map<String, Object?> json) {
+CheckoutQuote _$CheckoutQuoteDeserialize(Map<String, Object?> json) {
   final subtotalValue = JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble();
   final discountValue = JsonHelper.as<num>(json['discount'], 'discount', 'num').toDouble();
   final shippingValue = JsonHelper.as<num>(json['shipping'], 'shipping', 'num').toDouble();
@@ -277,3 +327,6 @@ CheckoutQuote _$CheckoutQuoteFromJson(Map<String, Object?> json) {
     message: messageValue,
   );
 }
+
+CheckoutQuote _$CheckoutQuoteFromJson(Map<String, Object?> json) =>
+    _$CheckoutQuoteDeserialize(json);

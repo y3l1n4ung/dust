@@ -13,7 +13,7 @@
 
 part of 'http_post.dart';
 
-mixin _$HttpPost {
+mixin _$HttpPost implements Serializable {
   @override
   String toString() {
     final self = this as HttpPost;
@@ -34,7 +34,9 @@ mixin _$HttpPost {
   @pragma('vm:prefer-inline')
   _$HttpPostCopyWith<HttpPost> get copyWith => _$HttpPostCopyWithImpl<HttpPost>(this as HttpPost, (value) => value);
 
-  Map<String, Object?> toJson() => _$HttpPostToJson(this as HttpPost);
+  Map<String, Object?> serialize() => _$HttpPostSerialize(this as HttpPost);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -74,8 +76,26 @@ final class _$HttpPostCopyWithImpl<$Res> implements _$HttpPostCopyWith<$Res> {
     );
   }
 }
+final class $HttpPostSerializer implements Serializer<HttpPost, Map<String, Object?>> {
+  const $HttpPostSerializer();
 
-Map<String, Object?> _$HttpPostToJson(HttpPost instance) {
+  @override
+  Map<String, Object?> serialize(HttpPost value) => _$HttpPostSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(HttpPost value) => serialize(value);
+}
+final class $HttpPostDeserializer implements Deserializer<HttpPost, Map<String, Object?>> {
+  const $HttpPostDeserializer();
+
+  @override
+  HttpPost deserialize(Map<String, Object?> json) => _$HttpPostDeserialize(json);
+
+  @override
+  HttpPost fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$HttpPostSerialize(HttpPost instance) {
   return <String, Object?>{
     'userId': instance.userId,
     'id': instance.id,
@@ -84,8 +104,11 @@ Map<String, Object?> _$HttpPostToJson(HttpPost instance) {
   };
 }
 
+Map<String, Object?> _$HttpPostToJson(HttpPost instance) =>
+    _$HttpPostSerialize(instance);
+
 // factory HttpPost.fromJson(Map<String, Object?> json) => _$HttpPostFromJson(json);
-HttpPost _$HttpPostFromJson(Map<String, Object?> json) {
+HttpPost _$HttpPostDeserialize(Map<String, Object?> json) {
   final userIdValue = JsonHelper.as<int>(json['userId'], 'userId', 'int');
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
   final titleValue = JsonHelper.as<String>(json['title'], 'title', 'String');
@@ -98,3 +121,6 @@ HttpPost _$HttpPostFromJson(Map<String, Object?> json) {
     body: bodyValue,
   );
 }
+
+HttpPost _$HttpPostFromJson(Map<String, Object?> json) =>
+    _$HttpPostDeserialize(json);

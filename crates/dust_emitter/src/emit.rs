@@ -186,9 +186,10 @@ fn assemble_source(library: &DartFileIr, plan: &SymbolPlan, merged: &MergedSecti
 
     for class in &library.classes {
         let members = merged.members_for_class(&class.name);
-        if !members.is_empty() {
+        let interfaces = merged.interfaces_for_class(&class.name);
+        if !members.is_empty() || !interfaces.is_empty() {
             writer.blank_line();
-            render_mixin_block(&mut writer, &class.name, members);
+            render_mixin_block(&mut writer, &class.name, interfaces, members);
         }
     }
 
@@ -229,13 +230,22 @@ fn format_auxiliary_output(output: AuxiliaryOutputContribution) -> AuxiliaryEmit
 }
 
 /// Renders the generated mixin block for one source class.
-fn render_mixin_block(writer: &mut DartWriter, class_name: &str, members: &[String]) {
+fn render_mixin_block(
+    writer: &mut DartWriter,
+    class_name: &str,
+    interfaces: &[String],
+    members: &[String],
+) {
     let mixin_name = format!("_${class_name}");
     let mut block = String::with_capacity(
         mixin_name.len() + members.iter().map(String::len).sum::<usize>() + 16,
     );
     block.push_str("mixin ");
     block.push_str(&mixin_name);
+    if !interfaces.is_empty() {
+        block.push_str(" implements ");
+        block.push_str(&interfaces.join(", "));
+    }
     block.push_str(" {\n");
     for (index, member) in members.iter().enumerate() {
         if index > 0 {

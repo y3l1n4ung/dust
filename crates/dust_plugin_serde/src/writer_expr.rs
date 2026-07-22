@@ -142,7 +142,7 @@ fn encode_non_nullable_expr(
             if contains_symbol(serializable_classes, name.as_ref())
                 || contains_symbol(serializable_enums, name.as_ref())
             {
-                format!("_${name}ToJson({expr})")
+                format!("_${name}Serialize({expr})")
             } else {
                 format!("{expr}.toJson()")
             }
@@ -220,9 +220,9 @@ fn decode_non_nullable_expr(
         }
         TypeIr::Named { name, .. } => {
             if contains_symbol(deserializable_classes, name.as_ref()) {
-                format!("_${name}FromJson(JsonHelper.asMap({raw}, {key}))")
+                format!("_${name}Deserialize(JsonHelper.asMap({raw}, {key}))")
             } else if contains_symbol(deserializable_enums, name.as_ref()) {
-                format!("_${name}FromJson({raw}, {key})")
+                format!("_${name}Deserialize({raw}, {key})")
             } else {
                 format!("{name}.fromJson(JsonHelper.asMap({raw}, {key}))")
             }

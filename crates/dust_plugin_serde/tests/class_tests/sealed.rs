@@ -27,42 +27,52 @@ fn generates_internal_tagged_sealed_helpers() {
 
     assert_eq!(
         members_for_class(&contribution, "JsonPaymentSuccess")[0],
-        "Map<String, Object?> toJson() =>\n    _$JsonPaymentEventToJson(this as JsonPaymentEvent);"
+        "Map<String, Object?> serialize() =>\n    _$JsonPaymentEventSerialize(this as JsonPaymentEvent);"
+    );
+    assert_eq!(
+        members_for_class(&contribution, "JsonPaymentSuccess")[1],
+        "Map<String, Object?> toJson() => serialize();"
     );
     assert_eq!(
         function_for(
             &contribution.top_level_functions,
-            "_$JsonPaymentEventToJson"
+            "_$JsonPaymentEventSerialize"
         ),
-        r#"Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) {
+        r#"Map<String, Object?> _$JsonPaymentEventSerialize(JsonPaymentEvent instance) {
   return switch (instance) {
     JsonPaymentSuccess value => <String, Object?>{
-      ..._$JsonPaymentSuccessToJson(value),
+      ..._$JsonPaymentSuccessSerialize(value),
       'type': 'payment_success',
     },
     JsonPaymentFailed value => <String, Object?>{
-      ..._$JsonPaymentFailedToJson(value),
+      ..._$JsonPaymentFailedSerialize(value),
       'type': 'payment_failed',
     },
   };
-}"#
+}
+
+Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) =>
+    _$JsonPaymentEventSerialize(instance);"#
     );
     assert_eq!(
         function_for(
             &contribution.top_level_functions,
-            "_$JsonPaymentEventFromJson",
+            "_$JsonPaymentEventDeserialize",
         ),
         r#"// factory JsonPaymentEvent.fromJson(Map<String, Object?> json) => _$JsonPaymentEventFromJson(json);
-JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) {
+JsonPaymentEvent _$JsonPaymentEventDeserialize(Map<String, Object?> json) {
   final tagValue = JsonHelper.as<String>(json['type'], 'type', 'String');
   final variantJson = Map<String, Object?>.from(json)..remove('type');
 
   return switch (tagValue) {
-    'payment_success' => _$JsonPaymentSuccessFromJson(variantJson),
-    'payment_failed' => _$JsonPaymentFailedFromJson(variantJson),
+    'payment_success' => _$JsonPaymentSuccessDeserialize(variantJson),
+    'payment_failed' => _$JsonPaymentFailedDeserialize(variantJson),
     _ => throw ArgumentError('Unknown SerDe variant tag: $tagValue'),
   };
-}"#
+}
+
+JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) =>
+    _$JsonPaymentEventDeserialize(json);"#
     );
 }
 
@@ -92,37 +102,43 @@ fn generates_adjacent_tagged_sealed_helpers() {
     assert_eq!(
         function_for(
             &contribution.top_level_functions,
-            "_$JsonPaymentEventToJson"
+            "_$JsonPaymentEventSerialize"
         ),
-        r#"Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) {
+        r#"Map<String, Object?> _$JsonPaymentEventSerialize(JsonPaymentEvent instance) {
   return switch (instance) {
     JsonPaymentSuccess value => <String, Object?>{
       'type': 'payment_success',
-      'payload': _$JsonPaymentSuccessToJson(value),
+      'payload': _$JsonPaymentSuccessSerialize(value),
     },
     JsonPaymentFailed value => <String, Object?>{
       'type': 'payment_failed',
-      'payload': _$JsonPaymentFailedToJson(value),
+      'payload': _$JsonPaymentFailedSerialize(value),
     },
   };
-}"#
+}
+
+Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) =>
+    _$JsonPaymentEventSerialize(instance);"#
     );
     assert_eq!(
         function_for(
             &contribution.top_level_functions,
-            "_$JsonPaymentEventFromJson",
+            "_$JsonPaymentEventDeserialize",
         ),
         r#"// factory JsonPaymentEvent.fromJson(Map<String, Object?> json) => _$JsonPaymentEventFromJson(json);
-JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) {
+JsonPaymentEvent _$JsonPaymentEventDeserialize(Map<String, Object?> json) {
   final tagValue = JsonHelper.as<String>(json['type'], 'type', 'String');
   final contentValue = JsonHelper.asMap(json['payload'], 'payload');
 
   return switch (tagValue) {
-    'payment_success' => _$JsonPaymentSuccessFromJson(contentValue),
-    'payment_failed' => _$JsonPaymentFailedFromJson(contentValue),
+    'payment_success' => _$JsonPaymentSuccessDeserialize(contentValue),
+    'payment_failed' => _$JsonPaymentFailedDeserialize(contentValue),
     _ => throw ArgumentError('Unknown SerDe variant tag: $tagValue'),
   };
-}"#
+}
+
+JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) =>
+    _$JsonPaymentEventDeserialize(json);"#
     );
 }
 
@@ -148,29 +164,32 @@ fn generates_untagged_sealed_helpers_in_variant_order() {
     assert_eq!(
         function_for(
             &contribution.top_level_functions,
-            "_$JsonPaymentEventToJson"
+            "_$JsonPaymentEventSerialize"
         ),
-        r#"Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) {
+        r#"Map<String, Object?> _$JsonPaymentEventSerialize(JsonPaymentEvent instance) {
   return switch (instance) {
-    JsonPaymentSuccess value => _$JsonPaymentSuccessToJson(value),
-    JsonPaymentFailed value => _$JsonPaymentFailedToJson(value),
+    JsonPaymentSuccess value => _$JsonPaymentSuccessSerialize(value),
+    JsonPaymentFailed value => _$JsonPaymentFailedSerialize(value),
   };
-}"#
+}
+
+Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) =>
+    _$JsonPaymentEventSerialize(instance);"#
     );
     assert_eq!(
         function_for(
             &contribution.top_level_functions,
-            "_$JsonPaymentEventFromJson",
+            "_$JsonPaymentEventDeserialize",
         ),
         r#"// factory JsonPaymentEvent.fromJson(Map<String, Object?> json) => _$JsonPaymentEventFromJson(json);
-JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) {
+JsonPaymentEvent _$JsonPaymentEventDeserialize(Map<String, Object?> json) {
   try {
-    return _$JsonPaymentSuccessFromJson(json);
+    return _$JsonPaymentSuccessDeserialize(json);
   } on Object {
     // Try the next untagged SerDe variant.
   }
   try {
-    return _$JsonPaymentFailedFromJson(json);
+    return _$JsonPaymentFailedDeserialize(json);
   } on Object {
     // Try the next untagged SerDe variant.
   }
@@ -179,7 +198,10 @@ JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) {
     'json',
     'no matching SerDe variant for JsonPaymentEvent',
   );
-}"#
+}
+
+JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) =>
+    _$JsonPaymentEventDeserialize(json);"#
     );
 }
 

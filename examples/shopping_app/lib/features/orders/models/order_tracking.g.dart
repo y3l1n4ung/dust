@@ -13,7 +13,7 @@
 
 part of 'order_tracking.dart';
 
-mixin _$TrackingEvent {
+mixin _$TrackingEvent implements Serializable {
   @override
   String toString() {
     final self = this as TrackingEvent;
@@ -67,7 +67,10 @@ mixin _$TrackingEvent {
   @pragma('vm:prefer-inline')
   _$TrackingEventCopyWith<TrackingEvent> get copyWith => _$TrackingEventCopyWithImpl<TrackingEvent>(this as TrackingEvent, (value) => value);
 
-  Map<String, Object?> toJson() => _$TrackingEventToJson(this as TrackingEvent);
+  Map<String, Object?> serialize() =>
+      _$TrackingEventSerialize(this as TrackingEvent);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -116,8 +119,26 @@ final class _$TrackingEventCopyWithImpl<$Res> implements _$TrackingEventCopyWith
     );
   }
 }
+final class $TrackingEventSerializer implements Serializer<TrackingEvent, Map<String, Object?>> {
+  const $TrackingEventSerializer();
 
-Map<String, Object?> _$TrackingEventToJson(TrackingEvent instance) {
+  @override
+  Map<String, Object?> serialize(TrackingEvent value) => _$TrackingEventSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(TrackingEvent value) => serialize(value);
+}
+final class $TrackingEventDeserializer implements Deserializer<TrackingEvent, Map<String, Object?>> {
+  const $TrackingEventDeserializer();
+
+  @override
+  TrackingEvent deserialize(Map<String, Object?> json) => _$TrackingEventDeserialize(json);
+
+  @override
+  TrackingEvent fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$TrackingEventSerialize(TrackingEvent instance) {
   return <String, Object?>{
     'id': instance.id,
     'orderId': instance.orderId,
@@ -129,8 +150,11 @@ Map<String, Object?> _$TrackingEventToJson(TrackingEvent instance) {
   };
 }
 
+Map<String, Object?> _$TrackingEventToJson(TrackingEvent instance) =>
+    _$TrackingEventSerialize(instance);
+
 // factory TrackingEvent.fromJson(Map<String, Object?> json) => _$TrackingEventFromJson(json);
-TrackingEvent _$TrackingEventFromJson(Map<String, Object?> json) {
+TrackingEvent _$TrackingEventDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
   final orderIdValue = JsonHelper.as<String>(
     json['orderId'],
@@ -168,3 +192,6 @@ TrackingEvent _$TrackingEventFromJson(Map<String, Object?> json) {
     completed: completedValue,
   );
 }
+
+TrackingEvent _$TrackingEventFromJson(Map<String, Object?> json) =>
+    _$TrackingEventDeserialize(json);

@@ -46,13 +46,16 @@ fn supports_default_values_during_deserialization() {
     assert_eq!(
         &contribution.top_level_functions[0],
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
-User _$UserFromJson(Map<String, Object?> json) {
+User _$UserDeserialize(Map<String, Object?> json) {
   final roleValue = json.containsKey('role')
       ? JsonHelper.as<String>(json['role'], 'role', 'String')
       : 'guest';
 
   return User(role: roleValue);
-}"#
+}
+
+User _$UserFromJson(Map<String, Object?> json) =>
+    _$UserDeserialize(json);"#
     );
 }
 
@@ -98,12 +101,15 @@ fn keeps_defaulted_double_decode_syntax_valid() {
     assert_eq!(
         &contribution.top_level_functions[0],
         r#"// factory Quote.fromJson(Map<String, Object?> json) => _$QuoteFromJson(json);
-Quote _$QuoteFromJson(Map<String, Object?> json) {
+Quote _$QuoteDeserialize(Map<String, Object?> json) {
   final subtotalValue = json.containsKey('subtotal')
       ? JsonHelper.as<num>(json['subtotal'], 'subtotal', 'num').toDouble()
       : 0.0;
 
   return Quote(subtotal: subtotalValue);
-}"#
+}
+
+Quote _$QuoteFromJson(Map<String, Object?> json) =>
+    _$QuoteDeserialize(json);"#
     );
 }

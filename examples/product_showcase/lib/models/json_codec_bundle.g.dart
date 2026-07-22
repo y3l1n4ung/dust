@@ -13,7 +13,7 @@
 
 part of 'json_codec_bundle.dart';
 
-mixin _$JsonCodecBundle {
+mixin _$JsonCodecBundle implements Serializable {
   @override
   String toString() {
     final self = this as JsonCodecBundle;
@@ -46,11 +46,32 @@ mixin _$JsonCodecBundle {
     ]);
   }
 
-  Map<String, Object?> toJson() =>
-      _$JsonCodecBundleToJson(this as JsonCodecBundle);
+  Map<String, Object?> serialize() =>
+      _$JsonCodecBundleSerialize(this as JsonCodecBundle);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-Map<String, Object?> _$JsonCodecBundleToJson(JsonCodecBundle instance) {
+final class $JsonCodecBundleSerializer implements Serializer<JsonCodecBundle, Map<String, Object?>> {
+  const $JsonCodecBundleSerializer();
+
+  @override
+  Map<String, Object?> serialize(JsonCodecBundle value) => _$JsonCodecBundleSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonCodecBundle value) => serialize(value);
+}
+final class $JsonCodecBundleDeserializer implements Deserializer<JsonCodecBundle, Map<String, Object?>> {
+  const $JsonCodecBundleDeserializer();
+
+  @override
+  JsonCodecBundle deserialize(Map<String, Object?> json) => _$JsonCodecBundleDeserialize(json);
+
+  @override
+  JsonCodecBundle fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$JsonCodecBundleSerialize(JsonCodecBundle instance) {
   return <String, Object?>{
     'createdAt': unixEpochDateTimeCodec.serialize(instance.createdAt),
     'updatedAt': instance.updatedAt == null
@@ -60,8 +81,11 @@ Map<String, Object?> _$JsonCodecBundleToJson(JsonCodecBundle instance) {
   };
 }
 
+Map<String, Object?> _$JsonCodecBundleToJson(JsonCodecBundle instance) =>
+    _$JsonCodecBundleSerialize(instance);
+
 // factory JsonCodecBundle.fromJson(Map<String, Object?> json) => _$JsonCodecBundleFromJson(json);
-JsonCodecBundle _$JsonCodecBundleFromJson(Map<String, Object?> json) {
+JsonCodecBundle _$JsonCodecBundleDeserialize(Map<String, Object?> json) {
   final createdAtValue = JsonHelper.decodeWithCodec<DateTime>(
     unixEpochDateTimeCodec,
     json['createdAt'],
@@ -82,3 +106,6 @@ JsonCodecBundle _$JsonCodecBundleFromJson(Map<String, Object?> json) {
     profiles: profilesValue,
   );
 }
+
+JsonCodecBundle _$JsonCodecBundleFromJson(Map<String, Object?> json) =>
+    _$JsonCodecBundleDeserialize(json);

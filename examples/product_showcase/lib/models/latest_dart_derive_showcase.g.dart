@@ -13,7 +13,7 @@
 
 part of 'latest_dart_derive_showcase.dart';
 
-mixin _$LatestDartProductCard {
+mixin _$LatestDartProductCard implements Serializable {
   @override
   String toString() {
     final self = this as LatestDartProductCard;
@@ -107,8 +107,10 @@ mixin _$LatestDartProductCard {
     }
   }
 
-  Map<String, Object?> toJson() =>
-      _$LatestDartProductCardToJson(this as LatestDartProductCard);
+  Map<String, Object?> serialize() =>
+      _$LatestDartProductCardSerialize(this as LatestDartProductCard);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -207,6 +209,24 @@ extension _LatestDartProductCardValidation on LatestDartProductCard {
   }
 
 }
+final class $LatestDartProductCardSerializer implements Serializer<LatestDartProductCard, Map<String, Object?>> {
+  const $LatestDartProductCardSerializer();
+
+  @override
+  Map<String, Object?> serialize(LatestDartProductCard value) => _$LatestDartProductCardSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(LatestDartProductCard value) => serialize(value);
+}
+final class $LatestDartProductCardDeserializer implements Deserializer<LatestDartProductCard, Map<String, Object?>> {
+  const $LatestDartProductCardDeserializer();
+
+  @override
+  LatestDartProductCard deserialize(Map<String, Object?> json) => _$LatestDartProductCardDeserialize(json);
+
+  @override
+  LatestDartProductCard fromJson(Map<String, Object?> json) => deserialize(json);
+}
 extension LatestDartProductCardFromRow on LatestDartProductCard {
   static LatestDartProductCard fromRow(Row row) {
     return LatestDartProductCard(
@@ -225,7 +245,7 @@ extension LatestDartProductCardFromRow on LatestDartProductCard {
 
 final bool _$latestDartProductCardFromRowRegistered = registerRowMapper<LatestDartProductCard>(LatestDartProductCardFromRow.fromRow);
 
-Map<String, Object?> _$LatestDartProductCardToJson(LatestDartProductCard instance) {
+Map<String, Object?> _$LatestDartProductCardSerialize(LatestDartProductCard instance) {
   return <String, Object?>{
     'id': instance.id,
     'title': instance.title,
@@ -238,8 +258,11 @@ Map<String, Object?> _$LatestDartProductCardToJson(LatestDartProductCard instanc
   };
 }
 
+Map<String, Object?> _$LatestDartProductCardToJson(LatestDartProductCard instance) =>
+    _$LatestDartProductCardSerialize(instance);
+
 // factory LatestDartProductCard.fromJson(Map<String, Object?> json) => _$LatestDartProductCardFromJson(json);
-LatestDartProductCard _$LatestDartProductCardFromJson(Map<String, Object?> json) {
+LatestDartProductCard _$LatestDartProductCardDeserialize(Map<String, Object?> json) {
   const allowedKeys = <String>{
     'id',
     'title',
@@ -293,3 +316,6 @@ LatestDartProductCard _$LatestDartProductCardFromJson(Map<String, Object?> json)
     internalOnly: internalOnlyValue,
   );
 }
+
+LatestDartProductCard _$LatestDartProductCardFromJson(Map<String, Object?> json) =>
+    _$LatestDartProductCardDeserialize(json);

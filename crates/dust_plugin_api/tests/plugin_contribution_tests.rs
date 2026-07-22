@@ -23,6 +23,7 @@ fn push_mixin_member_groups_members_by_class() {
         vec![
             ClassMixinContribution {
                 class_name: "User".to_owned(),
+                interfaces: Vec::new(),
                 members: vec![
                     "String toString() => 'User()';".to_owned(),
                     "User copyWith({String? id}) => User();".to_owned(),
@@ -30,8 +31,26 @@ fn push_mixin_member_groups_members_by_class() {
             },
             ClassMixinContribution {
                 class_name: "Team".to_owned(),
+                interfaces: Vec::new(),
                 members: vec!["Team copyWith({String? name}) => Team();".to_owned()],
             },
         ]
+    );
+}
+
+#[test]
+fn push_mixin_interface_groups_and_deduplicates_interfaces() {
+    let mut contribution = PluginContribution::default();
+    contribution.push_mixin_interface("User", "Serializable");
+    contribution.push_mixin_interface("User", "Serializable");
+    contribution.push_mixin_member("User", "Map<String, Object?> serialize() => {};");
+
+    assert_eq!(
+        contribution.mixin_members,
+        vec![ClassMixinContribution {
+            class_name: "User".to_owned(),
+            interfaces: vec!["Serializable".to_owned()],
+            members: vec!["Map<String, Object?> serialize() => {};".to_owned()],
+        }]
     );
 }

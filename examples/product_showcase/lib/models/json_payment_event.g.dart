@@ -13,11 +13,31 @@
 
 part of 'json_payment_event.dart';
 
-mixin _$JsonPaymentEvent {
-  Map<String, Object?> toJson() =>
-      _$JsonPaymentEventToJson(this as JsonPaymentEvent);
+mixin _$JsonPaymentEvent implements Serializable {
+  Map<String, Object?> serialize() =>
+      _$JsonPaymentEventSerialize(this as JsonPaymentEvent);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
+final class $JsonPaymentEventSerializer implements Serializer<JsonPaymentEvent, Map<String, Object?>> {
+  const $JsonPaymentEventSerializer();
+
+  @override
+  Map<String, Object?> serialize(JsonPaymentEvent value) => _$JsonPaymentEventSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonPaymentEvent value) => serialize(value);
+}
+final class $JsonPaymentEventDeserializer implements Deserializer<JsonPaymentEvent, Map<String, Object?>> {
+  const $JsonPaymentEventDeserializer();
+
+  @override
+  JsonPaymentEvent deserialize(Map<String, Object?> json) => _$JsonPaymentEventDeserialize(json);
+
+  @override
+  JsonPaymentEvent fromJson(Map<String, Object?> json) => deserialize(json);
+}
 final class JsonPaymentSuccess extends JsonPaymentEvent {
   const JsonPaymentSuccess({
     required this.id,
@@ -47,33 +67,75 @@ final class JsonPaymentFailed extends JsonPaymentEvent {
   final String reason;
   final bool retryable;
 }
+final class $JsonPaymentSuccessSerializer implements Serializer<JsonPaymentSuccess, Map<String, Object?>> {
+  const $JsonPaymentSuccessSerializer();
 
-Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) {
+  @override
+  Map<String, Object?> serialize(JsonPaymentSuccess value) => _$JsonPaymentSuccessSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonPaymentSuccess value) => serialize(value);
+}
+final class $JsonPaymentSuccessDeserializer implements Deserializer<JsonPaymentSuccess, Map<String, Object?>> {
+  const $JsonPaymentSuccessDeserializer();
+
+  @override
+  JsonPaymentSuccess deserialize(Map<String, Object?> json) => _$JsonPaymentSuccessDeserialize(json);
+
+  @override
+  JsonPaymentSuccess fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $JsonPaymentFailedSerializer implements Serializer<JsonPaymentFailed, Map<String, Object?>> {
+  const $JsonPaymentFailedSerializer();
+
+  @override
+  Map<String, Object?> serialize(JsonPaymentFailed value) => _$JsonPaymentFailedSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonPaymentFailed value) => serialize(value);
+}
+final class $JsonPaymentFailedDeserializer implements Deserializer<JsonPaymentFailed, Map<String, Object?>> {
+  const $JsonPaymentFailedDeserializer();
+
+  @override
+  JsonPaymentFailed deserialize(Map<String, Object?> json) => _$JsonPaymentFailedDeserialize(json);
+
+  @override
+  JsonPaymentFailed fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$JsonPaymentEventSerialize(JsonPaymentEvent instance) {
   return switch (instance) {
     JsonPaymentSuccess value => <String, Object?>{
-      ..._$JsonPaymentSuccessToJson(value),
+      ..._$JsonPaymentSuccessSerialize(value),
       'type': 'payment_success',
     },
     JsonPaymentFailed value => <String, Object?>{
-      ..._$JsonPaymentFailedToJson(value),
+      ..._$JsonPaymentFailedSerialize(value),
       'type': 'failed',
     },
   };
 }
 
+Map<String, Object?> _$JsonPaymentEventToJson(JsonPaymentEvent instance) =>
+    _$JsonPaymentEventSerialize(instance);
+
 // factory JsonPaymentEvent.fromJson(Map<String, Object?> json) => _$JsonPaymentEventFromJson(json);
-JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) {
+JsonPaymentEvent _$JsonPaymentEventDeserialize(Map<String, Object?> json) {
   final tagValue = JsonHelper.as<String>(json['type'], 'type', 'String');
   final variantJson = Map<String, Object?>.from(json)..remove('type');
 
   return switch (tagValue) {
-    'payment_success' => _$JsonPaymentSuccessFromJson(variantJson),
-    'failed' => _$JsonPaymentFailedFromJson(variantJson),
+    'payment_success' => _$JsonPaymentSuccessDeserialize(variantJson),
+    'failed' => _$JsonPaymentFailedDeserialize(variantJson),
     _ => throw ArgumentError('Unknown SerDe variant tag: $tagValue'),
   };
 }
 
-Map<String, Object?> _$JsonPaymentSuccessToJson(JsonPaymentSuccess instance) {
+JsonPaymentEvent _$JsonPaymentEventFromJson(Map<String, Object?> json) =>
+    _$JsonPaymentEventDeserialize(json);
+
+Map<String, Object?> _$JsonPaymentSuccessSerialize(JsonPaymentSuccess instance) {
   return <String, Object?>{
     'id': instance.id,
     'cents': instance.cents,
@@ -81,8 +143,11 @@ Map<String, Object?> _$JsonPaymentSuccessToJson(JsonPaymentSuccess instance) {
   };
 }
 
+Map<String, Object?> _$JsonPaymentSuccessToJson(JsonPaymentSuccess instance) =>
+    _$JsonPaymentSuccessSerialize(instance);
+
 // factory JsonPaymentSuccess.fromJson(Map<String, Object?> json) => _$JsonPaymentSuccessFromJson(json);
-JsonPaymentSuccess _$JsonPaymentSuccessFromJson(Map<String, Object?> json) {
+JsonPaymentSuccess _$JsonPaymentSuccessDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
   final centsValue = JsonHelper.as<int>(json['cents'], 'cents', 'int');
   final currencyValue = JsonHelper.as<String>(
@@ -98,7 +163,10 @@ JsonPaymentSuccess _$JsonPaymentSuccessFromJson(Map<String, Object?> json) {
   );
 }
 
-Map<String, Object?> _$JsonPaymentFailedToJson(JsonPaymentFailed instance) {
+JsonPaymentSuccess _$JsonPaymentSuccessFromJson(Map<String, Object?> json) =>
+    _$JsonPaymentSuccessDeserialize(json);
+
+Map<String, Object?> _$JsonPaymentFailedSerialize(JsonPaymentFailed instance) {
   return <String, Object?>{
     'id': instance.id,
     'reason': instance.reason,
@@ -106,8 +174,11 @@ Map<String, Object?> _$JsonPaymentFailedToJson(JsonPaymentFailed instance) {
   };
 }
 
+Map<String, Object?> _$JsonPaymentFailedToJson(JsonPaymentFailed instance) =>
+    _$JsonPaymentFailedSerialize(instance);
+
 // factory JsonPaymentFailed.fromJson(Map<String, Object?> json) => _$JsonPaymentFailedFromJson(json);
-JsonPaymentFailed _$JsonPaymentFailedFromJson(Map<String, Object?> json) {
+JsonPaymentFailed _$JsonPaymentFailedDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
   final reasonValue = JsonHelper.as<String>(json['reason'], 'reason', 'String');
   final retryableValue = JsonHelper.as<bool>(
@@ -122,3 +193,6 @@ JsonPaymentFailed _$JsonPaymentFailedFromJson(Map<String, Object?> json) {
     retryable: retryableValue,
   );
 }
+
+JsonPaymentFailed _$JsonPaymentFailedFromJson(Map<String, Object?> json) =>
+    _$JsonPaymentFailedDeserialize(json);

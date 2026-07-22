@@ -15,7 +15,7 @@ part of 'json_profile.dart';
 
 const DeepCollectionEquality _jsonProfileTagsEquality = DeepCollectionEquality();
 
-mixin _$JsonProfile {
+mixin _$JsonProfile implements Serializable {
   @override
   String toString() {
     final self = this as JsonProfile;
@@ -48,10 +48,32 @@ mixin _$JsonProfile {
     ]);
   }
 
-  Map<String, Object?> toJson() => _$JsonProfileToJson(this as JsonProfile);
+  Map<String, Object?> serialize() =>
+      _$JsonProfileSerialize(this as JsonProfile);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-Map<String, Object?> _$JsonProfileToJson(JsonProfile instance) {
+final class $JsonProfileSerializer implements Serializer<JsonProfile, Map<String, Object?>> {
+  const $JsonProfileSerializer();
+
+  @override
+  Map<String, Object?> serialize(JsonProfile value) => _$JsonProfileSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonProfile value) => serialize(value);
+}
+final class $JsonProfileDeserializer implements Deserializer<JsonProfile, Map<String, Object?>> {
+  const $JsonProfileDeserializer();
+
+  @override
+  JsonProfile deserialize(Map<String, Object?> json) => _$JsonProfileDeserialize(json);
+
+  @override
+  JsonProfile fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$JsonProfileSerialize(JsonProfile instance) {
   return <String, Object?>{
     'id': instance.id,
     'display_name': instance.displayName,
@@ -61,8 +83,11 @@ Map<String, Object?> _$JsonProfileToJson(JsonProfile instance) {
   };
 }
 
+Map<String, Object?> _$JsonProfileToJson(JsonProfile instance) =>
+    _$JsonProfileSerialize(instance);
+
 // factory JsonProfile.fromJson(Map<String, Object?> json) => _$JsonProfileFromJson(json);
-JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
+JsonProfile _$JsonProfileDeserialize(Map<String, Object?> json) {
   const allowedKeys = <String>{'id', 'display_name', 'displayName', 'tags'};
   for (final key in json.keys) {
     if (!allowedKeys.contains(key)) {
@@ -93,3 +118,6 @@ JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) {
     tags: tagsValue,
   );
 }
+
+JsonProfile _$JsonProfileFromJson(Map<String, Object?> json) =>
+    _$JsonProfileDeserialize(json);

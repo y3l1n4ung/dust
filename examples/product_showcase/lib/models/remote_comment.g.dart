@@ -13,7 +13,7 @@
 
 part of 'remote_comment.dart';
 
-mixin _$RemoteComment {
+mixin _$RemoteComment implements Serializable {
   @override
   String toString() {
     final self = this as RemoteComment;
@@ -35,7 +35,10 @@ mixin _$RemoteComment {
   @pragma('vm:prefer-inline')
   _$RemoteCommentCopyWith<RemoteComment> get copyWith => _$RemoteCommentCopyWithImpl<RemoteComment>(this as RemoteComment, (value) => value);
 
-  Map<String, Object?> toJson() => _$RemoteCommentToJson(this as RemoteComment);
+  Map<String, Object?> serialize() =>
+      _$RemoteCommentSerialize(this as RemoteComment);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -78,8 +81,26 @@ final class _$RemoteCommentCopyWithImpl<$Res> implements _$RemoteCommentCopyWith
     );
   }
 }
+final class $RemoteCommentSerializer implements Serializer<RemoteComment, Map<String, Object?>> {
+  const $RemoteCommentSerializer();
 
-Map<String, Object?> _$RemoteCommentToJson(RemoteComment instance) {
+  @override
+  Map<String, Object?> serialize(RemoteComment value) => _$RemoteCommentSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(RemoteComment value) => serialize(value);
+}
+final class $RemoteCommentDeserializer implements Deserializer<RemoteComment, Map<String, Object?>> {
+  const $RemoteCommentDeserializer();
+
+  @override
+  RemoteComment deserialize(Map<String, Object?> json) => _$RemoteCommentDeserialize(json);
+
+  @override
+  RemoteComment fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$RemoteCommentSerialize(RemoteComment instance) {
   return <String, Object?>{
     'postId': instance.postId,
     'id': instance.id,
@@ -89,8 +110,11 @@ Map<String, Object?> _$RemoteCommentToJson(RemoteComment instance) {
   };
 }
 
+Map<String, Object?> _$RemoteCommentToJson(RemoteComment instance) =>
+    _$RemoteCommentSerialize(instance);
+
 // factory RemoteComment.fromJson(Map<String, Object?> json) => _$RemoteCommentFromJson(json);
-RemoteComment _$RemoteCommentFromJson(Map<String, Object?> json) {
+RemoteComment _$RemoteCommentDeserialize(Map<String, Object?> json) {
   final postIdValue = JsonHelper.as<int>(json['postId'], 'postId', 'int');
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
   final nameValue = JsonHelper.as<String>(json['name'], 'name', 'String');
@@ -105,3 +129,6 @@ RemoteComment _$RemoteCommentFromJson(Map<String, Object?> json) {
     body: bodyValue,
   );
 }
+
+RemoteComment _$RemoteCommentFromJson(Map<String, Object?> json) =>
+    _$RemoteCommentDeserialize(json);

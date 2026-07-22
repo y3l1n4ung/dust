@@ -15,7 +15,7 @@ part of 'order.dart';
 
 const DeepCollectionEquality _orderItemsEquality = DeepCollectionEquality();
 
-mixin _$Order {
+mixin _$Order implements Serializable {
   @override
   String toString() {
     final self = this as Order;
@@ -67,10 +67,12 @@ mixin _$Order {
   @pragma('vm:prefer-inline')
   _$OrderCopyWith<Order> get copyWith => _$OrderCopyWithImpl<Order>(this as Order, (value) => value);
 
-  Map<String, Object?> toJson() => _$OrderToJson(this as Order);
+  Map<String, Object?> serialize() => _$OrderSerialize(this as Order);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$ShippingAddress {
+mixin _$ShippingAddress implements Serializable {
   @override
   String toString() {
     final self = this as ShippingAddress;
@@ -118,8 +120,10 @@ mixin _$ShippingAddress {
   @pragma('vm:prefer-inline')
   _$ShippingAddressCopyWith<ShippingAddress> get copyWith => _$ShippingAddressCopyWithImpl<ShippingAddress>(this as ShippingAddress, (value) => value);
 
-  Map<String, Object?> toJson() =>
-      _$ShippingAddressToJson(this as ShippingAddress);
+  Map<String, Object?> serialize() =>
+      _$ShippingAddressSerialize(this as ShippingAddress);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -214,29 +218,86 @@ final class _$ShippingAddressCopyWithImpl<$Res> implements _$ShippingAddressCopy
     );
   }
 }
+final class $OrderSerializer implements Serializer<Order, Map<String, Object?>> {
+  const $OrderSerializer();
 
-Map<String, Object?> _$OrderToJson(Order instance) {
+  @override
+  Map<String, Object?> serialize(Order value) => _$OrderSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(Order value) => serialize(value);
+}
+final class $OrderDeserializer implements Deserializer<Order, Map<String, Object?>> {
+  const $OrderDeserializer();
+
+  @override
+  Order deserialize(Map<String, Object?> json) => _$OrderDeserialize(json);
+
+  @override
+  Order fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $ShippingAddressSerializer implements Serializer<ShippingAddress, Map<String, Object?>> {
+  const $ShippingAddressSerializer();
+
+  @override
+  Map<String, Object?> serialize(ShippingAddress value) => _$ShippingAddressSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(ShippingAddress value) => serialize(value);
+}
+final class $ShippingAddressDeserializer implements Deserializer<ShippingAddress, Map<String, Object?>> {
+  const $ShippingAddressDeserializer();
+
+  @override
+  ShippingAddress deserialize(Map<String, Object?> json) => _$ShippingAddressDeserialize(json);
+
+  @override
+  ShippingAddress fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $OrderStatusSerializer implements Serializer<OrderStatus, Object?> {
+  const $OrderStatusSerializer();
+
+  @override
+  Object? serialize(OrderStatus value) => _$OrderStatusSerialize(value);
+
+  @override
+  Object? toJson(OrderStatus value) => serialize(value);
+}
+final class $OrderStatusDeserializer implements Deserializer<OrderStatus, Object?> {
+  const $OrderStatusDeserializer();
+
+  @override
+  OrderStatus deserialize(Object? json) => _$OrderStatusDeserialize(json);
+
+  @override
+  OrderStatus fromJson(Object? json) => deserialize(json);
+}
+
+Map<String, Object?> _$OrderSerialize(Order instance) {
   return <String, Object?>{
     'id': instance.id,
     'items': instance.items
         .map((item) => item.toJson())
         .toList(),
     'totalAmount': instance.totalAmount,
-    'status': _$OrderStatusToJson(instance.status),
+    'status': _$OrderStatusSerialize(instance.status),
     'createdAt': instance.createdAt.toIso8601String(),
-    'shippingAddress': _$ShippingAddressToJson(instance.shippingAddress),
+    'shippingAddress': _$ShippingAddressSerialize(instance.shippingAddress),
   };
 }
 
+Map<String, Object?> _$OrderToJson(Order instance) =>
+    _$OrderSerialize(instance);
+
 // factory Order.fromJson(Map<String, Object?> json) => _$OrderFromJson(json);
-Order _$OrderFromJson(Map<String, Object?> json) {
+Order _$OrderDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
   final itemsValue = JsonHelper.decodeList(json['items'], 'items',
       (item, itemKey) => CartItem.fromJson(JsonHelper.asMap(item, itemKey)));
   final totalAmountValue = JsonHelper.as<num>(json['totalAmount'], 'totalAmount', 'num').toDouble();
-  final statusValue = _$OrderStatusFromJson(json['status'], 'status');
+  final statusValue = _$OrderStatusDeserialize(json['status'], 'status');
   final createdAtValue = JsonHelper.asDateTime(json['createdAt'], 'createdAt');
-  final shippingAddressValue = _$ShippingAddressFromJson(
+  final shippingAddressValue = _$ShippingAddressDeserialize(
     JsonHelper.asMap(json['shippingAddress'], 'shippingAddress'),
   );
 
@@ -250,7 +311,10 @@ Order _$OrderFromJson(Map<String, Object?> json) {
   );
 }
 
-Map<String, Object?> _$ShippingAddressToJson(ShippingAddress instance) {
+Order _$OrderFromJson(Map<String, Object?> json) =>
+    _$OrderDeserialize(json);
+
+Map<String, Object?> _$ShippingAddressSerialize(ShippingAddress instance) {
   return <String, Object?>{
     'fullName': instance.fullName,
     'address': instance.address,
@@ -260,8 +324,11 @@ Map<String, Object?> _$ShippingAddressToJson(ShippingAddress instance) {
   };
 }
 
+Map<String, Object?> _$ShippingAddressToJson(ShippingAddress instance) =>
+    _$ShippingAddressSerialize(instance);
+
 // factory ShippingAddress.fromJson(Map<String, Object?> json) => _$ShippingAddressFromJson(json);
-ShippingAddress _$ShippingAddressFromJson(Map<String, Object?> json) {
+ShippingAddress _$ShippingAddressDeserialize(Map<String, Object?> json) {
   final fullNameValue = JsonHelper.as<String>(
     json['fullName'],
     'fullName',
@@ -289,7 +356,10 @@ ShippingAddress _$ShippingAddressFromJson(Map<String, Object?> json) {
   );
 }
 
-Object? _$OrderStatusToJson(OrderStatus instance) {
+ShippingAddress _$ShippingAddressFromJson(Map<String, Object?> json) =>
+    _$ShippingAddressDeserialize(json);
+
+Object? _$OrderStatusSerialize(OrderStatus instance) {
   return switch (instance) {
     OrderStatus.pending => 'pending',
     OrderStatus.processing => 'processing',
@@ -299,7 +369,10 @@ Object? _$OrderStatusToJson(OrderStatus instance) {
   };
 }
 
-OrderStatus _$OrderStatusFromJson(Object? json, [String key = 'json']) {
+Object? _$OrderStatusToJson(OrderStatus instance) =>
+    _$OrderStatusSerialize(instance);
+
+OrderStatus _$OrderStatusDeserialize(Object? json, [String key = 'json']) {
   return switch (json) {
     'pending' => OrderStatus.pending,
     'processing' => OrderStatus.processing,
@@ -309,3 +382,6 @@ OrderStatus _$OrderStatusFromJson(Object? json, [String key = 'json']) {
     _ => throw ArgumentError.value(json, key, 'unknown value for OrderStatus at $key'),
   };
 }
+
+OrderStatus _$OrderStatusFromJson(Object? json, [String key = 'json']) =>
+    _$OrderStatusDeserialize(json, key);

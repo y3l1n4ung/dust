@@ -15,7 +15,7 @@ part of 'json_account.dart';
 
 const DeepCollectionEquality _jsonAccountMetricsEquality = DeepCollectionEquality();
 
-mixin _$JsonAccount {
+mixin _$JsonAccount implements Serializable {
   @override
   String toString() {
     final self = this as JsonAccount;
@@ -57,7 +57,10 @@ mixin _$JsonAccount {
   @pragma('vm:prefer-inline')
   _$JsonAccountCopyWith<JsonAccount> get copyWith => _$JsonAccountCopyWithImpl<JsonAccount>(this as JsonAccount, (value) => value);
 
-  Map<String, Object?> toJson() => _$JsonAccountToJson(this as JsonAccount);
+  Map<String, Object?> serialize() =>
+      _$JsonAccountSerialize(this as JsonAccount);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -94,8 +97,26 @@ final class _$JsonAccountCopyWithImpl<$Res> implements _$JsonAccountCopyWith<$Re
     );
   }
 }
+final class $JsonAccountSerializer implements Serializer<JsonAccount, Map<String, Object?>> {
+  const $JsonAccountSerializer();
 
-Map<String, Object?> _$JsonAccountToJson(JsonAccount instance) {
+  @override
+  Map<String, Object?> serialize(JsonAccount value) => _$JsonAccountSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(JsonAccount value) => serialize(value);
+}
+final class $JsonAccountDeserializer implements Deserializer<JsonAccount, Map<String, Object?>> {
+  const $JsonAccountDeserializer();
+
+  @override
+  JsonAccount deserialize(Map<String, Object?> json) => _$JsonAccountDeserialize(json);
+
+  @override
+  JsonAccount fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$JsonAccountSerialize(JsonAccount instance) {
   return <String, Object?>{
     'profile': instance.profile.toJson(),
     'metrics': instance.metrics
@@ -111,8 +132,11 @@ Map<String, Object?> _$JsonAccountToJson(JsonAccount instance) {
   };
 }
 
+Map<String, Object?> _$JsonAccountToJson(JsonAccount instance) =>
+    _$JsonAccountSerialize(instance);
+
 // factory JsonAccount.fromJson(Map<String, Object?> json) => _$JsonAccountFromJson(json);
-JsonAccount _$JsonAccountFromJson(Map<String, Object?> json) {
+JsonAccount _$JsonAccountDeserialize(Map<String, Object?> json) {
   final profileValue = JsonProfile.fromJson(
     JsonHelper.asMap(json['profile'], 'profile'),
   );
@@ -132,3 +156,6 @@ JsonAccount _$JsonAccountFromJson(Map<String, Object?> json) {
     archived: archivedValue,
   );
 }
+
+JsonAccount _$JsonAccountFromJson(Map<String, Object?> json) =>
+    _$JsonAccountDeserialize(json);

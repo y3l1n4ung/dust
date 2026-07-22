@@ -63,12 +63,29 @@ final profile = UserProfile.fromJson({
   'display_name': 'Jane',
 });
 
-final json = profile.toJson();
+final json = profile.serialize();
+final dartJson = profile.toJson(); // Dart ecosystem mirror.
 ```
 
-`Serialize()` generates `toJson()`. `Deserialize()` generates the private
-`_$TypeFromJson(...)` helper; a class must expose a forwarding `fromJson`
-factory as shown above. The two traits can be used independently.
+`Serialize()` generates `serialize()` as the Dust source API and `toJson()` as
+the Dart ecosystem mirror. `Deserialize()` generates the private
+`_$TypeDeserialize(...)` source helper and `_$TypeFromJson(...)` mirror helper;
+a class must expose a forwarding `fromJson` factory as shown above. The two
+traits can be used independently.
+
+Dust also generates reusable directional objects:
+
+```dart
+const serializer = $UserProfileSerializer();
+final json = serializer.serialize(profile);
+
+const deserializer = $UserProfileDeserializer();
+final profileAgain = deserializer.deserialize(json);
+```
+
+These implement `Serializer<UserProfile, Map<String, Object?>>` and
+`Deserializer<UserProfile, Map<String, Object?>>`. They are useful when a
+framework, registry, or helper wants conversion behavior as a value.
 
 > [!IMPORTANT]
 > Generation requires the matching `part` directive and generated mixin.
@@ -97,8 +114,8 @@ Apply `@SerDe` to a class, enum, enum variant, or field.
 | `aliases` | Accepts additional keys during decoding. |
 | `defaultValue` | Supplies a value when the input key is absent. |
 | `skip` | Omits the field in both directions. |
-| `skipSerializing` | Omits the field from `toJson()`. |
-| `skipDeserializing` | Omits the field from `fromJson()`. |
+| `skipSerializing` | Omits the field from `serialize()` and `toJson()`. |
+| `skipDeserializing` | Omits the field from `_$TypeDeserialize(...)` and `fromJson()`. |
 | `using` | Uses a `SerDeCodec` for the field. |
 
 > [!IMPORTANT]
@@ -193,7 +210,7 @@ Serde requirements.
 ## Custom Codecs
 
 Use `SerDeCodec<DartT, JsonT>` when the JSON representation differs from the
-Dart type:
+Dart type. `JsonT` is the exact intermediate JSON shape used by the field:
 
 ```dart
 final class UnixEpochCodec implements SerDeCodec<DateTime, int> {
@@ -215,8 +232,9 @@ final DateTime createdAt;
 
 > [!TIP]
 > Dust handles field nullability outside the codec. The codec converts only the
-> non-null value. Custom codecs are also the escape hatch for generic
-> containers and legacy API formats.
+> non-null value. The `serde.dart` import provides `toJson` and `fromJson`
+> extension mirrors, so custom codecs usually implement only `serialize` and
+> `deserialize`.
 
 ## Examples
 

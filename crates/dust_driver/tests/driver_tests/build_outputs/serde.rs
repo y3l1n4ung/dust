@@ -57,11 +57,32 @@ fn build_writes_real_serde_outputs() {
         generated_output(
             r#"part of 'profile.dart';
 
-mixin _$Profile {
-  Map<String, Object?> toJson() => _$ProfileToJson(this as Profile);
+mixin _$Profile implements Serializable {
+  Map<String, Object?> serialize() => _$ProfileSerialize(this as Profile);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-Map<String, Object?> _$ProfileToJson(Profile instance) {
+final class $ProfileSerializer implements Serializer<Profile, Map<String, Object?>> {
+  const $ProfileSerializer();
+
+  @override
+  Map<String, Object?> serialize(Profile value) => _$ProfileSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(Profile value) => serialize(value);
+}
+final class $ProfileDeserializer implements Deserializer<Profile, Map<String, Object?>> {
+  const $ProfileDeserializer();
+
+  @override
+  Profile deserialize(Map<String, Object?> json) => _$ProfileDeserialize(json);
+
+  @override
+  Profile fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$ProfileSerialize(Profile instance) {
   return <String, Object?>{
     'id': instance.id,
     'display_name': instance.displayName,
@@ -71,8 +92,11 @@ Map<String, Object?> _$ProfileToJson(Profile instance) {
   };
 }
 
+Map<String, Object?> _$ProfileToJson(Profile instance) =>
+    _$ProfileSerialize(instance);
+
 // factory Profile.fromJson(Map<String, Object?> json) => _$ProfileFromJson(json);
-Profile _$ProfileFromJson(Map<String, Object?> json) {
+Profile _$ProfileDeserialize(Map<String, Object?> json) {
   const allowedKeys = <String>{'id', 'display_name', 'displayName', 'tags'};
   for (final key in json.keys) {
     if (!allowedKeys.contains(key)) {
@@ -99,6 +123,9 @@ Profile _$ProfileFromJson(Map<String, Object?> json) {
 
   return Profile(id: idValue, displayName: displayNameValue, tags: tagsValue);
 }
+
+Profile _$ProfileFromJson(Map<String, Object?> json) =>
+    _$ProfileDeserialize(json);
 "#
         )
     );
@@ -107,11 +134,32 @@ Profile _$ProfileFromJson(Map<String, Object?> json) {
         generated_output(
             r#"part of 'account.dart';
 
-mixin _$Account {
-  Map<String, Object?> toJson() => _$AccountToJson(this as Account);
+mixin _$Account implements Serializable {
+  Map<String, Object?> serialize() => _$AccountSerialize(this as Account);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-Map<String, Object?> _$AccountToJson(Account instance) {
+final class $AccountSerializer implements Serializer<Account, Map<String, Object?>> {
+  const $AccountSerializer();
+
+  @override
+  Map<String, Object?> serialize(Account value) => _$AccountSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(Account value) => serialize(value);
+}
+final class $AccountDeserializer implements Deserializer<Account, Map<String, Object?>> {
+  const $AccountDeserializer();
+
+  @override
+  Account deserialize(Map<String, Object?> json) => _$AccountDeserialize(json);
+
+  @override
+  Account fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$AccountSerialize(Account instance) {
   return <String, Object?>{
     'profile': instance.profile.toJson(),
     'metrics': instance.metrics
@@ -127,8 +175,11 @@ Map<String, Object?> _$AccountToJson(Account instance) {
   };
 }
 
+Map<String, Object?> _$AccountToJson(Account instance) =>
+    _$AccountSerialize(instance);
+
 // factory Account.fromJson(Map<String, Object?> json) => _$AccountFromJson(json);
-Account _$AccountFromJson(Map<String, Object?> json) {
+Account _$AccountDeserialize(Map<String, Object?> json) {
   final profileValue = Profile.fromJson(
     JsonHelper.asMap(json['profile'], 'profile'),
   );
@@ -148,6 +199,9 @@ Account _$AccountFromJson(Map<String, Object?> json) {
     archived: archivedValue,
   );
 }
+
+Account _$AccountFromJson(Map<String, Object?> json) =>
+    _$AccountDeserialize(json);
 "#
         )
     );

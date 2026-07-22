@@ -2,16 +2,46 @@
 
 import '../derive/base.dart';
 
-/// Generates `toJson()` support for the annotated class or enum.
+/// Generates `serialize()` and `toJson()` support for the annotated class or enum.
 final class Serialize extends DeriveTrait {
   /// Creates the `Serialize` derive marker.
   const Serialize();
 }
 
-/// Generates `_$TypeFromJson(...)` support for the annotated class or enum.
+/// Generates `_$TypeDeserialize(...)` and `_$TypeFromJson(...)` support.
 final class Deserialize extends DeriveTrait {
   /// Creates the `Deserialize` derive marker.
   const Deserialize();
+}
+
+/// Instance contract generated for classes deriving [Serialize].
+///
+/// Dust uses [serialize] as the source verb. [toJson] is kept as the Dart
+/// ecosystem mirror.
+abstract interface class Serializable {
+  /// Converts this value into a JSON object.
+  Map<String, Object?> serialize();
+
+  /// Dart ecosystem mirror for [serialize].
+  Map<String, Object?> toJson();
+}
+
+/// Directional conversion contract for generated and custom serializers.
+abstract interface class Serializer<DartT, JsonT> {
+  /// Converts [value] into its JSON representation.
+  JsonT serialize(DartT value);
+
+  /// Dart ecosystem mirror for [serialize].
+  JsonT toJson(DartT value);
+}
+
+/// Directional conversion contract for generated and custom deserializers.
+abstract interface class Deserializer<DartT, JsonT> {
+  /// Converts [json] into a Dart value.
+  DartT deserialize(JsonT json);
+
+  /// Dart ecosystem mirror for [deserialize].
+  DartT fromJson(JsonT json);
 }
 
 /// Field-level conversion contract for custom Dust serde handling.
@@ -22,11 +52,20 @@ abstract interface class SerDeCodec<DartT, JsonT> {
   /// Creates one codec contract object.
   const SerDeCodec(); // coverage:ignore-line
 
-  /// Converts one Dart value into its JSON representation.
+  /// Converts [value] into its JSON representation.
   JsonT serialize(DartT value);
 
-  /// Converts one JSON value into its Dart representation.
-  DartT deserialize(JsonT value);
+  /// Converts [json] into a Dart value.
+  DartT deserialize(JsonT json);
+}
+
+/// Dart ecosystem mirrors for custom serde codecs.
+extension SerDeCodecMirrors<DartT, JsonT> on SerDeCodec<DartT, JsonT> {
+  /// Dart ecosystem mirror for [SerDeCodec.serialize].
+  JsonT toJson(DartT value) => serialize(value);
+
+  /// Dart ecosystem mirror for [SerDeCodec.deserialize].
+  DartT fromJson(JsonT json) => deserialize(json);
 }
 
 /// The rename strategy used when Dust derives JSON keys automatically.

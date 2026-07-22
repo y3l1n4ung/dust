@@ -15,7 +15,7 @@ part of 'store_cart.dart';
 
 const DeepCollectionEquality _storeCartProductsEquality = DeepCollectionEquality();
 
-mixin _$StoreCart {
+mixin _$StoreCart implements Serializable {
   @override
   String toString() {
     final self = this as StoreCart;
@@ -60,10 +60,12 @@ mixin _$StoreCart {
   @pragma('vm:prefer-inline')
   _$StoreCartCopyWith<StoreCart> get copyWith => _$StoreCartCopyWithImpl<StoreCart>(this as StoreCart, (value) => value);
 
-  Map<String, Object?> toJson() => _$StoreCartToJson(this as StoreCart);
+  Map<String, Object?> serialize() => _$StoreCartSerialize(this as StoreCart);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$StoreCartProduct {
+mixin _$StoreCartProduct implements Serializable {
   @override
   String toString() {
     final self = this as StoreCartProduct;
@@ -102,8 +104,10 @@ mixin _$StoreCartProduct {
   @pragma('vm:prefer-inline')
   _$StoreCartProductCopyWith<StoreCartProduct> get copyWith => _$StoreCartProductCopyWithImpl<StoreCartProduct>(this as StoreCartProduct, (value) => value);
 
-  Map<String, Object?> toJson() =>
-      _$StoreCartProductToJson(this as StoreCartProduct);
+  Map<String, Object?> serialize() =>
+      _$StoreCartProductSerialize(this as StoreCartProduct);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -172,25 +176,64 @@ final class _$StoreCartProductCopyWithImpl<$Res> implements _$StoreCartProductCo
     );
   }
 }
+final class $StoreCartSerializer implements Serializer<StoreCart, Map<String, Object?>> {
+  const $StoreCartSerializer();
 
-Map<String, Object?> _$StoreCartToJson(StoreCart instance) {
+  @override
+  Map<String, Object?> serialize(StoreCart value) => _$StoreCartSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(StoreCart value) => serialize(value);
+}
+final class $StoreCartDeserializer implements Deserializer<StoreCart, Map<String, Object?>> {
+  const $StoreCartDeserializer();
+
+  @override
+  StoreCart deserialize(Map<String, Object?> json) => _$StoreCartDeserialize(json);
+
+  @override
+  StoreCart fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $StoreCartProductSerializer implements Serializer<StoreCartProduct, Map<String, Object?>> {
+  const $StoreCartProductSerializer();
+
+  @override
+  Map<String, Object?> serialize(StoreCartProduct value) => _$StoreCartProductSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(StoreCartProduct value) => serialize(value);
+}
+final class $StoreCartProductDeserializer implements Deserializer<StoreCartProduct, Map<String, Object?>> {
+  const $StoreCartProductDeserializer();
+
+  @override
+  StoreCartProduct deserialize(Map<String, Object?> json) => _$StoreCartProductDeserialize(json);
+
+  @override
+  StoreCartProduct fromJson(Map<String, Object?> json) => deserialize(json);
+}
+
+Map<String, Object?> _$StoreCartSerialize(StoreCart instance) {
   return <String, Object?>{
     'id': instance.id,
     'userId': instance.userId,
     'date': instance.date.toIso8601String(),
     'products': instance.products
-        .map((item) => _$StoreCartProductToJson(item))
+        .map((item) => _$StoreCartProductSerialize(item))
         .toList(),
   };
 }
 
+Map<String, Object?> _$StoreCartToJson(StoreCart instance) =>
+    _$StoreCartSerialize(instance);
+
 // factory StoreCart.fromJson(Map<String, Object?> json) => _$StoreCartFromJson(json);
-StoreCart _$StoreCartFromJson(Map<String, Object?> json) {
+StoreCart _$StoreCartDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
   final userIdValue = JsonHelper.as<int>(json['userId'], 'userId', 'int');
   final dateValue = JsonHelper.asDateTime(json['date'], 'date');
   final productsValue = JsonHelper.decodeList(json['products'], 'products',
-      (item, itemKey) => _$StoreCartProductFromJson(JsonHelper.asMap(item, itemKey)));
+      (item, itemKey) => _$StoreCartProductDeserialize(JsonHelper.asMap(item, itemKey)));
 
   return StoreCart(
     id: idValue,
@@ -200,15 +243,21 @@ StoreCart _$StoreCartFromJson(Map<String, Object?> json) {
   );
 }
 
-Map<String, Object?> _$StoreCartProductToJson(StoreCartProduct instance) {
+StoreCart _$StoreCartFromJson(Map<String, Object?> json) =>
+    _$StoreCartDeserialize(json);
+
+Map<String, Object?> _$StoreCartProductSerialize(StoreCartProduct instance) {
   return <String, Object?>{
     'productId': instance.productId,
     'quantity': instance.quantity,
   };
 }
 
+Map<String, Object?> _$StoreCartProductToJson(StoreCartProduct instance) =>
+    _$StoreCartProductSerialize(instance);
+
 // factory StoreCartProduct.fromJson(Map<String, Object?> json) => _$StoreCartProductFromJson(json);
-StoreCartProduct _$StoreCartProductFromJson(Map<String, Object?> json) {
+StoreCartProduct _$StoreCartProductDeserialize(Map<String, Object?> json) {
   final productIdValue = JsonHelper.as<int>(
     json['productId'],
     'productId',
@@ -218,3 +267,6 @@ StoreCartProduct _$StoreCartProductFromJson(Map<String, Object?> json) {
 
   return StoreCartProduct(productId: productIdValue, quantity: quantityValue);
 }
+
+StoreCartProduct _$StoreCartProductFromJson(Map<String, Object?> json) =>
+    _$StoreCartProductDeserialize(json);

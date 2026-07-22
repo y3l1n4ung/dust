@@ -49,16 +49,19 @@ fn supports_custom_json_key_renaming() {
 
     assert_eq!(
         &contribution.top_level_functions[0],
-        r#"Map<String, Object?> _$UserToJson(User instance) {
+        r#"Map<String, Object?> _$UserSerialize(User instance) {
   return <String, Object?>{
     'full_name': instance.fullName,
   };
-}"#
+}
+
+Map<String, Object?> _$UserToJson(User instance) =>
+    _$UserSerialize(instance);"#
     );
     assert_eq!(
         &contribution.top_level_functions[1],
         r#"// factory User.fromJson(Map<String, Object?> json) => _$UserFromJson(json);
-User _$UserFromJson(Map<String, Object?> json) {
+User _$UserDeserialize(Map<String, Object?> json) {
   final fullNameValue = JsonHelper.as<String>(
     json['full_name'],
     'full_name',
@@ -66,6 +69,9 @@ User _$UserFromJson(Map<String, Object?> json) {
   );
 
   return User(fullName: fullNameValue);
-}"#
+}
+
+User _$UserFromJson(Map<String, Object?> json) =>
+    _$UserDeserialize(json);"#
     );
 }

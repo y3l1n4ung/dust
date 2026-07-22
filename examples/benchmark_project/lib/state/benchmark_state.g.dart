@@ -13,7 +13,7 @@
 
 part of 'benchmark_state.dart';
 
-mixin _$BenchmarkState {
+mixin _$BenchmarkState implements Serializable {
   @override
   String toString() {
     final self = this as BenchmarkState;
@@ -55,8 +55,10 @@ mixin _$BenchmarkState {
   @pragma('vm:prefer-inline')
   _$BenchmarkStateCopyWith<BenchmarkState> get copyWith => _$BenchmarkStateCopyWithImpl<BenchmarkState>(this as BenchmarkState, (value) => value);
 
-  Map<String, Object?> toJson() =>
-      _$BenchmarkStateToJson(this as BenchmarkState);
+  Map<String, Object?> serialize() =>
+      _$BenchmarkStateSerialize(this as BenchmarkState);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -93,18 +95,57 @@ final class _$BenchmarkStateCopyWithImpl<$Res> implements _$BenchmarkStateCopyWi
     );
   }
 }
+final class $BenchmarkStateSerializer implements Serializer<BenchmarkState, Map<String, Object?>> {
+  const $BenchmarkStateSerializer();
 
-Map<String, Object?> _$BenchmarkStateToJson(BenchmarkState instance) {
+  @override
+  Map<String, Object?> serialize(BenchmarkState value) => _$BenchmarkStateSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(BenchmarkState value) => serialize(value);
+}
+final class $BenchmarkStateDeserializer implements Deserializer<BenchmarkState, Map<String, Object?>> {
+  const $BenchmarkStateDeserializer();
+
+  @override
+  BenchmarkState deserialize(Map<String, Object?> json) => _$BenchmarkStateDeserialize(json);
+
+  @override
+  BenchmarkState fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $BenchmarkModeSerializer implements Serializer<BenchmarkMode, Object?> {
+  const $BenchmarkModeSerializer();
+
+  @override
+  Object? serialize(BenchmarkMode value) => _$BenchmarkModeSerialize(value);
+
+  @override
+  Object? toJson(BenchmarkMode value) => serialize(value);
+}
+final class $BenchmarkModeDeserializer implements Deserializer<BenchmarkMode, Object?> {
+  const $BenchmarkModeDeserializer();
+
+  @override
+  BenchmarkMode deserialize(Object? json) => _$BenchmarkModeDeserialize(json);
+
+  @override
+  BenchmarkMode fromJson(Object? json) => deserialize(json);
+}
+
+Map<String, Object?> _$BenchmarkStateSerialize(BenchmarkState instance) {
   return <String, Object?>{
-    'mode': _$BenchmarkModeToJson(instance.mode),
+    'mode': _$BenchmarkModeSerialize(instance.mode),
     'activeFeature': instance.activeFeature,
     'buildsRun': instance.buildsRun,
   };
 }
 
+Map<String, Object?> _$BenchmarkStateToJson(BenchmarkState instance) =>
+    _$BenchmarkStateSerialize(instance);
+
 // factory BenchmarkState.fromJson(Map<String, Object?> json) => _$BenchmarkStateFromJson(json);
-BenchmarkState _$BenchmarkStateFromJson(Map<String, Object?> json) {
-  final modeValue = _$BenchmarkModeFromJson(json['mode'], 'mode');
+BenchmarkState _$BenchmarkStateDeserialize(Map<String, Object?> json) {
+  final modeValue = _$BenchmarkModeDeserialize(json['mode'], 'mode');
   final activeFeatureValue = JsonHelper.as<String>(
     json['activeFeature'],
     'activeFeature',
@@ -123,7 +164,10 @@ BenchmarkState _$BenchmarkStateFromJson(Map<String, Object?> json) {
   );
 }
 
-Object? _$BenchmarkModeToJson(BenchmarkMode instance) {
+BenchmarkState _$BenchmarkStateFromJson(Map<String, Object?> json) =>
+    _$BenchmarkStateDeserialize(json);
+
+Object? _$BenchmarkModeSerialize(BenchmarkMode instance) {
   return switch (instance) {
     BenchmarkMode.cold => 'cold-start',
     BenchmarkMode.warm => 'warm',
@@ -131,10 +175,16 @@ Object? _$BenchmarkModeToJson(BenchmarkMode instance) {
   };
 }
 
-BenchmarkMode _$BenchmarkModeFromJson(Object? json, [String key = 'json']) {
+Object? _$BenchmarkModeToJson(BenchmarkMode instance) =>
+    _$BenchmarkModeSerialize(instance);
+
+BenchmarkMode _$BenchmarkModeDeserialize(Object? json, [String key = 'json']) {
   return switch (json) {
     'cold-start' => BenchmarkMode.cold,
     'warm' => BenchmarkMode.warm,
     _ => throw ArgumentError.value(json, key, 'unknown value for BenchmarkMode at $key'),
   };
 }
+
+BenchmarkMode _$BenchmarkModeFromJson(Object? json, [String key = 'json']) =>
+    _$BenchmarkModeDeserialize(json, key);

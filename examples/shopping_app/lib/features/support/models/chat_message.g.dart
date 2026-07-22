@@ -15,7 +15,7 @@ part of 'chat_message.dart';
 
 const DeepCollectionEquality _chatRequestHistoryEquality = DeepCollectionEquality();
 
-mixin _$ChatMessage {
+mixin _$ChatMessage implements Serializable {
   @override
   String toString() {
     final self = this as ChatMessage;
@@ -60,10 +60,13 @@ mixin _$ChatMessage {
   @pragma('vm:prefer-inline')
   _$ChatMessageCopyWith<ChatMessage> get copyWith => _$ChatMessageCopyWithImpl<ChatMessage>(this as ChatMessage, (value) => value);
 
-  Map<String, Object?> toJson() => _$ChatMessageToJson(this as ChatMessage);
+  Map<String, Object?> serialize() =>
+      _$ChatMessageSerialize(this as ChatMessage);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$ChatRequest {
+mixin _$ChatRequest implements Serializable {
   @override
   String toString() {
     final self = this as ChatRequest;
@@ -102,10 +105,13 @@ mixin _$ChatRequest {
   @pragma('vm:prefer-inline')
   _$ChatRequestCopyWith<ChatRequest> get copyWith => _$ChatRequestCopyWithImpl<ChatRequest>(this as ChatRequest, (value) => value);
 
-  Map<String, Object?> toJson() => _$ChatRequestToJson(this as ChatRequest);
+  Map<String, Object?> serialize() =>
+      _$ChatRequestSerialize(this as ChatRequest);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$ChatResponse {
+mixin _$ChatResponse implements Serializable {
   @override
   String toString() {
     final self = this as ChatResponse;
@@ -145,7 +151,10 @@ mixin _$ChatResponse {
   @pragma('vm:prefer-inline')
   _$ChatResponseCopyWith<ChatResponse> get copyWith => _$ChatResponseCopyWithImpl<ChatResponse>(this as ChatResponse, (value) => value);
 
-  Map<String, Object?> toJson() => _$ChatResponseToJson(this as ChatResponse);
+  Map<String, Object?> serialize() =>
+      _$ChatResponseSerialize(this as ChatResponse);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
 // CopyWith API inspired by Freezed.
@@ -254,20 +263,95 @@ final class _$ChatResponseCopyWithImpl<$Res> implements _$ChatResponseCopyWith<$
     );
   }
 }
+final class $ChatMessageSerializer implements Serializer<ChatMessage, Map<String, Object?>> {
+  const $ChatMessageSerializer();
 
-Map<String, Object?> _$ChatMessageToJson(ChatMessage instance) {
+  @override
+  Map<String, Object?> serialize(ChatMessage value) => _$ChatMessageSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(ChatMessage value) => serialize(value);
+}
+final class $ChatMessageDeserializer implements Deserializer<ChatMessage, Map<String, Object?>> {
+  const $ChatMessageDeserializer();
+
+  @override
+  ChatMessage deserialize(Map<String, Object?> json) => _$ChatMessageDeserialize(json);
+
+  @override
+  ChatMessage fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $ChatRequestSerializer implements Serializer<ChatRequest, Map<String, Object?>> {
+  const $ChatRequestSerializer();
+
+  @override
+  Map<String, Object?> serialize(ChatRequest value) => _$ChatRequestSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(ChatRequest value) => serialize(value);
+}
+final class $ChatRequestDeserializer implements Deserializer<ChatRequest, Map<String, Object?>> {
+  const $ChatRequestDeserializer();
+
+  @override
+  ChatRequest deserialize(Map<String, Object?> json) => _$ChatRequestDeserialize(json);
+
+  @override
+  ChatRequest fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $ChatResponseSerializer implements Serializer<ChatResponse, Map<String, Object?>> {
+  const $ChatResponseSerializer();
+
+  @override
+  Map<String, Object?> serialize(ChatResponse value) => _$ChatResponseSerialize(value);
+
+  @override
+  Map<String, Object?> toJson(ChatResponse value) => serialize(value);
+}
+final class $ChatResponseDeserializer implements Deserializer<ChatResponse, Map<String, Object?>> {
+  const $ChatResponseDeserializer();
+
+  @override
+  ChatResponse deserialize(Map<String, Object?> json) => _$ChatResponseDeserialize(json);
+
+  @override
+  ChatResponse fromJson(Map<String, Object?> json) => deserialize(json);
+}
+final class $ChatRoleSerializer implements Serializer<ChatRole, Object?> {
+  const $ChatRoleSerializer();
+
+  @override
+  Object? serialize(ChatRole value) => _$ChatRoleSerialize(value);
+
+  @override
+  Object? toJson(ChatRole value) => serialize(value);
+}
+final class $ChatRoleDeserializer implements Deserializer<ChatRole, Object?> {
+  const $ChatRoleDeserializer();
+
+  @override
+  ChatRole deserialize(Object? json) => _$ChatRoleDeserialize(json);
+
+  @override
+  ChatRole fromJson(Object? json) => deserialize(json);
+}
+
+Map<String, Object?> _$ChatMessageSerialize(ChatMessage instance) {
   return <String, Object?>{
     'id': instance.id,
-    'role': _$ChatRoleToJson(instance.role),
+    'role': _$ChatRoleSerialize(instance.role),
     'text': instance.text,
     'createdAt': instance.createdAt.toIso8601String(),
   };
 }
 
+Map<String, Object?> _$ChatMessageToJson(ChatMessage instance) =>
+    _$ChatMessageSerialize(instance);
+
 // factory ChatMessage.fromJson(Map<String, Object?> json) => _$ChatMessageFromJson(json);
-ChatMessage _$ChatMessageFromJson(Map<String, Object?> json) {
+ChatMessage _$ChatMessageDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
-  final roleValue = _$ChatRoleFromJson(json['role'], 'role');
+  final roleValue = _$ChatRoleDeserialize(json['role'], 'role');
   final textValue = JsonHelper.as<String>(json['text'], 'text', 'String');
   final createdAtValue = JsonHelper.asDateTime(json['createdAt'], 'createdAt');
 
@@ -279,38 +363,50 @@ ChatMessage _$ChatMessageFromJson(Map<String, Object?> json) {
   );
 }
 
-Map<String, Object?> _$ChatRequestToJson(ChatRequest instance) {
+ChatMessage _$ChatMessageFromJson(Map<String, Object?> json) =>
+    _$ChatMessageDeserialize(json);
+
+Map<String, Object?> _$ChatRequestSerialize(ChatRequest instance) {
   return <String, Object?>{
     'message': instance.message,
     'history': instance.history
-        .map((item) => _$ChatMessageToJson(item))
+        .map((item) => _$ChatMessageSerialize(item))
         .toList(),
   };
 }
 
+Map<String, Object?> _$ChatRequestToJson(ChatRequest instance) =>
+    _$ChatRequestSerialize(instance);
+
 // factory ChatRequest.fromJson(Map<String, Object?> json) => _$ChatRequestFromJson(json);
-ChatRequest _$ChatRequestFromJson(Map<String, Object?> json) {
+ChatRequest _$ChatRequestDeserialize(Map<String, Object?> json) {
   final messageValue = JsonHelper.as<String>(
     json['message'],
     'message',
     'String',
   );
   final historyValue = JsonHelper.decodeList(json['history'], 'history',
-      (item, itemKey) => _$ChatMessageFromJson(JsonHelper.asMap(item, itemKey)));
+      (item, itemKey) => _$ChatMessageDeserialize(JsonHelper.asMap(item, itemKey)));
 
   return ChatRequest(message: messageValue, history: historyValue);
 }
 
-Map<String, Object?> _$ChatResponseToJson(ChatResponse instance) {
+ChatRequest _$ChatRequestFromJson(Map<String, Object?> json) =>
+    _$ChatRequestDeserialize(json);
+
+Map<String, Object?> _$ChatResponseSerialize(ChatResponse instance) {
   return <String, Object?>{
-    'message': _$ChatMessageToJson(instance.message),
+    'message': _$ChatMessageSerialize(instance.message),
     'escalated': instance.escalated,
   };
 }
 
+Map<String, Object?> _$ChatResponseToJson(ChatResponse instance) =>
+    _$ChatResponseSerialize(instance);
+
 // factory ChatResponse.fromJson(Map<String, Object?> json) => _$ChatResponseFromJson(json);
-ChatResponse _$ChatResponseFromJson(Map<String, Object?> json) {
-  final messageValue = _$ChatMessageFromJson(
+ChatResponse _$ChatResponseDeserialize(Map<String, Object?> json) {
+  final messageValue = _$ChatMessageDeserialize(
     JsonHelper.asMap(json['message'], 'message'),
   );
   final escalatedValue = JsonHelper.as<bool>(
@@ -322,17 +418,26 @@ ChatResponse _$ChatResponseFromJson(Map<String, Object?> json) {
   return ChatResponse(message: messageValue, escalated: escalatedValue);
 }
 
-Object? _$ChatRoleToJson(ChatRole instance) {
+ChatResponse _$ChatResponseFromJson(Map<String, Object?> json) =>
+    _$ChatResponseDeserialize(json);
+
+Object? _$ChatRoleSerialize(ChatRole instance) {
   return switch (instance) {
     ChatRole.user => 'user',
     ChatRole.assistant => 'assistant',
   };
 }
 
-ChatRole _$ChatRoleFromJson(Object? json, [String key = 'json']) {
+Object? _$ChatRoleToJson(ChatRole instance) =>
+    _$ChatRoleSerialize(instance);
+
+ChatRole _$ChatRoleDeserialize(Object? json, [String key = 'json']) {
   return switch (json) {
     'user' => ChatRole.user,
     'assistant' => ChatRole.assistant,
     _ => throw ArgumentError.value(json, key, 'unknown value for ChatRole at $key'),
   };
 }
+
+ChatRole _$ChatRoleFromJson(Object? json, [String key = 'json']) =>
+    _$ChatRoleDeserialize(json, key);
