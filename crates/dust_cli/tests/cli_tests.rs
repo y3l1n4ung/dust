@@ -6,6 +6,9 @@ mod binary;
 #[path = "cli_tests/build.rs"]
 mod build;
 
+#[path = "cli_tests/compatibility.rs"]
+mod compatibility;
+
 #[path = "cli_tests/diagnostics.rs"]
 mod diagnostics;
 

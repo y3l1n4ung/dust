@@ -9,6 +9,7 @@ and contributor documentation.
 | Goal | Documentation |
 | :--- | :--- |
 | Install Dust and generate the first model | [README Quick Start](../README.md#quick-start) |
+| Check CLI and package versions | [Compatibility guide](./usage/compatibility.md) |
 | Choose and configure a feature | [Usage guides](./usage/README.md) |
 | Explore a Dart example | [Product showcase](../examples/product_showcase/README.md) |
 | Explore a Flutter application | [Shopping app](../examples/shopping_app/README.md) |
