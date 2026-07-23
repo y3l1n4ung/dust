@@ -3,6 +3,11 @@
 /// Generated `.g.dart` files are `part of` the user library, so they reuse the
 /// app author's existing `package:dust_dart/serde.dart` import instead of
 /// emitting duplicate private helpers into every generated file.
+library;
+
+import 'serde.dart';
+
+/// Shared runtime helpers used by Dust-generated serde code.
 abstract final class JsonHelper {
   /// Throws a consistent type error for one JSON key.
   static Never typeError(Object? value, String key, String expected) {
@@ -99,8 +104,20 @@ abstract final class JsonHelper {
     return parseString(value, key, 'BigInt string', BigInt.tryParse);
   }
 
-  /// Decodes [value] through a user-provided `SerDeCodec`.
-  static T decodeWithCodec<T>(dynamic codec, Object? value, String key) {
+  /// Encodes [value] through a user-provided typed codec.
+  static JsonT encodeWithCodec<DartT, JsonT>(
+    Serializer<DartT, JsonT> codec,
+    DartT value,
+  ) {
+    return codec.serialize(value);
+  }
+
+  /// Decodes [value] through a user-provided typed codec.
+  static DartT decodeWithCodec<DartT, JsonT>(
+    Deserializer<DartT, JsonT> codec,
+    Object? value,
+    String key,
+  ) {
     if (value == null) {
       throw ArgumentError.value(
         value,
@@ -109,7 +126,7 @@ abstract final class JsonHelper {
       );
     }
     try {
-      return codec.deserialize(value as dynamic) as T;
+      return codec.deserialize(value as JsonT);
     } catch (error) {
       throw ArgumentError.value(
         value,

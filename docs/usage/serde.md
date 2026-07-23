@@ -238,6 +238,12 @@ final DateTime createdAt;
 > extension mirrors, so custom codecs usually implement only `serialize` and
 > `deserialize`.
 
+> [!TIP]
+> Dust emits typed codec calls. If `@SerDe(using: ...)` points a `DateTime`
+> field at a codec for another Dart type, `dart analyze` reports the mismatch
+> in the generated file. If the incoming JSON has the wrong shape for the codec,
+> Dust wraps the failure with the field key.
+
 ## Examples
 
 - [Class options and strict keys](../../examples/product_showcase/lib/models/json_serde_options.dart)
