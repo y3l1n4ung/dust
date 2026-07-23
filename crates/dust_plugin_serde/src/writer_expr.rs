@@ -268,22 +268,24 @@ fn indent_expr(expr: &str, spaces: usize) -> String {
 /// Renders JSON encoding through a user-provided codec.
 fn encode_with_codec(expr: &str, ty: &TypeIr, codec: &str) -> String {
     let codec = access_receiver(codec);
+    let value_ty = OBJECT_NULLABLE_TYPES.render_non_nullable(ty);
     if ty.is_nullable() {
-        let encoded = format!("{codec}.serialize({expr}!)");
+        let encoded = format!("JsonHelper.encodeWithCodec<{value_ty}, Object?>({codec}, {expr}!)");
         return format!("{expr} == null\n    ? null\n    : {encoded}");
     }
 
-    format!("{codec}.serialize({expr})")
+    format!("JsonHelper.encodeWithCodec<{value_ty}, Object?>({codec}, {expr})")
 }
 
 /// Renders JSON decoding through a user-provided codec.
 fn decode_with_codec(raw: &str, key: &str, ty: &TypeIr, codec: &str) -> String {
     let codec = access_receiver(codec);
-    let value_ty = OBJECT_NULLABLE_TYPES.render(&non_nullable(ty));
+    let value_ty = OBJECT_NULLABLE_TYPES.render_non_nullable(ty);
     if ty.is_nullable() {
-        let decoded = format!("JsonHelper.decodeWithCodec<{value_ty}>({codec}, {raw}, {key})");
+        let decoded =
+            format!("JsonHelper.decodeWithCodec<{value_ty}, Object?>({codec}, {raw}, {key})");
         return format!("{raw} == null\n    ? null\n    : {decoded}");
     }
 
-    format!("JsonHelper.decodeWithCodec<{value_ty}>({codec}, {raw}, {key})")
+    format!("JsonHelper.decodeWithCodec<{value_ty}, Object?>({codec}, {raw}, {key})")
 }

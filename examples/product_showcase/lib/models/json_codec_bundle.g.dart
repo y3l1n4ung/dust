@@ -67,11 +67,17 @@ final class $JsonCodecBundleDeserializer implements Deserializer<JsonCodecBundle
 
 Map<String, Object?> _$JsonCodecBundleSerialize(JsonCodecBundle instance) {
   return <String, Object?>{
-    'createdAt': unixEpochDateTimeCodec.serialize(instance.createdAt),
+    'createdAt': JsonHelper.encodeWithCodec<DateTime, Object?>(
+      unixEpochDateTimeCodec,
+      instance.createdAt,
+    ),
     'updatedAt': instance.updatedAt == null
         ? null
-        : unixEpochDateTimeCodec.serialize(instance.updatedAt!),
-    'profiles': jsonProfilePageCodec.serialize(instance.profiles),
+        : JsonHelper.encodeWithCodec<DateTime, Object?>(unixEpochDateTimeCodec, instance.updatedAt!),
+    'profiles': JsonHelper.encodeWithCodec<JsonPage<JsonProfile>, Object?>(
+      jsonProfilePageCodec,
+      instance.profiles,
+    ),
   };
 }
 
@@ -80,15 +86,15 @@ Map<String, Object?> _$JsonCodecBundleToJson(JsonCodecBundle instance) =>
 
 // factory JsonCodecBundle.fromJson(Map<String, Object?> json) => _$JsonCodecBundleFromJson(json);
 JsonCodecBundle _$JsonCodecBundleDeserialize(Map<String, Object?> json) {
-  final createdAtValue = JsonHelper.decodeWithCodec<DateTime>(
+  final createdAtValue = JsonHelper.decodeWithCodec<DateTime, Object?>(
     unixEpochDateTimeCodec,
     json['createdAt'],
     'createdAt',
   );
   final updatedAtValue = json['updatedAt'] == null
       ? null
-      : JsonHelper.decodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['updatedAt'], 'updatedAt');
-  final profilesValue = JsonHelper.decodeWithCodec<JsonPage<JsonProfile>>(
+      : JsonHelper.decodeWithCodec<DateTime, Object?>(unixEpochDateTimeCodec, json['updatedAt'], 'updatedAt');
+  final profilesValue = JsonHelper.decodeWithCodec<JsonPage<JsonProfile>, Object?>(
     jsonProfilePageCodec,
     json['profiles'],
     'profiles',

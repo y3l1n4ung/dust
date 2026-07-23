@@ -65,10 +65,13 @@ final class $AuditDeserializer implements Deserializer<Audit, Map<String, Object
 
 Map<String, Object?> _$AuditSerialize(Audit instance) {
   return <String, Object?>{
-    'createdAt': unixEpochDateTimeCodec.serialize(instance.createdAt),
+    'createdAt': JsonHelper.encodeWithCodec<DateTime, Object?>(
+      unixEpochDateTimeCodec,
+      instance.createdAt,
+    ),
     'updatedAt': instance.updatedAt == null
         ? null
-        : unixEpochDateTimeCodec.serialize(instance.updatedAt!),
+        : JsonHelper.encodeWithCodec<DateTime, Object?>(unixEpochDateTimeCodec, instance.updatedAt!),
   };
 }
 
@@ -77,14 +80,14 @@ Map<String, Object?> _$AuditToJson(Audit instance) =>
 
 // factory Audit.fromJson(Map<String, Object?> json) => _$AuditFromJson(json);
 Audit _$AuditDeserialize(Map<String, Object?> json) {
-  final createdAtValue = JsonHelper.decodeWithCodec<DateTime>(
+  final createdAtValue = JsonHelper.decodeWithCodec<DateTime, Object?>(
     unixEpochDateTimeCodec,
     json['createdAt'],
     'createdAt',
   );
   final updatedAtValue = json['updatedAt'] == null
       ? null
-      : JsonHelper.decodeWithCodec<DateTime>(unixEpochDateTimeCodec, json['updatedAt'], 'updatedAt');
+      : JsonHelper.decodeWithCodec<DateTime, Object?>(unixEpochDateTimeCodec, json['updatedAt'], 'updatedAt');
 
   return Audit(createdAt: createdAtValue, updatedAt: updatedAtValue);
 }

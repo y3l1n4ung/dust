@@ -81,11 +81,17 @@ final class $VehicleDeserializer implements Deserializer<Vehicle, Object?> {
 
 Map<String, Object?> _$JsonEnhancedEnumBundleSerialize(JsonEnhancedEnumBundle instance) {
   return <String, Object?>{
-    'primaryVehicle': vehicleIndexCodec.serialize(instance.primaryVehicle),
+    'primaryVehicle': JsonHelper.encodeWithCodec<Vehicle, Object?>(
+      vehicleIndexCodec,
+      instance.primaryVehicle,
+    ),
     'fallbackVehicle': instance.fallbackVehicle == null
         ? null
-        : vehicleIndexCodec.serialize(instance.fallbackVehicle!),
-    'fleet': vehicleIndexListCodec.serialize(instance.fleet),
+        : JsonHelper.encodeWithCodec<Vehicle, Object?>(vehicleIndexCodec, instance.fallbackVehicle!),
+    'fleet': JsonHelper.encodeWithCodec<List<Vehicle>, Object?>(
+      vehicleIndexListCodec,
+      instance.fleet,
+    ),
   };
 }
 
@@ -94,15 +100,15 @@ Map<String, Object?> _$JsonEnhancedEnumBundleToJson(JsonEnhancedEnumBundle insta
 
 // factory JsonEnhancedEnumBundle.fromJson(Map<String, Object?> json) => _$JsonEnhancedEnumBundleFromJson(json);
 JsonEnhancedEnumBundle _$JsonEnhancedEnumBundleDeserialize(Map<String, Object?> json) {
-  final primaryVehicleValue = JsonHelper.decodeWithCodec<Vehicle>(
+  final primaryVehicleValue = JsonHelper.decodeWithCodec<Vehicle, Object?>(
     vehicleIndexCodec,
     json['primaryVehicle'],
     'primaryVehicle',
   );
   final fallbackVehicleValue = json['fallbackVehicle'] == null
       ? null
-      : JsonHelper.decodeWithCodec<Vehicle>(vehicleIndexCodec, json['fallbackVehicle'], 'fallbackVehicle');
-  final fleetValue = JsonHelper.decodeWithCodec<List<Vehicle>>(
+      : JsonHelper.decodeWithCodec<Vehicle, Object?>(vehicleIndexCodec, json['fallbackVehicle'], 'fallbackVehicle');
+  final fleetValue = JsonHelper.decodeWithCodec<List<Vehicle>, Object?>(
     vehicleIndexListCodec,
     json['fleet'],
     'fleet',

@@ -89,7 +89,10 @@ BenchmarkWorkspaceAccount _$BenchmarkWorkspaceAccountFromJson(Map<String, Object
 
 Map<String, Object?> _$BenchmarkWorkspacePageEnvelopeSerialize(BenchmarkWorkspacePageEnvelope instance) {
   return <String, Object?>{
-    'page': benchmarkWorkspaceProfilePageCodec.serialize(instance.page),
+    'page': JsonHelper.encodeWithCodec<BenchmarkPage<BenchmarkWorkspaceProfile>, Object?>(
+      benchmarkWorkspaceProfilePageCodec,
+      instance.page,
+    ),
   };
 }
 
@@ -98,7 +101,7 @@ Map<String, Object?> _$BenchmarkWorkspacePageEnvelopeToJson(BenchmarkWorkspacePa
 
 // factory BenchmarkWorkspacePageEnvelope.fromJson(Map<String, Object?> json) => _$BenchmarkWorkspacePageEnvelopeFromJson(json);
 BenchmarkWorkspacePageEnvelope _$BenchmarkWorkspacePageEnvelopeDeserialize(Map<String, Object?> json) {
-  final pageValue = JsonHelper.decodeWithCodec<BenchmarkPage<BenchmarkWorkspaceProfile>>(
+  final pageValue = JsonHelper.decodeWithCodec<BenchmarkPage<BenchmarkWorkspaceProfile>, Object?>(
     benchmarkWorkspaceProfilePageCodec,
     json['page'],
     'page',

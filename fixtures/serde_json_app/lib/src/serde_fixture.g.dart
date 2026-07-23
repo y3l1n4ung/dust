@@ -13,23 +13,69 @@
 
 part of 'serde_fixture.dart';
 
-mixin _$NestedProfile {
-  Map<String, Object?> toJson() => _$NestedProfileToJson(this as NestedProfile);
+mixin _$NestedProfile implements Serializable {
+  Map<String, Object?> serialize() =>
+      _$NestedProfileSerialize(this as NestedProfile);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-mixin _$SerdeFixture {
-  Map<String, Object?> toJson() => _$SerdeFixtureToJson(this as SerdeFixture);
+mixin _$SerdeFixture implements Serializable {
+  Map<String, Object?> serialize() =>
+      _$SerdeFixtureSerialize(this as SerdeFixture);
+
+  Map<String, Object?> toJson() => serialize();
 }
 
-Map<String, Object?> _$NestedProfileToJson(NestedProfile instance) {
+final class $NestedProfileSerializer implements Serializer<NestedProfile, Map<String, Object?>> {
+  const $NestedProfileSerializer();
+
+  @override
+  Map<String, Object?> serialize(NestedProfile value) => _$NestedProfileSerialize(value);
+}
+final class $NestedProfileDeserializer implements Deserializer<NestedProfile, Map<String, Object?>> {
+  const $NestedProfileDeserializer();
+
+  @override
+  NestedProfile deserialize(Map<String, Object?> json) => _$NestedProfileDeserialize(json);
+}
+final class $SerdeFixtureSerializer implements Serializer<SerdeFixture, Map<String, Object?>> {
+  const $SerdeFixtureSerializer();
+
+  @override
+  Map<String, Object?> serialize(SerdeFixture value) => _$SerdeFixtureSerialize(value);
+}
+final class $SerdeFixtureDeserializer implements Deserializer<SerdeFixture, Map<String, Object?>> {
+  const $SerdeFixtureDeserializer();
+
+  @override
+  SerdeFixture deserialize(Map<String, Object?> json) => _$SerdeFixtureDeserialize(json);
+}
+final class $AccessLevelSerializer implements Serializer<AccessLevel, Object?> {
+  const $AccessLevelSerializer();
+
+  @override
+  Object? serialize(AccessLevel value) => _$AccessLevelSerialize(value);
+}
+final class $AccessLevelDeserializer implements Deserializer<AccessLevel, Object?> {
+  const $AccessLevelDeserializer();
+
+  @override
+  AccessLevel deserialize(Object? json) => _$AccessLevelDeserialize(json);
+}
+
+Map<String, Object?> _$NestedProfileSerialize(NestedProfile instance) {
   return <String, Object?>{
     'id': instance.id,
     'nickname': instance.nickname,
   };
 }
 
+Map<String, Object?> _$NestedProfileToJson(NestedProfile instance) =>
+    _$NestedProfileSerialize(instance);
+
 // factory NestedProfile.fromJson(Map<String, Object?> json) => _$NestedProfileFromJson(json);
-NestedProfile _$NestedProfileFromJson(Map<String, Object?> json) {
+NestedProfile _$NestedProfileDeserialize(Map<String, Object?> json) {
   final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
   final nicknameValue = json['nickname'] == null
       ? null
@@ -38,14 +84,17 @@ NestedProfile _$NestedProfileFromJson(Map<String, Object?> json) {
   return NestedProfile(id: idValue, nickname: nicknameValue);
 }
 
-Map<String, Object?> _$SerdeFixtureToJson(SerdeFixture instance) {
+NestedProfile _$NestedProfileFromJson(Map<String, Object?> json) =>
+    _$NestedProfileDeserialize(json);
+
+Map<String, Object?> _$SerdeFixtureSerialize(SerdeFixture instance) {
   return <String, Object?>{
     'id': instance.id,
     'display_name': instance.displayName,
     'tags': instance.tags
         .map((item) => item)
         .toList(),
-    'access_level': _$AccessLevelToJson(instance.accessLevel),
+    'access_level': _$AccessLevelSerialize(instance.accessLevel),
     'created_at': instance.createdAt.toIso8601String(),
     'homepage': instance.homepage.toString(),
     'large_number': instance.largeNumber.toString(),
@@ -61,17 +110,23 @@ Map<String, Object?> _$SerdeFixtureToJson(SerdeFixture instance) {
                 .toList(),
           ),
         ),
-    'profile': _$NestedProfileToJson(instance.profile),
+    'profile': _$NestedProfileSerialize(instance.profile),
     'receipts': instance.receipts
         .map((item) => item.toJson())
         .toList(),
     'client_only': instance.clientOnly,
-    'token': tokenCodec.serialize(instance.token),
+    'token': JsonHelper.encodeWithCodec<Token, Object?>(
+      tokenCodec,
+      instance.token,
+    ),
   };
 }
 
+Map<String, Object?> _$SerdeFixtureToJson(SerdeFixture instance) =>
+    _$SerdeFixtureSerialize(instance);
+
 // factory SerdeFixture.fromJson(Map<String, Object?> json) => _$SerdeFixtureFromJson(json);
-SerdeFixture _$SerdeFixtureFromJson(Map<String, Object?> json) {
+SerdeFixture _$SerdeFixtureDeserialize(Map<String, Object?> json) {
   const allowedKeys = <String>{
     'id',
     'display_name',
@@ -110,7 +165,7 @@ SerdeFixture _$SerdeFixtureFromJson(Map<String, Object?> json) {
       ? JsonHelper.decodeList(json['tags'], 'tags',
       (item, itemKey) => JsonHelper.as<String>(item, itemKey, 'String'))
       : ['guest'];
-  final accessLevelValue = _$AccessLevelFromJson(
+  final accessLevelValue = _$AccessLevelDeserialize(
     json['access_level'],
     'access_level',
   );
@@ -129,7 +184,7 @@ SerdeFixture _$SerdeFixtureFromJson(Map<String, Object?> json) {
       (value, valueKey) =>
           JsonHelper.decodeList(value, valueKey,
               (item, itemKey) => JsonHelper.as<int>(item, itemKey, 'int')));
-  final profileValue = _$NestedProfileFromJson(
+  final profileValue = _$NestedProfileDeserialize(
     JsonHelper.asMap(json['profile'], 'profile'),
   );
   final receiptsValue = JsonHelper.decodeList(json['receipts'], 'receipts',
@@ -139,7 +194,7 @@ SerdeFixture _$SerdeFixtureFromJson(Map<String, Object?> json) {
       : 'server-default';
   final clientOnlyValue = 'client-default';
   final hiddenValue = 'hidden-default';
-  final tokenValue = JsonHelper.decodeWithCodec<Token>(
+  final tokenValue = JsonHelper.decodeWithCodec<Token, Object?>(
     tokenCodec,
     json['token'],
     'token',
@@ -164,7 +219,10 @@ SerdeFixture _$SerdeFixtureFromJson(Map<String, Object?> json) {
   );
 }
 
-Object? _$AccessLevelToJson(AccessLevel instance) {
+SerdeFixture _$SerdeFixtureFromJson(Map<String, Object?> json) =>
+    _$SerdeFixtureDeserialize(json);
+
+Object? _$AccessLevelSerialize(AccessLevel instance) {
   return switch (instance) {
     AccessLevel.superAdmin => 'super-admin',
     AccessLevel.guestUser => 'guest-user',
@@ -172,7 +230,10 @@ Object? _$AccessLevelToJson(AccessLevel instance) {
   };
 }
 
-AccessLevel _$AccessLevelFromJson(Object? json, [String key = 'json']) {
+Object? _$AccessLevelToJson(AccessLevel instance) =>
+    _$AccessLevelSerialize(instance);
+
+AccessLevel _$AccessLevelDeserialize(Object? json, [String key = 'json']) {
   return switch (json) {
     'super-admin' => AccessLevel.superAdmin,
     'guest-user' => AccessLevel.guestUser,
@@ -180,3 +241,6 @@ AccessLevel _$AccessLevelFromJson(Object? json, [String key = 'json']) {
     _ => throw ArgumentError.value(json, key, 'unknown value for AccessLevel at $key'),
   };
 }
+
+AccessLevel _$AccessLevelFromJson(Object? json, [String key = 'json']) =>
+    _$AccessLevelDeserialize(json, key);

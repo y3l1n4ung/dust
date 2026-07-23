@@ -111,20 +111,28 @@ void main() {
     test('decodes with serde codec', () {
       const codec = _IntCodec();
 
-      expect(codec.serialize(42), '42');
-      expect(JsonHelper.decodeWithCodec<int>(codec, '42', 'id'), 42);
+      expect(JsonHelper.encodeWithCodec<int, Object?>(codec, 42), '42');
+      expect(JsonHelper.decodeWithCodec<int, Object?>(codec, '42', 'id'), 42);
     });
 
     test('rejects null codec values', () {
       expect(
-        () => JsonHelper.decodeWithCodec<int>(const _IntCodec(), null, 'id'),
+        () => JsonHelper.decodeWithCodec<int, Object?>(
+          const _IntCodec(),
+          null,
+          'id',
+        ),
         throwsA(isA<ArgumentError>()),
       );
     });
 
     test('wraps serde codec failures', () {
       expect(
-        () => JsonHelper.decodeWithCodec<int>(const _IntCodec(), 'nan', 'id'),
+        () => JsonHelper.decodeWithCodec<int, Object?>(
+          const _IntCodec(),
+          'nan',
+          'id',
+        ),
         throwsA(isA<ArgumentError>()),
       );
     });
