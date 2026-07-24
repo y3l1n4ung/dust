@@ -68,6 +68,14 @@ fn write_state_workspace(root: &std::path::Path) {
            const TaskBoardState({this.count = 0, this.message});\n\
            final int count;\n\
            final String? message;\n\
+           @override\n\
+           bool operator ==(Object other) =>\n\
+             identical(this, other) ||\n\
+             other is TaskBoardState &&\n\
+               other.count == count &&\n\
+               other.message == message;\n\
+           @override\n\
+           int get hashCode => Object.hash(count, message);\n\
          }\n\
          final class TaskBoardArgs extends ViewModelArgs {\n\
            const TaskBoardArgs({required this.repository, super.observer});\n\

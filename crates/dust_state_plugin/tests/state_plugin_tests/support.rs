@@ -1,6 +1,7 @@
 use dust_ir::{
     ClassIr, ClassKindIr, ConfigApplicationIr, DartFileIr, EnumIr, EnumVariantIr, FieldIr,
-    NormalizedConfigIr, SpanIr, StateConfigIr, StateModeIr, SymbolId, TypeIr,
+    MethodIr, NormalizedConfigIr, SpanIr, StateConfigIr, StateModeIr, SymbolId, TraitApplicationIr,
+    TypeIr,
 };
 use dust_text::{FileId, TextRange};
 
@@ -90,6 +91,30 @@ pub(crate) fn state_class() -> ClassIr {
         traits: Vec::new(),
         configs: Vec::new(),
         serde: None,
+    }
+}
+
+pub(crate) fn state_class_with_eq() -> ClassIr {
+    let mut state = state_class();
+    state.traits.push(TraitApplicationIr {
+        symbol: SymbolId::new("dust_dart::Eq"),
+        span: span(20, 30),
+    });
+    state
+}
+
+pub(crate) fn operator_eq_method() -> MethodIr {
+    MethodIr {
+        name: "==".to_owned(),
+        is_static: false,
+        is_external: false,
+        return_type: TypeIr::named("bool"),
+        has_body: true,
+        body_source: Some("=> identical(this, other);".to_owned()),
+        params: Vec::new(),
+        span: span(20, 40),
+        traits: Vec::new(),
+        configs: Vec::new(),
     }
 }
 

@@ -128,7 +128,7 @@ fn classify_class_member<'tree>(node: Node<'tree>) -> Option<ClassMemberShape<'t
 
     matches!(
         node.kind(),
-        "declaration" | "method_signature" | "function_signature"
+        "declaration" | "method_signature" | "function_signature" | "operator_signature"
     )
     .then_some(ClassMemberShape::Method)
 }

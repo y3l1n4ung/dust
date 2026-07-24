@@ -9,13 +9,14 @@ class MethodShapes {
   external static Future<void> load();
   static int answer() => 42;
   String describe() { return 'ok'; }
+  bool operator ==(Object other) => identical(this, other);
 }
 "#,
     );
 
     assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
     let class = &result.library.classes[0];
-    assert_eq!(class.methods.len(), 3);
+    assert_eq!(class.methods.len(), 4);
 
     let external_static = &class.methods[0];
     assert_eq!(external_static.name, "load");
@@ -43,4 +44,18 @@ class MethodShapes {
     assert!(block_body.has_body);
     assert_eq!(block_body.body_source.as_deref(), Some("{ return 'ok'; }"));
     assert_eq!(block_body.return_type_source.as_deref(), Some("String"));
+
+    let equality_operator = &class.methods[3];
+    assert_eq!(equality_operator.name, "==");
+    assert!(!equality_operator.is_static);
+    assert!(!equality_operator.is_external);
+    assert!(equality_operator.has_body);
+    assert_eq!(
+        equality_operator.body_source.as_deref(),
+        Some("=> identical(this, other);")
+    );
+    assert_eq!(
+        equality_operator.return_type_source.as_deref(),
+        Some("bool")
+    );
 }

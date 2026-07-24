@@ -22,10 +22,13 @@ pub(super) fn extract_method(
 ) -> Option<dust_parser_dart::ParsedMethodSurface> {
     let signature = find_first_descendant(node, "method_signature")
         .or_else(|| find_first_descendant(node, "function_signature"))
+        .or_else(|| find_first_descendant(node, "operator_signature"))
         .or_else(|| find_first_descendant(node, "declaration"))?;
     let callable_signature = callable_signature(signature);
 
-    let name_node = callable_signature.child_by_field_name("name")?;
+    let name_node = callable_signature
+        .child_by_field_name("name")
+        .or_else(|| callable_signature.child_by_field_name("operator"))?;
     let name = node_text(name_node, source);
 
     let is_static =
@@ -33,8 +36,12 @@ pub(super) fn extract_method(
     let is_external =
         has_direct_child_kind(node, "external") || has_direct_child_kind(signature, "external");
 
-    let parsed_return_type =
-        extract_type_before(callable_signature, name_node.start_byte(), source);
+    let return_type_end_byte = if callable_signature.kind() == "operator_signature" {
+        operator_keyword_start(callable_signature).unwrap_or(name_node.start_byte())
+    } else {
+        name_node.start_byte()
+    };
+    let parsed_return_type = extract_type_before(callable_signature, return_type_end_byte, source);
     let return_type_source = parsed_return_type.as_ref().map(|ty| ty.source.clone());
 
     let params = find_first_descendant(callable_signature, "formal_parameter_list")
@@ -78,6 +85,14 @@ fn method_body_node<'tree>(node: Node<'tree>, signature: Node<'tree>) -> Option<
             .parent()
             .and_then(|parent| direct_named_child(parent, "function_body"))
     })
+}
+
+/// Finds the `operator` keyword that separates return type from operator name.
+fn operator_keyword_start(node: Node<'_>) -> Option<usize> {
+    let mut cursor = node.walk();
+    node.children(&mut cursor)
+        .find(|child| child.kind() == "operator")
+        .map(|child| child.start_byte())
 }
 
 /// Extracts method or function parameters from a formal parameter list.
