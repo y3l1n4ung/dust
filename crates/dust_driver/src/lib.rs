@@ -60,7 +60,8 @@ pub use request::{
 };
 pub use result::{
     BuildArtifact, CacheReport, CheckedLibrary, CleanReport, CommandResult, DiagnosticFile,
-    DoctorReport, I18nBuildReport, I18nCheckReport, I18nScanEntry, I18nScanReport, WatchReport,
+    DoctorPackageCompatibility, DoctorPackageCompatibilityStatus, DoctorReport, I18nBuildReport,
+    I18nCheckReport, I18nScanEntry, I18nScanReport, WatchReport,
 };
 pub use watch::{run_watch, run_watch_with_progress};
 

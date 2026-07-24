@@ -66,6 +66,27 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult, ai_mod
                 }
                 lines.push(format!("package {}", doctor.package_root.display()));
                 lines.push(format!("config  {}", doctor.package_config_path.display()));
+                lines.push(format!("compat cli {}", doctor.cli_version));
+                for package in &doctor.package_compatibility {
+                    let usage = if package.used_by_workspace {
+                        "used"
+                    } else {
+                        "unused"
+                    };
+                    let resolved = package.resolved_version.as_deref().unwrap_or("-");
+                    let supported = package.supported_constraint.as_deref().unwrap_or("-");
+                    lines.push(format!(
+                        "compat {} status={} usage={} resolved={} supported={}",
+                        package.package_name,
+                        package.status.as_str(),
+                        usage,
+                        resolved,
+                        supported
+                    ));
+                    if let Some(action) = &package.action {
+                        lines.push(format!("compat {} action={}", package.package_name, action));
+                    }
+                }
             }
         }
         CliCommand::I18nBuild => {
@@ -235,7 +256,8 @@ mod tests {
 
     use dust_diagnostics::{Diagnostic, SourceLabel};
     use dust_driver::{
-        CacheReport, CleanReport, CommandResult, DiagnosticFile, DoctorReport, WatchReport,
+        CacheReport, CleanReport, CommandResult, DiagnosticFile, DoctorPackageCompatibility,
+        DoctorPackageCompatibilityStatus, DoctorReport, WatchReport,
     };
     use dust_text::{FileId, TextRange};
 
@@ -286,6 +308,7 @@ mod tests {
             &CliCommand::Doctor,
             &CommandResult {
                 doctor: Some(DoctorReport {
+                    cli_version: "0.1.3".to_owned(),
                     package_root: PathBuf::from("/tmp/project"),
                     package_config_path: PathBuf::from(
                         "/tmp/workspace/.dart_tool/package_config.json",
@@ -293,6 +316,14 @@ mod tests {
                     library_count: 7,
                     plugin_names: vec!["derive".to_owned(), "serde".to_owned()],
                     libraries: vec![PathBuf::from("lib/user.dart")],
+                    package_compatibility: vec![DoctorPackageCompatibility {
+                        package_name: "dust_dart".to_owned(),
+                        used_by_workspace: true,
+                        resolved_version: Some("0.1.3".to_owned()),
+                        supported_constraint: Some(">=0.1.3 <0.2.0".to_owned()),
+                        status: DoctorPackageCompatibilityStatus::Compatible,
+                        action: None,
+                    }],
                 }),
                 elapsed_ms: 9,
                 ..CommandResult::default()
@@ -305,6 +336,10 @@ mod tests {
         assert!(doctor.contains("plugins derive, serde"));
         assert!(doctor.contains("package /tmp/project"));
         assert!(doctor.contains("config  /tmp/workspace/.dart_tool/package_config.json"));
+        assert!(doctor.contains("compat cli 0.1.3"));
+        assert!(doctor.contains(
+            "compat dust_dart status=compatible usage=used resolved=0.1.3 supported=>=0.1.3 <0.2.0"
+        ));
     }
 
     #[test]

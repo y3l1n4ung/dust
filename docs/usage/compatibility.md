@@ -8,6 +8,10 @@ The machine-readable source of truth is
 CLI diagnostics, release checks, and docs should read from that contract instead
 of duplicating version rules.
 
+Run `dust doctor` to see the active CLI version, each Dust runtime package found
+in `package_config.json`, the supported range, and whether the package is used
+by the workspace source.
+
 ## Dust CLI 0.1.3
 
 | Dust CLI | `dust_dart` | `dust_flutter` | `dust_db_sqlite3` |

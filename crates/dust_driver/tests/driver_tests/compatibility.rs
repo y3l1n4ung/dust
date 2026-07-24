@@ -1,8 +1,6 @@
-use std::path::Path;
-
 use dust_driver::{BuildRequest, CheckRequest, run_build, run_check};
 
-use super::support::{make_workspace, write_file};
+use super::support::{make_workspace, write_file, write_resolved_dust_packages};
 
 #[test]
 fn build_allows_compatible_dust_package_versions() {
@@ -122,29 +120,4 @@ fn build_ignores_resolved_dust_package_that_source_does_not_use() {
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
     assert!(result.build_artifacts.is_empty());
-}
-
-fn write_resolved_dust_packages(root: &Path, packages: &[(&str, &str)]) {
-    for (name, version) in packages {
-        write_file(
-            &root.join(format!("deps/{name}/pubspec.yaml")),
-            &format!("name: {name}\nversion: {version}\n"),
-        );
-    }
-
-    let package_entries = packages
-        .iter()
-        .map(|(name, _)| {
-            format!(
-                r#"{{"name":"{name}","rootUri":"../deps/{name}","packageUri":"lib/","languageVersion":"3.6"}}"#
-            )
-        })
-        .collect::<Vec<_>>()
-        .join(",");
-    write_file(
-        &root.join(".dart_tool/package_config.json"),
-        &format!(
-            r#"{{"configVersion":2,"packages":[{{"name":"dust_test","rootUri":"../","packageUri":"lib/","languageVersion":"3.6"}},{package_entries}]}}"#
-        ),
-    );
 }
