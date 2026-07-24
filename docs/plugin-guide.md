@@ -148,11 +148,13 @@ Wire the crate through all compiled surfaces:
 3. Export a `register_plugin()` function from the plugin crate.
 4. Register it in
    `crates/dust_driver/src/build/support/registry.rs` in the intended order.
-5. Add every generation-affecting source and template to the plugin's fingerprint
-   input in `crates/dust_driver/src/build/support/tool_hash.rs`.
+5. If the plugin uses generation assets outside the registered codegen source
+   roots, add that root to `CODEGEN_FINGERPRINT_ROOTS` in
+   `crates/dust_driver/build.rs`.
 
-The fingerprint step is required. Without it, existing cache entries can hide a
-change to generated output.
+Dust automatically fingerprints Rust source and templates under registered
+codegen roots. Adding a module or template under a normal plugin `src/` tree
+does not require editing the cache hash code.
 
 ## 6. Test the Contract
 
