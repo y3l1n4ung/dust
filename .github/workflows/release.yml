@@ -110,30 +110,7 @@ jobs:
         shell: bash
         env:
           RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          python <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          tag = os.environ["RELEASE_TAG"].removeprefix("v")
-          contract_path = Path("compatibility/dust-cli-packages.json")
-          contract = json.loads(contract_path.read_text(encoding="utf-8"))
-          required = {"dust_dart", "dust_flutter", "dust_db_sqlite3"}
-
-          for entry in contract.get("entries", []):
-              if entry.get("cliVersion") != tag:
-                  continue
-              packages = set(entry.get("packageConstraints", {}).keys())
-              missing = sorted(required - packages)
-              if missing:
-                  raise SystemExit(
-                      f"{contract_path} entry {tag} is missing: {', '.join(missing)}"
-                  )
-              raise SystemExit(0)
-
-          raise SystemExit(f"{contract_path} has no entry for CLI {tag}")
-          PY
+        run: python3 scripts/validate_compatibility_contract.py --release-tag "$RELEASE_TAG"
 
       - name: Download packaged binaries
         uses: actions/download-artifact@v4
