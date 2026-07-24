@@ -154,7 +154,49 @@ void main() {
     expect(viewModel.data, 2);
   });
 
-  test('invalidateSelf clears async state and cancels stale load', () async {
+  test('invalidateSelf after data starts a fresh load', () async {
+    final viewModel = TestAsyncViewModel();
+
+    final load = viewModel.load();
+    viewModel.loads.single.complete(7);
+    await load;
+
+    viewModel.invalidateSelf();
+
+    expect(viewModel.state, isA<AsyncLoading<int>>());
+    expect(viewModel.visibleData, isNull);
+    expect(viewModel.loads, hasLength(2));
+
+    viewModel.loads.last.complete(9);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(viewModel.state, isA<AsyncData<int>>());
+    expect(viewModel.visibleData, 9);
+  });
+
+  test('invalidateSelf after failure starts a fresh load', () async {
+    final viewModel = TestAsyncViewModel();
+
+    final load = viewModel.load();
+    viewModel.loads.single.completeError(StateError('failed'));
+    await load;
+
+    expect(viewModel.state, isA<AsyncFailure<int>>());
+
+    viewModel.invalidateSelf();
+
+    expect(viewModel.state, isA<AsyncLoading<int>>());
+    expect(viewModel.visibleData, isNull);
+    expect(viewModel.loads, hasLength(2));
+
+    viewModel.loads.last.complete(3);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(viewModel.state, isA<AsyncData<int>>());
+    expect(viewModel.visibleData, 3);
+  });
+
+  test('invalidateSelf during refresh ignores stale result', () async {
     final viewModel = TestAsyncViewModel();
 
     final load = viewModel.load();
@@ -166,14 +208,21 @@ void main() {
 
     viewModel.invalidateSelf();
 
-    expect(viewModel.state, isA<AsyncInitial<int>>());
+    expect(viewModel.state, isA<AsyncLoading<int>>());
+    expect(viewModel.visibleData, isNull);
+    expect(viewModel.loads, hasLength(3));
+
+    viewModel.loads[1].complete(8);
+    await refresh;
+
+    expect(viewModel.state, isA<AsyncLoading<int>>());
     expect(viewModel.visibleData, isNull);
 
     viewModel.loads.last.complete(9);
-    await refresh;
+    await Future<void>.delayed(Duration.zero);
 
-    expect(viewModel.state, isA<AsyncInitial<int>>());
-    expect(viewModel.visibleData, isNull);
+    expect(viewModel.state, isA<AsyncData<int>>());
+    expect(viewModel.visibleData, 9);
   });
 
   test('nullable data is still present data', () async {

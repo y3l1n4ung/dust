@@ -236,7 +236,7 @@ The scope automatically calls `load()` through `onInit()`.
 | `retry()` | Calls `refresh()`. |
 | `data` | Returns currently visible data when available. |
 | `visibleData` | Returns current or preserved previous data. |
-| `invalidateSelf()` | Cancels stale work and resets to `AsyncInitial<T>`. |
+| `invalidateSelf()` | Cancels stale work, clears visible data, and starts a fresh `load()`. |
 
 The generated builder handles the common lifecycle:
 
@@ -274,7 +274,8 @@ Future<void> loadProducts() async {
 
 Starting the same action key supersedes its previous token. Use
 `cancelAction(key)` to invalidate one action. `invalidateSelf()` invalidates all
-pending action tokens and restores the generated initial state.
+pending action tokens. Sync ViewModels restore the generated initial state. Async
+ViewModels start a fresh load without preserving previous data.
 
 ## Configuration
 
