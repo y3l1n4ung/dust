@@ -48,6 +48,8 @@ fn emits_generated_base_with_args_getters() {
     assert!(source.contains("await viewModel.init();"));
     assert!(source.contains("FlutterError.reportError("));
     assert!(source.contains("ErrorDescription('TaskBoardViewModelScope init failed')"));
+    assert!(source.contains("Error.throwWithStackTrace(error, stackTrace);"));
+    assert!(!source.contains("Original error: $error"));
     assert!(!source.contains("ViewModelOwner<"));
     assert!(!source.contains("ListenableBuilder("));
     assert!(!source.contains("if (ownsViewModel) {"));

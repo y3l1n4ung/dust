@@ -402,13 +402,7 @@ class _AppViewModelScopeState extends State<AppViewModelScope> {
     try {
       created = create(context, argsFactory(context));
     } catch (error, stackTrace) {
-      Error.throwWithStackTrace(
-        StateError(
-          'AppViewModelScope failed to create its view model. Check the generated '
-          'scope args/create dependency injection. Original error: $error',
-        ),
-        stackTrace,
-      );
+      Error.throwWithStackTrace(error, stackTrace);
     }
     return created;
   }
@@ -792,13 +786,7 @@ class _BnbViewModelScopeState extends State<BnbViewModelScope> {
     try {
       created = create(context, argsFactory(context));
     } catch (error, stackTrace) {
-      Error.throwWithStackTrace(
-        StateError(
-          'BnbViewModelScope failed to create its view model. Check the generated '
-          'scope args/create dependency injection. Original error: $error',
-        ),
-        stackTrace,
-      );
+      Error.throwWithStackTrace(error, stackTrace);
     }
     return created;
   }
@@ -1224,13 +1212,7 @@ class _HomeViewModelScopeState extends State<HomeViewModelScope> {
     try {
       created = create(context, argsFactory(context));
     } catch (error, stackTrace) {
-      Error.throwWithStackTrace(
-        StateError(
-          'HomeViewModelScope failed to create its view model. Check the generated '
-          'scope args/create dependency injection. Original error: $error',
-        ),
-        stackTrace,
-      );
+      Error.throwWithStackTrace(error, stackTrace);
     }
     return created;
   }

@@ -240,13 +240,7 @@ class _OrderTrackingViewModelScopeState extends State<OrderTrackingViewModelScop
     try {
       created = create(context, argsFactory(context));
     } catch (error, stackTrace) {
-      Error.throwWithStackTrace(
-        StateError(
-          'OrderTrackingViewModelScope failed to create its view model. Check the generated '
-          'scope args/create dependency injection. Original error: $error',
-        ),
-        stackTrace,
-      );
+      Error.throwWithStackTrace(error, stackTrace);
     }
     return created;
   }
