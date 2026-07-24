@@ -228,31 +228,59 @@ fn feature_plugins_do_not_parse_raw_dart_sources() {
 }
 
 #[test]
-fn derive_generator_sources_are_in_cache_fingerprint() {
+fn codegen_tool_fingerprint_is_generated_from_source_roots() {
     let root = workspace_root();
-    let derive_src = root.join("crates/dust_plugin_derive/src");
+    let build_script = fs::read_to_string(root.join("crates/dust_driver/build.rs"))
+        .expect("dust_driver build script should be readable");
     let tool_hash_source =
         fs::read_to_string(root.join("crates/dust_driver/src/build/support/tool_hash.rs"))
             .expect("tool hash source should be readable");
-    let mut missing = Vec::new();
-
-    for path in collect_files(&derive_src) {
-        let relative = path
-            .strip_prefix(&derive_src)
-            .expect("collected path must be inside derive src")
-            .to_string_lossy()
-            .replace('\\', "/");
-        let fingerprint_path = format!("../../../../dust_plugin_derive/src/{relative}");
-        if !tool_hash_source.contains(&fingerprint_path) {
-            missing.push(fingerprint_path);
-        }
-    }
 
     assert!(
-        missing.is_empty(),
-        "derive generator source files must be part of the Dust cache fingerprint:\n{}",
-        missing.join("\n")
+        tool_hash_source.contains("env!(\"OUT_DIR\")")
+            && tool_hash_source.contains("codegen_tool_fingerprint.txt"),
+        "tool hash must include the generated fingerprint manifest"
     );
+    assert!(
+        !tool_hash_source.contains("dust_plugin_derive/src/features/debug.rs"),
+        "tool hash must not return to manual per-file fingerprint registration"
+    );
+
+    for root in [
+        "crates/dust_dart_emit/src",
+        "crates/dust_dart_syntax/src",
+        "crates/dust_db_plugin/src",
+        "crates/dust_driver/src",
+        "crates/dust_emitter/src",
+        "crates/dust_http_client_plugin/src",
+        "crates/dust_ir/src",
+        "crates/dust_parser_dart/src",
+        "crates/dust_parser_dart_ts/src",
+        "crates/dust_plugin_api/src",
+        "crates/dust_plugin_derive/src",
+        "crates/dust_plugin_serde/src",
+        "crates/dust_resolver/src",
+        "crates/dust_route_plugin/src",
+        "crates/dust_state_plugin/src",
+        "crates/dust_workspace/src",
+    ] {
+        assert!(
+            build_script.contains(root),
+            "build script must fingerprint {root}"
+        );
+    }
+
+    for behavior in [
+        "collect_fingerprint_files",
+        "cargo:rerun-if-changed",
+        "is_fingerprint_file",
+        "tests.rs",
+    ] {
+        assert!(
+            build_script.contains(behavior),
+            "build script must preserve fingerprint behavior `{behavior}`"
+        );
+    }
 }
 
 #[test]
@@ -494,24 +522,6 @@ fn scan_dir(dir: &Path, patterns: &[&str], violations: &mut Vec<String>) {
         }
         scan_file(&path, patterns, violations);
     }
-}
-
-fn collect_files(dir: &Path) -> Vec<std::path::PathBuf> {
-    let mut files = Vec::new();
-    let Ok(entries) = fs::read_dir(dir) else {
-        return files;
-    };
-
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            files.extend(collect_files(&path));
-        } else {
-            files.push(path);
-        }
-    }
-    files.sort();
-    files
 }
 
 fn scan_file(path: &Path, patterns: &[&str], violations: &mut Vec<String>) {
