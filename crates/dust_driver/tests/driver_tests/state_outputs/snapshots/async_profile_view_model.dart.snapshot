@@ -161,11 +161,12 @@ class ProfileViewModelBuilder extends StatelessWidget {
         hasPreviousData: true,
         previousData: final previousData,
       ) => data(context, previousData as Profile),
+      AsyncLoading<Profile>() => loading(context),
       AsyncFailure<Profile>(
         error: final loadError,
         previousData: final previousData,
       ) => error(context, loadError, previousData),
-      _ => loading(context),
+      AsyncInitial<Profile>() => loading(context),
     };
   }
 }

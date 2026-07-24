@@ -195,6 +195,9 @@ fn emits_async_view_model_base() {
     assert!(source.contains("final Widget Function(BuildContext context, Profile data) data;"));
     assert!(source.contains("AsyncLoading<Profile>("));
     assert!(source.contains("hasPreviousData: true"));
+    assert!(source.contains("AsyncLoading<Profile>() => loading(context)"));
+    assert!(source.contains("AsyncInitial<Profile>() => loading(context)"));
+    assert!(!source.contains("_ => loading(context)"));
     assert!(!source.contains("const Profile()"));
     assert!(!source.contains("initialState:"));
 }

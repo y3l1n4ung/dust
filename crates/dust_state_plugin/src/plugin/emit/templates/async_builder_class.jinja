@@ -25,11 +25,12 @@ class {{ builder_class }} extends StatelessWidget {
         hasPreviousData: true,
         previousData: final previousData,
       ) => data(context, {{ previous_data_argument }}),
+      AsyncLoading<{{ data_type }}>() => loading(context),
       AsyncFailure<{{ data_type }}>(
         error: final loadError,
         previousData: final previousData,
       ) => error(context, loadError, previousData),
-      _ => loading(context),
+      AsyncInitial<{{ data_type }}>() => loading(context),
     };
   }
 }

@@ -258,12 +258,16 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     _actionVersions[key] = (_actionVersions[key] ?? 0) + 1;
   }
 
-  /// Clears pending actions and returns state to the generated initial value.
-  void invalidateSelf() {
-    if (_isDisposed) return;
+  void _cancelActions() {
     for (final key in _actionVersions.keys.toList()) {
       cancelAction(key);
     }
+  }
+
+  /// Clears pending actions and returns state to the generated initial value.
+  void invalidateSelf() {
+    if (_isDisposed) return;
+    _cancelActions();
     emit(_initialState);
   }
 
@@ -329,7 +333,15 @@ abstract class AsyncViewModelBase<TData, TArgs extends ViewModelArgs>
   @override
   Future<void> onInit() => load();
 
+  @override
+  void invalidateSelf() {
+    if (_isDisposed) return;
+    _cancelActions();
+    unawaited(load());
+  }
+
   Future<void> _runLoad({required bool preserveData}) async {
+    if (_isDisposed) return;
     final token = beginAction(_loadAction);
     final previousData = preserveData ? visibleData : null;
     final hasPreviousData =
