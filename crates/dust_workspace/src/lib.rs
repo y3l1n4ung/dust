@@ -18,7 +18,9 @@ mod root;
 mod workspace;
 
 pub use config::{DustConfig, I18nConfig, I18nIosConfig, OutputConfig, load_dust_config};
-pub use discover::{SupportedAnnotations, discover_libraries};
+pub use discover::{
+    LibraryDiscovery, SupportedAnnotations, discover_libraries, discover_libraries_with_usage,
+};
 pub use output_policy::{
     expected_part_uri, generated_test_output_path, is_generated_primary_file, package_import_uri,
     primary_output_path, rewrite_library_import_uri,
