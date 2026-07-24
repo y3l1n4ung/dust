@@ -170,6 +170,8 @@ pub struct CacheReport {
 /// One workspace doctor report.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DoctorReport {
+    /// The Dust CLI version that owns the active compatibility contract.
+    pub cli_version: String,
     /// The detected package root used for library discovery.
     pub package_root: PathBuf,
     /// The resolved package configuration path.
@@ -180,6 +182,56 @@ pub struct DoctorReport {
     pub plugin_names: Vec<String>,
     /// The discovered source library paths.
     pub libraries: Vec<PathBuf>,
+    /// Dust runtime package compatibility rows.
+    pub package_compatibility: Vec<DoctorPackageCompatibility>,
+}
+
+/// One Dust runtime package compatibility row for `dust doctor`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DoctorPackageCompatibility {
+    /// Dart package name.
+    pub package_name: String,
+    /// Whether workspace source imports this package.
+    pub used_by_workspace: bool,
+    /// Resolved package version from package_config, when present.
+    pub resolved_version: Option<String>,
+    /// Supported package version constraint for this CLI, when known.
+    pub supported_constraint: Option<String>,
+    /// Compatibility status for this package.
+    pub status: DoctorPackageCompatibilityStatus,
+    /// Suggested user action when the status is not healthy.
+    pub action: Option<String>,
+}
+
+/// Compatibility status for one Dust runtime package.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DoctorPackageCompatibilityStatus {
+    /// Package is resolved and satisfies the CLI compatibility contract.
+    Compatible,
+    /// Workspace source imports the package but package_config does not resolve it.
+    Missing,
+    /// Package is not resolved and is not used by workspace source.
+    NotResolved,
+    /// Package is older than the supported range.
+    TooOld,
+    /// Package is newer than the supported range.
+    TooNew,
+    /// The embedded compatibility contract has no rule for this package.
+    UnknownRule,
+}
+
+impl DoctorPackageCompatibilityStatus {
+    /// Returns the stable lowercase CLI rendering for this status.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Compatible => "compatible",
+            Self::Missing => "missing",
+            Self::NotResolved => "not-resolved",
+            Self::TooOld => "too-old",
+            Self::TooNew => "too-new",
+            Self::UnknownRule => "unknown-rule",
+        }
+    }
 }
 
 /// One clean command summary.

@@ -112,6 +112,36 @@ pub(crate) fn make_pub_workspace_member() -> (tempfile::TempDir, std::path::Path
     (root, package_root)
 }
 
+pub(crate) fn write_resolved_dust_packages(root: &std::path::Path, packages: &[(&str, &str)]) {
+    for (name, version) in packages {
+        write_file(
+            &root.join(format!("deps/{name}/pubspec.yaml")),
+            &format!("name: {name}\nversion: {version}\n"),
+        );
+    }
+
+    let package_entries = packages
+        .iter()
+        .map(|(name, _)| {
+            format!(
+                r#"{{"name":"{name}","rootUri":"../deps/{name}","packageUri":"lib/","languageVersion":"3.6"}}"#
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    let suffix = if package_entries.is_empty() {
+        String::new()
+    } else {
+        format!(",{package_entries}")
+    };
+    write_file(
+        &root.join(".dart_tool/package_config.json"),
+        &format!(
+            r#"{{"configVersion":2,"packages":[{{"name":"dust_test","rootUri":"../","packageUri":"lib/","languageVersion":"3.6"}}{suffix}]}}"#
+        ),
+    );
+}
+
 #[cfg(test)]
 mod tests {
     use super::fixture_dust_import;

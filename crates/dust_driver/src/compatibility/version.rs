@@ -95,29 +95,45 @@ impl VersionConstraint {
         version: &Version,
         actions: &'a CompatibilityActions,
     ) -> &'a str {
+        match self.mismatch_kind(version) {
+            Some(VersionMismatch::TooOld) => &actions.package_too_old,
+            Some(VersionMismatch::TooNew) | None => &actions.package_too_new,
+        }
+    }
+
+    /// Returns why the version does not satisfy this constraint.
+    pub(super) fn mismatch_kind(&self, version: &Version) -> Option<VersionMismatch> {
         for requirement in &self.requirements {
             if requirement.is_satisfied_by(version) {
                 continue;
             }
             return match requirement.operator {
                 VersionOperator::GreaterOrEqual | VersionOperator::GreaterThan => {
-                    &actions.package_too_old
+                    Some(VersionMismatch::TooOld)
                 }
                 VersionOperator::LessOrEqual | VersionOperator::LessThan => {
-                    &actions.package_too_new
+                    Some(VersionMismatch::TooNew)
                 }
                 VersionOperator::Equal => {
                     if version < &requirement.version {
-                        &actions.package_too_old
+                        Some(VersionMismatch::TooOld)
                     } else {
-                        &actions.package_too_new
+                        Some(VersionMismatch::TooNew)
                     }
                 }
             };
         }
 
-        &actions.package_too_new
+        None
     }
+}
+
+/// Direction of a version mismatch against a compatibility constraint.
+pub(super) enum VersionMismatch {
+    /// The package version is below the supported range.
+    TooOld,
+    /// The package version is above the supported range.
+    TooNew,
 }
 
 /// One atomic version requirement.

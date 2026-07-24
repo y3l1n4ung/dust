@@ -94,6 +94,36 @@ fn cli_build_renders_unsupported_package_version() {
     assert!(!workspace.path().join("lib/user.g.dart").exists());
 }
 
+#[test]
+fn cli_doctor_renders_package_compatibility_matrix() {
+    let workspace = make_workspace();
+    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.2")]);
+    write_file(
+        &workspace.path().join("lib/user.dart"),
+        "part 'user.g.dart';\n\
+         @ToString()\n\
+         class User {\n\
+           final String id;\n\
+           const User(this.id);\n\
+         }\n",
+    );
+
+    let run = run_cli(["doctor", "--root", workspace.path().to_str().unwrap()]);
+
+    assert_eq!(run.exit_code, 1);
+    assert!(run.stdout.is_empty());
+    assert!(run.stderr.contains("doctor  workspace: issues"));
+    assert!(run.stderr.contains("compat cli 0.1.3"));
+    assert!(run.stderr.contains(
+        "compat dust_dart status=too-old usage=used resolved=0.1.2 supported=>=0.1.3 <0.2.0"
+    ));
+    assert!(
+        run.stderr
+            .contains("compat dust_dart action=Upgrade the Dust package dependency")
+    );
+    assert!(run.stderr.contains("unsupported Dust package version"));
+}
+
 fn repo_root() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()

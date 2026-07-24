@@ -2,6 +2,7 @@ use std::time::Instant;
 
 use crate::{
     build::RegistrySelection,
+    compatibility::doctor_package_compatibility,
     context::DriverContext,
     request::DoctorRequest,
     result::{CommandResult, DoctorReport},
@@ -24,7 +25,17 @@ pub fn run_doctor(request: DoctorRequest) -> CommandResult {
             return result;
         }
     };
+    let (package_compatibility, compatibility_diagnostics) =
+        match doctor_package_compatibility(&workspace) {
+            Ok(report) => report,
+            Err(diagnostic) => {
+                result.diagnostics.push(diagnostic);
+                (Vec::new(), Vec::new())
+            }
+        };
+    result.diagnostics.extend(compatibility_diagnostics);
     result.doctor = Some(DoctorReport {
+        cli_version: env!("CARGO_PKG_VERSION").to_owned(),
         package_root: workspace.package_root,
         package_config_path: workspace.package_config.path,
         library_count: workspace.libraries.len(),
@@ -38,6 +49,7 @@ pub fn run_doctor(request: DoctorRequest) -> CommandResult {
             .into_iter()
             .map(|library| library.source_path)
             .collect(),
+        package_compatibility,
     });
     result.elapsed_ms = started.elapsed().as_millis();
     result
