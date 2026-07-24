@@ -1,6 +1,7 @@
 ## 0.1.3
 
 - Add router stack observer runtime support for generated routing.
+- Unwrap deprecated `StateEffect` values before effect delivery.
 - Keep v0.1.3 routing, state, and i18n runtime APIs aligned with the Dust CLI.
 
 ## 0.1.2

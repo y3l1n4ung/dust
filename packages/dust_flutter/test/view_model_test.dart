@@ -4,16 +4,21 @@ import 'package:dust_flutter/state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final class TestArgs extends ViewModelArgs {
-  const TestArgs();
+  const TestArgs({super.observer});
 }
 
 final class CounterViewModel extends ViewModelBase<int, TestArgs> {
-  CounterViewModel() : super(const TestArgs(), initialState: 0);
+  CounterViewModel({StateObserver? observer})
+      : super(TestArgs(observer: observer), initialState: 0);
 
   static const Object testAction = Object();
 
   void setCount(int next) {
     emit(next);
+  }
+
+  void emitTestEffect(Object effect) {
+    emitEffect(effect);
   }
 
   ViewModelActionToken beginTestAction() {
@@ -37,6 +42,18 @@ final class InitViewModel extends ViewModelBase<int, TestArgs> {
     final completer = Completer<void>();
     initCompleters.add(completer);
     return completer.future;
+  }
+}
+
+final class RecordingStateObserver implements StateObserver {
+  final effects = <Object>[];
+
+  @override
+  void onChanged(Object viewModel, Object? previous, Object? next) {}
+
+  @override
+  void onEffect(Object viewModel, Object effect) {
+    effects.add(effect);
   }
 }
 
@@ -99,5 +116,40 @@ void main() {
     await viewModel.init();
 
     expect(viewModel.initCalls, 2);
+  });
+
+  test('emitEffect delivers raw effect to stream and observer', () async {
+    final observer = RecordingStateObserver();
+    final viewModel = CounterViewModel(observer: observer);
+    final effects = <Object>[];
+    final subscription = viewModel.effects.listen(effects.add);
+
+    addTearDown(viewModel.dispose);
+    addTearDown(subscription.cancel);
+
+    final effect = Object();
+    viewModel.emitTestEffect(effect);
+    await pumpEventQueue();
+
+    expect(effects.single, same(effect));
+    expect(observer.effects.single, same(effect));
+  });
+
+  test('emitEffect unwraps deprecated StateEffect wrapper', () async {
+    final observer = RecordingStateObserver();
+    final viewModel = CounterViewModel(observer: observer);
+    final effects = <Object>[];
+    final subscription = viewModel.effects.listen(effects.add);
+
+    addTearDown(viewModel.dispose);
+    addTearDown(subscription.cancel);
+
+    final effect = Object();
+    // ignore: deprecated_member_use_from_same_package
+    viewModel.emitTestEffect(StateEffect(effect));
+    await pumpEventQueue();
+
+    expect(effects.single, same(effect));
+    expect(observer.effects.single, same(effect));
   });
 }

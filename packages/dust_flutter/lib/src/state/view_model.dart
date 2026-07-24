@@ -52,7 +52,14 @@ final class SilentStateObserver implements StateObserver {
   void onEffect(Object viewModel, Object effect) {}
 }
 
-/// One-shot event emitted by a [ViewModelBase].
+/// Deprecated compatibility wrapper for one-shot effects.
+///
+/// Pass the payload object directly to `emitEffect(...)` instead. Dust unwraps
+/// [StateEffect] before delivery so older code keeps working.
+@Deprecated(
+  'Pass the effect object directly to emitEffect(...). '
+  'StateEffect is unwrapped for compatibility and will be removed.',
+)
 final class StateEffect {
   /// Creates an effect payload.
   const StateEffect(this.value);
@@ -230,8 +237,9 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
   @protected
   void emitEffect(Object effect) {
     if (_isDisposed) return;
-    observer?.onEffect(this, effect);
-    _effects.add(effect);
+    final deliveredEffect = _unwrapEffect(effect);
+    observer?.onEffect(this, deliveredEffect);
+    _effects.add(deliveredEffect);
   }
 
   /// Starts or supersedes an async action identified by [key].
@@ -298,6 +306,12 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     unawaited(_effects.close());
     super.dispose();
   }
+}
+
+Object _unwrapEffect(Object effect) {
+  // ignore: deprecated_member_use_from_same_package
+  if (effect case StateEffect(:final value)) return value;
+  return effect;
 }
 
 /// Base class used by generated async Dust view model bases.
