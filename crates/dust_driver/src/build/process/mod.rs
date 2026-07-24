@@ -11,7 +11,7 @@ use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
 use dust_parser_dart::ParsedDartFileSurface;
 use dust_plugin_api::{LibraryAnalysisSnapshot, WorkspaceAnalysis};
-use dust_text::{FileId, LineIndex};
+use dust_text::FileId;
 use dust_workspace::SourceLibrary;
 
 use crate::result::{BuildArtifact, DiagnosticFile};
@@ -173,16 +173,6 @@ impl PendingLibrary {
             analysis_snapshot: LibraryAnalysisSnapshot::default(),
         }
     }
-}
-
-/// Builds a diagnostic file handle with a precomputed line index.
-pub(crate) fn build_diagnostic_file(
-    file_id: FileId,
-    library: &SourceLibrary,
-    source: Arc<str>,
-    line_index: LineIndex,
-) -> DiagnosticFile {
-    DiagnosticFile::with_line_index(file_id, library.source_path.clone(), source, line_index)
 }
 
 /// Builds a user-facing artifact summary for a source library.
