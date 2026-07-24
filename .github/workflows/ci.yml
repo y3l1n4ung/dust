@@ -127,6 +127,12 @@ jobs:
         if: needs.changes.outputs.docs_only != 'true'
         run: ./scripts/rust/format.sh --check
 
+      - name: Validate compatibility contract
+        if: needs.changes.outputs.docs_only != 'true'
+        run: |
+          python3 scripts/validate_compatibility_contract.py --self-test
+          python3 scripts/validate_compatibility_contract.py
+
       - name: Install cargo-nextest
         if: needs.changes.outputs.docs_only != 'true'
         uses: taiki-e/install-action@16a76bb73558798e4218983c40c25fee9f2f99a8 # nextest

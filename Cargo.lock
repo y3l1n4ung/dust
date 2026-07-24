@@ -298,7 +298,7 @@ checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "dust_cache"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_plugin_api",
  "serde",
@@ -308,7 +308,7 @@ dependencies = [
 
 [[package]]
 name = "dust_cli"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "clap",
  "dust_diagnostics",
@@ -321,7 +321,7 @@ dependencies = [
 
 [[package]]
 name = "dust_dart_emit"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_dart_syntax",
  "dust_ir",
@@ -332,11 +332,11 @@ dependencies = [
 
 [[package]]
 name = "dust_dart_syntax"
-version = "0.1.2"
+version = "0.1.3"
 
 [[package]]
 name = "dust_db_plugin"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_dart_emit",
  "dust_dart_syntax",
@@ -353,14 +353,14 @@ dependencies = [
 
 [[package]]
 name = "dust_diagnostics"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_text",
 ]
 
 [[package]]
 name = "dust_driver"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_cache",
  "dust_dart_emit",
@@ -386,7 +386,7 @@ dependencies = [
 
 [[package]]
 name = "dust_emitter"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_dart_emit",
  "dust_diagnostics",
@@ -400,7 +400,7 @@ dependencies = [
 
 [[package]]
 name = "dust_http_client_plugin"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_dart_emit",
  "dust_diagnostics",
@@ -415,7 +415,7 @@ dependencies = [
 
 [[package]]
 name = "dust_ir"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_dart_syntax",
  "dust_diagnostics",
@@ -424,7 +424,7 @@ dependencies = [
 
 [[package]]
 name = "dust_parser_dart"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_dart_syntax",
  "dust_diagnostics",
@@ -433,7 +433,7 @@ dependencies = [
 
 [[package]]
 name = "dust_parser_dart_ts"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_dart_syntax",
  "dust_diagnostics",
@@ -445,7 +445,7 @@ dependencies = [
 
 [[package]]
 name = "dust_plugin_api"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_diagnostics",
  "dust_ir",
@@ -456,7 +456,7 @@ dependencies = [
 
 [[package]]
 name = "dust_plugin_derive"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_dart_emit",
  "dust_diagnostics",
@@ -470,7 +470,7 @@ dependencies = [
 
 [[package]]
 name = "dust_plugin_serde"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_dart_emit",
  "dust_dart_syntax",
@@ -485,7 +485,7 @@ dependencies = [
 
 [[package]]
 name = "dust_resolver"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_diagnostics",
  "dust_ir",
@@ -496,7 +496,7 @@ dependencies = [
 
 [[package]]
 name = "dust_route_plugin"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_dart_emit",
  "dust_diagnostics",
@@ -511,7 +511,7 @@ dependencies = [
 
 [[package]]
 name = "dust_state_plugin"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_dart_emit",
  "dust_diagnostics",
@@ -526,11 +526,11 @@ dependencies = [
 
 [[package]]
 name = "dust_text"
-version = "0.1.2"
+version = "0.1.3"
 
 [[package]]
 name = "dust_workspace"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "dust_diagnostics",
  "serde",
