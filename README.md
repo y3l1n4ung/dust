@@ -38,16 +38,8 @@ verify the installation:
 dust --version
 ```
 
-To check for a newer CLI and upgrade the installed binary later:
-
-```bash
-dust upgrade --check
-dust upgrade
-```
-
-`dust upgrade` downloads Dust release assets and `SHA256SUMS.txt` from this
-GitHub repository, verifies the archive checksum, and updates the CLI binary
-only. It does not change Dart or Flutter package dependencies.
+Dust packages have their own pub versions. When changing the CLI or packages,
+check the [compatibility guide](docs/usage/compatibility.md).
 
 ## Quick Start
 
@@ -115,6 +107,7 @@ Stable features keep their documented authoring APIs compatible throughout
 ## Documentation
 
 - [Usage guides](docs/usage/README.md)
+- [CLI and package compatibility](docs/usage/compatibility.md)
 - [Dart package](packages/dust_dart/README.md)
 - [Flutter package](packages/dust_flutter/README.md)
 - [Database runtime](packages/dust_db_sqlite3/README.md)

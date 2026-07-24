@@ -18,6 +18,8 @@ Each guide shows the handwritten API first and links to a working example.
 
 Install the CLI from the [installation guide](../../README.md#installation).
 Each feature guide contains its exact package command and setup requirements.
+When changing Dust versions, check the
+[CLI and package compatibility guide](./compatibility.md).
 
 ## CLI Overview
 
@@ -39,7 +41,8 @@ Run `dust --help` or `dust <command> --help` for the current options.
 
 `dust upgrade --check` reads release metadata only. `dust upgrade --dry-run`
 downloads and verifies the selected release without replacing the installed
-binary.
+binary. Package compatibility is tracked separately in the
+[compatibility contract](./compatibility.md).
 
 > [!NOTE]
 > Normal `dust build` does not generate `@SqlxDatabase` or `@SqlxDao` output.

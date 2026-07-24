@@ -18,6 +18,8 @@ dart pub add dust_dart
 
 Install the Dust CLI by following the
 [main installation guide](https://github.com/y3l1n4ung/dust#installation).
+If the CLI and package versions differ, check the
+[compatibility guide](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/compatibility.md).
 
 ## Quick Start
 

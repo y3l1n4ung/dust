@@ -19,6 +19,8 @@ dart pub add dust_dart dust_db_sqlite3
 
 Install the Dust CLI by following the
 [main installation guide](https://github.com/y3l1n4ung/dust#installation).
+If the CLI and package versions differ, check the
+[compatibility guide](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/compatibility.md).
 
 The driver uses Dart FFI and supports native Dart and Flutter targets. It is not
 intended for web applications.

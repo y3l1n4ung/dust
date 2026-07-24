@@ -82,6 +82,21 @@ scripts/lint.sh --scope rust
 scripts/test.sh --scope packages
 ```
 
+### Package Version Rule
+
+`packages/` contains publishable Dart and Flutter runtime packages. If a PR
+changes a package's `lib/` source, public API, dependency constraints, runtime
+behavior, or compatibility with generated code, update the same package's
+`pubspec.yaml` version and `CHANGELOG.md` in that PR.
+
+Docs-only and tests-only edits inside a package do not require a package version
+bump unless they document or validate behavior that will ship in a new package
+release.
+
+When generated code depends on a package version, also update
+[`compatibility/dust-cli-packages.json`](compatibility/dust-cli-packages.json)
+and the [compatibility guide](docs/usage/compatibility.md).
+
 ---
 
 ## 📚 Documentation Rules

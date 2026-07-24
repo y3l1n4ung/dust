@@ -1,3 +1,8 @@
+## 0.1.3
+
+- Add router stack observer runtime support for generated routing.
+- Keep v0.1.3 routing, state, and i18n runtime APIs aligned with the Dust CLI.
+
 ## 0.1.2
 
 - Make generated route `push()` calls awaitable and complete them when the
