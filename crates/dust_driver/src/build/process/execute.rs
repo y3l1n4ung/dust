@@ -13,7 +13,7 @@ use crate::lower::lower_library_with_catalog;
 
 use super::{
     BuildOutcome, LoweringConfig, PendingLibrary, PreprocessedLibrary, ProcessingConfig,
-    build_diagnostic_file, emit_or_write_library,
+    emit_or_write_library,
 };
 
 /// Processes one pending library and reports progress when it finishes.
@@ -90,13 +90,11 @@ pub(crate) fn process_library_from_source(
     processing: &ProcessingConfig<'_>,
 ) -> BuildOutcome {
     let mut diagnostics = Vec::new();
-    let source_text = SourceText::new(file_id, Arc::clone(&source));
-    let diagnostic_file =
-        build_diagnostic_file(file_id, library, source, source_text.line_index().clone());
     let lowered_library = if let Some(lowered) = preprocessed.lowered {
         lowered
     } else {
         let parsed = preprocessed.parsed.unwrap_or_else(|| {
+            let source_text = SourceText::new(file_id, Arc::clone(&source));
             let parsed = parse_file_with_backend(backend, &source_text, ParseOptions::default());
             diagnostics.extend(parsed.diagnostics);
             parsed.library
@@ -110,7 +108,15 @@ pub(crate) fn process_library_from_source(
         };
         match resolve_and_lower_library(file_id, library, &parsed, &lowering, &mut diagnostics) {
             Some(library) => library,
-            None => return BuildOutcome::failed(library, diagnostics, Some(diagnostic_file)),
+            None => {
+                let diagnostic_file = diagnostic_file_if_needed(
+                    file_id,
+                    library,
+                    Arc::clone(&source),
+                    diagnostics.iter().any(Diagnostic::has_labels),
+                );
+                return BuildOutcome::failed(library, diagnostics, diagnostic_file);
+            }
         }
     };
 
@@ -122,11 +128,31 @@ pub(crate) fn process_library_from_source(
                     "failed to write `{}`: {error}",
                     library.output_path.display()
                 )));
-                return BuildOutcome::failed(library, diagnostics, Some(diagnostic_file));
+                let diagnostic_file = diagnostic_file_if_needed(
+                    file_id,
+                    library,
+                    Arc::clone(&source),
+                    diagnostics.iter().any(Diagnostic::has_labels),
+                );
+                return BuildOutcome::failed(library, diagnostics, diagnostic_file);
             }
         };
 
-    finish_success(library, diagnostics, Some(diagnostic_file), output)
+    let needs_diagnostic_file = diagnostics.iter().any(Diagnostic::has_labels)
+        || output.diagnostics.iter().any(Diagnostic::has_labels);
+    let diagnostic_file =
+        diagnostic_file_if_needed(file_id, library, source, needs_diagnostic_file);
+    finish_success(library, diagnostics, diagnostic_file, output)
+}
+
+/// Builds source context only for diagnostics that need labeled rendering.
+fn diagnostic_file_if_needed(
+    file_id: FileId,
+    library: &SourceLibrary,
+    source: Arc<str>,
+    needed: bool,
+) -> Option<crate::result::DiagnosticFile> {
+    needed.then(|| crate::result::DiagnosticFile::new(file_id, library.source_path.clone(), source))
 }
 
 /// Resolves parser output and lowers it into Dust IR.

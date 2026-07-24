@@ -45,7 +45,9 @@ impl DartWriter {
 
     /// Writes one line with the current indentation level applied.
     fn write_indented_line(&mut self, line: &str) {
-        self.buffer.push_str(&" ".repeat(self.indent * 2));
+        for _ in 0..self.indent {
+            self.buffer.push_str("  ");
+        }
         self.buffer.push_str(line);
         self.buffer.push('\n');
     }
