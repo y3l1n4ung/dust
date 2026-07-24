@@ -196,6 +196,8 @@ Use effects for one-shot UI work such as snackbars or navigation:
 void saveCompleted() => emitEffect(const ProfileSaved());
 ```
 
+Emit the domain event directly. Do not wrap it in `StateEffect`.
+
 Listen with the generated widget:
 
 ```dart
@@ -213,6 +215,11 @@ ProfileViewModelListener(
 
 Effects do not change state, and the listener does not rebuild its child when
 an effect arrives.
+
+> [!NOTE]
+> `StateEffect` is kept only for compatibility. If old code emits
+> `StateEffect(ProfileSaved())`, Dust unwraps it before delivery so generated
+> listeners still receive `ProfileSaved`.
 
 ## Async ViewModels
 
