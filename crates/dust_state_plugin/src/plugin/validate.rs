@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use dust_diagnostics::Diagnostic;
-use dust_ir::{ClassIr, DartFileIr};
+use dust_diagnostics::{Diagnostic, SourceLabel};
+use dust_ir::{ClassIr, DartFileIr, MethodIr, TraitApplicationIr};
 
 use super::{
     model::ViewModelMode,
@@ -79,13 +79,12 @@ pub(crate) fn validate_library_state(library: &DartFileIr) -> Vec<Diagnostic> {
         }
 
         if annotation.mode == ViewModelMode::Sync
-            && let Some(state_class) = library
-                .classes
-                .iter()
-                .find(|candidate| candidate.name == annotation.state_type)
-            && annotation.initial_source.is_none()
+            && let Some(state_class) = local_state_class(library, &annotation.state_type)
         {
-            validate_default_initial_state(class, state_class, &mut diagnostics);
+            if annotation.initial_source.is_none() {
+                validate_default_initial_state(class, state_class, &mut diagnostics);
+            }
+            validate_state_value_equality(class, state_class, &mut diagnostics);
         }
 
         if let Some(args_type) = annotation.args_type.as_deref() {
@@ -94,6 +93,14 @@ pub(crate) fn validate_library_state(library: &DartFileIr) -> Vec<Diagnostic> {
     }
 
     diagnostics
+}
+
+/// Finds a state class declared in the same library.
+fn local_state_class<'a>(library: &'a DartFileIr, state_type: &str) -> Option<&'a ClassIr> {
+    library
+        .classes
+        .iter()
+        .find(|candidate| candidate.name == state_type)
 }
 
 /// Ensures Dust can create a default initial state when no `initial` is given.
@@ -135,6 +142,45 @@ fn validate_default_initial_state(
             view_model.name, state_class.name
         )));
     }
+}
+
+/// Warns when a local sync state class does not expose value equality.
+fn validate_state_value_equality(
+    view_model: &ClassIr,
+    state_class: &ClassIr,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    if has_eq_derive(&state_class.traits) || has_manual_equality_operator(&state_class.methods) {
+        return;
+    }
+
+    diagnostics.push(
+        Diagnostic::warning(format!(
+            "view model `{}` state `{}` should implement value equality",
+            view_model.name, state_class.name
+        ))
+        .with_label(SourceLabel::new(
+            state_class.span.file_id,
+            state_class.span.range,
+            "state changes are compared with `==`",
+        ))
+        .with_note("Add `Eq()` to the state class derive list, or implement `operator ==` and `hashCode` manually."),
+    );
+}
+
+/// Returns whether the state class has Dust's Eq derive.
+fn has_eq_derive(traits: &[TraitApplicationIr]) -> bool {
+    traits.iter().any(|application| {
+        application.symbol.0 == "dust_dart::Eq"
+            || application.symbol.0.rsplit("::").next() == Some("Eq")
+    })
+}
+
+/// Returns whether the state class defines equality itself.
+fn has_manual_equality_operator(methods: &[MethodIr]) -> bool {
+    methods
+        .iter()
+        .any(|method| !method.is_static && matches!(method.name.as_str(), "==" | "operator =="))
 }
 
 /// Validates that a declared args type is available and extends `ViewModelArgs`.

@@ -106,6 +106,12 @@ class AppViewModel extends $AppViewModel {
 }
 ```
 
+> [!TIP]
+> Prefer `Eq()` on sync state classes. Dust compares state with `==` to skip
+> unchanged updates, inherited-widget notifications, and selector rebuilds. If a
+> local sync state class has neither `Eq()` nor a manual `operator ==`, Dust
+> warns because identity equality can rebuild widgets for unchanged field values.
+
 ## Scope Lifecycle
 
 The default generated scope owns the ViewModel, calls `init()`, and disposes it.

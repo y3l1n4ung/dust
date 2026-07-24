@@ -1,17 +1,20 @@
+#[path = "validation/equality.rs"]
+mod equality;
+
 use dust_ir::{ConstructorIr, ConstructorParamIr, FieldIr, ParamKind, TypeIr};
 use dust_plugin_api::DustPlugin;
 use dust_state_plugin::register_plugin;
 
 use super::support::{
     args_class, enum_type, library_with_classes, library_with_classes_and_enums, state_class,
-    view_model_class,
+    state_class_with_eq, view_model_class,
 };
 
 #[test]
 fn accepts_valid_view_model() {
     let plugin = register_plugin();
     let diagnostics = plugin.validate(&library_with_classes(vec![
-        state_class(),
+        state_class_with_eq(),
         args_class(),
         view_model_class(
             "TaskBoardViewModel",
