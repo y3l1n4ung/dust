@@ -1,6 +1,9 @@
 use std::{fs, path::Path};
 
+use dust_cli::run_cli;
 use serde_json::Value;
+
+use super::helpers::{make_workspace, write_file};
 
 #[test]
 fn compatibility_contract_covers_v013_packages() {
@@ -65,6 +68,32 @@ fn ci_runs_compatibility_script_self_test_and_real_check() {
     assert!(workflow.contains("scripts/validate_compatibility_contract.py"));
 }
 
+#[test]
+fn cli_build_renders_unsupported_package_version() {
+    let workspace = make_workspace();
+    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.2")]);
+    write_file(
+        &workspace.path().join("lib/user.dart"),
+        "part 'user.g.dart';\n\
+         @ToString()\n\
+         class User {\n\
+           final String id;\n\
+           const User(this.id);\n\
+         }\n",
+    );
+
+    let run = run_cli(["build", "--root", workspace.path().to_str().unwrap()]);
+
+    assert_ne!(run.exit_code, 0);
+    assert!(run.stdout.is_empty());
+    assert!(run.stderr.contains("unsupported Dust package version"));
+    assert!(run.stderr.contains("CLI 0.1.3"));
+    assert!(run.stderr.contains("`dust_dart` >=0.1.3 <0.2.0"));
+    assert!(run.stderr.contains("resolves 0.1.2"));
+    assert!(run.stderr.contains("Upgrade the Dust package dependency"));
+    assert!(!workspace.path().join("lib/user.g.dart").exists());
+}
+
 fn repo_root() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -105,4 +134,29 @@ fn workspace_version(path: &Path) -> String {
     }
 
     panic!("workspace package version missing");
+}
+
+fn write_resolved_dust_packages(root: &Path, packages: &[(&str, &str)]) {
+    for (name, version) in packages {
+        write_file(
+            &root.join(format!("deps/{name}/pubspec.yaml")),
+            &format!("name: {name}\nversion: {version}\n"),
+        );
+    }
+
+    let package_entries = packages
+        .iter()
+        .map(|(name, _)| {
+            format!(
+                r#"{{"name":"{name}","rootUri":"../deps/{name}","packageUri":"lib/","languageVersion":"3.6"}}"#
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    write_file(
+        &root.join(".dart_tool/package_config.json"),
+        &format!(
+            r#"{{"configVersion":2,"packages":[{{"name":"dust_test","rootUri":"../","packageUri":"lib/","languageVersion":"3.6"}},{package_entries}]}}"#
+        ),
+    );
 }

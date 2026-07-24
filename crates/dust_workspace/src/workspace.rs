@@ -3,8 +3,9 @@ use std::path::{Path, PathBuf};
 use dust_diagnostics::Diagnostic;
 
 use crate::{
-    DustConfig, PackageConfig, SupportedAnnotations, detect_workspace_root, discover_libraries,
-    load_dust_config, load_is_flutter_package, load_package_config, load_package_name,
+    DustConfig, PackageConfig, SupportedAnnotations, detect_workspace_root,
+    discover_libraries_with_usage, load_dust_config, load_is_flutter_package, load_package_config,
+    load_package_name,
 };
 
 /// One source library selected for Dust processing.
@@ -33,6 +34,8 @@ pub struct WorkspacePlan {
     pub dust_config: DustConfig,
     /// Candidate Dust source libraries in deterministic order.
     pub libraries: Vec<SourceLibrary>,
+    /// Dust runtime packages imported by source files under `lib/`.
+    pub dust_packages: Vec<String>,
 }
 
 /// Discovers the workspace root, package configuration, and candidate source libraries.
@@ -45,7 +48,7 @@ pub fn discover_workspace(
     let is_flutter_package = load_is_flutter_package(&package_root)?;
     let package_config = load_package_config(&package_root)?;
     let dust_config = load_dust_config(&package_root)?;
-    let libraries = discover_libraries(&package_root, supported_annotations)?;
+    let library_discovery = discover_libraries_with_usage(&package_root, supported_annotations)?;
 
     Ok(WorkspacePlan {
         cache_root: package_root.clone(),
@@ -54,6 +57,7 @@ pub fn discover_workspace(
         package_root,
         package_config,
         dust_config,
-        libraries,
+        libraries: library_discovery.libraries,
+        dust_packages: library_discovery.dust_packages,
     })
 }

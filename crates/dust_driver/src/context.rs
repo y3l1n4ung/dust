@@ -12,6 +12,7 @@ use crate::{
         read_workspace_config_hash, registry_for_selection,
     },
     catalog::build_symbol_catalog,
+    compatibility::validate_workspace_package_versions,
     result::CacheReport,
 };
 
@@ -68,6 +69,7 @@ impl CachedDriverContext {
             registry,
             catalog,
         } = DriverContext::load(cwd, selection)?;
+        validate_workspace_package_versions(&workspace)?;
         let tool_hash = codegen_tool_hash_for_selection(selection);
         let package_config_hash = read_workspace_config_hash(
             &workspace.package_config.path,

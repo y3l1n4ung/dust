@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeSet, HashMap, HashSet},
     fs,
     path::{Path, PathBuf},
 };
@@ -10,6 +10,13 @@ use crate::{
     SourceLibrary, is_generated_primary_file, load_dust_config, load_package_name,
     primary_output_path,
 };
+
+/// Dust packages whose runtime versions affect generated Dart output.
+const DUST_RUNTIME_PACKAGES: &[(&str, &str)] = &[
+    ("dust_dart", "package:dust_dart/"),
+    ("dust_flutter", "package:dust_flutter/"),
+    ("dust_db_sqlite3", "package:dust_db_sqlite3/"),
+];
 
 /// Deduplicated set of annotation names owned by Dust plugins.
 ///
@@ -51,6 +58,15 @@ where
     }
 }
 
+/// Libraries selected for generation plus Dust package imports found during discovery.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LibraryDiscovery {
+    /// Candidate Dust source libraries in deterministic order.
+    pub libraries: Vec<SourceLibrary>,
+    /// Dust package names imported by source files under `lib/`.
+    pub dust_packages: Vec<String>,
+}
+
 /// Recursively discovers candidate Dust libraries under `lib/**/*.dart`.
 ///
 /// The scan is deterministic and only keeps source files that:
@@ -61,11 +77,22 @@ pub fn discover_libraries(
     root: &Path,
     supported_annotations: &SupportedAnnotations,
 ) -> Result<Vec<SourceLibrary>, Diagnostic> {
+    Ok(discover_libraries_with_usage(root, supported_annotations)?.libraries)
+}
+
+/// Discovers candidate Dust libraries and package imports in one source scan.
+pub fn discover_libraries_with_usage(
+    root: &Path,
+    supported_annotations: &SupportedAnnotations,
+) -> Result<LibraryDiscovery, Diagnostic> {
     let dust_config = load_dust_config(root)?;
     let package_name = load_package_name(root)?;
     let lib_dir = root.join("lib");
     if !lib_dir.is_dir() {
-        return Ok(Vec::new());
+        return Ok(LibraryDiscovery {
+            libraries: Vec::new(),
+            dust_packages: Vec::new(),
+        });
     }
 
     let mut dart_files = Vec::new();
@@ -81,6 +108,7 @@ pub fn discover_libraries(
             .filter(|path| !is_generated_primary_file(path, &dust_config.outputs.primary_suffix)),
         supported_annotations,
     )?;
+    let dust_packages = imported_dust_packages(&candidates);
     let dust_aware = dust_aware_files(&candidates);
 
     let mut libraries = Vec::new();
@@ -99,7 +127,10 @@ pub fn discover_libraries(
         }
     }
 
-    Ok(libraries)
+    Ok(LibraryDiscovery {
+        libraries,
+        dust_packages,
+    })
 }
 
 /// One Dart source file considered during discovery.
@@ -108,6 +139,8 @@ struct CandidateFile {
     path: PathBuf,
     /// Whether the file directly imports a Dust package.
     direct_dust: bool,
+    /// Dust runtime packages imported by this file.
+    dust_packages: Vec<&'static str>,
     /// Local files imported or exported by this file.
     local_imports: Vec<PathBuf>,
     /// Whether the file contains a supported annotation name.
@@ -135,12 +168,24 @@ where
                 ))
             })?;
             Ok(CandidateFile {
-                direct_dust: contains_dust_package(&source),
+                direct_dust: contains_dust_annotation_package(&source),
+                dust_packages: dust_package_imports(&source),
                 local_imports: local_imports(root, lib_dir, package_name, &path, &source),
                 has_supported_annotation: has_supported_annotation(&source, supported_annotations),
                 path,
             })
         })
+        .collect()
+}
+
+/// Returns the deterministic set of Dust package imports found during discovery.
+fn imported_dust_packages(candidates: &[CandidateFile]) -> Vec<String> {
+    candidates
+        .iter()
+        .flat_map(|candidate| candidate.dust_packages.iter().copied())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .map(str::to_owned)
         .collect()
 }
 
@@ -337,7 +382,15 @@ fn annotation_short_names(source: &str) -> impl Iterator<Item = &str> {
     })
 }
 
-/// Returns whether source imports or exports a Dust package URI.
-fn contains_dust_package(source: &str) -> bool {
+/// Returns whether source imports or exports a Dust annotation package URI.
+fn contains_dust_annotation_package(source: &str) -> bool {
     source.contains("package:dust_dart/") || source.contains("package:dust_flutter/")
+}
+
+/// Returns Dust runtime package imports found in source.
+fn dust_package_imports(source: &str) -> Vec<&'static str> {
+    DUST_RUNTIME_PACKAGES
+        .iter()
+        .filter_map(|(package, import_uri)| source.contains(import_uri).then_some(*package))
+        .collect()
 }

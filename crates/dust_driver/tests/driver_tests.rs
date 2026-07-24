@@ -45,6 +45,9 @@ mod build_validation;
 #[path = "driver_tests/commands.rs"]
 mod commands;
 
+#[path = "driver_tests/compatibility.rs"]
+mod compatibility;
+
 #[path = "driver_tests/watch.rs"]
 mod watch;
 

@@ -10,6 +10,8 @@ mod catalog;
 mod check;
 /// Clean command support for generated files and cache state.
 mod clean;
+/// Dust CLI and Dart package compatibility checks.
+mod compatibility;
 /// Shared workspace, registry, and cache loading context.
 mod context;
 /// Doctor command diagnostics for workspace setup.
