@@ -9,6 +9,15 @@ class MockRepository implements ShoppingRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+final class CreateFailure implements Exception {
+  const CreateFailure(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'CreateFailure: $message';
+}
+
 class TestProductsViewModel extends ProductsViewModel {
   TestProductsViewModel(super.args);
 
@@ -184,5 +193,21 @@ void main() {
 
     expect(first.disposeCalls, 1);
     expect(second.disposeCalls, 1);
+  });
+
+  testWidgets('owned scope preserves create exception type', (tester) async {
+    const failure = CreateFailure('dependency missing');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ProductsViewModelScope(
+          args: (_) => ProductsViewModelArgs(repository: MockRepository()),
+          create: (context, args) => throw failure,
+          child: const SizedBox.shrink(),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), same(failure));
   });
 }

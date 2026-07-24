@@ -240,13 +240,7 @@ class _ShoppingChatViewModelScopeState extends State<ShoppingChatViewModelScope>
     try {
       created = create(context, argsFactory(context));
     } catch (error, stackTrace) {
-      Error.throwWithStackTrace(
-        StateError(
-          'ShoppingChatViewModelScope failed to create its view model. Check the generated '
-          'scope args/create dependency injection. Original error: $error',
-        ),
-        stackTrace,
-      );
+      Error.throwWithStackTrace(error, stackTrace);
     }
     return created;
   }
