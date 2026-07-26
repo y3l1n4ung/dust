@@ -8,8 +8,8 @@ use dust_plugin_api::{
 use dust_plugin_derive::register_plugin;
 
 use crate::{
-    support::members_for_class,
     support::span,
+    support::{interfaces_for_class, members_for_class},
     validate_support::{class, field, library, validate},
 };
 
@@ -26,8 +26,10 @@ fn emits_validate_for_string_number_and_matching_fields() {
         .into_iter()
         .next()
         .expect("plugin must generate one contribution");
+    let interfaces = interfaces_for_class(&contribution, "SignupRequest");
     let members = members_for_class(&contribution, "SignupRequest");
 
+    assert_eq!(interfaces, &["Validatable".to_owned()]);
     assert_eq!(
         members,
         [r#"/// Validates this `SignupRequest`.

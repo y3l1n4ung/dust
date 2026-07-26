@@ -4,6 +4,7 @@
 - Keep Dart ecosystem `toJson` and `fromJson` mirrors available through
   extension APIs.
 - Refine Database runtime contracts and typed query helper support.
+- Add `Validatable` for generated validation APIs.
 
 ## 0.1.0
 

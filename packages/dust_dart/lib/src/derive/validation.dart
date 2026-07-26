@@ -118,6 +118,15 @@ sealed class ValidationResult {
   List<ValidationError> get errors;
 }
 
+/// Runtime contract implemented by generated `Validate()` mixins.
+abstract interface class Validatable {
+  /// Validates this value and returns all validation errors.
+  ValidationResult validate();
+
+  /// Throws [ValidationException] when this value is invalid.
+  void validateOrThrow();
+}
+
 /// Successful validation result.
 final class Valid extends ValidationResult {
   /// Creates one successful validation result.

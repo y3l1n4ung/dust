@@ -98,6 +98,13 @@ void main() {
     expect(exception.toString(), 'ValidationException($errors)');
   });
 
+  test('Validatable exposes the generated validation API shape', () {
+    const validatable = _AlwaysValid();
+
+    expect(validatable.validate(), const Valid());
+    expect(validatable.validateOrThrow, returnsNormally);
+  });
+
   test('ValidationHelper validates email and URL shapes', () {
     expect(ValidationHelper.isEmail('dust@example.com'), isTrue);
     expect(ValidationHelper.isEmail('dust'), isFalse);
@@ -113,3 +120,13 @@ ValidationError? _customValidator(String value) {
 }
 
 const _nameRequiredError = ValidationError(field: 'name', message: 'Required');
+
+final class _AlwaysValid implements Validatable {
+  const _AlwaysValid();
+
+  @override
+  ValidationResult validate() => const Valid();
+
+  @override
+  void validateOrThrow() {}
+}

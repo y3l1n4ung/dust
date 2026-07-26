@@ -110,3 +110,15 @@ pub(crate) fn members_for_class<'a>(
         .map(|entry| entry.members.as_slice())
         .unwrap_or(&[])
 }
+
+pub(crate) fn interfaces_for_class<'a>(
+    contribution: &'a PluginContribution,
+    class_name: &str,
+) -> &'a [String] {
+    contribution
+        .mixin_members
+        .iter()
+        .find(|entry| entry.class_name == class_name)
+        .map(|entry| entry.interfaces.as_slice())
+        .unwrap_or(&[])
+}

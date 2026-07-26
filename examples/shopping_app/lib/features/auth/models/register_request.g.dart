@@ -13,7 +13,7 @@
 
 part of 'register_request.dart';
 
-mixin _$RegisterRequest {
+mixin _$RegisterRequest implements Validatable {
   /// Validates this `RegisterRequest`.
   ///
   /// Usage:

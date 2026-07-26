@@ -13,7 +13,7 @@
 
 part of 'checkout_shipping_request.dart';
 
-mixin _$CheckoutShippingRequest {
+mixin _$CheckoutShippingRequest implements Validatable {
   /// Validates this `CheckoutShippingRequest`.
   ///
   /// Usage:

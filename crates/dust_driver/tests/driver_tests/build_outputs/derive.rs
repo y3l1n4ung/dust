@@ -249,7 +249,7 @@ fn build_writes_dart_validate_output_without_form_helpers() {
         generated_output(
             r#"part of 'signup.dart';
 
-mixin _$SignupRequest {
+mixin _$SignupRequest implements Validatable {
   /// Validates this `SignupRequest`.
   ///
   /// Usage:
