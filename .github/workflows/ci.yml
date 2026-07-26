@@ -145,6 +145,41 @@ jobs:
         if: needs.changes.outputs.docs_only != 'true'
         run: ./scripts/rust/lint.sh
 
+  dart-compat-fixtures:
+    name: Dart compatibility fixtures
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip docs-only change
+        if: needs.changes.outputs.docs_only == 'true'
+        run: echo "Docs-only change detected; skipping Dart compatibility fixtures."
+
+      - name: Checkout
+        if: needs.changes.outputs.docs_only != 'true'
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        if: needs.changes.outputs.docs_only != 'true'
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Parser language-version fixtures
+        if: needs.changes.outputs.docs_only != 'true'
+        run: cargo test -p dust_parser_dart_ts --test extract_tests dart_versions -- --nocapture
+
+      - name: Parser diagnostics fixtures
+        if: needs.changes.outputs.docs_only != 'true'
+        run: cargo test -p dust_parser_dart_ts --test extract_tests diagnostics -- --nocapture
+
+      - name: Formatter golden fixtures
+        if: needs.changes.outputs.docs_only != 'true'
+        run: cargo test -p dust_driver --test driver_tests build_outputs::dart_versions -- --nocapture
+
+      - name: Formatter idempotency fixtures
+        if: needs.changes.outputs.docs_only != 'true'
+        run: cargo test -p dust_emitter format::tests -- --nocapture
+
   dart-packages:
     name: Dart / ${{ matrix.name }}
     needs: changes
