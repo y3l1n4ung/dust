@@ -257,7 +257,7 @@ The scope automatically calls `load()` through `onInit()`.
 | `retry()` | Calls `refresh()`. |
 | `data` | Returns currently visible data when available. |
 | `visibleData` | Returns current or preserved previous data. |
-| `invalidateSelf()` | Cancels stale work, clears visible data, and starts a fresh `load()`. |
+| `invalidateSelf()` | Invalidates stale load results, clears visible data, and starts a fresh `load()`. |
 
 The generated builder handles the common lifecycle:
 
@@ -280,7 +280,7 @@ preserved value. Read `AsyncState<T>` directly when the UI must distinguish
 ## Stale Async Actions
 
 For asynchronous commands on a synchronous ViewModel, action tokens prevent an
-older request from overwriting newer state:
+older request result from overwriting newer state:
 
 ```dart
 static const _loadProducts = 'load-products';
@@ -294,9 +294,16 @@ Future<void> loadProducts() async {
 ```
 
 Starting the same action key supersedes its previous token. Use
-`cancelAction(key)` to invalidate one action. `invalidateSelf()` invalidates all
-pending action tokens. Sync ViewModels restore the generated initial state. Async
-ViewModels start a fresh load without preserving previous data.
+`cancelAction(key)` to invalidate one action result. `invalidateSelf()`
+invalidates all pending action tokens. Sync ViewModels restore the generated
+initial state. Async ViewModels start a fresh load without preserving previous
+data.
+
+> [!IMPORTANT]
+> Action tokens do not abort running `Future`s, network requests, uploads, or
+> server-side work. They only stop stale results from emitting state after the
+> work completes. Use the client or resource-specific cancellation API when the
+> underlying operation must be aborted.
 
 ## Configuration
 
