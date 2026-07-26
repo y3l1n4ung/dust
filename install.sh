@@ -28,10 +28,7 @@ detect_asset() {
     Linux)
       case "$arch" in
         x86_64) echo "dust-x86_64-unknown-linux-gnu.tar.gz" ;;
-        arm64|aarch64)
-          echo "unsupported architecture: $arch (Linux arm64 release asset is not available yet)" >&2
-          exit 1
-          ;;
+        arm64|aarch64) echo "dust-aarch64-unknown-linux-gnu.tar.gz" ;;
         *) echo "unsupported architecture: $arch" >&2; exit 1 ;;
       esac
       ;;
