@@ -28,17 +28,14 @@ void main() {
             handler.resolve(
               Response<dynamic>(
                 requestOptions: options,
-                data: const <String, dynamic>{},
+                data: <String, Object?>{'id': 'dust', 'name': 'dust'},
               ),
             );
           },
         ),
       );
       final api = HttpFixtureApi(dio);
-      await expectLater(
-        api.fetchUser('dust-id', includePosts: true, traceId: 'dust-id'),
-        throwsA(anything),
-      );
+      await api.fetchUser('dust-id', includePosts: true, traceId: 'dust-id');
       expect(captured, isNotNull);
       final request = captured!;
       expect(request.method, 'GET');

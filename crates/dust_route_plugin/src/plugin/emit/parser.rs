@@ -15,6 +15,8 @@ struct ParserContext {
     cases: String,
     /// Fallback route expression.
     fallback: String,
+    /// Boolean parser helper, emitted only when used by route cases.
+    bool_parser_helper: &'static str,
 }
 
 /// Template context for one route parser branch.
@@ -50,6 +52,12 @@ struct ParseNullCheckContext<'a> {
 
 /// Renders the generated URI parser for all route specs.
 pub(super) fn render_parser(out: &mut String, spec: &RouterSpec) {
+    let cases = spec
+        .routes
+        .iter()
+        .map(render_parse_case)
+        .collect::<Vec<_>>();
+    let uses_bool_parser = cases.iter().any(|case| case.contains("_parseBool("));
     let fallback = spec
         .not_found_route_class
         .as_deref()
@@ -70,11 +78,28 @@ pub(super) fn render_parser(out: &mut String, spec: &RouterSpec) {
         "route_parser",
         include_str!("templates/route_parser.jinja"),
         ParserContext {
-            cases: join_rendered(spec.routes.iter().map(render_parse_case).collect()),
+            cases: join_rendered(cases),
             fallback,
+            bool_parser_helper: bool_parser_helper(uses_bool_parser),
         },
     ));
     out.push_str("\n\n");
+}
+
+/// Renders the boolean parser helper only when a route uses bool decoding.
+fn bool_parser_helper(uses_bool_parser: bool) -> &'static str {
+    if !uses_bool_parser {
+        return "";
+    }
+    r#"
+bool? _parseBool(String? value) {
+  return switch (value) {
+    'true' || '1' => true,
+    'false' || '0' => false,
+    null || '' => null,
+    _ => null,
+  };
+}"#
 }
 
 /// Renders a route constructor used by parser fallback logic.
