@@ -180,6 +180,17 @@ void main() {
     await expectLater(result, completion(isNull));
   });
 
+  test('controller pop completes push future with typed result', () async {
+    final delegate = GeneratedRouterDelegate<_TestRoute>(_runtimeConfig());
+    await delegate.debugWaitForScheduledRefresh();
+
+    final result = delegate.push<bool>(const _TestRoute('/detail'));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(delegate.pop<bool>(true), isTrue);
+    await expectLater(result, completion(isTrue));
+  });
+
   test('ancestor guard redirect prevents unauthorized child restoration',
       () async {
     final calls = <String>[];

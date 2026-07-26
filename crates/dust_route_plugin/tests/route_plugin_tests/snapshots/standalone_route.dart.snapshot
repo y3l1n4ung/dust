@@ -245,7 +245,7 @@ final class AppRoutesNavigator {
   RouteAction<void> projectSettings({required int projectId}) =>
       RouteAction(_router, ProjectSettingsRoute(projectId: projectId));
 
-  void pop() => _router.pop();
+  bool pop<R>([R? result]) => _router.pop<R>(result);
 }
 
 final class RouteAction<R> {

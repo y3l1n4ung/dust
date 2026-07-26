@@ -11,6 +11,8 @@ use super::{formatting::dart_type, parser_decode::encode_param_expr};
 struct RouteClassContext<'a> {
     /// Generated route class name.
     route_class: &'a str,
+    /// Result type returned by route pushes.
+    result_type: &'a str,
     /// Generated constructor declaration.
     constructor: String,
     /// Rendered route parameter fields.
@@ -72,6 +74,7 @@ pub(super) fn render_route_classes(out: &mut String, spec: &RouterSpec) {
             include_str!("templates/route_class.jinja"),
             RouteClassContext {
                 route_class: &route.route_class,
+                result_type: &route.result_type,
                 constructor,
                 fields: render_route_fields(route),
                 location: render_location_getter(route),

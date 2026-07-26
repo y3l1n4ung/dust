@@ -11,7 +11,7 @@ fn collects_route_and_router_workspace_facts_from_canonical_ir() {
     let library = library_with_classes(vec![
         route_page_class(
             "DashboardPage",
-            "('/', name: 'dashboard')",
+            "('/', name: 'dashboard', result: bool)",
             vec![constructor_param("id", TypeIr::string())],
         ),
         router_class("(initial: '/', notFound: '/404')"),
@@ -26,6 +26,7 @@ fn collects_route_and_router_workspace_facts_from_canonical_ir() {
         let route = serde_json::from_str::<Value>(route).unwrap();
         route["class_name"] == "DashboardPage"
             && route["import_uri"] == "package:route_test/route.dart"
+            && route["annotation"]["result_type"] == "bool"
             && route["params"][0]["type_source"] == "String"
     }));
     let routers = snapshot.string_set("dust_route.routers.v1").unwrap();

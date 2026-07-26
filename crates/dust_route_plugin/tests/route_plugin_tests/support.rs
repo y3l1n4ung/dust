@@ -50,6 +50,7 @@ fn typed_route_config(config: &ConfigApplicationIr) -> Option<RouteConfigIr> {
     Some(RouteConfigIr {
         path: config.positional_string(0)?,
         name: config.named_string("name"),
+        result_type: config.named_type("result"),
         shell: config.named_type("shell"),
         guards: config.named_type_list("guards").unwrap_or_default(),
         guards_configured: config.has_named_argument("guards"),

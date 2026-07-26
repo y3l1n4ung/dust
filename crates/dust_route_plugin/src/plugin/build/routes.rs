@@ -43,6 +43,10 @@ pub(super) fn build_route_spec(class: &ClassIr) -> Option<RouteSpec> {
         route_class,
         path: annotation.path.clone(),
         name,
+        result_type: annotation
+            .result_type
+            .clone()
+            .unwrap_or_else(|| "void".to_owned()),
         annotation,
         params,
         import_uri: None,
@@ -111,6 +115,11 @@ fn build_route_spec_from_fact(fact: RouteFact) -> Option<RouteSpec> {
         route_class,
         path: fact.path,
         name: name.clone(),
+        result_type: fact
+            .annotation
+            .result_type
+            .clone()
+            .unwrap_or_else(|| "void".to_owned()),
         annotation: fact.annotation,
         params,
         import_uri: Some(fact.import_uri),
