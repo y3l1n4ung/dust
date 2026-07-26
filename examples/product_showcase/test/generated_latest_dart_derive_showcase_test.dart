@@ -1,5 +1,6 @@
 import 'package:dust_dart/db.dart' show Row;
-import 'package:dust_dart/derive.dart' show Invalid, ValidationError;
+import 'package:dust_dart/derive.dart'
+    show Invalid, Validatable, ValidationError;
 import 'package:test/test.dart';
 
 import 'package:product_showcase/product_showcase.dart';
@@ -109,6 +110,22 @@ void main() {
         ),
       ]),
     );
+  });
+
+  test('latest Dart showcase exposes the Validatable contract', () {
+    final Validatable validatable = LatestDartProductCard(
+      id: 'sku-100',
+      title: 'Runner',
+      productUrl: 'https://dust.dev/products/runner',
+      priceCents: 1299,
+      rating: 4.5,
+      stockCount: 2,
+      active: true,
+      launchedAt: DateTime.utc(2026, 6, 1, 10, 30),
+    );
+
+    expect(validatable.validate().isValid, isTrue);
+    expect(validatable.validateOrThrow, returnsNormally);
   });
 
   test('latest Dart showcase maps database rows through generated FromRow', () {

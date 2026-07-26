@@ -13,7 +13,7 @@
 
 part of 'latest_dart_derive_showcase.dart';
 
-mixin _$LatestDartProductCard implements Serializable {
+mixin _$LatestDartProductCard implements Validatable, Serializable {
   @override
   String toString() {
     final self = this as LatestDartProductCard;

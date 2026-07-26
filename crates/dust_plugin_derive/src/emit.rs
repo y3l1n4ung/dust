@@ -38,6 +38,7 @@ pub(crate) fn emit_library(library: &DartFileIr, plan: &SymbolPlan) -> PluginCon
             copy_with_credit_pending = false;
         }
         if let Some(validate) = emit_validate(library, class, emit_form_helpers) {
+            contribution.push_mixin_interface(&class.name, "Validatable");
             contribution.push_mixin_member(&class.name, validate.mixin_member);
             contribution.support_types.push(validate.support_type);
         }

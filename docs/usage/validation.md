@@ -69,6 +69,15 @@ switch (result) {
 Use `request.validateOrThrow()` when an exception is the better control flow.
 It throws `ValidationException` with the same error list.
 
+Generated validation models also implement `Validatable`, so shared app guards
+can accept any Dust-validated request:
+
+```dart
+void ensureValid(Validatable value) {
+  value.validateOrThrow();
+}
+```
+
 > [!IMPORTANT]
 > The model needs the matching `part` directive and generated mixin. Field
 > annotations do not generate validation unless the class derives `Validate()`.
