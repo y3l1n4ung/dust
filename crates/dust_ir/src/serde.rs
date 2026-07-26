@@ -1,3 +1,5 @@
+use heck::{AsKebabCase, AsLowerCamelCase, AsPascalCase, AsSnakeCase, AsTrainCase};
+
 use crate::{AnnotationValueIr, ConstructorParamIr};
 
 /// Normalized rename strategies derived from `SerDeRename`.
@@ -19,6 +21,20 @@ pub enum SerdeRenameRuleIr {
     KebabCase,
     /// `SCREAMING-KEBAB-CASE`.
     ScreamingKebabCase,
+}
+
+/// Applies a normalized serde rename rule to one Dart identifier.
+pub fn apply_serde_rename_rule(source: &str, rule: SerdeRenameRuleIr) -> String {
+    match rule {
+        SerdeRenameRuleIr::LowerCase => source.to_lowercase(),
+        SerdeRenameRuleIr::UpperCase => source.to_uppercase(),
+        SerdeRenameRuleIr::PascalCase => AsPascalCase(source).to_string(),
+        SerdeRenameRuleIr::CamelCase => AsLowerCamelCase(source).to_string(),
+        SerdeRenameRuleIr::SnakeCase => AsSnakeCase(source).to_string(),
+        SerdeRenameRuleIr::ScreamingSnakeCase => AsSnakeCase(source).to_string().to_uppercase(),
+        SerdeRenameRuleIr::KebabCase => AsKebabCase(source).to_string(),
+        SerdeRenameRuleIr::ScreamingKebabCase => AsTrainCase(source).to_string().to_uppercase(),
+    }
 }
 
 /// Normalized serde-related configuration attached to a class.

@@ -17,7 +17,7 @@ use crate::{
         resolve_method,
     },
     route::normalize_route,
-    serde::{normalize_class_serde, normalize_enum_variant_serde},
+    serde::{normalize_class_serde, normalize_enum_variant_serde, normalize_sealed_serde_variants},
     state::normalize_state,
 };
 
@@ -62,6 +62,7 @@ pub fn resolve_library_with_partless_configs(
         }
         enums.push(resolved);
     }
+    normalize_sealed_serde_variants(&mut classes, &mut diagnostics);
 
     let needs_part = saw_dust_symbol
         && classes

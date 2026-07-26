@@ -1,21 +1,11 @@
 /// Inherited field and constructor parameter lowering helpers.
 mod inheritance;
-/// Text parsing helpers used by lower-level Dart source parsing.
-mod parse_support;
 #[path = "lower/query_calls.rs"]
 /// SQL query call lowering.
 mod query_calls;
-/// SerDe configuration lowering.
-mod serde;
-/// SerDe annotation argument parsing.
-mod serde_parse;
 mod tests_declarations;
 mod tests_directives;
 mod tests_inheritance;
-mod tests_serde;
-mod tests_type;
-/// Dart type lowering and fallback parsing.
-mod type_parse;
 
 use std::collections::{HashMap, HashSet};
 
@@ -24,8 +14,8 @@ use dust_ir::{
     AnnotationIr, ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr,
     DartFileIr, EnumIr, EnumVariantIr, ExportIr, ExprSourceIr, ExtensionIr, ExtensionTypeIr,
     FieldIr, FunctionIr, ImportIr, LibraryDeclIr, LoweringOutcome, MethodIr, MethodParamIr,
-    MixinIr, NameIr, ParamKind, PartIr, PartOfIr, SerdeClassConfigIr, SerdeVariantConfigIr, SpanIr,
-    TopLevelVariableIr, TraitApplicationIr, TypeIr, TypedefIr,
+    MixinIr, NameIr, ParamKind, PartIr, PartOfIr, SerdeClassConfigIr, SpanIr, TopLevelVariableIr,
+    TraitApplicationIr, TypedefIr,
 };
 use dust_parser_dart::{
     ParameterKind, ParsedAnnotation, ParsedDirective, ParsedExtensionSurface,
@@ -35,17 +25,12 @@ use dust_parser_dart::{
 };
 use dust_resolver::{
     ResolvedClass, ResolvedConstructor, ResolvedField, ResolvedLibrary, ResolvedMethod,
-    SymbolCatalog,
+    SymbolCatalog, lower_type_ir as lower_type,
 };
 
 use self::{
     inheritance::{infer_param_type, merged_fields_for_class, resolve_constructor_param_types},
     query_calls::lower_query_calls,
-    serde::{
-        lower_class_serde_config, lower_enum_variant_serde_config, lower_field_serde_config,
-        lower_variant_serde_tag,
-    },
-    type_parse::lower_type,
 };
 
 /// Lowers one resolved library into semantic IR.
@@ -101,18 +86,6 @@ pub(crate) fn lower_library_with_catalog(
         .enumerate()
         .map(|(index, class)| (class.name.clone(), index))
         .collect::<HashMap<_, _>>();
-    let resolved_by_name = library
-        .classes
-        .iter()
-        .map(|class| (class.name.as_str(), class.constructors.as_slice()))
-        .collect::<HashMap<_, _>>();
-    lower_sealed_serde_variants(
-        &mut classes,
-        &index_by_name,
-        &resolved_by_name,
-        &mut diagnostics,
-    );
-
     let mut merged_cache = HashMap::new();
     let mut active_stack = Vec::new();
     for index in 0..classes.len() {
@@ -231,122 +204,6 @@ fn lowering_required_class_names(classes: &[ResolvedClass]) -> HashSet<String> {
     }
 
     names
-}
-
-/// Builds sealed class SerDe variant metadata from redirecting factory constructors.
-fn lower_sealed_serde_variants(
-    classes: &mut [ClassIr],
-    index_by_name: &HashMap<String, usize>,
-    constructors_by_name: &HashMap<&str, &[ResolvedConstructor]>,
-    diagnostics: &mut Vec<Diagnostic>,
-) {
-    for index in 0..classes.len() {
-        let has_serde = classes[index].serde.is_some();
-        let uses_sealed_serde = classes[index]
-            .serde
-            .as_ref()
-            .is_some_and(|serde| serde.uses_sealed_representation());
-        if !has_serde {
-            continue;
-        }
-
-        let base_name = classes[index].name.clone();
-        if classes[index].kind != ClassKindIr::SealedClass {
-            if !uses_sealed_serde {
-                continue;
-            }
-            diagnostics.push(Diagnostic::error(format!(
-                "SerDe class `{base_name}` uses sealed variant options but is not sealed"
-            )));
-            continue;
-        }
-
-        let rename_all = classes[index]
-            .serde
-            .as_ref()
-            .and_then(|serde| serde.rename_all);
-        let mut variants = Vec::new();
-        let constructors = constructors_by_name
-            .get(base_name.as_str())
-            .copied()
-            .unwrap_or_default();
-        let mut seen_tags = HashSet::new();
-
-        for constructor in constructors
-            .iter()
-            .filter(|constructor| constructor.surface.is_factory)
-        {
-            let Some(constructor_name) = constructor.surface.name.as_deref() else {
-                continue;
-            };
-            let Some(target_class_name) = constructor.surface.redirected_target_name.as_deref()
-            else {
-                continue;
-            };
-
-            let target_superclass = index_by_name
-                .get(target_class_name)
-                .and_then(|target_index| classes.get(*target_index))
-                .and_then(|target| target.superclass_name.as_deref());
-            if target_superclass.is_some() && target_superclass != Some(base_name.as_str()) {
-                diagnostics.push(Diagnostic::error(format!(
-                    "Variant target class {target_class_name} does not extend {base_name}"
-                )));
-            }
-
-            let tag = lower_variant_serde_tag(
-                constructor_name,
-                &constructor.configs,
-                rename_all,
-                diagnostics,
-            );
-            if !seen_tags.insert(tag.clone()) {
-                diagnostics.push(Diagnostic::error(format!(
-                    "Duplicate SerDe variant tag: {tag}"
-                )));
-            }
-
-            variants.push(SerdeVariantConfigIr {
-                constructor_name: constructor_name.to_owned(),
-                target_class_name: target_class_name.to_owned(),
-                tag,
-                params: constructor
-                    .surface
-                    .params
-                    .iter()
-                    .map(|param| {
-                        let outcome = param
-                            .type_source
-                            .as_deref()
-                            .map(|source| lower_type(param.parsed_type.as_ref(), Some(source)))
-                            .unwrap_or_else(|| LoweringOutcome::new(TypeIr::unknown()));
-                        diagnostics.extend(outcome.diagnostics);
-                        ConstructorParamIr {
-                            name: param.name.clone(),
-                            ty: outcome.value,
-                            span: SpanIr::new(classes[index].span.file_id, param.span),
-                            kind: match param.kind {
-                                ParameterKind::Positional => ParamKind::Positional,
-                                ParameterKind::Named => ParamKind::Named,
-                            },
-                            has_default: param.has_default,
-                            default_value_source: param.default_value_source.clone(),
-                        }
-                    })
-                    .collect(),
-            });
-        }
-
-        if variants.is_empty() {
-            diagnostics.push(Diagnostic::error(format!(
-                "Sealed SerDe class {base_name} has no factory variants"
-            )));
-        }
-
-        if let Some(serde) = &mut classes[index].serde {
-            serde.variants = variants;
-        }
-    }
 }
 
 /// Extracts a converter class name from a `tryFrom` annotation expression.
@@ -766,22 +623,17 @@ fn lower_name_ir(file_id: dust_text::FileId, source: &str, span: dust_text::Text
 
 /// Lowers one resolved enum into semantic IR.
 fn lower_enum(e: &mut dust_resolver::ResolvedEnum) -> LoweringOutcome<EnumIr> {
-    let mut diagnostics: Vec<Diagnostic> = Vec::new();
-    let serde = e
-        .serde
-        .take()
-        .or_else(|| lower_class_serde_config(&e.name, &e.configs, &mut diagnostics));
-    let variants: Vec<EnumVariantIr> =
-        e.variants
-            .iter_mut()
-            .map(|v| EnumVariantIr {
-                name: v.name.clone(),
-                serde: v.serde.take().or_else(|| {
-                    lower_enum_variant_serde_config(&v.name, &v.configs, &mut diagnostics)
-                }),
-                span: v.span,
-            })
-            .collect();
+    let diagnostics: Vec<Diagnostic> = Vec::new();
+    let serde = e.serde.take();
+    let variants: Vec<EnumVariantIr> = e
+        .variants
+        .iter_mut()
+        .map(|v| EnumVariantIr {
+            name: v.name.clone(),
+            serde: v.serde.take(),
+            span: v.span,
+        })
+        .collect();
     LoweringOutcome {
         value: EnumIr {
             name: e.name.clone(),
@@ -839,10 +691,7 @@ fn lower_class_from_parts(input: ClassLoweringInput<'_>) -> LoweringOutcome<Clas
         serde_value,
     } = input;
     let mut diagnostics = Vec::new();
-    let serde = serde_value.take().or_else(|| {
-        // Compatibility for resolver fixtures while callers migrate to normalized output.
-        lower_class_serde_config(name, configs, &mut diagnostics)
-    });
+    let serde = serde_value.take();
 
     let fields = lower_resolved_fields(fields, &mut diagnostics);
     let methods = lower_resolved_methods(methods, &mut diagnostics);
@@ -868,25 +717,6 @@ fn lower_class_from_parts(input: ClassLoweringInput<'_>) -> LoweringOutcome<Clas
     }
 }
 
-/// Test-only compatibility entrypoint for class lowering fixtures.
-#[cfg(test)]
-fn lower_class(class: &mut ResolvedClass) -> LoweringOutcome<ClassIr> {
-    lower_class_from_parts(ClassLoweringInput {
-        kind: class.kind,
-        name: &class.name,
-        is_abstract: class.is_abstract,
-        is_interface: class.is_interface,
-        superclass_name: class.superclass_name.as_deref(),
-        span: class.span,
-        fields: &mut class.fields,
-        constructors: &class.constructors,
-        methods: &class.methods,
-        traits: &class.traits,
-        configs: &class.configs,
-        serde_value: &mut class.serde,
-    })
-}
-
 /// Lowers resolved fields without requiring the owning class model.
 fn lower_resolved_fields(
     fields: &mut [ResolvedField],
@@ -902,10 +732,7 @@ fn lower_resolved_fields(
                 ty: outcome.value,
                 span: field.span,
                 has_default: field.has_default,
-                serde: field
-                    .serde
-                    .take()
-                    .or_else(|| lower_field_serde_config(&field.name, &field.configs, diagnostics)),
+                serde: field.serde.take(),
                 configs: field.configs.clone(),
             }
         })
