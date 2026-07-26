@@ -213,8 +213,16 @@ ProfileViewModelListener(
 )
 ```
 
-Effects do not change state, and the listener does not rebuild its child when
-an effect arrives.
+Effects are at-most-once UI events:
+
+- They do not change state.
+- They are delivered asynchronously to currently mounted listeners.
+- They are not replayed when no listener is mounted yet.
+- They can be dropped if the listener unmounts before delivery.
+- The listener does not rebuild its child when an effect arrives.
+
+Use state, not effects, for durable UI facts that must survive rebuilds,
+navigation, or late subscription.
 
 > [!NOTE]
 > `StateEffect` is kept only for compatibility. If old code emits

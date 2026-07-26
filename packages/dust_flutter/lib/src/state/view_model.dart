@@ -223,6 +223,9 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
   StateObserver? get observer => args.observer;
 
   /// Broadcast stream of one-shot effects.
+  ///
+  /// Effects are delivered asynchronously to currently subscribed listeners.
+  /// Effects emitted before subscription are not replayed.
   Stream<Object> get effects => _effects.stream;
 
   /// Emits [next] if it differs from the current state.

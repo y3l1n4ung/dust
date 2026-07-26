@@ -129,10 +129,44 @@ void main() {
 
     final effect = Object();
     viewModel.emitTestEffect(effect);
+
+    expect(observer.effects.single, same(effect));
+    expect(effects, isEmpty);
+
     await pumpEventQueue();
 
     expect(effects.single, same(effect));
-    expect(observer.effects.single, same(effect));
+  });
+
+  test('effects emitted before subscription are not replayed', () async {
+    final viewModel = CounterViewModel();
+    final effects = <Object>[];
+
+    addTearDown(viewModel.dispose);
+
+    viewModel.emitTestEffect('early');
+
+    final subscription = viewModel.effects.listen(effects.add);
+    addTearDown(subscription.cancel);
+
+    await pumpEventQueue();
+
+    expect(effects, isEmpty);
+  });
+
+  test('effects are dropped when subscription cancels before delivery',
+      () async {
+    final viewModel = CounterViewModel();
+    final effects = <Object>[];
+    final subscription = viewModel.effects.listen(effects.add);
+
+    addTearDown(viewModel.dispose);
+
+    viewModel.emitTestEffect('toast');
+    await subscription.cancel();
+    await pumpEventQueue();
+
+    expect(effects, isEmpty);
   });
 
   test('emitEffect unwraps deprecated StateEffect wrapper', () async {
