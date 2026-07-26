@@ -163,6 +163,23 @@ fn reports_diagnostics_for_grammar_blocked_future_syntax() {
 }
 
 #[test]
+fn reports_required_version_for_unsupported_language_feature() {
+    let result = parse(
+        135,
+        "// @dart=3.0\n\
+         enum ProductStatus { ready }\n\
+         final status = .ready;\n",
+    );
+
+    assert!(result.has_errors());
+    assert!(result.diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("dot shorthands require Dart 3.10")
+    }));
+}
+
+#[test]
 fn parses_private_named_parameter_fixture_without_version_gating() {
     let result = parse(
         140,

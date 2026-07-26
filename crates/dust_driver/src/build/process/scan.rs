@@ -1,8 +1,9 @@
 use std::sync::Arc;
 
+use dust_dart_syntax::DartLanguageVersion;
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
-use dust_parser_dart::{ParseOptions, ParsedDartFileSurface, parse_file_with_backend};
+use dust_parser_dart::{ParsedDartFileSurface, parse_file_with_backend};
 use dust_parser_dart_ts::TreeSitterDartBackend;
 use dust_plugin_api::{LibraryAnalysisSnapshot, PluginRegistry, WorkspaceAnalysisBuilder};
 use dust_resolver::SymbolCatalog;
@@ -18,6 +19,8 @@ pub(crate) struct WorkspaceAnalysisResult {
     pub(crate) analysis: WorkspaceAnalysisBuilder,
     /// Parsed surfaces retained for fallback processing.
     pub(crate) pre_parsed: Vec<Option<ParsedDartFileSurface>>,
+    /// Parser diagnostics retained for normal processing.
+    pub(crate) pre_parse_diagnostics: Vec<Vec<Diagnostic>>,
     /// Lowered IR retained for normal processing and emission.
     pub(crate) pre_lowered: Vec<Option<DartFileIr>>,
     /// Per-library plugin facts persisted into cache entries.
@@ -29,6 +32,7 @@ pub(crate) fn collect_workspace_analysis(
     pending: &[PendingLibrary],
     package_root: &std::path::Path,
     package_name: &str,
+    dart_language_version: DartLanguageVersion,
     catalog: &SymbolCatalog,
     registry: &PluginRegistry,
 ) -> WorkspaceAnalysisResult {
@@ -36,6 +40,7 @@ pub(crate) fn collect_workspace_analysis(
         return WorkspaceAnalysisResult {
             analysis: WorkspaceAnalysisBuilder::default(),
             pre_parsed: Vec::new(),
+            pre_parse_diagnostics: Vec::new(),
             pre_lowered: Vec::new(),
             snapshots: Vec::new(),
         };
@@ -62,8 +67,11 @@ pub(crate) fn collect_workspace_analysis(
                 for (index, pending) in group {
                     let source_text =
                         SourceText::new(pending.file_id, Arc::clone(&pending.input.source));
-                    let parsed =
-                        parse_file_with_backend(&backend, &source_text, ParseOptions::default());
+                    let parsed = parse_file_with_backend(
+                        &backend,
+                        &source_text,
+                        super::parse_options(dart_language_version),
+                    );
                     let mut library_analysis = WorkspaceAnalysisBuilder::default();
                     let lowered = lower_for_workspace_analysis(
                         pending,
@@ -76,7 +84,13 @@ pub(crate) fn collect_workspace_analysis(
                     }
                     let analysis_snapshot = library_analysis.snapshot();
                     local_analysis.merge(library_analysis);
-                    local_results.push((index, analysis_snapshot, parsed.library, lowered));
+                    local_results.push((
+                        index,
+                        analysis_snapshot,
+                        parsed.library,
+                        parsed.diagnostics,
+                        lowered,
+                    ));
                 }
 
                 (local_analysis, local_results)
@@ -85,15 +99,17 @@ pub(crate) fn collect_workspace_analysis(
 
         let mut workspace_analysis = WorkspaceAnalysisBuilder::default();
         let mut ordered_surfaces = vec![None; pending.len()];
+        let mut ordered_diagnostics = vec![Vec::new(); pending.len()];
         let mut ordered_lowered = vec![None; pending.len()];
         let mut analysis_snapshots = vec![LibraryAnalysisSnapshot::default(); pending.len()];
 
         for handle in handles {
             let (local_analysis, local) = handle.join().expect("scan thread must not panic");
             workspace_analysis.merge(local_analysis);
-            for (index, analysis_snapshot, parsed, lowered) in local {
+            for (index, analysis_snapshot, parsed, diagnostics, lowered) in local {
                 analysis_snapshots[index] = analysis_snapshot;
                 ordered_surfaces[index] = Some(parsed);
+                ordered_diagnostics[index] = diagnostics;
                 ordered_lowered[index] = lowered;
             }
         }
@@ -101,6 +117,7 @@ pub(crate) fn collect_workspace_analysis(
         WorkspaceAnalysisResult {
             analysis: workspace_analysis,
             pre_parsed: ordered_surfaces,
+            pre_parse_diagnostics: ordered_diagnostics,
             pre_lowered: ordered_lowered,
             snapshots: analysis_snapshots,
         }

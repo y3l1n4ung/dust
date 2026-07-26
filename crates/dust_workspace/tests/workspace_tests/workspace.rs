@@ -1,3 +1,4 @@
+use dust_dart_syntax::DartLanguageVersion;
 use dust_workspace::{PackageConfigKind, discover_workspace};
 use tempfile::tempdir;
 
@@ -40,6 +41,7 @@ fn discover_workspace_composes_root_config_and_library_scan() {
     assert_eq!(plan.package_root, package_root);
     assert_eq!(plan.cache_root, plan.package_root);
     assert_eq!(plan.package_name, "product_showcase");
+    assert_eq!(plan.dart_sdk_lower_bound, None);
     assert_eq!(
         plan.package_config.path,
         workspace_root.join(".dart_tool/package_config.json")
@@ -56,4 +58,29 @@ fn discover_workspace_composes_root_config_and_library_scan() {
         plan.package_root.join("lib/models/user.g.dart")
     );
     assert_eq!(plan.dust_config.outputs.primary_suffix, ".g.dart");
+}
+
+#[test]
+fn discover_workspace_reads_dart_sdk_lower_bound() {
+    let root = tempdir().unwrap();
+    write_file(
+        &root.path().join("pubspec.yaml"),
+        "name: dust_test\nenvironment:\n  sdk: '>=3.8.0 <4.0.0'\n",
+    );
+    write_file(
+        &root.path().join(".dart_tool/package_config.json"),
+        "{\"configVersion\":2}\n",
+    );
+    write_file(
+        &root.path().join("lib/user.dart"),
+        "import 'package:dust_dart/derive.dart';\npart 'user.g.dart';\n@Derive([ToString()])\nclass User {}\n",
+    );
+
+    let supported_annotations = test_annotations();
+    let plan = discover_workspace(root.path(), &supported_annotations).unwrap();
+
+    assert_eq!(
+        plan.dart_sdk_lower_bound,
+        Some(DartLanguageVersion::DART_3_8)
+    );
 }

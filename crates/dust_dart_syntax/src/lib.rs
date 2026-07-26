@@ -1,6 +1,8 @@
 #![deny(missing_docs)]
 #![doc = "Shared Dart source parsing helpers for Dust parser, IR, and plugins."]
 
+/// Dart language-version feature matrix.
+mod language_version;
 /// Literal-value parsing helpers.
 mod literals;
 /// Top-level source scanning helpers.
@@ -8,6 +10,10 @@ mod scanner;
 /// Annotation value parsing helpers.
 mod values;
 
+pub use language_version::{
+    DartLanguageFeature, DartLanguageVersion, supports_dot_shorthands,
+    supports_primary_constructors,
+};
 pub use literals::{parse_bool_literal, parse_static_dart_string_literal, parse_string_literal};
 pub use scanner::{
     balanced_parenthesized, find_top_level_char, has_top_level_char, normalized_args,

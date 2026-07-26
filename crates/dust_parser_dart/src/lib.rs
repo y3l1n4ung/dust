@@ -21,6 +21,7 @@ mod type_surface;
 
 pub use annotation_value::{AnnotationValue, parse_annotation_named_values};
 pub use backend::{ParseBackend, parse_file_with_backend};
+pub use dust_dart_syntax::{DartLanguageFeature, DartLanguageVersion};
 pub use options::{ParseOptions, SourceKind};
 pub use query_call::{ParsedQueryCallSurface, ParsedQueryFunction};
 pub use result::ParseResult;

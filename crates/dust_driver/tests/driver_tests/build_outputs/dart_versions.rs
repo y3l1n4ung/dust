@@ -2,7 +2,7 @@ use std::fs;
 
 use dust_driver::{BuildRequest, run_build};
 
-use crate::support::{generated_output, make_workspace, write_file};
+use crate::support::{DustImport, generated_output, make_workspace, write_dust_file, write_file};
 
 #[test]
 fn build_accepts_supported_dart_version_surfaces_while_generating_outputs() {
@@ -99,4 +99,38 @@ mixin _$CompatProfile {
 "#
         )
     );
+}
+
+#[test]
+fn build_uses_pubspec_sdk_lower_bound_for_language_gates() {
+    let workspace = make_workspace();
+    write_file(
+        &workspace.path().join("pubspec.yaml"),
+        "name: dust_test\nenvironment:\n  sdk: '>=3.0.0 <4.0.0'\n",
+    );
+    write_dust_file(
+        &workspace.path().join("lib/private_param.dart"),
+        &[DustImport::Derive],
+        "part 'private_param.g.dart';\n\
+         \n\
+         @Derive([ToString()])\n\
+         class PrivateNamedParameter {\n\
+           const PrivateNamedParameter({String? _traceId});\n\
+         }\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+        db: Default::default(),
+    });
+
+    assert!(result.has_errors());
+    assert!(result.diagnostics.iter().any(|diagnostic| {
+        diagnostic
+            .message
+            .contains("private named parameters require Dart 3.12")
+    }));
+    assert_eq!(result.diagnostic_files.len(), 1);
 }

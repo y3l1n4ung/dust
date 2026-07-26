@@ -1,5 +1,6 @@
 use std::{collections::BTreeMap, fs, path::Path};
 
+use dust_dart_syntax::DartLanguageVersion;
 use dust_diagnostics::Diagnostic;
 use serde::Deserialize;
 
@@ -14,6 +15,9 @@ struct Pubspec {
     /// Package development dependencies.
     #[serde(default)]
     dev_dependencies: BTreeMap<String, serde_yaml::Value>,
+    /// Dart environment constraints.
+    #[serde(default)]
+    environment: BTreeMap<String, serde_yaml::Value>,
     /// Optional Flutter-specific configuration.
     flutter: Option<FlutterPubspec>,
 }
@@ -82,6 +86,23 @@ pub fn load_is_flutter_package(package_root: &Path) -> Result<bool, Diagnostic> 
         || parsed.dev_dependencies.contains_key("flutter"))
 }
 
+/// Loads the lower Dart SDK language version from `pubspec.yaml`, if declared.
+pub fn load_dart_sdk_lower_bound(
+    package_root: &Path,
+) -> Result<Option<DartLanguageVersion>, Diagnostic> {
+    let path = package_root.join("pubspec.yaml");
+    let parsed = parse_pubspec(&path)?;
+    let Some(value) = parsed.environment.get("sdk") else {
+        return Ok(None);
+    };
+    let Some(constraint) = pubspec_string_value(value) else {
+        return Ok(None);
+    };
+    Ok(DartLanguageVersion::from_sdk_constraint_lower_bound(
+        constraint,
+    ))
+}
+
 /// Parses `pubspec.yaml`.
 fn parse_pubspec(path: &Path) -> Result<Pubspec, Diagnostic> {
     let source = fs::read_to_string(path).map_err(|error| {
@@ -96,4 +117,12 @@ fn parse_pubspec(path: &Path) -> Result<Pubspec, Diagnostic> {
             path.display()
         ))
     })
+}
+
+/// Converts a scalar pubspec value into a string slice when supported.
+fn pubspec_string_value(value: &serde_yaml::Value) -> Option<&str> {
+    match value {
+        serde_yaml::Value::String(value) => Some(value.as_str()),
+        _ => None,
+    }
 }
