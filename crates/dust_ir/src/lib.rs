@@ -67,7 +67,7 @@ pub use query_call::{QueryCallIr, QueryFunctionIr};
 pub use route::{RouteConfigIr, RouterConfigIr};
 pub use serde::{
     SerdeClassConfigIr, SerdeEnumVariantConfigIr, SerdeFieldConfigIr, SerdeRenameRuleIr,
-    SerdeVariantConfigIr,
+    SerdeVariantConfigIr, apply_serde_rename_rule,
 };
 pub use state::{StateConfigIr, StateModeIr};
 pub use traits::{ConfigApplicationIr, NormalizedConfigIr, SymbolId, TraitApplicationIr};

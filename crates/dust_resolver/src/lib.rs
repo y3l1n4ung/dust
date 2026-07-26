@@ -22,6 +22,8 @@ mod route;
 mod serde;
 /// Resolver-owned state configuration normalization.
 mod state;
+/// Resolver-owned type lowering.
+mod types;
 
 pub use annotations::{annotation_ir_from_parsed, resolve_annotation_ir};
 pub use catalog::{ResolvedSymbol, SymbolCatalog, SymbolKind};
@@ -32,3 +34,4 @@ pub use result::{
     ResolveResult, ResolvedClass, ResolvedConstructor, ResolvedEnum, ResolvedEnumVariant,
     ResolvedField, ResolvedLibrary, ResolvedMethod, ResolvedMethodParam,
 };
+pub use types::lower_type_ir;
