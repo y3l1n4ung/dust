@@ -101,6 +101,11 @@ See the [Plugin Guide](./plugin-guide.md) for a focused implementation path.
 > Parser syntax belongs in the parser crates; normalized meaning belongs in the
 > resolver and IR; feature behavior belongs in a plugin.
 
+Dust currently uses normalized IR as the feature-lowering boundary. There is no
+general plugin lowering hook. Add one only when a concrete feature cannot be
+modeled as parser facts, resolver normalization, and plugin
+validation/generation.
+
 ## Engineering Boundaries
 
 ### Public API ownership

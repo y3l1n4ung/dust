@@ -24,6 +24,12 @@ emission, and cache updates behind the CLI commands exposed by `dust_cli`.
 - i18n and DB command orchestration
 - progress summaries and build result counts
 
+## Does Not Own
+
+- feature-specific annotation meaning
+- feature validation rules
+- generated Dart feature behavior
+
 ## Edit Here When
 
 - command behavior needs driver support

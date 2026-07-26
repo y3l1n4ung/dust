@@ -23,6 +23,10 @@ return generated contributions.
 `generate` is the only output hook. Plugins should generate from `DartFileIr`
 and `PluginContext`, not by reparsing raw Dart source.
 
+There is no separate plugin lowering hook today. If generation needs a missing
+source fact, add it through the parser, resolver, and IR boundary before plugin
+validation or generation.
+
 ## Design Rules
 
 - Keep plugin output deterministic.

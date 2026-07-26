@@ -97,6 +97,31 @@ discovery. Claiming a symbol does not add its short name automatically.
 Use `partless_configs()` only when an annotation is valid without a source
 `part '<name>.g.dart';` declaration.
 
+## Feature Lowering Boundary
+
+Dust does not expose a separate plugin lowering hook today. The supported
+extension point is normalized IR:
+
+1. Parser crates extract syntax facts from Dart source.
+2. `dust_resolver` resolves symbols and turns annotation meaning into typed IR.
+3. `dust_driver` lowers resolved declarations and wires diagnostics, cache, and
+   workspace flow.
+4. Plugins validate `DartFileIr` and return generated contributions.
+
+If a plugin needs source information that is not present in `DartFileIr`, add a
+parser fact, resolver normalization, or IR field first. Do not add feature
+branches to driver lowering.
+
+> [!IMPORTANT]
+> Driver lowering must stay feature-neutral. SerDe, DB, routing, state, HTTP,
+> validation, and derive behavior belongs in the owning resolver facts and
+> plugin crate.
+
+Add a new plugin lowering hook only after a concrete feature cannot be expressed
+as normalized IR plus plugin validation/generation. The hook should be small,
+deterministic, tested in `dust_plugin_api`, and proven by migrating one existing
+feature path.
+
 ## 3. Return Contributions
 
 `PluginContribution` supports these output sections:

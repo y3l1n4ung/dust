@@ -13,6 +13,7 @@ and generation.
 - import and part resolution
 - type and constructor normalization
 - resolver diagnostics
+- feature diagnostic scope derived from normalized config
 - conversion support for canonical `DartFileIr`
 
 ## Design Rules
