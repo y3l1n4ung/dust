@@ -6,6 +6,10 @@ use crate::support::parse;
 struct DartVersionFixture {
     /// Human-readable label for test failures.
     label: &'static str,
+    /// Dart language version represented by the fixture.
+    language_version: &'static str,
+    /// Repository-relative fixture path.
+    path: &'static str,
     /// Fixture source code.
     source: &'static str,
 }
@@ -15,24 +19,34 @@ fn parses_supported_dart_version_fixtures_without_diagnostics() {
     let fixtures = [
         DartVersionFixture {
             label: "Dart 2.12 null safety",
+            language_version: "2.12",
+            path: "crates/dust_parser_dart_ts/tests/fixtures/dart_versions/dart_2_12_null_safety.dart",
             source: include_str!("../fixtures/dart_versions/dart_2_12_null_safety.dart"),
         },
         DartVersionFixture {
             label: "Dart 2.17 super parameters",
+            language_version: "2.17",
+            path: "crates/dust_parser_dart_ts/tests/fixtures/dart_versions/dart_2_17_super_parameters.dart",
             source: include_str!("../fixtures/dart_versions/dart_2_17_super_parameters.dart"),
         },
         DartVersionFixture {
             label: "Dart 3.0 records, patterns, class modifiers",
+            language_version: "3.0",
+            path: "crates/dust_parser_dart_ts/tests/fixtures/dart_versions/dart_3_0_records_patterns_class_modifiers.dart",
             source: include_str!(
                 "../fixtures/dart_versions/dart_3_0_records_patterns_class_modifiers.dart"
             ),
         },
         DartVersionFixture {
             label: "Dart 3.3 extension types",
+            language_version: "3.3",
+            path: "crates/dust_parser_dart_ts/tests/fixtures/dart_versions/dart_3_3_extension_types.dart",
             source: include_str!("../fixtures/dart_versions/dart_3_3_extension_types.dart"),
         },
         DartVersionFixture {
             label: "Dart 3.8 null-aware collection elements",
+            language_version: "3.8",
+            path: "crates/dust_parser_dart_ts/tests/fixtures/dart_versions/dart_3_8_null_aware_collections.dart",
             source: include_str!("../fixtures/dart_versions/dart_3_8_null_aware_collections.dart"),
         },
     ];
@@ -42,8 +56,10 @@ fn parses_supported_dart_version_fixtures_without_diagnostics() {
 
         assert!(
             result.diagnostics.is_empty(),
-            "{} diagnostics: {:?}",
+            "{} language={} path={} diagnostics: {:?}",
             fixture.label,
+            fixture.language_version,
+            fixture.path,
             result.diagnostics
         );
     }
@@ -115,10 +131,14 @@ fn reports_diagnostics_for_grammar_blocked_future_syntax() {
     let fixtures = [
         DartVersionFixture {
             label: "Dart 3.10 dot shorthands",
+            language_version: "3.10",
+            path: "crates/dust_parser_dart_ts/tests/fixtures/dart_versions/dart_3_10_dot_shorthands.dart",
             source: include_str!("../fixtures/dart_versions/dart_3_10_dot_shorthands.dart"),
         },
         DartVersionFixture {
             label: "Dart 3.13 primary constructors",
+            language_version: "3.13",
+            path: "crates/dust_parser_dart_ts/tests/fixtures/dart_versions/dart_3_13_primary_constructors.dart",
             source: include_str!("../fixtures/dart_versions/dart_3_13_primary_constructors.dart"),
         },
     ];
@@ -128,8 +148,10 @@ fn reports_diagnostics_for_grammar_blocked_future_syntax() {
 
         assert!(
             result.has_errors(),
-            "{} should stay diagnostic-gated until tree-sitter Dart supports it",
-            fixture.label
+            "{} language={} path={} should stay diagnostic-gated until tree-sitter Dart supports it",
+            fixture.label,
+            fixture.language_version,
+            fixture.path
         );
         assert!(
             result
