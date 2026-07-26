@@ -245,6 +245,40 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     _effects.add(deliveredEffect);
   }
 
+  /// Runs an async action and ignores stale results for [key].
+  ///
+  /// Use this for normal async commands on sync ViewModels. [onStart] runs
+  /// immediately after the action token is created. [onSuccess] or [onError]
+  /// runs only when this action is still current after [run] completes.
+  ///
+  /// Returns `true` when the current result or error was handled, and `false`
+  /// when the ViewModel was disposed or a newer action superseded this one.
+  /// If [run] throws and [onError] is omitted, the current error is rethrown.
+  @protected
+  Future<bool> runAction<TResult>(
+    Object key, {
+    required FutureOr<TResult> Function() run,
+    void Function()? onStart,
+    void Function(TResult result)? onSuccess,
+    void Function(Object error, StackTrace stackTrace)? onError,
+  }) async {
+    if (_isDisposed) return false;
+    final token = beginAction(key);
+    onStart?.call();
+
+    try {
+      final result = await run();
+      if (!isCurrentAction(token)) return false;
+      onSuccess?.call(result);
+      return true;
+    } on Object catch (error, stackTrace) {
+      if (!isCurrentAction(token)) return false;
+      if (onError == null) rethrow;
+      onError(error, stackTrace);
+      return true;
+    }
+  }
+
   /// Starts or supersedes an async action result identified by [key].
   ///
   /// Store the returned token before awaiting. After the await, call

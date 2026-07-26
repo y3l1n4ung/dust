@@ -2,6 +2,7 @@ import 'package:dust_flutter/state.dart';
 
 import '../../../core/data/shopping_repository.dart';
 import '../../../core/logging/logger.dart';
+import '../models/product.dart';
 import '../models/products_state.dart';
 
 part 'products_view_model.g.dart';
@@ -28,28 +29,32 @@ class ProductsViewModel extends $ProductsViewModel {
 
   /// Loads products.
   Future<void> loadProducts() async {
-    final token = beginAction(_loadProductsAction);
-    logger.info('PRODUCTS', 'Loading products...');
-    emit(state.copyWith(status: ProductsStatus.loading));
-
-    try {
-      final products = await args.repository.getProducts();
-      if (!isCurrentAction(token)) return;
-      emit(state.copyWith(products: products, status: ProductsStatus.success));
-      logger.info(
-        'PRODUCTS',
-        'Loaded ${products.length} products successfully',
-      );
-    } catch (e) {
-      if (!isCurrentAction(token)) return;
-      logger.error('PRODUCTS', 'Failed to load products', e);
-      emit(
-        state.copyWith(
-          status: ProductsStatus.error,
-          errorMessage: e.toString(),
-        ),
-      );
-    }
+    await runAction<List<Product>>(
+      _loadProductsAction,
+      onStart: () {
+        logger.info('PRODUCTS', 'Loading products...');
+        emit(state.copyWith(status: ProductsStatus.loading));
+      },
+      run: args.repository.getProducts,
+      onSuccess: (products) {
+        emit(
+          state.copyWith(products: products, status: ProductsStatus.success),
+        );
+        logger.info(
+          'PRODUCTS',
+          'Loaded ${products.length} products successfully',
+        );
+      },
+      onError: (error, _) {
+        logger.error('PRODUCTS', 'Failed to load products', error);
+        emit(
+          state.copyWith(
+            status: ProductsStatus.error,
+            errorMessage: error.toString(),
+          ),
+        );
+      },
+    );
   }
 
   /// Selects category.
