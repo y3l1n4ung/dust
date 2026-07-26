@@ -239,15 +239,6 @@ AppRoutePath parseAppRoute(Uri uri) {
 
 AppRoutePath _notFoundRoute(Uri uri) => NotFoundRoute(path: uri.toString());
 
-bool? _parseBool(String? value) {
-  return switch (value) {
-    'true' || '1' => true,
-    'false' || '0' => false,
-    null || '' => null,
-    _ => null,
-  };
-}
-
 const Map<Type, Type?> _kAppliedShellsByPage = {
   NotFoundPage: null,
   SearchPage: null,

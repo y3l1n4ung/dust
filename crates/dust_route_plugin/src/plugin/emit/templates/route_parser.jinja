@@ -5,12 +5,4 @@ AppRoutePath parseAppRoute(Uri uri) {
 }
 
 AppRoutePath _notFoundRoute(Uri uri) => {{ fallback }};
-
-bool? _parseBool(String? value) {
-  return switch (value) {
-    'true' || '1' => true,
-    'false' || '0' => false,
-    null || '' => null,
-    _ => null,
-  };
-}
+{{ bool_parser_helper }}

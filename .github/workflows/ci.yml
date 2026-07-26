@@ -214,14 +214,17 @@ jobs:
             path: packages/dust_flutter
             dust_check: ''
             db_check: false
+            strict_generated: false
           - name: benchmark_project
             path: examples/benchmark_project
             dust_check: examples/benchmark_project
             db_check: false
+            strict_generated: false
           - name: shopping_app
             path: examples/shopping_app
             dust_check: examples/shopping_app
             db_check: true
+            strict_generated: true
     steps:
       - name: Skip docs-only change
         if: needs.changes.outputs.docs_only == 'true'
@@ -265,6 +268,10 @@ jobs:
         if: needs.changes.outputs.docs_only != 'true' && matrix.db_check
         run: cargo run --quiet -p dust_cli -- build --root ${{ matrix.path }} --db
 
+      - name: Strict analyze generated Flutter output
+        if: needs.changes.outputs.docs_only != 'true' && matrix.strict_generated
+        run: python3 scripts/strict_generated_analyze.py --package ${{ matrix.path }} --tool flutter
+
       - name: Analyze
         if: needs.changes.outputs.docs_only != 'true'
         working-directory: ${{ matrix.path }}
@@ -300,6 +307,10 @@ jobs:
           rustup toolchain install stable --profile minimal
           rustup default stable
 
+      - name: Validate strict generated analyzer
+        if: needs.changes.outputs.docs_only != 'true'
+        run: python3 scripts/strict_generated_analyze.py --self-test
+
       - name: Pub get
         if: needs.changes.outputs.docs_only != 'true'
         working-directory: fixtures/serde_json_app
@@ -313,6 +324,10 @@ jobs:
         if: needs.changes.outputs.docs_only != 'true'
         working-directory: fixtures/serde_json_app
         run: dart analyze --fatal-infos
+
+      - name: Strict analyze generated SerDe output
+        if: needs.changes.outputs.docs_only != 'true'
+        run: python3 scripts/strict_generated_analyze.py --package fixtures/serde_json_app --tool dart
 
       - name: Test generated SerDe runtime
         if: needs.changes.outputs.docs_only != 'true'
@@ -357,6 +372,10 @@ jobs:
         if: needs.changes.outputs.docs_only != 'true'
         working-directory: fixtures/http_client_app
         run: dart analyze --fatal-infos
+
+      - name: Strict analyze generated HTTP output
+        if: needs.changes.outputs.docs_only != 'true'
+        run: python3 scripts/strict_generated_analyze.py --package fixtures/http_client_app --tool dart
 
       - name: Test generated HTTP requests
         if: needs.changes.outputs.docs_only != 'true'

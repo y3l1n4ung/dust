@@ -127,6 +127,13 @@ bug and whose contract is covered by tests.
 - Use `.dart.snapshot` for generator fixtures and exact snapshot assertions for
   generated contracts.
 
+CI also runs `scripts/strict_generated_analyze.py` against
+`fixtures/serde_json_app`, `fixtures/http_client_app`, and
+`examples/shopping_app`. That temporary pass includes `.g.dart` files, removes
+Dust's broad `type=lint` generated-file ignore, and treats analyzer warnings as
+failures so generated-code regressions are not hidden by the normal user-facing
+header.
+
 ### Cross-file features
 
 Do not add a second workspace scan inside a plugin. Extend shared workspace
