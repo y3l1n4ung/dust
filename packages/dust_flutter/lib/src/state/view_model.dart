@@ -177,7 +177,7 @@ final class AsyncFailure<T> extends AsyncState<T> {
   bool get isLoading => false;
 }
 
-/// Token used by view models to ignore stale async work.
+/// Token used by view models to ignore stale async results.
 @immutable
 final class ViewModelActionToken {
   const ViewModelActionToken._(this.key, this.version);
@@ -245,10 +245,10 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     _effects.add(deliveredEffect);
   }
 
-  /// Starts or supersedes an async action identified by [key].
+  /// Starts or supersedes an async action result identified by [key].
   ///
   /// Store the returned token before awaiting. After the await, call
-  /// [isCurrentAction] before emitting state. This prevents older async work
+  /// [isCurrentAction] before emitting state. This prevents older async results
   /// from overwriting newer state.
   @protected
   ViewModelActionToken beginAction(Object key) {
@@ -257,13 +257,16 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     return ViewModelActionToken._(key, version);
   }
 
-  /// Returns whether [token] still belongs to the latest action for its key.
+  /// Returns whether [token] still belongs to the latest result for its key.
   @protected
   bool isCurrentAction(ViewModelActionToken token) {
     return !_isDisposed && _actionVersions[token.key] == token.version;
   }
 
-  /// Invalidates any pending action for [key].
+  /// Invalidates any pending action result for [key].
+  ///
+  /// This does not abort a running [Future], network request, upload, or other
+  /// resource. It only makes older tokens fail [isCurrentAction].
   @protected
   void cancelAction(Object key) {
     _actionVersions[key] = (_actionVersions[key] ?? 0) + 1;
@@ -275,7 +278,10 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
     }
   }
 
-  /// Clears pending actions and returns state to the generated initial value.
+  /// Invalidates pending action results and restores the initial state.
+  ///
+  /// This does not abort running async work. In-flight work must cooperate with
+  /// [isCurrentAction] before emitting later results.
   void invalidateSelf() {
     if (_isDisposed) return;
     _cancelActions();
