@@ -202,6 +202,7 @@ fn lowers_explicit_required_method_parameter_state() {
             traits: Vec::new(),
             configs: vec![config("HttpClient")],
             serde: None,
+            requires_lowering_diagnostics: true,
         }],
         enums: Vec::new(),
         mixins: Vec::new(),

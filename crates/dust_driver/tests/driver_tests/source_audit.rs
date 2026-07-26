@@ -195,6 +195,26 @@ fn workspace_analysis_uses_canonical_ir_before_emission() {
 }
 
 #[test]
+fn driver_lowering_uses_resolver_diagnostic_scope() {
+    let root = workspace_root();
+    let lower = fs::read_to_string(root.join("crates/dust_driver/src/lower.rs"))
+        .expect("lowering source should be readable");
+
+    assert!(
+        lower.contains("requires_lowering_diagnostics"),
+        "driver lowering must consume resolver-owned diagnostic scope"
+    );
+    assert!(
+        !lower.contains("dust_dart::SerDe"),
+        "driver lowering must not branch on SerDe symbols"
+    );
+    assert!(
+        !lower.contains("tryFrom"),
+        "driver lowering must not parse DB tryFrom configuration"
+    );
+}
+
+#[test]
 fn feature_plugins_do_not_parse_raw_dart_sources() {
     let root = workspace_root();
     let mut violations = Vec::new();

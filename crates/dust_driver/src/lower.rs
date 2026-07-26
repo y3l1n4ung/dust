@@ -4,7 +4,7 @@ mod tests_declarations;
 mod tests_directives;
 mod tests_inheritance;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
@@ -21,8 +21,8 @@ use dust_parser_dart::{
     ParsedTypedefSurface,
 };
 use dust_resolver::{
-    ResolvedClass, ResolvedConstructor, ResolvedField, ResolvedLibrary, ResolvedMethod,
-    SymbolCatalog, lower_type_ir as lower_type,
+    ResolvedConstructor, ResolvedField, ResolvedLibrary, ResolvedMethod, SymbolCatalog,
+    lower_type_ir as lower_type,
 };
 
 use self::inheritance::{
@@ -41,12 +41,17 @@ pub(crate) fn lower_library_with_catalog(
     catalog: &SymbolCatalog,
 ) -> LoweringOutcome<DartFileIr> {
     let mut diagnostics = Vec::new();
-    let required_classes = lowering_required_class_names(&library.classes);
+    let collect_diagnostics_by_class = library
+        .classes
+        .iter()
+        .map(|class| class.requires_lowering_diagnostics)
+        .collect::<Vec<_>>();
     let mut classes = library
         .classes
         .iter_mut()
-        .map(|class| {
-            let collect_diagnostics = required_classes.contains(class.name.as_str());
+        .enumerate()
+        .map(|(index, class)| {
+            let collect_diagnostics = collect_diagnostics_by_class[index];
             let outcome = lower_class_from_parts(ClassLoweringInput {
                 kind: class.kind,
                 name: &class.name,
@@ -96,7 +101,7 @@ pub(crate) fn lower_library_with_catalog(
         classes[index].fields = merged_fields;
         let mut constructor_diagnostics = Vec::new();
         resolve_constructor_param_types(&mut classes[index], &mut constructor_diagnostics);
-        if required_classes.contains(classes[index].name.as_str()) {
+        if collect_diagnostics_by_class[index] {
             diagnostics.extend(constructor_diagnostics);
         }
     }
@@ -161,52 +166,6 @@ pub(crate) fn lower_library_with_catalog(
         },
         diagnostics,
     }
-}
-
-/// Returns classes that must report lowering diagnostics because plugins or converters reference them.
-fn lowering_required_class_names(classes: &[ResolvedClass]) -> HashSet<String> {
-    let mut names = classes
-        .iter()
-        .filter(|class| !class.traits.is_empty() || !class.configs.is_empty())
-        .map(|class| class.name.clone())
-        .collect::<HashSet<_>>();
-
-    for class in classes {
-        let class_has_serde = class
-            .configs
-            .iter()
-            .any(|config| config.symbol.0 == "dust_dart::SerDe");
-        for field in &class.fields {
-            for config in &field.configs {
-                if let Some(converter) = config
-                    .named_argument_source("tryFrom")
-                    .and_then(try_from_converter_name)
-                {
-                    names.insert(converter.to_owned());
-                }
-            }
-        }
-        if class_has_serde {
-            for constructor in &class.constructors {
-                if let Some(target) = constructor.surface.redirected_target_name.as_deref() {
-                    names.insert(target.to_owned());
-                }
-            }
-        }
-    }
-
-    names
-}
-
-/// Extracts a converter class name from a `tryFrom` annotation expression.
-fn try_from_converter_name(source: &str) -> Option<&str> {
-    let value = source.trim();
-    let value = value.strip_prefix("const ").unwrap_or(value).trim();
-    let before_args = value.split_once('(').map_or(value, |(name, _)| name).trim();
-    before_args
-        .rsplit('.')
-        .next()
-        .filter(|name| !name.is_empty())
 }
 
 /// Collects import URIs for backwards-compatible plugin input.

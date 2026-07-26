@@ -79,6 +79,82 @@ class AppDatabase {
 }
 
 #[test]
+fn marks_sqlx_try_from_converter_for_lowering_diagnostics() {
+    let source = SourceText::new(
+        FileId::new(276),
+        r#"
+part 'user.g.dart';
+
+@Derive([FromRow()])
+class UserRow {
+  @Sqlx(tryFrom: const UserIdCodec())
+  final UserId id;
+
+  const UserRow(this.id);
+}
+
+final class UserId {
+  final int value;
+
+  const UserId(this.value);
+}
+
+final class UserIdCodec {
+  const UserIdCodec();
+}
+"#,
+    );
+    let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+
+    let mut catalog = SymbolCatalog::new();
+    catalog.register_trait("FromRow", "dust_dart::FromRow");
+    catalog.register_config("Sqlx", "dust_dart::Sqlx");
+    let resolved = resolve_library(
+        FileId::new(276),
+        "lib/user.dart",
+        "lib/user.g.dart",
+        &parsed.library,
+        &catalog,
+    );
+
+    assert!(
+        resolved.diagnostics.is_empty(),
+        "{:?}",
+        resolved.diagnostics
+    );
+    let row_class = resolved
+        .library
+        .classes
+        .iter()
+        .find(|class| class.name == "UserRow")
+        .expect("expected row class");
+    let converter_class = resolved
+        .library
+        .classes
+        .iter()
+        .find(|class| class.name == "UserIdCodec")
+        .expect("expected converter class");
+    let value_class = resolved
+        .library
+        .classes
+        .iter()
+        .find(|class| class.name == "UserId")
+        .expect("expected value class");
+    let Some(NormalizedConfigIr::Db(DbConfigIr::Sqlx(sqlx))) =
+        row_class.fields[0].configs[0].normalized.as_ref()
+    else {
+        panic!("expected normalized field Sqlx configuration");
+    };
+
+    assert_eq!(sqlx.try_from_source.as_deref(), Some("const UserIdCodec()"));
+    assert_eq!(sqlx.try_from_class_name.as_deref(), Some("UserIdCodec"));
+    assert!(row_class.requires_lowering_diagnostics);
+    assert!(converter_class.requires_lowering_diagnostics);
+    assert!(!value_class.requires_lowering_diagnostics);
+}
+
+#[test]
 fn normalizes_standalone_query_calls_into_ir() {
     let source = SourceText::new(
         FileId::new(275),
