@@ -28,6 +28,19 @@ final class CounterViewModel extends ViewModelBase<int, TestArgs> {
   bool isCurrentTestAction(ViewModelActionToken token) {
     return isCurrentAction(token);
   }
+
+  Future<bool> runTestAction(
+    Future<int> Function() run, {
+    void Function(Object error, StackTrace stackTrace)? onError,
+  }) {
+    return runAction<int>(
+      testAction,
+      onStart: () => emit(-1),
+      run: run,
+      onSuccess: emit,
+      onError: onError,
+    );
+  }
 }
 
 final class InitViewModel extends ViewModelBase<int, TestArgs> {
@@ -79,6 +92,65 @@ void main() {
 
     expect(viewModel.isCurrentTestAction(oldToken), isFalse);
     expect(viewModel.isCurrentTestAction(newToken), isTrue);
+  });
+
+  test('runAction ignores stale success result', () async {
+    final viewModel = CounterViewModel();
+    final firstCompleter = Completer<int>();
+    final secondCompleter = Completer<int>();
+
+    final first = viewModel.runTestAction(() => firstCompleter.future);
+    expect(viewModel.state, -1);
+
+    final second = viewModel.runTestAction(() => secondCompleter.future);
+    expect(viewModel.state, -1);
+
+    secondCompleter.complete(2);
+    expect(await second, isTrue);
+    expect(viewModel.state, 2);
+
+    firstCompleter.complete(1);
+    expect(await first, isFalse);
+    expect(viewModel.state, 2);
+  });
+
+  test('runAction ignores stale error result', () async {
+    final viewModel = CounterViewModel();
+    final firstCompleter = Completer<int>();
+    final secondCompleter = Completer<int>();
+
+    final first = viewModel.runTestAction(
+      () => firstCompleter.future,
+      onError: (error, stackTrace) {
+        fail('stale errors must not call onError: $error $stackTrace');
+      },
+    );
+    final second = viewModel.runTestAction(() => secondCompleter.future);
+
+    secondCompleter.complete(2);
+    expect(await second, isTrue);
+
+    firstCompleter.completeError(StateError('stale'));
+    expect(await first, isFalse);
+    expect(viewModel.state, 2);
+  });
+
+  test('runAction handles current error', () async {
+    final viewModel = CounterViewModel();
+    final completer = Completer<int>();
+
+    final action = viewModel.runTestAction(
+      () => completer.future,
+      onError: (error, _) {
+        expect(error, isA<StateError>());
+        viewModel.setCount(-2);
+      },
+    );
+
+    completer.completeError(StateError('failed'));
+
+    expect(await action, isTrue);
+    expect(viewModel.state, -2);
   });
 
   test('init runs onInit once for concurrent calls', () async {

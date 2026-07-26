@@ -279,22 +279,40 @@ preserved value. Read `AsyncState<T>` directly when the UI must distinguish
 
 ## Stale Async Actions
 
-For asynchronous commands on a synchronous ViewModel, action tokens prevent an
-older request result from overwriting newer state:
+For asynchronous commands on a synchronous ViewModel, use `runAction` so stale
+results cannot emit state after a newer action starts:
 
 ```dart
 static const _loadProducts = 'load-products';
 
 Future<void> loadProducts() async {
-  final token = beginAction(_loadProducts);
-  final products = await args.repository.loadProducts();
-  if (!isCurrentAction(token)) return;
-  emit(state.copyWith(products: products));
+  await runAction<List<Product>>(
+    _loadProducts,
+    onStart: () => emit(state.copyWith(status: ProductsStatus.loading)),
+    run: args.repository.loadProducts,
+    onSuccess: (products) {
+      emit(state.copyWith(
+        products: products,
+        status: ProductsStatus.success,
+      ));
+    },
+    onError: (error, _) {
+      emit(state.copyWith(
+        status: ProductsStatus.error,
+        errorMessage: error.toString(),
+      ));
+    },
+  );
 }
 ```
 
-Starting the same action key supersedes its previous token. Use
-`cancelAction(key)` to invalidate one action result. `invalidateSelf()`
+`runAction` starts a token internally and calls `onSuccess` or `onError` only
+when that token is still current. Starting the same action key supersedes its
+previous token.
+
+Use the lower-level `beginAction`, `isCurrentAction`, and `cancelAction` APIs
+only when an action needs custom cleanup or multiple await points.
+`cancelAction(key)` invalidates one action result. `invalidateSelf()`
 invalidates all pending action tokens. Sync ViewModels restore the generated
 initial state. Async ViewModels start a fresh load without preserving previous
 data.
@@ -324,6 +342,6 @@ data.
 - [Flutter package example](../../packages/dust_flutter/example/dust_flutter_example.dart)
 - [Shopping app ViewModels](../../examples/shopping_app/lib/core/view_models/app_view_model.dart)
 - [Shopping app scope composition](../../examples/shopping_app/lib/main.dart)
-- [Async action tokens](../../examples/shopping_app/lib/features/products/view_models/products_view_model.dart)
+- [Safe async action helper](../../examples/shopping_app/lib/features/products/view_models/products_view_model.dart)
 - [Selector and listener tests](../../examples/shopping_app/test/state_selector_test.dart)
 - [Scope lifecycle tests](../../examples/shopping_app/test/state_scope_realworld_lifecycle_test.dart)
