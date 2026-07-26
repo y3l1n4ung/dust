@@ -1,12 +1,13 @@
 use dust_driver::{BuildRequest, CleanRequest, run_build, run_clean};
 
-use super::support::{make_workspace, write_file};
+use super::support::{DustImport, make_workspace, write_dust_file, write_file};
 
 #[test]
 fn second_build_uses_persistent_cache_under_dot_dart_tool() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -46,8 +47,9 @@ fn second_build_uses_persistent_cache_under_dot_dart_tool() {
 #[test]
 fn clean_removes_dust_outputs_and_cache_but_keeps_foreign_generated_files() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -90,8 +92,9 @@ fn clean_removes_dust_outputs_and_cache_but_keeps_foreign_generated_files() {
 #[test]
 fn parallel_build_keeps_artifact_order_deterministic() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/z_team.dart"),
+        &[DustImport::Derive],
         "part 'z_team.g.dart';\n\
          @CopyWith()\n\
          class Team {\n\
@@ -99,8 +102,9 @@ fn parallel_build_keeps_artifact_order_deterministic() {
            const Team(this.id);\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/a_user.dart"),
+        &[DustImport::Derive],
         "part 'a_user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -134,8 +138,9 @@ fn parallel_build_keeps_artifact_order_deterministic() {
 #[test]
 fn build_skips_invalid_library_and_continues_when_fail_fast_is_false() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/bad.dart"),
+        &[DustImport::Derive],
         "part 'bad.g.dart';\n\
          @CopyWith()\n\
          class Broken {\n\
@@ -144,8 +149,9 @@ fn build_skips_invalid_library_and_continues_when_fail_fast_is_false() {
            const Broken(this.id);\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/good.dart"),
+        &[DustImport::Derive],
         "part 'good.g.dart';\n\
          @CopyWith()\n\
          class Good {\n\
@@ -174,8 +180,9 @@ fn build_skips_invalid_library_and_continues_when_fail_fast_is_false() {
 #[test]
 fn build_stops_after_first_error_when_fail_fast_is_true() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/a_bad.dart"),
+        &[DustImport::Derive],
         "part 'a_bad.g.dart';\n\
          @CopyWith()\n\
          class Broken {\n\
@@ -184,8 +191,9 @@ fn build_stops_after_first_error_when_fail_fast_is_true() {
            const Broken(this.id);\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/z_good.dart"),
+        &[DustImport::Derive],
         "part 'z_good.g.dart';\n\
          @CopyWith()\n\
          class Good {\n\

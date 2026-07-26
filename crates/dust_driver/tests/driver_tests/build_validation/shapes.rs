@@ -2,13 +2,14 @@ use std::fs;
 
 use dust_driver::{BuildRequest, run_build};
 
-use crate::support::{generated_output, make_workspace, write_file};
+use crate::support::{DustImport, generated_output, make_workspace, write_dust_file};
 
 #[test]
 fn build_supports_abstract_and_mixin_clause_shapes_without_unrelated_warnings() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/entity.dart"),
+        &[DustImport::Derive],
         "part 'entity.g.dart';\n\
          mixin AuditStamp {\n\
            String auditLabel() => 'audited';\n\
@@ -25,8 +26,9 @@ fn build_supports_abstract_and_mixin_clause_shapes_without_unrelated_warnings() 
            const EntityView(super.id);\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/tagged_value.dart"),
+        &[DustImport::Derive],
         "part 'tagged_value.g.dart';\n\
          mixin LabelStamp {\n\
            String labelKind() => 'tagged';\n\

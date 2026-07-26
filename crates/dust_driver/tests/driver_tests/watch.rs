@@ -2,13 +2,14 @@ use std::{fs, thread, time::Duration};
 
 use dust_driver::{CommandRequest, WatchRequest, run, run_watch};
 
-use super::support::{generated_output, make_workspace, write_file};
+use super::support::{DustImport, generated_output, make_workspace, write_dust_file, write_file};
 
 #[test]
 fn watch_runs_initial_build_for_existing_candidates() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -34,8 +35,9 @@ fn watch_runs_initial_build_for_existing_candidates() {
 #[test]
 fn watch_rebuilds_only_the_changed_library() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -43,8 +45,9 @@ fn watch_rebuilds_only_the_changed_library() {
            const User(this.id);\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/team.dart"),
+        &[DustImport::Derive],
         "part 'team.g.dart';\n\
          @CopyWith()\n\
          class Team {\n\
@@ -57,8 +60,9 @@ fn watch_rebuilds_only_the_changed_library() {
     let user_path = root.join("lib/user.dart");
     let modifier = thread::spawn(move || {
         thread::sleep(Duration::from_millis(25));
-        write_file(
+        write_dust_file(
             &user_path,
+            &[DustImport::Derive],
             "part 'user.g.dart';\n\
              @ToString()\n\
              class User {\n\
@@ -166,8 +170,9 @@ final class _$TeamCopyWithImpl<$Res> implements _$TeamCopyWith<$Res> {
 #[test]
 fn watch_rebuilds_all_libraries_when_package_config_changes() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -175,8 +180,9 @@ fn watch_rebuilds_all_libraries_when_package_config_changes() {
            const User(this.id);\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/team.dart"),
+        &[DustImport::Derive],
         "part 'team.g.dart';\n\
          @CopyWith()\n\
          class Team {\n\
@@ -215,8 +221,9 @@ fn watch_rebuilds_all_libraries_when_package_config_changes() {
 #[test]
 fn watch_rebuilds_all_libraries_when_dust_config_changes() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -224,8 +231,9 @@ fn watch_rebuilds_all_libraries_when_dust_config_changes() {
            const User(this.id);\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/team.dart"),
+        &[DustImport::Derive],
         "part 'team.g.dart';\n\
          @CopyWith()\n\
          class Team {\n\

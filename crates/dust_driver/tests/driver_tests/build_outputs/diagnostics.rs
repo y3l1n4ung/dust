@@ -1,13 +1,14 @@
 use dust_diagnostics::render_to_string_with_files;
 use dust_driver::{BuildRequest, run_build};
 
-use crate::support::{make_workspace, write_file};
+use crate::support::{DustImport, make_workspace, write_dust_file};
 
 #[test]
 fn build_rejects_invalid_serde_using_values() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/audit.dart"),
+        &[DustImport::Derive],
         "part 'audit.g.dart';\n\
          @Derive([Serialize(), Deserialize()])\n\
          class Audit {\n\
@@ -42,8 +43,9 @@ fn build_rejects_invalid_serde_using_values() {
 #[test]
 fn build_keeps_source_context_for_labeled_diagnostics() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @Derive([ToString(), UnknownTrait()])\n\
          class User {\n\
@@ -77,8 +79,9 @@ fn build_keeps_source_context_for_labeled_diagnostics() {
 #[test]
 fn build_uses_workspace_serde_json_capability_facts() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/profile.dart"),
+        &[DustImport::Derive],
         r#"part 'profile.g.dart';
 
 @Derive([Serialize(), Deserialize()])
@@ -92,8 +95,9 @@ class JsonProfile with _$JsonProfile {
 }
 "#,
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/account.dart"),
+        &[DustImport::Derive],
         r#"import 'profile.dart';
 
 part 'account.g.dart';
@@ -140,8 +144,9 @@ class JsonBad {
 #[test]
 fn build_accepts_workspace_handwritten_json_members() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/profile.dart"),
+        &[DustImport::Derive],
         r#"part 'profile.g.dart';
 
 @Derive([Serialize()])
@@ -160,8 +165,9 @@ class HandwrittenProfile {
 }
 "#,
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/account.dart"),
+        &[DustImport::Derive],
         r#"import 'profile.dart';
 
 part 'account.g.dart';
@@ -191,8 +197,9 @@ class JsonAccount with _$JsonAccount {
 #[test]
 fn build_reports_missing_workspace_json_direction_only() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/profile.dart"),
+        &[DustImport::Derive],
         r#"part 'profile.g.dart';
 
 @Derive([Serialize(), Deserialize()])
@@ -207,8 +214,9 @@ class JsonSerializeOnly {
 }
 "#,
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/account.dart"),
+        &[DustImport::Derive],
         r#"import 'profile.dart';
 
 part 'account.g.dart';

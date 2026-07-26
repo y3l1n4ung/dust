@@ -1,10 +1,11 @@
 use std::{fs, path::PathBuf};
 
-use crate::support::write_file;
+use crate::support::{DustImport, write_dust_file};
 
 pub(crate) fn write_routing_workspace(root: &std::path::Path, dashboard_name: &str) {
-    write_file(
+    write_dust_file(
         &root.join("lib/route.dart"),
+        &[DustImport::Route],
         "import 'pages/dashboard_page.dart';\n\
          import 'pages/not_found_page.dart';\n\
          import 'route.g.dart';\n\
@@ -15,8 +16,9 @@ pub(crate) fn write_routing_workspace(root: &std::path::Path, dashboard_name: &s
          }\n",
     );
     write_dashboard_page(root, dashboard_name);
-    write_file(
+    write_dust_file(
         &root.join("lib/pages/not_found_page.dart"),
+        &[DustImport::Route],
         "@AppRoute('/404', name: 'notFound', guards: [])\n\
          final class NotFoundPage {\n\
            const NotFoundPage({this.path = ''});\n\
@@ -26,8 +28,9 @@ pub(crate) fn write_routing_workspace(root: &std::path::Path, dashboard_name: &s
 }
 
 pub(crate) fn write_dashboard_page(root: &std::path::Path, name: &str) {
-    write_file(
+    write_dust_file(
         &root.join("lib/pages/dashboard_page.dart"),
+        &[DustImport::Route],
         &format!(
             "@AppRoute('/', name: '{name}')\n\
              final class DashboardPage {{\n\

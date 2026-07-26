@@ -2,13 +2,14 @@ use std::fs;
 
 use dust_driver::{BuildRequest, run_build};
 
-use crate::support::{generated_output, make_workspace, write_file};
+use crate::support::{DustImport, generated_output, make_workspace, write_dust_file};
 
 #[test]
 fn build_includes_inherited_fields_for_annotated_subclasses() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/entity.dart"),
+        &[DustImport::Derive],
         "part 'entity.g.dart';\n\
          @Derive([ToString(), Eq()])\n\
          abstract class Entity with _$Entity {\n\

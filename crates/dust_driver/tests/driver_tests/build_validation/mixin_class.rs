@@ -1,12 +1,13 @@
 use dust_driver::{BuildRequest, run_build};
 
-use crate::support::{make_workspace, write_file};
+use crate::support::{DustImport, make_workspace, write_dust_file};
 
 #[test]
 fn build_rejects_mixin_class_targets_with_clear_diagnostic() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/mixin_target.dart"),
+        &[DustImport::Derive],
         "part 'mixin_target.g.dart';\n\
          @Derive([ToString(), CopyWith()])\n\
          mixin class MixinTarget {\n\

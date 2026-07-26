@@ -2,13 +2,14 @@ use std::fs;
 
 use dust_driver::{BuildRequest, run_build};
 
-use crate::support::{generated_output, make_workspace, write_file};
+use crate::support::{DustImport, generated_output, make_workspace, write_dust_file};
 
 #[test]
 fn build_writes_real_serde_outputs() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/profile.dart"),
+        &[DustImport::Derive],
         "part 'profile.g.dart';\n\
          @Derive([Serialize(), Deserialize()])\n\
          @SerDe(renameAll: SerDeRename.snakeCase, disallowUnrecognizedKeys: true)\n\
@@ -22,8 +23,9 @@ fn build_writes_real_serde_outputs() {
            factory Profile.fromJson(Map<String, Object?> json) => _$ProfileFromJson(json);\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/account.dart"),
+        &[DustImport::Derive],
         "part 'account.g.dart';\n\
          class Profile {\n\
            const Profile({required this.id});\n\

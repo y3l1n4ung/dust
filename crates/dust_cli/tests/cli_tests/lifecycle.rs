@@ -2,13 +2,14 @@ use std::{thread, time::Duration};
 
 use dust_cli::run_cli;
 
-use super::helpers::{make_workspace, write_file};
+use super::helpers::{DustImport, make_workspace, write_dust_file, write_file};
 
 #[test]
 fn cli_clean_removes_dust_outputs_and_cache() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -47,8 +48,9 @@ fn cli_clean_removes_dust_outputs_and_cache() {
 #[test]
 fn cli_check_returns_stale_exit_code_before_build() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -67,8 +69,9 @@ fn cli_check_returns_stale_exit_code_before_build() {
 #[test]
 fn cli_watch_reports_rebuilt_library() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -81,8 +84,9 @@ fn cli_watch_reports_rebuilt_library() {
     let user_path = root.join("lib/user.dart");
     let modifier = thread::spawn(move || {
         thread::sleep(Duration::from_millis(80));
-        write_file(
+        write_dust_file(
             &user_path,
+            &[DustImport::Derive],
             "part 'user.g.dart';\n\
              @ToString()\n\
              class User {\n\

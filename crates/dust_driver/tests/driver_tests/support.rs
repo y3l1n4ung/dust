@@ -3,84 +3,35 @@ use std::fs;
 use dust_plugin_api::GENERATED_HEADER;
 use tempfile::tempdir;
 
+pub(crate) enum DustImport {
+    Derive,
+    Http,
+    Route,
+    State,
+}
+
 pub(crate) fn generated_output(body: &str) -> String {
     format!("{GENERATED_HEADER}\n{body}")
+}
+
+pub(crate) fn write_dust_file(path: &std::path::Path, imports: &[DustImport], contents: &str) {
+    let import_block = imports
+        .iter()
+        .map(|import| match import {
+            DustImport::Derive => "import 'package:dust_dart/derive.dart';\n",
+            DustImport::Http => "import 'package:dust_dart/http.dart';\n",
+            DustImport::Route => "import 'package:dust_flutter/route.dart';\n",
+            DustImport::State => "import 'package:dust_flutter/state.dart';\n",
+        })
+        .collect::<String>();
+    write_file(path, &format!("{import_block}{contents}"));
 }
 
 pub(crate) fn write_file(path: &std::path::Path, contents: &str) {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).expect("create parent dirs");
     }
-    fs::write(path, fixture_contents(path, contents)).expect("write file");
-}
-
-fn fixture_contents(path: &std::path::Path, contents: &str) -> String {
-    if path.extension().and_then(|ext| ext.to_str()) != Some("dart")
-        || contents.contains("package:dust_dart/")
-        || contents.contains("package:dust_flutter/")
-    {
-        return contents.to_owned();
-    }
-
-    let Some(import) = fixture_dust_import(contents) else {
-        return contents.to_owned();
-    };
-
-    format!("{import}{contents}")
-}
-
-fn fixture_dust_import(contents: &str) -> Option<String> {
-    let mut imports = Vec::new();
-    let has = |name: &str| has_annotation(contents, name);
-
-    if has("AppRoute") || has("AppRouter") {
-        imports.push("import 'package:dust_flutter/route.dart';\n");
-    }
-    if has("ViewModel") {
-        imports.push("import 'package:dust_flutter/state.dart';\n");
-    }
-    if has("HttpClient") || has("GET") || has("POST") {
-        imports.push("import 'package:dust_dart/http.dart';\n");
-    }
-    if has("Sqlx") || has("SqlxDatabase") || has("SqlxDao") || contents.contains("FromRow()") {
-        imports.push("import 'package:dust_dart/db.dart';\n");
-    }
-    if has("Derive")
-        || has("ToString")
-        || has("Debug")
-        || has("Eq")
-        || has("CopyWith")
-        || has("Validate")
-        || has("SerDe")
-        || contents.contains("Serialize()")
-        || contents.contains("Deserialize()")
-    {
-        imports.push("import 'package:dust_dart/derive.dart';\n");
-    }
-
-    if imports.is_empty() {
-        None
-    } else {
-        Some(imports.concat())
-    }
-}
-
-fn has_annotation(contents: &str, name: &str) -> bool {
-    contents.match_indices('@').any(|(index, _)| {
-        let mut start = index + 1;
-        let bytes = contents.as_bytes();
-        while bytes.get(start).is_some_and(u8::is_ascii_whitespace) {
-            start += 1;
-        }
-        let mut end = start;
-        while bytes
-            .get(end)
-            .is_some_and(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'$' | b'.'))
-        {
-            end += 1;
-        }
-        contents[start..end].rsplit('.').next() == Some(name)
-    })
+    fs::write(path, contents).expect("write file");
 }
 
 pub(crate) fn make_workspace() -> tempfile::TempDir {
@@ -140,21 +91,4 @@ pub(crate) fn write_resolved_dust_packages(root: &std::path::Path, packages: &[(
             r#"{{"configVersion":2,"packages":[{{"name":"dust_test","rootUri":"../","packageUri":"lib/","languageVersion":"3.6"}}{suffix}]}}"#
         ),
     );
-}
-
-#[cfg(test)]
-mod tests {
-    use super::fixture_dust_import;
-
-    #[test]
-    fn fixture_dust_import_detects_prefixed_and_mixed_annotations() {
-        let contents = "@r.AppRoute('/profile')\n@h.HttpClient()\n@db.SqlxDatabase()\n@ d.Derive([d.ToString()])\nclass Profile {}\n";
-
-        assert_eq!(
-            fixture_dust_import(contents).as_deref(),
-            Some(
-                "import 'package:dust_flutter/route.dart';\nimport 'package:dust_dart/http.dart';\nimport 'package:dust_dart/db.dart';\nimport 'package:dust_dart/derive.dart';\n"
-            )
-        );
-    }
 }

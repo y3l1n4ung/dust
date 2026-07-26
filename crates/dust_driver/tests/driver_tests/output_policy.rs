@@ -1,6 +1,6 @@
 use dust_driver::{BuildRequest, run_build};
 
-use super::support::{make_workspace, write_file};
+use super::support::{DustImport, make_workspace, write_dust_file, write_file};
 
 #[test]
 fn build_uses_configured_primary_suffix() {
@@ -9,8 +9,9 @@ fn build_uses_configured_primary_suffix() {
         &workspace.path().join("dust.yaml"),
         "outputs:\n  primary_suffix: .d.dart\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.d.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -38,8 +39,9 @@ fn build_reports_part_suffix_mismatches_from_dust_config() {
         &workspace.path().join("dust.yaml"),
         "outputs:\n  primary_suffix: .d.dart\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\

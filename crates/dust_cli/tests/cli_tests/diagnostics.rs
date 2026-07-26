@@ -1,12 +1,13 @@
 use dust_cli::run_cli;
 
-use super::helpers::{make_workspace, write_file};
+use super::helpers::{DustImport, make_workspace, write_dust_file};
 
 #[test]
 fn cli_build_renders_warning_details() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @Derive([ToString(), UnknownTrait()])\n\
          class User {\n\
@@ -45,8 +46,9 @@ fn cli_build_renders_warning_details() {
 #[test]
 fn cli_build_renders_error_notes() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/audit.dart"),
+        &[DustImport::Derive],
         "part 'audit.g.dart';\n\
          @Derive([Serialize(), Deserialize()])\n\
          class Audit {\n\

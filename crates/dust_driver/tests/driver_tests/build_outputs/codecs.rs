@@ -2,13 +2,14 @@ use std::fs;
 
 use dust_driver::{BuildRequest, run_build};
 
-use crate::support::{generated_output, make_workspace, write_file};
+use crate::support::{DustImport, generated_output, make_workspace, write_dust_file};
 
 #[test]
 fn build_writes_custom_serde_codec_outputs() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/audit.dart"),
+        &[DustImport::Derive],
         "part 'audit.g.dart';\n\
          final class UnixEpochDateTimeCodec implements SerDeCodec<DateTime, int> {\n\
            const UnixEpochDateTimeCodec();\n\
