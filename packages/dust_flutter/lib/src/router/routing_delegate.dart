@@ -128,14 +128,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
 
   @override
   Future<bool> popRoute() async {
-    if (_disposed) return false;
-    if (_entries.length <= 1) return false;
-    final previous = _stackSnapshot();
-    final removed = _entries.removeLast();
-    removed.complete(null);
-    _log('pop ${_debugRoute(removed.route)}');
-    _finishStackCommit(previous);
-    return true;
+    return _popTop(null);
   }
 
   /// Navigates to [route], replacing the current stack.
@@ -151,6 +144,9 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   /// Replaces the current top route with [route].
   void replace(T route) =>
       unawaited(_applyRoute(route, NavigationMode.replace));
+
+  /// Pops the top route and completes its push future with [result].
+  bool pop<R>([R? result]) => _popTop(result);
 
   @override
   void dispose() {
@@ -313,6 +309,17 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     for (final entry in entries) {
       entry.complete(null);
     }
+  }
+
+  bool _popTop(Object? result) {
+    if (_disposed) return false;
+    if (_entries.length <= 1) return false;
+    final previous = _stackSnapshot();
+    final removed = _entries.removeLast();
+    removed.complete(result);
+    _log('pop ${_debugRoute(removed.route)}');
+    _finishStackCommit(previous);
+    return true;
   }
 
   RouteStack<T> _stackSnapshot() =>

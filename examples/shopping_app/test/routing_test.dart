@@ -67,7 +67,7 @@ void main() {
   test('real app public and protected route contract is explicit', () async {
     final router = await _shoppingRouter();
 
-    final publicRoutes = <AppRoutePath<void>>[
+    final publicRoutes = <AppRoutePath>[
       const ProductsRoute(),
       const CartRoute(),
       const LoginRoute(redirectPath: '/checkout'),
@@ -75,11 +75,13 @@ void main() {
       const SupportChatRoute(),
       const WishlistRoute(),
     ];
+    const supportRoute = SupportChatRoute();
+    expect(supportRoute, isA<AppRoutePath<bool>>());
     for (final route in publicRoutes) {
       expect(routeRequiresAuth(route), isFalse, reason: '${route.runtimeType}');
     }
 
-    final protectedRoutes = <AppRoutePath<void>>[
+    final protectedRoutes = <AppRoutePath>[
       const AdminRoute(),
       const CheckoutRoute(),
       const OrdersRoute(),
@@ -189,7 +191,7 @@ void main() {
       ),
     );
 
-    final unsafeAuthRoutes = <AppRoutePath<void>>[
+    final unsafeAuthRoutes = <AppRoutePath>[
       const LoginRoute(),
       const LoginRoute(redirectPath: ''),
       const LoginRoute(redirectPath: 'https://evil.test/a'),

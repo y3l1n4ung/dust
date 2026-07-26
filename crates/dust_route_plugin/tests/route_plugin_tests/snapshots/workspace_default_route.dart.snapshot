@@ -190,7 +190,7 @@ final class AppRoutesNavigator {
   RouteAction<void> search({int page = 1}) =>
       RouteAction(_router, SearchRoute(page: page));
 
-  void pop() => _router.pop();
+  bool pop<R>([R? result]) => _router.pop<R>(result);
 }
 
 final class RouteAction<R> {

@@ -1,6 +1,8 @@
 ## 0.1.3
 
 - Add router stack observer runtime support for generated routing.
+- Add typed route results with `@AppRoute(result: Type)` and generated
+  `Future<T?> push()` helpers.
 - Add `runAction` for stale-safe async commands in sync ViewModels.
 - Make failed ViewModel initialization retry only through explicit `retryInit()`.
 - Unwrap deprecated `StateEffect` values before effect delivery.

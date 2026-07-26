@@ -100,6 +100,9 @@ pub(crate) struct RouteAnnotation {
     pub(crate) path: String,
     /// Optional explicit route action name.
     pub(crate) name: Option<String>,
+    /// Optional result type returned by route pushes.
+    #[serde(default)]
+    pub(crate) result_type: Option<String>,
     /// Optional shell widget class wrapping the page.
     pub(crate) shell: Option<String>,
     /// Guard class names applied to the route.
@@ -151,6 +154,8 @@ pub(crate) struct RouteSpec {
     pub(crate) path: String,
     /// Generated route action name.
     pub(crate) name: String,
+    /// Result type returned by route pushes.
+    pub(crate) result_type: String,
     /// Parsed annotation settings.
     pub(crate) annotation: RouteAnnotation,
     /// Constructor parameters used by generated route classes.

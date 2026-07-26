@@ -7,7 +7,7 @@ import '../models/chat_state.dart';
 import '../view_models/shopping_chat_view_model.dart';
 
 /// Support chat screen.
-@AppRoute('/support/chat', name: 'supportChat', guards: [])
+@AppRoute('/support/chat', name: 'supportChat', guards: [], result: bool)
 class SupportChatScreen extends StatefulWidget {
   /// Creates a [SupportChatScreen].
   const SupportChatScreen({super.key});
@@ -18,6 +18,7 @@ class SupportChatScreen extends StatefulWidget {
 
 class _SupportChatScreenState extends State<SupportChatScreen> {
   final _controller = TextEditingController();
+  bool _sentMessage = false;
 
   @override
   void dispose() {
@@ -31,6 +32,11 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          icon: const BackButtonIcon(),
+          onPressed: () => context.navigator.pop(_sentMessage),
+        ),
         title: const TranslatedText(
           'shop_shopping_assistant',
           defaultText: 'Shopping Assistant',
@@ -95,8 +101,10 @@ class _SupportChatScreenState extends State<SupportChatScreen> {
   }
 
   void _send() {
-    final text = _controller.text;
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
     _controller.clear();
+    _sentMessage = true;
     context.readShoppingChatViewModel().send(text);
   }
 }

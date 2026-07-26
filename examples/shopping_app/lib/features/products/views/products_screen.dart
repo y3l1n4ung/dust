@@ -58,7 +58,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               defaultText: 'Support Chat',
             ),
             icon: const Icon(Icons.support_agent),
-            onPressed: () => context.navigator.supportChat().push(),
+            onPressed: _openSupportChat,
           ),
           _CartIconButton(itemCount: cartState.itemCount),
         ],
@@ -120,6 +120,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
           child: _ProductsGrid(products: state.filteredProducts),
         );
     }
+  }
+
+  Future<void> _openSupportChat() async {
+    final sentMessage = await context.navigator.supportChat().push();
+    if (!mounted || sentMessage != true) return;
+    AppSnackbar.success(
+      context,
+      context.tr(
+        'shop_support_message_sent',
+        defaultText: 'Support message sent',
+      ),
+    );
   }
 }
 

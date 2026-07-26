@@ -73,7 +73,7 @@ final class AppRoutesNavigator {
 
   final RouterController<AppRoutePath> _router;
 
-{{ factories }}  void pop() => _router.pop();
+{{ factories }}  bool pop<R>([R? result]) => _router.pop<R>(result);
 }
 
 final class RouteAction<R> {

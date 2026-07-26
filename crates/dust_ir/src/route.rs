@@ -5,6 +5,8 @@ pub struct RouteConfigIr {
     pub path: String,
     /// Optional explicit route action name.
     pub name: Option<String>,
+    /// Optional result type returned by route pushes.
+    pub result_type: Option<String>,
     /// Optional shell widget class wrapping the page.
     pub shell: Option<String>,
     /// Guard class names applied to the route.

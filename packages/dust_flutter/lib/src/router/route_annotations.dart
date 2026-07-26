@@ -54,6 +54,7 @@ class AppRoute {
   const AppRoute(
     this.path, {
     this.name,
+    this.result,
     this.shell,
     this.guards = const [],
     this.transition,
@@ -66,6 +67,11 @@ class AppRoute {
 
   /// Stable route name used for generated route and navigation helper names.
   final String? name;
+
+  /// Optional result type returned by `push()` when this route is popped.
+  ///
+  /// Omit for routes that do not return a value.
+  final Type? result;
 
   /// Optional layout widget type that wraps this page.
   final Type? shell;

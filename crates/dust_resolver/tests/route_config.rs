@@ -16,6 +16,7 @@ part 'project.g.dart';
 @AppRoute(
   '/projects/:id',
   name: 'project',
+  result: bool,
   shell: ui.AppShell,
   guards: [auth.AuthGuard, BillingGuard],
   transition: const cupertino.CupertinoPageTransitionsBuilder(),
@@ -50,6 +51,7 @@ class ProjectPage {}
     };
     assert_eq!(route.path, "/projects/:id");
     assert_eq!(route.name.as_deref(), Some("project"));
+    assert_eq!(route.result_type.as_deref(), Some("bool"));
     assert_eq!(route.shell.as_deref(), Some("ui.AppShell"));
     assert_eq!(route.guards, ["auth.AuthGuard", "BillingGuard"]);
     assert!(route.guards_configured);

@@ -99,6 +99,36 @@ fn emits_no_transition_builder_only_when_referenced() {
 }
 
 #[test]
+fn emits_typed_route_result_helpers() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/', notFound: '/404')"),
+        route_page_class("HomePage", "('/', name: 'home')", Vec::new()),
+        route_page_class(
+            "PickerPage",
+            "('/picker', name: 'picker', result: bool)",
+            Vec::new(),
+        ),
+    ]);
+
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
+    let primary = contribution.primary_source.expect("primary route output");
+
+    assert!(primary.contains("final class PickerRoute extends AppRoutePath<bool>"));
+    assert!(primary.contains("RouteAction<bool> picker() => RouteAction(_router, PickerRoute());"));
+    assert!(primary.contains("bool pop<R>([R? result]) => _router.pop<R>(result);"));
+}
+
+#[test]
 fn emits_guard_helpers_with_custom_router_base_name() {
     let plugin = register_plugin();
     let mut router = router_class("(initial: '/', notFound: '/404')");
