@@ -2,13 +2,14 @@ use std::fs;
 
 use dust_driver::{BuildRequest, CheckRequest, CleanRequest, run_build, run_check, run_clean};
 
-use super::support::{make_workspace, write_file};
+use super::support::{DustImport, make_workspace, write_dust_file};
 
 #[test]
 fn build_writes_http_client_auxiliary_test_output() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/api.dart"),
+        &[DustImport::Http],
         "part 'api.g.dart';\n\
          @HttpClient(generateTest: true)\n\
          abstract interface class Api {\n\
@@ -49,8 +50,9 @@ fn build_writes_http_client_auxiliary_test_output() {
 #[test]
 fn check_marks_http_client_output_stale_when_auxiliary_file_is_missing() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/api.dart"),
+        &[DustImport::Http],
         "part 'api.g.dart';\n\
          @HttpClient(generateTest: true)\n\
          abstract interface class Api {\n\
@@ -91,8 +93,9 @@ fn check_marks_http_client_output_stale_when_auxiliary_file_is_missing() {
 #[test]
 fn clean_removes_http_client_auxiliary_test_output() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/api.dart"),
+        &[DustImport::Http],
         "part 'api.g.dart';\n\
          @HttpClient(generateTest: true)\n\
          abstract interface class Api {\n\
@@ -131,8 +134,9 @@ fn clean_removes_http_client_auxiliary_test_output() {
 #[test]
 fn build_writes_dart_target_isolate_decode_output() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/api.dart"),
+        &[DustImport::Http],
         "import 'dart:isolate';\n\
          part 'api.g.dart';\n\
          @HttpClient(parseThread: HttpParseThread.isolate)\n\
@@ -163,8 +167,9 @@ fn build_writes_dart_target_isolate_decode_output() {
 #[test]
 fn build_writes_flutter_target_compute_decode_output() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/api.dart"),
+        &[DustImport::Http],
         "import 'package:flutter/foundation.dart' show compute;\n\
          part 'api.g.dart';\n\
          @HttpClient(\n\
@@ -198,8 +203,9 @@ fn build_writes_flutter_target_compute_decode_output() {
 #[test]
 fn build_rejects_flutter_target_isolate_decode_without_compute_import() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/api.dart"),
+        &[DustImport::Http],
         "part 'api.g.dart';\n\
          @HttpClient(\n\
            target: HttpTarget.flutter,\n\
@@ -235,16 +241,18 @@ fn build_rejects_flutter_target_isolate_decode_without_compute_import() {
 #[test]
 fn build_rejects_imported_http_models_without_json_support() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/model.dart"),
+        &[DustImport::Derive],
         "part 'model.g.dart';\n\
          @Derive([ToString()])\n\
          class NotJson {\n\
            const NotJson();\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/api.dart"),
+        &[DustImport::Http],
         "import 'model.dart';\n\
          part 'api.g.dart';\n\
          @HttpClient()\n\

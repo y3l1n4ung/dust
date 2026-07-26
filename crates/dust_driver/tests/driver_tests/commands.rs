@@ -6,14 +6,16 @@ use dust_driver::{
 };
 
 use super::support::{
-    make_pub_workspace_member, make_workspace, write_file, write_resolved_dust_packages,
+    DustImport, make_pub_workspace_member, make_workspace, write_dust_file,
+    write_resolved_dust_packages,
 };
 
 #[test]
 fn check_reports_stale_before_build_and_fresh_after_build() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -52,8 +54,9 @@ fn check_reports_stale_before_build_and_fresh_after_build() {
 fn doctor_reports_workspace_and_registered_plugins() {
     let workspace = make_workspace();
     write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.3")]);
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -111,8 +114,9 @@ fn doctor_reports_workspace_and_registered_plugins() {
 fn doctor_reports_member_package_root_and_shared_package_config() {
     let (workspace, package_root) = make_pub_workspace_member();
     write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.3")]);
-    write_file(
+    write_dust_file(
         &package_root.join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -142,8 +146,9 @@ fn doctor_reports_member_package_root_and_shared_package_config() {
 fn doctor_reports_too_old_dust_package() {
     let workspace = make_workspace();
     write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.2")]);
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -176,8 +181,9 @@ fn doctor_reports_too_old_dust_package() {
 fn doctor_reports_too_new_dust_package() {
     let workspace = make_workspace();
     write_resolved_dust_packages(workspace.path(), &[("dust_flutter", "0.2.0")]);
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/counter.dart"),
+        &[DustImport::State],
         "part 'counter.g.dart';\n\
          @ViewModel()\n\
          class CounterViewModel {}\n",
@@ -204,8 +210,9 @@ fn doctor_reports_too_new_dust_package() {
 #[test]
 fn doctor_reports_missing_used_dust_package() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -245,8 +252,9 @@ fn run_dispatches_supported_commands() {
 #[test]
 fn build_emits_progress_events() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\

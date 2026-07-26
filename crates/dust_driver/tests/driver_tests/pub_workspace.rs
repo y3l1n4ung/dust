@@ -1,12 +1,15 @@
 use dust_driver::{BuildRequest, CleanRequest, WatchRequest, run_build, run_clean, run_watch};
 
-use super::support::{generated_output, make_pub_workspace_member, write_file};
+use super::support::{
+    DustImport, generated_output, make_pub_workspace_member, write_dust_file, write_file,
+};
 
 #[test]
 fn build_uses_member_cache_root_and_shared_package_config_for_pub_workspace() {
     let (workspace, package_root) = make_pub_workspace_member();
-    write_file(
+    write_dust_file(
         &package_root.join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -52,8 +55,9 @@ fn build_uses_member_cache_root_and_shared_package_config_for_pub_workspace() {
 #[test]
 fn watch_rebuilds_member_package_when_shared_workspace_config_changes() {
     let (workspace, package_root) = make_pub_workspace_member();
-    write_file(
+    write_dust_file(
         &package_root.join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -61,8 +65,9 @@ fn watch_rebuilds_member_package_when_shared_workspace_config_changes() {
            const User(this.id);\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &package_root.join("lib/team.dart"),
+        &[DustImport::Derive],
         "part 'team.g.dart';\n\
          @CopyWith()\n\
          class Team {\n\
@@ -115,8 +120,9 @@ fn wait_for_path(path: &std::path::Path) {
 #[test]
 fn clean_only_clears_member_package_outputs_and_cache_in_pub_workspace() {
     let (workspace, package_root) = make_pub_workspace_member();
-    write_file(
+    write_dust_file(
         &package_root.join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\

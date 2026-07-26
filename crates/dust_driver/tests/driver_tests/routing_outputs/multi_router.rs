@@ -1,14 +1,15 @@
 use dust_driver::{BuildRequest, run_build};
 
 use super::helpers::write_routing_workspace;
-use crate::support::{make_workspace, write_file};
+use crate::support::{DustImport, make_workspace, write_dust_file};
 
 #[test]
 fn multiple_router_roots_are_rejected() {
     let workspace = make_workspace();
     write_routing_workspace(workspace.path(), "dashboard");
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/admin_route.dart"),
+        &[DustImport::Route],
         "import 'pages/admin_page.dart';\n\
          import 'admin_route.g.dart';\n\
          \n\
@@ -17,8 +18,9 @@ fn multiple_router_roots_are_rejected() {
            const AdminRouter();\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/pages/admin_page.dart"),
+        &[DustImport::Route],
         "@AppRoute('/admin', name: 'admin')\n\
          final class AdminPage {\n\
            const AdminPage();\n\

@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use dust_cli::run_cli;
 use serde_json::Value;
 
-use super::helpers::{make_workspace, write_file};
+use super::helpers::{DustImport, make_workspace, write_dust_file, write_file};
 
 #[test]
 fn compatibility_contract_covers_v013_packages() {
@@ -72,8 +72,9 @@ fn ci_runs_compatibility_script_self_test_and_real_check() {
 fn cli_build_renders_unsupported_package_version() {
     let workspace = make_workspace();
     write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.2")]);
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -98,8 +99,9 @@ fn cli_build_renders_unsupported_package_version() {
 fn cli_doctor_renders_package_compatibility_matrix() {
     let workspace = make_workspace();
     write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.2")]);
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\

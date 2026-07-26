@@ -1,14 +1,15 @@
 use dust_driver::{BuildRequest, run_build};
 
 use super::helpers::write_routing_workspace;
-use crate::support::{make_workspace, write_file};
+use crate::support::{DustImport, make_workspace, write_dust_file};
 
 #[test]
 fn build_reports_missing_initial_route_page() {
     let workspace = make_workspace();
     write_routing_workspace(workspace.path(), "dashboard");
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/route.dart"),
+        &[DustImport::Route],
         "import 'pages/dashboard_page.dart';\n\
          import 'pages/not_found_page.dart';\n\
          import 'route.g.dart';\n\
@@ -39,8 +40,9 @@ fn build_reports_missing_initial_route_page() {
 fn build_reports_missing_not_found_route_page() {
     let workspace = make_workspace();
     write_routing_workspace(workspace.path(), "dashboard");
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/route.dart"),
+        &[DustImport::Route],
         "import 'pages/dashboard_page.dart';\n\
          import 'route.g.dart';\n\
          \n\
@@ -70,8 +72,9 @@ fn build_reports_missing_not_found_route_page() {
 fn build_reports_route_shell_or_guard_without_visible_import() {
     let workspace = make_workspace();
     write_routing_workspace(workspace.path(), "dashboard");
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/pages/project_page.dart"),
+        &[DustImport::Route],
         "@AppRoute('/projects/:projectId', name: 'project', shell: AppShell, guards: [ProjectGuard])\n\
          final class ProjectPage {\n\
            const ProjectPage({required this.projectId});\n\
@@ -100,8 +103,9 @@ fn build_reports_route_shell_or_guard_without_visible_import() {
 fn build_reports_duplicate_route_path_params() {
     let workspace = make_workspace();
     write_routing_workspace(workspace.path(), "dashboard");
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/pages/post_page.dart"),
+        &[DustImport::Route],
         "@AppRoute('/users/:id/posts/:id', name: 'post')\n\
          final class PostPage {\n\
            const PostPage({required this.id});\n\
@@ -129,16 +133,18 @@ fn build_reports_duplicate_route_path_params() {
 fn build_reports_static_and_dynamic_route_siblings() {
     let workspace = make_workspace();
     write_routing_workspace(workspace.path(), "dashboard");
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/pages/user_page.dart"),
+        &[DustImport::Route],
         "@AppRoute('/users/:id', name: 'user')\n\
          final class UserPage {\n\
            const UserPage({required this.id});\n\
            final int id;\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/pages/user_settings_page.dart"),
+        &[DustImport::Route],
         "@AppRoute('/users/settings', name: 'userSettings')\n\
          final class UserSettingsPage {\n\
            const UserSettingsPage();\n\

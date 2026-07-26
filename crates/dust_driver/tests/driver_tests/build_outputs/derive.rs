@@ -2,13 +2,14 @@ use std::fs;
 
 use dust_driver::{BuildRequest, run_build};
 
-use crate::support::{generated_output, make_workspace, write_file};
+use crate::support::{DustImport, generated_output, make_workspace, write_dust_file, write_file};
 
 #[test]
 fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/models.dart"),
+        &[DustImport::Derive],
         "part 'models.g.dart';\n\
          @Derive([ToString(), Eq(), CopyWith()])\n\
          class User {\n\
@@ -22,8 +23,9 @@ fn build_writes_real_outputs_for_multiple_libraries_and_classes() {
            const Team(this.name);\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/request.dart"),
+        &[DustImport::Derive],
         "part 'request.g.dart';\n\
          @CopyWith()\n\
          class Request {\n\
@@ -327,8 +329,9 @@ fn build_writes_flutter_form_helpers_for_flutter_packages() {
 }
 
 fn write_signup_request(root: &std::path::Path) {
-    write_file(
+    write_dust_file(
         &root.join("lib/signup.dart"),
+        &[DustImport::Derive],
         "part 'signup.g.dart';\n\
          @Derive([Validate()])\n\
          class SignupRequest with _$SignupRequest {\n\

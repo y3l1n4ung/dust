@@ -1,12 +1,15 @@
 use dust_cli::run_cli;
 
-use super::helpers::{make_pub_workspace_member, make_workspace, write_file};
+use super::helpers::{
+    DustImport, make_pub_workspace_member, make_workspace, write_dust_file, write_file,
+};
 
 #[test]
 fn cli_build_writes_real_output() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -29,8 +32,9 @@ fn cli_build_writes_real_output() {
 #[test]
 fn cli_build_reports_route_contributors_separately() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/route.dart"),
+        &[DustImport::Route],
         "import 'pages/dashboard_page.dart';\n\
          import 'pages/not_found_page.dart';\n\
          import 'route.g.dart';\n\
@@ -39,15 +43,17 @@ fn cli_build_reports_route_contributors_separately() {
            const TestRouter();\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/pages/dashboard_page.dart"),
+        &[DustImport::Route],
         "@AppRoute('/', name: 'dashboard')\n\
          final class DashboardPage {\n\
            const DashboardPage();\n\
          }\n",
     );
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/pages/not_found_page.dart"),
+        &[DustImport::Route],
         "@AppRoute('/404', name: 'notFound', guards: [])\n\
          final class NotFoundPage {\n\
            const NotFoundPage({this.path = ''});\n\
@@ -87,8 +93,9 @@ fn cli_build_reports_route_contributors_separately() {
 #[test]
 fn cli_second_build_reports_cached_output() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -112,8 +119,9 @@ fn cli_second_build_reports_cached_output() {
 #[test]
 fn cli_build_clean_regenerates_without_previous_cache_hit() {
     let workspace = make_workspace();
-    write_file(
+    write_dust_file(
         &workspace.path().join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
@@ -155,8 +163,9 @@ fn cli_build_clean_regenerates_without_previous_cache_hit() {
 #[test]
 fn cli_build_supports_pub_workspace_member_package_graph() {
     let (workspace, package_root) = make_pub_workspace_member();
-    write_file(
+    write_dust_file(
         &package_root.join("lib/user.dart"),
+        &[DustImport::Derive],
         "part 'user.g.dart';\n\
          @ToString()\n\
          class User {\n\
