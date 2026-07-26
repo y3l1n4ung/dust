@@ -26,6 +26,8 @@ pub use output_policy::{
     primary_output_path, rewrite_library_import_uri,
 };
 pub use package_config::{PackageConfig, PackageConfigKind, load_package_config};
-pub use pubspec::{load_flutter_assets, load_is_flutter_package, load_package_name};
+pub use pubspec::{
+    load_dart_sdk_lower_bound, load_flutter_assets, load_is_flutter_package, load_package_name,
+};
 pub use root::detect_workspace_root;
 pub use workspace::{SourceLibrary, WorkspacePlan, discover_workspace};

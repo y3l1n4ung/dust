@@ -7,9 +7,10 @@ mod scan;
 
 use std::sync::Arc;
 
+use dust_dart_syntax::DartLanguageVersion;
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
-use dust_parser_dart::ParsedDartFileSurface;
+use dust_parser_dart::{ParseOptions, ParsedDartFileSurface};
 use dust_plugin_api::{LibraryAnalysisSnapshot, WorkspaceAnalysis};
 use dust_text::FileId;
 use dust_workspace::SourceLibrary;
@@ -28,6 +29,8 @@ pub(crate) struct ProcessingConfig<'a> {
     pub(crate) package_root: &'a std::path::Path,
     /// Dart package name.
     pub(crate) package_name: &'a str,
+    /// Workspace-level Dart language version for files without `// @dart`.
+    pub(crate) dart_language_version: DartLanguageVersion,
     /// Resolver catalog built from plugin symbol ownership.
     pub(crate) catalog: &'a dust_resolver::SymbolCatalog,
     /// Active plugin registry used for validation and emission.
@@ -42,6 +45,8 @@ pub(crate) struct ProcessingConfig<'a> {
 pub(crate) struct PreprocessedLibrary {
     /// Parsed library surface, retained for fallback diagnostics.
     pub(crate) parsed: Option<ParsedDartFileSurface>,
+    /// Parser diagnostics collected with the parsed surface.
+    pub(crate) diagnostics: Vec<Diagnostic>,
     /// Lowered canonical library ready for plugin analysis and emission.
     pub(crate) lowered: Option<DartFileIr>,
 }
@@ -56,6 +61,14 @@ pub(crate) struct LoweringConfig<'a> {
     pub(crate) catalog: &'a dust_resolver::SymbolCatalog,
     /// Active plugin registry used for partless config resolution.
     pub(crate) registry: &'a dust_plugin_api::PluginRegistry,
+}
+
+/// Builds parser options for one source file.
+pub(crate) fn parse_options(dart_language_version: DartLanguageVersion) -> ParseOptions {
+    ParseOptions {
+        language_version: dart_language_version,
+        ..ParseOptions::default()
+    }
 }
 
 /// Result of processing one source library through Dust code generation.
@@ -149,6 +162,8 @@ pub(crate) struct PendingLibrary {
     pub(crate) input: LoadedLibraryInput,
     /// Parsed library surface collected during workspace analysis, if available.
     pub(crate) pre_parsed: Option<ParsedDartFileSurface>,
+    /// Parser diagnostics collected during workspace analysis.
+    pub(crate) pre_parse_diagnostics: Vec<Diagnostic>,
     /// Lowered canonical library collected during workspace analysis, if available.
     pub(crate) pre_lowered: Option<DartFileIr>,
     /// Plugin workspace analysis facts for this library.
@@ -169,6 +184,7 @@ impl PendingLibrary {
             library,
             input,
             pre_parsed: None,
+            pre_parse_diagnostics: Vec::new(),
             pre_lowered: None,
             analysis_snapshot: LibraryAnalysisSnapshot::default(),
         }

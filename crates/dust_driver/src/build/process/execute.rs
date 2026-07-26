@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Instant};
 use dust_diagnostics::Diagnostic;
 use dust_emitter::WriteResult;
 use dust_ir::LoweringOutcome;
-use dust_parser_dart::{ParseOptions, ParsedDartFileSurface, parse_file_with_backend};
+use dust_parser_dart::{ParsedDartFileSurface, parse_file_with_backend};
 use dust_parser_dart_ts::TreeSitterDartBackend;
 use dust_resolver::ResolveResult;
 use dust_text::{FileId, SourceText};
@@ -28,6 +28,7 @@ pub(crate) fn process_pending_library(
         library,
         input,
         pre_parsed,
+        pre_parse_diagnostics,
         pre_lowered,
         analysis_snapshot,
     } = pending;
@@ -46,6 +47,7 @@ pub(crate) fn process_pending_library(
         source,
         PreprocessedLibrary {
             parsed: pre_parsed,
+            diagnostics: pre_parse_diagnostics,
             lowered: pre_lowered,
         },
         previous_output_hash,
@@ -91,14 +93,38 @@ pub(crate) fn process_library_from_source(
 ) -> BuildOutcome {
     let mut diagnostics = Vec::new();
     let lowered_library = if let Some(lowered) = preprocessed.lowered {
+        diagnostics.extend(preprocessed.diagnostics);
+        if diagnostics.iter().any(|diagnostic| diagnostic.is_error()) {
+            let diagnostic_file = diagnostic_file_if_needed(
+                file_id,
+                library,
+                Arc::clone(&source),
+                diagnostics.iter().any(Diagnostic::has_labels),
+            );
+            return BuildOutcome::failed(library, diagnostics, diagnostic_file);
+        }
         lowered
     } else {
         let parsed = preprocessed.parsed.unwrap_or_else(|| {
             let source_text = SourceText::new(file_id, Arc::clone(&source));
-            let parsed = parse_file_with_backend(backend, &source_text, ParseOptions::default());
+            let parsed = parse_file_with_backend(
+                backend,
+                &source_text,
+                super::parse_options(processing.dart_language_version),
+            );
             diagnostics.extend(parsed.diagnostics);
             parsed.library
         });
+        diagnostics.extend(preprocessed.diagnostics);
+        if diagnostics.iter().any(|diagnostic| diagnostic.is_error()) {
+            let diagnostic_file = diagnostic_file_if_needed(
+                file_id,
+                library,
+                Arc::clone(&source),
+                diagnostics.iter().any(Diagnostic::has_labels),
+            );
+            return BuildOutcome::failed(library, diagnostics, diagnostic_file);
+        }
 
         let lowering = LoweringConfig {
             package_root: processing.package_root,

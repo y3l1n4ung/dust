@@ -13,6 +13,7 @@ use std::{
 };
 
 use dust_cache::WorkspaceCache;
+use dust_dart_syntax::DartLanguageVersion;
 use dust_plugin_api::{PACKAGE_FEATURE_FLUTTER, PACKAGE_FEATURES_ANALYSIS_KEY};
 use dust_text::FileId;
 use dust_workspace::SourceLibrary;
@@ -50,6 +51,9 @@ pub(crate) struct BatchConfig<'a> {
     pub(crate) package_name: &'a str,
     /// Whether the package is a Flutter package.
     pub(crate) is_flutter_package: bool,
+    /// Workspace-level Dart language version for source files without an
+    /// explicit `// @dart = x.y` comment.
+    pub(crate) dart_language_version: DartLanguageVersion,
     /// Hash of package and Dust configuration files.
     pub(crate) package_config_hash: u64,
     /// Hash of Dust codegen logic and active plugin set.
@@ -157,17 +161,21 @@ pub(crate) fn prepare_and_process_batch(
         &pending,
         config.package_root,
         config.package_name,
+        config.dart_language_version,
         config.catalog,
         config.registry,
     );
     workspace_analysis.merge(workspace_result.analysis);
-    for (((pending, pre_parsed), pre_lowered), analysis_snapshot) in pending
-        .iter_mut()
-        .zip(workspace_result.pre_parsed)
-        .zip(workspace_result.pre_lowered)
-        .zip(workspace_result.snapshots)
+    for ((((pending, pre_parsed), pre_parse_diagnostics), pre_lowered), analysis_snapshot) in
+        pending
+            .iter_mut()
+            .zip(workspace_result.pre_parsed)
+            .zip(workspace_result.pre_parse_diagnostics)
+            .zip(workspace_result.pre_lowered)
+            .zip(workspace_result.snapshots)
     {
         pending.pre_parsed = pre_parsed;
+        pending.pre_parse_diagnostics = pre_parse_diagnostics;
         pending.pre_lowered = pre_lowered;
         pending.analysis_snapshot = analysis_snapshot;
     }
@@ -175,6 +183,7 @@ pub(crate) fn prepare_and_process_batch(
     let processing = ProcessingConfig {
         package_root: config.package_root,
         package_name: config.package_name,
+        dart_language_version: config.dart_language_version,
         catalog: config.catalog,
         registry: config.registry,
         workspace_analysis: Arc::new(workspace_analysis.build()),

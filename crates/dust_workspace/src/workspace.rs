@@ -1,11 +1,12 @@
 use std::path::{Path, PathBuf};
 
+use dust_dart_syntax::DartLanguageVersion;
 use dust_diagnostics::Diagnostic;
 
 use crate::{
     DustConfig, PackageConfig, SupportedAnnotations, detect_workspace_root,
-    discover_libraries_with_usage, load_dust_config, load_is_flutter_package, load_package_config,
-    load_package_name,
+    discover_libraries_with_usage, load_dart_sdk_lower_bound, load_dust_config,
+    load_is_flutter_package, load_package_config, load_package_name,
 };
 
 /// One source library selected for Dust processing.
@@ -28,6 +29,8 @@ pub struct WorkspacePlan {
     pub package_name: String,
     /// Whether the package is a Flutter package.
     pub is_flutter_package: bool,
+    /// Lower Dart SDK language version declared by `pubspec.yaml`.
+    pub dart_sdk_lower_bound: Option<DartLanguageVersion>,
     /// The loaded package configuration.
     pub package_config: PackageConfig,
     /// The loaded Dust output policy configuration.
@@ -46,6 +49,7 @@ pub fn discover_workspace(
     let package_root = detect_workspace_root(cwd)?;
     let package_name = load_package_name(&package_root)?;
     let is_flutter_package = load_is_flutter_package(&package_root)?;
+    let dart_sdk_lower_bound = load_dart_sdk_lower_bound(&package_root)?;
     let package_config = load_package_config(&package_root)?;
     let dust_config = load_dust_config(&package_root)?;
     let library_discovery = discover_libraries_with_usage(&package_root, supported_annotations)?;
@@ -53,6 +57,7 @@ pub fn discover_workspace(
     Ok(WorkspacePlan {
         cache_root: package_root.clone(),
         is_flutter_package,
+        dart_sdk_lower_bound,
         package_name,
         package_root,
         package_config,

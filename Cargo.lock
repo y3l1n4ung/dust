@@ -532,6 +532,7 @@ version = "0.1.3"
 name = "dust_workspace"
 version = "0.1.3"
 dependencies = [
+ "dust_dart_syntax",
  "dust_diagnostics",
  "serde",
  "serde_yaml",
