@@ -3,10 +3,10 @@ use dust_ir::{QueryCallIr, QueryFunctionIr, SpanIr};
 use dust_parser_dart::{ParsedQueryCallSurface, ParsedQueryFunction};
 use dust_text::FileId;
 
-use dust_resolver::lower_type_ir;
+use crate::lower_type_ir;
 
-/// Lowers parsed SQL query helper calls into DB plugin IR.
-pub(super) fn lower_query_calls(
+/// Normalizes parsed DB query helper calls into canonical query call IR.
+pub(crate) fn normalize_query_calls(
     file_id: FileId,
     query_calls: &[ParsedQueryCallSurface],
     diagnostics: &mut Vec<Diagnostic>,

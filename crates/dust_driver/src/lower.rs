@@ -1,8 +1,5 @@
 /// Inherited field and constructor parameter lowering helpers.
 mod inheritance;
-#[path = "lower/query_calls.rs"]
-/// SQL query call lowering.
-mod query_calls;
 mod tests_declarations;
 mod tests_directives;
 mod tests_inheritance;
@@ -28,9 +25,8 @@ use dust_resolver::{
     SymbolCatalog, lower_type_ir as lower_type,
 };
 
-use self::{
-    inheritance::{infer_param_type, merged_fields_for_class, resolve_constructor_param_types},
-    query_calls::lower_query_calls,
+use self::inheritance::{
+    infer_param_type, merged_fields_for_class, resolve_constructor_param_types,
 };
 
 /// Lowers one resolved library into semantic IR.
@@ -161,11 +157,7 @@ pub(crate) fn lower_library_with_catalog(
                 &mut diagnostics,
             ),
             enums,
-            query_calls: lower_query_calls(
-                library.span.file_id,
-                &library.query_calls,
-                &mut diagnostics,
-            ),
+            query_calls: std::mem::take(&mut library.query_calls),
         },
         diagnostics,
     }

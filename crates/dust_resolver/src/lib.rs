@@ -10,6 +10,8 @@ mod catalog;
 mod db;
 /// Resolver-owned HTTP configuration normalization.
 mod http;
+/// Resolver-owned DB query-call normalization.
+mod query_calls;
 /// Library resolution entry points.
 mod resolve;
 /// Shared declaration resolution helpers.

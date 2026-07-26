@@ -1,12 +1,12 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
-    ClassKindIr, ConfigApplicationIr, SerdeClassConfigIr, SerdeEnumVariantConfigIr,
+    ClassKindIr, ConfigApplicationIr, QueryCallIr, SerdeClassConfigIr, SerdeEnumVariantConfigIr,
     SerdeFieldConfigIr, SpanIr, TraitApplicationIr,
 };
 use dust_parser_dart::{
     ParsedConstructorSurface, ParsedDirective, ParsedExtensionSurface, ParsedExtensionTypeSurface,
     ParsedFunctionSurface, ParsedMethodParamSurface, ParsedMethodSurface, ParsedMixinSurface,
-    ParsedQueryCallSurface, ParsedTopLevelVariableSurface, ParsedTypeSurface, ParsedTypedefSurface,
+    ParsedTopLevelVariableSurface, ParsedTypeSurface, ParsedTypedefSurface,
 };
 
 /// One resolved field plus its field-level Dust configuration.
@@ -152,8 +152,8 @@ pub struct ResolvedLibrary {
     pub variables: Vec<ParsedTopLevelVariableSurface>,
     /// Parsed typedefs preserved for semantic lowering.
     pub typedefs: Vec<ParsedTypedefSurface>,
-    /// Parsed query helper calls preserved for semantic lowering.
-    pub query_calls: Vec<ParsedQueryCallSurface>,
+    /// Normalized DB query helper calls in this library.
+    pub query_calls: Vec<QueryCallIr>,
 }
 
 /// The result of resolving one parsed library.
