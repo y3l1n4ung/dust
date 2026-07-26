@@ -1,7 +1,12 @@
-use std::{collections::BTreeSet, path::Path};
+use std::{
+    collections::{BTreeSet, HashSet},
+    path::Path,
+};
 
 use dust_diagnostics::{Diagnostic, SourceLabel};
-use dust_ir::{ClassKindIr, ConfigApplicationIr, SpanIr, TraitApplicationIr};
+use dust_ir::{
+    ClassKindIr, ConfigApplicationIr, DbConfigIr, NormalizedConfigIr, SpanIr, TraitApplicationIr,
+};
 use dust_parser_dart::{
     ParsedAnnotation, ParsedClassKind, ParsedClassSurface, ParsedDartFileSurface, ParsedDirective,
 };
@@ -64,6 +69,7 @@ pub fn resolve_library_with_partless_configs(
         enums.push(resolved);
     }
     normalize_sealed_serde_variants(&mut classes, &mut diagnostics);
+    mark_required_lowering_diagnostics(&mut classes);
 
     let needs_part = saw_dust_symbol
         && classes
@@ -412,5 +418,37 @@ fn resolve_class(
         traits,
         configs,
         serde,
+        requires_lowering_diagnostics: false,
+    }
+}
+
+/// Marks classes whose lowering diagnostics are relevant to generated output.
+fn mark_required_lowering_diagnostics(classes: &mut [ResolvedClass]) {
+    let mut names = classes
+        .iter()
+        .filter(|class| !class.traits.is_empty() || !class.configs.is_empty())
+        .map(|class| class.name.clone())
+        .collect::<HashSet<_>>();
+
+    for class in classes.iter() {
+        for field in &class.fields {
+            for config in &field.configs {
+                if let Some(NormalizedConfigIr::Db(DbConfigIr::Sqlx(sqlx))) =
+                    config.normalized.as_ref()
+                    && let Some(converter) = &sqlx.try_from_class_name
+                {
+                    names.insert(converter.clone());
+                }
+            }
+        }
+        if let Some(serde) = &class.serde {
+            for variant in &serde.variants {
+                names.insert(variant.target_class_name.clone());
+            }
+        }
+    }
+
+    for class in classes {
+        class.requires_lowering_diagnostics = names.contains(&class.name);
     }
 }

@@ -47,6 +47,8 @@ pub struct DbSqlxConfigIr {
     pub json: bool,
     /// Source expression for try-conversion after row decoding.
     pub try_from_source: Option<String>,
+    /// Converter class name referenced by `tryFrom`, when it can be resolved.
+    pub try_from_class_name: Option<String>,
 }
 
 /// SQLx row field rename strategy.

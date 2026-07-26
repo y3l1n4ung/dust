@@ -121,6 +121,8 @@ pub struct ResolvedClass {
     pub configs: Vec<ConfigApplicationIr>,
     /// Resolver-normalized class-level SerDe configuration.
     pub serde: Option<SerdeClassConfigIr>,
+    /// Whether this class should contribute lowering diagnostics.
+    pub requires_lowering_diagnostics: bool,
 }
 
 /// One resolved library ready for lowering into semantic IR.

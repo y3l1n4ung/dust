@@ -290,6 +290,14 @@ final class UserLoggedIn extends AuthEvent {
     assert_eq!(serde.variants[0].params.len(), 1);
     assert_eq!(serde.variants[0].params[0].name, "userId");
     assert!(serde.variants[0].params[0].ty.is_named("String"));
+    let target_class = resolved
+        .library
+        .classes
+        .iter()
+        .find(|class| class.name == "UserLoggedIn")
+        .expect("expected sealed variant target class");
+    assert!(class.requires_lowering_diagnostics);
+    assert!(target_class.requires_lowering_diagnostics);
 }
 
 #[test]

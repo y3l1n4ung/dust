@@ -1,6 +1,6 @@
 use dust_ir::{
-    ConfigApplicationIr, DbConfigIr, DbDatabaseConfigIr, DbDriverIr, DbQueryConfigIr,
-    DbRenameRuleIr, DbSqlxConfigIr, NormalizedConfigIr,
+    AnnotationValueIr, ConfigApplicationIr, DbConfigIr, DbDatabaseConfigIr, DbDriverIr,
+    DbQueryConfigIr, DbRenameRuleIr, DbSqlxConfigIr, NormalizedConfigIr,
 };
 
 /// Normalizes database, SQLx, DAO, row, and query annotations.
@@ -70,6 +70,12 @@ fn normalize_config(config: &ConfigApplicationIr) -> Option<DbConfigIr> {
 
 /// Converts one resolved SQLx annotation into typed configuration.
 fn sqlx_config(config: &ConfigApplicationIr) -> DbSqlxConfigIr {
+    let try_from_source = config
+        .named_argument_source("tryFrom")
+        .map(str::trim)
+        .map(str::to_owned);
+    let try_from_class_name = try_from_class_name(config);
+
     let rename_all =
         config
             .named_member("renameAll")
@@ -94,9 +100,30 @@ fn sqlx_config(config: &ConfigApplicationIr) -> DbSqlxConfigIr {
             .map(str::to_owned),
         skip: config.named_bool("skip").unwrap_or(false),
         json: config.named_bool("json").unwrap_or(false),
-        try_from_source: config
+        try_from_source,
+        try_from_class_name,
+    }
+}
+
+/// Returns the converter class referenced by `Sqlx(tryFrom: ...)`.
+fn try_from_class_name(config: &ConfigApplicationIr) -> Option<String> {
+    match config.named_argument_value("tryFrom") {
+        Some(AnnotationValueIr::Constructor { name, .. })
+        | Some(AnnotationValueIr::Member(name)) => Some(name.short.clone()),
+        _ => config
             .named_argument_source("tryFrom")
-            .map(str::trim)
+            .and_then(try_from_converter_name)
             .map(str::to_owned),
     }
+}
+
+/// Extracts a converter class name from a preserved `tryFrom` expression.
+fn try_from_converter_name(source: &str) -> Option<&str> {
+    let value = source.trim();
+    let value = value.strip_prefix("const ").unwrap_or(value).trim();
+    let before_args = value.split_once('(').map_or(value, |(name, _)| name).trim();
+    before_args
+        .rsplit('.')
+        .next()
+        .filter(|name| !name.is_empty())
 }
