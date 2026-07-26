@@ -205,6 +205,7 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
       StreamController<Object>.broadcast();
   final Map<Object, int> _actionVersions = <Object, int>{};
   Future<void>? _initFuture;
+  bool _didAttemptInit = false;
   bool _didInit = false;
   bool _isDisposed = false;
 
@@ -326,9 +327,30 @@ abstract class ViewModelBase<TState, TArgs extends ViewModelArgs>
   @protected
   FutureOr<void> onInit() {}
 
-  /// Runs [onInit] at most once, even under concurrent scope rebuilds.
+  /// Runs one [onInit] attempt, even under concurrent scope rebuilds.
+  ///
+  /// If [onInit] fails, later scope rebuilds do not retry it implicitly. Use
+  /// [retryInit] when app code intentionally wants another initialization
+  /// attempt after a failure.
   Future<void> init() {
+    if (_isDisposed) return Future<void>.value();
+    if (_initFuture case final pending?) return pending;
+    if (_didAttemptInit) return Future<void>.value();
+    return _startInit();
+  }
+
+  /// Explicitly retries [onInit] after a failed initialization attempt.
+  ///
+  /// Concurrent calls share the same pending initialization. Once [onInit] has
+  /// completed successfully, this method becomes a no-op.
+  Future<void> retryInit() {
     if (_isDisposed || _didInit) return Future<void>.value();
+    if (_initFuture case final pending?) return pending;
+    return _startInit();
+  }
+
+  Future<void> _startInit() {
+    _didAttemptInit = true;
     return _initFuture ??= _runInit();
   }
 

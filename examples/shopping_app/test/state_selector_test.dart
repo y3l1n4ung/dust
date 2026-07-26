@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shopping_app/features/products/view_models/products_view_model.dart';
@@ -32,6 +34,21 @@ class InitProductsViewModel extends ProductsViewModel {
   @override
   Future<void> onInit() async {
     emit(state.copyWith(searchQuery: '${state.searchQuery}$label'));
+  }
+}
+
+class FailingInitProductsViewModel extends ProductsViewModel {
+  FailingInitProductsViewModel(super.args);
+
+  final initCompleters = <Completer<void>>[];
+  var initCalls = 0;
+
+  @override
+  Future<void> onInit() {
+    initCalls += 1;
+    final completer = Completer<void>();
+    initCompleters.add(completer);
+    return completer.future;
   }
 }
 
@@ -225,6 +242,38 @@ void main() {
 
     expect(find.text('external'), findsOneWidget);
     expect(find.text('externalexternal'), findsNothing);
+  });
+
+  testWidgets('.value scope does not retry failed init on parent rebuild', (
+    tester,
+  ) async {
+    final viewModel = FailingInitProductsViewModel(
+      ProductsViewModelArgs(repository: MockRepository()),
+    );
+
+    Widget build() {
+      return MaterialApp(
+        home: ProductsViewModelScope.value(
+          value: viewModel,
+          child: const SizedBox(),
+        ),
+      );
+    }
+
+    await tester.pumpWidget(build());
+    await tester.pump();
+
+    expect(viewModel.initCalls, 1);
+
+    viewModel.initCompleters.single.completeError(StateError('init failed'));
+    await tester.pump();
+
+    expect(tester.takeException(), isA<StateError>());
+
+    await tester.pumpWidget(build());
+    await tester.pump();
+
+    expect(viewModel.initCalls, 1);
   });
 
   testWidgets('owned scope recreates when identity changes', (tester) async {

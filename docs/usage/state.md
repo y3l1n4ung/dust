@@ -122,6 +122,10 @@ Override `onInit()` for one-time synchronous or asynchronous setup:
 Future<void> onInit() => loadProfile();
 ```
 
+`init()` makes one attempt. If `onInit()` fails, parent rebuilds do not retry it
+implicitly. Call `retryInit()` from app code when a retry should happen because
+of a user action or another intentional recovery path.
+
 Use `identity` when a dependency change must replace the owned ViewModel:
 
 ```dart

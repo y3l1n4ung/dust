@@ -169,7 +169,7 @@ void main() {
     expect(viewModel.initCalls, 1);
   });
 
-  test('init retries after onInit failure', () async {
+  test('init does not retry after onInit failure', () async {
     final viewModel = InitViewModel();
 
     final first = viewModel.init();
@@ -178,14 +178,28 @@ void main() {
     await expectLater(first, throwsA(isA<StateError>()));
     expect(viewModel.initCalls, 1);
 
-    final second = viewModel.init();
+    await viewModel.init();
+
+    expect(viewModel.initCalls, 1);
+  });
+
+  test('retryInit retries after onInit failure', () async {
+    final viewModel = InitViewModel();
+
+    final first = viewModel.init();
+    viewModel.initCompleters.single.completeError(StateError('failed'));
+
+    await expectLater(first, throwsA(isA<StateError>()));
+    expect(viewModel.initCalls, 1);
+
+    final second = viewModel.retryInit();
 
     expect(viewModel.initCalls, 2);
 
     viewModel.initCompleters.last.complete();
     await second;
 
-    await viewModel.init();
+    await viewModel.retryInit();
 
     expect(viewModel.initCalls, 2);
   });

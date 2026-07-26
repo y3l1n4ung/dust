@@ -2,6 +2,7 @@
 
 - Add router stack observer runtime support for generated routing.
 - Add `runAction` for stale-safe async commands in sync ViewModels.
+- Make failed ViewModel initialization retry only through explicit `retryInit()`.
 - Unwrap deprecated `StateEffect` values before effect delivery.
 - Keep v0.1.3 routing, state, and i18n runtime APIs aligned with the Dust CLI.
 
