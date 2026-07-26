@@ -12,6 +12,7 @@ use crate::{
     SymbolCatalog,
     db::normalize_db,
     http::normalize_http,
+    query_calls::normalize_query_calls,
     resolve_support::{
         first_part_uri, resolve_constructor, resolve_declaration_annotations, resolve_field,
         resolve_method,
@@ -108,7 +109,7 @@ pub fn resolve_library_with_partless_configs(
             functions: library.functions.clone(),
             variables: library.variables.clone(),
             typedefs: library.typedefs.clone(),
-            query_calls: library.query_calls.clone(),
+            query_calls: normalize_query_calls(file_id, &library.query_calls, &mut diagnostics),
         },
         diagnostics,
     }

@@ -1,6 +1,8 @@
 //! Integration tests for resolver-normalized database configuration.
 
-use dust_ir::{DbConfigIr, DbDriverIr, DbRenameRuleIr, NormalizedConfigIr};
+use dust_ir::{
+    BuiltinType, DbConfigIr, DbDriverIr, DbRenameRuleIr, NormalizedConfigIr, QueryFunctionIr,
+};
 use dust_parser_dart::{ParseBackend, ParseOptions};
 use dust_parser_dart_ts::TreeSitterDartBackend;
 use dust_resolver::{SymbolCatalog, resolve_library};
@@ -74,4 +76,66 @@ class AppDatabase {
     };
     assert_eq!(query.sql, "SELECT id FROM users WHERE id = $1");
     assert!(query.sql_source_static);
+}
+
+#[test]
+fn normalizes_standalone_query_calls_into_ir() {
+    let source = SourceText::new(
+        FileId::new(275),
+        r#"
+Future<UserRow?> loadUser(DatabaseExecutor db, int id) {
+  return queryAs<UserRow>(
+    r'SELECT id, name FROM users WHERE id = $1',
+    [id],
+  ).fetchOptional(db);
+}
+
+Future<int> countUsers(DatabaseExecutor db) {
+  return queryScalar<int>(
+    'SELECT COUNT(*) FROM users',
+    const <Object?>[],
+  ).fetchOne(db);
+}
+"#,
+    );
+    let parsed = TreeSitterDartBackend::new().parse_file(&source, ParseOptions::default());
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+
+    let resolved = resolve_library(
+        FileId::new(275),
+        "lib/queries.dart",
+        "lib/queries.g.dart",
+        &parsed.library,
+        &SymbolCatalog::new(),
+    );
+
+    assert!(
+        resolved.diagnostics.is_empty(),
+        "{:?}",
+        resolved.diagnostics
+    );
+    assert_eq!(resolved.library.query_calls.len(), 2);
+
+    let user_query = &resolved.library.query_calls[0];
+    assert_eq!(user_query.function, QueryFunctionIr::As);
+    assert!(user_query.type_arg.as_ref().unwrap().is_named("UserRow"));
+    assert_eq!(user_query.type_arg_source.as_deref(), Some("UserRow"));
+    assert_eq!(user_query.sql, "SELECT id, name FROM users WHERE id = $1");
+    assert!(user_query.sql_source_static);
+    assert_eq!(user_query.parameter_count, 1);
+    assert!(user_query.params_source_is_list);
+    assert_eq!(user_query.fetch_method.as_deref(), Some("fetchOptional"));
+    assert_eq!(user_query.span.file_id, FileId::new(275));
+
+    let count_query = &resolved.library.query_calls[1];
+    assert_eq!(count_query.function, QueryFunctionIr::Scalar);
+    assert!(
+        count_query
+            .type_arg
+            .as_ref()
+            .unwrap()
+            .is_builtin(BuiltinType::Int)
+    );
+    assert_eq!(count_query.fetch_method.as_deref(), Some("fetchOne"));
+    assert_eq!(count_query.parameter_count, 0);
 }
