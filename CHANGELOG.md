@@ -9,11 +9,13 @@ All notable changes to Dust are documented in this file.
 - CLI/runtime compatibility checks for supported Dust package versions.
 - Source-first JSON `serialize` and `deserialize` APIs with `toJson` and
   `fromJson` ecosystem mirrors.
+- `Validatable` for generated validation APIs.
 - Typed route results with generated `Future<T?> push()` helpers.
 - Router stack observer support.
 - `runAction` for stale-safe async ViewModel commands.
 - Explicit i18n source-locale sync and opt-in iOS locale metadata sync.
 - SQLite connect options and safer DB transaction support.
+- Database runtime contracts and typed query helper support.
 - `dust upgrade` support.
 
 ### Changed
@@ -28,6 +30,29 @@ All notable changes to Dust are documented in this file.
 
 - Deep-link and restored-stack routing edge cases.
 - Deprecated `StateEffect` values are unwrapped before effect delivery.
+
+## [v0.1.2] - 2026-07-10
+
+### Fixed
+
+- Generated `RouteAction.push()` now returns a `Future<R?>` that completes when
+  the pushed route is popped, including pop results.
+- Route `transition:` annotations now apply at the actual page route boundary.
+- Generated no-transition routes now use zero-duration transitions.
+
+## [v0.1.1] - 2026-07-09
+
+### Added
+
+- Router debug diagnostics for generated router troubleshooting.
+
+### Changed
+
+- Released CLI binary reports `0.1.1`.
+- Validation codegen keeps Dart model validation separate from Flutter form
+  validators.
+- Package README and pub.dev-facing documentation were polished.
+- Apple Silicon release assets were aligned.
 
 ## [v0.1.0] - 2026-05-08
 
