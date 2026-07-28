@@ -1,6 +1,34 @@
 # Changelog
 
 All notable changes to Dust are documented in this file.
+
+## [v0.1.3] - 2026-07-28
+
+### Added
+
+- CLI/runtime compatibility checks for supported Dust package versions.
+- Source-first JSON `serialize` and `deserialize` APIs with `toJson` and
+  `fromJson` ecosystem mirrors.
+- Typed route results with generated `Future<T?> push()` helpers.
+- Router stack observer support.
+- `runAction` for stale-safe async ViewModel commands.
+- Explicit i18n source-locale sync and opt-in iOS locale metadata sync.
+- SQLite connect options and safer DB transaction support.
+- `dust upgrade` support.
+
+### Changed
+
+- Preserved existing translated ARB values during i18n generation.
+- Made failed ViewModel initialization retry only through explicit
+  `retryInit()`.
+- Hardened Dust DB migrations, mapper errors, and execution API naming.
+- Automated codegen tool fingerprints for safer cache invalidation.
+
+### Fixed
+
+- Deep-link and restored-stack routing edge cases.
+- Deprecated `StateEffect` values are unwrapped before effect delivery.
+
 ## [v0.1.0] - 2026-05-08
 
 
