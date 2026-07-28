@@ -114,6 +114,8 @@ Before opening a docs PR:
 - Copy-paste each README command or code block into a real shell/project before claiming it works.
 - Use literal placeholders such as `your-api-token-here`; avoid ambiguous placeholders such as `<token>`.
 - Document breaking syntax or API changes in `CHANGELOG.md` or in a clearly linked migration section.
+- Keep changelogs based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+  The root `CHANGELOG.md` is the source of truth for GitHub release notes; do not add separate release-note files.
 - Keep docs changes scoped and reviewable. If a page mixes tutorial, how-to, reference, and explanation content, split the content or make the primary role explicit.
 
 ---

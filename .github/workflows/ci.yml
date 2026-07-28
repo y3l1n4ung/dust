@@ -13,6 +13,75 @@ permissions:
   contents: read
 
 jobs:
+  release-docs:
+    name: Release docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate changelog format
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for changelog in \
+            CHANGELOG.md \
+            packages/dust_dart/CHANGELOG.md \
+            packages/dust_flutter/CHANGELOG.md \
+            packages/dust_db_sqlite3/CHANGELOG.md
+          do
+            if [[ "$(sed -n '1p' "$changelog")" != "# Changelog" ]]; then
+              echo "::error file=$changelog,line=1::changelog must start with '# Changelog'."
+              exit 1
+            fi
+            if ! grep -q 'Keep a Changelog' "$changelog"; then
+              echo "::error file=$changelog::changelog must state the Keep a Changelog format."
+              exit 1
+            fi
+            if ! grep -q '^## \[Unreleased\]$' "$changelog"; then
+              echo "::error file=$changelog::changelog must include an Unreleased section."
+              exit 1
+            fi
+            if ! grep -Eq '^## \[v?[0-9]+\.[0-9]+\.[0-9]+\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$' "$changelog"; then
+              echo "::error file=$changelog::changelog must include dated bracketed version sections."
+              exit 1
+            fi
+          done
+
+          latest_tag="$(
+            sed -nE 's/^## \[(v?[0-9]+\.[0-9]+\.[0-9]+)\].*/\1/p' CHANGELOG.md \
+              | head -n 1
+          )"
+          if [[ -z "$latest_tag" ]]; then
+            echo "::error::CHANGELOG.md is missing a release heading."
+            exit 1
+          fi
+
+          if [[ "$latest_tag" != v* ]]; then
+            latest_tag="v$latest_tag"
+          fi
+
+          awk -v tag="$latest_tag" '
+            BEGIN { wanted = "## [" tag "]"; found = 0; started = 0 }
+            /^## \[/ {
+              if (found) exit
+              if (index($0, wanted) == 1) found = 1
+              next
+            }
+            found {
+              if (!started && $0 == "") next
+              started = 1
+              print
+            }
+            END { if (!found) exit 42 }
+          ' CHANGELOG.md > release-notes.md
+
+          if grep -Eiq '^#{2,6}[[:space:]]+(install(ation)?|install or update|updates?|updated|updating|included packages|package inventory|notes|validation)\b' release-notes.md; then
+            echo "::error::release notes must not include install/update, package inventory, notes, or validation sections."
+            exit 1
+          fi
+
   changes:
     name: Change classification
     runs-on: ubuntu-latest
@@ -51,7 +120,7 @@ jobs:
 
           for file in "${changed_files[@]}"; do
             case "$file" in
-              docs/*|release-notes/*|*.md|llms.txt)
+              docs/*|*.md|llms.txt)
                 ;;
               *)
                 docs_only=false

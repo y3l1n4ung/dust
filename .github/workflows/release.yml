@@ -51,6 +51,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+  cancel-in-progress: false
+
 env:
   CARGO_TERM_COLOR: always
 
@@ -79,7 +83,7 @@ jobs:
           if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
             release_tag="$GITHUB_REF_NAME"
             checkout_ref="$GITHUB_REF_NAME"
-            binary_targets="default"
+            binary_targets="all"
             package_mode="publish"
             package_targets="all"
           else
@@ -264,6 +268,7 @@ jobs:
           name: ${{ matrix.asset_name }}
           path: ${{ matrix.asset_name }}
           if-no-files-found: error
+          compression-level: 0
           retention-days: 7
 
   publish-release:
@@ -314,50 +319,136 @@ jobs:
             | sort \
             | xargs sha256sum > SHA256SUMS.txt
 
+      - name: Verify expected assets
+        shell: bash
+        env:
+          BINARY_TARGETS: ${{ needs.release-inputs.outputs.binary_targets }}
+        run: |
+          set -euo pipefail
+
+          expected_assets=()
+
+          add_asset() {
+            expected_assets+=("$1")
+          }
+
+          add_group() {
+            case "$1" in
+              linux)
+                add_asset dust-x86_64-unknown-linux-gnu.tar.gz
+                add_asset dust-aarch64-unknown-linux-gnu.tar.gz
+                ;;
+              macos)
+                add_asset dust-x86_64-apple-darwin.tar.gz
+                add_asset dust-aarch64-apple-darwin.tar.gz
+                ;;
+              windows)
+                add_asset dust-x86_64-pc-windows-msvc.zip
+                add_asset dust-aarch64-pc-windows-msvc.zip
+                ;;
+              *)
+                echo "::error::unknown asset group: $1"
+                exit 1
+                ;;
+            esac
+          }
+
+          case "$BINARY_TARGETS" in
+            default)
+              add_asset dust-x86_64-unknown-linux-gnu.tar.gz
+              add_asset dust-x86_64-apple-darwin.tar.gz
+              add_asset dust-aarch64-apple-darwin.tar.gz
+              add_asset dust-x86_64-pc-windows-msvc.zip
+              ;;
+            all)
+              add_group linux
+              add_group macos
+              add_group windows
+              ;;
+            linux|macos|windows)
+              add_group "$BINARY_TARGETS"
+              ;;
+            linux-x64)
+              add_asset dust-x86_64-unknown-linux-gnu.tar.gz
+              ;;
+            linux-arm64)
+              add_asset dust-aarch64-unknown-linux-gnu.tar.gz
+              ;;
+            macos-x64)
+              add_asset dust-x86_64-apple-darwin.tar.gz
+              ;;
+            macos-arm64)
+              add_asset dust-aarch64-apple-darwin.tar.gz
+              ;;
+            windows-x64)
+              add_asset dust-x86_64-pc-windows-msvc.zip
+              ;;
+            windows-arm64)
+              add_asset dust-aarch64-pc-windows-msvc.zip
+              ;;
+            *)
+              echo "::error::unsupported binary_targets value: $BINARY_TARGETS"
+              exit 1
+              ;;
+          esac
+
+          archive_count="$(
+            find upload -maxdepth 1 -type f \( -name '*.tar.gz' -o -name '*.zip' \) \
+              | wc -l \
+              | tr -d ' '
+          )"
+          if [[ "$archive_count" != "${#expected_assets[@]}" ]]; then
+            echo "::error::expected ${#expected_assets[@]} archives, found $archive_count"
+            find upload -maxdepth 1 -type f -printf '%f\n' | sort
+            exit 1
+          fi
+
+          for asset in "${expected_assets[@]}"; do
+            if [[ ! -f "upload/$asset" ]]; then
+              echo "::error::missing release asset: $asset"
+              exit 1
+            fi
+            if ! grep -q "  $asset$" upload/SHA256SUMS.txt; then
+              echo "::error::SHA256SUMS.txt is missing $asset"
+              exit 1
+            fi
+          done
+
+          echo "expected release assets verified"
+
       - name: Prepare release notes
         shell: bash
         env:
           RELEASE_TAG: ${{ needs.release-inputs.outputs.release_tag }}
         run: |
-          python <<'PY'
-          import os
-          from pathlib import Path
+          set -euo pipefail
 
-          tag = os.environ["RELEASE_TAG"]
-          changelog = Path("CHANGELOG.md")
-          manual_notes = Path("release-notes") / f"{tag}.md"
-          output = Path("release-notes.md")
+          awk -v tag="$RELEASE_TAG" '
+            BEGIN {
+              wanted = "## [" tag "]"
+              found = 0
+              started = 0
+              print "# Dust " tag
+              print ""
+            }
+            /^## \[/ {
+              if (found) exit
+              if (index($0, wanted) == 1) found = 1
+              next
+            }
+            found {
+              if (!started && $0 == "") next
+              started = 1
+              if ($0 ~ /^### /) sub(/^### /, "## ")
+              print
+            }
+            END { if (!found) exit 42 }
+          ' CHANGELOG.md > release-notes.md
 
-          if manual_notes.exists():
-              output.write_text(manual_notes.read_text(encoding="utf-8"), encoding="utf-8")
-              raise SystemExit(0)
-
-          if not changelog.exists():
-              output.write_text(f"Dust release {tag}\n", encoding="utf-8")
-              raise SystemExit(0)
-
-          lines = changelog.read_text(encoding="utf-8").splitlines()
-          wanted = [f"## [{tag}]", f"## [{tag.removeprefix('v')}]"]
-
-          start = None
-          for index, line in enumerate(lines):
-              if any(line.startswith(prefix) for prefix in wanted):
-                  start = index
-                  break
-
-          if start is None:
-              output.write_text(f"Dust release {tag}\n", encoding="utf-8")
-              raise SystemExit(0)
-
-          end = len(lines)
-          for index in range(start + 1, len(lines)):
-              if lines[index].startswith("## ["):
-                  end = index
-                  break
-
-          body = "\n".join(lines[start:end]).strip() + "\n"
-          output.write_text(body, encoding="utf-8")
-          PY
+          if grep -Eiq '^#{2,6}[[:space:]]+(install(ation)?|install or update|updates?|updated|updating|included packages|package inventory|notes|validation)\b' release-notes.md; then
+            echo "::error::release notes must not include install/update, package inventory, notes, or validation sections."
+            exit 1
+          fi
 
       - name: Create or update GitHub release
         env:
@@ -367,12 +458,42 @@ jobs:
           set -euo pipefail
           TAG="$RELEASE_TAG"
           TITLE="$TAG"
+
+          upload_with_retry() {
+            local asset="$1"
+
+            for attempt in 1 2 3; do
+              if gh release upload "$TAG" "$asset" --clobber; then
+                return 0
+              fi
+
+              echo "::warning::failed to upload $asset on attempt $attempt"
+              sleep $((attempt * 10))
+            done
+
+            echo "::error::failed to upload $asset after 3 attempts"
+            return 1
+          }
+
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --title "$TITLE" --notes-file release-notes.md
-            gh release upload "$TAG" upload/* --clobber
           else
-            gh release create "$TAG" upload/* --title "$TITLE" --notes-file release-notes.md
+            gh release create "$TAG" --draft --verify-tag --title "$TITLE" --notes-file release-notes.md
           fi
+
+          for asset in upload/*; do
+            upload_with_retry "$asset"
+          done
+
+          gh release view "$TAG" --json assets --jq '.assets[].name' | sort > published-assets.txt
+          find upload -maxdepth 1 -type f -printf '%f\n' | sort > expected-assets.txt
+
+          if ! diff -u expected-assets.txt published-assets.txt; then
+            echo "::error::published release assets do not match expected upload assets"
+            exit 1
+          fi
+
+          gh release edit "$TAG" --draft=false --latest
 
   package-dry-run:
     name: Package dry-run

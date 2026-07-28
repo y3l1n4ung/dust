@@ -3,6 +3,8 @@ header = """
 # Changelog
 
 All notable changes to Dust are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 """
 body = """
 {% if version %}## [{{ version }}] - {{ timestamp | date(format="%Y-%m-%d") }}{% else %}## [Unreleased]{% endif %}
