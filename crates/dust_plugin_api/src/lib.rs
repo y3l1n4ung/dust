@@ -6,6 +6,8 @@
 mod analysis;
 /// Plugin output contributions.
 mod contribution;
+/// Shared execution modes for validating plugins.
+mod mode;
 /// Plugin trait and context types.
 mod plugin;
 /// Plugin registration.
@@ -18,6 +20,7 @@ pub use analysis::{
     WorkspaceAnalysis, WorkspaceAnalysisBuilder,
 };
 pub use contribution::{AuxiliaryOutputContribution, ClassMixinContribution, PluginContribution};
+pub use mode::{MetadataOutput, PluginExecutionMode, ValidationAccess};
 pub use plugin::{DustPlugin, PluginContext};
 pub use registry::PluginRegistry;
 pub use symbols::{RequestedSymbol, SymbolPlan, short_symbol_name};

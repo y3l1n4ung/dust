@@ -5,6 +5,7 @@ use std::{
 };
 
 use dust_diagnostics::Diagnostic;
+use dust_plugin_api::{MetadataOutput, ValidationAccess};
 use either::Either;
 use sqlx::{Column, Connection, Executor, sqlite::SqliteConnection};
 
@@ -50,7 +51,7 @@ pub(super) fn validate_sqlx_describe(
         }
     };
 
-    if options.offline {
+    if matches!(options.execution.validation, ValidationAccess::Offline) {
         match validate_from_query_cache(library, &db.migrations, &schema_hash, queries, row_columns)
         {
             Ok(()) => {}
@@ -67,7 +68,7 @@ pub(super) fn validate_sqlx_describe(
         row_columns,
     ) {
         Ok(metadata) => {
-            if options.write_metadata {
+            if matches!(options.execution.metadata, MetadataOutput::Write) {
                 if let Err(error) = write_query_cache(library, metadata) {
                     diagnostics.push(Diagnostic::warning(error));
                 }

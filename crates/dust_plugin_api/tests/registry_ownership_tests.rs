@@ -108,3 +108,31 @@ fn plugin_names_follow_registration_order() {
 
     assert_eq!(registry.plugin_names(), vec!["derive", "serde"]);
 }
+
+#[test]
+fn symbols_only_registration_preserves_active_ownership() {
+    let mut registry = PluginRegistry::new();
+    registry
+        .register(Box::new(FakePlugin {
+            name: "database",
+            traits: &[],
+            configs: &["dust_dart::Query"],
+        }))
+        .unwrap();
+    registry
+        .register_symbols_only(Box::new(FakePlugin {
+            name: "http",
+            traits: &[],
+            configs: &["dust_dart::Query", "dust_dart::HttpClient"],
+        }))
+        .unwrap();
+
+    assert_eq!(
+        registry
+            .claimed_config_symbols()
+            .into_iter()
+            .map(|symbol| symbol.0)
+            .collect::<Vec<_>>(),
+        vec!["dust_dart::Query", "dust_dart::HttpClient"]
+    );
+}

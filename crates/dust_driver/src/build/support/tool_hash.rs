@@ -49,7 +49,8 @@ fn codegen_tool_hash_for_selection_with_input(
     fingerprint_input: &str,
 ) -> CodegenToolHash {
     let mut hash = 1469598103934665603_u64;
-    update_hash_bytes(&mut hash, selection.cache_salt().as_bytes());
+    let cache_salt = selection.cache_salt();
+    update_hash_bytes(&mut hash, cache_salt.as_bytes());
     update_hash_bytes(&mut hash, b"\0");
     update_hash_bytes(&mut hash, fingerprint_input.as_bytes());
     CodegenToolHash { hash }
@@ -74,10 +75,10 @@ mod tests {
         let normal =
             codegen_tool_hash_for_selection_with_input(RegistrySelection::All, "same-manifest");
         let db_only = codegen_tool_hash_for_selection_with_input(
-            RegistrySelection::DbOnly {
+            RegistrySelection::for_build(crate::request::DbRequestOptions {
+                only_db: true,
                 offline: false,
-                write_metadata: true,
-            },
+            }),
             "same-manifest",
         );
 

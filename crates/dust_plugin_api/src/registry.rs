@@ -8,6 +8,8 @@ use dust_ir::{DartFileIr, SymbolId};
 struct RegisteredPlugin {
     /// The plugin implementation.
     plugin: Box<dyn DustPlugin>,
+    /// Whether the plugin participates in analysis, validation, and generation.
+    executes: bool,
     /// Trait symbols claimed by the plugin.
     trait_symbols: Vec<SymbolId>,
     /// Config symbols claimed by the plugin.
@@ -38,41 +40,74 @@ impl PluginRegistry {
 
     /// Registers one plugin, failing if it claims a symbol already owned by another plugin.
     pub fn register(&mut self, plugin: Box<dyn DustPlugin>) -> Result<(), Diagnostic> {
+        self.register_with_execution(plugin, true, false)
+    }
+
+    /// Registers only a plugin's symbol claims without executing the plugin.
+    ///
+    /// This keeps non-selected annotations resolvable in focused plugin modes
+    /// without discovering files for, validating, or generating with the
+    /// non-selected plugin. Existing active ownership takes precedence over
+    /// overlapping fallback claims.
+    pub fn register_symbols_only(&mut self, plugin: Box<dyn DustPlugin>) -> Result<(), Diagnostic> {
+        self.register_with_execution(plugin, false, true)
+    }
+
+    /// Registers one plugin with an explicit execution policy.
+    fn register_with_execution(
+        &mut self,
+        plugin: Box<dyn DustPlugin>,
+        executes: bool,
+        skip_owned_symbols: bool,
+    ) -> Result<(), Diagnostic> {
         let plugin_name = plugin.plugin_name();
-        let trait_symbols = plugin
+        let mut trait_symbols = Vec::new();
+        let mut config_symbols = Vec::new();
+        let supported_annotations = if executes {
+            plugin.supported_annotations()
+        } else {
+            &[]
+        };
+
+        for symbol in plugin
             .claimed_traits()
             .iter()
             .map(|symbol| SymbolId::new(*symbol))
-            .collect::<Vec<_>>();
-        let config_symbols = plugin
-            .claimed_configs()
-            .iter()
-            .map(|symbol| SymbolId::new(*symbol))
-            .collect::<Vec<_>>();
-        let supported_annotations = plugin.supported_annotations();
-
-        for symbol in &trait_symbols {
-            if let Some(owner) = self.trait_owners.get(symbol) {
+        {
+            if let Some(owner) = self.trait_owners.get(&symbol) {
+                if skip_owned_symbols {
+                    continue;
+                }
                 return Err(Diagnostic::error(format!(
                     "trait symbol `{}` is already owned by plugin `{owner}`",
                     symbol.0
                 )));
             }
             self.trait_owners.insert(symbol.clone(), plugin_name);
+            trait_symbols.push(symbol);
         }
 
-        for symbol in &config_symbols {
-            if let Some(owner) = self.config_owners.get(symbol) {
+        for symbol in plugin
+            .claimed_configs()
+            .iter()
+            .map(|symbol| SymbolId::new(*symbol))
+        {
+            if let Some(owner) = self.config_owners.get(&symbol) {
+                if skip_owned_symbols {
+                    continue;
+                }
                 return Err(Diagnostic::error(format!(
                     "config symbol `{}` is already owned by plugin `{owner}`",
                     symbol.0
                 )));
             }
             self.config_owners.insert(symbol.clone(), plugin_name);
+            config_symbols.push(symbol);
         }
 
         self.plugins.push(RegisteredPlugin {
             plugin,
+            executes,
             trait_symbols,
             config_symbols,
             supported_annotations,
@@ -121,6 +156,7 @@ impl PluginRegistry {
         let mut symbols: Vec<_> = self
             .plugins
             .iter()
+            .filter(|plugin| plugin.executes)
             .flat_map(|plugin| plugin.plugin.partless_configs().iter().copied())
             .collect();
         symbols.sort_unstable();
@@ -131,7 +167,7 @@ impl PluginRegistry {
     /// Builds one deterministic symbol plan for a lowered library.
     pub fn build_symbol_plan(&self, file: &DartFileIr) -> SymbolPlan {
         let mut plan = SymbolPlan::default();
-        for plugin in &self.plugins {
+        for plugin in self.plugins.iter().filter(|plugin| plugin.executes) {
             for symbol in plugin.plugin.requested_symbols(file) {
                 plan.reserve(symbol);
             }
@@ -145,7 +181,7 @@ impl PluginRegistry {
         file: &DartFileIr,
         analysis: &mut WorkspaceAnalysisBuilder,
     ) {
-        for plugin in &self.plugins {
+        for plugin in self.plugins.iter().filter(|plugin| plugin.executes) {
             plugin.plugin.collect_workspace_analysis_ir(file, analysis);
         }
     }
@@ -162,7 +198,7 @@ impl PluginRegistry {
         plan: &SymbolPlan,
     ) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
-        for plugin in &self.plugins {
+        for plugin in self.plugins.iter().filter(|plugin| plugin.executes) {
             diagnostics.extend(plugin.plugin.validate_with_plan(file, plan));
         }
         diagnostics
@@ -176,7 +212,7 @@ impl PluginRegistry {
     ) -> Vec<crate::PluginContribution> {
         let mut contributions = Vec::with_capacity(self.plugins.len());
         let context = PluginContext { symbol_plan: plan };
-        for plugin in &self.plugins {
+        for plugin in self.plugins.iter().filter(|plugin| plugin.executes) {
             contributions.extend(plugin.plugin.generate(file, &context));
         }
         contributions

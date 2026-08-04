@@ -1,6 +1,8 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
-use dust_plugin_api::{DustPlugin, PluginContext, PluginContribution};
+use dust_plugin_api::{
+    DustPlugin, MetadataOutput, PluginContext, PluginContribution, PluginExecutionMode,
+};
 
 /// Shared annotation names and claimed symbol lists.
 mod constants;
@@ -24,22 +26,22 @@ use self::constants::{
 use self::emit::emit_db_library;
 use self::validate::validate_db_library;
 
+/// Stable name used to select the Database validating-plugin profile.
+pub const DATABASE_PLUGIN_NAME: &str = "Database";
+
 /// Runtime options for the Database plugin.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct DbPluginOptions {
-    /// Whether SQL validation must use cached metadata only.
-    pub offline: bool,
-    /// Whether successful online validation should update query metadata cache.
-    pub write_metadata: bool,
+struct DbPluginOptions {
+    /// Shared validation and metadata execution policy.
+    execution: PluginExecutionMode,
     /// Whether database generation and SQL validation are enabled.
-    pub databases: bool,
+    databases: bool,
 }
 
 impl Default for DbPluginOptions {
     fn default() -> Self {
         Self {
-            offline: false,
-            write_metadata: true,
+            execution: PluginExecutionMode::online(MetadataOutput::Write),
             databases: true,
         }
     }
@@ -56,15 +58,14 @@ impl DbPlugin {
     pub const fn new() -> Self {
         Self {
             options: DbPluginOptions {
-                offline: false,
-                write_metadata: true,
+                execution: PluginExecutionMode::online(MetadataOutput::Write),
                 databases: true,
             },
         }
     }
 
     /// Creates a DB plugin with explicit options.
-    pub const fn with_options(options: DbPluginOptions) -> Self {
+    const fn with_options(options: DbPluginOptions) -> Self {
         Self { options }
     }
 }
@@ -80,11 +81,10 @@ pub fn register_plugin() -> DbPlugin {
     DbPlugin::new()
 }
 
-/// Creates the Database plugin with explicit options.
-pub fn register_plugin_with_options(offline: bool, write_metadata: bool) -> DbPlugin {
+/// Creates the Database plugin for a shared validating-plugin execution mode.
+pub fn register_validating_plugin(execution: PluginExecutionMode) -> DbPlugin {
     DbPlugin::with_options(DbPluginOptions {
-        offline,
-        write_metadata,
+        execution,
         databases: true,
     })
 }
@@ -92,15 +92,14 @@ pub fn register_plugin_with_options(offline: bool, write_metadata: bool) -> DbPl
 /// Creates the Database plugin in row-mapper-only mode.
 pub fn register_row_plugin() -> DbPlugin {
     DbPlugin::with_options(DbPluginOptions {
-        offline: false,
-        write_metadata: false,
+        execution: PluginExecutionMode::online(MetadataOutput::ReadOnly),
         databases: false,
     })
 }
 
 impl DustPlugin for DbPlugin {
     fn plugin_name(&self) -> &'static str {
-        "Database"
+        DATABASE_PLUGIN_NAME
     }
 
     fn claimed_traits(&self) -> &'static [&'static str] {
@@ -138,11 +137,10 @@ impl DustPlugin for DbPlugin {
 
 #[cfg(test)]
 mod tests {
-    use dust_plugin_api::{DustPlugin, SymbolPlan};
+    use dust_plugin_api::{DustPlugin, MetadataOutput, PluginExecutionMode, SymbolPlan};
 
     use super::{
-        DbPlugin, DbPluginOptions, register_plugin, register_plugin_with_options,
-        register_row_plugin,
+        DbPlugin, DbPluginOptions, register_plugin, register_row_plugin, register_validating_plugin,
     };
 
     fn empty_library() -> dust_ir::DartFileIr {
@@ -179,8 +177,7 @@ mod tests {
         assert_eq!(
             DbPluginOptions::default(),
             DbPluginOptions {
-                offline: false,
-                write_metadata: true,
+                execution: PluginExecutionMode::online(MetadataOutput::Write),
                 databases: true,
             }
         );
@@ -207,7 +204,8 @@ mod tests {
 
     #[test]
     fn explicit_options_round_trip_through_plugin_contract() {
-        let plugin = register_plugin_with_options(true, false);
+        let plugin =
+            register_validating_plugin(PluginExecutionMode::offline(MetadataOutput::ReadOnly));
         let library = empty_library();
 
         assert!(plugin.validate(&library).is_empty());
@@ -226,8 +224,7 @@ mod tests {
         );
 
         let custom = DbPlugin::with_options(DbPluginOptions {
-            offline: true,
-            write_metadata: false,
+            execution: PluginExecutionMode::offline(MetadataOutput::ReadOnly),
             databases: false,
         });
         assert_eq!(custom.supported_annotations(), ["FromRow"]);

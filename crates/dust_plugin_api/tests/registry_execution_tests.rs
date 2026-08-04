@@ -134,3 +134,65 @@ fn registry_emits_generated_units_from_generate_api() {
     assert_eq!(contributions[0].mixin_members[0].members[0], "// first");
     assert_eq!(contributions[1].top_level_functions[0], "// symbols: 0");
 }
+
+#[test]
+fn symbols_only_registration_claims_without_executing() {
+    struct SymbolsOnlyPlugin;
+
+    impl DustPlugin for SymbolsOnlyPlugin {
+        fn plugin_name(&self) -> &'static str {
+            "symbols-only"
+        }
+
+        fn claimed_traits(&self) -> &'static [&'static str] {
+            &["dust_dart::Debug"]
+        }
+
+        fn claimed_configs(&self) -> &'static [&'static str] {
+            &["dust_dart::SerDe"]
+        }
+
+        fn partless_configs(&self) -> &'static [&'static str] {
+            &["dust_dart::SerDe"]
+        }
+
+        fn supported_annotations(&self) -> &'static [&'static str] {
+            &["Debug", "SerDe"]
+        }
+
+        fn requested_symbols(&self, _file: &DartFileIr) -> Vec<String> {
+            vec!["_$Debug".to_owned()]
+        }
+
+        fn validate(&self, _file: &DartFileIr) -> Vec<Diagnostic> {
+            vec![Diagnostic::error("must not execute")]
+        }
+
+        fn generate(
+            &self,
+            _file: &DartFileIr,
+            _context: &PluginContext<'_>,
+        ) -> Vec<PluginContribution> {
+            vec![PluginContribution::default()]
+        }
+    }
+
+    let file = sample_library();
+    let mut registry = PluginRegistry::new();
+    registry
+        .register_symbols_only(Box::new(SymbolsOnlyPlugin))
+        .unwrap();
+
+    assert_eq!(registry.plugin_names(), vec!["symbols-only"]);
+    assert_eq!(registry.claimed_trait_symbols()[0].0, "dust_dart::Debug");
+    assert_eq!(registry.claimed_config_symbols()[0].0, "dust_dart::SerDe");
+    assert!(registry.all_supported_annotations().is_empty());
+    assert!(registry.all_partless_configs().is_empty());
+    assert!(registry.build_symbol_plan(&file).reserved().is_empty());
+    assert!(registry.validate_library(&file).is_empty());
+    assert!(
+        registry
+            .generate_units(&file, &SymbolPlan::default())
+            .is_empty()
+    );
+}
