@@ -1,8 +1,8 @@
 use std::fs;
 
-use dust_db_plugin::{register_plugin, register_plugin_with_options};
+use dust_db_plugin::{register_plugin, register_validating_plugin};
 use dust_ir::TypeIr;
-use dust_plugin_api::DustPlugin;
+use dust_plugin_api::{DustPlugin, MetadataOutput, PluginExecutionMode};
 
 use super::support::*;
 
@@ -179,17 +179,19 @@ Future<int> count(Pool db) {
 "#,
     );
 
-    let diagnostics = register_plugin_with_options(true, false).validate(&library_with_queries(
-        &root,
-        vec![database_class()],
-        vec![query_scalar(
-            TypeIr::int(),
-            "SELECT COUNT(*) FROM users",
-            0,
-            "fetchOne",
-            10,
-        )],
-    ));
+    let diagnostics =
+        register_validating_plugin(PluginExecutionMode::offline(MetadataOutput::ReadOnly))
+            .validate(&library_with_queries(
+                &root,
+                vec![database_class()],
+                vec![query_scalar(
+                    TypeIr::int(),
+                    "SELECT COUNT(*) FROM users",
+                    0,
+                    "fetchOne",
+                    10,
+                )],
+            ));
 
     assert!(
         diagnostics.iter().any(|diagnostic| diagnostic

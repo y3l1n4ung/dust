@@ -14,6 +14,18 @@ emission, and cache updates behind the CLI commands exposed by `dust_cli`.
 5. Assemble deterministic `.g.dart` output.
 6. Write changed files and update cache metadata.
 
+## Validating Plugin Modes
+
+Focused validation commands select a plugin by its stable name and pass a
+shared execution mode describing online/offline access and metadata writes.
+Other plugins register only their symbol claims, so their annotations remain
+resolvable without running their validation or generation.
+
+The driver owns profile selection and deterministic cache salts. The selected
+plugin owns the meaning of validation and its metadata. For example, the
+Database plugin continues to own SQLx connections, query validation, and query
+cache files.
+
 ## Owns
 
 - build/check/watch scheduling

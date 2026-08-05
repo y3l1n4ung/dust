@@ -5,4 +5,7 @@
 /// DB plugin implementation and registration surface.
 mod plugin;
 
-pub use plugin::{DbPlugin, register_plugin, register_plugin_with_options, register_row_plugin};
+pub use plugin::{
+    DATABASE_PLUGIN_NAME, DbPlugin, register_plugin, register_row_plugin,
+    register_validating_plugin,
+};
