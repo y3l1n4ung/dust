@@ -86,6 +86,14 @@ flutter pub add dust_flutter
 See the [Flutter package guide](packages/dust_flutter/README.md) for routing,
 state, and i18n setup.
 
+## Agent Skill
+
+Install the [use-dust Agent Skill](skills/use-dust/SKILL.md):
+
+```bash
+npx skills add y3l1n4ung/dust --skill use-dust
+```
+
 ## Features
 
 | Feature | Status | Documentation |
