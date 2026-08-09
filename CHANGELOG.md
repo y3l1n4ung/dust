@@ -6,17 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [v0.1.4] - 2026-08-09
+
 ### Added
 
 - Added `@AppRoute(..., branch: 'name')` for stateful branch stacks that
   preserve independent tab history without adding another annotation.
 - Expanded router diagnostics to include route names, effective shells,
   branches, guard decisions, redirect targets, and committed stacks.
-
-## [v0.1.4] - 2026-08-09
-
-### Added
-
 - Router runtime hooks for `NavigatorObserver` integration and asynchronous
   navigation error handling.
 - Expanded route edge-case coverage across shell validation, generated shell
@@ -28,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Split the router delegate internals into parser, stack, and diagnostics
+  helpers while keeping the generated routing API unchanged.
 - Revalidated exposed routes after pop and page removal so guards and redirects
   stay current when session state changes.
 - Raised the supported `dust_flutter` runtime floor to `0.1.4`.
