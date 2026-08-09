@@ -8,7 +8,7 @@ final class RouterController<T extends Object> {
 
   /// Returns the nearest typed router controller.
   static RouterController<T> of<T extends Object>(BuildContext context) {
-    final scope = context.dependOnInheritedWidgetOfExactType<RouterScope>();
+    final scope = context.getInheritedWidgetOfExactType<RouterScope>();
     assert(scope != null, 'No generated router found in context.');
     return scope!.controller as RouterController<T>;
   }

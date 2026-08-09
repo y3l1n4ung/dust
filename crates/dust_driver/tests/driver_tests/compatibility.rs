@@ -96,7 +96,7 @@ fn check_rejects_too_new_dust_package_before_processing_libraries() {
             .message
             .contains("unsupported Dust package version")
     );
-    assert!(diagnostic.message.contains("`dust_flutter` >=0.1.3 <0.2.0"));
+    assert!(diagnostic.message.contains("`dust_flutter` >=0.1.4 <0.2.0"));
     assert!(diagnostic.message.contains("resolves 0.2.0"));
     assert!(diagnostic.notes.contains(
         &"Upgrade the Dust CLI first, or pin the package to a supported range.".to_owned()

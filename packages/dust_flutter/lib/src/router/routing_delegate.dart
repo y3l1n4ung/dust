@@ -98,6 +98,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
       notifier: this,
       child: Navigator(
         key: navigatorKey,
+        observers: config.router.observers,
         pages: [
           for (final entry in _entries)
             config.buildPage(entry.route, entry.key, (didPop, result) {
@@ -114,6 +115,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
             removed.complete(null);
             _log('remove ${_debugRoute(removed.route)}');
             _finishStackCommit(previous);
+            _revalidateExposedTop();
           }
         },
       ),
@@ -132,7 +134,8 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   }
 
   /// Navigates to [route], replacing the current stack.
-  void go(T route) => unawaited(_applyRoute(route, NavigationMode.go));
+  void go(T route) =>
+      _unawaitedNavigation(_applyRoute(route, NavigationMode.go));
 
   /// Pushes [route] on top of the current stack.
   Future<R?> push<R>(T route) async {
@@ -143,7 +146,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
 
   /// Replaces the current top route with [route].
   void replace(T route) =>
-      unawaited(_applyRoute(route, NavigationMode.replace));
+      _unawaitedNavigation(_applyRoute(route, NavigationMode.replace));
 
   /// Pops the top route and completes its push future with [result].
   bool pop<R>([R? result]) => _popTop(result);
@@ -168,7 +171,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
       await _applyRoute(currentRoute, NavigationMode.replace);
     });
     _scheduledRefresh = refresh;
-    unawaited(refresh);
+    _unawaitedNavigation(refresh);
   }
 
   Future<_RouteEntry<T>?> _applyRoute(
@@ -319,7 +322,21 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     removed.complete(result);
     _log('pop ${_debugRoute(removed.route)}');
     _finishStackCommit(previous);
+    _revalidateExposedTop();
     return true;
+  }
+
+  void _revalidateExposedTop() {
+    if (_disposed || _entries.isEmpty) return;
+    _unawaitedNavigation(_applyRoute(currentRoute, NavigationMode.replace));
+  }
+
+  void _unawaitedNavigation(Future<void> future) {
+    unawaited(
+      future.catchError((Object error, StackTrace stackTrace) {
+        config.router.onException(error, stackTrace);
+      }),
+    );
   }
 
   RouteStack<T> _stackSnapshot() =>

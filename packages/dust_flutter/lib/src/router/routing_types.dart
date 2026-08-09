@@ -33,11 +33,26 @@ abstract class RouterBase<T extends Object> {
   /// Optional listenable that triggers redirect and guard reevaluation.
   Listenable? get refreshListenable => null;
 
+  /// Navigator observers attached to the generated root Navigator.
+  List<NavigatorObserver> get observers => const [];
+
   /// Whether generated routing should print runtime diagnostics.
   bool get debugLogDiagnostics => false;
 
   /// Returns a replacement route before guards run, or `null` to continue.
   T? redirect(T route) => null;
+
+  /// Handles asynchronous router failures from unawaited navigation work.
+  void onException(Object error, StackTrace stackTrace) {
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'dust_flutter routing',
+        context: ErrorDescription('while navigating with a generated router'),
+      ),
+    );
+  }
 
   /// Called after the generated router commits a route stack change.
   ///

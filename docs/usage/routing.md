@@ -328,6 +328,34 @@ final class RootRouter extends $RootRouter {
 Dust calls this after a route stack is committed. Refreshes and same-location
 replacements are ignored so observers do not receive duplicate events.
 
+Use `NavigatorObserver`s when integrating packages that expect Flutter's
+standard navigation observer API:
+
+```dart
+@AppRouter(initial: '/', notFound: '/404')
+final class RootRouter extends $RootRouter {
+  RootRouter({required this.analyticsObserver});
+
+  final NavigatorObserver analyticsObserver;
+
+  @override
+  List<NavigatorObserver> get observers => [analyticsObserver];
+}
+```
+
+Handle asynchronous routing failures such as redirect cycles from unawaited
+`go()` or `replace()` calls through `onException`:
+
+```dart
+@AppRouter(initial: '/', notFound: '/404')
+final class RootRouter extends $RootRouter {
+  @override
+  void onException(Object error, StackTrace stackTrace) {
+    errorReporter.capture(error, stackTrace);
+  }
+}
+```
+
 ## Diagnostics
 
 Enable runtime logs while debugging parsing, redirects, guards, and stack

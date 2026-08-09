@@ -16,7 +16,7 @@ by the workspace source.
 
 | Dust CLI | `dust_dart` | `dust_flutter` | `dust_db_sqlite3` |
 | :--- | :--- | :--- | :--- |
-| `0.1.3` | `>=0.1.3 <0.2.0` | `>=0.1.3 <0.2.0` | `>=0.1.3 <0.2.0` |
+| `0.1.3` | `>=0.1.3 <0.2.0` | `>=0.1.4 <0.2.0` | `>=0.1.3 <0.2.0` |
 
 ## When Versions Do Not Match
 

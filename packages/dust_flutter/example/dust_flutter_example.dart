@@ -40,6 +40,49 @@ final class ProductPage extends StatelessWidget {
   }
 }
 
+/// Shared shell widget used by the shell route examples below.
+class DemoShell extends StatelessWidget {
+  /// Creates a demo shell.
+  const DemoShell({required this.child, super.key});
+
+  /// Page rendered inside the shell body.
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text('Demo shell'),
+        Expanded(child: child),
+      ],
+    );
+  }
+}
+
+/// Home route wrapped by [DemoShell].
+@AppRoute('/', name: 'home', shell: DemoShell, guards: [])
+final class HomePage extends StatelessWidget {
+  /// Creates the demo home page.
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Home');
+  }
+}
+
+/// Settings route wrapped by the same [DemoShell].
+@AppRoute('/settings', name: 'settings', shell: DemoShell, guards: [])
+final class SettingsPage extends StatelessWidget {
+  /// Creates the demo settings page.
+  const SettingsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Settings');
+  }
+}
+
 /// Renders an async lifecycle state produced by generated async ViewModels.
 Widget renderProducts(AsyncState<List<String>> state) {
   return switch (state) {

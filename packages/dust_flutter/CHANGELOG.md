@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-08-09
+
+### Added
+
+- Add `RouterBase.observers` for forwarding `NavigatorObserver` instances to
+  generated routers.
+- Add `RouterBase.onException` for unawaited generated navigation failures.
+
+### Fixed
+
+- Re-run redirects and guards when pop or platform page removal exposes a
+  previous route.
+- Avoid subscribing imperative router controller lookups to route changes.
+
 ## [0.1.3] - 2026-07-28
 
 ### Added

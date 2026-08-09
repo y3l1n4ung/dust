@@ -282,6 +282,50 @@ void main() {
     await expectLater(result, completion(isNull));
   });
 
+  test('delegate pop revalidates the exposed route', () async {
+    final router = _AuthRouter();
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(router: router),
+    );
+    await delegate.debugWaitForScheduledRefresh();
+
+    final privateResult = delegate.push<void>(const _TestRoute('/private'));
+    await Future<void>.delayed(Duration.zero);
+    final detailResult = delegate.push<void>(const _TestRoute('/detail'));
+    await Future<void>.delayed(Duration.zero);
+    expect(delegate.stack.map((route) => route.location), [
+      '/safe',
+      '/private',
+      '/detail',
+    ]);
+
+    router.isAuthenticated = false;
+    await delegate.popRoute();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(delegate.stack.map((route) => route.location), [
+      '/safe',
+      '/login',
+    ]);
+    await expectLater(privateResult, completion(isNull));
+    await expectLater(detailResult, completion(isNull));
+  });
+
+  test('unawaited navigation exceptions are routed to the router hook',
+      () async {
+    final router = _ExceptionRecordingRouter();
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(router: router),
+    );
+    await delegate.debugWaitForScheduledRefresh();
+
+    delegate.go(const _TestRoute('/one'));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(router.errors.single, isA<StateError>());
+    expect(router.stackTraces.single, isA<StackTrace>());
+  });
+
   test('disposing the delegate completes pending push futures with null',
       () async {
     final delegate = GeneratedRouterDelegate<_TestRoute>(_runtimeConfig());
@@ -375,6 +419,101 @@ void main() {
     await tester.pumpAndSettle();
 
     await expectLater(result, completion('saved'));
+  });
+
+  testWidgets('Navigator page removal revalidates the exposed route', (
+    tester,
+  ) async {
+    final router = _AuthRouter();
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(
+        router: router,
+        buildChild: (context, route) {
+          if (route.location != '/detail') return Text(route.location);
+          return TextButton(
+            onPressed: () {
+              router.isAuthenticated = false;
+              Navigator.of(context).pop();
+            },
+            child: const Text('close detail'),
+          );
+        },
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        routerConfig: RouterConfig<_TestRoute>(
+          routeInformationProvider: PlatformRouteInformationProvider(
+            initialRouteInformation: RouteInformation(
+              uri: Uri.parse('/safe'),
+            ),
+          ),
+          routeInformationParser: GeneratedRouteInformationParser<_TestRoute>(
+            parseRoute: (uri) => _TestRoute(uri.toString()),
+            routeLocation: (route) => route.location,
+          ),
+          routerDelegate: delegate,
+          backButtonDispatcher: RootBackButtonDispatcher(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final privateResult = delegate.push<void>(const _TestRoute('/private'));
+    await tester.pumpAndSettle();
+    final detailResult = delegate.push<void>(const _TestRoute('/detail'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('close detail'));
+    await tester.pumpAndSettle();
+
+    expect(delegate.stack.map((route) => route.location), [
+      '/safe',
+      '/login',
+    ]);
+    await expectLater(privateResult, completion(isNull));
+    await expectLater(detailResult, completion(isNull));
+  });
+
+  testWidgets('generated router passes Navigator observers through', (
+    tester,
+  ) async {
+    final observer = _RecordingNavigatorObserver();
+    final delegate = GeneratedRouterDelegate<_TestRoute>(
+      _runtimeConfig(
+        router: _ObserverRouter([observer]),
+        buildChild: (context, route) => Text(route.location),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        routerConfig: RouterConfig<_TestRoute>(
+          routeInformationProvider: PlatformRouteInformationProvider(
+            initialRouteInformation: RouteInformation(
+              uri: Uri.parse('/safe'),
+            ),
+          ),
+          routeInformationParser: GeneratedRouteInformationParser<_TestRoute>(
+            parseRoute: (uri) => _TestRoute(uri.toString()),
+            routeLocation: (route) => route.location,
+          ),
+          routerDelegate: delegate,
+          backButtonDispatcher: RootBackButtonDispatcher(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final result = delegate.push<void>(const _TestRoute('/detail'));
+    await tester.pumpAndSettle();
+    await delegate.popRoute();
+    await tester.pumpAndSettle();
+    await expectLater(result, completion(isNull));
+
+    expect(observer.pushed, contains('/detail'));
+    expect(observer.popped, contains('/detail'));
   });
 
   testWidgets('generated page transition runs at the route boundary', (
@@ -507,6 +646,62 @@ final class _RefreshRouter extends RouterBase<_TestRoute> {
 
   @override
   Listenable get refreshListenable => refreshNotifier;
+}
+
+final class _AuthRouter extends RouterBase<_TestRoute> {
+  bool isAuthenticated = true;
+
+  @override
+  _TestRoute? redirect(_TestRoute route) {
+    if (!isAuthenticated && route.location == '/private') {
+      return const _TestRoute('/login');
+    }
+    return null;
+  }
+}
+
+final class _ExceptionRecordingRouter extends RouterBase<_TestRoute> {
+  final errors = <Object>[];
+  final stackTraces = <StackTrace>[];
+
+  @override
+  _TestRoute? redirect(_TestRoute route) {
+    return switch (route.location) {
+      '/one' => const _TestRoute('/two'),
+      '/two' => const _TestRoute('/one'),
+      _ => null,
+    };
+  }
+
+  @override
+  void onException(Object error, StackTrace stackTrace) {
+    errors.add(error);
+    stackTraces.add(stackTrace);
+  }
+}
+
+final class _ObserverRouter extends RouterBase<_TestRoute> {
+  _ObserverRouter(this._observers);
+
+  final List<NavigatorObserver> _observers;
+
+  @override
+  List<NavigatorObserver> get observers => _observers;
+}
+
+final class _RecordingNavigatorObserver extends NavigatorObserver {
+  final pushed = <String?>[];
+  final popped = <String?>[];
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    pushed.add(route.settings.name);
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    popped.add(route.settings.name);
+  }
 }
 
 final class _DebugRouter extends RouterBase<_TestRoute> {

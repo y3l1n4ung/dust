@@ -129,6 +129,123 @@ fn emits_typed_route_result_helpers() {
 }
 
 #[test]
+fn rejects_generated_route_class_name_collisions() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/orders/detail', notFound: '/404')"),
+        route_page_class(
+            "OrderDetailPage",
+            "('/orders/detail', name: 'orderDetail')",
+            Vec::new(),
+        ),
+        route_page_class(
+            "OrderDetailSlugPage",
+            "('/order-details/:id', name: 'order_detail')",
+            vec![constructor_param("id", TypeIr::string())],
+        ),
+    ]);
+
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec!["generated route class `OrderDetailRoute` is emitted by more than one route name"]
+    );
+}
+
+#[test]
+fn rejects_reserved_route_helper_names() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/switch', notFound: '/404')"),
+        route_page_class("SwitchPage", "('/switch', name: 'switch')", Vec::new()),
+    ]);
+
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec!["route name `switch` must be a valid non-reserved Dart identifier"]
+    );
+}
+
+#[test]
+fn rejects_invalid_route_helper_identifiers() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/orders/detail', notFound: '/404')"),
+        route_page_class(
+            "OrderDetailPage",
+            "('/orders/detail', name: 'order-detail')",
+            Vec::new(),
+        ),
+    ]);
+
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec!["route name `order-detail` must be a valid non-reserved Dart identifier"]
+    );
+}
+
+#[test]
+fn rejects_route_helper_name_that_conflicts_with_navigator_pop() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/pop', notFound: '/404')"),
+        route_page_class("PopPage", "('/pop', name: 'pop')", Vec::new()),
+    ]);
+
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec!["route name `pop` conflicts with the generated navigator `pop` helper"]
+    );
+}
+
+#[test]
 fn emits_guard_helpers_with_custom_router_base_name() {
     let plugin = register_plugin();
     let mut router = router_class("(initial: '/', notFound: '/404')");
