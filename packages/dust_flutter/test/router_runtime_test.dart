@@ -47,12 +47,14 @@ void main() {
       const fullPathsLog = 'AppRouter: Full paths for routes:\n'
           '           => /safe\n'
           '           => /private\n'
+          '           => /branch\n'
           '           => /guard-private\n'
           '           => /login\n'
           '           => /nested/:id';
       const namedPathsLog = 'AppRouter: known full paths for route names:\n'
           '           safe => /safe\n'
           '           private => /private\n'
+          '           branch => /branch\n'
           '           guardPrivate => /guard-private\n'
           '           login => /login\n'
           '           nestedDetail => /nested/:id';
@@ -65,15 +67,50 @@ void main() {
           'AppRouter: setting initial route /safe',
           'AppRouter: refreshing /safe',
           'AppRouter: replace /safe',
+          'AppRouter: route /safe name=safe shell=- branch=-',
           'AppRouter: stack [/safe]',
           'AppRouter: restoring /private',
+          'AppRouter: route /private name=private shell=- branch=-',
           'AppRouter: redirecting /private => /login',
+          'AppRouter: redirect target /login name=login shell=- branch=-',
           'AppRouter: stack [/login]',
           'AppRouter: restoring /guard-private',
+          'AppRouter: route /guard-private name=guardPrivate shell=- branch=-',
           'AppRouter: guards 1 for /guard-private',
+          'AppRouter: guard _LoginGuard for /guard-private',
           'AppRouter: guard redirect /guard-private => /login',
+          'AppRouter: guard target /login name=login shell=- branch=-',
           'AppRouter: restoring /login',
+          'AppRouter: route /login name=login shell=- branch=-',
           'AppRouter: stack [/login]',
+        ]),
+      );
+    } finally {
+      debugPrint = previousDebugPrint;
+    }
+  });
+
+  test('router diagnostics include shell and branch decisions', () async {
+    final messages = <String>[];
+    final previousDebugPrint = debugPrint;
+    debugPrint = (message, {wrapWidth}) {
+      if (message != null) messages.add(message);
+    };
+
+    try {
+      final delegate = GeneratedRouterDelegate<_TestRoute>(
+        _runtimeConfig(router: _DebugRouter()),
+      );
+      await delegate.debugWaitForScheduledRefresh();
+      await delegate.setNewRoutePath(const _TestRoute('/branch'));
+
+      expect(
+        messages,
+        containsAllInOrder([
+          'AppRouter: restoring /branch',
+          'AppRouter: route /branch name=branch shell=_DebugShell branch=mainTabs',
+          'AppRouter: branch - => mainTabs',
+          'AppRouter: stack [/branch]',
         ]),
       );
     } finally {
@@ -571,6 +608,10 @@ RouterRuntimeConfig<_TestRoute> _runtimeConfig({
     parseRoute: (uri) => _TestRoute(uri.toString()),
     routeLocation: (route) => route.location,
     requiresAuth: (_) => false,
+    routeBranch: (route) => switch (route.location) {
+      '/branch' => 'mainTabs',
+      _ => null,
+    },
     resolveGuards: resolveGuards ?? (_) => const [],
     restoreStack: restoreStack,
     buildPage: (route, key, onPopInvoked) => generatedPage<Object?>(
@@ -587,6 +628,13 @@ RouterRuntimeConfig<_TestRoute> _runtimeConfig({
     debugRoutes: const [
       GeneratedRoute('/safe', page: SizedBox, name: 'safe'),
       GeneratedRoute('/private', page: SizedBox, name: 'private'),
+      GeneratedRoute(
+        '/branch',
+        page: SizedBox,
+        name: 'branch',
+        shell: _DebugShell,
+        branch: 'mainTabs',
+      ),
       GeneratedRoute('/guard-private', page: SizedBox, name: 'guardPrivate'),
       GeneratedRoute('/login', page: SizedBox, name: 'login'),
       GeneratedRoute(
@@ -596,6 +644,18 @@ RouterRuntimeConfig<_TestRoute> _runtimeConfig({
         ],
       ),
     ],
+    debugInfo: (route) => switch (route.location) {
+      '/safe' => const RouteDebugInfo(name: 'safe'),
+      '/private' => const RouteDebugInfo(name: 'private'),
+      '/branch' => const RouteDebugInfo(
+          name: 'branch',
+          shell: '_DebugShell',
+          branch: 'mainTabs',
+        ),
+      '/guard-private' => const RouteDebugInfo(name: 'guardPrivate'),
+      '/login' => const RouteDebugInfo(name: 'login'),
+      _ => const RouteDebugInfo(),
+    },
   );
 }
 
@@ -603,6 +663,15 @@ final class _TestRoute {
   const _TestRoute(this.location);
 
   final String location;
+}
+
+final class _DebugShell extends StatelessWidget {
+  const _DebugShell({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => child;
 }
 
 final class _RecordingPageTransitionsBuilder extends PageTransitionsBuilder {

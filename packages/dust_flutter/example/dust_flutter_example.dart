@@ -227,6 +227,47 @@ final class OrdersPage extends StatelessWidget {
   }
 }
 
+/// Tab root route that owns the home branch stack.
+@AppRoute('/tabs/home', name: 'tabHome', shell: DemoShell, branch: 'mainTabs')
+final class TabHomePage extends StatelessWidget {
+  /// Creates the demo home tab page.
+  const TabHomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Home tab');
+  }
+}
+
+/// Child page that inherits the home tab branch.
+@AppRoute('/tabs/home/details', name: 'tabHomeDetails')
+final class TabHomeDetailsPage extends StatelessWidget {
+  /// Creates the demo home tab detail page.
+  const TabHomeDetailsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Home tab details');
+  }
+}
+
+/// Tab root route that owns a separate orders branch stack.
+@AppRoute(
+  '/tabs/orders',
+  name: 'tabOrders',
+  shell: DemoShell,
+  branch: 'ordersTabs',
+)
+final class TabOrdersPage extends StatelessWidget {
+  /// Creates the demo orders tab page.
+  const TabOrdersPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Orders tab');
+  }
+}
+
 /// Shell used when a child subtree needs a more specific layout.
 class ReportsShell extends StatelessWidget {
   /// Creates a reports shell.

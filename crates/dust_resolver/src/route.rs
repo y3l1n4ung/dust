@@ -26,6 +26,7 @@ fn route_config(config: &ConfigApplicationIr) -> Option<RouteConfigIr> {
         name: string_value(config.named_argument_value("name")).map(str::to_owned),
         result_type: member_value(config.named_argument_value("result")).map(str::to_owned),
         shell: member_value(config.named_argument_value("shell")).map(str::to_owned),
+        branch: string_value(config.named_argument_value("branch")).map(str::to_owned),
         guards: member_list(config.named_argument_value("guards")),
         guards_configured: config.named_args.contains_key("guards"),
         transition: config

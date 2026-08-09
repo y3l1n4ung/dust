@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Added `@AppRoute(..., branch: 'name')` for stateful branch stacks that
+  preserve independent tab history without adding another annotation.
+- Expanded router diagnostics to include route names, effective shells,
+  branches, guard decisions, redirect targets, and committed stacks.
+
 ## [v0.1.4] - 2026-08-09
 
 ### Added

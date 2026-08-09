@@ -203,7 +203,7 @@ fn emits_common_app_route_use_cases() {
         router_class("(initial: '/dashboard', notFound: '/404')"),
         route_page_class(
             "DashboardPage",
-            "('/dashboard', name: 'dashboard', shell: AppShell, guards: [])",
+            "('/dashboard', name: 'dashboard', shell: AppShell, branch: 'mainTabs', guards: [])",
             Vec::new(),
         ),
         route_page_class(
@@ -272,30 +272,7 @@ fn emits_common_app_route_use_cases() {
         .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("RouteAction<void> dashboard()"));
-    assert!(primary.contains("RouteAction<void> dashboardOrders()"));
-    assert!(primary.contains(
-        "RouteAction<void> productSearch({String? query, int page = 1, bool showArchived = false})"
-    ));
-    assert!(primary.contains("RouteAction<int> productPicker()"));
-    assert!(primary.contains("RouteAction<void> invite({required String code, String? team})"));
-    assert!(primary.contains(
-        "RouteAction<void> orgProject({required String orgId, required int projectId, String? tab})"
-    ));
-    assert!(primary.contains("RouteAction<void> setup()"));
-    assert!(primary.contains("RouteAction<void> setupConnect()"));
-    assert!(primary.contains("ProductPickerRoute extends AppRoutePath<int>"));
-    assert!(primary.contains("InviteRoute extends AppRoutePath<void>"));
-    assert!(primary.contains("OrgProjectRoute extends AppRoutePath<void>"));
-    assert!(primary.contains("SetupRoute extends AppRoutePath<void>"));
-    assert!(primary.contains("SetupConnectRoute extends AppRoutePath<void>"));
-    assert!(primary.contains("transition: BottomToTopPageTransitionsBuilder(),"));
-    assert!(primary.contains("fullscreenDialog: true,"));
-    assert!(primary.contains("AdminRoute() => [AdminGuard()],"));
-    assert!(primary.contains("AppShell(child: const DashboardOrdersPage())"));
-    assert!(primary.contains("DashboardOrdersPage: AppShell,"));
-    assert!(primary.contains("SetupShell(child: const SetupConnectPage())"));
-    assert!(primary.contains("SetupConnectPage: SetupShell,"));
+    assert_snapshot("common_app_route_use_cases.dart.snapshot", &primary);
 }
 
 #[test]

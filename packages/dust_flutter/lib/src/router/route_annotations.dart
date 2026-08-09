@@ -56,6 +56,7 @@ class AppRoute {
     this.name,
     this.result,
     this.shell,
+    this.branch,
     this.guards = const [],
     this.transition,
     this.fullscreenDialog = false,
@@ -75,6 +76,9 @@ class AppRoute {
 
   /// Optional layout widget type that wraps this page.
   final Type? shell;
+
+  /// Optional stateful navigation branch this route belongs to.
+  final String? branch;
 
   /// Route-specific guard types evaluated after router-level redirects.
   final List<Type> guards;
@@ -98,6 +102,7 @@ class GeneratedRoute {
     this.name,
     this.routes = const [],
     this.shell,
+    this.branch,
     this.guards = const [],
     this.transition,
     this.fullscreenDialog = false,
@@ -118,6 +123,9 @@ class GeneratedRoute {
 
   /// Optional shell widget inherited by this generated route subtree.
   final Type? shell;
+
+  /// Optional stateful navigation branch this route belongs to.
+  final String? branch;
 
   /// Guard classes for this generated route.
   final List<Type> guards;

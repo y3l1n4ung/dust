@@ -1,15 +1,25 @@
+use std::collections::BTreeSet;
+
 use dust_dart_emit::render_template;
 use serde::Serialize;
 
 use crate::plugin::model::{GuardSpec, RouteParamSpec, RouteSpec, RouterSpec};
 
-use super::formatting::dart_type;
+use super::{
+    formatting::dart_type,
+    patterns::route_switch_pattern,
+    shell::{effective_branch, effective_shell},
+};
 
 /// Template context for generated route navigation helpers.
 #[derive(Serialize)]
 struct HelpersContext {
     /// Rendered switch cases that instantiate route guards.
     guard_cases: String,
+    /// Rendered switch cases that return branch names.
+    branch_cases: String,
+    /// Rendered switch cases that return route debug info.
+    debug_cases: String,
     /// Rendered route action factory methods.
     factories: String,
     /// Generated router base class name.
@@ -41,11 +51,53 @@ pub(super) fn render_helpers(out: &mut String, spec: &RouterSpec) {
         include_str!("templates/route_helpers.jinja"),
         HelpersContext {
             guard_cases: render_guard_cases(spec),
+            branch_cases: render_branch_cases(spec),
+            debug_cases: render_debug_cases(spec),
             factories: render_route_factories(spec),
             router_base_class: spec.generated_base_class.clone(),
         },
     ));
     out.push_str("\n\n");
+}
+
+/// Renders switch cases that return branch names for branched routes.
+fn render_branch_cases(spec: &RouterSpec) -> String {
+    let no_bindings = BTreeSet::new();
+    spec.routes
+        .iter()
+        .filter_map(|route| {
+            effective_branch(route, &spec.routes).map(|branch| {
+                format!(
+                    "    {} => '{}',\n",
+                    route_switch_pattern(route, Some(&no_bindings)),
+                    branch
+                )
+            })
+        })
+        .collect::<String>()
+}
+
+/// Renders switch cases that return route debug metadata.
+fn render_debug_cases(spec: &RouterSpec) -> String {
+    let no_bindings = BTreeSet::new();
+    spec.routes
+        .iter()
+        .map(|route| {
+            let shell = effective_shell(route, &spec.routes)
+                .map(|shell| format!("'{}'", shell))
+                .unwrap_or_else(|| "null".to_owned());
+            let branch = effective_branch(route, &spec.routes)
+                .map(|branch| format!("'{}'", branch))
+                .unwrap_or_else(|| "null".to_owned());
+            format!(
+                "    {} => const RouteDebugInfo(name: '{}', shell: {}, branch: {}),\n",
+                route_switch_pattern(route, Some(&no_bindings)),
+                route.name,
+                shell,
+                branch
+            )
+        })
+        .collect::<String>()
 }
 
 /// Renders switch cases that return guard instances for guarded routes.

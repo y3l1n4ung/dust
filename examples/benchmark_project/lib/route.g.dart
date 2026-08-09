@@ -27,9 +27,11 @@ abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
       parseRoute: parseAppRoute,
       routeLocation: routeLocation,
       requiresAuth: routeRequiresAuth,
+      routeBranch: routeBranch,
       resolveGuards: (route) => routeGuards(route, this),
       buildPage: buildAppRoutePage,
       restoreStack: restoreAppRouteStack,
+      debugInfo: routeDebugInfo,
       debugRoutes: $appRoutes,
     );
     final delegate = GeneratedRouterDelegate<AppRoutePath>(runtimeConfig);
@@ -201,6 +203,20 @@ String _routePath(
 }
 
 bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
+
+String? routeBranch(AppRoutePath route) {
+  return switch (route) {
+    _ => null,
+  };
+}
+
+RouteDebugInfo routeDebugInfo(AppRoutePath route) {
+  return switch (route) {
+    HomeRoute() => const RouteDebugInfo(name: 'home', shell: 'BenchmarkShell', branch: null),
+    NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: 'BenchmarkShell', branch: null),
+    ModelDetailRoute(id: _, tab: _, archived: _) => const RouteDebugInfo(name: 'modelDetail', shell: 'BenchmarkShell', branch: null),
+  };
+}
 
 List<Object> routeGuards(
   AppRoutePath route,

@@ -1,7 +1,7 @@
 use dust_dart_emit::render_template;
 use serde::Serialize;
 
-use super::shell::effective_shell;
+use super::shell::{effective_branch, effective_shell};
 use crate::plugin::model::RouteSpec;
 
 /// Template context for the generated route metadata list.
@@ -208,6 +208,9 @@ fn render_generated_route(
     ];
     if let Some(shell) = effective_shell(route, routes) {
         fields.push(format!("{}  shell: {shell},\n", indent_str(indent)));
+    }
+    if let Some(branch) = effective_branch(route, routes) {
+        fields.push(format!("{}  branch: '{branch}',\n", indent_str(indent)));
     }
     if route.annotation.guards_configured {
         fields.push(format!(

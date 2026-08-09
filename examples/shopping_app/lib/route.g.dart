@@ -76,9 +76,11 @@ abstract class $ShoppingRouter extends RouterBase<AppRoutePath> {
       parseRoute: parseAppRoute,
       routeLocation: routeLocation,
       requiresAuth: routeRequiresAuth,
+      routeBranch: routeBranch,
       resolveGuards: (route) => routeGuards(route, this),
       buildPage: buildAppRoutePage,
       restoreStack: restoreAppRouteStack,
+      debugInfo: routeDebugInfo,
       debugRoutes: $appRoutes,
     );
     final delegate = GeneratedRouterDelegate<AppRoutePath>(runtimeConfig);
@@ -511,6 +513,33 @@ String _routePath(
 }
 
 bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
+
+String? routeBranch(AppRoutePath route) {
+  return switch (route) {
+    _ => null,
+  };
+}
+
+RouteDebugInfo routeDebugInfo(AppRoutePath route) {
+  return switch (route) {
+    ProductsRoute() => const RouteDebugInfo(name: 'products', shell: null, branch: null),
+    NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
+    AdminRoute() => const RouteDebugInfo(name: 'admin', shell: null, branch: null),
+    CartRoute() => const RouteDebugInfo(name: 'cart', shell: null, branch: null),
+    CheckoutRoute() => const RouteDebugInfo(name: 'checkout', shell: null, branch: null),
+    DemoCartsRoute() => const RouteDebugInfo(name: 'demoCarts', shell: null, branch: null),
+    LoginRoute(redirectPath: _) => const RouteDebugInfo(name: 'login', shell: null, branch: null),
+    OrderConfirmationRoute(orderId: _) => const RouteDebugInfo(name: 'orderConfirmation', shell: null, branch: null),
+    OrdersRoute() => const RouteDebugInfo(name: 'orders', shell: null, branch: null),
+    OrderDetailRoute(orderId: _) => const RouteDebugInfo(name: 'orderDetail', shell: null, branch: null),
+    ProductDetailRoute(productId: _) => const RouteDebugInfo(name: 'productDetail', shell: null, branch: null),
+    ProfileRoute() => const RouteDebugInfo(name: 'profile', shell: null, branch: null),
+    RegisterRoute(redirectPath: _) => const RouteDebugInfo(name: 'register', shell: null, branch: null),
+    StaffRoute() => const RouteDebugInfo(name: 'staff', shell: null, branch: null),
+    SupportChatRoute() => const RouteDebugInfo(name: 'supportChat', shell: null, branch: null),
+    WishlistRoute() => const RouteDebugInfo(name: 'wishlist', shell: null, branch: null),
+  };
+}
 
 List<Object> routeGuards(
   AppRoutePath route,

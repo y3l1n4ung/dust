@@ -122,7 +122,7 @@ cookbook recipes:
 | Returning a value from a pushed page | `@AppRoute(..., result: Type)` plus `context.navigator.pop(value)` |
 | Multi-step flows | Model shareable steps as normal typed routes under one path prefix |
 | Web hash vs path URLs | Flutter's `usePathUrlStrategy()` before `runApp` |
-| Stateful bottom-tab branch stacks | Tracked as future `branch:` design work in [#406](https://github.com/y3l1n4ung/dust/issues/406) |
+| Stateful bottom-tab branch stacks | `@AppRoute(..., shell: AppShell, branch: 'mainTabs')` |
 
 - Flutter navigation overview: <https://docs.flutter.dev/ui/navigation>
 - Flutter nested navigation flow: <https://docs.flutter.dev/cookbook/effects/nested-nav>
@@ -278,6 +278,47 @@ Navigator.pages = [/dashboard/orders]
 ```
 
 No extra shell annotation or marker class is needed.
+
+### Stateful Tab Branches
+
+Use `branch:` when routes should keep independent tab stacks. Keep `shell:` for
+layout and `branch:` for navigation state:
+
+```dart
+@AppRoute(
+  '/tabs/home',
+  name: 'tabHome',
+  shell: DashboardShell,
+  branch: 'mainTabs',
+)
+final class TabHomePage extends StatelessWidget {}
+
+@AppRoute('/tabs/home/details', name: 'tabHomeDetails')
+final class TabHomeDetailsPage extends StatelessWidget {}
+
+@AppRoute(
+  '/tabs/orders',
+  name: 'tabOrders',
+  shell: DashboardShell,
+  branch: 'ordersTabs',
+)
+final class TabOrdersPage extends StatelessWidget {}
+```
+
+Call chain:
+
+```text
+context.navigator.tabHomeDetails().push()
+TabHomeDetailsRoute()
+branch mainTabs keeps [/tabs/home, /tabs/home/details]
+context.navigator.tabOrders().go()
+branch ordersTabs becomes active
+context.navigator.tabHome().go()
+branch mainTabs is restored with [/tabs/home, /tabs/home/details]
+```
+
+Child paths inherit the nearest parent `branch:` just like they inherit
+`shell:`.
 
 ### Multi-Step Setup Flow
 
@@ -725,8 +766,7 @@ link stacks, transitions, and generated navigation.
 ## Router DX Task List
 
 Dust routing should stay easy to remember: `@AppRouter` defines the app router,
-and `@AppRoute` defines pages, shells, guards, transitions, and future route
-branching options.
+and `@AppRoute` defines pages, shells, branches, guards, and transitions.
 
 Current implementation tasks:
 
@@ -740,17 +780,17 @@ Current implementation tasks:
   override behavior in route plugin tests.
 - [x] Cover Dart runtime parser, controller, guard-chain, and stack lifecycle
   edge cases.
-- [ ] Add route diagnostics that print shell, guard, redirect, and branch
+- [x] Add route diagnostics that print shell, guard, redirect, and branch
   decisions together. Tracked in
   [#405](https://github.com/y3l1n4ung/dust/issues/405).
-- [ ] Add first-class branch/stateful tab stacks without adding a new
+- [x] Add first-class branch/stateful tab stacks without adding a new
   annotation. Tracked in
   [#406](https://github.com/y3l1n4ung/dust/issues/406).
-- [ ] Add more web-history tests for back, forward, query, fragment, and
+- [x] Add more web-history tests for back, forward, query, fragment, and
   protected deep-link restore. Tracked in
   [#407](https://github.com/y3l1n4ung/dust/issues/407).
 
-Acceptance tests for future branch/stateful-tab work:
+Acceptance tests for branch/stateful-tab work:
 
 - A route using `branch: 'mainTabs'` belongs to an independent tab stack.
 - Switching branches preserves each branch stack.
@@ -766,5 +806,6 @@ Current edge-case test matrix:
 | Shell emission | Inherited parent shell, nearest child shell override, generated page wrapper, and shell metadata consistency. |
 | Runtime parser | Platform URI parsing and route-information restoration with query and fragment values. |
 | Runtime controller | `RouterController.of`, typed `push`/`pop` result flow, and immutable stack snapshots. |
-| Runtime stack | Duplicate route page keys, same-location replace key preservation, pushed-route completion on replace/go, and ignored root pop. |
+| Runtime stack | Duplicate route page keys, same-location replace key preservation, pushed-route completion on replace/go, ignored root pop, branch stack preservation, branch deep-link restore, and browser back/forward branch swaps. |
+| Diagnostics | Route name, effective shell, branch, redirect target, guard type, guard redirect target, and committed stack logs. |
 | Guards | Sync/async guard order, first redirect wins, and sync/async guard exception propagation. |

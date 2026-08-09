@@ -47,7 +47,9 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   /// Creates a router delegate from generated [config].
   GeneratedRouterDelegate(this.config) {
     _controller = RouterController<T>._(this);
+    _activeBranch = config.routeBranch(config.initialRoute);
     _entries.add(_RouteEntry(config.initialRoute));
+    _storeActiveEntries();
     _rebuildPageKeyMap();
     _logKnownRoutes();
     _log('setting initial route ${_debugRoute(config.initialRoute)}');
@@ -73,9 +75,13 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
   Future<void> debugWaitForScheduledRefresh() =>
       _scheduledRefresh ?? Future<void>.value();
 
-  final List<_RouteEntry<T>> _entries = <_RouteEntry<T>>[];
+  List<_RouteEntry<T>> _entries = <_RouteEntry<T>>[];
+  List<_RouteEntry<T>> _rootEntries = <_RouteEntry<T>>[];
+  final Map<String, List<_RouteEntry<T>>> _branchEntries =
+      <String, List<_RouteEntry<T>>>{};
   final Map<Key, int> _keyToStackIndex = <Key, int>{};
   late final RouterController<T> _controller;
+  String? _activeBranch;
   bool _refreshScheduled = false;
   Future<void>? _scheduledRefresh;
   int _navigationEpoch = 0;
@@ -157,7 +163,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     _disposed = true;
     _navigationEpoch += 1;
     config.router.refreshListenable?.removeListener(_scheduleRefresh);
-    _completeEntries(_entries);
+    _completeEntries(_allEntries());
     super.dispose();
   }
 
@@ -183,6 +189,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     final epoch = ++_navigationEpoch;
     var candidate = requested;
     _log('${_debugMode(mode)} ${_debugRoute(requested)}');
+    _logRouteDetails('route', requested);
 
     if (guardRedirects >= maxRedirects) {
       throw StateError(
@@ -203,6 +210,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
         'redirecting ${_debugRoute(candidate)} => '
         '${_debugRoute(redirected)}',
       );
+      _logRouteDetails('redirect target', redirected);
       candidate = redirected;
     }
     if (redirects >= maxRedirects) {
@@ -232,6 +240,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
             'guard redirect ${_debugRoute(route)} => '
             '${_debugRoute(redirected)}',
           );
+          _logRouteDetails('guard target', redirected);
           return _applyRoute(redirected, mode, guardRedirects + 1);
         }
       }
@@ -246,6 +255,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
         'guard redirect ${_debugRoute(candidate)} => '
         '${_debugRoute(redirected)}',
       );
+      _logRouteDetails('guard target', redirected);
       return _applyRoute(redirected, mode, guardRedirects + 1);
     }
     return _commitRoute(candidate, mode);
@@ -255,6 +265,9 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     final guards = config.resolveGuards(route);
     if (guards.isEmpty) return null;
     _log('guards ${guards.length} for ${_debugRoute(route)}');
+    for (final guard in guards) {
+      _log('guard ${guard.runtimeType} for ${_debugRoute(route)}');
+    }
     return RouteGuardChain<T>(guards).canActivate(route);
   }
 
@@ -264,9 +277,20 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     RouteStack<T>? restored,
   ]) {
     final previous = _stackSnapshot();
+    final targetBranch = config.routeBranch(route);
+    final switchedBranch = targetBranch != _activeBranch;
+    _activateBranch(targetBranch);
     late final _RouteEntry<T> committed;
     switch (mode) {
       case NavigationMode.go:
+        if (switchedBranch &&
+            targetBranch != null &&
+            _entries.isNotEmpty &&
+            config.routeLocation(_entries.first.route) ==
+                config.routeLocation(route)) {
+          committed = _entries.last;
+          break;
+        }
         _completeEntries(_entries);
         committed = _RouteEntry(route);
         _entries
@@ -314,6 +338,18 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     }
   }
 
+  Iterable<_RouteEntry<T>> _allEntries() sync* {
+    final seen = <LocalKey>{};
+    for (final entry in _rootEntries) {
+      if (seen.add(entry.key)) yield entry;
+    }
+    for (final branch in _branchEntries.values) {
+      for (final entry in branch) {
+        if (seen.add(entry.key)) yield entry;
+      }
+    }
+  }
+
   bool _popTop(Object? result) {
     if (_disposed) return false;
     if (_entries.length <= 1) return false;
@@ -343,6 +379,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
       List<T>.unmodifiable(_entries.map((entry) => entry.route));
 
   void _finishStackCommit(RouteStack<T> previous) {
+    _storeActiveEntries();
     _rebuildPageKeyMap();
     _log('stack ${_debugStack()}');
     final next = _stackSnapshot();
@@ -374,9 +411,42 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
       );
   }
 
+  void _activateBranch(String? branch) {
+    if (branch == _activeBranch) return;
+    _storeActiveEntries();
+    _log(
+      'branch ${_activeBranch ?? '-'} => ${branch ?? '-'}',
+    );
+    _activeBranch = branch;
+    _entries = branch == null
+        ? _rootEntries
+        : _branchEntries.putIfAbsent(branch, () => <_RouteEntry<T>>[]);
+  }
+
+  void _storeActiveEntries() {
+    final branch = _activeBranch;
+    if (branch == null) {
+      _rootEntries = _entries;
+    } else {
+      _branchEntries[branch] = _entries;
+    }
+  }
+
   void _log(String message) {
     if (!config.router.debugLogDiagnostics) return;
     debugPrint('AppRouter: $message');
+  }
+
+  void _logRouteDetails(String label, T route) {
+    if (!config.router.debugLogDiagnostics) return;
+    final info = config.debugInfo?.call(route);
+    final branch = info?.branch ?? config.routeBranch(route);
+    _log(
+      '$label ${_debugRoute(route)} '
+      'name=${info?.name ?? '-'} '
+      'shell=${info?.shell ?? '-'} '
+      'branch=${branch ?? '-'}',
+    );
   }
 
   void _logKnownRoutes() {

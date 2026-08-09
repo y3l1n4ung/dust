@@ -52,6 +52,7 @@ fn typed_route_config(config: &ConfigApplicationIr) -> Option<RouteConfigIr> {
         name: config.named_string("name"),
         result_type: config.named_type("result"),
         shell: config.named_type("shell"),
+        branch: config.named_string("branch"),
         guards: config.named_type_list("guards").unwrap_or_default(),
         guards_configured: config.has_named_argument("guards"),
         transition: config.named_expression_source("transition"),

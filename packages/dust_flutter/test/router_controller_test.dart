@@ -99,6 +99,7 @@ RouterRuntimeConfig<_Route> _runtimeConfig({
     parseRoute: (uri) => _Route(uri.toString()),
     routeLocation: (route) => route.location,
     requiresAuth: (_) => false,
+    routeBranch: (_) => null,
     resolveGuards: (_) => const [],
     buildPage: (route, key, onPopInvoked) {
       return MaterialPage<Object?>(
