@@ -308,7 +308,7 @@ mod tests {
             &CliCommand::Doctor,
             &CommandResult {
                 doctor: Some(DoctorReport {
-                    cli_version: "0.1.3".to_owned(),
+                    cli_version: "0.1.4".to_owned(),
                     package_root: PathBuf::from("/tmp/project"),
                     package_config_path: PathBuf::from(
                         "/tmp/workspace/.dart_tool/package_config.json",
@@ -336,7 +336,7 @@ mod tests {
         assert!(doctor.contains("plugins derive, serde"));
         assert!(doctor.contains("package /tmp/project"));
         assert!(doctor.contains("config  /tmp/workspace/.dart_tool/package_config.json"));
-        assert!(doctor.contains("compat cli 0.1.3"));
+        assert!(doctor.contains("compat cli 0.1.4"));
         assert!(doctor.contains(
             "compat dust_dart status=compatible usage=used resolved=0.1.3 supported=>=0.1.3 <0.2.0"
         ));

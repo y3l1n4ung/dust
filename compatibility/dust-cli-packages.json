@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "entries": [
     {
-      "cliVersion": "0.1.3",
+      "cliVersion": "0.1.4",
       "packageConstraints": {
         "dust_dart": ">=0.1.3 <0.2.0",
         "dust_flutter": ">=0.1.4 <0.2.0",

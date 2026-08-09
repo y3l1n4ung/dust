@@ -71,7 +71,7 @@ fn doctor_reports_workspace_and_registered_plugins() {
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
     let doctor = result.doctor.as_ref().unwrap();
 
-    assert_eq!(doctor.cli_version, "0.1.3");
+    assert_eq!(doctor.cli_version, "0.1.4");
     assert_eq!(doctor.package_root, workspace.path());
     assert_eq!(
         doctor.package_config_path,

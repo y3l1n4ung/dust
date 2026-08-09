@@ -59,7 +59,7 @@ fn build_rejects_too_old_dust_package_before_writing_outputs() {
             .message
             .contains("unsupported Dust package version")
     );
-    assert!(diagnostic.message.contains("CLI 0.1.3"));
+    assert!(diagnostic.message.contains("CLI 0.1.4"));
     assert!(diagnostic.message.contains("`dust_dart` >=0.1.3 <0.2.0"));
     assert!(diagnostic.message.contains("resolves 0.1.2"));
     assert!(

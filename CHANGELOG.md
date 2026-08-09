@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [v0.1.4] - 2026-08-09
+
+### Added
+
+- Router runtime hooks for `NavigatorObserver` integration and asynchronous
+  navigation error handling.
+
+### Changed
+
+- Revalidated exposed routes after pop and page removal so guards and redirects
+  stay current when session state changes.
+- Raised the supported `dust_flutter` runtime floor to `0.1.4`.
+
+### Fixed
+
+- Rejected invalid route helper identifiers, `pop` helper conflicts, and
+  generated route class collisions before emitting analyzer-broken Dart.
+
 ## [v0.1.3] - 2026-07-28
 
 This release hardens Dust for real Dart and Flutter projects.
