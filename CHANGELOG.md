@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   emission, Dart parser/controller behavior, guard chains, and stack lifecycle.
 - Added practical routing use-case recipes and Flutter package examples for
   search filters, shell inheritance, shell overrides, and result routes.
+- Added research-backed routing recipes for invite links, organization-scoped
+  detail pages, typed multi-step setup flows, and Flutter web path URLs.
 
 ### Changed
 

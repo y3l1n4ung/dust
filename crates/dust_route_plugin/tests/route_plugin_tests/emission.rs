@@ -226,6 +226,33 @@ fn emits_common_app_route_use_cases() {
             Vec::new(),
         ),
         route_page_class(
+            "InvitePage",
+            "('/invite/:code', name: 'invite', guards: [])",
+            vec![
+                constructor_param("code", TypeIr::string()),
+                constructor_param("team", TypeIr::string().nullable()),
+            ],
+        ),
+        route_page_class(
+            "OrgProjectPage",
+            "('/orgs/:orgId/projects/:projectId', name: 'orgProject')",
+            vec![
+                constructor_param("orgId", TypeIr::string()),
+                constructor_param("projectId", TypeIr::int()),
+                constructor_param("tab", TypeIr::string().nullable()),
+            ],
+        ),
+        route_page_class(
+            "SetupPage",
+            "('/setup', name: 'setup', guards: [], shell: SetupShell)",
+            Vec::new(),
+        ),
+        route_page_class(
+            "SetupConnectPage",
+            "('/setup/connect', name: 'setupConnect')",
+            Vec::new(),
+        ),
+        route_page_class(
             "AdminPage",
             "('/admin', name: 'admin', guards: [AdminGuard])",
             Vec::new(),
@@ -251,12 +278,24 @@ fn emits_common_app_route_use_cases() {
         "RouteAction<void> productSearch({String? query, int page = 1, bool showArchived = false})"
     ));
     assert!(primary.contains("RouteAction<int> productPicker()"));
+    assert!(primary.contains("RouteAction<void> invite({required String code, String? team})"));
+    assert!(primary.contains(
+        "RouteAction<void> orgProject({required String orgId, required int projectId, String? tab})"
+    ));
+    assert!(primary.contains("RouteAction<void> setup()"));
+    assert!(primary.contains("RouteAction<void> setupConnect()"));
     assert!(primary.contains("ProductPickerRoute extends AppRoutePath<int>"));
+    assert!(primary.contains("InviteRoute extends AppRoutePath<void>"));
+    assert!(primary.contains("OrgProjectRoute extends AppRoutePath<void>"));
+    assert!(primary.contains("SetupRoute extends AppRoutePath<void>"));
+    assert!(primary.contains("SetupConnectRoute extends AppRoutePath<void>"));
     assert!(primary.contains("transition: BottomToTopPageTransitionsBuilder(),"));
     assert!(primary.contains("fullscreenDialog: true,"));
     assert!(primary.contains("AdminRoute() => [AdminGuard()],"));
     assert!(primary.contains("AppShell(child: const DashboardOrdersPage())"));
     assert!(primary.contains("DashboardOrdersPage: AppShell,"));
+    assert!(primary.contains("SetupShell(child: const SetupConnectPage())"));
+    assert!(primary.contains("SetupConnectPage: SetupShell,"));
 }
 
 #[test]

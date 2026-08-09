@@ -85,6 +85,93 @@ final class ProductPickerPage extends StatelessWidget {
   }
 }
 
+/// Public invite route for signed-out magic links.
+@AppRoute('/invite/:code', name: 'invite', guards: [])
+final class InvitePage extends StatelessWidget {
+  /// Creates an invite page.
+  const InvitePage({required this.code, this.team, super.key});
+
+  /// Invite token from the URL path.
+  final String code;
+
+  /// Optional team hint from the query string.
+  final String? team;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('Invite $code ${team ?? ''}');
+  }
+}
+
+/// Organization-scoped detail route with path and query parameters.
+@AppRoute('/orgs/:orgId/projects/:projectId', name: 'orgProject')
+final class OrgProjectPage extends StatelessWidget {
+  /// Creates an organization project page.
+  const OrgProjectPage({
+    required this.orgId,
+    required this.projectId,
+    this.tab,
+    super.key,
+  });
+
+  /// Organization or workspace id from the path.
+  final String orgId;
+
+  /// Project id from the path.
+  final int projectId;
+
+  /// Optional selected tab from the query string.
+  final String? tab;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('Org $orgId project $projectId ${tab ?? ''}');
+  }
+}
+
+/// Shell used by setup flow routes.
+class SetupShell extends StatelessWidget {
+  /// Creates a setup shell.
+  const SetupShell({required this.child, super.key});
+
+  /// Flow step rendered inside the setup shell.
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text('Setup'),
+        Expanded(child: child),
+      ],
+    );
+  }
+}
+
+/// Shareable entry point for a multi-step setup flow.
+@AppRoute('/setup', name: 'setup', guards: [], shell: SetupShell)
+final class SetupPage extends StatelessWidget {
+  /// Creates the setup start page.
+  const SetupPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Find device');
+  }
+}
+
+/// Second setup step that inherits [SetupShell].
+@AppRoute('/setup/connect', name: 'setupConnect')
+final class SetupConnectPage extends StatelessWidget {
+  /// Creates the setup connect page.
+  const SetupConnectPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Connect');
+  }
+}
+
 /// Shared shell widget used by the shell route examples below.
 class DemoShell extends StatelessWidget {
   /// Creates a demo shell.
