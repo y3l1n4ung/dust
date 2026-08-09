@@ -71,8 +71,8 @@ final class HomePage extends StatelessWidget {
   }
 }
 
-/// Settings route wrapped by the same [DemoShell].
-@AppRoute('/settings', name: 'settings', shell: DemoShell, guards: [])
+/// Settings route inherits [DemoShell] from the root shell route.
+@AppRoute('/settings', name: 'settings', guards: [])
 final class SettingsPage extends StatelessWidget {
   /// Creates the demo settings page.
   const SettingsPage({super.key});

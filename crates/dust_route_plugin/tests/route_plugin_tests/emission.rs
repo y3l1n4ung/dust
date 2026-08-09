@@ -129,6 +129,40 @@ fn emits_typed_route_result_helpers() {
 }
 
 #[test]
+fn emits_inherited_shell_without_extra_annotations() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/dashboard/orders', notFound: '/404')"),
+        route_page_class(
+            "DashboardPage",
+            "('/dashboard', name: 'dashboard', shell: AppShell)",
+            Vec::new(),
+        ),
+        route_page_class(
+            "DashboardOrdersPage",
+            "('/dashboard/orders', name: 'dashboardOrders')",
+            Vec::new(),
+        ),
+    ]);
+
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
+    let primary = contribution.primary_source.expect("primary route output");
+
+    assert!(primary.contains("DashboardOrdersPage()"));
+    assert!(primary.contains("AppShell(child: const DashboardOrdersPage())"));
+    assert!(primary.contains("DashboardOrdersPage: AppShell,"));
+}
+
+#[test]
 fn rejects_generated_route_class_name_collisions() {
     let plugin = register_plugin();
     let library = library_with_classes(vec![

@@ -3,7 +3,8 @@ use dust_plugin_api::DustPlugin;
 use dust_route_plugin::register_plugin;
 
 use super::support::{
-    constructor_param, defaulted_param, library_with_classes, route_page_class, span,
+    constructor_param, defaulted_param, library_with_classes, positional_param, route_page_class,
+    shell_class, span,
 };
 
 #[test]
@@ -36,6 +37,63 @@ fn accepts_query_param_defaults_when_default_source_is_preserved() {
     let diagnostics = plugin.validate(&library_with_classes(vec![class]));
 
     assert!(diagnostics.is_empty(), "{diagnostics:?}");
+}
+
+#[test]
+fn accepts_local_route_shell_with_named_widget_child() {
+    let plugin = register_plugin();
+    let shell = shell_class(
+        "AppShell",
+        vec![constructor_param("child", TypeIr::named("Widget"))],
+    );
+    let page = route_page_class(
+        "DashboardPage",
+        "('/dashboard', name: 'dashboard', shell: AppShell)",
+        Vec::new(),
+    );
+
+    let diagnostics = plugin.validate(&library_with_classes(vec![shell, page]));
+
+    assert!(diagnostics.is_empty(), "{diagnostics:?}");
+}
+
+#[test]
+fn rejects_local_route_shell_without_named_widget_child() {
+    let plugin = register_plugin();
+    let shell = shell_class("AppShell", Vec::new());
+    let page = route_page_class(
+        "DashboardPage",
+        "('/dashboard', name: 'dashboard', shell: AppShell)",
+        Vec::new(),
+    );
+
+    let diagnostics = plugin.validate(&library_with_classes(vec![shell, page]));
+
+    let messages = diagnostic_messages(&diagnostics);
+    assert_eq!(messages.len(), 1);
+    assert!(messages[0].contains("route shell `AppShell` on `DashboardPage`"));
+    assert!(messages[0].contains("required named `Widget child` parameter"));
+}
+
+#[test]
+fn rejects_local_route_shell_with_positional_child() {
+    let plugin = register_plugin();
+    let shell = shell_class(
+        "AppShell",
+        vec![positional_param("child", TypeIr::named("Widget"))],
+    );
+    let page = route_page_class(
+        "DashboardPage",
+        "('/dashboard', name: 'dashboard', shell: AppShell)",
+        Vec::new(),
+    );
+
+    let diagnostics = plugin.validate(&library_with_classes(vec![shell, page]));
+
+    let messages = diagnostic_messages(&diagnostics);
+    assert_eq!(messages.len(), 1);
+    assert!(messages[0].contains("route shell `AppShell` on `DashboardPage`"));
+    assert!(messages[0].contains("required named `Widget child` parameter"));
 }
 
 #[test]

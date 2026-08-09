@@ -84,6 +84,37 @@ pub(crate) fn guard_class(name: &str, params: Vec<ConstructorParamIr>) -> ClassI
     }
 }
 
+pub(crate) fn shell_class(name: &str, params: Vec<ConstructorParamIr>) -> ClassIr {
+    ClassIr {
+        kind: ClassKindIr::Class,
+        name: name.to_owned(),
+        is_abstract: false,
+        is_interface: false,
+        superclass_name: Some("StatelessWidget".to_owned()),
+        span: span(10, 90),
+        fields: Vec::new(),
+        constructors: vec![ConstructorIr {
+            name: None,
+            is_factory: false,
+            redirected_target_source: None,
+            redirected_target_name: None,
+            span: span(12, 18),
+            params,
+        }],
+        methods: Vec::new(),
+        traits: Vec::new(),
+        configs: Vec::new(),
+        serde: None,
+    }
+}
+
+pub(crate) fn positional_param(name: &str, ty: TypeIr) -> ConstructorParamIr {
+    ConstructorParamIr {
+        kind: ParamKind::Positional,
+        ..constructor_param(name, ty)
+    }
+}
+
 pub(crate) fn named_constructor_guard_class(name: &str) -> ClassIr {
     let mut guard = guard_class(name, Vec::new());
     guard.constructors[0].name = Some("create".to_owned());

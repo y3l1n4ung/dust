@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Rejected invalid route helper identifiers, `pop` helper conflicts, and
   generated route class collisions before emitting analyzer-broken Dart.
+- Reported a concrete fix when a local route shell widget cannot be generated
+  as `Shell(child: page)`.
 
 ## [v0.1.3] - 2026-07-28
 

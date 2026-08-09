@@ -272,9 +272,22 @@ required dependency is missing or ambiguous.
 
 ## Shells and Transitions
 
-A shell wraps a route page and must accept a `child` argument:
+Dust keeps shell DX inside `@AppRoute`; there is no separate shell annotation.
+A shell is just a Flutter widget that accepts a required named `Widget child`
+argument:
 
 ```dart
+final class AppShell extends StatelessWidget {
+  const AppShell({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: child);
+  }
+}
+
 @AppRoute('/account', name: 'account', shell: AppShell)
 final class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
@@ -284,7 +297,26 @@ final class AccountPage extends StatelessWidget {
 }
 ```
 
-Child paths inherit the nearest parent shell unless they declare their own.
+Child paths inherit the nearest parent shell unless they declare their own, so
+you do not need to repeat `shell:` on every dashboard page:
+
+```dart
+@AppRoute('/dashboard', name: 'dashboard', shell: DashboardShell)
+final class DashboardPage extends StatelessWidget {}
+
+@AppRoute('/dashboard/orders', name: 'dashboardOrders')
+final class DashboardOrdersPage extends StatelessWidget {}
+```
+
+Dust generates the child page as:
+
+```dart
+DashboardShell(child: DashboardOrdersPage())
+```
+
+Use `shell: AppShell` for layout. Do not create empty shell route marker
+classes; if it does not render UI or own navigation state, it should not be a
+route.
 
 Use a Flutter `PageTransitionsBuilder` for a route-specific transition:
 
@@ -374,3 +406,35 @@ prefix. Keep diagnostics disabled in normal use.
 The [shopping app](../../examples/shopping_app) demonstrates public and
 protected routes, auth refresh, injected guards, URL round trips, restored deep
 link stacks, transitions, and generated navigation.
+
+## Router DX Task List
+
+Dust routing should stay easy to remember: `@AppRouter` defines the app router,
+and `@AppRoute` defines pages, shells, guards, transitions, and future route
+branching options.
+
+Current implementation tasks:
+
+- [x] Keep shells as plain widgets passed through `shell: AppShell`.
+- [x] Inherit the nearest parent shell for child paths.
+- [x] Validate local shell widgets expose a required named `Widget child`
+  constructor parameter.
+- [x] Route unawaited navigation failures through `RouterBase.onException`.
+- [x] Pass `RouterBase.observers` to the generated root `Navigator`.
+- [ ] Add route diagnostics that print shell, guard, redirect, and branch
+  decisions together. Tracked in
+  [#405](https://github.com/y3l1n4ung/dust/issues/405).
+- [ ] Add first-class branch/stateful tab stacks without adding a new
+  annotation. Tracked in
+  [#406](https://github.com/y3l1n4ung/dust/issues/406).
+- [ ] Add more web-history tests for back, forward, query, fragment, and
+  protected deep-link restore. Tracked in
+  [#407](https://github.com/y3l1n4ung/dust/issues/407).
+
+Acceptance tests for future branch/stateful-tab work:
+
+- A route using `branch: 'mainTabs'` belongs to an independent tab stack.
+- Switching branches preserves each branch stack.
+- Browser deep links restore the selected branch and route stack.
+- `shell:` remains a layout wrapper; `branch:` is the only tab-stack signal.
+- Routes without `branch:` keep today's single-stack Navigator behavior.
