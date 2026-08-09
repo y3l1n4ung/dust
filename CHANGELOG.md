@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   navigation error handling.
 - Expanded route edge-case coverage across shell validation, generated shell
   emission, Dart parser/controller behavior, guard chains, and stack lifecycle.
+- Added practical routing use-case recipes and Flutter package examples for
+  search filters, shell inheritance, shell overrides, and result routes.
 
 ### Changed
 

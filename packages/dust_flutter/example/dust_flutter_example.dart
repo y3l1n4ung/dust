@@ -40,6 +40,51 @@ final class ProductPage extends StatelessWidget {
   }
 }
 
+/// Search route demonstrating nullable and default-valued query parameters.
+@AppRoute('/products', name: 'productSearch', guards: [])
+final class ProductSearchPage extends StatelessWidget {
+  /// Creates a product search page.
+  const ProductSearchPage({
+    this.query,
+    this.page = 1,
+    this.showArchived = false,
+    super.key,
+  });
+
+  /// Search text encoded as a nullable query parameter.
+  final String? query;
+
+  /// Current page encoded as a default-valued query parameter.
+  final int page;
+
+  /// Whether archived products are shown.
+  final bool showArchived;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('Search ${query ?? ''} page $page archived $showArchived');
+  }
+}
+
+/// Fullscreen picker route that returns a selected product id.
+@AppRoute(
+  '/product-picker',
+  name: 'productPicker',
+  result: int,
+  guards: [],
+  transition: BottomToTopPageTransitionsBuilder(),
+  fullscreenDialog: true,
+)
+final class ProductPickerPage extends StatelessWidget {
+  /// Creates the demo product picker page.
+  const ProductPickerPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Pick product');
+  }
+}
+
 /// Shared shell widget used by the shell route examples below.
 class DemoShell extends StatelessWidget {
   /// Creates a demo shell.
@@ -80,6 +125,49 @@ final class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Text('Settings');
+  }
+}
+
+/// Child route that also inherits [DemoShell] from [HomePage].
+@AppRoute('/orders', name: 'orders')
+final class OrdersPage extends StatelessWidget {
+  /// Creates the demo orders page.
+  const OrdersPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Orders');
+  }
+}
+
+/// Shell used when a child subtree needs a more specific layout.
+class ReportsShell extends StatelessWidget {
+  /// Creates a reports shell.
+  const ReportsShell({required this.child, super.key});
+
+  /// Page rendered inside the reports shell.
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text('Reports shell'),
+        Expanded(child: child),
+      ],
+    );
+  }
+}
+
+/// Child route overriding the inherited shell with [ReportsShell].
+@AppRoute('/reports', name: 'reports', shell: ReportsShell)
+final class ReportsPage extends StatelessWidget {
+  /// Creates the demo reports page.
+  const ReportsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Reports');
   }
 }
 

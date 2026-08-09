@@ -5,8 +5,8 @@ use serde_json::json;
 use std::{fs, path::PathBuf, sync::Arc};
 
 use super::support::{
-    constructor_param, guard_class, library_with_classes, named_constructor_guard_class,
-    route_page_class, router_class,
+    constructor_param, defaulted_param, defaulted_param_source, guard_class, library_with_classes,
+    named_constructor_guard_class, route_page_class, router_class,
 };
 
 #[test]
@@ -194,6 +194,69 @@ fn emits_nearest_shell_when_child_route_overrides_parent_shell() {
     assert!(primary.contains("OrdersShell(child: const DashboardOrdersPage())"));
     assert!(primary.contains("DashboardOrdersPage: OrdersShell,"));
     assert!(primary.contains("shell: OrdersShell,"));
+}
+
+#[test]
+fn emits_common_app_route_use_cases() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/dashboard', notFound: '/404')"),
+        route_page_class(
+            "DashboardPage",
+            "('/dashboard', name: 'dashboard', shell: AppShell, guards: [])",
+            Vec::new(),
+        ),
+        route_page_class(
+            "DashboardOrdersPage",
+            "('/dashboard/orders', name: 'dashboardOrders')",
+            Vec::new(),
+        ),
+        route_page_class(
+            "ProductSearchPage",
+            "('/products', name: 'productSearch', guards: [])",
+            vec![
+                constructor_param("query", TypeIr::string().nullable()),
+                defaulted_param("page", TypeIr::int()),
+                defaulted_param_source("showArchived", TypeIr::bool(), "false"),
+            ],
+        ),
+        route_page_class(
+            "ProductPickerPage",
+            "('/product-picker', name: 'productPicker', result: int, guards: [], transition: BottomToTopPageTransitionsBuilder(), fullscreenDialog: true)",
+            Vec::new(),
+        ),
+        route_page_class(
+            "AdminPage",
+            "('/admin', name: 'admin', guards: [AdminGuard])",
+            Vec::new(),
+        ),
+        guard_class("AdminGuard", Vec::new()),
+    ]);
+
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
+    let primary = contribution.primary_source.expect("primary route output");
+
+    assert!(primary.contains("RouteAction<void> dashboard()"));
+    assert!(primary.contains("RouteAction<void> dashboardOrders()"));
+    assert!(primary.contains(
+        "RouteAction<void> productSearch({String? query, int page = 1, bool showArchived = false})"
+    ));
+    assert!(primary.contains("RouteAction<int> productPicker()"));
+    assert!(primary.contains("ProductPickerRoute extends AppRoutePath<int>"));
+    assert!(primary.contains("transition: BottomToTopPageTransitionsBuilder(),"));
+    assert!(primary.contains("fullscreenDialog: true,"));
+    assert!(primary.contains("AdminRoute() => [AdminGuard()],"));
+    assert!(primary.contains("AppShell(child: const DashboardOrdersPage())"));
+    assert!(primary.contains("DashboardOrdersPage: AppShell,"));
 }
 
 #[test]

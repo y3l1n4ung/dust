@@ -104,6 +104,188 @@ If `name` is omitted, Dust derives it from the widget class name. For example,
 `ProductDetailsScreen` becomes `productDetails()` and
 `ProductDetailsRoute`.
 
+## Use Case Recipes
+
+Most apps only need a small set of route patterns. Keep one `@AppRouter`, then
+compose these cases with normal `@AppRoute` options.
+
+### Public Login With Redirect Back
+
+```dart
+@AppRoute('/login', name: 'login', guards: [])
+final class LoginPage extends StatelessWidget {
+  const LoginPage({this.redirectPath, super.key});
+
+  final String? redirectPath;
+}
+
+@AppRouter(initial: '/', notFound: '/404')
+final class RootRouter extends $RootRouter {
+  RootRouter({required this.auth});
+
+  final AuthViewModel auth;
+
+  @override
+  AppRoutePath? redirect(AppRoutePath route) {
+    if (!auth.state.isAuthenticated && route.requiresAuth) {
+      return LoginRoute(redirectPath: route.location);
+    }
+    return null;
+  }
+}
+```
+
+Call chain after a private deep link:
+
+```text
+browser opens /orders/42
+RootRouter.redirect(OrderRoute(id: 42))
+LoginRoute(redirectPath: /orders/42)
+login succeeds
+context.navigator.order(id: 42).go()
+```
+
+### Search Page With Shareable Filters
+
+```dart
+@AppRoute('/products', name: 'productSearch', guards: [])
+final class ProductSearchPage extends StatelessWidget {
+  const ProductSearchPage({
+    this.query,
+    this.page = 1,
+    this.showArchived = false,
+    super.key,
+  });
+
+  final String? query;
+  final int page;
+  final bool showArchived;
+}
+```
+
+Generated calls:
+
+```dart
+context.navigator
+    .productSearch(query: 'tea', page: 2, showArchived: true)
+    .go();
+```
+
+This produces a URL like `/products?query=tea&page=2&showArchived=true`.
+
+### Dashboard Shell With Child Pages
+
+```dart
+final class DashboardShell extends StatelessWidget {
+  const DashboardShell({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(body: child);
+}
+
+@AppRoute('/dashboard', name: 'dashboard', shell: DashboardShell)
+final class DashboardPage extends StatelessWidget {}
+
+@AppRoute('/dashboard/orders', name: 'dashboardOrders')
+final class DashboardOrdersPage extends StatelessWidget {}
+```
+
+Call chain:
+
+```text
+context.navigator.dashboardOrders().go()
+DashboardOrdersRoute()
+DashboardShell(child: DashboardOrdersPage())
+Navigator.pages = [/dashboard/orders]
+```
+
+No extra shell annotation or marker class is needed.
+
+### Picker Or Dialog Route With Result
+
+```dart
+@AppRoute(
+  '/product-picker',
+  name: 'productPicker',
+  result: int,
+  guards: [],
+  transition: BottomToTopPageTransitionsBuilder(),
+  fullscreenDialog: true,
+)
+final class ProductPickerPage extends StatelessWidget {
+  const ProductPickerPage({super.key});
+}
+```
+
+Generated calls:
+
+```dart
+final productId = await context.navigator.productPicker().push();
+if (productId != null) {
+  context.navigator.product(id: productId).go();
+}
+```
+
+Inside the picker:
+
+```dart
+context.navigator.pop(selectedProductId);
+```
+
+### Guarded Admin Page
+
+```dart
+final class AdminGuard implements RouteGuard<AppRoutePath> {
+  const AdminGuard(this.auth);
+
+  final AuthViewModel auth;
+
+  @override
+  AppRoutePath? canActivate(AppRoutePath route) {
+    return auth.state.isAdmin ? null : const HomeRoute();
+  }
+}
+
+@AppRoute('/admin', name: 'admin', guards: [AdminGuard])
+final class AdminPage extends StatelessWidget {
+  const AdminPage({super.key});
+}
+```
+
+Call chain:
+
+```text
+context.navigator.admin().push()
+RootRouter.redirect(AdminRoute())
+AdminGuard.canActivate(AdminRoute())
+Navigator stack commit or HomeRoute redirect
+```
+
+### Analytics And Error Reporting
+
+```dart
+@AppRouter(initial: '/', notFound: '/404')
+final class RootRouter extends $RootRouter {
+  @override
+  void didChangeRouteStack(
+    RouteStack<AppRoutePath> previous,
+    RouteStack<AppRoutePath> next,
+  ) {
+    analytics.screenView(next.last.location);
+  }
+
+  @override
+  void onException(Object error, StackTrace stackTrace) {
+    errorReporter.capture(error, stackTrace);
+  }
+}
+```
+
+Use this for route stack analytics and unawaited navigation failures such as
+redirect cycles.
+
 ## Typed Route Results
 
 Routes return `void` by default. Add `result: Type` when a pushed route should

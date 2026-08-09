@@ -155,9 +155,17 @@ pub(crate) fn constructor_param(name: &str, ty: TypeIr) -> ConstructorParamIr {
 }
 
 pub(crate) fn defaulted_param(name: &str, ty: TypeIr) -> ConstructorParamIr {
+    defaulted_param_source(name, ty, "1")
+}
+
+pub(crate) fn defaulted_param_source(
+    name: &str,
+    ty: TypeIr,
+    default_value: &str,
+) -> ConstructorParamIr {
     ConstructorParamIr {
         has_default: true,
-        default_value_source: Some("1".to_owned()),
+        default_value_source: Some(default_value.to_owned()),
         ..constructor_param(name, ty)
     }
 }
