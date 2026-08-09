@@ -421,6 +421,10 @@ Current implementation tasks:
   constructor parameter.
 - [x] Route unawaited navigation failures through `RouterBase.onException`.
 - [x] Pass `RouterBase.observers` to the generated root `Navigator`.
+- [x] Cover shell imports, constructor mistakes, shell inheritance, and shell
+  override behavior in route plugin tests.
+- [x] Cover Dart runtime parser, controller, guard-chain, and stack lifecycle
+  edge cases.
 - [ ] Add route diagnostics that print shell, guard, redirect, and branch
   decisions together. Tracked in
   [#405](https://github.com/y3l1n4ung/dust/issues/405).
@@ -438,3 +442,14 @@ Acceptance tests for future branch/stateful-tab work:
 - Browser deep links restore the selected branch and route stack.
 - `shell:` remains a layout wrapper; `branch:` is the only tab-stack signal.
 - Routes without `branch:` keep today's single-stack Navigator behavior.
+
+Current edge-case test matrix:
+
+| Area | Covered cases |
+| --- | --- |
+| Shell validation | Local shell widget, imported shell, hidden shell import, missing child, positional child, nullable child, and defaulted child. |
+| Shell emission | Inherited parent shell, nearest child shell override, generated page wrapper, and shell metadata consistency. |
+| Runtime parser | Platform URI parsing and route-information restoration with query and fragment values. |
+| Runtime controller | `RouterController.of`, typed `push`/`pop` result flow, and immutable stack snapshots. |
+| Runtime stack | Duplicate route page keys, same-location replace key preservation, pushed-route completion on replace/go, and ignored root pop. |
+| Guards | Sync/async guard order, first redirect wins, and sync/async guard exception propagation. |
