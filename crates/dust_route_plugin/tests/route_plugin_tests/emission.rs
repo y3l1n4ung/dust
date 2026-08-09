@@ -47,26 +47,6 @@ fn emits_standalone_route_and_core_outputs() {
         .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(
-        primary.contains("late final RouterConfig<AppRoutePath> config = _buildConfig();"),
-        "generated router config should be cached per router instance"
-    );
-    assert!(
-        primary.contains("abstract class $TestRouter extends RouterBase<AppRoutePath>"),
-        "generated router base should expose RouterBase overrides such as route stack observers"
-    );
-    assert!(
-        primary.contains("router: this,"),
-        "generated router should pass user overrides into the runtime config"
-    );
-    assert!(
-        primary.contains("RouterConfig<AppRoutePath> _buildConfig() {"),
-        "generated router config should move construction into a private builder"
-    );
-    assert!(
-        !primary.contains("RouterConfig<AppRoutePath> get config {"),
-        "generated router config must not rebuild on every access"
-    );
     assert_snapshot("standalone_route.dart.snapshot", &primary);
     assert!(contribution.auxiliary_outputs.is_empty());
 }
@@ -123,9 +103,7 @@ fn emits_typed_route_result_helpers() {
         .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("final class PickerRoute extends AppRoutePath<bool>"));
-    assert!(primary.contains("RouteAction<bool> picker() => RouteAction(_router, PickerRoute());"));
-    assert!(primary.contains("bool pop<R>([R? result]) => _router.pop<R>(result);"));
+    assert_snapshot("typed_route_result.dart.snapshot", &primary);
 }
 
 #[test]
@@ -157,9 +135,7 @@ fn emits_inherited_shell_without_extra_annotations() {
         .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("DashboardOrdersPage()"));
-    assert!(primary.contains("AppShell(child: const DashboardOrdersPage())"));
-    assert!(primary.contains("DashboardOrdersPage: AppShell,"));
+    assert_snapshot("inherited_shell_route.dart.snapshot", &primary);
 }
 
 #[test]
@@ -191,9 +167,7 @@ fn emits_nearest_shell_when_child_route_overrides_parent_shell() {
         .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("OrdersShell(child: const DashboardOrdersPage())"));
-    assert!(primary.contains("DashboardOrdersPage: OrdersShell,"));
-    assert!(primary.contains("shell: OrdersShell,"));
+    assert_snapshot("shell_override_route.dart.snapshot", &primary);
 }
 
 #[test]
@@ -273,6 +247,34 @@ fn emits_common_app_route_use_cases() {
     let primary = contribution.primary_source.expect("primary route output");
 
     assert_snapshot("common_app_route_use_cases.dart.snapshot", &primary);
+}
+
+#[test]
+fn emits_escaped_branch_literals() {
+    let plugin = register_plugin();
+    let library = library_with_classes(vec![
+        router_class("(initial: '/dashboard', notFound: '/404')"),
+        route_page_class(
+            "DashboardPage",
+            r#"('/dashboard', name: 'dashboard', branch: r"team's-$main")"#,
+            Vec::new(),
+        ),
+        route_page_class("NotFoundPage", "('/404', name: 'notFound')", Vec::new()),
+    ]);
+
+    let contribution = plugin
+        .generate(
+            &library,
+            &dust_plugin_api::PluginContext {
+                symbol_plan: &SymbolPlan::default(),
+            },
+        )
+        .into_iter()
+        .next()
+        .expect("plugin must generate one contribution");
+    let primary = contribution.primary_source.expect("primary route output");
+
+    assert_snapshot("escaped_branch_literals.dart.snapshot", &primary);
 }
 
 #[test]
@@ -419,8 +421,6 @@ fn emits_guard_helpers_with_custom_router_base_name() {
         .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("DashboardRoute() => [BenchmarkGuard()]"));
-    assert!(!primary.contains("const BenchmarkGuard()"));
     assert_snapshot("custom_router_guard_route.dart.snapshot", &primary);
 }
 
@@ -455,10 +455,7 @@ fn emits_nested_guarded_route_restore_fixture() {
         .expect("plugin must generate one contribution");
     let primary = contribution.primary_source.expect("primary route output");
 
-    assert!(primary.contains("WorkspaceRoute() => [AuthGuard()],"));
-    assert!(primary.contains(
-        "WorkspaceDetailsRoute() => [\n      const HomeRoute(),\n      const WorkspaceRoute(),\n      route,\n    ],"
-    ));
+    assert_snapshot("nested_guarded_restore_route.dart.snapshot", &primary);
 }
 
 #[test]

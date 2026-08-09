@@ -116,10 +116,12 @@ fn rejects_local_route_shell_without_named_widget_child() {
 
     let diagnostics = plugin.validate(&library_with_classes(vec![shell, page]));
 
-    let messages = diagnostic_messages(&diagnostics);
-    assert_eq!(messages.len(), 1);
-    assert!(messages[0].contains("route shell `AppShell` on `DashboardPage`"));
-    assert!(messages[0].contains("required named `Widget child` parameter"));
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec![
+            "route shell `AppShell` on `DashboardPage` needs an unnamed generative constructor with a required named `Widget child` parameter, for example `const AppShell({required Widget child, super.key})`"
+        ]
+    );
 }
 
 #[test]
@@ -137,10 +139,12 @@ fn rejects_local_route_shell_with_positional_child() {
 
     let diagnostics = plugin.validate(&library_with_classes(vec![shell, page]));
 
-    let messages = diagnostic_messages(&diagnostics);
-    assert_eq!(messages.len(), 1);
-    assert!(messages[0].contains("route shell `AppShell` on `DashboardPage`"));
-    assert!(messages[0].contains("required named `Widget child` parameter"));
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec![
+            "route shell `AppShell` on `DashboardPage` needs an unnamed generative constructor with a required named `Widget child` parameter, for example `const AppShell({required Widget child, super.key})`"
+        ]
+    );
 }
 
 #[test]
@@ -161,10 +165,12 @@ fn rejects_local_route_shell_with_nullable_child() {
 
     let diagnostics = plugin.validate(&library_with_classes(vec![shell, page]));
 
-    let messages = diagnostic_messages(&diagnostics);
-    assert_eq!(messages.len(), 1);
-    assert!(messages[0].contains("route shell `AppShell` on `DashboardPage`"));
-    assert!(messages[0].contains("required named `Widget child` parameter"));
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec![
+            "route shell `AppShell` on `DashboardPage` needs an unnamed generative constructor with a required named `Widget child` parameter, for example `const AppShell({required Widget child, super.key})`"
+        ]
+    );
 }
 
 #[test]
@@ -182,10 +188,12 @@ fn rejects_local_route_shell_with_defaulted_child() {
 
     let diagnostics = plugin.validate(&library_with_classes(vec![shell, page]));
 
-    let messages = diagnostic_messages(&diagnostics);
-    assert_eq!(messages.len(), 1);
-    assert!(messages[0].contains("route shell `AppShell` on `DashboardPage`"));
-    assert!(messages[0].contains("required named `Widget child` parameter"));
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec![
+            "route shell `AppShell` on `DashboardPage` needs an unnamed generative constructor with a required named `Widget child` parameter, for example `const AppShell({required Widget child, super.key})`"
+        ]
+    );
 }
 
 #[test]

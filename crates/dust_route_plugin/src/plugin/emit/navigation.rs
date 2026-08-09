@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use dust_dart_emit::render_template;
+use dust_dart_emit::{dart_string_literal, render_template};
 use serde::Serialize;
 
 use crate::plugin::model::{GuardSpec, RouteParamSpec, RouteSpec, RouterSpec};
@@ -68,9 +68,9 @@ fn render_branch_cases(spec: &RouterSpec) -> String {
         .filter_map(|route| {
             effective_branch(route, &spec.routes).map(|branch| {
                 format!(
-                    "    {} => '{}',\n",
+                    "    {} => {},\n",
                     route_switch_pattern(route, Some(&no_bindings)),
-                    branch
+                    dart_string_literal(branch)
                 )
             })
         })
@@ -84,15 +84,16 @@ fn render_debug_cases(spec: &RouterSpec) -> String {
         .iter()
         .map(|route| {
             let shell = effective_shell(route, &spec.routes)
-                .map(|shell| format!("'{}'", shell))
+                .map(dart_string_literal)
                 .unwrap_or_else(|| "null".to_owned());
             let branch = effective_branch(route, &spec.routes)
-                .map(|branch| format!("'{}'", branch))
+                .map(dart_string_literal)
                 .unwrap_or_else(|| "null".to_owned());
+            let name = dart_string_literal(&route.name);
             format!(
-                "    {} => const RouteDebugInfo(name: '{}', shell: {}, branch: {}),\n",
+                "    {} => const RouteDebugInfo(name: {}, shell: {}, branch: {}),\n",
                 route_switch_pattern(route, Some(&no_bindings)),
-                route.name,
+                name,
                 shell,
                 branch
             )

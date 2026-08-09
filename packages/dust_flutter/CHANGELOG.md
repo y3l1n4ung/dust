@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Add `AppRoute.branch` and generated branch stack runtime support for
+  independent tab-style navigation history.
 - Add `RouterBase.observers` for forwarding `NavigatorObserver` instances to
   generated routers.
 - Add `RouterBase.onException` for unawaited generated navigation failures.

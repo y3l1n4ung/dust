@@ -1,4 +1,4 @@
-use dust_dart_emit::render_template;
+use dust_dart_emit::{dart_string_literal, render_template};
 use serde::Serialize;
 
 use super::shell::{effective_branch, effective_shell};
@@ -210,7 +210,11 @@ fn render_generated_route(
         fields.push(format!("{}  shell: {shell},\n", indent_str(indent)));
     }
     if let Some(branch) = effective_branch(route, routes) {
-        fields.push(format!("{}  branch: '{branch}',\n", indent_str(indent)));
+        fields.push(format!(
+            "{}  branch: {},\n",
+            indent_str(indent),
+            dart_string_literal(branch)
+        ));
     }
     if route.annotation.guards_configured {
         fields.push(format!(
