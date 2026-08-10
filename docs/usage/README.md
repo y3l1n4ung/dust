@@ -14,6 +14,7 @@ Each guide shows the handwritten API first and links to a working example.
 | Build typed ViewModels | [State](./state.md) | `dust_flutter` |
 | Configure Navigator 2.0 routing | [Routing](./routing.md) | `dust_flutter` |
 | Compare routing DX | [Router DX comparison](./routing-dx-comparison.md) | `dust_flutter` |
+| Plan routing improvements | [Routing improvement roadmap](./routing-improvement-roadmap.md) | `dust_flutter` |
 | Maintain ARB translations | [Internationalization](./i18n.md) | `dust_flutter` |
 | Validate SQLite queries | [Database](./db.md) | `dust_dart`, `dust_db_sqlite3` |
 
