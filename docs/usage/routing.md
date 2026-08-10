@@ -1,6 +1,9 @@
 # Typed Routing
 
 Dust generates a typed Flutter Navigator 2.0 router from annotated widgets.
+For a source-grounded comparison with go_router, AutoRoute, Beamer, and
+hand-written Router 2.0, see the
+[router DX comparison](./routing-dx-comparison.md).
 
 ## Add the Package
 
