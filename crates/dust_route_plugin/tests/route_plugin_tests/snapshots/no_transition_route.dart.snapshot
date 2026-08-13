@@ -9,8 +9,8 @@ import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
 
-class _NoTransitionBuilder extends PageTransitionsBuilder {
-  const _NoTransitionBuilder();
+class _$NoTransitionBuilder extends PageTransitionsBuilder {
+  const _$NoTransitionBuilder();
 
   @override
   Duration get transitionDuration => Duration.zero;
@@ -28,26 +28,26 @@ class _NoTransitionBuilder extends PageTransitionsBuilder {
   ) {
     return child;
   }
-}abstract class $TestRouter extends RouterBase<AppRoutePath> {
+}abstract class TestRouterBase extends RouterBase<TestRoutePath> {
 
-  late final RouterConfig<AppRoutePath> config = _buildConfig();
+  late final RouterConfig<TestRoutePath> config = _buildConfig();
 
-  RouterConfig<AppRoutePath> _buildConfig() {
-    final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
+  RouterConfig<TestRoutePath> _buildConfig() {
+    final runtimeConfig = RouterRuntimeConfig<TestRoutePath>(
       router: this,
-      initialRoute: const SearchRoute(),
-      parseRoute: parseAppRoute,
-      routeLocation: routeLocation,
-      requiresAuth: routeRequiresAuth,
-      routeBranch: routeBranch,
-      resolveGuards: (route) => routeGuards(route, this),
-      buildPage: buildAppRoutePage,
-      restoreStack: restoreAppRouteStack,
-      debugInfo: routeDebugInfo,
-      debugRoutes: $appRoutes,
+      initialRoute: const TestSearchRoute(),
+      parseRoute: parseTestRoute,
+      routeLocation: testRouteLocation,
+      requiresAuth: testRouteRequiresAuth,
+      routeBranch: testRouteBranch,
+      resolveGuards: (route) => testRouteGuards(route, this),
+      buildPage: buildTestRoutePage,
+      restoreStack: restoreTestRouteStack,
+      debugInfo: testRouteDebugInfo,
+      debugRoutes: $testRoutes,
     );
-    final delegate = GeneratedRouterDelegate<AppRoutePath>(runtimeConfig);
-    return RouterConfig<AppRoutePath>(
+    final delegate = GeneratedRouterDelegate<TestRoutePath>(runtimeConfig);
+    return RouterConfig<TestRoutePath>(
       routeInformationProvider: PlatformRouteInformationProvider(
         initialRouteInformation: RouteInformation(
           uri: Uri.parse(
@@ -55,9 +55,9 @@ class _NoTransitionBuilder extends PageTransitionsBuilder {
           ),
         ),
       ),
-      routeInformationParser: GeneratedRouteInformationParser<AppRoutePath>(
-        parseRoute: parseAppRoute,
-        routeLocation: routeLocation,
+      routeInformationParser: GeneratedRouteInformationParser<TestRoutePath>(
+        parseRoute: parseTestRoute,
+        routeLocation: testRouteLocation,
       ),
       routerDelegate: delegate,
       backButtonDispatcher: RootBackButtonDispatcher(),
@@ -65,7 +65,7 @@ class _NoTransitionBuilder extends PageTransitionsBuilder {
   }
 }
 
-const List<GeneratedRoute> $appRoutes = [
+const List<GeneratedRoute> $testRoutes = [
   GeneratedRoute(
     '/404',
     page: NotFoundPage,
@@ -76,12 +76,12 @@ const List<GeneratedRoute> $appRoutes = [
     '/search',
     page: SearchPage,
     name: 'search',
-    transition: _NoTransitionBuilder(),
+    transition: _$NoTransitionBuilder(),
   ),
 ];
 
-sealed class AppRoutePath<R> {
-  const AppRoutePath();
+sealed class TestRoutePath<R> {
+  const TestRoutePath();
 
   String get location;
 
@@ -90,18 +90,18 @@ sealed class AppRoutePath<R> {
   bool get requiresAuth => true;
 }
 
-/// Typed route data for `NotFoundRoute`.
-final class NotFoundRoute extends AppRoutePath<void> {
-  const NotFoundRoute({this.path = ''});
+/// Typed route data for `TestNotFoundRoute`.
+final class TestNotFoundRoute extends TestRoutePath<void> {
+  const TestNotFoundRoute({this.path = ''});
 
   final String path;
 
   @override
   String get location {
-    return _routePath(
+    return _$routePath(
       const ['404'],
       queryParameters: {'path': path},
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 
@@ -109,20 +109,20 @@ final class NotFoundRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `SearchRoute`.
-final class SearchRoute extends AppRoutePath<void> {
-  const SearchRoute();
+/// Typed route data for `TestSearchRoute`.
+final class TestSearchRoute extends TestRoutePath<void> {
+  const TestSearchRoute();
 
   @override
   String get location {
-    return _routePath(['search'], uriExtras: _routeUriExtrasOf(this));
+    return _$routePath(['search'], uriExtras: _$routeUriExtrasOf(this));
   }
 }
 
-String routeLocation(AppRoutePath route) => route.location;
+String testRouteLocation(TestRoutePath route) => route.location;
 
-final class _RouteUriExtras {
-  const _RouteUriExtras({
+final class _$RouteUriExtras {
+  const _$RouteUriExtras({
     required this.queryParameters,
     required this.fragment,
   });
@@ -131,11 +131,11 @@ final class _RouteUriExtras {
   final String fragment;
 }
 
-final Expando<_RouteUriExtras> _routeUriExtras = Expando<_RouteUriExtras>();
+final Expando<_$RouteUriExtras> _$routeUriExtras = Expando<_$RouteUriExtras>();
 
-_RouteUriExtras? _routeUriExtrasOf(Object route) => _routeUriExtras[route];
+_$RouteUriExtras? _$routeUriExtrasOf(Object route) => _$routeUriExtras[route];
 
-T _withRouteUriExtras<T extends AppRoutePath>(
+T _$withRouteUriExtras<T extends TestRoutePath>(
   T route,
   Uri uri,
   Set<String> knownQueryParameters,
@@ -147,17 +147,17 @@ T _withRouteUriExtras<T extends AppRoutePath>(
     }
   }
   if (queryParameters.isEmpty && uri.fragment.isEmpty) return route;
-  _routeUriExtras[route] = _RouteUriExtras(
+  _$routeUriExtras[route] = _$RouteUriExtras(
     queryParameters: Map.unmodifiable(queryParameters),
     fragment: uri.fragment,
   );
   return route;
 }
 
-String _routePath(
+String _$routePath(
   List<String> segments, {
   Map<String, dynamic>? queryParameters,
-  _RouteUriExtras? uriExtras,
+  _$RouteUriExtras? uriExtras,
 }) {
   final query = <String, dynamic>{
     ...?queryParameters,
@@ -172,115 +172,115 @@ String _routePath(
   return text.startsWith('/') ? text : '/$text';
 }
 
-bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
+bool testRouteRequiresAuth(TestRoutePath route) => route.requiresAuth;
 
-String? routeBranch(AppRoutePath route) {
+String? testRouteBranch(TestRoutePath route) {
   return switch (route) {
     _ => null,
   };
 }
 
-RouteDebugInfo routeDebugInfo(AppRoutePath route) {
+RouteDebugInfo testRouteDebugInfo(TestRoutePath route) {
   return switch (route) {
-    NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
-    SearchRoute() => const RouteDebugInfo(name: 'search', shell: null, branch: null),
+    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
+    TestSearchRoute() => const RouteDebugInfo(name: 'search', shell: null, branch: null),
   };
 }
 
-List<Object> routeGuards(
-  AppRoutePath route,
-  $TestRouter router,
+List<Object> testRouteGuards(
+  TestRoutePath route,
+  TestRouterBase router,
 ) {
   return switch (route) {
     _ => const [],
   };
 }
 
-extension AppRouterContext on BuildContext {
-  RouterController<AppRoutePath> get _routerController =>
-      RouterController.of<AppRoutePath>(this);
-  AppRoutesNavigator get navigator => AppRoutesNavigator(_routerController);
+extension TestRouterContext on BuildContext {
+  RouterController<TestRoutePath> get _routerController =>
+      RouterController.of<TestRoutePath>(this);
+  TestRoutesNavigator get navigator => TestRoutesNavigator(_routerController);
 }
 
-final class AppRoutesNavigator {
-  const AppRoutesNavigator(this._router);
+final class TestRoutesNavigator {
+  const TestRoutesNavigator(this._router);
 
-  final RouterController<AppRoutePath> _router;
+  final RouterController<TestRoutePath> _router;
 
-  RouteAction<void> notFound({String path = ''}) =>
-      RouteAction(_router, NotFoundRoute(path: path));
+  TestRouteAction<void> notFound({String path = ''}) =>
+      TestRouteAction(_router, TestNotFoundRoute(path: path));
 
-  RouteAction<void> search() => RouteAction(_router, SearchRoute());
+  TestRouteAction<void> search() => TestRouteAction(_router, TestSearchRoute());
 
   bool pop<R>([R? result]) => _router.pop<R>(result);
 }
 
-final class RouteAction<R> {
-  const RouteAction(this._router, this.route);
+final class TestRouteAction<R> {
+  const TestRouteAction(this._router, this.route);
 
-  final RouterController<AppRoutePath> _router;
-  final AppRoutePath<R> route;
+  final RouterController<TestRoutePath> _router;
+  final TestRoutePath<R> route;
 
   void go() => _router.go(route);
   Future<R?> push() => _router.push<R>(route);
   void replace() => _router.replace(route);
 }
 
-RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
+RouteStack<TestRoutePath> restoreTestRouteStack(TestRoutePath route) {
   return switch (route) {
-    NotFoundRoute(path: _) => [
-      const SearchRoute(),
+    TestNotFoundRoute(path: _) => [
+      const TestSearchRoute(),
       route,
     ],
-    SearchRoute() => [
+    TestSearchRoute() => [
       route,
     ],
   };
 }
 
-AppRoutePath parseAppRoute(Uri uri) {
+TestRoutePath parseTestRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.length == 1 && segments[0] == '404') {
-    final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
-    return _withRouteUriExtras(route, uri, const {'path'});
+    final route = TestNotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    return _$withRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 1 && segments[0] == 'search') {
-    final route = SearchRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = TestSearchRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
-  return _notFoundRoute(uri);
+  return _$notFoundRoute(uri);
 }
 
-AppRoutePath _notFoundRoute(Uri uri) => NotFoundRoute(path: uri.toString());
+TestRoutePath _$notFoundRoute(Uri uri) => TestNotFoundRoute(path: uri.toString());
 
-const Map<Type, Type?> _kAppliedShellsByPage = {
+const Map<Type, Type?> _$appliedShellsByPage = {
   NotFoundPage: null,
   SearchPage: null,
 };
 
-bool _shellConsistencyCheck() {
+bool _$shellConsistencyCheck() {
   bool visit(GeneratedRoute route) {
     final page = route.page;
-    if (page != null && _kAppliedShellsByPage[page] != route.shell) {
+    if (page != null && _$appliedShellsByPage[page] != route.shell) {
       return false;
     }
     return route.routes.every(visit);
   }
-  return $appRoutes.every(visit);
+  return $testRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(
-  AppRoutePath route,
+Page<dynamic> buildTestRoutePage(
+  TestRoutePath route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
   assert(
-    _shellConsistencyCheck(),
-    'Shell mismatch between \$appRoutes and buildAppRoutePage',
+    _$shellConsistencyCheck(),
+    'Shell mismatch between \$testRoutes and buildTestRoutePage',
   );
   return switch (route) {
-    NotFoundRoute(path: final path) => generatedPage(
+    TestNotFoundRoute(path: final path) => generatedPage(
       key: key,
       location: route.location,
       name: 'notFound',
@@ -289,12 +289,12 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: NotFoundPage(path: path),
     ),
-    SearchRoute() => generatedPage(
+    TestSearchRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'search',
       onPopInvoked: onPopInvoked,
-      transition: _NoTransitionBuilder(),
+      transition: _$NoTransitionBuilder(),
       fullscreenDialog: false,
       maintainState: true,
       child: const SearchPage(),

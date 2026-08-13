@@ -8,7 +8,16 @@ use super::{formatting::dart_type, parser_decode::encode_param_expr};
 
 /// Template context for one generated route class.
 #[derive(Serialize)]
+struct AppRouteBaseContext<'a> {
+    /// Generated route path base class name.
+    route_path_class: &'a str,
+}
+
+/// Template context for one generated route class.
+#[derive(Serialize)]
 struct RouteClassContext<'a> {
+    /// Generated route path base class name.
+    route_path_class: &'a str,
     /// Generated route class name.
     route_class: &'a str,
     /// Result type returned by route pushes.
@@ -53,7 +62,9 @@ pub(super) fn render_route_classes(out: &mut String, spec: &RouterSpec) {
     out.push_str(&render_template(
         "app_route_base",
         include_str!("templates/app_route_base.jinja"),
-        (),
+        AppRouteBaseContext {
+            route_path_class: &spec.route_path_class,
+        },
     ));
     out.push_str("\n\n");
 
@@ -73,6 +84,7 @@ pub(super) fn render_route_classes(out: &mut String, spec: &RouterSpec) {
             "route_class",
             include_str!("templates/route_class.jinja"),
             RouteClassContext {
+                route_path_class: &spec.route_path_class,
                 route_class: &route.route_class,
                 result_type: &route.result_type,
                 constructor,
@@ -119,7 +131,7 @@ fn render_constructor_param(param: &RouteParamSpec) -> String {
 
 /// Returns true for the conventional generated not-found route shape.
 pub(super) fn is_not_found_route(route: &RouteSpec) -> bool {
-    route.route_class == "NotFoundRoute" && route.params.iter().any(|param| param.name == "path")
+    route.name == "notFound" && route.params.iter().any(|param| param.name == "path")
 }
 /// Renders the generated `location` getter for a route.
 fn render_location_getter(route: &RouteSpec) -> String {
@@ -228,7 +240,7 @@ fn render_location_body(route: &RouteSpec) -> String {
         ));
     } else {
         let inline_return = format!(
-            "    return _routePath({inline_segments}, uriExtras: _routeUriExtrasOf(this));"
+            "    return _$routePath({inline_segments}, uriExtras: _$routeUriExtrasOf(this));"
         );
         let segment_expr = if inline_segments.len() <= 60 {
             inline_segments

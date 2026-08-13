@@ -14,6 +14,24 @@ use super::{
 /// Template context for generated route navigation helpers.
 #[derive(Serialize)]
 struct HelpersContext {
+    /// Generated route path base class.
+    route_path_class: String,
+    /// Generated route location helper function.
+    route_location_function: String,
+    /// Generated route auth helper function.
+    route_requires_auth_function: String,
+    /// Generated route branch helper function.
+    route_branch_function: String,
+    /// Generated route debug helper function.
+    route_debug_info_function: String,
+    /// Generated route guard helper function.
+    route_guards_function: String,
+    /// Generated BuildContext extension name.
+    context_extension: String,
+    /// Generated typed navigator helper class.
+    navigator_class: String,
+    /// Generated typed route action helper class.
+    route_action_class: String,
     /// Rendered switch cases that instantiate route guards.
     guard_cases: String,
     /// Rendered switch cases that return branch names.
@@ -50,6 +68,15 @@ pub(super) fn render_helpers(out: &mut String, spec: &RouterSpec) {
         "route_helpers",
         include_str!("templates/route_helpers.jinja"),
         HelpersContext {
+            route_path_class: spec.route_path_class.clone(),
+            route_location_function: spec.route_location_function.clone(),
+            route_requires_auth_function: spec.route_requires_auth_function.clone(),
+            route_branch_function: spec.route_branch_function.clone(),
+            route_debug_info_function: spec.route_debug_info_function.clone(),
+            route_guards_function: spec.route_guards_function.clone(),
+            context_extension: spec.context_extension.clone(),
+            navigator_class: spec.navigator_class.clone(),
+            route_action_class: spec.route_action_class.clone(),
             guard_cases: render_guard_cases(spec),
             branch_cases: render_branch_cases(spec),
             debug_cases: render_debug_cases(spec),
@@ -173,7 +200,7 @@ fn render_route_factories(spec: &RouterSpec) -> String {
     let factories = spec
         .routes
         .iter()
-        .map(render_route_factory)
+        .map(|route| render_route_factory(route, &spec.route_action_class))
         .collect::<Vec<_>>()
         .join("\n\n");
     if factories.is_empty() {
@@ -184,14 +211,14 @@ fn render_route_factories(spec: &RouterSpec) -> String {
 }
 
 /// Renders one route action factory method.
-fn render_route_factory(route: &RouteSpec) -> String {
+fn render_route_factory(route: &RouteSpec, route_action_class: &str) -> String {
     let route_ctor = format!("{}({})", route.route_class, render_route_args(route));
     let params = render_factory_params(route);
     let factory = format!(
-        "RouteAction<{}> {}({params})",
-        route.result_type, route.name
+        "{}<{}> {}({params})",
+        route_action_class, route.result_type, route.name
     );
-    let body = format!("RouteAction(_router, {route_ctor})");
+    let body = format!("{route_action_class}(_router, {route_ctor})");
     render_template(
         if factory.len() + body.len() + 7 <= 80 {
             "route_factory_inline"

@@ -9,7 +9,7 @@ export 'package:dust_flutter/route.dart';
 
 /// Benchmark router model for the benchmark example.
 @AppRouter(initial: '/', notFound: '/404')
-final class BenchmarkRouter extends $BenchmarkRouter {
+final class BenchmarkRouter extends BenchmarkRouterBase {
   /// Creates a [BenchmarkRouter].
   BenchmarkRouter({required this.refresh});
 
@@ -18,10 +18,10 @@ final class BenchmarkRouter extends $BenchmarkRouter {
 }
 
 /// Benchmark guard model for the benchmark example.
-final class BenchmarkGuard implements RouteGuard<AppRoutePath> {
+final class BenchmarkGuard implements RouteGuard<BenchmarkRoutePath> {
   /// Creates a [BenchmarkGuard].
   const BenchmarkGuard();
 
   @override
-  AppRoutePath? canActivate(AppRoutePath route) => null;
+  BenchmarkRoutePath? canActivate(BenchmarkRoutePath route) => null;
 }

@@ -2,11 +2,13 @@ use dust_dart_emit::{dart_string_literal, render_template};
 use serde::Serialize;
 
 use super::shell::{effective_branch, effective_shell};
-use crate::plugin::model::RouteSpec;
+use crate::plugin::model::{RouteSpec, RouterSpec};
 
 /// Template context for the generated route metadata list.
 #[derive(Serialize)]
 struct MetadataListContext {
+    /// Generated route metadata list variable.
+    routes_variable: String,
     /// Rendered metadata nodes in tree order.
     nodes: String,
 }
@@ -54,12 +56,14 @@ struct GeneratedChildrenContext {
 }
 
 /// Renders the generated route metadata tree.
-pub(super) fn render_route_metadata(out: &mut String, routes: &[RouteSpec]) {
+pub(super) fn render_route_metadata(out: &mut String, spec: &RouterSpec) {
+    let routes = &spec.routes;
     let tree = MetadataTree::build(routes);
     out.push_str(&render_template(
         "route_metadata_list",
         include_str!("templates/route_metadata_list.jinja"),
         MetadataListContext {
+            routes_variable: spec.routes_variable.clone(),
             nodes: render_metadata_nodes(&tree, routes, 1, true),
         },
     ));
@@ -224,6 +228,7 @@ fn render_generated_route(
         ));
     }
     if let Some(transition) = &route.annotation.transition {
+        let transition = super::normalize_private_transition_helper(transition);
         fields.push(format!(
             "{}  transition: {},\n",
             indent_str(indent),

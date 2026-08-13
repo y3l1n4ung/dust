@@ -1,4 +1,4 @@
-RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
+RouteStack<{{ route_path_class }}> {{ restore_stack_function }}({{ route_path_class }} route) {
   return switch (route) {
 {{ cases }}
   };

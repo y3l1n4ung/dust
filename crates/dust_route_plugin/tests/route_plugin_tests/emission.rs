@@ -58,7 +58,7 @@ fn emits_no_transition_builder_only_when_referenced() {
         router_class("(initial: '/search', notFound: '/404')"),
         route_page_class(
             "SearchPage",
-            "('/search', name: 'search', transition: _NoTransitionBuilder())",
+            "('/search', name: 'search', transition: _$NoTransitionBuilder())",
             Vec::new(),
         ),
     ]);
@@ -308,7 +308,7 @@ fn rejects_generated_route_class_name_collisions() {
     assert!(contribution.primary_source.is_none());
     assert_eq!(
         diagnostic_messages(&contribution.diagnostics),
-        vec!["generated route class `OrderDetailRoute` is emitted by more than one route name"]
+        vec!["generated route class `TestOrderDetailRoute` is emitted by more than one route name"]
     );
 }
 

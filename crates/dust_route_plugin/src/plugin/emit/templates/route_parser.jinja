@@ -1,8 +1,8 @@
-AppRoutePath parseAppRoute(Uri uri) {
+{{ route_path_class }} {{ parse_route_function }}(Uri uri) {
   final segments = uri.pathSegments;
 
-{{ cases }}  return _notFoundRoute(uri);
+{{ cases }}  return _$notFoundRoute(uri);
 }
 
-AppRoutePath _notFoundRoute(Uri uri) => {{ fallback }};
+{{ route_path_class }} _$notFoundRoute(Uri uri) => {{ fallback }};
 {{ bool_parser_helper }}
