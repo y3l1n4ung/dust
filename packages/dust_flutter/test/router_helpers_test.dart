@@ -37,6 +37,21 @@ void main() {
       expect(generatedRouteUriExtrasOf(route), isNull);
     });
 
+    test('build generated paths with encoded segments and fragment-only extras',
+        () {
+      final route = Object();
+      withGeneratedRouteUriExtras(route, Uri.parse('/#top'), const <String>{});
+
+      expect(
+        generatedRoutePath(
+          ['orders', 'ORDER 1/2'],
+          uriExtras: generatedRouteUriExtrasOf(route),
+        ),
+        '/orders/ORDER%201%2F2#top',
+      );
+      expect(generatedRoutePath(const []), '/');
+    });
+
     test('parse generated route bool URL values', () {
       expect(generatedRouteParseBool('true'), isTrue);
       expect(generatedRouteParseBool('1'), isTrue);

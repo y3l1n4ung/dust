@@ -32,6 +32,42 @@ void main() {
     );
   });
 
+  test('absolute deep links preserve duplicate unknown query values', () {
+    final route = parseShoppingRoute(
+      Uri.parse(
+        'https://shop.example/product/7?campaign=spring&campaign=launch'
+        '&redirect=%2Fcheckout#reviews',
+      ),
+    );
+
+    expect(
+      route,
+      isA<ShoppingProductDetailRoute>()
+          .having((route) => route.productId, 'productId', 7)
+          .having(
+            (route) => route.location,
+            'location',
+            '/product/7?campaign=spring&campaign=launch'
+                '&redirect=%2Fcheckout#reviews',
+          ),
+    );
+  });
+
+  test('trailing slash deep links use the configured not-found route', () {
+    final route = parseShoppingRoute(
+      Uri.parse('https://shop.example/product/7/?campaign=spring#reviews'),
+    );
+
+    expect(
+      route,
+      isA<ShoppingNotFoundRoute>().having(
+        (route) => route.path,
+        'path',
+        'https://shop.example/product/7/?campaign=spring#reviews',
+      ),
+    );
+  });
+
   test('known query parameters are typed while extras stay in the URL', () {
     final route = parseShoppingRoute(
       Uri.parse('/login?redirectPath=%2Fcheckout&coupon=SAVE10#auth'),
