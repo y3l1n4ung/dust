@@ -13,8 +13,6 @@ import 'package:dust_benchmark_project/pages/benchmark_detail_page.dart';
 import 'package:dust_benchmark_project/pages/benchmark_home_page.dart';
 import 'package:dust_benchmark_project/pages/benchmark_not_found_page.dart';
 import 'package:dust_benchmark_project/pages/benchmark_shell.dart';
-import 'package:dust_benchmark_project/state/benchmark_state.dart';
-import 'package:dust_benchmark_project/state/benchmark_view_model.dart';
 
 const List<GeneratedRoute> $benchmarkRoutes = [
   GeneratedRoute(
