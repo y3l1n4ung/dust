@@ -89,6 +89,19 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult, ai_mod
                 }
             }
         }
+        CliCommand::RouteTable => {
+            if let Some(table) = &result.route_table {
+                lines.push(format!(
+                    "route table  scanned: {}  routes: {}  time: {}ms",
+                    table.scanned_files,
+                    table.routes.len(),
+                    result.elapsed_ms
+                ));
+                if !table.routes.is_empty() {
+                    append_route_table(&mut lines, &table.routes);
+                }
+            }
+        }
         CliCommand::I18nBuild => {
             if let Some(build) = &result.i18n_build {
                 lines.push(format!(
@@ -162,6 +175,28 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult, ai_mod
         String::new()
     } else {
         format!("{}\n", lines.join("\n"))
+    }
+}
+
+/// Appends a stable route table.
+fn append_route_table(lines: &mut Vec<String>, routes: &[dust_driver::RouteTableRow]) {
+    lines.push("name | path | page | shell | branch | guards | result".to_owned());
+    lines.push("--- | --- | --- | --- | --- | --- | ---".to_owned());
+    for route in routes {
+        lines.push(format!(
+            "{} | {} | {} | {} | {} | {} | {}",
+            route.name,
+            route.path,
+            route.page,
+            route.shell.as_deref().unwrap_or("-"),
+            route.branch.as_deref().unwrap_or("-"),
+            if route.guards.is_empty() {
+                "-".to_owned()
+            } else {
+                route.guards.join(",")
+            },
+            route.result_type,
+        ));
     }
 }
 
@@ -257,7 +292,8 @@ mod tests {
     use dust_diagnostics::{Diagnostic, SourceLabel};
     use dust_driver::{
         CacheReport, CleanReport, CommandResult, DiagnosticFile, DoctorPackageCompatibility,
-        DoctorPackageCompatibilityStatus, DoctorReport, WatchReport,
+        DoctorPackageCompatibilityStatus, DoctorReport, RouteTableReport, RouteTableRow,
+        WatchReport,
     };
     use dust_text::{FileId, TextRange};
 
@@ -381,6 +417,50 @@ mod tests {
         assert!(!compact.contains(render_banner()));
         assert!(compact.contains("diagnostics  errors: 0  warnings: 1  notes: 0"));
         assert!(compact.contains("warning: something happened"));
+    }
+
+    #[test]
+    fn render_route_table_summary_and_rows() {
+        let rendered = render_result(
+            &CliCommand::RouteTable,
+            &CommandResult {
+                route_table: Some(RouteTableReport {
+                    scanned_files: 3,
+                    routes: vec![
+                        RouteTableRow {
+                            name: "dashboard".to_owned(),
+                            path: "/dashboard".to_owned(),
+                            page: "DashboardPage".to_owned(),
+                            shell: Some("AppShell".to_owned()),
+                            branch: Some("mainTabs".to_owned()),
+                            guards: Vec::new(),
+                            result_type: "void".to_owned(),
+                        },
+                        RouteTableRow {
+                            name: "checkout".to_owned(),
+                            path: "/checkout".to_owned(),
+                            page: "CheckoutPage".to_owned(),
+                            shell: None,
+                            branch: None,
+                            guards: vec!["CartGuard".to_owned()],
+                            result_type: "bool".to_owned(),
+                        },
+                    ],
+                }),
+                elapsed_ms: 12,
+                ..CommandResult::default()
+            },
+            true,
+        );
+
+        assert_eq!(
+            rendered,
+            "route table  scanned: 3  routes: 2  time: 12ms\n\
+             name | path | page | shell | branch | guards | result\n\
+             --- | --- | --- | --- | --- | --- | ---\n\
+             dashboard | /dashboard | DashboardPage | AppShell | mainTabs | - | void\n\
+             checkout | /checkout | CheckoutPage | - | - | CartGuard | bool\n"
+        );
     }
 
     #[test]

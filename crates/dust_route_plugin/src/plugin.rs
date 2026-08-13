@@ -10,6 +10,8 @@ mod build;
 mod constants;
 /// Renders generated Flutter route code.
 mod emit;
+/// Route inspection output built from route analysis facts.
+pub mod inspect;
 /// Internal route plugin model used by validation and emission.
 mod model;
 /// Parses route annotations from lowered IR and source-surface facts.

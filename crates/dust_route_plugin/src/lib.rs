@@ -5,4 +5,5 @@
 /// Route plugin implementation and registration surface.
 mod plugin;
 
+pub use plugin::inspect;
 pub use plugin::{RoutePlugin, register_plugin};

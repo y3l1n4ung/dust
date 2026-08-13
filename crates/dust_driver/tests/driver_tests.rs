@@ -27,6 +27,9 @@ mod i18n_stress_outputs;
 #[path = "driver_tests/routing_outputs.rs"]
 mod routing_outputs;
 
+#[path = "driver_tests/route_table.rs"]
+mod route_table;
+
 #[path = "driver_tests/state_outputs.rs"]
 mod state_outputs;
 
