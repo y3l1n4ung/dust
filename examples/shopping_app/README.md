@@ -48,6 +48,8 @@ flutter build web
 
 - `@AppRouter` generates typed route classes and parser helpers in
   generated files under [`lib/route/`](lib/route/).
+- [`lib/route.dart`](lib/route.dart) is the single app-facing routing
+  entrypoint. App code imports it instead of generated files directly.
 - `@AppRoute` on Flutter pages declares paths, route parameters, and guards.
 - `@ViewModel` generates scopes, typed args, readers, and watchers.
 - `@Derive` generates copy, equality, JSON, validation, and row-mapping helpers
@@ -63,6 +65,7 @@ flutter build web
 - `/`
 - `/cart`
 - `/checkout`
+- `/order-confirmation/:orderId`
 - `/wishlist`
 - `/demo-carts`
 - `/orders`
@@ -73,6 +76,41 @@ flutter build web
 The app calls `usePathUrlStrategy()` at startup. For deployed web builds,
 configure the host to serve `index.html` for unknown paths so direct deep links
 such as `/product/7` load the Flutter app.
+
+## Route Entrypoint
+
+Handwritten app code only needs `lib/route.dart`:
+
+```dart
+import 'package:dust_flutter/route.dart';
+
+import 'features/auth/view_models/auth_view_model.dart';
+import 'route/routes.g.dart';
+
+export 'package:dust_flutter/route.dart';
+export 'route/routes.g.dart';
+
+@AppRouter(initial: '/', notFound: '/404')
+final class ShoppingRouter extends ShoppingRouterBase {
+  ShoppingRouter({required this.auth});
+
+  final AuthViewModel auth;
+}
+```
+
+Every route page and caller imports the same entrypoint:
+
+```dart
+import 'package:shopping_app/route.dart';
+
+context.navigator.cart().go();
+context.navigator.checkout().push();
+context.navigator.orderConfirmation(orderId: 'ORDER-42').replace();
+```
+
+The generated `lib/route/routes.g.dart` file is the barrel for generated route
+paths, navigation helpers, metadata, and runtime glue. User code does not
+re-export those generated pieces one by one.
 
 ## More Docs
 
