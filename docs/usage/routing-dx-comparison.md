@@ -246,9 +246,6 @@ Remaining DX risks:
 - The generated file must stay readable because it is part of Dust's debugging
   story.
 
-Suggested next work is tracked in the
-[routing improvement roadmap](./routing-improvement-roadmap.md).
-
 ## Source Notes
 
 - Flutter recommends routing packages such as go_router for advanced direct
