@@ -33,6 +33,9 @@ mod route_table;
 #[path = "driver_tests/route_graph.rs"]
 mod route_graph;
 
+#[path = "driver_tests/route_fixtures.rs"]
+mod route_fixtures;
+
 #[path = "driver_tests/state_outputs.rs"]
 mod state_outputs;
 

@@ -983,6 +983,43 @@ Use `--root` from monorepos or scripts:
 dust route graph --root examples/shopping_app
 ```
 
+## Route Fixtures
+
+Run `dust route fixtures` when you want copyable deep-link QA examples without
+deriving every path and query shape by hand:
+
+```bash
+dust route fixtures
+```
+
+The command is read-only. It prints valid and invalid examples for path URLs,
+web URLs, app-link style URLs, custom-scheme URLs, typed path params, typed
+query params, preserved fragments, malformed fragment input, and not-found
+routes:
+
+```text
+route fixtures  scanned: 53  fixtures: 62  time: 206ms
+route | case | valid | shape | uri | expected
+--- | --- | --- | --- | --- | ---
+productDetail | path | true | path | /product/SKU-1001?tab=reviews | typed-route
+productDetail | web-url | true | web-url | https://shop.example/product/SKU-1001?tab=reviews | normalize-then-typed-route
+productDetail | app-link | true | app-link | https://shop.example/app/product/SKU-1001?tab=reviews | normalize-prefix-then-typed-route
+productDetail | custom-scheme | true | custom-scheme | shopping:///product/SKU-1001?tab=reviews | normalize-scheme-then-typed-route
+productDetail | fragment-preserved | true | path | /product/SKU-1001?tab=reviews#details | typed-route-preserve-fragment
+- | not-found | false | path | /__dust_missing_route__ | not-found-route
+```
+
+Fixtures use the documented normalization shapes from this guide:
+`https://shop.example/...`, `https://shop.example/app/...`, and
+`shopping:///...`. Apps with different hosts, prefixes, or schemes should keep
+their `parseRouteInformation` override covered by app-level tests.
+
+Use `--root` from monorepos or scripts:
+
+```bash
+dust route fixtures --root examples/shopping_app
+```
+
 ## Diagnostics
 
 Enable runtime logs while debugging parsing, redirects, guards, and stack

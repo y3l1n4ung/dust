@@ -5,6 +5,8 @@ use super::{
     model::{RouteAnnotation, RouteFact},
 };
 
+pub use super::inspect_fixtures::RouteFixtureRow;
+
 /// One route row shown by route inspection tooling.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RouteTableRow {
@@ -79,6 +81,12 @@ pub fn route_graph_nodes(snapshots: &[LibraryAnalysisSnapshot]) -> Vec<RouteGrap
         .collect()
 }
 
+/// Builds deterministic deep-link fixture rows from workspace analysis snapshots.
+pub fn route_fixture_rows(snapshots: &[LibraryAnalysisSnapshot]) -> Vec<RouteFixtureRow> {
+    let facts = route_facts(snapshots);
+    super::inspect_fixtures::route_fixture_rows(&facts)
+}
+
 /// Returns deterministic route facts from workspace analysis snapshots.
 fn route_facts(snapshots: &[LibraryAnalysisSnapshot]) -> Vec<RouteFact> {
     let mut facts = snapshots
@@ -97,7 +105,7 @@ fn route_facts(snapshots: &[LibraryAnalysisSnapshot]) -> Vec<RouteFact> {
 }
 
 /// Returns the explicit route name or the generated fallback name.
-fn route_name(fact: &RouteFact) -> String {
+pub(super) fn route_name(fact: &RouteFact) -> String {
     fact.name
         .clone()
         .unwrap_or_else(|| derive_route_name(&fact.class_name))
