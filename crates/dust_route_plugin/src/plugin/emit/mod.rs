@@ -6,6 +6,8 @@ mod branches;
 mod files;
 /// Shared formatting helpers for generated Dart code.
 mod formatting;
+/// Collects Dart symbols referenced by generated route imports.
+mod import_references;
 /// Renders imports used by split route generated files.
 mod imports;
 /// Renders the generated route metadata tree.
