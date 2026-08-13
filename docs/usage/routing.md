@@ -27,7 +27,7 @@ export 'package:dust_flutter/route.dart';
 export 'route/routes.g.dart';
 
 @AppRouter(initial: '/', notFound: '/404')
-final class RootRouter extends $RootRouter {}
+final class RootRouter extends RootRouterBase {}
 ```
 
 Import that entrypoint from each route page:
@@ -84,6 +84,106 @@ void main() {
 > Keep `route.dart` as the app-facing routing entrypoint. It imports and exports
 > generated files under `route/`; route pages import `route.dart` to use
 > annotations and generated navigation helpers.
+
+## Shopping Cart Entrypoint
+
+The [shopping app](../../examples/shopping_app) keeps the full routing surface
+behind one handwritten file: `lib/route.dart`.
+
+```dart
+import 'package:dust_flutter/route.dart';
+
+import 'features/auth/models/auth_state.dart';
+import 'features/auth/view_models/auth_view_model.dart';
+import 'route/routes.g.dart';
+
+export 'package:dust_flutter/route.dart';
+export 'route/routes.g.dart';
+
+@AppRouter(initial: '/', notFound: '/404')
+final class ShoppingRouter extends ShoppingRouterBase {
+  ShoppingRouter({required this.auth});
+
+  final AuthViewModel auth;
+
+  @override
+  ShoppingRoutePath? redirect(ShoppingRoutePath route) {
+    final status = auth.state.status;
+    if (status == AuthStatus.loading || status == AuthStatus.initial) {
+      return null;
+    }
+    if (!auth.state.isAuthenticated && route.requiresAuth) {
+      return ShoppingLoginRoute(redirectPath: route.location);
+    }
+    return null;
+  }
+}
+```
+
+Route pages import the same entrypoint. They do not import generated files:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:shopping_app/route.dart';
+
+@AppRoute('/cart', name: 'cart', guards: [])
+final class CartScreen extends StatelessWidget {
+  const CartScreen({super.key});
+}
+
+@AppRoute(
+  '/checkout',
+  name: 'checkout',
+  transition: BottomToTopPageTransitionsBuilder(),
+  fullscreenDialog: true,
+)
+final class CheckoutScreen extends StatelessWidget {
+  const CheckoutScreen({super.key});
+}
+
+@AppRoute(
+  '/order-confirmation/:orderId',
+  name: 'orderConfirmation',
+  guards: [],
+  transition: ZoomPageTransitionsBuilder(),
+)
+final class OrderConfirmationScreen extends StatelessWidget {
+  const OrderConfirmationScreen({required this.orderId, super.key});
+
+  final String orderId;
+}
+```
+
+App code also imports only `route.dart`:
+
+```dart
+import 'package:shopping_app/route.dart';
+
+final router = ShoppingRouter(auth: authViewModel);
+
+MaterialApp.router(routerConfig: router.config);
+
+context.navigator.cart().go();
+context.navigator.checkout().push();
+context.navigator
+    .orderConfirmation(orderId: 'ORDER 1/2')
+    .replace();
+```
+
+Call chain for a signed-out checkout deep link:
+
+```text
+browser opens /checkout
+parseShoppingRoute(Uri.parse('/checkout'))
+ShoppingCheckoutRoute()
+ShoppingRouter.redirect(ShoppingCheckoutRoute())
+ShoppingLoginRoute(redirectPath: /checkout)
+Navigator.pages = [/, /login?redirectPath=%2Fcheckout]
+```
+
+Generated files stay under `lib/route/`. The only generated file that
+`route.dart` names directly is `route/routes.g.dart`, which is a generated
+barrel for route paths, navigation helpers, metadata, and runtime glue.
 
 ## Navigation
 
@@ -765,50 +865,3 @@ prefix. Keep diagnostics disabled in normal use.
 The [shopping app](../../examples/shopping_app) demonstrates public and
 protected routes, auth refresh, injected guards, URL round trips, restored deep
 link stacks, transitions, and generated navigation.
-
-## Router DX Task List
-
-Dust routing should stay easy to remember: `@AppRouter` defines the app router,
-and `@AppRoute` defines pages, shells, branches, guards, and transitions.
-
-Current implementation tasks:
-
-- [x] Keep shells as plain widgets passed through `shell: AppShell`.
-- [x] Inherit the nearest parent shell for child paths.
-- [x] Validate local shell widgets expose a required named `Widget child`
-  constructor parameter.
-- [x] Route unawaited navigation failures through `RouterBase.onException`.
-- [x] Pass `RouterBase.observers` to the generated root `Navigator`.
-- [x] Cover shell imports, constructor mistakes, shell inheritance, and shell
-  override behavior in route plugin tests.
-- [x] Cover Dart runtime parser, controller, guard-chain, and stack lifecycle
-  edge cases.
-- [x] Add route diagnostics that print shell, guard, redirect, and branch
-  decisions together. Tracked in
-  [#405](https://github.com/y3l1n4ung/dust/issues/405).
-- [x] Add first-class branch/stateful tab stacks without adding a new
-  annotation. Tracked in
-  [#406](https://github.com/y3l1n4ung/dust/issues/406).
-- [x] Add more web-history tests for back, forward, query, fragment, and
-  protected deep-link restore. Tracked in
-  [#407](https://github.com/y3l1n4ung/dust/issues/407).
-
-Acceptance tests for branch/stateful-tab work:
-
-- A route using `branch: 'mainTabs'` belongs to an independent tab stack.
-- Switching branches preserves each branch stack.
-- Browser deep links restore the selected branch and route stack.
-- `shell:` remains a layout wrapper; `branch:` is the only tab-stack signal.
-- Routes without `branch:` keep today's single-stack Navigator behavior.
-
-Current edge-case test matrix:
-
-| Area | Covered cases |
-| --- | --- |
-| Shell validation | Local shell widget, imported shell, hidden shell import, missing child, positional child, nullable child, and defaulted child. |
-| Shell emission | Inherited parent shell, nearest child shell override, generated page wrapper, and shell metadata consistency. |
-| Runtime parser | Platform URI parsing and route-information restoration with query and fragment values. |
-| Runtime controller | `RouterController.of`, typed `push`/`pop` result flow, and immutable stack snapshots. |
-| Runtime stack | Duplicate route page keys, same-location replace key preservation, pushed-route completion on replace/go, ignored root pop, branch stack preservation, branch deep-link restore, and browser back/forward branch swaps. |
-| Diagnostics | Route name, effective shell, branch, redirect target, guard type, guard redirect target, and committed stack logs. |
-| Guards | Sync/async guard order, first redirect wins, and sync/async guard exception propagation. |
