@@ -142,6 +142,14 @@ fn parses_route_table_with_root() {
 }
 
 #[test]
+fn parses_route_graph_with_root() {
+    let parsed = parse_cli_args(["route", "graph", "--root", "/tmp/work"]).unwrap();
+
+    assert_eq!(parsed.command, CliCommand::RouteGraph);
+    assert_eq!(parsed.options.root, Some(PathBuf::from("/tmp/work")));
+}
+
+#[test]
 fn parses_upgrade_check() {
     let parsed = parse_cli_args(["upgrade", "--check"]).unwrap();
 

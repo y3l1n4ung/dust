@@ -955,6 +955,34 @@ Use `--root` from monorepos or scripts:
 dust route table --root examples/shopping_app
 ```
 
+## Route Graph
+
+Run `dust route graph` when you want parent-child route relationships in a
+stable Markdown table:
+
+```bash
+dust route graph
+```
+
+The command is read-only. It prints each route path, nearest parent route path,
+route name, page type, effective shell, effective branch, and direct guards:
+
+```text
+route graph  scanned: 53  routes: 16  time: 206ms
+path | parent | name | page | shell | branch | guards
+--- | --- | --- | --- | --- | --- | ---
+/ | - | products | ProductsScreen | - | - | -
+/admin | / | admin | AdminDashboardScreen | - | - | AdminGuard
+/products/:id | / | productDetail | ProductDetailScreen | - | - | -
+/support/chat | / | supportChat | SupportChatScreen | - | - | -
+```
+
+Use `--root` from monorepos or scripts:
+
+```bash
+dust route graph --root examples/shopping_app
+```
+
 ## Diagnostics
 
 Enable runtime logs while debugging parsing, redirects, guards, and stack
