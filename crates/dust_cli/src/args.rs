@@ -21,6 +21,8 @@ pub enum CliCommand {
     DbBuild,
     /// Report workspace and plugin readiness.
     Doctor,
+    /// Print generated route inspection output.
+    RouteTable,
     /// Reconcile scanned i18n keys into ARB assets.
     I18nBuild,
     /// Validate ARB assets against static i18n keys.
@@ -125,6 +127,8 @@ enum RawCommand {
     Db(DbCommandOptions),
     /// i18n utilities.
     I18n(I18nCommandOptions),
+    /// Route inspection utilities.
+    Route(RouteCommandOptions),
     /// Run initial build and then watch for changes.
     Watch(WatchOptions),
     /// Update the installed Dust CLI binary from GitHub release artifacts.
@@ -196,6 +200,21 @@ enum I18nCommand {
     Check(RootOptions),
     /// Scan static translation API calls.
     Scan(RootOptions),
+}
+
+/// Options for the `route` command group.
+#[derive(Debug, Clone, PartialEq, Eq, Args)]
+struct RouteCommandOptions {
+    /// Selected route subcommand.
+    #[command(subcommand)]
+    command: RouteCommand,
+}
+
+/// Route inspection subcommands parsed by Clap.
+#[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
+enum RouteCommand {
+    /// Print a generated route table.
+    Table(RootOptions),
 }
 
 /// Options accepted by the writing i18n build command.
@@ -297,6 +316,7 @@ impl From<RawCommand> for ParsedCli {
             RawCommand::Db(options) => options.into(),
             RawCommand::Doctor(options) => ParsedCli::new(CliCommand::Doctor, options),
             RawCommand::I18n(options) => options.into(),
+            RawCommand::Route(options) => options.into(),
             RawCommand::Watch(options) => ParsedCli::new(CliCommand::Watch, options),
             RawCommand::Upgrade(options) => ParsedCli::new(CliCommand::Upgrade, options),
         }
@@ -317,6 +337,14 @@ impl From<I18nCommandOptions> for ParsedCli {
             I18nCommand::Build(options) => ParsedCli::new(CliCommand::I18nBuild, options),
             I18nCommand::Check(options) => ParsedCli::new(CliCommand::I18nCheck, options),
             I18nCommand::Scan(options) => ParsedCli::new(CliCommand::I18nScan, options),
+        }
+    }
+}
+
+impl From<RouteCommandOptions> for ParsedCli {
+    fn from(value: RouteCommandOptions) -> Self {
+        match value.command {
+            RouteCommand::Table(options) => ParsedCli::new(CliCommand::RouteTable, options),
         }
     }
 }

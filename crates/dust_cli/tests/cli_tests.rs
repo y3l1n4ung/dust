@@ -20,3 +20,6 @@ mod i18n;
 
 #[path = "cli_tests/lifecycle.rs"]
 mod lifecycle;
+
+#[path = "cli_tests/route.rs"]
+mod route;

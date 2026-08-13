@@ -258,6 +258,34 @@ pub struct WatchReport {
     pub rebuilt_libraries: Vec<PathBuf>,
 }
 
+/// Route table inspection report.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct RouteTableReport {
+    /// Number of Dart source libraries scanned.
+    pub scanned_files: usize,
+    /// Deterministic route table rows.
+    pub routes: Vec<RouteTableRow>,
+}
+
+/// One route table row.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RouteTableRow {
+    /// Effective route name.
+    pub name: String,
+    /// Absolute route path.
+    pub path: String,
+    /// Flutter page class.
+    pub page: String,
+    /// Effective shell widget class, or absent.
+    pub shell: Option<String>,
+    /// Effective branch name, or absent.
+    pub branch: Option<String>,
+    /// Guard class names applied directly to this route.
+    pub guards: Vec<String>,
+    /// Route push result type.
+    pub result_type: String,
+}
+
 /// The structured result returned by the Dust driver.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CommandResult {
@@ -277,6 +305,8 @@ pub struct CommandResult {
     pub i18n_check: Option<I18nCheckReport>,
     /// An optional doctor report.
     pub doctor: Option<DoctorReport>,
+    /// An optional route table report.
+    pub route_table: Option<RouteTableReport>,
     /// An optional clean report.
     pub clean: Option<CleanReport>,
     /// An optional watch report.

@@ -46,6 +46,13 @@ pub struct DoctorRequest {
     pub cwd: PathBuf,
 }
 
+/// One route table inspection request.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RouteTableRequest {
+    /// The working directory used to discover the Dart workspace.
+    pub cwd: PathBuf,
+}
+
 /// One i18n scan request.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct I18nScanRequest {
@@ -108,6 +115,8 @@ pub enum CommandRequest {
     Check(CheckRequest),
     /// Report workspace and plugin readiness.
     Doctor(DoctorRequest),
+    /// Print the generated app route table.
+    RouteTable(RouteTableRequest),
     /// Reconcile scanned i18n keys into ARB assets.
     I18nBuild(I18nBuildRequest),
     /// Validate configured i18n ARB assets without writing files.

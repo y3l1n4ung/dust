@@ -928,6 +928,33 @@ final class RootRouter extends $RootRouter {
 }
 ```
 
+## Route Table
+
+Run `dust route table` when you want a quick reviewable map of the generated
+router without opening generated internals:
+
+```bash
+dust route table
+```
+
+The command is read-only. It prints each route's name, path, page type,
+effective shell, effective branch, guards, and result type:
+
+```text
+route table  scanned: 53  routes: 16  time: 206ms
+name | path | page | shell | branch | guards | result
+--- | --- | --- | --- | --- | --- | ---
+products | / | ProductsScreen | - | - | - | void
+admin | /admin | AdminDashboardScreen | - | - | AdminGuard | void
+supportChat | /support/chat | SupportChatScreen | - | - | - | bool
+```
+
+Use `--root` from monorepos or scripts:
+
+```bash
+dust route table --root examples/shopping_app
+```
+
 ## Diagnostics
 
 Enable runtime logs while debugging parsing, redirects, guards, and stack

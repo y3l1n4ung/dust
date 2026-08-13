@@ -40,6 +40,8 @@ mod progress;
 mod request;
 /// Public command result model.
 mod result;
+/// Route inspection command support.
+mod route_table;
 /// Watch command orchestration and change snapshots.
 mod watch;
 
@@ -56,13 +58,14 @@ pub use i18n_scan::run_i18n_scan;
 pub use progress::{ProgressEvent, ProgressPhase};
 pub use request::{
     BuildRequest, CheckRequest, CleanRequest, CommandRequest, DbRequestOptions, DoctorRequest,
-    I18nBuildRequest, I18nCheckRequest, I18nScanRequest, WatchRequest,
+    I18nBuildRequest, I18nCheckRequest, I18nScanRequest, RouteTableRequest, WatchRequest,
 };
 pub use result::{
     BuildArtifact, CacheReport, CheckedLibrary, CleanReport, CommandResult, DiagnosticFile,
     DoctorPackageCompatibility, DoctorPackageCompatibilityStatus, DoctorReport, I18nBuildReport,
-    I18nCheckReport, I18nScanEntry, I18nScanReport, WatchReport,
+    I18nCheckReport, I18nScanEntry, I18nScanReport, RouteTableReport, RouteTableRow, WatchReport,
 };
+pub use route_table::run_route_table;
 pub use watch::{run_watch, run_watch_with_progress};
 
 /// Runs one driver command request.
@@ -72,6 +75,7 @@ pub fn run(request: CommandRequest) -> CommandResult {
         CommandRequest::Clean(request) => run_clean(request),
         CommandRequest::Check(request) => run_check(request),
         CommandRequest::Doctor(request) => run_doctor(request),
+        CommandRequest::RouteTable(request) => run_route_table(request),
         CommandRequest::I18nBuild(request) => run_i18n_build(request),
         CommandRequest::I18nCheck(request) => run_i18n_check(request),
         CommandRequest::I18nScan(request) => run_i18n_scan(request),
