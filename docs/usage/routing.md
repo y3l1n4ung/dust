@@ -647,6 +647,63 @@ that the page does not model directly.
 > `location`. This catches decoding and round-trip regressions before testing a
 > full platform deep-link flow.
 
+### RouteInformation Override
+
+Override `parseRouteInformation` when platform links need app-level
+normalization before generated route matching. The method uses Flutter's own
+`RouteInformation` type, so app code can keep browser history state while
+rewriting the incoming URI:
+
+```dart
+import 'package:flutter/widgets.dart' show RouteInformation;
+
+@AppRouter(initial: '/', notFound: '/404')
+final class RootRouter extends RootRouterBase {
+  @override
+  RouteInformation parseRouteInformation(RouteInformation information) {
+    final uri = information.uri;
+
+    if (uri.host == 'old.example' &&
+        uri.pathSegments.length == 2 &&
+        uri.pathSegments[0] == 'item') {
+      return RouteInformation(
+        uri: Uri(pathSegments: ['products', uri.pathSegments[1]]),
+        state: information.state,
+      );
+    }
+
+    if (uri.hasAuthority && uri.host != 'shop.example') {
+      return RouteInformation(
+        uri: Uri(path: '/404', queryParameters: {'path': uri.toString()}),
+        state: information.state,
+      );
+    }
+
+    if (uri.path.startsWith('/app/')) {
+      return RouteInformation(
+        uri: uri.replace(path: uri.path.substring('/app'.length)),
+        state: information.state,
+      );
+    }
+
+    return information;
+  }
+}
+```
+
+Common recipes:
+
+| Incoming URL | Override result | Generated typed route |
+| --- | --- | --- |
+| `https://shop.example/app/products/42?tab=reviews#details` | `/products/42?tab=reviews#details` | `ProductRoute(id: 42, tab: 'reviews')` |
+| `https://old.example/item/42` | `/products/42` | `ProductRoute(id: 42)` |
+| `https://evil.test/products/42` | `/404?path=https%3A%2F%2Fevil.test%2Fproducts%2F42` | `NotFoundRoute(...)` |
+
+Use this hook for host allow-listing, subdirectory deploy prefixes, legacy URL
+migrations, invite-link normalization, and other routing decisions that should
+happen before typed route parsing. Use `redirect` for auth and app-state
+decisions after a typed route exists.
+
 ## Redirects and Authentication
 
 Routes are protected by default. Add `guards: []` when a route must be public:

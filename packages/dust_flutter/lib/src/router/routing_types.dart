@@ -66,6 +66,15 @@ abstract class RouterBase<T extends Object> {
   /// Whether generated routing should print runtime diagnostics.
   bool get debugLogDiagnostics => false;
 
+  /// Normalizes incoming route information before generated route matching.
+  ///
+  /// Override this to map host-specific, prefixed, or legacy URLs into the
+  /// app's typed route space while preserving Flutter's [RouteInformation]
+  /// shape.
+  RouteInformation parseRouteInformation(RouteInformation information) {
+    return information;
+  }
+
   /// Returns a replacement route before guards run, or `null` to continue.
   T? redirect(T route) => null;
 

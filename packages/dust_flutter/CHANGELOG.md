@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Add `RouterBase.observers` for forwarding `NavigatorObserver` instances to
   generated routers.
 - Add `RouterBase.onException` for unawaited generated navigation failures.
+- Add `RouterBase.parseRouteInformation` for normalizing Flutter
+  `RouteInformation` before generated route matching.
 - Add shared generated-route runtime helpers for URL construction, URI extras,
   bool parsing, shell checks, and no-transition pages.
 

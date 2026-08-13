@@ -216,6 +216,7 @@ abstract class BenchmarkRouterBase extends RouterBase<BenchmarkRoutePath> {
         ),
       ),
       routeInformationParser: GeneratedRouteInformationParser<BenchmarkRoutePath>(
+        router: this,
         parseRoute: parseBenchmarkRoute,
         routeLocation: benchmarkRouteLocation,
       ),
