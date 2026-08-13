@@ -43,7 +43,8 @@ const List<GeneratedRoute> $testRoutes = [
             resultType: 'void',
             shell: AppShell,
           ),
-        ],      ),
+        ],
+      ),
     ],
   ),
 ];

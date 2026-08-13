@@ -222,6 +222,11 @@ fn render_generated_route(
         fields.push(format!("{}  maintainState: false,\n", indent_str(indent)));
     }
     let children = render_generated_children_with_prefix(children, spec, indent, false);
+    let children = if children.is_empty() {
+        children
+    } else {
+        format!("{children}\n")
+    };
     render_template(
         "generated_route",
         include_str!("templates/generated_route.jinja"),

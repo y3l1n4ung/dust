@@ -33,7 +33,8 @@ const List<GeneratedRoute> $testRoutes = [
         resultType: 'void',
         shell: OrdersShell,
       ),
-    ],  ),
+    ],
+  ),
 ];
 
 bool testRouteRequiresAuth(TestRoutePath route) => route.requiresAuth;

@@ -91,6 +91,39 @@ void main() {
     expect(router.seenStates.every((seen) => identical(seen, state)), isTrue);
   });
 
+  test('normalizes web and mobile deep links into the same app route',
+      () async {
+    final parser = GeneratedRouteInformationParser<_Route>(
+      router: _ShoppingLinkRouter(),
+      parseRoute: (uri) => _Route(_appLocation(uri)),
+      routeLocation: (route) => route.location,
+    );
+
+    final webRoute = await parser.parseRouteInformation(
+      RouteInformation(
+        uri: Uri.parse(
+          'https://shop.example/app/products/42?tab=reviews#details',
+        ),
+      ),
+    );
+    final universalLinkRoute = await parser.parseRouteInformation(
+      RouteInformation(
+        uri: Uri.parse(
+          'https://shop.example/products/42?tab=reviews#details',
+        ),
+      ),
+    );
+    final appLinkRoute = await parser.parseRouteInformation(
+      RouteInformation(
+        uri: Uri.parse('shopping:///products/42?tab=reviews#details'),
+      ),
+    );
+
+    expect(webRoute.location, '/products/42?tab=reviews#details');
+    expect(universalLinkRoute.location, '/products/42?tab=reviews#details');
+    expect(appLinkRoute.location, '/products/42?tab=reviews#details');
+  });
+
   test('restores typed route information from generated locations', () {
     final parser = GeneratedRouteInformationParser<_Route>(
       parseRoute: _Route.fromUri,
@@ -151,5 +184,28 @@ final class _PrefixRouter extends RouterBase<_Route> {
       uri: uri.replace(path: uri.path.substring('/app'.length)),
       state: information.state,
     );
+  }
+}
+
+final class _ShoppingLinkRouter extends RouterBase<_Route> {
+  @override
+  RouteInformation parseRouteInformation(RouteInformation information) {
+    final uri = information.uri;
+    if (uri.scheme == 'shopping') {
+      return RouteInformation(
+        uri: Uri(path: uri.path, query: uri.query, fragment: uri.fragment),
+        state: information.state,
+      );
+    }
+    if (uri.hasAuthority && uri.host == 'shop.example') {
+      final path = uri.path.startsWith('/app/')
+          ? uri.path.substring('/app'.length)
+          : uri.path;
+      return RouteInformation(
+        uri: Uri(path: path, query: uri.query, fragment: uri.fragment),
+        state: information.state,
+      );
+    }
+    return information;
   }
 }

@@ -1,8 +1,8 @@
 use dust_ir::TypeIr;
 
 use crate::support::{
-    constructor_param, defaulted_param_source, enum_type, library_with_classes_and_enums,
-    route_page_class, router_class,
+    constructor_param, defaulted_param_source, enum_type, guard_class, library_with_classes,
+    library_with_classes_and_enums, route_page_class, router_class, shell_class,
 };
 
 use super::support::{assert_route_snapshot, generate_route_output, route_outputs_snapshot};
@@ -65,4 +65,39 @@ fn emits_url_parser_edge_case_matrix() {
     let output = route_outputs_snapshot(&contribution);
 
     assert_route_snapshot("url_parser_edge_case_matrix.dart.snapshot", &output);
+}
+
+#[test]
+fn emits_shell_branch_guard_result_edge_case_matrix() {
+    let library = library_with_classes(vec![
+        router_class("(initial: '/shop', notFound: '/404')"),
+        route_page_class(
+            "ShopPage",
+            "('/shop', name: 'shop', shell: ShopShell, branch: 'shopTabs')",
+            Vec::new(),
+        ),
+        route_page_class(
+            "CartPage",
+            "('/shop/cart', name: 'cart', guards: [CartGuard])",
+            Vec::new(),
+        ),
+        route_page_class(
+            "CheckoutPage",
+            "('/shop/checkout', name: 'checkout', result: bool, guards: [CartGuard], fullscreenDialog: true)",
+            Vec::new(),
+        ),
+        shell_class(
+            "ShopShell",
+            vec![constructor_param("child", TypeIr::named("Widget"))],
+        ),
+        guard_class("CartGuard", Vec::new()),
+    ]);
+
+    let contribution = generate_route_output(&library);
+    let output = route_outputs_snapshot(&contribution);
+
+    assert_route_snapshot(
+        "shell_branch_guard_result_edge_matrix.dart.snapshot",
+        &output,
+    );
 }
