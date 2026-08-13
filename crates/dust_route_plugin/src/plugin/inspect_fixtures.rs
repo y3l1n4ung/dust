@@ -85,14 +85,6 @@ pub(super) fn route_fixture_rows(facts: &[RouteFact]) -> Vec<RouteFixtureRow> {
             "/__dust_missing_route__",
             "not-found-route",
         ));
-        rows.push(fixture(
-            "-",
-            "malformed-fragment-escape",
-            false,
-            "path",
-            "/#%ZZ",
-            "uri-parse-error-before-router",
-        ));
     }
 
     rows

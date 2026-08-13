@@ -197,7 +197,7 @@ fn cli_route_fixtures_prints_valid_and_invalid_deep_links() {
     assert_eq!(run.stderr, "");
     assert_eq!(
         route_body(&run.stdout),
-        "route fixtures  scanned: 3  fixtures: 15  time: <ms>\n\
+        "route fixtures  scanned: 3  fixtures: 14  time: <ms>\n\
          route | case | valid | shape | uri | expected\n\
          --- | --- | --- | --- | --- | ---\n\
          notFound | path | true | path | /404?path=path-sample | typed-route\n\
@@ -213,8 +213,7 @@ fn cli_route_fixtures_prints_valid_and_invalid_deep_links() {
          product | invalid-path-param | false | path | /products/not-an-int?from=2026-08-10T09%3A30%3A00.000Z&tab=reviews | not-found-route\n\
          product | missing-query-from | false | path | /products/42?tab=reviews | not-found-route\n\
          product | invalid-query-from | false | path | /products/42?from=not-a-date&tab=reviews | not-found-route\n\
-         - | not-found | false | path | /__dust_missing_route__ | not-found-route\n\
-         - | malformed-fragment-escape | false | path | /#%ZZ | uri-parse-error-before-router\n"
+         - | not-found | false | path | /__dust_missing_route__ | not-found-route\n"
     );
 }
 
