@@ -25,6 +25,28 @@ void main() {
       );
     });
 
+    test('preserves repeated unknown query values beside repeated route values',
+        () {
+      final route = Object();
+      final uri = Uri.parse(
+        '/filters?tag=sale&tag=new&utm=mail&utm=app#results',
+      );
+
+      final preserved = withGeneratedRouteUriExtras(route, uri, const {'tag'});
+
+      expect(identical(preserved, route), isTrue);
+      expect(
+        generatedRoutePath(
+          ['filters'],
+          queryParameters: {
+            'tag': ['sale', 'new'],
+          },
+          uriExtras: generatedRouteUriExtrasOf(route),
+        ),
+        '/filters?tag=sale&tag=new&utm=mail&utm=app#results',
+      );
+    });
+
     test('does not store route extras when URI has no unknown values', () {
       final route = Object();
 

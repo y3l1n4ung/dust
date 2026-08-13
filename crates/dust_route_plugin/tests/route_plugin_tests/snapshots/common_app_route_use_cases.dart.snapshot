@@ -45,7 +45,8 @@ const List<GeneratedRoute> $testRoutes = [
         shell: AppShell,
         branch: testBranchMainTabs,
       ),
-    ],  ),
+    ],
+  ),
   GeneratedRoute(
     '/invite',
     routes: [
@@ -110,7 +111,8 @@ const List<GeneratedRoute> $testRoutes = [
         resultType: 'void',
         shell: SetupShell,
       ),
-    ],  ),
+    ],
+  ),
 ];
 
 bool testRouteRequiresAuth(TestRoutePath route) => route.requiresAuth;

@@ -104,7 +104,8 @@ const List<GeneratedRoute> $shoppingRoutes = [
         name: 'orderDetail',
         resultType: 'void',
       ),
-    ],  ),
+    ],
+  ),
   GeneratedRoute(
     '/product',
     routes: [

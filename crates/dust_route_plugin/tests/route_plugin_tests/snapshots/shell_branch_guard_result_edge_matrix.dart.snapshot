@@ -11,14 +11,9 @@ import 'package:dust_flutter/route.dart';
 import 'paths.g.dart';
 import '../route.dart';
 
+const String testBranchShopTabs = 'shopTabs';
+
 const List<GeneratedRoute> $testRoutes = [
-  GeneratedRoute(
-    '/',
-    page: HomePage,
-    name: 'home',
-    resultType: 'void',
-    guards: [],
-  ),
   GeneratedRoute(
     '/404',
     page: NotFoundPage,
@@ -27,17 +22,31 @@ const List<GeneratedRoute> $testRoutes = [
     guards: [],
   ),
   GeneratedRoute(
-    '/workspace',
-    page: WorkspacePage,
-    name: 'workspace',
+    '/shop',
+    page: ShopPage,
+    name: 'shop',
     resultType: 'void',
-    guards: [AuthGuard],
+    shell: ShopShell,
+    branch: testBranchShopTabs,
     routes: [
       GeneratedRoute(
-        'details',
-        page: WorkspaceDetailsPage,
-        name: 'workspaceDetails',
+        'cart',
+        page: CartPage,
+        name: 'cart',
         resultType: 'void',
+        shell: ShopShell,
+        branch: testBranchShopTabs,
+        guards: [CartGuard],
+      ),
+      GeneratedRoute(
+        'checkout',
+        page: CheckoutPage,
+        name: 'checkout',
+        resultType: 'bool',
+        shell: ShopShell,
+        branch: testBranchShopTabs,
+        guards: [CartGuard],
+        fullscreenDialog: true,
       ),
     ],
   ),
@@ -47,16 +56,19 @@ bool testRouteRequiresAuth(TestRoutePath route) => route.requiresAuth;
 
 String? testRouteBranch(TestRoutePath route) {
   return switch (route) {
+    TestShopRoute() => testBranchShopTabs,
+    TestCartRoute() => testBranchShopTabs,
+    TestCheckoutRoute() => testBranchShopTabs,
     _ => null,
   };
 }
 
 RouteDebugInfo testRouteDebugInfo(TestRoutePath route) {
   return switch (route) {
-    TestHomeRoute() => const RouteDebugInfo(name: 'home', shell: null, branch: null, resultType: 'void'),
     TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
-    TestWorkspaceRoute() => const RouteDebugInfo(name: 'workspace', shell: null, branch: null, resultType: 'void'),
-    TestWorkspaceDetailsRoute() => const RouteDebugInfo(name: 'workspaceDetails', shell: null, branch: null, resultType: 'void'),
+    TestShopRoute() => const RouteDebugInfo(name: 'shop', shell: 'ShopShell', branch: testBranchShopTabs, resultType: 'void'),
+    TestCartRoute() => const RouteDebugInfo(name: 'cart', shell: 'ShopShell', branch: testBranchShopTabs, resultType: 'void'),
+    TestCheckoutRoute() => const RouteDebugInfo(name: 'checkout', shell: 'ShopShell', branch: testBranchShopTabs, resultType: 'bool'),
   };
 }
 
@@ -65,7 +77,8 @@ List<Object> testRouteGuards(
   Object router,
 ) {
   return switch (route) {
-    TestWorkspaceRoute() => [AuthGuard()],
+    TestCartRoute() => [CartGuard()],
+    TestCheckoutRoute() => [CartGuard()],
     _ => const [],
   };
 }
@@ -92,16 +105,15 @@ final class TestRoutesNavigator {
 
   final RouterController<TestRoutePath> _router;
 
-  TestRouteAction<void> home() => TestRouteAction(_router, TestHomeRoute());
-
   TestRouteAction<void> notFound({String path = ''}) =>
       TestRouteAction(_router, TestNotFoundRoute(path: path));
 
-  TestRouteAction<void> workspace() =>
-      TestRouteAction(_router, TestWorkspaceRoute());
+  TestRouteAction<void> shop() => TestRouteAction(_router, TestShopRoute());
 
-  TestRouteAction<void> workspaceDetails() =>
-      TestRouteAction(_router, TestWorkspaceDetailsRoute());
+  TestRouteAction<void> cart() => TestRouteAction(_router, TestCartRoute());
+
+  TestRouteAction<bool> checkout() =>
+      TestRouteAction(_router, TestCheckoutRoute());
 
   bool pop<R>([R? result]) => _router.pop<R>(result);
 }
@@ -136,22 +148,6 @@ sealed class TestRoutePath<R> {
   bool get requiresAuth => true;
 }
 
-/// Typed route data for `TestHomeRoute`.
-final class TestHomeRoute extends TestRoutePath<void> {
-  const TestHomeRoute();
-
-  @override
-  String get location {
-    return generatedRoutePath(
-      const [],
-      uriExtras: generatedRouteUriExtrasOf(this),
-    );
-  }
-
-  @override
-  bool get requiresAuth => false;
-}
-
 /// Typed route data for `TestNotFoundRoute`.
 final class TestNotFoundRoute extends TestRoutePath<void> {
   const TestNotFoundRoute({this.path = ''});
@@ -171,27 +167,40 @@ final class TestNotFoundRoute extends TestRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `TestWorkspaceRoute`.
-final class TestWorkspaceRoute extends TestRoutePath<void> {
-  const TestWorkspaceRoute();
+/// Typed route data for `TestShopRoute`.
+final class TestShopRoute extends TestRoutePath<void> {
+  const TestShopRoute();
 
   @override
   String get location {
     return generatedRoutePath(
-      ['workspace'],
+      ['shop'],
       uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 }
 
-/// Typed route data for `TestWorkspaceDetailsRoute`.
-final class TestWorkspaceDetailsRoute extends TestRoutePath<void> {
-  const TestWorkspaceDetailsRoute();
+/// Typed route data for `TestCartRoute`.
+final class TestCartRoute extends TestRoutePath<void> {
+  const TestCartRoute();
 
   @override
   String get location {
     return generatedRoutePath(
-      ['workspace', 'details'],
+      ['shop', 'cart'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
+  }
+}
+
+/// Typed route data for `TestCheckoutRoute`.
+final class TestCheckoutRoute extends TestRoutePath<bool> {
+  const TestCheckoutRoute();
+
+  @override
+  String get location {
+    return generatedRoutePath(
+      ['shop', 'checkout'],
       uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
@@ -202,24 +211,20 @@ String testRouteLocation(TestRoutePath route) => route.location;
 TestRoutePath parseTestRoute(Uri uri) {
   final segments = uri.pathSegments;
 
-  if (segments.isEmpty) {
-    final route = TestHomeRoute();
-    return withGeneratedRouteUriExtras(route, uri, const <String>{});
-  }
   if (segments.length == 1 && segments[0] == '404') {
     final route = TestNotFoundRoute(path: uri.queryParameters['path'] ?? '');
     return withGeneratedRouteUriExtras(route, uri, const {'path'});
   }
-  if (segments.length == 1 && segments[0] == 'workspace') {
-    final route = TestWorkspaceRoute();
+  if (segments.length == 1 && segments[0] == 'shop') {
+    final route = TestShopRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
-  if (
-    segments.length == 2 &&
-    segments[0] == 'workspace' &&
-    segments[1] == 'details'
-  ) {
-    final route = TestWorkspaceDetailsRoute();
+  if (segments.length == 2 && segments[0] == 'shop' && segments[1] == 'cart') {
+    final route = TestCartRoute();
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
+  }
+  if (segments.length == 2 && segments[0] == 'shop' && segments[1] == 'checkout') {
+    final route = TestCheckoutRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   return _$notFoundRoute(uri);
@@ -260,7 +265,7 @@ abstract class TestRouterBase extends RouterBase<TestRoutePath> {
   RouterConfig<TestRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<TestRoutePath>(
       router: this,
-      initialRoute: const TestHomeRoute(),
+      initialRoute: const TestShopRoute(),
       parseRoute: parseTestRoute,
       routeLocation: testRouteLocation,
       requiresAuth: testRouteRequiresAuth,
@@ -293,30 +298,28 @@ abstract class TestRouterBase extends RouterBase<TestRoutePath> {
 
 RouteStack<TestRoutePath> restoreTestRouteStack(TestRoutePath route) {
   return switch (route) {
-    TestHomeRoute() => [
-      route,
-    ],
     TestNotFoundRoute(path: _) => [
-      const TestHomeRoute(),
       route,
     ],
-    TestWorkspaceRoute() => [
-      const TestHomeRoute(),
+    TestShopRoute() => [
       route,
     ],
-    TestWorkspaceDetailsRoute() => [
-      const TestHomeRoute(),
-      const TestWorkspaceRoute(),
+    TestCartRoute() => [
+      const TestShopRoute(),
+      route,
+    ],
+    TestCheckoutRoute() => [
+      const TestShopRoute(),
       route,
     ],
   };
 }
 
 const Map<Type, Type?> _$appliedShellsByPage = {
-  HomePage: null,
   NotFoundPage: null,
-  WorkspacePage: null,
-  WorkspaceDetailsPage: null,
+  ShopPage: ShopShell,
+  CartPage: ShopShell,
+  CheckoutPage: ShopShell,
 };
 
 Page<dynamic> buildTestRoutePage(
@@ -329,15 +332,6 @@ Page<dynamic> buildTestRoutePage(
     'Shell mismatch between \$testRoutes and buildTestRoutePage',
   );
   return switch (route) {
-    TestHomeRoute() => generatedPage(
-      key: key,
-      location: route.location,
-      name: 'home',
-      onPopInvoked: onPopInvoked,
-      fullscreenDialog: false,
-      maintainState: true,
-      child: const HomePage(),
-    ),
     TestNotFoundRoute(path: final path) => generatedPage(
       key: key,
       location: route.location,
@@ -347,23 +341,32 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: NotFoundPage(path: path),
     ),
-    TestWorkspaceRoute() => generatedPage(
+    TestShopRoute() => generatedPage(
       key: key,
       location: route.location,
-      name: 'workspace',
+      name: 'shop',
       onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
-      child: const WorkspacePage(),
+      child: ShopShell(child: const ShopPage()),
     ),
-    TestWorkspaceDetailsRoute() => generatedPage(
+    TestCartRoute() => generatedPage(
       key: key,
       location: route.location,
-      name: 'workspaceDetails',
+      name: 'cart',
       onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
-      child: const WorkspaceDetailsPage(),
+      child: ShopShell(child: const CartPage()),
+    ),
+    TestCheckoutRoute() => generatedPage(
+      key: key,
+      location: route.location,
+      name: 'checkout',
+      onPopInvoked: onPopInvoked,
+      fullscreenDialog: true,
+      maintainState: true,
+      child: ShopShell(child: const CheckoutPage()),
     ),
   };
 }
