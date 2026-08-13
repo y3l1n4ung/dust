@@ -482,6 +482,10 @@ void main() {
 Your web server must rewrite unknown app paths to `index.html`, otherwise a
 browser refresh on `/products/42` can miss the Flutter app entirely.
 
+For host-specific rewrite examples, subdirectory deploys, and deployment
+verification steps, see the
+[router web URL deployment guide](./routing-web-deployment.md).
+
 ### Picker Or Dialog Route With Result
 
 ```dart
