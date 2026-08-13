@@ -3,28 +3,57 @@ use std::path::Path;
 
 use dust_ir::DartFileIr;
 
-use crate::plugin::model::{RouteImport, RouterSpec};
+use crate::plugin::model::{RouteImport, RouteSpec, RouterSpec};
 
 use super::formatting::package_import_uri;
 
-/// Renders imports required by generated route metadata and runtime files.
-pub(super) fn render_route_imports(library: &DartFileIr, spec: &RouterSpec) -> String {
+/// Selects which generated route file dependencies should be imported.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum RouteImportKind {
+    /// Imports used by route metadata.
+    Metadata,
+    /// Imports used by page-building runtime code.
+    Runtime,
+    /// Imports used by typed route data and navigation helper signatures.
+    RouteTypes,
+}
+
+/// Renders imports required by one generated route file family.
+pub(super) fn render_route_imports(
+    library: &DartFileIr,
+    spec: &RouterSpec,
+    kind: RouteImportKind,
+) -> String {
     let current_import = package_import_uri(library);
     let mut imports = BTreeSet::new();
-    imports.insert(format!(
-        "import '{}';\n",
-        source_import_from_generated_dir(library)
-    ));
+    if matches!(kind, RouteImportKind::Metadata | RouteImportKind::Runtime) {
+        imports.insert(format!(
+            "import '{}';\n",
+            source_import_from_generated_dir(library)
+        ));
+    }
     for route in &spec.routes {
-        if let Some(import) = &route.import_uri
+        if matches!(kind, RouteImportKind::Metadata | RouteImportKind::Runtime)
+            && let Some(import) = &route.import_uri
             && Some(import.as_str()) != current_import.as_deref()
             && !is_internal_route_import(import)
         {
             imports.insert(format!("import '{import}';\n"));
         }
+        let references = route_import_references(route, kind);
+        if matches!(kind, RouteImportKind::RouteTypes)
+            && route.import_uri.is_none()
+            && !references.is_empty()
+        {
+            imports.insert(format!(
+                "import '{}';\n",
+                source_import_from_generated_dir(library)
+            ));
+        }
         for import in &route.imports {
             if Some(import.uri.as_str()) == current_import.as_deref()
                 || is_internal_route_import(&import.uri)
+                || !route_import_is_referenced(import, &references)
             {
                 continue;
             }
@@ -37,6 +66,68 @@ pub(super) fn render_route_imports(library: &DartFileIr, spec: &RouterSpec) -> S
     } else {
         format!("{imports}\n")
     }
+}
+
+/// Symbols from route annotations that may require replaying page-library imports.
+#[derive(Debug, Default)]
+struct RouteImportReferences {
+    /// Import prefixes referenced as `prefix.Symbol`.
+    prefixes: BTreeSet<String>,
+    /// Unprefixed type or constructor identifiers referenced by generated code.
+    names: BTreeSet<String>,
+}
+
+impl RouteImportReferences {
+    /// Returns true when no annotation symbol needs an import from the page library.
+    fn is_empty(&self) -> bool {
+        self.prefixes.is_empty() && self.names.is_empty()
+    }
+}
+
+/// Collects route annotation references for one generated file family.
+fn route_import_references(route: &RouteSpec, kind: RouteImportKind) -> RouteImportReferences {
+    let mut references = RouteImportReferences::default();
+    match kind {
+        RouteImportKind::Metadata => {
+            if let Some(shell) = &route.annotation.shell {
+                collect_expression_references(shell, &mut references);
+            }
+            for guard in &route.annotation.guards {
+                collect_expression_references(guard, &mut references);
+            }
+            if let Some(transition) = &route.annotation.transition {
+                collect_expression_references(transition, &mut references);
+            }
+        }
+        RouteImportKind::Runtime => {
+            if let Some(shell) = &route.annotation.shell {
+                collect_expression_references(shell, &mut references);
+            }
+            if let Some(transition) = &route.annotation.transition {
+                collect_expression_references(transition, &mut references);
+            }
+        }
+        RouteImportKind::RouteTypes => collect_type_references(&route.result_type, &mut references),
+    }
+    references
+}
+
+/// Returns true when a page-library import exposes a generated-code reference.
+fn route_import_is_referenced(import: &RouteImport, references: &RouteImportReferences) -> bool {
+    if let Some(prefix) = &import.prefix {
+        return references.prefixes.contains(prefix);
+    }
+    if references.names.is_empty() {
+        return false;
+    }
+    if !import.show.is_empty() {
+        return import
+            .show
+            .iter()
+            .any(|name| references.names.contains(name) && !import.hide.contains(name));
+    }
+    import_uri_type_name(&import.uri)
+        .is_some_and(|name| references.names.contains(&name) && !import.hide.contains(&name))
 }
 
 /// Returns whether an import is generated by the route plugin itself.
@@ -61,6 +152,91 @@ fn source_import_from_generated_dir(library: &DartFileIr) -> String {
         .and_then(|name| name.to_str())
         .unwrap_or("route.dart");
     format!("../{source_name}")
+}
+
+/// Records type and constructor names that can appear in route annotations.
+fn collect_expression_references(source: &str, references: &mut RouteImportReferences) {
+    let tokens = dart_identifier_tokens(source);
+    for (index, token) in tokens.iter().enumerate() {
+        if tokens.get(index + 1).is_some_and(|next| next == ".") {
+            references.prefixes.insert(token.clone());
+            continue;
+        }
+        if index > 0
+            && tokens
+                .get(index - 1)
+                .is_some_and(|previous| previous == ".")
+        {
+            continue;
+        }
+        if is_public_identifier(token) {
+            references.names.insert(token.clone());
+        }
+    }
+}
+
+/// Records result-type symbols used by generated path and navigator signatures.
+fn collect_type_references(source: &str, references: &mut RouteImportReferences) {
+    if matches!(
+        source,
+        "void" | "bool" | "int" | "double" | "String" | "Object" | "dynamic"
+    ) {
+        return;
+    }
+    collect_expression_references(source, references);
+}
+
+/// Tokenizes enough Dart expression syntax to detect prefixed route references.
+fn dart_identifier_tokens(source: &str) -> Vec<String> {
+    let mut tokens = Vec::new();
+    let mut current = String::new();
+    for ch in source.chars() {
+        if ch == '_' || ch.is_ascii_alphanumeric() {
+            current.push(ch);
+        } else {
+            if !current.is_empty() {
+                tokens.push(std::mem::take(&mut current));
+            }
+            if ch == '.' {
+                tokens.push(".".to_owned());
+            }
+        }
+    }
+    if !current.is_empty() {
+        tokens.push(current);
+    }
+    tokens
+}
+
+/// Keeps constructors and type names while ignoring lower-case values and args.
+fn is_public_identifier(value: &str) -> bool {
+    value
+        .chars()
+        .next()
+        .is_some_and(|ch| ch == '_' || ch.is_ascii_uppercase())
+}
+
+/// Infers a conventional public type name from a Dart import file name.
+fn import_uri_type_name(uri: &str) -> Option<String> {
+    let stem = uri.rsplit('/').next()?.strip_suffix(".dart")?;
+    Some(upper_camel(stem))
+}
+
+/// Converts snake, kebab, and spaced file stems to UpperCamelCase.
+fn upper_camel(value: &str) -> String {
+    value
+        .split(|ch: char| ch == '_' || ch == '-' || ch.is_whitespace())
+        .filter(|part| !part.is_empty())
+        .map(|part| {
+            let mut chars = part.chars();
+            match chars.next() {
+                Some(first) => {
+                    first.to_uppercase().collect::<String>() + &chars.as_str().to_lowercase()
+                }
+                None => String::new(),
+            }
+        })
+        .collect()
 }
 
 /// Renders a Dart import while preserving prefix, deferred, show, and hide clauses.

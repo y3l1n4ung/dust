@@ -8,7 +8,7 @@ use serde::Serialize;
 use crate::plugin::model::RouterSpec;
 
 use super::{
-    imports::render_route_imports,
+    imports::{RouteImportKind, render_route_imports},
     metadata,
     navigation::{render_metadata_helpers, render_navigation_helpers, render_path_helpers},
     page_builder::{render_page_builder, render_shell_consistency_helpers},
@@ -73,7 +73,9 @@ pub(crate) fn render_route_generated_files(
 /// Renders all generated route files before converting to plugin contributions.
 fn route_generated_files(library: &DartFileIr, spec: &RouterSpec) -> Vec<RouteGeneratedFile> {
     let output_dir = route_output_dir(library);
-    let route_imports = render_route_imports(library, spec);
+    let metadata_imports = render_route_imports(library, spec, RouteImportKind::Metadata);
+    let runtime_imports = render_route_imports(library, spec, RouteImportKind::Runtime);
+    let route_type_imports = render_route_imports(library, spec, RouteImportKind::RouteTypes);
     vec![
         RouteGeneratedFile {
             path: output_dir.join("routes.g.dart"),
@@ -81,19 +83,19 @@ fn route_generated_files(library: &DartFileIr, spec: &RouterSpec) -> Vec<RouteGe
         },
         RouteGeneratedFile {
             path: output_dir.join("paths.g.dart"),
-            source: render_paths_file(spec),
+            source: render_paths_file(spec, &route_type_imports),
         },
         RouteGeneratedFile {
             path: output_dir.join("metadata.g.dart"),
-            source: render_metadata_file(spec, &route_imports),
+            source: render_metadata_file(spec, &metadata_imports),
         },
         RouteGeneratedFile {
             path: output_dir.join("navigation.g.dart"),
-            source: render_navigation_file(spec),
+            source: render_navigation_file(spec, &route_type_imports),
         },
         RouteGeneratedFile {
             path: output_dir.join("runtime.g.dart"),
-            source: render_runtime_file(spec, &route_imports),
+            source: render_runtime_file(spec, &runtime_imports),
         },
     ]
 }
@@ -132,12 +134,12 @@ fn route_output_dir(library: &DartFileIr) -> PathBuf {
 }
 
 /// Renders generated route classes, path helpers, and the URI parser.
-fn render_paths_file(spec: &RouterSpec) -> String {
+fn render_paths_file(spec: &RouterSpec, route_imports: &str) -> String {
     let mut body = String::new();
     render_route_classes(&mut body, spec);
     render_path_helpers(&mut body, spec);
     render_parser(&mut body, spec);
-    generated_file("", "", &body)
+    generated_file("", route_imports, &body)
 }
 
 /// Renders route metadata, debug helpers, guard lookup, and route table data.
@@ -158,12 +160,12 @@ fn render_metadata_file(spec: &RouterSpec, route_imports: &str) -> String {
 }
 
 /// Renders BuildContext navigation helpers.
-fn render_navigation_file(spec: &RouterSpec) -> String {
+fn render_navigation_file(spec: &RouterSpec, route_imports: &str) -> String {
     let mut body = String::new();
     render_navigation_helpers(&mut body, spec);
     generated_file(
         "import 'package:flutter/widgets.dart';\nimport 'package:dust_flutter/route.dart';\n\nimport 'paths.g.dart';\n",
-        "",
+        route_imports,
         &body,
     )
 }

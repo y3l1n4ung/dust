@@ -27,6 +27,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Split the router delegate internals into parser, stack, and diagnostics
   helpers while keeping the generated routing API unchanged.
+- Pruned generated router imports so route files keep page imports and directly
+  referenced shell, guard, transition, and result-type imports without leaking
+  unrelated page-library dependencies.
 - Revalidated exposed routes after pop and page removal so guards and redirects
   stay current when session state changes.
 - Raised the supported `dust_flutter` runtime floor to `0.1.4`.
