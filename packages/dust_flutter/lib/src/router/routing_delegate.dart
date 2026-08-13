@@ -150,10 +150,12 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     T requested,
     NavigationMode mode, [
     int guardRedirects = 0,
+    List<String>? guardRedirectChain,
   ]) async {
     if (_disposed) return null;
     final epoch = ++_navigationEpoch;
     var candidate = requested;
+    final guardChain = guardRedirectChain ?? [_debugRoute(requested)];
     _log('${_debugMode(mode)} ${_debugRoute(requested)}');
     _logRouteDetails('route', requested);
 
@@ -161,11 +163,13 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
       throw StateError(
         'Router guard redirects hit the redirect cap ($maxRedirects) '
         'navigating to "${config.routeLocation(requested)}". '
-        'Check for a guard redirect cycle.',
+        'Guard redirect chain: ${guardChain.join(' -> ')}. '
+        'Check guards that return one of these routes repeatedly.',
       );
     }
 
     var redirects = 0;
+    final redirectChain = <String>[_debugRoute(candidate)];
     for (; redirects < maxRedirects; redirects += 1) {
       final redirected = config.router.redirect(candidate);
       if (redirected == null ||
@@ -178,11 +182,14 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
       );
       _logRouteDetails('redirect target', redirected);
       candidate = redirected;
+      redirectChain.add(_debugRoute(candidate));
     }
     if (redirects >= maxRedirects) {
       throw StateError(
         'Router hit the redirect cap ($maxRedirects) navigating to '
-        '"${config.routeLocation(requested)}". Check for a redirect cycle.',
+        '"${config.routeLocation(requested)}". '
+        'Redirect chain: ${redirectChain.join(' -> ')}. '
+        'Check redirect() for a cycle or return null to allow navigation.',
       );
     }
     assert(
@@ -207,7 +214,12 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
             '${_debugRoute(redirected)}',
           );
           _logRouteDetails('guard target', redirected);
-          return _applyRoute(redirected, mode, guardRedirects + 1);
+          return _applyRoute(
+            redirected,
+            mode,
+            guardRedirects + 1,
+            [...guardChain, _debugRoute(redirected)],
+          );
         }
       }
       return _commitRoute(candidate, mode, routes);
@@ -222,7 +234,12 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
         '${_debugRoute(redirected)}',
       );
       _logRouteDetails('guard target', redirected);
-      return _applyRoute(redirected, mode, guardRedirects + 1);
+      return _applyRoute(
+        redirected,
+        mode,
+        guardRedirects + 1,
+        [...guardChain, _debugRoute(redirected)],
+      );
     }
     return _commitRoute(candidate, mode);
   }
@@ -231,10 +248,28 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
     final guards = config.resolveGuards(route);
     if (guards.isEmpty) return null;
     _log('guards ${guards.length} for ${_debugRoute(route)}');
+    return _runGuardChain(route, guards);
+  }
+
+  Future<T?> _runGuardChain(T route, List<Object> guards) async {
     for (final guard in guards) {
       _log('guard ${guard.runtimeType} for ${_debugRoute(route)}');
+      T? redirected;
+      if (guard is RouteGuard<T>) {
+        redirected = guard.canActivate(route);
+      } else if (guard is AsyncRouteGuard<T>) {
+        redirected = await guard.canActivate(route);
+      }
+      if (redirected != null) {
+        _log(
+          'guard ${guard.runtimeType} redirect '
+          '${_debugRoute(route)} => ${_debugRoute(redirected)}',
+        );
+        return redirected;
+      }
+      _log('guard ${guard.runtimeType} allow ${_debugRoute(route)}');
     }
-    return RouteGuardChain<T>(guards).canActivate(route);
+    return null;
   }
 
   _RouteEntry<T> _commitRoute(
