@@ -40,6 +40,265 @@ final class ProductPage extends StatelessWidget {
   }
 }
 
+/// Search route demonstrating nullable and default-valued query parameters.
+@AppRoute('/products', name: 'productSearch', guards: [])
+final class ProductSearchPage extends StatelessWidget {
+  /// Creates a product search page.
+  const ProductSearchPage({
+    this.query,
+    this.page = 1,
+    this.showArchived = false,
+    super.key,
+  });
+
+  /// Search text encoded as a nullable query parameter.
+  final String? query;
+
+  /// Current page encoded as a default-valued query parameter.
+  final int page;
+
+  /// Whether archived products are shown.
+  final bool showArchived;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('Search ${query ?? ''} page $page archived $showArchived');
+  }
+}
+
+/// Fullscreen picker route that returns a selected product id.
+@AppRoute(
+  '/product-picker',
+  name: 'productPicker',
+  result: int,
+  guards: [],
+  transition: BottomToTopPageTransitionsBuilder(),
+  fullscreenDialog: true,
+)
+final class ProductPickerPage extends StatelessWidget {
+  /// Creates the demo product picker page.
+  const ProductPickerPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Pick product');
+  }
+}
+
+/// Public invite route for signed-out magic links.
+@AppRoute('/invite/:code', name: 'invite', guards: [])
+final class InvitePage extends StatelessWidget {
+  /// Creates an invite page.
+  const InvitePage({required this.code, this.team, super.key});
+
+  /// Invite token from the URL path.
+  final String code;
+
+  /// Optional team hint from the query string.
+  final String? team;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('Invite $code ${team ?? ''}');
+  }
+}
+
+/// Organization-scoped detail route with path and query parameters.
+@AppRoute('/orgs/:orgId/projects/:projectId', name: 'orgProject')
+final class OrgProjectPage extends StatelessWidget {
+  /// Creates an organization project page.
+  const OrgProjectPage({
+    required this.orgId,
+    required this.projectId,
+    this.tab,
+    super.key,
+  });
+
+  /// Organization or workspace id from the path.
+  final String orgId;
+
+  /// Project id from the path.
+  final int projectId;
+
+  /// Optional selected tab from the query string.
+  final String? tab;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('Org $orgId project $projectId ${tab ?? ''}');
+  }
+}
+
+/// Shell used by setup flow routes.
+class SetupShell extends StatelessWidget {
+  /// Creates a setup shell.
+  const SetupShell({required this.child, super.key});
+
+  /// Flow step rendered inside the setup shell.
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text('Setup'),
+        Expanded(child: child),
+      ],
+    );
+  }
+}
+
+/// Shareable entry point for a multi-step setup flow.
+@AppRoute('/setup', name: 'setup', guards: [], shell: SetupShell)
+final class SetupPage extends StatelessWidget {
+  /// Creates the setup start page.
+  const SetupPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Find device');
+  }
+}
+
+/// Second setup step that inherits [SetupShell].
+@AppRoute('/setup/connect', name: 'setupConnect')
+final class SetupConnectPage extends StatelessWidget {
+  /// Creates the setup connect page.
+  const SetupConnectPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Connect');
+  }
+}
+
+/// Shared shell widget used by the shell route examples below.
+class DemoShell extends StatelessWidget {
+  /// Creates a demo shell.
+  const DemoShell({required this.child, super.key});
+
+  /// Page rendered inside the shell body.
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text('Demo shell'),
+        Expanded(child: child),
+      ],
+    );
+  }
+}
+
+/// Home route wrapped by [DemoShell].
+@AppRoute('/', name: 'home', shell: DemoShell, guards: [])
+final class HomePage extends StatelessWidget {
+  /// Creates the demo home page.
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Home');
+  }
+}
+
+/// Settings route inherits [DemoShell] from the root shell route.
+@AppRoute('/settings', name: 'settings', guards: [])
+final class SettingsPage extends StatelessWidget {
+  /// Creates the demo settings page.
+  const SettingsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Settings');
+  }
+}
+
+/// Child route that also inherits [DemoShell] from [HomePage].
+@AppRoute('/orders', name: 'orders')
+final class OrdersPage extends StatelessWidget {
+  /// Creates the demo orders page.
+  const OrdersPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Orders');
+  }
+}
+
+/// Tab root route that owns the home branch stack.
+@AppRoute('/tabs/home', name: 'tabHome', shell: DemoShell, branch: 'mainTabs')
+final class TabHomePage extends StatelessWidget {
+  /// Creates the demo home tab page.
+  const TabHomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Home tab');
+  }
+}
+
+/// Child page that inherits the home tab branch.
+@AppRoute('/tabs/home/details', name: 'tabHomeDetails')
+final class TabHomeDetailsPage extends StatelessWidget {
+  /// Creates the demo home tab detail page.
+  const TabHomeDetailsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Home tab details');
+  }
+}
+
+/// Tab root route that owns a separate orders branch stack.
+@AppRoute(
+  '/tabs/orders',
+  name: 'tabOrders',
+  shell: DemoShell,
+  branch: 'ordersTabs',
+)
+final class TabOrdersPage extends StatelessWidget {
+  /// Creates the demo orders tab page.
+  const TabOrdersPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Orders tab');
+  }
+}
+
+/// Shell used when a child subtree needs a more specific layout.
+class ReportsShell extends StatelessWidget {
+  /// Creates a reports shell.
+  const ReportsShell({required this.child, super.key});
+
+  /// Page rendered inside the reports shell.
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text('Reports shell'),
+        Expanded(child: child),
+      ],
+    );
+  }
+}
+
+/// Child route overriding the inherited shell with [ReportsShell].
+@AppRoute('/reports', name: 'reports', shell: ReportsShell)
+final class ReportsPage extends StatelessWidget {
+  /// Creates the demo reports page.
+  const ReportsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Reports');
+  }
+}
+
 /// Renders an async lifecycle state produced by generated async ViewModels.
 Widget renderProducts(AsyncState<List<String>> state) {
   return switch (state) {

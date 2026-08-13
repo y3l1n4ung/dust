@@ -9,14 +9,14 @@ import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
 
-abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
+abstract class $TestRouter extends RouterBase<AppRoutePath> {
 
   late final RouterConfig<AppRoutePath> config = _buildConfig();
 
   RouterConfig<AppRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
-      initialRoute: const DashboardRoute(),
+      initialRoute: const HomeRoute(),
       parseRoute: parseAppRoute,
       routeLocation: routeLocation,
       requiresAuth: routeRequiresAuth,
@@ -49,9 +49,9 @@ abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
 const List<GeneratedRoute> $appRoutes = [
   GeneratedRoute(
     '/',
-    page: DashboardPage,
-    name: 'dashboard',
-    guards: [BenchmarkGuard],
+    page: HomePage,
+    name: 'home',
+    guards: [],
   ),
   GeneratedRoute(
     '/404',
@@ -59,6 +59,18 @@ const List<GeneratedRoute> $appRoutes = [
     name: 'notFound',
     guards: [],
   ),
+  GeneratedRoute(
+    '/workspace',
+    page: WorkspacePage,
+    name: 'workspace',
+    guards: [AuthGuard],
+    routes: [
+      GeneratedRoute(
+        'details',
+        page: WorkspaceDetailsPage,
+        name: 'workspaceDetails',
+      ),
+    ],  ),
 ];
 
 sealed class AppRoutePath<R> {
@@ -71,9 +83,9 @@ sealed class AppRoutePath<R> {
   bool get requiresAuth => true;
 }
 
-/// Typed route data for `DashboardRoute`.
-final class DashboardRoute extends AppRoutePath<void> {
-  const DashboardRoute();
+/// Typed route data for `HomeRoute`.
+final class HomeRoute extends AppRoutePath<void> {
+  const HomeRoute();
 
   @override
   String get location {
@@ -82,6 +94,9 @@ final class DashboardRoute extends AppRoutePath<void> {
       uriExtras: _routeUriExtrasOf(this),
     );
   }
+
+  @override
+  bool get requiresAuth => false;
 }
 
 /// Typed route data for `NotFoundRoute`.
@@ -101,6 +116,29 @@ final class NotFoundRoute extends AppRoutePath<void> {
 
   @override
   bool get requiresAuth => false;
+}
+
+/// Typed route data for `WorkspaceRoute`.
+final class WorkspaceRoute extends AppRoutePath<void> {
+  const WorkspaceRoute();
+
+  @override
+  String get location {
+    return _routePath(['workspace'], uriExtras: _routeUriExtrasOf(this));
+  }
+}
+
+/// Typed route data for `WorkspaceDetailsRoute`.
+final class WorkspaceDetailsRoute extends AppRoutePath<void> {
+  const WorkspaceDetailsRoute();
+
+  @override
+  String get location {
+    return _routePath(
+      ['workspace', 'details'],
+      uriExtras: _routeUriExtrasOf(this),
+    );
+  }
 }
 
 String routeLocation(AppRoutePath route) => route.location;
@@ -166,17 +204,19 @@ String? routeBranch(AppRoutePath route) {
 
 RouteDebugInfo routeDebugInfo(AppRoutePath route) {
   return switch (route) {
-    DashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: null, branch: null),
+    HomeRoute() => const RouteDebugInfo(name: 'home', shell: null, branch: null),
     NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
+    WorkspaceRoute() => const RouteDebugInfo(name: 'workspace', shell: null, branch: null),
+    WorkspaceDetailsRoute() => const RouteDebugInfo(name: 'workspaceDetails', shell: null, branch: null),
   };
 }
 
 List<Object> routeGuards(
   AppRoutePath route,
-  $BenchmarkRouter router,
+  $TestRouter router,
 ) {
   return switch (route) {
-    DashboardRoute() => [BenchmarkGuard()],
+    WorkspaceRoute() => [AuthGuard()],
     _ => const [],
   };
 }
@@ -192,10 +232,15 @@ final class AppRoutesNavigator {
 
   final RouterController<AppRoutePath> _router;
 
-  RouteAction<void> dashboard() => RouteAction(_router, DashboardRoute());
+  RouteAction<void> home() => RouteAction(_router, HomeRoute());
 
   RouteAction<void> notFound({String path = ''}) =>
       RouteAction(_router, NotFoundRoute(path: path));
+
+  RouteAction<void> workspace() => RouteAction(_router, WorkspaceRoute());
+
+  RouteAction<void> workspaceDetails() =>
+      RouteAction(_router, WorkspaceDetailsRoute());
 
   bool pop<R>([R? result]) => _router.pop<R>(result);
 }
@@ -213,11 +258,20 @@ final class RouteAction<R> {
 
 RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
   return switch (route) {
-    DashboardRoute() => [
+    HomeRoute() => [
       route,
     ],
     NotFoundRoute(path: _) => [
-      const DashboardRoute(),
+      const HomeRoute(),
+      route,
+    ],
+    WorkspaceRoute() => [
+      const HomeRoute(),
+      route,
+    ],
+    WorkspaceDetailsRoute() => [
+      const HomeRoute(),
+      const WorkspaceRoute(),
       route,
     ],
   };
@@ -227,12 +281,24 @@ AppRoutePath parseAppRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
-    final route = DashboardRoute();
+    final route = HomeRoute();
     return _withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == '404') {
     final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
     return _withRouteUriExtras(route, uri, const {'path'});
+  }
+  if (segments.length == 1 && segments[0] == 'workspace') {
+    final route = WorkspaceRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
+  }
+  if (
+    segments.length == 2 &&
+    segments[0] == 'workspace' &&
+    segments[1] == 'details'
+  ) {
+    final route = WorkspaceDetailsRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   return _notFoundRoute(uri);
 }
@@ -240,8 +306,10 @@ AppRoutePath parseAppRoute(Uri uri) {
 AppRoutePath _notFoundRoute(Uri uri) => NotFoundRoute(path: uri.toString());
 
 const Map<Type, Type?> _kAppliedShellsByPage = {
-  DashboardPage: null,
+  HomePage: null,
   NotFoundPage: null,
+  WorkspacePage: null,
+  WorkspaceDetailsPage: null,
 };
 
 bool _shellConsistencyCheck() {
@@ -265,14 +333,14 @@ Page<dynamic> buildAppRoutePage(
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
-    DashboardRoute() => generatedPage(
+    HomeRoute() => generatedPage(
       key: key,
       location: route.location,
-      name: 'dashboard',
+      name: 'home',
       onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
-      child: const DashboardPage(),
+      child: const HomePage(),
     ),
     NotFoundRoute(path: final path) => generatedPage(
       key: key,
@@ -282,6 +350,24 @@ Page<dynamic> buildAppRoutePage(
       fullscreenDialog: false,
       maintainState: true,
       child: NotFoundPage(path: path),
+    ),
+    WorkspaceRoute() => generatedPage(
+      key: key,
+      location: route.location,
+      name: 'workspace',
+      onPopInvoked: onPopInvoked,
+      fullscreenDialog: false,
+      maintainState: true,
+      child: const WorkspacePage(),
+    ),
+    WorkspaceDetailsRoute() => generatedPage(
+      key: key,
+      location: route.location,
+      name: 'workspaceDetails',
+      onPopInvoked: onPopInvoked,
+      fullscreenDialog: false,
+      maintainState: true,
+      child: const WorkspaceDetailsPage(),
     ),
   };
 }

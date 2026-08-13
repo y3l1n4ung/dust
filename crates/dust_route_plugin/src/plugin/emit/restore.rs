@@ -8,6 +8,7 @@ use crate::plugin::model::{RouteSpec, RouterSpec};
 use super::{
     path::{is_path_prefix, route_segments},
     patterns::route_switch_pattern,
+    shell::effective_branch,
 };
 
 /// Template context for generated restore-stack switch cases.
@@ -80,10 +81,12 @@ fn restore_stack_entries(route: &RouteSpec, spec: &RouterSpec) -> Vec<String> {
     }
 
     let mut entries = Vec::new();
+    let target_branch = effective_branch(route, &spec.routes);
     if let Some(initial) = spec
         .routes
         .iter()
         .find(|candidate| candidate.route_class == spec.initial_route_class)
+        .filter(|candidate| effective_branch(candidate, &spec.routes) == target_branch)
         && let Some(expr) = route_constructor_from_target(initial, route)
     {
         entries.push(expr);
@@ -94,6 +97,7 @@ fn restore_stack_entries(route: &RouteSpec, spec: &RouterSpec) -> Vec<String> {
         .iter()
         .filter(|candidate| candidate.route_class != spec.initial_route_class)
         .filter(|candidate| candidate.route_class != route.route_class)
+        .filter(|candidate| effective_branch(candidate, &spec.routes) == target_branch)
         .filter(|candidate| is_path_prefix(&candidate.path, &route.path))
         .collect::<Vec<_>>();
     parents.sort_by_key(|candidate| route_segments(&candidate.path).len());
@@ -115,11 +119,17 @@ fn restore_stack_bound_params(route: &RouteSpec, spec: &RouterSpec) -> BTreeSet<
         return names;
     }
 
-    for parent in spec.routes.iter().filter(|candidate| {
-        candidate.route_class == spec.initial_route_class
-            || (candidate.route_class != route.route_class
-                && is_path_prefix(&candidate.path, &route.path))
-    }) {
+    let target_branch = effective_branch(route, &spec.routes);
+    for parent in spec
+        .routes
+        .iter()
+        .filter(|candidate| effective_branch(candidate, &spec.routes) == target_branch)
+        .filter(|candidate| {
+            candidate.route_class == spec.initial_route_class
+                || (candidate.route_class != route.route_class
+                    && is_path_prefix(&candidate.path, &route.path))
+        })
+    {
         if route_constructor_from_target(parent, route).is_some() {
             names.extend(parent.params.iter().map(|param| param.name.clone()));
         }

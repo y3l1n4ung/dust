@@ -123,6 +123,8 @@ fn validate_workspace_route_set(routes: &[RouteSpec]) -> Result<(), Vec<Diagnost
     let mut diagnostics = Vec::new();
     let mut paths = HashSet::new();
     let mut names = HashSet::new();
+    let mut route_classes = HashSet::new();
+    let mut helper_names = HashSet::new();
     for route in routes {
         if !paths.insert(route.path.clone()) {
             diagnostics.push(Diagnostic::error(format!(
@@ -134,6 +136,29 @@ fn validate_workspace_route_set(routes: &[RouteSpec]) -> Result<(), Vec<Diagnost
             diagnostics.push(Diagnostic::error(format!(
                 "duplicate route name `{}`",
                 route.name
+            )));
+        }
+        if !is_valid_dart_identifier(&route.name) || is_dart_reserved_word(&route.name) {
+            diagnostics.push(Diagnostic::error(format!(
+                "route name `{}` must be a valid non-reserved Dart identifier",
+                route.name
+            )));
+        }
+        if route.name == "pop" {
+            diagnostics.push(Diagnostic::error(
+                "route name `pop` conflicts with the generated navigator `pop` helper",
+            ));
+        }
+        if !helper_names.insert(route.name.clone()) {
+            diagnostics.push(Diagnostic::error(format!(
+                "generated route helper `{}` is emitted more than once",
+                route.name
+            )));
+        }
+        if !route_classes.insert(route.route_class.clone()) {
+            diagnostics.push(Diagnostic::error(format!(
+                "generated route class `{}` is emitted by more than one route name",
+                route.route_class
             )));
         }
         for param in &route.params {
@@ -152,6 +177,100 @@ fn validate_workspace_route_set(routes: &[RouteSpec]) -> Result<(), Vec<Diagnost
     } else {
         Err(diagnostics)
     }
+}
+
+/// Returns true when [name] can be emitted as a Dart identifier.
+fn is_valid_dart_identifier(name: &str) -> bool {
+    let mut chars = name.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+    is_dart_identifier_start(first) && chars.all(is_dart_identifier_part)
+}
+
+/// Returns true when [ch] is allowed at the start of a Dart identifier.
+fn is_dart_identifier_start(ch: char) -> bool {
+    ch == '_' || ch == '$' || ch.is_ascii_alphabetic()
+}
+
+/// Returns true when [ch] is allowed after the first Dart identifier character.
+fn is_dart_identifier_part(ch: char) -> bool {
+    is_dart_identifier_start(ch) || ch.is_ascii_digit()
+}
+
+/// Returns true for Dart reserved and contextual words that should not be
+/// generated as route helper names.
+fn is_dart_reserved_word(name: &str) -> bool {
+    matches!(
+        name,
+        "abstract"
+            | "as"
+            | "assert"
+            | "async"
+            | "await"
+            | "base"
+            | "break"
+            | "case"
+            | "catch"
+            | "class"
+            | "const"
+            | "continue"
+            | "covariant"
+            | "default"
+            | "deferred"
+            | "do"
+            | "dynamic"
+            | "else"
+            | "enum"
+            | "export"
+            | "extends"
+            | "extension"
+            | "external"
+            | "factory"
+            | "false"
+            | "final"
+            | "finally"
+            | "for"
+            | "Function"
+            | "get"
+            | "hide"
+            | "if"
+            | "implements"
+            | "import"
+            | "in"
+            | "interface"
+            | "is"
+            | "late"
+            | "library"
+            | "mixin"
+            | "new"
+            | "null"
+            | "of"
+            | "on"
+            | "operator"
+            | "part"
+            | "required"
+            | "rethrow"
+            | "return"
+            | "sealed"
+            | "set"
+            | "show"
+            | "static"
+            | "super"
+            | "switch"
+            | "sync"
+            | "this"
+            | "throw"
+            | "true"
+            | "try"
+            | "typedef"
+            | "var"
+            | "void"
+            | "when"
+            | "while"
+            | "with"
+            | "yield"
+    )
 }
 
 /// Rejects paths that bind the same `:param` name more than once.

@@ -17,6 +17,7 @@ pub(crate) fn route_annotation(config: &RouteConfigIr) -> RouteAnnotation {
         name: config.name.clone(),
         result_type: config.result_type.clone(),
         shell: config.shell.clone(),
+        branch: config.branch.clone(),
         guards: config.guards.clone(),
         guards_configured: config.guards_configured,
         transition: config.transition.clone(),

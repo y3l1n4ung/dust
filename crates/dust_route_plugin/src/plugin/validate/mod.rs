@@ -2,7 +2,8 @@ use std::collections::HashSet;
 
 use dust_diagnostics::Diagnostic;
 use dust_ir::{
-    BuiltinType, ClassIr, ConstructorIr, ConstructorParamIr, DartFileIr, ImportIr, TypeIr,
+    BuiltinType, ClassIr, ConstructorIr, ConstructorParamIr, DartFileIr, ImportIr, ParamKind,
+    TypeIr,
 };
 
 use super::{
@@ -78,6 +79,10 @@ fn validate_visible_route_types(
             "route shell `{shell}` on `{}` must be declared in the same library or imported",
             class.name
         )));
+    } else if let Some(shell) = route.shell.as_deref()
+        && let Some(shell_class) = local_class(library, shell)
+    {
+        validate_local_shell_constructor(shell_class, class, diagnostics);
     }
     for guard in &route.guards {
         if !is_visible_type(library, local_classes, guard) {
@@ -98,6 +103,42 @@ fn is_visible_type(library: &DartFileIr, local_classes: &HashSet<&str>, name: &s
             .any(|import| import_exposes_type(import, name))
         || library.import_directives.is_empty()
             && library.imports.iter().any(|uri| is_user_type_import(uri))
+}
+
+/// Returns a local class by exact name.
+fn local_class<'a>(library: &'a DartFileIr, name: &str) -> Option<&'a ClassIr> {
+    library.classes.iter().find(|class| class.name == name)
+}
+
+/// Validates local shell constructors match the generated `Shell(child: page)` call.
+fn validate_local_shell_constructor(
+    shell: &ClassIr,
+    route: &ClassIr,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    let Some(constructor) = route_constructor(shell) else {
+        diagnostics.push(shell_constructor_diagnostic(shell, route));
+        return;
+    };
+    let Some(child) = constructor
+        .params
+        .iter()
+        .find(|param| param.name == "child" && param.kind == ParamKind::Named)
+    else {
+        diagnostics.push(shell_constructor_diagnostic(shell, route));
+        return;
+    };
+    if !child.ty.is_named("Widget") || child.ty.is_nullable() || child.has_default {
+        diagnostics.push(shell_constructor_diagnostic(shell, route));
+    }
+}
+
+/// Builds the local shell constructor diagnostic with a concrete fix.
+fn shell_constructor_diagnostic(shell: &ClassIr, route: &ClassIr) -> Diagnostic {
+    Diagnostic::error(format!(
+        "route shell `{}` on `{}` needs an unnamed generative constructor with a required named `Widget child` parameter, for example `const {}({{required Widget child, super.key}})`",
+        shell.name, route.name, shell.name
+    ))
 }
 
 /// Returns true when an import directive exposes the requested type.

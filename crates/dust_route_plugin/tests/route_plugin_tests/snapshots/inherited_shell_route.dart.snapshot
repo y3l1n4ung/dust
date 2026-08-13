@@ -9,14 +9,14 @@ import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
 
-abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
+abstract class $TestRouter extends RouterBase<AppRoutePath> {
 
   late final RouterConfig<AppRoutePath> config = _buildConfig();
 
   RouterConfig<AppRoutePath> _buildConfig() {
     final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
       router: this,
-      initialRoute: const DashboardRoute(),
+      initialRoute: const DashboardOrdersRoute(),
       parseRoute: parseAppRoute,
       routeLocation: routeLocation,
       requiresAuth: routeRequiresAuth,
@@ -48,17 +48,24 @@ abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
 
 const List<GeneratedRoute> $appRoutes = [
   GeneratedRoute(
-    '/',
-    page: DashboardPage,
-    name: 'dashboard',
-    guards: [BenchmarkGuard],
-  ),
-  GeneratedRoute(
     '/404',
     page: NotFoundPage,
     name: 'notFound',
     guards: [],
   ),
+  GeneratedRoute(
+    '/dashboard',
+    page: DashboardPage,
+    name: 'dashboard',
+    shell: AppShell,
+    routes: [
+      GeneratedRoute(
+        'orders',
+        page: DashboardOrdersPage,
+        name: 'dashboardOrders',
+        shell: AppShell,
+      ),
+    ],  ),
 ];
 
 sealed class AppRoutePath<R> {
@@ -69,19 +76,6 @@ sealed class AppRoutePath<R> {
   /// Defaults to true. Override and return false for public routes
   /// (login, invite, forbidden, checkout, notFound).
   bool get requiresAuth => true;
-}
-
-/// Typed route data for `DashboardRoute`.
-final class DashboardRoute extends AppRoutePath<void> {
-  const DashboardRoute();
-
-  @override
-  String get location {
-    return _routePath(
-      const [],
-      uriExtras: _routeUriExtrasOf(this),
-    );
-  }
 }
 
 /// Typed route data for `NotFoundRoute`.
@@ -101,6 +95,29 @@ final class NotFoundRoute extends AppRoutePath<void> {
 
   @override
   bool get requiresAuth => false;
+}
+
+/// Typed route data for `DashboardRoute`.
+final class DashboardRoute extends AppRoutePath<void> {
+  const DashboardRoute();
+
+  @override
+  String get location {
+    return _routePath(['dashboard'], uriExtras: _routeUriExtrasOf(this));
+  }
+}
+
+/// Typed route data for `DashboardOrdersRoute`.
+final class DashboardOrdersRoute extends AppRoutePath<void> {
+  const DashboardOrdersRoute();
+
+  @override
+  String get location {
+    return _routePath(
+      ['dashboard', 'orders'],
+      uriExtras: _routeUriExtrasOf(this),
+    );
+  }
 }
 
 String routeLocation(AppRoutePath route) => route.location;
@@ -166,17 +183,17 @@ String? routeBranch(AppRoutePath route) {
 
 RouteDebugInfo routeDebugInfo(AppRoutePath route) {
   return switch (route) {
-    DashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: null, branch: null),
     NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
+    DashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: 'AppShell', branch: null),
+    DashboardOrdersRoute() => const RouteDebugInfo(name: 'dashboardOrders', shell: 'AppShell', branch: null),
   };
 }
 
 List<Object> routeGuards(
   AppRoutePath route,
-  $BenchmarkRouter router,
+  $TestRouter router,
 ) {
   return switch (route) {
-    DashboardRoute() => [BenchmarkGuard()],
     _ => const [],
   };
 }
@@ -192,10 +209,13 @@ final class AppRoutesNavigator {
 
   final RouterController<AppRoutePath> _router;
 
-  RouteAction<void> dashboard() => RouteAction(_router, DashboardRoute());
-
   RouteAction<void> notFound({String path = ''}) =>
       RouteAction(_router, NotFoundRoute(path: path));
+
+  RouteAction<void> dashboard() => RouteAction(_router, DashboardRoute());
+
+  RouteAction<void> dashboardOrders() =>
+      RouteAction(_router, DashboardOrdersRoute());
 
   bool pop<R>([R? result]) => _router.pop<R>(result);
 }
@@ -213,11 +233,15 @@ final class RouteAction<R> {
 
 RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
   return switch (route) {
-    DashboardRoute() => [
+    NotFoundRoute(path: _) => [
+      const DashboardOrdersRoute(),
       route,
     ],
-    NotFoundRoute(path: _) => [
-      const DashboardRoute(),
+    DashboardRoute() => [
+      const DashboardOrdersRoute(),
+      route,
+    ],
+    DashboardOrdersRoute() => [
       route,
     ],
   };
@@ -226,13 +250,21 @@ RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
 AppRoutePath parseAppRoute(Uri uri) {
   final segments = uri.pathSegments;
 
-  if (segments.isEmpty) {
-    final route = DashboardRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
-  }
   if (segments.length == 1 && segments[0] == '404') {
     final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
     return _withRouteUriExtras(route, uri, const {'path'});
+  }
+  if (segments.length == 1 && segments[0] == 'dashboard') {
+    final route = DashboardRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
+  }
+  if (
+    segments.length == 2 &&
+    segments[0] == 'dashboard' &&
+    segments[1] == 'orders'
+  ) {
+    final route = DashboardOrdersRoute();
+    return _withRouteUriExtras(route, uri, const <String>{});
   }
   return _notFoundRoute(uri);
 }
@@ -240,8 +272,9 @@ AppRoutePath parseAppRoute(Uri uri) {
 AppRoutePath _notFoundRoute(Uri uri) => NotFoundRoute(path: uri.toString());
 
 const Map<Type, Type?> _kAppliedShellsByPage = {
-  DashboardPage: null,
   NotFoundPage: null,
+  DashboardPage: AppShell,
+  DashboardOrdersPage: AppShell,
 };
 
 bool _shellConsistencyCheck() {
@@ -265,15 +298,6 @@ Page<dynamic> buildAppRoutePage(
     'Shell mismatch between \$appRoutes and buildAppRoutePage',
   );
   return switch (route) {
-    DashboardRoute() => generatedPage(
-      key: key,
-      location: route.location,
-      name: 'dashboard',
-      onPopInvoked: onPopInvoked,
-      fullscreenDialog: false,
-      maintainState: true,
-      child: const DashboardPage(),
-    ),
     NotFoundRoute(path: final path) => generatedPage(
       key: key,
       location: route.location,
@@ -282,6 +306,24 @@ Page<dynamic> buildAppRoutePage(
       fullscreenDialog: false,
       maintainState: true,
       child: NotFoundPage(path: path),
+    ),
+    DashboardRoute() => generatedPage(
+      key: key,
+      location: route.location,
+      name: 'dashboard',
+      onPopInvoked: onPopInvoked,
+      fullscreenDialog: false,
+      maintainState: true,
+      child: AppShell(child: const DashboardPage()),
+    ),
+    DashboardOrdersRoute() => generatedPage(
+      key: key,
+      location: route.location,
+      name: 'dashboardOrders',
+      onPopInvoked: onPopInvoked,
+      fullscreenDialog: false,
+      maintainState: true,
+      child: AppShell(child: const DashboardOrdersPage()),
     ),
   };
 }

@@ -18,6 +18,7 @@ part 'project.g.dart';
   name: 'project',
   result: bool,
   shell: ui.AppShell,
+  branch: 'mainTabs',
   guards: [auth.AuthGuard, BillingGuard],
   transition: const cupertino.CupertinoPageTransitionsBuilder(),
   fullscreenDialog: true,
@@ -53,6 +54,7 @@ class ProjectPage {}
     assert_eq!(route.name.as_deref(), Some("project"));
     assert_eq!(route.result_type.as_deref(), Some("bool"));
     assert_eq!(route.shell.as_deref(), Some("ui.AppShell"));
+    assert_eq!(route.branch.as_deref(), Some("mainTabs"));
     assert_eq!(route.guards, ["auth.AuthGuard", "BillingGuard"]);
     assert!(route.guards_configured);
     assert_eq!(

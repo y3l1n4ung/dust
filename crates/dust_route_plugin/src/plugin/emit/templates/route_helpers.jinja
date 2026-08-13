@@ -53,6 +53,17 @@ String _routePath(
 
 bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
 
+String? routeBranch(AppRoutePath route) {
+  return switch (route) {
+{{ branch_cases }}    _ => null,
+  };
+}
+
+RouteDebugInfo routeDebugInfo(AppRoutePath route) {
+  return switch (route) {
+{{ debug_cases }}  };
+}
+
 List<Object> routeGuards(
   AppRoutePath route,
   {{ router_base_class }} router,

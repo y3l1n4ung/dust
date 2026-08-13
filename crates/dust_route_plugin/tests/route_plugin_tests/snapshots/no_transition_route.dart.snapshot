@@ -39,9 +39,11 @@ class _NoTransitionBuilder extends PageTransitionsBuilder {
       parseRoute: parseAppRoute,
       routeLocation: routeLocation,
       requiresAuth: routeRequiresAuth,
+      routeBranch: routeBranch,
       resolveGuards: (route) => routeGuards(route, this),
       buildPage: buildAppRoutePage,
       restoreStack: restoreAppRouteStack,
+      debugInfo: routeDebugInfo,
       debugRoutes: $appRoutes,
     );
     final delegate = GeneratedRouterDelegate<AppRoutePath>(runtimeConfig);
@@ -171,6 +173,19 @@ String _routePath(
 }
 
 bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
+
+String? routeBranch(AppRoutePath route) {
+  return switch (route) {
+    _ => null,
+  };
+}
+
+RouteDebugInfo routeDebugInfo(AppRoutePath route) {
+  return switch (route) {
+    NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
+    SearchRoute() => const RouteDebugInfo(name: 'search', shell: null, branch: null),
+  };
+}
 
 List<Object> routeGuards(
   AppRoutePath route,

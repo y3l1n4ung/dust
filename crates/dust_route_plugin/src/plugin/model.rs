@@ -105,6 +105,9 @@ pub(crate) struct RouteAnnotation {
     pub(crate) result_type: Option<String>,
     /// Optional shell widget class wrapping the page.
     pub(crate) shell: Option<String>,
+    /// Optional stateful navigation branch name.
+    #[serde(default)]
+    pub(crate) branch: Option<String>,
     /// Guard class names applied to the route.
     pub(crate) guards: Vec<String>,
     /// Whether the `guards:` argument was present.

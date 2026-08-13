@@ -20,9 +20,11 @@ import 'route.dart';
       parseRoute: parseAppRoute,
       routeLocation: routeLocation,
       requiresAuth: routeRequiresAuth,
+      routeBranch: routeBranch,
       resolveGuards: (route) => routeGuards(route, this),
       buildPage: buildAppRoutePage,
       restoreStack: restoreAppRouteStack,
+      debugInfo: routeDebugInfo,
       debugRoutes: $appRoutes,
     );
     final delegate = GeneratedRouterDelegate<AppRoutePath>(runtimeConfig);

@@ -17,7 +17,7 @@ final class _TransactionCoordinator {
     final tx = _SingleConnectionPool(database, this);
     try {
       final result = await fn(tx);
-      return result.match<Future<Result<T, SqlxError>>>(
+      return await result.match<Future<Result<T, SqlxError>>>(
         ok: (value) async {
           final commit = _executeControl(
             database,
@@ -71,7 +71,7 @@ final class _TransactionCoordinator {
     final tx = _SingleConnectionPool(database, this);
     try {
       final result = await fn(tx);
-      return result.match<Future<Result<T, SqlxError>>>(
+      return await result.match<Future<Result<T, SqlxError>>>(
         ok: (value) async {
           final release = _executeControl(
             database,

@@ -271,6 +271,41 @@ void main() {
     await delegate.debugWaitForScheduledRefresh();
     expect(delegate.currentConfiguration, isA<ProductsRoute>());
   });
+
+  test('router revalidates protected routes exposed by pop', () async {
+    final router = await _shoppingRouter();
+    final delegate =
+        router.config.routerDelegate as GeneratedRouterDelegate<AppRoutePath>;
+    await delegate.debugWaitForScheduledRefresh();
+
+    _authenticate(router, 'admin');
+    await delegate.debugWaitForScheduledRefresh();
+    await delegate.setNewRoutePath(const AdminRoute());
+    expect(delegate.stack, [isA<ProductsRoute>(), isA<AdminRoute>()]);
+
+    final supportResult = delegate.push<bool>(const SupportChatRoute());
+    await Future<void>.delayed(Duration.zero);
+    expect(delegate.stack, [
+      isA<ProductsRoute>(),
+      isA<AdminRoute>(),
+      isA<SupportChatRoute>(),
+    ]);
+
+    _expireSession(router);
+    await delegate.popRoute();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(
+      delegate.currentConfiguration,
+      isA<LoginRoute>().having(
+        (route) => route.redirectPath,
+        'redirectPath',
+        '/admin',
+      ),
+    );
+    expect(delegate.stack, [isA<ProductsRoute>(), isA<LoginRoute>()]);
+    await expectLater(supportResult, completion(isNull));
+  });
 }
 
 Future<ShoppingRouter> _shoppingRouter() async {
