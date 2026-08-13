@@ -994,8 +994,7 @@ dust route fixtures
 
 The command is read-only. It prints valid and invalid examples for path URLs,
 web URLs, app-link style URLs, custom-scheme URLs, typed path params, typed
-query params, preserved fragments, malformed fragment input, and not-found
-routes:
+query params, preserved fragments, and not-found routes:
 
 ```text
 route fixtures  scanned: 53  fixtures: 62  time: 206ms
@@ -1013,6 +1012,11 @@ Fixtures use the documented normalization shapes from this guide:
 `https://shop.example/...`, `https://shop.example/app/...`, and
 `shopping:///...`. Apps with different hosts, prefixes, or schemes should keep
 their `parseRouteInformation` override covered by app-level tests.
+
+Fragments are not decoded into typed route constructor fields. Dart's `Uri`
+normalizes malformed percent escapes before Dust sees the route information, so
+fragment fixture rows focus on preservation and round-trip behavior. Invalid
+fixture rows focus on typed path/query parsing and not-found routing.
 
 Use `--root` from monorepos or scripts:
 

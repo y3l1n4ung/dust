@@ -212,14 +212,6 @@ fn route_fixtures_return_valid_and_invalid_deep_links() {
                 "/__dust_missing_route__",
                 "not-found-route",
             ),
-            fixture(
-                "-",
-                "malformed-fragment-escape",
-                false,
-                "path",
-                "/#%ZZ",
-                "uri-parse-error-before-router",
-            ),
         ]
     );
 }
