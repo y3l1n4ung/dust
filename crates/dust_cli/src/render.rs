@@ -115,6 +115,19 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult, ai_mod
                 }
             }
         }
+        CliCommand::RouteFixtures => {
+            if let Some(fixtures) = &result.route_fixtures {
+                lines.push(format!(
+                    "route fixtures  scanned: {}  fixtures: {}  time: {}ms",
+                    fixtures.scanned_files,
+                    fixtures.fixtures.len(),
+                    result.elapsed_ms
+                ));
+                if !fixtures.fixtures.is_empty() {
+                    append_route_fixtures(&mut lines, &fixtures.fixtures);
+                }
+            }
+        }
         CliCommand::I18nBuild => {
             if let Some(build) = &result.i18n_build {
                 lines.push(format!(
@@ -188,6 +201,23 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult, ai_mod
         String::new()
     } else {
         format!("{}\n", lines.join("\n"))
+    }
+}
+
+/// Appends stable deep-link fixture rows as a Markdown table.
+fn append_route_fixtures(lines: &mut Vec<String>, fixtures: &[dust_driver::RouteFixtureRow]) {
+    lines.push("route | case | valid | shape | uri | expected".to_owned());
+    lines.push("--- | --- | --- | --- | --- | ---".to_owned());
+    for fixture in fixtures {
+        lines.push(format!(
+            "{} | {} | {} | {} | {} | {}",
+            fixture.route,
+            fixture.case_name,
+            fixture.valid,
+            fixture.shape,
+            fixture.uri,
+            fixture.expected
+        ));
     }
 }
 
@@ -327,8 +357,8 @@ mod tests {
     use dust_diagnostics::{Diagnostic, SourceLabel};
     use dust_driver::{
         CacheReport, CleanReport, CommandResult, DiagnosticFile, DoctorPackageCompatibility,
-        DoctorPackageCompatibilityStatus, DoctorReport, RouteGraphNode, RouteGraphReport,
-        RouteTableReport, RouteTableRow, WatchReport,
+        DoctorPackageCompatibilityStatus, DoctorReport, RouteFixtureRow, RouteFixturesReport,
+        RouteGraphNode, RouteGraphReport, RouteTableReport, RouteTableRow, WatchReport,
     };
     use dust_text::{FileId, TextRange};
 
@@ -539,6 +569,48 @@ mod tests {
              --- | --- | --- | --- | --- | --- | ---\n\
              /dashboard | - | dashboard | DashboardPage | AppShell | mainTabs | -\n\
              /dashboard/orders | /dashboard | orders | OrdersPage | AppShell | mainTabs | OrderGuard\n"
+        );
+    }
+
+    #[test]
+    fn render_route_fixtures_summary_and_rows() {
+        let rendered = render_result(
+            &CliCommand::RouteFixtures,
+            &CommandResult {
+                route_fixtures: Some(RouteFixturesReport {
+                    scanned_files: 3,
+                    fixtures: vec![
+                        RouteFixtureRow {
+                            route: "product".to_owned(),
+                            case_name: "path".to_owned(),
+                            valid: true,
+                            shape: "path".to_owned(),
+                            uri: "/products/42?tab=reviews".to_owned(),
+                            expected: "typed-route".to_owned(),
+                        },
+                        RouteFixtureRow {
+                            route: "product".to_owned(),
+                            case_name: "invalid-path-param".to_owned(),
+                            valid: false,
+                            shape: "path".to_owned(),
+                            uri: "/products/not-an-int?tab=reviews".to_owned(),
+                            expected: "not-found-route".to_owned(),
+                        },
+                    ],
+                }),
+                elapsed_ms: 12,
+                ..CommandResult::default()
+            },
+            true,
+        );
+
+        assert_eq!(
+            rendered,
+            "route fixtures  scanned: 3  fixtures: 2  time: 12ms\n\
+             route | case | valid | shape | uri | expected\n\
+             --- | --- | --- | --- | --- | ---\n\
+             product | path | true | path | /products/42?tab=reviews | typed-route\n\
+             product | invalid-path-param | false | path | /products/not-an-int?tab=reviews | not-found-route\n"
         );
     }
 
