@@ -26,6 +26,7 @@ abstract class {{ generated_base_class }} extends RouterBase<{{ route_path_class
         ),
       ),
       routeInformationParser: GeneratedRouteInformationParser<{{ route_path_class }}>(
+        router: this,
         parseRoute: {{ parse_route_function }},
         routeLocation: {{ route_location_function }},
       ),

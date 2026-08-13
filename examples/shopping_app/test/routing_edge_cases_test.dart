@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart' show RouteInformation;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shopping_app/route.dart';
 
@@ -99,4 +100,73 @@ void main() {
       ),
     );
   });
+
+  test('generated parser applies app route-information override first',
+      () async {
+    final state = Object();
+    final router = _ShoppingRouteInformationRouter();
+    final parser = GeneratedRouteInformationParser<ShoppingRoutePath>(
+      router: router,
+      parseRoute: parseShoppingRoute,
+      routeLocation: shoppingRouteLocation,
+    );
+
+    final prefixedRoute = await parser.parseRouteInformation(
+      RouteInformation(
+        uri: Uri.parse(
+          'https://shop.example/app/product/7?campaign=spring#reviews',
+        ),
+        state: state,
+      ),
+    );
+    final unsafeHostRoute = await parser.parseRouteInformation(
+      RouteInformation(
+        uri: Uri.parse('https://evil.test/app/product/7'),
+        state: state,
+      ),
+    );
+
+    expect(
+      prefixedRoute,
+      isA<ShoppingProductDetailRoute>()
+          .having((route) => route.productId, 'productId', 7)
+          .having(
+            (route) => route.location,
+            'location',
+            '/product/7?campaign=spring#reviews',
+          ),
+    );
+    expect(
+      unsafeHostRoute,
+      isA<ShoppingNotFoundRoute>().having(
+        (route) => route.path,
+        'path',
+        'https://evil.test/app/product/7',
+      ),
+    );
+    expect(router.seenStates.length, 2);
+    expect(router.seenStates.every((seen) => identical(seen, state)), isTrue);
+  });
+}
+
+final class _ShoppingRouteInformationRouter
+    extends RouterBase<ShoppingRoutePath> {
+  final seenStates = <Object?>[];
+
+  @override
+  RouteInformation parseRouteInformation(RouteInformation information) {
+    seenStates.add(information.state);
+    final uri = information.uri;
+    if (uri.hasAuthority && uri.host != 'shop.example') {
+      return RouteInformation(
+        uri: Uri(path: '/404', queryParameters: {'path': uri.toString()}),
+        state: information.state,
+      );
+    }
+    if (!uri.path.startsWith('/app/')) return information;
+    return RouteInformation(
+      uri: uri.replace(path: uri.path.substring('/app'.length)),
+      state: information.state,
+    );
+  }
 }

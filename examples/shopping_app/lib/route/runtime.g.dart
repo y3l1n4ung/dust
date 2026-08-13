@@ -56,6 +56,7 @@ abstract class ShoppingRouterBase extends RouterBase<ShoppingRoutePath> {
         ),
       ),
       routeInformationParser: GeneratedRouteInformationParser<ShoppingRoutePath>(
+        router: this,
         parseRoute: parseShoppingRoute,
         routeLocation: shoppingRouteLocation,
       ),

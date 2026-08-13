@@ -230,6 +230,7 @@ abstract class TestRouterBase extends RouterBase<TestRoutePath> {
         ),
       ),
       routeInformationParser: GeneratedRouteInformationParser<TestRoutePath>(
+        router: this,
         parseRoute: parseTestRoute,
         routeLocation: testRouteLocation,
       ),

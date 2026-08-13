@@ -57,6 +57,40 @@ void main() {
     expect(appRoute.fragment, 'receipt');
   });
 
+  test('runs router route-information override before generated parsing',
+      () async {
+    final router = _PrefixRouter();
+    final state = Object();
+    final parser = GeneratedRouteInformationParser<_Route>(
+      router: router,
+      parseRoute: (uri) => _Route(_appLocation(uri)),
+      routeLocation: (route) => route.location,
+    );
+
+    final prefixedRoute = await parser.parseRouteInformation(
+      RouteInformation(
+        uri: Uri.parse(
+          'https://shop.example/app/projects/42?tab=activity#comments',
+        ),
+        state: state,
+      ),
+    );
+    final unsafeHostRoute = await parser.parseRouteInformation(
+      RouteInformation(
+        uri: Uri.parse('https://evil.test/app/projects/42'),
+        state: state,
+      ),
+    );
+
+    expect(prefixedRoute.location, '/projects/42?tab=activity#comments');
+    expect(
+      unsafeHostRoute.location,
+      '/404?path=https%3A%2F%2Fevil.test%2Fapp%2Fprojects%2F42',
+    );
+    expect(router.seenStates.length, 2);
+    expect(router.seenStates.every((seen) => identical(seen, state)), isTrue);
+  });
+
   test('restores typed route information from generated locations', () {
     final parser = GeneratedRouteInformationParser<_Route>(
       parseRoute: _Route.fromUri,
@@ -69,6 +103,12 @@ void main() {
 
     expect(restored.uri.toString(), '/projects/42?tab=files#attachments');
   });
+}
+
+String _appLocation(Uri uri) {
+  final query = uri.hasQuery ? '?${uri.query}' : '';
+  final fragment = uri.fragment.isEmpty ? '' : '#${uri.fragment}';
+  return '${uri.path}$query$fragment';
 }
 
 final class _Route {
@@ -91,4 +131,25 @@ final class _Route {
   Map<String, String> get queryParameters => uri.queryParameters;
 
   String get fragment => uri.fragment;
+}
+
+final class _PrefixRouter extends RouterBase<_Route> {
+  final seenStates = <Object?>[];
+
+  @override
+  RouteInformation parseRouteInformation(RouteInformation information) {
+    seenStates.add(information.state);
+    final uri = information.uri;
+    if (uri.hasAuthority && uri.host != 'shop.example') {
+      return RouteInformation(
+        uri: Uri(path: '/404', queryParameters: {'path': uri.toString()}),
+        state: information.state,
+      );
+    }
+    if (!uri.path.startsWith('/app/')) return information;
+    return RouteInformation(
+      uri: uri.replace(path: uri.path.substring('/app'.length)),
+      state: information.state,
+    );
+  }
 }
