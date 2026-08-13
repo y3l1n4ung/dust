@@ -21,10 +21,10 @@ Create one router entrypoint at `lib/route.dart`:
 ```dart
 import 'package:dust_flutter/route.dart';
 
-import 'route.g.dart';
+import 'route/routes.g.dart';
 
-export 'route.g.dart';
 export 'package:dust_flutter/route.dart';
+export 'route/routes.g.dart';
 
 @AppRouter(initial: '/', notFound: '/404')
 final class RootRouter extends $RootRouter {}
@@ -82,8 +82,8 @@ void main() {
 
 > [!IMPORTANT]
 > Keep `route.dart` as the app-facing routing entrypoint. It imports and exports
-> `route.g.dart`; route pages import `route.dart` to use annotations and
-> generated navigation helpers.
+> generated files under `route/`; route pages import `route.dart` to use
+> annotations and generated navigation helpers.
 
 ## Navigation
 

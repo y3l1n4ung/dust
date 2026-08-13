@@ -8,7 +8,8 @@ pub(crate) fn write_routing_workspace(root: &std::path::Path, dashboard_name: &s
         &[DustImport::Route],
         "import 'pages/dashboard_page.dart';\n\
          import 'pages/not_found_page.dart';\n\
-         import 'route.g.dart';\n\
+         import 'route/routes.g.dart';\n\
+         export 'route/routes.g.dart';\n\
          \n\
          @AppRouter(initial: '/', notFound: '/404')\n\
          final class TestRouter extends $TestRouter {\n\
@@ -48,6 +49,36 @@ pub(crate) fn assert_route_snapshot(name: &str, actual: &str) {
     let expected = fs::read_to_string(&path)
         .unwrap_or_else(|error| panic!("missing route snapshot `{}`: {error}", path.display()));
     assert_eq!(actual, expected, "route snapshot `{name}` changed");
+}
+
+pub(crate) fn read_route_outputs(root: &std::path::Path) -> String {
+    [
+        "routes.g.dart",
+        "paths.g.dart",
+        "metadata.g.dart",
+        "navigation.g.dart",
+        "runtime.g.dart",
+    ]
+    .into_iter()
+    .map(|name| {
+        let source = fs::read_to_string(root.join("lib/route").join(name)).unwrap();
+        format!("// file: lib/route/{name}\n{source}")
+    })
+    .collect::<Vec<_>>()
+    .join("\n")
+}
+
+pub(crate) fn route_output_paths(root: &std::path::Path) -> Vec<std::path::PathBuf> {
+    [
+        "routes.g.dart",
+        "paths.g.dart",
+        "metadata.g.dart",
+        "navigation.g.dart",
+        "runtime.g.dart",
+    ]
+    .into_iter()
+    .map(|name| root.join("lib/route").join(name))
+    .collect()
 }
 
 fn snapshot_path(name: &str) -> PathBuf {

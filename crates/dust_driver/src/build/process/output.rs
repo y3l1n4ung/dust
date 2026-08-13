@@ -68,7 +68,12 @@ pub(crate) fn emit_or_write_library(
                 })
             })
             .collect::<io::Result<Vec<_>>>()?;
-        let changed = emitted.changed || auxiliary_outputs.iter().any(|output| output.changed);
+        let primary_changed = if emitted.suppress_primary_output {
+            read_previous_output(&library.output_path, false)?.is_some()
+        } else {
+            emitted.changed
+        };
+        let changed = primary_changed || auxiliary_outputs.iter().any(|output| output.changed);
 
         Ok(WriteResult {
             source: emitted.source,
@@ -77,6 +82,7 @@ pub(crate) fn emit_or_write_library(
             diagnostics: emitted.diagnostics,
             changed,
             written: false,
+            suppress_primary_output: emitted.suppress_primary_output,
             output_path: library.output_path.clone(),
             auxiliary_outputs,
         })
@@ -100,7 +106,9 @@ fn persist_with_previous_hash(
     let changed = output_hash != previous_hash;
     let should_write = write_output && changed && !has_errors;
 
-    if should_write {
+    if should_write && emitted.suppress_primary_output {
+        remove_output_file(&output_path)?;
+    } else if should_write {
         write_output_file(&output_path, &emitted.source)?;
     }
 
@@ -127,6 +135,7 @@ fn persist_with_previous_hash(
         diagnostics: emitted.diagnostics,
         changed,
         written: should_write,
+        suppress_primary_output: emitted.suppress_primary_output,
         output_path,
         auxiliary_outputs,
     })
@@ -142,6 +151,15 @@ fn write_output_file(path: &Path, source: &str) -> io::Result<()> {
             }
             fs::write(path, source)
         }
+        Err(error) => Err(error),
+    }
+}
+
+/// Removes a generated file when it exists.
+fn remove_output_file(path: &Path) -> io::Result<()> {
+    match fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
         Err(error) => Err(error),
     }
 }

@@ -12,7 +12,8 @@ fn build_reports_missing_initial_route_page() {
         &[DustImport::Route],
         "import 'pages/dashboard_page.dart';\n\
          import 'pages/not_found_page.dart';\n\
-         import 'route.g.dart';\n\
+         import 'route/routes.g.dart';\n\
+         export 'route/routes.g.dart';\n\
          \n\
          @AppRouter(initial: '/missing', notFound: '/404')\n\
          final class TestRouter extends $TestRouter {\n\
@@ -44,7 +45,8 @@ fn build_reports_missing_not_found_route_page() {
         &workspace.path().join("lib/route.dart"),
         &[DustImport::Route],
         "import 'pages/dashboard_page.dart';\n\
-         import 'route.g.dart';\n\
+         import 'route/routes.g.dart';\n\
+         export 'route/routes.g.dart';\n\
          \n\
          @AppRouter(initial: '/', notFound: '/missing')\n\
          final class TestRouter extends $TestRouter {\n\

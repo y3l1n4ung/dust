@@ -31,6 +31,7 @@ pub(super) fn build_load_error(
                 routed: false,
             },
             expected_output_hash: None,
+            suppress_primary_output: false,
             analysis_snapshot: LibraryAnalysisSnapshot::default(),
         },
     }
@@ -42,6 +43,7 @@ pub(super) fn build_cached_outcome(
     library: &SourceLibrary,
     expected_output_hash: u64,
     auxiliary_output_paths: Vec<std::path::PathBuf>,
+    suppress_primary_output: bool,
     analysis_snapshot: LibraryAnalysisSnapshot,
 ) -> IndexedBuildOutcome {
     let routed = crate::build::support::route_only_analysis(&analysis_snapshot);
@@ -63,6 +65,7 @@ pub(super) fn build_cached_outcome(
                 routed,
             },
             expected_output_hash: Some(expected_output_hash),
+            suppress_primary_output,
             analysis_snapshot,
         },
     }

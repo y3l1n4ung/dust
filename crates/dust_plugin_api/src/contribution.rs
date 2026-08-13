@@ -30,6 +30,9 @@ pub struct PluginContribution {
     /// Complete primary generated source override for plugins that own a
     /// standalone output library instead of a `part of` file.
     pub primary_source: Option<String>,
+    /// Whether the plugin intentionally emits no primary output for this
+    /// source library.
+    pub suppress_primary_output: bool,
     /// Helper declarations shared across generated output.
     pub shared_helpers: Vec<String>,
     /// Class-scoped generated members grouped by target class.

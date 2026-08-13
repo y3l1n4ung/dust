@@ -20,7 +20,7 @@ mod validate;
 use self::analysis::collect_route_workspace_analysis_ir;
 use self::build::build_router_spec;
 use self::constants::{CLAIMED_CONFIG_SYMBOLS, SUPPORTED_ANNOTATIONS};
-use self::emit::render_route_generated;
+use self::emit::render_route_generated_files;
 use self::validate::validate_library_routes;
 
 /// Dust plugin for typed Flutter Navigator 2.0 routing.
@@ -89,7 +89,8 @@ impl DustPlugin for RoutePlugin {
             }
         };
         vec![PluginContribution {
-            primary_source: Some(render_route_generated(library, &spec)),
+            suppress_primary_output: true,
+            auxiliary_outputs: render_route_generated_files(library, &spec),
             ..PluginContribution::default()
         }]
     }

@@ -148,7 +148,7 @@ fn discover_libraries_accepts_dust_reexport_imports() {
 
     write_file(
         &root.path().join("lib/route.dart"),
-        "import 'package:dust_flutter/route.dart' show AppRouter;\nexport 'package:dust_flutter/route.dart';\npart 'route.g.dart';\n@AppRouter(initial: '/')\nclass TestRouter {}\n",
+        "import 'package:dust_flutter/route.dart' show AppRouter;\nimport 'route/routes.g.dart';\nexport 'package:dust_flutter/route.dart';\nexport 'route/routes.g.dart';\n@AppRouter(initial: '/')\nclass TestRouter extends $TestRouter {}\n",
     );
     write_file(
         &root.path().join("lib/pages/home.dart"),

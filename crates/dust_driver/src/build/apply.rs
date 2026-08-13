@@ -40,6 +40,7 @@ pub(crate) fn apply_indexed_outcomes(
             diagnostic_file,
             artifact,
             expected_output_hash,
+            suppress_primary_output,
             analysis_snapshot,
         } = outcome;
         let has_error = diagnostics.iter().any(|diagnostic| diagnostic.is_error());
@@ -56,6 +57,7 @@ pub(crate) fn apply_indexed_outcomes(
                         tool_hash,
                         expected_output_hash,
                         auxiliary_output_paths: artifact.auxiliary_output_paths.clone(),
+                        suppress_primary_output,
                         analysis_snapshot,
                     },
                 );

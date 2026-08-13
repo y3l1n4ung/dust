@@ -35,7 +35,7 @@ pub(super) fn load_library_inputs(
                                     .collect(),
                                 allow_missing_primary: crate::build::support::route_only_analysis(
                                     &entry.analysis_snapshot,
-                                ),
+                                ) || entry.suppress_primary_output,
                             });
                         let input = load_library_input(
                             library,

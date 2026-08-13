@@ -10,7 +10,7 @@ instead of isolated model fixtures.
 
 | Area | Where to look |
 | :--- | :--- |
-| Routing and guards | [`lib/route.dart`](lib/route.dart), [`lib/route.g.dart`](lib/route.g.dart) |
+| Routing and guards | [`lib/route.dart`](lib/route.dart), [`lib/route/routes.g.dart`](lib/route/routes.g.dart) |
 | ViewModel scopes | [`lib/main.dart`](lib/main.dart), [`lib/core/view_models/app_view_model.dart`](lib/core/view_models/app_view_model.dart) |
 | HTTP client | [`lib/core/api/shopping_api.dart`](lib/core/api/shopping_api.dart) |
 | JSON models | [`lib/features/products/models/product.dart`](lib/features/products/models/product.dart), [`lib/features/cart/models/cart_state.dart`](lib/features/cart/models/cart_state.dart) |
@@ -47,7 +47,7 @@ flutter build web
 ## Generated Surfaces
 
 - `@AppRouter` generates typed route classes and parser helpers in
-  [`lib/route.g.dart`](lib/route.g.dart).
+  generated files under [`lib/route/`](lib/route/).
 - `@AppRoute` on Flutter pages declares paths, route parameters, and guards.
 - `@ViewModel` generates scopes, typed args, readers, and watchers.
 - `@Derive` generates copy, equality, JSON, validation, and row-mapping helpers

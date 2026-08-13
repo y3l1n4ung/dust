@@ -133,6 +133,7 @@ pub(crate) fn prepare_and_process_batch(
                     library,
                     entry.expected_output_hash,
                     entry.auxiliary_output_paths.clone(),
+                    entry.suppress_primary_output,
                     entry.analysis_snapshot.clone(),
                 ));
                 reporter.finish(ProgressSnapshot {

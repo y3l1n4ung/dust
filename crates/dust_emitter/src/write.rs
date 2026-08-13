@@ -24,6 +24,8 @@ pub struct WriteResult {
     pub changed: bool,
     /// Whether the file was actually written to disk.
     pub written: bool,
+    /// Whether the primary output path should be absent.
+    pub suppress_primary_output: bool,
     /// The resolved output path used for writing.
     pub output_path: PathBuf,
     /// Additional generated files written for this library.
@@ -78,7 +80,9 @@ pub fn persist_emit_result(
         .diagnostics
         .iter()
         .any(|diagnostic| diagnostic.is_error());
-    let primary_written = if !has_errors && emitted.changed {
+    let primary_written = if !has_errors && emitted.suppress_primary_output {
+        remove_output_file(&output_path)?
+    } else if !has_errors && emitted.changed {
         write_output_file(&output_path, &emitted.source)?;
         true
     } else {
@@ -95,6 +99,7 @@ pub fn persist_emit_result(
         diagnostics: emitted.diagnostics,
         changed,
         written,
+        suppress_primary_output: emitted.suppress_primary_output,
         output_path,
         auxiliary_outputs,
     })
@@ -105,6 +110,15 @@ fn read_previous_output(path: &Path) -> io::Result<Option<String>> {
     match fs::read_to_string(path) {
         Ok(source) => Ok(Some(source)),
         Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(error),
+    }
+}
+
+/// Removes a generated source file when it exists.
+fn remove_output_file(path: &Path) -> io::Result<bool> {
+    match fs::remove_file(path) {
+        Ok(()) => Ok(true),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(false),
         Err(error) => Err(error),
     }
 }
