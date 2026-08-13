@@ -1,6 +1,7 @@
 use dust_ir::{
     ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, DartFileIr,
-    NormalizedConfigIr, ParamKind, RouteConfigIr, RouterConfigIr, SpanIr, SymbolId, TypeIr,
+    EnumIr, EnumVariantIr, NormalizedConfigIr, ParamKind, RouteConfigIr, RouterConfigIr, SpanIr,
+    SymbolId, TypeIr,
 };
 use dust_text::{FileId, TextRange};
 
@@ -172,6 +173,13 @@ pub(crate) fn defaulted_param_source(
 }
 
 pub(crate) fn library_with_classes(mut classes: Vec<ClassIr>) -> DartFileIr {
+    library_with_classes_and_enums(&mut classes, Vec::new())
+}
+
+pub(crate) fn library_with_classes_and_enums(
+    classes: &mut Vec<ClassIr>,
+    enums: Vec<EnumIr>,
+) -> DartFileIr {
     if classes.iter().any(|class| {
         class
             .configs
@@ -199,14 +207,14 @@ pub(crate) fn library_with_classes(mut classes: Vec<ClassIr>) -> DartFileIr {
         part_directives: Vec::new(),
         part_of: None,
         span: span(0, 100),
-        classes,
+        classes: std::mem::take(classes),
         mixins: Vec::new(),
         extensions: Vec::new(),
         extension_types: Vec::new(),
         functions: Vec::new(),
         variables: Vec::new(),
         typedefs: Vec::new(),
-        enums: Vec::new(),
+        enums,
         query_calls: Vec::new(),
     }
 }
@@ -216,5 +224,22 @@ fn string_default_param(name: &str, default_value: &str) -> ConstructorParamIr {
         has_default: true,
         default_value_source: Some(default_value.to_owned()),
         ..constructor_param(name, TypeIr::string())
+    }
+}
+
+pub(crate) fn enum_type(name: &str, variants: &[&str]) -> EnumIr {
+    EnumIr {
+        name: name.to_owned(),
+        span: span(40, 60),
+        variants: variants
+            .iter()
+            .map(|variant| EnumVariantIr {
+                name: (*variant).to_owned(),
+                serde: None,
+                span: span(42, 44),
+            })
+            .collect(),
+        traits: Vec::new(),
+        serde: None,
     }
 }

@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Add `RouterBase.onException` for unawaited generated navigation failures.
 - Add `RouterBase.parseRouteInformation` for normalizing Flutter
   `RouteInformation` before generated route matching.
+- Add generated route query parsing and restoration for enums, `DateTime`,
+  `Uri`, and repeated `List<String>` / `List<int>` values.
 - Add shared generated-route runtime helpers for URL construction, URI extras,
   bool parsing, shell checks, and no-transition pages.
 

@@ -24,6 +24,12 @@ const List<GeneratedRoute> $testRoutes = [
     guards: [],
   ),
   GeneratedRoute(
+    '/filters',
+    page: FilterPage,
+    name: 'filters',
+    guards: [],
+  ),
+  GeneratedRoute(
     '/invite',
     routes: [
       GeneratedRoute(
@@ -67,6 +73,7 @@ RouteDebugInfo testRouteDebugInfo(TestRoutePath route) {
   return switch (route) {
     TestHomeRoute() => const RouteDebugInfo(name: 'home', shell: null, branch: null),
     TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
+    TestFiltersRoute(tab: _, from: _, redirect: _, tags: _, ids: _) => const RouteDebugInfo(name: 'filters', shell: null, branch: null),
     TestInvitePreviewRoute(code: _, active: _, score: _) => const RouteDebugInfo(name: 'invitePreview', shell: null, branch: null),
     TestProductDetailRoute(productId: _, ref: _, preview: _) => const RouteDebugInfo(name: 'productDetail', shell: null, branch: null),
     TestSearchRoute(query: _, page: _, minRating: _, inStock: _) => const RouteDebugInfo(name: 'search', shell: null, branch: null),
@@ -93,6 +100,8 @@ import 'package:flutter/widgets.dart';
 import 'package:dust_flutter/route.dart';
 
 import 'paths.g.dart';
+import '../route.dart';
+
 extension TestRouterContext on BuildContext {
   RouterController<TestRoutePath> get _routerController =>
       RouterController.of<TestRoutePath>(this);
@@ -108,6 +117,9 @@ final class TestRoutesNavigator {
 
   TestRouteAction<void> notFound({String path = ''}) =>
       TestRouteAction(_router, TestNotFoundRoute(path: path));
+
+  TestRouteAction<void> filters({required RouteTab tab, required DateTime from, Uri? redirect, List<String> tags = const <String>[], List<int>? ids}) =>
+      TestRouteAction(_router, TestFiltersRoute(tab: tab, from: from, redirect: redirect, tags: tags, ids: ids));
 
   TestRouteAction<void> invitePreview({required String code, required bool active, double score = 0.0}) =>
       TestRouteAction(_router, TestInvitePreviewRoute(code: code, active: active, score: score));
@@ -140,6 +152,8 @@ final class TestRouteAction<R> {
 // ignore_for_file: unused_import, unnecessary_import
 
 import 'package:dust_flutter/route.dart';
+
+import '../route.dart';
 
 sealed class TestRoutePath<R> {
   const TestRoutePath();
@@ -183,6 +197,41 @@ final class TestNotFoundRoute extends TestRoutePath<void> {
   bool get requiresAuth => false;
 }
 
+/// Typed route data for `TestFiltersRoute`.
+final class TestFiltersRoute extends TestRoutePath<void> {
+  const TestFiltersRoute({required this.tab, required this.from, this.redirect, this.tags = const <String>[], this.ids});
+
+  final RouteTab tab;
+  final DateTime from;
+  final Uri? redirect;
+  final List<String> tags;
+  final List<int>? ids;
+
+  @override
+  String get location {
+    final query = <String, dynamic>{};
+    query['tab'] = tab.name;
+    query['from'] = from.toIso8601String();
+    if (redirect != null) {
+      query['redirect'] = redirect!.toString();
+    }
+    if (!generatedRouteListEquals(tags, const <String>[])) {
+      query['tags'] = tags;
+    }
+    if (ids != null) {
+      query['ids'] = ids!.map((value) => value.toString()).toList(growable: false);
+    }
+    return generatedRoutePath(
+      ['filters'],
+      queryParameters: query.isEmpty ? null : query,
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
+  }
+
+  @override
+  bool get requiresAuth => false;
+}
+
 /// Typed route data for `TestInvitePreviewRoute`.
 final class TestInvitePreviewRoute extends TestRoutePath<void> {
   const TestInvitePreviewRoute({required this.code, required this.active, this.score = 0.0});
@@ -193,7 +242,7 @@ final class TestInvitePreviewRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    final query = <String, String>{};
+    final query = <String, dynamic>{};
     if (score != 0.0) {
       query['score'] = score.toString();
     }
@@ -215,7 +264,7 @@ final class TestProductDetailRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    final query = <String, String>{};
+    final query = <String, dynamic>{};
     if (ref != null) {
       query['ref'] = ref!;
     }
@@ -241,7 +290,7 @@ final class TestSearchRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    final query = <String, String>{};
+    final query = <String, dynamic>{};
     if (query != null) {
       query['query'] = query!;
     }
@@ -275,37 +324,86 @@ TestRoutePath parseTestRoute(Uri uri) {
     final route = TestNotFoundRoute(path: uri.queryParameters['path'] ?? '');
     return withGeneratedRouteUriExtras(route, uri, const {'path'});
   }
+  if (segments.length == 1 && segments[0] == 'filters') {
+    final tab = generatedRouteParseEnum(RouteTab.values, uri.queryParameters['tab']);
+    final from = DateTime.tryParse(uri.queryParameters['from'] ?? '');
+    final redirect = uri.queryParameters.containsKey('redirect') ? Uri.tryParse(uri.queryParameters['redirect'] ?? '') : null;
+    final tags = uri.queryParametersAll['tags'] ?? const <String>[];
+    final ids = uri.queryParametersAll.containsKey('ids') ? generatedRouteParseIntList(uri.queryParametersAll['ids']) : null;
+    if (tab == null) {
+      return _$notFoundRoute(uri);
+    }
+    if (from == null) {
+      return _$notFoundRoute(uri);
+    }
+    if (uri.queryParameters.containsKey('redirect') && redirect == null) {
+      return _$notFoundRoute(uri);
+    }
+    if (uri.queryParametersAll.containsKey('ids') && ids == null) {
+      return _$notFoundRoute(uri);
+    }
+    final route = TestFiltersRoute(
+      tab: tab,
+      from: from,
+      redirect: redirect,
+      tags: tags,
+      ids: ids,
+    );
+    return withGeneratedRouteUriExtras(route, uri, const <String>{'tab', 'from', 'redirect', 'tags', 'ids'});
+  }
   if (segments.length == 3 && segments[0] == 'invite') {
     final code = segments[1];
     final active = generatedRouteParseBool(segments[2]);
+    final score = uri.queryParameters.containsKey('score') ? double.tryParse(uri.queryParameters['score'] ?? '') : 0.0;
     if (active == null) {
+      return _$notFoundRoute(uri);
+    }
+    if (score == null) {
       return _$notFoundRoute(uri);
     }
     final route = TestInvitePreviewRoute(
       code: code,
       active: active,
-      score: double.tryParse(uri.queryParameters['score'] ?? '') ?? 0.0,
+      score: score,
     );
     return withGeneratedRouteUriExtras(route, uri, const <String>{'score'});
   }
   if (segments.length == 2 && segments[0] == 'products') {
     final productId = int.tryParse(segments[1]);
+    final ref = uri.queryParameters['ref'];
+    final preview = uri.queryParameters.containsKey('preview') ? generatedRouteParseBool(uri.queryParameters['preview']) : false;
     if (productId == null) {
+      return _$notFoundRoute(uri);
+    }
+    if (preview == null) {
       return _$notFoundRoute(uri);
     }
     final route = TestProductDetailRoute(
       productId: productId,
-      ref: uri.queryParameters['ref'],
-      preview: generatedRouteParseBool(uri.queryParameters['preview']) ?? false,
+      ref: ref,
+      preview: preview,
     );
     return withGeneratedRouteUriExtras(route, uri, const <String>{'ref', 'preview'});
   }
   if (segments.length == 1 && segments[0] == 'search') {
+    final query = uri.queryParameters['query'];
+    final page = uri.queryParameters.containsKey('page') ? int.tryParse(uri.queryParameters['page'] ?? '') : 1;
+    final minRating = uri.queryParameters.containsKey('minRating') ? double.tryParse(uri.queryParameters['minRating'] ?? '') : null;
+    final inStock = uri.queryParameters.containsKey('inStock') ? generatedRouteParseBool(uri.queryParameters['inStock']) : null;
+    if (page == null) {
+      return _$notFoundRoute(uri);
+    }
+    if (uri.queryParameters.containsKey('minRating') && minRating == null) {
+      return _$notFoundRoute(uri);
+    }
+    if (uri.queryParameters.containsKey('inStock') && inStock == null) {
+      return _$notFoundRoute(uri);
+    }
     final route = TestSearchRoute(
-      query: uri.queryParameters['query'],
-      page: int.tryParse(uri.queryParameters['page'] ?? '') ?? 1,
-      minRating: double.tryParse(uri.queryParameters['minRating'] ?? ''),
-      inStock: generatedRouteParseBool(uri.queryParameters['inStock']),
+      query: query,
+      page: page,
+      minRating: minRating,
+      inStock: inStock,
     );
     return withGeneratedRouteUriExtras(route, uri, const <String>{'query', 'page', 'minRating', 'inStock'});
   }
@@ -387,6 +485,10 @@ RouteStack<TestRoutePath> restoreTestRouteStack(TestRoutePath route) {
       const TestHomeRoute(),
       route,
     ],
+    TestFiltersRoute(tab: _, from: _, redirect: _, tags: _, ids: _) => [
+      const TestHomeRoute(),
+      route,
+    ],
     TestInvitePreviewRoute(code: _, active: _, score: _) => [
       const TestHomeRoute(),
       route,
@@ -405,6 +507,7 @@ RouteStack<TestRoutePath> restoreTestRouteStack(TestRoutePath route) {
 const Map<Type, Type?> _$appliedShellsByPage = {
   HomePage: null,
   NotFoundPage: null,
+  FilterPage: null,
   InvitePreviewPage: null,
   ProductDetailPage: null,
   SearchPage: null,
@@ -437,6 +540,27 @@ Page<dynamic> buildTestRoutePage(
       fullscreenDialog: false,
       maintainState: true,
       child: NotFoundPage(path: path),
+    ),
+    TestFiltersRoute(
+      tab: final tab,
+      from: final from,
+      redirect: final redirect,
+      tags: final tags,
+      ids: final ids,
+    ) => generatedPage(
+      key: key,
+      location: route.location,
+      name: 'filters',
+      onPopInvoked: onPopInvoked,
+      fullscreenDialog: false,
+      maintainState: true,
+      child: FilterPage(
+        tab: tab,
+        from: from,
+        redirect: redirect,
+        tags: tags,
+        ids: ids,
+      ),
     ),
     TestInvitePreviewRoute(
       code: final code,

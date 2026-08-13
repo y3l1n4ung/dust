@@ -7,6 +7,8 @@ import 'package:flutter/widgets.dart';
 import 'package:dust_flutter/route.dart';
 
 import 'paths.g.dart';
+import '../route.dart';
+
 extension ShoppingRouterContext on BuildContext {
   RouterController<ShoppingRoutePath> get _routerController =>
       RouterController.of<ShoppingRoutePath>(this);
@@ -57,8 +59,8 @@ final class ShoppingRoutesNavigator {
   ShoppingRouteAction<void> register({String? redirectPath}) =>
       ShoppingRouteAction(_router, ShoppingRegisterRoute(redirectPath: redirectPath));
 
-  ShoppingRouteAction<void> staff() =>
-      ShoppingRouteAction(_router, ShoppingStaffRoute());
+  ShoppingRouteAction<void> staff({ShoppingAccessLevel access = ShoppingAccessLevel.staff, DateTime? from, Uri? returnTo, List<String> sections = const <String>[], List<int>? orderIds}) =>
+      ShoppingRouteAction(_router, ShoppingStaffRoute(access: access, from: from, returnTo: returnTo, sections: sections, orderIds: orderIds));
 
   ShoppingRouteAction<bool> supportChat() =>
       ShoppingRouteAction(_router, ShoppingSupportChatRoute());

@@ -28,8 +28,20 @@ pub(super) fn dart_type(ty: &TypeIr) -> String {
         TypeIr::Builtin { kind, nullable } => {
             format!("{}{}", kind.as_str(), if *nullable { "?" } else { "" })
         }
-        TypeIr::Named { name, nullable, .. } => {
-            format!("{name}{}", if *nullable { "?" } else { "" })
+        TypeIr::Named {
+            name,
+            args,
+            nullable,
+        } => {
+            let generics = if args.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    "<{}>",
+                    args.iter().map(dart_type).collect::<Vec<_>>().join(", ")
+                )
+            };
+            format!("{name}{generics}{}", if *nullable { "?" } else { "" })
         }
         TypeIr::Dynamic => DART_DYNAMIC.to_owned(),
         TypeIr::Function {

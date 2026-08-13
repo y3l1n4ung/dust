@@ -5,6 +5,8 @@
 
 import 'package:dust_flutter/route.dart';
 
+import '../route.dart';
+
 sealed class ShoppingRoutePath<R> {
   const ShoppingRoutePath();
 
@@ -116,7 +118,7 @@ final class ShoppingLoginRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    final query = <String, String>{};
+    final query = <String, dynamic>{};
     if (redirectPath != null) {
       query['redirectPath'] = redirectPath!;
     }
@@ -216,7 +218,7 @@ final class ShoppingRegisterRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    final query = <String, String>{};
+    final query = <String, dynamic>{};
     if (redirectPath != null) {
       query['redirectPath'] = redirectPath!;
     }
@@ -233,12 +235,35 @@ final class ShoppingRegisterRoute extends ShoppingRoutePath<void> {
 
 /// Typed route data for `ShoppingStaffRoute`.
 final class ShoppingStaffRoute extends ShoppingRoutePath<void> {
-  const ShoppingStaffRoute();
+  const ShoppingStaffRoute({this.access = ShoppingAccessLevel.staff, this.from, this.returnTo, this.sections = const <String>[], this.orderIds});
+
+  final ShoppingAccessLevel access;
+  final DateTime? from;
+  final Uri? returnTo;
+  final List<String> sections;
+  final List<int>? orderIds;
 
   @override
   String get location {
+    final query = <String, dynamic>{};
+    if (access != ShoppingAccessLevel.staff) {
+      query['access'] = access.name;
+    }
+    if (from != null) {
+      query['from'] = from!.toIso8601String();
+    }
+    if (returnTo != null) {
+      query['returnTo'] = returnTo!.toString();
+    }
+    if (!generatedRouteListEquals(sections, const <String>[])) {
+      query['sections'] = sections;
+    }
+    if (orderIds != null) {
+      query['orderIds'] = orderIds!.map((value) => value.toString()).toList(growable: false);
+    }
     return generatedRoutePath(
       ['staff'],
+      queryParameters: query.isEmpty ? null : query,
       uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
@@ -306,9 +331,8 @@ ShoppingRoutePath parseShoppingRoute(Uri uri) {
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'login') {
-    final route = ShoppingLoginRoute(
-      redirectPath: uri.queryParameters['redirectPath'],
-    );
+    final redirectPath = uri.queryParameters['redirectPath'];
+    final route = ShoppingLoginRoute(redirectPath: redirectPath);
     return withGeneratedRouteUriExtras(route, uri, const <String>{'redirectPath'});
   }
   if (segments.length == 2 && segments[0] == 'order-confirmation') {
@@ -338,14 +362,36 @@ ShoppingRoutePath parseShoppingRoute(Uri uri) {
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'register') {
-    final route = ShoppingRegisterRoute(
-      redirectPath: uri.queryParameters['redirectPath'],
-    );
+    final redirectPath = uri.queryParameters['redirectPath'];
+    final route = ShoppingRegisterRoute(redirectPath: redirectPath);
     return withGeneratedRouteUriExtras(route, uri, const <String>{'redirectPath'});
   }
   if (segments.length == 1 && segments[0] == 'staff') {
-    final route = ShoppingStaffRoute();
-    return withGeneratedRouteUriExtras(route, uri, const <String>{});
+    final access = uri.queryParameters.containsKey('access') ? generatedRouteParseEnum(ShoppingAccessLevel.values, uri.queryParameters['access']) : ShoppingAccessLevel.staff;
+    final from = uri.queryParameters.containsKey('from') ? DateTime.tryParse(uri.queryParameters['from'] ?? '') : null;
+    final returnTo = uri.queryParameters.containsKey('returnTo') ? Uri.tryParse(uri.queryParameters['returnTo'] ?? '') : null;
+    final sections = uri.queryParametersAll['sections'] ?? const <String>[];
+    final orderIds = uri.queryParametersAll.containsKey('orderIds') ? generatedRouteParseIntList(uri.queryParametersAll['orderIds']) : null;
+    if (access == null) {
+      return _$notFoundRoute(uri);
+    }
+    if (uri.queryParameters.containsKey('from') && from == null) {
+      return _$notFoundRoute(uri);
+    }
+    if (uri.queryParameters.containsKey('returnTo') && returnTo == null) {
+      return _$notFoundRoute(uri);
+    }
+    if (uri.queryParametersAll.containsKey('orderIds') && orderIds == null) {
+      return _$notFoundRoute(uri);
+    }
+    final route = ShoppingStaffRoute(
+      access: access,
+      from: from,
+      returnTo: returnTo,
+      sections: sections,
+      orderIds: orderIds,
+    );
+    return withGeneratedRouteUriExtras(route, uri, const <String>{'access', 'from', 'returnTo', 'sections', 'orderIds'});
   }
   if (segments.length == 2 && segments[0] == 'support' && segments[1] == 'chat') {
     final route = ShoppingSupportChatRoute();

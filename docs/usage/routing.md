@@ -597,7 +597,8 @@ context.navigator.pop(true);
 ## Route Parameters
 
 Path parameters match required, non-nullable constructor parameters. Other
-parameters must be nullable or have a default and are encoded as query values:
+parameters are encoded as query values. Query parameters can be required,
+nullable, or defaulted:
 
 ```dart
 @AppRoute('/products/:id', name: 'product', guards: [])
@@ -605,25 +606,42 @@ final class ProductPage extends StatelessWidget {
   const ProductPage({
     super.key,
     required this.id,
+    required this.from,
     this.tab,
     this.preview = false,
+    this.tags = const <String>[],
   });
 
   final int id;
+  final DateTime from;
   final String? tab;
   final bool preview;
+  final List<String> tags;
 
   @override
   Widget build(BuildContext context) => Scaffold(body: Text('Product $id'));
 }
 ```
 
-This route can produce `/products/42?tab=reviews&preview=true`. Default-valued
-query parameters are omitted when their value matches the default.
+This route can parse and restore
+`/products/42?from=2026-08-10T09%3A30%3A00.000Z&tab=reviews&tags=sale&tags=new`.
+Default-valued query parameters are omitted when their value matches the
+default. Missing or invalid required query values resolve to the configured
+not-found route.
 
-Supported URL types are `String`, `int`, `double`, `bool`, and their nullable
-variants. Route widgets need an unnamed generative constructor. Invalid typed
-path values resolve to the configured not-found route.
+Supported URL types:
+
+| Shape | URL spelling |
+| --- | --- |
+| `String`, `int`, `double`, `bool` | Single path or query value. |
+| enum | Query value uses the Dart enum case name, for example `admin`. |
+| `DateTime` | Query value uses ISO-8601 text. |
+| `Uri` | Query value is encoded once by `Uri`. |
+| `List<String>` | Repeated query values, for example `tag=a&tag=b`. |
+| `List<int>` | Repeated query values parsed as integers. |
+
+Route widgets need an unnamed generative constructor. Invalid typed path or
+query values resolve to the configured not-found route.
 
 ## Deep Links and Browser URLs
 

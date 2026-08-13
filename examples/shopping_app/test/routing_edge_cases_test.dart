@@ -86,6 +86,59 @@ void main() {
     );
   });
 
+  test('typed query parameters parse and restore staff dashboard links', () {
+    final route = parseShoppingRoute(
+      Uri.parse(
+        '/staff?access=admin&from=2026-08-10T09%3A30%3A00.000Z'
+        '&returnTo=%2Forders%2FORDER%25201%3Ftab%3Dreceipt'
+        '&sections=orders&sections=returns&orderIds=10&orderIds=20',
+      ),
+    );
+
+    expect(
+      route,
+      isA<ShoppingStaffRoute>()
+          .having(
+            (route) => route.access,
+            'access',
+            ShoppingAccessLevel.admin,
+          )
+          .having(
+            (route) => route.from,
+            'from',
+            DateTime.utc(2026, 8, 10, 9, 30),
+          )
+          .having(
+            (route) => route.returnTo.toString(),
+            'returnTo',
+            '/orders/ORDER%201?tab=receipt',
+          )
+          .having(
+        (route) => route.sections,
+        'sections',
+        ['orders', 'returns'],
+      ).having((route) => route.orderIds, 'orderIds', [10, 20]).having(
+        (route) => route.location,
+        'location',
+        '/staff?access=admin&from=2026-08-10T09%3A30%3A00.000Z'
+            '&returnTo=%2Forders%2FORDER%25201%3Ftab%3Dreceipt'
+            '&sections=orders&sections=returns&orderIds=10&orderIds=20',
+      ),
+    );
+  });
+
+  test('invalid typed query parameters use the configured not-found route', () {
+    final invalidEnum = parseShoppingRoute(Uri.parse('/staff?access=owner'));
+    final invalidDate = parseShoppingRoute(Uri.parse('/staff?from=tomorrow'));
+    final invalidRepeatedInt = parseShoppingRoute(
+      Uri.parse('/staff?orderIds=10&orderIds=bad'),
+    );
+
+    expect(invalidEnum, isA<ShoppingNotFoundRoute>());
+    expect(invalidDate, isA<ShoppingNotFoundRoute>());
+    expect(invalidRepeatedInt, isA<ShoppingNotFoundRoute>());
+  });
+
   test('unknown deep links resolve to the configured not-found route', () {
     final route = parseShoppingRoute(
       Uri.parse('https://shop.example/missing/path?campaign=spring#fallback'),

@@ -62,6 +62,28 @@ void main() {
       expect(generatedRouteParseBool('yes'), isNull);
     });
 
+    test('parse generated route enum URL values', () {
+      expect(
+        generatedRouteParseEnum(_RouteTab.values, 'reviews'),
+        _RouteTab.reviews,
+      );
+      expect(generatedRouteParseEnum(_RouteTab.values, 'missing'), isNull);
+      expect(generatedRouteParseEnum(_RouteTab.values, ''), isNull);
+      expect(generatedRouteParseEnum(_RouteTab.values, null), isNull);
+    });
+
+    test('parse generated repeated int query values', () {
+      expect(generatedRouteParseIntList(['1', '2', '3']), [1, 2, 3]);
+      expect(generatedRouteParseIntList(['1', 'bad']), isNull);
+      expect(generatedRouteParseIntList(null), isNull);
+    });
+
+    test('compare generated list route defaults by value', () {
+      expect(generatedRouteListEquals(['sale'], ['sale']), isTrue);
+      expect(generatedRouteListEquals(['sale'], ['new']), isFalse);
+      expect(generatedRouteListEquals(['sale'], ['sale', 'new']), isFalse);
+    });
+
     test('detect shell metadata mismatches', () {
       const routes = [
         GeneratedRoute('/', page: _HomePage, shell: _Shell),
@@ -89,6 +111,8 @@ void main() {
     });
   });
 }
+
+enum _RouteTab { overview, reviews }
 
 final class _HomePage extends StatelessWidget {
   const _HomePage();

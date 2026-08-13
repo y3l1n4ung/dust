@@ -57,7 +57,13 @@ pub(crate) fn validate_library_routes(library: &DartFileIr) -> Vec<Diagnostic> {
             diagnostics.push(Diagnostic::error(format!("duplicate route name `{name}`")));
         }
 
-        validate_route_params(class, &route.path, &mut diagnostics);
+        validate_route_params(
+            library,
+            class,
+            &route.path,
+            &local_classes,
+            &mut diagnostics,
+        );
         validate_visible_route_types(library, class, &route, &local_classes, &mut diagnostics);
     }
 
@@ -157,7 +163,13 @@ fn is_user_type_import(uri: &str) -> bool {
 }
 
 /// Validates constructor parameters used by a route path and query string.
-fn validate_route_params(class: &ClassIr, path: &str, diagnostics: &mut Vec<Diagnostic>) {
+fn validate_route_params(
+    library: &DartFileIr,
+    class: &ClassIr,
+    path: &str,
+    local_classes: &HashSet<&str>,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
     let Some(constructor) = route_constructor(class) else {
         diagnostics.push(Diagnostic::error(format!(
             "route page `{}` needs an unnamed generative constructor",
@@ -206,14 +218,15 @@ fn validate_route_params(class: &ClassIr, path: &str, diagnostics: &mut Vec<Diag
                 param.name, class.name
             )));
         }
-        if !is_supported_url_primitive(&param.ty) {
+        if !is_supported_route_query_param(
+            library,
+            local_classes,
+            &param.ty,
+            class,
+            param,
+            diagnostics,
+        ) {
             diagnostics.push(unsupported_param_diagnostic(&class.name, param));
-        }
-        if !param.ty.is_nullable() && !param.has_default {
-            diagnostics.push(Diagnostic::error(format!(
-                "route query parameter `{}` on `{}` must be nullable or have a default value",
-                param.name, class.name
-            )));
         }
     }
 }
@@ -246,10 +259,63 @@ fn is_supported_url_primitive(ty: &TypeIr) -> bool {
     )
 }
 
+/// Returns true when a constructor parameter can round-trip through a query string.
+fn is_supported_route_query_param(
+    library: &DartFileIr,
+    local_classes: &HashSet<&str>,
+    ty: &TypeIr,
+    class: &ClassIr,
+    param: &ConstructorParamIr,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> bool {
+    if is_supported_url_primitive(ty)
+        || ty.is_named("DateTime")
+        || ty.is_named("Uri")
+        || is_supported_repeated_query_param(ty)
+    {
+        return true;
+    }
+    if matches!(ty, TypeIr::Named { name, args, .. }
+        if args.is_empty() && is_visible_enum_like_type(library, local_classes, name))
+    {
+        return true;
+    }
+    if matches!(ty, TypeIr::Named { name, .. } if name.as_ref() == "List") {
+        diagnostics.push(Diagnostic::error(format!(
+            "route repeated query parameter `{}` on `{}` must be `List<String>` or `List<int>`",
+            param.name, class.name
+        )));
+        return true;
+    }
+    false
+}
+
+/// Returns true when a named query type can be referenced as an enum by generated code.
+fn is_visible_enum_like_type(
+    library: &DartFileIr,
+    local_classes: &HashSet<&str>,
+    name: &str,
+) -> bool {
+    library.enums.iter().any(|enum_| enum_.name == name)
+        || is_visible_type(library, local_classes, name)
+}
+
+/// Returns true for the repeated query shapes supported by generated routing.
+fn is_supported_repeated_query_param(ty: &TypeIr) -> bool {
+    matches!(
+        ty,
+        TypeIr::Named { name, args, .. }
+            if name.as_ref() == "List"
+                && args.len() == 1
+                && (args[0].is_builtin(BuiltinType::String)
+                    || args[0].is_builtin(BuiltinType::Int))
+    )
+}
+
 /// Builds a diagnostic for unsupported route constructor parameter types.
 fn unsupported_param_diagnostic(class_name: &str, param: &ConstructorParamIr) -> Diagnostic {
     Diagnostic::error(format!(
-        "route parameter `{}` on `{class_name}` must be a URL primitive (`String`, `int`, `double`, or `bool`)",
+        "route parameter `{}` on `{class_name}` must be a URL type (`String`, `int`, `double`, `bool`, `DateTime`, `Uri`, enum, `List<String>`, or `List<int>`)",
         param.name
     ))
 }

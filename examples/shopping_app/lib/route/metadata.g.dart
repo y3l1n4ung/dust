@@ -165,7 +165,13 @@ RouteDebugInfo shoppingRouteDebugInfo(ShoppingRoutePath route) {
     ShoppingProductDetailRoute(productId: _) => const RouteDebugInfo(name: 'productDetail', shell: null, branch: null),
     ShoppingProfileRoute() => const RouteDebugInfo(name: 'profile', shell: null, branch: null),
     ShoppingRegisterRoute(redirectPath: _) => const RouteDebugInfo(name: 'register', shell: null, branch: null),
-    ShoppingStaffRoute() => const RouteDebugInfo(name: 'staff', shell: null, branch: null),
+    ShoppingStaffRoute(
+      access: _,
+      from: _,
+      returnTo: _,
+      sections: _,
+      orderIds: _,
+    ) => const RouteDebugInfo(name: 'staff', shell: null, branch: null),
     ShoppingSupportChatRoute() => const RouteDebugInfo(name: 'supportChat', shell: null, branch: null),
     ShoppingWishlistRoute() => const RouteDebugInfo(name: 'wishlist', shell: null, branch: null),
   };

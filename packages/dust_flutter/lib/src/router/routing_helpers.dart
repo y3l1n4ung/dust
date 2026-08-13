@@ -74,6 +74,37 @@ bool? generatedRouteParseBool(String? value) {
   };
 }
 
+/// Parses a URL enum value by Dart enum name.
+T? generatedRouteParseEnum<T extends Enum>(Iterable<T> values, String? value) {
+  if (value == null || value.isEmpty) return null;
+  for (final item in values) {
+    if (item.name == value) return item;
+  }
+  return null;
+}
+
+/// Parses repeated URL query values as integers.
+List<int>? generatedRouteParseIntList(List<String>? values) {
+  if (values == null) return null;
+  final parsed = <int>[];
+  for (final value in values) {
+    final item = int.tryParse(value);
+    if (item == null) return null;
+    parsed.add(item);
+  }
+  return List.unmodifiable(parsed);
+}
+
+/// Compares generated route list defaults without relying on identity.
+bool generatedRouteListEquals<T>(List<T> left, List<T> right) {
+  if (identical(left, right)) return true;
+  if (left.length != right.length) return false;
+  for (var index = 0; index < left.length; index += 1) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
+}
+
 /// Checks that generated page wrapping matches generated route metadata.
 bool generatedRouteShellsMatch(
   List<GeneratedRoute> routes,
