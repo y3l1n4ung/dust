@@ -57,7 +57,7 @@ final class BenchmarkModelDetailRoute extends BenchmarkRoutePath<void> {
 
   @override
   String get location {
-    final query = <String, String>{};
+    final query = <String, dynamic>{};
     if (tab != null) {
       query['tab'] = tab!;
     }
@@ -87,13 +87,18 @@ BenchmarkRoutePath parseBenchmarkRoute(Uri uri) {
   }
   if (segments.length == 2 && segments[0] == 'models') {
     final id = int.tryParse(segments[1]);
+    final tab = uri.queryParameters['tab'];
+    final archived = uri.queryParameters.containsKey('archived') ? generatedRouteParseBool(uri.queryParameters['archived']) : null;
     if (id == null) {
+      return _$notFoundRoute(uri);
+    }
+    if (uri.queryParameters.containsKey('archived') && archived == null) {
       return _$notFoundRoute(uri);
     }
     final route = BenchmarkModelDetailRoute(
       id: id,
-      tab: uri.queryParameters['tab'],
-      archived: generatedRouteParseBool(uri.queryParameters['archived']),
+      tab: tab,
+      archived: archived,
     );
     return withGeneratedRouteUriExtras(route, uri, const <String>{'tab', 'archived'});
   }

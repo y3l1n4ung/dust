@@ -87,10 +87,25 @@ pub(super) fn is_required_parameter(node: Node<'_>, source: &SourceText) -> bool
 
 /// Extracts a parameter default-value expression from the surrounding syntax.
 pub(super) fn default_value_source(node: Node<'_>, source: &SourceText) -> Option<String> {
+    let mut candidate = Some(node);
+    while let Some(current) = candidate {
+        if current.kind() == "default_formal_parameter" {
+            let mut value_start = None;
+            let mut cursor = current.walk();
+            for child in current.children(&mut cursor) {
+                if matches!(child.kind(), "=" | ":") {
+                    value_start = Some(child.end_byte());
+                }
+            }
+            return default_value_between(source, value_start?, current.end_byte());
+        }
+        candidate = current.parent();
+    }
+
     let parent = node.parent()?;
 
     let mut found_parameter = false;
-    let mut found_separator = false;
+    let mut value_start = None;
     let mut cursor = parent.walk();
     for child in parent.children(&mut cursor) {
         if same_node(child, node) {
@@ -102,18 +117,21 @@ pub(super) fn default_value_source(node: Node<'_>, source: &SourceText) -> Optio
         }
 
         match child.kind() {
-            "=" | ":" => found_separator = true,
-            "," | "}" | "]" if !found_separator => return None,
-            "," | "}" | "]" => return None,
-            _ if found_separator && child.is_named() => {
-                let value = node_text(child, source);
-                return (!value.trim().is_empty()).then_some(value);
+            "=" | ":" => value_start = Some(child.end_byte()),
+            "," | "}" | "]" => {
+                return default_value_between(source, value_start?, child.start_byte());
             }
             _ => {}
         }
     }
 
-    None
+    default_value_between(source, value_start?, parent.end_byte())
+}
+
+/// Returns trimmed default-value source between two byte offsets.
+fn default_value_between(source: &SourceText, start: usize, end: usize) -> Option<String> {
+    let value = source.as_str().get(start..end)?.trim().to_owned();
+    (!value.is_empty()).then_some(value)
 }
 
 /// Compares tree-sitter nodes by stable kind and byte range.

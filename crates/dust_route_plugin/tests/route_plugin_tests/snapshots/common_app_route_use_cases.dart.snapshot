@@ -289,7 +289,7 @@ final class TestInviteRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    final query = <String, String>{};
+    final query = <String, dynamic>{};
     if (team != null) {
       query['team'] = team!;
     }
@@ -314,7 +314,7 @@ final class TestOrgProjectRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    final query = <String, String>{};
+    final query = <String, dynamic>{};
     if (tab != null) {
       query['tab'] = tab!;
     }
@@ -352,7 +352,7 @@ final class TestProductSearchRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    final query = <String, String>{};
+    final query = <String, dynamic>{};
     if (query != null) {
       query['query'] = query!;
     }
@@ -429,22 +429,21 @@ TestRoutePath parseTestRoute(Uri uri) {
   }
   if (segments.length == 2 && segments[0] == 'invite') {
     final code = segments[1];
-    final route = TestInviteRoute(
-      code: code,
-      team: uri.queryParameters['team'],
-    );
+    final team = uri.queryParameters['team'];
+    final route = TestInviteRoute(code: code, team: team);
     return withGeneratedRouteUriExtras(route, uri, const <String>{'team'});
   }
   if (segments.length == 4 && segments[0] == 'orgs' && segments[2] == 'projects') {
     final orgId = segments[1];
     final projectId = int.tryParse(segments[3]);
+    final tab = uri.queryParameters['tab'];
     if (projectId == null) {
       return _$notFoundRoute(uri);
     }
     final route = TestOrgProjectRoute(
       orgId: orgId,
       projectId: projectId,
-      tab: uri.queryParameters['tab'],
+      tab: tab,
     );
     return withGeneratedRouteUriExtras(route, uri, const <String>{'tab'});
   }
@@ -453,10 +452,19 @@ TestRoutePath parseTestRoute(Uri uri) {
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'products') {
+    final query = uri.queryParameters['query'];
+    final page = uri.queryParameters.containsKey('page') ? int.tryParse(uri.queryParameters['page'] ?? '') : 1;
+    final showArchived = uri.queryParameters.containsKey('showArchived') ? generatedRouteParseBool(uri.queryParameters['showArchived']) : false;
+    if (page == null) {
+      return _$notFoundRoute(uri);
+    }
+    if (showArchived == null) {
+      return _$notFoundRoute(uri);
+    }
     final route = TestProductSearchRoute(
-      query: uri.queryParameters['query'],
-      page: int.tryParse(uri.queryParameters['page'] ?? '') ?? 1,
-      showArchived: generatedRouteParseBool(uri.queryParameters['showArchived']) ?? false,
+      query: query,
+      page: page,
+      showArchived: showArchived,
     );
     return withGeneratedRouteUriExtras(route, uri, const <String>{'query', 'page', 'showArchived'});
   }

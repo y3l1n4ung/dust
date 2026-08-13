@@ -46,8 +46,8 @@ struct LocationQueryContext {
     name: String,
     /// Dart expression that encodes the parameter value.
     encode: String,
-    /// Default value source used for omission checks.
-    default_value: String,
+    /// Dart condition that decides whether a defaulted parameter is emitted.
+    default_check: String,
 }
 
 /// Template context for a route location return expression.
@@ -174,7 +174,7 @@ fn render_location_body(route: &RouteSpec) -> String {
             let context = LocationQueryContext {
                 name: param.name.clone(),
                 encode,
-                default_value: param.default_value_source.clone().unwrap_or_default(),
+                default_check: default_query_check(param),
             };
             if param.ty.is_nullable() {
                 body.push(render_template(
@@ -261,4 +261,14 @@ fn render_location_body(route: &RouteSpec) -> String {
         ));
     }
     format!("{}\n", body.join("\n"))
+}
+
+/// Renders the location omission check for a defaulted query parameter.
+fn default_query_check(param: &RouteParamSpec) -> String {
+    let default_value = param.default_value_source.clone().unwrap_or_default();
+    if matches!(&param.ty, TypeIr::Named { name, .. } if name.as_ref() == "List") {
+        format!("!generatedRouteListEquals({}, {default_value})", param.name)
+    } else {
+        format!("{} != {default_value}", param.name)
+    }
 }

@@ -41,6 +41,33 @@ class UserProfile<T> {
 }
 
 #[test]
+fn extracts_dotted_constructor_parameter_defaults() {
+    let result = parse(
+        3,
+        r#"
+enum ShoppingAccessLevel { staff }
+
+class StaffDashboardScreen {
+  const StaffDashboardScreen({
+    this.access = ShoppingAccessLevel.staff,
+  });
+
+  final ShoppingAccessLevel access;
+}
+"#,
+    );
+
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    let class = &result.library.classes[0];
+    let access = &class.constructors[0].params[0];
+    assert_eq!(access.name, "access");
+    assert_eq!(
+        access.default_value_source.as_deref(),
+        Some("ShoppingAccessLevel.staff")
+    );
+}
+
+#[test]
 fn extracts_annotations_for_multiple_named_method_parameters() {
     let result = parse(
         8,

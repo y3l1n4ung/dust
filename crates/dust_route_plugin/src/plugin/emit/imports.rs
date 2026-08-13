@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 use std::path::Path;
 
-use dust_ir::DartFileIr;
+use dust_ir::{DartFileIr, TypeIr};
 
 use crate::plugin::model::{RouteImport, RouteSpec, RouterSpec};
 
@@ -42,8 +42,7 @@ pub(super) fn render_route_imports(
         }
         let references = route_import_references(route, kind);
         if matches!(kind, RouteImportKind::RouteTypes)
-            && route.import_uri.is_none()
-            && !references.is_empty()
+            && route_type_needs_source_import(current_import.as_deref(), route, &references)
         {
             imports.insert(format!(
                 "import '{}';\n",
@@ -107,9 +106,50 @@ fn route_import_references(route: &RouteSpec, kind: RouteImportKind) -> RouteImp
                 collect_expression_references(transition, &mut references);
             }
         }
-        RouteImportKind::RouteTypes => collect_type_references(&route.result_type, &mut references),
+        RouteImportKind::RouteTypes => {
+            collect_type_references(&route.result_type, &mut references);
+            for param in &route.params {
+                collect_type_ir_references(&param.ty, &mut references);
+            }
+        }
     }
     references
+}
+
+/// Returns true when generated route types need the user route entrypoint.
+fn route_type_needs_source_import(
+    current_import: Option<&str>,
+    route: &RouteSpec,
+    references: &RouteImportReferences,
+) -> bool {
+    if references.is_empty() {
+        return false;
+    }
+    route.import_uri.is_none()
+        || route.imports.iter().any(|import| {
+            Some(import.uri.as_str()) == current_import
+                && route_current_import_is_referenced(import, references)
+        })
+}
+
+/// Returns true when a route page import of the user entrypoint exposes references.
+fn route_current_import_is_referenced(
+    import: &RouteImport,
+    references: &RouteImportReferences,
+) -> bool {
+    if let Some(prefix) = &import.prefix {
+        return references.prefixes.contains(prefix);
+    }
+    if !import.show.is_empty() {
+        return import
+            .show
+            .iter()
+            .any(|name| references.names.contains(name) && !import.hide.contains(name));
+    }
+    references
+        .names
+        .iter()
+        .any(|name| !import.hide.contains(name))
 }
 
 /// Returns true when a page-library import exposes a generated-code reference.
@@ -177,6 +217,7 @@ fn collect_expression_references(source: &str, references: &mut RouteImportRefer
 
 /// Records result-type symbols used by generated path and navigator signatures.
 fn collect_type_references(source: &str, references: &mut RouteImportReferences) {
+    let source = source.trim().trim_end_matches('?').trim();
     if matches!(
         source,
         "void" | "bool" | "int" | "double" | "String" | "Object" | "dynamic"
@@ -184,6 +225,37 @@ fn collect_type_references(source: &str, references: &mut RouteImportReferences)
         return;
     }
     collect_expression_references(source, references);
+}
+
+/// Records non-core route parameter type symbols used by generated route data.
+fn collect_type_ir_references(ty: &TypeIr, references: &mut RouteImportReferences) {
+    match ty {
+        TypeIr::Builtin { .. } | TypeIr::Dynamic | TypeIr::Unknown => {}
+        TypeIr::Named { name, args, .. }
+            if name.as_ref() == "DateTime" || name.as_ref() == "Uri" =>
+        {
+            for arg in args {
+                collect_type_ir_references(arg, references);
+            }
+        }
+        TypeIr::Named { name, args, .. } if name.as_ref() == "List" => {
+            for arg in args {
+                collect_type_ir_references(arg, references);
+            }
+        }
+        TypeIr::Named { name, args, .. } => {
+            collect_expression_references(name, references);
+            for arg in args {
+                collect_type_ir_references(arg, references);
+            }
+        }
+        TypeIr::Function { signature, .. }
+        | TypeIr::Record {
+            shape: signature, ..
+        } => {
+            collect_type_references(signature, references);
+        }
+    }
 }
 
 /// Tokenizes enough Dart expression syntax to detect prefixed route references.

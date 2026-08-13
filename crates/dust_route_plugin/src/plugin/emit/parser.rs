@@ -4,7 +4,7 @@ use serde::Serialize;
 
 use crate::plugin::model::{RouteParamSpec, RouteSpec, RouterSpec};
 
-use super::parser_decode::{decode_path_expr, decode_query_expr};
+use super::parser_decode::{decode_path_expr, decode_query};
 
 use super::route_classes::is_not_found_route;
 
@@ -55,8 +55,8 @@ struct ParseDecoderContext<'a> {
 /// Template context for one required decode null check.
 #[derive(Serialize)]
 struct ParseNullCheckContext<'a> {
-    /// Path parameter name being checked.
-    name: &'a str,
+    /// Dart condition that identifies a failed decode.
+    condition: &'a str,
 }
 
 /// Renders the generated URI parser for all route specs.
@@ -195,7 +195,9 @@ fn render_parse_case(route: &RouteSpec) -> String {
                 null_checks.push(render_template(
                     "route_parse_null_check",
                     include_str!("templates/route_parse_null_check.jinja"),
-                    ParseNullCheckContext { name },
+                    ParseNullCheckContext {
+                        condition: &format!("{name} == null"),
+                    },
                 ));
             }
         }
@@ -205,7 +207,25 @@ fn render_parse_case(route: &RouteSpec) -> String {
         if param.is_path {
             args.push(format!("{}: {}", param.name, param.name));
         } else {
-            args.push(format!("{}: {}", param.name, decode_query_expr(param)));
+            let decode = decode_query(param);
+            decoders.push(render_template(
+                "route_parse_decoder",
+                include_str!("templates/route_parse_decoder.jinja"),
+                ParseDecoderContext {
+                    name: &param.name,
+                    expr: decode.expr,
+                },
+            ));
+            if let Some(condition) = decode.invalid_condition {
+                null_checks.push(render_template(
+                    "route_parse_null_check",
+                    include_str!("templates/route_parse_null_check.jinja"),
+                    ParseNullCheckContext {
+                        condition: &condition,
+                    },
+                ));
+            }
+            args.push(format!("{}: {}", param.name, param.name));
         }
     }
     let known_query_parameters = route

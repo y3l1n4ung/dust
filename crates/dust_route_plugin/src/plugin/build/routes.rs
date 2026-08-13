@@ -127,20 +127,49 @@ fn build_route_spec_from_fact(fact: RouteFact) -> Option<RouteSpec> {
     })
 }
 
-/// Parses a URL-supported primitive type from source text.
+/// Parses a URL-supported route parameter type from source text.
 fn parse_url_type(source: Option<&str>) -> Option<TypeIr> {
     let raw = source?.trim();
     let (name, nullable) = raw
         .strip_suffix('?')
         .map_or((raw, false), |stripped| (stripped.trim(), true));
-    let kind = match name {
-        DART_STRING => BuiltinType::String,
-        DART_INT => BuiltinType::Int,
-        DART_DOUBLE => BuiltinType::Double,
-        DART_BOOL => BuiltinType::Bool,
-        _ => return None,
+    let ty = if let Some(inner) = name
+        .strip_prefix("List<")
+        .and_then(|value| value.strip_suffix('>'))
+    {
+        TypeIr::list_of(parse_url_type(Some(inner.trim()))?)
+    } else {
+        match name {
+            DART_STRING => TypeIr::builtin(BuiltinType::String),
+            DART_INT => TypeIr::builtin(BuiltinType::Int),
+            DART_DOUBLE => TypeIr::builtin(BuiltinType::Double),
+            DART_BOOL => TypeIr::builtin(BuiltinType::Bool),
+            "DateTime" | "Uri" => TypeIr::named(name),
+            value if is_route_named_type(value) => TypeIr::named(value),
+            _ => return None,
+        }
     };
-    Some(TypeIr::Builtin { kind, nullable })
+    Some(if nullable { ty.nullable() } else { ty })
+}
+
+/// Returns true for a named type source that generated route code can reference.
+fn is_route_named_type(value: &str) -> bool {
+    let mut parts = value.split('.');
+    parts
+        .next_back()
+        .and_then(|name| name.chars().next())
+        .is_some_and(|ch| ch.is_ascii_uppercase())
+        && value.split('.').all(is_simple_dart_identifier)
+}
+
+/// Returns true when the source fragment is a simple Dart identifier.
+fn is_simple_dart_identifier(value: &str) -> bool {
+    let mut chars = value.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+    (first == '_' || first == '$' || first.is_ascii_alphabetic())
+        && chars.all(|ch| ch == '_' || ch == '$' || ch.is_ascii_alphanumeric())
 }
 
 /// Extracts `:param` placeholders from a route path.

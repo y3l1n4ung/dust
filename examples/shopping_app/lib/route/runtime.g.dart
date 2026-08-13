@@ -120,7 +120,13 @@ RouteStack<ShoppingRoutePath> restoreShoppingRouteStack(ShoppingRoutePath route)
       const ShoppingProductsRoute(),
       route,
     ],
-    ShoppingStaffRoute() => [
+    ShoppingStaffRoute(
+      access: _,
+      from: _,
+      returnTo: _,
+      sections: _,
+      orderIds: _,
+    ) => [
       const ShoppingProductsRoute(),
       route,
     ],
@@ -285,14 +291,26 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: RegisterScreen(redirectPath: redirectPath),
     ),
-    ShoppingStaffRoute() => generatedPage(
+    ShoppingStaffRoute(
+      access: final access,
+      from: final from,
+      returnTo: final returnTo,
+      sections: final sections,
+      orderIds: final orderIds,
+    ) => generatedPage(
       key: key,
       location: route.location,
       name: 'staff',
       onPopInvoked: onPopInvoked,
       fullscreenDialog: false,
       maintainState: true,
-      child: const StaffDashboardScreen(),
+      child: StaffDashboardScreen(
+        access: access,
+        from: from,
+        returnTo: returnTo,
+        sections: sections,
+        orderIds: orderIds,
+      ),
     ),
     ShoppingSupportChatRoute() => generatedPage(
       key: key,

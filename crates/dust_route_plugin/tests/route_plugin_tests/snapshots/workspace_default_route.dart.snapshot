@@ -138,7 +138,7 @@ final class TestSearchRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    final query = <String, String>{};
+    final query = <String, dynamic>{};
     if (page != 1) {
       query['page'] = page.toString();
     }
@@ -160,9 +160,11 @@ TestRoutePath parseTestRoute(Uri uri) {
     return withGeneratedRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 1 && segments[0] == 'search') {
-    final route = TestSearchRoute(
-      page: int.tryParse(uri.queryParameters['page'] ?? '') ?? 1,
-    );
+    final page = uri.queryParameters.containsKey('page') ? int.tryParse(uri.queryParameters['page'] ?? '') : 1;
+    if (page == null) {
+      return _$notFoundRoute(uri);
+    }
+    final route = TestSearchRoute(page: page);
     return withGeneratedRouteUriExtras(route, uri, const <String>{'page'});
   }
   return _$notFoundRoute(uri);

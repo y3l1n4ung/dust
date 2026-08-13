@@ -199,7 +199,7 @@ fn workspace_router_count(plan: &SymbolPlan) -> usize {
         .len()
 }
 
-/// Validates duplicate route paths, names, and required query parameters.
+/// Validates duplicate route paths and names.
 fn validate_workspace_route_set(routes: &[RouteSpec]) -> Result<(), Vec<Diagnostic>> {
     let mut diagnostics = Vec::new();
     let mut paths = HashSet::new();
@@ -241,14 +241,6 @@ fn validate_workspace_route_set(routes: &[RouteSpec]) -> Result<(), Vec<Diagnost
                 "generated route class `{}` is emitted by more than one route name",
                 route.route_class
             )));
-        }
-        for param in &route.params {
-            if !param.is_path && !param.ty.is_nullable() && !param.has_default {
-                diagnostics.push(Diagnostic::error(format!(
-                    "route query parameter `{}` on `{}` must be nullable or have a default value",
-                    param.name, route.page_class
-                )));
-            }
         }
         validate_duplicate_path_params(route, &mut diagnostics);
     }
