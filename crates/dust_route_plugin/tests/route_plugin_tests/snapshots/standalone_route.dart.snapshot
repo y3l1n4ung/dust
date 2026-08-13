@@ -16,12 +16,14 @@ const List<GeneratedRoute> $testRoutes = [
     '/',
     page: DashboardPage,
     name: 'dashboard',
+    resultType: 'void',
     transition: FadeUpwardsPageTransitionsBuilder(),
   ),
   GeneratedRoute(
     '/404',
     page: NotFoundPage,
     name: 'notFound',
+    resultType: 'void',
     guards: [],
   ),
   GeneratedRoute(
@@ -31,12 +33,14 @@ const List<GeneratedRoute> $testRoutes = [
         ':projectId',
         page: ProjectPage,
         name: 'project',
+        resultType: 'void',
         shell: AppShell,
         routes: [
           GeneratedRoute(
             'settings',
             page: ProjectSettingsPage,
             name: 'projectSettings',
+            resultType: 'void',
             shell: AppShell,
           ),
         ],      ),
@@ -54,10 +58,10 @@ String? testRouteBranch(TestRoutePath route) {
 
 RouteDebugInfo testRouteDebugInfo(TestRoutePath route) {
   return switch (route) {
-    TestDashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: null, branch: null),
-    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
-    TestProjectRoute(projectId: _, tab: _, archived: _) => const RouteDebugInfo(name: 'project', shell: 'AppShell', branch: null),
-    TestProjectSettingsRoute(projectId: _) => const RouteDebugInfo(name: 'projectSettings', shell: 'AppShell', branch: null),
+    TestDashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: null, branch: null, resultType: 'void'),
+    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
+    TestProjectRoute(projectId: _, tab: _, archived: _) => const RouteDebugInfo(name: 'project', shell: 'AppShell', branch: null, resultType: 'void'),
+    TestProjectSettingsRoute(projectId: _) => const RouteDebugInfo(name: 'projectSettings', shell: 'AppShell', branch: null, resultType: 'void'),
   };
 }
 

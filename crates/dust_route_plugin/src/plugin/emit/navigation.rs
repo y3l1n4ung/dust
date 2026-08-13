@@ -7,6 +7,7 @@ use crate::plugin::model::{GuardSpec, RouterSpec};
 
 use super::{
     action_helpers::render_route_factories,
+    branches::branch_constant_expr,
     patterns::route_switch_pattern,
     shell::{effective_branch, effective_shell},
 };
@@ -113,7 +114,7 @@ fn render_branch_cases(spec: &RouterSpec) -> String {
                 format!(
                     "    {} => {},\n",
                     route_switch_pattern(route, Some(&no_bindings)),
-                    dart_string_literal(branch)
+                    branch_constant_expr(spec, branch)
                 )
             })
         })
@@ -130,15 +131,17 @@ fn render_debug_cases(spec: &RouterSpec) -> String {
                 .map(dart_string_literal)
                 .unwrap_or_else(|| "null".to_owned());
             let branch = effective_branch(route, &spec.routes)
-                .map(dart_string_literal)
+                .map(|branch| branch_constant_expr(spec, branch))
                 .unwrap_or_else(|| "null".to_owned());
             let name = dart_string_literal(&route.name);
+            let result_type = dart_string_literal(&route.result_type);
             format!(
-                "    {} => const RouteDebugInfo(name: {}, shell: {}, branch: {}),\n",
+                "    {} => const RouteDebugInfo(name: {}, shell: {}, branch: {}, resultType: {}),\n",
                 route_switch_pattern(route, Some(&no_bindings)),
                 name,
                 shell,
-                branch
+                branch,
+                result_type
             )
         })
         .collect::<String>()

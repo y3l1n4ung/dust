@@ -1,5 +1,7 @@
 /// Renders typed navigation action factory helpers.
 mod action_helpers;
+/// Renders generated branch constants and branch references.
+mod branches;
 /// Renders split route output files.
 mod files;
 /// Shared formatting helpers for generated Dart code.

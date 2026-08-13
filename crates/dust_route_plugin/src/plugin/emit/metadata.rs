@@ -1,6 +1,7 @@
 use dust_dart_emit::{dart_string_literal, render_template};
 
 use super::{
+    branches::{branch_constant_expr, branch_constants},
     metadata_context::{
         GeneratedChildrenContext, GeneratedGroupContext, GeneratedRouteContext,
         MetadataEntryContext, MetadataListContext,
@@ -11,17 +12,33 @@ use crate::plugin::model::{RouteSpec, RouterSpec};
 
 /// Renders the generated route metadata tree.
 pub(super) fn render_route_metadata(out: &mut String, spec: &RouterSpec) {
-    let routes = &spec.routes;
-    let tree = MetadataTree::build(routes);
+    render_branch_constants(out, spec);
+    let tree = MetadataTree::build(&spec.routes);
     out.push_str(&render_template(
         "route_metadata_list",
         include_str!("templates/route_metadata_list.jinja"),
         MetadataListContext {
             routes_variable: spec.routes_variable.clone(),
-            nodes: render_metadata_nodes(&tree, routes, 1, true),
+            nodes: render_metadata_nodes(&tree, spec, 1, true),
         },
     ));
     out.push_str("\n\n");
+}
+
+/// Renders public constants for every generated stateful branch.
+fn render_branch_constants(out: &mut String, spec: &RouterSpec) {
+    let constants = branch_constants(spec);
+    if constants.is_empty() {
+        return;
+    }
+    for constant in constants {
+        out.push_str(&format!(
+            "const String {} = {};\n",
+            constant.name,
+            dart_string_literal(&constant.value)
+        ));
+    }
+    out.push('\n');
 }
 
 /// Prefix tree used to render nested route metadata.
@@ -87,10 +104,11 @@ impl MetadataTree {
 /// Renders metadata nodes for a tree level.
 fn render_metadata_nodes(
     node: &MetadataTree,
-    routes: &[RouteSpec],
+    spec: &RouterSpec,
     indent: usize,
     root: bool,
 ) -> String {
+    let routes = &spec.routes;
     let mut entries = Vec::new();
     if let Some(index) = node.route_index {
         let children = if root { &[] } else { node.children.as_slice() };
@@ -100,7 +118,7 @@ fn render_metadata_nodes(
                 routes[index].path.as_str(),
                 &routes[index],
                 children,
-                routes,
+                spec,
                 indent,
             ),
         ));
@@ -112,9 +130,9 @@ fn render_metadata_nodes(
             child.segment.clone()
         };
         let rendered = if let Some(index) = child.node.route_index {
-            render_generated_route(&path, &routes[index], &child.node.children, routes, indent)
+            render_generated_route(&path, &routes[index], &child.node.children, spec, indent)
         } else {
-            render_generated_group(&path, &child.node.children, routes, indent)
+            render_generated_group(&path, &child.node.children, spec, indent)
         };
         entries.push(render_metadata_entry(indent, rendered));
     }
@@ -137,7 +155,7 @@ fn render_metadata_entry(indent: usize, node: String) -> String {
 fn render_generated_group(
     path: &str,
     children: &[MetadataChild],
-    routes: &[RouteSpec],
+    spec: &RouterSpec,
     indent: usize,
 ) -> String {
     render_template(
@@ -146,7 +164,7 @@ fn render_generated_group(
         GeneratedGroupContext {
             indent: indent_str(indent),
             path: path.to_owned(),
-            children: render_generated_children_with_prefix(children, routes, indent, true),
+            children: render_generated_children_with_prefix(children, spec, indent, true),
         },
     )
 }
@@ -156,13 +174,19 @@ fn render_generated_route(
     path: &str,
     route: &RouteSpec,
     children: &[MetadataChild],
-    routes: &[RouteSpec],
+    spec: &RouterSpec,
     indent: usize,
 ) -> String {
+    let routes = &spec.routes;
     let mut fields = vec![
         format!("{}  '{path}',\n", indent_str(indent)),
         format!("{}  page: {},\n", indent_str(indent), route.page_class),
         format!("{}  name: '{}',\n", indent_str(indent), route.name),
+        format!(
+            "{}  resultType: {},\n",
+            indent_str(indent),
+            dart_string_literal(&route.result_type)
+        ),
     ];
     if let Some(shell) = effective_shell(route, routes) {
         fields.push(format!("{}  shell: {shell},\n", indent_str(indent)));
@@ -171,7 +195,7 @@ fn render_generated_route(
         fields.push(format!(
             "{}  branch: {},\n",
             indent_str(indent),
-            dart_string_literal(branch)
+            branch_constant_expr(spec, branch)
         ));
     }
     if route.annotation.guards_configured {
@@ -197,7 +221,7 @@ fn render_generated_route(
     if !route.annotation.maintain_state {
         fields.push(format!("{}  maintainState: false,\n", indent_str(indent)));
     }
-    let children = render_generated_children_with_prefix(children, routes, indent, false);
+    let children = render_generated_children_with_prefix(children, spec, indent, false);
     render_template(
         "generated_route",
         include_str!("templates/generated_route.jinja"),
@@ -212,13 +236,14 @@ fn render_generated_route(
 /// Renders generated child metadata with an optional leading comma.
 fn render_generated_children_with_prefix(
     children: &[MetadataChild],
-    routes: &[RouteSpec],
+    spec: &RouterSpec,
     indent: usize,
     needs_prefix_comma: bool,
 ) -> String {
     if children.is_empty() {
         return String::new();
     }
+    let routes = &spec.routes;
     let nodes = children
         .iter()
         .map(|child| {
@@ -227,11 +252,11 @@ fn render_generated_children_with_prefix(
                     &child.segment,
                     &routes[index],
                     &child.node.children,
-                    routes,
+                    spec,
                     indent + 2,
                 )
             } else {
-                render_generated_group(&child.segment, &child.node.children, routes, indent + 2)
+                render_generated_group(&child.segment, &child.node.children, spec, indent + 2)
             };
             render_metadata_entry(indent + 2, rendered)
         })

@@ -103,6 +103,29 @@ void main() {
       );
     });
 
+    test('exposes route metadata names branches and result types', () {
+      const route = GeneratedRoute(
+        '/picker',
+        page: _PlainPage,
+        name: 'picker',
+        branch: 'mainTabs',
+        resultType: 'bool',
+      );
+      const defaultRoute = GeneratedRoute('/home');
+      const debugInfo = RouteDebugInfo(
+        name: 'picker',
+        branch: 'mainTabs',
+        resultType: 'bool',
+      );
+
+      expect(route.name, 'picker');
+      expect(route.branch, 'mainTabs');
+      expect(route.resultType, 'bool');
+      expect(defaultRoute.resultType, 'void');
+      expect(debugInfo.resultType, 'bool');
+      expect(const RouteDebugInfo().resultType, 'void');
+    });
+
     test('runtime no-transition builder has zero durations', () {
       const builder = GeneratedNoTransitionBuilder();
 

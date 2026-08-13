@@ -421,7 +421,9 @@ branch mainTabs is restored with [/tabs/home, /tabs/home/details]
 ```
 
 Child paths inherit the nearest parent `branch:` just like they inherit
-`shell:`.
+`shell:`. Dust also generates a stable constant for each branch value, for
+example `rootBranchMainTabs`, and reuses that constant in route metadata and
+debug helpers.
 
 ### Multi-Step Setup Flow
 

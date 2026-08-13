@@ -43,6 +43,7 @@ final class RouteDebugInfo {
     this.name,
     this.shell,
     this.branch,
+    this.resultType = 'void',
   });
 
   /// Generated route name.
@@ -53,6 +54,9 @@ final class RouteDebugInfo {
 
   /// Stateful navigation branch name.
   final String? branch;
+
+  /// Generated route result type source.
+  final String resultType;
 }
 
 /// Base class for user-owned generated routers.

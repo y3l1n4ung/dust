@@ -100,6 +100,7 @@ class GeneratedRoute {
     this.path, {
     this.page,
     this.name,
+    this.resultType = 'void',
     this.routes = const [],
     this.shell,
     this.branch,
@@ -117,6 +118,9 @@ class GeneratedRoute {
 
   /// Stable route name.
   final String? name;
+
+  /// Generated route result type source.
+  final String resultType;
 
   /// Nested generated routes grouped from child paths.
   final List<GeneratedRoute> routes;

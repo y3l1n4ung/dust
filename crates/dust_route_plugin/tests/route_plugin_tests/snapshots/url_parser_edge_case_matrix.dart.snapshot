@@ -16,17 +16,20 @@ const List<GeneratedRoute> $testRoutes = [
     '/',
     page: HomePage,
     name: 'home',
+    resultType: 'void',
   ),
   GeneratedRoute(
     '/404',
     page: NotFoundPage,
     name: 'notFound',
+    resultType: 'void',
     guards: [],
   ),
   GeneratedRoute(
     '/filters',
     page: FilterPage,
     name: 'filters',
+    resultType: 'void',
     guards: [],
   ),
   GeneratedRoute(
@@ -39,6 +42,7 @@ const List<GeneratedRoute> $testRoutes = [
             ':active',
             page: InvitePreviewPage,
             name: 'invitePreview',
+            resultType: 'void',
           ),
         ],
       ),
@@ -51,6 +55,7 @@ const List<GeneratedRoute> $testRoutes = [
         ':productId',
         page: ProductDetailPage,
         name: 'productDetail',
+        resultType: 'void',
       ),
     ],
   ),
@@ -58,6 +63,7 @@ const List<GeneratedRoute> $testRoutes = [
     '/search',
     page: SearchPage,
     name: 'search',
+    resultType: 'void',
   ),
 ];
 
@@ -71,12 +77,12 @@ String? testRouteBranch(TestRoutePath route) {
 
 RouteDebugInfo testRouteDebugInfo(TestRoutePath route) {
   return switch (route) {
-    TestHomeRoute() => const RouteDebugInfo(name: 'home', shell: null, branch: null),
-    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
-    TestFiltersRoute(tab: _, from: _, redirect: _, tags: _, ids: _) => const RouteDebugInfo(name: 'filters', shell: null, branch: null),
-    TestInvitePreviewRoute(code: _, active: _, score: _) => const RouteDebugInfo(name: 'invitePreview', shell: null, branch: null),
-    TestProductDetailRoute(productId: _, ref: _, preview: _) => const RouteDebugInfo(name: 'productDetail', shell: null, branch: null),
-    TestSearchRoute(query: _, page: _, minRating: _, inStock: _) => const RouteDebugInfo(name: 'search', shell: null, branch: null),
+    TestHomeRoute() => const RouteDebugInfo(name: 'home', shell: null, branch: null, resultType: 'void'),
+    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
+    TestFiltersRoute(tab: _, from: _, redirect: _, tags: _, ids: _) => const RouteDebugInfo(name: 'filters', shell: null, branch: null, resultType: 'void'),
+    TestInvitePreviewRoute(code: _, active: _, score: _) => const RouteDebugInfo(name: 'invitePreview', shell: null, branch: null, resultType: 'void'),
+    TestProductDetailRoute(productId: _, ref: _, preview: _) => const RouteDebugInfo(name: 'productDetail', shell: null, branch: null, resultType: 'void'),
+    TestSearchRoute(query: _, page: _, minRating: _, inStock: _) => const RouteDebugInfo(name: 'search', shell: null, branch: null, resultType: 'void'),
   };
 }
 
