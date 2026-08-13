@@ -102,6 +102,19 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult, ai_mod
                 }
             }
         }
+        CliCommand::RouteGraph => {
+            if let Some(graph) = &result.route_graph {
+                lines.push(format!(
+                    "route graph  scanned: {}  routes: {}  time: {}ms",
+                    graph.scanned_files,
+                    graph.nodes.len(),
+                    result.elapsed_ms
+                ));
+                if !graph.nodes.is_empty() {
+                    append_route_graph(&mut lines, &graph.nodes);
+                }
+            }
+        }
         CliCommand::I18nBuild => {
             if let Some(build) = &result.i18n_build {
                 lines.push(format!(
@@ -175,6 +188,28 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult, ai_mod
         String::new()
     } else {
         format!("{}\n", lines.join("\n"))
+    }
+}
+
+/// Appends a stable route graph as Markdown table rows.
+fn append_route_graph(lines: &mut Vec<String>, nodes: &[dust_driver::RouteGraphNode]) {
+    lines.push("path | parent | name | page | shell | branch | guards".to_owned());
+    lines.push("--- | --- | --- | --- | --- | --- | ---".to_owned());
+    for node in nodes {
+        lines.push(format!(
+            "{} | {} | {} | {} | {} | {} | {}",
+            node.path,
+            node.parent_path.as_deref().unwrap_or("-"),
+            node.name,
+            node.page,
+            node.shell.as_deref().unwrap_or("-"),
+            node.branch.as_deref().unwrap_or("-"),
+            if node.guards.is_empty() {
+                "-".to_owned()
+            } else {
+                node.guards.join(",")
+            },
+        ));
     }
 }
 
@@ -292,8 +327,8 @@ mod tests {
     use dust_diagnostics::{Diagnostic, SourceLabel};
     use dust_driver::{
         CacheReport, CleanReport, CommandResult, DiagnosticFile, DoctorPackageCompatibility,
-        DoctorPackageCompatibilityStatus, DoctorReport, RouteTableReport, RouteTableRow,
-        WatchReport,
+        DoctorPackageCompatibilityStatus, DoctorReport, RouteGraphNode, RouteGraphReport,
+        RouteTableReport, RouteTableRow, WatchReport,
     };
     use dust_text::{FileId, TextRange};
 
@@ -460,6 +495,50 @@ mod tests {
              --- | --- | --- | --- | --- | --- | ---\n\
              dashboard | /dashboard | DashboardPage | AppShell | mainTabs | - | void\n\
              checkout | /checkout | CheckoutPage | - | - | CartGuard | bool\n"
+        );
+    }
+
+    #[test]
+    fn render_route_graph_summary_and_nodes() {
+        let rendered = render_result(
+            &CliCommand::RouteGraph,
+            &CommandResult {
+                route_graph: Some(RouteGraphReport {
+                    scanned_files: 3,
+                    nodes: vec![
+                        RouteGraphNode {
+                            name: "dashboard".to_owned(),
+                            path: "/dashboard".to_owned(),
+                            parent_path: None,
+                            page: "DashboardPage".to_owned(),
+                            shell: Some("AppShell".to_owned()),
+                            branch: Some("mainTabs".to_owned()),
+                            guards: Vec::new(),
+                        },
+                        RouteGraphNode {
+                            name: "orders".to_owned(),
+                            path: "/dashboard/orders".to_owned(),
+                            parent_path: Some("/dashboard".to_owned()),
+                            page: "OrdersPage".to_owned(),
+                            shell: Some("AppShell".to_owned()),
+                            branch: Some("mainTabs".to_owned()),
+                            guards: vec!["OrderGuard".to_owned()],
+                        },
+                    ],
+                }),
+                elapsed_ms: 12,
+                ..CommandResult::default()
+            },
+            true,
+        );
+
+        assert_eq!(
+            rendered,
+            "route graph  scanned: 3  routes: 2  time: 12ms\n\
+             path | parent | name | page | shell | branch | guards\n\
+             --- | --- | --- | --- | --- | --- | ---\n\
+             /dashboard | - | dashboard | DashboardPage | AppShell | mainTabs | -\n\
+             /dashboard/orders | /dashboard | orders | OrdersPage | AppShell | mainTabs | OrderGuard\n"
         );
     }
 

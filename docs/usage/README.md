@@ -33,6 +33,7 @@ When changing Dust versions, check the
 | `dust clean` | Removes Dust-owned generated outputs and cache state. |
 | `dust doctor` | Reports workspace and plugin readiness. |
 | `dust route table` | Prints the app route table without writing files. |
+| `dust route graph` | Prints parent-child route graph nodes without writing files. |
 | `dust upgrade` | Checks, verifies, and upgrades the installed CLI binary. |
 | `dust db build` | Validates static SQLite queries and writes database/DAO output. |
 | `dust check --db` | Checks database/DAO output and SQL without writing. |
