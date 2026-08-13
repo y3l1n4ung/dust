@@ -61,7 +61,7 @@ void main() {
 
       expect(
         messages,
-        containsAllInOrder([
+        [
           fullPathsLog,
           namedPathsLog,
           'AppRouter: setting initial route /safe',
@@ -78,13 +78,50 @@ void main() {
           'AppRouter: route /guard-private name=guardPrivate shell=- branch=-',
           'AppRouter: guards 1 for /guard-private',
           'AppRouter: guard _LoginGuard for /guard-private',
+          'AppRouter: guard _LoginGuard redirect /guard-private => /login',
           'AppRouter: guard redirect /guard-private => /login',
           'AppRouter: guard target /login name=login shell=- branch=-',
           'AppRouter: restoring /login',
           'AppRouter: route /login name=login shell=- branch=-',
           'AppRouter: stack [/login]',
-        ]),
+        ],
       );
+    } finally {
+      debugPrint = previousDebugPrint;
+    }
+  });
+
+  test('router diagnostics log guard allow results', () async {
+    final messages = <String>[];
+    final previousDebugPrint = debugPrint;
+    debugPrint = (message, {wrapWidth}) {
+      if (message != null) messages.add(message);
+    };
+
+    try {
+      final calls = <String>[];
+      final delegate = GeneratedRouterDelegate<_TestRoute>(
+        _runtimeConfig(
+          router: _DebugRouter(),
+          resolveGuards: (route) => route.location == '/guard-private'
+              ? [_RecordingGuard(route.location, calls)]
+              : const [],
+        ),
+      );
+      await delegate.debugWaitForScheduledRefresh();
+      messages.clear();
+
+      await delegate.setNewRoutePath(const _TestRoute('/guard-private'));
+
+      expect(calls, ['/guard-private']);
+      expect(messages, [
+        'AppRouter: restoring /guard-private',
+        'AppRouter: route /guard-private name=guardPrivate shell=- branch=-',
+        'AppRouter: guards 1 for /guard-private',
+        'AppRouter: guard _RecordingGuard for /guard-private',
+        'AppRouter: guard _RecordingGuard allow /guard-private',
+        'AppRouter: stack [/guard-private]',
+      ]);
     } finally {
       debugPrint = previousDebugPrint;
     }
@@ -102,16 +139,17 @@ void main() {
         _runtimeConfig(router: _DebugRouter()),
       );
       await delegate.debugWaitForScheduledRefresh();
+      messages.clear();
       await delegate.setNewRoutePath(const _TestRoute('/branch'));
 
       expect(
         messages,
-        containsAllInOrder([
+        [
           'AppRouter: restoring /branch',
           'AppRouter: route /branch name=branch shell=_DebugShell branch=mainTabs',
           'AppRouter: branch - => mainTabs',
           'AppRouter: stack [/branch]',
-        ]),
+        ],
       );
     } finally {
       debugPrint = previousDebugPrint;
@@ -132,7 +170,10 @@ void main() {
         isA<StateError>().having(
           (error) => error.message,
           'message',
-          contains('redirect cap'),
+          'Router hit the redirect cap (8) navigating to "/one". '
+              'Redirect chain: /one -> /two -> /one -> /two -> /one -> '
+              '/two -> /one -> /two -> /one. '
+              'Check redirect() for a cycle or return null to allow navigation.',
         ),
       ),
     );
@@ -156,7 +197,11 @@ void main() {
         isA<StateError>().having(
           (error) => error.message,
           'message',
-          contains('guard redirect cycle'),
+          'Router guard redirects hit the redirect cap (8) navigating to '
+              '"/guard-one". Guard redirect chain: /guard-one -> '
+              '/guard-two -> /guard-one -> /guard-two -> /guard-one -> '
+              '/guard-two -> /guard-one -> /guard-two -> /guard-one. '
+              'Check guards that return one of these routes repeatedly.',
         ),
       ),
     );
