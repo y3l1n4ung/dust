@@ -12,11 +12,17 @@ use super::{
 
 /// Builds guard specs and router-field injections.
 mod guards;
+/// Validates generated Dart identifiers.
+mod identifiers;
 /// Builds local and workspace route specs.
 mod routes;
+/// Validates route sets before generation.
+mod validation;
 
 use guards::build_guard_specs;
+use identifiers::lower_camel;
 use routes::{build_route_spec, workspace_route_specs};
+use validation::validate_workspace_route_set;
 
 /// Builds the final router spec for a library containing the workspace router.
 pub(crate) fn build_router_spec(
@@ -199,245 +205,6 @@ fn workspace_router_count(plan: &SymbolPlan) -> usize {
         .len()
 }
 
-/// Validates duplicate route paths and names.
-fn validate_workspace_route_set(routes: &[RouteSpec]) -> Result<(), Vec<Diagnostic>> {
-    let mut diagnostics = Vec::new();
-    let mut paths = HashSet::new();
-    let mut names = HashSet::new();
-    let mut route_classes = HashSet::new();
-    let mut helper_names = HashSet::new();
-    for route in routes {
-        if !paths.insert(route.path.clone()) {
-            diagnostics.push(Diagnostic::error(format!(
-                "duplicate route path `{}`",
-                route.path
-            )));
-        }
-        if !names.insert(route.name.clone()) {
-            diagnostics.push(Diagnostic::error(format!(
-                "duplicate route name `{}`",
-                route.name
-            )));
-        }
-        if !is_valid_dart_identifier(&route.name) || is_dart_reserved_word(&route.name) {
-            diagnostics.push(Diagnostic::error(format!(
-                "route name `{}` must be a valid non-reserved Dart identifier",
-                route.name
-            )));
-        }
-        if route.name == "pop" {
-            diagnostics.push(Diagnostic::error(
-                "route name `pop` conflicts with the generated navigator `pop` helper",
-            ));
-        }
-        if !helper_names.insert(route.name.clone()) {
-            diagnostics.push(Diagnostic::error(format!(
-                "generated route helper `{}` is emitted more than once",
-                route.name
-            )));
-        }
-        if !route_classes.insert(route.route_class.clone()) {
-            diagnostics.push(Diagnostic::error(format!(
-                "generated route class `{}` is emitted by more than one route name",
-                route.route_class
-            )));
-        }
-        validate_duplicate_path_params(route, &mut diagnostics);
-    }
-    validate_ambiguous_path_siblings(routes, &mut diagnostics);
-    if diagnostics.is_empty() {
-        Ok(())
-    } else {
-        Err(diagnostics)
-    }
-}
-
-/// Returns true when [name] can be emitted as a Dart identifier.
-fn is_valid_dart_identifier(name: &str) -> bool {
-    let mut chars = name.chars();
-    let Some(first) = chars.next() else {
-        return false;
-    };
-    is_dart_identifier_start(first) && chars.all(is_dart_identifier_part)
-}
-
-/// Returns true when [ch] is allowed at the start of a Dart identifier.
-fn is_dart_identifier_start(ch: char) -> bool {
-    ch == '_' || ch == '$' || ch.is_ascii_alphabetic()
-}
-
-/// Returns true when [ch] is allowed after the first Dart identifier character.
-fn is_dart_identifier_part(ch: char) -> bool {
-    is_dart_identifier_start(ch) || ch.is_ascii_digit()
-}
-
-/// Returns true for Dart reserved and contextual words that should not be
-/// generated as route helper names.
-fn is_dart_reserved_word(name: &str) -> bool {
-    matches!(
-        name,
-        "abstract"
-            | "as"
-            | "assert"
-            | "async"
-            | "await"
-            | "base"
-            | "break"
-            | "case"
-            | "catch"
-            | "class"
-            | "const"
-            | "continue"
-            | "covariant"
-            | "default"
-            | "deferred"
-            | "do"
-            | "dynamic"
-            | "else"
-            | "enum"
-            | "export"
-            | "extends"
-            | "extension"
-            | "external"
-            | "factory"
-            | "false"
-            | "final"
-            | "finally"
-            | "for"
-            | "Function"
-            | "get"
-            | "hide"
-            | "if"
-            | "implements"
-            | "import"
-            | "in"
-            | "interface"
-            | "is"
-            | "late"
-            | "library"
-            | "mixin"
-            | "new"
-            | "null"
-            | "of"
-            | "on"
-            | "operator"
-            | "part"
-            | "required"
-            | "rethrow"
-            | "return"
-            | "sealed"
-            | "set"
-            | "show"
-            | "static"
-            | "super"
-            | "switch"
-            | "sync"
-            | "this"
-            | "throw"
-            | "true"
-            | "try"
-            | "typedef"
-            | "var"
-            | "void"
-            | "when"
-            | "while"
-            | "with"
-            | "yield"
-    )
-}
-
-/// Rejects paths that bind the same `:param` name more than once.
-fn validate_duplicate_path_params(route: &RouteSpec, diagnostics: &mut Vec<Diagnostic>) {
-    let mut seen = HashSet::new();
-    let mut reported = HashSet::new();
-    for segment in path_segments(&route.path) {
-        let Some(param) = path_param_name(segment) else {
-            continue;
-        };
-        if !seen.insert(param) && reported.insert(param) {
-            diagnostics.push(Diagnostic::error(format!(
-                "route `{}` path `{}` declares duplicate path parameter `:{param}`",
-                route.page_class, route.path
-            )));
-        }
-    }
-}
-
-/// Rejects same-length path patterns with overlapping static/dynamic segments.
-fn validate_ambiguous_path_siblings(routes: &[RouteSpec], diagnostics: &mut Vec<Diagnostic>) {
-    for (index, route) in routes.iter().enumerate() {
-        let route_segments = path_segments(&route.path).collect::<Vec<_>>();
-        for sibling in routes.iter().skip(index + 1) {
-            let sibling_segments = path_segments(&sibling.path).collect::<Vec<_>>();
-            let Some(parent) = ambiguous_parent(&route_segments, &sibling_segments) else {
-                continue;
-            };
-            diagnostics.push(ambiguous_sibling_diagnostic(
-                &sibling.path,
-                &route.path,
-                &parent,
-            ));
-        }
-    }
-}
-
-/// Returns the shared parent path when sibling patterns can match the same URL.
-fn ambiguous_parent(left: &[&str], right: &[&str]) -> Option<String> {
-    if left.len() != right.len() {
-        return None;
-    }
-
-    let mut first_static_dynamic_parent = None;
-    for (index, (left_segment, right_segment)) in left.iter().zip(right).enumerate() {
-        if left_segment == right_segment {
-            continue;
-        }
-        let left_dynamic = path_param_name(left_segment).is_some();
-        let right_dynamic = path_param_name(right_segment).is_some();
-        if !left_dynamic && !right_dynamic {
-            return None;
-        }
-        if left_dynamic != right_dynamic {
-            first_static_dynamic_parent.get_or_insert_with(|| {
-                display_parent_path(
-                    &left[..index]
-                        .iter()
-                        .map(|segment| (*segment).to_owned())
-                        .collect::<Vec<_>>(),
-                )
-            });
-        }
-    }
-
-    first_static_dynamic_parent
-}
-
-/// Builds a diagnostic for ambiguous static and dynamic sibling segments.
-fn ambiguous_sibling_diagnostic(route_path: &str, sibling_path: &str, parent: &str) -> Diagnostic {
-    Diagnostic::error(format!(
-        "route path `{route_path}` conflicts with sibling `{sibling_path}`; static and dynamic segments under `{parent}` are ambiguous"
-    ))
-}
-
-/// Iterates over non-empty slash-delimited path segments.
-fn path_segments(path: &str) -> impl Iterator<Item = &str> {
-    path.split('/').filter(|segment| !segment.is_empty())
-}
-
-/// Returns the parameter name for a dynamic path segment.
-fn path_param_name(segment: &str) -> Option<&str> {
-    segment.strip_prefix(':').filter(|name| !name.is_empty())
-}
-
-/// Renders parent path segments with a leading slash.
-fn display_parent_path(segments: &[String]) -> String {
-    if segments.is_empty() {
-        "/".to_owned()
-    } else {
-        format!("/{}", segments.join("/"))
-    }
-}
-
 /// Resolves an annotation path to the generated route class for router settings.
 fn route_class_for_path(
     routes: &[RouteSpec],
@@ -512,29 +279,4 @@ fn discover_refresh_listenable(
 /// Returns true when a router field type can refresh Navigator state.
 fn is_listenable_type(name: &str) -> bool {
     matches!(name, "Listenable" | "ChangeNotifier" | "ValueNotifier") || name.ends_with("ViewModel")
-}
-
-/// Converts a name to lowerCamelCase.
-fn lower_camel(value: &str) -> String {
-    let upper = upper_camel(value);
-    let mut chars = upper.chars();
-    match chars.next() {
-        Some(first) => first.to_lowercase().chain(chars).collect(),
-        None => upper,
-    }
-}
-
-/// Converts a snake, kebab, or spaced name to UpperCamelCase.
-fn upper_camel(value: &str) -> String {
-    value
-        .split(|ch: char| ch == '_' || ch == '-' || ch.is_whitespace())
-        .filter(|part| !part.is_empty())
-        .map(|part| {
-            let mut chars = part.chars();
-            match chars.next() {
-                Some(first) => first.to_uppercase().chain(chars).collect::<String>(),
-                None => String::new(),
-            }
-        })
-        .collect::<String>()
 }

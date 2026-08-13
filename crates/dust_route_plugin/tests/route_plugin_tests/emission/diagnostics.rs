@@ -85,6 +85,50 @@ fn rejects_route_helper_name_that_conflicts_with_navigator_pop() {
 }
 
 #[test]
+fn rejects_duplicate_route_paths_with_page_names_before_emitting_parser() {
+    let library = library_with_classes(vec![
+        router_class("(initial: '/cart', notFound: '/404')"),
+        route_page_class("CartPage", "('/cart', name: 'cart')", Vec::new()),
+        route_page_class("BasketPage", "('/cart', name: 'basket')", Vec::new()),
+    ]);
+
+    let contribution = generate_route_output(&library);
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec![
+            "duplicate route path `/cart` used by `BasketPage` (`basket`) and `CartPage` (`cart`); URL `/cart` matches both"
+        ]
+    );
+}
+
+#[test]
+fn rejects_duplicate_route_names_with_page_paths_before_emitting_parser() {
+    let library = library_with_classes(vec![
+        router_class("(initial: '/cart', notFound: '/404')"),
+        route_page_class("CartPage", "('/cart', name: 'cart')", Vec::new()),
+        route_page_class(
+            "CartSummaryPage",
+            "('/cart/summary', name: 'cart')",
+            Vec::new(),
+        ),
+    ]);
+
+    let contribution = generate_route_output(&library);
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec![
+            "duplicate route name `cart` used by `CartPage` (`/cart`) and `CartSummaryPage` (`/cart/summary`)",
+            "generated route helper `cart` is emitted more than once",
+            "generated route class `TestCartRoute` is emitted by more than one route name"
+        ]
+    );
+}
+
+#[test]
 fn rejects_guard_without_unnamed_constructor() {
     let library = library_with_classes(vec![
         router_class("(initial: '/', notFound: '/404')"),
@@ -180,7 +224,34 @@ fn rejects_static_and_dynamic_route_siblings_before_emitting_parser() {
     assert_eq!(
         diagnostic_messages(&contribution.diagnostics),
         vec![
-            "route path `/users/settings` conflicts with sibling `/users/:id`; static and dynamic segments under `/users` are ambiguous"
+            "route `UserSettingsPage` (`userSettings`, `/users/settings`) conflicts with `UserPage` (`user`, `/users/:id`); URL `/users/settings` can match both because static and dynamic segments under `/users` are ambiguous"
+        ]
+    );
+}
+
+#[test]
+fn rejects_deeper_static_and_dynamic_route_siblings_with_example_url() {
+    let library = library_with_classes(vec![
+        router_class("(initial: '/shops/acme/products/featured', notFound: '/404')"),
+        route_page_class(
+            "ShopProductPage",
+            "('/shops/:shopId/products/featured', name: 'shopProduct')",
+            vec![constructor_param("shopId", TypeIr::string())],
+        ),
+        route_page_class(
+            "FeaturedProductPage",
+            "('/shops/acme/products/:slug', name: 'featuredProduct')",
+            vec![constructor_param("slug", TypeIr::string())],
+        ),
+    ]);
+
+    let contribution = generate_route_output(&library);
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec![
+            "route `FeaturedProductPage` (`featuredProduct`, `/shops/acme/products/:slug`) conflicts with `ShopProductPage` (`shopProduct`, `/shops/:shopId/products/featured`); URL `/shops/acme/products/featured` can match both because static and dynamic segments under `/shops` are ambiguous"
         ]
     );
 }
