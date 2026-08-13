@@ -48,4 +48,19 @@ void main() {
           ),
     );
   });
+
+  test('unknown deep links resolve to the configured not-found route', () {
+    final route = parseShoppingRoute(
+      Uri.parse('https://shop.example/missing/path?campaign=spring#fallback'),
+    );
+
+    expect(
+      route,
+      isA<ShoppingNotFoundRoute>().having(
+        (route) => route.path,
+        'path',
+        'https://shop.example/missing/path?campaign=spring#fallback',
+      ),
+    );
+  });
 }
