@@ -4,7 +4,7 @@ Page<dynamic> {{ build_page_function }}(
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
   assert(
-    _$shellConsistencyCheck(),
+    generatedRouteShellsMatch({{ routes_variable }}, _$appliedShellsByPage),
     'Shell mismatch between \{{ routes_variable }} and {{ build_page_function }}',
   );
   return switch (route) {

@@ -207,6 +207,8 @@ final class TestRouteAction<R> {
 //
 // ignore_for_file: unused_import, unnecessary_import
 
+import 'package:dust_flutter/route.dart';
+
 sealed class TestRoutePath<R> {
   const TestRoutePath();
 
@@ -225,10 +227,10 @@ final class TestNotFoundRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       const ['404'],
       queryParameters: {'path': path},
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 
@@ -242,7 +244,10 @@ final class TestAdminRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(['admin'], uriExtras: _$routeUriExtrasOf(this));
+    return generatedRoutePath(
+      ['admin'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
   }
 }
 
@@ -252,7 +257,10 @@ final class TestDashboardRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(['dashboard'], uriExtras: _$routeUriExtrasOf(this));
+    return generatedRoutePath(
+      ['dashboard'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
   }
 
   @override
@@ -265,9 +273,9 @@ final class TestDashboardOrdersRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       ['dashboard', 'orders'],
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 }
@@ -285,10 +293,10 @@ final class TestInviteRoute extends TestRoutePath<void> {
     if (team != null) {
       query['team'] = team!;
     }
-    return _$routePath(
+    return generatedRoutePath(
       ['invite', code],
       queryParameters: query.isEmpty ? null : query,
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 
@@ -310,10 +318,10 @@ final class TestOrgProjectRoute extends TestRoutePath<void> {
     if (tab != null) {
       query['tab'] = tab!;
     }
-    return _$routePath(
+    return generatedRoutePath(
       ['orgs', orgId, 'projects', projectId.toString()],
       queryParameters: query.isEmpty ? null : query,
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 }
@@ -324,7 +332,10 @@ final class TestProductPickerRoute extends TestRoutePath<int> {
 
   @override
   String get location {
-    return _$routePath(['product-picker'], uriExtras: _$routeUriExtrasOf(this));
+    return generatedRoutePath(
+      ['product-picker'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
   }
 
   @override
@@ -351,10 +362,10 @@ final class TestProductSearchRoute extends TestRoutePath<void> {
     if (showArchived != false) {
       query['showArchived'] = showArchived.toString();
     }
-    return _$routePath(
+    return generatedRoutePath(
       ['products'],
       queryParameters: query.isEmpty ? null : query,
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 
@@ -368,7 +379,10 @@ final class TestSetupRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(['setup'], uriExtras: _$routeUriExtrasOf(this));
+    return generatedRoutePath(
+      ['setup'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
   }
 
   @override
@@ -381,80 +395,29 @@ final class TestSetupConnectRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       ['setup', 'connect'],
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 }
 
 String testRouteLocation(TestRoutePath route) => route.location;
 
-final class _$RouteUriExtras {
-  const _$RouteUriExtras({
-    required this.queryParameters,
-    required this.fragment,
-  });
-
-  final Map<String, List<String>> queryParameters;
-  final String fragment;
-}
-
-final Expando<_$RouteUriExtras> _$routeUriExtras = Expando<_$RouteUriExtras>();
-
-_$RouteUriExtras? _$routeUriExtrasOf(Object route) => _$routeUriExtras[route];
-
-T _$withRouteUriExtras<T extends TestRoutePath>(
-  T route,
-  Uri uri,
-  Set<String> knownQueryParameters,
-) {
-  final queryParameters = <String, List<String>>{};
-  for (final entry in uri.queryParametersAll.entries) {
-    if (!knownQueryParameters.contains(entry.key)) {
-      queryParameters[entry.key] = List.unmodifiable(entry.value);
-    }
-  }
-  if (queryParameters.isEmpty && uri.fragment.isEmpty) return route;
-  _$routeUriExtras[route] = _$RouteUriExtras(
-    queryParameters: Map.unmodifiable(queryParameters),
-    fragment: uri.fragment,
-  );
-  return route;
-}
-
-String _$routePath(
-  List<String> segments, {
-  Map<String, dynamic>? queryParameters,
-  _$RouteUriExtras? uriExtras,
-}) {
-  final query = <String, dynamic>{
-    ...?queryParameters,
-    ...?uriExtras?.queryParameters,
-  };
-  final text = Uri(
-    pathSegments: segments,
-    queryParameters: query.isEmpty ? null : query,
-    fragment: uriExtras?.fragment.isEmpty ?? true ? null : uriExtras!.fragment,
-  ).toString();
-  if (text.isEmpty) return '/';
-  return text.startsWith('/') ? text : '/$text';
-}
-
 TestRoutePath parseTestRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.length == 1 && segments[0] == '404') {
     final route = TestNotFoundRoute(path: uri.queryParameters['path'] ?? '');
-    return _$withRouteUriExtras(route, uri, const {'path'});
+    return withGeneratedRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 1 && segments[0] == 'admin') {
     final route = TestAdminRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'dashboard') {
     final route = TestDashboardRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (
     segments.length == 2 &&
@@ -462,7 +425,7 @@ TestRoutePath parseTestRoute(Uri uri) {
     segments[1] == 'orders'
   ) {
     final route = TestDashboardOrdersRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'invite') {
     final code = segments[1];
@@ -470,7 +433,7 @@ TestRoutePath parseTestRoute(Uri uri) {
       code: code,
       team: uri.queryParameters['team'],
     );
-    return _$withRouteUriExtras(route, uri, const <String>{'team'});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{'team'});
   }
   if (segments.length == 4 && segments[0] == 'orgs' && segments[2] == 'projects') {
     final orgId = segments[1];
@@ -483,41 +446,32 @@ TestRoutePath parseTestRoute(Uri uri) {
       projectId: projectId,
       tab: uri.queryParameters['tab'],
     );
-    return _$withRouteUriExtras(route, uri, const <String>{'tab'});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{'tab'});
   }
   if (segments.length == 1 && segments[0] == 'product-picker') {
     final route = TestProductPickerRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'products') {
     final route = TestProductSearchRoute(
       query: uri.queryParameters['query'],
       page: int.tryParse(uri.queryParameters['page'] ?? '') ?? 1,
-      showArchived: _$parseBool(uri.queryParameters['showArchived']) ?? false,
+      showArchived: generatedRouteParseBool(uri.queryParameters['showArchived']) ?? false,
     );
-    return _$withRouteUriExtras(route, uri, const <String>{'query', 'page', 'showArchived'});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{'query', 'page', 'showArchived'});
   }
   if (segments.length == 1 && segments[0] == 'setup') {
     final route = TestSetupRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'setup' && segments[1] == 'connect') {
     final route = TestSetupConnectRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   return _$notFoundRoute(uri);
 }
 
 TestRoutePath _$notFoundRoute(Uri uri) => TestNotFoundRoute(path: uri.toString());
-
-bool? _$parseBool(String? value) {
-  return switch (value) {
-    'true' || '1' => true,
-    'false' || '0' => false,
-    null || '' => null,
-    _ => null,
-  };
-}
 
 
 // file: lib/route/routes.g.dart
@@ -632,24 +586,13 @@ const Map<Type, Type?> _$appliedShellsByPage = {
   SetupConnectPage: SetupShell,
 };
 
-bool _$shellConsistencyCheck() {
-  bool visit(GeneratedRoute route) {
-    final page = route.page;
-    if (page != null && _$appliedShellsByPage[page] != route.shell) {
-      return false;
-    }
-    return route.routes.every(visit);
-  }
-  return $testRoutes.every(visit);
-}
-
 Page<dynamic> buildTestRoutePage(
   TestRoutePath route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
   assert(
-    _$shellConsistencyCheck(),
+    generatedRouteShellsMatch($testRoutes, _$appliedShellsByPage),
     'Shell mismatch between \$testRoutes and buildTestRoutePage',
   );
   return switch (route) {

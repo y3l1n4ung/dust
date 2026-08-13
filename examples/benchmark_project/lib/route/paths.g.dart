@@ -3,6 +3,8 @@
 //
 // ignore_for_file: unused_import, unnecessary_import
 
+import 'package:dust_flutter/route.dart';
+
 sealed class BenchmarkRoutePath<R> {
   const BenchmarkRoutePath();
 
@@ -19,9 +21,9 @@ final class BenchmarkHomeRoute extends BenchmarkRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       const [],
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 }
@@ -34,10 +36,10 @@ final class BenchmarkNotFoundRoute extends BenchmarkRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       const ['404'],
       queryParameters: {'path': path},
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 
@@ -62,77 +64,26 @@ final class BenchmarkModelDetailRoute extends BenchmarkRoutePath<void> {
     if (archived != null) {
       query['archived'] = archived!.toString();
     }
-    return _$routePath(
+    return generatedRoutePath(
       ['models', id.toString()],
       queryParameters: query.isEmpty ? null : query,
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 }
 
 String benchmarkRouteLocation(BenchmarkRoutePath route) => route.location;
 
-final class _$RouteUriExtras {
-  const _$RouteUriExtras({
-    required this.queryParameters,
-    required this.fragment,
-  });
-
-  final Map<String, List<String>> queryParameters;
-  final String fragment;
-}
-
-final Expando<_$RouteUriExtras> _$routeUriExtras = Expando<_$RouteUriExtras>();
-
-_$RouteUriExtras? _$routeUriExtrasOf(Object route) => _$routeUriExtras[route];
-
-T _$withRouteUriExtras<T extends BenchmarkRoutePath>(
-  T route,
-  Uri uri,
-  Set<String> knownQueryParameters,
-) {
-  final queryParameters = <String, List<String>>{};
-  for (final entry in uri.queryParametersAll.entries) {
-    if (!knownQueryParameters.contains(entry.key)) {
-      queryParameters[entry.key] = List.unmodifiable(entry.value);
-    }
-  }
-  if (queryParameters.isEmpty && uri.fragment.isEmpty) return route;
-  _$routeUriExtras[route] = _$RouteUriExtras(
-    queryParameters: Map.unmodifiable(queryParameters),
-    fragment: uri.fragment,
-  );
-  return route;
-}
-
-String _$routePath(
-  List<String> segments, {
-  Map<String, dynamic>? queryParameters,
-  _$RouteUriExtras? uriExtras,
-}) {
-  final query = <String, dynamic>{
-    ...?queryParameters,
-    ...?uriExtras?.queryParameters,
-  };
-  final text = Uri(
-    pathSegments: segments,
-    queryParameters: query.isEmpty ? null : query,
-    fragment: uriExtras?.fragment.isEmpty ?? true ? null : uriExtras!.fragment,
-  ).toString();
-  if (text.isEmpty) return '/';
-  return text.startsWith('/') ? text : '/$text';
-}
-
 BenchmarkRoutePath parseBenchmarkRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
     final route = BenchmarkHomeRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == '404') {
     final route = BenchmarkNotFoundRoute(path: uri.queryParameters['path'] ?? '');
-    return _$withRouteUriExtras(route, uri, const {'path'});
+    return withGeneratedRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 2 && segments[0] == 'models') {
     final id = int.tryParse(segments[1]);
@@ -142,20 +93,11 @@ BenchmarkRoutePath parseBenchmarkRoute(Uri uri) {
     final route = BenchmarkModelDetailRoute(
       id: id,
       tab: uri.queryParameters['tab'],
-      archived: _$parseBool(uri.queryParameters['archived']),
+      archived: generatedRouteParseBool(uri.queryParameters['archived']),
     );
-    return _$withRouteUriExtras(route, uri, const <String>{'tab', 'archived'});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{'tab', 'archived'});
   }
   return _$notFoundRoute(uri);
 }
 
 BenchmarkRoutePath _$notFoundRoute(Uri uri) => BenchmarkNotFoundRoute(path: uri.toString());
-
-bool? _$parseBool(String? value) {
-  return switch (value) {
-    'true' || '1' => true,
-    'false' || '0' => false,
-    null || '' => null,
-    _ => null,
-  };
-}

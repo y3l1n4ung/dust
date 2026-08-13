@@ -125,6 +125,8 @@ final class TestRouteAction<R> {
 //
 // ignore_for_file: unused_import, unnecessary_import
 
+import 'package:dust_flutter/route.dart';
+
 sealed class TestRoutePath<R> {
   const TestRoutePath();
 
@@ -141,9 +143,9 @@ final class TestDashboardRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       const [],
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 }
@@ -156,10 +158,10 @@ final class TestNotFoundRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       const ['404'],
       queryParameters: {'path': path},
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 
@@ -184,10 +186,10 @@ final class TestProjectRoute extends TestRoutePath<void> {
     if (archived != null) {
       query['archived'] = archived!.toString();
     }
-    return _$routePath(
+    return generatedRoutePath(
       ['projects', projectId.toString()],
       queryParameters: query.isEmpty ? null : query,
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 }
@@ -200,76 +202,25 @@ final class TestProjectSettingsRoute extends TestRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       ['projects', projectId.toString(), 'settings'],
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 }
 
 String testRouteLocation(TestRoutePath route) => route.location;
 
-final class _$RouteUriExtras {
-  const _$RouteUriExtras({
-    required this.queryParameters,
-    required this.fragment,
-  });
-
-  final Map<String, List<String>> queryParameters;
-  final String fragment;
-}
-
-final Expando<_$RouteUriExtras> _$routeUriExtras = Expando<_$RouteUriExtras>();
-
-_$RouteUriExtras? _$routeUriExtrasOf(Object route) => _$routeUriExtras[route];
-
-T _$withRouteUriExtras<T extends TestRoutePath>(
-  T route,
-  Uri uri,
-  Set<String> knownQueryParameters,
-) {
-  final queryParameters = <String, List<String>>{};
-  for (final entry in uri.queryParametersAll.entries) {
-    if (!knownQueryParameters.contains(entry.key)) {
-      queryParameters[entry.key] = List.unmodifiable(entry.value);
-    }
-  }
-  if (queryParameters.isEmpty && uri.fragment.isEmpty) return route;
-  _$routeUriExtras[route] = _$RouteUriExtras(
-    queryParameters: Map.unmodifiable(queryParameters),
-    fragment: uri.fragment,
-  );
-  return route;
-}
-
-String _$routePath(
-  List<String> segments, {
-  Map<String, dynamic>? queryParameters,
-  _$RouteUriExtras? uriExtras,
-}) {
-  final query = <String, dynamic>{
-    ...?queryParameters,
-    ...?uriExtras?.queryParameters,
-  };
-  final text = Uri(
-    pathSegments: segments,
-    queryParameters: query.isEmpty ? null : query,
-    fragment: uriExtras?.fragment.isEmpty ?? true ? null : uriExtras!.fragment,
-  ).toString();
-  if (text.isEmpty) return '/';
-  return text.startsWith('/') ? text : '/$text';
-}
-
 TestRoutePath parseTestRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
     final route = TestDashboardRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == '404') {
     final route = TestNotFoundRoute(path: uri.queryParameters['path'] ?? '');
-    return _$withRouteUriExtras(route, uri, const {'path'});
+    return withGeneratedRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 2 && segments[0] == 'projects') {
     final projectId = int.tryParse(segments[1]);
@@ -279,9 +230,9 @@ TestRoutePath parseTestRoute(Uri uri) {
     final route = TestProjectRoute(
       projectId: projectId,
       tab: uri.queryParameters['tab'],
-      archived: _$parseBool(uri.queryParameters['archived']),
+      archived: generatedRouteParseBool(uri.queryParameters['archived']),
     );
-    return _$withRouteUriExtras(route, uri, const <String>{'tab', 'archived'});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{'tab', 'archived'});
   }
   if (
     segments.length == 3 &&
@@ -293,21 +244,12 @@ TestRoutePath parseTestRoute(Uri uri) {
       return _$notFoundRoute(uri);
     }
     final route = TestProjectSettingsRoute(projectId: projectId);
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   return _$notFoundRoute(uri);
 }
 
 TestRoutePath _$notFoundRoute(Uri uri) => TestNotFoundRoute(path: uri.toString());
-
-bool? _$parseBool(String? value) {
-  return switch (value) {
-    'true' || '1' => true,
-    'false' || '0' => false,
-    null || '' => null,
-    _ => null,
-  };
-}
 
 
 // file: lib/route/routes.g.dart
@@ -400,24 +342,13 @@ const Map<Type, Type?> _$appliedShellsByPage = {
   ProjectSettingsPage: AppShell,
 };
 
-bool _$shellConsistencyCheck() {
-  bool visit(GeneratedRoute route) {
-    final page = route.page;
-    if (page != null && _$appliedShellsByPage[page] != route.shell) {
-      return false;
-    }
-    return route.routes.every(visit);
-  }
-  return $testRoutes.every(visit);
-}
-
 Page<dynamic> buildTestRoutePage(
   TestRoutePath route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
   assert(
-    _$shellConsistencyCheck(),
+    generatedRouteShellsMatch($testRoutes, _$appliedShellsByPage),
     'Shell mismatch between \$testRoutes and buildTestRoutePage',
   );
   return switch (route) {

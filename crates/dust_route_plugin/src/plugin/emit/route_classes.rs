@@ -240,7 +240,7 @@ fn render_location_body(route: &RouteSpec) -> String {
         ));
     } else {
         let inline_return = format!(
-            "    return _$routePath({inline_segments}, uriExtras: _$routeUriExtrasOf(this));"
+            "    return generatedRoutePath({inline_segments}, uriExtras: generatedRouteUriExtrasOf(this));"
         );
         let segment_expr = if inline_segments.len() <= 60 {
             inline_segments

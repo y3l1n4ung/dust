@@ -75,24 +75,13 @@ const Map<Type, Type?> _$appliedShellsByPage = {
   BenchmarkDetailPage: BenchmarkShell,
 };
 
-bool _$shellConsistencyCheck() {
-  bool visit(GeneratedRoute route) {
-    final page = route.page;
-    if (page != null && _$appliedShellsByPage[page] != route.shell) {
-      return false;
-    }
-    return route.routes.every(visit);
-  }
-  return $benchmarkRoutes.every(visit);
-}
-
 Page<dynamic> buildBenchmarkRoutePage(
   BenchmarkRoutePath route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
   assert(
-    _$shellConsistencyCheck(),
+    generatedRouteShellsMatch($benchmarkRoutes, _$appliedShellsByPage),
     'Shell mismatch between \$benchmarkRoutes and buildBenchmarkRoutePage',
   );
   return switch (route) {

@@ -1,4 +1,4 @@
   if (segments.length == 1 && segments[0] == '404') {
     final route = {{ route_class }}(path: uri.queryParameters['path'] ?? '');
-    return _$withRouteUriExtras(route, uri, const {'path'});
+    return withGeneratedRouteUriExtras(route, uri, const {'path'});
   }
