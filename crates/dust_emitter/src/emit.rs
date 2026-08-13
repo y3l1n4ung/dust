@@ -19,6 +19,8 @@ pub struct EmitResult {
     pub diagnostics: Vec<Diagnostic>,
     /// Whether the newly emitted source differs from the previous output.
     pub changed: bool,
+    /// Whether the primary output path should be absent.
+    pub suppress_primary_output: bool,
     /// Additional generated files emitted for this library.
     pub auxiliary_outputs: Vec<AuxiliaryEmitOutput>,
 }
@@ -55,12 +57,17 @@ pub fn emit_library_with_plan(
         diagnostics.append(&mut contribution.diagnostics);
     }
     let primary_source_override = take_primary_source_override(&mut contributions);
+    let suppress_primary_output = contributions
+        .iter()
+        .any(|contribution| contribution.suppress_primary_output);
     let auxiliary_outputs = collect_auxiliary_outputs(&mut contributions);
     let has_contributions = contributions
         .iter()
         .any(|contribution| !contribution.is_empty());
     let merged = MergedSections::from_contributions(contributions);
-    let (source, changed) = if should_emit_primary(
+    let (source, changed) = if suppress_primary_output {
+        (String::new(), previous_output.is_some())
+    } else if should_emit_primary(
         library,
         has_contributions || primary_source_override.is_some(),
         &plan,
@@ -81,6 +88,7 @@ pub fn emit_library_with_plan(
         symbols: plan,
         diagnostics,
         changed,
+        suppress_primary_output,
         auxiliary_outputs,
     }
 }

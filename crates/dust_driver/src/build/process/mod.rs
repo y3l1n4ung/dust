@@ -81,6 +81,8 @@ pub(crate) struct BuildOutcome {
     pub(crate) artifact: BuildArtifact,
     /// Hash of the expected generated output set when processing succeeded.
     pub(crate) expected_output_hash: Option<u64>,
+    /// Whether this library intentionally leaves the primary output absent.
+    pub(crate) suppress_primary_output: bool,
     /// Plugin analysis facts collected for this library.
     pub(crate) analysis_snapshot: LibraryAnalysisSnapshot,
 }
@@ -97,28 +99,46 @@ impl BuildOutcome {
             diagnostic_file,
             artifact: build_artifact(library, Vec::new(), false, false, false),
             expected_output_hash: None,
+            suppress_primary_output: false,
             analysis_snapshot: LibraryAnalysisSnapshot::default(),
         }
     }
 
     /// Builds a successful outcome that can be written into the workspace cache.
-    pub(crate) fn succeeded(
-        library: &SourceLibrary,
-        diagnostics: Vec<Diagnostic>,
-        diagnostic_file: Option<DiagnosticFile>,
-        expected_output_hash: u64,
-        auxiliary_output_paths: Vec<std::path::PathBuf>,
-        changed: bool,
-        written: bool,
-    ) -> Self {
+    pub(crate) fn succeeded(library: &SourceLibrary, success: SuccessfulBuildOutcome) -> Self {
         Self {
-            diagnostics,
-            diagnostic_file,
-            artifact: build_artifact(library, auxiliary_output_paths, changed, written, false),
-            expected_output_hash: Some(expected_output_hash),
+            diagnostics: success.diagnostics,
+            diagnostic_file: success.diagnostic_file,
+            artifact: build_artifact(
+                library,
+                success.auxiliary_output_paths,
+                success.changed,
+                success.written,
+                false,
+            ),
+            expected_output_hash: Some(success.expected_output_hash),
+            suppress_primary_output: success.suppress_primary_output,
             analysis_snapshot: LibraryAnalysisSnapshot::default(),
         }
     }
+}
+
+/// Successful per-library output details.
+pub(crate) struct SuccessfulBuildOutcome {
+    /// Diagnostics produced while processing the library.
+    pub(crate) diagnostics: Vec<Diagnostic>,
+    /// Source file and line index used to render labeled diagnostics.
+    pub(crate) diagnostic_file: Option<DiagnosticFile>,
+    /// Hash of the expected generated output set.
+    pub(crate) expected_output_hash: u64,
+    /// Additional generated outputs owned by this library.
+    pub(crate) auxiliary_output_paths: Vec<std::path::PathBuf>,
+    /// Whether this library intentionally leaves the primary output absent.
+    pub(crate) suppress_primary_output: bool,
+    /// Whether the output differed from the previous file contents.
+    pub(crate) changed: bool,
+    /// Whether any output was actually written to disk.
+    pub(crate) written: bool,
 }
 
 /// Build outcome paired with the source library's original discovery order.

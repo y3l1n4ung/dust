@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dust_flutter/route.dart';
 
-import 'route.g.dart';
+import 'route/routes.g.dart';
 
-export 'route.g.dart';
 export 'package:dust_flutter/route.dart';
+export 'route/routes.g.dart';
 
 /// Benchmark router model for the benchmark example.
 @AppRouter(initial: '/', notFound: '/404')

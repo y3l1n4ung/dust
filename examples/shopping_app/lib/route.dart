@@ -3,10 +3,10 @@ import 'package:dust_flutter/route.dart';
 import 'features/auth/models/auth_state.dart';
 import 'features/auth/models/user.dart';
 import 'features/auth/view_models/auth_view_model.dart';
-import 'route.g.dart';
+import 'route/routes.g.dart';
 
-export 'route.g.dart';
 export 'package:dust_flutter/route.dart';
+export 'route/routes.g.dart';
 
 /// Shopping router model for the shopping app example.
 @AppRouter(initial: '/', notFound: '/404')

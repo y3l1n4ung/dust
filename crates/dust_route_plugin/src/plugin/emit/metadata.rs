@@ -1,59 +1,13 @@
 use dust_dart_emit::{dart_string_literal, render_template};
-use serde::Serialize;
 
-use super::shell::{effective_branch, effective_shell};
+use super::{
+    metadata_context::{
+        GeneratedChildrenContext, GeneratedGroupContext, GeneratedRouteContext,
+        MetadataEntryContext, MetadataListContext,
+    },
+    shell::{effective_branch, effective_shell},
+};
 use crate::plugin::model::{RouteSpec, RouterSpec};
-
-/// Template context for the generated route metadata list.
-#[derive(Serialize)]
-struct MetadataListContext {
-    /// Generated route metadata list variable.
-    routes_variable: String,
-    /// Rendered metadata nodes in tree order.
-    nodes: String,
-}
-
-/// Template context for one metadata list entry.
-#[derive(Serialize)]
-struct MetadataEntryContext {
-    /// Indentation used by the generated Dart source.
-    indent: String,
-    /// Rendered metadata node source.
-    node: String,
-}
-
-/// Template context for a generated metadata group node.
-#[derive(Serialize)]
-struct GeneratedGroupContext {
-    /// Indentation used by the generated Dart source.
-    indent: String,
-    /// Path segment represented by this group.
-    path: String,
-    /// Rendered child metadata nodes.
-    children: String,
-}
-
-/// Template context for a generated route metadata node.
-#[derive(Serialize)]
-struct GeneratedRouteContext {
-    /// Indentation used by the generated Dart source.
-    indent: String,
-    /// Rendered generated route constructor fields.
-    fields: String,
-    /// Rendered child metadata nodes.
-    children: String,
-}
-
-/// Template context for generated child metadata.
-#[derive(Serialize)]
-struct GeneratedChildrenContext {
-    /// Optional prefix inserted before child lists.
-    prefix: &'static str,
-    /// Indentation used by the generated Dart source.
-    indent: String,
-    /// Rendered child nodes.
-    nodes: String,
-}
 
 /// Renders the generated route metadata tree.
 pub(super) fn render_route_metadata(out: &mut String, spec: &RouterSpec) {

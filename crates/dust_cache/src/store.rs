@@ -25,6 +25,9 @@ pub struct CacheEntry {
     /// Additional generated output paths owned by this library build.
     #[serde(default)]
     pub auxiliary_output_paths: Vec<PathBuf>,
+    /// Whether this library intentionally leaves the primary output absent.
+    #[serde(default)]
+    pub suppress_primary_output: bool,
     /// The cached parse-only plugin analysis facts for this library.
     #[serde(default)]
     pub analysis_snapshot: LibraryAnalysisSnapshot,
@@ -233,6 +236,7 @@ mod tests {
                 tool_hash: 3,
                 expected_output_hash: 4,
                 auxiliary_output_paths: Vec::new(),
+                suppress_primary_output: false,
                 analysis_snapshot: LibraryAnalysisSnapshot::default(),
             },
         );
@@ -247,6 +251,7 @@ mod tests {
                 tool_hash: 3,
                 expected_output_hash: 4,
                 auxiliary_output_paths: Vec::new(),
+                suppress_primary_output: false,
                 analysis_snapshot: LibraryAnalysisSnapshot::default(),
             })
         );
@@ -268,6 +273,7 @@ mod tests {
                 tool_hash: 30,
                 expected_output_hash: 40,
                 auxiliary_output_paths: Vec::new(),
+                suppress_primary_output: false,
                 analysis_snapshot: LibraryAnalysisSnapshot::default(),
             },
         );
@@ -292,6 +298,7 @@ mod tests {
                 tool_hash: 3,
                 expected_output_hash: 4,
                 auxiliary_output_paths: Vec::new(),
+                suppress_primary_output: false,
                 analysis_snapshot: LibraryAnalysisSnapshot::default(),
             },
         );

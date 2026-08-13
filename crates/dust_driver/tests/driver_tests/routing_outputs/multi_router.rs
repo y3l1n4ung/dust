@@ -11,7 +11,8 @@ fn multiple_router_roots_are_rejected() {
         &workspace.path().join("lib/admin_route.dart"),
         &[DustImport::Route],
         "import 'pages/admin_page.dart';\n\
-         import 'admin_route.g.dart';\n\
+         import 'admin_route/routes.g.dart';\n\
+         export 'admin_route/routes.g.dart';\n\
          \n\
          @AppRouter(initial: '/admin', notFound: '/404')\n\
          final class AdminRouter extends $AdminRouter {\n\

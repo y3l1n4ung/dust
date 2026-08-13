@@ -1,11 +1,12 @@
-use std::fs;
-
 use dust_driver::{
     BuildRequest, CheckRequest, CleanRequest, WatchRequest, run_build, run_check, run_clean,
     run_watch,
 };
 
-use super::helpers::{assert_route_snapshot, write_dashboard_page, write_routing_workspace};
+use super::helpers::{
+    assert_route_snapshot, read_route_outputs, route_output_paths, write_dashboard_page,
+    write_routing_workspace,
+};
 use crate::support::{make_pub_workspace_member, make_workspace};
 
 #[test]
@@ -20,13 +21,14 @@ fn build_writes_route_output_only_from_router_root() {
         db: Default::default(),
     });
 
-    let route_output = workspace.path().join("lib/route.g.dart");
+    let route_outputs = route_output_paths(workspace.path());
     let dashboard_output = workspace.path().join("lib/pages/dashboard_page.g.dart");
     let not_found_output = workspace.path().join("lib/pages/not_found_page.g.dart");
-    let source = fs::read_to_string(&route_output).unwrap();
+    let source = read_route_outputs(workspace.path());
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
-    assert!(route_output.exists());
+    assert!(route_outputs.iter().all(|path| path.exists()));
+    assert!(!workspace.path().join("lib/route.g.dart").exists());
     assert!(!dashboard_output.exists());
     assert!(!not_found_output.exists());
     assert!(result.build_artifacts.iter().any(|artifact| {
@@ -58,7 +60,7 @@ fn build_refreshes_router_output_when_annotated_page_changes() {
         jobs: None,
         db: Default::default(),
     });
-    let second_source = fs::read_to_string(workspace.path().join("lib/route.g.dart")).unwrap();
+    let second_source = read_route_outputs(workspace.path());
     write_dashboard_page(workspace.path(), "home");
     let third = run_build(BuildRequest {
         cwd: workspace.path().to_path_buf(),
@@ -67,7 +69,7 @@ fn build_refreshes_router_output_when_annotated_page_changes() {
         db: Default::default(),
     });
 
-    let source = fs::read_to_string(workspace.path().join("lib/route.g.dart")).unwrap();
+    let source = read_route_outputs(workspace.path());
 
     assert!(!first.has_errors(), "{:?}", first.diagnostics);
     assert!(!second.has_errors(), "{:?}", second.diagnostics);
@@ -128,7 +130,11 @@ fn clean_removes_route_output_only_from_router_root() {
         db: Default::default(),
     });
     assert!(!build.has_errors(), "{:?}", build.diagnostics);
-    assert!(workspace.path().join("lib/route.g.dart").exists());
+    assert!(
+        route_output_paths(workspace.path())
+            .iter()
+            .all(|path| path.exists())
+    );
 
     let clean = run_clean(CleanRequest {
         cwd: workspace.path().to_path_buf(),
@@ -136,6 +142,11 @@ fn clean_removes_route_output_only_from_router_root() {
 
     assert!(!clean.has_errors(), "{:?}", clean.diagnostics);
     assert!(!workspace.path().join("lib/route.g.dart").exists());
+    assert!(
+        route_output_paths(workspace.path())
+            .iter()
+            .all(|path| !path.exists())
+    );
     assert!(
         !workspace
             .path()
@@ -167,7 +178,7 @@ fn watch_rebuilds_route_output_when_annotated_page_changes() {
     });
     modifier.join().unwrap();
 
-    let source = fs::read_to_string(root.join("lib/route.g.dart")).unwrap();
+    let source = read_route_outputs(&root);
     let watch = result.watch.as_ref().unwrap();
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
@@ -185,7 +196,7 @@ fn route_generation_works_from_pub_workspace_member() {
         jobs: None,
         db: Default::default(),
     });
-    let source = fs::read_to_string(package_root.join("lib/route.g.dart")).unwrap();
+    let source = read_route_outputs(&package_root);
 
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
     assert_route_snapshot("pub_workspace_route.dart.snapshot", &source);

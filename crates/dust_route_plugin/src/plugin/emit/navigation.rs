@@ -3,10 +3,10 @@ use std::collections::BTreeSet;
 use dust_dart_emit::{dart_string_literal, render_template};
 use serde::Serialize;
 
-use crate::plugin::model::{GuardSpec, RouteParamSpec, RouteSpec, RouterSpec};
+use crate::plugin::model::{GuardSpec, RouterSpec};
 
 use super::{
-    formatting::dart_type,
+    action_helpers::render_route_factories,
     patterns::route_switch_pattern,
     shell::{effective_branch, effective_shell},
 };
@@ -53,38 +53,54 @@ struct GuardCaseContext {
     guards: String,
 }
 
-/// Template context for one route action factory.
-#[derive(Serialize)]
-struct FactoryContext {
-    /// Factory method signature.
-    factory: String,
-    /// Factory method body expression.
-    body: String,
-}
-
-/// Renders generated navigation helpers for guards and route actions.
-pub(super) fn render_helpers(out: &mut String, spec: &RouterSpec) {
+/// Renders generated route path helpers.
+pub(super) fn render_path_helpers(out: &mut String, spec: &RouterSpec) {
     out.push_str(&render_template(
-        "route_helpers",
-        include_str!("templates/route_helpers.jinja"),
-        HelpersContext {
-            route_path_class: spec.route_path_class.clone(),
-            route_location_function: spec.route_location_function.clone(),
-            route_requires_auth_function: spec.route_requires_auth_function.clone(),
-            route_branch_function: spec.route_branch_function.clone(),
-            route_debug_info_function: spec.route_debug_info_function.clone(),
-            route_guards_function: spec.route_guards_function.clone(),
-            context_extension: spec.context_extension.clone(),
-            navigator_class: spec.navigator_class.clone(),
-            route_action_class: spec.route_action_class.clone(),
-            guard_cases: render_guard_cases(spec),
-            branch_cases: render_branch_cases(spec),
-            debug_cases: render_debug_cases(spec),
-            factories: render_route_factories(spec),
-            router_base_class: spec.generated_base_class.clone(),
-        },
+        "route_path_helpers",
+        include_str!("templates/route_path_helpers.jinja"),
+        helpers_context(spec),
     ));
     out.push_str("\n\n");
+}
+
+/// Renders generated route metadata helper functions.
+pub(super) fn render_metadata_helpers(out: &mut String, spec: &RouterSpec) {
+    out.push_str(&render_template(
+        "route_metadata_helpers",
+        include_str!("templates/route_metadata_helpers.jinja"),
+        helpers_context(spec),
+    ));
+    out.push_str("\n\n");
+}
+
+/// Renders generated navigation helpers for route actions.
+pub(super) fn render_navigation_helpers(out: &mut String, spec: &RouterSpec) {
+    out.push_str(&render_template(
+        "route_navigation_helpers",
+        include_str!("templates/route_navigation_helpers.jinja"),
+        helpers_context(spec),
+    ));
+    out.push_str("\n\n");
+}
+
+/// Builds the shared helper template context.
+fn helpers_context(spec: &RouterSpec) -> HelpersContext {
+    HelpersContext {
+        route_path_class: spec.route_path_class.clone(),
+        route_location_function: spec.route_location_function.clone(),
+        route_requires_auth_function: spec.route_requires_auth_function.clone(),
+        route_branch_function: spec.route_branch_function.clone(),
+        route_debug_info_function: spec.route_debug_info_function.clone(),
+        route_guards_function: spec.route_guards_function.clone(),
+        context_extension: spec.context_extension.clone(),
+        navigator_class: spec.navigator_class.clone(),
+        route_action_class: spec.route_action_class.clone(),
+        guard_cases: render_guard_cases(spec),
+        branch_cases: render_branch_cases(spec),
+        debug_cases: render_debug_cases(spec),
+        factories: render_route_factories(spec),
+        router_base_class: spec.generated_base_class.clone(),
+    }
 }
 
 /// Renders switch cases that return branch names for branched routes.
@@ -169,11 +185,11 @@ fn render_guard_instance(guard: &str, spec: &RouterSpec) -> String {
     else {
         return format!("{guard}()");
     };
-    guard_constructor(guard_spec, &spec.router_class)
+    guard_constructor(guard_spec)
 }
 
 /// Renders a guard constructor call from a resolved guard spec.
-fn guard_constructor(guard: &GuardSpec, router_class: &str) -> String {
+fn guard_constructor(guard: &GuardSpec) -> String {
     if guard.params.is_empty() {
         return format!("{}()", guard.class_name);
     }
@@ -182,7 +198,7 @@ fn guard_constructor(guard: &GuardSpec, router_class: &str) -> String {
         .iter()
         .filter_map(|param| {
             param.inject_field.as_ref().map(|field| {
-                let expr = format!("(router as {router_class}).{field}");
+                let expr = format!("(router as dynamic).{field}");
                 if param.is_named {
                     format!("{}: {expr}", param.name)
                 } else {
@@ -193,80 +209,4 @@ fn guard_constructor(guard: &GuardSpec, router_class: &str) -> String {
         .collect::<Vec<_>>()
         .join(", ");
     format!("{}({args})", guard.class_name)
-}
-
-/// Renders route action factory methods for all routes.
-fn render_route_factories(spec: &RouterSpec) -> String {
-    let factories = spec
-        .routes
-        .iter()
-        .map(|route| render_route_factory(route, &spec.route_action_class))
-        .collect::<Vec<_>>()
-        .join("\n\n");
-    if factories.is_empty() {
-        String::new()
-    } else {
-        format!("{factories}\n\n")
-    }
-}
-
-/// Renders one route action factory method.
-fn render_route_factory(route: &RouteSpec, route_action_class: &str) -> String {
-    let route_ctor = format!("{}({})", route.route_class, render_route_args(route));
-    let params = render_factory_params(route);
-    let factory = format!(
-        "{}<{}> {}({params})",
-        route_action_class, route.result_type, route.name
-    );
-    let body = format!("{route_action_class}(_router, {route_ctor})");
-    render_template(
-        if factory.len() + body.len() + 7 <= 80 {
-            "route_factory_inline"
-        } else {
-            "route_factory_multiline"
-        },
-        if factory.len() + body.len() + 7 <= 80 {
-            include_str!("templates/route_factory_inline.jinja")
-        } else {
-            include_str!("templates/route_factory_multiline.jinja")
-        },
-        FactoryContext { factory, body },
-    )
-}
-
-/// Renders factory parameters for a route action.
-fn render_factory_params(route: &RouteSpec) -> String {
-    let params = route
-        .params
-        .iter()
-        .map(render_factory_param)
-        .collect::<Vec<_>>()
-        .join(", ");
-    if route.params.iter().any(|param| param.is_named) {
-        format!("{{{params}}}")
-    } else {
-        params
-    }
-}
-
-/// Renders one route action factory parameter.
-fn render_factory_param(param: &RouteParamSpec) -> String {
-    let ty = dart_type(&param.ty);
-    if param.is_path || (!param.ty.is_nullable() && !param.has_default) {
-        format!("required {ty} {}", param.name)
-    } else if let Some(default_value) = &param.default_value_source {
-        format!("{ty} {} = {default_value}", param.name)
-    } else {
-        format!("{ty} {}", param.name)
-    }
-}
-
-/// Renders arguments passed from a route action factory to a route class.
-fn render_route_args(route: &RouteSpec) -> String {
-    route
-        .params
-        .iter()
-        .map(|param| format!("{}: {}", param.name, param.name))
-        .collect::<Vec<_>>()
-        .join(", ")
 }

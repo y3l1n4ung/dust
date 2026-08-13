@@ -1,15 +1,15 @@
-use std::collections::BTreeSet;
-
-use dust_dart_emit::render_template;
-use dust_ir::DartFileIr;
-use serde::Serialize;
-
-use super::model::{RouteImport, RouterSpec};
-
+/// Renders typed navigation action factory helpers.
+mod action_helpers;
+/// Renders split route output files.
+mod files;
 /// Shared formatting helpers for generated Dart code.
 mod formatting;
+/// Renders imports used by split route generated files.
+mod imports;
 /// Renders the generated route metadata tree.
 mod metadata;
+/// Template contexts for generated route metadata.
+mod metadata_context;
 /// Renders navigation helpers and guard lookup code.
 mod navigation;
 /// Renders page builder and shell consistency helpers.
@@ -29,172 +29,9 @@ mod route_classes;
 /// Resolves effective shell widgets for nested routes.
 mod shell;
 
-use formatting::package_import_uri;
-use navigation::render_helpers;
-use page_builder::{render_page_builder, render_shell_consistency_helpers};
-use parser::render_parser;
-use restore::render_restore_stack;
-use route_classes::render_route_classes;
-
-/// Template context for the top-level generated route file.
-#[derive(Serialize)]
-struct RouteFileContext<'a> {
-    /// Rendered imports required by workspace routes.
-    imports: String,
-    /// Optional no-transition builder helper source.
-    no_transition_builder: String,
-    /// Generated router base class name.
-    generated_base_class: &'a str,
-    /// Generated sealed route path base class.
-    route_path_class: &'a str,
-    /// Generated route metadata list variable.
-    routes_variable: &'a str,
-    /// Generated route parser function.
-    parse_route_function: &'a str,
-    /// Generated route location helper function.
-    route_location_function: &'a str,
-    /// Generated route auth helper function.
-    route_requires_auth_function: &'a str,
-    /// Generated route branch helper function.
-    route_branch_function: &'a str,
-    /// Generated route debug helper function.
-    route_debug_info_function: &'a str,
-    /// Generated route guard helper function.
-    route_guards_function: &'a str,
-    /// Generated route page builder function.
-    build_page_function: &'a str,
-    /// Generated route stack restoration function.
-    restore_stack_function: &'a str,
-    /// Initial generated route class.
-    initial_route_class: &'a str,
-    /// Optional refresh listenable override.
-    refresh_getter: String,
-    /// Rendered generated body sections.
-    body: String,
-}
-
-/// Renders the complete generated route file for a router spec.
-pub(crate) fn render_route_generated(library: &DartFileIr, spec: &RouterSpec) -> String {
-    let current_import = package_import_uri(library);
-    let mut imports = BTreeSet::new();
-    for route in &spec.routes {
-        if let Some(import) = &route.import_uri
-            && Some(import.as_str()) != current_import.as_deref()
-            && !is_internal_route_import(import)
-        {
-            imports.insert(format!("import '{import}';\n"));
-        }
-        for import in &route.imports {
-            if Some(import.uri.as_str()) == current_import.as_deref()
-                || is_internal_route_import(&import.uri)
-            {
-                continue;
-            }
-            imports.insert(render_import(import));
-        }
-    }
-
-    let mut body = String::new();
-    metadata::render_route_metadata(&mut body, spec);
-    render_route_classes(&mut body, spec);
-    render_helpers(&mut body, spec);
-    render_restore_stack(&mut body, spec);
-    render_parser(&mut body, spec);
-    render_shell_consistency_helpers(&mut body, spec);
-    render_page_builder(&mut body, spec);
-
-    format!(
-        "{}\n",
-        render_template(
-            "route_file",
-            include_str!("templates/route_file.jinja"),
-            RouteFileContext {
-                imports: imports.into_iter().collect::<String>(),
-                no_transition_builder: if uses_no_transition_builder(spec) {
-                    render_no_transition_builder()
-                } else {
-                    String::new()
-                },
-                generated_base_class: &spec.generated_base_class,
-                route_path_class: &spec.route_path_class,
-                routes_variable: &spec.routes_variable,
-                parse_route_function: &spec.parse_route_function,
-                route_location_function: &spec.route_location_function,
-                route_requires_auth_function: &spec.route_requires_auth_function,
-                route_branch_function: &spec.route_branch_function,
-                route_debug_info_function: &spec.route_debug_info_function,
-                route_guards_function: &spec.route_guards_function,
-                build_page_function: &spec.build_page_function,
-                restore_stack_function: &spec.restore_stack_function,
-                initial_route_class: &spec.initial_route_class,
-                refresh_getter: render_refresh_getter(spec),
-                body,
-            },
-        )
-    )
-}
-
-/// Returns whether an import is generated by the route plugin itself.
-fn is_internal_route_import(import: &str) -> bool {
-    matches!(import, "route.g.dart" | "routing_core.dart")
-}
-
-/// Renders a Dart import while preserving prefix, deferred, show, and hide clauses.
-fn render_import(import: &RouteImport) -> String {
-    let mut rendered = format!("import '{}'", import.uri);
-    if let Some(prefix) = &import.prefix {
-        if import.is_deferred {
-            rendered.push_str(" deferred");
-        }
-        rendered.push_str(&format!(" as {prefix}"));
-    }
-    if !import.show.is_empty() {
-        rendered.push_str(&format!(" show {}", import.show.join(", ")));
-    }
-    if !import.hide.is_empty() {
-        rendered.push_str(&format!(" hide {}", import.hide.join(", ")));
-    }
-    rendered.push_str(";\n");
-    rendered
-}
-
-/// Renders the helper transition builder used by no-transition routes.
-fn render_no_transition_builder() -> String {
-    render_template(
-        "no_transition_builder",
-        include_str!("templates/no_transition_builder.jinja"),
-        (),
-    )
-}
-
-/// Returns true when any route references the no-transition helper.
-fn uses_no_transition_builder(spec: &RouterSpec) -> bool {
-    spec.routes.iter().any(|route| {
-        route
-            .annotation
-            .transition
-            .as_deref()
-            .is_some_and(|transition| {
-                transition.contains("_NoTransitionBuilder")
-                    || transition.contains("_$NoTransitionBuilder")
-            })
-    })
-}
+pub(crate) use files::render_route_generated_files;
 
 /// Normalizes generated private transition helpers to Dust's `_$...` style.
 pub(super) fn normalize_private_transition_helper(transition: &str) -> String {
     transition.replace("_NoTransitionBuilder", "_$NoTransitionBuilder")
-}
-
-/// Renders the router refresh-listenable override when available.
-fn render_refresh_getter(spec: &RouterSpec) -> String {
-    spec.refresh_listenable
-        .as_ref()
-        .map(|field| {
-            format!(
-                "  @override\n  Listenable? get refreshListenable => (this as {}).{};",
-                spec.router_class, field
-            )
-        })
-        .unwrap_or_default()
 }

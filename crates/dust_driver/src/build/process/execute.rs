@@ -13,7 +13,7 @@ use crate::lower::lower_library_with_catalog;
 
 use super::{
     BuildOutcome, LoweringConfig, PendingLibrary, PreprocessedLibrary, ProcessingConfig,
-    emit_or_write_library,
+    SuccessfulBuildOutcome, emit_or_write_library,
 };
 
 /// Processes one pending library and reports progress when it finishes.
@@ -247,21 +247,25 @@ fn finish_success(
         changed,
         written,
         output_path: _,
+        suppress_primary_output,
         auxiliary_outputs,
     } = output;
     diagnostics.extend(output_diagnostics);
 
     BuildOutcome::succeeded(
         library,
-        diagnostics,
-        diagnostic_file,
-        output_hash,
-        auxiliary_outputs
-            .into_iter()
-            .map(|output| output.output_path)
-            .collect(),
-        changed,
-        written,
+        SuccessfulBuildOutcome {
+            diagnostics,
+            diagnostic_file,
+            expected_output_hash: output_hash,
+            auxiliary_output_paths: auxiliary_outputs
+                .into_iter()
+                .map(|output| output.output_path)
+                .collect(),
+            suppress_primary_output,
+            changed,
+            written,
+        },
     )
 }
 

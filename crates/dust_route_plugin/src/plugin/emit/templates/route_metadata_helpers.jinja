@@ -1,0 +1,21 @@
+bool {{ route_requires_auth_function }}({{ route_path_class }} route) => route.requiresAuth;
+
+String? {{ route_branch_function }}({{ route_path_class }} route) {
+  return switch (route) {
+{{ branch_cases }}    _ => null,
+  };
+}
+
+RouteDebugInfo {{ route_debug_info_function }}({{ route_path_class }} route) {
+  return switch (route) {
+{{ debug_cases }}  };
+}
+
+List<Object> {{ route_guards_function }}(
+  {{ route_path_class }} route,
+  Object router,
+) {
+  return switch (route) {
+{{ guard_cases }}    _ => const [],
+  };
+}
