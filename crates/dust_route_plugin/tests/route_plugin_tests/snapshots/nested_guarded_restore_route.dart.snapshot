@@ -16,24 +16,28 @@ const List<GeneratedRoute> $testRoutes = [
     '/',
     page: HomePage,
     name: 'home',
+    resultType: 'void',
     guards: [],
   ),
   GeneratedRoute(
     '/404',
     page: NotFoundPage,
     name: 'notFound',
+    resultType: 'void',
     guards: [],
   ),
   GeneratedRoute(
     '/workspace',
     page: WorkspacePage,
     name: 'workspace',
+    resultType: 'void',
     guards: [AuthGuard],
     routes: [
       GeneratedRoute(
         'details',
         page: WorkspaceDetailsPage,
         name: 'workspaceDetails',
+        resultType: 'void',
       ),
     ],  ),
 ];
@@ -48,10 +52,10 @@ String? testRouteBranch(TestRoutePath route) {
 
 RouteDebugInfo testRouteDebugInfo(TestRoutePath route) {
   return switch (route) {
-    TestHomeRoute() => const RouteDebugInfo(name: 'home', shell: null, branch: null),
-    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
-    TestWorkspaceRoute() => const RouteDebugInfo(name: 'workspace', shell: null, branch: null),
-    TestWorkspaceDetailsRoute() => const RouteDebugInfo(name: 'workspaceDetails', shell: null, branch: null),
+    TestHomeRoute() => const RouteDebugInfo(name: 'home', shell: null, branch: null, resultType: 'void'),
+    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
+    TestWorkspaceRoute() => const RouteDebugInfo(name: 'workspace', shell: null, branch: null, resultType: 'void'),
+    TestWorkspaceDetailsRoute() => const RouteDebugInfo(name: 'workspaceDetails', shell: null, branch: null, resultType: 'void'),
   };
 }
 

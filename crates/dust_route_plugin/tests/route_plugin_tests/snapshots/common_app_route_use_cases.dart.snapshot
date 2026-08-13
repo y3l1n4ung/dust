@@ -11,33 +11,39 @@ import 'package:dust_flutter/route.dart';
 import 'paths.g.dart';
 import '../route.dart';
 
+const String testBranchMainTabs = 'mainTabs';
+
 const List<GeneratedRoute> $testRoutes = [
   GeneratedRoute(
     '/404',
     page: NotFoundPage,
     name: 'notFound',
+    resultType: 'void',
     guards: [],
   ),
   GeneratedRoute(
     '/admin',
     page: AdminPage,
     name: 'admin',
+    resultType: 'void',
     guards: [AdminGuard],
   ),
   GeneratedRoute(
     '/dashboard',
     page: DashboardPage,
     name: 'dashboard',
+    resultType: 'void',
     shell: AppShell,
-    branch: 'mainTabs',
+    branch: testBranchMainTabs,
     guards: [],
     routes: [
       GeneratedRoute(
         'orders',
         page: DashboardOrdersPage,
         name: 'dashboardOrders',
+        resultType: 'void',
         shell: AppShell,
-        branch: 'mainTabs',
+        branch: testBranchMainTabs,
       ),
     ],  ),
   GeneratedRoute(
@@ -47,6 +53,7 @@ const List<GeneratedRoute> $testRoutes = [
         ':code',
         page: InvitePage,
         name: 'invite',
+        resultType: 'void',
         guards: [],
       ),
     ],
@@ -64,6 +71,7 @@ const List<GeneratedRoute> $testRoutes = [
                 ':projectId',
                 page: OrgProjectPage,
                 name: 'orgProject',
+                resultType: 'void',
               ),
             ],
           ),
@@ -75,6 +83,7 @@ const List<GeneratedRoute> $testRoutes = [
     '/product-picker',
     page: ProductPickerPage,
     name: 'productPicker',
+    resultType: 'int',
     guards: [],
     transition: BottomToTopPageTransitionsBuilder(),
     fullscreenDialog: true,
@@ -83,12 +92,14 @@ const List<GeneratedRoute> $testRoutes = [
     '/products',
     page: ProductSearchPage,
     name: 'productSearch',
+    resultType: 'void',
     guards: [],
   ),
   GeneratedRoute(
     '/setup',
     page: SetupPage,
     name: 'setup',
+    resultType: 'void',
     shell: SetupShell,
     guards: [],
     routes: [
@@ -96,6 +107,7 @@ const List<GeneratedRoute> $testRoutes = [
         'connect',
         page: SetupConnectPage,
         name: 'setupConnect',
+        resultType: 'void',
         shell: SetupShell,
       ),
     ],  ),
@@ -105,24 +117,24 @@ bool testRouteRequiresAuth(TestRoutePath route) => route.requiresAuth;
 
 String? testRouteBranch(TestRoutePath route) {
   return switch (route) {
-    TestDashboardRoute() => 'mainTabs',
-    TestDashboardOrdersRoute() => 'mainTabs',
+    TestDashboardRoute() => testBranchMainTabs,
+    TestDashboardOrdersRoute() => testBranchMainTabs,
     _ => null,
   };
 }
 
 RouteDebugInfo testRouteDebugInfo(TestRoutePath route) {
   return switch (route) {
-    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
-    TestAdminRoute() => const RouteDebugInfo(name: 'admin', shell: null, branch: null),
-    TestDashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: 'AppShell', branch: 'mainTabs'),
-    TestDashboardOrdersRoute() => const RouteDebugInfo(name: 'dashboardOrders', shell: 'AppShell', branch: 'mainTabs'),
-    TestInviteRoute(code: _, team: _) => const RouteDebugInfo(name: 'invite', shell: null, branch: null),
-    TestOrgProjectRoute(orgId: _, projectId: _, tab: _) => const RouteDebugInfo(name: 'orgProject', shell: null, branch: null),
-    TestProductPickerRoute() => const RouteDebugInfo(name: 'productPicker', shell: null, branch: null),
-    TestProductSearchRoute(query: _, page: _, showArchived: _) => const RouteDebugInfo(name: 'productSearch', shell: null, branch: null),
-    TestSetupRoute() => const RouteDebugInfo(name: 'setup', shell: 'SetupShell', branch: null),
-    TestSetupConnectRoute() => const RouteDebugInfo(name: 'setupConnect', shell: 'SetupShell', branch: null),
+    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
+    TestAdminRoute() => const RouteDebugInfo(name: 'admin', shell: null, branch: null, resultType: 'void'),
+    TestDashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: 'AppShell', branch: testBranchMainTabs, resultType: 'void'),
+    TestDashboardOrdersRoute() => const RouteDebugInfo(name: 'dashboardOrders', shell: 'AppShell', branch: testBranchMainTabs, resultType: 'void'),
+    TestInviteRoute(code: _, team: _) => const RouteDebugInfo(name: 'invite', shell: null, branch: null, resultType: 'void'),
+    TestOrgProjectRoute(orgId: _, projectId: _, tab: _) => const RouteDebugInfo(name: 'orgProject', shell: null, branch: null, resultType: 'void'),
+    TestProductPickerRoute() => const RouteDebugInfo(name: 'productPicker', shell: null, branch: null, resultType: 'int'),
+    TestProductSearchRoute(query: _, page: _, showArchived: _) => const RouteDebugInfo(name: 'productSearch', shell: null, branch: null, resultType: 'void'),
+    TestSetupRoute() => const RouteDebugInfo(name: 'setup', shell: 'SetupShell', branch: null, resultType: 'void'),
+    TestSetupConnectRoute() => const RouteDebugInfo(name: 'setupConnect', shell: 'SetupShell', branch: null, resultType: 'void'),
   };
 }
 

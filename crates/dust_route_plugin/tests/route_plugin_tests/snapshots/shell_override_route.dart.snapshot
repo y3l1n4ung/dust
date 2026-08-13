@@ -16,18 +16,21 @@ const List<GeneratedRoute> $testRoutes = [
     '/404',
     page: NotFoundPage,
     name: 'notFound',
+    resultType: 'void',
     guards: [],
   ),
   GeneratedRoute(
     '/dashboard',
     page: DashboardPage,
     name: 'dashboard',
+    resultType: 'void',
     shell: AppShell,
     routes: [
       GeneratedRoute(
         'orders',
         page: DashboardOrdersPage,
         name: 'dashboardOrders',
+        resultType: 'void',
         shell: OrdersShell,
       ),
     ],  ),
@@ -43,9 +46,9 @@ String? testRouteBranch(TestRoutePath route) {
 
 RouteDebugInfo testRouteDebugInfo(TestRoutePath route) {
   return switch (route) {
-    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
-    TestDashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: 'AppShell', branch: null),
-    TestDashboardOrdersRoute() => const RouteDebugInfo(name: 'dashboardOrders', shell: 'OrdersShell', branch: null),
+    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
+    TestDashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: 'AppShell', branch: null, resultType: 'void'),
+    TestDashboardOrdersRoute() => const RouteDebugInfo(name: 'dashboardOrders', shell: 'OrdersShell', branch: null, resultType: 'void'),
   };
 }
 

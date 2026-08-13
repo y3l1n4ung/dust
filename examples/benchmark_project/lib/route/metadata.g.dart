@@ -19,6 +19,7 @@ const List<GeneratedRoute> $benchmarkRoutes = [
     '/',
     page: BenchmarkHomePage,
     name: 'home',
+    resultType: 'void',
     shell: BenchmarkShell,
     guards: [BenchmarkGuard],
     transition: FadeUpwardsPageTransitionsBuilder(),
@@ -27,6 +28,7 @@ const List<GeneratedRoute> $benchmarkRoutes = [
     '/404',
     page: BenchmarkNotFoundPage,
     name: 'notFound',
+    resultType: 'void',
     shell: BenchmarkShell,
     guards: [],
   ),
@@ -37,6 +39,7 @@ const List<GeneratedRoute> $benchmarkRoutes = [
         ':id',
         page: BenchmarkDetailPage,
         name: 'modelDetail',
+        resultType: 'void',
         shell: BenchmarkShell,
       ),
     ],
@@ -53,9 +56,9 @@ String? benchmarkRouteBranch(BenchmarkRoutePath route) {
 
 RouteDebugInfo benchmarkRouteDebugInfo(BenchmarkRoutePath route) {
   return switch (route) {
-    BenchmarkHomeRoute() => const RouteDebugInfo(name: 'home', shell: 'BenchmarkShell', branch: null),
-    BenchmarkNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: 'BenchmarkShell', branch: null),
-    BenchmarkModelDetailRoute(id: _, tab: _, archived: _) => const RouteDebugInfo(name: 'modelDetail', shell: 'BenchmarkShell', branch: null),
+    BenchmarkHomeRoute() => const RouteDebugInfo(name: 'home', shell: 'BenchmarkShell', branch: null, resultType: 'void'),
+    BenchmarkNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: 'BenchmarkShell', branch: null, resultType: 'void'),
+    BenchmarkModelDetailRoute(id: _, tab: _, archived: _) => const RouteDebugInfo(name: 'modelDetail', shell: 'BenchmarkShell', branch: null, resultType: 'void'),
   };
 }
 
