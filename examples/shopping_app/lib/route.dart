@@ -10,7 +10,7 @@ export 'package:dust_flutter/route.dart';
 
 /// Shopping router model for the shopping app example.
 @AppRouter(initial: '/', notFound: '/404')
-final class ShoppingRouter extends $ShoppingRouter {
+final class ShoppingRouter extends ShoppingRouterBase {
   /// Creates a [ShoppingRouter].
   ShoppingRouter({required this.auth});
 
@@ -18,37 +18,38 @@ final class ShoppingRouter extends $ShoppingRouter {
   final AuthViewModel auth;
 
   @override
-  AppRoutePath? redirect(AppRoutePath route) {
+  ShoppingRoutePath? redirect(ShoppingRoutePath route) {
     final status = auth.state.status;
     final isAuthenticated = auth.state.isAuthenticated;
-    final isAuthRoute = route is LoginRoute || route is RegisterRoute;
+    final isAuthRoute =
+        route is ShoppingLoginRoute || route is ShoppingRegisterRoute;
 
     if (status == AuthStatus.loading || status == AuthStatus.initial) {
       return null;
     }
 
     if (!isAuthenticated && route.requiresAuth) {
-      return LoginRoute(redirectPath: route.location);
+      return ShoppingLoginRoute(redirectPath: route.location);
     }
 
     if (isAuthenticated && isAuthRoute) {
       final redirectPath = switch (route) {
-        LoginRoute(:final redirectPath) => redirectPath,
-        RegisterRoute(:final redirectPath) => redirectPath,
+        ShoppingLoginRoute(:final redirectPath) => redirectPath,
+        ShoppingRegisterRoute(:final redirectPath) => redirectPath,
         _ => null,
       };
-      return _safeRedirect(redirectPath) ?? const ProductsRoute();
+      return _safeRedirect(redirectPath) ?? const ShoppingProductsRoute();
     }
 
     return null;
   }
 
-  AppRoutePath? _safeRedirect(String? redirectPath) {
+  ShoppingRoutePath? _safeRedirect(String? redirectPath) {
     if (redirectPath == null || redirectPath.isEmpty) return null;
     final uri = Uri.tryParse(redirectPath);
     if (uri == null || uri.host.isNotEmpty) return null;
-    final route = parseAppRoute(uri);
-    if (route is NotFoundRoute) return null;
+    final route = parseShoppingRoute(uri);
+    if (route is ShoppingNotFoundRoute) return null;
     return route;
   }
 }
@@ -81,7 +82,7 @@ ShoppingAccessLevel shoppingAccessLevel(User? user) {
 }
 
 /// Staff guard model for the shopping app example.
-final class StaffGuard implements RouteGuard<AppRoutePath> {
+final class StaffGuard implements RouteGuard<ShoppingRoutePath> {
   /// Creates a [StaffGuard].
   const StaffGuard(this.auth);
 
@@ -89,11 +90,13 @@ final class StaffGuard implements RouteGuard<AppRoutePath> {
   final AuthViewModel auth;
 
   @override
-  AppRoutePath? canActivate(AppRoutePath route) {
+  ShoppingRoutePath? canActivate(ShoppingRoutePath route) {
     if (!auth.state.isAuthenticated) {
-      return LoginRoute(redirectPath: route.location);
+      return ShoppingLoginRoute(redirectPath: route.location);
     }
-    return _hasAccess(ShoppingAccessLevel.staff) ? null : const ProductsRoute();
+    return _hasAccess(ShoppingAccessLevel.staff)
+        ? null
+        : const ShoppingProductsRoute();
   }
 
   bool _hasAccess(ShoppingAccessLevel minimum) =>
@@ -101,7 +104,7 @@ final class StaffGuard implements RouteGuard<AppRoutePath> {
 }
 
 /// Admin guard model for the shopping app example.
-final class AdminGuard implements RouteGuard<AppRoutePath> {
+final class AdminGuard implements RouteGuard<ShoppingRoutePath> {
   /// Creates an [AdminGuard].
   const AdminGuard(this.auth);
 
@@ -109,11 +112,13 @@ final class AdminGuard implements RouteGuard<AppRoutePath> {
   final AuthViewModel auth;
 
   @override
-  AppRoutePath? canActivate(AppRoutePath route) {
+  ShoppingRoutePath? canActivate(ShoppingRoutePath route) {
     if (!auth.state.isAuthenticated) {
-      return LoginRoute(redirectPath: route.location);
+      return ShoppingLoginRoute(redirectPath: route.location);
     }
-    return _hasAccess(ShoppingAccessLevel.admin) ? null : const ProductsRoute();
+    return _hasAccess(ShoppingAccessLevel.admin)
+        ? null
+        : const ShoppingProductsRoute();
   }
 
   bool _hasAccess(ShoppingAccessLevel minimum) =>

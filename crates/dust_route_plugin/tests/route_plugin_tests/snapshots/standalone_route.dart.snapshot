@@ -9,26 +9,26 @@ import 'package:dust_flutter/route.dart';
 
 import 'route.dart';
 
-abstract class $TestRouter extends RouterBase<AppRoutePath> {
+abstract class TestRouterBase extends RouterBase<TestRoutePath> {
 
-  late final RouterConfig<AppRoutePath> config = _buildConfig();
+  late final RouterConfig<TestRoutePath> config = _buildConfig();
 
-  RouterConfig<AppRoutePath> _buildConfig() {
-    final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
+  RouterConfig<TestRoutePath> _buildConfig() {
+    final runtimeConfig = RouterRuntimeConfig<TestRoutePath>(
       router: this,
-      initialRoute: const DashboardRoute(),
-      parseRoute: parseAppRoute,
-      routeLocation: routeLocation,
-      requiresAuth: routeRequiresAuth,
-      routeBranch: routeBranch,
-      resolveGuards: (route) => routeGuards(route, this),
-      buildPage: buildAppRoutePage,
-      restoreStack: restoreAppRouteStack,
-      debugInfo: routeDebugInfo,
-      debugRoutes: $appRoutes,
+      initialRoute: const TestDashboardRoute(),
+      parseRoute: parseTestRoute,
+      routeLocation: testRouteLocation,
+      requiresAuth: testRouteRequiresAuth,
+      routeBranch: testRouteBranch,
+      resolveGuards: (route) => testRouteGuards(route, this),
+      buildPage: buildTestRoutePage,
+      restoreStack: restoreTestRouteStack,
+      debugInfo: testRouteDebugInfo,
+      debugRoutes: $testRoutes,
     );
-    final delegate = GeneratedRouterDelegate<AppRoutePath>(runtimeConfig);
-    return RouterConfig<AppRoutePath>(
+    final delegate = GeneratedRouterDelegate<TestRoutePath>(runtimeConfig);
+    return RouterConfig<TestRoutePath>(
       routeInformationProvider: PlatformRouteInformationProvider(
         initialRouteInformation: RouteInformation(
           uri: Uri.parse(
@@ -36,9 +36,9 @@ abstract class $TestRouter extends RouterBase<AppRoutePath> {
           ),
         ),
       ),
-      routeInformationParser: GeneratedRouteInformationParser<AppRoutePath>(
-        parseRoute: parseAppRoute,
-        routeLocation: routeLocation,
+      routeInformationParser: GeneratedRouteInformationParser<TestRoutePath>(
+        parseRoute: parseTestRoute,
+        routeLocation: testRouteLocation,
       ),
       routerDelegate: delegate,
       backButtonDispatcher: RootBackButtonDispatcher(),
@@ -46,7 +46,7 @@ abstract class $TestRouter extends RouterBase<AppRoutePath> {
   }
 }
 
-const List<GeneratedRoute> $appRoutes = [
+const List<GeneratedRoute> $testRoutes = [
   GeneratedRoute(
     '/',
     page: DashboardPage,
@@ -79,8 +79,8 @@ const List<GeneratedRoute> $appRoutes = [
   ),
 ];
 
-sealed class AppRoutePath<R> {
-  const AppRoutePath();
+sealed class TestRoutePath<R> {
+  const TestRoutePath();
 
   String get location;
 
@@ -89,31 +89,31 @@ sealed class AppRoutePath<R> {
   bool get requiresAuth => true;
 }
 
-/// Typed route data for `DashboardRoute`.
-final class DashboardRoute extends AppRoutePath<void> {
-  const DashboardRoute();
+/// Typed route data for `TestDashboardRoute`.
+final class TestDashboardRoute extends TestRoutePath<void> {
+  const TestDashboardRoute();
 
   @override
   String get location {
-    return _routePath(
+    return _$routePath(
       const [],
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 }
 
-/// Typed route data for `NotFoundRoute`.
-final class NotFoundRoute extends AppRoutePath<void> {
-  const NotFoundRoute({this.path = ''});
+/// Typed route data for `TestNotFoundRoute`.
+final class TestNotFoundRoute extends TestRoutePath<void> {
+  const TestNotFoundRoute({this.path = ''});
 
   final String path;
 
   @override
   String get location {
-    return _routePath(
+    return _$routePath(
       const ['404'],
       queryParameters: {'path': path},
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 
@@ -121,9 +121,9 @@ final class NotFoundRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `ProjectRoute`.
-final class ProjectRoute extends AppRoutePath<void> {
-  const ProjectRoute({required this.projectId, this.tab, this.archived});
+/// Typed route data for `TestProjectRoute`.
+final class TestProjectRoute extends TestRoutePath<void> {
+  const TestProjectRoute({required this.projectId, this.tab, this.archived});
 
   final int projectId;
   final String? tab;
@@ -138,33 +138,33 @@ final class ProjectRoute extends AppRoutePath<void> {
     if (archived != null) {
       query['archived'] = archived!.toString();
     }
-    return _routePath(
+    return _$routePath(
       ['projects', projectId.toString()],
       queryParameters: query.isEmpty ? null : query,
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 }
 
-/// Typed route data for `ProjectSettingsRoute`.
-final class ProjectSettingsRoute extends AppRoutePath<void> {
-  const ProjectSettingsRoute({required this.projectId});
+/// Typed route data for `TestProjectSettingsRoute`.
+final class TestProjectSettingsRoute extends TestRoutePath<void> {
+  const TestProjectSettingsRoute({required this.projectId});
 
   final int projectId;
 
   @override
   String get location {
-    return _routePath(
+    return _$routePath(
       ['projects', projectId.toString(), 'settings'],
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 }
 
-String routeLocation(AppRoutePath route) => route.location;
+String testRouteLocation(TestRoutePath route) => route.location;
 
-final class _RouteUriExtras {
-  const _RouteUriExtras({
+final class _$RouteUriExtras {
+  const _$RouteUriExtras({
     required this.queryParameters,
     required this.fragment,
   });
@@ -173,11 +173,11 @@ final class _RouteUriExtras {
   final String fragment;
 }
 
-final Expando<_RouteUriExtras> _routeUriExtras = Expando<_RouteUriExtras>();
+final Expando<_$RouteUriExtras> _$routeUriExtras = Expando<_$RouteUriExtras>();
 
-_RouteUriExtras? _routeUriExtrasOf(Object route) => _routeUriExtras[route];
+_$RouteUriExtras? _$routeUriExtrasOf(Object route) => _$routeUriExtras[route];
 
-T _withRouteUriExtras<T extends AppRoutePath>(
+T _$withRouteUriExtras<T extends TestRoutePath>(
   T route,
   Uri uri,
   Set<String> knownQueryParameters,
@@ -189,17 +189,17 @@ T _withRouteUriExtras<T extends AppRoutePath>(
     }
   }
   if (queryParameters.isEmpty && uri.fragment.isEmpty) return route;
-  _routeUriExtras[route] = _RouteUriExtras(
+  _$routeUriExtras[route] = _$RouteUriExtras(
     queryParameters: Map.unmodifiable(queryParameters),
     fragment: uri.fragment,
   );
   return route;
 }
 
-String _routePath(
+String _$routePath(
   List<String> segments, {
   Map<String, dynamic>? queryParameters,
-  _RouteUriExtras? uriExtras,
+  _$RouteUriExtras? uriExtras,
 }) {
   final query = <String, dynamic>{
     ...?queryParameters,
@@ -214,111 +214,112 @@ String _routePath(
   return text.startsWith('/') ? text : '/$text';
 }
 
-bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
+bool testRouteRequiresAuth(TestRoutePath route) => route.requiresAuth;
 
-String? routeBranch(AppRoutePath route) {
+String? testRouteBranch(TestRoutePath route) {
   return switch (route) {
     _ => null,
   };
 }
 
-RouteDebugInfo routeDebugInfo(AppRoutePath route) {
+RouteDebugInfo testRouteDebugInfo(TestRoutePath route) {
   return switch (route) {
-    DashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: null, branch: null),
-    NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
-    ProjectRoute(projectId: _, tab: _, archived: _) => const RouteDebugInfo(name: 'project', shell: 'AppShell', branch: null),
-    ProjectSettingsRoute(projectId: _) => const RouteDebugInfo(name: 'projectSettings', shell: 'AppShell', branch: null),
+    TestDashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: null, branch: null),
+    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
+    TestProjectRoute(projectId: _, tab: _, archived: _) => const RouteDebugInfo(name: 'project', shell: 'AppShell', branch: null),
+    TestProjectSettingsRoute(projectId: _) => const RouteDebugInfo(name: 'projectSettings', shell: 'AppShell', branch: null),
   };
 }
 
-List<Object> routeGuards(
-  AppRoutePath route,
-  $TestRouter router,
+List<Object> testRouteGuards(
+  TestRoutePath route,
+  TestRouterBase router,
 ) {
   return switch (route) {
     _ => const [],
   };
 }
 
-extension AppRouterContext on BuildContext {
-  RouterController<AppRoutePath> get _routerController =>
-      RouterController.of<AppRoutePath>(this);
-  AppRoutesNavigator get navigator => AppRoutesNavigator(_routerController);
+extension TestRouterContext on BuildContext {
+  RouterController<TestRoutePath> get _routerController =>
+      RouterController.of<TestRoutePath>(this);
+  TestRoutesNavigator get navigator => TestRoutesNavigator(_routerController);
 }
 
-final class AppRoutesNavigator {
-  const AppRoutesNavigator(this._router);
+final class TestRoutesNavigator {
+  const TestRoutesNavigator(this._router);
 
-  final RouterController<AppRoutePath> _router;
+  final RouterController<TestRoutePath> _router;
 
-  RouteAction<void> dashboard() => RouteAction(_router, DashboardRoute());
+  TestRouteAction<void> dashboard() =>
+      TestRouteAction(_router, TestDashboardRoute());
 
-  RouteAction<void> notFound({String path = ''}) =>
-      RouteAction(_router, NotFoundRoute(path: path));
+  TestRouteAction<void> notFound({String path = ''}) =>
+      TestRouteAction(_router, TestNotFoundRoute(path: path));
 
-  RouteAction<void> project({required int projectId, String? tab, bool? archived}) =>
-      RouteAction(_router, ProjectRoute(projectId: projectId, tab: tab, archived: archived));
+  TestRouteAction<void> project({required int projectId, String? tab, bool? archived}) =>
+      TestRouteAction(_router, TestProjectRoute(projectId: projectId, tab: tab, archived: archived));
 
-  RouteAction<void> projectSettings({required int projectId}) =>
-      RouteAction(_router, ProjectSettingsRoute(projectId: projectId));
+  TestRouteAction<void> projectSettings({required int projectId}) =>
+      TestRouteAction(_router, TestProjectSettingsRoute(projectId: projectId));
 
   bool pop<R>([R? result]) => _router.pop<R>(result);
 }
 
-final class RouteAction<R> {
-  const RouteAction(this._router, this.route);
+final class TestRouteAction<R> {
+  const TestRouteAction(this._router, this.route);
 
-  final RouterController<AppRoutePath> _router;
-  final AppRoutePath<R> route;
+  final RouterController<TestRoutePath> _router;
+  final TestRoutePath<R> route;
 
   void go() => _router.go(route);
   Future<R?> push() => _router.push<R>(route);
   void replace() => _router.replace(route);
 }
 
-RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
+RouteStack<TestRoutePath> restoreTestRouteStack(TestRoutePath route) {
   return switch (route) {
-    DashboardRoute() => [
+    TestDashboardRoute() => [
       route,
     ],
-    NotFoundRoute(path: _) => [
-      const DashboardRoute(),
+    TestNotFoundRoute(path: _) => [
+      const TestDashboardRoute(),
       route,
     ],
-    ProjectRoute(projectId: _, tab: _, archived: _) => [
-      const DashboardRoute(),
+    TestProjectRoute(projectId: _, tab: _, archived: _) => [
+      const TestDashboardRoute(),
       route,
     ],
-    ProjectSettingsRoute(projectId: final projectId) => [
-      const DashboardRoute(),
-      ProjectRoute(projectId: projectId),
+    TestProjectSettingsRoute(projectId: final projectId) => [
+      const TestDashboardRoute(),
+      TestProjectRoute(projectId: projectId),
       route,
     ],
   };
 }
 
-AppRoutePath parseAppRoute(Uri uri) {
+TestRoutePath parseTestRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
-    final route = DashboardRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = TestDashboardRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == '404') {
-    final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
-    return _withRouteUriExtras(route, uri, const {'path'});
+    final route = TestNotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    return _$withRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 2 && segments[0] == 'projects') {
     final projectId = int.tryParse(segments[1]);
     if (projectId == null) {
-      return _notFoundRoute(uri);
+      return _$notFoundRoute(uri);
     }
-    final route = ProjectRoute(
+    final route = TestProjectRoute(
       projectId: projectId,
       tab: uri.queryParameters['tab'],
-      archived: _parseBool(uri.queryParameters['archived']),
+      archived: _$parseBool(uri.queryParameters['archived']),
     );
-    return _withRouteUriExtras(route, uri, const <String>{'tab', 'archived'});
+    return _$withRouteUriExtras(route, uri, const <String>{'tab', 'archived'});
   }
   if (
     segments.length == 3 &&
@@ -327,17 +328,17 @@ AppRoutePath parseAppRoute(Uri uri) {
   ) {
     final projectId = int.tryParse(segments[1]);
     if (projectId == null) {
-      return _notFoundRoute(uri);
+      return _$notFoundRoute(uri);
     }
-    final route = ProjectSettingsRoute(projectId: projectId);
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = TestProjectSettingsRoute(projectId: projectId);
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
-  return _notFoundRoute(uri);
+  return _$notFoundRoute(uri);
 }
 
-AppRoutePath _notFoundRoute(Uri uri) => NotFoundRoute(path: uri.toString());
+TestRoutePath _$notFoundRoute(Uri uri) => TestNotFoundRoute(path: uri.toString());
 
-bool? _parseBool(String? value) {
+bool? _$parseBool(String? value) {
   return switch (value) {
     'true' || '1' => true,
     'false' || '0' => false,
@@ -346,35 +347,35 @@ bool? _parseBool(String? value) {
   };
 }
 
-const Map<Type, Type?> _kAppliedShellsByPage = {
+const Map<Type, Type?> _$appliedShellsByPage = {
   DashboardPage: null,
   NotFoundPage: null,
   ProjectPage: AppShell,
   ProjectSettingsPage: AppShell,
 };
 
-bool _shellConsistencyCheck() {
+bool _$shellConsistencyCheck() {
   bool visit(GeneratedRoute route) {
     final page = route.page;
-    if (page != null && _kAppliedShellsByPage[page] != route.shell) {
+    if (page != null && _$appliedShellsByPage[page] != route.shell) {
       return false;
     }
     return route.routes.every(visit);
   }
-  return $appRoutes.every(visit);
+  return $testRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(
-  AppRoutePath route,
+Page<dynamic> buildTestRoutePage(
+  TestRoutePath route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
   assert(
-    _shellConsistencyCheck(),
-    'Shell mismatch between \$appRoutes and buildAppRoutePage',
+    _$shellConsistencyCheck(),
+    'Shell mismatch between \$testRoutes and buildTestRoutePage',
   );
   return switch (route) {
-    DashboardRoute() => generatedPage(
+    TestDashboardRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'dashboard',
@@ -384,7 +385,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: const DashboardPage(),
     ),
-    NotFoundRoute(path: final path) => generatedPage(
+    TestNotFoundRoute(path: final path) => generatedPage(
       key: key,
       location: route.location,
       name: 'notFound',
@@ -393,7 +394,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: NotFoundPage(path: path),
     ),
-    ProjectRoute(
+    TestProjectRoute(
       projectId: final projectId,
       tab: final tab,
       archived: final archived,
@@ -406,7 +407,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: AppShell(child: ProjectPage(projectId: projectId, tab: tab, archived: archived)),
     ),
-    ProjectSettingsRoute(projectId: final projectId) => generatedPage(
+    TestProjectSettingsRoute(projectId: final projectId) => generatedPage(
       key: key,
       location: route.location,
       name: 'projectSettings',

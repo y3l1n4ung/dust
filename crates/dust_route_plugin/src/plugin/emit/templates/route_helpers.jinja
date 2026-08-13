@@ -1,7 +1,7 @@
-String routeLocation(AppRoutePath route) => route.location;
+String {{ route_location_function }}({{ route_path_class }} route) => route.location;
 
-final class _RouteUriExtras {
-  const _RouteUriExtras({
+final class _$RouteUriExtras {
+  const _$RouteUriExtras({
     required this.queryParameters,
     required this.fragment,
   });
@@ -10,11 +10,11 @@ final class _RouteUriExtras {
   final String fragment;
 }
 
-final Expando<_RouteUriExtras> _routeUriExtras = Expando<_RouteUriExtras>();
+final Expando<_$RouteUriExtras> _$routeUriExtras = Expando<_$RouteUriExtras>();
 
-_RouteUriExtras? _routeUriExtrasOf(Object route) => _routeUriExtras[route];
+_$RouteUriExtras? _$routeUriExtrasOf(Object route) => _$routeUriExtras[route];
 
-T _withRouteUriExtras<T extends AppRoutePath>(
+T _$withRouteUriExtras<T extends {{ route_path_class }}>(
   T route,
   Uri uri,
   Set<String> knownQueryParameters,
@@ -26,17 +26,17 @@ T _withRouteUriExtras<T extends AppRoutePath>(
     }
   }
   if (queryParameters.isEmpty && uri.fragment.isEmpty) return route;
-  _routeUriExtras[route] = _RouteUriExtras(
+  _$routeUriExtras[route] = _$RouteUriExtras(
     queryParameters: Map.unmodifiable(queryParameters),
     fragment: uri.fragment,
   );
   return route;
 }
 
-String _routePath(
+String _$routePath(
   List<String> segments, {
   Map<String, dynamic>? queryParameters,
-  _RouteUriExtras? uriExtras,
+  _$RouteUriExtras? uriExtras,
 }) {
   final query = <String, dynamic>{
     ...?queryParameters,
@@ -51,21 +51,21 @@ String _routePath(
   return text.startsWith('/') ? text : '/$text';
 }
 
-bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
+bool {{ route_requires_auth_function }}({{ route_path_class }} route) => route.requiresAuth;
 
-String? routeBranch(AppRoutePath route) {
+String? {{ route_branch_function }}({{ route_path_class }} route) {
   return switch (route) {
 {{ branch_cases }}    _ => null,
   };
 }
 
-RouteDebugInfo routeDebugInfo(AppRoutePath route) {
+RouteDebugInfo {{ route_debug_info_function }}({{ route_path_class }} route) {
   return switch (route) {
 {{ debug_cases }}  };
 }
 
-List<Object> routeGuards(
-  AppRoutePath route,
+List<Object> {{ route_guards_function }}(
+  {{ route_path_class }} route,
   {{ router_base_class }} router,
 ) {
   return switch (route) {
@@ -73,25 +73,25 @@ List<Object> routeGuards(
   };
 }
 
-extension AppRouterContext on BuildContext {
-  RouterController<AppRoutePath> get _routerController =>
-      RouterController.of<AppRoutePath>(this);
-  AppRoutesNavigator get navigator => AppRoutesNavigator(_routerController);
+extension {{ context_extension }} on BuildContext {
+  RouterController<{{ route_path_class }}> get _routerController =>
+      RouterController.of<{{ route_path_class }}>(this);
+  {{ navigator_class }} get navigator => {{ navigator_class }}(_routerController);
 }
 
-final class AppRoutesNavigator {
-  const AppRoutesNavigator(this._router);
+final class {{ navigator_class }} {
+  const {{ navigator_class }}(this._router);
 
-  final RouterController<AppRoutePath> _router;
+  final RouterController<{{ route_path_class }}> _router;
 
 {{ factories }}  bool pop<R>([R? result]) => _router.pop<R>(result);
 }
 
-final class RouteAction<R> {
-  const RouteAction(this._router, this.route);
+final class {{ route_action_class }}<R> {
+  const {{ route_action_class }}(this._router, this.route);
 
-  final RouterController<AppRoutePath> _router;
-  final AppRoutePath<R> route;
+  final RouterController<{{ route_path_class }}> _router;
+  final {{ route_path_class }}<R> route;
 
   void go() => _router.go(route);
   Future<R?> push() => _router.push<R>(route);

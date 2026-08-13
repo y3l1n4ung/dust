@@ -8,6 +8,8 @@ use super::{patterns::route_switch_pattern, shell::effective_shell};
 /// Template context for generated shell consistency metadata.
 #[derive(Serialize)]
 struct ShellConsistencyContext {
+    /// Generated route metadata list variable.
+    routes_variable: String,
     /// Rendered page-to-shell map entries.
     entries: String,
 }
@@ -15,6 +17,12 @@ struct ShellConsistencyContext {
 /// Template context for generated page builder switch.
 #[derive(Serialize)]
 struct PageBuilderContext {
+    /// Generated route metadata list variable.
+    routes_variable: String,
+    /// Generated route path base class.
+    route_path_class: String,
+    /// Generated route page builder function.
+    build_page_function: String,
     /// Rendered route builder cases.
     cases: String,
 }
@@ -42,6 +50,7 @@ pub(super) fn render_shell_consistency_helpers(out: &mut String, spec: &RouterSp
         "shell_consistency",
         include_str!("templates/shell_consistency.jinja"),
         ShellConsistencyContext {
+            routes_variable: spec.routes_variable.clone(),
             entries: spec
                 .routes
                 .iter()
@@ -64,6 +73,9 @@ pub(super) fn render_page_builder(out: &mut String, spec: &RouterSpec) {
         "page_builder",
         include_str!("templates/page_builder.jinja"),
         PageBuilderContext {
+            routes_variable: spec.routes_variable.clone(),
+            route_path_class: spec.route_path_class.clone(),
+            build_page_function: spec.build_page_function.clone(),
             cases: spec
                 .routes
                 .iter()
@@ -97,7 +109,10 @@ fn render_page_builder_case(spec: &RouterSpec, route: &crate::plugin::model::Rou
                 .annotation
                 .transition
                 .as_ref()
-                .map(|transition| format!("      transition: {transition},\n"))
+                .map(|transition| {
+                    let transition = super::normalize_private_transition_helper(transition);
+                    format!("      transition: {transition},\n")
+                })
                 .unwrap_or_default(),
             fullscreen_dialog: route.annotation.fullscreen_dialog,
             maintain_state: route.annotation.maintain_state,

@@ -1,11 +1,11 @@
-Page<dynamic> buildAppRoutePage(
-  AppRoutePath route,
+Page<dynamic> {{ build_page_function }}(
+  {{ route_path_class }} route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
   assert(
-    _shellConsistencyCheck(),
-    'Shell mismatch between \$appRoutes and buildAppRoutePage',
+    _$shellConsistencyCheck(),
+    'Shell mismatch between \{{ routes_variable }} and {{ build_page_function }}',
   );
   return switch (route) {
 {{ cases }}  };

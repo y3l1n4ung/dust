@@ -22,19 +22,20 @@ void main() {
   });
 
   test('generated typed routes parse and format benchmark paths', () {
-    final route = parseAppRoute(
+    final route = parseBenchmarkRoute(
       Uri.parse('/models/42?tab=serde&archived=true'),
     );
 
-    expect(route, isA<ModelDetailRoute>());
-    expect((route as ModelDetailRoute).id, 42);
+    expect(route, isA<BenchmarkModelDetailRoute>());
+    expect((route as BenchmarkModelDetailRoute).id, 42);
     expect(route.tab, 'serde');
     expect(route.archived, isTrue);
     expect(route.location, '/models/42?tab=serde&archived=true');
   });
 
   test('benchmark guard allows generated guarded routes', () {
-    final result = const BenchmarkGuard().canActivate(const HomeRoute());
+    final result =
+        const BenchmarkGuard().canActivate(const BenchmarkHomeRoute());
 
     expect(result, isNull);
   });
@@ -44,18 +45,21 @@ void main() {
     addTearDown(refresh.dispose);
     final router = BenchmarkRouter(refresh: refresh);
 
-    final homeGuards = routeGuards(const HomeRoute(), router);
+    final homeGuards = benchmarkRouteGuards(const BenchmarkHomeRoute(), router);
     expect(homeGuards, hasLength(1));
     expect(homeGuards.single, isA<BenchmarkGuard>());
     expect(
-      await RouteGuardChain<AppRoutePath>(
+      await RouteGuardChain<BenchmarkRoutePath>(
         homeGuards,
-      ).canActivate(const HomeRoute()),
+      ).canActivate(const BenchmarkHomeRoute()),
       isNull,
     );
 
-    expect(routeGuards(const NotFoundRoute(), router), isEmpty);
-    expect(routeGuards(const ModelDetailRoute(id: 42), router), isEmpty);
+    expect(
+        benchmarkRouteGuards(const BenchmarkNotFoundRoute(), router), isEmpty);
+    expect(
+        benchmarkRouteGuards(const BenchmarkModelDetailRoute(id: 42), router),
+        isEmpty);
   });
 
   testWidgets('benchmark app renders generated route and state APIs', (

@@ -45,6 +45,26 @@ struct RouteFileContext<'a> {
     no_transition_builder: String,
     /// Generated router base class name.
     generated_base_class: &'a str,
+    /// Generated sealed route path base class.
+    route_path_class: &'a str,
+    /// Generated route metadata list variable.
+    routes_variable: &'a str,
+    /// Generated route parser function.
+    parse_route_function: &'a str,
+    /// Generated route location helper function.
+    route_location_function: &'a str,
+    /// Generated route auth helper function.
+    route_requires_auth_function: &'a str,
+    /// Generated route branch helper function.
+    route_branch_function: &'a str,
+    /// Generated route debug helper function.
+    route_debug_info_function: &'a str,
+    /// Generated route guard helper function.
+    route_guards_function: &'a str,
+    /// Generated route page builder function.
+    build_page_function: &'a str,
+    /// Generated route stack restoration function.
+    restore_stack_function: &'a str,
     /// Initial generated route class.
     initial_route_class: &'a str,
     /// Optional refresh listenable override.
@@ -75,7 +95,7 @@ pub(crate) fn render_route_generated(library: &DartFileIr, spec: &RouterSpec) ->
     }
 
     let mut body = String::new();
-    metadata::render_route_metadata(&mut body, &spec.routes);
+    metadata::render_route_metadata(&mut body, spec);
     render_route_classes(&mut body, spec);
     render_helpers(&mut body, spec);
     render_restore_stack(&mut body, spec);
@@ -96,6 +116,16 @@ pub(crate) fn render_route_generated(library: &DartFileIr, spec: &RouterSpec) ->
                     String::new()
                 },
                 generated_base_class: &spec.generated_base_class,
+                route_path_class: &spec.route_path_class,
+                routes_variable: &spec.routes_variable,
+                parse_route_function: &spec.parse_route_function,
+                route_location_function: &spec.route_location_function,
+                route_requires_auth_function: &spec.route_requires_auth_function,
+                route_branch_function: &spec.route_branch_function,
+                route_debug_info_function: &spec.route_debug_info_function,
+                route_guards_function: &spec.route_guards_function,
+                build_page_function: &spec.build_page_function,
+                restore_stack_function: &spec.restore_stack_function,
                 initial_route_class: &spec.initial_route_class,
                 refresh_getter: render_refresh_getter(spec),
                 body,
@@ -144,8 +174,16 @@ fn uses_no_transition_builder(spec: &RouterSpec) -> bool {
             .annotation
             .transition
             .as_deref()
-            .is_some_and(|transition| transition.contains("_NoTransitionBuilder"))
+            .is_some_and(|transition| {
+                transition.contains("_NoTransitionBuilder")
+                    || transition.contains("_$NoTransitionBuilder")
+            })
     })
+}
+
+/// Normalizes generated private transition helpers to Dust's `_$...` style.
+pub(super) fn normalize_private_transition_helper(transition: &str) -> String {
+    transition.replace("_NoTransitionBuilder", "_$NoTransitionBuilder")
 }
 
 /// Renders the router refresh-listenable override when available.

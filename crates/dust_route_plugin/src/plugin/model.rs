@@ -211,6 +211,32 @@ pub(crate) struct RouterSpec {
     pub(crate) router_class: String,
     /// Generated abstract base class mixed into the router.
     pub(crate) generated_base_class: String,
+    /// Generated sealed route path base class.
+    pub(crate) route_path_class: String,
+    /// Generated route metadata list variable.
+    pub(crate) routes_variable: String,
+    /// Generated route parser function.
+    pub(crate) parse_route_function: String,
+    /// Generated route location helper function.
+    pub(crate) route_location_function: String,
+    /// Generated route auth helper function.
+    pub(crate) route_requires_auth_function: String,
+    /// Generated route branch helper function.
+    pub(crate) route_branch_function: String,
+    /// Generated route debug helper function.
+    pub(crate) route_debug_info_function: String,
+    /// Generated route guard helper function.
+    pub(crate) route_guards_function: String,
+    /// Generated route page builder function.
+    pub(crate) build_page_function: String,
+    /// Generated route stack restoration function.
+    pub(crate) restore_stack_function: String,
+    /// Generated BuildContext extension name.
+    pub(crate) context_extension: String,
+    /// Generated typed navigator helper class.
+    pub(crate) navigator_class: String,
+    /// Generated typed route action helper class.
+    pub(crate) route_action_class: String,
     /// Generated route class used as the initial route.
     pub(crate) initial_route_class: String,
     /// Generated route class used as the not-found fallback.

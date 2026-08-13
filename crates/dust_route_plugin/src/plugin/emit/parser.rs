@@ -11,6 +11,10 @@ use super::route_classes::is_not_found_route;
 /// Template context for the generated URI parser.
 #[derive(Serialize)]
 struct ParserContext {
+    /// Generated route path base class.
+    route_path_class: String,
+    /// Generated route parser function.
+    parse_route_function: String,
     /// Rendered route parsing cases.
     cases: String,
     /// Fallback route expression.
@@ -32,6 +36,13 @@ struct ParseCaseContext {
     known_query_parameters: String,
     /// Route instance returned by the branch.
     route_instance: String,
+}
+
+/// Template context for the conventional not-found parser branch.
+#[derive(Serialize)]
+struct NotFoundCaseContext {
+    /// Generated not-found route class.
+    route_class: String,
 }
 
 /// Template context for one path parameter decoder.
@@ -57,7 +68,7 @@ pub(super) fn render_parser(out: &mut String, spec: &RouterSpec) {
         .iter()
         .map(render_parse_case)
         .collect::<Vec<_>>();
-    let uses_bool_parser = cases.iter().any(|case| case.contains("_parseBool("));
+    let uses_bool_parser = cases.iter().any(|case| case.contains("_$parseBool("));
     let fallback = spec
         .not_found_route_class
         .as_deref()
@@ -67,7 +78,7 @@ pub(super) fn render_parser(out: &mut String, spec: &RouterSpec) {
                 .find(|route| route.route_class == class)
                 .map(|route| {
                     if is_not_found_route(route) {
-                        "NotFoundRoute(path: uri.toString())".to_owned()
+                        format!("{}(path: uri.toString())", route.route_class)
                     } else {
                         route_constructor_with_fallback(route, "uri.toString()")
                     }
@@ -78,6 +89,8 @@ pub(super) fn render_parser(out: &mut String, spec: &RouterSpec) {
         "route_parser",
         include_str!("templates/route_parser.jinja"),
         ParserContext {
+            route_path_class: spec.route_path_class.clone(),
+            parse_route_function: spec.parse_route_function.clone(),
             cases: join_rendered(cases),
             fallback,
             bool_parser_helper: bool_parser_helper(uses_bool_parser),
@@ -92,7 +105,7 @@ fn bool_parser_helper(uses_bool_parser: bool) -> &'static str {
         return "";
     }
     r#"
-bool? _parseBool(String? value) {
+bool? _$parseBool(String? value) {
   return switch (value) {
     'true' || '1' => true,
     'false' || '0' => false,
@@ -156,7 +169,9 @@ fn render_parse_case(route: &RouteSpec) -> String {
         return render_template(
             "route_parse_not_found_case",
             include_str!("templates/route_parse_not_found_case.jinja"),
-            (),
+            NotFoundCaseContext {
+                route_class: route.route_class.clone(),
+            },
         );
     }
 

@@ -15,27 +15,27 @@ import 'package:dust_benchmark_project/pages/benchmark_shell.dart';
 import 'package:dust_benchmark_project/state/benchmark_state.dart';
 import 'package:dust_benchmark_project/state/benchmark_view_model.dart';
 
-abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
+abstract class BenchmarkRouterBase extends RouterBase<BenchmarkRoutePath> {
   @override
   Listenable? get refreshListenable => (this as BenchmarkRouter).refresh;
-  late final RouterConfig<AppRoutePath> config = _buildConfig();
+  late final RouterConfig<BenchmarkRoutePath> config = _buildConfig();
 
-  RouterConfig<AppRoutePath> _buildConfig() {
-    final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
+  RouterConfig<BenchmarkRoutePath> _buildConfig() {
+    final runtimeConfig = RouterRuntimeConfig<BenchmarkRoutePath>(
       router: this,
-      initialRoute: const HomeRoute(),
-      parseRoute: parseAppRoute,
-      routeLocation: routeLocation,
-      requiresAuth: routeRequiresAuth,
-      routeBranch: routeBranch,
-      resolveGuards: (route) => routeGuards(route, this),
-      buildPage: buildAppRoutePage,
-      restoreStack: restoreAppRouteStack,
-      debugInfo: routeDebugInfo,
-      debugRoutes: $appRoutes,
+      initialRoute: const BenchmarkHomeRoute(),
+      parseRoute: parseBenchmarkRoute,
+      routeLocation: benchmarkRouteLocation,
+      requiresAuth: benchmarkRouteRequiresAuth,
+      routeBranch: benchmarkRouteBranch,
+      resolveGuards: (route) => benchmarkRouteGuards(route, this),
+      buildPage: buildBenchmarkRoutePage,
+      restoreStack: restoreBenchmarkRouteStack,
+      debugInfo: benchmarkRouteDebugInfo,
+      debugRoutes: $benchmarkRoutes,
     );
-    final delegate = GeneratedRouterDelegate<AppRoutePath>(runtimeConfig);
-    return RouterConfig<AppRoutePath>(
+    final delegate = GeneratedRouterDelegate<BenchmarkRoutePath>(runtimeConfig);
+    return RouterConfig<BenchmarkRoutePath>(
       routeInformationProvider: PlatformRouteInformationProvider(
         initialRouteInformation: RouteInformation(
           uri: Uri.parse(
@@ -43,9 +43,9 @@ abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
           ),
         ),
       ),
-      routeInformationParser: GeneratedRouteInformationParser<AppRoutePath>(
-        parseRoute: parseAppRoute,
-        routeLocation: routeLocation,
+      routeInformationParser: GeneratedRouteInformationParser<BenchmarkRoutePath>(
+        parseRoute: parseBenchmarkRoute,
+        routeLocation: benchmarkRouteLocation,
       ),
       routerDelegate: delegate,
       backButtonDispatcher: RootBackButtonDispatcher(),
@@ -53,7 +53,7 @@ abstract class $BenchmarkRouter extends RouterBase<AppRoutePath> {
   }
 }
 
-const List<GeneratedRoute> $appRoutes = [
+const List<GeneratedRoute> $benchmarkRoutes = [
   GeneratedRoute(
     '/',
     page: BenchmarkHomePage,
@@ -82,8 +82,8 @@ const List<GeneratedRoute> $appRoutes = [
   ),
 ];
 
-sealed class AppRoutePath<R> {
-  const AppRoutePath();
+sealed class BenchmarkRoutePath<R> {
+  const BenchmarkRoutePath();
 
   String get location;
 
@@ -92,31 +92,31 @@ sealed class AppRoutePath<R> {
   bool get requiresAuth => true;
 }
 
-/// Typed route data for `HomeRoute`.
-final class HomeRoute extends AppRoutePath<void> {
-  const HomeRoute();
+/// Typed route data for `BenchmarkHomeRoute`.
+final class BenchmarkHomeRoute extends BenchmarkRoutePath<void> {
+  const BenchmarkHomeRoute();
 
   @override
   String get location {
-    return _routePath(
+    return _$routePath(
       const [],
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 }
 
-/// Typed route data for `NotFoundRoute`.
-final class NotFoundRoute extends AppRoutePath<void> {
-  const NotFoundRoute({this.path = ''});
+/// Typed route data for `BenchmarkNotFoundRoute`.
+final class BenchmarkNotFoundRoute extends BenchmarkRoutePath<void> {
+  const BenchmarkNotFoundRoute({this.path = ''});
 
   final String path;
 
   @override
   String get location {
-    return _routePath(
+    return _$routePath(
       const ['404'],
       queryParameters: {'path': path},
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 
@@ -124,9 +124,9 @@ final class NotFoundRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `ModelDetailRoute`.
-final class ModelDetailRoute extends AppRoutePath<void> {
-  const ModelDetailRoute({required this.id, this.tab, this.archived});
+/// Typed route data for `BenchmarkModelDetailRoute`.
+final class BenchmarkModelDetailRoute extends BenchmarkRoutePath<void> {
+  const BenchmarkModelDetailRoute({required this.id, this.tab, this.archived});
 
   final int id;
   final String? tab;
@@ -141,18 +141,18 @@ final class ModelDetailRoute extends AppRoutePath<void> {
     if (archived != null) {
       query['archived'] = archived!.toString();
     }
-    return _routePath(
+    return _$routePath(
       ['models', id.toString()],
       queryParameters: query.isEmpty ? null : query,
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 }
 
-String routeLocation(AppRoutePath route) => route.location;
+String benchmarkRouteLocation(BenchmarkRoutePath route) => route.location;
 
-final class _RouteUriExtras {
-  const _RouteUriExtras({
+final class _$RouteUriExtras {
+  const _$RouteUriExtras({
     required this.queryParameters,
     required this.fragment,
   });
@@ -161,11 +161,11 @@ final class _RouteUriExtras {
   final String fragment;
 }
 
-final Expando<_RouteUriExtras> _routeUriExtras = Expando<_RouteUriExtras>();
+final Expando<_$RouteUriExtras> _$routeUriExtras = Expando<_$RouteUriExtras>();
 
-_RouteUriExtras? _routeUriExtrasOf(Object route) => _routeUriExtras[route];
+_$RouteUriExtras? _$routeUriExtrasOf(Object route) => _$routeUriExtras[route];
 
-T _withRouteUriExtras<T extends AppRoutePath>(
+T _$withRouteUriExtras<T extends BenchmarkRoutePath>(
   T route,
   Uri uri,
   Set<String> knownQueryParameters,
@@ -177,17 +177,17 @@ T _withRouteUriExtras<T extends AppRoutePath>(
     }
   }
   if (queryParameters.isEmpty && uri.fragment.isEmpty) return route;
-  _routeUriExtras[route] = _RouteUriExtras(
+  _$routeUriExtras[route] = _$RouteUriExtras(
     queryParameters: Map.unmodifiable(queryParameters),
     fragment: uri.fragment,
   );
   return route;
 }
 
-String _routePath(
+String _$routePath(
   List<String> segments, {
   Map<String, dynamic>? queryParameters,
-  _RouteUriExtras? uriExtras,
+  _$RouteUriExtras? uriExtras,
 }) {
   final query = <String, dynamic>{
     ...?queryParameters,
@@ -202,110 +202,111 @@ String _routePath(
   return text.startsWith('/') ? text : '/$text';
 }
 
-bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
+bool benchmarkRouteRequiresAuth(BenchmarkRoutePath route) => route.requiresAuth;
 
-String? routeBranch(AppRoutePath route) {
+String? benchmarkRouteBranch(BenchmarkRoutePath route) {
   return switch (route) {
     _ => null,
   };
 }
 
-RouteDebugInfo routeDebugInfo(AppRoutePath route) {
+RouteDebugInfo benchmarkRouteDebugInfo(BenchmarkRoutePath route) {
   return switch (route) {
-    HomeRoute() => const RouteDebugInfo(name: 'home', shell: 'BenchmarkShell', branch: null),
-    NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: 'BenchmarkShell', branch: null),
-    ModelDetailRoute(id: _, tab: _, archived: _) => const RouteDebugInfo(name: 'modelDetail', shell: 'BenchmarkShell', branch: null),
+    BenchmarkHomeRoute() => const RouteDebugInfo(name: 'home', shell: 'BenchmarkShell', branch: null),
+    BenchmarkNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: 'BenchmarkShell', branch: null),
+    BenchmarkModelDetailRoute(id: _, tab: _, archived: _) => const RouteDebugInfo(name: 'modelDetail', shell: 'BenchmarkShell', branch: null),
   };
 }
 
-List<Object> routeGuards(
-  AppRoutePath route,
-  $BenchmarkRouter router,
+List<Object> benchmarkRouteGuards(
+  BenchmarkRoutePath route,
+  BenchmarkRouterBase router,
 ) {
   return switch (route) {
-    HomeRoute() => [BenchmarkGuard()],
+    BenchmarkHomeRoute() => [BenchmarkGuard()],
     _ => const [],
   };
 }
 
-extension AppRouterContext on BuildContext {
-  RouterController<AppRoutePath> get _routerController =>
-      RouterController.of<AppRoutePath>(this);
-  AppRoutesNavigator get navigator => AppRoutesNavigator(_routerController);
+extension BenchmarkRouterContext on BuildContext {
+  RouterController<BenchmarkRoutePath> get _routerController =>
+      RouterController.of<BenchmarkRoutePath>(this);
+  BenchmarkRoutesNavigator get navigator => BenchmarkRoutesNavigator(_routerController);
 }
 
-final class AppRoutesNavigator {
-  const AppRoutesNavigator(this._router);
+final class BenchmarkRoutesNavigator {
+  const BenchmarkRoutesNavigator(this._router);
 
-  final RouterController<AppRoutePath> _router;
+  final RouterController<BenchmarkRoutePath> _router;
 
-  RouteAction<void> home() => RouteAction(_router, HomeRoute());
+  BenchmarkRouteAction<void> home() =>
+      BenchmarkRouteAction(_router, BenchmarkHomeRoute());
 
-  RouteAction<void> notFound({String path = ''}) =>
-      RouteAction(_router, NotFoundRoute(path: path));
+  BenchmarkRouteAction<void> notFound({String path = ''}) =>
+      BenchmarkRouteAction(_router, BenchmarkNotFoundRoute(path: path));
 
-  RouteAction<void> modelDetail({required int id, String? tab, bool? archived}) =>
-      RouteAction(_router, ModelDetailRoute(id: id, tab: tab, archived: archived));
+  BenchmarkRouteAction<void> modelDetail({required int id, String? tab, bool? archived}) =>
+      BenchmarkRouteAction(_router, BenchmarkModelDetailRoute(id: id, tab: tab, archived: archived));
 
   bool pop<R>([R? result]) => _router.pop<R>(result);
 }
 
-final class RouteAction<R> {
-  const RouteAction(this._router, this.route);
+final class BenchmarkRouteAction<R> {
+  const BenchmarkRouteAction(this._router, this.route);
 
-  final RouterController<AppRoutePath> _router;
-  final AppRoutePath<R> route;
+  final RouterController<BenchmarkRoutePath> _router;
+  final BenchmarkRoutePath<R> route;
 
   void go() => _router.go(route);
   Future<R?> push() => _router.push<R>(route);
   void replace() => _router.replace(route);
 }
 
-RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
+RouteStack<BenchmarkRoutePath> restoreBenchmarkRouteStack(BenchmarkRoutePath route) {
   return switch (route) {
-    HomeRoute() => [
+    BenchmarkHomeRoute() => [
       route,
     ],
-    NotFoundRoute(path: _) => [
-      const HomeRoute(),
+    BenchmarkNotFoundRoute(path: _) => [
+      const BenchmarkHomeRoute(),
       route,
     ],
-    ModelDetailRoute(id: _, tab: _, archived: _) => [
-      const HomeRoute(),
+    BenchmarkModelDetailRoute(id: _, tab: _, archived: _) => [
+      const BenchmarkHomeRoute(),
       route,
     ],
   };
 }
 
-AppRoutePath parseAppRoute(Uri uri) {
+BenchmarkRoutePath parseBenchmarkRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
-    final route = HomeRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = BenchmarkHomeRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == '404') {
-    final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
-    return _withRouteUriExtras(route, uri, const {'path'});
+    final route = BenchmarkNotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    return _$withRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 2 && segments[0] == 'models') {
     final id = int.tryParse(segments[1]);
     if (id == null) {
-      return _notFoundRoute(uri);
+      return _$notFoundRoute(uri);
     }
-    final route = ModelDetailRoute(
+    final route = BenchmarkModelDetailRoute(
       id: id,
       tab: uri.queryParameters['tab'],
-      archived: _parseBool(uri.queryParameters['archived']),
+      archived: _$parseBool(uri.queryParameters['archived']),
     );
-    return _withRouteUriExtras(route, uri, const <String>{'tab', 'archived'});
+    return _$withRouteUriExtras(route, uri, const <String>{'tab', 'archived'});
   }
-  return _notFoundRoute(uri);
+  return _$notFoundRoute(uri);
 }
 
-AppRoutePath _notFoundRoute(Uri uri) => NotFoundRoute(path: uri.toString());
+BenchmarkRoutePath _$notFoundRoute(Uri uri) => BenchmarkNotFoundRoute(path: uri.toString());
 
-bool? _parseBool(String? value) {
+bool? _$parseBool(String? value) {
   return switch (value) {
     'true' || '1' => true,
     'false' || '0' => false,
@@ -314,34 +315,34 @@ bool? _parseBool(String? value) {
   };
 }
 
-const Map<Type, Type?> _kAppliedShellsByPage = {
+const Map<Type, Type?> _$appliedShellsByPage = {
   BenchmarkHomePage: BenchmarkShell,
   BenchmarkNotFoundPage: BenchmarkShell,
   BenchmarkDetailPage: BenchmarkShell,
 };
 
-bool _shellConsistencyCheck() {
+bool _$shellConsistencyCheck() {
   bool visit(GeneratedRoute route) {
     final page = route.page;
-    if (page != null && _kAppliedShellsByPage[page] != route.shell) {
+    if (page != null && _$appliedShellsByPage[page] != route.shell) {
       return false;
     }
     return route.routes.every(visit);
   }
-  return $appRoutes.every(visit);
+  return $benchmarkRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(
-  AppRoutePath route,
+Page<dynamic> buildBenchmarkRoutePage(
+  BenchmarkRoutePath route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
   assert(
-    _shellConsistencyCheck(),
-    'Shell mismatch between \$appRoutes and buildAppRoutePage',
+    _$shellConsistencyCheck(),
+    'Shell mismatch between \$benchmarkRoutes and buildBenchmarkRoutePage',
   );
   return switch (route) {
-    HomeRoute() => generatedPage(
+    BenchmarkHomeRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'home',
@@ -351,7 +352,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: BenchmarkShell(child: const BenchmarkHomePage()),
     ),
-    NotFoundRoute(path: final path) => generatedPage(
+    BenchmarkNotFoundRoute(path: final path) => generatedPage(
       key: key,
       location: route.location,
       name: 'notFound',
@@ -360,7 +361,11 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: BenchmarkShell(child: BenchmarkNotFoundPage(path: path)),
     ),
-    ModelDetailRoute(id: final id, tab: final tab, archived: final archived) => generatedPage(
+    BenchmarkModelDetailRoute(
+      id: final id,
+      tab: final tab,
+      archived: final archived,
+    ) => generatedPage(
       key: key,
       location: route.location,
       name: 'modelDetail',

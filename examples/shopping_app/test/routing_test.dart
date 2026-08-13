@@ -13,25 +13,27 @@ void main() {
 
   test('generated route locations round-trip encoded real app values', () {
     const orderId = 'ORDER 1/2';
-    final order = OrderDetailRoute(orderId: orderId);
-    expect(order.location, isNot(contains(' ')));
+    final order = ShoppingOrderDetailRoute(orderId: orderId);
+    expect(order.location, '/orders/ORDER%201%2F2');
 
-    final parsedOrder = parseAppRoute(Uri.parse(order.location));
+    final parsedOrder = parseShoppingRoute(Uri.parse(order.location));
     expect(
       parsedOrder,
-      isA<OrderDetailRoute>()
+      isA<ShoppingOrderDetailRoute>()
           .having((route) => route.orderId, 'orderId', orderId),
     );
 
     const redirectPath = '/orders/ORDER 1/2?tab=tracking';
-    final login = LoginRoute(redirectPath: redirectPath);
-    expect(login.location, startsWith('/login?redirectPath='));
-    expect(login.location, isNot(contains(' ')));
+    final login = ShoppingLoginRoute(redirectPath: redirectPath);
+    expect(
+      login.location,
+      '/login?redirectPath=%2Forders%2FORDER+1%2F2%3Ftab%3Dtracking',
+    );
 
-    final parsedLogin = parseAppRoute(Uri.parse(login.location));
+    final parsedLogin = parseShoppingRoute(Uri.parse(login.location));
     expect(
       parsedLogin,
-      isA<LoginRoute>().having(
+      isA<ShoppingLoginRoute>().having(
         (route) => route.redirectPath,
         'redirectPath',
         redirectPath,
@@ -40,23 +42,52 @@ void main() {
   });
 
   test('typed deep links preserve undeclared query and fragment data', () {
-    final route = parseAppRoute(
+    final route = parseShoppingRoute(
       Uri.parse('/product/7?campaign=spring&campaign=launch#reviews'),
     );
 
-    expect(route, isA<ProductDetailRoute>());
+    expect(route, isA<ShoppingProductDetailRoute>());
     expect(
         route.location, '/product/7?campaign=spring&campaign=launch#reviews');
+  });
+
+  test('shopping cart flow routes are typed and parseable', () {
+    const cart = ShoppingCartRoute();
+    const checkout = ShoppingCheckoutRoute();
+    const confirmation = ShoppingOrderConfirmationRoute(orderId: 'ORDER 1/2');
+
+    expect(cart.location, '/cart');
+    expect(checkout.location, '/checkout');
+    expect(confirmation.location, '/order-confirmation/ORDER%201%2F2');
+
+    expect(
+        parseShoppingRoute(Uri.parse(cart.location)), isA<ShoppingCartRoute>());
+    expect(
+      parseShoppingRoute(Uri.parse(checkout.location)),
+      isA<ShoppingCheckoutRoute>(),
+    );
+    expect(
+      parseShoppingRoute(Uri.parse(confirmation.location)),
+      isA<ShoppingOrderConfirmationRoute>().having(
+        (route) => route.orderId,
+        'orderId',
+        confirmation.orderId,
+      ),
+    );
+
+    expect(shoppingRouteLocation(cart), cart.location);
+    expect(shoppingRouteLocation(checkout), checkout.location);
+    expect(shoppingRouteLocation(confirmation), confirmation.location);
   });
 
   test('invalid typed path values become not-found routes with source path',
       () {
     final route =
-        parseAppRoute(Uri.parse('/product/not-an-int?from=deep-link'));
+        parseShoppingRoute(Uri.parse('/product/not-an-int?from=deep-link'));
 
     expect(
       route,
-      isA<NotFoundRoute>().having(
+      isA<ShoppingNotFoundRoute>().having(
         (route) => route.path,
         'path',
         '/product/not-an-int?from=deep-link',
@@ -67,33 +98,35 @@ void main() {
   test('real app public and protected route contract is explicit', () async {
     final router = await _shoppingRouter();
 
-    final publicRoutes = <AppRoutePath>[
-      const ProductsRoute(),
-      const CartRoute(),
-      const LoginRoute(redirectPath: '/checkout'),
-      const ProductDetailRoute(productId: 1),
-      const SupportChatRoute(),
-      const WishlistRoute(),
+    final publicRoutes = <ShoppingRoutePath>[
+      const ShoppingProductsRoute(),
+      const ShoppingCartRoute(),
+      const ShoppingLoginRoute(redirectPath: '/checkout'),
+      const ShoppingProductDetailRoute(productId: 1),
+      const ShoppingSupportChatRoute(),
+      const ShoppingWishlistRoute(),
     ];
-    const supportRoute = SupportChatRoute();
-    expect(supportRoute, isA<AppRoutePath<bool>>());
+    const supportRoute = ShoppingSupportChatRoute();
+    expect(supportRoute, isA<ShoppingRoutePath<bool>>());
     for (final route in publicRoutes) {
-      expect(routeRequiresAuth(route), isFalse, reason: '${route.runtimeType}');
+      expect(shoppingRouteRequiresAuth(route), isFalse,
+          reason: '${route.runtimeType}');
     }
 
-    final protectedRoutes = <AppRoutePath>[
-      const AdminRoute(),
-      const CheckoutRoute(),
-      const OrdersRoute(),
-      const OrderDetailRoute(orderId: 'ORDER-1'),
-      const ProfileRoute(),
-      const StaffRoute(),
+    final protectedRoutes = <ShoppingRoutePath>[
+      const ShoppingAdminRoute(),
+      const ShoppingCheckoutRoute(),
+      const ShoppingOrdersRoute(),
+      const ShoppingOrderDetailRoute(orderId: 'ORDER-1'),
+      const ShoppingProfileRoute(),
+      const ShoppingStaffRoute(),
     ];
     for (final route in protectedRoutes) {
-      expect(routeRequiresAuth(route), isTrue, reason: '${route.runtimeType}');
+      expect(shoppingRouteRequiresAuth(route), isTrue,
+          reason: '${route.runtimeType}');
     }
 
-    expect(routeGuards(const CheckoutRoute(), router), isEmpty);
+    expect(shoppingRouteGuards(const ShoppingCheckoutRoute(), router), isEmpty);
   });
 
   test('shopping access levels map real app users', () {
@@ -106,17 +139,19 @@ void main() {
 
   test('staff and admin guards use injected auth access levels', () async {
     final router = await _shoppingRouter();
-    const staffRoute = StaffRoute();
-    const adminRoute = AdminRoute();
+    const staffRoute = ShoppingStaffRoute();
+    const adminRoute = ShoppingAdminRoute();
 
-    final staffGuard = routeGuards(staffRoute, router).single as StaffGuard;
-    final adminGuard = routeGuards(adminRoute, router).single as AdminGuard;
+    final staffGuard =
+        shoppingRouteGuards(staffRoute, router).single as StaffGuard;
+    final adminGuard =
+        shoppingRouteGuards(adminRoute, router).single as AdminGuard;
     expect(staffGuard.auth, same(router.auth));
     expect(adminGuard.auth, same(router.auth));
 
     expect(
       staffGuard.canActivate(staffRoute),
-      isA<LoginRoute>().having(
+      isA<ShoppingLoginRoute>().having(
         (route) => route.redirectPath,
         'redirectPath',
         staffRoute.location,
@@ -124,47 +159,49 @@ void main() {
     );
 
     _authenticate(router, 'dust');
-    expect(staffGuard.canActivate(staffRoute), isA<ProductsRoute>());
-    expect(adminGuard.canActivate(adminRoute), isA<ProductsRoute>());
+    expect(staffGuard.canActivate(staffRoute), isA<ShoppingProductsRoute>());
+    expect(adminGuard.canActivate(adminRoute), isA<ShoppingProductsRoute>());
 
     _authenticate(router, 'manager');
     expect(staffGuard.canActivate(staffRoute), isNull);
-    expect(adminGuard.canActivate(adminRoute), isA<ProductsRoute>());
+    expect(adminGuard.canActivate(adminRoute), isA<ShoppingProductsRoute>());
 
     _authenticate(router, 'admin');
     expect(staffGuard.canActivate(staffRoute), isNull);
     expect(adminGuard.canActivate(adminRoute), isNull);
 
-    expect(routeGuards(const ProductsRoute(), router), isEmpty);
+    expect(shoppingRouteGuards(const ShoppingProductsRoute(), router), isEmpty);
   });
 
   test('deep app routes restore the expected parent stack', () {
-    final orderStack = restoreAppRouteStack(
-      const OrderDetailRoute(orderId: 'ORDER-9'),
+    final orderStack = restoreShoppingRouteStack(
+      const ShoppingOrderDetailRoute(orderId: 'ORDER-9'),
     );
     expect(orderStack, [
-      isA<ProductsRoute>(),
-      isA<OrdersRoute>(),
-      isA<OrderDetailRoute>().having(
+      isA<ShoppingProductsRoute>(),
+      isA<ShoppingOrdersRoute>(),
+      isA<ShoppingOrderDetailRoute>().having(
         (route) => route.orderId,
         'orderId',
         'ORDER-9',
       ),
     ]);
 
-    final supportStack = restoreAppRouteStack(const SupportChatRoute());
-    expect(supportStack, [isA<ProductsRoute>(), isA<SupportChatRoute>()]);
+    final supportStack =
+        restoreShoppingRouteStack(const ShoppingSupportChatRoute());
+    expect(supportStack,
+        [isA<ShoppingProductsRoute>(), isA<ShoppingSupportChatRoute>()]);
   });
 
   test('shopping router redirects through real auth state safely', () async {
     final router = await _shoppingRouter();
-    final deepLink = parseAppRoute(
+    final deepLink = parseShoppingRoute(
             Uri.parse('/orders/ORDER%201%2F2?campaign=spring#receipt'))
-        as OrderDetailRoute;
+        as ShoppingOrderDetailRoute;
 
     expect(
-      router.redirect(const CheckoutRoute()),
-      isA<LoginRoute>().having(
+      router.redirect(const ShoppingCheckoutRoute()),
+      isA<ShoppingLoginRoute>().having(
         (route) => route.redirectPath,
         'redirectPath',
         '/checkout',
@@ -172,35 +209,35 @@ void main() {
     );
     expect(
       router.redirect(deepLink),
-      isA<LoginRoute>().having(
+      isA<ShoppingLoginRoute>().having(
         (route) => route.redirectPath,
         'redirectPath',
         deepLink.location,
       ),
     );
-    expect(router.redirect(const ProductsRoute()), isNull);
+    expect(router.redirect(const ShoppingProductsRoute()), isNull);
 
     await router.auth.login('dust', 'password');
 
     expect(
-      router.redirect(LoginRoute(redirectPath: deepLink.location)),
-      isA<OrderDetailRoute>().having(
+      router.redirect(ShoppingLoginRoute(redirectPath: deepLink.location)),
+      isA<ShoppingOrderDetailRoute>().having(
         (route) => route.orderId,
         'orderId',
         deepLink.orderId,
       ),
     );
 
-    final unsafeAuthRoutes = <AppRoutePath>[
-      const LoginRoute(),
-      const LoginRoute(redirectPath: ''),
-      const LoginRoute(redirectPath: 'https://evil.test/a'),
-      const RegisterRoute(redirectPath: '//evil.test/a'),
-      const RegisterRoute(redirectPath: '/missing'),
-      const LoginRoute(redirectPath: '/404?path=/orders/ORDER-1'),
+    final unsafeAuthRoutes = <ShoppingRoutePath>[
+      const ShoppingLoginRoute(),
+      const ShoppingLoginRoute(redirectPath: ''),
+      const ShoppingLoginRoute(redirectPath: 'https://evil.test/a'),
+      const ShoppingRegisterRoute(redirectPath: '//evil.test/a'),
+      const ShoppingRegisterRoute(redirectPath: '/missing'),
+      const ShoppingLoginRoute(redirectPath: '/404?path=/orders/ORDER-1'),
     ];
     for (final route in unsafeAuthRoutes) {
-      expect(router.redirect(route), isA<ProductsRoute>());
+      expect(router.redirect(route), isA<ShoppingProductsRoute>());
     }
   });
 
@@ -208,87 +245,92 @@ void main() {
     final router = await _shoppingRouter();
 
     router.auth.value = const AuthState(status: AuthStatus.initial);
-    expect(router.redirect(const CheckoutRoute()), isNull);
+    expect(router.redirect(const ShoppingCheckoutRoute()), isNull);
 
     router.auth.value = const AuthState(status: AuthStatus.loading);
-    expect(router.redirect(const CheckoutRoute()), isNull);
+    expect(router.redirect(const ShoppingCheckoutRoute()), isNull);
   });
 
   test('router redirect and guards compose through runtime navigation',
       () async {
     final router = await _shoppingRouter();
-    final delegate =
-        router.config.routerDelegate as GeneratedRouterDelegate<AppRoutePath>;
+    final delegate = router.config.routerDelegate
+        as GeneratedRouterDelegate<ShoppingRoutePath>;
     await delegate.debugWaitForScheduledRefresh();
 
-    await delegate.setNewRoutePath(const AdminRoute());
+    await delegate.setNewRoutePath(const ShoppingAdminRoute());
     expect(
       delegate.currentConfiguration,
-      isA<LoginRoute>().having(
+      isA<ShoppingLoginRoute>().having(
         (route) => route.redirectPath,
         'redirectPath',
         '/admin',
       ),
     );
-    expect(delegate.stack, [isA<ProductsRoute>(), isA<LoginRoute>()]);
+    expect(delegate.stack,
+        [isA<ShoppingProductsRoute>(), isA<ShoppingLoginRoute>()]);
 
     _authenticate(router, 'dust');
     await delegate.debugWaitForScheduledRefresh();
-    expect(delegate.currentConfiguration, isA<ProductsRoute>());
+    expect(delegate.currentConfiguration, isA<ShoppingProductsRoute>());
 
-    await delegate.setNewRoutePath(const StaffRoute());
-    expect(delegate.currentConfiguration, isA<ProductsRoute>());
-    expect(delegate.stack, [isA<ProductsRoute>()]);
+    await delegate.setNewRoutePath(const ShoppingStaffRoute());
+    expect(delegate.currentConfiguration, isA<ShoppingProductsRoute>());
+    expect(delegate.stack, [isA<ShoppingProductsRoute>()]);
 
     _authenticate(router, 'manager');
     await delegate.debugWaitForScheduledRefresh();
-    await delegate.setNewRoutePath(const StaffRoute());
-    expect(delegate.currentConfiguration, isA<StaffRoute>());
-    expect(delegate.stack, [isA<ProductsRoute>(), isA<StaffRoute>()]);
+    await delegate.setNewRoutePath(const ShoppingStaffRoute());
+    expect(delegate.currentConfiguration, isA<ShoppingStaffRoute>());
+    expect(delegate.stack,
+        [isA<ShoppingProductsRoute>(), isA<ShoppingStaffRoute>()]);
 
-    await delegate.setNewRoutePath(const AdminRoute());
-    expect(delegate.currentConfiguration, isA<ProductsRoute>());
+    await delegate.setNewRoutePath(const ShoppingAdminRoute());
+    expect(delegate.currentConfiguration, isA<ShoppingProductsRoute>());
 
     _authenticate(router, 'admin');
     await delegate.debugWaitForScheduledRefresh();
-    await delegate.setNewRoutePath(const AdminRoute());
-    expect(delegate.currentConfiguration, isA<AdminRoute>());
-    expect(delegate.stack, [isA<ProductsRoute>(), isA<AdminRoute>()]);
+    await delegate.setNewRoutePath(const ShoppingAdminRoute());
+    expect(delegate.currentConfiguration, isA<ShoppingAdminRoute>());
+    expect(delegate.stack,
+        [isA<ShoppingProductsRoute>(), isA<ShoppingAdminRoute>()]);
 
     _expireSession(router);
     await delegate.debugWaitForScheduledRefresh();
     expect(
       delegate.currentConfiguration,
-      isA<LoginRoute>().having(
+      isA<ShoppingLoginRoute>().having(
         (route) => route.redirectPath,
         'redirectPath',
         '/admin',
       ),
     );
-    expect(delegate.stack, [isA<ProductsRoute>(), isA<LoginRoute>()]);
+    expect(delegate.stack,
+        [isA<ShoppingProductsRoute>(), isA<ShoppingLoginRoute>()]);
 
     _authenticate(router, 'dust');
     await delegate.debugWaitForScheduledRefresh();
-    expect(delegate.currentConfiguration, isA<ProductsRoute>());
+    expect(delegate.currentConfiguration, isA<ShoppingProductsRoute>());
   });
 
   test('router revalidates protected routes exposed by pop', () async {
     final router = await _shoppingRouter();
-    final delegate =
-        router.config.routerDelegate as GeneratedRouterDelegate<AppRoutePath>;
+    final delegate = router.config.routerDelegate
+        as GeneratedRouterDelegate<ShoppingRoutePath>;
     await delegate.debugWaitForScheduledRefresh();
 
     _authenticate(router, 'admin');
     await delegate.debugWaitForScheduledRefresh();
-    await delegate.setNewRoutePath(const AdminRoute());
-    expect(delegate.stack, [isA<ProductsRoute>(), isA<AdminRoute>()]);
+    await delegate.setNewRoutePath(const ShoppingAdminRoute());
+    expect(delegate.stack,
+        [isA<ShoppingProductsRoute>(), isA<ShoppingAdminRoute>()]);
 
-    final supportResult = delegate.push<bool>(const SupportChatRoute());
+    final supportResult = delegate.push<bool>(const ShoppingSupportChatRoute());
     await Future<void>.delayed(Duration.zero);
     expect(delegate.stack, [
-      isA<ProductsRoute>(),
-      isA<AdminRoute>(),
-      isA<SupportChatRoute>(),
+      isA<ShoppingProductsRoute>(),
+      isA<ShoppingAdminRoute>(),
+      isA<ShoppingSupportChatRoute>(),
     ]);
 
     _expireSession(router);
@@ -297,13 +339,14 @@ void main() {
 
     expect(
       delegate.currentConfiguration,
-      isA<LoginRoute>().having(
+      isA<ShoppingLoginRoute>().having(
         (route) => route.redirectPath,
         'redirectPath',
         '/admin',
       ),
     );
-    expect(delegate.stack, [isA<ProductsRoute>(), isA<LoginRoute>()]);
+    expect(delegate.stack,
+        [isA<ShoppingProductsRoute>(), isA<ShoppingLoginRoute>()]);
     await expectLater(supportResult, completion(isNull));
   });
 }

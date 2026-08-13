@@ -64,27 +64,27 @@ import 'package:shopping_app/shared/widgets/dialogs/loading_dialog.dart';
 import 'package:shopping_app/shared/widgets/loaders/product_skeleton.dart';
 import 'package:shopping_app/shared/widgets/snackbars/app_snackbar.dart';
 
-abstract class $ShoppingRouter extends RouterBase<AppRoutePath> {
+abstract class ShoppingRouterBase extends RouterBase<ShoppingRoutePath> {
   @override
   Listenable? get refreshListenable => (this as ShoppingRouter).auth;
-  late final RouterConfig<AppRoutePath> config = _buildConfig();
+  late final RouterConfig<ShoppingRoutePath> config = _buildConfig();
 
-  RouterConfig<AppRoutePath> _buildConfig() {
-    final runtimeConfig = RouterRuntimeConfig<AppRoutePath>(
+  RouterConfig<ShoppingRoutePath> _buildConfig() {
+    final runtimeConfig = RouterRuntimeConfig<ShoppingRoutePath>(
       router: this,
-      initialRoute: const ProductsRoute(),
-      parseRoute: parseAppRoute,
-      routeLocation: routeLocation,
-      requiresAuth: routeRequiresAuth,
-      routeBranch: routeBranch,
-      resolveGuards: (route) => routeGuards(route, this),
-      buildPage: buildAppRoutePage,
-      restoreStack: restoreAppRouteStack,
-      debugInfo: routeDebugInfo,
-      debugRoutes: $appRoutes,
+      initialRoute: const ShoppingProductsRoute(),
+      parseRoute: parseShoppingRoute,
+      routeLocation: shoppingRouteLocation,
+      requiresAuth: shoppingRouteRequiresAuth,
+      routeBranch: shoppingRouteBranch,
+      resolveGuards: (route) => shoppingRouteGuards(route, this),
+      buildPage: buildShoppingRoutePage,
+      restoreStack: restoreShoppingRouteStack,
+      debugInfo: shoppingRouteDebugInfo,
+      debugRoutes: $shoppingRoutes,
     );
-    final delegate = GeneratedRouterDelegate<AppRoutePath>(runtimeConfig);
-    return RouterConfig<AppRoutePath>(
+    final delegate = GeneratedRouterDelegate<ShoppingRoutePath>(runtimeConfig);
+    return RouterConfig<ShoppingRoutePath>(
       routeInformationProvider: PlatformRouteInformationProvider(
         initialRouteInformation: RouteInformation(
           uri: Uri.parse(
@@ -92,9 +92,9 @@ abstract class $ShoppingRouter extends RouterBase<AppRoutePath> {
           ),
         ),
       ),
-      routeInformationParser: GeneratedRouteInformationParser<AppRoutePath>(
-        parseRoute: parseAppRoute,
-        routeLocation: routeLocation,
+      routeInformationParser: GeneratedRouteInformationParser<ShoppingRoutePath>(
+        parseRoute: parseShoppingRoute,
+        routeLocation: shoppingRouteLocation,
       ),
       routerDelegate: delegate,
       backButtonDispatcher: RootBackButtonDispatcher(),
@@ -102,7 +102,7 @@ abstract class $ShoppingRouter extends RouterBase<AppRoutePath> {
   }
 }
 
-const List<GeneratedRoute> $appRoutes = [
+const List<GeneratedRoute> $shoppingRoutes = [
   GeneratedRoute(
     '/',
     page: ProductsScreen,
@@ -218,8 +218,8 @@ const List<GeneratedRoute> $appRoutes = [
   ),
 ];
 
-sealed class AppRoutePath<R> {
-  const AppRoutePath();
+sealed class ShoppingRoutePath<R> {
+  const ShoppingRoutePath();
 
   String get location;
 
@@ -228,15 +228,15 @@ sealed class AppRoutePath<R> {
   bool get requiresAuth => true;
 }
 
-/// Typed route data for `ProductsRoute`.
-final class ProductsRoute extends AppRoutePath<void> {
-  const ProductsRoute();
+/// Typed route data for `ShoppingProductsRoute`.
+final class ShoppingProductsRoute extends ShoppingRoutePath<void> {
+  const ShoppingProductsRoute();
 
   @override
   String get location {
-    return _routePath(
+    return _$routePath(
       const [],
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 
@@ -244,18 +244,18 @@ final class ProductsRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `NotFoundRoute`.
-final class NotFoundRoute extends AppRoutePath<void> {
-  const NotFoundRoute({this.path = ''});
+/// Typed route data for `ShoppingNotFoundRoute`.
+final class ShoppingNotFoundRoute extends ShoppingRoutePath<void> {
+  const ShoppingNotFoundRoute({this.path = ''});
 
   final String path;
 
   @override
   String get location {
-    return _routePath(
+    return _$routePath(
       const ['404'],
       queryParameters: {'path': path},
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 
@@ -263,55 +263,55 @@ final class NotFoundRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `AdminRoute`.
-final class AdminRoute extends AppRoutePath<void> {
-  const AdminRoute();
+/// Typed route data for `ShoppingAdminRoute`.
+final class ShoppingAdminRoute extends ShoppingRoutePath<void> {
+  const ShoppingAdminRoute();
 
   @override
   String get location {
-    return _routePath(['admin'], uriExtras: _routeUriExtrasOf(this));
+    return _$routePath(['admin'], uriExtras: _$routeUriExtrasOf(this));
   }
 }
 
-/// Typed route data for `CartRoute`.
-final class CartRoute extends AppRoutePath<void> {
-  const CartRoute();
+/// Typed route data for `ShoppingCartRoute`.
+final class ShoppingCartRoute extends ShoppingRoutePath<void> {
+  const ShoppingCartRoute();
 
   @override
   String get location {
-    return _routePath(['cart'], uriExtras: _routeUriExtrasOf(this));
-  }
-
-  @override
-  bool get requiresAuth => false;
-}
-
-/// Typed route data for `CheckoutRoute`.
-final class CheckoutRoute extends AppRoutePath<void> {
-  const CheckoutRoute();
-
-  @override
-  String get location {
-    return _routePath(['checkout'], uriExtras: _routeUriExtrasOf(this));
-  }
-}
-
-/// Typed route data for `DemoCartsRoute`.
-final class DemoCartsRoute extends AppRoutePath<void> {
-  const DemoCartsRoute();
-
-  @override
-  String get location {
-    return _routePath(['demo-carts'], uriExtras: _routeUriExtrasOf(this));
+    return _$routePath(['cart'], uriExtras: _$routeUriExtrasOf(this));
   }
 
   @override
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `LoginRoute`.
-final class LoginRoute extends AppRoutePath<void> {
-  const LoginRoute({this.redirectPath});
+/// Typed route data for `ShoppingCheckoutRoute`.
+final class ShoppingCheckoutRoute extends ShoppingRoutePath<void> {
+  const ShoppingCheckoutRoute();
+
+  @override
+  String get location {
+    return _$routePath(['checkout'], uriExtras: _$routeUriExtrasOf(this));
+  }
+}
+
+/// Typed route data for `ShoppingDemoCartsRoute`.
+final class ShoppingDemoCartsRoute extends ShoppingRoutePath<void> {
+  const ShoppingDemoCartsRoute();
+
+  @override
+  String get location {
+    return _$routePath(['demo-carts'], uriExtras: _$routeUriExtrasOf(this));
+  }
+
+  @override
+  bool get requiresAuth => false;
+}
+
+/// Typed route data for `ShoppingLoginRoute`.
+final class ShoppingLoginRoute extends ShoppingRoutePath<void> {
+  const ShoppingLoginRoute({this.redirectPath});
 
   final String? redirectPath;
 
@@ -321,10 +321,10 @@ final class LoginRoute extends AppRoutePath<void> {
     if (redirectPath != null) {
       query['redirectPath'] = redirectPath!;
     }
-    return _routePath(
+    return _$routePath(
       ['login'],
       queryParameters: query.isEmpty ? null : query,
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 
@@ -332,17 +332,17 @@ final class LoginRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `OrderConfirmationRoute`.
-final class OrderConfirmationRoute extends AppRoutePath<void> {
-  const OrderConfirmationRoute({required this.orderId});
+/// Typed route data for `ShoppingOrderConfirmationRoute`.
+final class ShoppingOrderConfirmationRoute extends ShoppingRoutePath<void> {
+  const ShoppingOrderConfirmationRoute({required this.orderId});
 
   final String orderId;
 
   @override
   String get location {
-    return _routePath(
+    return _$routePath(
       ['order-confirmation', orderId],
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 
@@ -350,39 +350,42 @@ final class OrderConfirmationRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `OrdersRoute`.
-final class OrdersRoute extends AppRoutePath<void> {
-  const OrdersRoute();
+/// Typed route data for `ShoppingOrdersRoute`.
+final class ShoppingOrdersRoute extends ShoppingRoutePath<void> {
+  const ShoppingOrdersRoute();
 
   @override
   String get location {
-    return _routePath(['orders'], uriExtras: _routeUriExtrasOf(this));
+    return _$routePath(['orders'], uriExtras: _$routeUriExtrasOf(this));
   }
 }
 
-/// Typed route data for `OrderDetailRoute`.
-final class OrderDetailRoute extends AppRoutePath<void> {
-  const OrderDetailRoute({required this.orderId});
+/// Typed route data for `ShoppingOrderDetailRoute`.
+final class ShoppingOrderDetailRoute extends ShoppingRoutePath<void> {
+  const ShoppingOrderDetailRoute({required this.orderId});
 
   final String orderId;
 
   @override
   String get location {
-    return _routePath(['orders', orderId], uriExtras: _routeUriExtrasOf(this));
+    return _$routePath(
+      ['orders', orderId],
+      uriExtras: _$routeUriExtrasOf(this),
+    );
   }
 }
 
-/// Typed route data for `ProductDetailRoute`.
-final class ProductDetailRoute extends AppRoutePath<void> {
-  const ProductDetailRoute({required this.productId});
+/// Typed route data for `ShoppingProductDetailRoute`.
+final class ShoppingProductDetailRoute extends ShoppingRoutePath<void> {
+  const ShoppingProductDetailRoute({required this.productId});
 
   final int productId;
 
   @override
   String get location {
-    return _routePath(
+    return _$routePath(
       ['product', productId.toString()],
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 
@@ -390,19 +393,19 @@ final class ProductDetailRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `ProfileRoute`.
-final class ProfileRoute extends AppRoutePath<void> {
-  const ProfileRoute();
+/// Typed route data for `ShoppingProfileRoute`.
+final class ShoppingProfileRoute extends ShoppingRoutePath<void> {
+  const ShoppingProfileRoute();
 
   @override
   String get location {
-    return _routePath(['profile'], uriExtras: _routeUriExtrasOf(this));
+    return _$routePath(['profile'], uriExtras: _$routeUriExtrasOf(this));
   }
 }
 
-/// Typed route data for `RegisterRoute`.
-final class RegisterRoute extends AppRoutePath<void> {
-  const RegisterRoute({this.redirectPath});
+/// Typed route data for `ShoppingRegisterRoute`.
+final class ShoppingRegisterRoute extends ShoppingRoutePath<void> {
+  const ShoppingRegisterRoute({this.redirectPath});
 
   final String? redirectPath;
 
@@ -412,10 +415,10 @@ final class RegisterRoute extends AppRoutePath<void> {
     if (redirectPath != null) {
       query['redirectPath'] = redirectPath!;
     }
-    return _routePath(
+    return _$routePath(
       ['register'],
       queryParameters: query.isEmpty ? null : query,
-      uriExtras: _routeUriExtrasOf(this),
+      uriExtras: _$routeUriExtrasOf(this),
     );
   }
 
@@ -423,46 +426,49 @@ final class RegisterRoute extends AppRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `StaffRoute`.
-final class StaffRoute extends AppRoutePath<void> {
-  const StaffRoute();
+/// Typed route data for `ShoppingStaffRoute`.
+final class ShoppingStaffRoute extends ShoppingRoutePath<void> {
+  const ShoppingStaffRoute();
 
   @override
   String get location {
-    return _routePath(['staff'], uriExtras: _routeUriExtrasOf(this));
+    return _$routePath(['staff'], uriExtras: _$routeUriExtrasOf(this));
   }
 }
 
-/// Typed route data for `SupportChatRoute`.
-final class SupportChatRoute extends AppRoutePath<bool> {
-  const SupportChatRoute();
+/// Typed route data for `ShoppingSupportChatRoute`.
+final class ShoppingSupportChatRoute extends ShoppingRoutePath<bool> {
+  const ShoppingSupportChatRoute();
 
   @override
   String get location {
-    return _routePath(['support', 'chat'], uriExtras: _routeUriExtrasOf(this));
-  }
-
-  @override
-  bool get requiresAuth => false;
-}
-
-/// Typed route data for `WishlistRoute`.
-final class WishlistRoute extends AppRoutePath<void> {
-  const WishlistRoute();
-
-  @override
-  String get location {
-    return _routePath(['wishlist'], uriExtras: _routeUriExtrasOf(this));
+    return _$routePath(
+      ['support', 'chat'],
+      uriExtras: _$routeUriExtrasOf(this),
+    );
   }
 
   @override
   bool get requiresAuth => false;
 }
 
-String routeLocation(AppRoutePath route) => route.location;
+/// Typed route data for `ShoppingWishlistRoute`.
+final class ShoppingWishlistRoute extends ShoppingRoutePath<void> {
+  const ShoppingWishlistRoute();
 
-final class _RouteUriExtras {
-  const _RouteUriExtras({
+  @override
+  String get location {
+    return _$routePath(['wishlist'], uriExtras: _$routeUriExtrasOf(this));
+  }
+
+  @override
+  bool get requiresAuth => false;
+}
+
+String shoppingRouteLocation(ShoppingRoutePath route) => route.location;
+
+final class _$RouteUriExtras {
+  const _$RouteUriExtras({
     required this.queryParameters,
     required this.fragment,
   });
@@ -471,11 +477,11 @@ final class _RouteUriExtras {
   final String fragment;
 }
 
-final Expando<_RouteUriExtras> _routeUriExtras = Expando<_RouteUriExtras>();
+final Expando<_$RouteUriExtras> _$routeUriExtras = Expando<_$RouteUriExtras>();
 
-_RouteUriExtras? _routeUriExtrasOf(Object route) => _routeUriExtras[route];
+_$RouteUriExtras? _$routeUriExtrasOf(Object route) => _$routeUriExtras[route];
 
-T _withRouteUriExtras<T extends AppRoutePath>(
+T _$withRouteUriExtras<T extends ShoppingRoutePath>(
   T route,
   Uri uri,
   Set<String> knownQueryParameters,
@@ -487,17 +493,17 @@ T _withRouteUriExtras<T extends AppRoutePath>(
     }
   }
   if (queryParameters.isEmpty && uri.fragment.isEmpty) return route;
-  _routeUriExtras[route] = _RouteUriExtras(
+  _$routeUriExtras[route] = _$RouteUriExtras(
     queryParameters: Map.unmodifiable(queryParameters),
     fragment: uri.fragment,
   );
   return route;
 }
 
-String _routePath(
+String _$routePath(
   List<String> segments, {
   Map<String, dynamic>? queryParameters,
-  _RouteUriExtras? uriExtras,
+  _$RouteUriExtras? uriExtras,
 }) {
   final query = <String, dynamic>{
     ...?queryParameters,
@@ -512,261 +518,271 @@ String _routePath(
   return text.startsWith('/') ? text : '/$text';
 }
 
-bool routeRequiresAuth(AppRoutePath route) => route.requiresAuth;
+bool shoppingRouteRequiresAuth(ShoppingRoutePath route) => route.requiresAuth;
 
-String? routeBranch(AppRoutePath route) {
+String? shoppingRouteBranch(ShoppingRoutePath route) {
   return switch (route) {
     _ => null,
   };
 }
 
-RouteDebugInfo routeDebugInfo(AppRoutePath route) {
+RouteDebugInfo shoppingRouteDebugInfo(ShoppingRoutePath route) {
   return switch (route) {
-    ProductsRoute() => const RouteDebugInfo(name: 'products', shell: null, branch: null),
-    NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
-    AdminRoute() => const RouteDebugInfo(name: 'admin', shell: null, branch: null),
-    CartRoute() => const RouteDebugInfo(name: 'cart', shell: null, branch: null),
-    CheckoutRoute() => const RouteDebugInfo(name: 'checkout', shell: null, branch: null),
-    DemoCartsRoute() => const RouteDebugInfo(name: 'demoCarts', shell: null, branch: null),
-    LoginRoute(redirectPath: _) => const RouteDebugInfo(name: 'login', shell: null, branch: null),
-    OrderConfirmationRoute(orderId: _) => const RouteDebugInfo(name: 'orderConfirmation', shell: null, branch: null),
-    OrdersRoute() => const RouteDebugInfo(name: 'orders', shell: null, branch: null),
-    OrderDetailRoute(orderId: _) => const RouteDebugInfo(name: 'orderDetail', shell: null, branch: null),
-    ProductDetailRoute(productId: _) => const RouteDebugInfo(name: 'productDetail', shell: null, branch: null),
-    ProfileRoute() => const RouteDebugInfo(name: 'profile', shell: null, branch: null),
-    RegisterRoute(redirectPath: _) => const RouteDebugInfo(name: 'register', shell: null, branch: null),
-    StaffRoute() => const RouteDebugInfo(name: 'staff', shell: null, branch: null),
-    SupportChatRoute() => const RouteDebugInfo(name: 'supportChat', shell: null, branch: null),
-    WishlistRoute() => const RouteDebugInfo(name: 'wishlist', shell: null, branch: null),
+    ShoppingProductsRoute() => const RouteDebugInfo(name: 'products', shell: null, branch: null),
+    ShoppingNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null),
+    ShoppingAdminRoute() => const RouteDebugInfo(name: 'admin', shell: null, branch: null),
+    ShoppingCartRoute() => const RouteDebugInfo(name: 'cart', shell: null, branch: null),
+    ShoppingCheckoutRoute() => const RouteDebugInfo(name: 'checkout', shell: null, branch: null),
+    ShoppingDemoCartsRoute() => const RouteDebugInfo(name: 'demoCarts', shell: null, branch: null),
+    ShoppingLoginRoute(redirectPath: _) => const RouteDebugInfo(name: 'login', shell: null, branch: null),
+    ShoppingOrderConfirmationRoute(orderId: _) => const RouteDebugInfo(name: 'orderConfirmation', shell: null, branch: null),
+    ShoppingOrdersRoute() => const RouteDebugInfo(name: 'orders', shell: null, branch: null),
+    ShoppingOrderDetailRoute(orderId: _) => const RouteDebugInfo(name: 'orderDetail', shell: null, branch: null),
+    ShoppingProductDetailRoute(productId: _) => const RouteDebugInfo(name: 'productDetail', shell: null, branch: null),
+    ShoppingProfileRoute() => const RouteDebugInfo(name: 'profile', shell: null, branch: null),
+    ShoppingRegisterRoute(redirectPath: _) => const RouteDebugInfo(name: 'register', shell: null, branch: null),
+    ShoppingStaffRoute() => const RouteDebugInfo(name: 'staff', shell: null, branch: null),
+    ShoppingSupportChatRoute() => const RouteDebugInfo(name: 'supportChat', shell: null, branch: null),
+    ShoppingWishlistRoute() => const RouteDebugInfo(name: 'wishlist', shell: null, branch: null),
   };
 }
 
-List<Object> routeGuards(
-  AppRoutePath route,
-  $ShoppingRouter router,
+List<Object> shoppingRouteGuards(
+  ShoppingRoutePath route,
+  ShoppingRouterBase router,
 ) {
   return switch (route) {
-    AdminRoute() => [AdminGuard((router as ShoppingRouter).auth)],
-    StaffRoute() => [StaffGuard((router as ShoppingRouter).auth)],
+    ShoppingAdminRoute() => [AdminGuard((router as ShoppingRouter).auth)],
+    ShoppingStaffRoute() => [StaffGuard((router as ShoppingRouter).auth)],
     _ => const [],
   };
 }
 
-extension AppRouterContext on BuildContext {
-  RouterController<AppRoutePath> get _routerController =>
-      RouterController.of<AppRoutePath>(this);
-  AppRoutesNavigator get navigator => AppRoutesNavigator(_routerController);
+extension ShoppingRouterContext on BuildContext {
+  RouterController<ShoppingRoutePath> get _routerController =>
+      RouterController.of<ShoppingRoutePath>(this);
+  ShoppingRoutesNavigator get navigator => ShoppingRoutesNavigator(_routerController);
 }
 
-final class AppRoutesNavigator {
-  const AppRoutesNavigator(this._router);
+final class ShoppingRoutesNavigator {
+  const ShoppingRoutesNavigator(this._router);
 
-  final RouterController<AppRoutePath> _router;
+  final RouterController<ShoppingRoutePath> _router;
 
-  RouteAction<void> products() => RouteAction(_router, ProductsRoute());
+  ShoppingRouteAction<void> products() =>
+      ShoppingRouteAction(_router, ShoppingProductsRoute());
 
-  RouteAction<void> notFound({String path = ''}) =>
-      RouteAction(_router, NotFoundRoute(path: path));
+  ShoppingRouteAction<void> notFound({String path = ''}) =>
+      ShoppingRouteAction(_router, ShoppingNotFoundRoute(path: path));
 
-  RouteAction<void> admin() => RouteAction(_router, AdminRoute());
+  ShoppingRouteAction<void> admin() =>
+      ShoppingRouteAction(_router, ShoppingAdminRoute());
 
-  RouteAction<void> cart() => RouteAction(_router, CartRoute());
+  ShoppingRouteAction<void> cart() =>
+      ShoppingRouteAction(_router, ShoppingCartRoute());
 
-  RouteAction<void> checkout() => RouteAction(_router, CheckoutRoute());
+  ShoppingRouteAction<void> checkout() =>
+      ShoppingRouteAction(_router, ShoppingCheckoutRoute());
 
-  RouteAction<void> demoCarts() => RouteAction(_router, DemoCartsRoute());
+  ShoppingRouteAction<void> demoCarts() =>
+      ShoppingRouteAction(_router, ShoppingDemoCartsRoute());
 
-  RouteAction<void> login({String? redirectPath}) =>
-      RouteAction(_router, LoginRoute(redirectPath: redirectPath));
+  ShoppingRouteAction<void> login({String? redirectPath}) =>
+      ShoppingRouteAction(_router, ShoppingLoginRoute(redirectPath: redirectPath));
 
-  RouteAction<void> orderConfirmation({required String orderId}) =>
-      RouteAction(_router, OrderConfirmationRoute(orderId: orderId));
+  ShoppingRouteAction<void> orderConfirmation({required String orderId}) =>
+      ShoppingRouteAction(_router, ShoppingOrderConfirmationRoute(orderId: orderId));
 
-  RouteAction<void> orders() => RouteAction(_router, OrdersRoute());
+  ShoppingRouteAction<void> orders() =>
+      ShoppingRouteAction(_router, ShoppingOrdersRoute());
 
-  RouteAction<void> orderDetail({required String orderId}) =>
-      RouteAction(_router, OrderDetailRoute(orderId: orderId));
+  ShoppingRouteAction<void> orderDetail({required String orderId}) =>
+      ShoppingRouteAction(_router, ShoppingOrderDetailRoute(orderId: orderId));
 
-  RouteAction<void> productDetail({required int productId}) =>
-      RouteAction(_router, ProductDetailRoute(productId: productId));
+  ShoppingRouteAction<void> productDetail({required int productId}) =>
+      ShoppingRouteAction(_router, ShoppingProductDetailRoute(productId: productId));
 
-  RouteAction<void> profile() => RouteAction(_router, ProfileRoute());
+  ShoppingRouteAction<void> profile() =>
+      ShoppingRouteAction(_router, ShoppingProfileRoute());
 
-  RouteAction<void> register({String? redirectPath}) =>
-      RouteAction(_router, RegisterRoute(redirectPath: redirectPath));
+  ShoppingRouteAction<void> register({String? redirectPath}) =>
+      ShoppingRouteAction(_router, ShoppingRegisterRoute(redirectPath: redirectPath));
 
-  RouteAction<void> staff() => RouteAction(_router, StaffRoute());
+  ShoppingRouteAction<void> staff() =>
+      ShoppingRouteAction(_router, ShoppingStaffRoute());
 
-  RouteAction<bool> supportChat() => RouteAction(_router, SupportChatRoute());
+  ShoppingRouteAction<bool> supportChat() =>
+      ShoppingRouteAction(_router, ShoppingSupportChatRoute());
 
-  RouteAction<void> wishlist() => RouteAction(_router, WishlistRoute());
+  ShoppingRouteAction<void> wishlist() =>
+      ShoppingRouteAction(_router, ShoppingWishlistRoute());
 
   bool pop<R>([R? result]) => _router.pop<R>(result);
 }
 
-final class RouteAction<R> {
-  const RouteAction(this._router, this.route);
+final class ShoppingRouteAction<R> {
+  const ShoppingRouteAction(this._router, this.route);
 
-  final RouterController<AppRoutePath> _router;
-  final AppRoutePath<R> route;
+  final RouterController<ShoppingRoutePath> _router;
+  final ShoppingRoutePath<R> route;
 
   void go() => _router.go(route);
   Future<R?> push() => _router.push<R>(route);
   void replace() => _router.replace(route);
 }
 
-RouteStack<AppRoutePath> restoreAppRouteStack(AppRoutePath route) {
+RouteStack<ShoppingRoutePath> restoreShoppingRouteStack(ShoppingRoutePath route) {
   return switch (route) {
-    ProductsRoute() => [
+    ShoppingProductsRoute() => [
       route,
     ],
-    NotFoundRoute(path: _) => [
-      const ProductsRoute(),
+    ShoppingNotFoundRoute(path: _) => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    AdminRoute() => [
-      const ProductsRoute(),
+    ShoppingAdminRoute() => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    CartRoute() => [
-      const ProductsRoute(),
+    ShoppingCartRoute() => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    CheckoutRoute() => [
-      const ProductsRoute(),
+    ShoppingCheckoutRoute() => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    DemoCartsRoute() => [
-      const ProductsRoute(),
+    ShoppingDemoCartsRoute() => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    LoginRoute(redirectPath: _) => [
-      const ProductsRoute(),
+    ShoppingLoginRoute(redirectPath: _) => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    OrderConfirmationRoute(orderId: _) => [
-      const ProductsRoute(),
+    ShoppingOrderConfirmationRoute(orderId: _) => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    OrdersRoute() => [
-      const ProductsRoute(),
+    ShoppingOrdersRoute() => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    OrderDetailRoute(orderId: _) => [
-      const ProductsRoute(),
-      const OrdersRoute(),
+    ShoppingOrderDetailRoute(orderId: _) => [
+      const ShoppingProductsRoute(),
+      const ShoppingOrdersRoute(),
       route,
     ],
-    ProductDetailRoute(productId: _) => [
-      const ProductsRoute(),
+    ShoppingProductDetailRoute(productId: _) => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    ProfileRoute() => [
-      const ProductsRoute(),
+    ShoppingProfileRoute() => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    RegisterRoute(redirectPath: _) => [
-      const ProductsRoute(),
+    ShoppingRegisterRoute(redirectPath: _) => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    StaffRoute() => [
-      const ProductsRoute(),
+    ShoppingStaffRoute() => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    SupportChatRoute() => [
-      const ProductsRoute(),
+    ShoppingSupportChatRoute() => [
+      const ShoppingProductsRoute(),
       route,
     ],
-    WishlistRoute() => [
-      const ProductsRoute(),
+    ShoppingWishlistRoute() => [
+      const ShoppingProductsRoute(),
       route,
     ],
   };
 }
 
-AppRoutePath parseAppRoute(Uri uri) {
+ShoppingRoutePath parseShoppingRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
-    final route = ProductsRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingProductsRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == '404') {
-    final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
-    return _withRouteUriExtras(route, uri, const {'path'});
+    final route = ShoppingNotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    return _$withRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 1 && segments[0] == 'admin') {
-    final route = AdminRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingAdminRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'cart') {
-    final route = CartRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingCartRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'checkout') {
-    final route = CheckoutRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingCheckoutRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'demo-carts') {
-    final route = DemoCartsRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingDemoCartsRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'login') {
-    final route = LoginRoute(
+    final route = ShoppingLoginRoute(
       redirectPath: uri.queryParameters['redirectPath'],
     );
-    return _withRouteUriExtras(route, uri, const <String>{'redirectPath'});
+    return _$withRouteUriExtras(route, uri, const <String>{'redirectPath'});
   }
   if (segments.length == 2 && segments[0] == 'order-confirmation') {
     final orderId = segments[1];
-    final route = OrderConfirmationRoute(orderId: orderId);
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingOrderConfirmationRoute(orderId: orderId);
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'orders') {
-    final route = OrdersRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingOrdersRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'orders') {
     final orderId = segments[1];
-    final route = OrderDetailRoute(orderId: orderId);
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingOrderDetailRoute(orderId: orderId);
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'product') {
     final productId = int.tryParse(segments[1]);
     if (productId == null) {
-      return _notFoundRoute(uri);
+      return _$notFoundRoute(uri);
     }
-    final route = ProductDetailRoute(productId: productId);
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingProductDetailRoute(productId: productId);
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'profile') {
-    final route = ProfileRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingProfileRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'register') {
-    final route = RegisterRoute(
+    final route = ShoppingRegisterRoute(
       redirectPath: uri.queryParameters['redirectPath'],
     );
-    return _withRouteUriExtras(route, uri, const <String>{'redirectPath'});
+    return _$withRouteUriExtras(route, uri, const <String>{'redirectPath'});
   }
   if (segments.length == 1 && segments[0] == 'staff') {
-    final route = StaffRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingStaffRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'support' && segments[1] == 'chat') {
-    final route = SupportChatRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingSupportChatRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'wishlist') {
-    final route = WishlistRoute();
-    return _withRouteUriExtras(route, uri, const <String>{});
+    final route = ShoppingWishlistRoute();
+    return _$withRouteUriExtras(route, uri, const <String>{});
   }
-  return _notFoundRoute(uri);
+  return _$notFoundRoute(uri);
 }
 
-AppRoutePath _notFoundRoute(Uri uri) => NotFoundRoute(path: uri.toString());
+ShoppingRoutePath _$notFoundRoute(Uri uri) => ShoppingNotFoundRoute(path: uri.toString());
 
-const Map<Type, Type?> _kAppliedShellsByPage = {
+const Map<Type, Type?> _$appliedShellsByPage = {
   ProductsScreen: null,
   NotFoundScreen: null,
   AdminDashboardScreen: null,
@@ -785,28 +801,28 @@ const Map<Type, Type?> _kAppliedShellsByPage = {
   WishlistScreen: null,
 };
 
-bool _shellConsistencyCheck() {
+bool _$shellConsistencyCheck() {
   bool visit(GeneratedRoute route) {
     final page = route.page;
-    if (page != null && _kAppliedShellsByPage[page] != route.shell) {
+    if (page != null && _$appliedShellsByPage[page] != route.shell) {
       return false;
     }
     return route.routes.every(visit);
   }
-  return $appRoutes.every(visit);
+  return $shoppingRoutes.every(visit);
 }
 
-Page<dynamic> buildAppRoutePage(
-  AppRoutePath route,
+Page<dynamic> buildShoppingRoutePage(
+  ShoppingRoutePath route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
   assert(
-    _shellConsistencyCheck(),
-    'Shell mismatch between \$appRoutes and buildAppRoutePage',
+    _$shellConsistencyCheck(),
+    'Shell mismatch between \$shoppingRoutes and buildShoppingRoutePage',
   );
   return switch (route) {
-    ProductsRoute() => generatedPage(
+    ShoppingProductsRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'products',
@@ -816,7 +832,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: const ProductsScreen(),
     ),
-    NotFoundRoute(path: final path) => generatedPage(
+    ShoppingNotFoundRoute(path: final path) => generatedPage(
       key: key,
       location: route.location,
       name: 'notFound',
@@ -825,7 +841,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: NotFoundScreen(path: path),
     ),
-    AdminRoute() => generatedPage(
+    ShoppingAdminRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'admin',
@@ -834,7 +850,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: const AdminDashboardScreen(),
     ),
-    CartRoute() => generatedPage(
+    ShoppingCartRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'cart',
@@ -844,7 +860,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: const CartScreen(),
     ),
-    CheckoutRoute() => generatedPage(
+    ShoppingCheckoutRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'checkout',
@@ -854,7 +870,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: const CheckoutScreen(),
     ),
-    DemoCartsRoute() => generatedPage(
+    ShoppingDemoCartsRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'demoCarts',
@@ -863,7 +879,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: const DemoCartsScreen(),
     ),
-    LoginRoute(redirectPath: final redirectPath) => generatedPage(
+    ShoppingLoginRoute(redirectPath: final redirectPath) => generatedPage(
       key: key,
       location: route.location,
       name: 'login',
@@ -872,7 +888,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: LoginScreen(redirectPath: redirectPath),
     ),
-    OrderConfirmationRoute(orderId: final orderId) => generatedPage(
+    ShoppingOrderConfirmationRoute(orderId: final orderId) => generatedPage(
       key: key,
       location: route.location,
       name: 'orderConfirmation',
@@ -882,7 +898,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: OrderConfirmationScreen(orderId: orderId),
     ),
-    OrdersRoute() => generatedPage(
+    ShoppingOrdersRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'orders',
@@ -891,7 +907,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: const OrdersScreen(),
     ),
-    OrderDetailRoute(orderId: final orderId) => generatedPage(
+    ShoppingOrderDetailRoute(orderId: final orderId) => generatedPage(
       key: key,
       location: route.location,
       name: 'orderDetail',
@@ -900,7 +916,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: OrderDetailScreen(orderId: orderId),
     ),
-    ProductDetailRoute(productId: final productId) => generatedPage(
+    ShoppingProductDetailRoute(productId: final productId) => generatedPage(
       key: key,
       location: route.location,
       name: 'productDetail',
@@ -909,7 +925,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: ProductDetailScreen(productId: productId),
     ),
-    ProfileRoute() => generatedPage(
+    ShoppingProfileRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'profile',
@@ -918,7 +934,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: const ProfileScreen(),
     ),
-    RegisterRoute(redirectPath: final redirectPath) => generatedPage(
+    ShoppingRegisterRoute(redirectPath: final redirectPath) => generatedPage(
       key: key,
       location: route.location,
       name: 'register',
@@ -927,7 +943,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: RegisterScreen(redirectPath: redirectPath),
     ),
-    StaffRoute() => generatedPage(
+    ShoppingStaffRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'staff',
@@ -936,7 +952,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: const StaffDashboardScreen(),
     ),
-    SupportChatRoute() => generatedPage(
+    ShoppingSupportChatRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'supportChat',
@@ -945,7 +961,7 @@ Page<dynamic> buildAppRoutePage(
       maintainState: true,
       child: const SupportChatScreen(),
     ),
-    WishlistRoute() => generatedPage(
+    ShoppingWishlistRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'wishlist',
