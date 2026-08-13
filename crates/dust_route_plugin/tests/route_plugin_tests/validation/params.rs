@@ -211,8 +211,44 @@ fn rejects_duplicate_paths_and_names() {
     assert_eq!(
         diagnostic_messages(&diagnostics),
         vec![
-            "duplicate route path `/same`",
-            "duplicate route name `same`"
+            "duplicate route path `/same` used by `FirstPage` (`same`) and `SecondPage` (`same`); URL `/same` matches both",
+            "duplicate route name `same` used by `FirstPage` (`/same`) and `SecondPage` (`/same`)"
+        ]
+    );
+}
+
+#[test]
+fn rejects_duplicate_route_path_with_page_names() {
+    let plugin = register_plugin();
+    let first = route_page_class("CartPage", "('/cart', name: 'cart')", Vec::new());
+    let second = route_page_class("BasketPage", "('/cart', name: 'basket')", Vec::new());
+
+    let diagnostics = plugin.validate(&library_with_classes(vec![first, second]));
+
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec![
+            "duplicate route path `/cart` used by `CartPage` (`cart`) and `BasketPage` (`basket`); URL `/cart` matches both"
+        ]
+    );
+}
+
+#[test]
+fn rejects_duplicate_route_name_with_page_paths() {
+    let plugin = register_plugin();
+    let first = route_page_class("CartPage", "('/cart', name: 'cart')", Vec::new());
+    let second = route_page_class(
+        "CartSummaryPage",
+        "('/cart/summary', name: 'cart')",
+        Vec::new(),
+    );
+
+    let diagnostics = plugin.validate(&library_with_classes(vec![first, second]));
+
+    assert_eq!(
+        diagnostic_messages(&diagnostics),
+        vec![
+            "duplicate route name `cart` used by `CartPage` (`/cart`) and `CartSummaryPage` (`/cart/summary`)"
         ]
     );
 }

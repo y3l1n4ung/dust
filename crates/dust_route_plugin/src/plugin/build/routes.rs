@@ -10,6 +10,8 @@ use crate::plugin::{
     parse::{route_annotation, route_config},
 };
 
+use super::identifiers::{lower_camel, upper_camel};
+
 /// Builds a local route spec from a lowered page class.
 pub(super) fn build_route_spec(class: &ClassIr) -> Option<RouteSpec> {
     let annotation = route_annotation(route_config(&class.configs)?);
@@ -189,29 +191,4 @@ fn derive_route_name(class_name: &str) -> String {
         .or_else(|| class_name.strip_suffix("View"))
         .unwrap_or(class_name);
     lower_camel(stem)
-}
-
-/// Converts a snake, kebab, or spaced name to UpperCamelCase.
-fn upper_camel(value: &str) -> String {
-    value
-        .split(|ch: char| ch == '_' || ch == '-' || ch.is_whitespace())
-        .filter(|part| !part.is_empty())
-        .map(|part| {
-            let mut chars = part.chars();
-            match chars.next() {
-                Some(first) => first.to_uppercase().chain(chars).collect::<String>(),
-                None => String::new(),
-            }
-        })
-        .collect::<String>()
-}
-
-/// Converts a name to lowerCamelCase.
-fn lower_camel(value: &str) -> String {
-    let upper = upper_camel(value);
-    let mut chars = upper.chars();
-    match chars.next() {
-        Some(first) => first.to_lowercase().chain(chars).collect(),
-        None => upper,
-    }
 }

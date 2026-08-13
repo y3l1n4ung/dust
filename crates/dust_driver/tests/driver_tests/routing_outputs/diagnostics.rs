@@ -164,7 +164,48 @@ fn build_reports_static_and_dynamic_route_siblings() {
     assert_eq!(
         diagnostic_messages(&result.diagnostics),
         vec![
-            "route path `/users/settings` conflicts with sibling `/users/:id`; static and dynamic segments under `/users` are ambiguous"
+            "route `UserSettingsPage` (`userSettings`, `/users/settings`) conflicts with `UserPage` (`user`, `/users/:id`); URL `/users/settings` can match both because static and dynamic segments under `/users` are ambiguous"
+        ]
+    );
+}
+
+#[test]
+fn build_reports_deeper_static_and_dynamic_route_siblings() {
+    let workspace = make_workspace();
+    write_routing_workspace(workspace.path(), "dashboard");
+    write_dust_file(
+        &workspace.path().join("lib/pages/shop_product_page.dart"),
+        &[DustImport::Route],
+        "@AppRoute('/shops/:shopId/products/featured', name: 'shopProduct')\n\
+         final class ShopProductPage {\n\
+           const ShopProductPage({required this.shopId});\n\
+           final String shopId;\n\
+         }\n",
+    );
+    write_dust_file(
+        &workspace
+            .path()
+            .join("lib/pages/featured_product_page.dart"),
+        &[DustImport::Route],
+        "@AppRoute('/shops/acme/products/:slug', name: 'featuredProduct')\n\
+         final class FeaturedProductPage {\n\
+           const FeaturedProductPage({required this.slug});\n\
+           final String slug;\n\
+         }\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: true,
+        jobs: None,
+        db: Default::default(),
+    });
+
+    assert!(result.has_errors());
+    assert_eq!(
+        diagnostic_messages(&result.diagnostics),
+        vec![
+            "route `FeaturedProductPage` (`featuredProduct`, `/shops/acme/products/:slug`) conflicts with `ShopProductPage` (`shopProduct`, `/shops/:shopId/products/featured`); URL `/shops/acme/products/featured` can match both because static and dynamic segments under `/shops` are ambiguous"
         ]
     );
 }
