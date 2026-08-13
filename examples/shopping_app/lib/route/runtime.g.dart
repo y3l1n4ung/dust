@@ -153,24 +153,13 @@ const Map<Type, Type?> _$appliedShellsByPage = {
   WishlistScreen: null,
 };
 
-bool _$shellConsistencyCheck() {
-  bool visit(GeneratedRoute route) {
-    final page = route.page;
-    if (page != null && _$appliedShellsByPage[page] != route.shell) {
-      return false;
-    }
-    return route.routes.every(visit);
-  }
-  return $shoppingRoutes.every(visit);
-}
-
 Page<dynamic> buildShoppingRoutePage(
   ShoppingRoutePath route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
   assert(
-    _$shellConsistencyCheck(),
+    generatedRouteShellsMatch($shoppingRoutes, _$appliedShellsByPage),
     'Shell mismatch between \$shoppingRoutes and buildShoppingRoutePage',
   );
   return switch (route) {

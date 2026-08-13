@@ -67,7 +67,7 @@ fn emits_route_outputs_under_relative_package_root() {
 }
 
 #[test]
-fn emits_no_transition_builder_only_when_referenced() {
+fn emits_runtime_no_transition_builder_reference() {
     let library = library_with_classes(vec![
         router_class("(initial: '/search', notFound: '/404')"),
         route_page_class(

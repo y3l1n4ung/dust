@@ -36,7 +36,7 @@ pub(super) fn decode_path_expr(ty: &TypeIr, index: usize) -> String {
         TypeIr::Builtin {
             kind: BuiltinType::Bool,
             ..
-        } => format!("_$parseBool(segments[{index}])"),
+        } => format!("generatedRouteParseBool(segments[{index}])"),
         _ => "null".to_owned(),
     }
 }
@@ -81,12 +81,12 @@ pub(super) fn decode_query_expr(param: &RouteParamSpec) -> String {
         TypeIr::Builtin {
             kind: BuiltinType::Bool,
             nullable: true,
-        } => format!("_$parseBool(uri.queryParameters['{name}'])"),
+        } => format!("generatedRouteParseBool(uri.queryParameters['{name}'])"),
         TypeIr::Builtin {
             kind: BuiltinType::Bool,
             nullable: false,
         } => format!(
-            "_$parseBool(uri.queryParameters['{name}']) ?? {}",
+            "generatedRouteParseBool(uri.queryParameters['{name}']) ?? {}",
             param.default_value_source.as_deref().unwrap_or("false")
         ),
         _ => "null".to_owned(),

@@ -31,7 +31,9 @@ mod shell;
 
 pub(crate) use files::render_route_generated_files;
 
-/// Normalizes generated private transition helpers to Dust's `_$...` style.
+/// Normalizes generated no-transition helpers to the shared Flutter runtime.
 pub(super) fn normalize_private_transition_helper(transition: &str) -> String {
-    transition.replace("_NoTransitionBuilder", "_$NoTransitionBuilder")
+    transition
+        .replace("_$NoTransitionBuilder", "GeneratedNoTransitionBuilder")
+        .replace("_NoTransitionBuilder", "GeneratedNoTransitionBuilder")
 }

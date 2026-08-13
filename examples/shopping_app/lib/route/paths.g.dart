@@ -3,6 +3,8 @@
 //
 // ignore_for_file: unused_import, unnecessary_import
 
+import 'package:dust_flutter/route.dart';
+
 sealed class ShoppingRoutePath<R> {
   const ShoppingRoutePath();
 
@@ -19,9 +21,9 @@ final class ShoppingProductsRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       const [],
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 
@@ -37,10 +39,10 @@ final class ShoppingNotFoundRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       const ['404'],
       queryParameters: {'path': path},
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 
@@ -54,7 +56,10 @@ final class ShoppingAdminRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(['admin'], uriExtras: _$routeUriExtrasOf(this));
+    return generatedRoutePath(
+      ['admin'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
   }
 }
 
@@ -64,7 +69,10 @@ final class ShoppingCartRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(['cart'], uriExtras: _$routeUriExtrasOf(this));
+    return generatedRoutePath(
+      ['cart'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
   }
 
   @override
@@ -77,7 +85,10 @@ final class ShoppingCheckoutRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(['checkout'], uriExtras: _$routeUriExtrasOf(this));
+    return generatedRoutePath(
+      ['checkout'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
   }
 }
 
@@ -87,7 +98,10 @@ final class ShoppingDemoCartsRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(['demo-carts'], uriExtras: _$routeUriExtrasOf(this));
+    return generatedRoutePath(
+      ['demo-carts'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
   }
 
   @override
@@ -106,10 +120,10 @@ final class ShoppingLoginRoute extends ShoppingRoutePath<void> {
     if (redirectPath != null) {
       query['redirectPath'] = redirectPath!;
     }
-    return _$routePath(
+    return generatedRoutePath(
       ['login'],
       queryParameters: query.isEmpty ? null : query,
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 
@@ -125,9 +139,9 @@ final class ShoppingOrderConfirmationRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       ['order-confirmation', orderId],
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 
@@ -141,7 +155,10 @@ final class ShoppingOrdersRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(['orders'], uriExtras: _$routeUriExtrasOf(this));
+    return generatedRoutePath(
+      ['orders'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
   }
 }
 
@@ -153,9 +170,9 @@ final class ShoppingOrderDetailRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       ['orders', orderId],
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 }
@@ -168,9 +185,9 @@ final class ShoppingProductDetailRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       ['product', productId.toString()],
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 
@@ -184,7 +201,10 @@ final class ShoppingProfileRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(['profile'], uriExtras: _$routeUriExtrasOf(this));
+    return generatedRoutePath(
+      ['profile'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
   }
 }
 
@@ -200,10 +220,10 @@ final class ShoppingRegisterRoute extends ShoppingRoutePath<void> {
     if (redirectPath != null) {
       query['redirectPath'] = redirectPath!;
     }
-    return _$routePath(
+    return generatedRoutePath(
       ['register'],
       queryParameters: query.isEmpty ? null : query,
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 
@@ -217,7 +237,10 @@ final class ShoppingStaffRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(['staff'], uriExtras: _$routeUriExtrasOf(this));
+    return generatedRoutePath(
+      ['staff'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
   }
 }
 
@@ -227,9 +250,9 @@ final class ShoppingSupportChatRoute extends ShoppingRoutePath<bool> {
 
   @override
   String get location {
-    return _$routePath(
+    return generatedRoutePath(
       ['support', 'chat'],
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
   }
 
@@ -243,7 +266,10 @@ final class ShoppingWishlistRoute extends ShoppingRoutePath<void> {
 
   @override
   String get location {
-    return _$routePath(['wishlist'], uriExtras: _$routeUriExtrasOf(this));
+    return generatedRoutePath(
+      ['wishlist'],
+      uriExtras: generatedRouteUriExtrasOf(this),
+    );
   }
 
   @override
@@ -252,103 +278,52 @@ final class ShoppingWishlistRoute extends ShoppingRoutePath<void> {
 
 String shoppingRouteLocation(ShoppingRoutePath route) => route.location;
 
-final class _$RouteUriExtras {
-  const _$RouteUriExtras({
-    required this.queryParameters,
-    required this.fragment,
-  });
-
-  final Map<String, List<String>> queryParameters;
-  final String fragment;
-}
-
-final Expando<_$RouteUriExtras> _$routeUriExtras = Expando<_$RouteUriExtras>();
-
-_$RouteUriExtras? _$routeUriExtrasOf(Object route) => _$routeUriExtras[route];
-
-T _$withRouteUriExtras<T extends ShoppingRoutePath>(
-  T route,
-  Uri uri,
-  Set<String> knownQueryParameters,
-) {
-  final queryParameters = <String, List<String>>{};
-  for (final entry in uri.queryParametersAll.entries) {
-    if (!knownQueryParameters.contains(entry.key)) {
-      queryParameters[entry.key] = List.unmodifiable(entry.value);
-    }
-  }
-  if (queryParameters.isEmpty && uri.fragment.isEmpty) return route;
-  _$routeUriExtras[route] = _$RouteUriExtras(
-    queryParameters: Map.unmodifiable(queryParameters),
-    fragment: uri.fragment,
-  );
-  return route;
-}
-
-String _$routePath(
-  List<String> segments, {
-  Map<String, dynamic>? queryParameters,
-  _$RouteUriExtras? uriExtras,
-}) {
-  final query = <String, dynamic>{
-    ...?queryParameters,
-    ...?uriExtras?.queryParameters,
-  };
-  final text = Uri(
-    pathSegments: segments,
-    queryParameters: query.isEmpty ? null : query,
-    fragment: uriExtras?.fragment.isEmpty ?? true ? null : uriExtras!.fragment,
-  ).toString();
-  if (text.isEmpty) return '/';
-  return text.startsWith('/') ? text : '/$text';
-}
-
 ShoppingRoutePath parseShoppingRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
     final route = ShoppingProductsRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == '404') {
     final route = ShoppingNotFoundRoute(path: uri.queryParameters['path'] ?? '');
-    return _$withRouteUriExtras(route, uri, const {'path'});
+    return withGeneratedRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 1 && segments[0] == 'admin') {
     final route = ShoppingAdminRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'cart') {
     final route = ShoppingCartRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'checkout') {
     final route = ShoppingCheckoutRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'demo-carts') {
     final route = ShoppingDemoCartsRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'login') {
     final route = ShoppingLoginRoute(
       redirectPath: uri.queryParameters['redirectPath'],
     );
-    return _$withRouteUriExtras(route, uri, const <String>{'redirectPath'});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{'redirectPath'});
   }
   if (segments.length == 2 && segments[0] == 'order-confirmation') {
     final orderId = segments[1];
     final route = ShoppingOrderConfirmationRoute(orderId: orderId);
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'orders') {
     final route = ShoppingOrdersRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'orders') {
     final orderId = segments[1];
     final route = ShoppingOrderDetailRoute(orderId: orderId);
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'product') {
     final productId = int.tryParse(segments[1]);
@@ -356,29 +331,29 @@ ShoppingRoutePath parseShoppingRoute(Uri uri) {
       return _$notFoundRoute(uri);
     }
     final route = ShoppingProductDetailRoute(productId: productId);
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'profile') {
     final route = ShoppingProfileRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'register') {
     final route = ShoppingRegisterRoute(
       redirectPath: uri.queryParameters['redirectPath'],
     );
-    return _$withRouteUriExtras(route, uri, const <String>{'redirectPath'});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{'redirectPath'});
   }
   if (segments.length == 1 && segments[0] == 'staff') {
     final route = ShoppingStaffRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'support' && segments[1] == 'chat') {
     final route = ShoppingSupportChatRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'wishlist') {
     final route = ShoppingWishlistRoute();
-    return _$withRouteUriExtras(route, uri, const <String>{});
+    return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   return _$notFoundRoute(uri);
 }

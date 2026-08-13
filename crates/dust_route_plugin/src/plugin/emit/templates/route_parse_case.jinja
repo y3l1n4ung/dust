@@ -1,4 +1,4 @@
   if ({{ condition }}) {
 {{ decoders }}{{ null_checks }}    final route = {{ route_instance }};
-    return _$withRouteUriExtras(route, uri, {{ known_query_parameters }});
+    return withGeneratedRouteUriExtras(route, uri, {{ known_query_parameters }});
   }

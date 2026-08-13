@@ -1,5 +1,5 @@
-    return _$routePath(
+    return generatedRoutePath(
       {{ segments }},
       queryParameters: query.isEmpty ? null : query,
-      uriExtras: _$routeUriExtrasOf(this),
+      uriExtras: generatedRouteUriExtrasOf(this),
     );
