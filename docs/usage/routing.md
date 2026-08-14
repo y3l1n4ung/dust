@@ -84,23 +84,6 @@ void main() {
 > generated files under `route/`; route pages import `route.dart` to use
 > annotations and generated navigation helpers.
 
-## Generated Names
-
-Dust drops the `Router` suffix from the router class and uses the remaining stem
-to name everything it generates. A router called `ShopRouter` gives a stem of
-`Shop`:
-
-| Generated | Name |
-| --- | --- |
-| Base class to extend | `ShopRouterBase` |
-| Route path base class | `ShopRoutePath` |
-| Route class for `HomePage` | `ShopHomeRoute` |
-| URI parser function | `parseShopRoute` |
-| Navigator facade | `ShopRoutesNavigator` |
-
-Name the router after the app or domain. The stem appears in every generated
-type, so `ShopRouter` reads better than a generic name.
-
 Exactly one `@AppRouter` is allowed per project. A second one fails generation
 with `exactly one @AppRouter is allowed in a Dust route workspace`. Nested
 layouts and independent tab histories are handled by shells and branches
