@@ -76,7 +76,7 @@ flutter build web
 The app calls `usePathUrlStrategy()` at startup. For deployed web builds,
 configure the host to serve `index.html` for unknown paths so direct deep links
 such as `/product/7` load the Flutter app. Host examples are covered in the
-[router web URL deployment guide](../../docs/usage/routing-web-deployment.md).
+[routing guide](../../docs/usage/routing.md#web-urls).
 
 ## Route Entrypoint
 

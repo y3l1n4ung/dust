@@ -1,9 +1,8 @@
 # Typed Routing
 
 Dust generates a typed Flutter Navigator 2.0 router from annotated widgets.
-For a source-grounded comparison with go_router, AutoRoute, Beamer, and
-hand-written Router 2.0, see the
-[router DX comparison](./routing-dx-comparison.md).
+One `@AppRouter` class and one `@AppRoute` per page produce the parser, the
+delegate, guards, shells, and typed navigation helpers.
 
 ## Add the Package
 
@@ -27,7 +26,7 @@ export 'package:dust_flutter/route.dart';
 export 'route/routes.g.dart';
 
 @AppRouter(initial: '/', notFound: '/404')
-final class RootRouter extends RootRouterBase {}
+final class ShopRouter extends ShopRouterBase {}
 ```
 
 Import that entrypoint from each route page:
@@ -67,7 +66,7 @@ final class NotFoundPage extends StatelessWidget {
 }
 ```
 
-Generate the router and pass its configuration to Flutter:
+Generate the router and hand its configuration to Flutter:
 
 ```bash
 dust build
@@ -75,7 +74,7 @@ dust build
 
 ```dart
 void main() {
-  final router = RootRouter();
+  final router = ShopRouter();
   runApp(MaterialApp.router(routerConfig: router.config));
 }
 ```
@@ -85,105 +84,27 @@ void main() {
 > generated files under `route/`; route pages import `route.dart` to use
 > annotations and generated navigation helpers.
 
-## Shopping Cart Entrypoint
+## Generated Names
 
-The [shopping app](../../examples/shopping_app) keeps the full routing surface
-behind one handwritten file: `lib/route.dart`.
+Dust drops the `Router` suffix from the router class and uses the remaining stem
+to name everything it generates. A router called `ShopRouter` gives a stem of
+`Shop`:
 
-```dart
-import 'package:dust_flutter/route.dart';
+| Generated | Name |
+| --- | --- |
+| Base class to extend | `ShopRouterBase` |
+| Route path base class | `ShopRoutePath` |
+| Route class for `HomePage` | `ShopHomeRoute` |
+| URI parser function | `parseShopRoute` |
+| Navigator facade | `ShopRoutesNavigator` |
 
-import 'features/auth/models/auth_state.dart';
-import 'features/auth/view_models/auth_view_model.dart';
-import 'route/routes.g.dart';
+Name the router after the app or domain. The stem appears in every generated
+type, so `ShopRouter` reads better than a generic name.
 
-export 'package:dust_flutter/route.dart';
-export 'route/routes.g.dart';
-
-@AppRouter(initial: '/', notFound: '/404')
-final class ShoppingRouter extends ShoppingRouterBase {
-  ShoppingRouter({required this.auth});
-
-  final AuthViewModel auth;
-
-  @override
-  ShoppingRoutePath? redirect(ShoppingRoutePath route) {
-    final status = auth.state.status;
-    if (status == AuthStatus.loading || status == AuthStatus.initial) {
-      return null;
-    }
-    if (!auth.state.isAuthenticated && route.requiresAuth) {
-      return ShoppingLoginRoute(redirectPath: route.location);
-    }
-    return null;
-  }
-}
-```
-
-Route pages import the same entrypoint. They do not import generated files:
-
-```dart
-import 'package:flutter/material.dart';
-import 'package:shopping_app/route.dart';
-
-@AppRoute('/cart', name: 'cart', guards: [])
-final class CartScreen extends StatelessWidget {
-  const CartScreen({super.key});
-}
-
-@AppRoute(
-  '/checkout',
-  name: 'checkout',
-  transition: BottomToTopPageTransitionsBuilder(),
-  fullscreenDialog: true,
-)
-final class CheckoutScreen extends StatelessWidget {
-  const CheckoutScreen({super.key});
-}
-
-@AppRoute(
-  '/order-confirmation/:orderId',
-  name: 'orderConfirmation',
-  guards: [],
-  transition: ZoomPageTransitionsBuilder(),
-)
-final class OrderConfirmationScreen extends StatelessWidget {
-  const OrderConfirmationScreen({required this.orderId, super.key});
-
-  final String orderId;
-}
-```
-
-App code also imports only `route.dart`:
-
-```dart
-import 'package:shopping_app/route.dart';
-
-final router = ShoppingRouter(auth: authViewModel);
-
-MaterialApp.router(routerConfig: router.config);
-
-context.navigator.cart().go();
-context.navigator.checkout().push();
-context.navigator
-    .orderConfirmation(orderId: 'ORDER 1/2')
-    .replace();
-```
-
-Call chain for a signed-out checkout deep link:
-
-```text
-browser opens /checkout
-parseShoppingRoute(Uri.parse('/checkout'))
-ShoppingCheckoutRoute()
-ShoppingRouter.redirect(ShoppingCheckoutRoute())
-ShoppingLoginRoute(redirectPath: /checkout)
-Navigator.pages = [/, /login?redirectPath=%2Fcheckout]
-```
-
-Generated files stay under `lib/route/`. The only generated file that
-`route.dart` names directly is `route/routes.g.dart`, which is a generated
-barrel for route paths, navigation helpers, metadata, and runtime glue.
+Exactly one `@AppRouter` is allowed per project. A second one fails generation
+with `exactly one @AppRouter is allowed in a Dust route workspace`. Nested
+layouts and independent tab histories are handled by shells and branches
+instead, so they never need a second router.
 
 ## Navigation
 
@@ -203,18 +124,405 @@ context.navigator.pop();
 | `replace()` | Replaces the current top route. |
 | `pop()` | Pops the top route when possible. |
 
-If `name` is omitted, Dust derives it from the widget class name. For example,
-`ProductDetailsScreen` becomes `productDetails()` and
-`ProductDetailsRoute`.
+If `name` is omitted, Dust derives it from the widget class name by stripping a
+trailing `Page`, `Screen`, or `View`. `ProductDetailsScreen` becomes
+`productDetails()` and `ShopProductDetailsRoute`.
 
-## Next Steps
+System back dismisses dialogs, modal sheets, and other imperatively pushed
+routes before popping a generated page, and honours `PopScope`.
 
-| Need | Guide |
+## Route Options
+
+```dart
+@AppRoute(
+  '/checkout',
+  name: 'checkout',
+  result: bool,
+  shell: AppShell,
+  branch: 'mainTabs',
+  guards: [CartGuard],
+  transition: BottomToTopPageTransitionsBuilder(),
+  fullscreenDialog: true,
+  maintainState: true,
+)
+```
+
+| Option | Default | Purpose |
+| :--- | :--- | :--- |
+| `name` | derived from the class name | Route and navigation helper name. |
+| `result` | `void` | Type returned by `push()` when the route is popped. |
+| `shell` | inherited from the nearest parent path | Layout widget wrapping the page. |
+| `branch` | inherited from the nearest parent path | Stateful tab stack the route belongs to. |
+| `guards` | protected | Route-specific access checks. `guards: []` marks a route public. |
+| `transition` | `MaterialPage` | `PageTransitionsBuilder` used at the page boundary. |
+| `fullscreenDialog` | `false` | Presents the page as a fullscreen dialog. |
+| `maintainState` | `true` | Keeps page state alive while inactive. |
+
+Routes are protected unless they declare `guards: []`. The router's not-found
+route is always public.
+
+## Route Parameters
+
+Path parameters match required, non-nullable constructor parameters. Other
+parameters become query values, and may be required, nullable, or defaulted:
+
+```dart
+@AppRoute('/products/:id', name: 'product', guards: [])
+final class ProductPage extends StatelessWidget {
+  const ProductPage({
+    super.key,
+    required this.id,
+    required this.from,
+    this.tab,
+    this.preview = false,
+    this.tags = const <String>[],
+  });
+
+  final int id;
+  final DateTime from;
+  final String? tab;
+  final bool preview;
+  final List<String> tags;
+}
+```
+
+This route parses and restores
+`/products/42?from=2026-08-10T09%3A30%3A00.000Z&tab=reviews&tags=sale&tags=new`.
+Query parameters equal to their default are omitted from the generated URL.
+Missing or invalid required values resolve to the configured not-found route.
+
+Supported URL types:
+
+| Shape | URL spelling |
 | --- | --- |
-| Common app patterns | [Routing recipes](./routing-recipes.md) |
-| API details and diagnostics | [Routing reference](./routing-reference.md) |
-| Flutter web path URLs and server rewrites | [Router web URL deployment](./routing-web-deployment.md) |
-| Source-grounded router comparison | [Router DX comparison](./routing-dx-comparison.md) |
+| `String`, `int`, `double`, `bool` | Single path or query value. |
+| enum | Query value uses the Dart enum case name, for example `admin`. |
+| `DateTime` | Query value uses ISO-8601 text. |
+| `Uri` | Query value is encoded once by `Uri`. |
+| `List<String>` | Repeated query values, for example `tags=a&tags=b`. |
+| `List<int>` | Repeated query values parsed as integers. |
+
+Route widgets need an unnamed generative constructor. Anything richer than a URL
+primitive should be loaded from app state after navigation.
+
+## Deep Links and Browser URLs
+
+The generated parser converts incoming platform and browser URIs into typed
+routes, so `/products/42?tab=reviews` becomes
+`ShopProductRoute(id: 42, tab: 'reviews')`. Dust also rebuilds the stack from
+matching path prefixes: `/orders/ORDER-9` restores the initial page, `/orders`,
+and the order detail page.
+
+Unknown query values and URI fragments are preserved in `route.location`, so
+auth redirects round-trip campaign parameters and anchors the page does not
+model.
+
+> [!TIP]
+> Test both `parseShopRoute(Uri.parse(url))` and the generated route's
+> `location`. That catches decoding and round-trip regressions before testing a
+> full platform deep-link flow.
+
+Override `parseRouteInformation` when platform links need app-level
+normalization before route matching:
+
+```dart
+import 'package:flutter/widgets.dart' show RouteInformation;
+
+@AppRouter(initial: '/', notFound: '/404')
+final class ShopRouter extends ShopRouterBase {
+  @override
+  RouteInformation parseRouteInformation(RouteInformation information) {
+    final uri = information.uri;
+
+    if (uri.path.startsWith('/app/')) {
+      return RouteInformation(
+        uri: uri.replace(path: uri.path.substring('/app'.length)),
+        state: information.state,
+      );
+    }
+
+    return information;
+  }
+}
+```
+
+Use this hook for host allow-listing, subdirectory deploy prefixes, and legacy
+URL migrations. Use `redirect` for decisions that depend on app state.
+
+## Redirects and Authentication
+
+Use the router's `redirect` method for app-wide auth decisions:
+
+```dart
+@AppRouter(initial: '/', notFound: '/404')
+final class ShopRouter extends ShopRouterBase {
+  ShopRouter({required this.auth});
+
+  final AuthViewModel auth;
+
+  @override
+  ShopRoutePath? redirect(ShopRoutePath route) {
+    if (!auth.state.isAuthenticated && route.requiresAuth) {
+      return ShopLoginRoute(redirectPath: route.location);
+    }
+    return null;
+  }
+}
+```
+
+Dust uses the router's single `Listenable`, `ChangeNotifier`, `ValueNotifier`,
+or `*ViewModel` field as its refresh source. When that object notifies, the
+current route is redirected and guarded again. Generation fails if the router
+has more than one such field.
+
+> [!IMPORTANT]
+> Validate saved redirect locations before reopening them. Reject external hosts
+> and unknown routes instead of treating arbitrary input as an internal
+> destination.
+
+## Route Guards
+
+Use guards for route-specific access checks:
+
+```dart
+final class AdminGuard implements RouteGuard<ShopRoutePath> {
+  const AdminGuard(this.auth);
+
+  final AuthViewModel auth;
+
+  @override
+  ShopRoutePath? canActivate(ShopRoutePath route) {
+    return auth.state.isAdmin ? null : const ShopHomeRoute();
+  }
+}
+
+@AppRoute('/admin', name: 'admin', guards: [AdminGuard])
+final class AdminPage extends StatelessWidget {
+  const AdminPage({super.key});
+}
+```
+
+A guard returns `null` to allow navigation or another route to redirect.
+Implement `AsyncRouteGuard<ShopRoutePath>` when the decision needs a `Future`.
+Mixed sync and async guards run in annotation order, and the first redirect
+wins.
+
+Every class in `guards:` must implement one of those two contracts. Generated
+guard lists are typed `List<RouteGuardBase<ShopRoutePath>>`, so a class that
+implements neither is an analyzer error rather than a guard that never runs.
+
+Guard constructor dependencies are matched to router fields by type. Dust passes
+`ShopRouter.auth` to `AdminGuard` above. Generation fails when a required
+dependency is missing or ambiguous.
+
+> [!NOTE]
+> Route guards control navigation, not backend authorization. Enforce access on
+> the server as well.
+
+## Shells and Branches
+
+A shell is a normal widget that takes a required named `Widget child`. There is
+no separate shell annotation:
+
+```dart
+final class AppShell extends StatelessWidget {
+  const AppShell({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(body: child);
+}
+
+@AppRoute('/dashboard', name: 'dashboard', shell: AppShell)
+final class DashboardPage extends StatelessWidget {
+  const DashboardPage({super.key});
+}
+
+@AppRoute('/dashboard/orders', name: 'dashboardOrders')
+final class DashboardOrdersPage extends StatelessWidget {
+  const DashboardOrdersPage({super.key});
+}
+```
+
+Child paths inherit the nearest parent shell, so the child above is generated as
+`AppShell(child: DashboardOrdersPage())`. Do not create empty shell marker
+routes; if it does not render UI or own navigation state, it should not be a
+route.
+
+Use `branch:` when routes need independent tab stacks. Keep `shell:` for layout
+and `branch:` for navigation state:
+
+```dart
+@AppRoute('/tabs/home', name: 'tabHome', shell: AppShell, branch: 'mainTabs')
+final class TabHomePage extends StatelessWidget {
+  const TabHomePage({super.key});
+}
+
+@AppRoute('/tabs/home/details', name: 'tabHomeDetails')
+final class TabHomeDetailsPage extends StatelessWidget {
+  const TabHomeDetailsPage({super.key});
+}
+```
+
+Switching to another branch and back restores the first branch's stack, so
+`/tabs/home` reopens with `/tabs/home/details` still on top. Child paths inherit
+the nearest parent `branch:` just as they inherit `shell:`, and Dust generates a
+stable constant per branch value, such as `shopBranchMainTabs`, reused in route
+metadata and debug helpers.
+
+Without `transition`, Dust uses `MaterialPage`. With one, it creates a page route
+that runs the selected `PageTransitionsBuilder` at the navigation boundary.
+
+## Typed Route Results
+
+Routes return `void` by default. Add `result: Type` when a pushed route should
+return a value:
+
+```dart
+@AppRoute('/support/chat', name: 'supportChat', result: bool)
+final class SupportChatScreen extends StatefulWidget {
+  const SupportChatScreen({super.key});
+}
+```
+
+The generated helper returns `Future<bool?>`:
+
+```dart
+final sentMessage = await context.navigator.supportChat().push();
+if (sentMessage == true) {
+  AppSnackbar.success(context, 'Support message sent');
+}
+```
+
+Return the value through the generated navigator:
+
+```dart
+context.navigator.pop(true);
+```
+
+> [!TIP]
+> Use route results for one-time answers such as pickers and confirmations. Keep
+> shareable state in path or query parameters.
+
+## Observe Route Changes
+
+Override `didChangeRouteStack` to record analytics or breadcrumbs from typed
+routes:
+
+```dart
+@AppRouter(initial: '/', notFound: '/404')
+final class ShopRouter extends ShopRouterBase {
+  @override
+  void didChangeRouteStack(
+    RouteStack<ShopRoutePath> previous,
+    RouteStack<ShopRoutePath> next,
+  ) {
+    analytics.screenView(next.last.location);
+  }
+}
+```
+
+Dust calls this after a stack is committed. Refreshes and same-location
+replacements are skipped, so observers do not see duplicate events.
+
+Provide `observers` for packages that expect Flutter's `NavigatorObserver` API,
+and `onException` for asynchronous routing failures such as redirect cycles from
+unawaited `go()` or `replace()` calls:
+
+```dart
+@AppRouter(initial: '/', notFound: '/404')
+final class ShopRouter extends ShopRouterBase {
+  ShopRouter({required this.analyticsObserver});
+
+  final NavigatorObserver analyticsObserver;
+
+  @override
+  List<NavigatorObserver> get observers => [analyticsObserver];
+
+  @override
+  void onException(Object error, StackTrace stackTrace) {
+    errorReporter.capture(error, stackTrace);
+  }
+}
+```
+
+## Route Table
+
+Run `dust route table` for a reviewable map of the generated router without
+opening generated internals:
+
+```bash
+dust route table
+```
+
+The command is read-only. It prints each route's name, path, page type,
+effective shell, effective branch, guards, auth state, and result type:
+
+```text
+route table  scanned: 53  routes: 16  time: 139ms
+name | path | page | shell | branch | guards | auth | result
+--- | --- | --- | --- | --- | --- | --- | ---
+products | / | ProductsScreen | - | - | - | public | void
+admin | /admin | AdminDashboardScreen | - | - | AdminGuard | protected | void
+cart | /cart | CartScreen | - | - | - | public | void
+checkout | /checkout | CheckoutScreen | - | - | - | protected | void
+supportChat | /support/chat | SupportChatScreen | - | - | - | public | bool
+```
+
+Those rows are trimmed from the `examples/shopping_app` output.
+
+`auth` reports the generated `requiresAuth` value. Read it instead of `guards`:
+`cart` and `checkout` both show `-` guards above, but only `cart` is public.
+
+Use `--root` from monorepos or scripts:
+
+```bash
+dust route table --root examples/shopping_app
+```
+
+## Web URLs
+
+Flutter web uses hash URLs such as `/#/products/42` by default. For normal path
+URLs, add the Flutter SDK web plugins dependency and call `usePathUrlStrategy()`
+before `runApp`:
+
+```dart
+import 'package:flutter_web_plugins/url_strategy.dart';
+
+void main() {
+  usePathUrlStrategy();
+
+  final router = ShopRouter();
+  runApp(MaterialApp.router(routerConfig: router.config));
+}
+```
+
+Path URLs also need the web host to serve `index.html` for unknown app paths,
+otherwise a browser refresh on `/products/42` never reaches the Flutter app.
+Dust cannot do this from generated Dart. Most hosts support it directly, for
+example NGINX `try_files $uri $uri/ /index.html;`; see Flutter's
+[URL strategies guide](https://docs.flutter.dev/ui/navigation/url-strategies).
+
+For a subdirectory deploy, build with a matching base href and strip the prefix
+in `parseRouteInformation` as shown above:
+
+```bash
+flutter build web --base-href /app/
+```
+
+## Diagnostics
+
+Enable runtime logs while debugging parsing, redirects, guards, and stack
+changes:
+
+```dart
+@override
+bool get debugLogDiagnostics => true;
+```
+
+The router prints through Flutter's `debugPrint` with an `AppRouter:` prefix.
+Keep diagnostics disabled in normal use.
 
 ## Example
 
