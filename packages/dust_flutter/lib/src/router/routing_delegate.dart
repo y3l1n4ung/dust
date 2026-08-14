@@ -49,6 +49,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
 
   late final _RouteStackStore<T> _history;
   late final RouterController<T> _controller;
+  bool _built = false;
   bool _refreshScheduled = false;
   Future<void>? _scheduledRefresh;
   int _navigationEpoch = 0;
@@ -65,6 +66,7 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
 
   @override
   Widget build(BuildContext context) {
+    _built = true;
     return RouterScope(
       controller: _controller,
       notifier: this,
@@ -102,6 +104,15 @@ final class GeneratedRouterDelegate<T extends Object> extends RouterDelegate<T>
 
   @override
   Future<bool> popRoute() async {
+    if (_disposed) return false;
+    // Routes the app pushed imperatively, such as dialogs and modal sheets,
+    // sit above the generated pages and must be dismissed first. The Navigator
+    // is only consulted once this delegate has built one, so delegates driven
+    // directly in tests keep working without a widget binding.
+    if (_built) {
+      final navigator = navigatorKey.currentState;
+      if (navigator != null && await navigator.maybePop()) return true;
+    }
     return _popTop(null);
   }
 
