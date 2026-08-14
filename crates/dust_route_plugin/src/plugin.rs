@@ -13,9 +13,7 @@ mod emit;
 /// Route inspection output built from route analysis facts.
 pub mod inspect;
 /// Deterministic sample values for route fixture output.
-mod inspect_fixture_values;
 /// Deep-link fixture output built from route analysis facts.
-mod inspect_fixtures;
 /// Internal route plugin model used by validation and emission.
 mod model;
 /// Parses route annotations from lowered IR and source-surface facts.

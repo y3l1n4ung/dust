@@ -2,9 +2,8 @@ use std::{env, path::PathBuf};
 
 use dust_driver::{
     BuildRequest, CheckRequest, CleanRequest, CommandRequest, CommandResult, DbRequestOptions,
-    DoctorRequest, I18nBuildRequest, I18nCheckRequest, I18nScanRequest, RouteFixturesRequest,
-    RouteGraphRequest, RouteTableRequest, WatchRequest, run, run_build_with_progress,
-    run_watch_with_progress,
+    DoctorRequest, I18nBuildRequest, I18nCheckRequest, I18nScanRequest, RouteTableRequest,
+    WatchRequest, run, run_build_with_progress, run_watch_with_progress,
 };
 
 use crate::{
@@ -105,10 +104,6 @@ fn run_command(parsed: ParsedCli, progress: Option<&ProgressHandle>) -> CommandR
         })),
         CliCommand::Doctor => run(CommandRequest::Doctor(DoctorRequest { cwd })),
         CliCommand::RouteTable => run(CommandRequest::RouteTable(RouteTableRequest { cwd })),
-        CliCommand::RouteGraph => run(CommandRequest::RouteGraph(RouteGraphRequest { cwd })),
-        CliCommand::RouteFixtures => {
-            run(CommandRequest::RouteFixtures(RouteFixturesRequest { cwd }))
-        }
         CliCommand::I18nBuild => run(CommandRequest::I18nBuild(I18nBuildRequest {
             cwd,
             sync_source: parsed.options.i18n_sync_source,

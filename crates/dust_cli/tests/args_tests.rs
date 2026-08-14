@@ -142,19 +142,15 @@ fn parses_route_table_with_root() {
 }
 
 #[test]
-fn parses_route_graph_with_root() {
-    let parsed = parse_cli_args(["route", "graph", "--root", "/tmp/work"]).unwrap();
-
-    assert_eq!(parsed.command, CliCommand::RouteGraph);
-    assert_eq!(parsed.options.root, Some(PathBuf::from("/tmp/work")));
-}
-
-#[test]
-fn parses_route_fixtures_with_root() {
-    let parsed = parse_cli_args(["route", "fixtures", "--root", "/tmp/work"]).unwrap();
-
-    assert_eq!(parsed.command, CliCommand::RouteFixtures);
-    assert_eq!(parsed.options.root, Some(PathBuf::from("/tmp/work")));
+fn rejects_removed_route_subcommands() {
+    for removed in [["route", "graph"], ["route", "fixtures"]] {
+        assert!(
+            parse_cli_args(removed).is_err(),
+            "expected `dust {} {}` to be rejected",
+            removed[0],
+            removed[1]
+        );
+    }
 }
 
 #[test]

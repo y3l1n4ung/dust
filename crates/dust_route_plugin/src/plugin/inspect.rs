@@ -7,8 +7,6 @@ use super::{
     model::{RouteAnnotation, RouteFact, RouterFact},
 };
 
-pub use super::inspect_fixtures::RouteFixtureRow;
-
 /// One route row shown by route inspection tooling.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RouteTableRow {
@@ -30,25 +28,6 @@ pub struct RouteTableRow {
     pub result_type: String,
 }
 
-/// One route node shown by route graph inspection tooling.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RouteGraphNode {
-    /// Effective route name.
-    pub name: String,
-    /// Absolute route path.
-    pub path: String,
-    /// Parent route path, or absent for a root route.
-    pub parent_path: Option<String>,
-    /// Flutter page class.
-    pub page: String,
-    /// Effective shell widget class, including inherited shells.
-    pub shell: Option<String>,
-    /// Effective branch name, including inherited branches.
-    pub branch: Option<String>,
-    /// Guard class names applied directly to this route.
-    pub guards: Vec<String>,
-}
-
 /// Builds deterministic route table rows from workspace analysis snapshots.
 pub fn route_table_rows(snapshots: &[LibraryAnalysisSnapshot]) -> Vec<RouteTableRow> {
     let facts = route_facts(snapshots);
@@ -67,30 +46,6 @@ pub fn route_table_rows(snapshots: &[LibraryAnalysisSnapshot]) -> Vec<RouteTable
             result_type: result_type(&fact.annotation),
         })
         .collect()
-}
-
-/// Builds deterministic route graph nodes from workspace analysis snapshots.
-pub fn route_graph_nodes(snapshots: &[LibraryAnalysisSnapshot]) -> Vec<RouteGraphNode> {
-    let facts = route_facts(snapshots);
-
-    facts
-        .iter()
-        .map(|fact| RouteGraphNode {
-            name: route_name(fact),
-            path: fact.path.clone(),
-            parent_path: nearest_parent(fact, &facts).map(|parent| parent.path.clone()),
-            page: fact.class_name.clone(),
-            shell: effective_shell(fact, &facts).map(str::to_owned),
-            branch: effective_branch(fact, &facts).map(str::to_owned),
-            guards: fact.annotation.guards.clone(),
-        })
-        .collect()
-}
-
-/// Builds deterministic deep-link fixture rows from workspace analysis snapshots.
-pub fn route_fixture_rows(snapshots: &[LibraryAnalysisSnapshot]) -> Vec<RouteFixtureRow> {
-    let facts = route_facts(snapshots);
-    super::inspect_fixtures::route_fixture_rows(&facts)
 }
 
 /// Returns deterministic route facts from workspace analysis snapshots.
@@ -161,22 +116,6 @@ fn effective_branch<'a>(route: &'a RouteFact, routes: &'a [RouteFact]) -> Option
         .branch
         .as_deref()
         .or_else(|| inherited(route, routes, |annotation| annotation.branch.as_deref()))
-}
-
-/// Returns the nearest route whose path is a segment-wise parent.
-fn nearest_parent<'a>(route: &RouteFact, routes: &'a [RouteFact]) -> Option<&'a RouteFact> {
-    let current_segments = route_segments(&route.path);
-    routes
-        .iter()
-        .filter(|candidate| candidate.path != route.path)
-        .filter_map(|candidate| {
-            let candidate_segments = route_segments(&candidate.path);
-            (candidate_segments.len() < current_segments.len()
-                && current_segments.starts_with(&candidate_segments))
-            .then_some((candidate_segments.len(), candidate))
-        })
-        .max_by_key(|(length, _)| *length)
-        .map(|(_, candidate)| candidate)
 }
 
 /// Returns the nearest inherited annotation value from a parent path.
