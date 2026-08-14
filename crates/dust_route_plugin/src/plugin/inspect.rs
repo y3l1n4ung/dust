@@ -1,8 +1,10 @@
+use std::collections::HashSet;
+
 use dust_plugin_api::LibraryAnalysisSnapshot;
 
 use super::{
-    constants::ROUTES_ANALYSIS_KEY,
-    model::{RouteAnnotation, RouteFact},
+    constants::{ROUTERS_ANALYSIS_KEY, ROUTES_ANALYSIS_KEY},
+    model::{RouteAnnotation, RouteFact, RouterFact},
 };
 
 pub use super::inspect_fixtures::RouteFixtureRow;
@@ -22,6 +24,8 @@ pub struct RouteTableRow {
     pub branch: Option<String>,
     /// Guard class names applied directly to this route.
     pub guards: Vec<String>,
+    /// Whether generated code treats this route as auth-protected.
+    pub requires_auth: bool,
     /// Route push result type.
     pub result_type: String,
 }
@@ -48,6 +52,7 @@ pub struct RouteGraphNode {
 /// Builds deterministic route table rows from workspace analysis snapshots.
 pub fn route_table_rows(snapshots: &[LibraryAnalysisSnapshot]) -> Vec<RouteTableRow> {
     let facts = route_facts(snapshots);
+    let public_paths = not_found_paths(snapshots);
 
     facts
         .iter()
@@ -58,6 +63,7 @@ pub fn route_table_rows(snapshots: &[LibraryAnalysisSnapshot]) -> Vec<RouteTable
             shell: effective_shell(fact, &facts).map(str::to_owned),
             branch: effective_branch(fact, &facts).map(str::to_owned),
             guards: fact.annotation.guards.clone(),
+            requires_auth: requires_auth(fact, &public_paths),
             result_type: result_type(&fact.annotation),
         })
         .collect()
@@ -109,6 +115,26 @@ pub(super) fn route_name(fact: &RouteFact) -> String {
     fact.name
         .clone()
         .unwrap_or_else(|| derive_route_name(&fact.class_name))
+}
+
+/// Returns whether generated code treats the route as auth-protected.
+///
+/// This mirrors the generated `requiresAuth` override: a route is public when
+/// `guards:` is configured and empty, or when it is the router not-found route.
+fn requires_auth(fact: &RouteFact, not_found_paths: &HashSet<String>) -> bool {
+    let public_guards = fact.annotation.guards_configured && fact.annotation.guards.is_empty();
+    !(public_guards || not_found_paths.contains(&fact.path))
+}
+
+/// Returns the not-found route paths declared by workspace routers.
+fn not_found_paths(snapshots: &[LibraryAnalysisSnapshot]) -> HashSet<String> {
+    snapshots
+        .iter()
+        .filter_map(|snapshot| snapshot.string_set(ROUTERS_ANALYSIS_KEY))
+        .flatten()
+        .filter_map(|value| serde_json::from_str::<RouterFact>(value).ok())
+        .filter_map(|router| router.not_found)
+        .collect()
 }
 
 /// Returns the explicit route result type or the generated default.

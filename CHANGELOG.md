@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   search filters, shell inheritance, shell overrides, and result routes.
 - Added research-backed routing recipes for invite links, organization-scoped
   detail pages, typed multi-step setup flows, and Flutter web path URLs.
+- Added an `auth` column to `dust route table` so route inspection shows whether
+  each route is `public` or `protected` instead of leaving auth state implicit
+  in the `guards` column.
 
 ### Changed
 
