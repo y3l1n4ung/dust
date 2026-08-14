@@ -23,9 +23,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   table inspection.
 - Add shared generated-route runtime helpers for URL construction, URI extras,
   bool parsing, shell checks, and no-transition pages.
+- Add `RouteGuardBase<T>` as the common supertype of `RouteGuard<T>` and
+  `AsyncRouteGuard<T>`. Generated guard lists use it, so a class that implements
+  neither contract no longer type-checks in `@AppRoute(guards: [...])`.
 
 ### Fixed
 
+- Throw instead of skipping a guard that implements neither guard contract, so a
+  mistyped guard cannot silently disable an access check.
+- Log `allow` only for guards that actually ran.
 - Re-run redirects and guards when pop or platform page removal exposes a
   previous route.
 - Avoid subscribing imperative router controller lookups to route changes.

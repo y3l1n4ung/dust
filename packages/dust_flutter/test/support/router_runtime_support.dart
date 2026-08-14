@@ -281,3 +281,8 @@ final class RedirectRecordingGuard implements RouteGuard<TestRoute> {
 String locations(RouteStack<TestRoute> stack) {
   return '[${stack.map((route) => route.location).join(', ')}]';
 }
+
+/// Satisfies the guard list type without implementing a guard contract.
+final class UnrecognizedGuard implements RouteGuardBase<TestRoute> {
+  const UnrecognizedGuard();
+}

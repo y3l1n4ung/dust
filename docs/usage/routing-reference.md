@@ -238,6 +238,11 @@ A guard returns `null` to allow navigation or another route to redirect.
 Implement `AsyncRouteGuard<AppRoutePath>` when the decision needs a `Future`.
 Mixed sync and async guards run in annotation order.
 
+Every class listed in `guards:` must implement one of those two contracts.
+Generated guard lists are typed as `List<RouteGuardBase<AppRoutePath>>`, so a
+class that implements neither is an analyzer error in the generated route file
+rather than a guard that quietly never runs.
+
 Guard constructor dependencies are matched to router fields by type. In this
 example, Dust passes `RootRouter.auth` to `AdminGuard`. Generation fails when a
 required dependency is missing or ambiguous.
