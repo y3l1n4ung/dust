@@ -26,7 +26,7 @@ export 'package:dust_flutter/route.dart';
 export 'route/routes.g.dart';
 
 @AppRouter(initial: '/', notFound: '/404')
-final class ShopRouter extends ShopRouterBase {}
+final class ShopRouter extends $ShopRouter {}
 ```
 
 Import that entrypoint from each route page:
@@ -212,7 +212,7 @@ normalization before route matching:
 import 'package:flutter/widgets.dart' show RouteInformation;
 
 @AppRouter(initial: '/', notFound: '/404')
-final class ShopRouter extends ShopRouterBase {
+final class ShopRouter extends $ShopRouter {
   @override
   RouteInformation parseRouteInformation(RouteInformation information) {
     final uri = information.uri;
@@ -238,7 +238,7 @@ Use the router's `redirect` method for app-wide auth decisions:
 
 ```dart
 @AppRouter(initial: '/', notFound: '/404')
-final class ShopRouter extends ShopRouterBase {
+final class ShopRouter extends $ShopRouter {
   ShopRouter({required this.auth});
 
   final AuthViewModel auth;
@@ -395,7 +395,7 @@ routes:
 
 ```dart
 @AppRouter(initial: '/', notFound: '/404')
-final class ShopRouter extends ShopRouterBase {
+final class ShopRouter extends $ShopRouter {
   @override
   void didChangeRouteStack(
     RouteStack<ShopRoutePath> previous,
@@ -415,7 +415,7 @@ unawaited `go()` or `replace()` calls:
 
 ```dart
 @AppRouter(initial: '/', notFound: '/404')
-final class ShopRouter extends ShopRouterBase {
+final class ShopRouter extends $ShopRouter {
   ShopRouter({required this.analyticsObserver});
 
   final NavigatorObserver analyticsObserver;
@@ -428,40 +428,6 @@ final class ShopRouter extends ShopRouterBase {
     errorReporter.capture(error, stackTrace);
   }
 }
-```
-
-## Route Table
-
-Run `dust route table` for a reviewable map of the generated router without
-opening generated internals:
-
-```bash
-dust route table
-```
-
-The command is read-only. It prints each route's name, path, page type,
-effective shell, effective branch, guards, auth state, and result type:
-
-```text
-route table  scanned: 53  routes: 16  time: 139ms
-name | path | page | shell | branch | guards | auth | result
---- | --- | --- | --- | --- | --- | --- | ---
-products | / | ProductsScreen | - | - | - | public | void
-admin | /admin | AdminDashboardScreen | - | - | AdminGuard | protected | void
-cart | /cart | CartScreen | - | - | - | public | void
-checkout | /checkout | CheckoutScreen | - | - | - | protected | void
-supportChat | /support/chat | SupportChatScreen | - | - | - | public | bool
-```
-
-Those rows are trimmed from the `examples/shopping_app` output.
-
-`auth` reports the generated `requiresAuth` value. Read it instead of `guards`:
-`cart` and `checkout` both show `-` guards above, but only `cart` is public.
-
-Use `--root` from monorepos or scripts:
-
-```bash
-dust route table --root examples/shopping_app
 ```
 
 ## Web URLs

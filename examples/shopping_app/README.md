@@ -92,7 +92,7 @@ export 'package:dust_flutter/route.dart';
 export 'route/routes.g.dart';
 
 @AppRouter(initial: '/', notFound: '/404')
-final class ShoppingRouter extends ShoppingRouterBase {
+final class ShoppingRouter extends $ShoppingRouter {
   ShoppingRouter({required this.auth});
 
   final AuthViewModel auth;

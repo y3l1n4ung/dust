@@ -27,7 +27,7 @@ import 'package:shopping_app/features/shared/not_found_screen.dart';
 import 'package:shopping_app/features/support/views/support_chat_screen.dart';
 import 'package:shopping_app/features/wishlist/views/wishlist_screen.dart';
 
-abstract class ShoppingRouterBase extends RouterBase<ShoppingRoutePath> {
+abstract class $ShoppingRouter extends RouterBase<ShoppingRoutePath> {
   @override
   Listenable? get refreshListenable => (this as dynamic).auth as Listenable?;
   late final RouterConfig<ShoppingRoutePath> config = _buildConfig();

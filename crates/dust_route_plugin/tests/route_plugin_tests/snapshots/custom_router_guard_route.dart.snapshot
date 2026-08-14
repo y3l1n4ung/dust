@@ -190,7 +190,7 @@ import 'paths.g.dart';
 import 'metadata.g.dart';
 import '../route.dart';
 
-abstract class BenchmarkRouterBase extends RouterBase<BenchmarkRoutePath> {
+abstract class $BenchmarkRouter extends RouterBase<BenchmarkRoutePath> {
 
   late final RouterConfig<BenchmarkRoutePath> config = _buildConfig();
 

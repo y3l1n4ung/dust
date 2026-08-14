@@ -143,7 +143,7 @@ fn router_generated_names(router_class: &str) -> RouterGeneratedNames {
     let lower = lower_camel(stem);
     RouterGeneratedNames {
         route_class_prefix: stem.to_owned(),
-        generated_base_class: format!("{router_class}Base"),
+        generated_base_class: format!("${router_class}"),
         route_path_class: format!("{stem}RoutePath"),
         routes_variable: format!("${lower}Routes"),
         parse_route_function: format!("parse{stem}Route"),

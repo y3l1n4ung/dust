@@ -15,7 +15,7 @@ import 'package:dust_benchmark_project/pages/benchmark_home_page.dart';
 import 'package:dust_benchmark_project/pages/benchmark_not_found_page.dart';
 import 'package:dust_benchmark_project/pages/benchmark_shell.dart';
 
-abstract class BenchmarkRouterBase extends RouterBase<BenchmarkRoutePath> {
+abstract class $BenchmarkRouter extends RouterBase<BenchmarkRoutePath> {
   @override
   Listenable? get refreshListenable => (this as dynamic).refresh as Listenable?;
   late final RouterConfig<BenchmarkRoutePath> config = _buildConfig();

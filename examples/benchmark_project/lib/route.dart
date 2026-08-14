@@ -9,7 +9,7 @@ export 'route/routes.g.dart';
 
 /// Benchmark router model for the benchmark example.
 @AppRouter(initial: '/', notFound: '/404')
-final class BenchmarkRouter extends BenchmarkRouterBase {
+final class BenchmarkRouter extends $BenchmarkRouter {
   /// Creates a [BenchmarkRouter].
   BenchmarkRouter({required this.refresh});
 

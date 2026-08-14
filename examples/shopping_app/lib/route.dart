@@ -10,7 +10,7 @@ export 'route/routes.g.dart';
 
 /// Shopping router model for the shopping app example.
 @AppRouter(initial: '/', notFound: '/404')
-final class ShoppingRouter extends ShoppingRouterBase {
+final class ShoppingRouter extends $ShoppingRouter {
   /// Creates a [ShoppingRouter].
   ShoppingRouter({required this.auth});
 

@@ -35,6 +35,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   and `ShopCheckoutRoute` instead of `AppRoutePath`, `parseAppRoute`, and
   `CheckoutRoute`. Route pages, annotations, and navigation call sites are
   unchanged; code that names generated types directly must be renamed.
+- Restored generated router base classes to Dust's `$ClassName` convention, so
+  handwritten routers extend generated bases such as `$ShopRouter`.
 - Split the router delegate internals into parser, stack, and diagnostics
   helpers while keeping the generated routing API unchanged.
 - Pruned generated router imports so route files keep page imports and directly
