@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 ///
 /// ```dart
 /// @AppRouter(initial: '/', notFound: '/404')
-/// final class RootRouter extends $RootRouter {
+/// final class RootRouter extends RootRouterBase {
 ///   RootRouter({required this.auth});
 ///
 ///   final AuthViewModel auth;

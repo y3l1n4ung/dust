@@ -246,7 +246,7 @@ final class LoginPage extends StatelessWidget {
 }
 
 @AppRouter(initial: '/', notFound: '/404')
-final class RootRouter extends $RootRouter {
+final class RootRouter extends RootRouterBase {
   RootRouter({required this.auth});
 
   final AuthViewModel auth;
@@ -550,7 +550,7 @@ Navigator stack commit or HomeRoute redirect
 
 ```dart
 @AppRouter(initial: '/', notFound: '/404')
-final class RootRouter extends $RootRouter {
+final class RootRouter extends RootRouterBase {
   @override
   void didChangeRouteStack(
     RouteStack<AppRoutePath> previous,
@@ -748,7 +748,7 @@ Use the router's `redirect` method for app-wide auth decisions:
 
 ```dart
 @AppRouter(initial: '/', notFound: '/404')
-final class RootRouter extends $RootRouter {
+final class RootRouter extends RootRouterBase {
   RootRouter({required this.auth});
 
   final AuthViewModel auth;
@@ -886,7 +886,7 @@ breadcrumbs, or debug traces from typed routes:
 
 ```dart
 @AppRouter(initial: '/', notFound: '/404')
-final class RootRouter extends $RootRouter {
+final class RootRouter extends RootRouterBase {
   @override
   void didChangeRouteStack(
     RouteStack<AppRoutePath> previous,
@@ -905,7 +905,7 @@ standard navigation observer API:
 
 ```dart
 @AppRouter(initial: '/', notFound: '/404')
-final class RootRouter extends $RootRouter {
+final class RootRouter extends RootRouterBase {
   RootRouter({required this.analyticsObserver});
 
   final NavigatorObserver analyticsObserver;
@@ -920,7 +920,7 @@ Handle asynchronous routing failures such as redirect cycles from unawaited
 
 ```dart
 @AppRouter(initial: '/', notFound: '/404')
-final class RootRouter extends $RootRouter {
+final class RootRouter extends RootRouterBase {
   @override
   void onException(Object error, StackTrace stackTrace) {
     errorReporter.capture(error, stackTrace);
