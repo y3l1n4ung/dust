@@ -188,7 +188,7 @@ import 'paths.g.dart';
 import 'metadata.g.dart';
 import '../route.dart';
 
-abstract class TestRouterBase extends RouterBase<TestRoutePath> {
+abstract class $TestRouter extends RouterBase<TestRoutePath> {
 
   late final RouterConfig<TestRoutePath> config = _buildConfig();
 
