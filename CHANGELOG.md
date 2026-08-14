@@ -48,6 +48,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Dismissed dialogs, modal sheets, and other imperatively pushed routes on
+  system back instead of popping the generated page underneath them. Back now
+  also respects `PopScope` on a generated page, which the previous pop path
+  ignored entirely.
 - Failed route guards loudly instead of silently skipping them. Generated guard
   lists are now typed as `List<RouteGuardBase<RoutePath>>`, so a class in
   `guards:` that implements neither `RouteGuard` nor `AsyncRouteGuard` is an

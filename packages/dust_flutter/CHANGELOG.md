@@ -29,6 +29,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Ask the Navigator to pop first on system back, so dialogs, modal bottom
+  sheets, and imperatively pushed routes are dismissed before a generated page
+  is popped, and `PopScope` on a generated page is honoured.
 - Throw instead of skipping a guard that implements neither guard contract, so a
   mistyped guard cannot silently disable an access check.
 - Log `allow` only for guards that actually ran.
