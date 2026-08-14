@@ -25,6 +25,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Scoped every generated router symbol to the handwritten router class. The
+  router name drops its `Router` suffix and the remaining stem prefixes the
+  route path base class, route classes, parser function, navigator, and route
+  action class, so `ShopRouter` now generates `ShopRoutePath`, `parseShopRoute`,
+  and `ShopCheckoutRoute` instead of `AppRoutePath`, `parseAppRoute`, and
+  `CheckoutRoute`. Route pages, annotations, and navigation call sites are
+  unchanged; code that names generated types directly must be renamed.
 - Split the router delegate internals into parser, stack, and diagnostics
   helpers while keeping the generated routing API unchanged.
 - Pruned generated router imports so route files keep page imports and directly
