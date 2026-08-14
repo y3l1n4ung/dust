@@ -282,6 +282,8 @@ pub struct RouteTableRow {
     pub branch: Option<String>,
     /// Guard class names applied directly to this route.
     pub guards: Vec<String>,
+    /// Whether generated code treats this route as auth-protected.
+    pub requires_auth: bool,
     /// Route push result type.
     pub result_type: String,
 }

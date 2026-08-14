@@ -19,6 +19,7 @@ pub fn run_route_table(request: RouteTableRequest) -> CommandResult {
             shell: row.shell,
             branch: row.branch,
             guards: row.guards,
+            requires_auth: row.requires_auth,
             result_type: row.result_type,
         })
         .collect();

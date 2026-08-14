@@ -374,16 +374,25 @@ dust route table
 ```
 
 The command is read-only. It prints each route's name, path, page type,
-effective shell, effective branch, guards, and result type:
+effective shell, effective branch, guards, auth state, and result type:
 
 ```text
-route table  scanned: 53  routes: 16  time: 206ms
-name | path | page | shell | branch | guards | result
---- | --- | --- | --- | --- | --- | ---
-products | / | ProductsScreen | - | - | - | void
-admin | /admin | AdminDashboardScreen | - | - | AdminGuard | void
-supportChat | /support/chat | SupportChatScreen | - | - | - | bool
+route table  scanned: 53  routes: 16  time: 139ms
+name | path | page | shell | branch | guards | auth | result
+--- | --- | --- | --- | --- | --- | --- | ---
+products | / | ProductsScreen | - | - | - | public | void
+admin | /admin | AdminDashboardScreen | - | - | AdminGuard | protected | void
+cart | /cart | CartScreen | - | - | - | public | void
+checkout | /checkout | CheckoutScreen | - | - | - | protected | void
+supportChat | /support/chat | SupportChatScreen | - | - | - | public | bool
 ```
+
+The rows above are trimmed from the `examples/shopping_app` output.
+
+`auth` reports the generated `requiresAuth` value. A route is `public` only when
+it declares `guards: []` or when it is the router's not-found route; every other
+route is `protected`. Read this column instead of `guards`: `cart` and
+`checkout` both show `-` guards above, but only `cart` is public.
 
 Use `--root` from monorepos or scripts:
 

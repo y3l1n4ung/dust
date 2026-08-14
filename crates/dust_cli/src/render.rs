@@ -245,11 +245,11 @@ fn append_route_graph(lines: &mut Vec<String>, nodes: &[dust_driver::RouteGraphN
 
 /// Appends a stable route table.
 fn append_route_table(lines: &mut Vec<String>, routes: &[dust_driver::RouteTableRow]) {
-    lines.push("name | path | page | shell | branch | guards | result".to_owned());
-    lines.push("--- | --- | --- | --- | --- | --- | ---".to_owned());
+    lines.push("name | path | page | shell | branch | guards | auth | result".to_owned());
+    lines.push("--- | --- | --- | --- | --- | --- | --- | ---".to_owned());
     for route in routes {
         lines.push(format!(
-            "{} | {} | {} | {} | {} | {} | {}",
+            "{} | {} | {} | {} | {} | {} | {} | {}",
             route.name,
             route.path,
             route.page,
@@ -260,9 +260,15 @@ fn append_route_table(lines: &mut Vec<String>, routes: &[dust_driver::RouteTable
             } else {
                 route.guards.join(",")
             },
+            route_auth_label(route.requires_auth),
             route.result_type,
         ));
     }
+}
+
+/// Renders the generated auth state for one route.
+fn route_auth_label(requires_auth: bool) -> &'static str {
+    if requires_auth { "protected" } else { "public" }
 }
 
 /// Appends the build/check/watch artifact summary line.
@@ -499,6 +505,7 @@ mod tests {
                             shell: Some("AppShell".to_owned()),
                             branch: Some("mainTabs".to_owned()),
                             guards: Vec::new(),
+                            requires_auth: true,
                             result_type: "void".to_owned(),
                         },
                         RouteTableRow {
@@ -508,6 +515,7 @@ mod tests {
                             shell: None,
                             branch: None,
                             guards: vec!["CartGuard".to_owned()],
+                            requires_auth: true,
                             result_type: "bool".to_owned(),
                         },
                     ],
@@ -521,10 +529,10 @@ mod tests {
         assert_eq!(
             rendered,
             "route table  scanned: 3  routes: 2  time: 12ms\n\
-             name | path | page | shell | branch | guards | result\n\
-             --- | --- | --- | --- | --- | --- | ---\n\
-             dashboard | /dashboard | DashboardPage | AppShell | mainTabs | - | void\n\
-             checkout | /checkout | CheckoutPage | - | - | CartGuard | bool\n"
+             name | path | page | shell | branch | guards | auth | result\n\
+             --- | --- | --- | --- | --- | --- | --- | ---\n\
+             dashboard | /dashboard | DashboardPage | AppShell | mainTabs | - | protected | void\n\
+             checkout | /checkout | CheckoutPage | - | - | CartGuard | protected | bool\n"
         );
     }
 

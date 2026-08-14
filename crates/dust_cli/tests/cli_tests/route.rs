@@ -67,12 +67,12 @@ fn cli_route_table_prints_effective_route_rows() {
     assert_eq!(
         route_table_body(&run.stdout),
         "route table  scanned: 5  routes: 4  time: <ms>\n\
-         name | path | page | shell | branch | guards | result\n\
-         --- | --- | --- | --- | --- | --- | ---\n\
-         notFound | /404 | NotFoundPage | - | - | - | void\n\
-         checkout | /checkout | CheckoutPage | - | - | CartGuard | bool\n\
-         dashboard | /dashboard | DashboardPage | AppShell | mainTabs | - | void\n\
-         orders | /dashboard/orders | OrdersPage | AppShell | mainTabs | - | void\n"
+         name | path | page | shell | branch | guards | auth | result\n\
+         --- | --- | --- | --- | --- | --- | --- | ---\n\
+         notFound | /404 | NotFoundPage | - | - | - | public | void\n\
+         checkout | /checkout | CheckoutPage | - | - | CartGuard | protected | bool\n\
+         dashboard | /dashboard | DashboardPage | AppShell | mainTabs | - | protected | void\n\
+         orders | /dashboard/orders | OrdersPage | AppShell | mainTabs | - | protected | void\n"
     );
 }
 
