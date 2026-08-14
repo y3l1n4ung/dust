@@ -288,60 +288,6 @@ pub struct RouteTableRow {
     pub result_type: String,
 }
 
-/// Route graph inspection report.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct RouteGraphReport {
-    /// Number of Dart source libraries scanned.
-    pub scanned_files: usize,
-    /// Deterministic route graph nodes.
-    pub nodes: Vec<RouteGraphNode>,
-}
-
-/// One route graph node.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RouteGraphNode {
-    /// Effective route name.
-    pub name: String,
-    /// Absolute route path.
-    pub path: String,
-    /// Parent route path, or absent for a root route.
-    pub parent_path: Option<String>,
-    /// Flutter page class.
-    pub page: String,
-    /// Effective shell widget class, or absent.
-    pub shell: Option<String>,
-    /// Effective branch name, or absent.
-    pub branch: Option<String>,
-    /// Guard class names applied directly to this route.
-    pub guards: Vec<String>,
-}
-
-/// Route deep-link fixture inspection report.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct RouteFixturesReport {
-    /// Number of Dart source libraries scanned.
-    pub scanned_files: usize,
-    /// Deterministic deep-link fixture rows.
-    pub fixtures: Vec<RouteFixtureRow>,
-}
-
-/// One route deep-link fixture row.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RouteFixtureRow {
-    /// Effective route name, or `-` for workspace-level examples.
-    pub route: String,
-    /// Fixture case name.
-    pub case_name: String,
-    /// Whether this URI should resolve to the typed route.
-    pub valid: bool,
-    /// Link shape, such as `path`, `web-url`, `app-link`, or `custom-scheme`.
-    pub shape: String,
-    /// Fixture URI text.
-    pub uri: String,
-    /// Expected routing outcome.
-    pub expected: String,
-}
-
 /// The structured result returned by the Dust driver.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CommandResult {
@@ -363,10 +309,6 @@ pub struct CommandResult {
     pub doctor: Option<DoctorReport>,
     /// An optional route table report.
     pub route_table: Option<RouteTableReport>,
-    /// An optional route graph report.
-    pub route_graph: Option<RouteGraphReport>,
-    /// An optional route fixture report.
-    pub route_fixtures: Option<RouteFixturesReport>,
     /// An optional clean report.
     pub clean: Option<CleanReport>,
     /// An optional watch report.

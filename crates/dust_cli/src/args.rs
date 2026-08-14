@@ -23,10 +23,6 @@ pub enum CliCommand {
     Doctor,
     /// Print generated route inspection output.
     RouteTable,
-    /// Print generated route graph output.
-    RouteGraph,
-    /// Print generated deep-link route fixtures.
-    RouteFixtures,
     /// Reconcile scanned i18n keys into ARB assets.
     I18nBuild,
     /// Validate ARB assets against static i18n keys.
@@ -219,10 +215,6 @@ struct RouteCommandOptions {
 enum RouteCommand {
     /// Print a generated route table.
     Table(RootOptions),
-    /// Print a generated route graph.
-    Graph(RootOptions),
-    /// Print generated deep-link fixture examples.
-    Fixtures(RootOptions),
 }
 
 /// Options accepted by the writing i18n build command.
@@ -353,8 +345,6 @@ impl From<RouteCommandOptions> for ParsedCli {
     fn from(value: RouteCommandOptions) -> Self {
         match value.command {
             RouteCommand::Table(options) => ParsedCli::new(CliCommand::RouteTable, options),
-            RouteCommand::Graph(options) => ParsedCli::new(CliCommand::RouteGraph, options),
-            RouteCommand::Fixtures(options) => ParsedCli::new(CliCommand::RouteFixtures, options),
         }
     }
 }
