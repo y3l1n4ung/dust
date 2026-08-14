@@ -13,6 +13,8 @@ Each guide shows the handwritten API first and links to a working example.
 | Generate Dio clients | [HTTP](./http.md) | `dust_dart` |
 | Build typed ViewModels | [State](./state.md) | `dust_flutter` |
 | Configure Navigator 2.0 routing | [Routing](./routing.md) | `dust_flutter` |
+| Apply common routing patterns | [Routing recipes](./routing-recipes.md) | `dust_flutter` |
+| Check routing API details | [Routing reference](./routing-reference.md) | `dust_flutter` |
 | Deploy Flutter web route URLs | [Router web deployment](./routing-web-deployment.md) | `dust_flutter` |
 | Compare routing DX | [Router DX comparison](./routing-dx-comparison.md) | `dust_flutter` |
 | Maintain ARB translations | [Internationalization](./i18n.md) | `dust_flutter` |

@@ -28,6 +28,9 @@ and contributor documentation.
 
 - [State management](./usage/state.md)
 - [Typed routing](./usage/routing.md)
+- [Routing recipes](./usage/routing-recipes.md)
+- [Routing reference](./usage/routing-reference.md)
+- [Router web deployment](./usage/routing-web-deployment.md)
 - [Internationalization](./usage/i18n.md)
 
 ### Database
