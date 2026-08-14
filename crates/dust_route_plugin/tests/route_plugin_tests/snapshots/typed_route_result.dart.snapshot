@@ -49,7 +49,7 @@ RouteDebugInfo testRouteDebugInfo(TestRoutePath route) {
   };
 }
 
-List<Object> testRouteGuards(
+List<RouteGuardBase<TestRoutePath>> testRouteGuards(
   TestRoutePath route,
   Object router,
 ) {

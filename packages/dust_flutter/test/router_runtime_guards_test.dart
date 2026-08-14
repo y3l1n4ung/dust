@@ -159,4 +159,28 @@ void main() {
     expect(delegate.stack.map((route) => route.location), ['/login']);
     expect(router.stackChanges, ['[/safe] => [/login]']);
   });
+
+  test('navigation fails closed when a guard implements neither interface',
+      () async {
+    final delegate = GeneratedRouterDelegate<TestRoute>(
+      runtimeConfig(
+        resolveGuards: (route) => route.location == '/guard-private'
+            ? [const UnrecognizedGuard()]
+            : const [],
+      ),
+    );
+    await delegate.debugWaitForScheduledRefresh();
+
+    await expectLater(
+      delegate.setNewRoutePath(const TestRoute('/guard-private')),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          contains('implements neither RouteGuard'),
+        ),
+      ),
+    );
+    expect(delegate.stack.map((route) => route.location), ['/safe']);
+  });
 }

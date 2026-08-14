@@ -11,7 +11,7 @@ RouteDebugInfo {{ route_debug_info_function }}({{ route_path_class }} route) {
 {{ debug_cases }}  };
 }
 
-List<Object> {{ route_guards_function }}(
+List<RouteGuardBase<{{ route_path_class }}>> {{ route_guards_function }}(
   {{ route_path_class }} route,
   Object router,
 ) {

@@ -194,7 +194,7 @@ RouteDebugInfo shoppingRouteDebugInfo(ShoppingRoutePath route) {
   };
 }
 
-List<Object> shoppingRouteGuards(
+List<RouteGuardBase<ShoppingRoutePath>> shoppingRouteGuards(
   ShoppingRoutePath route,
   Object router,
 ) {

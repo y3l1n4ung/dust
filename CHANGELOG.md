@@ -48,6 +48,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Failed route guards loudly instead of silently skipping them. Generated guard
+  lists are now typed as `List<RouteGuardBase<RoutePath>>`, so a class in
+  `guards:` that implements neither `RouteGuard` nor `AsyncRouteGuard` is an
+  analyzer error, and the router throws rather than allowing navigation if one
+  reaches the runtime. Router diagnostics no longer log `allow` for a guard that
+  never ran.
 - Rejected invalid route helper identifiers, `pop` helper conflicts, and
   generated route class collisions before emitting analyzer-broken Dart.
 - Reported a concrete fix when a local route shell widget cannot be generated

@@ -107,24 +107,22 @@ extension _GeneratedRouterDelegateNavigation<T extends Object>
     return _runGuardChain(route, guards);
   }
 
-  Future<T?> _runGuardChain(T route, List<Object> guards) async {
-    for (final guard in guards) {
-      _log('guard ${guard.runtimeType} for ${_debugRoute(route)}');
-      T? redirected;
-      if (guard is RouteGuard<T>) {
-        redirected = guard.canActivate(route);
-      } else if (guard is AsyncRouteGuard<T>) {
-        redirected = await guard.canActivate(route);
-      }
-      if (redirected != null) {
+  Future<T?> _runGuardChain(T route, List<RouteGuardBase<T>> guards) {
+    return _runRouteGuards(
+      route,
+      guards,
+      onGuardStart: (guard) {
+        _log('guard ${guard.runtimeType} for ${_debugRoute(route)}');
+      },
+      onGuardAllowed: (guard) {
+        _log('guard ${guard.runtimeType} allow ${_debugRoute(route)}');
+      },
+      onGuardRedirect: (guard, redirected) {
         _log(
           'guard ${guard.runtimeType} redirect '
           '${_debugRoute(route)} => ${_debugRoute(redirected)}',
         );
-        return redirected;
-      }
-      _log('guard ${guard.runtimeType} allow ${_debugRoute(route)}');
-    }
-    return null;
+      },
+    );
   }
 }

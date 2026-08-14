@@ -62,7 +62,7 @@ RouteDebugInfo benchmarkRouteDebugInfo(BenchmarkRoutePath route) {
   };
 }
 
-List<Object> benchmarkRouteGuards(
+List<RouteGuardBase<BenchmarkRoutePath>> benchmarkRouteGuards(
   BenchmarkRoutePath route,
   Object router,
 ) {

@@ -89,4 +89,44 @@ void main() {
 
     expect(shoppingRouteGuards(const ShoppingProductsRoute(), router), isEmpty);
   });
+
+  test('generated guard resolver is typed so untyped guards cannot compile',
+      () async {
+    final router = await shoppingRouter();
+
+    final adminGuards = shoppingRouteGuards(const ShoppingAdminRoute(), router);
+    final staffGuards = shoppingRouteGuards(const ShoppingStaffRoute(), router);
+
+    expect(adminGuards, isA<List<RouteGuardBase<ShoppingRoutePath>>>());
+    expect(staffGuards, isA<List<RouteGuardBase<ShoppingRoutePath>>>());
+    expect(adminGuards.single, isA<RouteGuard<ShoppingRoutePath>>());
+    expect(staffGuards.single, isA<RouteGuard<ShoppingRoutePath>>());
+  });
+
+  test('guarded admin route denies navigation through the real router',
+      () async {
+    final router = await shoppingRouter();
+    final delegate = GeneratedRouterDelegate<ShoppingRoutePath>(
+      RouterRuntimeConfig<ShoppingRoutePath>(
+        router: router,
+        initialRoute: const ShoppingProductsRoute(),
+        parseRoute: parseShoppingRoute,
+        routeLocation: shoppingRouteLocation,
+        requiresAuth: shoppingRouteRequiresAuth,
+        routeBranch: shoppingRouteBranch,
+        resolveGuards: (route) => shoppingRouteGuards(route, router),
+        buildPage: buildShoppingRoutePage,
+        restoreStack: restoreShoppingRouteStack,
+      ),
+    );
+    await delegate.debugWaitForScheduledRefresh();
+
+    await delegate.setNewRoutePath(const ShoppingAdminRoute());
+
+    expect(
+      delegate.stack.map((route) => route.location),
+      isNot(contains('/admin')),
+      reason: 'AdminGuard must deny a signed-out admin deep link',
+    );
+  });
 }

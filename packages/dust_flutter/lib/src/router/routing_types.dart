@@ -17,7 +17,8 @@ typedef RoutePageBuilder<T extends Object> = Page<dynamic> Function(
 );
 
 /// Resolves route-level guards for one typed route object.
-typedef RouteGuardResolver<T extends Object> = List<Object> Function(T route);
+typedef RouteGuardResolver<T extends Object> = List<RouteGuardBase<T>> Function(
+    T route);
 
 /// Converts a typed route object back into a URL location.
 typedef RouteLocation<T extends Object> = String Function(T route);
