@@ -19,8 +19,8 @@ struct ShellConsistencyContext {
 struct PageBuilderContext {
     /// Generated route metadata list variable.
     routes_variable: String,
-    /// Generated route path base class.
-    route_path_class: String,
+    /// Generated route base class.
+    route_base_class: String,
     /// Generated route page builder function.
     build_page_function: String,
     /// Rendered route builder cases.
@@ -74,7 +74,7 @@ pub(super) fn render_page_builder(out: &mut String, spec: &RouterSpec) {
         include_str!("templates/page_builder.jinja"),
         PageBuilderContext {
             routes_variable: spec.routes_variable.clone(),
-            route_path_class: spec.route_path_class.clone(),
+            route_base_class: spec.route_base_class.clone(),
             build_page_function: spec.build_page_function.clone(),
             cases: spec
                 .routes

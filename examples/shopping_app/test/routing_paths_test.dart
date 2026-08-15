@@ -4,18 +4,18 @@ import 'package:shopping_app/route.dart';
 void main() {
   test('generated route locations round-trip encoded real app values', () {
     const orderId = 'ORDER 1/2';
-    final order = ShoppingOrderDetailRoute(orderId: orderId);
+    final order = OrderDetailRoute(orderId: orderId);
     expect(order.location, '/orders/ORDER%201%2F2');
 
     final parsedOrder = parseShoppingRoute(Uri.parse(order.location));
     expect(
       parsedOrder,
-      isA<ShoppingOrderDetailRoute>()
+      isA<OrderDetailRoute>()
           .having((route) => route.orderId, 'orderId', orderId),
     );
 
     const redirectPath = '/orders/ORDER 1/2?tab=tracking';
-    final login = ShoppingLoginRoute(redirectPath: redirectPath);
+    final login = LoginRoute(redirectPath: redirectPath);
     expect(
       login.location,
       '/login?redirectPath=%2Forders%2FORDER+1%2F2%3Ftab%3Dtracking',
@@ -24,7 +24,7 @@ void main() {
     final parsedLogin = parseShoppingRoute(Uri.parse(login.location));
     expect(
       parsedLogin,
-      isA<ShoppingLoginRoute>().having(
+      isA<LoginRoute>().having(
         (route) => route.redirectPath,
         'redirectPath',
         redirectPath,
@@ -37,7 +37,7 @@ void main() {
       Uri.parse('/product/7?campaign=spring&campaign=launch#reviews'),
     );
 
-    expect(route, isA<ShoppingProductDetailRoute>());
+    expect(route, isA<ProductDetailRoute>());
     expect(
       route.location,
       '/product/7?campaign=spring&campaign=launch#reviews',
@@ -45,23 +45,22 @@ void main() {
   });
 
   test('shopping cart flow routes are typed and parseable', () {
-    const cart = ShoppingCartRoute();
-    const checkout = ShoppingCheckoutRoute();
-    const confirmation = ShoppingOrderConfirmationRoute(orderId: 'ORDER 1/2');
+    const cart = CartRoute();
+    const checkout = CheckoutRoute();
+    const confirmation = OrderConfirmationRoute(orderId: 'ORDER 1/2');
 
     expect(cart.location, '/cart');
     expect(checkout.location, '/checkout');
     expect(confirmation.location, '/order-confirmation/ORDER%201%2F2');
 
-    expect(
-        parseShoppingRoute(Uri.parse(cart.location)), isA<ShoppingCartRoute>());
+    expect(parseShoppingRoute(Uri.parse(cart.location)), isA<CartRoute>());
     expect(
       parseShoppingRoute(Uri.parse(checkout.location)),
-      isA<ShoppingCheckoutRoute>(),
+      isA<CheckoutRoute>(),
     );
     expect(
       parseShoppingRoute(Uri.parse(confirmation.location)),
-      isA<ShoppingOrderConfirmationRoute>().having(
+      isA<OrderConfirmationRoute>().having(
         (route) => route.orderId,
         'orderId',
         confirmation.orderId,
@@ -80,7 +79,7 @@ void main() {
 
     expect(
       route,
-      isA<ShoppingNotFoundRoute>().having(
+      isA<NotFoundRoute>().having(
         (route) => route.path,
         'path',
         '/product/not-an-int?from=deep-link',
@@ -90,23 +89,22 @@ void main() {
 
   test('deep app routes restore the expected parent stack', () {
     final orderStack = restoreShoppingRouteStack(
-      const ShoppingOrderDetailRoute(orderId: 'ORDER-9'),
+      const OrderDetailRoute(orderId: 'ORDER-9'),
     );
     expect(orderStack, [
-      isA<ShoppingProductsRoute>(),
-      isA<ShoppingOrdersRoute>(),
-      isA<ShoppingOrderDetailRoute>().having(
+      isA<ProductsRoute>(),
+      isA<OrdersRoute>(),
+      isA<OrderDetailRoute>().having(
         (route) => route.orderId,
         'orderId',
         'ORDER-9',
       ),
     ]);
 
-    final supportStack =
-        restoreShoppingRouteStack(const ShoppingSupportChatRoute());
+    final supportStack = restoreShoppingRouteStack(const SupportChatRoute());
     expect(
       supportStack,
-      [isA<ShoppingProductsRoute>(), isA<ShoppingSupportChatRoute>()],
+      [isA<ProductsRoute>(), isA<SupportChatRoute>()],
     );
   });
 }

@@ -108,15 +108,13 @@ void main() {
   });
 
   test('generated routes include new shopping showcase destinations', () {
-    expect(parseShoppingRoute(Uri.parse('/wishlist')),
-        isA<ShoppingWishlistRoute>());
-    expect(parseShoppingRoute(Uri.parse('/demo-carts')),
-        isA<ShoppingDemoCartsRoute>());
+    expect(parseShoppingRoute(Uri.parse('/wishlist')), isA<WishlistRoute>());
+    expect(parseShoppingRoute(Uri.parse('/demo-carts')), isA<DemoCartsRoute>());
     expect(parseShoppingRoute(Uri.parse('/support/chat')),
-        isA<ShoppingSupportChatRoute>());
+        isA<SupportChatRoute>());
     expect(
       parseShoppingRoute(Uri.parse('/orders/ORDER-1')),
-      isA<ShoppingOrderDetailRoute>(),
+      isA<OrderDetailRoute>(),
     );
   });
 

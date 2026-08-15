@@ -28,27 +28,27 @@ const List<GeneratedRoute> $benchmarkRoutes = [
   ),
 ];
 
-bool benchmarkRouteRequiresAuth(BenchmarkRoutePath route) => route.requiresAuth;
+bool benchmarkRouteRequiresAuth(BenchmarkRoute route) => route.requiresAuth;
 
-String? benchmarkRouteBranch(BenchmarkRoutePath route) {
+String? benchmarkRouteBranch(BenchmarkRoute route) {
   return switch (route) {
     _ => null,
   };
 }
 
-RouteDebugInfo benchmarkRouteDebugInfo(BenchmarkRoutePath route) {
+RouteDebugInfo benchmarkRouteDebugInfo(BenchmarkRoute route) {
   return switch (route) {
-    BenchmarkDashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: null, branch: null, resultType: 'void'),
-    BenchmarkNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
+    DashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: null, branch: null, resultType: 'void'),
+    NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
   };
 }
 
-List<RouteGuardBase<BenchmarkRoutePath>> benchmarkRouteGuards(
-  BenchmarkRoutePath route,
+List<RouteGuardBase<BenchmarkRoute>> benchmarkRouteGuards(
+  BenchmarkRoute route,
   Object router,
 ) {
   return switch (route) {
-    BenchmarkDashboardRoute() => [BenchmarkGuard()],
+    DashboardRoute() => [BenchmarkGuard()],
     _ => const [],
   };
 }
@@ -65,21 +65,21 @@ import 'package:dust_flutter/route.dart';
 
 import 'paths.g.dart';
 extension BenchmarkRouterContext on BuildContext {
-  RouterController<BenchmarkRoutePath> get _routerController =>
-      RouterController.of<BenchmarkRoutePath>(this);
+  RouterController<BenchmarkRoute> get _routerController =>
+      RouterController.of<BenchmarkRoute>(this);
   BenchmarkRoutesNavigator get navigator => BenchmarkRoutesNavigator(_routerController);
 }
 
 final class BenchmarkRoutesNavigator {
   const BenchmarkRoutesNavigator(this._router);
 
-  final RouterController<BenchmarkRoutePath> _router;
+  final RouterController<BenchmarkRoute> _router;
 
   BenchmarkRouteAction<void> dashboard() =>
-      BenchmarkRouteAction(_router, BenchmarkDashboardRoute());
+      BenchmarkRouteAction(_router, DashboardRoute());
 
   BenchmarkRouteAction<void> notFound({String path = ''}) =>
-      BenchmarkRouteAction(_router, BenchmarkNotFoundRoute(path: path));
+      BenchmarkRouteAction(_router, NotFoundRoute(path: path));
 
   bool pop<R>([R? result]) => _router.pop<R>(result);
 }
@@ -87,8 +87,8 @@ final class BenchmarkRoutesNavigator {
 final class BenchmarkRouteAction<R> {
   const BenchmarkRouteAction(this._router, this.route);
 
-  final RouterController<BenchmarkRoutePath> _router;
-  final BenchmarkRoutePath<R> route;
+  final RouterController<BenchmarkRoute> _router;
+  final BenchmarkRoute<R> route;
 
   void go() => _router.go(route);
   Future<R?> push() => _router.push<R>(route);
@@ -104,8 +104,8 @@ final class BenchmarkRouteAction<R> {
 
 import 'package:dust_flutter/route.dart';
 
-sealed class BenchmarkRoutePath<R> {
-  const BenchmarkRoutePath();
+sealed class BenchmarkRoute<R> {
+  const BenchmarkRoute();
 
   String get location;
 
@@ -114,9 +114,9 @@ sealed class BenchmarkRoutePath<R> {
   bool get requiresAuth => true;
 }
 
-/// Typed route data for `BenchmarkDashboardRoute`.
-final class BenchmarkDashboardRoute extends BenchmarkRoutePath<void> {
-  const BenchmarkDashboardRoute();
+/// Typed route data for `DashboardRoute`.
+final class DashboardRoute extends BenchmarkRoute<void> {
+  const DashboardRoute();
 
   @override
   String get location {
@@ -127,9 +127,9 @@ final class BenchmarkDashboardRoute extends BenchmarkRoutePath<void> {
   }
 }
 
-/// Typed route data for `BenchmarkNotFoundRoute`.
-final class BenchmarkNotFoundRoute extends BenchmarkRoutePath<void> {
-  const BenchmarkNotFoundRoute({this.path = ''});
+/// Typed route data for `NotFoundRoute`.
+final class NotFoundRoute extends BenchmarkRoute<void> {
+  const NotFoundRoute({this.path = ''});
 
   final String path;
 
@@ -146,23 +146,23 @@ final class BenchmarkNotFoundRoute extends BenchmarkRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-String benchmarkRouteLocation(BenchmarkRoutePath route) => route.location;
+String benchmarkRouteLocation(BenchmarkRoute route) => route.location;
 
-BenchmarkRoutePath parseBenchmarkRoute(Uri uri) {
+BenchmarkRoute parseBenchmarkRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
-    final route = BenchmarkDashboardRoute();
+    final route = DashboardRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == '404') {
-    final route = BenchmarkNotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
     return withGeneratedRouteUriExtras(route, uri, const {'path'});
   }
   return _$notFoundRoute(uri);
 }
 
-BenchmarkRoutePath _$notFoundRoute(Uri uri) => BenchmarkNotFoundRoute(path: uri.toString());
+BenchmarkRoute _$notFoundRoute(Uri uri) => NotFoundRoute(path: uri.toString());
 
 
 // file: lib/route/routes.g.dart
@@ -190,14 +190,14 @@ import 'paths.g.dart';
 import 'metadata.g.dart';
 import '../route.dart';
 
-abstract class $BenchmarkRouter extends RouterBase<BenchmarkRoutePath> {
+abstract class $BenchmarkRouter extends RouterBase<BenchmarkRoute> {
 
-  late final RouterConfig<BenchmarkRoutePath> config = _buildConfig();
+  late final RouterConfig<BenchmarkRoute> config = _buildConfig();
 
-  RouterConfig<BenchmarkRoutePath> _buildConfig() {
-    final runtimeConfig = RouterRuntimeConfig<BenchmarkRoutePath>(
+  RouterConfig<BenchmarkRoute> _buildConfig() {
+    final runtimeConfig = RouterRuntimeConfig<BenchmarkRoute>(
       router: this,
-      initialRoute: const BenchmarkDashboardRoute(),
+      initialRoute: const DashboardRoute(),
       parseRoute: parseBenchmarkRoute,
       routeLocation: benchmarkRouteLocation,
       requiresAuth: benchmarkRouteRequiresAuth,
@@ -208,8 +208,8 @@ abstract class $BenchmarkRouter extends RouterBase<BenchmarkRoutePath> {
       debugInfo: benchmarkRouteDebugInfo,
       debugRoutes: $benchmarkRoutes,
     );
-    final delegate = GeneratedRouterDelegate<BenchmarkRoutePath>(runtimeConfig);
-    return RouterConfig<BenchmarkRoutePath>(
+    final delegate = GeneratedRouterDelegate<BenchmarkRoute>(runtimeConfig);
+    return RouterConfig<BenchmarkRoute>(
       routeInformationProvider: PlatformRouteInformationProvider(
         initialRouteInformation: RouteInformation(
           uri: Uri.parse(
@@ -217,7 +217,7 @@ abstract class $BenchmarkRouter extends RouterBase<BenchmarkRoutePath> {
           ),
         ),
       ),
-      routeInformationParser: GeneratedRouteInformationParser<BenchmarkRoutePath>(
+      routeInformationParser: GeneratedRouteInformationParser<BenchmarkRoute>(
         router: this,
         parseRoute: parseBenchmarkRoute,
         routeLocation: benchmarkRouteLocation,
@@ -228,13 +228,13 @@ abstract class $BenchmarkRouter extends RouterBase<BenchmarkRoutePath> {
   }
 }
 
-RouteStack<BenchmarkRoutePath> restoreBenchmarkRouteStack(BenchmarkRoutePath route) {
+RouteStack<BenchmarkRoute> restoreBenchmarkRouteStack(BenchmarkRoute route) {
   return switch (route) {
-    BenchmarkDashboardRoute() => [
+    DashboardRoute() => [
       route,
     ],
-    BenchmarkNotFoundRoute(path: _) => [
-      const BenchmarkDashboardRoute(),
+    NotFoundRoute(path: _) => [
+      const DashboardRoute(),
       route,
     ],
   };
@@ -246,7 +246,7 @@ const Map<Type, Type?> _$appliedShellsByPage = {
 };
 
 Page<dynamic> buildBenchmarkRoutePage(
-  BenchmarkRoutePath route,
+  BenchmarkRoute route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
@@ -255,7 +255,7 @@ Page<dynamic> buildBenchmarkRoutePage(
     'Shell mismatch between \$benchmarkRoutes and buildBenchmarkRoutePage',
   );
   return switch (route) {
-    BenchmarkDashboardRoute() => generatedPage(
+    DashboardRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'dashboard',
@@ -264,7 +264,7 @@ Page<dynamic> buildBenchmarkRoutePage(
       maintainState: true,
       child: const DashboardPage(),
     ),
-    BenchmarkNotFoundRoute(path: final path) => generatedPage(
+    NotFoundRoute(path: final path) => generatedPage(
       key: key,
       location: route.location,
       name: 'notFound',

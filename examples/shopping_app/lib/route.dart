@@ -18,38 +18,37 @@ final class ShoppingRouter extends $ShoppingRouter {
   final AuthViewModel auth;
 
   @override
-  ShoppingRoutePath? redirect(ShoppingRoutePath route) {
+  ShoppingRoute? redirect(ShoppingRoute route) {
     final status = auth.state.status;
     final isAuthenticated = auth.state.isAuthenticated;
-    final isAuthRoute =
-        route is ShoppingLoginRoute || route is ShoppingRegisterRoute;
+    final isAuthRoute = route is LoginRoute || route is RegisterRoute;
 
     if (status == AuthStatus.loading || status == AuthStatus.initial) {
       return null;
     }
 
     if (!isAuthenticated && route.requiresAuth) {
-      return ShoppingLoginRoute(redirectPath: route.location);
+      return LoginRoute(redirectPath: route.location);
     }
 
     if (isAuthenticated && isAuthRoute) {
       final redirectPath = switch (route) {
-        ShoppingLoginRoute(:final redirectPath) => redirectPath,
-        ShoppingRegisterRoute(:final redirectPath) => redirectPath,
+        LoginRoute(:final redirectPath) => redirectPath,
+        RegisterRoute(:final redirectPath) => redirectPath,
         _ => null,
       };
-      return _safeRedirect(redirectPath) ?? const ShoppingProductsRoute();
+      return _safeRedirect(redirectPath) ?? const ProductsRoute();
     }
 
     return null;
   }
 
-  ShoppingRoutePath? _safeRedirect(String? redirectPath) {
+  ShoppingRoute? _safeRedirect(String? redirectPath) {
     if (redirectPath == null || redirectPath.isEmpty) return null;
     final uri = Uri.tryParse(redirectPath);
     if (uri == null || uri.host.isNotEmpty) return null;
     final route = parseShoppingRoute(uri);
-    if (route is ShoppingNotFoundRoute) return null;
+    if (route is NotFoundRoute) return null;
     return route;
   }
 }
@@ -82,7 +81,7 @@ ShoppingAccessLevel shoppingAccessLevel(User? user) {
 }
 
 /// Staff guard model for the shopping app example.
-final class StaffGuard implements RouteGuard<ShoppingRoutePath> {
+final class StaffGuard implements RouteGuard<ShoppingRoute> {
   /// Creates a [StaffGuard].
   const StaffGuard(this.auth);
 
@@ -90,13 +89,11 @@ final class StaffGuard implements RouteGuard<ShoppingRoutePath> {
   final AuthViewModel auth;
 
   @override
-  ShoppingRoutePath? canActivate(ShoppingRoutePath route) {
+  ShoppingRoute? canActivate(ShoppingRoute route) {
     if (!auth.state.isAuthenticated) {
-      return ShoppingLoginRoute(redirectPath: route.location);
+      return LoginRoute(redirectPath: route.location);
     }
-    return _hasAccess(ShoppingAccessLevel.staff)
-        ? null
-        : const ShoppingProductsRoute();
+    return _hasAccess(ShoppingAccessLevel.staff) ? null : const ProductsRoute();
   }
 
   bool _hasAccess(ShoppingAccessLevel minimum) =>
@@ -104,7 +101,7 @@ final class StaffGuard implements RouteGuard<ShoppingRoutePath> {
 }
 
 /// Admin guard model for the shopping app example.
-final class AdminGuard implements RouteGuard<ShoppingRoutePath> {
+final class AdminGuard implements RouteGuard<ShoppingRoute> {
   /// Creates an [AdminGuard].
   const AdminGuard(this.auth);
 
@@ -112,13 +109,11 @@ final class AdminGuard implements RouteGuard<ShoppingRoutePath> {
   final AuthViewModel auth;
 
   @override
-  ShoppingRoutePath? canActivate(ShoppingRoutePath route) {
+  ShoppingRoute? canActivate(ShoppingRoute route) {
     if (!auth.state.isAuthenticated) {
-      return ShoppingLoginRoute(redirectPath: route.location);
+      return LoginRoute(redirectPath: route.location);
     }
-    return _hasAccess(ShoppingAccessLevel.admin)
-        ? null
-        : const ShoppingProductsRoute();
+    return _hasAccess(ShoppingAccessLevel.admin) ? null : const ProductsRoute();
   }
 
   bool _hasAccess(ShoppingAccessLevel minimum) =>

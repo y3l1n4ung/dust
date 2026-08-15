@@ -11,8 +11,8 @@ use super::route_classes::is_not_found_route;
 /// Template context for the generated URI parser.
 #[derive(Serialize)]
 struct ParserContext {
-    /// Generated route path base class.
-    route_path_class: String,
+    /// Generated route base class.
+    route_base_class: String,
     /// Generated route parser function.
     parse_route_function: String,
     /// Rendered route parsing cases.
@@ -86,7 +86,7 @@ pub(super) fn render_parser(out: &mut String, spec: &RouterSpec) {
         "route_parser",
         include_str!("templates/route_parser.jinja"),
         ParserContext {
-            route_path_class: spec.route_path_class.clone(),
+            route_base_class: spec.route_base_class.clone(),
             parse_route_function: spec.parse_route_function.clone(),
             cases: join_rendered(cases),
             fallback,

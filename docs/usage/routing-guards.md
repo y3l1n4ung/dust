@@ -17,9 +17,9 @@ final class ShopRouter extends $ShopRouter {
   final AuthViewModel auth;
 
   @override
-  ShopRoutePath? redirect(ShopRoutePath route) {
+  ShopRoute? redirect(ShopRoute route) {
     if (!auth.state.isAuthenticated && route.requiresAuth) {
-      return ShopLoginRoute(redirectPath: route.location);
+      return LoginRoute(redirectPath: route.location);
     }
     return null;
   }
@@ -34,14 +34,14 @@ new route instead of continuing guards for the original route.
 Use guards for route-specific access checks:
 
 ```dart
-final class AdminGuard implements RouteGuard<ShopRoutePath> {
+final class AdminGuard implements RouteGuard<ShopRoute> {
   const AdminGuard(this.auth);
 
   final AuthViewModel auth;
 
   @override
-  ShopRoutePath? canActivate(ShopRoutePath route) {
-    return auth.state.isAdmin ? null : const ShopHomeRoute();
+  ShopRoute? canActivate(ShopRoute route) {
+    return auth.state.isAdmin ? null : const HomeRoute();
   }
 }
 
@@ -52,7 +52,7 @@ final class AdminPage extends StatelessWidget {
 ```
 
 A guard returns `null` to allow navigation or another route to redirect.
-Implement `AsyncRouteGuard<ShopRoutePath>` when the decision needs a `Future`.
+Implement `AsyncRouteGuard<ShopRoute>` when the decision needs a `Future`.
 Mixed sync and async guards run in annotation order, and the first redirect
 wins.
 
@@ -61,15 +61,15 @@ wins.
 Use an async guard when the decision must load fresh data:
 
 ```dart
-final class CheckoutReadyGuard implements AsyncRouteGuard<ShopRoutePath> {
+final class CheckoutReadyGuard implements AsyncRouteGuard<ShopRoute> {
   const CheckoutReadyGuard(this.cart);
 
   final CartViewModel cart;
 
   @override
-  Future<ShopRoutePath?> canActivate(ShopRoutePath route) async {
+  Future<ShopRoute?> canActivate(ShopRoute route) async {
     await cart.refreshIfStale();
-    return cart.state.items.isEmpty ? const ShopCartRoute() : null;
+    return cart.state.items.isEmpty ? const CartRoute() : null;
   }
 }
 
@@ -109,7 +109,7 @@ In this example, `AdminGuard` can reject non-admin users before
 ## Contracts
 
 Every class in `guards:` must implement one of the route guard contracts.
-Generated guard lists are typed `List<RouteGuardBase<ShopRoutePath>>`, so a
+Generated guard lists are typed `List<RouteGuardBase<ShopRoute>>`, so a
 class that implements neither is an analyzer error rather than a guard that
 never runs.
 
@@ -133,14 +133,14 @@ final class ShopRouter extends $ShopRouter {
   final EntitlementsViewModel entitlements;
 }
 
-final class FeatureGuard implements RouteGuard<ShopRoutePath> {
+final class FeatureGuard implements RouteGuard<ShopRoute> {
   const FeatureGuard(this.entitlements);
 
   final EntitlementsViewModel entitlements;
 
   @override
-  ShopRoutePath? canActivate(ShopRoutePath route) {
-    return entitlements.state.hasPremium ? null : const ShopUpgradeRoute();
+  ShopRoute? canActivate(ShopRoute route) {
+    return entitlements.state.hasPremium ? null : const UpgradeRoute();
   }
 }
 ```
@@ -182,7 +182,7 @@ test('admin guard rejects signed-out users', () {
   final auth = AuthViewModel.signedOut();
   final guard = AdminGuard(auth);
 
-  expect(guard.canActivate(const ShopAdminRoute()), const ShopHomeRoute());
+  expect(guard.canActivate(const AdminRoute()), const HomeRoute());
 });
 ```
 
@@ -213,19 +213,19 @@ the cart page, missing entitlement to an upgrade page, and denied admin access
 to a stable home or forbidden route:
 
 ```dart
-final class OrderAccessGuard implements RouteGuard<ShopRoutePath> {
+final class OrderAccessGuard implements RouteGuard<ShopRoute> {
   const OrderAccessGuard(this.orders);
 
   final OrdersViewModel orders;
 
   @override
-  ShopRoutePath? canActivate(ShopRoutePath route) {
-    if (route is! ShopOrderDetailRoute) {
+  ShopRoute? canActivate(ShopRoute route) {
+    if (route is! OrderDetailRoute) {
       return null;
     }
     return orders.canOpen(route.orderId)
         ? null
-        : const ShopNotFoundRoute(path: '/orders');
+        : const NotFoundRoute(path: '/orders');
   }
 }
 ```
@@ -244,14 +244,14 @@ final class ForbiddenPage extends StatelessWidget {
   const ForbiddenPage({super.key});
 }
 
-final class StaffGuard implements RouteGuard<ShopRoutePath> {
+final class StaffGuard implements RouteGuard<ShopRoute> {
   const StaffGuard(this.auth);
 
   final AuthViewModel auth;
 
   @override
-  ShopRoutePath? canActivate(ShopRoutePath route) {
-    return auth.state.isStaff ? null : const ShopForbiddenRoute();
+  ShopRoute? canActivate(ShopRoute route) {
+    return auth.state.isStaff ? null : const ForbiddenRoute();
   }
 }
 ```

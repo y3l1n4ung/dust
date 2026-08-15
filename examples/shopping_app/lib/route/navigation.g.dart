@@ -10,63 +10,62 @@ import 'paths.g.dart';
 import '../route.dart';
 
 extension ShoppingRouterContext on BuildContext {
-  RouterController<ShoppingRoutePath> get _routerController =>
-      RouterController.of<ShoppingRoutePath>(this);
+  RouterController<ShoppingRoute> get _routerController =>
+      RouterController.of<ShoppingRoute>(this);
   ShoppingRoutesNavigator get navigator => ShoppingRoutesNavigator(_routerController);
 }
 
 final class ShoppingRoutesNavigator {
   const ShoppingRoutesNavigator(this._router);
 
-  final RouterController<ShoppingRoutePath> _router;
+  final RouterController<ShoppingRoute> _router;
 
   ShoppingRouteAction<void> products() =>
-      ShoppingRouteAction(_router, ShoppingProductsRoute());
+      ShoppingRouteAction(_router, ProductsRoute());
 
   ShoppingRouteAction<void> notFound({String path = ''}) =>
-      ShoppingRouteAction(_router, ShoppingNotFoundRoute(path: path));
+      ShoppingRouteAction(_router, NotFoundRoute(path: path));
 
   ShoppingRouteAction<void> admin() =>
-      ShoppingRouteAction(_router, ShoppingAdminRoute());
+      ShoppingRouteAction(_router, AdminRoute());
 
-  ShoppingRouteAction<void> cart() =>
-      ShoppingRouteAction(_router, ShoppingCartRoute());
+  ShoppingRouteAction<void> cart() => ShoppingRouteAction(_router, CartRoute());
 
   ShoppingRouteAction<void> checkout() =>
-      ShoppingRouteAction(_router, ShoppingCheckoutRoute());
+      ShoppingRouteAction(_router, CheckoutRoute());
 
   ShoppingRouteAction<void> demoCarts() =>
-      ShoppingRouteAction(_router, ShoppingDemoCartsRoute());
+      ShoppingRouteAction(_router, DemoCartsRoute());
 
   ShoppingRouteAction<void> login({String? redirectPath}) =>
-      ShoppingRouteAction(_router, ShoppingLoginRoute(redirectPath: redirectPath));
+      ShoppingRouteAction(_router, LoginRoute(redirectPath: redirectPath));
 
   ShoppingRouteAction<void> orderConfirmation({required String orderId}) =>
-      ShoppingRouteAction(_router, ShoppingOrderConfirmationRoute(orderId: orderId));
+      ShoppingRouteAction(_router, OrderConfirmationRoute(orderId: orderId));
 
   ShoppingRouteAction<void> orders() =>
-      ShoppingRouteAction(_router, ShoppingOrdersRoute());
+      ShoppingRouteAction(_router, OrdersRoute());
 
   ShoppingRouteAction<void> orderDetail({required String orderId}) =>
-      ShoppingRouteAction(_router, ShoppingOrderDetailRoute(orderId: orderId));
+      ShoppingRouteAction(_router, OrderDetailRoute(orderId: orderId));
 
   ShoppingRouteAction<void> productDetail({required int productId}) =>
-      ShoppingRouteAction(_router, ShoppingProductDetailRoute(productId: productId));
+      ShoppingRouteAction(_router, ProductDetailRoute(productId: productId));
 
   ShoppingRouteAction<void> profile() =>
-      ShoppingRouteAction(_router, ShoppingProfileRoute());
+      ShoppingRouteAction(_router, ProfileRoute());
 
   ShoppingRouteAction<void> register({String? redirectPath}) =>
-      ShoppingRouteAction(_router, ShoppingRegisterRoute(redirectPath: redirectPath));
+      ShoppingRouteAction(_router, RegisterRoute(redirectPath: redirectPath));
 
   ShoppingRouteAction<void> staff({ShoppingAccessLevel access = ShoppingAccessLevel.staff, DateTime? from, Uri? returnTo, List<String> sections = const <String>[], List<int>? orderIds}) =>
-      ShoppingRouteAction(_router, ShoppingStaffRoute(access: access, from: from, returnTo: returnTo, sections: sections, orderIds: orderIds));
+      ShoppingRouteAction(_router, StaffRoute(access: access, from: from, returnTo: returnTo, sections: sections, orderIds: orderIds));
 
   ShoppingRouteAction<bool> supportChat() =>
-      ShoppingRouteAction(_router, ShoppingSupportChatRoute());
+      ShoppingRouteAction(_router, SupportChatRoute());
 
   ShoppingRouteAction<void> wishlist() =>
-      ShoppingRouteAction(_router, ShoppingWishlistRoute());
+      ShoppingRouteAction(_router, WishlistRoute());
 
   bool pop<R>([R? result]) => _router.pop<R>(result);
 }
@@ -74,8 +73,8 @@ final class ShoppingRoutesNavigator {
 final class ShoppingRouteAction<R> {
   const ShoppingRouteAction(this._router, this.route);
 
-  final RouterController<ShoppingRoutePath> _router;
-  final ShoppingRoutePath<R> route;
+  final RouterController<ShoppingRoute> _router;
+  final ShoppingRoute<R> route;
 
   void go() => _router.go(route);
   Future<R?> push() => _router.push<R>(route);

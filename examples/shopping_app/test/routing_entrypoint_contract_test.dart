@@ -5,10 +5,10 @@ import 'package:shopping_app/route.dart';
 
 void main() {
   test('route.dart exposes the shopping cart navigation contract', () {
-    final routes = <ShoppingRoutePath>[
-      const ShoppingCartRoute(),
-      const ShoppingCheckoutRoute(),
-      const ShoppingOrderConfirmationRoute(orderId: 'ORDER 1/2'),
+    final routes = <ShoppingRoute>[
+      const CartRoute(),
+      const CheckoutRoute(),
+      const OrderConfirmationRoute(orderId: 'ORDER 1/2'),
     ];
 
     expect(
@@ -22,19 +22,19 @@ void main() {
 
     expect(
       parseShoppingRoute(Uri.parse('/cart')).runtimeType,
-      ShoppingCartRoute,
+      CartRoute,
     );
     expect(
       parseShoppingRoute(Uri.parse('/checkout')).runtimeType,
-      ShoppingCheckoutRoute,
+      CheckoutRoute,
     );
 
     final confirmation = parseShoppingRoute(
       Uri.parse('/order-confirmation/ORDER%201%2F2'),
     );
-    expect(confirmation.runtimeType, ShoppingOrderConfirmationRoute);
+    expect(confirmation.runtimeType, OrderConfirmationRoute);
     expect(
-      (confirmation as ShoppingOrderConfirmationRoute).orderId,
+      (confirmation as OrderConfirmationRoute).orderId,
       'ORDER 1/2',
     );
   });

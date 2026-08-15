@@ -1,13 +1,13 @@
 extension {{ context_extension }} on BuildContext {
-  RouterController<{{ route_path_class }}> get _routerController =>
-      RouterController.of<{{ route_path_class }}>(this);
+  RouterController<{{ route_base_class }}> get _routerController =>
+      RouterController.of<{{ route_base_class }}>(this);
   {{ navigator_class }} get navigator => {{ navigator_class }}(_routerController);
 }
 
 final class {{ navigator_class }} {
   const {{ navigator_class }}(this._router);
 
-  final RouterController<{{ route_path_class }}> _router;
+  final RouterController<{{ route_base_class }}> _router;
 
 {{ factories }}  bool pop<R>([R? result]) => _router.pop<R>(result);
 }
@@ -15,8 +15,8 @@ final class {{ navigator_class }} {
 final class {{ route_action_class }}<R> {
   const {{ route_action_class }}(this._router, this.route);
 
-  final RouterController<{{ route_path_class }}> _router;
-  final {{ route_path_class }}<R> route;
+  final RouterController<{{ route_base_class }}> _router;
+  final {{ route_base_class }}<R> route;
 
   void go() => _router.go(route);
   Future<R?> push() => _router.push<R>(route);

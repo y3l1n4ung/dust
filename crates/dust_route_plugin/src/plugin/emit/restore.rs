@@ -14,8 +14,8 @@ use super::{
 /// Template context for generated restore-stack switch cases.
 #[derive(Serialize)]
 struct RestoreStackContext {
-    /// Generated route path base class.
-    route_path_class: String,
+    /// Generated route base class.
+    route_base_class: String,
     /// Generated route stack restoration function.
     restore_stack_function: String,
     /// Rendered restore cases.
@@ -50,7 +50,7 @@ pub(super) fn render_restore_stack(out: &mut String, spec: &RouterSpec) {
         "restore_stack",
         include_str!("templates/restore_stack.jinja"),
         RestoreStackContext {
-            route_path_class: spec.route_path_class.clone(),
+            route_base_class: spec.route_base_class.clone(),
             restore_stack_function: spec.restore_stack_function.clone(),
             cases,
         },

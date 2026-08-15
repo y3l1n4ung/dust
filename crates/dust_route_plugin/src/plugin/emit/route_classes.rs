@@ -9,15 +9,15 @@ use super::{formatting::dart_type, parser_decode::encode_param_expr};
 /// Template context for one generated route class.
 #[derive(Serialize)]
 struct AppRouteBaseContext<'a> {
-    /// Generated route path base class name.
-    route_path_class: &'a str,
+    /// Generated route base class name.
+    route_base_class: &'a str,
 }
 
 /// Template context for one generated route class.
 #[derive(Serialize)]
 struct RouteClassContext<'a> {
-    /// Generated route path base class name.
-    route_path_class: &'a str,
+    /// Generated route base class name.
+    route_base_class: &'a str,
     /// Generated route class name.
     route_class: &'a str,
     /// Result type returned by route pushes.
@@ -63,7 +63,7 @@ pub(super) fn render_route_classes(out: &mut String, spec: &RouterSpec) {
         "app_route_base",
         include_str!("templates/app_route_base.jinja"),
         AppRouteBaseContext {
-            route_path_class: &spec.route_path_class,
+            route_base_class: &spec.route_base_class,
         },
     ));
     out.push_str("\n\n");
@@ -84,7 +84,7 @@ pub(super) fn render_route_classes(out: &mut String, spec: &RouterSpec) {
             "route_class",
             include_str!("templates/route_class.jinja"),
             RouteClassContext {
-                route_path_class: &spec.route_path_class,
+                route_base_class: &spec.route_base_class,
                 route_class: &route.route_class,
                 result_type: &route.result_type,
                 constructor,

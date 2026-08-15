@@ -1,9 +1,9 @@
-abstract class {{ generated_base_class }} extends RouterBase<{{ route_path_class }}> {
+abstract class {{ generated_base_class }} extends RouterBase<{{ route_base_class }}> {
 {{ refresh_getter }}
-  late final RouterConfig<{{ route_path_class }}> config = _buildConfig();
+  late final RouterConfig<{{ route_base_class }}> config = _buildConfig();
 
-  RouterConfig<{{ route_path_class }}> _buildConfig() {
-    final runtimeConfig = RouterRuntimeConfig<{{ route_path_class }}>(
+  RouterConfig<{{ route_base_class }}> _buildConfig() {
+    final runtimeConfig = RouterRuntimeConfig<{{ route_base_class }}>(
       router: this,
       initialRoute: const {{ initial_route_class }}(),
       parseRoute: {{ parse_route_function }},
@@ -16,8 +16,8 @@ abstract class {{ generated_base_class }} extends RouterBase<{{ route_path_class
       debugInfo: {{ route_debug_info_function }},
       debugRoutes: {{ routes_variable }},
     );
-    final delegate = GeneratedRouterDelegate<{{ route_path_class }}>(runtimeConfig);
-    return RouterConfig<{{ route_path_class }}>(
+    final delegate = GeneratedRouterDelegate<{{ route_base_class }}>(runtimeConfig);
+    return RouterConfig<{{ route_base_class }}>(
       routeInformationProvider: PlatformRouteInformationProvider(
         initialRouteInformation: RouteInformation(
           uri: Uri.parse(
@@ -25,7 +25,7 @@ abstract class {{ generated_base_class }} extends RouterBase<{{ route_path_class
           ),
         ),
       ),
-      routeInformationParser: GeneratedRouteInformationParser<{{ route_path_class }}>(
+      routeInformationParser: GeneratedRouteInformationParser<{{ route_base_class }}>(
         router: this,
         parseRoute: {{ parse_route_function }},
         routeLocation: {{ route_location_function }},

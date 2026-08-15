@@ -104,7 +104,7 @@ context.navigator.pop();
 
 If `name` is omitted, Dust derives it from the widget class name by stripping a
 trailing `Page`, `Screen`, or `View`. `ProductDetailsScreen` becomes
-`productDetails()` and `ShopProductDetailsRoute`.
+`productDetails()` and `ProductDetailsRoute`.
 
 System back dismisses dialogs, modal sheets, and other imperatively pushed
 routes before popping a generated page, and honours `PopScope`.
@@ -199,9 +199,9 @@ final class ShopRouter extends $ShopRouter {
   final AuthViewModel auth;
 
   @override
-  ShopRoutePath? redirect(ShopRoutePath route) {
+  ShopRoute? redirect(ShopRoute route) {
     if (!auth.state.isAuthenticated && route.requiresAuth) {
-      return ShopLoginRoute(redirectPath: route.location);
+      return LoginRoute(redirectPath: route.location);
     }
     return null;
   }
@@ -222,7 +222,7 @@ has more than one such field.
 
 The generated parser converts incoming platform and browser URIs into typed
 routes, so `/products/42?tab=reviews` becomes
-`ShopProductRoute(id: 42, tab: 'reviews')`.
+`ProductRoute(id: 42, tab: 'reviews')`.
 
 For app-link normalization, host allow-listing, subdirectory deploys, and
 Flutter web path URLs, see [Deep Links and Web URLs](./routing-deep-links.md).
@@ -264,8 +264,8 @@ routes:
 final class ShopRouter extends $ShopRouter {
   @override
   void didChangeRouteStack(
-    RouteStack<ShopRoutePath> previous,
-    RouteStack<ShopRoutePath> next,
+    RouteStack<ShopRoute> previous,
+    RouteStack<ShopRoute> next,
   ) {
     analytics.screenView(next.last.location);
   }

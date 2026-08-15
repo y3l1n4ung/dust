@@ -28,7 +28,44 @@ fn rejects_generated_route_class_name_collisions() {
     assert!(contribution.primary_source.is_none());
     assert_eq!(
         diagnostic_messages(&contribution.diagnostics),
-        vec!["generated route class `TestOrderDetailRoute` is emitted by more than one route name"]
+        vec!["generated route class `OrderDetailRoute` is emitted by more than one route name"]
+    );
+}
+
+#[test]
+fn rejects_generated_route_class_that_conflicts_with_existing_class() {
+    let library = library_with_classes(vec![
+        router_class("(initial: '/login', notFound: '/404')"),
+        guard_class("LoginRoute", Vec::new()),
+        route_page_class("LoginPage", "('/login', name: 'login')", Vec::new()),
+    ]);
+
+    let contribution = generate_route_output(&library);
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec![
+            "generated route class `LoginRoute` conflicts with an existing Dart class; rename the route or page"
+        ]
+    );
+}
+
+#[test]
+fn rejects_generated_route_class_that_conflicts_with_router_support_class() {
+    let library = library_with_classes(vec![
+        router_class("(initial: '/test', notFound: '/404')"),
+        route_page_class("TestPage", "('/test', name: 'test')", Vec::new()),
+    ]);
+
+    let contribution = generate_route_output(&library);
+
+    assert!(contribution.primary_source.is_none());
+    assert_eq!(
+        diagnostic_messages(&contribution.diagnostics),
+        vec![
+            "generated route class `TestRoute` conflicts with a generated router support declaration"
+        ]
     );
 }
 
@@ -123,7 +160,7 @@ fn rejects_duplicate_route_names_with_page_paths_before_emitting_parser() {
         vec![
             "duplicate route name `cart` used by `CartPage` (`/cart`) and `CartSummaryPage` (`/cart/summary`)",
             "generated route helper `cart` is emitted more than once",
-            "generated route class `TestCartRoute` is emitted by more than one route name"
+            "generated route class `CartRoute` is emitted by more than one route name"
         ]
     );
 }

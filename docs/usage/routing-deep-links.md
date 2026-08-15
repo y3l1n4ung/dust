@@ -7,7 +7,7 @@ to URL text through `location`.
 ## Round Trips
 
 `/products/42?tab=reviews` parses to
-`ShopProductRoute(id: 42, tab: 'reviews')`. Dust also rebuilds the stack from
+`ProductRoute(id: 42, tab: 'reviews')`. Dust also rebuilds the stack from
 matching path prefixes: `/orders/ORDER-9` restores the initial page, `/orders`,
 and the order detail page.
 
@@ -22,7 +22,7 @@ model.
 ```dart
 final route = parseShopRoute(Uri.parse('/products/42?tab=reviews#details'));
 
-expect(route, isA<ShopProductRoute>());
+expect(route, isA<ProductRoute>());
 expect(route.location, '/products/42?tab=reviews#details');
 ```
 
@@ -60,7 +60,7 @@ URL migrations. Use `redirect` for decisions that depend on app state.
 Redirect routes often store the blocked destination:
 
 ```dart
-return ShopLoginRoute(redirectPath: route.location);
+return LoginRoute(redirectPath: route.location);
 ```
 
 > [!IMPORTANT]

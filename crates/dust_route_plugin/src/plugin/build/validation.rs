@@ -6,13 +6,38 @@ use crate::plugin::model::RouteSpec;
 
 use super::identifiers::{is_dart_reserved_word, is_valid_dart_identifier};
 
+/// Generated declarations that share Dart's library namespace with route classes.
+pub(super) struct GeneratedRouteNames<'a> {
+    /// Generated base class extended by the handwritten router.
+    pub(super) generated_base_class: &'a str,
+    /// Generated sealed route base class.
+    pub(super) route_base_class: &'a str,
+    /// Generated BuildContext extension.
+    pub(super) context_extension: &'a str,
+    /// Generated typed navigator facade class.
+    pub(super) navigator_class: &'a str,
+    /// Generated typed route action class.
+    pub(super) route_action_class: &'a str,
+}
+
 /// Validates duplicate route paths, names, helpers, classes, and ambiguous URLs.
-pub(super) fn validate_workspace_route_set(routes: &[RouteSpec]) -> Result<(), Vec<Diagnostic>> {
+pub(super) fn validate_workspace_route_set(
+    routes: &[RouteSpec],
+    generated_names: &GeneratedRouteNames<'_>,
+    workspace_classes: &HashSet<String>,
+) -> Result<(), Vec<Diagnostic>> {
     let mut diagnostics = Vec::new();
     let mut paths = HashMap::new();
     let mut names = HashMap::new();
     let mut route_classes = HashSet::new();
     let mut helper_names = HashSet::new();
+    let generated_support_declarations = HashSet::from([
+        generated_names.generated_base_class,
+        generated_names.route_base_class,
+        generated_names.context_extension,
+        generated_names.navigator_class,
+        generated_names.route_action_class,
+    ]);
     for route in routes {
         if let Some(previous) = paths.insert(route.path.clone(), route) {
             diagnostics.push(duplicate_route_path_diagnostic(
@@ -48,6 +73,18 @@ pub(super) fn validate_workspace_route_set(routes: &[RouteSpec]) -> Result<(), V
         if !route_classes.insert(route.route_class.clone()) {
             diagnostics.push(Diagnostic::error(format!(
                 "generated route class `{}` is emitted by more than one route name",
+                route.route_class
+            )));
+        }
+        if generated_support_declarations.contains(route.route_class.as_str()) {
+            diagnostics.push(Diagnostic::error(format!(
+                "generated route class `{}` conflicts with a generated router support declaration",
+                route.route_class
+            )));
+        }
+        if workspace_classes.contains(&route.route_class) {
+            diagnostics.push(Diagnostic::error(format!(
+                "generated route class `{}` conflicts with an existing Dart class; rename the route or page",
                 route.route_class
             )));
         }

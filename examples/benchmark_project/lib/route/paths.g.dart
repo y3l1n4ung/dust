@@ -5,8 +5,8 @@
 
 import 'package:dust_flutter/route.dart';
 
-sealed class BenchmarkRoutePath<R> {
-  const BenchmarkRoutePath();
+sealed class BenchmarkRoute<R> {
+  const BenchmarkRoute();
 
   String get location;
 
@@ -15,9 +15,9 @@ sealed class BenchmarkRoutePath<R> {
   bool get requiresAuth => true;
 }
 
-/// Typed route data for `BenchmarkHomeRoute`.
-final class BenchmarkHomeRoute extends BenchmarkRoutePath<void> {
-  const BenchmarkHomeRoute();
+/// Typed route data for `HomeRoute`.
+final class HomeRoute extends BenchmarkRoute<void> {
+  const HomeRoute();
 
   @override
   String get location {
@@ -28,9 +28,9 @@ final class BenchmarkHomeRoute extends BenchmarkRoutePath<void> {
   }
 }
 
-/// Typed route data for `BenchmarkNotFoundRoute`.
-final class BenchmarkNotFoundRoute extends BenchmarkRoutePath<void> {
-  const BenchmarkNotFoundRoute({this.path = ''});
+/// Typed route data for `NotFoundRoute`.
+final class NotFoundRoute extends BenchmarkRoute<void> {
+  const NotFoundRoute({this.path = ''});
 
   final String path;
 
@@ -47,9 +47,9 @@ final class BenchmarkNotFoundRoute extends BenchmarkRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `BenchmarkModelDetailRoute`.
-final class BenchmarkModelDetailRoute extends BenchmarkRoutePath<void> {
-  const BenchmarkModelDetailRoute({required this.id, this.tab, this.archived});
+/// Typed route data for `ModelDetailRoute`.
+final class ModelDetailRoute extends BenchmarkRoute<void> {
+  const ModelDetailRoute({required this.id, this.tab, this.archived});
 
   final int id;
   final String? tab;
@@ -72,17 +72,17 @@ final class BenchmarkModelDetailRoute extends BenchmarkRoutePath<void> {
   }
 }
 
-String benchmarkRouteLocation(BenchmarkRoutePath route) => route.location;
+String benchmarkRouteLocation(BenchmarkRoute route) => route.location;
 
-BenchmarkRoutePath parseBenchmarkRoute(Uri uri) {
+BenchmarkRoute parseBenchmarkRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
-    final route = BenchmarkHomeRoute();
+    final route = HomeRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == '404') {
-    final route = BenchmarkNotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
     return withGeneratedRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 2 && segments[0] == 'models') {
@@ -95,14 +95,10 @@ BenchmarkRoutePath parseBenchmarkRoute(Uri uri) {
     if (uri.queryParameters.containsKey('archived') && archived == null) {
       return _$notFoundRoute(uri);
     }
-    final route = BenchmarkModelDetailRoute(
-      id: id,
-      tab: tab,
-      archived: archived,
-    );
+    final route = ModelDetailRoute(id: id, tab: tab, archived: archived);
     return withGeneratedRouteUriExtras(route, uri, const <String>{'tab', 'archived'});
   }
   return _$notFoundRoute(uri);
 }
 
-BenchmarkRoutePath _$notFoundRoute(Uri uri) => BenchmarkNotFoundRoute(path: uri.toString());
+BenchmarkRoute _$notFoundRoute(Uri uri) => NotFoundRoute(path: uri.toString());
