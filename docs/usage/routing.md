@@ -15,7 +15,7 @@ flutter pub add dust_flutter
 
 ## Quick Start
 
-Create one router entrypoint at `lib/route.dart`:
+Create one app-facing router entrypoint at `lib/route.dart`:
 
 ```dart
 import 'package:dust_flutter/route.dart';
@@ -66,7 +66,7 @@ final class NotFoundPage extends StatelessWidget {
 }
 ```
 
-Generate the router and hand its configuration to Flutter:
+Generate the router and pass its config to Flutter:
 
 ```bash
 dust build
@@ -80,14 +80,9 @@ void main() {
 ```
 
 > [!IMPORTANT]
-> Keep `route.dart` as the app-facing routing entrypoint. It imports and exports
-> generated files under `route/`; route pages import `route.dart` to use
+> Keep `route.dart` as the single app-facing routing entrypoint. It imports and
+> exports generated files under `route/`; route pages import `route.dart` to use
 > annotations and generated navigation helpers.
-
-Exactly one `@AppRouter` is allowed per project. A second one fails generation
-with `exactly one @AppRouter is allowed in a Dust route workspace`. Nested
-layouts and independent tab histories are handled by shells and branches
-instead, so they never need a second router.
 
 ## Navigation
 
@@ -144,6 +139,9 @@ routes before popping a generated page, and honours `PopScope`.
 Routes are protected unless they declare `guards: []`. The router's not-found
 route is always public.
 
+For guard injection, shell inheritance, and branch behavior, see
+[Shells, Branches, and Guards](./routing-shells-guards.md).
+
 ## Route Parameters
 
 Path parameters match required, non-nullable constructor parameters. Other
@@ -188,51 +186,7 @@ Supported URL types:
 Route widgets need an unnamed generative constructor. Anything richer than a URL
 primitive should be loaded from app state after navigation.
 
-## Deep Links and Browser URLs
-
-The generated parser converts incoming platform and browser URIs into typed
-routes, so `/products/42?tab=reviews` becomes
-`ShopProductRoute(id: 42, tab: 'reviews')`. Dust also rebuilds the stack from
-matching path prefixes: `/orders/ORDER-9` restores the initial page, `/orders`,
-and the order detail page.
-
-Unknown query values and URI fragments are preserved in `route.location`, so
-auth redirects round-trip campaign parameters and anchors the page does not
-model.
-
-> [!TIP]
-> Test both `parseShopRoute(Uri.parse(url))` and the generated route's
-> `location`. That catches decoding and round-trip regressions before testing a
-> full platform deep-link flow.
-
-Override `parseRouteInformation` when platform links need app-level
-normalization before route matching:
-
-```dart
-import 'package:flutter/widgets.dart' show RouteInformation;
-
-@AppRouter(initial: '/', notFound: '/404')
-final class ShopRouter extends $ShopRouter {
-  @override
-  RouteInformation parseRouteInformation(RouteInformation information) {
-    final uri = information.uri;
-
-    if (uri.path.startsWith('/app/')) {
-      return RouteInformation(
-        uri: uri.replace(path: uri.path.substring('/app'.length)),
-        state: information.state,
-      );
-    }
-
-    return information;
-  }
-}
-```
-
-Use this hook for host allow-listing, subdirectory deploy prefixes, and legacy
-URL migrations. Use `redirect` for decisions that depend on app state.
-
-## Redirects and Authentication
+## Redirects
 
 Use the router's `redirect` method for app-wide auth decisions:
 
@@ -263,99 +217,14 @@ has more than one such field.
 > and unknown routes instead of treating arbitrary input as an internal
 > destination.
 
-## Route Guards
+## Deep Links and Web URLs
 
-Use guards for route-specific access checks:
+The generated parser converts incoming platform and browser URIs into typed
+routes, so `/products/42?tab=reviews` becomes
+`ShopProductRoute(id: 42, tab: 'reviews')`.
 
-```dart
-final class AdminGuard implements RouteGuard<ShopRoutePath> {
-  const AdminGuard(this.auth);
-
-  final AuthViewModel auth;
-
-  @override
-  ShopRoutePath? canActivate(ShopRoutePath route) {
-    return auth.state.isAdmin ? null : const ShopHomeRoute();
-  }
-}
-
-@AppRoute('/admin', name: 'admin', guards: [AdminGuard])
-final class AdminPage extends StatelessWidget {
-  const AdminPage({super.key});
-}
-```
-
-A guard returns `null` to allow navigation or another route to redirect.
-Implement `AsyncRouteGuard<ShopRoutePath>` when the decision needs a `Future`.
-Mixed sync and async guards run in annotation order, and the first redirect
-wins.
-
-Every class in `guards:` must implement one of those two contracts. Generated
-guard lists are typed `List<RouteGuardBase<ShopRoutePath>>`, so a class that
-implements neither is an analyzer error rather than a guard that never runs.
-
-Guard constructor dependencies are matched to router fields by type. Dust passes
-`ShopRouter.auth` to `AdminGuard` above. Generation fails when a required
-dependency is missing or ambiguous.
-
-> [!NOTE]
-> Route guards control navigation, not backend authorization. Enforce access on
-> the server as well.
-
-## Shells and Branches
-
-A shell is a normal widget that takes a required named `Widget child`. There is
-no separate shell annotation:
-
-```dart
-final class AppShell extends StatelessWidget {
-  const AppShell({required this.child, super.key});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => Scaffold(body: child);
-}
-
-@AppRoute('/dashboard', name: 'dashboard', shell: AppShell)
-final class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
-}
-
-@AppRoute('/dashboard/orders', name: 'dashboardOrders')
-final class DashboardOrdersPage extends StatelessWidget {
-  const DashboardOrdersPage({super.key});
-}
-```
-
-Child paths inherit the nearest parent shell, so the child above is generated as
-`AppShell(child: DashboardOrdersPage())`. Do not create empty shell marker
-routes; if it does not render UI or own navigation state, it should not be a
-route.
-
-Use `branch:` when routes need independent tab stacks. Keep `shell:` for layout
-and `branch:` for navigation state:
-
-```dart
-@AppRoute('/tabs/home', name: 'tabHome', shell: AppShell, branch: 'mainTabs')
-final class TabHomePage extends StatelessWidget {
-  const TabHomePage({super.key});
-}
-
-@AppRoute('/tabs/home/details', name: 'tabHomeDetails')
-final class TabHomeDetailsPage extends StatelessWidget {
-  const TabHomeDetailsPage({super.key});
-}
-```
-
-Switching to another branch and back restores the first branch's stack, so
-`/tabs/home` reopens with `/tabs/home/details` still on top. Child paths inherit
-the nearest parent `branch:` just as they inherit `shell:`, and Dust generates a
-stable constant per branch value, such as `shopBranchMainTabs`, reused in route
-metadata and debug helpers.
-
-Without `transition`, Dust uses `MaterialPage`. With one, it creates a page route
-that runs the selected `PageTransitionsBuilder` at the navigation boundary.
+For app-link normalization, host allow-listing, subdirectory deploys, and
+Flutter web path URLs, see [Deep Links and Web URLs](./routing-deep-links.md).
 
 ## Typed Route Results
 
@@ -384,11 +253,7 @@ Return the value through the generated navigator:
 context.navigator.pop(true);
 ```
 
-> [!TIP]
-> Use route results for one-time answers such as pickers and confirmations. Keep
-> shareable state in path or query parameters.
-
-## Observe Route Changes
+## Observability
 
 Override `didChangeRouteStack` to record analytics or breadcrumbs from typed
 routes:
@@ -406,61 +271,9 @@ final class ShopRouter extends $ShopRouter {
 }
 ```
 
-Dust calls this after a stack is committed. Refreshes and same-location
-replacements are skipped, so observers do not see duplicate events.
-
 Provide `observers` for packages that expect Flutter's `NavigatorObserver` API,
 and `onException` for asynchronous routing failures such as redirect cycles from
-unawaited `go()` or `replace()` calls:
-
-```dart
-@AppRouter(initial: '/', notFound: '/404')
-final class ShopRouter extends $ShopRouter {
-  ShopRouter({required this.analyticsObserver});
-
-  final NavigatorObserver analyticsObserver;
-
-  @override
-  List<NavigatorObserver> get observers => [analyticsObserver];
-
-  @override
-  void onException(Object error, StackTrace stackTrace) {
-    errorReporter.capture(error, stackTrace);
-  }
-}
-```
-
-## Web URLs
-
-Flutter web uses hash URLs such as `/#/products/42` by default. For normal path
-URLs, add the Flutter SDK web plugins dependency and call `usePathUrlStrategy()`
-before `runApp`:
-
-```dart
-import 'package:flutter_web_plugins/url_strategy.dart';
-
-void main() {
-  usePathUrlStrategy();
-
-  final router = ShopRouter();
-  runApp(MaterialApp.router(routerConfig: router.config));
-}
-```
-
-Path URLs also need the web host to serve `index.html` for unknown app paths,
-otherwise a browser refresh on `/products/42` never reaches the Flutter app.
-Dust cannot do this from generated Dart. Most hosts support it directly, for
-example NGINX `try_files $uri $uri/ /index.html;`; see Flutter's
-[URL strategies guide](https://docs.flutter.dev/ui/navigation/url-strategies).
-
-For a subdirectory deploy, build with a matching base href and strip the prefix
-in `parseRouteInformation` as shown above:
-
-```bash
-flutter build web --base-href /app/
-```
-
-## Diagnostics
+unawaited `go()` or `replace()` calls.
 
 Enable runtime logs while debugging parsing, redirects, guards, and stack
 changes:
@@ -469,9 +282,6 @@ changes:
 @override
 bool get debugLogDiagnostics => true;
 ```
-
-The router prints through Flutter's `debugPrint` with an `AppRouter:` prefix.
-Keep diagnostics disabled in normal use.
 
 ## Example
 
