@@ -139,8 +139,9 @@ routes before popping a generated page, and honours `PopScope`.
 Routes are protected unless they declare `guards: []`. The router's not-found
 route is always public.
 
-For guard injection, shell inheritance, and branch behavior, see
-[Shells, Branches, and Guards](./routing-shells-guards.md).
+For shell inheritance and independent branch stacks, see
+[Shells and Branches](./routing-shells.md). For guard injection and access
+checks, see [Guards](./routing-guards.md).
 
 ## Route Parameters
 

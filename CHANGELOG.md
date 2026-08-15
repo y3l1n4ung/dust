@@ -37,8 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   unchanged; code that names generated types directly must be renamed.
 - Restored generated router base classes to Dust's `$ClassName` convention, so
   handwritten routers extend generated bases such as `$ShopRouter`.
-- Split the routing usage docs into a shorter main guide plus focused deep-link
-  and shell/guard references.
+- Split the routing usage docs into a shorter main guide plus focused deep-link,
+  shell/branch, and guard references.
 - Split the router delegate internals into parser, stack, and diagnostics
   helpers while keeping the generated routing API unchanged.
 - Pruned generated router imports so route files keep page imports and directly

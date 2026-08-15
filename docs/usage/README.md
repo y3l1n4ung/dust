@@ -12,7 +12,7 @@ Each guide shows the handwritten API first and links to a working example.
 | Validate models and Flutter forms | [Validation](./validation.md) | `dust_dart` |
 | Generate Dio clients | [HTTP](./http.md) | `dust_dart` |
 | Build typed ViewModels | [State](./state.md) | `dust_flutter` |
-| Configure Navigator 2.0 routing | [Routing](./routing.md), [deep links](./routing-deep-links.md), [shells and guards](./routing-shells-guards.md) | `dust_flutter` |
+| Configure Navigator 2.0 routing | [Routing](./routing.md), [deep links](./routing-deep-links.md), [shells](./routing-shells.md), [guards](./routing-guards.md) | `dust_flutter` |
 | Maintain ARB translations | [Internationalization](./i18n.md) | `dust_flutter` |
 | Validate SQLite queries | [Database](./db.md) | `dust_dart`, `dust_db_sqlite3` |
 
