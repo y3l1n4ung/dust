@@ -43,29 +43,29 @@ const List<GeneratedRoute> $testRoutes = [
   ),
 ];
 
-bool testRouteRequiresAuth(TestRoutePath route) => route.requiresAuth;
+bool testRouteRequiresAuth(TestRoute route) => route.requiresAuth;
 
-String? testRouteBranch(TestRoutePath route) {
+String? testRouteBranch(TestRoute route) {
   return switch (route) {
     _ => null,
   };
 }
 
-RouteDebugInfo testRouteDebugInfo(TestRoutePath route) {
+RouteDebugInfo testRouteDebugInfo(TestRoute route) {
   return switch (route) {
-    TestHomeRoute() => const RouteDebugInfo(name: 'home', shell: null, branch: null, resultType: 'void'),
-    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
-    TestWorkspaceRoute() => const RouteDebugInfo(name: 'workspace', shell: null, branch: null, resultType: 'void'),
-    TestWorkspaceDetailsRoute() => const RouteDebugInfo(name: 'workspaceDetails', shell: null, branch: null, resultType: 'void'),
+    HomeRoute() => const RouteDebugInfo(name: 'home', shell: null, branch: null, resultType: 'void'),
+    NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
+    WorkspaceRoute() => const RouteDebugInfo(name: 'workspace', shell: null, branch: null, resultType: 'void'),
+    WorkspaceDetailsRoute() => const RouteDebugInfo(name: 'workspaceDetails', shell: null, branch: null, resultType: 'void'),
   };
 }
 
-List<RouteGuardBase<TestRoutePath>> testRouteGuards(
-  TestRoutePath route,
+List<RouteGuardBase<TestRoute>> testRouteGuards(
+  TestRoute route,
   Object router,
 ) {
   return switch (route) {
-    TestWorkspaceRoute() => [AuthGuard()],
+    WorkspaceRoute() => [AuthGuard()],
     _ => const [],
   };
 }
@@ -82,26 +82,26 @@ import 'package:dust_flutter/route.dart';
 
 import 'paths.g.dart';
 extension TestRouterContext on BuildContext {
-  RouterController<TestRoutePath> get _routerController =>
-      RouterController.of<TestRoutePath>(this);
+  RouterController<TestRoute> get _routerController =>
+      RouterController.of<TestRoute>(this);
   TestRoutesNavigator get navigator => TestRoutesNavigator(_routerController);
 }
 
 final class TestRoutesNavigator {
   const TestRoutesNavigator(this._router);
 
-  final RouterController<TestRoutePath> _router;
+  final RouterController<TestRoute> _router;
 
-  TestRouteAction<void> home() => TestRouteAction(_router, TestHomeRoute());
+  TestRouteAction<void> home() => TestRouteAction(_router, HomeRoute());
 
   TestRouteAction<void> notFound({String path = ''}) =>
-      TestRouteAction(_router, TestNotFoundRoute(path: path));
+      TestRouteAction(_router, NotFoundRoute(path: path));
 
   TestRouteAction<void> workspace() =>
-      TestRouteAction(_router, TestWorkspaceRoute());
+      TestRouteAction(_router, WorkspaceRoute());
 
   TestRouteAction<void> workspaceDetails() =>
-      TestRouteAction(_router, TestWorkspaceDetailsRoute());
+      TestRouteAction(_router, WorkspaceDetailsRoute());
 
   bool pop<R>([R? result]) => _router.pop<R>(result);
 }
@@ -109,8 +109,8 @@ final class TestRoutesNavigator {
 final class TestRouteAction<R> {
   const TestRouteAction(this._router, this.route);
 
-  final RouterController<TestRoutePath> _router;
-  final TestRoutePath<R> route;
+  final RouterController<TestRoute> _router;
+  final TestRoute<R> route;
 
   void go() => _router.go(route);
   Future<R?> push() => _router.push<R>(route);
@@ -126,8 +126,8 @@ final class TestRouteAction<R> {
 
 import 'package:dust_flutter/route.dart';
 
-sealed class TestRoutePath<R> {
-  const TestRoutePath();
+sealed class TestRoute<R> {
+  const TestRoute();
 
   String get location;
 
@@ -136,9 +136,9 @@ sealed class TestRoutePath<R> {
   bool get requiresAuth => true;
 }
 
-/// Typed route data for `TestHomeRoute`.
-final class TestHomeRoute extends TestRoutePath<void> {
-  const TestHomeRoute();
+/// Typed route data for `HomeRoute`.
+final class HomeRoute extends TestRoute<void> {
+  const HomeRoute();
 
   @override
   String get location {
@@ -152,9 +152,9 @@ final class TestHomeRoute extends TestRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `TestNotFoundRoute`.
-final class TestNotFoundRoute extends TestRoutePath<void> {
-  const TestNotFoundRoute({this.path = ''});
+/// Typed route data for `NotFoundRoute`.
+final class NotFoundRoute extends TestRoute<void> {
+  const NotFoundRoute({this.path = ''});
 
   final String path;
 
@@ -171,9 +171,9 @@ final class TestNotFoundRoute extends TestRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `TestWorkspaceRoute`.
-final class TestWorkspaceRoute extends TestRoutePath<void> {
-  const TestWorkspaceRoute();
+/// Typed route data for `WorkspaceRoute`.
+final class WorkspaceRoute extends TestRoute<void> {
+  const WorkspaceRoute();
 
   @override
   String get location {
@@ -184,9 +184,9 @@ final class TestWorkspaceRoute extends TestRoutePath<void> {
   }
 }
 
-/// Typed route data for `TestWorkspaceDetailsRoute`.
-final class TestWorkspaceDetailsRoute extends TestRoutePath<void> {
-  const TestWorkspaceDetailsRoute();
+/// Typed route data for `WorkspaceDetailsRoute`.
+final class WorkspaceDetailsRoute extends TestRoute<void> {
+  const WorkspaceDetailsRoute();
 
   @override
   String get location {
@@ -197,21 +197,21 @@ final class TestWorkspaceDetailsRoute extends TestRoutePath<void> {
   }
 }
 
-String testRouteLocation(TestRoutePath route) => route.location;
+String testRouteLocation(TestRoute route) => route.location;
 
-TestRoutePath parseTestRoute(Uri uri) {
+TestRoute parseTestRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.isEmpty) {
-    final route = TestHomeRoute();
+    final route = HomeRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == '404') {
-    final route = TestNotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
     return withGeneratedRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 1 && segments[0] == 'workspace') {
-    final route = TestWorkspaceRoute();
+    final route = WorkspaceRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (
@@ -219,13 +219,13 @@ TestRoutePath parseTestRoute(Uri uri) {
     segments[0] == 'workspace' &&
     segments[1] == 'details'
   ) {
-    final route = TestWorkspaceDetailsRoute();
+    final route = WorkspaceDetailsRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   return _$notFoundRoute(uri);
 }
 
-TestRoutePath _$notFoundRoute(Uri uri) => TestNotFoundRoute(path: uri.toString());
+TestRoute _$notFoundRoute(Uri uri) => NotFoundRoute(path: uri.toString());
 
 
 // file: lib/route/routes.g.dart
@@ -253,14 +253,14 @@ import 'paths.g.dart';
 import 'metadata.g.dart';
 import '../route.dart';
 
-abstract class $TestRouter extends RouterBase<TestRoutePath> {
+abstract class $TestRouter extends RouterBase<TestRoute> {
 
-  late final RouterConfig<TestRoutePath> config = _buildConfig();
+  late final RouterConfig<TestRoute> config = _buildConfig();
 
-  RouterConfig<TestRoutePath> _buildConfig() {
-    final runtimeConfig = RouterRuntimeConfig<TestRoutePath>(
+  RouterConfig<TestRoute> _buildConfig() {
+    final runtimeConfig = RouterRuntimeConfig<TestRoute>(
       router: this,
-      initialRoute: const TestHomeRoute(),
+      initialRoute: const HomeRoute(),
       parseRoute: parseTestRoute,
       routeLocation: testRouteLocation,
       requiresAuth: testRouteRequiresAuth,
@@ -271,8 +271,8 @@ abstract class $TestRouter extends RouterBase<TestRoutePath> {
       debugInfo: testRouteDebugInfo,
       debugRoutes: $testRoutes,
     );
-    final delegate = GeneratedRouterDelegate<TestRoutePath>(runtimeConfig);
-    return RouterConfig<TestRoutePath>(
+    final delegate = GeneratedRouterDelegate<TestRoute>(runtimeConfig);
+    return RouterConfig<TestRoute>(
       routeInformationProvider: PlatformRouteInformationProvider(
         initialRouteInformation: RouteInformation(
           uri: Uri.parse(
@@ -280,7 +280,7 @@ abstract class $TestRouter extends RouterBase<TestRoutePath> {
           ),
         ),
       ),
-      routeInformationParser: GeneratedRouteInformationParser<TestRoutePath>(
+      routeInformationParser: GeneratedRouteInformationParser<TestRoute>(
         router: this,
         parseRoute: parseTestRoute,
         routeLocation: testRouteLocation,
@@ -291,22 +291,22 @@ abstract class $TestRouter extends RouterBase<TestRoutePath> {
   }
 }
 
-RouteStack<TestRoutePath> restoreTestRouteStack(TestRoutePath route) {
+RouteStack<TestRoute> restoreTestRouteStack(TestRoute route) {
   return switch (route) {
-    TestHomeRoute() => [
+    HomeRoute() => [
       route,
     ],
-    TestNotFoundRoute(path: _) => [
-      const TestHomeRoute(),
+    NotFoundRoute(path: _) => [
+      const HomeRoute(),
       route,
     ],
-    TestWorkspaceRoute() => [
-      const TestHomeRoute(),
+    WorkspaceRoute() => [
+      const HomeRoute(),
       route,
     ],
-    TestWorkspaceDetailsRoute() => [
-      const TestHomeRoute(),
-      const TestWorkspaceRoute(),
+    WorkspaceDetailsRoute() => [
+      const HomeRoute(),
+      const WorkspaceRoute(),
       route,
     ],
   };
@@ -320,7 +320,7 @@ const Map<Type, Type?> _$appliedShellsByPage = {
 };
 
 Page<dynamic> buildTestRoutePage(
-  TestRoutePath route,
+  TestRoute route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
@@ -329,7 +329,7 @@ Page<dynamic> buildTestRoutePage(
     'Shell mismatch between \$testRoutes and buildTestRoutePage',
   );
   return switch (route) {
-    TestHomeRoute() => generatedPage(
+    HomeRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'home',
@@ -338,7 +338,7 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: const HomePage(),
     ),
-    TestNotFoundRoute(path: final path) => generatedPage(
+    NotFoundRoute(path: final path) => generatedPage(
       key: key,
       location: route.location,
       name: 'notFound',
@@ -347,7 +347,7 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: NotFoundPage(path: path),
     ),
-    TestWorkspaceRoute() => generatedPage(
+    WorkspaceRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'workspace',
@@ -356,7 +356,7 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: const WorkspacePage(),
     ),
-    TestWorkspaceDetailsRoute() => generatedPage(
+    WorkspaceDetailsRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'workspaceDetails',

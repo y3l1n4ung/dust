@@ -28,13 +28,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Scoped every generated router symbol to the handwritten router class. The
-  router name drops its `Router` suffix and the remaining stem prefixes the
-  route path base class, route classes, parser function, navigator, and route
-  action class, so `ShopRouter` now generates `ShopRoutePath`, `parseShopRoute`,
-  and `ShopCheckoutRoute` instead of `AppRoutePath`, `parseAppRoute`, and
-  `CheckoutRoute`. Route pages, annotations, and navigation call sites are
-  unchanged; code that names generated types directly must be renamed.
+- Simplified generated route names. The router name still scopes the generated
+  base route type and helpers, so `ShopRouter` generates `ShopRoute`,
+  `parseShopRoute`, and `$ShopRouter`, while concrete route classes use their
+  route names directly, such as `CheckoutRoute`. Route pages, annotations, and
+  navigation call sites are unchanged; code that names generated types directly
+  must be renamed.
 - Restored generated router base classes to Dust's `$ClassName` convention, so
   handwritten routers extend generated bases such as `$ShopRouter`.
 - Split the routing usage docs into a shorter main guide plus focused deep-link,
@@ -57,13 +56,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   also respects `PopScope` on a generated page, which the previous pop path
   ignored entirely.
 - Failed route guards loudly instead of silently skipping them. Generated guard
-  lists are now typed as `List<RouteGuardBase<RoutePath>>`, so a class in
+  lists are now typed as `List<RouteGuardBase<ShopRoute>>`, so a class in
   `guards:` that implements neither `RouteGuard` nor `AsyncRouteGuard` is an
   analyzer error, and the router throws rather than allowing navigation if one
   reaches the runtime. Router diagnostics no longer log `allow` for a guard that
   never ran.
 - Rejected invalid route helper identifiers, `pop` helper conflicts, and
   generated route class collisions before emitting analyzer-broken Dart.
+- Rejected generated route classes that would collide with existing Dart
+  classes or router support classes when using unprefixed route names.
 - Reported a concrete fix when a local route shell widget cannot be generated
   as `Shell(child: page)`.
 

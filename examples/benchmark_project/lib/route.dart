@@ -18,10 +18,10 @@ final class BenchmarkRouter extends $BenchmarkRouter {
 }
 
 /// Benchmark guard model for the benchmark example.
-final class BenchmarkGuard implements RouteGuard<BenchmarkRoutePath> {
+final class BenchmarkGuard implements RouteGuard<BenchmarkRoute> {
   /// Creates a [BenchmarkGuard].
   const BenchmarkGuard();
 
   @override
-  BenchmarkRoutePath? canActivate(BenchmarkRoutePath route) => null;
+  BenchmarkRoute? canActivate(BenchmarkRoute route) => null;
 }

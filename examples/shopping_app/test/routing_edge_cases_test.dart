@@ -13,7 +13,7 @@ void main() {
 
     expect(
       webRoute,
-      isA<ShoppingProductDetailRoute>()
+      isA<ProductDetailRoute>()
           .having((route) => route.productId, 'productId', 7)
           .having(
             (route) => route.location,
@@ -23,7 +23,7 @@ void main() {
     );
     expect(
       appRoute,
-      isA<ShoppingOrderDetailRoute>()
+      isA<OrderDetailRoute>()
           .having((route) => route.orderId, 'orderId', 'ORDER 1/2')
           .having(
             (route) => route.location,
@@ -43,7 +43,7 @@ void main() {
 
     expect(
       route,
-      isA<ShoppingProductDetailRoute>()
+      isA<ProductDetailRoute>()
           .having((route) => route.productId, 'productId', 7)
           .having(
             (route) => route.location,
@@ -61,7 +61,7 @@ void main() {
 
     expect(
       route,
-      isA<ShoppingNotFoundRoute>().having(
+      isA<NotFoundRoute>().having(
         (route) => route.path,
         'path',
         'https://shop.example/product/7/?campaign=spring#reviews',
@@ -76,7 +76,7 @@ void main() {
 
     expect(
       route,
-      isA<ShoppingLoginRoute>()
+      isA<LoginRoute>()
           .having((route) => route.redirectPath, 'redirectPath', '/checkout')
           .having(
             (route) => route.location,
@@ -97,7 +97,7 @@ void main() {
 
     expect(
       route,
-      isA<ShoppingStaffRoute>()
+      isA<StaffRoute>()
           .having(
             (route) => route.access,
             'access',
@@ -134,9 +134,9 @@ void main() {
       Uri.parse('/staff?orderIds=10&orderIds=bad'),
     );
 
-    expect(invalidEnum, isA<ShoppingNotFoundRoute>());
-    expect(invalidDate, isA<ShoppingNotFoundRoute>());
-    expect(invalidRepeatedInt, isA<ShoppingNotFoundRoute>());
+    expect(invalidEnum, isA<NotFoundRoute>());
+    expect(invalidDate, isA<NotFoundRoute>());
+    expect(invalidRepeatedInt, isA<NotFoundRoute>());
   });
 
   test('unknown deep links resolve to the configured not-found route', () {
@@ -146,7 +146,7 @@ void main() {
 
     expect(
       route,
-      isA<ShoppingNotFoundRoute>().having(
+      isA<NotFoundRoute>().having(
         (route) => route.path,
         'path',
         'https://shop.example/missing/path?campaign=spring#fallback',
@@ -158,7 +158,7 @@ void main() {
       () async {
     final state = Object();
     final router = _ShoppingRouteInformationRouter();
-    final parser = GeneratedRouteInformationParser<ShoppingRoutePath>(
+    final parser = GeneratedRouteInformationParser<ShoppingRoute>(
       router: router,
       parseRoute: parseShoppingRoute,
       routeLocation: shoppingRouteLocation,
@@ -181,7 +181,7 @@ void main() {
 
     expect(
       prefixedRoute,
-      isA<ShoppingProductDetailRoute>()
+      isA<ProductDetailRoute>()
           .having((route) => route.productId, 'productId', 7)
           .having(
             (route) => route.location,
@@ -191,7 +191,7 @@ void main() {
     );
     expect(
       unsafeHostRoute,
-      isA<ShoppingNotFoundRoute>().having(
+      isA<NotFoundRoute>().having(
         (route) => route.path,
         'path',
         'https://evil.test/app/product/7',
@@ -202,8 +202,7 @@ void main() {
   });
 }
 
-final class _ShoppingRouteInformationRouter
-    extends RouterBase<ShoppingRoutePath> {
+final class _ShoppingRouteInformationRouter extends RouterBase<ShoppingRoute> {
   final seenStates = <Object?>[];
 
   @override

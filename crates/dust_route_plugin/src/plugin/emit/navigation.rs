@@ -15,8 +15,8 @@ use super::{
 /// Template context for generated route navigation helpers.
 #[derive(Serialize)]
 struct HelpersContext {
-    /// Generated route path base class.
-    route_path_class: String,
+    /// Generated route base class.
+    route_base_class: String,
     /// Generated route location helper function.
     route_location_function: String,
     /// Generated route auth helper function.
@@ -54,7 +54,7 @@ struct GuardCaseContext {
     guards: String,
 }
 
-/// Renders generated route path helpers.
+/// Renders generated route helpers.
 pub(super) fn render_path_helpers(out: &mut String, spec: &RouterSpec) {
     out.push_str(&render_template(
         "route_path_helpers",
@@ -87,7 +87,7 @@ pub(super) fn render_navigation_helpers(out: &mut String, spec: &RouterSpec) {
 /// Builds the shared helper template context.
 fn helpers_context(spec: &RouterSpec) -> HelpersContext {
     HelpersContext {
-        route_path_class: spec.route_path_class.clone(),
+        route_base_class: spec.route_base_class.clone(),
         route_location_function: spec.route_location_function.clone(),
         route_requires_auth_function: spec.route_requires_auth_function.clone(),
         route_branch_function: spec.route_branch_function.clone(),

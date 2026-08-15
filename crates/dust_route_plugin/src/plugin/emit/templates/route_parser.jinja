@@ -1,7 +1,7 @@
-{{ route_path_class }} {{ parse_route_function }}(Uri uri) {
+{{ route_base_class }} {{ parse_route_function }}(Uri uri) {
   final segments = uri.pathSegments;
 
 {{ cases }}  return _$notFoundRoute(uri);
 }
 
-{{ route_path_class }} _$notFoundRoute(Uri uri) => {{ fallback }};
+{{ route_base_class }} _$notFoundRoute(Uri uri) => {{ fallback }};

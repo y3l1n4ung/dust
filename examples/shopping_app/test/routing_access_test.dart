@@ -9,16 +9,16 @@ void main() {
   test('real app public and protected route contract is explicit', () async {
     final router = await shoppingRouter();
 
-    final publicRoutes = <ShoppingRoutePath>[
-      const ShoppingProductsRoute(),
-      const ShoppingCartRoute(),
-      const ShoppingLoginRoute(redirectPath: '/checkout'),
-      const ShoppingProductDetailRoute(productId: 1),
-      const ShoppingSupportChatRoute(),
-      const ShoppingWishlistRoute(),
+    final publicRoutes = <ShoppingRoute>[
+      const ProductsRoute(),
+      const CartRoute(),
+      const LoginRoute(redirectPath: '/checkout'),
+      const ProductDetailRoute(productId: 1),
+      const SupportChatRoute(),
+      const WishlistRoute(),
     ];
-    const supportRoute = ShoppingSupportChatRoute();
-    expect(supportRoute, isA<ShoppingRoutePath<bool>>());
+    const supportRoute = SupportChatRoute();
+    expect(supportRoute, isA<ShoppingRoute<bool>>());
     for (final route in publicRoutes) {
       expect(
         shoppingRouteRequiresAuth(route),
@@ -27,13 +27,13 @@ void main() {
       );
     }
 
-    final protectedRoutes = <ShoppingRoutePath>[
-      const ShoppingAdminRoute(),
-      const ShoppingCheckoutRoute(),
-      const ShoppingOrdersRoute(),
-      const ShoppingOrderDetailRoute(orderId: 'ORDER-1'),
-      const ShoppingProfileRoute(),
-      const ShoppingStaffRoute(),
+    final protectedRoutes = <ShoppingRoute>[
+      const AdminRoute(),
+      const CheckoutRoute(),
+      const OrdersRoute(),
+      const OrderDetailRoute(orderId: 'ORDER-1'),
+      const ProfileRoute(),
+      const StaffRoute(),
     ];
     for (final route in protectedRoutes) {
       expect(
@@ -43,7 +43,7 @@ void main() {
       );
     }
 
-    expect(shoppingRouteGuards(const ShoppingCheckoutRoute(), router), isEmpty);
+    expect(shoppingRouteGuards(const CheckoutRoute(), router), isEmpty);
   });
 
   test('shopping access levels map real app users', () {
@@ -56,8 +56,8 @@ void main() {
 
   test('staff and admin guards use injected auth access levels', () async {
     final router = await shoppingRouter();
-    const staffRoute = ShoppingStaffRoute();
-    const adminRoute = ShoppingAdminRoute();
+    const staffRoute = StaffRoute();
+    const adminRoute = AdminRoute();
 
     final staffGuard =
         shoppingRouteGuards(staffRoute, router).single as StaffGuard;
@@ -68,7 +68,7 @@ void main() {
 
     expect(
       staffGuard.canActivate(staffRoute),
-      isA<ShoppingLoginRoute>().having(
+      isA<LoginRoute>().having(
         (route) => route.redirectPath,
         'redirectPath',
         staffRoute.location,
@@ -76,40 +76,40 @@ void main() {
     );
 
     authenticate(router, 'dust');
-    expect(staffGuard.canActivate(staffRoute), isA<ShoppingProductsRoute>());
-    expect(adminGuard.canActivate(adminRoute), isA<ShoppingProductsRoute>());
+    expect(staffGuard.canActivate(staffRoute), isA<ProductsRoute>());
+    expect(adminGuard.canActivate(adminRoute), isA<ProductsRoute>());
 
     authenticate(router, 'manager');
     expect(staffGuard.canActivate(staffRoute), isNull);
-    expect(adminGuard.canActivate(adminRoute), isA<ShoppingProductsRoute>());
+    expect(adminGuard.canActivate(adminRoute), isA<ProductsRoute>());
 
     authenticate(router, 'admin');
     expect(staffGuard.canActivate(staffRoute), isNull);
     expect(adminGuard.canActivate(adminRoute), isNull);
 
-    expect(shoppingRouteGuards(const ShoppingProductsRoute(), router), isEmpty);
+    expect(shoppingRouteGuards(const ProductsRoute(), router), isEmpty);
   });
 
   test('generated guard resolver is typed so untyped guards cannot compile',
       () async {
     final router = await shoppingRouter();
 
-    final adminGuards = shoppingRouteGuards(const ShoppingAdminRoute(), router);
-    final staffGuards = shoppingRouteGuards(const ShoppingStaffRoute(), router);
+    final adminGuards = shoppingRouteGuards(const AdminRoute(), router);
+    final staffGuards = shoppingRouteGuards(const StaffRoute(), router);
 
-    expect(adminGuards, isA<List<RouteGuardBase<ShoppingRoutePath>>>());
-    expect(staffGuards, isA<List<RouteGuardBase<ShoppingRoutePath>>>());
-    expect(adminGuards.single, isA<RouteGuard<ShoppingRoutePath>>());
-    expect(staffGuards.single, isA<RouteGuard<ShoppingRoutePath>>());
+    expect(adminGuards, isA<List<RouteGuardBase<ShoppingRoute>>>());
+    expect(staffGuards, isA<List<RouteGuardBase<ShoppingRoute>>>());
+    expect(adminGuards.single, isA<RouteGuard<ShoppingRoute>>());
+    expect(staffGuards.single, isA<RouteGuard<ShoppingRoute>>());
   });
 
   test('guarded admin route denies navigation through the real router',
       () async {
     final router = await shoppingRouter();
-    final delegate = GeneratedRouterDelegate<ShoppingRoutePath>(
-      RouterRuntimeConfig<ShoppingRoutePath>(
+    final delegate = GeneratedRouterDelegate<ShoppingRoute>(
+      RouterRuntimeConfig<ShoppingRoute>(
         router: router,
-        initialRoute: const ShoppingProductsRoute(),
+        initialRoute: const ProductsRoute(),
         parseRoute: parseShoppingRoute,
         routeLocation: shoppingRouteLocation,
         requiresAuth: shoppingRouteRequiresAuth,
@@ -121,7 +121,7 @@ void main() {
     );
     await delegate.debugWaitForScheduledRefresh();
 
-    await delegate.setNewRoutePath(const ShoppingAdminRoute());
+    await delegate.setNewRoutePath(const AdminRoute());
 
     expect(
       delegate.stack.map((route) => route.location),

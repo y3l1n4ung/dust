@@ -159,48 +159,42 @@ const List<GeneratedRoute> $shoppingRoutes = [
   ),
 ];
 
-bool shoppingRouteRequiresAuth(ShoppingRoutePath route) => route.requiresAuth;
+bool shoppingRouteRequiresAuth(ShoppingRoute route) => route.requiresAuth;
 
-String? shoppingRouteBranch(ShoppingRoutePath route) {
+String? shoppingRouteBranch(ShoppingRoute route) {
   return switch (route) {
     _ => null,
   };
 }
 
-RouteDebugInfo shoppingRouteDebugInfo(ShoppingRoutePath route) {
+RouteDebugInfo shoppingRouteDebugInfo(ShoppingRoute route) {
   return switch (route) {
-    ShoppingProductsRoute() => const RouteDebugInfo(name: 'products', shell: null, branch: null, resultType: 'void'),
-    ShoppingNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
-    ShoppingAdminRoute() => const RouteDebugInfo(name: 'admin', shell: null, branch: null, resultType: 'void'),
-    ShoppingCartRoute() => const RouteDebugInfo(name: 'cart', shell: null, branch: null, resultType: 'void'),
-    ShoppingCheckoutRoute() => const RouteDebugInfo(name: 'checkout', shell: null, branch: null, resultType: 'void'),
-    ShoppingDemoCartsRoute() => const RouteDebugInfo(name: 'demoCarts', shell: null, branch: null, resultType: 'void'),
-    ShoppingLoginRoute(redirectPath: _) => const RouteDebugInfo(name: 'login', shell: null, branch: null, resultType: 'void'),
-    ShoppingOrderConfirmationRoute(orderId: _) => const RouteDebugInfo(name: 'orderConfirmation', shell: null, branch: null, resultType: 'void'),
-    ShoppingOrdersRoute() => const RouteDebugInfo(name: 'orders', shell: null, branch: null, resultType: 'void'),
-    ShoppingOrderDetailRoute(orderId: _) => const RouteDebugInfo(name: 'orderDetail', shell: null, branch: null, resultType: 'void'),
-    ShoppingProductDetailRoute(productId: _) => const RouteDebugInfo(name: 'productDetail', shell: null, branch: null, resultType: 'void'),
-    ShoppingProfileRoute() => const RouteDebugInfo(name: 'profile', shell: null, branch: null, resultType: 'void'),
-    ShoppingRegisterRoute(redirectPath: _) => const RouteDebugInfo(name: 'register', shell: null, branch: null, resultType: 'void'),
-    ShoppingStaffRoute(
-      access: _,
-      from: _,
-      returnTo: _,
-      sections: _,
-      orderIds: _,
-    ) => const RouteDebugInfo(name: 'staff', shell: null, branch: null, resultType: 'void'),
-    ShoppingSupportChatRoute() => const RouteDebugInfo(name: 'supportChat', shell: null, branch: null, resultType: 'bool'),
-    ShoppingWishlistRoute() => const RouteDebugInfo(name: 'wishlist', shell: null, branch: null, resultType: 'void'),
+    ProductsRoute() => const RouteDebugInfo(name: 'products', shell: null, branch: null, resultType: 'void'),
+    NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
+    AdminRoute() => const RouteDebugInfo(name: 'admin', shell: null, branch: null, resultType: 'void'),
+    CartRoute() => const RouteDebugInfo(name: 'cart', shell: null, branch: null, resultType: 'void'),
+    CheckoutRoute() => const RouteDebugInfo(name: 'checkout', shell: null, branch: null, resultType: 'void'),
+    DemoCartsRoute() => const RouteDebugInfo(name: 'demoCarts', shell: null, branch: null, resultType: 'void'),
+    LoginRoute(redirectPath: _) => const RouteDebugInfo(name: 'login', shell: null, branch: null, resultType: 'void'),
+    OrderConfirmationRoute(orderId: _) => const RouteDebugInfo(name: 'orderConfirmation', shell: null, branch: null, resultType: 'void'),
+    OrdersRoute() => const RouteDebugInfo(name: 'orders', shell: null, branch: null, resultType: 'void'),
+    OrderDetailRoute(orderId: _) => const RouteDebugInfo(name: 'orderDetail', shell: null, branch: null, resultType: 'void'),
+    ProductDetailRoute(productId: _) => const RouteDebugInfo(name: 'productDetail', shell: null, branch: null, resultType: 'void'),
+    ProfileRoute() => const RouteDebugInfo(name: 'profile', shell: null, branch: null, resultType: 'void'),
+    RegisterRoute(redirectPath: _) => const RouteDebugInfo(name: 'register', shell: null, branch: null, resultType: 'void'),
+    StaffRoute(access: _, from: _, returnTo: _, sections: _, orderIds: _) => const RouteDebugInfo(name: 'staff', shell: null, branch: null, resultType: 'void'),
+    SupportChatRoute() => const RouteDebugInfo(name: 'supportChat', shell: null, branch: null, resultType: 'bool'),
+    WishlistRoute() => const RouteDebugInfo(name: 'wishlist', shell: null, branch: null, resultType: 'void'),
   };
 }
 
-List<RouteGuardBase<ShoppingRoutePath>> shoppingRouteGuards(
-  ShoppingRoutePath route,
+List<RouteGuardBase<ShoppingRoute>> shoppingRouteGuards(
+  ShoppingRoute route,
   Object router,
 ) {
   return switch (route) {
-    ShoppingAdminRoute() => [AdminGuard((router as dynamic).auth)],
-    ShoppingStaffRoute() => [StaffGuard((router as dynamic).auth)],
+    AdminRoute() => [AdminGuard((router as dynamic).auth)],
+    StaffRoute() => [StaffGuard((router as dynamic).auth)],
     _ => const [],
   };
 }

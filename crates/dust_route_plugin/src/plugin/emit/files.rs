@@ -30,8 +30,8 @@ struct RouteGeneratedFile {
 struct RouteFileContext<'a> {
     /// Generated router base class name.
     generated_base_class: &'a str,
-    /// Generated sealed route path base class.
-    route_path_class: &'a str,
+    /// Generated sealed route base class.
+    route_base_class: &'a str,
     /// Generated route metadata list variable.
     routes_variable: &'a str,
     /// Generated route parser function.
@@ -177,7 +177,7 @@ fn render_runtime_file(spec: &RouterSpec, route_imports: &str) -> String {
         include_str!("templates/route_runtime.jinja"),
         RouteFileContext {
             generated_base_class: &spec.generated_base_class,
-            route_path_class: &spec.route_path_class,
+            route_base_class: &spec.route_base_class,
             routes_variable: &spec.routes_variable,
             parse_route_function: &spec.parse_route_function,
             route_location_function: &spec.route_location_function,

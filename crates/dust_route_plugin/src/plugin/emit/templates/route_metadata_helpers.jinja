@@ -1,18 +1,18 @@
-bool {{ route_requires_auth_function }}({{ route_path_class }} route) => route.requiresAuth;
+bool {{ route_requires_auth_function }}({{ route_base_class }} route) => route.requiresAuth;
 
-String? {{ route_branch_function }}({{ route_path_class }} route) {
+String? {{ route_branch_function }}({{ route_base_class }} route) {
   return switch (route) {
 {{ branch_cases }}    _ => null,
   };
 }
 
-RouteDebugInfo {{ route_debug_info_function }}({{ route_path_class }} route) {
+RouteDebugInfo {{ route_debug_info_function }}({{ route_base_class }} route) {
   return switch (route) {
 {{ debug_cases }}  };
 }
 
-List<RouteGuardBase<{{ route_path_class }}>> {{ route_guards_function }}(
-  {{ route_path_class }} route,
+List<RouteGuardBase<{{ route_base_class }}>> {{ route_guards_function }}(
+  {{ route_base_class }} route,
   Object router,
 ) {
   return switch (route) {

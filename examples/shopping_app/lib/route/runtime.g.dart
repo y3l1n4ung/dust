@@ -27,15 +27,15 @@ import 'package:shopping_app/features/shared/not_found_screen.dart';
 import 'package:shopping_app/features/support/views/support_chat_screen.dart';
 import 'package:shopping_app/features/wishlist/views/wishlist_screen.dart';
 
-abstract class $ShoppingRouter extends RouterBase<ShoppingRoutePath> {
+abstract class $ShoppingRouter extends RouterBase<ShoppingRoute> {
   @override
   Listenable? get refreshListenable => (this as dynamic).auth as Listenable?;
-  late final RouterConfig<ShoppingRoutePath> config = _buildConfig();
+  late final RouterConfig<ShoppingRoute> config = _buildConfig();
 
-  RouterConfig<ShoppingRoutePath> _buildConfig() {
-    final runtimeConfig = RouterRuntimeConfig<ShoppingRoutePath>(
+  RouterConfig<ShoppingRoute> _buildConfig() {
+    final runtimeConfig = RouterRuntimeConfig<ShoppingRoute>(
       router: this,
-      initialRoute: const ShoppingProductsRoute(),
+      initialRoute: const ProductsRoute(),
       parseRoute: parseShoppingRoute,
       routeLocation: shoppingRouteLocation,
       requiresAuth: shoppingRouteRequiresAuth,
@@ -46,8 +46,8 @@ abstract class $ShoppingRouter extends RouterBase<ShoppingRoutePath> {
       debugInfo: shoppingRouteDebugInfo,
       debugRoutes: $shoppingRoutes,
     );
-    final delegate = GeneratedRouterDelegate<ShoppingRoutePath>(runtimeConfig);
-    return RouterConfig<ShoppingRoutePath>(
+    final delegate = GeneratedRouterDelegate<ShoppingRoute>(runtimeConfig);
+    return RouterConfig<ShoppingRoute>(
       routeInformationProvider: PlatformRouteInformationProvider(
         initialRouteInformation: RouteInformation(
           uri: Uri.parse(
@@ -55,7 +55,7 @@ abstract class $ShoppingRouter extends RouterBase<ShoppingRoutePath> {
           ),
         ),
       ),
-      routeInformationParser: GeneratedRouteInformationParser<ShoppingRoutePath>(
+      routeInformationParser: GeneratedRouteInformationParser<ShoppingRoute>(
         router: this,
         parseRoute: parseShoppingRoute,
         routeLocation: shoppingRouteLocation,
@@ -66,76 +66,70 @@ abstract class $ShoppingRouter extends RouterBase<ShoppingRoutePath> {
   }
 }
 
-RouteStack<ShoppingRoutePath> restoreShoppingRouteStack(ShoppingRoutePath route) {
+RouteStack<ShoppingRoute> restoreShoppingRouteStack(ShoppingRoute route) {
   return switch (route) {
-    ShoppingProductsRoute() => [
+    ProductsRoute() => [
       route,
     ],
-    ShoppingNotFoundRoute(path: _) => [
-      const ShoppingProductsRoute(),
+    NotFoundRoute(path: _) => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingAdminRoute() => [
-      const ShoppingProductsRoute(),
+    AdminRoute() => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingCartRoute() => [
-      const ShoppingProductsRoute(),
+    CartRoute() => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingCheckoutRoute() => [
-      const ShoppingProductsRoute(),
+    CheckoutRoute() => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingDemoCartsRoute() => [
-      const ShoppingProductsRoute(),
+    DemoCartsRoute() => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingLoginRoute(redirectPath: _) => [
-      const ShoppingProductsRoute(),
+    LoginRoute(redirectPath: _) => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingOrderConfirmationRoute(orderId: _) => [
-      const ShoppingProductsRoute(),
+    OrderConfirmationRoute(orderId: _) => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingOrdersRoute() => [
-      const ShoppingProductsRoute(),
+    OrdersRoute() => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingOrderDetailRoute(orderId: _) => [
-      const ShoppingProductsRoute(),
-      const ShoppingOrdersRoute(),
+    OrderDetailRoute(orderId: _) => [
+      const ProductsRoute(),
+      const OrdersRoute(),
       route,
     ],
-    ShoppingProductDetailRoute(productId: _) => [
-      const ShoppingProductsRoute(),
+    ProductDetailRoute(productId: _) => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingProfileRoute() => [
-      const ShoppingProductsRoute(),
+    ProfileRoute() => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingRegisterRoute(redirectPath: _) => [
-      const ShoppingProductsRoute(),
+    RegisterRoute(redirectPath: _) => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingStaffRoute(
-      access: _,
-      from: _,
-      returnTo: _,
-      sections: _,
-      orderIds: _,
-    ) => [
-      const ShoppingProductsRoute(),
+    StaffRoute(access: _, from: _, returnTo: _, sections: _, orderIds: _) => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingSupportChatRoute() => [
-      const ShoppingProductsRoute(),
+    SupportChatRoute() => [
+      const ProductsRoute(),
       route,
     ],
-    ShoppingWishlistRoute() => [
-      const ShoppingProductsRoute(),
+    WishlistRoute() => [
+      const ProductsRoute(),
       route,
     ],
   };
@@ -161,7 +155,7 @@ const Map<Type, Type?> _$appliedShellsByPage = {
 };
 
 Page<dynamic> buildShoppingRoutePage(
-  ShoppingRoutePath route,
+  ShoppingRoute route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
@@ -170,7 +164,7 @@ Page<dynamic> buildShoppingRoutePage(
     'Shell mismatch between \$shoppingRoutes and buildShoppingRoutePage',
   );
   return switch (route) {
-    ShoppingProductsRoute() => generatedPage(
+    ProductsRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'products',
@@ -180,7 +174,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: const ProductsScreen(),
     ),
-    ShoppingNotFoundRoute(path: final path) => generatedPage(
+    NotFoundRoute(path: final path) => generatedPage(
       key: key,
       location: route.location,
       name: 'notFound',
@@ -189,7 +183,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: NotFoundScreen(path: path),
     ),
-    ShoppingAdminRoute() => generatedPage(
+    AdminRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'admin',
@@ -198,7 +192,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: const AdminDashboardScreen(),
     ),
-    ShoppingCartRoute() => generatedPage(
+    CartRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'cart',
@@ -208,7 +202,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: const CartScreen(),
     ),
-    ShoppingCheckoutRoute() => generatedPage(
+    CheckoutRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'checkout',
@@ -218,7 +212,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: const CheckoutScreen(),
     ),
-    ShoppingDemoCartsRoute() => generatedPage(
+    DemoCartsRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'demoCarts',
@@ -227,7 +221,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: const DemoCartsScreen(),
     ),
-    ShoppingLoginRoute(redirectPath: final redirectPath) => generatedPage(
+    LoginRoute(redirectPath: final redirectPath) => generatedPage(
       key: key,
       location: route.location,
       name: 'login',
@@ -236,7 +230,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: LoginScreen(redirectPath: redirectPath),
     ),
-    ShoppingOrderConfirmationRoute(orderId: final orderId) => generatedPage(
+    OrderConfirmationRoute(orderId: final orderId) => generatedPage(
       key: key,
       location: route.location,
       name: 'orderConfirmation',
@@ -246,7 +240,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: OrderConfirmationScreen(orderId: orderId),
     ),
-    ShoppingOrdersRoute() => generatedPage(
+    OrdersRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'orders',
@@ -255,7 +249,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: const OrdersScreen(),
     ),
-    ShoppingOrderDetailRoute(orderId: final orderId) => generatedPage(
+    OrderDetailRoute(orderId: final orderId) => generatedPage(
       key: key,
       location: route.location,
       name: 'orderDetail',
@@ -264,7 +258,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: OrderDetailScreen(orderId: orderId),
     ),
-    ShoppingProductDetailRoute(productId: final productId) => generatedPage(
+    ProductDetailRoute(productId: final productId) => generatedPage(
       key: key,
       location: route.location,
       name: 'productDetail',
@@ -273,7 +267,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: ProductDetailScreen(productId: productId),
     ),
-    ShoppingProfileRoute() => generatedPage(
+    ProfileRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'profile',
@@ -282,7 +276,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: const ProfileScreen(),
     ),
-    ShoppingRegisterRoute(redirectPath: final redirectPath) => generatedPage(
+    RegisterRoute(redirectPath: final redirectPath) => generatedPage(
       key: key,
       location: route.location,
       name: 'register',
@@ -291,7 +285,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: RegisterScreen(redirectPath: redirectPath),
     ),
-    ShoppingStaffRoute(
+    StaffRoute(
       access: final access,
       from: final from,
       returnTo: final returnTo,
@@ -312,7 +306,7 @@ Page<dynamic> buildShoppingRoutePage(
         orderIds: orderIds,
       ),
     ),
-    ShoppingSupportChatRoute() => generatedPage(
+    SupportChatRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'supportChat',
@@ -321,7 +315,7 @@ Page<dynamic> buildShoppingRoutePage(
       maintainState: true,
       child: const SupportChatScreen(),
     ),
-    ShoppingWishlistRoute() => generatedPage(
+    WishlistRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'wishlist',

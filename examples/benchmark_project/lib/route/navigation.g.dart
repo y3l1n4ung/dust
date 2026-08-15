@@ -8,24 +8,24 @@ import 'package:dust_flutter/route.dart';
 
 import 'paths.g.dart';
 extension BenchmarkRouterContext on BuildContext {
-  RouterController<BenchmarkRoutePath> get _routerController =>
-      RouterController.of<BenchmarkRoutePath>(this);
+  RouterController<BenchmarkRoute> get _routerController =>
+      RouterController.of<BenchmarkRoute>(this);
   BenchmarkRoutesNavigator get navigator => BenchmarkRoutesNavigator(_routerController);
 }
 
 final class BenchmarkRoutesNavigator {
   const BenchmarkRoutesNavigator(this._router);
 
-  final RouterController<BenchmarkRoutePath> _router;
+  final RouterController<BenchmarkRoute> _router;
 
   BenchmarkRouteAction<void> home() =>
-      BenchmarkRouteAction(_router, BenchmarkHomeRoute());
+      BenchmarkRouteAction(_router, HomeRoute());
 
   BenchmarkRouteAction<void> notFound({String path = ''}) =>
-      BenchmarkRouteAction(_router, BenchmarkNotFoundRoute(path: path));
+      BenchmarkRouteAction(_router, NotFoundRoute(path: path));
 
   BenchmarkRouteAction<void> modelDetail({required int id, String? tab, bool? archived}) =>
-      BenchmarkRouteAction(_router, BenchmarkModelDetailRoute(id: id, tab: tab, archived: archived));
+      BenchmarkRouteAction(_router, ModelDetailRoute(id: id, tab: tab, archived: archived));
 
   bool pop<R>([R? result]) => _router.pop<R>(result);
 }
@@ -33,8 +33,8 @@ final class BenchmarkRoutesNavigator {
 final class BenchmarkRouteAction<R> {
   const BenchmarkRouteAction(this._router, this.route);
 
-  final RouterController<BenchmarkRoutePath> _router;
-  final BenchmarkRoutePath<R> route;
+  final RouterController<BenchmarkRoute> _router;
+  final BenchmarkRoute<R> route;
 
   void go() => _router.go(route);
   Future<R?> push() => _router.push<R>(route);

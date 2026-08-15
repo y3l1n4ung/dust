@@ -211,8 +211,8 @@ pub(crate) struct RouterSpec {
     pub(crate) router_class: String,
     /// Generated abstract base class mixed into the router.
     pub(crate) generated_base_class: String,
-    /// Generated sealed route path base class.
-    pub(crate) route_path_class: String,
+    /// Generated sealed route base class.
+    pub(crate) route_base_class: String,
     /// Generated route metadata list variable.
     pub(crate) routes_variable: String,
     /// Generated route parser function.

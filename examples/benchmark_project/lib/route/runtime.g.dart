@@ -15,15 +15,15 @@ import 'package:dust_benchmark_project/pages/benchmark_home_page.dart';
 import 'package:dust_benchmark_project/pages/benchmark_not_found_page.dart';
 import 'package:dust_benchmark_project/pages/benchmark_shell.dart';
 
-abstract class $BenchmarkRouter extends RouterBase<BenchmarkRoutePath> {
+abstract class $BenchmarkRouter extends RouterBase<BenchmarkRoute> {
   @override
   Listenable? get refreshListenable => (this as dynamic).refresh as Listenable?;
-  late final RouterConfig<BenchmarkRoutePath> config = _buildConfig();
+  late final RouterConfig<BenchmarkRoute> config = _buildConfig();
 
-  RouterConfig<BenchmarkRoutePath> _buildConfig() {
-    final runtimeConfig = RouterRuntimeConfig<BenchmarkRoutePath>(
+  RouterConfig<BenchmarkRoute> _buildConfig() {
+    final runtimeConfig = RouterRuntimeConfig<BenchmarkRoute>(
       router: this,
-      initialRoute: const BenchmarkHomeRoute(),
+      initialRoute: const HomeRoute(),
       parseRoute: parseBenchmarkRoute,
       routeLocation: benchmarkRouteLocation,
       requiresAuth: benchmarkRouteRequiresAuth,
@@ -34,8 +34,8 @@ abstract class $BenchmarkRouter extends RouterBase<BenchmarkRoutePath> {
       debugInfo: benchmarkRouteDebugInfo,
       debugRoutes: $benchmarkRoutes,
     );
-    final delegate = GeneratedRouterDelegate<BenchmarkRoutePath>(runtimeConfig);
-    return RouterConfig<BenchmarkRoutePath>(
+    final delegate = GeneratedRouterDelegate<BenchmarkRoute>(runtimeConfig);
+    return RouterConfig<BenchmarkRoute>(
       routeInformationProvider: PlatformRouteInformationProvider(
         initialRouteInformation: RouteInformation(
           uri: Uri.parse(
@@ -43,7 +43,7 @@ abstract class $BenchmarkRouter extends RouterBase<BenchmarkRoutePath> {
           ),
         ),
       ),
-      routeInformationParser: GeneratedRouteInformationParser<BenchmarkRoutePath>(
+      routeInformationParser: GeneratedRouteInformationParser<BenchmarkRoute>(
         router: this,
         parseRoute: parseBenchmarkRoute,
         routeLocation: benchmarkRouteLocation,
@@ -54,17 +54,17 @@ abstract class $BenchmarkRouter extends RouterBase<BenchmarkRoutePath> {
   }
 }
 
-RouteStack<BenchmarkRoutePath> restoreBenchmarkRouteStack(BenchmarkRoutePath route) {
+RouteStack<BenchmarkRoute> restoreBenchmarkRouteStack(BenchmarkRoute route) {
   return switch (route) {
-    BenchmarkHomeRoute() => [
+    HomeRoute() => [
       route,
     ],
-    BenchmarkNotFoundRoute(path: _) => [
-      const BenchmarkHomeRoute(),
+    NotFoundRoute(path: _) => [
+      const HomeRoute(),
       route,
     ],
-    BenchmarkModelDetailRoute(id: _, tab: _, archived: _) => [
-      const BenchmarkHomeRoute(),
+    ModelDetailRoute(id: _, tab: _, archived: _) => [
+      const HomeRoute(),
       route,
     ],
   };
@@ -77,7 +77,7 @@ const Map<Type, Type?> _$appliedShellsByPage = {
 };
 
 Page<dynamic> buildBenchmarkRoutePage(
-  BenchmarkRoutePath route,
+  BenchmarkRoute route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
@@ -86,7 +86,7 @@ Page<dynamic> buildBenchmarkRoutePage(
     'Shell mismatch between \$benchmarkRoutes and buildBenchmarkRoutePage',
   );
   return switch (route) {
-    BenchmarkHomeRoute() => generatedPage(
+    HomeRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'home',
@@ -96,7 +96,7 @@ Page<dynamic> buildBenchmarkRoutePage(
       maintainState: true,
       child: BenchmarkShell(child: const BenchmarkHomePage()),
     ),
-    BenchmarkNotFoundRoute(path: final path) => generatedPage(
+    NotFoundRoute(path: final path) => generatedPage(
       key: key,
       location: route.location,
       name: 'notFound',
@@ -105,11 +105,7 @@ Page<dynamic> buildBenchmarkRoutePage(
       maintainState: true,
       child: BenchmarkShell(child: BenchmarkNotFoundPage(path: path)),
     ),
-    BenchmarkModelDetailRoute(
-      id: final id,
-      tab: final tab,
-      archived: final archived,
-    ) => generatedPage(
+    ModelDetailRoute(id: final id, tab: final tab, archived: final archived) => generatedPage(
       key: key,
       location: route.location,
       name: 'modelDetail',

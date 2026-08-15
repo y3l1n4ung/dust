@@ -5,8 +5,8 @@ use dust_ir::{ClassIr, DartFileIr};
 use dust_plugin_api::SymbolPlan;
 
 use super::{
-    constants::{ROUTER, ROUTERS_ANALYSIS_KEY},
-    model::{RouteSpec, RouterAnnotation, RouterFieldSpec, RouterSpec},
+    constants::{GUARDS_ANALYSIS_KEY, ROUTER, ROUTERS_ANALYSIS_KEY},
+    model::{GuardFact, RouteSpec, RouterAnnotation, RouterFieldSpec, RouterSpec},
     parse::router_config,
 };
 
@@ -22,7 +22,7 @@ mod validation;
 use guards::build_guard_specs;
 use identifiers::lower_camel;
 use routes::{build_route_spec, workspace_route_specs};
-use validation::validate_workspace_route_set;
+use validation::{GeneratedRouteNames, validate_workspace_route_set};
 
 /// Builds the final router spec for a library containing the workspace router.
 pub(crate) fn build_router_spec(
@@ -59,8 +59,11 @@ pub(crate) fn build_router_spec(
     }
 
     let names = router_generated_names(&router_class.name);
-    apply_router_route_prefix(&mut routes, &names.route_class_prefix);
-    validate_workspace_route_set(&routes)?;
+    validate_workspace_route_set(
+        &routes,
+        &names.generated_route_names(),
+        &workspace_classes(library, plan),
+    )?;
     let initial_route_class = route_class_for_path(
         &routes,
         router_annotation.initial.as_deref(),
@@ -82,7 +85,7 @@ pub(crate) fn build_router_spec(
     Ok(Some(RouterSpec {
         router_class: router_class.name.clone(),
         generated_base_class: names.generated_base_class,
-        route_path_class: names.route_path_class,
+        route_base_class: names.route_base_class,
         routes_variable: names.routes_variable,
         parse_route_function: names.parse_route_function,
         route_location_function: names.route_location_function,
@@ -105,12 +108,10 @@ pub(crate) fn build_router_spec(
 
 /// Generated public names derived from the handwritten router class.
 struct RouterGeneratedNames {
-    /// Prefix applied to every generated typed route data class.
-    route_class_prefix: String,
     /// Generated base class extended by the handwritten router.
     generated_base_class: String,
-    /// Generated sealed route path base class.
-    route_path_class: String,
+    /// Generated sealed route base class.
+    route_base_class: String,
     /// Generated route metadata tree variable.
     routes_variable: String,
     /// Generated URI parser function.
@@ -142,9 +143,8 @@ fn router_generated_names(router_class: &str) -> RouterGeneratedNames {
     let stem = router_class.strip_suffix("Router").unwrap_or(router_class);
     let lower = lower_camel(stem);
     RouterGeneratedNames {
-        route_class_prefix: stem.to_owned(),
         generated_base_class: format!("${router_class}"),
-        route_path_class: format!("{stem}RoutePath"),
+        route_base_class: format!("{stem}Route"),
         routes_variable: format!("${lower}Routes"),
         parse_route_function: format!("parse{stem}Route"),
         route_location_function: format!("{lower}RouteLocation"),
@@ -160,11 +160,15 @@ fn router_generated_names(router_class: &str) -> RouterGeneratedNames {
     }
 }
 
-/// Prefixes route classes with the router stem, unless already scoped.
-fn apply_router_route_prefix(routes: &mut [RouteSpec], prefix: &str) {
-    for route in routes {
-        if !route.route_class.starts_with(prefix) {
-            route.route_class = format!("{prefix}{}", route.route_class);
+impl RouterGeneratedNames {
+    /// Returns public generated names that share the Dart declaration namespace.
+    fn generated_route_names(&self) -> GeneratedRouteNames<'_> {
+        GeneratedRouteNames {
+            generated_base_class: &self.generated_base_class,
+            route_base_class: &self.route_base_class,
+            context_extension: &self.context_extension,
+            navigator_class: &self.navigator_class,
+            route_action_class: &self.route_action_class,
         }
     }
 }
@@ -203,6 +207,23 @@ fn workspace_router_count(plan: &SymbolPlan) -> usize {
     plan.workspace_string_set(ROUTERS_ANALYSIS_KEY)
         .unwrap_or_default()
         .len()
+}
+
+/// Returns class names discovered by route workspace analysis.
+fn workspace_classes(library: &DartFileIr, plan: &SymbolPlan) -> HashSet<String> {
+    let mut classes = library
+        .classes
+        .iter()
+        .map(|class| class.name.clone())
+        .collect::<HashSet<_>>();
+    classes.extend(
+        plan.workspace_string_set(GUARDS_ANALYSIS_KEY)
+            .unwrap_or_default()
+            .iter()
+            .filter_map(|value| serde_json::from_str::<GuardFact>(value).ok())
+            .map(|fact| fact.class_name),
+    );
+    classes
 }
 
 /// Resolves an annotation path to the generated route class for router settings.

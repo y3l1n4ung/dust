@@ -115,37 +115,37 @@ const List<GeneratedRoute> $testRoutes = [
   ),
 ];
 
-bool testRouteRequiresAuth(TestRoutePath route) => route.requiresAuth;
+bool testRouteRequiresAuth(TestRoute route) => route.requiresAuth;
 
-String? testRouteBranch(TestRoutePath route) {
+String? testRouteBranch(TestRoute route) {
   return switch (route) {
-    TestDashboardRoute() => testBranchMainTabs,
-    TestDashboardOrdersRoute() => testBranchMainTabs,
+    DashboardRoute() => testBranchMainTabs,
+    DashboardOrdersRoute() => testBranchMainTabs,
     _ => null,
   };
 }
 
-RouteDebugInfo testRouteDebugInfo(TestRoutePath route) {
+RouteDebugInfo testRouteDebugInfo(TestRoute route) {
   return switch (route) {
-    TestNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
-    TestAdminRoute() => const RouteDebugInfo(name: 'admin', shell: null, branch: null, resultType: 'void'),
-    TestDashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: 'AppShell', branch: testBranchMainTabs, resultType: 'void'),
-    TestDashboardOrdersRoute() => const RouteDebugInfo(name: 'dashboardOrders', shell: 'AppShell', branch: testBranchMainTabs, resultType: 'void'),
-    TestInviteRoute(code: _, team: _) => const RouteDebugInfo(name: 'invite', shell: null, branch: null, resultType: 'void'),
-    TestOrgProjectRoute(orgId: _, projectId: _, tab: _) => const RouteDebugInfo(name: 'orgProject', shell: null, branch: null, resultType: 'void'),
-    TestProductPickerRoute() => const RouteDebugInfo(name: 'productPicker', shell: null, branch: null, resultType: 'int'),
-    TestProductSearchRoute(query: _, page: _, showArchived: _) => const RouteDebugInfo(name: 'productSearch', shell: null, branch: null, resultType: 'void'),
-    TestSetupRoute() => const RouteDebugInfo(name: 'setup', shell: 'SetupShell', branch: null, resultType: 'void'),
-    TestSetupConnectRoute() => const RouteDebugInfo(name: 'setupConnect', shell: 'SetupShell', branch: null, resultType: 'void'),
+    NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: null, branch: null, resultType: 'void'),
+    AdminRoute() => const RouteDebugInfo(name: 'admin', shell: null, branch: null, resultType: 'void'),
+    DashboardRoute() => const RouteDebugInfo(name: 'dashboard', shell: 'AppShell', branch: testBranchMainTabs, resultType: 'void'),
+    DashboardOrdersRoute() => const RouteDebugInfo(name: 'dashboardOrders', shell: 'AppShell', branch: testBranchMainTabs, resultType: 'void'),
+    InviteRoute(code: _, team: _) => const RouteDebugInfo(name: 'invite', shell: null, branch: null, resultType: 'void'),
+    OrgProjectRoute(orgId: _, projectId: _, tab: _) => const RouteDebugInfo(name: 'orgProject', shell: null, branch: null, resultType: 'void'),
+    ProductPickerRoute() => const RouteDebugInfo(name: 'productPicker', shell: null, branch: null, resultType: 'int'),
+    ProductSearchRoute(query: _, page: _, showArchived: _) => const RouteDebugInfo(name: 'productSearch', shell: null, branch: null, resultType: 'void'),
+    SetupRoute() => const RouteDebugInfo(name: 'setup', shell: 'SetupShell', branch: null, resultType: 'void'),
+    SetupConnectRoute() => const RouteDebugInfo(name: 'setupConnect', shell: 'SetupShell', branch: null, resultType: 'void'),
   };
 }
 
-List<RouteGuardBase<TestRoutePath>> testRouteGuards(
-  TestRoutePath route,
+List<RouteGuardBase<TestRoute>> testRouteGuards(
+  TestRoute route,
   Object router,
 ) {
   return switch (route) {
-    TestAdminRoute() => [AdminGuard()],
+    AdminRoute() => [AdminGuard()],
     _ => const [],
   };
 }
@@ -162,43 +162,43 @@ import 'package:dust_flutter/route.dart';
 
 import 'paths.g.dart';
 extension TestRouterContext on BuildContext {
-  RouterController<TestRoutePath> get _routerController =>
-      RouterController.of<TestRoutePath>(this);
+  RouterController<TestRoute> get _routerController =>
+      RouterController.of<TestRoute>(this);
   TestRoutesNavigator get navigator => TestRoutesNavigator(_routerController);
 }
 
 final class TestRoutesNavigator {
   const TestRoutesNavigator(this._router);
 
-  final RouterController<TestRoutePath> _router;
+  final RouterController<TestRoute> _router;
 
   TestRouteAction<void> notFound({String path = ''}) =>
-      TestRouteAction(_router, TestNotFoundRoute(path: path));
+      TestRouteAction(_router, NotFoundRoute(path: path));
 
-  TestRouteAction<void> admin() => TestRouteAction(_router, TestAdminRoute());
+  TestRouteAction<void> admin() => TestRouteAction(_router, AdminRoute());
 
   TestRouteAction<void> dashboard() =>
-      TestRouteAction(_router, TestDashboardRoute());
+      TestRouteAction(_router, DashboardRoute());
 
   TestRouteAction<void> dashboardOrders() =>
-      TestRouteAction(_router, TestDashboardOrdersRoute());
+      TestRouteAction(_router, DashboardOrdersRoute());
 
   TestRouteAction<void> invite({required String code, String? team}) =>
-      TestRouteAction(_router, TestInviteRoute(code: code, team: team));
+      TestRouteAction(_router, InviteRoute(code: code, team: team));
 
   TestRouteAction<void> orgProject({required String orgId, required int projectId, String? tab}) =>
-      TestRouteAction(_router, TestOrgProjectRoute(orgId: orgId, projectId: projectId, tab: tab));
+      TestRouteAction(_router, OrgProjectRoute(orgId: orgId, projectId: projectId, tab: tab));
 
   TestRouteAction<int> productPicker() =>
-      TestRouteAction(_router, TestProductPickerRoute());
+      TestRouteAction(_router, ProductPickerRoute());
 
   TestRouteAction<void> productSearch({String? query, int page = 1, bool showArchived = false}) =>
-      TestRouteAction(_router, TestProductSearchRoute(query: query, page: page, showArchived: showArchived));
+      TestRouteAction(_router, ProductSearchRoute(query: query, page: page, showArchived: showArchived));
 
-  TestRouteAction<void> setup() => TestRouteAction(_router, TestSetupRoute());
+  TestRouteAction<void> setup() => TestRouteAction(_router, SetupRoute());
 
   TestRouteAction<void> setupConnect() =>
-      TestRouteAction(_router, TestSetupConnectRoute());
+      TestRouteAction(_router, SetupConnectRoute());
 
   bool pop<R>([R? result]) => _router.pop<R>(result);
 }
@@ -206,8 +206,8 @@ final class TestRoutesNavigator {
 final class TestRouteAction<R> {
   const TestRouteAction(this._router, this.route);
 
-  final RouterController<TestRoutePath> _router;
-  final TestRoutePath<R> route;
+  final RouterController<TestRoute> _router;
+  final TestRoute<R> route;
 
   void go() => _router.go(route);
   Future<R?> push() => _router.push<R>(route);
@@ -223,8 +223,8 @@ final class TestRouteAction<R> {
 
 import 'package:dust_flutter/route.dart';
 
-sealed class TestRoutePath<R> {
-  const TestRoutePath();
+sealed class TestRoute<R> {
+  const TestRoute();
 
   String get location;
 
@@ -233,9 +233,9 @@ sealed class TestRoutePath<R> {
   bool get requiresAuth => true;
 }
 
-/// Typed route data for `TestNotFoundRoute`.
-final class TestNotFoundRoute extends TestRoutePath<void> {
-  const TestNotFoundRoute({this.path = ''});
+/// Typed route data for `NotFoundRoute`.
+final class NotFoundRoute extends TestRoute<void> {
+  const NotFoundRoute({this.path = ''});
 
   final String path;
 
@@ -252,9 +252,9 @@ final class TestNotFoundRoute extends TestRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `TestAdminRoute`.
-final class TestAdminRoute extends TestRoutePath<void> {
-  const TestAdminRoute();
+/// Typed route data for `AdminRoute`.
+final class AdminRoute extends TestRoute<void> {
+  const AdminRoute();
 
   @override
   String get location {
@@ -265,9 +265,9 @@ final class TestAdminRoute extends TestRoutePath<void> {
   }
 }
 
-/// Typed route data for `TestDashboardRoute`.
-final class TestDashboardRoute extends TestRoutePath<void> {
-  const TestDashboardRoute();
+/// Typed route data for `DashboardRoute`.
+final class DashboardRoute extends TestRoute<void> {
+  const DashboardRoute();
 
   @override
   String get location {
@@ -281,9 +281,9 @@ final class TestDashboardRoute extends TestRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `TestDashboardOrdersRoute`.
-final class TestDashboardOrdersRoute extends TestRoutePath<void> {
-  const TestDashboardOrdersRoute();
+/// Typed route data for `DashboardOrdersRoute`.
+final class DashboardOrdersRoute extends TestRoute<void> {
+  const DashboardOrdersRoute();
 
   @override
   String get location {
@@ -294,9 +294,9 @@ final class TestDashboardOrdersRoute extends TestRoutePath<void> {
   }
 }
 
-/// Typed route data for `TestInviteRoute`.
-final class TestInviteRoute extends TestRoutePath<void> {
-  const TestInviteRoute({required this.code, this.team});
+/// Typed route data for `InviteRoute`.
+final class InviteRoute extends TestRoute<void> {
+  const InviteRoute({required this.code, this.team});
 
   final String code;
   final String? team;
@@ -318,9 +318,9 @@ final class TestInviteRoute extends TestRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `TestOrgProjectRoute`.
-final class TestOrgProjectRoute extends TestRoutePath<void> {
-  const TestOrgProjectRoute({required this.orgId, required this.projectId, this.tab});
+/// Typed route data for `OrgProjectRoute`.
+final class OrgProjectRoute extends TestRoute<void> {
+  const OrgProjectRoute({required this.orgId, required this.projectId, this.tab});
 
   final String orgId;
   final int projectId;
@@ -340,9 +340,9 @@ final class TestOrgProjectRoute extends TestRoutePath<void> {
   }
 }
 
-/// Typed route data for `TestProductPickerRoute`.
-final class TestProductPickerRoute extends TestRoutePath<int> {
-  const TestProductPickerRoute();
+/// Typed route data for `ProductPickerRoute`.
+final class ProductPickerRoute extends TestRoute<int> {
+  const ProductPickerRoute();
 
   @override
   String get location {
@@ -356,9 +356,9 @@ final class TestProductPickerRoute extends TestRoutePath<int> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `TestProductSearchRoute`.
-final class TestProductSearchRoute extends TestRoutePath<void> {
-  const TestProductSearchRoute({this.query, this.page = 1, this.showArchived = false});
+/// Typed route data for `ProductSearchRoute`.
+final class ProductSearchRoute extends TestRoute<void> {
+  const ProductSearchRoute({this.query, this.page = 1, this.showArchived = false});
 
   final String? query;
   final int page;
@@ -387,9 +387,9 @@ final class TestProductSearchRoute extends TestRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `TestSetupRoute`.
-final class TestSetupRoute extends TestRoutePath<void> {
-  const TestSetupRoute();
+/// Typed route data for `SetupRoute`.
+final class SetupRoute extends TestRoute<void> {
+  const SetupRoute();
 
   @override
   String get location {
@@ -403,9 +403,9 @@ final class TestSetupRoute extends TestRoutePath<void> {
   bool get requiresAuth => false;
 }
 
-/// Typed route data for `TestSetupConnectRoute`.
-final class TestSetupConnectRoute extends TestRoutePath<void> {
-  const TestSetupConnectRoute();
+/// Typed route data for `SetupConnectRoute`.
+final class SetupConnectRoute extends TestRoute<void> {
+  const SetupConnectRoute();
 
   @override
   String get location {
@@ -416,21 +416,21 @@ final class TestSetupConnectRoute extends TestRoutePath<void> {
   }
 }
 
-String testRouteLocation(TestRoutePath route) => route.location;
+String testRouteLocation(TestRoute route) => route.location;
 
-TestRoutePath parseTestRoute(Uri uri) {
+TestRoute parseTestRoute(Uri uri) {
   final segments = uri.pathSegments;
 
   if (segments.length == 1 && segments[0] == '404') {
-    final route = TestNotFoundRoute(path: uri.queryParameters['path'] ?? '');
+    final route = NotFoundRoute(path: uri.queryParameters['path'] ?? '');
     return withGeneratedRouteUriExtras(route, uri, const {'path'});
   }
   if (segments.length == 1 && segments[0] == 'admin') {
-    final route = TestAdminRoute();
+    final route = AdminRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'dashboard') {
-    final route = TestDashboardRoute();
+    final route = DashboardRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (
@@ -438,13 +438,13 @@ TestRoutePath parseTestRoute(Uri uri) {
     segments[0] == 'dashboard' &&
     segments[1] == 'orders'
   ) {
-    final route = TestDashboardOrdersRoute();
+    final route = DashboardOrdersRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'invite') {
     final code = segments[1];
     final team = uri.queryParameters['team'];
-    final route = TestInviteRoute(code: code, team: team);
+    final route = InviteRoute(code: code, team: team);
     return withGeneratedRouteUriExtras(route, uri, const <String>{'team'});
   }
   if (segments.length == 4 && segments[0] == 'orgs' && segments[2] == 'projects') {
@@ -454,7 +454,7 @@ TestRoutePath parseTestRoute(Uri uri) {
     if (projectId == null) {
       return _$notFoundRoute(uri);
     }
-    final route = TestOrgProjectRoute(
+    final route = OrgProjectRoute(
       orgId: orgId,
       projectId: projectId,
       tab: tab,
@@ -462,7 +462,7 @@ TestRoutePath parseTestRoute(Uri uri) {
     return withGeneratedRouteUriExtras(route, uri, const <String>{'tab'});
   }
   if (segments.length == 1 && segments[0] == 'product-picker') {
-    final route = TestProductPickerRoute();
+    final route = ProductPickerRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 1 && segments[0] == 'products') {
@@ -475,7 +475,7 @@ TestRoutePath parseTestRoute(Uri uri) {
     if (showArchived == null) {
       return _$notFoundRoute(uri);
     }
-    final route = TestProductSearchRoute(
+    final route = ProductSearchRoute(
       query: query,
       page: page,
       showArchived: showArchived,
@@ -483,17 +483,17 @@ TestRoutePath parseTestRoute(Uri uri) {
     return withGeneratedRouteUriExtras(route, uri, const <String>{'query', 'page', 'showArchived'});
   }
   if (segments.length == 1 && segments[0] == 'setup') {
-    final route = TestSetupRoute();
+    final route = SetupRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   if (segments.length == 2 && segments[0] == 'setup' && segments[1] == 'connect') {
-    final route = TestSetupConnectRoute();
+    final route = SetupConnectRoute();
     return withGeneratedRouteUriExtras(route, uri, const <String>{});
   }
   return _$notFoundRoute(uri);
 }
 
-TestRoutePath _$notFoundRoute(Uri uri) => TestNotFoundRoute(path: uri.toString());
+TestRoute _$notFoundRoute(Uri uri) => NotFoundRoute(path: uri.toString());
 
 
 // file: lib/route/routes.g.dart
@@ -521,14 +521,14 @@ import 'paths.g.dart';
 import 'metadata.g.dart';
 import '../route.dart';
 
-abstract class $TestRouter extends RouterBase<TestRoutePath> {
+abstract class $TestRouter extends RouterBase<TestRoute> {
 
-  late final RouterConfig<TestRoutePath> config = _buildConfig();
+  late final RouterConfig<TestRoute> config = _buildConfig();
 
-  RouterConfig<TestRoutePath> _buildConfig() {
-    final runtimeConfig = RouterRuntimeConfig<TestRoutePath>(
+  RouterConfig<TestRoute> _buildConfig() {
+    final runtimeConfig = RouterRuntimeConfig<TestRoute>(
       router: this,
-      initialRoute: const TestDashboardRoute(),
+      initialRoute: const DashboardRoute(),
       parseRoute: parseTestRoute,
       routeLocation: testRouteLocation,
       requiresAuth: testRouteRequiresAuth,
@@ -539,8 +539,8 @@ abstract class $TestRouter extends RouterBase<TestRoutePath> {
       debugInfo: testRouteDebugInfo,
       debugRoutes: $testRoutes,
     );
-    final delegate = GeneratedRouterDelegate<TestRoutePath>(runtimeConfig);
-    return RouterConfig<TestRoutePath>(
+    final delegate = GeneratedRouterDelegate<TestRoute>(runtimeConfig);
+    return RouterConfig<TestRoute>(
       routeInformationProvider: PlatformRouteInformationProvider(
         initialRouteInformation: RouteInformation(
           uri: Uri.parse(
@@ -548,7 +548,7 @@ abstract class $TestRouter extends RouterBase<TestRoutePath> {
           ),
         ),
       ),
-      routeInformationParser: GeneratedRouteInformationParser<TestRoutePath>(
+      routeInformationParser: GeneratedRouteInformationParser<TestRoute>(
         router: this,
         parseRoute: parseTestRoute,
         routeLocation: testRouteLocation,
@@ -559,38 +559,38 @@ abstract class $TestRouter extends RouterBase<TestRoutePath> {
   }
 }
 
-RouteStack<TestRoutePath> restoreTestRouteStack(TestRoutePath route) {
+RouteStack<TestRoute> restoreTestRouteStack(TestRoute route) {
   return switch (route) {
-    TestNotFoundRoute(path: _) => [
+    NotFoundRoute(path: _) => [
       route,
     ],
-    TestAdminRoute() => [
+    AdminRoute() => [
       route,
     ],
-    TestDashboardRoute() => [
+    DashboardRoute() => [
       route,
     ],
-    TestDashboardOrdersRoute() => [
-      const TestDashboardRoute(),
+    DashboardOrdersRoute() => [
+      const DashboardRoute(),
       route,
     ],
-    TestInviteRoute(code: _, team: _) => [
+    InviteRoute(code: _, team: _) => [
       route,
     ],
-    TestOrgProjectRoute(orgId: _, projectId: _, tab: _) => [
+    OrgProjectRoute(orgId: _, projectId: _, tab: _) => [
       route,
     ],
-    TestProductPickerRoute() => [
+    ProductPickerRoute() => [
       route,
     ],
-    TestProductSearchRoute(query: _, page: _, showArchived: _) => [
+    ProductSearchRoute(query: _, page: _, showArchived: _) => [
       route,
     ],
-    TestSetupRoute() => [
+    SetupRoute() => [
       route,
     ],
-    TestSetupConnectRoute() => [
-      const TestSetupRoute(),
+    SetupConnectRoute() => [
+      const SetupRoute(),
       route,
     ],
   };
@@ -610,7 +610,7 @@ const Map<Type, Type?> _$appliedShellsByPage = {
 };
 
 Page<dynamic> buildTestRoutePage(
-  TestRoutePath route,
+  TestRoute route,
   LocalKey key,
   PopInvokedWithResultCallback<Object?> onPopInvoked,
 ) {
@@ -619,7 +619,7 @@ Page<dynamic> buildTestRoutePage(
     'Shell mismatch between \$testRoutes and buildTestRoutePage',
   );
   return switch (route) {
-    TestNotFoundRoute(path: final path) => generatedPage(
+    NotFoundRoute(path: final path) => generatedPage(
       key: key,
       location: route.location,
       name: 'notFound',
@@ -628,7 +628,7 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: NotFoundPage(path: path),
     ),
-    TestAdminRoute() => generatedPage(
+    AdminRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'admin',
@@ -637,7 +637,7 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: const AdminPage(),
     ),
-    TestDashboardRoute() => generatedPage(
+    DashboardRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'dashboard',
@@ -646,7 +646,7 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: AppShell(child: const DashboardPage()),
     ),
-    TestDashboardOrdersRoute() => generatedPage(
+    DashboardOrdersRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'dashboardOrders',
@@ -655,7 +655,7 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: AppShell(child: const DashboardOrdersPage()),
     ),
-    TestInviteRoute(code: final code, team: final team) => generatedPage(
+    InviteRoute(code: final code, team: final team) => generatedPage(
       key: key,
       location: route.location,
       name: 'invite',
@@ -664,7 +664,7 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: InvitePage(code: code, team: team),
     ),
-    TestOrgProjectRoute(
+    OrgProjectRoute(
       orgId: final orgId,
       projectId: final projectId,
       tab: final tab,
@@ -677,7 +677,7 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: OrgProjectPage(orgId: orgId, projectId: projectId, tab: tab),
     ),
-    TestProductPickerRoute() => generatedPage(
+    ProductPickerRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'productPicker',
@@ -687,7 +687,7 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: const ProductPickerPage(),
     ),
-    TestProductSearchRoute(
+    ProductSearchRoute(
       query: final query,
       page: final page,
       showArchived: final showArchived,
@@ -700,7 +700,7 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: ProductSearchPage(query: query, page: page, showArchived: showArchived),
     ),
-    TestSetupRoute() => generatedPage(
+    SetupRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'setup',
@@ -709,7 +709,7 @@ Page<dynamic> buildTestRoutePage(
       maintainState: true,
       child: SetupShell(child: const SetupPage()),
     ),
-    TestSetupConnectRoute() => generatedPage(
+    SetupConnectRoute() => generatedPage(
       key: key,
       location: route.location,
       name: 'setupConnect',

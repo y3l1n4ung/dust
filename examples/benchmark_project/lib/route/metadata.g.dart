@@ -46,28 +46,28 @@ const List<GeneratedRoute> $benchmarkRoutes = [
   ),
 ];
 
-bool benchmarkRouteRequiresAuth(BenchmarkRoutePath route) => route.requiresAuth;
+bool benchmarkRouteRequiresAuth(BenchmarkRoute route) => route.requiresAuth;
 
-String? benchmarkRouteBranch(BenchmarkRoutePath route) {
+String? benchmarkRouteBranch(BenchmarkRoute route) {
   return switch (route) {
     _ => null,
   };
 }
 
-RouteDebugInfo benchmarkRouteDebugInfo(BenchmarkRoutePath route) {
+RouteDebugInfo benchmarkRouteDebugInfo(BenchmarkRoute route) {
   return switch (route) {
-    BenchmarkHomeRoute() => const RouteDebugInfo(name: 'home', shell: 'BenchmarkShell', branch: null, resultType: 'void'),
-    BenchmarkNotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: 'BenchmarkShell', branch: null, resultType: 'void'),
-    BenchmarkModelDetailRoute(id: _, tab: _, archived: _) => const RouteDebugInfo(name: 'modelDetail', shell: 'BenchmarkShell', branch: null, resultType: 'void'),
+    HomeRoute() => const RouteDebugInfo(name: 'home', shell: 'BenchmarkShell', branch: null, resultType: 'void'),
+    NotFoundRoute(path: _) => const RouteDebugInfo(name: 'notFound', shell: 'BenchmarkShell', branch: null, resultType: 'void'),
+    ModelDetailRoute(id: _, tab: _, archived: _) => const RouteDebugInfo(name: 'modelDetail', shell: 'BenchmarkShell', branch: null, resultType: 'void'),
   };
 }
 
-List<RouteGuardBase<BenchmarkRoutePath>> benchmarkRouteGuards(
-  BenchmarkRoutePath route,
+List<RouteGuardBase<BenchmarkRoute>> benchmarkRouteGuards(
+  BenchmarkRoute route,
   Object router,
 ) {
   return switch (route) {
-    BenchmarkHomeRoute() => [BenchmarkGuard()],
+    HomeRoute() => [BenchmarkGuard()],
     _ => const [],
   };
 }
