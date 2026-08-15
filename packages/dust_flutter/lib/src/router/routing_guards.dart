@@ -5,7 +5,7 @@ part of 'routing_core.dart';
 
 /// Common supertype for every route guard accepted by generated routers.
 ///
-/// Generated guard lists are typed as `List<RouteGuardBase<RoutePath>>`, so a
+/// Generated guard lists are typed against the router's route base class, so a
 /// class listed in `@AppRoute(guards: [...])` that implements neither
 /// [RouteGuard] nor [AsyncRouteGuard] fails to compile instead of being
 /// skipped at runtime.
@@ -63,7 +63,7 @@ Future<T?> _runRouteGuards<T extends Object>(
         'Route guard ${guard.runtimeType} implements neither RouteGuard<$T> '
         'nor AsyncRouteGuard<$T>, so its access check cannot run. '
         'Implement one of them, and check the type argument matches the '
-        "router's generated route path type.",
+        "router's generated route base type.",
       );
     }
 
