@@ -54,11 +54,11 @@ struct GuardCaseContext {
     guards: String,
 }
 
-/// Renders generated route helpers.
-pub(super) fn render_path_helpers(out: &mut String, spec: &RouterSpec) {
+/// Renders the generated helper that returns a route location.
+pub(super) fn render_route_location_helpers(out: &mut String, spec: &RouterSpec) {
     out.push_str(&render_template(
-        "route_path_helpers",
-        include_str!("templates/route_path_helpers.jinja"),
+        "route_location_helpers",
+        include_str!("templates/route_location_helpers.jinja"),
         helpers_context(spec),
     ));
     out.push_str("\n\n");

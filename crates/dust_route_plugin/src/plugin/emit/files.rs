@@ -10,7 +10,9 @@ use crate::plugin::model::RouterSpec;
 use super::{
     imports::{RouteImportKind, render_route_imports},
     metadata,
-    navigation::{render_metadata_helpers, render_navigation_helpers, render_path_helpers},
+    navigation::{
+        render_metadata_helpers, render_navigation_helpers, render_route_location_helpers,
+    },
     page_builder::{render_page_builder, render_shell_consistency_helpers},
     parser::render_parser,
     restore::render_restore_stack,
@@ -133,11 +135,11 @@ fn route_output_dir(library: &DartFileIr) -> PathBuf {
     output_path.with_extension("")
 }
 
-/// Renders generated route classes, path helpers, and the URI parser.
+/// Renders generated route classes, location helpers, and the URI parser.
 fn render_paths_file(spec: &RouterSpec, route_imports: &str) -> String {
     let mut body = String::new();
     render_route_classes(&mut body, spec);
-    render_path_helpers(&mut body, spec);
+    render_route_location_helpers(&mut body, spec);
     render_parser(&mut body, spec);
     generated_file(
         "import 'package:dust_flutter/route.dart';\n\n",
