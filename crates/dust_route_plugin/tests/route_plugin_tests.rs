@@ -12,5 +12,8 @@ mod validation;
 #[path = "route_plugin_tests/emission.rs"]
 mod emission;
 
+#[path = "route_plugin_tests/inspect.rs"]
+mod inspect;
+
 #[path = "route_plugin_tests/workspace_analysis.rs"]
 mod workspace_analysis;

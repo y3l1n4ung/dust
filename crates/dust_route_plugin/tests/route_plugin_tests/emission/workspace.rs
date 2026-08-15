@@ -1,8 +1,7 @@
-use std::sync::Arc;
-
 use dust_ir::TypeIr;
 use dust_plugin_api::{SymbolPlan, WorkspaceAnalysisBuilder};
 use serde_json::json;
+use std::sync::Arc;
 
 use crate::support::{constructor_param, library_with_classes, route_page_class, router_class};
 
