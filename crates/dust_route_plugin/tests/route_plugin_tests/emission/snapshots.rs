@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use crate::support::{
     constructor_param, defaulted_param, defaulted_param_source, guard_class, library_with_classes,
-    route_page_class, router_class,
+    route_page_class, router_class, router_field,
 };
 
 use super::support::{assert_route_snapshot, generate_route_output, route_outputs_snapshot};
@@ -250,6 +250,29 @@ fn emits_guard_helpers_with_custom_router_base_name() {
     let output = route_outputs_snapshot(&contribution);
 
     assert_route_snapshot("custom_router_guard_route.dart.snapshot", &output);
+}
+
+#[test]
+fn emits_guard_dependency_injection() {
+    let mut router = router_class("(initial: '/', notFound: '/404')");
+    router.fields = vec![router_field("auth", "AuthService")];
+    let library = library_with_classes(vec![
+        router,
+        route_page_class(
+            "DashboardPage",
+            "('/', name: 'dashboard', guards: [AuthGuard])",
+            Vec::new(),
+        ),
+        guard_class(
+            "AuthGuard",
+            vec![constructor_param("auth", TypeIr::named("AuthService"))],
+        ),
+    ]);
+
+    let contribution = generate_route_output(&library);
+    let output = route_outputs_snapshot(&contribution);
+
+    assert_route_snapshot("guard_dependency_injection_route.dart.snapshot", &output);
 }
 
 #[test]

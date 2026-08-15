@@ -1,7 +1,7 @@
 use dust_ir::{
     ClassIr, ClassKindIr, ConfigApplicationIr, ConstructorIr, ConstructorParamIr, DartFileIr,
-    EnumIr, EnumVariantIr, NormalizedConfigIr, ParamKind, RouteConfigIr, RouterConfigIr, SpanIr,
-    SymbolId, TypeIr,
+    EnumIr, EnumVariantIr, FieldIr, NormalizedConfigIr, ParamKind, RouteConfigIr, RouterConfigIr,
+    SpanIr, SymbolId, TypeIr,
 };
 use dust_text::{FileId, TextRange};
 
@@ -153,6 +153,17 @@ pub(crate) fn constructor_param(name: &str, ty: TypeIr) -> ConstructorParamIr {
         kind: ParamKind::Named,
         has_default: false,
         default_value_source: None,
+    }
+}
+
+pub(crate) fn router_field(name: &str, type_name: &str) -> FieldIr {
+    FieldIr {
+        name: name.to_owned(),
+        ty: TypeIr::named(type_name),
+        span: span(0, 0),
+        has_default: false,
+        serde: None,
+        configs: Vec::new(),
     }
 }
 

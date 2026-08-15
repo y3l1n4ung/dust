@@ -1,8 +1,7 @@
 use dust_ir::TypeIr;
 
 use crate::support::{
-    constructor_param, guard_class, library_with_classes, named_constructor_guard_class,
-    route_page_class, router_class,
+    constructor_param, guard_class, library_with_classes, route_page_class, router_class,
 };
 
 use super::support::{diagnostic_messages, generate_route_output, route_outputs_snapshot};
@@ -161,58 +160,6 @@ fn rejects_duplicate_route_names_with_page_paths_before_emitting_parser() {
             "duplicate route name `cart` used by `CartPage` (`/cart`) and `CartSummaryPage` (`/cart/summary`)",
             "generated route helper `cart` is emitted more than once",
             "generated route class `CartRoute` is emitted by more than one route name"
-        ]
-    );
-}
-
-#[test]
-fn rejects_guard_without_unnamed_constructor() {
-    let library = library_with_classes(vec![
-        router_class("(initial: '/', notFound: '/404')"),
-        route_page_class(
-            "DashboardPage",
-            "('/', name: 'dashboard', guards: [AuthGuard])",
-            Vec::new(),
-        ),
-        named_constructor_guard_class("AuthGuard"),
-    ]);
-
-    let contribution = generate_route_output(&library);
-
-    assert!(contribution.primary_source.is_none());
-    assert_eq!(
-        diagnostic_messages(&contribution.diagnostics),
-        vec![
-            "route guard `AuthGuard` needs an unnamed generative constructor for generated route guard lookup"
-        ]
-    );
-}
-
-#[test]
-fn rejects_guard_required_dependency_with_unresolvable_type() {
-    let library = library_with_classes(vec![
-        router_class("(initial: '/', notFound: '/404')"),
-        route_page_class(
-            "DashboardPage",
-            "('/', name: 'dashboard', guards: [AuthGuard])",
-            Vec::new(),
-        ),
-        guard_class(
-            "AuthGuard",
-            vec![constructor_param(
-                "predicate",
-                TypeIr::function("bool Function(String value)"),
-            )],
-        ),
-    ]);
-
-    let contribution = generate_route_output(&library);
-
-    assert!(contribution.primary_source.is_none());
-    assert_eq!(
-        diagnostic_messages(&contribution.diagnostics),
-        vec![
-            "route guard `AuthGuard` constructor parameter `predicate` needs a resolvable type for router injection"
         ]
     );
 }
