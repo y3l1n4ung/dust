@@ -3,7 +3,7 @@ use dust_cli::run_cli;
 use super::helpers::{DustImport, make_workspace, write_dust_file};
 
 #[test]
-fn cli_route_table_prints_effective_route_rows() {
+fn cli_route_table_prints_effective_routes() {
     let workspace = make_workspace();
     write_dust_file(
         &workspace.path().join("lib/route.dart"),

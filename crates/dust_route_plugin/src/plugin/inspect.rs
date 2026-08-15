@@ -7,9 +7,9 @@ use super::{
     model::{RouteAnnotation, RouteFact, RouterFact},
 };
 
-/// One route row shown by route inspection tooling.
+/// One inspected route shown by route tooling.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RouteTableRow {
+pub struct RouteInspectionEntry {
     /// Effective route name.
     pub name: String,
     /// Absolute route path.
@@ -28,14 +28,16 @@ pub struct RouteTableRow {
     pub result_type: String,
 }
 
-/// Builds deterministic route table rows from workspace analysis snapshots.
-pub fn route_table_rows(snapshots: &[LibraryAnalysisSnapshot]) -> Vec<RouteTableRow> {
+/// Builds deterministic route inspection entries from workspace analysis snapshots.
+pub fn route_inspection_entries(
+    snapshots: &[LibraryAnalysisSnapshot],
+) -> Vec<RouteInspectionEntry> {
     let facts = route_facts(snapshots);
     let public_paths = not_found_paths(snapshots);
 
     facts
         .iter()
-        .map(|fact| RouteTableRow {
+        .map(|fact| RouteInspectionEntry {
             name: route_name(fact),
             path: fact.path.clone(),
             page: fact.class_name.clone(),

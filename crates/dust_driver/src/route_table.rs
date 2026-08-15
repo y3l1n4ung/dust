@@ -1,6 +1,6 @@
 use crate::{
     request::RouteTableRequest,
-    result::{CommandResult, RouteTableReport, RouteTableRow},
+    result::{CommandResult, RouteInspectionEntry, RouteTableReport},
     route_inspection::collect_route_inspection,
 };
 
@@ -10,17 +10,17 @@ pub fn run_route_table(request: RouteTableRequest) -> CommandResult {
     if inspection.scanned_files == 0 && inspection.result.has_errors() {
         return inspection.result;
     }
-    let routes = dust_route_plugin::inspect::route_table_rows(&inspection.snapshots)
+    let routes = dust_route_plugin::inspect::route_inspection_entries(&inspection.snapshots)
         .into_iter()
-        .map(|row| RouteTableRow {
-            name: row.name,
-            path: row.path,
-            page: row.page,
-            shell: row.shell,
-            branch: row.branch,
-            guards: row.guards,
-            requires_auth: row.requires_auth,
-            result_type: row.result_type,
+        .map(|entry| RouteInspectionEntry {
+            name: entry.name,
+            path: entry.path,
+            page: entry.page,
+            shell: entry.shell,
+            branch: entry.branch,
+            guards: entry.guards,
+            requires_auth: entry.requires_auth,
+            result_type: entry.result_type,
         })
         .collect();
     let mut result = inspection.result;

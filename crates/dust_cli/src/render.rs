@@ -179,7 +179,7 @@ pub(crate) fn render_result(command: &CliCommand, result: &CommandResult, ai_mod
 }
 
 /// Appends a stable route table.
-fn append_route_table(lines: &mut Vec<String>, routes: &[dust_driver::RouteTableRow]) {
+fn append_route_table(lines: &mut Vec<String>, routes: &[dust_driver::RouteInspectionEntry]) {
     lines.push("name | path | page | shell | branch | guards | auth | result".to_owned());
     lines.push("--- | --- | --- | --- | --- | --- | --- | ---".to_owned());
     for route in routes {
@@ -298,7 +298,7 @@ mod tests {
     use dust_diagnostics::{Diagnostic, SourceLabel};
     use dust_driver::{
         CacheReport, CleanReport, CommandResult, DiagnosticFile, DoctorPackageCompatibility,
-        DoctorPackageCompatibilityStatus, DoctorReport, RouteTableReport, RouteTableRow,
+        DoctorPackageCompatibilityStatus, DoctorReport, RouteInspectionEntry, RouteTableReport,
         WatchReport,
     };
     use dust_text::{FileId, TextRange};
@@ -426,14 +426,14 @@ mod tests {
     }
 
     #[test]
-    fn render_route_table_summary_and_rows() {
+    fn render_route_table_summary_and_routes() {
         let rendered = render_result(
             &CliCommand::RouteTable,
             &CommandResult {
                 route_table: Some(RouteTableReport {
                     scanned_files: 3,
                     routes: vec![
-                        RouteTableRow {
+                        RouteInspectionEntry {
                             name: "dashboard".to_owned(),
                             path: "/dashboard".to_owned(),
                             page: "DashboardPage".to_owned(),
@@ -443,7 +443,7 @@ mod tests {
                             requires_auth: true,
                             result_type: "void".to_owned(),
                         },
-                        RouteTableRow {
+                        RouteInspectionEntry {
                             name: "checkout".to_owned(),
                             path: "/checkout".to_owned(),
                             page: "CheckoutPage".to_owned(),
