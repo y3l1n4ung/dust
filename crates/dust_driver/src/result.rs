@@ -263,13 +263,13 @@ pub struct WatchReport {
 pub struct RouteTableReport {
     /// Number of Dart source libraries scanned.
     pub scanned_files: usize,
-    /// Deterministic route table rows.
-    pub routes: Vec<RouteTableRow>,
+    /// Deterministic route inspection entries.
+    pub routes: Vec<RouteInspectionEntry>,
 }
 
-/// One route table row.
+/// One route inspection entry.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RouteTableRow {
+pub struct RouteInspectionEntry {
     /// Effective route name.
     pub name: String,
     /// Absolute route path.

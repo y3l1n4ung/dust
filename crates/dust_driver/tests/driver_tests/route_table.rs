@@ -1,10 +1,10 @@
-use dust_driver::{RouteTableRequest, RouteTableRow, run_route_table};
+use dust_driver::{RouteInspectionEntry, RouteTableRequest, run_route_table};
 
 use super::support::{DustImport, write_dust_file};
 use crate::support::make_workspace;
 
 #[test]
-fn route_table_returns_effective_route_rows() {
+fn route_table_returns_effective_routes() {
     let workspace = make_workspace();
     write_dust_file(
         &workspace.path().join("lib/route.dart"),
@@ -75,7 +75,7 @@ fn route_table_returns_effective_route_rows() {
     assert_eq!(
         table.routes,
         vec![
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "notFound".to_owned(),
                 path: "/404".to_owned(),
                 page: "NotFoundPage".to_owned(),
@@ -85,7 +85,7 @@ fn route_table_returns_effective_route_rows() {
                 requires_auth: false,
                 result_type: "void".to_owned(),
             },
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "checkout".to_owned(),
                 path: "/checkout".to_owned(),
                 page: "CheckoutPage".to_owned(),
@@ -95,7 +95,7 @@ fn route_table_returns_effective_route_rows() {
                 requires_auth: true,
                 result_type: "bool".to_owned(),
             },
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "dashboard".to_owned(),
                 path: "/dashboard".to_owned(),
                 page: "DashboardPage".to_owned(),
@@ -105,7 +105,7 @@ fn route_table_returns_effective_route_rows() {
                 requires_auth: true,
                 result_type: "void".to_owned(),
             },
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "orders".to_owned(),
                 path: "/dashboard/orders".to_owned(),
                 page: "OrdersPage".to_owned(),
@@ -115,7 +115,7 @@ fn route_table_returns_effective_route_rows() {
                 requires_auth: true,
                 result_type: "void".to_owned(),
             },
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "login".to_owned(),
                 path: "/login".to_owned(),
                 page: "LoginPage".to_owned(),

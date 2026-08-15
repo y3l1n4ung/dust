@@ -67,7 +67,8 @@ pub use request::{
 pub use result::{
     BuildArtifact, CacheReport, CheckedLibrary, CleanReport, CommandResult, DiagnosticFile,
     DoctorPackageCompatibility, DoctorPackageCompatibilityStatus, DoctorReport, I18nBuildReport,
-    I18nCheckReport, I18nScanEntry, I18nScanReport, RouteTableReport, RouteTableRow, WatchReport,
+    I18nCheckReport, I18nScanEntry, I18nScanReport, RouteInspectionEntry, RouteTableReport,
+    WatchReport,
 };
 pub use route_table::run_route_table;
 pub use watch::{run_watch, run_watch_with_progress};

@@ -1,7 +1,7 @@
 use dust_ir::TypeIr;
 use dust_plugin_api::{DustPlugin, WorkspaceAnalysisBuilder};
 use dust_route_plugin::{
-    inspect::{RouteTableRow, route_table_rows},
+    inspect::{RouteInspectionEntry, route_inspection_entries},
     register_plugin,
 };
 use serde_json::json;
@@ -12,7 +12,7 @@ const ROUTES_KEY: &str = "dust_route.routes.v1";
 const ROUTERS_KEY: &str = "dust_route.routers.v1";
 
 #[test]
-fn route_table_rows_cover_canonical_route_analysis() {
+fn route_inspection_entries_cover_canonical_route_analysis() {
     let plugin = register_plugin();
     let library = library_with_classes(vec![
         router_class("(initial: '/dashboard', notFound: '/404')"),
@@ -32,13 +32,13 @@ fn route_table_rows_cover_canonical_route_analysis() {
     let mut builder = WorkspaceAnalysisBuilder::default();
     plugin.collect_workspace_analysis_ir(&library, &mut builder);
 
-    let rows = route_table_rows(&[builder.snapshot()]);
+    let entries = route_inspection_entries(&[builder.snapshot()]);
 
     assert_eq!(
-        rows,
+        entries,
         vec![
-            row("notFound", "/404", "NotFoundPage"),
-            RouteTableRow {
+            entry("notFound", "/404", "NotFoundPage"),
+            RouteInspectionEntry {
                 name: "account".to_owned(),
                 path: "/account".to_owned(),
                 page: "AccountScreen".to_owned(),
@@ -48,7 +48,7 @@ fn route_table_rows_cover_canonical_route_analysis() {
                 requires_auth: false,
                 result_type: "void".to_owned(),
             },
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "checkout".to_owned(),
                 path: "/checkout".to_owned(),
                 page: "CheckoutView".to_owned(),
@@ -58,7 +58,7 @@ fn route_table_rows_cover_canonical_route_analysis() {
                 requires_auth: true,
                 result_type: "bool".to_owned(),
             },
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "dashboard".to_owned(),
                 path: "/dashboard".to_owned(),
                 page: "DashboardPage".to_owned(),
@@ -68,7 +68,7 @@ fn route_table_rows_cover_canonical_route_analysis() {
                 requires_auth: true,
                 result_type: "void".to_owned(),
             },
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "dashboardOrders".to_owned(),
                 path: "/dashboard/orders".to_owned(),
                 page: "DashboardOrdersPage".to_owned(),
@@ -83,7 +83,7 @@ fn route_table_rows_cover_canonical_route_analysis() {
 }
 
 #[test]
-fn route_table_rows_ignore_bad_facts_and_use_nearest_inherited_metadata() {
+fn route_inspection_entries_ignore_bad_facts_and_use_nearest_inherited_metadata() {
     let root = route_fact(
         "SettingsPage",
         "/settings",
@@ -109,7 +109,7 @@ fn route_table_rows_ignore_bad_facts_and_use_nearest_inherited_metadata() {
     let legacy = route_fact("legacy_admin", "/legacy", None, None, None);
     let not_found = route_fact("MissingPage", "/missing", None, None, None);
 
-    let rows = route_table_rows(&[
+    let entries = route_inspection_entries(&[
         snapshot([
             (ROUTES_KEY, "not json".to_owned()),
             (ROUTERS_KEY, r#"{"not_found":42}"#.to_owned()),
@@ -135,9 +135,9 @@ fn route_table_rows_ignore_bad_facts_and_use_nearest_inherited_metadata() {
     ]);
 
     assert_eq!(
-        rows,
+        entries,
         vec![
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: String::new(),
                 path: "/empty".to_owned(),
                 page: String::new(),
@@ -147,7 +147,7 @@ fn route_table_rows_ignore_bad_facts_and_use_nearest_inherited_metadata() {
                 requires_auth: true,
                 result_type: "void".to_owned(),
             },
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "legacyAdmin".to_owned(),
                 path: "/legacy".to_owned(),
                 page: "legacy_admin".to_owned(),
@@ -157,7 +157,7 @@ fn route_table_rows_ignore_bad_facts_and_use_nearest_inherited_metadata() {
                 requires_auth: true,
                 result_type: "void".to_owned(),
             },
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "missing".to_owned(),
                 path: "/missing".to_owned(),
                 page: "MissingPage".to_owned(),
@@ -167,7 +167,7 @@ fn route_table_rows_ignore_bad_facts_and_use_nearest_inherited_metadata() {
                 requires_auth: false,
                 result_type: "void".to_owned(),
             },
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "settings".to_owned(),
                 path: "/settings".to_owned(),
                 page: "SettingsPage".to_owned(),
@@ -177,7 +177,7 @@ fn route_table_rows_ignore_bad_facts_and_use_nearest_inherited_metadata() {
                 requires_auth: true,
                 result_type: "void".to_owned(),
             },
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "account".to_owned(),
                 path: "/settings/account".to_owned(),
                 page: "AccountView".to_owned(),
@@ -187,7 +187,7 @@ fn route_table_rows_ignore_bad_facts_and_use_nearest_inherited_metadata() {
                 requires_auth: true,
                 result_type: "void".to_owned(),
             },
-            RouteTableRow {
+            RouteInspectionEntry {
                 name: "security".to_owned(),
                 path: "/settings/account/security".to_owned(),
                 page: "SecurityScreen".to_owned(),
@@ -201,8 +201,8 @@ fn route_table_rows_ignore_bad_facts_and_use_nearest_inherited_metadata() {
     );
 }
 
-fn row(name: &str, path: &str, page: &str) -> RouteTableRow {
-    RouteTableRow {
+fn entry(name: &str, path: &str, page: &str) -> RouteInspectionEntry {
+    RouteInspectionEntry {
         name: name.to_owned(),
         path: path.to_owned(),
         page: page.to_owned(),
