@@ -1,5 +1,6 @@
 import 'package:shelf/shelf.dart';
 
+import '../request/request_parts.dart';
 import '../router/middleware.dart';
 import 'request_id.dart';
 
@@ -12,6 +13,7 @@ final class AccessRecord {
     required this.status,
     required this.duration,
     this.requestId,
+    this.matchedRoute,
   });
 
   /// The request method.
@@ -28,6 +30,13 @@ final class AccessRecord {
 
   /// The id from a [RequestId] layer, when one ran.
   final String? requestId;
+
+  /// The route pattern that served it — `/orders/{id}` — or `null` for a 404.
+  ///
+  /// This, not [path], is what a metric or a dashboard groups by. `path` is one
+  /// value per order; the pattern is one value per endpoint, which is the
+  /// difference between a chart and a cardinality explosion.
+  final String? matchedRoute;
 
   @override
   String toString() {
@@ -58,7 +67,15 @@ final class AccessLog implements Layer {
     return (Handler inner) {
       return (Request request) async {
         final stopwatch = Stopwatch()..start();
-        final response = await inner(request);
+
+        // The router fills this on the way through. A layer wraps the matcher,
+        // so it cannot read the matched route off its own request.
+        final matched = MatchedRouteSlot();
+        final logged = request.change(
+          context: {matchedRouteSlotKey: matched},
+        );
+
+        final response = await inner(logged);
         stopwatch.stop();
 
         onRecord(
@@ -68,6 +85,7 @@ final class AccessLog implements Layer {
             status: response.statusCode,
             duration: stopwatch.elapsed,
             requestId: requestIdOf(request),
+            matchedRoute: matched.route,
           ),
         );
         return response;

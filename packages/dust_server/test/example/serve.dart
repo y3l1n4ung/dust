@@ -15,7 +15,7 @@ import 'package:test/test.dart';
 /// Port 0 rather than the number in the example's `main`: a suite that fails
 /// because something else holds 8080 has told you nothing.
 final class ExampleApp {
-  ExampleApp._(this._server, this.records);
+  ExampleApp._(this.server, this.records);
 
   /// Starts [app].
   static Future<ExampleApp> serve(
@@ -26,16 +26,17 @@ final class ExampleApp {
     return ExampleApp._(server, records ?? []);
   }
 
-  final ServerHandle _server;
+  /// The running server, for a test that asserts on draining.
+  final ServerHandle server;
 
   /// Whatever the example's access log recorded, when it has one.
   final List<AccessRecord> records;
 
   /// Where to point a client.
-  String get origin => 'http://${_server.address.host}:${_server.port}';
+  String get origin => 'http://${server.address.host}:${server.port}';
 
   /// Requests still being handled.
-  int get inFlight => _server.inFlight;
+  int get inFlight => server.inFlight;
 
   /// The full URL of [path].
   Uri uri(String path) => Uri.parse('$origin$path');
@@ -111,7 +112,10 @@ final class ExampleApp {
       jsonDecode(response.body) as List<Object?>;
 
   /// Stops the server, draining what is in flight.
-  Future<void> stop() => _server.close(drain: const Duration(seconds: 2));
+  ///
+  /// Returns whether everything finished inside the budget, so a test can assert
+  /// on it — that return value is the only signal that requests were abandoned.
+  Future<bool> stop() => server.close(drain: const Duration(seconds: 2));
 }
 
 /// Serves [app] for one test and closes it afterwards.

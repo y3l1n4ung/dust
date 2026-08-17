@@ -93,28 +93,55 @@ a list, for tests.
 
 ## Trying it
 
-`example/tracing.dart` installs the layer with an exporter that prints one line
-per span, so a trace survives a hop in a terminal:
+`dart run example/tracing.dart` installs the layer with an exporter that prints
+one line per span:
 
 ```bash
-dart run example/tracing.dart
+curl -s localhost:8080/orders/41
+curl -s localhost:8080/orders/42
+curl -s localhost:8080/nothing
+curl -s localhost:8080/orders/41 \
+  -H 'traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01'
 ```
+
+```
+GET /orders/{id} 13ms trace=67be3863d30c9075… parent=- {order.id: 41, http.route: /orders/{id}, http.response.status_code: 200}
+GET /orders/{id}  0ms trace=036a58eecd7cdd27… parent=- {order.id: 42, http.route: /orders/{id}, http.response.status_code: 200}
+GET /nothing      0ms trace=39a1bf3bdd54fea8… parent=- {http.response.status_code: 404}
+GET /orders/{id}  0ms trace=4bf92f3577b34da6a3ce929d0e0e4736 parent=00f067aa0ba902b7 {order.id: 41, …}
+```
+
+Four things to read off those lines:
+
+* **The first two share a span name.** `/orders/41` and `/orders/42` are both
+  `GET /orders/{id}`. Naming spans after the URL gives one series per order and a
+  dashboard nothing can group — the single most common way a tracing backend
+  becomes useless.
+* **The 404 is traced.** The layer sits above the routes, so a request that
+  matched nothing still produces a span. One that vanishes is one nobody can
+  explain.
+* **The fourth continues the caller's trace.** Same trace id, and this span's
+  parent is the caller's span id. A request through a gateway and three services
+  is one trace rather than four.
+* **`order.id` came from the handler**, through `CurrentSpan.setAttribute`, with
+  no span threaded into it — it is zone-scoped.
+
+`nameSpan` overrides the route name where the pattern is not the useful one:
 
 ```bash
-# a request with no trace: the response carries the span that answered
-curl -i -H 'authorization: Bearer todos:read' localhost:8080/api/v1/todos \
-  | grep -i traceparent
-
-# a request that is already part of a trace: the same trace id comes back
-curl -i -H 'authorization: Bearer todos:read' \
-  -H 'traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01' \
-  localhost:8080/api/v1/todos | grep -i traceparent
-
-# a malformed header: answered anyway, with a fresh trace
-curl -i -H 'authorization: Bearer todos:read' \
-  -H 'traceparent: nonsense' \
-  localhost:8080/api/v1/todos | grep -i traceparent
+curl -s localhost:8080/legacy/rebuild   # span: legacy.rebuild
 ```
+
+> **Attributes leave the process and stay wherever they land.** A trace backend
+> is rarely as locked down as your database and it retains for weeks, so an id
+> belongs there and a token, a password, a request body, or an email address does
+> not.
+
+Counting rather than tracing is `dart run example/metrics.dart`, and the same
+cardinality rule decides whether it works — see
+[`example/metrics.dart`](../../packages/dust_server/example/metrics.dart), which
+labels by `record.matchedRoute` and collapses every unmatched path to one series.
+
 
 The second prints a `traceparent` carrying `4bf92f…4736` with a **different**
 span id — same trace, new span:

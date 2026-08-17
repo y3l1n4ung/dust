@@ -58,13 +58,15 @@ dart run example/hello_world.dart
 ```
 
 ```bash
-curl -s localhost:8080/health
-curl -s -H 'authorization: Bearer todos:read' localhost:8080/api/v1/todos
-curl -s -X POST localhost:8080/api/v1/todos \
-  -H 'authorization: Bearer todos:write' \
-  -H 'content-type: application/json' \
-  --data '{"title":"buy milk"}'
+curl -s localhost:8080/           # Hello, world!
+curl -s localhost:8080/hello/ada  # Hello, ada!
+curl -s localhost:8080/json       # {"greeting":"Hello, world!"}
 ```
+
+The third is the one that surprises people. Everything a handler returns is
+encoded as **JSON** unless it is already a `Response` — a bare `String` included,
+so `return 'Hello'` sends `"Hello"` with the quotes. Text is a choice you state,
+with `textResponse`.
 
 Every example runs the same way. The
 [index](../../packages/dust_server/example/README.md) lists them by the question

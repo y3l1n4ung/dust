@@ -88,24 +88,61 @@ final response = await http.get(
 
 Port `0` binds a free port, so tests can run in parallel.
 
-## Driving a server by hand
+## Two ways in, and when each is right
 
-The suite uses a real socket, and so can you. Every example takes the same
-shape: `buildApp` is separate from `main`, so a test serves it on port 0 and a
-terminal serves it on a fixed one.
+`example/testing.dart` shows both.
+
+**`router.handler`** takes a `Request` and returns a `Response`, in process, no
+socket:
+
+```dart
+final app = buildApp(NoteStore(['only']));
+
+final response = await app.handler(
+  Request('GET', Uri.parse('http://localhost/notes')),
+);
+
+expect(await response.readAsString(), '["only"]');
+```
+
+Fast enough to run thousands of, and right for statuses, bodies, and headers.
+
+**`serveRouter` on port 0** goes over a real socket with a real client. Slower,
+and the only way to catch what the wire does — gzip, chunked bodies, `HEAD`
+dropping a body, a WebSocket upgrade:
+
+```dart
+final client = HttpClient()..autoUncompress = false;
+final request = await client.getUrl(app.uri('/notes'));
+request.headers.set('accept-encoding', 'gzip');
+
+expect((await request.close()).headers.value('content-encoding'), 'gzip');
+```
+
+`autoUncompress` is off because `dart:io` otherwise decodes the body and strips
+the header, and the assertion passes while proving nothing.
+
+> **Port 0, never a fixed port.** The OS assigns a free one. A suite pinned to
+> 8080 fails when anything else holds it — and worse, it can **pass** against
+> another process that happens to be listening, measuring something that is not
+> your code at all. That has happened here: a benchmark once reported numbers for
+> a process started days earlier.
+
+The other rule is in every example in this repository: `buildApp` takes its
+dependencies, so a test hands in an empty store and asserts on it afterwards
+rather than reaching for a global.
+
+## Driving a server by hand
 
 ```bash
 dart run example/testing.dart
 ```
 
 ```bash
-# what the flow tests assert, one request at a time
-curl -s -H 'authorization: Bearer todos:read' localhost:8080/api/v1/todos
-curl -s -X POST localhost:8080/api/v1/todos \
-  -H 'authorization: Bearer todos:write' \
+curl -s  localhost:8080/notes
+curl -s -X POST localhost:8080/notes \
   -H 'content-type: application/json' --data '{"title":"buy milk"}'
-curl -i -X DELETE -H 'authorization: Bearer todos:write' \
-  localhost:8080/api/v1/todos/2
+curl -si localhost:8080/notes/9
 ```
 
 Add `-i` to see the status and headers, `-v` to see the request as it goes out.

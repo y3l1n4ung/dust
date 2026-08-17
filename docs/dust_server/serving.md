@@ -70,17 +70,51 @@ without knowing the proxy is a spoofing hole.
 
 ## Trying it
 
-```bash
-dart run example/graceful_shutdown.dart
-```
+`dart run example/graceful_shutdown.dart`, then from another terminal:
 
 ```bash
-# the server answers while it is up
-curl -s localhost:8080/health
-
-# ask it to stop, and watch it drain rather than cut connections
-kill -INT $(pgrep -f 'example/graceful_shutdown.dart')
+curl -s localhost:8080/slow &   # takes two seconds
+sleep 0.2
+kill -TERM $(pgrep -f 'example/graceful_shutdown.dart')
 ```
 
-The process prints how many requests were still in flight and waits for them
-within the deadline before exiting.
+The `curl` finishes with a 200 and the process exits after it. Three things in
+that example are worth copying rather than rediscovering:
+
+* **Watch `SIGTERM`, not only `SIGINT`.** Docker, Kubernetes, and systemd all
+  send `SIGTERM`. A server that watches only `SIGINT` drains when you press
+  ctrl-C and never in production.
+* **Keep the drain budget under the platform's grace period.** Kubernetes sends
+  `SIGKILL` 30 seconds after `SIGTERM` by default, so a 60-second drain is a
+  30-second drain followed by a hard kill.
+* **Check what `close` returns.** `false` means the deadline passed with work
+  still running — requests were abandoned. It is the only signal you get, and it
+  is the one most code throws away.
+
+Draining waits; it does not cancel. Dart has no cancellation, so a request still
+running when the budget expires keeps running until the process dies underneath
+it.
+
+Using every core is `dart run example/clustered_isolates.dart`:
+
+```bash
+for i in $(seq 6); do curl -s localhost:8080/whoami; echo; done
+```
+
+```json
+{"isolate":"main","seen":1}
+{"isolate":"main","seen":1}
+{"isolate":"main","seen":2}
+```
+
+The counts do not add up to six, and that is the lesson rather than a bug: state
+does not cross isolates, so each one counts only what it handled. An in-memory
+cache becomes N caches with different contents, and an in-memory session store
+signs a user in on one isolate and not the next. Anything shared has to live
+outside the process.
+
+TLS is `dart run example/tls.dart <cert.pem> <key.pem>`, and mostly you should
+not: a proxy in front already terminates it and renews the certificate, and doing
+it in two places means one of them will lapse.
+
+

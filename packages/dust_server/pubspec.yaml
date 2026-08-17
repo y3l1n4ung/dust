@@ -24,6 +24,9 @@ dependencies:
 
 dev_dependencies:
   coverage: ^1.11.0
+  # For example/sessions.dart only. Signing a session needs HMAC, and
+  # hand-rolling one is never the right answer; the runtime itself needs none.
+  crypto: ^3.0.6
   http: ^1.2.2
   jinja: ^0.6.6
   shelf_router: ^1.1.4

@@ -182,19 +182,23 @@ reads from.
 cuts off a streamed body at the limit. A limit set on the root router reaches
 extractors whose own limit was fixed at build time.
 
+With `dart run example/json_body.dart`, the three body failures in order:
+
 ```bash
 # 415: the extractor wanted JSON
-curl -i -X POST localhost:8080/api/v1/todos \
-  -H 'authorization: Bearer todos:write' \
-  -H 'content-type: text/plain' --data 'not json'
+curl -si -X POST localhost:8080/notes -d 'title=x'
 
-# 400: JSON that does not parse
-curl -i -X POST localhost:8080/api/v1/todos \
-  -H 'authorization: Bearer todos:write' \
-  -H 'content-type: application/json' --data '{'
+# 400: the type was right, the bytes were not JSON
+curl -si -X POST localhost:8080/notes \
+  -H 'content-type: application/json' --data 'not json'
 
-# 422: parses, but breaks a constraint
-curl -i -X POST localhost:8080/api/v1/todos \
-  -H 'authorization: Bearer todos:write' \
-  -H 'content-type: application/json' --data '{"title":""}'
+# 422: parses, wrong shape
+curl -si -X POST localhost:8080/notes \
+  -H 'content-type: application/json' --data '{"body":"no title"}'
+```
+
+```
+415 {"error":"expected application/json"}
+400 {"error":"malformed JSON: Unexpected character"}
+422 {"error":"JSON body does not match the expected shape: FormatException: title is required"}
 ```

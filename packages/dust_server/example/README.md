@@ -91,18 +91,23 @@ repository.
 
 | Question | File |
 | :--- | :--- |
-| Shutting down without dropping requests in flight | `graceful_shutdown.dart` |
-| Spans, and continuing a trace that started upstream | `tracing.dart` |
-| Using every core | `clustered_isolates.dart` |
-| Serving over TLS | `tls.dart` |
-| Counting requests and timing them | `metrics.dart` |
-| Signed sessions over the cookie extractor | `sessions.dart` |
-| Testing an application built on this runtime | `testing.dart` |
+| Shutting down without dropping requests in flight | [`graceful_shutdown.dart`](graceful_shutdown.dart) |
+| Spans, and continuing a trace that started upstream | [`tracing.dart`](tracing.dart) |
+| Using every core | [`clustered_isolates.dart`](clustered_isolates.dart) |
+| Serving over TLS | [`tls.dart`](tls.dart) |
+| Counting requests and timing them | [`metrics.dart`](metrics.dart) |
+| Signed sessions over the cookie extractor | [`sessions.dart`](sessions.dart) |
+| Testing an application built on this runtime | [`testing.dart`](testing.dart) |
 
 `metrics.dart` and `sessions.dart` are examples rather than runtime features on
 purpose. Both are policy: what to count, and what a session means. The runtime
 supplies the layer and the cookie extractor and stops there — the same boundary
 that keeps authorization out of it.
+
+Every question in this index has a file, and every file is served over a real
+socket by [`../test/example/`](../test/example) — 177 tests, one group per
+example. An example that stops compiling fails the suite, which is what keeps a
+directory this size from rotting.
 
 ## Running them
 
@@ -110,6 +115,4 @@ that keeps authorization out of it.
 dart run example/hello_world.dart
 ```
 
-Every one of them is served over a real socket by
-[`../test/example/`](../test/example). An example that stops compiling fails the
-suite, which is what keeps a directory this size from rotting.
+
