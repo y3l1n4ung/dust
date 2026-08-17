@@ -85,13 +85,20 @@ final class ExampleApp {
   ///
   /// `OPTIONS` in particular: a CORS preflight cannot be sent through
   /// `package:http`'s named methods.
+  ///
+  /// Redirects are **not** followed, because a test that asserts a 303 wants to
+  /// see the 303. Following it turns the assertion into one about whatever the
+  /// target answers, which passes for the wrong reason.
   Future<http.StreamedResponse> raw(
     String method,
     String path, {
     Map<String, String> headers = const {},
+    bool followRedirects = false,
   }) {
     return http.Client().send(
-      http.Request(method, uri(path))..headers.addAll(headers),
+      http.Request(method, uri(path))
+        ..headers.addAll(headers)
+        ..followRedirects = followRedirects,
     );
   }
 

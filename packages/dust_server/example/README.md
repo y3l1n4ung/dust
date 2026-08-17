@@ -37,7 +37,7 @@ repository.
 | Reading `{id}` out of the path | [`path_params.dart`](path_params.dart) |
 | Reading the query string, including repeated keys | [`query_params.dart`](query_params.dart) |
 | Reading headers, and the `Host` the client claims | [`headers_and_host.dart`](headers_and_host.dart) |
-| Reading and setting cookies | `cookies.dart` |
+| Reading and setting cookies | [`cookies.dart`](cookies.dart) |
 | Answering `HEAD` from a `GET` handler | `handle_head_request.dart` |
 | One fallback for everything unmatched | `global_404.dart` |
 | Serving two versions of the same API | `versioning.dart` |
@@ -57,12 +57,12 @@ repository.
 
 | Question | File |
 | :--- | :--- |
-| Passing a database or client to a handler | `state.dart` |
-| Writing an extractor of your own | `custom_extractor.dart` |
-| Making a missing value `None` instead of a 400 | `optional_extraction.dart` |
-| Handing the failure to the handler instead of short-circuiting | `fallible_extraction.dart` |
-| Requiring a bearer token | `bearer_auth.dart` |
-| Accepting an API key, a cookie, or Basic — whichever arrives | `credential_schemes.dart` |
+| Passing a database or client to a handler | [`state.dart`](state.dart) |
+| Writing an extractor of your own | [`custom_extractor.dart`](custom_extractor.dart) |
+| Making a missing value `None` instead of a 400 | [`optional_extraction.dart`](optional_extraction.dart) |
+| Handing the failure to the handler instead of short-circuiting | [`fallible_extraction.dart`](fallible_extraction.dart) |
+| Requiring a bearer token | [`bearer_auth.dart`](bearer_auth.dart) |
+| Accepting an API key, a cookie, or Basic — whichever arrives | [`credential_schemes.dart`](credential_schemes.dart) |
 
 ## Layers
 

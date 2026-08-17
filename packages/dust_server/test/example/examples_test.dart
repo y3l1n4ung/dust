@@ -1,15 +1,22 @@
 import 'package:test/test.dart';
 
+import '../../example/bearer_auth.dart' as bearer_auth;
+import '../../example/cookies.dart' as cookies;
+import '../../example/credential_schemes.dart' as credential_schemes;
+import '../../example/custom_extractor.dart' as custom_extractor;
 import '../../example/customize_rejection.dart' as customize_rejection;
+import '../../example/fallible_extraction.dart' as fallible_extraction;
 import '../../example/form_body.dart' as form_body;
 import '../../example/headers_and_host.dart' as headers_and_host;
 import '../../example/hello_world.dart' as hello_world;
 import '../../example/json_body.dart' as json_body;
 import '../../example/multipart_form.dart' as multipart_form;
+import '../../example/optional_extraction.dart' as optional_extraction;
 import '../../example/parse_body_by_content_type.dart' as by_content_type;
 import '../../example/path_params.dart' as path_params;
 import '../../example/query_params.dart' as query_params;
 import '../../example/routing.dart' as routing;
+import '../../example/state.dart' as state_example;
 import '../../example/validation_422.dart' as validation_422;
 import 'serve.dart';
 
@@ -535,6 +542,325 @@ void main() {
       expect(
         app.object(response)['error'],
         'send application/json or application/x-www-form-urlencoded',
+      );
+    });
+  });
+
+  group('state', () {
+    test('a handler reads what withState attached', () async {
+      final app = await example(state_example.buildApp());
+
+      expect(app.array(await app.get('/notes')), ['first']);
+    });
+
+    test('two types coexist, neither overwriting the other', () async {
+      final app = await example(state_example.buildApp());
+
+      expect(app.array(await app.get('/notes')), isNotEmpty);
+      expect(app.object(await app.get('/config')), {'currency': 'GBP'});
+    });
+
+    test('state outlives one request', () async {
+      final app = await example(state_example.buildApp());
+
+      await app.post('/notes', const {'title': 'second'});
+
+      expect(app.array(await app.get('/notes')), ['first', 'second']);
+    });
+
+    test('a type nothing attached is a 500, not a 404', () async {
+      // A wiring mistake in the route table, not something a client did.
+      final app = await example(state_example.buildApp());
+
+      expect((await app.get('/missing')).statusCode, 500);
+    });
+  });
+
+  group('custom_extractor', () {
+    test('reads and coerces the header', () async {
+      final app = await example(custom_extractor.buildApp());
+
+      final response = await app.get('/page', headers: {'x-page-size': '25'});
+
+      expect(app.object(response), {'size': 25});
+    });
+
+    test('an absent header takes the default', () async {
+      final app = await example(custom_extractor.buildApp());
+
+      expect(app.object(await app.get('/page')), {'size': 10});
+    });
+
+    test('a value over the cap is refused, in one place', () async {
+      // The reason this is an extractor: ?limit=1000000 is a denial-of-service
+      // request dressed as pagination, and one place to refuse it beats twenty.
+      final app = await example(custom_extractor.buildApp());
+
+      final response = await app.get('/page', headers: {'x-page-size': '500'});
+
+      expect(response.statusCode, 400);
+      expect(app.object(response)['error'], 'x-page-size may not exceed 100');
+    });
+
+    test('a non-numeric value is a 400 from the coercion', () async {
+      final app = await example(custom_extractor.buildApp());
+
+      expect(
+        (await app.get('/page', headers: {'x-page-size': 'big'})).statusCode,
+        400,
+      );
+    });
+
+    test('zero is refused, not treated as absent', () async {
+      final app = await example(custom_extractor.buildApp());
+
+      expect(
+        (await app.get('/page', headers: {'x-page-size': '0'})).statusCode,
+        400,
+      );
+    });
+  });
+
+  group('optional_extraction', () {
+    test('a required value absent is a 400', () async {
+      final app = await example(optional_extraction.buildApp());
+
+      expect((await app.get('/strict')).statusCode, 400);
+      expect(app.object(await app.get('/strict?page=2')), {'page': 2});
+    });
+
+    test('a nullable type makes absent fine but malformed still an error',
+        () async {
+      final app = await example(optional_extraction.buildApp());
+
+      expect(app.object(await app.get('/nullable')), {'page': 1});
+      expect((await app.get('/nullable?page=x')).statusCode, 400);
+    });
+
+    test('optional swallows a malformed value as well as an absent one',
+        () async {
+      // The trap: a client with a bug gets silence and page one. A nullable
+      // type is the right default; optional is for composing.
+      final app = await example(optional_extraction.buildApp());
+
+      expect(app.object(await app.get('/optional')), {'page': 'none'});
+      expect(app.object(await app.get('/optional?page=x')), {'page': 'none'});
+      expect(app.object(await app.get('/optional?page=3')), {'page': 3});
+    });
+  });
+
+  group('fallible_extraction', () {
+    test('both failures are reported together', () async {
+      final app = await example(fallible_extraction.buildApp());
+
+      final response = await app.get('/report');
+
+      expect(response.statusCode, 422);
+      expect(
+        (app.object(response)['fields']! as Map).keys,
+        containsAll(['from', 'to']),
+      );
+    });
+
+    test('one failure names only that field', () async {
+      final app = await example(fallible_extraction.buildApp());
+
+      final response = await app.get('/report?from=x&to=9');
+
+      expect(response.statusCode, 422);
+      expect((app.object(response)['fields']! as Map).keys, ['from']);
+    });
+
+    test('both valid passes through', () async {
+      final app = await example(fallible_extraction.buildApp());
+
+      expect(
+        app.object(await app.get('/report?from=1&to=9')),
+        {'from': 1, 'to': 9},
+      );
+    });
+
+    test('a bad value can answer with a redirect instead of a 400', () async {
+      final app = await example(fallible_extraction.buildApp());
+
+      final response = await app.raw('GET', '/browse?page=x');
+
+      expect(response.statusCode, 303);
+      expect(response.headers['location'], '/browse');
+    });
+  });
+
+  group('cookies', () {
+    test('sign-in sets a cookie with every attribute that matters', () async {
+      final app = await example(cookies.buildApp());
+
+      final header = (await app.get('/sign-in')).headers['set-cookie']!;
+
+      expect(header, contains('user=ada'));
+      expect(header, contains('HttpOnly'));
+      expect(header, contains('Secure'));
+      expect(header, contains('SameSite=Lax'));
+      expect(header, contains('Path=/'));
+    });
+
+    test('sign-out expires the same cookie, since HTTP has no delete',
+        () async {
+      final app = await example(cookies.buildApp());
+
+      final header = (await app.get('/sign-out')).headers['set-cookie']!;
+
+      expect(header, contains('Max-Age=0'));
+    });
+
+    test('one cookie is read, and absent is null rather than an error',
+        () async {
+      final app = await example(cookies.buildApp());
+
+      expect(
+        app.object(await app.get('/whoami', headers: {'cookie': 'user=ada'})),
+        {'user': 'ada'},
+      );
+      expect(app.object(await app.get('/whoami')), {'user': null});
+    });
+
+    test('the whole jar is read at once', () async {
+      final app = await example(cookies.buildApp());
+
+      final response = await app.get('/all', headers: {'cookie': 'a=1; b=2'});
+
+      expect(app.object(response)['cookies'], {'a': '1', 'b': '2'});
+    });
+  });
+
+  group('bearer_auth', () {
+    test('a known token names its user', () async {
+      final app = await example(bearer_auth.buildApp());
+
+      final response = await app.get(
+        '/me',
+        headers: {'authorization': 'Bearer t-ada'},
+      );
+
+      expect(app.object(response), {'user': 'ada'});
+    });
+
+    test('no credential is 401 with the challenge', () async {
+      final app = await example(bearer_auth.buildApp());
+
+      final response = await app.get('/me');
+
+      expect(response.statusCode, 401);
+      expect(response.headers['www-authenticate'], contains('Bearer'));
+    });
+
+    test('the wrong scheme is 401, not 403', () async {
+      final app = await example(bearer_auth.buildApp());
+
+      final response = await app.get(
+        '/me',
+        headers: {'authorization': 'Basic YWRhOnNlY3JldA=='},
+      );
+
+      expect(response.statusCode, 401);
+    });
+
+    test('a real credential that is not allowed is 403', () async {
+      // A client that retries on 401 loops forever if a wrong token answers
+      // 401. The distinction is what tells it to stop.
+      final app = await example(bearer_auth.buildApp());
+
+      final response = await app.get(
+        '/me',
+        headers: {'authorization': 'Bearer nope'},
+      );
+
+      expect(response.statusCode, 403);
+    });
+
+    test('a route that asks for no credential requires none', () async {
+      final app = await example(bearer_auth.buildApp());
+
+      expect((await app.get('/public')).statusCode, 200);
+    });
+  });
+
+  group('credential_schemes', () {
+    test('a bearer token is accepted', () async {
+      final app = await example(credential_schemes.buildApp());
+
+      expect(
+        app.object(
+          await app.get('/whoami', headers: {'authorization': 'Bearer t-ada'}),
+        ),
+        {'via': 'bearer', 'id': 'ada'},
+      );
+    });
+
+    test('an API key header is accepted', () async {
+      final app = await example(credential_schemes.buildApp());
+
+      expect(
+        app.object(await app.get('/whoami', headers: {'x-api-key': 'k-robot'})),
+        {'via': 'api-key', 'id': 'robot'},
+      );
+    });
+
+    test('HTTP Basic is accepted', () async {
+      final app = await example(credential_schemes.buildApp());
+
+      expect(
+        app.object(
+          await app.get(
+            '/whoami',
+            headers: {'authorization': 'Basic YWRhOnNlY3JldA=='},
+          ),
+        ),
+        {'via': 'basic', 'id': 'ada'},
+      );
+    });
+
+    test('a session cookie is accepted', () async {
+      final app = await example(credential_schemes.buildApp());
+
+      expect(
+        app.object(
+            await app.get('/whoami', headers: {'cookie': 'session=s-ada'})),
+        {'via': 'session', 'id': 'ada'},
+      );
+    });
+
+    test('a key in the query string is refused, because URLs leak', () async {
+      // Query strings reach access logs, proxy logs, browser history, and the
+      // Referer header. allowQuery: false is the setting that closes it.
+      final app = await example(credential_schemes.buildApp());
+
+      expect((await app.get('/whoami?api_key=k-robot')).statusCode, 401);
+    });
+
+    test('no credential at all is 401 carrying the last scheme challenge',
+        () async {
+      // Pinning a wart rather than pretending it away: firstOf returns the
+      // final Err, so the challenge and the message come from whichever scheme
+      // ran last — accurate for that one, misleading about the other three.
+      final app = await example(credential_schemes.buildApp());
+
+      final response = await app.get('/whoami');
+
+      expect(response.statusCode, 401);
+      expect(response.headers['www-authenticate'], 'Cookie');
+      expect(app.object(response)['error'], 'expected a session cookie');
+    });
+
+    test('a wrong Basic password is refused', () async {
+      final app = await example(credential_schemes.buildApp());
+
+      expect(
+        (await app.get(
+          '/whoami',
+          headers: {'authorization': 'Basic YWRhOnd)cm9uZw=='},
+        ))
+            .statusCode,
+        401,
       );
     });
   });

@@ -102,46 +102,65 @@ final class RequireScope implements FromRequestParts<Caller> {
 
 ## Trying it
 
-```bash
-dart run example/bearer_auth.dart
-```
+One scheme first — `dart run example/bearer_auth.dart`:
 
 ```bash
-# bearer
-curl -s -H 'authorization: Bearer t-ada' localhost:8082/whoami
-
-# api key, in the header and in the query
-curl -s -H 'x-api-key: k-robot' localhost:8082/whoami
-curl -s 'localhost:8082/whoami?api_key=k-robot'
-
-# basic
-curl -s -u ada:secret localhost:8082/whoami
-
-# session cookie, alongside others
-curl -s -H 'cookie: theme=dark; session=s-ada' localhost:8082/whoami
+curl -s  localhost:8080/me -H 'authorization: Bearer t-ada'
+curl -si localhost:8080/me
+curl -si localhost:8080/me -H 'authorization: Basic abc'
+curl -si localhost:8080/me -H 'authorization: Bearer nope'
 ```
 
-Each answers with the subject and which scheme carried it:
+```
+200 {"user":"ada"}
+401 WWW-Authenticate: Bearer   {"error":"expected a bearer token"}
+401 WWW-Authenticate: Bearer   {"error":"expected a bearer token"}
+403                            {"error":"unknown token"}
+```
+
+The last two are the pair to read. A wrong **scheme** is a 401 — no credential
+was presented, so presenting one may work. A wrong **token** is a 403 — one was
+presented and it is not allowed, so retrying is pointless. Answer 401 for both
+and a client that retries on 401 loops forever.
+
+Four schemes behind one interface — `dart run example/credential_schemes.dart`:
+
+```bash
+curl -s localhost:8080/whoami -H 'authorization: Bearer t-ada'
+curl -s localhost:8080/whoami -H 'x-api-key: k-robot'
+curl -s localhost:8080/whoami -u ada:secret
+curl -s localhost:8080/whoami -H 'cookie: session=s-ada'
+```
 
 ```json
-{"id":"ada@dust.test","via":"bearer","scopes":["read","write"]}
+{"via":"bearer","id":"ada"}
+{"via":"api-key","id":"robot"}
+{"via":"basic","id":"ada"}
+{"via":"session","id":"ada"}
 ```
 
-The refusals are the interesting part:
+The handler never learns which header carried the credential, which is the point
+of `firstOf`. Two refusals are worth seeing:
 
 ```bash
-# 401, and the challenge a browser needs
-curl -i localhost:8082/basic
-
-# 401 naming the scheme tried last, not first
-curl -i localhost:8082/whoami
-
-# 403: the API key authenticated, but grants only read
-curl -i -H 'x-api-key: k-robot' localhost:8082/admin
-
-# 200: the bearer token grants write
-curl -i -H 'authorization: Bearer t-ada' localhost:8082/admin
+curl -si 'localhost:8080/whoami?api_key=k-robot'
+curl -si  localhost:8080/whoami
 ```
+
+```
+401 WWW-Authenticate: Cookie   {"error":"expected a session cookie"}
+401 WWW-Authenticate: Cookie   {"error":"expected a session cookie"}
+```
+
+The first is `allowQuery: false` doing its job — a key in a URL is refused even
+though it is the right key.
+
+The second is a wart, and the reason it is documented rather than hidden:
+`firstOf` returns the **last** `Err`, so the challenge and the message come from
+whichever scheme ran last. `expected a session cookie` is accurate for that one
+extractor and misleading about the other three. HTTP allows several challenges in
+one response; if the message matters, order the list so the most likely scheme
+runs last, or answer the 401 yourself instead of letting the last extractor do it.
 
 ## Notes worth heeding
 
