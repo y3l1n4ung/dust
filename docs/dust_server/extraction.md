@@ -56,7 +56,7 @@ a check.
 ### Trying it
 
 ```bash
-dart run example/todo_api.dart
+dart run example/path_params.dart
 ```
 
 ```bash

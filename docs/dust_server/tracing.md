@@ -93,12 +93,11 @@ a list, for tests.
 
 ## Trying it
 
-[`example/todo_api.dart`](../../packages/dust_server/example/todo_api.dart)
-installs the layer with an exporter that prints one line per span, so a trace
-survives a hop in a terminal:
+`example/tracing.dart` installs the layer with an exporter that prints one line
+per span, so a trace survives a hop in a terminal:
 
 ```bash
-dart run example/todo_api.dart
+dart run example/tracing.dart
 ```
 
 ```bash

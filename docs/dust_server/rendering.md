@@ -134,7 +134,7 @@ it collapses before matching, and no file outside the directory is reachable.
 ## Trying it
 
 ```bash
-dart run example/chat_server.dart
+dart run example/templates.dart
 ```
 
 ```bash

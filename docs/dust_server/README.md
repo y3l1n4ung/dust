@@ -62,12 +62,11 @@ Converting the result, catching what escapes, and choosing the status happen
 once, in the verb builder — which is generic over the return type, so
 answering with the wrong model is a compile error.
 
-Complete applications, smallest first:
+Examples:
 
-| Example | Shows |
+| Where | Shows |
 | :--- | :--- |
-| [`packages/dust_server/example/todo_api.dart`](../../packages/dust_server/example/todo_api.dart) | a JSON API on the runtime alone, with no generator step |
-| [`packages/dust_server/example/chat_server.dart`](../../packages/dust_server/example/chat_server.dart) | HTTP, WebSockets, and server-rendered HTML from one route table |
-| [`examples/todo_server`](../../examples/todo_server) | generated models, a SQLite store, and ownership rules |
+| [`packages/dust_server/example`](../../packages/dust_server/example/README.md) | one file per question, each under 60 lines |
+| [`examples/todo_server`](../../examples/todo_server) | the complete application: generated models, a SQLite store, ownership rules |
 
 Every one of them is driven over a real socket by its own tests.

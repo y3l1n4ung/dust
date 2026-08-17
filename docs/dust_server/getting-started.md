@@ -54,7 +54,7 @@ folder decides what stays internal.
 
 ```bash
 cd packages/dust_server
-dart run example/todo_api.dart
+dart run example/hello_world.dart
 ```
 
 ```bash
@@ -66,8 +66,7 @@ curl -s -X POST localhost:8080/api/v1/todos \
   --data '{"title":"buy milk"}'
 ```
 
-Three more examples run the same way:
-[`chat_server.dart`](../../packages/dust_server/example/chat_server.dart) on
-8081, [`auth_schemes.dart`](../../packages/dust_server/example/auth_schemes.dart)
-on 8082, and [`examples/todo_server`](../../examples/todo_server) with
-`dart run bin/server.dart`.
+Every example runs the same way. The
+[index](../../packages/dust_server/example/README.md) lists them by the question
+each one answers, and [`examples/todo_server`](../../examples/todo_server) is the
+complete application, with `dart run bin/server.dart`.

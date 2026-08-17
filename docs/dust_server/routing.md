@@ -99,7 +99,7 @@ that ignores the change.
 ## Trying it
 
 ```bash
-dart run example/todo_api.dart
+dart run example/routing.dart
 ```
 
 ```bash

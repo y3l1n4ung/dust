@@ -70,7 +70,7 @@ anything a router did not claim.
 ## Trying it
 
 ```bash
-dart run example/todo_api.dart
+dart run example/redirects.dart
 ```
 
 Every failure the API can answer with, in the order a client meets them:

@@ -61,7 +61,7 @@ not.
 ## Trying it
 
 ```bash
-dart run example/chat_server.dart
+dart run example/websockets.dart
 ```
 
 The upgrade and the page it belongs to come from one route table:

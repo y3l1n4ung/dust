@@ -71,7 +71,7 @@ without knowing the proxy is a spoofing hole.
 ## Trying it
 
 ```bash
-dart run example/todo_api.dart
+dart run example/graceful_shutdown.dart
 ```
 
 ```bash
@@ -79,7 +79,7 @@ dart run example/todo_api.dart
 curl -s localhost:8080/health
 
 # ask it to stop, and watch it drain rather than cut connections
-kill -INT $(pgrep -f 'example/todo_api.dart')
+kill -INT $(pgrep -f 'example/graceful_shutdown.dart')
 ```
 
 The process prints how many requests were still in flight and waits for them

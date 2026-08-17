@@ -95,7 +95,7 @@ shape: `buildApp` is separate from `main`, so a test serves it on port 0 and a
 terminal serves it on a fixed one.
 
 ```bash
-dart run example/todo_api.dart
+dart run example/testing.dart
 ```
 
 ```bash

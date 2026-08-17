@@ -39,7 +39,7 @@ keeps running with nobody waiting for it.
 ## Trying it
 
 ```bash
-dart run example/todo_api.dart
+dart run example/cors.dart
 ```
 
 ```bash

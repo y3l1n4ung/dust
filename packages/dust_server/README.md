@@ -44,14 +44,12 @@ all on one router.
 
 ## Examples
 
-| Example | Shows |
-| :--- | :--- |
-| [`example/todo_api.dart`](example/todo_api.dart) | a JSON API: extraction, validation, typed failures, layers, draining |
-| [`example/chat_server.dart`](example/chat_server.dart) | HTTP, WebSockets, and rendered HTML from one route table |
-| [`example/auth_schemes.dart`](example/auth_schemes.dart) | bearer, API key, HTTP Basic, and session cookie behind one interface |
+[`example/`](example/README.md) holds one file per question — under 60 lines
+each, named after the question it answers, so the answer is not buried in an
+application. The index lists them by area.
 
-Both are served over a loopback socket by `test/example/` and driven with a
-real client.
+Every one is served over a loopback socket by `test/example/` and driven with a
+real client, which is what keeps a directory that size from rotting.
 
 One more lives in the workspace, where `dust build` can reach it:
 

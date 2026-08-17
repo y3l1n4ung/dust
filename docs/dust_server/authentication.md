@@ -4,7 +4,8 @@ The runtime **extracts credentials and stops there**. What a caller is, and what
 a scope permits, is a product decision — so nothing here asks your user type to
 implement an interface it did not choose.
 
-Working example: [`example/auth_schemes.dart`](../../packages/dust_server/example/auth_schemes.dart).
+Working examples: `example/bearer_auth.dart` for one scheme, and
+`example/credential_schemes.dart` for accepting whichever of four arrives.
 
 ## What the runtime reads
 
@@ -102,7 +103,7 @@ final class RequireScope implements FromRequestParts<Caller> {
 ## Trying it
 
 ```bash
-dart run example/auth_schemes.dart
+dart run example/bearer_auth.dart
 ```
 
 ```bash
