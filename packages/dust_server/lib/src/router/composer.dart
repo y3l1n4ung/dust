@@ -25,8 +25,13 @@ Handler composeHandler(Router root) {
     final path = '/${request.url.path}';
 
     return switch (matcher.match(request.method, path)) {
-      Matched(:final handler, :final parameters, :final mountPrefix) =>
-        handler(_prepare(request, parameters, mountPrefix)),
+      Matched(
+        :final handler,
+        :final parameters,
+        :final matchedPath,
+        :final mountPrefix,
+      ) =>
+        handler(_prepare(request, parameters, matchedPath, mountPrefix)),
       MethodMismatch(:final allowed) =>
         methodNotAllowed(request.method, path, allowed),
       NoMatch() => root.internals.fallback?.call(request) ?? notFound(path),
@@ -76,9 +81,12 @@ Middleware _bodyLimitMiddleware(int limit) {
 Request _prepare(
   Request request,
   Map<String, String> parameters,
+  String matchedPath,
   String? mountPrefix,
 ) {
-  var prepared = request;
+  reportMatchedRoute(request, matchedPath);
+
+  var prepared = request.change(context: {matchedPathKey: matchedPath});
   if (parameters.isNotEmpty) {
     prepared = prepared.change(context: {pathParametersKey: parameters});
   }

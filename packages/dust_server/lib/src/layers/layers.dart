@@ -5,5 +5,8 @@
 library;
 
 export 'access_log.dart';
+export 'compression.dart';
+export 'cors.dart';
+export 'normalize_path.dart';
 export 'request_id.dart';
 export 'timeout.dart';

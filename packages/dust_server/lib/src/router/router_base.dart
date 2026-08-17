@@ -139,6 +139,33 @@ final class Router {
     internals.middleware.add(middleware);
   }
 
+  /// Wraps only the routes below this router in [middleware].
+  ///
+  /// The difference from [layer] is what it does **not** wrap: a request that
+  /// matched no route, or matched a path but not a method, never reaches a
+  /// route layer. It answers 404 or 405 without running it.
+  ///
+  /// That is the difference between decoration and enforcement:
+  ///
+  /// ```dart
+  /// final app = Router()
+  ///   ..layer(const RequestId())        // every answer, 404 included
+  ///   ..routeLayer(RequireApiKey())     // only requests that hit a route
+  ///   ..merge(routes);
+  /// ```
+  ///
+  /// Authentication usually wants this one. A `layer` that rejects
+  /// unauthenticated requests also rejects the 404 for a path that does not
+  /// exist, which turns "no such route" into "not authorised" and makes a
+  /// missing route look like a permissions bug.
+  ///
+  /// Logging and tracing usually want [layer] instead: a 404 is a request too,
+  /// and one that vanishes from the log is one nobody can explain.
+  void routeLayer(Object middleware) {
+    _requireOpen();
+    internals.routeMiddleware.add(middleware);
+  }
+
   /// Attaches state that `@State() T` handlers below this router read.
   ///
   /// ```dart

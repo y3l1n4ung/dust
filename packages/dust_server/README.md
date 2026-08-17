@@ -41,3 +41,29 @@ final server = await serveRouter(app, InternetAddress.anyIPv4, 8080);
 
 HTTP, WebSockets, server-rendered HTML, static assets, and isolate clustering,
 all on one router.
+
+## Examples
+
+| Example | Shows |
+| :--- | :--- |
+| [`example/todo_api.dart`](example/todo_api.dart) | a JSON API: extraction, validation, typed failures, layers, draining |
+| [`example/chat_server.dart`](example/chat_server.dart) | HTTP, WebSockets, and rendered HTML from one route table |
+| [`example/auth_schemes.dart`](example/auth_schemes.dart) | bearer, API key, HTTP Basic, and session cookie behind one interface |
+
+Both are served over a loopback socket by `test/example/` and driven with a
+real client.
+
+Two more live in the workspace, where `dust build` can reach them:
+
+| Example | Shows |
+| :--- | :--- |
+| [`examples/notes_mvc`](../../examples/notes_mvc) | the smallest thing worth writing: model, controller, five routes |
+| [`examples/todo_server`](../../examples/todo_server) | generated models, a SQLite store, ownership rules, stress tests |
+
+## Tests
+
+834 tests, 100% line coverage.
+
+```bash
+dart test
+```

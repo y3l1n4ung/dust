@@ -15,13 +15,21 @@ sealed class RouteMatch {
 @internal
 final class Matched extends RouteMatch {
   /// Pairs the handler with what matching produced.
-  const Matched(this.handler, this.parameters, {this.mountPrefix});
+  const Matched(
+    this.handler,
+    this.parameters, {
+    required this.matchedPath,
+    this.mountPrefix,
+  });
 
   /// The handler to run.
   final Handler handler;
 
   /// Path parameters, still percent-encoded.
   final Map<String, String> parameters;
+
+  /// The route pattern that matched, such as `/todos/{id}`.
+  final String matchedPath;
 
   /// The prefix to hand to the mounted handler, when the route is a mount.
   ///

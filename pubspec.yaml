@@ -8,8 +8,11 @@ workspace:
   - packages/dust_dart
   - packages/dust_flutter
   - packages/dust_db_sqlite3
+  - packages/dust_server
   - examples/product_showcase
   - examples/benchmark_project
+  - examples/notes_mvc
+  - examples/todo_server
 
 hooks:
   user_defines:

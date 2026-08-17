@@ -88,6 +88,10 @@ Future<Response> guard(Future<Response> Function() body) async {
     return await body();
   } on Rejection catch (rejection) {
     return rejection.intoResponse();
+  } on HijackException {
+    // Taking over the socket is how a WebSocket upgrade succeeds, and `shelf`
+    // signals it by throwing. Catching it would answer 500 on every upgrade.
+    rethrow;
   } on Object catch (error, stack) {
     ServerErrors.report(error, stack);
     return const Rejection.internal().intoResponse();

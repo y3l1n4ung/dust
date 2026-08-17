@@ -35,6 +35,7 @@
 /// | `serving.dart` | running and draining a server |
 /// | `ws.dart` | WebSocket routes and sessions |
 /// | `templating.dart` | rendering HTML from templates |
+/// | `tracing.dart` | spans, W3C trace context, exporters |
 library;
 
 export 'annotations.dart';
@@ -44,4 +45,5 @@ export 'response.dart';
 export 'router.dart';
 export 'serving.dart';
 export 'templating.dart';
+export 'tracing.dart';
 export 'ws.dart';

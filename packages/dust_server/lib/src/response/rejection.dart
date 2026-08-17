@@ -84,14 +84,27 @@ final class Rejection implements IntoResponse {
       'error': message,
       if (fields.isNotEmpty) 'fields': fields,
     };
+    final scheme = challenge;
     return Response(
       status,
       body: jsonEncode(body),
       headers: {
         'content-type': 'application/json',
-        if (challenge != null) 'www-authenticate': challenge!,
+        if (scheme != null) 'www-authenticate': _headerSafe(scheme),
       },
     );
+  }
+
+  /// Strips what cannot appear in a header value.
+  ///
+  /// [challenge] is the only part of a rejection that reaches a header rather
+  /// than the JSON body, so it is the only one where a newline would end the
+  /// header and start another. An extractor that builds its challenge from
+  /// anything a client influenced — a realm named after a tenant, say — would
+  /// otherwise be a response-splitting hole. The body needs no such care:
+  /// `jsonEncode` escapes it.
+  static String _headerSafe(String value) {
+    return value.replaceAll(RegExp(r'[\r\n\x00]'), '');
   }
 
   @override

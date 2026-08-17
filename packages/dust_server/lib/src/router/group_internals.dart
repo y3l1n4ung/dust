@@ -18,6 +18,9 @@ final class GroupInternals {
   /// Middleware added with `layer`, outermost first.
   final middleware = <Object>[];
 
+  /// Middleware added with `routeLayer`, which wraps matched routes only.
+  final routeMiddleware = <Object>[];
+
   /// State attached with `withState`, keyed by type.
   final state = <String, Object>{};
 

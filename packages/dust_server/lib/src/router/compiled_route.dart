@@ -17,6 +17,7 @@ final class CompiledRoute {
       : method = route.method,
         handler = route.handler,
         mountPrefix = route.isMount ? route.path : null,
+        matchedPath = route.path,
         _names = parameterNames(route.path),
         _staticPath = _staticPathOf(route),
         _segmentCount = _segmentCountOf(route),
@@ -29,6 +30,9 @@ final class CompiledRoute {
   final String method;
   final Handler handler;
   final String? mountPrefix;
+
+  /// The pattern this route was declared with, kept for `matchedPathOf`.
+  final String matchedPath;
   final RegExp pattern;
   final List<String> _names;
 
@@ -61,6 +65,7 @@ final class CompiledRoute {
     return Matched(
       handler,
       captured == null ? const {} : _parameters(captured),
+      matchedPath: matchedPath,
       mountPrefix: mountPrefix,
     );
   }

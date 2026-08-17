@@ -26,8 +26,7 @@ import 'extractable.dart';
 /// mistake as letting any other exception escape a handler.
 extension RequireExtraction<T> on FromRequestParts<T> {
   /// Extracts the value, throwing the [Rejection] when extraction fails.
-  Future<T> require(Request request) async =>
-      (await extract(request)).orReject;
+  Future<T> require(Request request) async => (await extract(request)).orReject;
 }
 
 /// Collapses an extraction outcome onto its value.

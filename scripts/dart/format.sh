@@ -8,12 +8,13 @@ CHECK_MODE=false
 TARGETS=(
   "packages/dust_dart"
   "packages/dust_db_sqlite3"
+  "packages/dust_server"
 )
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --check) CHECK_MODE=true ;;
-    --examples) TARGETS=("examples/product_showcase") ;;
+    --examples) TARGETS=("examples/product_showcase" "examples/notes_mvc" "examples/todo_server") ;;
     *)
       echo "Usage: $0 [--check] [--examples]" >&2
       exit 2

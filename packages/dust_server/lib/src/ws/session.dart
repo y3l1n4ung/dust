@@ -29,7 +29,12 @@ abstract final class WebSocketClose {
 /// request that opened it, path parameters and state included, is still here.
 final class WebSocketSession {
   /// Wraps [channel], opened by [request].
-  WebSocketSession(this.channel, this.request);
+  ///
+  /// [negotiatedProtocol] is what the handshake settled on. `shelf_web_socket`
+  /// reports it alongside the channel rather than on it, and a server-side
+  /// channel leaves `WebSocketChannel.protocol` null, so it is carried here.
+  WebSocketSession(this.channel, this.request, {String? negotiatedProtocol})
+      : _negotiatedProtocol = negotiatedProtocol;
 
   /// The channel underneath, for anything this class does not wrap.
   final WebSocketChannel channel;
@@ -37,11 +42,14 @@ final class WebSocketSession {
   /// The request that upgraded, kept so extractors still work.
   final Request request;
 
+  final String? _negotiatedProtocol;
+
   /// Path parameters captured by the route that accepted the upgrade.
   Map<String, String> get pathParameters => pathParametersOf(request);
 
-  /// The subprotocol agreed during the handshake, if any.
-  String? get protocol => channel.protocol;
+  /// The subprotocol agreed during the handshake, or `null` when the client
+  /// offered none the route accepts.
+  String? get protocol => _negotiatedProtocol ?? channel.protocol;
 
   /// Everything the peer sends, as `String` or `Uint8List`.
   Stream<Object?> get messages => channel.stream;
@@ -69,6 +77,15 @@ final class WebSocketSession {
       channel.sink.close(code, reason);
 
   /// Resolves when the connection is finished, however it ended.
+  ///
+  /// A close frame is only noticed while the incoming stream is being read, so
+  /// this completes only if something is consuming [messages]. Awaiting it as
+  /// a handler's whole body leaves the connection open until the socket dies:
+  ///
+  /// ```dart
+  /// await for (final message in session.textMessages) { ... }
+  /// // the loop ends when the peer closes; `done` has completed by now
+  /// ```
   Future<void> get done => channel.sink.done;
 
   /// The close code the peer sent, once [done] completes.

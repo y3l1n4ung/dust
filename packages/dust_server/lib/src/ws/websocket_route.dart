@@ -32,7 +32,11 @@ MethodRouter ws(
     (request) {
       final upgrade = webSocketHandler(
         (channel, protocol) async {
-          final session = WebSocketSession(channel, request);
+          final session = WebSocketSession(
+            channel,
+            request,
+            negotiatedProtocol: protocol,
+          );
           try {
             await handler(session);
           } on Object catch (error, stack) {

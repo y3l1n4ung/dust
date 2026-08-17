@@ -31,6 +31,12 @@ final class MustacheTemplates implements TemplateEngine {
   ///
   /// A template's name is its path below [directory] without the extension, so
   /// `web/templates/mail/welcome.html` is `mail/welcome`.
+  ///
+  /// That name works for [render]. It does not work in a `{{> partial}}` tag:
+  /// `mustache_template` allows only letters, digits, `-`, `_` and `.` there,
+  /// so a fragment meant to be included has to sit at the root or carry a flat
+  /// name. A slash in a partial tag fails at load time rather than silently
+  /// rendering nothing.
   factory MustacheTemplates.fromDirectory(
     String directory, {
     String extension = '.html',

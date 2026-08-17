@@ -66,6 +66,32 @@ final class RequestParts {
 /// The context key captured path parameters travel under.
 const pathParametersKey = 'dust_server/path_parameters';
 
+/// The context key the matched route pattern travels under.
+const matchedPathKey = 'dust_server/matched_path';
+
+/// The context key a [MatchedRouteSlot] travels under.
+const matchedRouteSlotKey = 'dust_server/matched_route_slot';
+
+/// A box a layer passes down so the router can report back what it matched.
+///
+/// A layer wraps the matcher, so it sees the request on the way *in*, before
+/// any route has been chosen — reading the matched path from its own request
+/// would always find nothing. Handing down a slot the router fills is what
+/// lets a layer label a request by route on the way out.
+final class MatchedRouteSlot {
+  /// Creates an empty slot.
+  MatchedRouteSlot();
+
+  /// The route that matched, once one has.
+  String? route;
+}
+
+/// Fills the slot [request] carries, when it carries one.
+void reportMatchedRoute(Request request, String route) {
+  final slot = request.context[matchedRouteSlotKey];
+  if (slot is MatchedRouteSlot) slot.route = route;
+}
+
 /// Reads router-captured path parameters from [request].
 ///
 /// Returns an empty map when the request did not pass through a router, which
@@ -75,4 +101,18 @@ Map<String, String> pathParametersOf(Request request) {
   if (raw is Map<String, String>) return raw;
   if (raw is Map) return raw.map((k, v) => MapEntry('$k', '$v'));
   return const {};
+}
+
+/// The route pattern that matched [request], or `null` when none did.
+///
+/// The **pattern**, not the path: `/todos/{id}` rather than `/todos/7`. That
+/// is what a span name, a metric label, or a log line should carry — naming
+/// them after the path makes every id its own operation, and a dashboard of a
+/// million one-request operations says nothing.
+///
+/// `null` for a request that reached the fallback, or one built in a test
+/// without a router, because no route matched it.
+String? matchedPathOf(Request request) {
+  final raw = request.context[matchedPathKey];
+  return raw is String ? raw : null;
 }

@@ -84,7 +84,8 @@ final class JsonListExtractable<T> implements FromRequest<List<T>> {
 
     try {
       return Ok([
-        for (final element in value) deserialize(element! as Map<String, Object?>),
+        for (final element in value)
+          deserialize(element! as Map<String, Object?>),
       ]);
     } on Object catch (error) {
       return Err(decodeRejection(error, subject: 'JSON array'));

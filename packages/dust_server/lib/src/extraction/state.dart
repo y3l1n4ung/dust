@@ -5,6 +5,12 @@ import '../response/rejection.dart';
 import 'extractable.dart';
 
 /// The request-context key state of type [T] travels under.
+///
+/// The key is the type's name, which is all Dart exposes without mirrors. Two
+/// classes with the same name from different libraries therefore share a key,
+/// and the second `withState` wins. [StateExtractable] catches that: the value
+/// it finds fails its type test and answers 500 rather than handing a handler
+/// the wrong object. Renaming one of them is the fix.
 String stateKeyFor<T>() => 'dust_server/state/$T';
 
 /// Reads application state attached with `Router.withState`.

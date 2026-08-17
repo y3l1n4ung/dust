@@ -89,6 +89,10 @@ void _collect(
     ...inherited,
     if (stateMiddleware(group.internals.state) case final state?) state,
     if (includeOwnMiddleware) ...resolveMiddleware(group.internals.middleware),
+    // Always included, even for the root: a route layer is defined as running
+    // for matched routes only, so it belongs to the route rather than to the
+    // composed handler that also answers 404 and 405.
+    ...resolveMiddleware(group.internals.routeMiddleware),
   ];
   final metadata = [
     ...inheritedMetadata,

@@ -16,6 +16,11 @@ Type typeOf<X>() => X;
 ///
 /// `bool` accepts `true`, `false`, `1`, and `0`, and treats a bare flag with an
 /// empty value as `true`, matching how query flags are usually written.
+///
+/// Integers are decimal only. `int.tryParse` reads `0x10` as 16 by default,
+/// which means `?id=0x10` and `?id=16` would name the same record and a check
+/// written against the text would miss one of them. A request carries decimal,
+/// so anything else is a 400.
 Result<T, Rejection> coerce<T>(String raw, {required String source}) {
   Rejection bad(String type) =>
       Rejection.badRequest('$source is not a valid $type');
@@ -24,7 +29,7 @@ Result<T, Rejection> coerce<T>(String raw, {required String source}) {
     return Ok(raw as T);
   }
   if (T == int || T == typeOf<int?>()) {
-    final value = int.tryParse(raw);
+    final value = int.tryParse(raw, radix: 10);
     return value == null ? Err(bad('integer')) : Ok(value as T);
   }
   if (T == double || T == typeOf<double?>()) {
@@ -44,7 +49,7 @@ Result<T, Rejection> coerce<T>(String raw, {required String source}) {
     return value == null ? Err(bad('boolean')) : Ok(value as T);
   }
   if (T == BigInt || T == typeOf<BigInt?>()) {
-    final value = BigInt.tryParse(raw);
+    final value = BigInt.tryParse(raw, radix: 10);
     return value == null ? Err(bad('integer')) : Ok(value as T);
   }
   if (T == DateTime || T == typeOf<DateTime?>()) {

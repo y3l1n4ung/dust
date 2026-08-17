@@ -5,16 +5,22 @@
 library;
 
 export 'body_reader.dart';
+export 'authorization.dart';
 export 'context.dart';
+export 'cookie.dart';
+export 'credentials.dart';
 export 'extractable.dart';
 export 'form.dart';
 export 'header.dart';
+export 'host.dart';
 export 'json.dart';
 export 'multipart.dart';
 export 'path.dart';
 export 'query.dart';
 export 'raw.dart';
 export 'reads_body.dart';
+export 'request_extension.dart';
 export 'require.dart';
+export 'shortcut.dart';
 export 'state.dart';
 export 'validated.dart';
