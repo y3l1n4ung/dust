@@ -1,6 +1,12 @@
+import 'dart:io';
+
+import 'package:dust_server/server.dart';
 import 'package:test/test.dart';
 
+import '../../example/access_log.dart' as access_log;
 import '../../example/bearer_auth.dart' as bearer_auth;
+import '../../example/compression.dart' as compression;
+import '../../example/cors.dart' as cors;
 import '../../example/cookies.dart' as cookies;
 import '../../example/credential_schemes.dart' as credential_schemes;
 import '../../example/custom_extractor.dart' as custom_extractor;
@@ -11,11 +17,16 @@ import '../../example/headers_and_host.dart' as headers_and_host;
 import '../../example/hello_world.dart' as hello_world;
 import '../../example/json_body.dart' as json_body;
 import '../../example/multipart_form.dart' as multipart_form;
+import '../../example/normalize_path.dart' as normalize_path;
 import '../../example/optional_extraction.dart' as optional_extraction;
 import '../../example/parse_body_by_content_type.dart' as by_content_type;
 import '../../example/path_params.dart' as path_params;
 import '../../example/query_params.dart' as query_params;
+import '../../example/request_id.dart' as request_id;
+import '../../example/request_timeout.dart' as request_timeout;
+import '../../example/route_layer.dart' as route_layer;
 import '../../example/routing.dart' as routing;
+import '../../example/security_headers.dart' as security_headers;
 import '../../example/state.dart' as state_example;
 import '../../example/validation_422.dart' as validation_422;
 import 'serve.dart';
@@ -862,6 +873,375 @@ void main() {
             .statusCode,
         401,
       );
+    });
+  });
+
+  group('cors', () {
+    test('an allowed origin gets the allow header and Vary', () async {
+      final app = await example(cors.buildApp());
+
+      final response = await app.get(
+        '/api/notes',
+        headers: {'origin': 'https://app.example'},
+      );
+
+      expect(
+        response.headers['access-control-allow-origin'],
+        'https://app.example',
+      );
+      // Without Vary a cache can serve one origin's response to another.
+      expect(response.headers['vary'], contains('Origin'));
+    });
+
+    test('an origin not on the list gets no allow header', () async {
+      final app = await example(cors.buildApp());
+
+      final response = await app.get(
+        '/api/notes',
+        headers: {'origin': 'https://evil.example'},
+      );
+
+      // The body still comes back: CORS instructs the browser, it is not a
+      // server-side gate. curl sees the data either way.
+      expect(response.statusCode, 200);
+      expect(response.headers['access-control-allow-origin'], isNull);
+    });
+
+    test('a preflight is answered without reaching the handler', () async {
+      final app = await example(cors.buildApp());
+
+      final response = await app.raw(
+        'OPTIONS',
+        '/api/notes',
+        headers: {
+          'origin': 'https://app.example',
+          'access-control-request-method': 'POST',
+        },
+      );
+
+      expect(response.statusCode, anyOf(200, 204));
+      expect(
+        response.headers['access-control-allow-methods'],
+        contains('POST'),
+      );
+      expect(response.headers['access-control-max-age'], '600');
+    });
+
+    test('exposeHeaders is what lets fetch read x-request-id', () async {
+      final app = await example(cors.buildApp());
+
+      final response = await app.get(
+        '/api/notes',
+        headers: {'origin': 'https://app.example'},
+      );
+
+      expect(
+        response.headers['access-control-expose-headers'],
+        contains('x-request-id'),
+      );
+    });
+
+    test('credentials with a wildcard origin throws at construction', () {
+      // A browser refuses a credentialed response allowed for "*", so this is
+      // caught here rather than in someone console.
+      expect(
+        () => Cors(origins: const AllowedOrigins.any(), credentials: true),
+        throwsArgumentError,
+      );
+    });
+  });
+
+  group('compression', () {
+    test('a big enough body is gzipped, and Vary is set', () async {
+      final app = await example(compression.buildApp());
+
+      final client = HttpClient()..autoUncompress = false;
+      addTearDown(client.close);
+      final request = await client.getUrl(app.uri('/rows'));
+      request.headers.set('accept-encoding', 'gzip');
+      final response = await request.close();
+      final bytes = await response.fold<List<int>>(
+        <int>[],
+        (all, chunk) => all..addAll(chunk),
+      );
+
+      expect(response.headers.value('content-encoding'), 'gzip');
+      expect(response.headers.value('vary'), contains('Accept-Encoding'));
+      expect(gzip.decode(bytes).length, greaterThan(bytes.length));
+    });
+
+    test('gzip;q=0 is a refusal, not an absence', () async {
+      final app = await example(compression.buildApp());
+
+      final response = await app.get(
+        '/rows',
+        headers: {'accept-encoding': 'gzip;q=0'},
+      );
+
+      expect(response.headers['content-encoding'], isNull);
+    });
+
+    test('a body under the threshold is left alone', () async {
+      final app = await example(compression.buildApp());
+
+      final response = await app.get(
+        '/ping',
+        headers: {'accept-encoding': 'gzip'},
+      );
+
+      expect(response.body.length, lessThan(1024));
+      expect(response.headers['content-encoding'], isNull);
+    });
+  });
+
+  group('request_id', () {
+    test('every answer carries an id', () async {
+      final app = await example(request_id.buildApp(log: (_) {}));
+
+      expect((await app.get('/notes')).headers['x-request-id'], isNotEmpty);
+    });
+
+    test('a client-supplied id is kept, so one id spans every hop', () async {
+      final app = await example(request_id.buildApp(log: (_) {}));
+
+      final response = await app.get(
+        '/notes',
+        headers: {'x-request-id': 'from-the-gateway'},
+      );
+
+      expect(response.headers['x-request-id'], 'from-the-gateway');
+    });
+
+    test('the handler reads the same id the response carries', () async {
+      final app = await example(request_id.buildApp(log: (_) {}));
+
+      final response = await app.get(
+        '/echo-id',
+        headers: {'x-request-id': 'abc-123'},
+      );
+
+      expect(app.object(response), {'requestId': 'abc-123'});
+      expect(response.headers['x-request-id'], 'abc-123');
+    });
+
+    test('two requests get different ids', () async {
+      final app = await example(request_id.buildApp(log: (_) {}));
+
+      final first = (await app.get('/notes')).headers['x-request-id'];
+      final second = (await app.get('/notes')).headers['x-request-id'];
+
+      expect(first, isNot(second));
+    });
+  });
+
+  group('access_log', () {
+    test('records the method, path, and status', () async {
+      final records = <AccessRecord>[];
+      final app = await example(access_log.buildApp(onRecord: records.add));
+
+      await app.get('/notes');
+
+      expect(records.single.method, 'GET');
+      expect(records.single.path, '/notes');
+      expect(records.single.status, 200);
+    });
+
+    test('records a 404 too, because it is a request', () async {
+      // Above the routes on purpose: a request that never reaches the log is
+      // one nobody can explain.
+      final records = <AccessRecord>[];
+      final app = await example(access_log.buildApp(onRecord: records.add));
+
+      await app.get('/nothing');
+
+      expect(records.single.status, 404);
+      expect(records.single.path, '/nothing');
+    });
+
+    test('the recorded path carries no query string', () async {
+      // Query strings carry API keys and reset tokens. An access log is a
+      // recognised place they leak.
+      final records = <AccessRecord>[];
+      final app = await example(access_log.buildApp(onRecord: records.add));
+
+      await app.get('/notes?api_key=secret');
+
+      expect(records.single.path, '/notes');
+      expect(records.single.path, isNot(contains('secret')));
+    });
+
+    test('the record carries the request id, so the two logs join up',
+        () async {
+      final records = <AccessRecord>[];
+      final app = await example(access_log.buildApp(onRecord: records.add));
+
+      await app.get('/notes', headers: {'x-request-id': 'abc-123'});
+
+      expect(records.single.requestId, 'abc-123');
+    });
+  });
+
+  group('normalize_path', () {
+    test('a trailing slash is rewritten, and the client sees one response',
+        () async {
+      final app = await example(normalize_path.buildApp());
+
+      final bare = await app.get('/notes');
+      final slashed = await app.get('/notes/');
+
+      expect(slashed.statusCode, 200);
+      expect(slashed.body, bare.body);
+    });
+
+    test('a nested route is covered when the layer sits above the nest',
+        () async {
+      final app = await example(normalize_path.buildApp());
+
+      expect((await app.get('/api/notes/')).statusCode, 200);
+    });
+
+    test('the same layer inside a nested router silently does nothing',
+        () async {
+      // The trap this example keeps on purpose. A nested router's layer runs
+      // only after one of its routes matched, and normalizing exists to make a
+      // path match — so it never runs for the request it was added to fix.
+      final right = await example(normalize_path.buildApp());
+      final wrong = await example(normalize_path.buildMisplacedApp());
+
+      // Same layer, same route, same request. Only the placement differs.
+      expect((await right.get('/api/notes/')).statusCode, 200);
+      expect((await wrong.get('/api/notes/')).statusCode, 404);
+
+      // And the route itself is fine — it is only the trailing slash that is
+      // left unhandled, which is what makes the mistake hard to spot.
+      expect((await wrong.get('/api/notes')).statusCode, 200);
+    });
+
+    test('the root is never touched', () async {
+      // Stripping its slash would leave an empty path nothing can match.
+      final app = await example(normalize_path.buildApp());
+
+      expect(app.object(await app.get('/')), {'root': true});
+    });
+  });
+
+  group('security_headers', () {
+    test('a page carries the whole set, CSP included', () async {
+      final app = await example(security_headers.buildApp());
+
+      final response = await app.get('/page');
+
+      expect(response.headers['x-content-type-options'], 'nosniff');
+      expect(response.headers['x-frame-options'], 'DENY');
+      expect(response.headers['referrer-policy'], isNotNull);
+      expect(response.headers['content-security-policy'], contains("'self'"));
+    });
+
+    test('the CSP names its sources and allows no inline script', () async {
+      // An allowlist that permits inline scripts permits the injected one too.
+      final app = await example(security_headers.buildApp());
+
+      final policy =
+          (await app.get('/page')).headers['content-security-policy']!;
+
+      expect(policy, isNot(contains('unsafe-inline')));
+      expect(policy, contains("frame-ancestors 'none'"));
+    });
+
+    test('the API gets the cheap headers and no CSP', () async {
+      final app = await example(security_headers.buildApp());
+
+      final response = await app.get('/api/notes');
+
+      expect(response.headers['x-content-type-options'], 'nosniff');
+      expect(response.headers['content-security-policy'], isNull);
+    });
+
+    test('HSTS is absent, because this example serves plain HTTP', () async {
+      final app = await example(security_headers.buildApp());
+
+      expect(
+        (await app.get('/page')).headers['strict-transport-security'],
+        isNull,
+      );
+    });
+  });
+
+  group('route_layer', () {
+    test('a matched route without a credential is 401', () async {
+      final app = await example(route_layer.buildApp());
+
+      final response = await app.get('/admin/orders');
+
+      expect(response.statusCode, 401);
+      expect(response.headers['www-authenticate'], contains('Bearer'));
+    });
+
+    test('the credential gets through', () async {
+      final app = await example(route_layer.buildApp());
+
+      final response = await app.get(
+        '/admin/orders',
+        headers: {'authorization': 'Bearer staff'},
+      );
+
+      expect(app.array(response), ['order-1']);
+    });
+
+    test('an unmatched path under the prefix is 404, not 401', () async {
+      // The whole reason for routeLayer. With a plain layer this answers 401,
+      // and a typo in your own route table looks like an auth problem.
+      final app = await example(route_layer.buildApp());
+
+      expect((await app.get('/admin/typo')).statusCode, 404);
+    });
+
+    test('routes outside the guard are untouched', () async {
+      final app = await example(route_layer.buildApp());
+
+      expect((await app.get('/health')).statusCode, 200);
+    });
+
+    test('a real credential that is not the staff one is 403', () async {
+      final app = await example(route_layer.buildApp());
+
+      final response = await app.get(
+        '/admin/orders',
+        headers: {'authorization': 'Bearer intern'},
+      );
+
+      expect(response.statusCode, 403);
+    });
+  });
+
+  group('request_timeout', () {
+    test('a request inside the budget is untouched', () async {
+      final app = await example(request_timeout.buildApp(onTimeout: (_) {}));
+
+      expect(app.object(await app.get('/quick')), {'ok': true});
+    });
+
+    test('a request over the budget is a 503', () async {
+      final app = await example(request_timeout.buildApp(onTimeout: (_) {}));
+
+      final response = await app.get('/slow');
+
+      expect(response.statusCode, 503);
+      expect(app.object(response)['error'], contains('200ms'));
+    });
+
+    test('onTimeout fires, so a 503 can be counted', () async {
+      // A 503 nobody counted is an outage nobody noticed.
+      final timedOut = <String>[];
+      final app = await example(
+        request_timeout.buildApp(
+          onTimeout: (request) => timedOut.add(request.url.path),
+        ),
+      );
+
+      await app.get('/slow');
+
+      expect(timedOut, ['slow']);
     });
   });
 }

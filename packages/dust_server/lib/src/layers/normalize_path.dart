@@ -34,6 +34,25 @@ enum TrailingSlash {
 ///
 /// The root path is never touched: `/` is already canonical, and stripping its
 /// slash would leave an empty path nothing can match.
+///
+/// > **Put it on the top-level router.** A `layer` added to a *nested* or
+/// > *merged* router runs only once one of that router's routes has matched, and
+/// > this layer's whole job is to run **before** matching. Added to a nested
+/// > router it silently does nothing: `/api/notes/` matches no route, so the
+/// > layer never runs to normalize it, and the request 404s. Above the `nest`
+/// > it works for every route below.
+///
+/// ```dart
+/// // Right: the layer sees the request before routing.
+/// final app = Router()
+///   ..layer(const NormalizePath())
+///   ..nest('/api', api);
+///
+/// // Wrong: nothing normalizes `/api/notes/`, because nothing matched it.
+/// final api = Router()
+///   ..layer(const NormalizePath())
+///   ..route('/notes', get(listNotes));
+/// ```
 final class NormalizePath implements Layer {
   /// Normalizes by rewriting the request.
   const NormalizePath({this.slash = TrailingSlash.strip}) : redirect = false;

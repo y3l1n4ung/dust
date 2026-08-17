@@ -38,20 +38,69 @@ keeps running with nobody waiting for it.
 
 ## Trying it
 
-```bash
-dart run example/cors.dart
-```
+One example per layer, each under 60 lines. The two worth running first are the
+ones where placement changes the answer.
+
+**`routeLayer` versus `layer`** — `dart run example/route_layer.dart`:
 
 ```bash
-# every response carries an id, whatever it answered
-curl -sD- -o/dev/null localhost:8080/health | grep -i x-request-id
-curl -sD- -o/dev/null localhost:8080/api/v1/todos | grep -i x-request-id
-
-# the layers wrap the failures too, so a 401 is still traced and logged
-curl -sD- -o/dev/null localhost:8080/api/v1/todos | grep -iE 'x-request-id|traceparent'
+curl -si localhost:8080/admin/orders
+curl -s  localhost:8080/admin/orders -H 'authorization: Bearer staff'
+curl -si localhost:8080/admin/typo
+curl -s  localhost:8080/health
 ```
 
-The access log line and the span appear on the server's stdout for each.
+```
+401 WWW-Authenticate: Bearer   {"error":"expected a bearer token"}
+200                            ["order-1"]
+404                            {"error":"no route for /admin/typo"}
+200                            {"status":"ok"}
+```
+
+The third line is the point. A guard added with `layer` answers **401** there, so
+a typo in your own route table looks like an auth failure — and you spend the
+afternoon on the credential instead of the spelling.
+
+**`NormalizePath` has to be on the top-level router** —
+`dart run example/normalize_path.dart`:
+
+```bash
+curl -s localhost:8080/notes/      # rewritten, one response, same URL
+curl -s localhost:8080/api/notes/  # nested, covered from above
+```
+
+Both answer 200. The same layer moved *inside* the nested router does not:
+
+```
+GET /api/notes  -> 200 ["first"]
+GET /api/notes/ -> 404 {"error":"no route for /api/notes/"}
+```
+
+A nested router's layer runs only once one of its routes has **matched**, and
+normalizing exists to make a path match — so it never runs for the request it was
+added to fix. Nothing errors; the route simply 404s. `buildMisplacedApp` in that
+example keeps the mistake so it can be seen rather than described.
+
+**The rest**, each with its own example:
+
+| Layer | Example | The bit worth reading |
+| :--- | :--- | :--- |
+| `Cors` | `cors.dart` | a preflight answers 204 without reaching a handler; `Vary: Origin` is set; credentials with `any()` throws at construction |
+| `Compression` | `compression.dart` | `gzip;q=0` is a refusal, not an absence; under 1 KB is left alone |
+| `RequestId` | `request_id.dart` | a client-supplied id is kept, so one id spans every hop |
+| `AccessLog` | `access_log.dart` | records the 404 too, and the recorded path carries no query string |
+| `SecurityHeaders` | `security_headers.dart` | CSP and HSTS have no defaults, and why |
+| `RequestTimeout` | `request_timeout.dart` | the 503 goes back while the handler keeps running |
+
+```bash
+curl -sI localhost:8080/rows -H 'accept-encoding: gzip'      # content-encoding: gzip
+curl -sI localhost:8080/rows -H 'accept-encoding: gzip;q=0'  # no encoding
+curl -si localhost:8080/slow                                 # 503 after ~200ms
+```
+
+`AccessLog` is the one to point somewhere real. It hands you an `AccessRecord`
+rather than printing, so a service that wants JSON on stdout, a counter, and a
+sampled trace does not have to fork the layer to get them.
 
 ## Writing one
 

@@ -134,6 +134,17 @@ final class Router {
   ///
   /// Takes a shelf [Middleware] or a const-expressible [Layer]. Layers run
   /// outermost first, in the order they were added.
+  ///
+  /// "Everything below" means everything this router answers, and on the
+  /// **top-level** router that includes the 404 for a path nothing matched. On a
+  /// router that has been [nest]ed or [merge]d it does not: the parent finds a
+  /// route first, so a request that matches nothing in the subtree never reaches
+  /// the subtree's layers at all.
+  ///
+  /// The distinction matters for anything that has to run *before* routing —
+  /// `NormalizePath` above all, whose job is to rewrite a path so that it can
+  /// match. Added to a nested router it silently does nothing. Put such a layer
+  /// on the top-level router, above the `nest`.
   void layer(Object middleware) {
     _requireOpen();
     internals.middleware.add(middleware);

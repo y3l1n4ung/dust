@@ -68,14 +68,14 @@ repository.
 
 | Question | File |
 | :--- | :--- |
-| Allowing a browser on another origin | `cors.dart` |
-| Compressing responses | `compression.dart` |
-| Giving every request an id that reaches the logs | `request_id.dart` |
-| Recording what was served | `access_log.dart` |
-| Making `/todos` and `/todos/` the same route | `normalize_path.dart` |
-| The response headers a browser uses to lock a page down | `security_headers.dart` |
-| A layer that runs only for routes that matched | `route_layer.dart` |
-| Cutting off a request that takes too long | `deadline.dart` |
+| Allowing a browser on another origin | [`cors.dart`](cors.dart) |
+| Compressing responses | [`compression.dart`](compression.dart) |
+| Giving every request an id that reaches the logs | [`request_id.dart`](request_id.dart) |
+| Recording what was served | [`access_log.dart`](access_log.dart) |
+| Making `/todos` and `/todos/` the same route | [`normalize_path.dart`](normalize_path.dart) |
+| The response headers a browser uses to lock a page down | [`security_headers.dart`](security_headers.dart) |
+| A layer that runs only for routes that matched | [`route_layer.dart`](route_layer.dart) |
+| Cutting off a request that takes too long | [`request_timeout.dart`](request_timeout.dart) |
 
 ## Responses
 
