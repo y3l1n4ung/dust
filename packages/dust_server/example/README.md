@@ -32,11 +32,11 @@ repository.
 
 | Question | File |
 | :--- | :--- |
-| The smallest server that answers | `hello_world.dart` |
-| Paths, methods, nesting, merging | `routing.dart` |
-| Reading `{id}` out of the path | `path_params.dart` |
-| Reading the query string, including repeated keys | `query_params.dart` |
-| Reading headers, and the `Host` the client claims | `headers_and_host.dart` |
+| The smallest server that answers | [`hello_world.dart`](hello_world.dart) |
+| Paths, methods, nesting, merging | [`routing.dart`](routing.dart) |
+| Reading `{id}` out of the path | [`path_params.dart`](path_params.dart) |
+| Reading the query string, including repeated keys | [`query_params.dart`](query_params.dart) |
+| Reading headers, and the `Host` the client claims | [`headers_and_host.dart`](headers_and_host.dart) |
 | Reading and setting cookies | `cookies.dart` |
 | Answering `HEAD` from a `GET` handler | `handle_head_request.dart` |
 | One fallback for everything unmatched | `global_404.dart` |
@@ -46,12 +46,12 @@ repository.
 
 | Question | File |
 | :--- | :--- |
-| Decoding a JSON body into a model | `json_body.dart` |
-| Decoding an HTML form post | `form_body.dart` |
-| Handling a file upload | `multipart_form.dart` |
-| Answering 422 with the per-field errors | `validation_422.dart` |
-| Changing what a rejection looks like on the wire | `customize_rejection.dart` |
-| Choosing a decoder by `content-type` | `parse_body_by_content_type.dart` |
+| Decoding a JSON body into a model | [`json_body.dart`](json_body.dart) |
+| Decoding an HTML form post | [`form_body.dart`](form_body.dart) |
+| Handling a file upload | [`multipart_form.dart`](multipart_form.dart) |
+| Answering 422 with the per-field errors | [`validation_422.dart`](validation_422.dart) |
+| Changing what a rejection looks like on the wire | [`customize_rejection.dart`](customize_rejection.dart) |
+| Choosing a decoder by `content-type` | [`parse_body_by_content_type.dart`](parse_body_by_content_type.dart) |
 
 ## Extraction
 
