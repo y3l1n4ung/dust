@@ -29,7 +29,7 @@ import 'package:dust_server/server.dart';
 /// Run it with `dart run example/security_headers.dart`:
 ///
 /// ```bash
-/// curl -sI localhost:8080/page
+/// curl -sI localhost:8080/app
 /// curl -sI localhost:8080/api/notes    # no CSP: it is not an HTML document
 /// ```
 Future<void> main() async {
@@ -41,6 +41,10 @@ Future<void> main() async {
 }
 
 /// Assembles the application, kept apart from `main` so tests can serve it.
+///
+/// Two nested routers rather than one merged one. A `layer` covers what its own
+/// router answers, so nesting is what scopes a policy to half an application —
+/// `merge` has no prefix, and its layer would cover everything.
 Router buildApp() {
   // The API half gets the cheap headers and no CSP: a policy meant for a
   // document does nothing for a JSON response, and shipping one there trains
@@ -62,16 +66,16 @@ Router buildApp() {
         // strictTransportSecurity: 'max-age=63072000; includeSubDomains',
       ),
     )
-    ..route('/page', get(page));
+    ..route('/', get(page));
 
   return Router()
     ..nest('/api', api)
-    ..merge(pages);
+    ..nest('/app', pages);
 }
 
 /// `GET /api/notes`
 List<String> listNotes(Request request) => const ['first'];
 
-/// `GET /page`
+/// `GET /app`
 Response page(Request request) =>
     htmlResponse('<!doctype html><title>Locked down</title><h1>Hello</h1>');

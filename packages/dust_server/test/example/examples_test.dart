@@ -1100,21 +1100,21 @@ void main() {
       expect((await app.get('/api/notes/')).statusCode, 200);
     });
 
-    test('the same layer inside a nested router silently does nothing',
+    test('a layer on a nested router covers that prefix, 404s included',
         () async {
-      // The trap this example keeps on purpose. A nested router's layer runs
-      // only after one of its routes matched, and normalizing exists to make a
-      // path match — so it never runs for the request it was added to fix.
-      final right = await example(normalize_path.buildApp());
-      final wrong = await example(normalize_path.buildMisplacedApp());
+      final app = await example(normalize_path.buildScopedApp());
 
-      // Same layer, same route, same request. Only the placement differs.
-      expect((await right.get('/api/notes/')).statusCode, 200);
-      expect((await wrong.get('/api/notes/')).statusCode, 404);
+      expect((await app.get('/api/notes')).statusCode, 200);
+      expect((await app.get('/api/notes/')).statusCode, 200);
+    });
 
-      // And the route itself is fine — it is only the trailing slash that is
-      // left unhandled, which is what makes the mistake hard to spot.
-      expect((await wrong.get('/api/notes')).statusCode, 200);
+    test('and covers nothing outside it', () async {
+      // Scoping matters when one half of an application has URLs you must not
+      // rewrite — a webhook whose signature covers the exact path, say.
+      final app = await example(normalize_path.buildScopedApp());
+
+      expect((await app.get('/shop/notes')).statusCode, 200);
+      expect((await app.get('/shop/notes/')).statusCode, 404);
     });
 
     test('the root is never touched', () async {
@@ -1129,7 +1129,7 @@ void main() {
     test('a page carries the whole set, CSP included', () async {
       final app = await example(security_headers.buildApp());
 
-      final response = await app.get('/page');
+      final response = await app.get('/app');
 
       expect(response.headers['x-content-type-options'], 'nosniff');
       expect(response.headers['x-frame-options'], 'DENY');
@@ -1142,13 +1142,15 @@ void main() {
       final app = await example(security_headers.buildApp());
 
       final policy =
-          (await app.get('/page')).headers['content-security-policy']!;
+          (await app.get('/app')).headers['content-security-policy']!;
 
       expect(policy, isNot(contains('unsafe-inline')));
       expect(policy, contains("frame-ancestors 'none'"));
     });
 
     test('the API gets the cheap headers and no CSP', () async {
+      // Two nested routers, so each policy covers one half. A merged router has
+      // no prefix, and its layer would cover both.
       final app = await example(security_headers.buildApp());
 
       final response = await app.get('/api/notes');
@@ -1161,7 +1163,7 @@ void main() {
       final app = await example(security_headers.buildApp());
 
       expect(
-        (await app.get('/page')).headers['strict-transport-security'],
+        (await app.get('/app')).headers['strict-transport-security'],
         isNull,
       );
     });

@@ -21,7 +21,7 @@ Handler composeHandler(Router root) {
 
   final matcher = RouteMatcher(flattenRoutes(root));
 
-  Handler composed = (request) async {
+  Future<Response> routing(Request request) async {
     final path = '/${request.url.path}';
 
     return switch (matcher.match(request.method, path)) {
@@ -36,7 +36,12 @@ Handler composeHandler(Router root) {
         methodNotAllowed(request.method, path, allowed),
       NoMatch() => root.internals.fallback?.call(request) ?? notFound(path),
     };
-  };
+  }
+
+  // A nested router's `layer` wraps matching itself, not the matched route, so
+  // it covers the 404s and 405s inside its prefix — and so a layer that rewrites
+  // the path runs early enough for the rewritten path to match.
+  var composed = _applyScopes(routing, flattenLayerScopes(root));
 
   final limit = root.bodyLimit;
   final chain = <Middleware>[
@@ -55,6 +60,32 @@ Handler composeHandler(Router root) {
   // isolate do not overwrite each other's sink.
   final inner = composed;
   return (request) => ServerErrors.runWith(onError, () => inner(request));
+}
+
+/// Wraps [routing] in each scope, so a request inside a prefix runs its layers.
+///
+/// Applied innermost prefix first, so the outermost router's stack ends up
+/// outermost — the same order `layer` gives at the top level.
+///
+/// A request outside a scope passes through untouched. That is what keeps a
+/// layer mounted at `/admin` off the storefront.
+Handler _applyScopes(Handler routing, List<LayerScope> scopes) {
+  var composed = routing;
+
+  for (final scope in scopes.reversed) {
+    var wrapped = composed;
+    for (final middleware in scope.middleware.reversed) {
+      wrapped = middleware(wrapped);
+    }
+
+    final outside = composed;
+    final inside = wrapped;
+    composed = (request) => scope.covers('/${request.url.path}')
+        ? inside(request)
+        : outside(request);
+  }
+
+  return composed;
 }
 
 /// Closes the whole mounted subtree to further mounting.

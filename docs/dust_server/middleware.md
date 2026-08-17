@@ -61,7 +61,7 @@ The third line is the point. A guard added with `layer` answers **401** there, s
 a typo in your own route table looks like an auth failure — and you spend the
 afternoon on the credential instead of the spelling.
 
-**`NormalizePath` has to be on the top-level router** —
+**A nested `layer` is scoped to its prefix** —
 `dart run example/normalize_path.dart`:
 
 ```bash
@@ -69,17 +69,17 @@ curl -s localhost:8080/notes/      # rewritten, one response, same URL
 curl -s localhost:8080/api/notes/  # nested, covered from above
 ```
 
-Both answer 200. The same layer moved *inside* the nested router does not:
+A `layer` covers everything its router answers — the 404s and 405s inside its
+prefix included — so it can run *before* routing, which is what a path rewrite
+depends on. `buildScopedApp` in that example puts the layer on `/api` alone:
 
 ```
-GET /api/notes  -> 200 ["first"]
-GET /api/notes/ -> 404 {"error":"no route for /api/notes/"}
+GET /api/notes/  -> 200 ["first"]
+GET /shop/notes/ -> 404 {"error":"no route for /shop/notes/"}
 ```
 
-A nested router's layer runs only once one of its routes has **matched**, and
-normalizing exists to make a path match — so it never runs for the request it was
-added to fix. Nothing errors; the route simply 404s. `buildMisplacedApp` in that
-example keeps the mistake so it can be seen rather than described.
+Scoping earns its keep when one half of an application has URLs you must not
+rewrite — a webhook whose signature is computed over the exact path, say.
 
 **The rest**, each with its own example:
 
@@ -89,7 +89,7 @@ example keeps the mistake so it can be seen rather than described.
 | `Compression` | `compression.dart` | `gzip;q=0` is a refusal, not an absence; under 1 KB is left alone |
 | `RequestId` | `request_id.dart` | a client-supplied id is kept, so one id spans every hop |
 | `AccessLog` | `access_log.dart` | records the 404 too, and the recorded path carries no query string |
-| `SecurityHeaders` | `security_headers.dart` | CSP and HSTS have no defaults, and why |
+| `SecurityHeaders` | `security_headers.dart` | CSP and HSTS have no defaults, and why; two nested routers scope one policy to each half |
 | `RequestTimeout` | `request_timeout.dart` | the 503 goes back while the handler keeps running |
 
 ```bash

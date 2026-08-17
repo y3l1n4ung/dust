@@ -135,16 +135,16 @@ final class Router {
   /// Takes a shelf [Middleware] or a const-expressible [Layer]. Layers run
   /// outermost first, in the order they were added.
   ///
-  /// "Everything below" means everything this router answers, and on the
-  /// **top-level** router that includes the 404 for a path nothing matched. On a
-  /// router that has been [nest]ed or [merge]d it does not: the parent finds a
-  /// route first, so a request that matches nothing in the subtree never reaches
-  /// the subtree's layers at all.
+  /// "Everything below" means everything this router answers, the 404s and 405s
+  /// included. On a [nest]ed router that is scoped to its prefix: a layer on a
+  /// router mounted at `/admin` runs for `/admin/typo` as well as
+  /// `/admin/orders`, and never for `/health`. A [merge]d router has no prefix,
+  /// so its layers cover the whole application.
   ///
-  /// The distinction matters for anything that has to run *before* routing —
-  /// `NormalizePath` above all, whose job is to rewrite a path so that it can
-  /// match. Added to a nested router it silently does nothing. Put such a layer
-  /// on the top-level router, above the `nest`.
+  /// That is what lets a layer run *before* routing, which anything rewriting a
+  /// path depends on — `NormalizePath` most of all, since its job is to make a
+  /// path match. Use [routeLayer] for the other intent: wrapping only the
+  /// requests a route actually claimed.
   void layer(Object middleware) {
     _requireOpen();
     internals.middleware.add(middleware);

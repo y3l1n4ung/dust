@@ -34,6 +34,34 @@ final class FlatRoute {
   final bool isMount;
 }
 
+/// One nested router's `layer` stack, and the prefix it covers.
+///
+/// A `layer` is defined as wrapping everything the router answers, 404s and
+/// 405s included. Folding it into each route's chain instead would make it run
+/// only for routes that matched — which is `routeLayer`, a different thing. So
+/// the stack travels with its prefix and the composer wraps matching around it.
+@internal
+final class LayerScope {
+  /// Pairs [prefix] with the [middleware] declared on the router mounted there.
+  const LayerScope(this.prefix, this.middleware);
+
+  /// The mounted path this stack covers, `''` for the whole application.
+  final String prefix;
+
+  /// The middleware, outermost first.
+  final List<Middleware> middleware;
+
+  /// Whether [path] falls inside this scope.
+  bool covers(String path) {
+    if (prefix.isEmpty) return true;
+    if (!path.startsWith(prefix)) return false;
+
+    // `/apiary` is not inside `/api`. Only a segment boundary counts.
+    final rest = path.substring(prefix.length);
+    return rest.isEmpty || rest.startsWith('/');
+  }
+}
+
 /// Walks [root] and returns every route with its mounted path.
 ///
 /// [root]'s own middleware is left out, since it wraps the composed router
@@ -41,11 +69,24 @@ final class FlatRoute {
 @internal
 List<FlatRoute> flattenRoutes(Router root) {
   final flattened = <FlatRoute>[];
-  _collect(root, '', const [], const [], flattened,
+  _collect(root, '', const [], const [], flattened, [],
       includeOwnMiddleware: false);
 
   _rejectUnreachable(flattened);
   return flattened;
+}
+
+/// Every nested router's `layer` stack, outermost prefix first.
+///
+/// [root]'s own stack is excluded for the same reason as above: the composer
+/// applies it around the whole handler.
+@internal
+List<LayerScope> flattenLayerScopes(Router root) {
+  final scopes = <LayerScope>[];
+  _collect(root, '', const [], const [], [], scopes,
+      includeOwnMiddleware: false);
+
+  return scopes;
 }
 
 /// Refuses a route the router could never reach.
@@ -81,14 +122,26 @@ void _collect(
   String prefix,
   List<Middleware> inherited,
   List<Object> inheritedMetadata,
-  List<FlatRoute> into, {
+  List<FlatRoute> into,
+  List<LayerScope> scopes, {
   bool includeOwnMiddleware = true,
 }) {
   final path = joinPaths(prefix, group.prefix);
+
+  // A nested `layer` becomes a scope rather than part of the route chain. In
+  // the chain it would run only for a route that matched, which is what made
+  // `NormalizePath` inside a `nest` silently do nothing: the layer exists to
+  // rewrite a path so it *can* match, and it never got the chance.
+  if (includeOwnMiddleware) {
+    final own = resolveMiddleware(group.internals.middleware);
+    if (own.isNotEmpty) {
+      scopes.add(LayerScope(normalizePrefix(path), own));
+    }
+  }
+
   final chain = [
     ...inherited,
     if (stateMiddleware(group.internals.state) case final state?) state,
-    if (includeOwnMiddleware) ...resolveMiddleware(group.internals.middleware),
     // Always included, even for the root: a route layer is defined as running
     // for matched routes only, so it belongs to the route rather than to the
     // composed handler that also answers 404 and 405.
@@ -116,7 +169,7 @@ void _collect(
   }
 
   for (final child in group.internals.children) {
-    _collect(child, path, chain, metadata, into);
+    _collect(child, path, chain, metadata, into, scopes);
   }
 }
 

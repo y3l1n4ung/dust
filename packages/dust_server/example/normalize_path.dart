@@ -24,20 +24,17 @@ import 'package:dust_server/server.dart';
 /// `/` is never touched. It is already canonical, and stripping its slash would
 /// leave an empty path nothing can match.
 ///
-/// > **It has to be on the top-level router.** A `layer` on a *nested* router
-/// > runs only after one of that router's routes has matched — and this layer
-/// > exists to run **before** matching. Put it inside a `nest` and it silently
-/// > does nothing: `/api/notes/` matches nothing, so nothing normalizes it, and
-/// > the request 404s with no hint as to why. Above the `nest` it covers every
-/// > route below. `buildMisplacedApp` in this file is that mistake, kept so it
-/// > can be seen rather than described.
+/// A `layer` covers everything the router it is on answers, and on a **nested**
+/// router that includes the 404s inside its prefix. So this works either at the
+/// top level or inside a `nest`, and `buildScopedApp` below shows the second —
+/// `/api` normalized, and nothing outside it touched.
 ///
 /// Run it with `dart run example/normalize_path.dart`:
 ///
 /// ```bash
 /// curl -s  localhost:8080/notes          # rewritten
 /// curl -s  localhost:8080/notes/         # the same answer, same URL
-/// curl -s  localhost:8080/api/notes/     # nested, and covered from above
+/// curl -s  localhost:8080/api/notes/     # nested, covered from above
 /// curl -s  localhost:8080/
 /// ```
 Future<void> main() async {
@@ -53,25 +50,28 @@ Router buildApp() {
   final api = Router()..route('/notes', get(listNotes));
 
   return Router()
-    // Above the nest, so every route below is covered — including `/api`.
     ..layer(const NormalizePath())
     ..route('/notes', get(listNotes))
     ..route('/', get(home))
     ..nest('/api', api);
 }
 
-/// The same layer in the wrong place, kept so the mistake can be seen.
+/// The same layer scoped to one prefix rather than the whole application.
 ///
-/// Nothing here normalizes `/api/notes/`: the nested router's layer runs only
-/// once one of its routes has matched, and `/api/notes/` matches none of them.
-/// The request 404s, and the layer that was added to prevent exactly that never
-/// runs.
-Router buildMisplacedApp() {
+/// `/api/notes/` is normalized; `/shop/notes/` is not, because the layer covers
+/// only what its own router answers. Scoping matters when one half of an
+/// application has URLs you must not rewrite — a webhook whose signature is
+/// computed over the exact path, say.
+Router buildScopedApp() {
   final api = Router()
     ..layer(const NormalizePath())
     ..route('/notes', get(listNotes));
 
-  return Router()..nest('/api', api);
+  final shop = Router()..route('/notes', get(listNotes));
+
+  return Router()
+    ..nest('/api', api)
+    ..nest('/shop', shop);
 }
 
 /// `GET /notes`
