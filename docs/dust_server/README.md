@@ -66,7 +66,6 @@ Complete applications, smallest first:
 
 | Example | Shows |
 | :--- | :--- |
-| [`examples/notes_mvc`](../../examples/notes_mvc) | **start here** — model, controller, five routes, 239 lines |
 | [`packages/dust_server/example/todo_api.dart`](../../packages/dust_server/example/todo_api.dart) | a JSON API on the runtime alone, with no generator step |
 | [`packages/dust_server/example/chat_server.dart`](../../packages/dust_server/example/chat_server.dart) | HTTP, WebSockets, and server-rendered HTML from one route table |
 | [`examples/todo_server`](../../examples/todo_server) | generated models, a SQLite store, and ownership rules |

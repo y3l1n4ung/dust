@@ -53,11 +53,10 @@ all on one router.
 Both are served over a loopback socket by `test/example/` and driven with a
 real client.
 
-Two more live in the workspace, where `dust build` can reach them:
+One more lives in the workspace, where `dust build` can reach it:
 
 | Example | Shows |
 | :--- | :--- |
-| [`examples/notes_mvc`](../../examples/notes_mvc) | the smallest thing worth writing: model, controller, five routes |
 | [`examples/todo_server`](../../examples/todo_server) | generated models, a SQLite store, ownership rules, stress tests |
 
 ## Tests
