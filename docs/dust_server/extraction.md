@@ -60,13 +60,37 @@ dart run example/path_params.dart
 ```
 
 ```bash
-curl -H 'authorization: Bearer todos:read' localhost:8080/api/v1/todos
-curl -i -H 'authorization: Bearer todos:read' 'localhost:8080/api/v1/todos?done=maybe'
-curl -i localhost:8080/api/v1/todos
+curl -s localhost:8080/orders/41              # {"id":41}
+curl -s localhost:8080/orders/abc             # 400
+curl -s localhost:8080/strict/abc             # 404
+curl -s localhost:8080/files/css/app.css      # {"path":"css/app.css"}
+curl -s localhost:8080/teams/dust/members/ada
 ```
 
-The second is a 400 — `done` will not coerce to `bool`. The third is a 401 with
-`WWW-Authenticate: Bearer`.
+The second and third are the pair worth comparing:
+
+```
+{"error":"path parameter \"id\" is not a valid integer"}
+{"error":"no route for /strict/abc"}
+```
+
+`/orders/{id}` matched and the **extractor** refused the value, so it is a 400.
+`/strict/{id|\d+}` never matched at all, so it is a 404 and no handler ran.
+Choosing between them is choosing whether a bad id is a client error or a
+non-existent URL.
+
+`dart run example/query_params.dart` covers the other half:
+
+```bash
+curl -s 'localhost:8080/search?q=shirt&page=2'  # {"q":"shirt","page":2}
+curl -s 'localhost:8080/search?q=shirt'         # page defaults to 1
+curl -s 'localhost:8080/search'                 # 400, q is required
+curl -s 'localhost:8080/filter?tag=red&tag=blue' # {"tags":["red","blue"]}
+curl -s 'localhost:8080/raw?a=1&b=%20two'       # the undecoded string
+```
+
+`query<String>` on `?tag=red&tag=blue` hands back one value and drops the other
+silently. `queryList<String>` is what takes both.
 
 ## The classes underneath
 

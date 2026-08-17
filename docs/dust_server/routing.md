@@ -103,20 +103,34 @@ dart run example/routing.dart
 ```
 
 ```bash
-# the route table, one path at a time
-curl -s -H 'authorization: Bearer todos:read' localhost:8080/api/v1/todos
-curl -s -H 'authorization: Bearer todos:read' localhost:8080/api/v1/todos/1
-curl -s localhost:8080/health
+# nest: the inner routes do not repeat the prefix
+curl -s localhost:8080/api/notes        # ["first","second"]
+curl -s localhost:8080/api/notes/7      # {"id":"7"}
+
+# merge: folded in at the same level, no prefix invented for it
+curl -s localhost:8080/health           # {"status":"ok"}
+
+# two verbs chained onto one path
+curl -s -X POST localhost:8080/api/notes  # 201 {"created":true}
 
 # 405, and the methods the path does serve
-curl -i -X PUT -H 'authorization: Bearer todos:read' localhost:8080/api/v1/todos
+curl -i -X PUT localhost:8080/api/notes
 
-# 404 for a path nothing matched
-curl -i localhost:8080/api/v1/nothing
+# the fallback, rather than a bare 404
+curl -s localhost:8080/nothing-here     # {"error":"no such route"}
 
 # HEAD falls back to the GET handler
 curl -I localhost:8080/health
 ```
 
-`-i` prints the status line and headers; the `Allow` header on the 405 is the
-part worth reading.
+The 405 is the part worth reading:
+
+```
+HTTP/1.1 405 Method Not Allowed
+allow: GET, HEAD, POST
+
+{"error":"PUT is not allowed on /api/notes"}
+```
+
+A path that exists but not for this method is never a 404 — the difference tells
+a client whether to fix the verb or the URL.
