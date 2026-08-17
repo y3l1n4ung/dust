@@ -4,6 +4,7 @@ import 'package:shelf/shelf.dart';
 import '../extraction/state.dart';
 import 'middleware.dart';
 import 'paths.dart';
+import 'route.dart';
 import 'router_base.dart';
 
 /// One route with its full path, middleware, and inherited metadata.
@@ -152,24 +153,29 @@ void _collect(
     if (group.metadata case final own?) own,
   ];
 
-  for (final route in group.internals.routes) {
-    var handler = route.handler;
-    for (final middleware in chain.reversed) {
-      handler = middleware(handler);
+  // Walked in declaration order rather than routes-then-children, because
+  // declaration order is the matcher's tie-break. Taking the routes first meant
+  // a `mount('/')` written after a `nest('/api', ...)` still came out ahead of
+  // it, and swallowed every path the nested router was there to serve.
+  for (final declaration in group.internals.declarations) {
+    switch (declaration) {
+      case final Route route:
+        var handler = route.handler;
+        for (final middleware in chain.reversed) {
+          handler = middleware(handler);
+        }
+        into.add(
+          FlatRoute(
+            method: route.method,
+            path: _routePath(path, route.path),
+            handler: handler,
+            metadata: List.unmodifiable(metadata),
+            isMount: route.isMount,
+          ),
+        );
+      case final Router child:
+        _collect(child, path, chain, metadata, into, scopes);
     }
-    into.add(
-      FlatRoute(
-        method: route.method,
-        path: _routePath(path, route.path),
-        handler: handler,
-        metadata: List.unmodifiable(metadata),
-        isMount: route.isMount,
-      ),
-    );
-  }
-
-  for (final child in group.internals.children) {
-    _collect(child, path, chain, metadata, into, scopes);
   }
 }
 

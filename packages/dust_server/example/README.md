@@ -38,9 +38,9 @@ repository.
 | Reading the query string, including repeated keys | [`query_params.dart`](query_params.dart) |
 | Reading headers, and the `Host` the client claims | [`headers_and_host.dart`](headers_and_host.dart) |
 | Reading and setting cookies | [`cookies.dart`](cookies.dart) |
-| Answering `HEAD` from a `GET` handler | `handle_head_request.dart` |
-| One fallback for everything unmatched | `global_404.dart` |
-| Serving two versions of the same API | `versioning.dart` |
+| Answering `HEAD` from a `GET` handler | [`handle_head_request.dart`](handle_head_request.dart) |
+| One fallback for everything unmatched | [`global_404.dart`](global_404.dart) |
+| Serving two versions of the same API | [`versioning.dart`](versioning.dart) |
 
 ## Bodies and validation
 
@@ -81,11 +81,11 @@ repository.
 
 | Question | File |
 | :--- | :--- |
-| Redirecting, and which status to use | `redirects.dart` |
-| Streaming events to a browser | `sse.dart` |
-| A WebSocket on the same router as the HTTP routes | `websockets.dart` |
-| Rendering HTML from a template | `templates.dart` |
-| Serving a built front end, single-page routes included | `static_files.dart` |
+| Redirecting, and which status to use | [`redirects.dart`](redirects.dart) |
+| Streaming events to a browser | [`sse.dart`](sse.dart) |
+| A WebSocket on the same router as the HTTP routes | [`websockets.dart`](websockets.dart) |
+| Rendering HTML from a template | [`templates.dart`](templates.dart) |
+| Serving a built front end, single-page routes included | [`static_files.dart`](static_files.dart) |
 
 ## Operations
 

@@ -60,7 +60,11 @@ RegExp compilePath(String path, {bool isMount = false}) {
   }
 
   pattern.write(switch (_tailOf(path, pattern.length == 1, isMount)) {
-    _PathTail.rootMount => '/?',
+    // A mount owns everything below its prefix, and at the root that is every
+    // path. `/?` alone matched only the bare root, which made `mount('/', ...)`
+    // — the way a single-page build is served — answer 404 for every deep link
+    // and every asset.
+    _PathTail.rootMount => '/?.*',
     _PathTail.root => '/',
     _PathTail.subtree => '(?:/.*)?',
     _PathTail.trailingSlash => '/',
@@ -80,7 +84,7 @@ Iterable<PathSegment> _segments(String path) sync* {
 
 /// How a compiled path ends.
 enum _PathTail {
-  /// A mount at the root, which also serves the bare root.
+  /// A mount at the root, which serves every path including the bare root.
   rootMount,
 
   /// The root path itself.

@@ -62,7 +62,9 @@ final class Router {
     List<Route> routes = const [],
     this.bodyLimit,
     this.onError,
-  }) : internals = GroupInternals(routes: List.of(routes));
+  }) : internals = GroupInternals(routes: List.of(routes)) {
+    internals.declarations.addAll(routes);
+  }
 
   /// The prefix this router contributes, normalized.
   final String prefix;
@@ -97,7 +99,9 @@ final class Router {
       throw ArgumentError('route "$path" was given no handlers');
     }
     for (final entry in methods.handlers.entries) {
-      internals.routes.add(Route(entry.key, path, entry.value));
+      final route = Route(entry.key, path, entry.value);
+      internals.routes.add(route);
+      internals.declarations.add(route);
     }
   }
 
@@ -110,9 +114,16 @@ final class Router {
   /// ```dart
   /// app.mount('/assets', createStaticHandler('public'));
   /// ```
+  ///
+  /// `mount('/')` claims **every** path, which is how a single-page build is
+  /// served. Declare the routes that must win above it: the first declaration
+  /// that matches is the one that runs, and that counts `route`, `mount`, and
+  /// `nest` alike, in the order they were written.
   void mount(String path, Handler handler) {
     _requireOpen();
-    internals.routes.add(Route.mount(normalizePrefix(path), handler));
+    final route = Route.mount(normalizePrefix(path), handler);
+    internals.routes.add(route);
+    internals.declarations.add(route);
   }
 
   /// Mounts [router] under [path].
@@ -124,7 +135,9 @@ final class Router {
 
     final mount = Router._(prefix: normalizePrefix(path));
     mount.internals.children.add(router);
+    mount.internals.declarations.add(router);
     internals.children.add(mount);
+    internals.declarations.add(mount);
   }
 
   /// Mounts [router] at this router's own path, adding no prefix.

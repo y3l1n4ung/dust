@@ -27,6 +27,15 @@ final class GroupInternals {
   /// Routers nested inside it.
   final children = <Router>[];
 
+  /// Routes and children in the order they were declared.
+  ///
+  /// The two live in separate lists because composition walks them differently,
+  /// but the matcher's tie-break is declaration order — so it needs to know that
+  /// `nest('/api', api)` came before `mount('/', files)`. Without this the
+  /// router's own routes were always flattened first, and a `mount('/')` written
+  /// last still shadowed every nested route.
+  final declarations = <Object>[];
+
   /// The fallback handler, when one was set.
   Handler? fallback;
 

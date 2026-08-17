@@ -60,28 +60,54 @@ not.
 
 ## Trying it
 
+`dart run example/websockets.dart`. The upgrade routes sit in the same table as
+everything else, and get the same layers.
+
+The refusals come first, because they are the part that has to work:
+
 ```bash
-dart run example/websockets.dart
-```
-
-The upgrade and the page it belongs to come from one route table:
-
-```bash
-# the rendered page
-curl -s localhost:8081/rooms/general
-
-# the same room over JSON
-curl -s localhost:8081/api/rooms
-curl -s localhost:8081/api/rooms/general/messages
-
-# the upgrade handshake, by hand
-curl -i --http1.1 \
+# no ticket
+curl -si --http1.1 localhost:8080/echo \
   -H 'connection: Upgrade' -H 'upgrade: websocket' \
-  -H 'sec-websocket-version: 13' \
-  -H 'sec-websocket-key: dGhlIHNhbXBsZSBub25jZQ==' \
-  localhost:8081/ws/general
+  -H 'sec-websocket-version: 13' -H 'sec-websocket-key: dGhlIHNhbXBsZSBub25jZQ=='
+
+# a foreign origin
+curl -si --http1.1 'localhost:8080/echo?token=t-ada' \
+  -H 'origin: https://evil.example' \
+  -H 'connection: Upgrade' -H 'upgrade: websocket' \
+  -H 'sec-websocket-version: 13' -H 'sec-websocket-key: dGhlIHNhbXBsZSBub25jZQ=='
 ```
 
-The last one answers `101 Switching Protocols`. For an actual conversation use
-a WebSocket client — `websocat ws://localhost:8081/ws/general?as=ada` — and
-watch the message appear in the rendered page.
+```
+401 {"error":"a ticket is required"}
+403 {"error":"origin not allowed"}
+```
+
+Both are checked at the upgrade, while it is still HTTP and a status code can
+still be sent. After the handshake there is no status code left to send.
+
+**The `Origin` check is not optional.** The same-origin policy does not apply to
+WebSockets: any page on the internet may open one to your server carrying the
+user's cookies, and the server will accept it unless you look. That is cross-site
+WebSocket hijacking, and this check is the whole defence.
+
+The credential rides in the query string because a browser cannot set headers on
+a WebSocket handshake. It therefore lands in access logs — so use a short-lived
+ticket fetched over HTTPS, not the session token.
+
+With both in place the handshake succeeds:
+
+```bash
+curl -si --http1.1 'localhost:8080/echo?token=t-ada' \
+  -H 'origin: http://localhost:3000' \
+  -H 'connection: Upgrade' -H 'upgrade: websocket' \
+  -H 'sec-websocket-version: 13' -H 'sec-websocket-key: dGhlIHNhbXBsZSBub25jZQ=='
+```
+
+That answers `101 Switching Protocols`. For an actual conversation use a
+WebSocket client — `websocat 'ws://localhost:8080/echo?token=t-ada'` with an
+`Origin` header — and every message comes back prefixed with `echo:`.
+
+`/greeter` shows subprotocol negotiation: `protocols` is offered in preference
+order, the client picks, and the result is `session.protocol`. It is how one
+endpoint serves two client versions without a second URL.

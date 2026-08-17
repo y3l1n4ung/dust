@@ -133,18 +133,49 @@ it collapses before matching, and no file outside the directory is reachable.
 
 ## Trying it
 
-```bash
-dart run example/templates.dart
-```
+`dart run example/templates.dart`:
 
 ```bash
-# a rendered page, with the charset stated
-curl -i localhost:8081/rooms/general | head -3
-
-# what a visitor typed comes back escaped, not executed
-curl -s -X POST 'localhost:8081/api/rooms?name=xss'
-curl -s localhost:8081/rooms/xss
+curl -s  localhost:8080/
+curl -s  localhost:8080/notes/2
+curl -si localhost:8080/notes/9
 ```
 
-Mustache escapes every interpolation, so markup in a message renders as
-`&lt;script&gt;` rather than running.
+The second note is titled `<script>alert(1)</script>`, and the page comes back
+with `&lt;script&gt;`. That is the reason to use an engine rather than string
+interpolation, and it is why `{{{value}}}` — three braces, unescaped — should
+only ever receive markup you produced. Every stored-XSS bug is a third brace
+around something a user sent.
+
+The 404 is HTML too, not a JSON rejection: whoever mistyped the URL is holding a
+browser.
+
+Serving a built front end is `dart run example/static_files.dart`:
+
+```bash
+curl -si localhost:8080/                # the document
+curl -si localhost:8080/orders/41       # the same document, deep link
+curl -sI localhost:8080/main.a1b2c3.js  # immutable for a year
+curl -s  localhost:8080/api/notes       # the API still reachable
+```
+
+```
+200 cache-control=no-cache                                <div id="app">loading</div>
+200 cache-control=no-cache                                <div id="app">loading</div>
+200 cache-control=public, max-age=31536000, immutable
+200                                                       ["first"]
+```
+
+Three things in those four lines:
+
+* **The deep link works.** `html: true` answers `/orders/41` with the document,
+  so the client-side router gets to run. Without it that is a 404 — there is no
+  such file, and the router that would have handled it has not loaded yet.
+* **The document is revalidated and the asset is immutable.** The document is how
+  a browser learns the new asset names; cache it hard and users stay pinned to a
+  deploy you have replaced, asking for files that no longer exist.
+* **The API is declared above the mount.** `mount('/')` claims every path, and
+  the first declaration that matches wins — so a static handler written above the
+  API would answer `/api/notes` with the document.
+
+

@@ -11,6 +11,8 @@ import '../../example/cookies.dart' as cookies;
 import '../../example/credential_schemes.dart' as credential_schemes;
 import '../../example/custom_extractor.dart' as custom_extractor;
 import '../../example/customize_rejection.dart' as customize_rejection;
+import '../../example/global_404.dart' as global_404;
+import '../../example/handle_head_request.dart' as head_request;
 import '../../example/fallible_extraction.dart' as fallible_extraction;
 import '../../example/form_body.dart' as form_body;
 import '../../example/headers_and_host.dart' as headers_and_host;
@@ -22,11 +24,17 @@ import '../../example/optional_extraction.dart' as optional_extraction;
 import '../../example/parse_body_by_content_type.dart' as by_content_type;
 import '../../example/path_params.dart' as path_params;
 import '../../example/query_params.dart' as query_params;
+import '../../example/redirects.dart' as redirects;
 import '../../example/request_id.dart' as request_id;
 import '../../example/request_timeout.dart' as request_timeout;
 import '../../example/route_layer.dart' as route_layer;
 import '../../example/routing.dart' as routing;
 import '../../example/security_headers.dart' as security_headers;
+import '../../example/sse.dart' as sse;
+import '../../example/static_files.dart' as static_files;
+import '../../example/templates.dart' as templates;
+import '../../example/versioning.dart' as versioning;
+import '../../example/websockets.dart' as websockets;
 import '../../example/state.dart' as state_example;
 import '../../example/validation_422.dart' as validation_422;
 import 'serve.dart';
@@ -1244,6 +1252,406 @@ void main() {
       await app.get('/slow');
 
       expect(timedOut, ['slow']);
+    });
+  });
+
+  group('redirects', () {
+    test('a POST answers 303, so a reload does not re-submit', () async {
+      final app = await example(redirects.buildApp());
+
+      final response = await app.raw('POST', '/notes');
+
+      expect(response.statusCode, 303);
+      expect(response.headers['location'], '/notes/1');
+    });
+
+    test('permanent is 308, which keeps the method', () async {
+      final app = await example(redirects.buildApp());
+
+      final response = await app.raw('GET', '/old-home');
+
+      expect(response.statusCode, 308);
+      expect(response.headers['location'], '/');
+    });
+
+    test('temporary is 307, so nothing caches it', () async {
+      final app = await example(redirects.buildApp());
+
+      expect((await app.raw('GET', '/maintenance')).statusCode, 307);
+    });
+
+    test('a newline in the target is stripped from Location', () async {
+      // Location is one of the few places caller input reaches a header, and a
+      // newline there would let a client inject headers of its own.
+      final app = await example(redirects.buildApp());
+
+      final response = await app.raw(
+        'GET',
+        '/search?q=a%0d%0aX-Evil%3A%201',
+      );
+
+      expect(response.statusCode, 303);
+      expect(response.headers['location'], isNot(contains('\n')));
+      expect(response.headers['location'], isNot(contains('\r')));
+      expect(response.headers['x-evil'], isNull);
+    });
+  });
+
+  group('sse', () {
+    test('sets the three headers a stream needs', () async {
+      final app = await example(sse.buildApp());
+
+      final response = await app.get('/ticks');
+
+      expect(response.headers['content-type'], startsWith('text/event-stream'));
+      expect(response.headers['cache-control'], 'no-cache');
+      // Without this nginx buffers, and the stream looks like a hung server.
+      expect(response.headers['x-accel-buffering'], 'no');
+    });
+
+    test('each event carries its data and id', () async {
+      final app = await example(sse.buildApp());
+
+      final body = (await app.get('/ticks')).body;
+
+      // No space after the colon. The specification makes one optional and
+      // tells clients to strip it, so both forms are legal on the wire.
+      expect(body, contains('id:1'));
+      expect(body, contains('data:{"tick":1}'));
+      expect(body, contains('id:5'));
+    });
+
+    test('Last-Event-ID resumes rather than replaying', () async {
+      // A server that ignores it drops whatever happened while the client was
+      // away, which is the reconnect the browser makes automatically.
+      final app = await example(sse.buildApp());
+
+      final body =
+          (await app.get('/ticks', headers: {'last-event-id': '2'})).body;
+
+      expect(body, contains('id:3'));
+      expect(body, isNot(contains('id:1')));
+    });
+
+    test('a named event is distinguishable from a default one', () async {
+      final app = await example(sse.buildApp());
+
+      final body = (await app.get('/progress')).body;
+
+      expect(body, contains('event:step'));
+      expect(body, contains('data:fetching'));
+      expect(body, contains('event:done'));
+    });
+  });
+
+  group('websockets', () {
+    /// The headers a real handshake sends.
+    Map<String, String> handshake() => const {
+          'connection': 'Upgrade',
+          'upgrade': 'websocket',
+          'sec-websocket-version': '13',
+          'sec-websocket-key': 'dGhlIHNhbXBsZSBub25jZQ==',
+        };
+
+    test('an upgrade without a ticket is refused while it is still HTTP',
+        () async {
+      // After the upgrade there is no status code to send, which is why the
+      // check belongs here.
+      final app = await example(websockets.buildApp());
+
+      final response = await app.raw('GET', '/echo', headers: handshake());
+
+      expect(response.statusCode, 401);
+    });
+
+    test(
+        'a foreign origin is refused, because same-origin does not apply to '
+        'WebSockets', () async {
+      // Any page on the internet may open one carrying the user's cookies.
+      // Checking Origin is the whole defence.
+      final app = await example(websockets.buildApp());
+
+      final response = await app.raw(
+        'GET',
+        '/echo?token=t-ada',
+        headers: {...handshake(), 'origin': 'https://evil.example'},
+      );
+
+      expect(response.statusCode, 403);
+    });
+
+    test('an allowed origin with a ticket upgrades', () async {
+      final app = await example(websockets.buildApp());
+
+      final response = await app.raw(
+        'GET',
+        '/echo?token=t-ada',
+        headers: {...handshake(), 'origin': 'http://localhost:3000'},
+      );
+
+      expect(response.statusCode, 101);
+    });
+
+    test('a plain GET to an upgrade route is not an upgrade', () async {
+      final app = await example(websockets.buildApp());
+
+      expect((await app.get('/echo?token=t-ada')).statusCode, isNot(101));
+    });
+
+    test('echo round-trips a message', () async {
+      final app = await example(websockets.buildApp());
+
+      final socket = await WebSocket.connect(
+        'ws://${app.uri('/echo?token=t-ada').authority}'
+        '/echo?token=t-ada',
+        headers: {'origin': 'http://localhost:3000'},
+      );
+      addTearDown(socket.close);
+
+      socket.add('ping');
+
+      expect(await socket.first, 'echo: ping');
+    });
+
+    test('the negotiated subprotocol reaches the handler', () async {
+      // It used to be dropped, so session.protocol was always null.
+      final app = await example(websockets.buildApp());
+
+      final socket = await WebSocket.connect(
+        'ws://${app.uri('/greeter?token=t-ada').authority}'
+        '/greeter?token=t-ada',
+        protocols: const ['greeting.v2'],
+        headers: {'origin': 'http://localhost:3000'},
+      );
+      addTearDown(socket.close);
+
+      expect(socket.protocol, 'greeting.v2');
+      expect(await socket.first, '{"hello":true}');
+    });
+  });
+
+  group('templates', () {
+    test('renders a page inside the shared layout', () async {
+      final app = await example(templates.buildApp());
+
+      final response = await app.get('/');
+
+      expect(response.headers['content-type'], 'text/html; charset=utf-8');
+      expect(response.body, startsWith('<!doctype html>'));
+      expect('<head>'.allMatches(response.body).length, 1);
+      expect(response.body, contains('href="/notes/1"'));
+    });
+
+    test('interpolation is escaped, which is the reason to use an engine',
+        () async {
+      final app = await example(templates.buildApp());
+
+      final response = await app.get('/notes/2');
+
+      expect(response.body, contains('&lt;script&gt;'));
+      expect(response.body, isNot(contains('<script>alert(1)</script>')));
+    });
+
+    test('an unknown id answers 404 as a page, not as JSON', () async {
+      final app = await example(templates.buildApp());
+
+      final response = await app.get('/notes/9');
+
+      expect(response.statusCode, 404);
+      expect(response.headers['content-type'], 'text/html; charset=utf-8');
+      expect(response.body, contains('Back'));
+    });
+  });
+
+  group('static_files', () {
+    /// Writes a throwaway build for one test.
+    Future<String> build() async {
+      final root =
+          await Directory.systemTemp.createTemp('dust-example-static-');
+      addTearDown(() => root.delete(recursive: true));
+      await File('${root.path}/index.html').writeAsString(
+        '<!doctype html><title>App</title><div id="app">loading</div>',
+      );
+      await File('${root.path}/main.a1b2c3.js')
+          .writeAsString('console.log("fingerprinted");');
+      return root.path;
+    }
+
+    test('the root serves the default document', () async {
+      final app = await example(static_files.buildApp(await build()));
+
+      final response = await app.get('/');
+
+      expect(response.statusCode, 200);
+      expect(response.body, contains('<div id="app">'));
+    });
+
+    test('a deep link serves the same document, so the client router runs',
+        () async {
+      // Without html: true this is a 404 — there is no such file, and the
+      // router that would have handled it has not loaded yet.
+      final app = await example(static_files.buildApp(await build()));
+
+      final response = await app.get('/orders/41');
+
+      expect(response.statusCode, 200);
+      expect(response.body, contains('<div id="app">'));
+    });
+
+    test('the document is revalidated, not cached hard', () async {
+      // It is how a browser learns the new asset names. Cache it for a year and
+      // users stay on a deploy you have replaced.
+      final app = await example(static_files.buildApp(await build()));
+
+      final cache = (await app.get('/')).headers['cache-control'] ?? '';
+
+      expect(cache, isNot(contains('immutable')));
+    });
+
+    test('a fingerprinted asset is immutable', () async {
+      final app = await example(static_files.buildApp(await build()));
+
+      final cache =
+          (await app.get('/main.a1b2c3.js')).headers['cache-control'] ?? '';
+
+      expect(cache, contains('immutable'));
+    });
+
+    test('the API is reachable, because it is mounted first', () async {
+      // mount('/') claims everything below it, so order decides whether /api
+      // reaches its routes or gets the document.
+      final app = await example(static_files.buildApp(await build()));
+
+      expect(app.array(await app.get('/api/notes')), ['first']);
+    });
+  });
+
+  group('global_404', () {
+    test('a browser gets a page', () async {
+      final app = await example(global_404.buildApp());
+
+      final response = await app.get('/nothing');
+
+      expect(response.statusCode, 404);
+      expect(response.headers['content-type'], 'text/html; charset=utf-8');
+    });
+
+    test('an API path gets JSON whatever it says it accepts', () async {
+      final app = await example(global_404.buildApp());
+
+      final response = await app.get(
+        '/api/nothing',
+        headers: {'accept': 'text/html'},
+      );
+
+      expect(response.statusCode, 404);
+      expect(app.object(response)['error'], 'no such route');
+    });
+
+    test('an Accept header alone is enough to ask for JSON', () async {
+      final app = await example(global_404.buildApp());
+
+      final response = await app.get(
+        '/nothing',
+        headers: {'accept': 'application/json'},
+      );
+
+      expect(app.object(response)['error'], 'no such route');
+    });
+
+    test('a 405 does not reach the fallback', () async {
+      // A path that exists for another method is answered with Allow, which is
+      // more useful to a client than a 404.
+      final app = await example(global_404.buildApp());
+
+      final response = await app.send('PUT', '/api/notes');
+
+      expect(response.statusCode, 405);
+      expect(response.headers['allow'], contains('GET'));
+    });
+  });
+
+  group('handle_head_request', () {
+    test('HEAD is answered from the GET route, with no body', () async {
+      final app = await example(head_request.buildApp());
+
+      final get = await app.get('/notes');
+      final head = await app.send('HEAD', '/notes');
+
+      expect(head.statusCode, 200);
+      expect(head.body, isEmpty);
+      expect(head.headers['content-type'], get.headers['content-type']);
+    });
+
+    test('HEAD appears in Allow', () async {
+      final app = await example(head_request.buildApp());
+
+      expect(
+          (await app.send('PUT', '/notes')).headers['allow'], contains('HEAD'));
+    });
+
+    test('an explicit HEAD route overrides the automatic one', () async {
+      final app = await example(head_request.buildApp());
+
+      final head = await app.send('HEAD', '/report');
+
+      expect(head.statusCode, 200);
+      expect(head.headers['content-length'], '28');
+    });
+
+    test('the handler still runs for HEAD, body discarded', () async {
+      // A GET that increments a counter does so for every HEAD too. If that is
+      // unwanted, the work does not belong in a GET.
+      final app = await example(head_request.buildApp());
+      head_request.counter.calls = 0;
+
+      await app.get('/counted');
+      await app.send('HEAD', '/counted');
+
+      expect(head_request.counter.calls, 2);
+    });
+  });
+
+  group('versioning', () {
+    test('each path version keeps its own shape', () async {
+      final app = await example(versioning.buildApp());
+
+      expect(app.array(await app.get('/v1/notes')), ['first', 'second']);
+      expect(
+        (app.array(await app.get('/v2/notes')).first! as Map)['id'],
+        1,
+      );
+    });
+
+    test('no version header means the oldest, not the newest', () async {
+      // Defaulting to latest breaks a client the day you ship v3 — silently,
+      // with no deploy of theirs to blame.
+      final app = await example(versioning.buildApp());
+
+      expect(app.array(await app.get('/notes')), ['first', 'second']);
+    });
+
+    test('the header selects a version', () async {
+      final app = await example(versioning.buildApp());
+
+      final response = await app.get(
+        '/notes',
+        headers: {'accept': 'application/vnd.notes.v2+json'},
+      );
+
+      expect((app.array(response).first! as Map)['title'], 'first');
+    });
+
+    test('an unknown version is a 406 naming what exists', () async {
+      final app = await example(versioning.buildApp());
+
+      final response = await app.get(
+        '/notes',
+        headers: {'accept': 'application/vnd.notes.v9+json'},
+      );
+
+      expect(response.statusCode, 406);
+      expect(app.object(response)['error'], contains('try v1 or v2'));
     });
   });
 }
