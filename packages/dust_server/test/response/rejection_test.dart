@@ -94,6 +94,34 @@ void main() {
       expect(response.headers['www-authenticate'], 'Basic realm="todos"');
     });
 
+    test('strips control characters from the challenge', () {
+      // The challenge is the only part of a rejection that reaches a header
+      // rather than the JSON body, so it is the only one where a newline would
+      // end the header and start another. An extractor that builds its realm
+      // from anything a client influenced — a tenant name, say — would otherwise
+      // be a response-splitting hole.
+      final response = const Rejection.unauthorized(
+        'missing credentials',
+        challenge: 'Basic realm="a\r\nX-Evil: 1"',
+      ).intoResponse();
+
+      final header = response.headers['www-authenticate']!;
+
+      expect(header, isNot(contains('\r')));
+      expect(header, isNot(contains('\n')));
+      expect(header, 'Basic realm="aX-Evil: 1"');
+      expect(response.headers['x-evil'], isNull);
+    });
+
+    test('strips a NUL from the challenge', () {
+      final response = const Rejection.unauthorized(
+        'missing credentials',
+        challenge: 'Bearer realm="a\u0000b"',
+      ).intoResponse();
+
+      expect(response.headers['www-authenticate'], 'Bearer realm="ab"');
+    });
+
     test('leaves the header off other statuses', () {
       expect(
         const Rejection.forbidden('nope')

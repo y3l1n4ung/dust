@@ -16,6 +16,19 @@ void main() {
       expect(expectOk(coerce<int?>('42', source: 'q')), 42);
     });
 
+    test('parses base 10 only, so 0x10 is not 16', () {
+      // `int.tryParse` accepts an 0x prefix by default, which made `?id=0x10`
+      // and `?id=16` the same request — two URLs for one resource, which breaks
+      // caching and anything keyed on the raw query.
+      expectStatus(coerce<int>('0x10', source: 'query "n"'), 400);
+      expect(expectOk(coerce<int>('16', source: 'q')), 16);
+    });
+
+    test('parses big integers in base 10 too', () {
+      expectStatus(coerce<BigInt>('0x10', source: 'query "n"'), 400);
+      expect(expectOk(coerce<BigInt>('16', source: 'q')), BigInt.from(16));
+    });
+
     test('rejects a malformed integer with 400', () {
       final rejection =
           expectStatus(coerce<int>('4.2', source: 'query "n"'), 400);
