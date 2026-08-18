@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 
 import '../router/router_base.dart';
+import 'background.dart';
 
 /// A running server that can be stopped without dropping work.
 ///
@@ -11,12 +12,13 @@ import '../router/router_base.dart';
 /// connections. What it does not do is tell you how many requests are still in
 /// flight, which is what a deployment needs before it takes the process away.
 final class ServerHandle {
-  ServerHandle._(this._server, this._inFlight)
+  ServerHandle._(this._server, this._inFlight, this._background)
       : address = _server.address,
         port = _server.port;
 
   final HttpServer _server;
   final _InFlight _inFlight;
+  final BackgroundTasks? _background;
 
   /// The address the server bound to.
   ///
@@ -30,14 +32,37 @@ final class ServerHandle {
   /// How many requests are being handled right now.
   int get inFlight => _inFlight.count;
 
+  /// How many background tasks are still running, when a registry was passed.
+  int get pendingTasks => _background?.pending ?? 0;
+
   /// Stops accepting, then waits for the requests already accepted.
+  ///
+  /// When a [BackgroundTasks] was passed to [serveRouter], its work is drained
+  /// too, and within the same [drain] budget rather than a second one — the
+  /// platform kills the process on its own schedule, and two budgets in series
+  /// exceed it.
   ///
   /// Returns `true` when everything finished within [drain], and `false` when
   /// the deadline passed with work still running, at which point the caller
   /// decides whether to wait longer or exit anyway.
   Future<bool> close({Duration drain = const Duration(seconds: 30)}) async {
     await _server.close();
-    return _inFlight.settled(drain);
+
+    final deadline = Stopwatch()..start();
+    final requestsSettled = await _inFlight.settled(drain);
+
+    final background = _background;
+    if (background == null) return requestsSettled;
+
+    // Whatever is left of the budget. A request that used all of it leaves
+    // nothing, and `close` reports the failure rather than waiting twice as long
+    // as it was told to.
+    final remaining = drain - deadline.elapsed;
+    final tasksSettled = await background.close(
+      within: remaining.isNegative ? Duration.zero : remaining,
+    );
+
+    return requestsSettled && tasksSettled;
   }
 }
 
@@ -57,6 +82,7 @@ Future<ServerHandle> serveRouter(
   int port, {
   SecurityContext? securityContext,
   bool shared = false,
+  BackgroundTasks? background,
 }) async {
   final inFlight = _InFlight();
   final handler = router.handler;
@@ -76,7 +102,7 @@ Future<ServerHandle> serveRouter(
     shared: shared,
   );
 
-  return ServerHandle._(server, inFlight);
+  return ServerHandle._(server, inFlight, background);
 }
 
 final class _InFlight {

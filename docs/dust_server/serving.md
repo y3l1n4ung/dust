@@ -95,6 +95,52 @@ Draining waits; it does not cancel. Dart has no cancellation, so a request still
 running when the budget expires keeps running until the process dies underneath
 it.
 
+### Work that outlives the response
+
+`close(drain:)` counts **requests**. Anything spawned outside one —
+`unawaited(sendReceipt(order))` — is invisible to it, so every deploy kills that
+work mid-flight with nothing logged. A customer gets their 201 and never gets
+their email.
+
+`BackgroundTasks` closes that hole. Pass one to `serveRouter` and it is drained
+alongside the requests, inside the same budget:
+
+```dart
+final tasks = BackgroundTasks();
+final server = await serveRouter(app, address, 8080, background: tasks);
+
+// in a handler
+final tasks = await request.state<BackgroundTasks>();
+tasks.run('receipt', () => mail.sendReceipt(order));
+```
+
+`run` returns `false` when the registry is draining, which is worth acting on:
+the order was placed and the receipt will not be sent, so it belongs in an outbox
+rather than lost. A task that throws is reported through `onError` with its name
+attached rather than raised, since an unhandled asynchronous error would take the
+isolate down.
+
+> **In-process and unpersisted.** A task lost to a crash is gone and nothing
+> retries it. Right for work that is *nice* to finish, wrong for work that
+> *must* happen — that needs an outbox table or a real queue, and this is not a
+> substitute for one.
+
+`dart run example/background_tasks.dart`:
+
+```bash
+curl -s -X POST localhost:8080/orders -H 'content-type: application/json' \
+  -d '{"email":"ada@example.com"}'
+curl -s localhost:8080/receipts
+```
+
+```json
+{"placed":true,"receiptQueued":true}
+{"sent":[]}
+```
+
+The receipt is empty because the handler returned before the task ran — which is
+the point. `server.pendingTasks` reads 1 at that moment, and `close` waits for it.
+
 Using every core is `dart run example/clustered_isolates.dart`:
 
 ```bash

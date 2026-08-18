@@ -44,6 +44,7 @@ HTML, JSON, and a WebSocket upgrade answered by one route table.
 | Pathological input | 10000-segment paths, 100 KB segments, and a 200-route table all answer in bounded time |
 | Untrusted fields | a method carrying CRLF cannot forge a response header; paths are matched literally after Dart normalizes them |
 | Body limits | `content-length` is refused before reading, and streamed bodies are cut off at the limit |
+| Background work | `BackgroundTasks` is drained with the requests, inside the same budget; a task that throws is reported with its name rather than taking the isolate down |
 | Failure taxonomy | 400, 401 with `WWW-Authenticate`, 403, 405 with `Allow`, 413, 415, 422, 500 opaque with the detail going to `onError` |
 | Validation | a failed constraint answers 422 naming every field, whether it was caught by `ValidatedExtractable` or thrown by a generated `deserialize` |
 | WebSockets | binary frames, subprotocol negotiation, close codes, broadcast between connections, and an upgrade served beside HTTP on one router |

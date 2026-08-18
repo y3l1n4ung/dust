@@ -9,6 +9,7 @@ import 'package:test/test.dart';
 import '../../example/access_log.dart' as access_log;
 import '../../example/bearer_auth.dart' as bearer_auth;
 import '../../example/compression.dart' as compression;
+import '../../example/background_tasks.dart' as background_tasks;
 import '../../example/body_limits.dart' as body_limits;
 import '../../example/client_ip.dart' as client_ip;
 import '../../example/clustered_isolates.dart' as clustered;
@@ -2536,6 +2537,46 @@ void main() {
       expect((await app.get('/health/startup')).statusCode, 503);
       checks.markStarted();
       expect((await app.get('/health/startup')).statusCode, 200);
+    });
+  });
+
+  group('background_tasks', () {
+    test('the response does not wait for the task', () async {
+      final tasks = BackgroundTasks(onError: (_, __) {});
+      final app = await example(background_tasks.buildApp(tasks));
+
+      final response =
+          await app.post('/orders', const {'email': 'ada@example.com'});
+
+      expect(response.statusCode, 201);
+      expect(app.object(response), {'placed': true, 'receiptQueued': true});
+      // Not sent yet: the handler returned before the work finished.
+      expect(app.object(await app.get('/receipts'))['sent'], isEmpty);
+    });
+
+    test('the task finishes afterwards', () async {
+      final tasks = BackgroundTasks(onError: (_, __) {});
+      final app = await example(background_tasks.buildApp(tasks));
+
+      await app.post('/orders', const {'email': 'ada@example.com'});
+      await tasks.settled(const Duration(seconds: 2));
+
+      expect(
+          app.object(await app.get('/receipts'))['sent'], ['ada@example.com']);
+    });
+
+    test('a draining registry refuses, and the handler is told', () async {
+      // The order was placed and the receipt will not be sent. Knowing that is
+      // the difference between an outbox row and a silent loss.
+      final tasks = BackgroundTasks(onError: (_, __) {});
+      final app = await example(background_tasks.buildApp(tasks));
+      await tasks.close(within: const Duration(milliseconds: 10));
+
+      final response =
+          await app.post('/orders', const {'email': 'ada@example.com'});
+
+      expect(app.object(response)['receiptQueued'], isFalse);
+      expect(app.object(await app.get('/receipts'))['sent'], isEmpty);
     });
   });
 }
