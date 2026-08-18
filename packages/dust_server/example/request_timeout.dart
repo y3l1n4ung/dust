@@ -16,6 +16,11 @@ import 'package:dust_server/server.dart';
 /// > was told the request failed. Put the deadline above work you can afford to
 /// > abandon, and make the writes underneath it idempotent.
 ///
+/// > **It bounds producing the response, not sending it.** A handler that
+/// > returns immediately with a streamed body has already met the deadline, and
+/// > the stream then runs unbounded — so this layer over an SSE endpoint
+/// > protects nothing. Bound the stream itself.
+///
 /// `onTimeout` is the hook for recording that it happened — a counter, a log
 /// line — because a 503 nobody counted is an outage nobody noticed.
 ///

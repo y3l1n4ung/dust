@@ -11,6 +11,15 @@ import '../router/middleware.dart';
 /// The body limit bounds how much a request can send; this bounds how long it
 /// can take.
 ///
+/// > **It bounds producing the response, not sending it.** The budget covers the
+/// > handler returning a [Response]. A handler that returns immediately with a
+/// > streamed body — an event stream, a large download — has already satisfied
+/// > it, and the stream then runs for as long as it likes. Adding this layer
+/// > above an SSE endpoint protects nothing there, and the connection is held
+/// > until the stream ends or the client leaves. Bound those in the stream
+/// > itself, with `take`, a timeout on the source, or a keep-alive the client
+/// > answers.
+///
 /// ```dart
 /// final app = Router()
 ///   ..layer(const RequestTimeout(Duration(seconds: 30)))

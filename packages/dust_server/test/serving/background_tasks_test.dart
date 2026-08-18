@@ -115,6 +115,81 @@ void main() {
     });
   });
 
+  group('tracing', () {
+    test('a task does not inherit the request span', () async {
+      // The span ends when the response goes out. A task that kept it would
+      // write attributes onto a finished, already exported span — and race
+      // another task doing the same on one map.
+      final exported = <Span>[];
+      final tasks = BackgroundTasks(onError: (_, __) {});
+      final gate = Completer<void>();
+      Span? seenInTask;
+
+      final app = Router()
+        ..layer(Tracing(_Exporter(exported), serviceName: 'test'))
+        ..route('/go', post((request) async {
+          (await request.state<BackgroundTasks>()).run('late', () async {
+            await gate.future;
+            seenInTask = CurrentSpan.value;
+            CurrentSpan.setAttribute('written.after.request', true);
+          });
+          return {'ok': true};
+        }))
+        ..withState(tasks);
+
+      final server = await serveRouter(
+        app,
+        InternetAddress.loopbackIPv4,
+        0,
+        background: tasks,
+      );
+      await http.post(
+        Uri.parse('http://${server.address.host}:${server.port}/go'),
+      );
+
+      expect(exported.single.isFinished, isTrue,
+          reason: 'span ends with the response');
+
+      gate.complete();
+      await server.close(drain: const Duration(seconds: 2));
+
+      expect(seenInTask, isNull);
+      expect(
+        exported.single.attributes.containsKey('written.after.request'),
+        isFalse,
+      );
+    });
+
+    test('a handler still has its span, so detaching is scoped to the task',
+        () async {
+      final exported = <Span>[];
+      final tasks = BackgroundTasks(onError: (_, __) {});
+
+      final app = Router()
+        ..layer(Tracing(_Exporter(exported), serviceName: 'test'))
+        ..route('/go', post((request) async {
+          CurrentSpan.setAttribute('from.handler', true);
+          (await request.state<BackgroundTasks>()).run('noop', () async {});
+          return {'ok': true};
+        }))
+        ..withState(tasks);
+
+      final server = await serveRouter(
+        app,
+        InternetAddress.loopbackIPv4,
+        0,
+        background: tasks,
+      );
+      addTearDown(() => server.close(drain: const Duration(seconds: 1)));
+
+      await http.post(
+        Uri.parse('http://${server.address.host}:${server.port}/go'),
+      );
+
+      expect(exported.single.attributes['from.handler'], isTrue);
+    });
+  });
+
   group('closing', () {
     test('refuses new work once it has begun', () async {
       // Better to know a task never ran than to half-run it during shutdown.
@@ -238,4 +313,14 @@ void main() {
       expect(server.pendingTasks, 0);
     });
   });
+}
+
+/// Keeps every span so a test can look at one.
+final class _Exporter implements SpanExporter {
+  const _Exporter(this.into);
+
+  final List<Span> into;
+
+  @override
+  void export(Span span) => into.add(span);
 }

@@ -1360,6 +1360,31 @@ void main() {
       expect(app.object(response)['error'], contains('200ms'));
     });
 
+    test('a streamed body is not bounded by the deadline', () async {
+      // The trap: the budget covers producing the Response, not sending it. A
+      // handler that returns at once with a stream has already met it.
+      final app = await example(
+        Router()
+          ..layer(const RequestTimeout(Duration(milliseconds: 50)))
+          ..route(
+            '/events',
+            get((request) => eventStream(
+                  Stream<ServerSentEvent>.periodic(
+                    const Duration(milliseconds: 40),
+                    (index) => ServerSentEvent(data: '$index'),
+                  ).take(4),
+                  keepAlive: null,
+                )),
+          ),
+      );
+
+      final response = await app.get('/events');
+
+      // 200 after ~160ms, well past the 50ms budget.
+      expect(response.statusCode, 200);
+      expect(response.body, contains('data:3'));
+    });
+
     test('onTimeout fires, so a 503 can be counted', () async {
       // A 503 nobody counted is an outage nobody noticed.
       final timedOut = <String>[];

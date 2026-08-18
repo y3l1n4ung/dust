@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../response/error_reporting.dart';
+import '../tracing/tracing_layer.dart';
 
 /// Work that outlives the response that started it.
 ///
@@ -63,7 +64,11 @@ final class BackgroundTasks {
     if (_closed) return false;
 
     late final Future<void> task;
-    task = Future<void>.sync(body).then(
+    // Detached from the request's span. A zone value is inherited by whatever is
+    // spawned inside it, and the request's span ends when the response goes out
+    // — so a task that kept it would write attributes onto a finished, already
+    // exported span. Work that wants a trace should start its own.
+    task = CurrentSpan.runDetached(() => Future<void>.sync(body)).then(
       (_) {},
       onError: (Object error, StackTrace stack) {
         // Swallowed here rather than escaping into the zone, where an unhandled

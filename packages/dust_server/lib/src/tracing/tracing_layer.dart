@@ -25,6 +25,16 @@ abstract final class CurrentSpan {
   static R runWith<R>(Span span, R Function() body) =>
       runZoned(body, zoneValues: {_zoneKey: span});
 
+  /// Runs [body] with no current span, whatever the surrounding zone has.
+  ///
+  /// For work that outlives the request that started it. A zone value is
+  /// inherited by anything spawned inside it, so a background task would
+  /// otherwise keep writing to a span that has already ended and already been
+  /// exported — attributes belonging to work the trace never covered, and a race
+  /// on the span's own map if two tasks do it at once.
+  static R runDetached<R>(R Function() body) =>
+      runZoned(body, zoneValues: {_zoneKey: null});
+
   /// Records an attribute on the current span, if there is one.
   ///
   /// Safe to call from anywhere, including code that does not know whether

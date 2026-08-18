@@ -122,6 +122,12 @@ Response eventStream(
       'cache-control': 'no-cache',
       'x-accel-buffering': 'no',
     },
+    // Without this the adapter buffers the body and flushes it when the stream
+    // ends, which for a stream that never ends means never. Every event would
+    // arrive at once, and a progress bar would show nothing until the work it
+    // reports on had finished — the exact failure `x-accel-buffering` above
+    // prevents at the proxy, happening in this process instead.
+    context: const {'shelf.io.buffer_output': false},
   );
 }
 
