@@ -67,7 +67,7 @@ extension ValidateOrReject on Validatable {
   ///
   /// ```dart
   /// return guard(() async {
-  ///   final input = await const JsonExtractable(CreateTodo.fromJson)
+  ///   final input = await const JsonExtractable(CreateTodo.deserialize)
   ///       .require(request);
   ///   input.validateOrReject();
   ///   ...

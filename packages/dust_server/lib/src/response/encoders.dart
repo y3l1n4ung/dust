@@ -26,9 +26,15 @@ Response jsonResponse(Object? value, {int status = 200}) {
 
 /// Converts one value `dart:convert` does not encode on its own.
 ///
-/// `serialize` is Dust's verb, so it wins. `toJson` still runs for everything
-/// else, which is what `jsonEncode` would have done without this hook and what
-/// types from outside Dust implement.
+/// `serialize` is Dust's verb, so it wins: a type deriving `Serialize`
+/// implements [Serializable] and is matched by interface.
+///
+/// `toJson` still runs for everything else — what `jsonEncode` would have done
+/// without this hook, and what types from outside Dust implement. That call goes
+/// through `dynamic`, which is Dart's ordinary dispatch and **not** reflection:
+/// nothing here imports `dart:mirrors`, which would rule out AOT compilation and
+/// defeat the point of generating code in the first place. A type with neither
+/// is a `JsonUnsupportedObjectError` rather than a silent `null`.
 Object? _encode(Object? value) {
   if (value is Serializable) return value.serialize();
   if (value is DateTime) return value.toIso8601String();

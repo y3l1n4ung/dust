@@ -90,10 +90,10 @@ and the generated cast makes `dart analyze` verify they agree. Dust never
 resolves the binding, so it never needs the interface list.
 
 The remaining users of an `implements` list are `IntoResponse` and `Validatable`
-dispatch, and both detect structurally from `MethodIr` instead, using the same
-approach serde already takes for `toJson`
+dispatch, and both detect structurally from `MethodIr` instead — the same
+approach the serde plugin already takes for `toJson` and `fromJson`
 (`crates/dust_plugin_serde/src/analysis.rs`), accepting the same small
-false-positive risk.
+false-positive risk. Structural, from the IR: nothing here reflects at runtime.
 
 Adding `ClassIr.interfaces` remains an improvement for the codebase as a whole;
 it would replace that structural detection and unlock the bare-type extractor
@@ -549,7 +549,7 @@ Dispatch on the static return type, first match wins:
 | :--- | :--- |
 | `Response` | passthrough |
 | exposes `Response intoResponse()` | `intoResponse()` |
-| derives `Serialize` or has `toJson()` | JSON, `status` or 200 |
+| derives `Serialize`, or a foreign type exposing `toJson()` | JSON, `status` or 200 |
 | `List<T>`, `T` serializable | JSON array |
 | `Result<T, E>`, `E` implements `IntoResponse` | branch on `Ok` / `Err` |
 | `String` | `text/plain` |
@@ -558,10 +558,16 @@ Dispatch on the static return type, first match wins:
 | `void` or `Unit` | 204 |
 | anything else | diagnostic |
 
-Detection is structural, from `MethodIr`, matching how serde detects `toJson`
-(`crates/dust_plugin_serde/src/analysis.rs`). Implementing the `IntoResponse`
-interface from `dust_server` is the documented way to opt in and keeps intent
-explicit, but the plugin matches on the method shape rather than the interface
+Detection reads the IR, never reflection — there is no `dart:mirrors` anywhere
+in Dust, and a generator that needed it would defeat its own purpose.
+
+For a Dust type the derive is the signal, and `serialize` / `deserialize` are the
+verbs the generated code calls. `toJson` and `fromJson` are recognised **as
+well**, structurally from `MethodIr`, so a model from outside Dust still works —
+which is what `crates/dust_plugin_serde/src/analysis.rs` already does. Implementing
+the `IntoResponse` interface from `dust_server` is the documented way to opt in
+and keeps intent explicit, but the plugin matches on the method shape rather than
+the interface
 list, so no cross-file lookup is required.
 
 ### Uncaught exceptions (runtime-checked)
@@ -1010,7 +1016,7 @@ mixin _$TodoController {
       final result = await create(user, input);
       return Response(
         201,
-        body: jsonEncode(result.toJson()),
+        body: jsonEncode(result.serialize()),
         headers: const {'content-type': 'application/json'},
       );
     } on Rejection catch (rejection) {
