@@ -69,11 +69,26 @@ work keeps running with nobody waiting for it. A handler that leaks a resource
 on a slow path still leaks it. Nothing is installed by default either, so an
 application that never adds the layer has no deadline at all.
 
-### 3. Multipart buffers the whole body
+### 3. Multipart: buffered by default, streaming when you need it
 
-`MultipartExtractable` holds every part in memory at once, bounded only by the
-body limit. A 1 MiB default makes that survivable; anything raising the limit
-for uploads makes it a memory amplifier. Streaming parts is the fix.
+`MultipartExtractable` holds every part in memory at once, bounded by the body
+limit. That is the right trade for a form — several parts, readable in any
+order — and a memory amplifier the moment the limit is raised for uploads.
+
+`StreamedMultipartExtractable` is the answer for those: the parts arrive one at
+a time and can be piped straight to disk, so nothing larger than a socket chunk
+is ever held. The trade is explicit — the parts are ordered and consumable once,
+so a handler needing to read part three before part one still has to buffer.
+
+Two limits, because they stop different things. The **body** limit bounds the
+whole request, checked up front against `content-length` and as the bytes flow
+when there is none — a streamed upload usually declares no length. The **part**
+limit bounds one file, and without it a single part can be the entire body
+budget.
+
+`example/multipart_stream.dart` shows it, including the part worth copying: the
+file is stored under a generated id and the client's filename is kept as data,
+because `../../etc/passwd` is a valid filename as far as a client is concerned.
 
 ### 4. Shutdown drains, but nothing tests it under load
 

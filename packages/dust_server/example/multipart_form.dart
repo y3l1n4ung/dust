@@ -10,9 +10,10 @@ import 'package:dust_server/server.dart';
 ///
 /// > **This buffers.** The whole body is read into memory before the handler
 /// > runs, capped by the extractor's `limit`, which answers **413** when
-/// > exceeded. That is fine for an avatar and wrong for a video: streaming
-/// > multipart straight to disk is a documented gap in the runtime. Set the
-/// > limit to what you actually accept rather than leaving the default.
+/// > exceeded. That is the right trade for a form — several parts, read in any
+/// > order — and the wrong one for a video. For an upload larger than memory,
+/// > `multipart_stream.dart` hands the parts over one at a time and never holds
+/// > them.
 ///
 /// Run it with `dart run example/multipart_form.dart`:
 ///

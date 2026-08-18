@@ -49,6 +49,7 @@ repository.
 | Decoding a JSON body into a model | [`json_body.dart`](json_body.dart) |
 | Decoding an HTML form post | [`form_body.dart`](form_body.dart) |
 | Handling a file upload | [`multipart_form.dart`](multipart_form.dart) |
+| Accepting an upload larger than memory | [`multipart_stream.dart`](multipart_stream.dart) |
 | Answering 422 with the per-field errors | [`validation_422.dart`](validation_422.dart) |
 | Changing what a rejection looks like on the wire | [`customize_rejection.dart`](customize_rejection.dart) |
 | Choosing a decoder by `content-type` | [`parse_body_by_content_type.dart`](parse_body_by_content_type.dart) |

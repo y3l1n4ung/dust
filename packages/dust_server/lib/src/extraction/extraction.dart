@@ -15,6 +15,7 @@ export 'header.dart';
 export 'host.dart';
 export 'json.dart';
 export 'multipart.dart';
+export 'multipart_stream.dart';
 export 'path.dart';
 export 'query.dart';
 export 'raw.dart';

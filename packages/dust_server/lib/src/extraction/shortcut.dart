@@ -26,6 +26,7 @@ import 'header.dart';
 import 'host.dart';
 import 'json.dart';
 import 'multipart.dart';
+import 'multipart_stream.dart';
 import 'path.dart';
 import 'query.dart';
 import 'raw.dart';
@@ -113,8 +114,16 @@ FromRequest<Stream<List<int>>> bodyStream() => const StreamBodyExtractable();
 /// Decodes an `application/x-www-form-urlencoded` body.
 FromRequest<FormMap> form() => const FormExtractable();
 
-/// Decodes a `multipart/form-data` body.
+/// Decodes a `multipart/form-data` body, buffering every part.
 FromRequest<MultipartForm> multipart() => const MultipartExtractable();
+
+/// Hands a `multipart/form-data` body over a part at a time, without buffering.
+///
+/// For uploads too large to hold in memory. The parts are ordered and
+/// consumable once; use [multipart] when you need to read them out of order.
+FromRequest<StreamedMultipart> multipartStream(
+        {int limit = 64 * 1024 * 1024}) =>
+    StreamedMultipartExtractable(limit: limit);
 
 /// The connection's peer address and port.
 FromRequestParts<PeerInfo> peer() => const PeerExtractable();

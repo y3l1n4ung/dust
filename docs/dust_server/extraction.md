@@ -44,6 +44,7 @@ Future<Result<Todo, Rejection>> readTodo(Request request) async {
 | `bodyStream()` | the unread body stream |
 | `form()` | a urlencoded body, or the query on `GET` and `HEAD` |
 | `multipart()` | a multipart body, buffered |
+| `multipartStream()` | a multipart body, a part at a time, never buffered |
 | `state<T>()` | application state attached with `withState` |
 | `peer()` | the connection's address and port |
 | `extract(anything)` | any extractor, including your own |
@@ -105,7 +106,7 @@ Use the class when you want the `Result` rather than the throw.
 | `CookieExtractable<T>`, `CookieJarExtractable` | `cookie<T>`, `cookies` |
 | `BearerTokenExtractable`, `BasicCredentialsExtractable`, `ApiKeyExtractable`, `SessionIdExtractable` | `bearerToken`, `basicCredentials`, `apiKey`, `sessionId` |
 | `JsonExtractable<T>`, `JsonListExtractable<T>` | `body<T>`, `bodyList<T>` |
-| `FormExtractable`, `MultipartExtractable` | `form`, `multipart` |
+| `FormExtractable`, `MultipartExtractable`, `StreamedMultipartExtractable` | `form`, `multipart`, `multipartStream` |
 | `RawBodyExtractable`, `TextBodyExtractable`, `StreamBodyExtractable` | `rawBody`, `textBody`, `bodyStream` |
 | `StateExtractable<T>`, `ContextExtractable<T>`, `PeerExtractable` | `state<T>`, —, `peer` |
 

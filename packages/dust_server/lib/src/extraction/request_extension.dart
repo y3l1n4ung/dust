@@ -9,6 +9,7 @@ import 'cookie.dart';
 import 'extractable.dart';
 import 'form.dart';
 import 'multipart.dart';
+import 'multipart_stream.dart';
 import 'require.dart';
 import 'shortcut.dart' as extractors;
 
@@ -182,6 +183,10 @@ extension RequestExtraction on Request {
 
   /// The parts of a `multipart/form-data` body.
   Future<MultipartForm> multipart() => extractors.multipart().require(this);
+
+  /// Hands the multipart body over a part at a time, without buffering it.
+  Future<StreamedMultipart> multipartStream({int limit = 64 * 1024 * 1024}) =>
+      extractors.multipartStream(limit: limit).require(this);
 
   /// The connection's peer address and port.
   Future<PeerInfo> peer() => extractors.peer().require(this);
