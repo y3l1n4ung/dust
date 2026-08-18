@@ -11,6 +11,66 @@ import '../support.dart';
 /// up once, from one SDK, in production.
 
 void main() {
+  group('basic credentials, at the edges', () {
+    String header(String raw) => 'Basic ${base64.encode(utf8.encode(raw))}';
+
+    Request sent(String value) => Request(
+          'GET',
+          Uri.parse('http://localhost/'),
+          headers: {'authorization': value},
+        );
+
+    test('splits on the first colon, so a password may contain them', () async {
+      // RFC 7617. Splitting on the last one, or refusing, locks out anyone
+      // whose password has a colon in it — and they will never work out why.
+      final outcome = await const BasicCredentialsExtractable()
+          .extract(sent(header('ada:pa:ss:word')));
+
+      final credentials = expectOk(outcome);
+      expect(credentials.username, 'ada');
+      expect(credentials.password, 'pa:ss:word');
+    });
+
+    test('accepts an empty password', () async {
+      final credentials = expectOk(await const BasicCredentialsExtractable()
+          .extract(sent(header('ada:'))));
+
+      expect(credentials.username, 'ada');
+      expect(credentials.password, isEmpty);
+    });
+
+    test('keeps a space in the password', () async {
+      final credentials = expectOk(await const BasicCredentialsExtractable()
+          .extract(sent(header('ada:s p'))));
+
+      expect(credentials.password, 's p');
+    });
+
+    test('refuses a value with no colon at all', () async {
+      expectStatus(
+        await const BasicCredentialsExtractable()
+            .extract(sent(header('nocolon'))),
+        401,
+      );
+    });
+
+    test('refuses something that is not base64', () async {
+      expectStatus(
+        await const BasicCredentialsExtractable()
+            .extract(sent('Basic !!!not-base64!!!')),
+        401,
+      );
+    });
+
+    test('matches the scheme without regard to case', () async {
+      // HTTP scheme names are case-insensitive, and clients do send `basic`.
+      final credentials = expectOk(await const BasicCredentialsExtractable()
+          .extract(sent('basic ${base64.encode(utf8.encode('ada:secret'))}')));
+
+      expect(credentials.username, 'ada');
+    });
+  });
+
   Request withAuth(String value) =>
       request('GET', '/', headers: {'authorization': value});
 

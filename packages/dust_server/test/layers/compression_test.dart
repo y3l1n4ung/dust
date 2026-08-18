@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:convert';
 import 'dart:io' show gzip;
 
@@ -11,6 +12,43 @@ import '../support.dart';
 /// cannot read it, or CPU spent making a JPEG larger.
 
 void main() {
+  group('a response that is already encoded', () {
+    test('is not compressed twice', () async {
+      // Double-gzipping produces bytes no client can read, and the response
+      // still claims a single content-encoding.
+      final body = gzip.encode(utf8.encode('{"already":"compressed"}'));
+      final app = Router()
+        ..layer(const Compression())
+        ..route(
+          '/pre',
+          get((request) async => Response.ok(
+                body,
+                headers: const {
+                  'content-type': 'application/json',
+                  'content-encoding': 'gzip',
+                },
+              )),
+        );
+
+      final response = await app.handler(
+        Request(
+          'GET',
+          Uri.parse('http://localhost/pre'),
+          headers: const {'accept-encoding': 'gzip'},
+        ),
+      );
+
+      expect(response.headers['content-encoding'], 'gzip');
+      final sent = await response.read().fold<List<int>>(
+        <int>[],
+        (all, chunk) => all..addAll(chunk),
+      );
+      // Decodes in one pass. Twice-encoded, the first decode would yield gzip
+      // bytes rather than JSON.
+      expect(utf8.decode(gzip.decode(sent)), '{"already":"compressed"}');
+    });
+  });
+
   final large = 'x' * 4096;
 
   Handler serve({

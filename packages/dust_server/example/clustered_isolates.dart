@@ -19,6 +19,14 @@ import 'package:dust_server/server.dart';
 /// That constraint is why the factory is a function rather than a router: a
 /// `Router` cannot be sent across isolates, so each one has to build its own.
 ///
+/// > **Measure from another process.** A load generator in the same process as
+/// > the server competes with the main isolate for its event loop, and starves
+/// > exactly the isolate it shares with. Measured that way this cluster looks
+/// > badly skewed — main taking 2% of traffic — and measured from a separate
+/// > process the same cluster is even: 18/17/15/10 across four isolates. The
+/// > skew was the measurement, not the server. `wrk`, `curl`, or anything out of
+/// > process gives the real answer.
+///
 /// One isolate is the right number more often than people expect. Isolates cost
 /// memory, they make in-process state useless, and a server whose work is
 /// waiting on a database is not CPU-bound in the first place. Measure before

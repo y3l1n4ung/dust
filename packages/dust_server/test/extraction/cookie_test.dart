@@ -9,6 +9,49 @@ import '../support.dart';
 /// request, and that the one wanted is still found.
 
 void main() {
+  group('a cookie header, at the edges', () {
+    Future<CookieJar> parse(String header) async => expectOk(
+          await const CookieJarExtractable().extract(
+            Request(
+              'GET',
+              Uri.parse('http://localhost/'),
+              headers: {'cookie': header},
+            ),
+          ),
+        );
+
+    test('keeps an = inside a value, which every JWT has', () async {
+      // Splitting on every = truncates a base64 payload to nothing useful.
+      expect((await parse('jwt=aa=bb=cc')).values, {'jwt': 'aa=bb=cc'});
+    });
+
+    test('parses pairs with no space after the semicolon', () async {
+      expect((await parse('a=1;b=2')).values, {'a': '1', 'b': '2'});
+    });
+
+    test('keeps the first of a duplicated name', () async {
+      expect((await parse('a=first; a=second')).values, {'a': 'first'});
+    });
+
+    test('keeps an empty value rather than dropping the cookie', () async {
+      // How a cookie is cleared. Dropping it makes a sign-out look like a
+      // still-signed-in session.
+      expect((await parse('a=; b=2')).values, {'a': '', 'b': '2'});
+    });
+
+    test('skips a bare name with no value', () async {
+      expect((await parse('flag; b=2')).values, {'b': '2'});
+    });
+
+    test('trims space around the name and the value', () async {
+      expect((await parse('  a  =  1  ')).values, {'a': '1'});
+    });
+
+    test('unquotes a quoted value', () async {
+      expect((await parse('a="quoted value"')).values, {'a': 'quoted value'});
+    });
+  });
+
   Request withCookies(String header) =>
       request('GET', '/', headers: {'cookie': header});
 
