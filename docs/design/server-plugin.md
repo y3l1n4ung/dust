@@ -1192,8 +1192,9 @@ automatically.
 
 ## Open Questions
 
-1. What type generated controllers should pass as `metadata`, which the
-   documentation package defines and the plugin has to emit.
+None outstanding. The runtime was built first so the design could be checked
+against working code, and every question that blocked the generator is answered
+below.
 
 ## Deferred
 
@@ -1210,6 +1211,32 @@ automatically.
   already uses, and `example/static_files.dart` serves a single-page build
   through it. `shelf_router` stays a **dev** dependency, as the conformance
   oracle in `test/router/conformance/`, and nothing in `lib/` imports it.
+
+- **`metadata` stays untyped, deliberately, so OpenAPI can land later.** The
+  question was what type generated controllers should pass. The answer is that
+  the runtime does not get to know: `Router` takes `Object?`, `describe()` hands
+  back `List<Object>`, and `metadataOf<T>()` lets a consumer pull out its own
+  type and ignore the rest. Naming a type in `dust_server` would drag a
+  documentation format into the runtime, which is the coupling the slot exists to
+  avoid.
+
+  Until a documentation package defines one, generated controllers pass nothing.
+  That costs only the document itself: adding it later is a new package, a
+  metadata type, and an extension method — no change to `Router`, and one extra
+  argument on generated controllers.
+
+  What `describe()` already gives such a package: every route with its method,
+  its path with `{name}` placeholders intact, and the metadata of every router it
+  was mounted through, innermost first. What it does **not** give, and what an
+  OpenAPI generator would take from the IR at build time instead: parameter
+  types, request and response schemas, and status codes. `describe()` is runtime
+  introspection of the route table, not a schema source.
+
+  The verb annotations already carry everything that needs no spec type —
+  `summary`, `description`, `tags`, `operationId`, `deprecated`, `hidden` — frozen
+  now so nobody re-annotates when documentation ships. `responses:` is the one
+  argument that left, because it needed a schema-reference type; adding a named
+  parameter back is not a breaking change.
 
 - **A nullable parameter rejects a malformed value.** The runtime settled this
   by behaving: a nullable type makes a value *optional*, not *forgiving*. Absent

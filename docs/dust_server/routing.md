@@ -34,6 +34,38 @@ final app = Router()
 | `fallback(handler)` | answer what nothing matched |
 | `describe()` | list every route, for tooling |
 
+## Describing the route table
+
+`describe()` returns every route the application serves, with its method, its
+path with `{name}` placeholders intact, and whatever metadata was attached to the
+routers it was mounted through.
+
+```dart
+for (final route in app.describe()) {
+  print('${route.method} ${route.path}');
+}
+```
+
+Metadata is `Object`, not a named type, and that is the point. An OpenAPI
+generator, a permissions audit, and a `routes` command each want something
+different there, so each attaches its own type and takes it back with
+`metadataOf<T>()`:
+
+```dart
+final app = Router(metadata: const ApiDoc(tag: 'todos'))
+  ..route('/todos', get(listTodos));
+
+app.describe().first.metadataOf<ApiDoc>();   // the ApiDoc
+app.describe().first.metadataOf<Audit>();    // null — someone else's type
+```
+
+Naming one of those types in `dust_server` would make the runtime depend on a
+format it has no business knowing, so nothing is named. The slot stays open for
+OpenAPI support to land later without a breaking change.
+
+What `describe()` is not is a schema source. Parameter types and request or
+response bodies come from the build-time IR, not from the route table.
+
 ## Path syntax
 
 | Form | Matches |

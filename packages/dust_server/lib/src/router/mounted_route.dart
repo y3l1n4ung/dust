@@ -4,6 +4,17 @@
 /// documentation reads the method and path from here and finds its own
 /// description in [metadata], which keeps `dust_server` free of any particular
 /// documentation format.
+///
+/// [metadata] is `Object` on purpose rather than a named type. An OpenAPI
+/// generator, a permissions audit, and a route-listing command each want
+/// something different in that slot, and naming one of them here would make the
+/// runtime depend on a format it has no business knowing. [metadataOf] is how a
+/// consumer takes its own type back and ignores everyone else's.
+///
+/// What this gives a documentation generator: every route, its method, and its
+/// path with `{name}` placeholders intact. What it deliberately does not give:
+/// parameter types and body schemas, which come from the build-time IR. This is
+/// introspection of the route table, not a schema source.
 final class MountedRoute {
   /// Describes one served route.
   const MountedRoute({
