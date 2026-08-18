@@ -28,6 +28,17 @@ final class _Refuses implements FromRequestParts<String> {
       Err(Rejection.status(status, message));
 }
 
+/// Refuses with a 401 carrying [challenge], the way a real scheme does.
+final class _Challenges implements FromRequestParts<String> {
+  const _Challenges(this.challenge);
+
+  final String challenge;
+
+  @override
+  Future<Result<String, Rejection>> extract(Request request) async =>
+      Err(Rejection.unauthorized('needs a credential', challenge: challenge));
+}
+
 void main() {
   group('an API key', () {
     test('is read from the header', () async {
@@ -153,14 +164,75 @@ void main() {
       expect(expectOk(await extractor.extract(request('GET', '/'))), 'b');
     });
 
-    test('reports the last refusal, not the first', () async {
+    test('offers every scheme challenge when none had a credential', () async {
+      // A 401 naming only the last scheme tried tells a browser to do the wrong
+      // thing. HTTP allows several challenges in one response.
+      const extractor = FirstOf<String>([
+        _Challenges('Bearer'),
+        _Challenges('Basic realm="api"'),
+        _Challenges('Cookie'),
+      ]);
+
+      final rejection = expectErr(await extractor.extract(request('GET', '/')));
+
+      expect(rejection.status, 401);
+      expect(rejection.challenge, 'Bearer, Basic realm="api", Cookie');
+      expect(rejection.message, 'no credentials were supplied');
+    });
+
+    test('does not repeat a challenge two schemes share', () async {
+      const extractor = FirstOf<String>([
+        _Challenges('Bearer'),
+        _Challenges('Bearer'),
+      ]);
+
+      expect(
+        expectErr(await extractor.extract(request('GET', '/'))).challenge,
+        'Bearer',
+      );
+    });
+
+    test('a refusal that is not a 401 wins, because it is more specific',
+        () async {
+      // A 403 means a credential was presented and was not good enough. Burying
+      // it under "no credentials" sends the caller after the wrong problem.
+      const extractor = FirstOf<String>([
+        _Refuses(403, 'that key is not allowed here'),
+        _Challenges('Cookie'),
+      ]);
+
+      final rejection = expectErr(await extractor.extract(request('GET', '/')));
+
+      expect(rejection.status, 403);
+      expect(rejection.message, 'that key is not allowed here');
+    });
+
+    test('a challenge carrying its own parameters stays parseable', () async {
+      // `Basic realm="x", charset="UTF-8"` is one challenge with a comma in it.
+      // Joined with others the header is still unambiguous, because an
+      // auth-param contains `=` and a scheme name does not — so a parser
+      // attaches charset to Basic rather than reading it as a scheme.
+      const extractor = FirstOf<String>([
+        _Challenges('Basic realm="api", charset="UTF-8"'),
+        _Challenges('Cookie'),
+      ]);
+
+      expect(
+        expectErr(await extractor.extract(request('GET', '/'))).challenge,
+        'Basic realm="api", charset="UTF-8", Cookie',
+      );
+    });
+
+    test('falls back to Bearer when no scheme supplied a challenge', () async {
       const extractor = FirstOf<String>([
         _Refuses(401, 'first'),
         _Refuses(401, 'last'),
       ]);
 
-      expect(expectErr(await extractor.extract(request('GET', '/'))).message,
-          'last');
+      final rejection = expectErr(await extractor.extract(request('GET', '/')));
+
+      expect(rejection.status, 401);
+      expect(rejection.challenge, 'Bearer');
     });
 
     test('stops at a 5xx rather than trying the rest', () async {

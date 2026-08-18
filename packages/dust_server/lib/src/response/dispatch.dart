@@ -21,7 +21,13 @@ import 'rejection.dart';
 /// | `Some(value)` | the value, dispatched again |
 /// | `None` | 404 |
 /// | `null` | 204 |
+/// | `String` | `text/plain`, sent as written |
 /// | anything else | JSON, through `serialize` when it derives `Serialize` |
+///
+/// A bare [String] is text rather than JSON, which is the rule axum uses. It
+/// used to be encoded, so `return 'Hello'` sent `"Hello"` with the quotes — the
+/// only correct answer if you wanted a JSON string, and a surprise every other
+/// time. Wrap it in a list or a map to send JSON, or call `jsonResponse`.
 ///
 /// [status] applies only to the last row and to `Ok`, so a create can answer
 /// 201 without the failure path inheriting it.
@@ -34,6 +40,7 @@ Response responseFrom(Object? value, {int status = 200}) {
     Err(error: final inner) => _errorResponse(inner),
     Some(value: final inner) => responseFrom(inner, status: status),
     None() => const Rejection.notFound('not found').intoResponse(),
+    final String text => textResponse(text, status: status),
     _ => jsonResponse(value, status: status),
   };
 }

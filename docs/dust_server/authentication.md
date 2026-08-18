@@ -148,19 +148,29 @@ curl -si  localhost:8080/whoami
 ```
 
 ```
-401 WWW-Authenticate: Cookie   {"error":"expected a session cookie"}
-401 WWW-Authenticate: Cookie   {"error":"expected a session cookie"}
+401 WWW-Authenticate: Bearer, ApiKey, Basic realm="restricted", charset="UTF-8", Cookie
+    {"error":"no credentials were supplied"}
 ```
 
-The first is `allowQuery: false` doing its job — a key in a URL is refused even
-though it is the right key.
+Both answer the same way, and both lines are worth reading.
 
-The second is a wart, and the reason it is documented rather than hidden:
-`firstOf` returns the **last** `Err`, so the challenge and the message come from
-whichever scheme ran last. `expected a session cookie` is accurate for that one
-extractor and misleading about the other three. HTTP allows several challenges in
-one response; if the message matters, order the list so the most likely scheme
-runs last, or answer the 401 yourself instead of letting the last extractor do it.
+The first is `allowQuery: false` doing its job: the key is correct, and it is
+refused anyway because it arrived in a query string — which reaches access logs,
+proxy logs, browser history, and the `Referer` header. As far as the server is
+concerned no credential was presented at all.
+
+The challenge names **every** scheme `firstOf` would have accepted, not whichever
+extractor happened to run last. HTTP allows several challenges in one response,
+and a 401 offering only the last one tells a browser to do the wrong thing.
+
+That header has a comma inside one of its challenges —
+`Basic realm="restricted", charset="UTF-8"` is a single entry — and stays
+unambiguous anyway: an auth-param contains `=` and a scheme name does not, so a
+parser attaches the parameter to the scheme before it.
+
+A refusal that is **not** a 401 wins over the combined challenge, because it is
+more specific: a 403 means a credential was presented and was not good enough,
+and burying it under "no credentials" sends the caller after the wrong problem.
 
 ## Notes worth heeding
 

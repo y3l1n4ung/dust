@@ -63,10 +63,10 @@ curl -s localhost:8080/hello/ada  # Hello, ada!
 curl -s localhost:8080/json       # {"greeting":"Hello, world!"}
 ```
 
-The third is the one that surprises people. Everything a handler returns is
-encoded as **JSON** unless it is already a `Response` — a bare `String` included,
-so `return 'Hello'` sends `"Hello"` with the quotes. Text is a choice you state,
-with `textResponse`.
+A handler returns the value it produced and the verb builder encodes it: a
+`String` goes out as `text/plain`, and anything else as JSON. That is axum's
+rule. To send a JSON string specifically, wrap it — `['Hello']` or
+`{'greeting': 'Hello'}` — or call `jsonResponse`.
 
 Every example runs the same way. The
 [index](../../packages/dust_server/example/README.md) lists them by the question

@@ -13,13 +13,16 @@ import 'package:dust_server/server.dart';
 /// composes by inspecting the failure and moving on; a throw would end the
 /// request at the first scheme and the other three would never run.
 ///
-/// > **What the 401 says is the last scheme's message.** `firstOf` returns the
-/// > final `Err` when every scheme declines, so a caller with no credential at
-/// > all is told `expected a session cookie` and gets `WWW-Authenticate: Cookie`
-/// > — accurate for the scheme that ran last, and misleading about the other
-/// > three. HTTP allows several challenges in one response; if the message
-/// > matters to your clients, order the list so the most likely scheme is last,
-/// > or answer the 401 yourself rather than letting the last extractor do it.
+/// A caller with no credential at all gets one 401 offering **every** scheme,
+/// because HTTP allows several challenges in one response:
+///
+/// ```http
+/// WWW-Authenticate: Bearer, x-api-key, Basic realm="restricted", Cookie
+/// ```
+///
+/// A refusal that is not a 401 wins over that. A 403 means a credential was
+/// presented and was not good enough, and burying it under "no credentials"
+/// sends the caller after the wrong problem.
 ///
 /// > **`allowQuery: false` on the API key.** `ApiKeyExtractable` will read
 /// > `?api_key=` if you let it, and the default lets it. A key in a URL is

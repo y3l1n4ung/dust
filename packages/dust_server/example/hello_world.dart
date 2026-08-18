@@ -10,10 +10,9 @@ import 'package:dust_server/server.dart';
 ///   annotation — `get` takes what you give it.
 /// * The verb builder is generic over the return type and encodes it, so a
 ///   handler ends in the value it produced rather than in a call to an encoder.
-/// * Everything that is not already a `Response` becomes **JSON**, a bare
-///   `String` included — returning `'Hello, world!'` sends `"Hello, world!"`,
-///   with the quotes, because that is valid JSON. Text is a choice you state:
-///   `textResponse`. See `json_body.dart` for the other direction.
+/// * A `String` goes out as `text/plain`; everything else becomes **JSON**.
+///   That is axum's rule. To send a JSON string specifically, wrap it —
+///   `['Hello']` — or call `jsonResponse`.
 /// * `close(drain:)` finishes the requests already accepted before the process
 ///   exits. Skipping it drops them.
 ///
@@ -40,14 +39,14 @@ Router buildApp() {
     ..route('/json', get(greeting));
 }
 
-/// `GET /` — text, stated as text.
-Response hello(Request request) => textResponse('Hello, world!');
+/// `GET /` — a String, so it goes out as text.
+String hello(Request request) => 'Hello, world!';
 
 /// `GET /hello/{name}` — the path segment, coerced and read.
-Future<Response> greet(Request request) async {
+Future<String> greet(Request request) async {
   final name = await request.path<String>('name');
 
-  return textResponse('Hello, $name!');
+  return 'Hello, $name!';
 }
 
 /// `GET /json` — a model, encoded without being asked.

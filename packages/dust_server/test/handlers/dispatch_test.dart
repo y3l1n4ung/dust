@@ -110,10 +110,24 @@ void main() {
       expect(jsonDecode(await response.readAsString()), {'ok': true});
     });
 
-    test('encodes a string as JSON rather than as a body', () async {
+    test('sends a string as text, not as a quoted JSON string', () async {
+      // axum's rule. Encoding it gave `"hello"` with the quotes, which is right
+      // only if you wanted a JSON string and a surprise every other time.
       final response = responseFrom('hello');
 
-      expect(await response.readAsString(), '"hello"');
+      expect(await response.readAsString(), 'hello');
+      expect(response.headers['content-type'], startsWith('text/plain'));
+    });
+
+    test('a list of strings is still JSON', () async {
+      final response = responseFrom(const ['a', 'b']);
+
+      expect(await response.readAsString(), '["a","b"]');
+      expect(response.headers['content-type'], 'application/json');
+    });
+
+    test('the status still applies to a string', () async {
+      expect(responseFrom('made', status: 201).statusCode, 201);
     });
   });
 }

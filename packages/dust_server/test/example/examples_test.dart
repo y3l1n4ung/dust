@@ -57,7 +57,7 @@ import 'serve.dart';
 
 void main() {
   group('hello_world', () {
-    test('answers the root as text, not as a quoted JSON string', () async {
+    test('a returned String goes out as text', () async {
       final app = await example(hello_world.buildApp());
 
       final response = await app.get('/');
@@ -865,18 +865,18 @@ void main() {
       expect((await app.get('/whoami?api_key=k-robot')).statusCode, 401);
     });
 
-    test('no credential at all is 401 carrying the last scheme challenge',
-        () async {
-      // Pinning a wart rather than pretending it away: firstOf returns the
-      // final Err, so the challenge and the message come from whichever scheme
-      // ran last — accurate for that one, misleading about the other three.
+    test('no credential at all is 401 offering every scheme', () async {
+      // It used to name only whichever scheme ran last — accurate for that one
+      // and misleading about the other three.
       final app = await example(credential_schemes.buildApp());
 
       final response = await app.get('/whoami');
 
       expect(response.statusCode, 401);
-      expect(response.headers['www-authenticate'], 'Cookie');
-      expect(app.object(response)['error'], 'expected a session cookie');
+      final challenge = response.headers['www-authenticate']!;
+      expect(challenge, contains('Bearer'));
+      expect(challenge, contains('Cookie'));
+      expect(app.object(response)['error'], 'no credentials were supplied');
     });
 
     test('a wrong Basic password is refused', () async {

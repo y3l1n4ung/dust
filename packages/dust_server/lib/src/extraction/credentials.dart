@@ -83,9 +83,22 @@ final class SessionIdExtractable implements FromRequestParts<String> {
 /// const signedIn = FirstOf([SessionScheme(), ApiKeyScheme()]);
 /// ```
 ///
-/// The rejection reported is the **last** one tried, not the first, so put the
-/// scheme your callers most likely meant last. Reporting the first would tell
-/// a browser user that their bearer token is missing.
+/// When every scheme declines for want of a credential, the refusal names
+/// **all** of them: HTTP allows several challenges in one response, and a 401
+/// offering only the last scheme tried tells a browser to do the wrong thing.
+///
+/// ```http
+/// WWW-Authenticate: Bearer, Basic realm="api", Cookie
+/// ```
+///
+/// A challenge carrying its own parameters — `Basic realm="api",
+/// charset="UTF-8"` — already contains a comma, and the joined header stays
+/// unambiguous anyway: an auth-param contains `=` and a scheme name does not,
+/// so a parser attaches the parameter to the scheme before it.
+///
+/// A refusal that is **not** a 401 wins over that, because it is more specific:
+/// a 403 means a credential was presented and was not good enough, and burying
+/// it under "no credentials" sends the caller looking for the wrong problem.
 ///
 /// A 5xx from any extractor stops the search immediately: that means something
 /// on the server is broken, and trying the next scheme would turn a fault into
@@ -99,7 +112,8 @@ final class FirstOf<T> implements FromRequestParts<T> {
 
   @override
   Future<Result<T, Rejection>> extract(Request request) async {
-    Rejection? last;
+    final refusals = <Rejection>[];
+
     for (final extractor in extractors) {
       switch (await extractor.extract(request)) {
         case Ok(:final value):
@@ -107,9 +121,31 @@ final class FirstOf<T> implements FromRequestParts<T> {
         case Err(:final error) when error.status >= 500:
           return Err(error);
         case Err(:final error):
-          last = error;
+          refusals.add(error);
       }
     }
-    return Err(last ?? const Rejection.unauthorized('no credentials accepted'));
+
+    if (refusals.isEmpty) {
+      return const Err(Rejection.unauthorized('no credentials accepted'));
+    }
+
+    // Anything other than a 401 says a credential *was* presented and was not
+    // good enough. That is the more useful answer, so it is not buried under a
+    // challenge asking for one.
+    final refused = refusals.where((rejection) => rejection.status != 401);
+    if (refused.isNotEmpty) return Err(refused.last);
+
+    // Every scheme wanted a credential and none arrived, so offer them all.
+    final challenges = <String>{
+      for (final rejection in refusals)
+        if (rejection.challenge case final challenge?) challenge,
+    };
+
+    return Err(
+      Rejection.unauthorized(
+        'no credentials were supplied',
+        challenge: challenges.isEmpty ? 'Bearer' : challenges.join(', '),
+      ),
+    );
   }
 }
