@@ -8,9 +8,13 @@ For the feature itself, see the [Server Plugin Design](server-plugin.md).
 
 ## Where it stands
 
-834 tests at 100% line coverage, no analyzer findings, every file under 180
-lines. That says the code does what its tests say. It does not say the tests
-ask the right questions, which is what the rest of this document is about.
+1264 tests at 100% line coverage, no analyzer findings. That says the code does
+what its tests say. It does not say the tests ask the right questions, which is
+what the rest of this document is about.
+
+Sixteen defects have been found and fixed since, all but two by writing an
+example or probing a combination rather than by reading the code — which is the
+strongest argument in this document for how the rest of it should be read.
 
 ## Covered
 
@@ -22,18 +26,26 @@ is visible as a thin folder rather than hidden inside a long file:
 | `matching/` | placeholders, percent encoding, literal segments, trailing slashes |
 | `methods/` | HEAD fallback, 405 and `Allow`, every verb builder |
 | `composition/` | nest, merge, duplicates, sealing, fallback, describe |
-| `middleware/` | layer order down the tree, layer types |
+| `middleware/` | layer order down the tree, layer types, nested-layer scoping |
 | `state/` | scoping and override, missing state |
 | `lifecycle/` | body limit, error reporting |
 | `paths/` | prefix normalization and joining |
 | `conformance/` | parity with `shelf_router`, hand-picked and randomized |
 | `integration/` | real socket, `shelf` interop, concurrency, throughput |
-| `hardening/` | pathological input, untrusted request fields |
+| `mounting/` | mount, root mount, declaration order against a catch-all |
+| `hardening/` | pathological input, untrusted request fields, decoded parameters |
 
-Beyond the router, `test/example/` serves both example applications over a
-loopback socket and drives them with a real client: the CRUD flow, every
-failure code, the layers, shutdown, and — for the chat example — rendered
-HTML, JSON, and a WebSocket upgrade answered by one route table.
+Beyond the router, `test/example/` serves all 51 examples over a loopback socket
+and drives each with a real client — 216 tests, one group per example, so an
+example that stops compiling fails the build.
+
+Three suites test properties no status code can show:
+
+| Suite | Property |
+| :--- | :--- |
+| `response/streaming_test.dart` | events reach the client as they happen, read off a raw socket by arrival time |
+| `serving/traversal_test.dart` | a static handler cannot be walked out of, sent byte for byte so no client normalizes the attempt away |
+| `serving/background_tasks_test.dart` | work outliving a response is drained by shutdown, and detached from the request's span |
 
 | Area | Evidence |
 | :--- | :--- |
@@ -105,13 +117,18 @@ so the port stays held until the process exits. A supervisor that restarts a
 wedged worker in-process will not get the port back; replacing the process is
 the only recovery.
 
-### 5. Observability has traces and logs, and no metrics
+### 5. Observability has traces and logs, and metrics are the application's
 
 `RequestId` and `AccessLog` cover the log line, `onError` covers the failure,
 and `Tracing` records one span per request in W3C Trace Context, so a trace
-survives a hop into a service written in something else. What is still missing
-is metrics: no counters, no histograms, nothing that answers "how many" or
-"how slow" without reading every span.
+survives a hop into a service written in something else.
+
+Metrics stay out of the runtime on purpose: what to count, how to bucket it, and
+what to call it are decisions only the application can make, and a built-in set
+that does not match your dashboard is worse than none. `AccessRecord` carries
+what a counter needs, `matchedRoute` included — which is the part that decides
+whether the labels aggregate or explode into one series per id.
+`example/metrics.dart` builds a Prometheus endpoint on it.
 
 No exporter ships either. `SpanExporter` is one method, deliberately, so
 binding to a collector stays an application's dependency rather than the

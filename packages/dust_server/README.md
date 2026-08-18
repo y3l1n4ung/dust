@@ -59,7 +59,7 @@ One more lives in the workspace, where `dust build` can reach it:
 
 ## Tests
 
-834 tests, 100% line coverage.
+1264 tests, 100% line coverage.
 
 ```bash
 dart test

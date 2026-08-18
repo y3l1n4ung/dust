@@ -45,13 +45,11 @@ Future<Result<Uint8List, Rejection>> readBody(
 
 /// The smaller of [limit] and whatever the router configured.
 ///
-/// Two places set a body limit and neither should be able to loosen the other:
-/// `Router(bodyLimit:)` bounds the whole application, and an extractor bounds
-/// one route. Taking the minimum means adding either can only ever refuse more.
-///
-/// It used to be "the router wins", which reached generated code correctly and
-/// also quietly *raised* a limit an extractor had deliberately set low — a route
-/// that asked for 1 KB accepted whatever the application allowed.
+/// Two places set a body limit and neither may loosen the other:
+/// `Router(bodyLimit:)` bounds the whole application, an extractor bounds one
+/// route. Taking the minimum means adding either can only ever refuse more — in
+/// particular, a route that asks for 1 KB is not widened by a looser
+/// application-wide limit.
 int effectiveBodyLimit(Request request, int limit) {
   final configured = request.context[bodyLimitContextKey];
   return configured is int && configured < limit ? configured : limit;

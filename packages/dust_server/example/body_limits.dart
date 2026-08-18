@@ -14,13 +14,10 @@ import 'package:dust_server/server.dart';
 ///   code whose own limit was fixed at build time.
 /// * A limit on the extractor bounds one route.
 ///
-/// Taking the minimum means adding either can only ever refuse more. It used to
-/// be "the router wins", which quietly *raised* a limit an extractor had set
-/// low — a route asking for 1 KB accepted whatever the application allowed.
-///
-/// The consequence for how you configure it: the router limit is a **ceiling**,
-/// so set it to the largest body the application should ever accept, and tighten
-/// individual routes below it. A route cannot opt into more.
+/// Taking the minimum means adding either can only ever refuse more, so the
+/// router limit is a **ceiling**: set it to the largest body the application
+/// should ever accept, and tighten individual routes below it. A route cannot
+/// opt into more.
 ///
 /// The check happens twice, on purpose. `content-length` is compared **before**
 /// the body is read, so an oversized upload is refused without transferring it.

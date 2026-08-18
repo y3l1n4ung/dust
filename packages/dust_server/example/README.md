@@ -113,7 +113,7 @@ supplies the layer and the cookie extractor and stops there — the same boundar
 that keeps authorization out of it.
 
 Every question in this index has a file, and every file is served over a real
-socket by [`../test/example/`](../test/example) — 213 tests, one group per
+socket by [`../test/example/`](../test/example) — 216 tests, one group per
 example. An example that stops compiling fails the suite, which is what keeps a
 directory this size from rotting.
 

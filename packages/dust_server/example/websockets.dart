@@ -11,12 +11,10 @@ import 'package:dust_server/server.dart';
 /// close the socket — `session.done` is how you wait, and `session.close()` is
 /// how you end it.
 ///
-/// An upgrade succeeds by **throwing** `HijackException`, which is the one place
-/// in this runtime where a throw is not a failure. Layers have to know: tracing
-/// records the upgrade as `ok` with **101**, and the access log records it with
-/// 101 too. Treated as an error instead — which both did until it was measured —
-/// a working chat server reads as 100% failure on the endpoint that works, and
-/// the connections never reach the log at all.
+/// An upgrade succeeds by **throwing** `HijackException` — the one place here
+/// where a throw is not a failure. Layers have to know: tracing and the access
+/// log both record it as **101**. Treated as an error instead, a working chat
+/// server reads as 100% failure on the endpoint that works.
 ///
 /// > **Every message is untrusted input, and the connection is long-lived.**
 /// > Two things follow. Authenticate at the upgrade, where you still have
