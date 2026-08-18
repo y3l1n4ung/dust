@@ -770,7 +770,7 @@ part 'todo.g.dart';
 class Todo with _$Todo {
   const Todo({required this.id, required this.title, required this.done});
 
-  factory Todo.fromJson(Map<String, Object?> json) => _$TodoFromJson(json);
+  static Todo deserialize(Map<String, Object?> json) => _$TodoDeserialize(json);
 
   final String id;
   final String title;
@@ -789,8 +789,8 @@ part 'create_todo.g.dart';
 class CreateTodo with _$CreateTodo {
   const CreateTodo({required this.title});
 
-  factory CreateTodo.fromJson(Map<String, Object?> json) =>
-      _$CreateTodoFromJson(json);
+  static CreateTodo deserialize(Map<String, Object?> json) =>
+      _$CreateTodoDeserialize(json);
 
   @Validate(length: Length(min: 1, max: 200))
   final String title;
@@ -997,7 +997,7 @@ mixin _$TodoController {
     if ($user case Err(:final error)) return error.intoResponse();
     final user = ($user as Ok<AuthUser, Rejection>).value;
 
-    final $input = await const JsonExtractable<CreateTodo>(CreateTodo.fromJson)
+    final $input = await const JsonExtractable<CreateTodo>(CreateTodo.deserialize)
         .extract(request);
     if ($input case Err(:final error)) return error.intoResponse();
     final input = ($input as Ok<CreateTodo, Rejection>).value;
@@ -1166,9 +1166,9 @@ Named so they are not rediscovered as gaps:
 
 | Surface | Reason |
 | :--- | :--- |
-| WebSocket upgrade | needs a second handler shape, and does not fit the request-response contract |
+| WebSocket upgrade | `ws()` is a `MethodRouter` written by hand; a second handler shape does not fit the request-response contract |
 | Server-sent events | `Stream<List<int>>` covers the transport; a typed `Stream<T>` SSE return needs its own response row |
-| Static file serving | `shelf_static` mounts as a plain handler; only needs the `Router` escape hatch |
+| Static file serving | `staticFiles` mounts as a plain handler through `mount()`; nothing for the generator to emit |
 | Content negotiation beyond JSON | one media type per body keeps extractors simple |
 | Extractor-to-extractor dependencies | attached state plus `@State()` covers the real cases |
 
@@ -1186,19 +1186,45 @@ automatically.
 
 ## Open Questions
 
-1. Whether `Router` should expose the underlying `shelf_router.Router` as an
-   escape hatch for non-Dust routes. Needed for static files.
-2. Whether `Validate` constraints should be published as a workspace fact for
-   the documentation package to consume.
-3. Whether `@Query` should coerce or reject on a type mismatch for a nullable
-   parameter. Axum rejects, which is stricter than most Dart HTTP code.
-4. What type generated controllers should pass as `metadata`, which the
+1. What type generated controllers should pass as `metadata`, which the
    documentation package defines and the plugin has to emit.
-5. Whether the shared annotations should move to a `dust_http_annotations`
-   package, so a Phase 6 contract package does not drag `shelf` into client-only
-   consumers.
+
+## Deferred
+
+- **Moving the shared annotations to a `dust_http_annotations` package.** The
+  motivation stands — a Phase 6 contract package should not drag `shelf` into
+  client-only consumers — but the split is not being made yet. Revisit when a
+  contract package actually exists to be dragged into.
 
 ## Resolved
+
+- **No `shelf_router` escape hatch is needed.** The question was how non-Dust
+  routes get served, static files above all. `mount(path, handler)` answers it:
+  it hands a subtree to any `shelf` `Handler`, which is what `staticFiles`
+  already uses, and `example/static_files.dart` serves a single-page build
+  through it. `shelf_router` stays a **dev** dependency, as the conformance
+  oracle in `test/router/conformance/`, and nothing in `lib/` imports it.
+
+- **A nullable parameter rejects a malformed value.** The runtime settled this
+  by behaving: a nullable type makes a value *optional*, not *forgiving*. Absent
+  is `null`; present and uncoercible is a **400**, which matches axum and is
+  stricter than most Dart HTTP code. `example/optional_extraction.dart` shows the
+  three levels side by side, and its tests assert that `?page=x` is a 400 while
+  `?page=` absent defaults cleanly. `optional(...)` is the opt-in that swallows
+  both — and the example says plainly that it hands a client with a bug silence
+  and page one.
+
+- **Validation uses the built-in `Validate()` derive.** The generator does not
+  define a validation mechanism of its own: it emits `@Derive([Validate()])` on
+  the request model and calls `validBody`, which runs the generated `validate()`
+  and answers **422** with per-field errors. That path is already proven by
+  `example/validation_422.dart` — every broken rule reported at once, and a shape
+  failure landing on the same status and body shape as a rule failure, so a
+  client writes one error renderer.
+
+  Whether those constraints are *also* published as a workspace fact for the
+  documentation package is a separate question about the doc package, not about
+  how validation runs, and it does not block the generator.
 
 - **Method name: `extract`, not `fromRequest`.** `implements` cannot constrain
   statics in Dart, so the contract must be an instance method, and `extract`
