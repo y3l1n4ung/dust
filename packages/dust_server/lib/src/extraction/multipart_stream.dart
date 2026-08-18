@@ -197,8 +197,7 @@ final class StreamedMultipartExtractable
       );
     }
 
-    final configured = request.context[bodyLimitContextKey];
-    final effective = configured is int ? configured : limit;
+    final effective = effectiveBodyLimit(request, limit);
 
     // Checked up front when the client declared one, so an oversized upload is
     // refused before a byte of it is read.

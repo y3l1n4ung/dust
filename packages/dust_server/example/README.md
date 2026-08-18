@@ -37,9 +37,11 @@ repository.
 | Reading `{id}` out of the path | [`path_params.dart`](path_params.dart) |
 | Reading the query string, including repeated keys | [`query_params.dart`](query_params.dart) |
 | Reading headers, and the `Host` the client claims | [`headers_and_host.dart`](headers_and_host.dart) |
+| Finding the client address behind a proxy | [`client_ip.dart`](client_ip.dart) |
 | Reading and setting cookies | [`cookies.dart`](cookies.dart) |
 | Answering `HEAD` from a `GET` handler | [`handle_head_request.dart`](handle_head_request.dart) |
 | One fallback for everything unmatched | [`global_404.dart`](global_404.dart) |
+| What happens when a handler throws | [`error_handling.dart`](error_handling.dart) |
 | Serving two versions of the same API | [`versioning.dart`](versioning.dart) |
 
 ## Bodies and validation
@@ -50,6 +52,8 @@ repository.
 | Decoding an HTML form post | [`form_body.dart`](form_body.dart) |
 | Handling a file upload | [`multipart_form.dart`](multipart_form.dart) |
 | Accepting an upload larger than memory | [`multipart_stream.dart`](multipart_stream.dart) |
+| Refusing a body that is too big | [`body_limits.dart`](body_limits.dart) |
+| Verifying a signed webhook | [`webhook_signatures.dart`](webhook_signatures.dart) |
 | Answering 422 with the per-field errors | [`validation_422.dart`](validation_422.dart) |
 | Changing what a rejection looks like on the wire | [`customize_rejection.dart`](customize_rejection.dart) |
 | Choosing a decoder by `content-type` | [`parse_body_by_content_type.dart`](parse_body_by_content_type.dart) |
@@ -73,6 +77,7 @@ repository.
 | Compressing responses | [`compression.dart`](compression.dart) |
 | Giving every request an id that reaches the logs | [`request_id.dart`](request_id.dart) |
 | Recording what was served | [`access_log.dart`](access_log.dart) |
+| Seeing what actually went over the wire | [`print_request_response.dart`](print_request_response.dart) |
 | Making `/todos` and `/todos/` the same route | [`normalize_path.dart`](normalize_path.dart) |
 | The response headers a browser uses to lock a page down | [`security_headers.dart`](security_headers.dart) |
 | A layer that runs only for routes that matched | [`route_layer.dart`](route_layer.dart) |
@@ -98,6 +103,7 @@ repository.
 | Serving over TLS | [`tls.dart`](tls.dart) |
 | Counting requests and timing them | [`metrics.dart`](metrics.dart) |
 | Signed sessions over the cookie extractor | [`sessions.dart`](sessions.dart) |
+| Liveness and readiness, which differ | [`health_checks.dart`](health_checks.dart) |
 | Testing an application built on this runtime | [`testing.dart`](testing.dart) |
 
 `metrics.dart` and `sessions.dart` are examples rather than runtime features on
@@ -106,7 +112,7 @@ supplies the layer and the cookie extractor and stops there — the same boundar
 that keeps authorization out of it.
 
 Every question in this index has a file, and every file is served over a real
-socket by [`../test/example/`](../test/example) — 177 tests, one group per
+socket by [`../test/example/`](../test/example) — 210 tests, one group per
 example. An example that stops compiling fails the suite, which is what keeps a
 directory this size from rotting.
 
