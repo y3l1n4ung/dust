@@ -75,7 +75,26 @@ final class AccessLog implements Layer {
           context: {matchedRouteSlotKey: matched},
         );
 
-        final response = await inner(logged);
+        final Response response;
+        try {
+          response = await inner(logged);
+        } on HijackException {
+          // An upgrade succeeds by throwing, so without this a WebSocket
+          // connection never reaches the log at all — you cannot see who
+          // connected, when, or from where. 101 is what went on the wire.
+          stopwatch.stop();
+          onRecord(
+            AccessRecord(
+              method: request.method,
+              path: '/${request.url.path}',
+              status: 101,
+              duration: stopwatch.elapsed,
+              requestId: requestIdOf(request),
+              matchedRoute: matched.route,
+            ),
+          );
+          rethrow;
+        }
         stopwatch.stop();
 
         onRecord(

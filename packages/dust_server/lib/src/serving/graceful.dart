@@ -71,6 +71,11 @@ final class ServerHandle {
 /// [shared] lets several isolates bind the same port, which is what
 /// `serveCluster` uses; on its own a single server has no reason to set it.
 ///
+/// [background] is drained alongside the requests. When it is omitted, a
+/// [BackgroundTasks] attached to [router] with `withState` is used instead — so
+/// a clustered server, whose registry is built inside each isolate, needs no
+/// extra wiring to be drained.
+///
 /// ```dart
 /// final server = await serveRouter(app, InternetAddress.anyIPv4, 8080);
 /// await ProcessSignal.sigterm.watch().first;
@@ -85,6 +90,11 @@ Future<ServerHandle> serveRouter(
   BackgroundTasks? background,
 }) async {
   final inFlight = _InFlight();
+  // Falling back to the router's own state means `withState(tasks)` is enough,
+  // and a clustered server — where the registry is built inside each isolate and
+  // cannot be handed in from outside — drains its tasks without any extra
+  // wiring.
+  final tasks = background ?? backgroundTasksIn(router);
   final handler = router.handler;
 
   final server = await shelf_io.serve(
@@ -102,7 +112,7 @@ Future<ServerHandle> serveRouter(
     shared: shared,
   );
 
-  return ServerHandle._(server, inFlight, background);
+  return ServerHandle._(server, inFlight, tasks);
 }
 
 final class _InFlight {

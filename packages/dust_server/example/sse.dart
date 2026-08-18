@@ -10,6 +10,12 @@ import 'package:dust_server/server.dart';
 /// build log. The browser reconnects on its own, and there is no framing to get
 /// wrong.
 ///
+/// The response opts out of the adapter's output buffering, and that is what
+/// makes it a stream at all. `shelf` buffers a streamed body by default and
+/// flushes when it ends — so every event arrived at once, and a stream that
+/// never ends delivered nothing. Measured at the socket, five events emitted
+/// 100ms apart all landed together at 536ms.
+///
 /// Three headers make it work, and `eventStream` sets all three:
 ///
 /// * `content-type: text/event-stream` — what makes `EventSource` accept it.

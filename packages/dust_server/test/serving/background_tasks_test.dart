@@ -115,6 +115,70 @@ void main() {
     });
   });
 
+  group('discovery from state', () {
+    test('serveRouter finds a registry attached with withState', () async {
+      // The only way a clustered server can drain one: each isolate builds its
+      // registry inside the factory, so nothing outside can hand it in.
+      final tasks = BackgroundTasks(onError: (_, __) {});
+      final gate = Completer<void>();
+      var finished = false;
+
+      final app = Router()
+        ..route('/go', post((request) async {
+          (await request.state<BackgroundTasks>()).run('late', () async {
+            await gate.future;
+            finished = true;
+          });
+          return {'ok': true};
+        }))
+        ..withState(tasks);
+
+      // No `background:` argument.
+      final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+
+      await http.post(
+        Uri.parse('http://${server.address.host}:${server.port}/go'),
+      );
+
+      expect(server.pendingTasks, 1);
+
+      Timer(const Duration(milliseconds: 30), gate.complete);
+      expect(await server.close(drain: const Duration(seconds: 2)), isTrue);
+      expect(finished, isTrue);
+    });
+
+    test('an explicit registry wins over one in state', () async {
+      final passed = BackgroundTasks(onError: (_, __) {});
+      final attached = BackgroundTasks(onError: (_, __) {});
+      final app = Router()
+        ..route('/', get((request) async => const {'ok': true}))
+        ..withState(attached);
+
+      final server = await serveRouter(
+        app,
+        InternetAddress.loopbackIPv4,
+        0,
+        background: passed,
+      );
+      addTearDown(() => server.close(drain: const Duration(seconds: 1)));
+
+      passed.run('one', () => Completer<void>().future);
+
+      expect(server.pendingTasks, 1, reason: 'the passed registry is the one');
+    });
+
+    test('no registry anywhere leaves pendingTasks at zero', () async {
+      final server = await serveRouter(
+        Router()..route('/', get((request) async => const {'ok': true})),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => server.close(drain: const Duration(seconds: 1)));
+
+      expect(server.pendingTasks, 0);
+    });
+  });
+
   group('tracing', () {
     test('a task does not inherit the request span', () async {
       // The span ends when the response goes out. A task that kept it would

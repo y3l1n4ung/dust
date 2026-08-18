@@ -136,6 +136,16 @@ final class Tracing implements Layer {
           return response.change(
             headers: {'traceparent': span.context.traceparent},
           );
+        } on HijackException {
+          // Taking over the socket is how a WebSocket upgrade *succeeds*, and
+          // `shelf` signals it by throwing. Treated as an error, every working
+          // WebSocket endpoint reads as a total failure in a trace backend —
+          // the connections that succeeded are exactly the ones marked broken.
+          span
+            ..setAttribute('http.response.status_code', 101)
+            ..end(status: SpanStatus.ok);
+          _export(span);
+          rethrow;
         } on Object catch (error) {
           span
             ..setAttribute('error.type', error.runtimeType.toString())

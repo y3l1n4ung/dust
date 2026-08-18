@@ -1,6 +1,10 @@
 import 'dart:async';
 
+import 'package:meta/meta.dart';
+
+import '../extraction/state.dart';
 import '../response/error_reporting.dart';
+import '../router/router_base.dart';
 import '../tracing/tracing_layer.dart';
 
 /// Work that outlives the response that started it.
@@ -121,4 +125,16 @@ final class _TaskFailed {
 
   @override
   String toString() => 'background task "$name" failed: $cause';
+}
+
+/// The [BackgroundTasks] attached to [router] with `withState`, when there is
+/// one.
+///
+/// Lets `serveRouter` find a registry the caller did not hand it, which is the
+/// only way a clustered server can drain one: each isolate builds its own inside
+/// the factory, so nothing outside can pass it in.
+@internal
+BackgroundTasks? backgroundTasksIn(Router router) {
+  final attached = router.internals.state[stateKeyFor<BackgroundTasks>()];
+  return attached is BackgroundTasks ? attached : null;
 }

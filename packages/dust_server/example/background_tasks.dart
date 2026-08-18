@@ -15,6 +15,15 @@ import 'package:dust_server/server.dart';
 /// > registered here is drained with everything else, and `close` reports
 /// > `false` if it did not finish.
 ///
+/// The registry can also be attached with `withState` alone — `serveRouter`
+/// finds it there when no `background:` is passed. That is what lets a
+/// **clustered** server drain its tasks: each isolate builds its own registry
+/// inside the factory, so nothing outside can hand one in.
+///
+/// A task does **not** inherit the request's tracing span. The span ends when
+/// the response goes out, so a task that kept it would write attributes onto a
+/// finished, already-exported span. Work that wants a trace starts its own.
+///
 /// Two things to be clear about before reaching for it:
 ///
 /// * **It is in-process and unpersisted.** A task lost to a crash is gone, and
