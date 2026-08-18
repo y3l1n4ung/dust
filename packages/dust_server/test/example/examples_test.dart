@@ -166,6 +166,24 @@ void main() {
       expect((await app.get('/strict/abc')).statusCode, 404);
     });
 
+    test('a decoded value can contain a slash, and stays one segment',
+        () async {
+      // The trap the example documents: routing is right, and the value really
+      // does contain a slash. Joining it onto a path is where it goes wrong.
+      final app = await example(path_params.buildApp());
+
+      final response = await app.get('/orders/1');
+
+      expect(response.statusCode, 200);
+      expect(app.object(await app.get('/files/a%2Fb')), {'path': 'a/b'});
+    });
+
+    test('a constrained route refuses an encoded slash outright', () async {
+      final app = await example(path_params.buildApp());
+
+      expect((await app.get('/strict/1%2F2')).statusCode, 404);
+    });
+
     test('a catch-all keeps the slashes', () async {
       final app = await example(path_params.buildApp());
 

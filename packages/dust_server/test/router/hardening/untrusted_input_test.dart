@@ -74,6 +74,62 @@ void main() {
       expect(await response.readAsString(), '/x/y/z');
     });
 
+    test('a percent-encoded slash stays inside one segment', () async {
+      // %2F is a slash *in the value*, not a separator. Routing is right to
+      // treat it as one segment — and the value handed over really does contain
+      // a slash, which is the part an application has to know.
+      final app = Router()
+        ..route(
+            '/files/{name}',
+            get((request) async => {
+                  'name': await request.path<String>('name'),
+                }));
+
+      final response = await app.handler(request('GET', '/files/a%2Fb'));
+
+      expect(response.statusCode, 200);
+      expect(await response.readAsString(), '{"name":"a/b"}');
+    });
+
+    test('a path parameter arrives decoded, control characters included',
+        () async {
+      // Not a defect: this is what RFC 3986 says the value is. It is recorded
+      // because a handler that joins it onto a filesystem path, an internal URL,
+      // or a shell command is where the defect would be.
+      final app = Router()
+        ..route(
+            '/files/{name}',
+            get((request) async => {
+                  'name': await request.path<String>('name'),
+                }));
+
+      final nul = await app.handler(request('GET', '/files/%00null'));
+      final space = await app.handler(request('GET', '/files/sp%20ace'));
+      final percent = await app.handler(request('GET', '/files/a%25b'));
+
+      expect(await nul.readAsString(), contains(r'\u0000'));
+      expect(await space.readAsString(), '{"name":"sp ace"}');
+      expect(await percent.readAsString(), '{"name":"a%b"}');
+    });
+
+    test('a constrained parameter is how a value is restricted', () async {
+      // The runtime will not guess which characters an application considers
+      // safe. It gives a way to say so, and refuses at the route.
+      final app = Router()
+        ..route(
+            r'/files/{name|[a-z0-9-]+}',
+            get((request) async => {
+                  'name': await request.path<String>('name'),
+                }));
+
+      expect((await app.handler(request('GET', '/files/report-1'))).statusCode,
+          200);
+      expect(
+          (await app.handler(request('GET', '/files/a%2Fb'))).statusCode, 404);
+      expect((await app.handler(request('GET', '/files/%00null'))).statusCode,
+          404);
+    });
+
     test('an unknown method on an unknown path is still 404', () async {
       final app = _ours().handler;
 

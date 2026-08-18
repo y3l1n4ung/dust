@@ -13,6 +13,11 @@ import 'extractable.dart';
 ///
 /// The matcher captures the raw segment, so decoding happens here:
 /// `/files/a%20b` gives `a b`, not `a%20b`.
+/// > The value arrives **percent-decoded**, so it can contain a slash, a NUL, or
+/// > any other character a client chose to encode: `/files/a%2Fb` matches one
+/// > segment and yields `a/b`. That is what the value is, per RFC 3986. Treat it
+/// > as untrusted text — never as a path fragment — or constrain it at the route
+/// > with `{name|pattern}`, which refuses before a handler runs.
 final class PathExtractable<T> implements FromRequestParts<T> {
   /// Reads the path parameter named [key].
   const PathExtractable(this.key);
