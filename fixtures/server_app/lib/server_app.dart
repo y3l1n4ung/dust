@@ -14,6 +14,7 @@
 /// ```
 library;
 
+export 'src/api/admin.dart';
 export 'src/api/orders.dart';
 export 'src/auth/caller.dart';
 export 'src/auth/require_scope.dart';

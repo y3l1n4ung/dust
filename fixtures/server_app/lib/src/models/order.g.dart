@@ -53,7 +53,8 @@ mixin _$Order implements Serializable {
   /// final updated = order.copyWith(id: 'John');
   /// ```
   @pragma('vm:prefer-inline')
-  _$OrderCopyWith<Order> get copyWith => _$OrderCopyWithImpl<Order>(this as Order, (value) => value);
+  _$OrderCopyWith<Order> get copyWith =>
+      _$OrderCopyWithImpl<Order>(this as Order, (value) => value);
 
   Map<String, Object?> serialize() => _$OrderSerialize(this as Order);
 
@@ -85,22 +86,24 @@ final class _$OrderCopyWithImpl<$Res> implements _$OrderCopyWith<$Res> {
     Object? item = null,
     Object? quantity = null,
   }) {
-    return _then(
-      Order(
-        id: id == null ? _self.id : id as String,
-        item: item == null ? _self.item : item as String,
-        quantity: quantity == null ? _self.quantity : quantity as int,
-      )
-    );
+    return _then(Order(
+      id: id == null ? _self.id : id as String,
+      item: item == null ? _self.item : item as String,
+      quantity: quantity == null ? _self.quantity : quantity as int,
+    ));
   }
 }
-final class $OrderSerializer implements Serializer<Order, Map<String, Object?>> {
+
+final class $OrderSerializer
+    implements Serializer<Order, Map<String, Object?>> {
   const $OrderSerializer();
 
   @override
   Map<String, Object?> serialize(Order value) => _$OrderSerialize(value);
 }
-final class $OrderDeserializer implements Deserializer<Order, Map<String, Object?>> {
+
+final class $OrderDeserializer
+    implements Deserializer<Order, Map<String, Object?>> {
   const $OrderDeserializer();
 
   @override
@@ -127,5 +130,4 @@ Order _$OrderDeserialize(Map<String, Object?> json) {
   return Order(id: idValue, item: itemValue, quantity: quantityValue);
 }
 
-Order _$OrderFromJson(Map<String, Object?> json) =>
-    _$OrderDeserialize(json);
+Order _$OrderFromJson(Map<String, Object?> json) => _$OrderDeserialize(json);

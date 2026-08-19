@@ -83,19 +83,23 @@ extension _NewOrderValidation on NewOrder {
 
   static void _validateQuantity(int quantity, List<ValidationError> errors) {
     if (quantity < 1) {
-      errors.add(ValidationError(field: 'quantity', message: 'must be 1 to 10'));
+      errors
+          .add(ValidationError(field: 'quantity', message: 'must be 1 to 10'));
     }
     if (quantity > 10) {
-      errors.add(ValidationError(field: 'quantity', message: 'must be 1 to 10'));
+      errors
+          .add(ValidationError(field: 'quantity', message: 'must be 1 to 10'));
     }
   }
-
 }
-final class $NewOrderDeserializer implements Deserializer<NewOrder, Map<String, Object?>> {
+
+final class $NewOrderDeserializer
+    implements Deserializer<NewOrder, Map<String, Object?>> {
   const $NewOrderDeserializer();
 
   @override
-  NewOrder deserialize(Map<String, Object?> json) => _$NewOrderDeserialize(json);
+  NewOrder deserialize(Map<String, Object?> json) =>
+      _$NewOrderDeserialize(json);
 }
 
 // factory NewOrder.fromJson(Map<String, Object?> json) => _$NewOrderFromJson(json);

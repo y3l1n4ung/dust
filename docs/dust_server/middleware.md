@@ -81,6 +81,35 @@ GET /shop/notes/ -> 404 {"error":"no route for /shop/notes/"}
 Scoping earns its keep when one half of an application has URLs you must not
 rewrite — a webhook whose signature is computed over the exact path, say.
 
+**An extractor as a layer.** `fromExtractor` runs one extractor for every route
+below it and passes the value on; `Extension<T>` reads it back in a handler.
+Both names are axum's — `middleware::from_extractor` and `Extension<T>` — because
+this is the same idea and a second vocabulary would help nobody.
+
+```dart
+final admin = Router()
+  ..routeLayer(fromExtractor(const RequireScope('admin')))
+  ..route('/orders', get(listOrders))
+  ..route('/whoami', get(whoAmI));
+```
+
+```dart
+Future<Map<String, Object?>> whoAmI(Request request) async {
+  final caller = await request.extract(const Extension<Caller>());
+
+  return {'id': caller.id};
+}
+```
+
+Two things this buys over naming the extractor in every handler: the work
+happens **once per request** rather than once per handler that wants the value,
+and a route added to that module later cannot forget it.
+
+A missing value is a **500**, not a 401 — the layer not being installed is a
+wiring mistake in the route table, and a 401 would send whoever is debugging it
+after a credential that was never the problem. Pair it with `routeLayer` rather
+than `layer`, so a path that does not exist still answers 404.
+
 **The rest**, each with its own example:
 
 | Layer | Example | The bit worth reading |
