@@ -54,9 +54,9 @@ Future<Response> _$handleReadOrder(Request request) async {
 }
 
 Future<Response> _$handlePlaceOrder(Request request) async {
-  final user = await const BearerAuth().extract(request);
-  if (user case Err(:final error)) return error.intoResponse();
-  final user$ = (user as Ok<AuthUser, Rejection>).value;
+  final caller = await const OrdersWrite().extract(request);
+  if (caller case Err(:final error)) return error.intoResponse();
+  final caller$ = (caller as Ok<Caller, Rejection>).value;
 
   final store = await const StateExtractable<OrderStore>().extract(request);
   if (store case Err(:final error)) return error.intoResponse();
@@ -70,16 +70,16 @@ Future<Response> _$handlePlaceOrder(Request request) async {
 
   return guard(
     () async => jsonResponse(
-      await placeOrder(user$, store$, input$),
+      await placeOrder(caller$, store$, input$),
       status: 201,
     ),
   );
 }
 
 Future<Response> _$handleCancelOrder(Request request) async {
-  final user = await const TodosWrite().extract(request);
-  if (user case Err(:final error)) return error.intoResponse();
-  final user$ = (user as Ok<AuthUser, Rejection>).value;
+  final caller = await const OrdersWrite().extract(request);
+  if (caller case Err(:final error)) return error.intoResponse();
+  final caller$ = (caller as Ok<Caller, Rejection>).value;
 
   final id = await const PathExtractable<String>('id').extract(request);
   if (id case Err(:final error)) return error.intoResponse();
@@ -90,7 +90,7 @@ Future<Response> _$handleCancelOrder(Request request) async {
   final store$ = (store as Ok<OrderStore, Rejection>).value;
 
   return guard(() async {
-    await cancelOrder(user$, id$, store$);
+    await cancelOrder(caller$, id$, store$);
     return noContent();
   });
 }
