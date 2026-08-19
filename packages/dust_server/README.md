@@ -58,7 +58,7 @@ real client, which is what keeps a directory that size from rotting.
 
 ## Tests
 
-1264 tests, 100% line coverage.
+Over 1,200 tests, 100% line coverage, gated in CI.
 
 ```bash
 dart test

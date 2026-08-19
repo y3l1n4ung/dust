@@ -19,8 +19,19 @@ version, and the exceptions are recorded rather than assumed.
 | `dust_dart` | `Result`, `Option` | the workspace's own functional types |
 | `meta` | `@internal`, `@immutable` | keeps internals out of the public surface |
 
-Dev-only: `test`, `http` (a real client for socket tests), `coverage`,
-`shelf_router` (the conformance oracle), `very_good_analysis`.
+Dev-only, and each earns its place:
+
+| Package | Used by |
+| :--- | :--- |
+| `test` | the suite |
+| `http` | a real client, for the tests that go over a socket |
+| `coverage` | `scripts/dart/coverage.sh`, which fails the build under 100% |
+| `shelf_router` | the conformance oracle in `test/router/conformance/` |
+| `jinja` | a second `TemplateEngine`, proving the interface is pluggable rather than mustache with extra steps |
+| `crypto` | `example/sessions.dart` and `example/webhook_signatures.dart` — signing needs HMAC, and hand-rolling one is never the answer |
+| `very_good_analysis` | the lint set, via the root `analysis_options.yaml` |
+
+None of them is a runtime dependency: `lib/` imports none of the above.
 
 ## What was deliberately not used
 

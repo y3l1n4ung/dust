@@ -8,7 +8,7 @@ For the feature itself, see the [Server Plugin Design](server-plugin.md).
 
 ## Where it stands
 
-1264 tests at 100% line coverage, no analyzer findings. That says the code does
+Over 1,200 tests at 100% line coverage, no analyzer findings. That says the code does
 what its tests say. It does not say the tests ask the right questions, which is
 what the rest of this document is about.
 

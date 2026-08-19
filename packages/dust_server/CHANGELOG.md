@@ -26,6 +26,11 @@ Routing in the shape axum uses — `route`, `nest`, `merge`, `mount`, `layer`,
 51 examples in `example/`, one question each, all served over a real socket by
 `test/example/`.
 
+Pinned at this release: **1275 tests, 1595/1595 lines, 100% line coverage.**
+Prose elsewhere says "over 1,200" on purpose — an exact figure in a document
+nobody recounts goes stale on the next commit, and did so four times before this
+one.
+
 ### Known limits
 
 - The code generator this runtime exists for does not exist yet. Everything here

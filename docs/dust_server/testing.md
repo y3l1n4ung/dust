@@ -29,7 +29,7 @@ dart run coverage:format_coverage --lcov --in=.coverage --out=.coverage/lcov.inf
 
 ## How this package is tested
 
-1264 tests, organized so a gap looks like a thin folder rather than hiding inside
+Over 1,200 tests, organized so a gap looks like a thin folder rather than hiding inside
 a long file.
 
 | Folder | Covers |
