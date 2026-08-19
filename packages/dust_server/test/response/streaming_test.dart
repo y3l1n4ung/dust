@@ -43,7 +43,101 @@ Response ticks(Request request) => eventStream(
       keepAlive: null,
     );
 
+/// Five chunks, one every 60ms.
+Stream<List<int>> slowChunks() async* {
+  for (var index = 0; index < 5; index++) {
+    await Future<void>.delayed(const Duration(milliseconds: 60));
+    yield utf8.encode('chunk $index\n');
+  }
+}
+
 void main() {
+  group('a handler that returns a stream', () {
+    test('is served rather than failing to encode', () async {
+      // It used to reach `jsonEncode`, which cannot encode a Stream, so the
+      // natural way to send a large file answered 500.
+      final server = await serveRouter(
+        Router()..route('/download', get((request) async => slowChunks())),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => server.close(drain: const Duration(seconds: 1)));
+
+      final client = HttpClient();
+      addTearDown(client.close);
+      final response = await (await client
+              .getUrl(Uri.parse('http://127.0.0.1:${server.port}/download')))
+          .close();
+      final body = await utf8.decodeStream(response);
+
+      expect(response.statusCode, 200);
+      expect(body, contains('chunk 0'));
+      expect(body, contains('chunk 4'));
+    });
+
+    test('reaches the client as it is produced', () async {
+      final server = await serveRouter(
+        Router()..route('/download', get((request) async => slowChunks())),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => server.close(drain: const Duration(seconds: 1)));
+
+      final arrivals = await arrivalsFor(server, '/download');
+
+      expect(arrivals.length, greaterThanOrEqualTo(5));
+      expect(arrivals.last - arrivals.first, greaterThan(150));
+    });
+  });
+
+  group('the streamed helper', () {
+    test('sets the content type it was given', () async {
+      final response = streamed(
+        const Stream<List<int>>.empty(),
+        contentType: 'text/csv',
+      );
+
+      expect(response.headers['content-type'], 'text/csv');
+      expect(response.context['shelf.io.buffer_output'], false);
+    });
+
+    test('sets no content-length, so it can start before the work ends',
+        () async {
+      final response = streamed(const Stream<List<int>>.empty());
+
+      expect(response.headers['content-length'], isNull);
+    });
+
+    test('carries extra headers and a status through', () async {
+      final response = streamed(
+        const Stream<List<int>>.empty(),
+        status: 206,
+        headers: const {'content-range': 'bytes 0-99/200'},
+      );
+
+      expect(response.statusCode, 206);
+      expect(response.headers['content-range'], 'bytes 0-99/200');
+    });
+
+    test('delivers incrementally', () async {
+      final server = await serveRouter(
+        Router()
+          ..route(
+            '/csv',
+            get((request) async =>
+                streamed(slowChunks(), contentType: 'text/csv')),
+          ),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => server.close(drain: const Duration(seconds: 1)));
+
+      final arrivals = await arrivalsFor(server, '/csv');
+
+      expect(arrivals.length, greaterThanOrEqualTo(5));
+    });
+  });
+
   group('an event stream', () {
     test('delivers its events as they happen, not all at the end', () async {
       final server = await serveRouter(

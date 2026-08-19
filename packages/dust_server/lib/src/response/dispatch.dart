@@ -22,6 +22,7 @@ import 'rejection.dart';
 /// | `None` | 404 |
 /// | `null` | 204 |
 /// | `String` | `text/plain`, sent as written |
+/// | `Stream<List<int>>` | streamed as it arrives, unbuffered |
 /// | anything else | JSON, through `serialize` when it derives `Serialize` |
 ///
 /// A bare [String] is text, not JSON — axum's rule. To send a JSON string
@@ -39,6 +40,7 @@ Response responseFrom(Object? value, {int status = 200}) {
     Some(value: final inner) => responseFrom(inner, status: status),
     None() => const Rejection.notFound('not found').intoResponse(),
     final String text => textResponse(text, status: status),
+    final Stream<List<int>> body => streamed(body, status: status),
     _ => jsonResponse(value, status: status),
   };
 }

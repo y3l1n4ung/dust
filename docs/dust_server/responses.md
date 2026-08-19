@@ -67,6 +67,31 @@ The sink is scoped to a zone, not the process, so two routers in one isolate
 keep their own. `ServerErrors.reporter` sets a process-wide fallback for
 anything a router did not claim.
 
+## Streaming a body
+
+A handler that returns a `Stream<List<int>>` streams it — a file download, a
+generated export, a log tail. The bytes reach the client as they are produced,
+and no `content-length` is set, because the length is not known until the work
+finishes.
+
+```dart
+Future<Stream<List<int>>> download(Request request) async =>
+    File('report.csv').openRead();
+```
+
+`streamed` is the explicit form, for a content type or a status:
+
+```dart
+Future<Response> download(Request request) async =>
+    streamed(File('report.csv').openRead(), contentType: 'text/csv');
+```
+
+Both opt out of the adapter's output buffering, which is what makes them
+streams. A plain `Response.ok(stream)` does not: `shelf` buffers a streamed body
+by default and flushes when the stream ends, so the client waits for the whole
+thing — and for a stream that never ends, waits forever. Use `streamed` unless
+you specifically want the buffering.
+
 ## Trying it
 
 The failures a body extractor can answer with, in the order a client meets them.

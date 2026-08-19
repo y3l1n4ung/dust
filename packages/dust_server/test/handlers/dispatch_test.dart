@@ -119,6 +119,19 @@ void main() {
       expect(response.headers['content-type'], startsWith('text/plain'));
     });
 
+    test('sends a byte stream rather than trying to encode it', () async {
+      final response = responseFrom(
+        Stream<List<int>>.fromIterable([
+          [104, 105],
+        ]),
+      );
+
+      expect(response.statusCode, 200);
+      expect(response.headers['content-type'], 'application/octet-stream');
+      expect(response.context['shelf.io.buffer_output'], false);
+      expect(await response.readAsString(), 'hi');
+    });
+
     test('a list of strings is still JSON', () async {
       final response = responseFrom(const ['a', 'b']);
 

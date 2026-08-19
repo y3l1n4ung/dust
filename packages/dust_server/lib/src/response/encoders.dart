@@ -47,6 +47,40 @@ Object? _encode(Object? value) {
   }
 }
 
+/// Answers with [body] as it arrives, without buffering it.
+///
+/// For anything too large to hold or too slow to wait for: a file download, a
+/// generated export, a log tail. The bytes reach the client as the stream
+/// produces them.
+///
+/// The adapter buffers a streamed body by default and flushes when the stream
+/// ends, which for a stream that never ends means never. This opts out, the same
+/// way `eventStream` does.
+///
+/// ```dart
+/// Future<Response> download(Request request) async {
+///   final file = File('report.csv').openRead();
+///
+///   return streamed(file, contentType: 'text/csv');
+/// }
+/// ```
+///
+/// No `content-length` is set, because the length is not known — the response is
+/// chunked, which is what lets it start before the work finishes.
+Response streamed(
+  Stream<List<int>> body, {
+  int status = 200,
+  String contentType = 'application/octet-stream',
+  Map<String, String> headers = const {},
+}) {
+  return Response(
+    status,
+    body: body,
+    headers: {'content-type': contentType, ...headers},
+    context: const {'shelf.io.buffer_output': false},
+  );
+}
+
 /// Encodes [value] as a plain-text response.
 Response textResponse(String value, {int status = 200}) {
   return Response(
