@@ -1,10 +1,10 @@
 import 'package:dust_dart/db.dart';
 import 'package:dust_dart/serde.dart';
 
-part 'order.g.dart';
+part 'order_model.g.dart';
 
 /// One placed order.
-@Derive([ToString(), Eq(), CopyWith(), Serialize(), Deserialize(), FromRow()])
+@Derive([ToString(), Eq(), CopyWith(), Serialize(), FromRow()])
 final class Order with _$Order {
   /// Creates an [Order].
   const Order({
@@ -15,15 +15,10 @@ final class Order with _$Order {
     required this.placedAt,
   });
 
-  /// Reads an [Order] from decoded JSON.
-  static Order deserialize(Map<String, Object?> json) =>
-      _$OrderDeserialize(json);
-
   /// The primary key.
   final int id;
 
-  /// Who placed it. Every query filters on this — an order is not readable by
-  /// whoever guesses its id.
+  /// Who placed it. Every query filters on this.
   @Sqlx(rename: 'account_id')
   final int accountId;
 

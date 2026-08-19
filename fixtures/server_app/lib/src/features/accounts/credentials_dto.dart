@@ -1,6 +1,6 @@
 import 'package:dust_dart/serde.dart';
 
-part 'credentials.g.dart';
+part 'credentials_dto.g.dart';
 
 /// What `POST /auth/tokens` accepts.
 ///

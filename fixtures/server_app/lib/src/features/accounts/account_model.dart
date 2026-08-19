@@ -1,13 +1,13 @@
 import 'package:dust_dart/db.dart';
 import 'package:dust_dart/serde.dart';
 
-part 'account.g.dart';
+part 'account_model.g.dart';
 
 /// One account, as stored.
 ///
-/// `FromRow` maps the row; `Serialize` is deliberately **not** derived, because
-/// this type carries a password hash and a salt and must never be returned to a
-/// client by accident. See `AccountView` for what is safe to send.
+/// No `Serialize`: this type carries a password hash and a salt, and a type
+/// that cannot be serialized cannot be returned to a client by accident. See
+/// [AccountView] for what is safe to send.
 @Derive([ToString(), Eq(), FromRow()])
 final class Account with _$Account {
   /// Creates an [Account].
@@ -42,14 +42,14 @@ final class Account with _$Account {
 }
 
 /// What an account looks like on the wire.
-///
-/// A separate type rather than a hidden field: the compiler will not let a
-/// hash reach a response if the type that reaches a response has no hash.
 @Derive([ToString(), Eq(), Serialize()])
 final class AccountView with _$AccountView {
   /// Creates an [AccountView].
-  const AccountView(
-      {required this.id, required this.email, required this.scopes});
+  const AccountView({
+    required this.id,
+    required this.email,
+    required this.scopes,
+  });
 
   /// Builds a view of [account].
   factory AccountView.of(Account account) => AccountView(

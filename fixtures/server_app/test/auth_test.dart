@@ -89,8 +89,8 @@ void main() {
       final now = DateTime.now().toUtc().toIso8601String();
 
       final byFingerprint =
-          await app.queries.accountForToken(Tokens.fingerprint(token), now);
-      final byToken = await app.queries.accountForToken(token, now);
+          await app.accounts.accountForToken(Tokens.fingerprint(token), now);
+      final byToken = await app.accounts.accountForToken(token, now);
 
       expect((byFingerprint as Ok<Account?, SqlxError>).value, isNotNull);
       expect(
@@ -107,7 +107,7 @@ void main() {
       final accountId =
           await app.createAccount('ada@example.com', 'correct horse battery');
       final token = Tokens.issue();
-      await app.queries.insertToken(
+      await app.accounts.insertToken(
         accountId,
         Tokens.fingerprint(token),
         DateTime.now()

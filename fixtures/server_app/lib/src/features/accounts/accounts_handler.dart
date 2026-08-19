@@ -2,13 +2,14 @@ import 'package:dust_server/server.dart';
 
 import 'package:dust_dart/db.dart';
 
-import '../auth/passwords.dart';
-import '../auth/tokens.dart';
-import '../db/queries.dart';
-import '../models/account.dart';
-import '../models/credentials.dart';
+import '../../shared/auth/passwords.dart';
+import '../../shared/auth/tokens.dart';
+import 'account_model.dart';
+import 'accounts_repo.dart';
+import 'credentials_dto.dart';
+import 'require_scope.dart';
 
-part 'auth.g.dart';
+part 'accounts_router.g.dart';
 
 // Signing in. This is the one endpoint that sees a password.
 
@@ -24,14 +25,14 @@ part 'auth.g.dart';
 /// would have leaked outright.
 @POST('/tokens', status: 201)
 Future<Result<IssuedToken, Rejection>> signIn(
-  @State() AppQueries queries,
+  @State() AccountsRepo repo,
   @Body() Credentials input,
 ) async {
   const invalid = Err<IssuedToken, Rejection>(
     Rejection.unauthorized('invalid credentials'),
   );
 
-  final found = await queries.accountByEmail(input.email);
+  final found = await repo.accountByEmail(input.email);
   if (found case Err()) return const Err(Rejection.internal());
 
   final account = (found as Ok<Account?, SqlxError>).value;
@@ -53,7 +54,7 @@ Future<Result<IssuedToken, Rejection>> signIn(
   final expiresAt =
       DateTime.now().toUtc().add(const Duration(days: 7)).toIso8601String();
 
-  final stored = await queries.insertToken(
+  final stored = await repo.insertToken(
     account.id,
     Tokens.fingerprint(token),
     expiresAt,
@@ -67,3 +68,14 @@ Future<Result<IssuedToken, Rejection>> signIn(
 /// A salt and hash for an account that does not exist, so the work is real.
 final String _dummySalt = Passwords.newSalt();
 final String _dummyHash = Passwords.hash('not a real password', _dummySalt);
+
+/// `GET /me` — who the token belongs to.
+///
+/// Answers with [AccountView], never [Account]: the stored type carries a hash
+/// and a salt, and it derives no `Serialize`, so this cannot go wrong quietly.
+@GET('/me')
+Future<AccountView> whoAmI(
+  @Extract(RequireScope) Account account,
+) async {
+  return AccountView.of(account);
+}

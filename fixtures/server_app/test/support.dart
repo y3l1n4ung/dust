@@ -9,21 +9,29 @@ import 'package:test/test.dart';
 
 /// The application on a loopback port, over an in-memory database.
 final class TestApp {
-  TestApp._(this.server, this.database, this.queries);
+  TestApp._(this.server, this.database, this.accounts, this.inventory);
 
   /// Opens a fresh database, migrates it, and serves the routes.
   static Future<TestApp> start() async {
     final database = AppDatabase.open(':memory:', options: appOptions);
-    final queries = AppQueries(database.connection);
+    final accounts = AccountsRepo(database.connection);
+    final orders = OrdersRepo(database.connection);
+    final inventory = InventoryRepo(database.connection);
 
+    // One router per feature, mounted where it belongs. Each repository is
+    // attached by type, which is how a handler asks for the one it needs.
     final app = Router()
-      ..nest('/auth', authRoutes())
+      ..nest('/auth', accountRoutes())
       ..nest('/orders', orderRoutes())
-      ..nest('/admin', adminRoutes())
-      ..withState(queries);
+      ..nest('/inventory', inventoryRoutes())
+      ..nest('/exports', exportRoutes())
+      ..withState(accounts)
+      ..withState(orders)
+      ..withState(inventory)
+      ..withState(database);
 
     final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
-    return TestApp._(server, database, queries);
+    return TestApp._(server, database, accounts, inventory);
   }
 
   /// The running server.
@@ -32,8 +40,11 @@ final class TestApp {
   /// The open database.
   final AppDatabase database;
 
-  /// The queries, for reaching past HTTP when a test needs to.
-  final AppQueries queries;
+  /// The accounts repository, for reaching past HTTP when a test needs to.
+  final AccountsRepo accounts;
+
+  /// The inventory repository, for seeding stock.
+  final InventoryRepo inventory;
 
   /// Where to point a client.
   String get origin => 'http://${server.address.host}:${server.port}';
@@ -45,7 +56,7 @@ final class TestApp {
     String scopes = 'orders:write',
   }) async {
     final salt = Passwords.newSalt();
-    final result = await queries.insertAccount(
+    final result = await accounts.insertAccount(
       email,
       Passwords.hash(password, salt),
       salt,

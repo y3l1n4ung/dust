@@ -1,8 +1,8 @@
 import 'package:dust_server/server.dart';
 
-import '../db/queries.dart';
-import '../models/account.dart';
-import 'tokens.dart';
+import '../../shared/auth/tokens.dart';
+import 'account_model.dart';
+import 'accounts_repo.dart';
 
 /// Authenticates a bearer token against the database.
 ///
@@ -26,16 +26,15 @@ final class RequireScope implements FromRequestParts<Account> {
       case Err(:final error):
         return Err(error);
       case Ok(value: final token):
-        final queries = await const StateExtractable<AppQueries>()
-            .extract(request)
-            .then((outcome) => outcome);
-        if (queries case Err(:final error)) return Err(error);
+        final attached =
+            await const StateExtractable<AccountsRepo>().extract(request);
+        if (attached case Err(:final error)) return Err(error);
+        final repo = (attached as Ok<AccountsRepo, Rejection>).value;
 
-        final found =
-            await (queries as Ok<AppQueries, Rejection>).value.accountForToken(
-                  Tokens.fingerprint(token),
-                  DateTime.now().toUtc().toIso8601String(),
-                );
+        final found = await repo.accountForToken(
+          Tokens.fingerprint(token),
+          DateTime.now().toUtc().toIso8601String(),
+        );
 
         switch (found) {
           case Err(:final error):

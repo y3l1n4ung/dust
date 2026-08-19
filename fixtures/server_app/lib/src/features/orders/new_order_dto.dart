@@ -1,12 +1,8 @@
 import 'package:dust_dart/serde.dart';
 
-part 'new_order.g.dart';
+part 'new_order_dto.g.dart';
 
 /// What `POST /orders` accepts.
-///
-/// Nothing here is hand-written: `Deserialize` builds the decoder and
-/// `Validate` builds `validate()`, which the runtime's `ValidatedExtractable`
-/// calls. The messages on the annotations are what a client reads in the 422.
 @Derive([ToString(), Eq(), Deserialize(), Validate()])
 final class NewOrder with _$NewOrder {
   /// Creates a [NewOrder].

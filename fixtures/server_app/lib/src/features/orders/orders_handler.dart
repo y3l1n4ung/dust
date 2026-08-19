@@ -1,46 +1,51 @@
 import 'package:dust_server/server.dart';
 
-import '../auth/require_scope.dart';
-import '../db/queries.dart';
-import '../models/account.dart';
-import '../models/new_order.dart';
-import '../models/order.dart';
+import '../accounts/account_model.dart';
+import '../accounts/require_scope.dart';
+import 'new_order_dto.dart';
+import 'order_model.dart';
+import 'orders_repo.dart';
 
-part 'orders.g.dart';
+part 'orders_router.g.dart';
 
-// What an author writes. `orders.g.dart` is what the server plugin will emit.
-//
-// Every query is scoped to the authenticated account, in SQL. Filtering in
-// Dart after fetching everything is how one customer reads another's orders on
-// the day somebody forgets an `if`.
+// Every query is scoped to the authenticated account, in SQL. Filtering in Dart
+// after fetching everything is how one customer reads another's orders on the
+// day somebody forgets an `if`.
 
-/// `GET /` — this account's orders.
+/// `GET /?limit=&offset=` — this account's orders, paged.
+///
+/// The limit is capped rather than trusted: `?limit=1000000` is a denial-of-
+/// service request dressed as pagination.
 @GET('/', summary: 'List your orders')
 Future<Result<List<Order>, Rejection>> listOrders(
   @Extract(RequireScope) Account account,
-  @State() AppQueries queries,
+  @Query('limit') int? limit,
+  @Query('offset') int? offset,
+  @State() OrdersRepo repo,
 ) async {
-  return switch (await queries.ordersFor(account.id)) {
+  final page = (limit ?? 20).clamp(1, 100);
+  final from = (offset ?? 0).clamp(0, 1 << 30);
+
+  return switch (await repo.pageFor(account.id, page, from)) {
     Ok(:final value) => Ok(value),
-    Err(:final error) => Err(_reportAsInternal(error)),
+    Err(:final error) => Err(_internal(error)),
   };
 }
 
 /// `GET /{id}` — one order, if it belongs to this account.
 ///
 /// A miss and someone else's order answer the same 404. Distinguishing them
-/// would confirm that an order with that id exists, which is not this caller's
-/// business.
+/// would confirm an order with that id exists.
 @GET('/{id}')
 Future<Result<Order, Rejection>> readOrder(
   @Path() int id,
   @Extract(RequireScope) Account account,
-  @State() AppQueries queries,
+  @State() OrdersRepo repo,
 ) async {
-  return switch (await queries.orderFor(id, account.id)) {
+  return switch (await repo.orderFor(id, account.id)) {
     Ok(value: final order?) => Ok(order),
     Ok() => const Err(Rejection.notFound('no such order')),
-    Err(:final error) => Err(_reportAsInternal(error)),
+    Err(:final error) => Err(_internal(error)),
   };
 }
 
@@ -48,11 +53,11 @@ Future<Result<Order, Rejection>> readOrder(
 @POST('/', status: 201)
 Future<Result<Order, Rejection>> placeOrder(
   @Extract(OrdersWrite) Account account,
-  @State() AppQueries queries,
+  @State() OrdersRepo repo,
   @Body() NewOrder input,
 ) async {
   final placedAt = DateTime.now().toUtc().toIso8601String();
-  final inserted = await queries.insertOrder(
+  final inserted = await repo.insertOrder(
     account.id,
     input.item,
     input.quantity,
@@ -60,7 +65,7 @@ Future<Result<Order, Rejection>> placeOrder(
   );
 
   return switch (inserted) {
-    Err(:final error) => Err(_reportAsInternal(error)),
+    Err(:final error) => Err(_internal(error)),
     Ok(:final value) => Ok(
         Order(
           id: value.lastInsertId!,
@@ -78,16 +83,16 @@ Future<Result<Order, Rejection>> placeOrder(
 Future<Result<void, Rejection>> cancelOrder(
   @Extract(OrdersWrite) Account account,
   @Path() int id,
-  @State() AppQueries queries,
+  @State() OrdersRepo repo,
 ) async {
-  return switch (await queries.deleteOrder(id, account.id)) {
-    Err(:final error) => Err(_reportAsInternal(error)),
+  return switch (await repo.deleteOrder(id, account.id)) {
+    Err(:final error) => Err(_internal(error)),
     Ok() => const Ok(null),
   };
 }
 
 /// Answers for a database fault without telling the client what broke.
-Rejection _reportAsInternal(Object error) {
+Rejection _internal(Object error) {
   ServerErrors.report(error, StackTrace.current);
 
   return const Rejection.internal();
