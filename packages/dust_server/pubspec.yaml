@@ -1,0 +1,34 @@
+name: dust_server
+description: Runtime support for Dust-generated Dart HTTP servers on shelf.
+version: 0.1.0-beta.1
+publish_to: none
+repository: https://github.com/y3l1n4ung/dust
+issue_tracker: https://github.com/y3l1n4ung/dust/issues
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  dust_dart: ^0.1.3
+  meta: ^1.16.0
+  http_parser: ^4.1.2
+  mime: ^2.0.0
+  mustache_template: ^2.0.0
+  shelf: ^1.4.2
+  shelf_static: ^1.1.3
+  shelf_web_socket: ^3.0.0
+  uuid: ^4.5.1
+  web_socket_channel: ^3.0.3
+
+dev_dependencies:
+  coverage: ^1.11.0
+  # For example/sessions.dart only. Signing a session needs HMAC, and
+  # hand-rolling one is never the right answer; the runtime itself needs none.
+  crypto: ^3.0.6
+  http: ^1.2.2
+  jinja: ^0.6.6
+  shelf_router: ^1.1.4
+  test: ^1.26.0
+  very_good_analysis: ^10.3.0

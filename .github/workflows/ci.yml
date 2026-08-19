@@ -260,12 +260,23 @@ jobs:
           - name: dust_dart
             path: packages/dust_dart
             dust_check: ''
+            db_check: false
+            coverage_floor: ''
           - name: dust_db_sqlite3
             path: packages/dust_db_sqlite3
             dust_check: ''
+            db_check: false
+            coverage_floor: ''
+          - name: dust_server
+            path: packages/dust_server
+            dust_check: ''
+            db_check: false
+            coverage_floor: '100'
           - name: product_showcase
             path: examples/product_showcase
             dust_check: examples/product_showcase
+            db_check: false
+            coverage_floor: ''
     steps:
       - name: Skip docs-only change
         if: needs.changes.outputs.docs_only == 'true'
@@ -296,15 +307,25 @@ jobs:
         if: needs.changes.outputs.docs_only != 'true' && matrix.dust_check != ''
         run: cargo run --quiet -p dust_cli -- build --clean --root ${{ matrix.dust_check }}
 
+      - name: Dust database build
+        if: needs.changes.outputs.docs_only != 'true' && matrix.db_check
+        run: |
+          cargo run --quiet -p dust_cli -- build --root ${{ matrix.dust_check }} --db
+          cargo run --quiet -p dust_cli -- check --root ${{ matrix.dust_check }} --db
+
       - name: Analyze
         if: needs.changes.outputs.docs_only != 'true'
         working-directory: ${{ matrix.path }}
         run: dart analyze --fatal-infos
 
       - name: Test
-        if: needs.changes.outputs.docs_only != 'true'
+        if: needs.changes.outputs.docs_only != 'true' && matrix.coverage_floor == ''
         working-directory: ${{ matrix.path }}
         run: dart test
+
+      - name: Test with a coverage floor
+        if: needs.changes.outputs.docs_only != 'true' && matrix.coverage_floor != ''
+        run: bash scripts/dart/coverage.sh ${{ matrix.path }} ${{ matrix.coverage_floor }}
 
   flutter-packages:
     name: Flutter / ${{ matrix.name }}

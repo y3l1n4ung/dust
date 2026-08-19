@@ -7,6 +7,7 @@ cd "$ROOT_DIR"
 TARGETS=(
   "packages/dust_dart"
   "packages/dust_db_sqlite3"
+  "packages/dust_server"
 )
 
 if [[ "${1:-}" == "--examples" ]]; then
@@ -22,10 +23,13 @@ for target in "${TARGETS[@]}"; do
 done
 
 if [[ "${1:-}" == "--examples" ]]; then
-  echo "==> Dust build --clean: examples/product_showcase"
-  cargo run --quiet -p dust_cli -- build --clean --root examples/product_showcase
-  echo "==> Dust check: examples/product_showcase"
-  cargo run --quiet -p dust_cli -- check --root examples/product_showcase
+  for example in examples/product_showcase; do
+    echo "==> Dust build --clean: $example"
+    cargo run --quiet -p dust_cli -- build --clean --root "$example"
+    echo "==> Dust check: $example"
+    cargo run --quiet -p dust_cli -- check --root "$example"
+  done
+
 fi
 
 for target in "${TARGETS[@]}"; do

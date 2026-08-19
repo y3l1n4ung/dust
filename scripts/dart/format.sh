@@ -8,6 +8,7 @@ CHECK_MODE=false
 TARGETS=(
   "packages/dust_dart"
   "packages/dust_db_sqlite3"
+  "packages/dust_server"
 )
 
 while [[ $# -gt 0 ]]; do
