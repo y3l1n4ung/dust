@@ -3,10 +3,15 @@
 Runtime support for Dust-generated Dart HTTP servers on `shelf`.
 
 > [!IMPORTANT]
-> Unreleased and unpublished (`publish_to: none`). The code generator described
-> in [docs/design/server-plugin.md](../../docs/design/server-plugin.md) does not
-> exist yet; this package is the runtime that generated code will call, built
-> first so the design is checked against working code rather than a sketch.
+> **0.1.0-beta.1**, unpublished (`publish_to: none`). Complete enough to build
+> on; the API may still change before 1.0.
+>
+> The code generator described in
+> [docs/design/server-plugin.md](../../docs/design/server-plugin.md) does not
+> exist yet. This package is the runtime that generated code will call, built
+> first so the design is checked against working code rather than a sketch —
+> which found seventeen defects the generated code would otherwise have been
+> built on top of. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Documentation
 
