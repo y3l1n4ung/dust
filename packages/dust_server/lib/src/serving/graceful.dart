@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 
 import '../router/router_base.dart';
@@ -101,7 +102,7 @@ Future<ServerHandle> serveRouter(
     (request) async {
       inFlight.enter();
       try {
-        return await handler(request);
+        return _flushIfStreamed(await handler(request));
       } finally {
         inFlight.leave();
       }
@@ -114,6 +115,30 @@ Future<ServerHandle> serveRouter(
 
   return ServerHandle._(server, inFlight, tasks);
 }
+
+/// Turns off output buffering for a response whose length is not known.
+///
+/// `shelf` buffers a streamed body and flushes when the stream ends, which for a
+/// download makes the client wait for all of it and for an endless stream means
+/// never. `streamed` and `eventStream` opt out themselves; this covers a
+/// `Response` built by hand, including one from a mounted third-party handler
+/// that has never heard of Dust.
+///
+/// Only when the length is unknown. A response with a `content-length` is a
+/// single write, where buffering costs nothing and helps.
+///
+/// A response that set the key itself is left alone, so `bufferOutput: true` on
+/// a chunked response remains sayable — worth having for a body that arrives as
+/// very many tiny chunks, where one write each is slower than one write.
+Response _flushIfStreamed(Response response) {
+  if (response.contentLength != null) return response;
+  if (response.context.containsKey(_bufferOutputKey)) return response;
+
+  return response.change(context: {_bufferOutputKey: false});
+}
+
+/// The context key `shelf_io` reads to decide whether to buffer.
+const _bufferOutputKey = 'shelf.io.buffer_output';
 
 final class _InFlight {
   int count = 0;

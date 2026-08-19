@@ -87,10 +87,20 @@ Future<Response> download(Request request) async =>
 ```
 
 Both opt out of the adapter's output buffering, which is what makes them
-streams. A plain `Response.ok(stream)` does not: `shelf` buffers a streamed body
-by default and flushes when the stream ends, so the client waits for the whole
-thing — and for a stream that never ends, waits forever. Use `streamed` unless
-you specifically want the buffering.
+streams — and serving turns it off for **any** response whose length is unknown,
+so a `Response.ok(stream)` built by hand and a mounted third-party handler
+stream too. `shelf` buffers a streamed body by default and flushes when the
+stream ends, so without this the client waits for the whole thing, and for a
+stream that never ends waits forever.
+
+A response with a `content-length` is untouched: one write either way, where
+buffering costs nothing. To ask for buffering on a chunked response — worth it
+when the body arrives as very many tiny chunks, and one write each is slower
+than one write — say so:
+
+```dart
+Response.ok(stream, context: const {'shelf.io.buffer_output': true});
+```
 
 ## Trying it
 

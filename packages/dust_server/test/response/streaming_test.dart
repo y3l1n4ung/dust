@@ -90,6 +90,81 @@ void main() {
     });
   });
 
+  group('a response built by hand', () {
+    test('streams even though it never opted out of buffering', () async {
+      // `Response.ok(stream)` is plain shelf, which buffers by default. Serving
+      // turns that off when the length is unknown, so a hand-built response and
+      // a mounted third-party handler stream like everything else.
+      final server = await serveRouter(
+        Router()
+          ..route('/raw', get((request) async => Response.ok(slowChunks()))),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => server.close(drain: const Duration(seconds: 1)));
+
+      final arrivals = await arrivalsFor(server, '/raw');
+
+      expect(arrivals.length, greaterThanOrEqualTo(5));
+      expect(arrivals.last - arrivals.first, greaterThan(150));
+    });
+
+    test('a mounted handler streams too', () async {
+      // Whatever is mounted has never heard of Dust and cannot opt in itself.
+      final server = await serveRouter(
+        Router()..mount('/', (request) async => Response.ok(slowChunks())),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => server.close(drain: const Duration(seconds: 1)));
+
+      expect((await arrivalsFor(server, '/anything')).length,
+          greaterThanOrEqualTo(5));
+    });
+
+    test('asking for buffering is still respected', () async {
+      // Worth having for a body that arrives as very many tiny chunks, where
+      // one write each is slower than one write.
+      final server = await serveRouter(
+        Router()
+          ..route(
+            '/buffered',
+            get((request) async => Response.ok(
+                  slowChunks(),
+                  context: const {'shelf.io.buffer_output': true},
+                )),
+          ),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => server.close(drain: const Duration(seconds: 1)));
+
+      final arrivals = await arrivalsFor(server, '/buffered');
+
+      // Headers, then the whole body at the end.
+      expect(arrivals.length, lessThan(4));
+    });
+
+    test('a response with a known length is left alone', () async {
+      // One write either way, so buffering costs nothing and helps.
+      final server = await serveRouter(
+        Router()..route('/json', get((request) async => const {'ok': true})),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => server.close(drain: const Duration(seconds: 1)));
+
+      final client = HttpClient();
+      addTearDown(client.close);
+      final response = await (await client
+              .getUrl(Uri.parse('http://127.0.0.1:${server.port}/json')))
+          .close();
+
+      expect(response.headers.contentLength, greaterThan(0));
+      expect(await utf8.decodeStream(response), '{"ok":true}');
+    });
+  });
+
   group('the streamed helper', () {
     test('sets the content type it was given', () async {
       final response = streamed(
