@@ -277,11 +277,6 @@ jobs:
             dust_check: examples/product_showcase
             db_check: false
             coverage_floor: ''
-          - name: todo_server
-            path: examples/todo_server
-            dust_check: examples/todo_server
-            db_check: true
-            coverage_floor: ''
     steps:
       - name: Skip docs-only change
         if: needs.changes.outputs.docs_only == 'true'

@@ -14,7 +14,7 @@ TARGETS=(
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --check) CHECK_MODE=true ;;
-    --examples) TARGETS=("examples/product_showcase" "examples/todo_server") ;;
+    --examples) TARGETS=("examples/product_showcase") ;;
     *)
       echo "Usage: $0 [--check] [--examples]" >&2
       exit 2

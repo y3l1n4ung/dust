@@ -754,7 +754,7 @@ composition, `Rejection` encoding, and each built-in extractor.
 ## Worked Example
 
 ```text
-examples/todo_server/
+todo_api/
   pubspec.yaml
   bin/server.dart
   lib/src/
@@ -972,8 +972,8 @@ Router buildApp(TodoRepo repo) {
 ```dart
 // bin/server.dart
 import 'package:dust_server/server.dart';
-import 'package:todo_server/src/app.dart';
-import 'package:todo_server/src/repo/todo_repo.dart';
+import 'package:todo_api/src/app.dart';
+import 'package:todo_api/src/repo/todo_repo.dart';
 
 Future<void> main(List<String> args) async {
   final app = buildApp(TodoRepo());

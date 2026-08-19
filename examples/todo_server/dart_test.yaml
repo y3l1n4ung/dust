@@ -1,5 +1,0 @@
-tags:
-  stress:
-    # Sustained-load tests: slower than the rest, and the only ones that send
-    # more than one request at a time. Run them with `dart test -t stress`.
-    timeout: 2x

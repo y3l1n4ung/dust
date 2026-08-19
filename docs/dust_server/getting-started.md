@@ -69,6 +69,5 @@ rule. To send a JSON string specifically, wrap it — `['Hello']` or
 `{'greeting': 'Hello'}` — or call `jsonResponse`.
 
 Every example runs the same way. The
-[index](../../packages/dust_server/example/README.md) lists them by the question
-each one answers, and [`examples/todo_server`](../../examples/todo_server) is the
-complete application, with `dart run bin/server.dart`.
+[index](../../packages/dust_server/example/README.md) lists all 51 by the
+question each one answers.

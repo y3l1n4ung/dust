@@ -11,7 +11,7 @@ TARGETS=(
 )
 
 if [[ "${1:-}" == "--examples" ]]; then
-  TARGETS=("examples/product_showcase" "examples/todo_server")
+  TARGETS=("examples/product_showcase")
 elif [[ $# -gt 0 ]]; then
   echo "Usage: $0 [--examples]" >&2
   exit 2
@@ -23,19 +23,13 @@ for target in "${TARGETS[@]}"; do
 done
 
 if [[ "${1:-}" == "--examples" ]]; then
-  for example in examples/product_showcase examples/todo_server; do
+  for example in examples/product_showcase; do
     echo "==> Dust build --clean: $example"
     cargo run --quiet -p dust_cli -- build --clean --root "$example"
     echo "==> Dust check: $example"
     cargo run --quiet -p dust_cli -- check --root "$example"
   done
 
-  for example in examples/todo_server; do
-    echo "==> Dust build --db: $example"
-    cargo run --quiet -p dust_cli -- build --root "$example" --db
-    echo "==> Dust check --db: $example"
-    cargo run --quiet -p dust_cli -- check --root "$example" --db
-  done
 fi
 
 for target in "${TARGETS[@]}"; do

@@ -56,12 +56,6 @@ application. The index lists them by area.
 Every one is served over a loopback socket by `test/example/` and driven with a
 real client, which is what keeps a directory that size from rotting.
 
-One more lives in the workspace, where `dust build` can reach it:
-
-| Example | Shows |
-| :--- | :--- |
-| [`examples/todo_server`](../../examples/todo_server) | generated models, a SQLite store, ownership rules, stress tests |
-
 ## Tests
 
 1264 tests, 100% line coverage.

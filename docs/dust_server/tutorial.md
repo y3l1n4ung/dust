@@ -1,7 +1,8 @@
 # Tutorial
 
-Build a to-do API one endpoint at a time. Every snippet runs; the finished
-application is [`examples/todo_server`](../../examples/todo_server).
+Build a to-do API one endpoint at a time. Every snippet runs. For the same
+pieces isolated one per file, see the
+[examples index](../../packages/dust_server/example/README.md).
 
 ```yaml
 # pubspec.yaml

@@ -66,7 +66,7 @@ Examples:
 
 | Where | Shows |
 | :--- | :--- |
-| [`packages/dust_server/example`](../../packages/dust_server/example/README.md) | one file per question, each under 60 lines |
-| [`examples/todo_server`](../../examples/todo_server) | the complete application: generated models, a SQLite store, ownership rules |
+| [`packages/dust_server/example`](../../packages/dust_server/example/README.md) | 51 files, one question each, under 60 lines each |
 
-Every one of them is driven over a real socket by its own tests.
+Every one is driven over a real socket by `test/example/`, so an example that
+stops compiling fails the build.
