@@ -19,8 +19,10 @@ mixin _$Order implements Serializable {
     final self = this as Order;
     return 'Order('
         'id: ${self.id}, '
+        'accountId: ${self.accountId}, '
         'item: ${self.item}, '
-        'quantity: ${self.quantity}'
+        'quantity: ${self.quantity}, '
+        'placedAt: ${self.placedAt}'
         ')';
   }
 
@@ -31,8 +33,10 @@ mixin _$Order implements Serializable {
         other is Order &&
             runtimeType == other.runtimeType &&
             other.id == self.id &&
+            other.accountId == self.accountId &&
             other.item == self.item &&
-            other.quantity == self.quantity;
+            other.quantity == self.quantity &&
+            other.placedAt == self.placedAt;
   }
 
   @override
@@ -41,8 +45,10 @@ mixin _$Order implements Serializable {
     return Object.hashAll([
       runtimeType,
       self.id,
+      self.accountId,
       self.item,
       self.quantity,
+      self.placedAt,
     ]);
   }
 
@@ -50,11 +56,10 @@ mixin _$Order implements Serializable {
   ///
   /// Usage:
   /// ```dart
-  /// final updated = order.copyWith(id: 'John');
+  /// final updated = order.copyWith(id: 1);
   /// ```
   @pragma('vm:prefer-inline')
-  _$OrderCopyWith<Order> get copyWith =>
-      _$OrderCopyWithImpl<Order>(this as Order, (value) => value);
+  _$OrderCopyWith<Order> get copyWith => _$OrderCopyWithImpl<Order>(this as Order, (value) => value);
 
   Map<String, Object?> serialize() => _$OrderSerialize(this as Order);
 
@@ -66,9 +71,11 @@ mixin _$Order implements Serializable {
 /// @nodoc
 abstract class _$OrderCopyWith<$Res> {
   $Res call({
-    String? id,
+    int? id,
+    int? accountId,
     String? item,
     int? quantity,
+    String? placedAt,
   });
 }
 
@@ -83,38 +90,55 @@ final class _$OrderCopyWithImpl<$Res> implements _$OrderCopyWith<$Res> {
   @pragma('vm:prefer-inline')
   $Res call({
     Object? id = null,
+    Object? accountId = null,
     Object? item = null,
     Object? quantity = null,
+    Object? placedAt = null,
   }) {
-    return _then(Order(
-      id: id == null ? _self.id : id as String,
-      item: item == null ? _self.item : item as String,
-      quantity: quantity == null ? _self.quantity : quantity as int,
-    ));
+    return _then(
+      Order(
+        id: id == null ? _self.id : id as int,
+        accountId: accountId == null ? _self.accountId : accountId as int,
+        item: item == null ? _self.item : item as String,
+        quantity: quantity == null ? _self.quantity : quantity as int,
+        placedAt: placedAt == null ? _self.placedAt : placedAt as String,
+      )
+    );
   }
 }
-
-final class $OrderSerializer
-    implements Serializer<Order, Map<String, Object?>> {
+final class $OrderSerializer implements Serializer<Order, Map<String, Object?>> {
   const $OrderSerializer();
 
   @override
   Map<String, Object?> serialize(Order value) => _$OrderSerialize(value);
 }
-
-final class $OrderDeserializer
-    implements Deserializer<Order, Map<String, Object?>> {
+final class $OrderDeserializer implements Deserializer<Order, Map<String, Object?>> {
   const $OrderDeserializer();
 
   @override
   Order deserialize(Map<String, Object?> json) => _$OrderDeserialize(json);
 }
+extension OrderFromRow on Order {
+  static Order fromRow(Row row) {
+    return Order(
+      id: row.read<int>('id'),
+      accountId: row.read<int>('account_id'),
+      item: row.read<String>('item'),
+      quantity: row.read<int>('quantity'),
+      placedAt: row.read<String>('placed_at'),
+    );
+  }
+}
+
+final bool _$orderFromRowRegistered = registerRowMapper<Order>(OrderFromRow.fromRow);
 
 Map<String, Object?> _$OrderSerialize(Order instance) {
   return <String, Object?>{
     'id': instance.id,
+    'accountId': instance.accountId,
     'item': instance.item,
     'quantity': instance.quantity,
+    'placedAt': instance.placedAt,
   };
 }
 
@@ -123,11 +147,28 @@ Map<String, Object?> _$OrderToJson(Order instance) =>
 
 // factory Order.fromJson(Map<String, Object?> json) => _$OrderFromJson(json);
 Order _$OrderDeserialize(Map<String, Object?> json) {
-  final idValue = JsonHelper.as<String>(json['id'], 'id', 'String');
+  final idValue = JsonHelper.as<int>(json['id'], 'id', 'int');
+  final accountIdValue = JsonHelper.as<int>(
+    json['accountId'],
+    'accountId',
+    'int',
+  );
   final itemValue = JsonHelper.as<String>(json['item'], 'item', 'String');
   final quantityValue = JsonHelper.as<int>(json['quantity'], 'quantity', 'int');
+  final placedAtValue = JsonHelper.as<String>(
+    json['placedAt'],
+    'placedAt',
+    'String',
+  );
 
-  return Order(id: idValue, item: itemValue, quantity: quantityValue);
+  return Order(
+    id: idValue,
+    accountId: accountIdValue,
+    item: itemValue,
+    quantity: quantityValue,
+    placedAt: placedAtValue,
+  );
 }
 
-Order _$OrderFromJson(Map<String, Object?> json) => _$OrderDeserialize(json);
+Order _$OrderFromJson(Map<String, Object?> json) =>
+    _$OrderDeserialize(json);

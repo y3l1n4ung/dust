@@ -24,28 +24,38 @@ Router orderRoutes() => Router.module(
     );
 
 Future<Response> _$handleListOrders(Request request) async {
-  final item = await const QueryExtractable<String?>('item').extract(request);
-  if (item case Err(:final error)) return error.intoResponse();
-  final item$ = (item as Ok<String?, Rejection>).value;
+  final account = await const RequireScope().extract(request);
+  if (account case Err(:final error)) return error.intoResponse();
+  final account$ = (account as Ok<Account, Rejection>).value;
 
-  final store = await const StateExtractable<OrderStore>().extract(request);
-  if (store case Err(:final error)) return error.intoResponse();
-  final store$ = (store as Ok<OrderStore, Rejection>).value;
+  final queries = await const StateExtractable<AppQueries>().extract(request);
+  if (queries case Err(:final error)) return error.intoResponse();
+  final queries$ = (queries as Ok<AppQueries, Rejection>).value;
 
-  return guard(() async => jsonResponse(await listOrders(item$, store$)));
+  return guard(() async {
+    final result = await listOrders(account$, queries$);
+    return switch (result) {
+      Ok(:final value) => jsonResponse(value),
+      Err(:final error) => error.intoResponse(),
+    };
+  });
 }
 
 Future<Response> _$handleReadOrder(Request request) async {
-  final id = await const PathExtractable<String>('id').extract(request);
+  final id = await const PathExtractable<int>('id').extract(request);
   if (id case Err(:final error)) return error.intoResponse();
-  final id$ = (id as Ok<String, Rejection>).value;
+  final id$ = (id as Ok<int, Rejection>).value;
 
-  final store = await const StateExtractable<OrderStore>().extract(request);
-  if (store case Err(:final error)) return error.intoResponse();
-  final store$ = (store as Ok<OrderStore, Rejection>).value;
+  final account = await const RequireScope().extract(request);
+  if (account case Err(:final error)) return error.intoResponse();
+  final account$ = (account as Ok<Account, Rejection>).value;
+
+  final queries = await const StateExtractable<AppQueries>().extract(request);
+  if (queries case Err(:final error)) return error.intoResponse();
+  final queries$ = (queries as Ok<AppQueries, Rejection>).value;
 
   return guard(() async {
-    final result = await readOrder(id$, store$);
+    final result = await readOrder(id$, account$, queries$);
     return switch (result) {
       Ok(:final value) => jsonResponse(value),
       Err(:final error) => error.intoResponse(),
@@ -54,13 +64,13 @@ Future<Response> _$handleReadOrder(Request request) async {
 }
 
 Future<Response> _$handlePlaceOrder(Request request) async {
-  final caller = await const OrdersWrite().extract(request);
-  if (caller case Err(:final error)) return error.intoResponse();
-  final caller$ = (caller as Ok<Caller, Rejection>).value;
+  final account = await const OrdersWrite().extract(request);
+  if (account case Err(:final error)) return error.intoResponse();
+  final account$ = (account as Ok<Account, Rejection>).value;
 
-  final store = await const StateExtractable<OrderStore>().extract(request);
-  if (store case Err(:final error)) return error.intoResponse();
-  final store$ = (store as Ok<OrderStore, Rejection>).value;
+  final queries = await const StateExtractable<AppQueries>().extract(request);
+  if (queries case Err(:final error)) return error.intoResponse();
+  final queries$ = (queries as Ok<AppQueries, Rejection>).value;
 
   final input = await const ValidatedExtractable<NewOrder>(
     JsonExtractable<NewOrder>(NewOrder.deserialize),
@@ -68,29 +78,33 @@ Future<Response> _$handlePlaceOrder(Request request) async {
   if (input case Err(:final error)) return error.intoResponse();
   final input$ = (input as Ok<NewOrder, Rejection>).value;
 
-  return guard(
-    () async => jsonResponse(
-      await placeOrder(caller$, store$, input$),
-      status: 201,
-    ),
-  );
+  return guard(() async {
+    final result = await placeOrder(account$, queries$, input$);
+    return switch (result) {
+      Ok(:final value) => jsonResponse(value, status: 201),
+      Err(:final error) => error.intoResponse(),
+    };
+  });
 }
 
 Future<Response> _$handleCancelOrder(Request request) async {
-  final caller = await const OrdersWrite().extract(request);
-  if (caller case Err(:final error)) return error.intoResponse();
-  final caller$ = (caller as Ok<Caller, Rejection>).value;
+  final account = await const OrdersWrite().extract(request);
+  if (account case Err(:final error)) return error.intoResponse();
+  final account$ = (account as Ok<Account, Rejection>).value;
 
-  final id = await const PathExtractable<String>('id').extract(request);
+  final id = await const PathExtractable<int>('id').extract(request);
   if (id case Err(:final error)) return error.intoResponse();
-  final id$ = (id as Ok<String, Rejection>).value;
+  final id$ = (id as Ok<int, Rejection>).value;
 
-  final store = await const StateExtractable<OrderStore>().extract(request);
-  if (store case Err(:final error)) return error.intoResponse();
-  final store$ = (store as Ok<OrderStore, Rejection>).value;
+  final queries = await const StateExtractable<AppQueries>().extract(request);
+  if (queries case Err(:final error)) return error.intoResponse();
+  final queries$ = (queries as Ok<AppQueries, Rejection>).value;
 
   return guard(() async {
-    await cancelOrder(caller$, id$, store$);
-    return noContent();
+    final result = await cancelOrder(account$, id$, queries$);
+    return switch (result) {
+      Ok() => noContent(),
+      Err(:final error) => error.intoResponse(),
+    };
   });
 }

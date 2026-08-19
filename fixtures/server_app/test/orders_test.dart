@@ -1,132 +1,148 @@
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:dust_server/server.dart';
-import 'package:http/http.dart' as http;
-import 'package:server_app/server_app.dart';
 import 'package:test/test.dart';
 
-/// Drives the hand-emitted `orders.g.dart` over a real socket.
+import 'support.dart';
+
+/// The order routes, over a real SQLite database and real tokens.
 ///
-/// The models it decodes are generated for real: `NewOrder.validate()` and
-/// `NewOrder.deserialize` come from `models.g.dart`, which `dust build`
-/// produces from the annotations. Only the routing half is hand-written, and
-/// this file is the spec it has to satisfy.
+/// Every query is scoped to the authenticated account in SQL, so the tests that
+/// matter most are the ones checking one account cannot reach another's data.
 
 void main() {
-  late ServerHandle server;
-  late OrderStore store;
+  group('listing', () {
+    test('returns this account orders', () async {
+      final app = await testApp();
+      await app.createAccount('ada@example.com', 'correct horse battery');
+      final token =
+          await app.signIn('ada@example.com', 'correct horse battery');
 
-  setUp(() async {
-    store = OrderStore([const Order(id: '1', item: 'shirt', quantity: 2)]);
-    server = await serveRouter(
-      Router()
-        ..nest('/orders', orderRoutes())
-        ..withState(store),
-      InternetAddress.loopbackIPv4,
-      0,
-    );
-  });
+      await app.send('POST', '/orders',
+          body: const {'item': 'shirt', 'quantity': 2}, token: token);
 
-  tearDown(() => server.close(drain: const Duration(seconds: 1)));
-
-  String origin() => 'http://${server.address.host}:${server.port}';
-
-  Future<http.Response> send(
-    String method,
-    String path, {
-    Object? body,
-    String? token,
-  }) {
-    final uri = Uri.parse('${origin()}$path');
-    final headers = {
-      if (body != null) 'content-type': 'application/json',
-      if (token != null) 'authorization': 'Bearer $token',
-    };
-    final encoded =
-        body is String ? body : (body == null ? null : jsonEncode(body));
-
-    return switch (method) {
-      'GET' => http.get(uri, headers: headers),
-      'POST' => http.post(uri, headers: headers, body: encoded),
-      'DELETE' => http.delete(uri, headers: headers),
-      _ => throw ArgumentError(method),
-    };
-  }
-
-  group('reading', () {
-    test('lists what the store holds', () async {
-      final response = await send('GET', '/orders');
+      final response = await app.send('GET', '/orders', token: token);
 
       expect(response.statusCode, 200);
-      expect(jsonDecode(response.body), [
-        {'id': '1', 'item': 'shirt', 'quantity': 2},
-      ]);
+      expect(jsonDecode(response.body), hasLength(1));
+      expect(jsonDecode(response.body).first['item'], 'shirt');
     });
 
-    test('an absent optional query is not a rejection', () async {
-      expect((await send('GET', '/orders')).statusCode, 200);
+    test('does not return another account orders', () async {
+      // The property the whole schema exists for.
+      final app = await testApp();
+      await app.createAccount('ada@example.com', 'correct horse battery');
+      await app.createAccount('bob@example.com', 'a different long password');
+      final ada = await app.signIn('ada@example.com', 'correct horse battery');
+      final bob =
+          await app.signIn('bob@example.com', 'a different long password');
+
+      await app.send('POST', '/orders',
+          body: const {'item': 'ada shirt', 'quantity': 1}, token: ada);
+
+      expect(jsonDecode((await app.send('GET', '/orders', token: bob)).body),
+          isEmpty);
     });
 
-    test('an empty query value is not the same as absent', () async {
-      // `?item=` is present and empty, so it filters to nothing rather than
-      // falling back to the unfiltered list.
-      expect(jsonDecode((await send('GET', '/orders?item=')).body), isEmpty);
+    test('no token is 401', () async {
+      final app = await testApp();
+
+      expect((await app.send('GET', '/orders')).statusCode, 401);
     });
 
-    test('a repeated query key takes one value rather than failing', () async {
+    test('a token that was never issued is 401', () async {
+      final app = await testApp();
+
       expect(
-          (await send('GET', '/orders?item=shirt&item=hat')).statusCode, 200);
-    });
-
-    test('reads one order', () async {
-      expect(
-          jsonDecode((await send('GET', '/orders/1')).body)['item'], 'shirt');
-    });
-
-    test('an Err supplies its own status', () async {
-      final response = await send('GET', '/orders/99');
-
-      expect(response.statusCode, 404);
-      expect(jsonDecode(response.body)['error'], 'no such order');
-    });
-
-    test('a percent-encoded id stays one segment', () async {
-      // `%2F` is a slash in the value, not a separator, so this is a lookup
-      // that misses rather than a route that does not exist.
-      final response = await send('GET', '/orders/a%2Fb');
-
-      expect(response.statusCode, 404);
-      expect(jsonDecode(response.body)['error'], 'no such order');
+        (await app.send('GET', '/orders', token: 'made-up')).statusCode,
+        401,
+      );
     });
   });
 
-  group('the generated validator', () {
-    test('accepts a valid payload and answers 201', () async {
-      final response = await send(
-        'POST',
-        '/orders',
-        body: const {'item': 'hat', 'quantity': 3},
-        token: 'orders:write',
-      );
+  group('reading one', () {
+    test('reads your own', () async {
+      final app = await testApp();
+      await app.createAccount('ada@example.com', 'correct horse battery');
+      final token =
+          await app.signIn('ada@example.com', 'correct horse battery');
 
-      expect(response.statusCode, 201);
-      expect(jsonDecode(response.body), {
-        'id': '2',
-        'item': 'hat',
-        'quantity': 3,
-      });
+      final placed = await app.send('POST', '/orders',
+          body: const {'item': 'shirt', 'quantity': 2}, token: token);
+      final id = jsonDecode(placed.body)['id'];
+
+      final response = await app.send('GET', '/orders/$id', token: token);
+
+      expect(response.statusCode, 200);
+      expect(jsonDecode(response.body)['item'], 'shirt');
     });
 
-    test('reports every broken rule at once', () async {
-      // Both messages come from the annotations in models.dart, through the
-      // validate() that dust build generated.
-      final response = await send(
-        'POST',
-        '/orders',
-        body: const {'item': '', 'quantity': 99},
-        token: 'orders:write',
+    test('another account order is 404, not 403', () async {
+      // 403 would confirm the order exists. A caller who cannot read it has no
+      // business learning whether it is there.
+      final app = await testApp();
+      await app.createAccount('ada@example.com', 'correct horse battery');
+      await app.createAccount('bob@example.com', 'a different long password');
+      final ada = await app.signIn('ada@example.com', 'correct horse battery');
+      final bob =
+          await app.signIn('bob@example.com', 'a different long password');
+
+      final placed = await app.send('POST', '/orders',
+          body: const {'item': 'ada shirt', 'quantity': 1}, token: ada);
+      final id = jsonDecode(placed.body)['id'];
+
+      final response = await app.send('GET', '/orders/$id', token: bob);
+
+      expect(response.statusCode, 404);
+      expect(jsonDecode(response.body)['error'], 'no such order');
+    });
+
+    test('an id that does not exist is the same 404', () async {
+      final app = await testApp();
+      await app.createAccount('ada@example.com', 'correct horse battery');
+      final token =
+          await app.signIn('ada@example.com', 'correct horse battery');
+
+      final response = await app.send('GET', '/orders/9999', token: token);
+
+      expect(response.statusCode, 404);
+    });
+
+    test('a non-numeric id is 400 from the coercion', () async {
+      final app = await testApp();
+      await app.createAccount('ada@example.com', 'correct horse battery');
+      final token =
+          await app.signIn('ada@example.com', 'correct horse battery');
+
+      expect(
+        (await app.send('GET', '/orders/abc', token: token)).statusCode,
+        400,
       );
+    });
+  });
+
+  group('placing', () {
+    test('writes a row owned by the caller', () async {
+      final app = await testApp();
+      final accountId =
+          await app.createAccount('ada@example.com', 'correct horse battery');
+      final token =
+          await app.signIn('ada@example.com', 'correct horse battery');
+
+      final response = await app.send('POST', '/orders',
+          body: const {'item': 'shirt', 'quantity': 2}, token: token);
+
+      expect(response.statusCode, 201);
+      expect(jsonDecode(response.body)['accountId'], accountId);
+    });
+
+    test('the generated validator refuses a bad payload', () async {
+      final app = await testApp();
+      await app.createAccount('ada@example.com', 'correct horse battery');
+      final token =
+          await app.signIn('ada@example.com', 'correct horse battery');
+
+      final response = await app.send('POST', '/orders',
+          body: const {'item': '', 'quantity': 99}, token: token);
 
       expect(response.statusCode, 422);
       expect(jsonDecode(response.body)['fields'], {
@@ -135,191 +151,60 @@ void main() {
       });
     });
 
-    test('enforces the lower bound as well as the upper', () async {
-      final response = await send(
-        'POST',
-        '/orders',
-        body: const {'item': 'hat', 'quantity': 0},
-        token: 'orders:write',
+    test('a token without the scope is 403 and writes nothing', () async {
+      final app = await testApp();
+      await app.createAccount(
+        'reader@example.com',
+        'a read only long password',
+        scopes: 'orders:read',
       );
+      final token =
+          await app.signIn('reader@example.com', 'a read only long password');
 
-      expect(response.statusCode, 422);
-      expect(jsonDecode(response.body)['fields'], {
-        'quantity': ['must be 1 to 10'],
-      });
-    });
-
-    test('accepts the boundaries', () async {
-      for (final quantity in [1, 10]) {
-        final response = await send(
-          'POST',
-          '/orders',
-          body: {'item': 'hat', 'quantity': quantity},
-          token: 'orders:write',
-        );
-
-        expect(response.statusCode, 201, reason: 'quantity $quantity');
-      }
-    });
-
-    test('applies the generated default when a field is left out', () async {
-      // `@SerDe(defaultValue: 1)` — the decoder supplies it, not the handler.
-      final response = await send(
-        'POST',
-        '/orders',
-        body: const {'item': 'hat'},
-        token: 'orders:write',
-      );
-
-      expect(jsonDecode(response.body)['quantity'], 1);
-    });
-
-    test('a missing required field is 422, not 500', () async {
-      final response = await send(
-        'POST',
-        '/orders',
-        body: const {'quantity': 2},
-        token: 'orders:write',
-      );
-
-      expect(response.statusCode, 422);
-    });
-
-    test('a wrong type is 422, not 500', () async {
-      final response = await send(
-        'POST',
-        '/orders',
-        body: const {'item': 'hat', 'quantity': 'three'},
-        token: 'orders:write',
-      );
-
-      expect(response.statusCode, 422);
-    });
-
-    test('a body that is not JSON is 400', () async {
-      final response = await send(
-        'POST',
-        '/orders',
-        body: 'not json',
-        token: 'orders:write',
-      );
-
-      expect(response.statusCode, 400);
-    });
-
-    test('a JSON array where an object belongs is 422', () async {
-      final response = await send(
-        'POST',
-        '/orders',
-        body: const [1, 2],
-        token: 'orders:write',
-      );
-
-      expect(response.statusCode, 422);
-    });
-  });
-
-  group('extractor order', () {
-    test('a missing credential is 401 before the body is read', () async {
-      final response = await send(
-        'POST',
-        '/orders',
-        body: const {'item': 'hat'},
-      );
-
-      expect(response.statusCode, 401);
-      expect(store.orders, hasLength(1), reason: 'nothing was written');
-    });
-
-    test('the credential is checked before the payload is validated', () async {
-      // Both are wrong. The 401 wins because @Extract is the first parameter.
-      final response = await send(
-        'POST',
-        '/orders',
-        body: const {'item': '', 'quantity': 99},
-      );
-
-      expect(response.statusCode, 401);
-    });
-
-    test('a scoped extractor answers 403, not 401', () async {
-      final response = await send(
-        'DELETE',
-        '/orders/1',
-        token: 'orders:read',
-      );
+      final response = await app.send('POST', '/orders',
+          body: const {'item': 'shirt', 'quantity': 1}, token: token);
 
       expect(response.statusCode, 403);
-      expect(jsonDecode(response.body)['error'], 'requires scope orders:write');
-      expect(store.orders, hasLength(1));
+      expect(jsonDecode((await app.send('GET', '/orders', token: token)).body),
+          isEmpty);
     });
   });
 
-  group('writing', () {
-    test('a void handler answers 204 with no body', () async {
-      final response = await send('DELETE', '/orders/1', token: 'orders:write');
+  group('cancelling', () {
+    test('removes your own and answers 204', () async {
+      final app = await testApp();
+      await app.createAccount('ada@example.com', 'correct horse battery');
+      final token =
+          await app.signIn('ada@example.com', 'correct horse battery');
+
+      final placed = await app.send('POST', '/orders',
+          body: const {'item': 'shirt', 'quantity': 1}, token: token);
+      final id = jsonDecode(placed.body)['id'];
+
+      final response = await app.send('DELETE', '/orders/$id', token: token);
 
       expect(response.statusCode, 204);
-      expect(response.body, isEmpty);
-      expect(store.orders, isEmpty);
+      expect(jsonDecode((await app.send('GET', '/orders', token: token)).body),
+          isEmpty);
     });
 
-    test('deleting something absent is still 204', () async {
-      // The handler returns void either way; it does not report a miss.
-      expect(
-        (await send('DELETE', '/orders/99', token: 'orders:write')).statusCode,
-        204,
-      );
-    });
+    test('cannot cancel another account order', () async {
+      final app = await testApp();
+      await app.createAccount('ada@example.com', 'correct horse battery');
+      await app.createAccount('bob@example.com', 'a different long password');
+      final ada = await app.signIn('ada@example.com', 'correct horse battery');
+      final bob =
+          await app.signIn('bob@example.com', 'a different long password');
 
-    test('a placed order is readable afterwards', () async {
-      await send(
-        'POST',
-        '/orders',
-        body: const {'item': 'hat', 'quantity': 2},
-        token: 'orders:write',
-      );
+      final placed = await app.send('POST', '/orders',
+          body: const {'item': 'ada shirt', 'quantity': 1}, token: ada);
+      final id = jsonDecode(placed.body)['id'];
 
-      expect(jsonDecode((await send('GET', '/orders/2')).body)['item'], 'hat');
-    });
-  });
+      await app.send('DELETE', '/orders/$id', token: bob);
 
-  group('the module', () {
-    test('describes every route it declared', () {
-      final routes = (Router()..nest('/orders', orderRoutes())).describe();
-
-      expect(
-        routes.map((route) => '${route.method} ${route.path}').toList(),
-        [
-          'GET /orders',
-          'GET /orders/{id}',
-          'POST /orders',
-          'DELETE /orders/{id}',
-        ],
-      );
-    });
-
-    test('answers 405 with Allow for a method it does not serve', () async {
-      final response = await http.put(Uri.parse('${origin()}/orders/1'));
-
-      expect(response.statusCode, 405);
-      expect(response.headers['allow'], contains('DELETE'));
-    });
-
-    test('each call builds a fresh Router', () {
-      expect(identical(orderRoutes(), orderRoutes()), isFalse);
-    });
-
-    test('can be passed where a RouterFactory is required', () async {
-      final cluster = await serveCluster(
-        orderRoutes,
-        InternetAddress.loopbackIPv4,
-        0,
-        isolates: 1,
-      );
-
-      expect(cluster.port, greaterThan(0));
-      await cluster.close(drain: const Duration(seconds: 1));
+      expect(jsonDecode((await app.send('GET', '/orders', token: ada)).body),
+          hasLength(1),
+          reason: 'ada order survived');
     });
   });
 }

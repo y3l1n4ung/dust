@@ -1,65 +1,94 @@
 import 'package:dust_server/server.dart';
 
-import '../auth/caller.dart';
 import '../auth/require_scope.dart';
+import '../db/queries.dart';
+import '../models/account.dart';
 import '../models/new_order.dart';
 import '../models/order.dart';
-import '../repo/order_store.dart';
 
 part 'orders.g.dart';
 
-// What an author writes. `orders.g.dart` beside it is what the server plugin
-// will emit — hand-written until the plugin exists, and the spec it has to
-// satisfy. The models it decodes are generated for real: see `models.g.dart`,
-// which `dust build` produces from the annotations on `NewOrder` and `Order`.
+// What an author writes. `orders.g.dart` is what the server plugin will emit.
+//
+// Every query is scoped to the authenticated account, in SQL. Filtering in
+// Dart after fetching everything is how one customer reads another's orders on
+// the day somebody forgets an `if`.
 
-/// `GET /` — an optional filter.
-@GET('/', summary: 'List orders')
-Future<List<Order>> listOrders(
-  @Query('item') String? item,
-  @State() OrderStore store,
+/// `GET /` — this account's orders.
+@GET('/', summary: 'List your orders')
+Future<Result<List<Order>, Rejection>> listOrders(
+  @Extract(RequireScope) Account account,
+  @State() AppQueries queries,
 ) async {
-  if (item == null) return store.orders;
-
-  return store.orders.where((order) => order.item == item).toList();
+  return switch (await queries.ordersFor(account.id)) {
+    Ok(:final value) => Ok(value),
+    Err(:final error) => Err(_reportAsInternal(error)),
+  };
 }
 
-/// `GET /{id}` — the `Err` carries its own status.
+/// `GET /{id}` — one order, if it belongs to this account.
+///
+/// A miss and someone else's order answer the same 404. Distinguishing them
+/// would confirm that an order with that id exists, which is not this caller's
+/// business.
 @GET('/{id}')
 Future<Result<Order, Rejection>> readOrder(
-  @Path() String id,
-  @State() OrderStore store,
+  @Path() int id,
+  @Extract(RequireScope) Account account,
+  @State() AppQueries queries,
 ) async {
-  final order = store.find(id);
-
-  return order == null
-      ? const Err(Rejection.notFound('no such order'))
-      : Ok(order);
+  return switch (await queries.orderFor(id, account.id)) {
+    Ok(value: final order?) => Ok(order),
+    Ok() => const Err(Rejection.notFound('no such order')),
+    Err(:final error) => Err(_reportAsInternal(error)),
+  };
 }
 
-/// `POST /` — the body is validated by the generated `validate()`.
+/// `POST /` — place one.
 @POST('/', status: 201)
-Future<Order> placeOrder(
-  @Extract(OrdersWrite) Caller caller,
-  @State() OrderStore store,
+Future<Result<Order, Rejection>> placeOrder(
+  @Extract(OrdersWrite) Account account,
+  @State() AppQueries queries,
   @Body() NewOrder input,
 ) async {
-  final order = Order(
-    id: '${store.orders.length + 1}',
-    item: input.item,
-    quantity: input.quantity,
+  final placedAt = DateTime.now().toUtc().toIso8601String();
+  final inserted = await queries.insertOrder(
+    account.id,
+    input.item,
+    input.quantity,
+    placedAt,
   );
-  store.orders.add(order);
 
-  return order;
+  return switch (inserted) {
+    Err(:final error) => Err(_reportAsInternal(error)),
+    Ok(:final value) => Ok(
+        Order(
+          id: value.lastInsertId!,
+          accountId: account.id,
+          item: input.item,
+          quantity: input.quantity,
+          placedAt: placedAt,
+        ),
+      ),
+  };
 }
 
-/// `DELETE /{id}` — a `void` handler, so 204 and no body.
+/// `DELETE /{id}` — cancel one, if it belongs to this account.
 @DELETE('/{id}', status: 204)
-Future<void> cancelOrder(
-  @Extract(OrdersWrite) Caller caller,
-  @Path() String id,
-  @State() OrderStore store,
+Future<Result<void, Rejection>> cancelOrder(
+  @Extract(OrdersWrite) Account account,
+  @Path() int id,
+  @State() AppQueries queries,
 ) async {
-  store.orders.removeWhere((order) => order.id == id);
+  return switch (await queries.deleteOrder(id, account.id)) {
+    Err(:final error) => Err(_reportAsInternal(error)),
+    Ok() => const Ok(null),
+  };
+}
+
+/// Answers for a database fault without telling the client what broke.
+Rejection _reportAsInternal(Object error) {
+  ServerErrors.report(error, StackTrace.current);
+
+  return const Rejection.internal();
 }

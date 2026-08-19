@@ -18,41 +18,54 @@ Router adminRoutes() => Router.module(
       routes: [
         Route('GET', '/orders', _$handleAllOrders),
         Route('GET', '/whoami', _$handleWhoAmI),
-        Route('DELETE', '/orders', _$handleClearOrders),
+        Route('DELETE', '/orders/{id}', _$handleClearOrder),
       ],
     )..routeLayer(fromExtractor(const OrdersWrite()));
 
 Future<Response> _$handleAllOrders(Request request) async {
-  final caller = await const Extension<Caller>().extract(request);
-  if (caller case Err(:final error)) return error.intoResponse();
-  final caller$ = (caller as Ok<Caller, Rejection>).value;
+  final account = await const Extension<Account>().extract(request);
+  if (account case Err(:final error)) return error.intoResponse();
+  final account$ = (account as Ok<Account, Rejection>).value;
 
-  final store = await const StateExtractable<OrderStore>().extract(request);
-  if (store case Err(:final error)) return error.intoResponse();
-  final store$ = (store as Ok<OrderStore, Rejection>).value;
+  final queries = await const StateExtractable<AppQueries>().extract(request);
+  if (queries case Err(:final error)) return error.intoResponse();
+  final queries$ = (queries as Ok<AppQueries, Rejection>).value;
 
-  return guard(() async => jsonResponse(await allOrders(caller$, store$)));
+  return guard(() async {
+    final result = await allOrders(account$, queries$);
+    return switch (result) {
+      Ok(:final value) => jsonResponse(value),
+      Err(:final error) => error.intoResponse(),
+    };
+  });
 }
 
 Future<Response> _$handleWhoAmI(Request request) async {
-  final caller = await const Extension<Caller>().extract(request);
-  if (caller case Err(:final error)) return error.intoResponse();
-  final caller$ = (caller as Ok<Caller, Rejection>).value;
+  final account = await const Extension<Account>().extract(request);
+  if (account case Err(:final error)) return error.intoResponse();
+  final account$ = (account as Ok<Account, Rejection>).value;
 
-  return guard(() async => jsonResponse(await whoAmI(caller$)));
+  return guard(() async => jsonResponse(await whoAmI(account$)));
 }
 
-Future<Response> _$handleClearOrders(Request request) async {
-  final caller = await const Extension<Caller>().extract(request);
-  if (caller case Err(:final error)) return error.intoResponse();
-  final caller$ = (caller as Ok<Caller, Rejection>).value;
+Future<Response> _$handleClearOrder(Request request) async {
+  final account = await const Extension<Account>().extract(request);
+  if (account case Err(:final error)) return error.intoResponse();
+  final account$ = (account as Ok<Account, Rejection>).value;
 
-  final store = await const StateExtractable<OrderStore>().extract(request);
-  if (store case Err(:final error)) return error.intoResponse();
-  final store$ = (store as Ok<OrderStore, Rejection>).value;
+  final id = await const PathExtractable<int>('id').extract(request);
+  if (id case Err(:final error)) return error.intoResponse();
+  final id$ = (id as Ok<int, Rejection>).value;
+
+  final queries = await const StateExtractable<AppQueries>().extract(request);
+  if (queries case Err(:final error)) return error.intoResponse();
+  final queries$ = (queries as Ok<AppQueries, Rejection>).value;
 
   return guard(() async {
-    await clearOrders(caller$, store$);
-    return noContent();
+    final result = await clearOrder(account$, id$, queries$);
+    return switch (result) {
+      Ok() => noContent(),
+      Err(:final error) => error.intoResponse(),
+    };
   });
 }

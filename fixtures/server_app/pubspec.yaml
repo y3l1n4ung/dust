@@ -9,8 +9,11 @@ environment:
 resolution: workspace
 
 dependencies:
+  crypto: ^3.0.6
   dust_dart:
     path: ../../packages/dust_dart
+  dust_db_sqlite3:
+    path: ../../packages/dust_db_sqlite3
   dust_server:
     path: ../../packages/dust_server
 

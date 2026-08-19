@@ -1,9 +1,9 @@
 import 'package:dust_server/server.dart';
 
-import '../auth/caller.dart';
 import '../auth/require_scope.dart';
+import '../db/queries.dart';
+import '../models/account.dart';
 import '../models/order.dart';
-import '../repo/order_store.dart';
 
 part 'admin.g.dart';
 
@@ -15,28 +15,39 @@ part 'admin.g.dart';
 // A route added to this file later is covered without anyone remembering to
 // cover it.
 
-/// `GET /admin/orders` — every order, for staff.
-@GET('/orders', summary: 'Every order')
-Future<List<Order>> allOrders(
-  @Extract(RequireScope) Caller caller,
-  @State() OrderStore store,
+/// `GET /admin/orders` — this account's orders, for staff tooling.
+@GET('/orders', summary: 'Orders')
+Future<Result<List<Order>, Rejection>> allOrders(
+  @Extract(RequireScope) Account account,
+  @State() AppQueries queries,
 ) async {
-  return store.orders;
+  return switch (await queries.ordersFor(account.id)) {
+    Ok(:final value) => Ok(value),
+    Err() => const Err(Rejection.internal()),
+  };
 }
 
 /// `GET /admin/whoami` — proof the guard ran.
+///
+/// Answers with [AccountView], not [Account]: the stored type carries a
+/// password hash and a salt, and a type that cannot be serialized cannot leak
+/// them by accident.
 @GET('/whoami')
-Future<Map<String, Object?>> whoAmI(
-  @Extract(RequireScope) Caller caller,
+Future<AccountView> whoAmI(
+  @Extract(RequireScope) Account account,
 ) async {
-  return {'id': caller.id, 'scopes': caller.scopes};
+  return AccountView.of(account);
 }
 
-/// `DELETE /admin/orders` — clears the lot.
-@DELETE('/orders', status: 204)
-Future<void> clearOrders(
-  @Extract(RequireScope) Caller caller,
-  @State() OrderStore store,
+/// `DELETE /admin/orders/{id}` — cancel one on a customer's behalf.
+@DELETE('/orders/{id}', status: 204)
+Future<Result<void, Rejection>> clearOrder(
+  @Extract(RequireScope) Account account,
+  @Path() int id,
+  @State() AppQueries queries,
 ) async {
-  store.orders.clear();
+  return switch (await queries.deleteOrder(id, account.id)) {
+    Ok() => const Ok(null),
+    Err() => const Err(Rejection.internal()),
+  };
 }
