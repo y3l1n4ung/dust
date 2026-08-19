@@ -6,7 +6,12 @@ import 'models.dart';
 //
 // The annotated functions are exactly what an author writes. Everything below
 // the divider stands in for what the plugin will emit into notes.g.dart: one
-// handler per function, and a top-level getter exposing the group.
+// handler per function, and a top-level function exposing the group.
+//
+// A function rather than a getter: a Router is mutable and is sealed when
+// its handler is read, so two servers in one isolate each need their own —
+// and a getter makes `noteRoutes.withState(x)` compile, configure a
+// throwaway, and answer 500 claiming the state was never attached.
 //
 // Dependencies cannot live in fields here, so they arrive as state attached
 // where the routes are mounted, the way axum's `State` pairs with
@@ -49,7 +54,7 @@ Future<String> write(
 // ---------------------------------------------------------------------------
 // Stand-in for notes.g.dart.
 
-Router get noteRoutes => Router.module(
+Router noteRoutes() => Router.module(
       prefix: '',
       routes: [
         Route('GET', '/', _handleList),

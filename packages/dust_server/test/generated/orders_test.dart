@@ -19,7 +19,7 @@ void main() {
   setUp(() async {
     store = OrderStore([const Order('1', 'shirt', 2)]);
     final app = Router()
-      ..nest('/orders', orderRoutes)
+      ..nest('/orders', orderRoutes())
       ..withState(store);
 
     server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
@@ -161,9 +161,54 @@ void main() {
     });
   });
 
+  group('the module is a function, not a getter', () {
+    test('each call builds a fresh Router, so two apps do not share one',
+        () async {
+      // A Router is mutable and gets sealed when its handler is read. Two
+      // servers in one isolate is every test file, so each needs its own.
+      expect(identical(orderRoutes(), orderRoutes()), isFalse);
+    });
+
+    test('it can be passed where a RouterFactory is required', () async {
+      // serveCluster takes Router Function(). A getter is not a value and
+      // cannot be passed at all, so a clustered app could not use the module.
+      final cluster = await serveCluster(
+        orderRoutes,
+        InternetAddress.loopbackIPv4,
+        0,
+        isolates: 1,
+      );
+
+      expect(cluster.port, greaterThan(0));
+      await cluster.close(drain: const Duration(seconds: 1));
+    });
+
+    test('configuring the result is visibly a mistake, not a silent one',
+        () async {
+      // With a getter, `orderRoutes.withState(x)` compiled, configured a
+      // throwaway, and answered 500 at request time saying the state was never
+      // attached. Written as a call, the same mistake reads as one.
+      final configured = orderRoutes()..withState(OrderStore());
+
+      // State on the module itself does reach its own routes.
+      final server = await serveRouter(
+        Router()..nest('/orders', configured),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => server.close(drain: const Duration(seconds: 1)));
+
+      final response = await http.get(
+        Uri.parse('http://${server.address.host}:${server.port}/orders'),
+      );
+
+      expect(response.statusCode, 200);
+    });
+  });
+
   group('the route table', () {
     test('reports every route it declared, for tooling', () async {
-      final routes = (Router()..nest('/orders', orderRoutes)).describe();
+      final routes = (Router()..nest('/orders', orderRoutes())).describe();
 
       expect(
         routes.map((route) => '${route.method} ${route.path}').toList(),

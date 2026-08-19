@@ -206,7 +206,7 @@ Future<Note> write(
 | :--- | :--- | :--- |
 | Prefix | `@Controller('/todos')` | none; the composition site supplies it |
 | Dependencies | constructor parameters, held as fields | `@State()`, attached with `withState` |
-| Generated entry point | `routes` getter on the mixin | a top-level getter, `noteRoutes` for `notes.dart` |
+| Generated entry point | `routes()` method on the mixin | a top-level function, `noteRoutes()` for `notes.dart` |
 | Construction | `TodoController(repo)` at composition | nothing to construct |
 
 Neither is preferred. A controller that holds three repositories reads better as
@@ -220,11 +220,22 @@ is where the path comes from:
 
 ```dart
 final notes = Router()
-  ..merge(noteRoutes)
+  ..merge(noteRoutes())
   ..withState(repo);
 
 final app = Router()..nest('/notes', notes);
 ```
+
+A **function**, not a getter, for two reasons that both bite:
+
+* A `Router` is mutable and is sealed when its handler is read, so two servers
+  in one isolate — every test file — each need their own. A getter that rebuilds
+  on access gives that, but silently: `noteRoutes.withState(repo)` compiles,
+  configures a throwaway, and answers **500 at request time** claiming the state
+  was never attached. Written as a call, the same mistake reads as one.
+* `serveCluster` takes a `RouterFactory`, which is `Router Function()`. A getter
+  is not a value and cannot be passed, so a clustered application could not use
+  the generated module at all.
 
 Both styles land on `Router.module(...)`, which is why that factory is not
 named `controller`.
@@ -958,7 +969,7 @@ import 'api/todo_controller.dart';
 import 'repo/todo_repo.dart';
 
 Router buildApp(TodoRepo repo) {
-  final v1 = Router()..merge(TodoController(repo).routes);
+  final v1 = Router()..merge(TodoController(repo).routes());
 
   return Router()
     ..layer(Cors())
@@ -993,7 +1004,7 @@ mixin _$TodoController {
   Future<Todo> create(AuthUser user, CreateTodo input);
   Future<void> remove(AuthUser user, String id);
 
-  Router get routes => Router.module(
+  Router routes() => Router.module(
         prefix: '/todos',
         routes: [
           Route('GET', '/', _$handleList),

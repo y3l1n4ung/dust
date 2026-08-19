@@ -46,7 +46,7 @@ class TodoController {
   // -------------------------------------------------------------------------
   // Stand-in for todo_controller.g.dart.
 
-  Router get routes => Router.module(
+  Router routes() => Router.module(
         prefix: '/todos',
         routes: [
           Route('GET', '/{id}', _handleGet),
@@ -112,7 +112,7 @@ class TodoController {
 
 /// The composition an application writes by hand.
 Handler todoApp({void Function(Object, StackTrace)? onError}) {
-  final v1 = Router()..merge(TodoController().routes);
+  final v1 = Router()..merge(TodoController().routes());
   return (Router(onError: onError)..nest('/api/v1', v1)).handler;
 }
 

@@ -13,7 +13,7 @@
 
 part of 'orders.dart';
 
-Router get orderRoutes => Router.module(
+Router orderRoutes() => Router.module(
       prefix: '',
       routes: [
         Route('GET', '/', _$handleListOrders),
