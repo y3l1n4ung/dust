@@ -9,7 +9,7 @@ import 'accounts_repo.dart';
 import 'credentials_dto.dart';
 import 'require_scope.dart';
 
-part 'accounts_router.g.dart';
+part 'accounts.g.dart';
 
 // Signing in. This is the one endpoint that sees a password.
 

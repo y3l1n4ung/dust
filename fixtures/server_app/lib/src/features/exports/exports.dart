@@ -8,7 +8,7 @@ import '../accounts/require_scope.dart';
 import '../orders/order_model.dart';
 import '../orders/orders_repo.dart';
 
-part 'exports_router.g.dart';
+part 'exports.g.dart';
 
 // The feature that streams. An export is unbounded by nature, so it is written
 // out as it is produced rather than assembled and then sent.

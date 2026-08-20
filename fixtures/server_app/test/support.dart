@@ -34,10 +34,10 @@ final class TestApp {
     // One router per feature, mounted where it belongs. Each repository is
     // attached by type, which is how a handler asks for the one it needs.
     final app = Router()
-      ..nest('/auth', accountRoutes())
-      ..nest('/orders', orderRoutes())
-      ..nest('/inventory', inventoryRoutes())
-      ..nest('/exports', exportRoutes())
+      ..nest('/auth', $accountsRoutes())
+      ..nest('/orders', $ordersRoutes())
+      ..nest('/inventory', $inventoryRoutes())
+      ..nest('/exports', $exportsRoutes())
       ..withState(accounts)
       ..withState(orders)
       ..withState(inventory)

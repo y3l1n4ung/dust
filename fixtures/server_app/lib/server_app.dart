@@ -7,13 +7,13 @@
 /// ```text
 /// lib/src/
 ///   features/
-///     accounts/    credentials_dto, account_model, accounts_repo,
-///                  accounts_handler -> accounts_router.g.dart, require_scope
-///     orders/      new_order_dto, order_model, orders_repo,
-///                  orders_handler -> orders_router.g.dart
-///     inventory/   stock_model, inventory_repo,
-///                  inventory_handler -> inventory_router.g.dart
-///     exports/     exports_handler -> exports_router.g.dart
+///     accounts/    accounts.dart -> accounts.g.dart, credentials_dto,
+///                  account_model, accounts_repo, require_scope
+///     orders/      orders.dart -> orders.g.dart, new_order_dto, order_model,
+///                  orders_repo
+///     inventory/   inventory.dart -> inventory.g.dart, stock_model,
+///                  inventory_repo
+///     exports/     exports.dart -> exports.g.dart
 ///   shared/
 ///     auth/        passwords, tokens
 ///     db/          database -> database.g.dart
@@ -25,17 +25,17 @@
 library;
 
 export 'src/features/accounts/account_model.dart';
-export 'src/features/accounts/accounts_handler.dart';
+export 'src/features/accounts/accounts.dart';
 export 'src/features/accounts/accounts_repo.dart';
 export 'src/features/accounts/credentials_dto.dart';
 export 'src/features/accounts/require_scope.dart';
-export 'src/features/exports/exports_handler.dart';
-export 'src/features/inventory/inventory_handler.dart';
+export 'src/features/exports/exports.dart';
+export 'src/features/inventory/inventory.dart';
 export 'src/features/inventory/inventory_repo.dart';
 export 'src/features/inventory/stock_model.dart';
 export 'src/features/orders/new_order_dto.dart';
 export 'src/features/orders/order_model.dart';
-export 'src/features/orders/orders_handler.dart';
+export 'src/features/orders/orders.dart';
 export 'src/features/orders/orders_repo.dart';
 export 'src/shared/auth/passwords.dart';
 export 'src/shared/auth/tokens.dart';
