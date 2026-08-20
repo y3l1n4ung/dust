@@ -9,11 +9,24 @@ import 'package:test/test.dart';
 
 /// The application on a loopback port, over an in-memory database.
 final class TestApp {
-  TestApp._(this.server, this.database, this.accounts, this.inventory);
+  TestApp._(this.server, this.database, this.accounts, this.inventory,
+      this._directory);
 
   /// Opens a fresh database, migrates it, and serves the routes.
+  ///
+  /// A **file**, not `:memory:`. SQLite ignores `journal_mode = WAL` for an
+  /// in-memory database, so the options the application ships with — WAL, a
+  /// busy timeout, foreign keys — would not be the ones under test, and the
+  /// concurrency tests would prove less than they appear to.
+  ///
+  /// One directory per test, deleted afterwards, so nothing is shared between
+  /// them and nothing survives the run.
   static Future<TestApp> start() async {
-    final database = AppDatabase.open(':memory:', options: appOptions);
+    final directory = Directory.systemTemp.createTempSync('server_app_test_');
+    final database = AppDatabase.open(
+      '${directory.path}/app.db',
+      options: appOptions,
+    );
     final accounts = AccountsRepo(database.connection);
     final orders = OrdersRepo(database.connection);
     final inventory = InventoryRepo(database.connection);
@@ -31,7 +44,7 @@ final class TestApp {
       ..withState(database);
 
     final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
-    return TestApp._(server, database, accounts, inventory);
+    return TestApp._(server, database, accounts, inventory, directory);
   }
 
   /// The running server.
@@ -45,6 +58,11 @@ final class TestApp {
 
   /// The inventory repository, for seeding stock.
   final InventoryRepo inventory;
+
+  final Directory _directory;
+
+  /// Where the database file lives, for a test that wants to look.
+  String get databasePath => '${_directory.path}/app.db';
 
   /// Where to point a client.
   String get origin => 'http://${server.address.host}:${server.port}';
@@ -104,10 +122,14 @@ final class TestApp {
     };
   }
 
-  /// Stops the server and closes the database.
+  /// Stops the server, closes the database, and removes the file.
+  ///
+  /// The `-wal` and `-shm` files go with it, which is why the whole directory
+  /// is removed rather than the one path.
   Future<void> stop() async {
     await server.close(drain: const Duration(seconds: 1));
     await database.connection.close();
+    if (_directory.existsSync()) _directory.deleteSync(recursive: true);
   }
 }
 
