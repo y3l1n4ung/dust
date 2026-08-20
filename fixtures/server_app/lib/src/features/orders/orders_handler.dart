@@ -6,7 +6,7 @@ import 'new_order_dto.dart';
 import 'order_model.dart';
 import 'orders_repo.dart';
 
-part 'orders.g.dart';
+part 'orders_handler.g.dart';
 
 // Every query is scoped to the authenticated account, in SQL. Filtering in Dart
 // after fetching everything is how one customer reads another's orders on the

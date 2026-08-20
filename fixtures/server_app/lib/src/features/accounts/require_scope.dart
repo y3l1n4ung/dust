@@ -32,7 +32,7 @@ final class RequireScope implements FromRequestParts<Account> {
         final repo = (attached as Ok<AccountsRepo, Rejection>).value;
 
         final found = await repo.accountForToken(
-          Tokens.fingerprint(token),
+          await Tokens.fingerprint(token),
           DateTime.now().toUtc().toIso8601String(),
         );
 

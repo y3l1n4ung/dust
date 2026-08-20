@@ -21,12 +21,15 @@ void main() {
       expect(first, isNot(second));
     });
 
-    test('the same password and salt hash the same, so verify works', () {
+    test('the same password and salt hash the same, so verify works', () async {
       final salt = Passwords.newSalt();
-      final hash = Passwords.hash('correct horse battery', salt);
+      final hash = await Passwords.hash('correct horse battery', salt);
 
-      expect(Passwords.verify('correct horse battery', salt, hash), isTrue);
-      expect(Passwords.verify('wrong', salt, hash), isFalse);
+      expect(
+        await Passwords.verify('correct horse battery', salt, hash),
+        isTrue,
+      );
+      expect(await Passwords.verify('wrong', salt, hash), isFalse);
     });
 
     test('a salt is not reused', () {
@@ -35,9 +38,20 @@ void main() {
       expect(salts, hasLength(20));
     });
 
-    test('the comparison is length-safe', () {
-      expect(Passwords.constantTimeEquals('abc', 'abcd'), isFalse);
-      expect(Passwords.constantTimeEquals('abc', 'abc'), isTrue);
+    test('is Argon2id at the parameters OWASP asks for', () {
+      // The security setting, asserted so a change is deliberate rather than a
+      // number someone lowered to make the suite faster.
+      expect(Passwords.memoryKiB, greaterThanOrEqualTo(19 * 1024));
+      expect(Passwords.iterations, greaterThanOrEqualTo(2));
+      expect(Passwords.parallelism, greaterThanOrEqualTo(1));
+    });
+
+    test('a hash is not the password, and is fixed width', () async {
+      final salt = Passwords.newSalt();
+      final hash = await Passwords.hash('correct horse battery', salt);
+
+      expect(hash, isNot(contains('correct')));
+      expect(hash, hasLength(64), reason: '32 bytes, hex encoded');
     });
   });
 
@@ -49,14 +63,21 @@ void main() {
     });
 
     test('a token is long enough not to be guessed', () {
+      expect(Tokens.entropyBytes, greaterThanOrEqualTo(32));
       expect(Tokens.issue().length, greaterThanOrEqualTo(32));
     });
 
-    test('the fingerprint is stable and is not the token', () {
+    test('the fingerprint is stable and is not the token', () async {
       final token = Tokens.issue();
 
-      expect(Tokens.fingerprint(token), Tokens.fingerprint(token));
-      expect(Tokens.fingerprint(token), isNot(contains(token)));
+      expect(await Tokens.fingerprint(token), await Tokens.fingerprint(token));
+      expect(await Tokens.fingerprint(token), isNot(contains(token)));
+    });
+
+    test('a token is url-safe, so it survives a header intact', () {
+      // base64url with the padding removed: no +, / or = to be re-encoded by
+      // something in the middle.
+      expect(Tokens.issue(), matches(RegExp(r'^[A-Za-z0-9_-]+$')));
     });
   });
 
@@ -88,8 +109,10 @@ void main() {
           await app.signIn('ada@example.com', 'correct horse battery');
       final now = DateTime.now().toUtc().toIso8601String();
 
-      final byFingerprint =
-          await app.accounts.accountForToken(Tokens.fingerprint(token), now);
+      final byFingerprint = await app.accounts.accountForToken(
+        await Tokens.fingerprint(token),
+        now,
+      );
       final byToken = await app.accounts.accountForToken(token, now);
 
       expect((byFingerprint as Ok<Account?, SqlxError>).value, isNotNull);
@@ -109,7 +132,7 @@ void main() {
       final token = Tokens.issue();
       await app.accounts.insertToken(
         accountId,
-        Tokens.fingerprint(token),
+        await Tokens.fingerprint(token),
         DateTime.now()
             .toUtc()
             .subtract(const Duration(days: 1))

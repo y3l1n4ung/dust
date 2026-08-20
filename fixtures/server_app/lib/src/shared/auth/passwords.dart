@@ -1,79 +1,79 @@
 import 'dart:convert';
-import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart';
+import 'package:cryptography/cryptography.dart';
+import 'package:cryptography/helpers.dart';
 
-/// Hashing and verifying passwords.
+/// Hashing and verifying passwords, on `package:cryptography`.
 ///
-/// PBKDF2-HMAC-SHA256, which `package:crypto` can build from `Hmac`. It is the
-/// weakest of the acceptable choices — Argon2id or scrypt resist GPUs better —
-/// and it is what a pure-Dart application can reach without a native
-/// dependency. The iteration count is the knob: raise it until hashing costs
-/// about 100ms on your hardware, and store it if you ever want to change it
-/// without invalidating every password.
+/// **Argon2id**, which is what OWASP recommends first for password storage and
+/// what the Password Hashing Competition selected. It is memory-hard, so the
+/// GPU and ASIC arrays that make PBKDF2 and bcrypt cheap to attack have to buy
+/// RAM per guess as well as compute.
 ///
-/// What matters as much as the algorithm:
+/// The parameters below are OWASP's minimum configuration: 19 MiB of memory,
+/// two iterations, one degree of parallelism. They are the security setting, so
+/// they are named constants rather than numbers buried in a call — raise
+/// [memoryKiB] until hashing costs what you can afford, and treat any change as
+/// something that has to be recorded per hash before you make it.
 ///
-/// * a **per-account salt**, so one rainbow table cannot cover two accounts and
-///   two users with the same password do not have the same hash;
-/// * a **constant-time** comparison, because a byte-at-a-time comparison leaks
-///   the answer through timing;
-/// * never storing the password, and never logging it.
+/// The library does the parts that are easy to get wrong: the KDF itself, and a
+/// constant-time comparison. Nothing here is hand-rolled.
 abstract final class Passwords {
-  /// How many rounds. Deliberately a named constant: it is the security
-  /// parameter, and a number buried in a function is one nobody revisits.
-  static const iterations = 120000;
+  /// Memory cost, in kibibytes. OWASP's floor is 19 MiB.
+  static const int memoryKiB = 19 * 1024;
 
-  static const _keyLength = 32;
-  static final _random = Random.secure();
+  /// How many passes over memory.
+  static const iterations = 2;
+
+  /// How many lanes may run at once.
+  static const parallelism = 1;
+
+  static const _hashLength = 32;
+  static const _saltLength = 16;
+
+  static final Argon2id _algorithm = Argon2id(
+    memory: memoryKiB,
+    iterations: iterations,
+    parallelism: parallelism,
+    hashLength: _hashLength,
+  );
 
   /// A new random salt, hex encoded.
-  static String newSalt() {
-    final bytes = Uint8List.fromList(
-      List.generate(16, (_) => _random.nextInt(256)),
-    );
-    return _hex(bytes);
-  }
+  ///
+  /// From the library's own secure random rather than `Random.secure()`, so
+  /// there is one source of randomness to reason about.
+  static String newSalt() => _hex(
+        Uint8List.fromList(SecretKeyData.random(length: _saltLength).bytes),
+      );
 
   /// Derives the hash of [password] with [salt], hex encoded.
-  static String hash(String password, String salt) {
-    final hmac = Hmac(sha256, utf8.encode(password));
-    final saltBytes = utf8.encode(salt);
-
-    // PBKDF2: the first block is enough for a 32-byte key with SHA-256.
-    var block = Uint8List.fromList(
-      hmac.convert([...saltBytes, 0, 0, 0, 1]).bytes,
+  static Future<String> hash(String password, String salt) async {
+    final derived = await _algorithm.deriveKey(
+      secretKey: SecretKey(utf8.encode(password)),
+      nonce: utf8.encode(salt),
     );
-    final result = Uint8List.fromList(block);
 
-    for (var round = 1; round < iterations; round++) {
-      block = Uint8List.fromList(hmac.convert(block).bytes);
-      for (var index = 0; index < result.length; index++) {
-        result[index] ^= block[index];
-      }
-    }
-
-    return _hex(Uint8List.sublistView(result, 0, _keyLength));
+    return _hex(Uint8List.fromList(await derived.extractBytes()));
   }
 
-  /// Whether [password] matches [expectedHash], compared in constant time.
-  static bool verify(String password, String salt, String expectedHash) =>
-      constantTimeEquals(hash(password, salt), expectedHash);
-
-  /// Compares without stopping at the first difference.
+  /// Whether [password] matches [expectedHash].
   ///
-  /// `==` returns as soon as two bytes differ, and the time that takes tells an
-  /// attacker how much of their guess was right — enough to recover a secret
-  /// one byte at a time over enough requests.
-  static bool constantTimeEquals(String a, String b) {
-    if (a.length != b.length) return false;
+  /// Compared with the library's constant-time equality. A `==` on a secret
+  /// returns as soon as two bytes differ, and how long that took tells an
+  /// attacker how much of their guess was right — enough to recover a hash one
+  /// byte at a time given enough requests.
+  static Future<bool> verify(
+    String password,
+    String salt,
+    String expectedHash,
+  ) async {
+    final actual = await hash(password, salt);
 
-    var difference = 0;
-    for (var index = 0; index < a.length; index++) {
-      difference |= a.codeUnitAt(index) ^ b.codeUnitAt(index);
-    }
-    return difference == 0;
+    return constantTimeBytesEquality.equals(
+      utf8.encode(actual),
+      utf8.encode(expectedHash),
+    );
   }
 
   static String _hex(Uint8List bytes) =>

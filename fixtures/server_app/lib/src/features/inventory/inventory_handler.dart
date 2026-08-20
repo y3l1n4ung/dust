@@ -10,7 +10,7 @@ import '../orders/orders_repo.dart';
 import 'inventory_repo.dart';
 import 'stock_model.dart';
 
-part 'inventory.g.dart';
+part 'inventory_handler.g.dart';
 
 // The feature that needs a transaction: reserving stock and writing the order
 // are one unit of work.

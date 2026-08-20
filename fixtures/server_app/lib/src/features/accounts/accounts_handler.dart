@@ -9,7 +9,7 @@ import 'accounts_repo.dart';
 import 'credentials_dto.dart';
 import 'require_scope.dart';
 
-part 'accounts.g.dart';
+part 'accounts_handler.g.dart';
 
 // Signing in. This is the one endpoint that sees a password.
 
@@ -38,11 +38,11 @@ Future<Result<IssuedToken, Rejection>> signIn(
   final account = (found as Ok<Account?, SqlxError>).value;
   if (account == null) {
     // Same work, thrown away, so the timing matches a real account.
-    Passwords.verify(input.password, _dummySalt, _dummyHash);
+    await Passwords.verify(input.password, _dummySalt, await _dummyHash());
     return invalid;
   }
 
-  if (!Passwords.verify(
+  if (!await Passwords.verify(
     input.password,
     account.passwordSalt,
     account.passwordHash,
@@ -56,7 +56,7 @@ Future<Result<IssuedToken, Rejection>> signIn(
 
   final stored = await repo.insertToken(
     account.id,
-    Tokens.fingerprint(token),
+    await Tokens.fingerprint(token),
     expiresAt,
   );
   if (stored case Err()) return const Err(Rejection.internal());
@@ -66,8 +66,15 @@ Future<Result<IssuedToken, Rejection>> signIn(
 }
 
 /// A salt and hash for an account that does not exist, so the work is real.
+///
+/// Computed once and kept, because deriving it per request would double the
+/// cost of every sign-in that succeeds — the point is to spend the same time as
+/// a real verification, not twice it.
 final String _dummySalt = Passwords.newSalt();
-final String _dummyHash = Passwords.hash('not a real password', _dummySalt);
+String? _cachedDummyHash;
+
+Future<String> _dummyHash() async => _cachedDummyHash ??=
+    await Passwords.hash('not a real password', _dummySalt);
 
 /// `GET /me` — who the token belongs to.
 ///

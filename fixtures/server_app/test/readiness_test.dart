@@ -23,10 +23,26 @@ String _name(Directory feature) =>
     feature.path.split(Platform.pathSeparator).last;
 
 File _handler(Directory feature) =>
-    File('${feature.path}/${_name(feature)}.dart');
+    File('${feature.path}/${_name(feature)}_handler.dart');
 
 File _emitted(Directory feature) =>
-    File('${feature.path}/${_name(feature)}.g.dart');
+    File('${feature.path}/${_name(feature)}_handler.g.dart');
+
+/// The module function a file called `<base>.dart` produces.
+///
+/// The file base, lowerCamelCased, plus `Routes`, prefixed with `$`. No
+/// stripping and no English: `accounts_handler.dart` gives
+/// `\$accountsHandlerRoutes`, which is verbose and needs nothing remembered.
+String _moduleName(String fileBase) {
+  final parts = fileBase.split('_');
+  final camel = parts.first +
+      parts
+          .skip(1)
+          .map((part) => part[0].toUpperCase() + part.substring(1))
+          .join();
+
+  return '\$${camel}Routes';
+}
 
 /// Every `@GET('/x')`-style annotation in [source], as `METHOD path`.
 List<String> _annotatedRoutes(String source) {
@@ -68,23 +84,23 @@ void main() {
       test('declares its generated part as <source>.g.dart', () {
         expect(
           _handler(feature).readAsStringSync(),
-          contains("part '$name.g.dart';"),
+          contains("part '${name}_handler.g.dart';"),
         );
       });
 
       test('the emitted file is a part of the handler', () {
         expect(
           _emitted(feature).readAsStringSync(),
-          contains("part of '$name.dart';"),
+          contains("part of '${name}_handler.dart';"),
         );
       });
 
-      test('exposes \$${name}Routes, derived from the file name', () {
-        // The rule, with no exceptions and no English: the file base, a Routes
-        // suffix, and a $ marking it generated.
+      test('exposes the module name its file name produces', () {
+        // The whole rule: file base, lowerCamelCase, Routes, $ prefix. Nothing
+        // stripped, nothing pluralised, nothing to remember.
         expect(
           _emitted(feature).readAsStringSync(),
-          contains('Router \$${name}Routes()'),
+          contains('Router ${_moduleName('${name}_handler')}()'),
         );
       });
 

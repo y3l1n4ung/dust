@@ -25,17 +25,17 @@
 library;
 
 export 'src/features/accounts/account_model.dart';
-export 'src/features/accounts/accounts.dart';
+export 'src/features/accounts/accounts_handler.dart';
 export 'src/features/accounts/accounts_repo.dart';
 export 'src/features/accounts/credentials_dto.dart';
 export 'src/features/accounts/require_scope.dart';
-export 'src/features/exports/exports.dart';
-export 'src/features/inventory/inventory.dart';
+export 'src/features/exports/exports_handler.dart';
+export 'src/features/inventory/inventory_handler.dart';
 export 'src/features/inventory/inventory_repo.dart';
 export 'src/features/inventory/stock_model.dart';
 export 'src/features/orders/new_order_dto.dart';
 export 'src/features/orders/order_model.dart';
-export 'src/features/orders/orders.dart';
+export 'src/features/orders/orders_handler.dart';
 export 'src/features/orders/orders_repo.dart';
 export 'src/shared/auth/passwords.dart';
 export 'src/shared/auth/tokens.dart';

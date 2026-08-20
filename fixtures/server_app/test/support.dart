@@ -34,10 +34,10 @@ final class TestApp {
     // One router per feature, mounted where it belongs. Each repository is
     // attached by type, which is how a handler asks for the one it needs.
     final app = Router()
-      ..nest('/auth', $accountsRoutes())
-      ..nest('/orders', $ordersRoutes())
-      ..nest('/inventory', $inventoryRoutes())
-      ..nest('/exports', $exportsRoutes())
+      ..nest('/auth', $accountsHandlerRoutes())
+      ..nest('/orders', $ordersHandlerRoutes())
+      ..nest('/inventory', $inventoryHandlerRoutes())
+      ..nest('/exports', $exportsHandlerRoutes())
       ..withState(accounts)
       ..withState(orders)
       ..withState(inventory)
@@ -76,7 +76,7 @@ final class TestApp {
     final salt = Passwords.newSalt();
     final result = await accounts.insertAccount(
       email,
-      Passwords.hash(password, salt),
+      await Passwords.hash(password, salt),
       salt,
       scopes,
     );
