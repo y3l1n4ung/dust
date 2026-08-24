@@ -3,8 +3,8 @@
 Runtime support for Dust-generated Dart HTTP servers on `shelf`.
 
 > [!IMPORTANT]
-> **0.1.0-beta.1**, unpublished (`publish_to: none`). Complete enough to build
-> on; the API may still change before 1.0.
+> **0.1.0-beta.1**. Complete enough to build on; the API may still change
+> before 1.0, so pin the exact version.
 >
 > The code generator described in
 > [docs/design/server-plugin.md](../../docs/design/server-plugin.md) does not

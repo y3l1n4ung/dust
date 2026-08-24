@@ -1,0 +1,12 @@
+# SQLite files, from running the application locally.
+#
+# The tests never write here — each opens a database in a temp directory and
+# removes it afterwards — so anything matching this came from a manual run.
+# The -wal and -shm companions are listed because WAL is on: deleting only the
+# .db leaves them behind, and a stale -wal can be read back into a database you
+# thought you had removed.
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3

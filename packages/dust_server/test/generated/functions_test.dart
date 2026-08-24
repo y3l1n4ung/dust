@@ -8,7 +8,7 @@ import 'functions.dart';
 
 Handler _app(Map<String, String> seed) {
   final notes = Router()
-    ..merge(noteRoutes)
+    ..merge(noteRoutes())
     ..withState(NoteStore(seed));
 
   return (Router()..nest('/notes', notes)).handler;
@@ -68,7 +68,7 @@ void main() {
     });
 
     test('report missing state as 500, not as a client error', () async {
-      final response = await (Router()..nest('/notes', noteRoutes))
+      final response = await (Router()..nest('/notes', noteRoutes()))
           .handler(_authed('GET', '/notes'));
 
       expect(response.statusCode, 500);
@@ -78,7 +78,7 @@ void main() {
   group('both styles compose together', () {
     test('mount side by side under one root', () async {
       final notes = Router()
-        ..merge(noteRoutes)
+        ..merge(noteRoutes())
         ..withState(NoteStore({'1': 'first'}));
       final app = Router()..nest('/notes', notes);
       final handler = app.handler;
@@ -90,7 +90,7 @@ void main() {
     });
 
     test('appear in describe() the same way', () {
-      final app = Router()..nest('/notes', noteRoutes);
+      final app = Router()..nest('/notes', noteRoutes());
 
       expect(
         app.describe().map((route) => '${route.method} ${route.path}'),

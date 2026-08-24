@@ -9,6 +9,7 @@ workspace:
   - packages/dust_flutter
   - packages/dust_db_sqlite3
   - packages/dust_server
+  - fixtures/server_app
   - examples/product_showcase
   - examples/benchmark_project
 

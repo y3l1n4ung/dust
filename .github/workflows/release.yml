@@ -47,6 +47,7 @@ on:
           - dust_dart
           - dust_flutter
           - dust_db_sqlite3
+          - dust_server
 
 permissions:
   contents: read
@@ -114,7 +115,7 @@ jobs:
           esac
 
           case "$package_targets" in
-            all|dust_dart|dust_flutter|dust_db_sqlite3) ;;
+            all|dust_dart|dust_flutter|dust_db_sqlite3|dust_server) ;;
             *) echo "::error::unsupported package_targets value: $package_targets"; exit 1 ;;
           esac
 
@@ -549,6 +550,7 @@ jobs:
           dry_run_package dust_dart packages/dust_dart dart
           dry_run_package dust_flutter packages/dust_flutter flutter
           dry_run_package dust_db_sqlite3 packages/dust_db_sqlite3 dart
+          dry_run_package dust_server packages/dust_server dart
 
   publish-packages:
     name: Publish packages
@@ -657,3 +659,4 @@ jobs:
           publish_package dust_dart packages/dust_dart dart
           publish_package dust_flutter packages/dust_flutter flutter
           publish_package dust_db_sqlite3 packages/dust_db_sqlite3 dart
+          publish_package dust_server packages/dust_server dart
