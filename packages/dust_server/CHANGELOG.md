@@ -2,8 +2,9 @@
 
 ## 0.1.0-beta.1
 
-First beta. The runtime is complete enough to build on and is not published:
-`publish_to: none`, and the API may still change before 1.0.
+First beta, and the first release of this package. The runtime is complete
+enough to build on; the API may still change before 1.0, so pin the exact
+version.
 
 ### What it does
 
