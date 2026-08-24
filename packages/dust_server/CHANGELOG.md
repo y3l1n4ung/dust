@@ -1,12 +1,18 @@
 # Changelog
 
-## 0.1.0-beta.1
+All notable changes to `dust_server` are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [Unreleased]
+
+## [0.1.0-beta.1] - 2026-08-24
 
 First beta, and the first release of this package. The runtime is complete
 enough to build on; the API may still change before 1.0, so pin the exact
 version.
 
-### What it does
+### Added
 
 Routing in the shape axum uses — `route`, `nest`, `merge`, `mount`, `layer`,
 `routeLayer`, `withState`, `fallback` — over `shelf`, with its own matcher.
