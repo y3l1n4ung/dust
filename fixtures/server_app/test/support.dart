@@ -27,24 +27,23 @@ final class TestApp {
       '${directory.path}/app.db',
       options: appOptions,
     );
-    final accounts = AccountsRepo(database.connection);
-    final orders = OrdersRepo(database.connection);
-    final inventory = InventoryRepo(database.connection);
+    // The same composition the entry point uses. A test that built its own
+    // router would pass while `bin/server.dart` was broken.
+    final server = await serveRouter(
+      buildApp(database),
+      InternetAddress.loopbackIPv4,
+      0,
+    );
 
-    // One router per feature, mounted where it belongs. Each repository is
-    // attached by type, which is how a handler asks for the one it needs.
-    final app = Router()
-      ..nest('/auth', $accountsHandlerRoutes())
-      ..nest('/orders', $ordersHandlerRoutes())
-      ..nest('/inventory', $inventoryHandlerRoutes())
-      ..nest('/exports', $exportsHandlerRoutes())
-      ..withState(accounts)
-      ..withState(orders)
-      ..withState(inventory)
-      ..withState(database);
-
-    final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
-    return TestApp._(server, database, accounts, inventory, directory);
+    // Reaching past HTTP to seed. These wrap the connection rather than owning
+    // it, so building a second set costs nothing and closes nothing.
+    return TestApp._(
+      server,
+      database,
+      AccountsRepo(database.connection),
+      InventoryRepo(database.connection),
+      directory,
+    );
   }
 
   /// The running server.
