@@ -106,11 +106,15 @@ npx skills add y3l1n4ung/dust --skill use-dust
 | State management | Beta | [State guide](docs/usage/state.md) |
 | i18n | Beta | [i18n guide](docs/usage/i18n.md) |
 | Database | Beta | [Database guide](docs/usage/db.md) |
+| HTTP servers | Beta, runtime only | [Server guide](docs/dust_server/README.md) |
 | Firebase | Planned | — |
 | Supabase | Planned | — |
 
 Stable features keep their documented authoring APIs compatible throughout
 `0.1.x`. Beta features may still receive API refinements.
+
+`dust_server` is a runtime, not a generator. Server code is written by hand
+today; `dust build` produces nothing for it.
 
 ## Documentation
 
@@ -119,6 +123,7 @@ Stable features keep their documented authoring APIs compatible throughout
 - [Dart package](packages/dust_dart/README.md)
 - [Flutter package](packages/dust_flutter/README.md)
 - [Database runtime](packages/dust_db_sqlite3/README.md)
+- [Server runtime](packages/dust_server/README.md)
 - [Contributor guide](CONTRIBUTING.md)
 - [Architecture and internals](docs/developer.md)
 
