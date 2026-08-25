@@ -16,6 +16,10 @@ Each guide shows the handwritten API first and links to a working example.
 | Maintain ARB translations | [Internationalization](./i18n.md) | `dust_flutter` |
 | Validate SQLite queries | [Database](./db.md) | `dust_dart`, `dust_db_sqlite3` |
 
+Every guide above describes a feature Dust generates. `dust_server` is a runtime
+with no generation yet, so its guides live separately in
+[docs/dust_server](../dust_server/README.md).
+
 Install the CLI from the [installation guide](../../README.md#installation).
 Each feature guide contains its exact package command and setup requirements.
 When changing Dust versions, check the

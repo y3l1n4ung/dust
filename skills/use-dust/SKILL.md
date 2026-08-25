@@ -1,6 +1,6 @@
 ---
 name: use-dust
-description: Add, migrate, validate, or troubleshoot Dust code generation in Dart and Flutter application projects. Use for Dust setup, Dust annotations, generated .g.dart files, dust build/check/watch, data classes, JSON, validation, HTTP clients, Flutter routing/state/i18n, or Dust Database. Do not use for developing Dust's Rust engine or for unrelated code-generation tools.
+description: Add, migrate, validate, or troubleshoot Dust code generation in Dart and Flutter application projects. Use for Dust setup, Dust annotations, generated .g.dart files, dust build/check/watch, data classes, JSON, validation, HTTP clients, Flutter routing/state/i18n, or Dust Database. Also covers the dust_server HTTP runtime, which is handwritten rather than generated. Do not use for developing Dust's Rust engine or for unrelated code-generation tools.
 ---
 
 # Use Dust
@@ -37,8 +37,13 @@ into the engine task.
   annotations.
 - Use `dust_flutter` only for Flutter routing, state, and i18n.
 - Add `dust_db_sqlite3` only for native SQLite runtime access.
-- Treat routing, state, i18n, and Database as beta. Do not present Firebase,
-  Supabase, PostgreSQL runtime support, or other planned features as available.
+- Use `dust_server` for HTTP servers: a Dart runtime on `shelf` whose API is
+  modelled on Rust's axum. It is a runtime, not a generator — routes, handlers,
+  and extractors are handwritten, and `dust build` produces no server output.
+  Do not add `part 'x.g.dart';` for it or promise generated routing.
+- Treat routing, state, i18n, Database, and the server runtime as beta. Do not
+  present Firebase, Supabase, PostgreSQL runtime support, or other planned
+  features as available.
 - Prefer focused imports such as `derive.dart`, `serde.dart`, `http.dart`,
   `route.dart`, `state.dart`, `i18n.dart`, or `db.dart`.
 
@@ -76,6 +81,7 @@ Run only the command family required by the selected feature:
 - i18n: preview with `dust i18n scan`, write with `dust i18n build`, then run
   `dust i18n check`.
 - Iteration: use `dust watch` only for normal generation.
+- Server: no Dust command applies. Verify with `dart analyze` and `dart test`.
 
 After generation, run `dart analyze` and `dart test` for Dart packages or
 `flutter analyze` and `flutter test` for Flutter projects. Inspect the diff and

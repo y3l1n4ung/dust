@@ -34,6 +34,14 @@ and contributor documentation.
 
 - [SQLite query validation and generated DAOs](./usage/db.md)
 
+### Server
+
+- [dust_server guides](./dust_server/README.md): routing, extraction, responses,
+  middleware, serving, WebSockets, and testing
+
+  A runtime, not a generator. Server code is handwritten today; `dust build`
+  produces nothing for it.
+
 ## Package References
 
 - [`dust_dart`](../packages/dust_dart/README.md): Dart annotations and runtime
@@ -42,6 +50,8 @@ and contributor documentation.
   validation, and i18n APIs.
 - [`dust_db_sqlite3`](../packages/dust_db_sqlite3/README.md): native SQLite
   runtime for generated Database code.
+- [`dust_server`](../packages/dust_server/README.md): HTTP server runtime on
+  `shelf`, shaped after axum. Beta, and not yet generated from annotations.
 
 ## Examples
 

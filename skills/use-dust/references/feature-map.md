@@ -13,6 +13,10 @@ describe the current public `0.1.x` authoring surface:
 | State | `dust_flutter`, often `dust_dart` | `package:dust_flutter/state.dart` | [State](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/state.md) |
 | i18n | `dust_flutter` | `package:dust_flutter/i18n.dart` | [i18n](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/i18n.md) |
 | Database | `dust_dart`, `dust_db_sqlite3` | `package:dust_dart/db.dart` | [Database](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/db.md) |
+| HTTP servers *(no generation)* | `dust_server` | `package:dust_server/server.dart` | [Server](https://github.com/y3l1n4ung/dust/blob/main/docs/dust_server/README.md) |
+
+`dust_server` is a Dart runtime on `shelf` whose API is modelled on Rust's
+axum. It is not built on axum, and no Rust dependency is involved.
 
 Install the CLI from the [Dust installation guide](https://github.com/y3l1n4ung/dust#installation).
 Review remote installer commands before execution. Check CLI/package alignment
@@ -41,6 +45,12 @@ with the [compatibility guide](https://github.com/y3l1n4ung/dust/blob/main/docs/
 - **Database:** keep row models and database roots in separate libraries. Use
   `@Derive([FromRow()])`, `@SqlxDatabase`, `@SqlxDao`, raw static `@Query` SQL,
   and migrations. SQLite is native-only; it does not support web.
+- **HTTP servers:** `dust_server` is a Dart HTTP runtime on `shelf`, with an
+  API modelled on Rust's axum — `Router` with `route`, `nest`, `merge`,
+  `mount`, `layer`, `routeLayer`, `withState`, and `fallback`;
+  `FromRequestParts` and `FromRequest` extractors; `IntoResponse` and
+  `Rejection`. Nothing is generated, so compose the router by hand and serve
+  it. Native-only; no web support.
 
 ## Command routing
 
@@ -57,6 +67,8 @@ with the [compatibility guide](https://github.com/y3l1n4ung/dust/blob/main/docs/
 An offline Database command requires compatible query metadata written by a
 successful online database build. Normal `dust build` does not generate
 `@SqlxDatabase`, `@SqlxDao`, or `@Query` output.
+
+No Dust command generates server code.
 
 Firebase, Supabase, PostgreSQL runtime support, and ORM/query-builder behavior
 are not current Dust features. Do not generate examples that imply otherwise.
