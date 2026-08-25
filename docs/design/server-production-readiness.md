@@ -1,8 +1,10 @@
 # Server Runtime: Production Readiness
 
-Status: `packages/dust_server` is **not** production ready. This document says
-what is covered, what is missing, and what would have to be true before an
-application is put in front of real traffic.
+Status: `packages/dust_server` is **not** production ready. `0.1.0-beta.1` is
+on pub.dev, so this is now a document about a package other people can install
+rather than an internal note. It says what is covered, what is missing, and
+what would have to be true before an application is put in front of real
+traffic.
 
 For the feature itself, see the [Server Plugin Design](server-plugin.md).
 
@@ -12,7 +14,7 @@ Over 1,200 tests at 100% line coverage, no analyzer findings. That says the code
 what its tests say. It does not say the tests ask the right questions, which is
 what the rest of this document is about.
 
-Sixteen defects have been found and fixed since, all but two by writing an
+Seventeen defects have been found and fixed since, all but two by writing an
 example or probing a combination rather than by reading the code — which is the
 strongest argument in this document for how the rest of it should be read.
 
@@ -82,7 +84,44 @@ work keeps running with nobody waiting for it. A handler that leaks a resource
 on a slow path still leaks it. Nothing is installed by default either, so an
 application that never adds the layer has no deadline at all.
 
-### 3. Multipart: buffered by default, streaming when you need it
+### 3. Stateful middleware has no teardown
+
+`Layer` is the shape production middleware needs — a class with configuration
+fields, which is how all eight built-ins are written, and how the interface's
+own doc comment shows a rate limiter. What it has no room for is a resource.
+
+A rate limiter holding a Redis client, a metrics layer with a background
+flusher, an auth layer caching JWKS on a timer: each acquires something at
+construction and has nowhere to release it. `Layer` declares one method,
+`toMiddleware()`. There is no `dispose`, and `ServerHandle.close` does not look
+for one.
+
+axum has the same interface and does not need the method, because Rust drops a
+layer when its router goes. Dart has no destructor, so the gap is real here in
+a way it is not there. The machinery is already close: `serveRouter` walks the
+router to find a `BackgroundTasks` registry, and the same walk would find
+layers that want draining.
+
+Until then, middleware owning a resource has to be closed by the application
+that built it, and nothing reminds anyone to do that.
+
+### 4. No backpressure, and no way to add it
+
+tower's `Service` has two methods. `call` handles a request; `poll_ready` says
+whether the service can take one at all. Everything tower builds on top of that
+second method — `limit`, `load_shed`, `balance` — has no counterpart here.
+
+Dart's equivalent of a service is a function. A function cannot decline before
+it is called, so a Dust layer learns about a request only once it already has
+it. Shedding load means answering 503 from inside the handler, after the work
+of accepting and parsing is already done.
+
+`RequestTimeout` bounds a slow request and is the closest thing available. It
+is not the same thing: a timeout reacts after the fact, where backpressure
+refuses in advance. Anyone arriving from tower will look for the second and
+find only the first.
+
+### 5. Multipart: buffered by default, streaming when you need it
 
 `MultipartExtractable` holds every part in memory at once, bounded by the body
 limit. That is the right trade for a form — several parts, readable in any
@@ -103,7 +142,7 @@ budget.
 file is stored under a generated id and the client's filename is kept as data,
 because `../../etc/passwd` is a valid filename as far as a client is concerned.
 
-### 4. Shutdown drains, but nothing tests it under load
+### 6. Shutdown drains, but nothing tests it under load
 
 `serveRouter` returns a handle that counts in-flight requests, and `close`
 waits for them within a deadline. It has never been exercised against real
@@ -117,7 +156,7 @@ so the port stays held until the process exits. A supervisor that restarts a
 wedged worker in-process will not get the port back; replacing the process is
 the only recovery.
 
-### 5. Observability has traces and logs, and metrics are the application's
+### 7. Observability has traces and logs, and metrics are the application's
 
 `RequestId` and `AccessLog` cover the log line, `onError` covers the failure,
 and `Tracing` records one span per request in W3C Trace Context, so a trace
@@ -134,27 +173,27 @@ No exporter ships either. `SpanExporter` is one method, deliberately, so
 binding to a collector stays an application's dependency rather than the
 runtime's.
 
-### 6. No TLS guidance
+### 8. No TLS guidance
 
 `serve` is re-exported without a word about certificates, HTTP/2, or running
 behind a proxy. Most deployments terminate TLS upstream; that should be said
 rather than assumed.
 
-### 7. The matcher is bucketed, not a trie
+### 9. The matcher is bucketed, not a trie
 
 Routes bucket by their whole literal prefix: 29us at 100 routes, 13us at 1000,
 11us for 500 sharing one prefix, 6us for static paths. What is left is a scan
 within a bucket, so routes that are identical up to their first parameter still
 compete. A trie would fix that; the numbers do not yet justify it.
 
-### 8. CI has a coverage gate, and no benchmark gate
+### 10. CI has a coverage gate, and no benchmark gate
 
 The package is in the `dart-packages` matrix in `.github/workflows/ci.yml`, so
 analyze and test run on every commit, and `scripts/dart/coverage.sh` fails the
 build below a 100% floor. What is still missing is a benchmark regression
 check, and the suite has never run on any machine but one.
 
-### 9. Coverage is complete, and now gated
+### 11. Coverage is complete, and now gated
 
 100% of lines, 1204 of 1204. Reaching it was worth more than the number: closing
 the gaps, and then hunting past them, surfaced six real defects — each now
@@ -176,23 +215,42 @@ change was finished.
 A covered line is still not a checked line — 100% says every line ran, not that
 every branch through it was asserted.
 
-### 10. The API is unstable by design
+### 12. The API is unstable by design
 
-`publish_to: none`, and the last few days moved `RouteGroup` to `Router`,
-`@Ctx` to `@State`, and dropped OpenAPI. None of that is settled enough to
-promise compatibility, and the generator that will be its main consumer does
-not exist yet.
+The last few days moved `RouteGroup` to `Router`, `@Ctx` to `@State`, and
+dropped OpenAPI. `0.1.0-beta.1` is published, so changes now cost a version
+rather than a commit, but the surface is not settled and the generator that
+will be its main consumer does not exist yet.
+
+Two known changes are still owed, both of them axum parity:
+
+- **`serveRouter` should be `serve`.** axum calls it `serve` even though its
+  second argument is a `Router`; the qualifier names the argument type the
+  caller can already see. It exists only to dodge a collision with
+  `shelf_io.serve` that cannot happen, since shelf is imported prefixed.
+- **`Router` should implement a `Service` interface** rather than converting
+  through `Router.handler`. A Dart class with a `call` method is assignable to
+  a matching function type, so `Router implements Service` would be passable
+  anywhere a shelf `Handler` is wanted, with no conversion — the same reason
+  `axum::serve(listener, app)` takes a `Router` directly.
+
+Argument order and the shutdown model should not follow axum. It takes a bound
+listener because that is the Rust idiom, and gates shutdown on `Drop`; Dart
+binds inside `serve` by convention and has no destructor, so `ServerHandle`
+with a bounded `close(drain:)` is the better fit and keeps a timeout axum does
+not have.
 
 ## What would make it ready
 
 In order, each one gated on the previous:
 
 1. Multipart streaming, so an upload limit is not a memory limit.
-2. A soak test: sustained traffic for an hour, memory flat.
-3. A deployment note covering TLS termination and proxies.
-4. The plugin, so generated code is what gets exercised rather than
+2. A teardown hook on `Layer`, so middleware may own a resource.
+3. A soak test: sustained traffic for an hour, memory flat.
+4. A deployment note covering TLS termination and proxies.
+5. The plugin, so generated code is what gets exercised rather than
    hand-written stand-ins.
-5. Only then a version number and a freeze on the public surface.
+6. Only then a version number and a freeze on the public surface.
 
 Until those are done, the honest description is "a runtime with good test
 coverage of its own semantics", not "production ready".
