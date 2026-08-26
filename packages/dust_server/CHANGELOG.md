@@ -34,6 +34,11 @@ than later. See [axum parity](https://github.com/y3l1n4ung/dust/blob/main/docs/d
   after background work has drained. A `dispose` that throws does not stop the
   others. Separate from `Layer` because Dart's `implements` requires every
   member re-declared, so adding a method there would break every existing layer.
+- `ServerIsolates.alive` and an `onIsolateError` callback on `serveIsolates`.
+  A dead isolate was invisible: the port stays bound by the survivors, so
+  traffic kept flowing at reduced capacity with nothing to say so. It still
+  cannot be restarted — killing an isolate does not release its socket, so a
+  replacement cannot rebind the port — but the loss is no longer silent.
 - `Service`, with `Router` implementing it. Dart tears off `call` implicitly, so
   a router is assignable to a shelf `Handler` with no conversion — the same
   reason `axum::serve(listener, app)` takes a `Router` directly.

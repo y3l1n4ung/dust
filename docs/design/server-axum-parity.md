@@ -266,6 +266,14 @@ which is still better than a named conversion getter but is not free.
 
 ## Open
 
+- **A dead isolate is silent.** `Isolate.spawn` is called with no `onExit` and
+  no `onError`, so a worker that dies is simply gone: the port stays bound by
+  the survivors, traffic keeps flowing at reduced capacity, and
+  `ServerIsolates.size` still reports the original count. Restarting it is not
+  possible — see [Rejected](#rejected) — but reporting it is, and an operator
+  who cannot tell a four-isolate server from a one-isolate one has no way to
+  find the lost throughput.
+
 - **`serveIsolates` has no default.** `isolates:` is required: two was neither
   "one, explicitly" nor "use the machine". Defaulting to the core count is
   wrong for a different reason — `Platform.numberOfProcessors` reports the
@@ -278,8 +286,15 @@ which is still better than a named conversion getter but is not free.
   discarding a more useful handle.
 - **Folding isolates into `serve`.** Kills a real footgun at the cost of a
   factory argument in every call, including the ones that never cluster.
-- **A dedicated supervisor isolate**, uvicorn-style. Costs a core to supervise,
-  which is the wrong trade on a two-core container; `onExit` on the main
-  isolate's event loop does the same job for nothing.
+- **Restarting a dead isolate**, uvicorn-style. Not because it costs a core to
+  supervise — `onExit` on the main isolate's event loop is nearly free — but
+  because it would not work. Killing an isolate does not release the socket it
+  bound, so a replacement cannot rebind the port; the process has to go. This is
+  the one place where uvicorn's model genuinely does not port, since an OS
+  worker takes its socket with it when it dies. Replacing the process is the
+  only recovery, which is what a supervisor outside it already does.
+
+  Detection is a different question from restart, and is still worth having —
+  see [Open](#open).
 - **`serveWorkers`.** Familiar from gunicorn and uvicorn, but "worker" implies
   a process, and hiding the isolate boundary hides the constraint that matters.

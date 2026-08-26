@@ -21,6 +21,8 @@ final class ServerIsolates {
 
   final List<Isolate> _isolates;
   final List<SendPort> _handles;
+  final _dead = <int>{};
+  final _exitPorts = <ReceivePort>[];
 
   /// The address every isolate bound to.
   final InternetAddress address;
@@ -28,8 +30,19 @@ final class ServerIsolates {
   /// The port every isolate shares.
   final int port;
 
-  /// How many isolates are serving.
+  /// How many isolates were started.
   int get size => _isolates.length + 1;
+
+  /// How many are still running.
+  ///
+  /// Lower than [size] once a spawned isolate has died. It cannot be replaced:
+  /// killing an isolate does not release the socket it bound, so a new one
+  /// cannot take the port back. Recovery is replacing the process, which is
+  /// what a supervisor outside it does.
+  ///
+  /// Worth watching, because nothing else reports the loss — the port stays
+  /// bound by the survivors and traffic keeps flowing at reduced capacity.
+  int get alive => size - _dead.length;
 
   /// Stops every isolate, draining what each has in flight.
   Future<void> close({Duration drain = const Duration(seconds: 30)}) async {
@@ -46,6 +59,9 @@ final class ServerIsolates {
     );
     for (final isolate in _isolates) {
       isolate.kill(priority: Isolate.immediate);
+    }
+    for (final port in _exitPorts) {
+      port.close();
     }
   }
 }
@@ -90,6 +106,7 @@ Future<ServerIsolates> serveIsolates(
   InternetAddress address,
   int port, {
   required int isolates,
+  void Function(Object? error, Object? stackTrace)? onIsolateError,
 }) async {
   if (isolates < 1) {
     throw ArgumentError.value(isolates, 'isolates', 'must be at least one');
@@ -104,22 +121,44 @@ Future<ServerIsolates> serveIsolates(
 
   final spawned = <Isolate>[];
   final handles = <SendPort>[];
+  final exitPorts = <ReceivePort>[];
 
   for (var i = 1; i < isolates; i++) {
     final ready = ReceivePort();
+    final exits = ReceivePort();
     final isolate = await Isolate.spawn(
       _serveInIsolate,
       _IsolateSeed(factory, address, local.port, ready.sendPort),
-      debugName: 'dust_server worker $i',
+      debugName: 'dust_server isolate $i',
+      onExit: exits.sendPort,
+      onError: exits.sendPort,
     );
 
     handles.add(await ready.first as SendPort);
     ready.close();
     spawned.add(isolate);
+    exitPorts.add(exits);
   }
 
   handles.add(_localHandle(local));
-  return ServerIsolates._(spawned, handles, address, local.port);
+  final cluster = ServerIsolates._(spawned, handles, address, local.port)
+    .._exitPorts.addAll(exitPorts);
+
+  // An isolate that dies is otherwise invisible: the port stays bound by the
+  // survivors, so traffic keeps flowing at reduced capacity with nothing to
+  // say so. This cannot restart it — a replacement cannot rebind the socket —
+  // but it can stop the loss being silent.
+  for (var i = 0; i < exitPorts.length; i++) {
+    final index = i;
+    exitPorts[i].listen((message) {
+      cluster._dead.add(index);
+      if (message is List && message.length == 2) {
+        onIsolateError?.call(message.first, message.last);
+      }
+    });
+  }
+
+  return cluster;
 }
 
 SendPort _localHandle(ServerHandle server) {

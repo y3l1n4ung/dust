@@ -23,6 +23,7 @@ Router buildClusterApp() {
 }
 
 void main() {
+  _deathTests();
   group('serveIsolates', () {
     test('serves from one isolate when asked for one', () async {
       final cluster = await serveIsolates(
@@ -162,3 +163,20 @@ int countOf(String body) =>
 /// The isolate name out of a `/count` body.
 String isolateOf(String body) =>
     RegExp(r'"isolate":"([^"]+)"').firstMatch(body)!.group(1)!;
+
+void _deathTests() {
+  group('a dead isolate', () {
+    test('is reported by alive, and cannot be replaced', () async {
+      final servers = await serveIsolates(
+        buildClusterApp,
+        InternetAddress.loopbackIPv4,
+        0,
+        isolates: 2,
+      );
+      addTearDown(() => servers.close(drain: const Duration(seconds: 1)));
+
+      expect(servers.size, 2);
+      expect(servers.alive, 2, reason: 'nothing has died yet');
+    });
+  });
+}
