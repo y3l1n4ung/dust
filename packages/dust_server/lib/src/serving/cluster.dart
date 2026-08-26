@@ -13,6 +13,9 @@ import 'graceful.dart';
 typedef RouterFactory = Router Function();
 
 /// A cluster of isolates all serving one port.
+///
+/// Each isolate is a separate heap with its own router. This is not a thread
+/// pool, and nothing is shared between them; see [serveCluster].
 final class ServerCluster {
   ServerCluster._(this._isolates, this._handles, this.address, this.port);
 
@@ -49,8 +52,21 @@ final class ServerCluster {
 
 /// Serves [factory] from [isolates] isolates, all sharing one port.
 ///
-/// Dart runs one isolate on one thread, so a single server uses one core. The
-/// operating system load-balances accepted connections across sockets bound
+/// Dart runs one isolate on one thread, so a single server uses one core, and
+/// isolates do not share memory. Using the rest of the machine means running
+/// the server several times over rather than adding threads to it.
+///
+/// [serveRouter] on its own uses one core. On a four-core machine that leaves
+/// three idle under any load, and nothing reports it — the throughput ceiling
+/// looks like the application's rather than the process's.
+///
+/// This is what `uvicorn --workers` and `gunicorn -w` do for Python, for the
+/// same reason: the runtime cannot spread one server across cores, so it is run
+/// several times behind a shared socket. A threaded runtime needs none of it,
+/// so there is no equivalent to copy; this is here for the isolate model, not
+/// as a convenience on top of [serveRouter].
+///
+/// The operating system load-balances accepted connections across sockets bound
 /// with `shared: true`, which is what lets several isolates answer one port.
 ///
 /// ```dart

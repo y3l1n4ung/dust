@@ -29,9 +29,28 @@ nothing; they see a refused connection.
 
 ## Several isolates
 
-Dart runs one isolate on one thread, so one server uses one core. Sockets bound
-with `shared: true` let several isolates accept on one port, and the operating
-system balances between them.
+Dart runs one isolate on one thread, so one server uses one core, however many
+the machine has. Isolates do not share memory, so reaching the other cores
+means running the server several times over rather than adding threads to it.
+
+> [!IMPORTANT]
+> `serveRouter` alone uses **one** core. On a four-core machine that is three
+> quarters of the hardware idle, under any load, with nothing in the logs to
+> say so. Nothing warns you, and the throughput ceiling looks like the
+> application's rather than the process's.
+
+This is the model `uvicorn --workers` and `gunicorn -w` solve for Python, for
+the same reason: one interpreter holds the GIL, one isolate holds a thread, so
+the runtime cannot spread one server across cores. Both answers are the same —
+run it N times behind a shared socket. Dart's isolates are lighter than worker
+processes, sharing a VM rather than an OS process, but the arithmetic is
+identical.
+
+A threaded runtime needs none of it. axum on tokio, or a Go server, schedules
+across every core from one process, so there is nothing to cluster.
+
+Sockets bound with `shared: true` let several isolates accept on one port, and
+the operating system balances between them.
 
 ```dart
 Router buildApp() => Router()..route('/', get(home));
