@@ -172,6 +172,75 @@ void main() {
     });
   });
 
+  group('request id', () {
+    test('a plausible inbound id is echoed', () async {
+      final app = Router()
+        ..layer(const RequestId())
+        ..route('/', get((r) async => 'ok'));
+      final origin = await up(app);
+
+      final res = await http
+          .get(Uri.parse('$origin/'), headers: {'x-request-id': 'abc-123.z_9'});
+      expect(res.headers['x-request-id'], 'abc-123.z_9');
+    });
+
+    test('an oversized inbound id is replaced, not echoed', () async {
+      // The value reaches the response and every access log line, so an
+      // unchecked one hands a client kilobytes of the log per request.
+      final app = Router()
+        ..layer(const RequestId())
+        ..route('/', get((r) async => 'ok'));
+      final origin = await up(app);
+
+      final res = await http
+          .get(Uri.parse('$origin/'), headers: {'x-request-id': 'x' * 4096});
+      final echoed = res.headers['x-request-id']!;
+      expect(echoed.length, lessThan(64));
+      expect(echoed, isNot('x' * 4096));
+    });
+
+    test('an inbound id with unexpected characters is replaced', () async {
+      final app = Router()
+        ..layer(const RequestId())
+        ..route('/', get((r) async => 'ok'));
+      final origin = await up(app);
+
+      for (final bad in ['a b c', 'a"q"', 'a;drop', '../../etc/passwd']) {
+        final res = await http
+            .get(Uri.parse('$origin/'), headers: {'x-request-id': bad});
+        expect(res.headers['x-request-id'], isNot(bad), reason: bad);
+      }
+    });
+  });
+
+  group('server-sent events', () {
+    test('a generator that throws reaches onError', () async {
+      // The handler returned long before the stream ran, so `guard` never sees
+      // this. The reporter has to be captured while the handler is still on the
+      // stack — by the time the stream is consumed its zone is gone.
+      final errors = <Object>[];
+      final app = Router(onError: (error, _) => errors.add(error))
+        ..route('/sse', get((r) async {
+          Stream<ServerSentEvent> events() async* {
+            yield const ServerSentEvent(data: 'one');
+            throw StateError('generator died');
+          }
+
+          return eventStream(events());
+        }));
+      final origin = await up(app);
+
+      final res = await http
+          .get(Uri.parse('$origin/sse'))
+          .timeout(const Duration(seconds: 5));
+
+      expect(res.statusCode, 200, reason: 'headers were already sent');
+      expect(res.body, contains('data:one'));
+      expect(errors, hasLength(1));
+      expect(errors.single, isA<StateError>());
+    });
+  });
+
   group('shutdown', () {
     test('a request arriving after close is refused', () async {
       final app = Router()..route('/', get((r) async => 'ok'));

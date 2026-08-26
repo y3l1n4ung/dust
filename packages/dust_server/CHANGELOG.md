@@ -60,6 +60,18 @@ than later. See [axum parity](https://github.com/y3l1n4ung/dust/blob/main/docs/d
   the client waited until it timed out, and nothing in the log said which
   handler did it: a leaked connection and an invisible failure. Tab is still
   allowed; every other control character is refused.
+- A server-sent events generator that throws now reaches `onError`. The
+  handler has returned long before the stream runs, so `guard` never saw it:
+  the error arrived in the zone as an unhandled asynchronous failure, the
+  client got a dropped connection, and the application had no record of why.
+  The reporter is captured while the handler is still on the stack, because
+  `ServerErrors.reporter` is zone-scoped and the request's zone is gone by the
+  time the stream is consumed.
+- `RequestId` no longer echoes an arbitrary inbound header. The value reaches
+  the response and every access log line, so an unchecked one handed a client
+  kilobytes of the log per request — a 4096-character id was echoed verbatim.
+  An inbound id longer than `maxLength` (128 by default) or carrying anything
+  outside `A-Z a-z 0-9 - _ .` is replaced by a generated one.
 - A `DisposableLayer` used on more than one router is disposed once, by
   identity, rather than once per registration. A layer applied at the root and
   again on a subtree owns one resource, and closing it twice failed silently
