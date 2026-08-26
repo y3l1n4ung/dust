@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -164,6 +165,34 @@ int countOf(String body) =>
 String isolateOf(String body) =>
     RegExp(r'"isolate":"([^"]+)"').firstMatch(body)!.group(1)!;
 
+/// Succeeds everywhere except the second spawned isolate.
+///
+/// Exercises the cleanup of isolates spawned *before* the one that failed:
+/// with a factory that fails on the first spawn there are none to clean up,
+/// which is how those lines stayed unreached.
+Router failsOnTheSecondSpawn() {
+  if ((Isolate.current.debugName ?? '').contains('isolate 2')) {
+    throw StateError('cannot build here either');
+  }
+  return Router()..route('/', get((request) async => 'ok'));
+}
+
+/// Serves, then dies of an uncaught asynchronous error a moment later.
+///
+/// An isolate error arrives as `[error, stackTrace]`, which is the shape the
+/// death callback reads; killing an isolate instead reports an exit with no
+/// error and takes a different path.
+Router diesShortlyAfterStarting() {
+  // Only in a spawned isolate. `serveIsolates` calls the factory in the calling
+  // isolate too, and a timer that throws there takes the test process with it.
+  if ((Isolate.current.debugName ?? '').contains('dust_server isolate')) {
+    Timer(const Duration(milliseconds: 150), () {
+      throw StateError('died while serving');
+    });
+  }
+  return Router()..route('/', get((request) async => 'ok'));
+}
+
 /// Succeeds in the isolate that calls it and fails in every spawned one.
 ///
 /// The realistic shape of a startup failure: a file the parent already holds
@@ -241,6 +270,44 @@ void _deathTests() {
       );
       addTearDown(() => rebound.close(drain: Duration.zero));
       expect(rebound.port, port);
+    });
+
+    test('a failure on the second spawn tears down the first', () async {
+      // The first isolate is already running when the second fails. Leaving it
+      // alive would leak a heap and a share of the port for a server that
+      // never started.
+      await expectLater(
+        serveIsolates(
+          failsOnTheSecondSpawn,
+          InternetAddress.loopbackIPv4,
+          0,
+          isolates: 3,
+        ).timeout(const Duration(seconds: 10)),
+        throwsA(
+          isA<StateError>()
+              .having((e) => e.message, 'message', contains('isolate 2')),
+        ),
+      );
+    });
+
+    test('an isolate that dies while serving reaches onIsolateError', () async {
+      final failures = <Object?>[];
+      final servers = await serveIsolates(
+        diesShortlyAfterStarting,
+        InternetAddress.loopbackIPv4,
+        0,
+        isolates: 2,
+        onIsolateError: (error, _) => failures.add(error),
+      );
+      addTearDown(() => servers.close(drain: const Duration(seconds: 1)));
+
+      expect(servers.alive, 2, reason: 'both are up at first');
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      expect(failures, isNotEmpty, reason: 'the death has to be reported');
+      expect(failures.first.toString(), contains('died while serving'));
+      expect(servers.alive, lessThan(servers.size));
     });
 
     test('one isolate serves without spawning any', () async {
