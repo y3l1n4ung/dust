@@ -43,6 +43,14 @@ than later. See [axum parity](https://github.com/y3l1n4ung/dust/blob/main/docs/d
   a router is assignable to a shelf `Handler` with no conversion — the same
   reason `axum::serve(listener, app)` takes a `Router` directly.
 
+### Examples
+
+- `disposable_layers.dart` — releasing what a layer owns, on shutdown.
+- `router_as_handler.dart` — handing a router to `shelf` middleware, since
+  `Router` implements `Service` and is therefore already a `Handler`.
+- `isolate_failure.dart` — knowing when a serving isolate dies, and why it
+  cannot be replaced.
+
 ### Fixed
 
 - A response header carrying a control character now answers 500 and reports
@@ -52,6 +60,14 @@ than later. See [axum parity](https://github.com/y3l1n4ung/dust/blob/main/docs/d
   the client waited until it timed out, and nothing in the log said which
   handler did it: a leaked connection and an invisible failure. Tab is still
   allowed; every other control character is refused.
+- `serveIsolates` no longer hangs forever when the router factory throws
+  inside a spawned isolate. It waited on a port the isolate writes to only
+  after the factory has already succeeded, so a factory that works in the
+  parent and fails in the child — a locked file, an environment variable read
+  per isolate, anything the parent already holds — left the server never
+  started and nothing logged. It now fails with the isolate named and the
+  original error attached, and cleans up: no port left bound, no isolate left
+  running.
 - Numeric coercion no longer accepts surrounding whitespace. Dart's parsers
   trim before parsing, so `?id=%2010` and `?id=10` produced the same number
   from two different requests, and anything keyed on the raw text — a cache

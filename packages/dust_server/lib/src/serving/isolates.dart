@@ -22,7 +22,7 @@ final class ServerIsolates {
   final List<Isolate> _isolates;
   final List<SendPort> _handles;
   final _dead = <int>{};
-  final _exitPorts = <ReceivePort>[];
+  final _workers = <_Worker>[];
 
   /// The address every isolate bound to.
   final InternetAddress address;
@@ -60,8 +60,8 @@ final class ServerIsolates {
     for (final isolate in _isolates) {
       isolate.kill(priority: Isolate.immediate);
     }
-    for (final port in _exitPorts) {
-      port.close();
+    for (final worker in _workers) {
+      worker.dispose();
     }
   }
 }
@@ -112,53 +112,106 @@ Future<ServerIsolates> serveIsolates(
     throw ArgumentError.value(isolates, 'isolates', 'must be at least one');
   }
 
-  final local = await serve(
-    factory(),
-    address,
-    port,
-    shared: true,
-  );
+  final local = await serve(factory(), address, port, shared: true);
 
   final spawned = <Isolate>[];
   final handles = <SendPort>[];
-  final exitPorts = <ReceivePort>[];
+  final workers = <_Worker>[];
 
   for (var i = 1; i < isolates; i++) {
-    final ready = ReceivePort();
-    final exits = ReceivePort();
+    final worker = _Worker(i);
     final isolate = await Isolate.spawn(
       _serveInIsolate,
-      _IsolateSeed(factory, address, local.port, ready.sendPort),
+      _IsolateSeed(factory, address, local.port, worker.ready.sendPort),
       debugName: 'dust_server isolate $i',
-      onExit: exits.sendPort,
-      onError: exits.sendPort,
+      onExit: worker.exits.sendPort,
+      onError: worker.exits.sendPort,
     );
+    worker.isolate = isolate;
 
-    handles.add(await ready.first as SendPort);
-    ready.close();
+    final SendPort handle;
+    try {
+      handle = await worker.started.future;
+    } on Object {
+      // Nothing the caller knows about is serving yet, so leaving the local
+      // server bound and the earlier isolates alive would leak a port and a
+      // heap each.
+      worker.dispose();
+      isolate.kill(priority: Isolate.immediate);
+      for (final earlier in workers) {
+        earlier.dispose();
+        earlier.isolate?.kill(priority: Isolate.immediate);
+      }
+      await local.close(drain: Duration.zero);
+      rethrow;
+    }
+
+    handles.add(handle);
+    worker.ready.close();
     spawned.add(isolate);
-    exitPorts.add(exits);
+    workers.add(worker);
   }
 
   handles.add(_localHandle(local));
   final cluster = ServerIsolates._(spawned, handles, address, local.port)
-    .._exitPorts.addAll(exitPorts);
+    .._workers.addAll(workers);
 
-  // An isolate that dies is otherwise invisible: the port stays bound by the
-  // survivors, so traffic keeps flowing at reduced capacity with nothing to
-  // say so. This cannot restart it — a replacement cannot rebind the socket —
-  // but it can stop the loss being silent.
-  for (var i = 0; i < exitPorts.length; i++) {
+  // An isolate that dies afterwards is otherwise invisible: the port stays
+  // bound by the survivors, so traffic keeps flowing at reduced capacity with
+  // nothing to say so. This cannot restart it — a replacement cannot rebind
+  // the socket — but it can stop the loss being silent.
+  for (var i = 0; i < workers.length; i++) {
     final index = i;
-    exitPorts[i].listen((message) {
+    workers[i].onDeath = (message) {
       cluster._dead.add(index);
       if (message is List && message.length == 2) {
         onIsolateError?.call(message.first, message.last);
       }
-    });
+    };
   }
 
   return cluster;
+}
+
+/// One spawned isolate, and the two ports used to talk to it.
+///
+/// `exits` carries both startup failure and later death, because a
+/// `ReceivePort` allows one subscription: the single listener below decides
+/// which of the two it is by whether startup has finished.
+final class _Worker {
+  _Worker(this.index) {
+    exits.listen((message) {
+      if (!started.isCompleted) {
+        started.completeError(
+          StateError(
+            'dust_server isolate $index died before it began serving: '
+            '${message is List && message.isNotEmpty ? message.first : message}',
+          ),
+        );
+        return;
+      }
+      onDeath?.call(message);
+    });
+
+    // `listen`, not `first`: closing the port after a failed start completes
+    // `first` with a "No element" error nobody is waiting for any more.
+    ready.listen((message) {
+      if (!started.isCompleted) started.complete(message as SendPort);
+    });
+  }
+
+  final int index;
+  final ready = ReceivePort();
+  final exits = ReceivePort();
+  final started = Completer<SendPort>();
+
+  Isolate? isolate;
+  void Function(Object? message)? onDeath;
+
+  void dispose() {
+    ready.close();
+    exits.close();
+  }
 }
 
 SendPort _localHandle(ServerHandle server) {

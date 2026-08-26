@@ -164,9 +164,21 @@ int countOf(String body) =>
 String isolateOf(String body) =>
     RegExp(r'"isolate":"([^"]+)"').firstMatch(body)!.group(1)!;
 
+/// Succeeds in the isolate that calls it and fails in every spawned one.
+///
+/// The realistic shape of a startup failure: a file the parent already holds
+/// open, an environment variable set for the process but read per isolate, a
+/// port bound before the fork. The parent builds fine and the child does not.
+Router failsOnlyWhenSpawned() {
+  if ((Isolate.current.debugName ?? '').contains('dust_server isolate')) {
+    throw StateError('cannot build here');
+  }
+  return Router()..route('/', get((request) async => 'ok'));
+}
+
 void _deathTests() {
   group('a dead isolate', () {
-    test('is reported by alive, and cannot be replaced', () async {
+    test('is reported by alive against size', () async {
       final servers = await serveIsolates(
         buildClusterApp,
         InternetAddress.loopbackIPv4,
@@ -177,6 +189,86 @@ void _deathTests() {
 
       expect(servers.size, 2);
       expect(servers.alive, 2, reason: 'nothing has died yet');
+    });
+  });
+
+  group('startup', () {
+    test('a factory that throws only in a spawn fails instead of hanging',
+        () async {
+      // Waiting on the ready port alone waits forever: the isolate sends it
+      // after the factory has already thrown, so nothing ever arrives.
+      await expectLater(
+        serveIsolates(
+          failsOnlyWhenSpawned,
+          InternetAddress.loopbackIPv4,
+          0,
+          isolates: 3,
+        ).timeout(const Duration(seconds: 10)),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            allOf(contains('before it began serving'), contains('isolate 1')),
+          ),
+        ),
+      );
+    });
+
+    test('a failed start leaves no port bound', () async {
+      final server = await serve(
+        Router()..route('/', get((request) async => 'free')),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      final port = server.port;
+      await server.close(drain: Duration.zero);
+
+      await expectLater(
+        serveIsolates(
+          failsOnlyWhenSpawned,
+          InternetAddress.loopbackIPv4,
+          port,
+          isolates: 2,
+        ).timeout(const Duration(seconds: 10)),
+        throwsA(isA<StateError>()),
+      );
+
+      // If the local server had been left bound, this would fail.
+      final rebound = await serve(
+        Router()..route('/', get((request) async => 'rebound')),
+        InternetAddress.loopbackIPv4,
+        port,
+      );
+      addTearDown(() => rebound.close(drain: Duration.zero));
+      expect(rebound.port, port);
+    });
+
+    test('one isolate serves without spawning any', () async {
+      final servers = await serveIsolates(
+        buildClusterApp,
+        InternetAddress.loopbackIPv4,
+        0,
+        isolates: 1,
+      );
+      addTearDown(() => servers.close(drain: const Duration(seconds: 1)));
+
+      expect(servers.size, 1);
+      expect(servers.alive, 1);
+    });
+
+    test('closing twice is not an error', () async {
+      final servers = await serveIsolates(
+        buildClusterApp,
+        InternetAddress.loopbackIPv4,
+        0,
+        isolates: 2,
+      );
+
+      await servers.close(drain: const Duration(seconds: 1));
+      await expectLater(
+        servers.close(drain: const Duration(seconds: 1)),
+        completes,
+      );
     });
   });
 }
