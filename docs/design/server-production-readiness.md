@@ -186,14 +186,31 @@ Routes bucket by their whole literal prefix: 29us at 100 routes, 13us at 1000,
 within a bucket, so routes that are identical up to their first parameter still
 compete. A trie would fix that; the numbers do not yet justify it.
 
-### 10. CI has a coverage gate, and no benchmark gate
+### 10. One core unless you ask for more, and nothing says so
+
+`serveRouter` serves from the isolate that called it, and a Dart isolate is one
+thread. On a four-core machine that is one core busy and three idle, under any
+load, with nothing in the logs or the metrics to say the ceiling is the
+process rather than the application.
+
+`serveCluster` fixes it — the same answer `uvicorn --workers` and `gunicorn -w`
+give Python, for the same reason — but it is opt-in, and its own default is two
+isolates rather than the core count. An application that never calls it is
+correct, passes every test, and quietly wastes most of the machine.
+
+Warning about it automatically is worse than it sounds: `Platform.numberOfProcessors`
+reports the host's cores, not the container's CPU limit, so the obvious check
+fires loudly and wrongly on every constrained deployment. Until there is a
+reliable way to read the effective limit, this stays a documentation problem.
+
+### 11. CI has a coverage gate, and no benchmark gate
 
 The package is in the `dart-packages` matrix in `.github/workflows/ci.yml`, so
 analyze and test run on every commit, and `scripts/dart/coverage.sh` fails the
 build below a 100% floor. What is still missing is a benchmark regression
 check, and the suite has never run on any machine but one.
 
-### 11. Coverage is complete, and now gated
+### 12. Coverage is complete, and now gated
 
 100% of lines, 1204 of 1204. Reaching it was worth more than the number: closing
 the gaps, and then hunting past them, surfaced six real defects — each now
@@ -215,7 +232,7 @@ change was finished.
 A covered line is still not a checked line — 100% says every line ran, not that
 every branch through it was asserted.
 
-### 12. The API is unstable by design
+### 13. The API is unstable by design
 
 The last few days moved `RouteGroup` to `Router`, `@Ctx` to `@State`, and
 dropped OpenAPI. `0.1.0-beta.1` is published, so changes now cost a version
