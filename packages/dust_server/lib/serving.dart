@@ -11,5 +11,6 @@
 /// Everything here is also exported from `package:dust_server/server.dart`.
 library;
 
-export 'src/serving/background.dart' hide backgroundTasksIn;
+export 'src/serving/background.dart'
+    hide backgroundTasksIn, disposableLayersIn;
 export 'src/serving/serving.dart';

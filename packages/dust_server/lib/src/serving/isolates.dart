@@ -89,7 +89,7 @@ Future<ServerIsolates> serveIsolates(
   RouterFactory factory,
   InternetAddress address,
   int port, {
-  int isolates = 2,
+  required int isolates,
 }) async {
   if (isolates < 1) {
     throw ArgumentError.value(isolates, 'isolates', 'must be at least one');

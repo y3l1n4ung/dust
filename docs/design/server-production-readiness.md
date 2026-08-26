@@ -84,26 +84,16 @@ work keeps running with nobody waiting for it. A handler that leaks a resource
 on a slow path still leaks it. Nothing is installed by default either, so an
 application that never adds the layer has no deadline at all.
 
-### 3. Stateful middleware has no teardown
+### 3. Stateful middleware can be released, and nothing yet does
 
-`Layer` is the shape production middleware needs — a class with configuration
-fields, which is how all eight built-ins are written, and how the interface's
-own doc comment shows a rate limiter. What it has no room for is a resource.
+`DisposableLayer` gives a layer a `dispose()` that `close(drain:)` calls, after
+background work has drained and whether or not there is any. A rate limiter
+holding a client, a metrics flusher, a key cache on a timer: each now has
+somewhere to release it, and one that throws does not stop the others.
 
-A rate limiter holding a Redis client, a metrics layer with a background
-flusher, an auth layer caching JWKS on a timer: each acquires something at
-construction and has nowhere to release it. `Layer` declares one method,
-`toMiddleware()`. There is no `dispose`, and `ServerHandle.close` does not look
-for one.
-
-axum has the same interface and does not need the method, because Rust drops a
-layer when its router goes. Dart has no destructor, so the gap is real here in
-a way it is not there. The machinery is already close: `serve` walks the
-router to find a `BackgroundTasks` registry, and the same walk would find
-layers that want draining.
-
-Until then, middleware owning a resource has to be closed by the application
-that built it, and nothing reminds anyone to do that.
+None of the eight built-in layers implements it, because none owns anything. So
+the mechanism exists and is tested, and no shipped code exercises it under real
+load — the same distinction the top of this document draws about test coverage.
 
 ### 4. No backpressure, and no way to add it
 

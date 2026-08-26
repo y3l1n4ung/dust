@@ -16,10 +16,27 @@ than later. See [axum parity](https://github.com/y3l1n4ung/dust/blob/main/docs/d
 
 - `serveRouter` is now `serve`. The old name described its argument's type,
   which the caller can already see.
+- `serve` takes an `InternetAddress` rather than an `Object`. `HttpServer.bind`
+  accepts a `String` host, which buys a hidden DNS lookup and a typo that fails
+  at runtime; `InternetAddress.anyIPv4` and `.loopbackIPv4` say what `0.0.0.0`
+  and `127.0.0.1` mean and cannot be mistyped. `serveIsolates` already took one.
+- `serveIsolates` requires `isolates:`. The old default of two was neither
+  "one, explicitly" nor "use the machine".
 - `serveCluster` is now `serveIsolates`, and `ServerCluster` is now
   `ServerIsolates`. "Cluster" reads as multiple machines; this forks isolates on
   one box, the way `uvicorn --workers` forks processes. Naming the isolate is
   also the clearest warning that state does not cross one.
+
+### Added
+
+- `DisposableLayer`, a `Layer` that also declares `dispose()`. Shutdown walks
+  the router — nested groups and `routeLayer` included — and releases each one
+  after background work has drained. A `dispose` that throws does not stop the
+  others. Separate from `Layer` because Dart's `implements` requires every
+  member re-declared, so adding a method there would break every existing layer.
+- `Service`, with `Router` implementing it. Dart tears off `call` implicitly, so
+  a router is assignable to a shelf `Handler` with no conversion — the same
+  reason `axum::serve(listener, app)` takes a `Router` directly.
 
 ### Removed
 

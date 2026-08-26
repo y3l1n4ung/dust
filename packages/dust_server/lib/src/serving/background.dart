@@ -4,6 +4,7 @@ import 'package:meta/meta.dart';
 
 import '../extraction/state.dart';
 import '../response/error_reporting.dart';
+import '../router/middleware.dart';
 import '../router/router_base.dart';
 import '../tracing/tracing_layer.dart';
 
@@ -137,4 +138,27 @@ final class _TaskFailed {
 BackgroundTasks? backgroundTasksIn(Router router) {
   final attached = router.internals.state[stateKeyFor<BackgroundTasks>()];
   return attached is BackgroundTasks ? attached : null;
+}
+
+/// Every [DisposableLayer] on [router] and everything nested inside it.
+///
+/// Layers are held as `Object` because `layer` accepts a [Layer] or a bare
+/// shelf `Middleware`, so this filters rather than casts. Collected once when
+/// the server starts, since a router is closed to further building by then.
+@internal
+List<DisposableLayer> disposableLayersIn(Router router) {
+  final found = <DisposableLayer>[];
+
+  void walk(Router group) {
+    for (final entry in [
+      ...group.internals.middleware,
+      ...group.internals.routeMiddleware,
+    ]) {
+      if (entry is DisposableLayer) found.add(entry);
+    }
+    group.internals.children.forEach(walk);
+  }
+
+  walk(router);
+  return found;
 }

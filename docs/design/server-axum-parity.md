@@ -40,7 +40,7 @@ pub fn serve<L, M, S>(listener: L, make_service: M) -> Serve<L, M, S>
 
 ```dart
 // dust_server
-Future<ServerHandle> serve(Router app, Object address, int port, {...});
+Future<ServerHandle> serve(Router app, InternetAddress address, int port, {...});
 ```
 
 | axum | dust_server | Verdict |
@@ -60,15 +60,25 @@ package's own namespace.
 
 **Argument order stays.** axum takes an already-bound listener because Rust
 wants the socket owned explicitly. Dart's convention is `HttpServer.bind`, and
-binding inside `serve` keeps the common case one call. The cost is a weakly
-typed `Object address`, inherited from `shelf_io.serve` and ultimately from
-`HttpServer.bind`, which accepts a `String` host or an `InternetAddress`.
+binding inside `serve` keeps the common case one call.
 
-A listener-first `serve(HttpServer listener, Router app)` would delete that
-`Object` and every parameter forwarded to `bind`. It was considered and left
-alone: it makes the simple case two statements, and `ServerHandle` — which
-carries `port`, `inFlight`, and `pendingTasks` — is more useful than what axum
-returns.
+`address` is an `InternetAddress`, not the `Object` inherited from
+`shelf_io.serve` and `HttpServer.bind`. Those accept a `String` host too, which
+buys a hidden DNS lookup and a typo that fails at runtime; `InternetAddress.anyIPv4`
+and `.loopbackIPv4` say what `'0.0.0.0'` and `'127.0.0.1'` mean and cannot be
+mistyped. Binding to a named host is still possible, with the lookup visible:
+
+```dart
+final addresses = await InternetAddress.lookup('example.internal');
+await serve(app, addresses.first, 8080);
+```
+
+`serveIsolates` already took `InternetAddress`, so this also makes the two agree.
+
+A listener-first `serve(HttpServer listener, Router app)` would delete the
+address and port parameters entirely. It was considered and left alone: it makes
+the simple case two statements, and `ServerHandle` — which carries `port`,
+`inFlight`, and `pendingTasks` — is more useful than what axum returns.
 
 **Shutdown stays.** axum's `with_graceful_shutdown` takes a future and then
 waits, unbounded, for in-flight connections. Dust returns a handle and bounds
@@ -157,18 +167,26 @@ The built-in catalogue tracks `tower-http`, which is middleware only and has no
 `set_header`. dust_server ships `Cors`, `Compression`, `AccessLog`,
 `RequestTimeout`, `RequestId`, `NormalizePath`, `SecurityHeaders`, `Tracing`.
 
-### Gap: no teardown
+### Teardown: `DisposableLayer`
 
-`Layer` declares one method. A layer holding a Redis client, a metrics flusher,
-or a JWKS cache on a timer has nowhere to release it, and `ServerHandle.close`
-does not look for one.
+`Layer` declares one method, so a layer holding a client, a flusher, or a cache
+on a timer had nowhere to release it. axum needs no equivalent — Rust drops the
+layer when its router goes — which made this the clearest case in the document
+of a **Dart problem rather than an axum one**.
 
-axum has the same interface and does not need the method, because Rust drops the
-layer when its router goes. This is the clearest case in the document of a
-difference that is a **Dart problem rather than an axum one**, and it wants a
-separate `DisposableLayer` interface — adding a method to `Layer`, even with a
-default body, fails analysis on all thirteen implementors, because Dart's
-`implements` requires every member to be re-declared.
+```dart
+abstract interface class DisposableLayer implements Layer {
+  Future<void> dispose();
+}
+```
+
+`close(drain:)` walks the router, including nested groups and `routeLayer`, and
+disposes each one after background tasks have drained — a task may still be
+using what a layer owns. A `dispose` that throws does not stop the others.
+
+It is a separate interface because Dart's `implements` requires every member to
+be re-declared, so adding a method to `Layer` — even one with a body — fails
+analysis on all thirteen existing layers.
 
 ## Isolates
 
@@ -223,21 +241,35 @@ Anyone arriving from tower will look for the second and find only the first.
 | `serveCluster` | → `serveIsolates` |
 | `ServerCluster` | → `ServerIsolates` |
 | `ServerHandle` | kept — no axum equivalent, and more useful than `Serve` |
-| `Object address`, `int port` | kept — `HttpServer.bind` is the Dart convention |
+| `Object address` | → `InternetAddress`; matches `serveIsolates`, kills the weakest type |
 | `mount` | kept — no good axum name for it |
 | `toMiddleware()` | kept for now; `layer(Service)` would be closer |
 
+## Service
+
+```dart
+abstract interface class Service {
+  FutureOr<Response> call(Request request);
+}
+```
+
+`Router implements Service`, which is the Dart counterpart of axum's `Router`
+implementing tower's `Service`. Dart tears off `call` implicitly when an object
+is used where a function type is wanted, so a router is assignable to a shelf
+`Handler` with no conversion — the same reason `axum::serve(listener, app)`
+takes a `Router` directly.
+
+One caveat found while testing it: `very_good_analysis` enables
+`implicit_call_tearoffs`, so the implicit form is linted even though it
+compiles. Under that lint you write `app.call` where a `Handler` is wanted,
+which is still better than a named conversion getter but is not free.
+
 ## Open
 
-- **`Layer` teardown**, as a `DisposableLayer` interface drained by
-  `ServerHandle.close`.
-- **`Router implements Service`**, so a router is passable wherever a shelf
-  `Handler` is wanted with no conversion. A Dart class with a `call` method
-  tears off to a matching function type implicitly, so this costs nothing.
-- **`serveIsolates` default of two**, which is neither "one, explicitly" nor
-  "use the machine". Defaulting to the core count has its own problem:
-  `Platform.numberOfProcessors` reports the host's cores rather than the
-  container's CPU limit.
+- **`serveIsolates` has no default.** `isolates:` is required: two was neither
+  "one, explicitly" nor "use the machine". Defaulting to the core count is
+  wrong for a different reason — `Platform.numberOfProcessors` reports the
+  host's cores rather than the container's CPU limit — so the caller decides.
 
 ## Rejected
 
