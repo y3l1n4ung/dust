@@ -10,13 +10,24 @@ For the feature itself, see the [Server Plugin Design](server-plugin.md).
 
 ## Where it stands
 
-Over 1,200 tests at 100% line coverage, no analyzer findings. That says the code does
-what its tests say. It does not say the tests ask the right questions, which is
-what the rest of this document is about.
+100% line coverage, gated in CI, and no analyzer findings. That says the code
+does what its tests say. It does not say the tests ask the right questions,
+which is what the rest of this document is about — and the record backs the
+distinction: every defect below was found by writing an example or probing a
+combination, never by the coverage number moving.
 
-Seventeen defects have been found and fixed since, all but two by writing an
-example or probing a combination rather than by reading the code — which is the
-strongest argument in this document for how the rest of it should be read.
+More than twenty defects have been found and fixed since, nearly all by writing
+an example or probing a combination rather than by reading the code — which is
+the strongest argument in this document for how the rest of it should be read.
+
+Six of those came from one pass over deployment behaviour rather than API
+behaviour, and three of the six shared a shape worth naming: a failure **after
+the handler returned**, where `guard` cannot reach and the request's zone no
+longer exists. A response header that could not be written hung the connection
+with nothing logged; a server-sent events generator that threw never reached
+`onError`; and a router factory that failed inside a spawned isolate hung
+startup forever. That seam deserves a deliberate audit rather than another
+round of probing.
 
 ## Covered
 
@@ -37,7 +48,7 @@ is visible as a thin folder rather than hidden inside a long file:
 | `mounting/` | mount, root mount, declaration order against a catch-all |
 | `hardening/` | pathological input, untrusted request fields, decoded parameters |
 
-Beyond the router, `test/example/` serves all 51 examples over a loopback socket
+Beyond the router, `test/example/` serves every example over a loopback socket
 and drives each with a real client — 216 tests, one group per example, so an
 example that stops compiling fails the build.
 

@@ -4,17 +4,20 @@ Status: proposal, with the runtime built. This document describes a Dust feature
 for generating Dart HTTP server wiring from annotated controller classes, with
 runtime route composition.
 
-`packages/dust_server` exists and is covered by over 1,200 tests at 100% line
-coverage, including `test/generated/`, which hand-writes what the plugin will
-emit for the [Worked Example](#worked-example) below, and 51 examples in
-`example/` that exercise every extractor, layer, and response path the plugin
-will emit against.
+`packages/dust_server` exists, is published, and is held at 100% line coverage
+by a gate in CI. That includes `test/generated/`, which hand-writes what the
+plugin will emit for the [Worked Example](#worked-example) below, and the
+examples in `example/`, which exercise every extractor, layer, and response path
+the plugin will emit against.
 
-The package is unpublished (`publish_to: none`); no plugin crate exists yet.
-Sections marked **runtime-checked** describe behavior that runs today rather
-than intent — and that distinction earned its keep: writing those examples turned
-up sixteen defects in the runtime, which is sixteen the generated code would
-otherwise have been built on top of.
+No plugin crate exists yet. Sections marked **runtime-checked** describe
+behavior that runs today rather than intent — and that distinction earned its
+keep: probing the runtime that way has turned up more than twenty defects, every
+one of which the generated code would otherwise have been built on top of.
+
+Exact test counts are deliberately absent here. They have gone stale in this
+document four times; `packages/dust_server/CHANGELOG.md` pins the number for a
+release, which is the one place it stays true.
 
 For the build pipeline and crate map, see the [Developer Guide](../developer.md).
 For the plugin contract, see the [Plugin Guide](../plugin-guide.md).
