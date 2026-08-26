@@ -18,11 +18,11 @@ final class ExampleApp {
   ExampleApp._(this.server, this.records);
 
   /// Starts [app].
-  static Future<ExampleApp> serve(
+  static Future<ExampleApp> start(
     Router app, {
     List<AccessRecord>? records,
   }) async {
-    final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+    final server = await serve(app, InternetAddress.loopbackIPv4, 0);
     return ExampleApp._(server, records ?? []);
   }
 
@@ -130,7 +130,7 @@ final class ExampleApp {
 /// The teardown is registered here rather than left to the caller, because a
 /// suite of thirty examples is thirty chances to leak a socket.
 Future<ExampleApp> example(Router app, {List<AccessRecord>? records}) async {
-  final served = await ExampleApp.serve(app, records: records);
+  final served = await ExampleApp.start(app, records: records);
   addTearDown(served.stop);
   return served;
 }

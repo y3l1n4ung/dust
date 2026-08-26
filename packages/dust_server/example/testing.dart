@@ -9,7 +9,7 @@ import 'package:dust_server/server.dart';
 /// * **`router.handler`** takes a `Request` and returns a `Response`, in
 ///   process, no socket. Fast enough to run thousands of, and right for
 ///   asserting statuses, bodies, and headers.
-/// * **`serveRouter` on port 0** goes over a real socket with a real client.
+/// * **`serve` on port 0** goes over a real socket with a real client.
 ///   Slower, and the only way to catch what the wire does: gzip, chunked
 ///   bodies, `HEAD` dropping a body, a WebSocket upgrade, connection reuse.
 ///
@@ -28,7 +28,7 @@ import 'package:dust_server/server.dart';
 /// Run it with `dart run example/testing.dart`, or read
 /// `test/example/examples_test.dart`, which drives all 34 examples this way.
 Future<void> main() async {
-  final server = await serveRouter(
+  final server = await serve(
     buildApp(NoteStore()),
     InternetAddress.anyIPv4,
     8080,

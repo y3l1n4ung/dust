@@ -52,7 +52,7 @@ Future<void> main() async {
     return;
   }
 
-  final server = await serveRouter(
+  final server = await serve(
     buildApp(secret: secret),
     InternetAddress.anyIPv4,
     8080,

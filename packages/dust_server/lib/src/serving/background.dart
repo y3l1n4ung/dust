@@ -1,9 +1,11 @@
+import 'dart:collection';
 import 'dart:async';
 
 import 'package:meta/meta.dart';
 
 import '../extraction/state.dart';
 import '../response/error_reporting.dart';
+import '../router/middleware.dart';
 import '../router/router_base.dart';
 import '../tracing/tracing_layer.dart';
 
@@ -20,7 +22,7 @@ import '../tracing/tracing_layer.dart';
 ///
 /// ```dart
 /// final tasks = BackgroundTasks();
-/// final server = await serveRouter(app, address, 8080, background: tasks);
+/// final server = await serve(app, address, 8080, background: tasks);
 ///
 /// Future<Order> checkout(Request request) async {
 ///   final order = await shop.place(basket);
@@ -130,11 +132,43 @@ final class _TaskFailed {
 /// The [BackgroundTasks] attached to [router] with `withState`, when there is
 /// one.
 ///
-/// Lets `serveRouter` find a registry the caller did not hand it, which is the
+/// Lets `serve` find a registry the caller did not hand it, which is the
 /// only way a clustered server can drain one: each isolate builds its own inside
 /// the factory, so nothing outside can pass it in.
 @internal
 BackgroundTasks? backgroundTasksIn(Router router) {
   final attached = router.internals.state[stateKeyFor<BackgroundTasks>()];
   return attached is BackgroundTasks ? attached : null;
+}
+
+/// Every [DisposableLayer] on [router] and everything nested inside it.
+///
+/// Layers are held as `Object` because `layer` accepts a [Layer] or a bare
+/// shelf `Middleware`, so this filters rather than casts. Collected once when
+/// the server starts, since a router is closed to further building by then.
+@internal
+List<DisposableLayer> disposableLayersIn(Router router) {
+  // By identity, not equality. One layer instance applied to two routers — a
+  // rate limiter at the root and again on a subtree, a layer built once and
+  // merged into several groups — owns one resource and must be released once.
+  // Equality would be worse than useless here: a layer written as a const, or
+  // one deriving `==` from its configuration, would collapse two genuinely
+  // separate instances into one and leak whichever lost.
+  final found = LinkedHashSet<DisposableLayer>(
+    equals: identical,
+    hashCode: identityHashCode,
+  );
+
+  void walk(Router group) {
+    for (final entry in [
+      ...group.internals.middleware,
+      ...group.internals.routeMiddleware,
+    ]) {
+      if (entry is DisposableLayer) found.add(entry);
+    }
+    group.internals.children.forEach(walk);
+  }
+
+  walk(router);
+  return found.toList();
 }

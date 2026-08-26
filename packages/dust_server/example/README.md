@@ -82,6 +82,7 @@ repository.
 | The response headers a browser uses to lock a page down | [`security_headers.dart`](security_headers.dart) |
 | A layer that runs only for routes that matched | [`route_layer.dart`](route_layer.dart) |
 | Cutting off a request that takes too long | [`request_timeout.dart`](request_timeout.dart) |
+| Releasing what a layer owns, on shutdown | [`disposable_layers.dart`](disposable_layers.dart) |
 
 ## Responses
 
@@ -100,12 +101,14 @@ repository.
 | Shutting down without dropping requests in flight | [`graceful_shutdown.dart`](graceful_shutdown.dart) |
 | Work that outlives the response | [`background_tasks.dart`](background_tasks.dart) |
 | Spans, and continuing a trace that started upstream | [`tracing.dart`](tracing.dart) |
-| Using every core | [`clustered_isolates.dart`](clustered_isolates.dart) |
+| Using every core | [`several_isolates.dart`](several_isolates.dart) |
+| Knowing when a serving isolate dies | [`isolate_failure.dart`](isolate_failure.dart) |
 | Serving over TLS | [`tls.dart`](tls.dart) |
 | Counting requests and timing them | [`metrics.dart`](metrics.dart) |
 | Signed sessions over the cookie extractor | [`sessions.dart`](sessions.dart) |
 | Liveness and readiness, which differ | [`health_checks.dart`](health_checks.dart) |
 | Testing an application built on this runtime | [`testing.dart`](testing.dart) |
+| Handing a router to `shelf` middleware | [`router_as_handler.dart`](router_as_handler.dart) |
 
 `metrics.dart` and `sessions.dart` are examples rather than runtime features on
 purpose. Both are policy: what to count, and what a session means. The runtime

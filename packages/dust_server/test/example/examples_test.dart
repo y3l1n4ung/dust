@@ -12,8 +12,11 @@ import '../../example/compression.dart' as compression;
 import '../../example/background_tasks.dart' as background_tasks;
 import '../../example/body_limits.dart' as body_limits;
 import '../../example/client_ip.dart' as client_ip;
-import '../../example/clustered_isolates.dart' as clustered;
+import '../../example/several_isolates.dart' as several_isolates;
 import '../../example/cors.dart' as cors;
+import '../../example/disposable_layers.dart' as disposable_layers;
+import '../../example/isolate_failure.dart' as isolate_failure;
+import '../../example/router_as_handler.dart' as router_as_handler;
 import '../../example/cookies.dart' as cookies;
 import '../../example/credential_schemes.dart' as credential_schemes;
 import '../../example/custom_extractor.dart' as custom_extractor;
@@ -1822,7 +1825,7 @@ void main() {
     test('a request already accepted finishes after close begins', () async {
       // The whole point. A process that exits on the signal drops these, and
       // they are the slow ones — the ones most likely to be mid-write.
-      final app = await ExampleApp.serve(graceful_shutdown.buildApp());
+      final app = await ExampleApp.start(graceful_shutdown.buildApp());
 
       final slow = app.get('/slow');
       await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -1835,7 +1838,7 @@ void main() {
     test('close reports whether everything finished', () async {
       // The return value is the only way to learn that requests were abandoned,
       // and it is the thing most code throws away.
-      final app = await ExampleApp.serve(graceful_shutdown.buildApp());
+      final app = await ExampleApp.start(graceful_shutdown.buildApp());
 
       await app.get('/quick');
 
@@ -1843,7 +1846,7 @@ void main() {
     });
 
     test('nothing new is accepted once close has begun', () async {
-      final app = await ExampleApp.serve(graceful_shutdown.buildApp());
+      final app = await ExampleApp.start(graceful_shutdown.buildApp());
       final origin = app.origin;
 
       await app.stop();
@@ -1926,11 +1929,54 @@ void main() {
     });
   });
 
-  group('clustered_isolates', () {
+  group('disposable_layers', () {
+    test('serves, and flushes the counter exactly once on shutdown', () async {
+      final flushed = <String>[];
+      final app = Router()
+        ..layer(disposable_layers.RequestCounter(flushed.add))
+        ..route('/', get((request) async => 'counted'));
+
+      final server = await serve(app, InternetAddress.loopbackIPv4, 0);
+      final origin = 'http://127.0.0.1:${server.port}';
+
+      expect((await http.get(Uri.parse('$origin/'))).body, 'counted');
+      expect((await http.get(Uri.parse('$origin/'))).body, 'counted');
+      expect(flushed, isEmpty, reason: 'not until shutdown');
+
+      await server.close(drain: const Duration(seconds: 1));
+      expect(flushed, ['flushed 2 requests']);
+    });
+  });
+
+  group('isolate_failure', () {
+    // The isolate machinery itself is covered by test/serving/isolates_test.dart.
+    // What matters here is that the application each isolate builds is real.
+    test('builds an application that reports which process answered', () async {
+      final app = await example(isolate_failure.buildApp());
+
+      expect((await app.get('/')).body, 'ok');
+      expect(jsonDecode((await app.get('/health')).body), {'pid': pid});
+    });
+  });
+
+  group('router_as_handler', () {
+    test('serves the inner router through a shelf pipeline', () async {
+      final app = await example(router_as_handler.buildApp());
+
+      final root = await app.get('/');
+      expect(root.body, 'from the inner router');
+      expect(root.headers['x-served-through'], 'shelf-pipeline');
+
+      final who = await app.get('/who');
+      expect(jsonDecode(who.body), {'router': 'inner'});
+    });
+  });
+
+  group('several_isolates', () {
     test('the factory builds a working application on its own', () async {
       // The cluster itself is covered by the runtime's serving tests. What this
       // example owns is that its factory is a valid top-level one.
-      final app = await example(clustered.buildApp());
+      final app = await example(several_isolates.buildApp());
 
       final response = await app.get('/whoami');
 
@@ -1943,8 +1989,8 @@ void main() {
       // Two applications from one factory share nothing. In a cluster that is
       // exactly what each isolate gets, and why an in-memory counter counts a
       // fraction of the traffic.
-      final first = await example(clustered.buildApp());
-      final second = await example(clustered.buildApp());
+      final first = await example(several_isolates.buildApp());
+      final second = await example(several_isolates.buildApp());
 
       await first.get('/whoami');
       await first.get('/whoami');

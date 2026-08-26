@@ -1,6 +1,6 @@
 name: dust_server
 description: Runtime support for Dust-generated Dart HTTP servers on shelf.
-version: 0.1.0-beta.1
+version: 0.1.0-beta.2
 homepage: https://github.com/y3l1n4ung/dust
 repository: https://github.com/y3l1n4ung/dust
 issue_tracker: https://github.com/y3l1n4ung/dust/issues

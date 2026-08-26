@@ -24,7 +24,7 @@ final class _Exporter implements SpanExporter {
 }
 
 /// Serves an upgrade route and an ordinary one, behind both layers.
-Future<ServerHandle> serve(
+Future<ServerHandle> serveObserved(
   List<Span> spans,
   List<AccessRecord> records,
 ) {
@@ -34,7 +34,7 @@ Future<ServerHandle> serve(
     ..route('/ws', ws((session) async => session.close()))
     ..route('/plain', get((request) async => const {'ok': true}));
 
-  return serveRouter(app, InternetAddress.loopbackIPv4, 0);
+  return serve(app, InternetAddress.loopbackIPv4, 0);
 }
 
 void main() {
@@ -46,7 +46,7 @@ void main() {
     setUp(() async {
       spans = [];
       records = [];
-      server = await serve(spans, records);
+      server = await serveObserved(spans, records);
     });
 
     tearDown(() => server.close(drain: const Duration(seconds: 1)));
@@ -109,7 +109,7 @@ void main() {
       // The fix must not make every throw look like a success.
       final failures = <Span>[];
       final logged = <AccessRecord>[];
-      final failing = await serveRouter(
+      final failing = await serve(
         Router(onError: (_, __) {})
           ..layer(Tracing(_Exporter(failures), serviceName: 'test'))
           ..layer(AccessLog(logged.add))

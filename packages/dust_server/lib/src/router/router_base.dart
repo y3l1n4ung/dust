@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:meta/meta.dart';
 import 'package:shelf/shelf.dart';
 
 import '../extraction/body_reader.dart';
 import '../extraction/state.dart';
 import 'composer.dart';
+import 'service.dart';
 import 'group_internals.dart';
 import 'method_router.dart';
 import 'middleware.dart';
@@ -23,7 +25,7 @@ import 'route.dart';
 ///   ..layer(Cors())
 ///   ..withState(repo);
 /// ```
-final class Router {
+final class Router implements Service {
   /// Creates an empty router.
   ///
   /// [bodyLimit] and [onError] are read from the outermost router only, since
@@ -227,4 +229,12 @@ final class Router {
   /// The result is cached, and changing the tree afterwards throws instead of
   /// producing a handler that ignores the change.
   Handler get handler => internals.composed ??= composeHandler(this);
+
+  /// Answers [request], so a router is usable wherever a [Handler] is.
+  ///
+  /// Dart tears this off implicitly when a router is passed to something
+  /// expecting a function, which is why `serve(app, ...)` needs no conversion —
+  /// the same reason `axum::serve(listener, app)` takes a `Router` directly.
+  @override
+  FutureOr<Response> call(Request request) => handler(request);
 }

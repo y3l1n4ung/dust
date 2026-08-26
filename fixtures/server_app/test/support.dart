@@ -29,7 +29,7 @@ final class TestApp {
     );
     // The same composition the entry point uses. A test that built its own
     // router would pass while `bin/server.dart` was broken.
-    final server = await serveRouter(
+    final server = await serve(
       buildApp(database),
       InternetAddress.loopbackIPv4,
       0,

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 
+import '../router/middleware.dart';
 import '../router/router_base.dart';
 import 'background.dart';
 
@@ -13,13 +14,14 @@ import 'background.dart';
 /// connections. What it does not do is tell you how many requests are still in
 /// flight, which is what a deployment needs before it takes the process away.
 final class ServerHandle {
-  ServerHandle._(this._server, this._inFlight, this._background)
+  ServerHandle._(this._server, this._inFlight, this._background, this._layers)
       : address = _server.address,
         port = _server.port;
 
   final HttpServer _server;
   final _InFlight _inFlight;
   final BackgroundTasks? _background;
+  final List<DisposableLayer> _layers;
 
   /// The address the server bound to.
   ///
@@ -38,7 +40,7 @@ final class ServerHandle {
 
   /// Stops accepting, then waits for the requests already accepted.
   ///
-  /// When a [BackgroundTasks] was passed to [serveRouter], its work is drained
+  /// When a [BackgroundTasks] was passed to [serve], its work is drained
   /// too, and within the same [drain] budget rather than a second one — the
   /// platform kills the process on its own schedule, and two budgets in series
   /// exceed it.
@@ -53,24 +55,47 @@ final class ServerHandle {
     final requestsSettled = await _inFlight.settled(drain);
 
     final background = _background;
-    if (background == null) return requestsSettled;
+    var tasksSettled = true;
 
-    // Whatever is left of the budget. A request that used all of it leaves
-    // nothing, and `close` reports the failure rather than waiting twice as long
-    // as it was told to.
-    final remaining = drain - deadline.elapsed;
-    final tasksSettled = await background.close(
-      within: remaining.isNegative ? Duration.zero : remaining,
-    );
+    if (background != null) {
+      // Whatever is left of the budget. A request that used all of it leaves
+      // nothing, and `close` reports the failure rather than waiting twice as
+      // long as it was told to.
+      final remaining = drain - deadline.elapsed;
+      tasksSettled = await background.close(
+        within: remaining.isNegative ? Duration.zero : remaining,
+      );
+    }
+
+    // After the tasks, because a background task may still be using whatever a
+    // layer owns. Always, because a server with no background work still has
+    // layers to release — an early return here left them open.
+    await _disposeLayers();
 
     return requestsSettled && tasksSettled;
+  }
+
+  /// Releases every [DisposableLayer] on the router, once.
+  ///
+  /// A layer that throws does not stop the others: shutdown has already
+  /// stopped accepting, and losing the rest of the teardown to one bad
+  /// `dispose` is worse than the error itself.
+  Future<void> _disposeLayers() async {
+    for (final layer in _layers) {
+      try {
+        await layer.dispose();
+      } catch (_) {
+        // Reported by the layer if it wants to be; shutdown continues.
+      }
+    }
+    _layers.clear();
   }
 }
 
 /// Serves [router], counting requests so shutdown can wait for them.
 ///
 /// [shared] lets several isolates bind the same port, which is what
-/// `serveCluster` uses; on its own a single server has no reason to set it.
+/// `serveIsolates` uses; on its own a single server has no reason to set it.
 ///
 /// [background] is drained alongside the requests. When it is omitted, a
 /// [BackgroundTasks] attached to [router] with `withState` is used instead — so
@@ -78,13 +103,13 @@ final class ServerHandle {
 /// extra wiring to be drained.
 ///
 /// ```dart
-/// final server = await serveRouter(app, InternetAddress.anyIPv4, 8080);
+/// final server = await serve(app, InternetAddress.anyIPv4, 8080);
 /// await ProcessSignal.sigterm.watch().first;
 /// await server.close(drain: const Duration(seconds: 15));
 /// ```
-Future<ServerHandle> serveRouter(
+Future<ServerHandle> serve(
   Router router,
-  Object address,
+  InternetAddress address,
   int port, {
   SecurityContext? securityContext,
   bool shared = false,
@@ -113,7 +138,7 @@ Future<ServerHandle> serveRouter(
     shared: shared,
   );
 
-  return ServerHandle._(server, inFlight, tasks);
+  return ServerHandle._(server, inFlight, tasks, disposableLayersIn(router));
 }
 
 /// Turns off output buffering for a response whose length is not known.

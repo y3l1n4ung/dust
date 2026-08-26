@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'error_reporting.dart';
 import 'dart:convert';
 
 import 'package:shelf/shelf.dart';
@@ -112,7 +113,8 @@ Response eventStream(
   Duration? keepAlive = const Duration(seconds: 15),
   int status = 200,
 }) {
-  final body = keepAlive == null ? events : _withKeepAlive(events, keepAlive);
+  final source = keepAlive == null ? events : _withKeepAlive(events, keepAlive);
+  final body = _reported(source);
 
   return Response(
     status,
@@ -170,4 +172,29 @@ Stream<ServerSentEvent> _withKeepAlive(
   );
 
   return controller.stream;
+}
+
+/// Reports an error from [events] the way a failing handler is reported.
+///
+/// The handler has already returned by the time the stream runs, so `guard`
+/// cannot see this: a generator that throws mid-stream reached the zone as an
+/// unhandled asynchronous error, went nowhere near the router's `onError`, and
+/// left the application with a dropped connection it could not explain.
+///
+/// The reporter is captured **here**, while `eventStream` is still being called
+/// inside the handler. `ServerErrors.reporter` is scoped to a zone, and by the
+/// time the stream is consumed the request's zone is gone — reading it then
+/// finds nothing, which is why routing the error through it at that point
+/// changed nothing.
+///
+/// The stream still ends rather than rethrowing. There is no way to answer an
+/// error status once the headers are sent, so the client sees the events stop —
+/// which is what an `EventSource` reconnects after.
+Stream<ServerSentEvent> _reported(Stream<ServerSentEvent> events) {
+  final reporter = ServerErrors.reporter;
+  if (reporter == null) return events;
+
+  return events.handleError((Object error, StackTrace stack) {
+    reporter(error, stack);
+  });
 }

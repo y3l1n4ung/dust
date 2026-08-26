@@ -29,7 +29,7 @@ import 'package:dust_server/server.dart';
 /// curl -s 'localhost:8080/raw?a=1&b=%20two'
 /// ```
 Future<void> main() async {
-  final server = await serveRouter(buildApp(), InternetAddress.anyIPv4, 8080);
+  final server = await serve(buildApp(), InternetAddress.anyIPv4, 8080);
   stdout.writeln('listening on http://${server.address.host}:${server.port}');
 
   await ProcessSignal.sigint.watch().first;

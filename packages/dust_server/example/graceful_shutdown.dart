@@ -36,7 +36,7 @@ import 'package:dust_server/server.dart';
 /// # the curl finishes; the server exits after it
 /// ```
 Future<void> main() async {
-  final server = await serveRouter(buildApp(), InternetAddress.anyIPv4, 8080);
+  final server = await serve(buildApp(), InternetAddress.anyIPv4, 8080);
   stdout.writeln('listening on http://${server.address.host}:${server.port}');
 
   // Both signals, so it behaves the same under a container runtime and under a

@@ -4,7 +4,7 @@ import 'package:dust_server/server.dart';
 
 /// Serving over TLS.
 ///
-/// `serveRouter` takes a `SecurityContext`, so terminating TLS in the Dart
+/// `serve` takes a `SecurityContext`, so terminating TLS in the Dart
 /// process is two extra lines. Whether you should is a separate question.
 ///
 /// **Most deployments should not.** A reverse proxy or load balancer in front —
@@ -47,13 +47,13 @@ Future<void> main(List<String> arguments) async {
     ..useCertificateChain(arguments[0])
     ..usePrivateKey(arguments[1]);
 
-  final https = await serveRouter(
+  final https = await serve(
     buildApp(),
     InternetAddress.anyIPv4,
     8443,
     securityContext: context,
   );
-  final http = await serveRouter(
+  final http = await serve(
     buildRedirectApp(port: 8443),
     InternetAddress.anyIPv4,
     8080,

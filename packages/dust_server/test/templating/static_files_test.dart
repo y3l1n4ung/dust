@@ -21,7 +21,7 @@ void main() {
       ..mount('/assets', staticFiles(root.path))
       ..fallback(singlePageApp('${root.path}/spa.html'));
 
-    server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+    server = await serve(app, InternetAddress.loopbackIPv4, 0);
   });
 
   tearDown(() async {

@@ -56,7 +56,7 @@ void main() {
     test('is served rather than failing to encode', () async {
       // It used to reach `jsonEncode`, which cannot encode a Stream, so the
       // natural way to send a large file answered 500.
-      final server = await serveRouter(
+      final server = await serve(
         Router()..route('/download', get((request) async => slowChunks())),
         InternetAddress.loopbackIPv4,
         0,
@@ -76,7 +76,7 @@ void main() {
     });
 
     test('reaches the client as it is produced', () async {
-      final server = await serveRouter(
+      final server = await serve(
         Router()..route('/download', get((request) async => slowChunks())),
         InternetAddress.loopbackIPv4,
         0,
@@ -95,7 +95,7 @@ void main() {
       // `Response.ok(stream)` is plain shelf, which buffers by default. Serving
       // turns that off when the length is unknown, so a hand-built response and
       // a mounted third-party handler stream like everything else.
-      final server = await serveRouter(
+      final server = await serve(
         Router()
           ..route('/raw', get((request) async => Response.ok(slowChunks()))),
         InternetAddress.loopbackIPv4,
@@ -111,7 +111,7 @@ void main() {
 
     test('a mounted handler streams too', () async {
       // Whatever is mounted has never heard of Dust and cannot opt in itself.
-      final server = await serveRouter(
+      final server = await serve(
         Router()..mount('/', (request) async => Response.ok(slowChunks())),
         InternetAddress.loopbackIPv4,
         0,
@@ -125,7 +125,7 @@ void main() {
     test('asking for buffering is still respected', () async {
       // Worth having for a body that arrives as very many tiny chunks, where
       // one write each is slower than one write.
-      final server = await serveRouter(
+      final server = await serve(
         Router()
           ..route(
             '/buffered',
@@ -147,7 +147,7 @@ void main() {
 
     test('a response with a known length is left alone', () async {
       // One write either way, so buffering costs nothing and helps.
-      final server = await serveRouter(
+      final server = await serve(
         Router()..route('/json', get((request) async => const {'ok': true})),
         InternetAddress.loopbackIPv4,
         0,
@@ -195,7 +195,7 @@ void main() {
     });
 
     test('delivers incrementally', () async {
-      final server = await serveRouter(
+      final server = await serve(
         Router()
           ..route(
             '/csv',
@@ -215,7 +215,7 @@ void main() {
 
   group('an event stream', () {
     test('delivers its events as they happen, not all at the end', () async {
-      final server = await serveRouter(
+      final server = await serve(
         Router()..route('/events', get(ticks)),
         InternetAddress.loopbackIPv4,
         0,
@@ -234,7 +234,7 @@ void main() {
     });
 
     test('the first event does not wait for the last', () async {
-      final server = await serveRouter(
+      final server = await serve(
         Router()..route('/events', get(ticks)),
         InternetAddress.loopbackIPv4,
         0,
@@ -282,7 +282,7 @@ void main() {
     test('streams through the compression layer too', () async {
       // Compression is allowed to gzip an event stream, but it must not turn it
       // back into a buffer while doing so.
-      final server = await serveRouter(
+      final server = await serve(
         Router()
           ..layer(const Compression())
           ..route('/events', get(ticks)),

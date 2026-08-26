@@ -37,7 +37,7 @@ void main() {
       }))
       ..route('/quick', get((request) async => {'ok': true}));
 
-    server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+    server = await serve(app, InternetAddress.loopbackIPv4, 0);
   });
 
   tearDown(() => server.close(drain: const Duration(seconds: 2)));

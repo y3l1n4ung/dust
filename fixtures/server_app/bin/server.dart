@@ -17,7 +17,7 @@ Future<void> main(List<String> arguments) async {
   final port = int.tryParse(Platform.environment['PORT'] ?? '') ?? 8080;
 
   final database = AppDatabase.open(path, options: appOptions);
-  final server = await serveRouter(
+  final server = await serve(
     buildApp(database),
     InternetAddress.anyIPv4,
     port,

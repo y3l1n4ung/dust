@@ -13,3 +13,4 @@ export 'path_segment.dart';
 export 'paths.dart';
 export 'route.dart';
 export 'router_base.dart';
+export 'service.dart';

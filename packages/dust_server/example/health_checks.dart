@@ -33,7 +33,7 @@ import 'package:dust_server/server.dart';
 /// ```
 Future<void> main() async {
   final checks = HealthChecks();
-  final server = await serveRouter(
+  final server = await serve(
     buildApp(checks),
     InternetAddress.anyIPv4,
     8080,

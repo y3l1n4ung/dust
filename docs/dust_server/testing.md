@@ -78,7 +78,7 @@ expect(response.statusCode, 200);
 For anything touching encoding, upgrades, or shutdown, serve it:
 
 ```dart
-final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+final server = await serve(app, InternetAddress.loopbackIPv4, 0);
 addTearDown(server.close);
 
 final response = await http.get(
@@ -107,7 +107,7 @@ expect(await response.readAsString(), '["only"]');
 
 Fast enough to run thousands of, and right for statuses, bodies, and headers.
 
-**`serveRouter` on port 0** goes over a real socket with a real client. Slower,
+**`serve` on port 0** goes over a real socket with a real client. Slower,
 and the only way to catch what the wire does — gzip, chunked bodies, `HEAD`
 dropping a body, a WebSocket upgrade:
 

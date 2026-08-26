@@ -17,6 +17,5 @@
 library;
 
 export 'package:shelf/shelf.dart' show Handler, Middleware, Request, Response;
-export 'package:shelf/shelf_io.dart' show serve;
 
 export 'src/router/router.dart';

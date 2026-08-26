@@ -9,7 +9,7 @@ final app = Router()
   ..nest('/api', apiRoutes)
   ..fallback(staticFiles('build/web', html: true));
 
-await serveRouter(app, InternetAddress.anyIPv4, 8080);
+await serve(app, InternetAddress.anyIPv4, 8080);
 ```
 
 `fallback` is the right place for it. API routes win, and everything they do

@@ -6,6 +6,100 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0-beta.2] - 2026-08-25
+
+Naming, brought in line with axum. All three are breaking, with no deprecated
+forwarders — the package is one release old and the names are wrong now rather
+than later. See [axum parity](https://github.com/y3l1n4ung/dust/blob/main/docs/design/server-axum-parity.md).
+
+### Changed
+
+- `serveRouter` is now `serve`. The old name described its argument's type,
+  which the caller can already see.
+- `serve` takes an `InternetAddress` rather than an `Object`. `HttpServer.bind`
+  accepts a `String` host, which buys a hidden DNS lookup and a typo that fails
+  at runtime; `InternetAddress.anyIPv4` and `.loopbackIPv4` say what `0.0.0.0`
+  and `127.0.0.1` mean and cannot be mistyped. `serveIsolates` already took one.
+- `serveIsolates` requires `isolates:`. The old default of two was neither
+  "one, explicitly" nor "use the machine".
+- `serveCluster` is now `serveIsolates`, and `ServerCluster` is now
+  `ServerIsolates`. "Cluster" reads as multiple machines; this forks isolates on
+  one box, the way `uvicorn --workers` forks processes. Naming the isolate is
+  also the clearest warning that state does not cross one.
+
+### Added
+
+- `DisposableLayer`, a `Layer` that also declares `dispose()`. Shutdown walks
+  the router — nested groups and `routeLayer` included — and releases each one
+  after background work has drained. A `dispose` that throws does not stop the
+  others. Separate from `Layer` because Dart's `implements` requires every
+  member re-declared, so adding a method there would break every existing layer.
+- `ServerIsolates.alive` and an `onIsolateError` callback on `serveIsolates`.
+  A dead isolate was invisible: the port stays bound by the survivors, so
+  traffic kept flowing at reduced capacity with nothing to say so. It still
+  cannot be restarted — killing an isolate does not release its socket, so a
+  replacement cannot rebind the port — but the loss is no longer silent.
+- `Service`, with `Router` implementing it. Dart tears off `call` implicitly, so
+  a router is assignable to a shelf `Handler` with no conversion — the same
+  reason `axum::serve(listener, app)` takes a `Router` directly.
+
+### Examples
+
+- `disposable_layers.dart` — releasing what a layer owns, on shutdown.
+- `router_as_handler.dart` — handing a router to `shelf` middleware, since
+  `Router` implements `Service` and is therefore already a `Handler`.
+- `isolate_failure.dart` — knowing when a serving isolate dies, and why it
+  cannot be replaced.
+
+### Fixed
+
+- A response header carrying a control character now answers 500 and reports
+  through `onError`. `dart:io` refuses to write one — which is what stops a
+  response being split — but it threw inside `shelf_io` after the handler had
+  returned, outside every catch in the package. The request never completed,
+  the client waited until it timed out, and nothing in the log said which
+  handler did it: a leaked connection and an invisible failure. Tab is still
+  allowed; every other control character is refused.
+- A server-sent events generator that throws now reaches `onError`. The
+  handler has returned long before the stream runs, so `guard` never saw it:
+  the error arrived in the zone as an unhandled asynchronous failure, the
+  client got a dropped connection, and the application had no record of why.
+  The reporter is captured while the handler is still on the stack, because
+  `ServerErrors.reporter` is zone-scoped and the request's zone is gone by the
+  time the stream is consumed.
+- `RequestId` no longer echoes an arbitrary inbound header. The value reaches
+  the response and every access log line, so an unchecked one handed a client
+  kilobytes of the log per request — a 4096-character id was echoed verbatim.
+  An inbound id longer than `maxLength` (128 by default) or carrying anything
+  outside `A-Z a-z 0-9 - _ .` is replaced by a generated one.
+- A `DisposableLayer` used on more than one router is disposed once, by
+  identity, rather than once per registration. A layer applied at the root and
+  again on a subtree owns one resource, and closing it twice failed silently
+  because the guard around `dispose` swallows the second error. Deduplication
+  is by identity, not equality: two separate instances that compare equal each
+  own their own resource, and collapsing them would leak one.
+- `serveIsolates` no longer hangs forever when the router factory throws
+  inside a spawned isolate. It waited on a port the isolate writes to only
+  after the factory has already succeeded, so a factory that works in the
+  parent and fails in the child — a locked file, an environment variable read
+  per isolate, anything the parent already holds — left the server never
+  started and nothing logged. It now fails with the isolate named and the
+  original error attached, and cleans up: no port left bound, no isolate left
+  running.
+- Numeric coercion no longer accepts surrounding whitespace. Dart's parsers
+  trim before parsing, so `?id=%2010` and `?id=10` produced the same number
+  from two different requests, and anything keyed on the raw text — a cache
+  key, a rate-limit bucket, a dedup check — disagreed with the handler about
+  which request it had. Applies to `int`, `double`, `num`, and `BigInt`. This
+  is the same class as the `0x` prefix already rejected, which the earlier fix
+  did not cover.
+
+### Removed
+
+- `package:dust_server/router.dart` no longer re-exports shelf's `serve`. It
+  occupied the name the package needed for its own entry point. Import
+  `package:shelf/shelf_io.dart` directly if you were using it.
+
 ## [0.1.0-beta.1] - 2026-08-24
 
 First beta, and the first release of this package. The runtime is complete
@@ -45,7 +139,7 @@ one.
 - No metrics, sessions, or rate limiting in the runtime. Each is policy, and each
   ships as an example instead.
 - Range requests work for static files, not for a dynamic body.
-- `serveCluster` gives each isolate its own state; anything shared belongs
+- `serveIsolates` gives each isolate its own state; anything shared belongs
   outside the process.
 
 ### Seventeen defects found and fixed before this beta

@@ -26,7 +26,6 @@ void main() {
       expect(app.handler, isA<router.Handler>());
       expect(router.normalizePrefix('api/'), '/api');
       expect(const router.MethodRouter().handlers, isEmpty);
-      expect(router.serve, isA<Function>());
     });
 
     test('names every verb builder', () {

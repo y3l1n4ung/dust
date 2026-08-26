@@ -125,7 +125,7 @@ Response noContent() => Response(204);
 /// ```
 Future<Response> guard(Future<Response> Function() body) async {
   try {
-    return await body();
+    return _checkHeaders(await body());
   } on Rejection catch (rejection) {
     return rejection.intoResponse();
   } on HijackException {
@@ -136,4 +136,46 @@ Future<Response> guard(Future<Response> Function() body) async {
     ServerErrors.report(error, stack);
     return const Rejection.internal().intoResponse();
   }
+}
+
+/// Rejects a response carrying a header value `dart:io` will refuse to write.
+///
+/// A control character in a header value is how a response gets split, so
+/// `HttpHeaders.set` throws a `FormatException` on one. That happens inside
+/// `shelf_io`, after the handler has returned and outside every catch here, and
+/// the result is worse than an error: the request never completes, the client
+/// waits until it times out, and `onError` is never called, so nothing in the
+/// log says which handler did it.
+///
+/// Catching it here turns a hung connection into a 500 and a reported error.
+/// The response is not repaired — a handler that meant to send two headers has
+/// a bug, and guessing which one it wanted would hide it.
+Response _checkHeaders(Response response) {
+  for (final entry in response.headers.entries) {
+    if (_hasControlCharacter(entry.value)) {
+      ServerErrors.report(
+        FormatException(
+          'header "${entry.key}" carries a control character, which cannot be '
+          'written and would split the response',
+          entry.value,
+        ),
+        StackTrace.current,
+      );
+      return const Rejection.internal().intoResponse();
+    }
+  }
+  return response;
+}
+
+/// Whether [value] holds anything `dart:io` rejects in a header value.
+///
+/// Everything below `0x20` except tab, plus DEL. CR and LF are the dangerous
+/// pair; the rest cannot be written either, so refusing them together keeps the
+/// check honest rather than only guarding the exploit everyone knows.
+bool _hasControlCharacter(String value) {
+  for (final unit in value.codeUnits) {
+    if (unit == 0x09) continue;
+    if (unit < 0x20 || unit == 0x7f) return true;
+  }
+  return false;
 }
