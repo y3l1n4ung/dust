@@ -43,6 +43,23 @@ than later. See [axum parity](https://github.com/y3l1n4ung/dust/blob/main/docs/d
   a router is assignable to a shelf `Handler` with no conversion — the same
   reason `axum::serve(listener, app)` takes a `Router` directly.
 
+### Fixed
+
+- A response header carrying a control character now answers 500 and reports
+  through `onError`. `dart:io` refuses to write one — which is what stops a
+  response being split — but it threw inside `shelf_io` after the handler had
+  returned, outside every catch in the package. The request never completed,
+  the client waited until it timed out, and nothing in the log said which
+  handler did it: a leaked connection and an invisible failure. Tab is still
+  allowed; every other control character is refused.
+- Numeric coercion no longer accepts surrounding whitespace. Dart's parsers
+  trim before parsing, so `?id=%2010` and `?id=10` produced the same number
+  from two different requests, and anything keyed on the raw text — a cache
+  key, a rate-limit bucket, a dedup check — disagreed with the handler about
+  which request it had. Applies to `int`, `double`, `num`, and `BigInt`. This
+  is the same class as the `0x` prefix already rejected, which the earlier fix
+  did not cover.
+
 ### Removed
 
 - `package:dust_server/router.dart` no longer re-exports shelf's `serve`. It

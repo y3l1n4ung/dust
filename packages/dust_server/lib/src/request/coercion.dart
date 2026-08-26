@@ -17,10 +17,13 @@ Type typeOf<X>() => X;
 /// `bool` accepts `true`, `false`, `1`, and `0`, and treats a bare flag with an
 /// empty value as `true`, matching how query flags are usually written.
 ///
-/// Integers are decimal only. `int.tryParse` reads `0x10` as 16 by default,
-/// which means `?id=0x10` and `?id=16` would name the same record and a check
-/// written against the text would miss one of them. A request carries decimal,
-/// so anything else is a 400.
+/// Integers are decimal only, and are not padded with whitespace. Dart's
+/// parsers are lenient in two ways a request should not be: `int.tryParse`
+/// reads `0x10` as 16, and every numeric parser skips surrounding whitespace,
+/// so `?id=0x10`, `?id=%2010`, and `?id=10` would all name the same record.
+/// Anything keyed on the raw text — a cache key, a rate-limit bucket, a dedup
+/// check — then disagrees with the handler about which request this was. A
+/// request carries a bare decimal number, so anything else is a 400.
 Result<T, Rejection> coerce<T>(String raw, {required String source}) {
   Rejection bad(String type) =>
       Rejection.badRequest('$source is not a valid $type');
@@ -29,15 +32,15 @@ Result<T, Rejection> coerce<T>(String raw, {required String source}) {
     return Ok(raw as T);
   }
   if (T == int || T == typeOf<int?>()) {
-    final value = int.tryParse(raw, radix: 10);
+    final value = _padded(raw) ? null : int.tryParse(raw, radix: 10);
     return value == null ? Err(bad('integer')) : Ok(value as T);
   }
   if (T == double || T == typeOf<double?>()) {
-    final value = double.tryParse(raw);
+    final value = _padded(raw) ? null : double.tryParse(raw);
     return value == null ? Err(bad('number')) : Ok(value as T);
   }
   if (T == num || T == typeOf<num?>()) {
-    final value = num.tryParse(raw);
+    final value = _padded(raw) ? null : num.tryParse(raw);
     return value == null ? Err(bad('number')) : Ok(value as T);
   }
   if (T == bool || T == typeOf<bool?>()) {
@@ -49,7 +52,7 @@ Result<T, Rejection> coerce<T>(String raw, {required String source}) {
     return value == null ? Err(bad('boolean')) : Ok(value as T);
   }
   if (T == BigInt || T == typeOf<BigInt?>()) {
-    final value = BigInt.tryParse(raw, radix: 10);
+    final value = _padded(raw) ? null : BigInt.tryParse(raw, radix: 10);
     return value == null ? Err(bad('integer')) : Ok(value as T);
   }
   if (T == DateTime || T == typeOf<DateTime?>()) {
@@ -63,3 +66,10 @@ Result<T, Rejection> coerce<T>(String raw, {required String source}) {
 
   throw ArgumentError('dust_server cannot coerce a request value to $T');
 }
+
+/// Whether [raw] carries whitespace a numeric parser would skip.
+///
+/// Dart's `int.tryParse`, `double.tryParse`, `num.tryParse`, and
+/// `BigInt.tryParse` all trim before parsing, so `" 5"`, `"5 "`, and `"5"`
+/// produce the same number from three different requests.
+bool _padded(String raw) => raw.trim().length != raw.length;
