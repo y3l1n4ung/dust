@@ -36,6 +36,13 @@ is the application's decision.
 not. It cannot **cancel** the handler: Dart has no cancellation, so the work
 keeps running with nobody waiting for it.
 
+It also bounds *producing* the response, not sending it. A handler that returns
+straight away with a streamed body — an event stream, a large download — has
+already met the budget, and the stream then runs for as long as it likes. Put
+this layer above an SSE endpoint and it protects nothing there. Bound those in
+the stream itself, with `take`, a timeout on the source, or a keep-alive the
+client has to answer.
+
 ## Trying it
 
 One example per layer, each under 60 lines. The two worth running first are the

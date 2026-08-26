@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:async';
 
 import 'package:meta/meta.dart';
@@ -147,7 +148,16 @@ BackgroundTasks? backgroundTasksIn(Router router) {
 /// the server starts, since a router is closed to further building by then.
 @internal
 List<DisposableLayer> disposableLayersIn(Router router) {
-  final found = <DisposableLayer>[];
+  // By identity, not equality. One layer instance applied to two routers — a
+  // rate limiter at the root and again on a subtree, a layer built once and
+  // merged into several groups — owns one resource and must be released once.
+  // Equality would be worse than useless here: a layer written as a const, or
+  // one deriving `==` from its configuration, would collapse two genuinely
+  // separate instances into one and leak whichever lost.
+  final found = LinkedHashSet<DisposableLayer>(
+    equals: identical,
+    hashCode: identityHashCode,
+  );
 
   void walk(Router group) {
     for (final entry in [
@@ -160,5 +170,5 @@ List<DisposableLayer> disposableLayersIn(Router router) {
   }
 
   walk(router);
-  return found;
+  return found.toList();
 }

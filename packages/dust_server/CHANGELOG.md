@@ -60,6 +60,12 @@ than later. See [axum parity](https://github.com/y3l1n4ung/dust/blob/main/docs/d
   the client waited until it timed out, and nothing in the log said which
   handler did it: a leaked connection and an invisible failure. Tab is still
   allowed; every other control character is refused.
+- A `DisposableLayer` used on more than one router is disposed once, by
+  identity, rather than once per registration. A layer applied at the root and
+  again on a subtree owns one resource, and closing it twice failed silently
+  because the guard around `dispose` swallows the second error. Deduplication
+  is by identity, not equality: two separate instances that compare equal each
+  own their own resource, and collapsing them would leak one.
 - `serveIsolates` no longer hangs forever when the router factory throws
   inside a spawned isolate. It waited on a port the isolate writes to only
   after the factory has already succeeded, so a factory that works in the
