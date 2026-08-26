@@ -116,7 +116,7 @@ void main() {
   });
 
   group('discovery from state', () {
-    test('serveRouter finds a registry attached with withState', () async {
+    test('serve finds a registry attached with withState', () async {
       // The only way a clustered server can drain one: each isolate builds its
       // registry inside the factory, so nothing outside can hand it in.
       final tasks = BackgroundTasks(onError: (_, __) {});
@@ -134,7 +134,7 @@ void main() {
         ..withState(tasks);
 
       // No `background:` argument.
-      final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+      final server = await serve(app, InternetAddress.loopbackIPv4, 0);
 
       await http.post(
         Uri.parse('http://${server.address.host}:${server.port}/go'),
@@ -154,7 +154,7 @@ void main() {
         ..route('/', get((request) async => const {'ok': true}))
         ..withState(attached);
 
-      final server = await serveRouter(
+      final server = await serve(
         app,
         InternetAddress.loopbackIPv4,
         0,
@@ -168,7 +168,7 @@ void main() {
     });
 
     test('no registry anywhere leaves pendingTasks at zero', () async {
-      final server = await serveRouter(
+      final server = await serve(
         Router()..route('/', get((request) async => const {'ok': true})),
         InternetAddress.loopbackIPv4,
         0,
@@ -201,7 +201,7 @@ void main() {
         }))
         ..withState(tasks);
 
-      final server = await serveRouter(
+      final server = await serve(
         app,
         InternetAddress.loopbackIPv4,
         0,
@@ -238,7 +238,7 @@ void main() {
         }))
         ..withState(tasks);
 
-      final server = await serveRouter(
+      final server = await serve(
         app,
         InternetAddress.loopbackIPv4,
         0,
@@ -283,7 +283,7 @@ void main() {
   });
 
   group('a served application', () {
-    Future<({ServerHandle server, BackgroundTasks tasks})> serve(
+    Future<({ServerHandle server, BackgroundTasks tasks})> startServer(
       Completer<void> gate,
       List<String> done,
     ) async {
@@ -299,7 +299,7 @@ void main() {
         }))
         ..withState(tasks);
 
-      final server = await serveRouter(
+      final server = await serve(
         app,
         InternetAddress.loopbackIPv4,
         0,
@@ -312,7 +312,7 @@ void main() {
       // The whole point of backgrounding it.
       final gate = Completer<void>();
       final done = <String>[];
-      final served = await serve(gate, done);
+      final served = await startServer(gate, done);
 
       final response = await http.post(
         Uri.parse('http://${served.server.address.host}:'
@@ -332,7 +332,7 @@ void main() {
       // Before this existed the task was simply killed, silently.
       final gate = Completer<void>();
       final done = <String>[];
-      final served = await serve(gate, done);
+      final served = await startServer(gate, done);
 
       await http.post(
         Uri.parse('http://${served.server.address.host}:'
@@ -351,7 +351,7 @@ void main() {
     test('shutdown reports false when a task outlasts the budget', () async {
       final gate = Completer<void>();
       final done = <String>[];
-      final served = await serve(gate, done);
+      final served = await startServer(gate, done);
 
       await http.post(
         Uri.parse('http://${served.server.address.host}:'
@@ -367,7 +367,7 @@ void main() {
     });
 
     test('pendingTasks is zero without a registry', () async {
-      final server = await serveRouter(
+      final server = await serve(
         Router()..route('/', get((request) async => const {'ok': true})),
         InternetAddress.loopbackIPv4,
         0,

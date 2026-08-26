@@ -20,7 +20,7 @@ import '../tracing/tracing_layer.dart';
 ///
 /// ```dart
 /// final tasks = BackgroundTasks();
-/// final server = await serveRouter(app, address, 8080, background: tasks);
+/// final server = await serve(app, address, 8080, background: tasks);
 ///
 /// Future<Order> checkout(Request request) async {
 ///   final order = await shop.place(basket);
@@ -130,7 +130,7 @@ final class _TaskFailed {
 /// The [BackgroundTasks] attached to [router] with `withState`, when there is
 /// one.
 ///
-/// Lets `serveRouter` find a registry the caller did not hand it, which is the
+/// Lets `serve` find a registry the caller did not hand it, which is the
 /// only way a clustered server can drain one: each isolate builds its own inside
 /// the factory, so nothing outside can pass it in.
 @internal

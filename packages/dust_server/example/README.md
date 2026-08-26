@@ -100,7 +100,7 @@ repository.
 | Shutting down without dropping requests in flight | [`graceful_shutdown.dart`](graceful_shutdown.dart) |
 | Work that outlives the response | [`background_tasks.dart`](background_tasks.dart) |
 | Spans, and continuing a trace that started upstream | [`tracing.dart`](tracing.dart) |
-| Using every core | [`clustered_isolates.dart`](clustered_isolates.dart) |
+| Using every core | [`several_isolates.dart`](several_isolates.dart) |
 | Serving over TLS | [`tls.dart`](tls.dart) |
 | Counting requests and timing them | [`metrics.dart`](metrics.dart) |
 | Signed sessions over the cookie extractor | [`sessions.dart`](sessions.dart) |

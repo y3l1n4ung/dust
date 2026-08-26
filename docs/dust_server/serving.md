@@ -3,7 +3,7 @@
 ## One isolate
 
 ```dart
-final server = await serveRouter(app, InternetAddress.anyIPv4, 8080);
+final server = await serve(app, InternetAddress.anyIPv4, 8080);
 stdout.writeln('listening on ${server.address.host}:${server.port}');
 ```
 
@@ -34,7 +34,7 @@ the machine has. Isolates do not share memory, so reaching the other cores
 means running the server several times over rather than adding threads to it.
 
 > [!IMPORTANT]
-> `serveRouter` alone uses **one** core. On a four-core machine that is three
+> `serve` alone uses **one** core. On a four-core machine that is three
 > quarters of the hardware idle, under any load, with nothing in the logs to
 > say so. Nothing warns you, and the throughput ceiling looks like the
 > application's rather than the process's.
@@ -55,7 +55,7 @@ the operating system balances between them.
 ```dart
 Router buildApp() => Router()..route('/', get(home));
 
-final cluster = await serveCluster(
+final cluster = await serveIsolates(
   buildApp,
   InternetAddress.anyIPv4,
   8080,
@@ -72,14 +72,14 @@ cache or a counter, belongs outside the process.
 
 ## TLS
 
-`serveRouter` takes a `SecurityContext`:
+`serve` takes a `SecurityContext`:
 
 ```dart
 final context = SecurityContext()
   ..useCertificateChain('fullchain.pem')
   ..usePrivateKey('privkey.pem');
 
-await serveRouter(app, InternetAddress.anyIPv4, 443, securityContext: context);
+await serve(app, InternetAddress.anyIPv4, 443, securityContext: context);
 ```
 
 Most deployments terminate TLS upstream instead, at a load balancer or a reverse
@@ -121,12 +121,12 @@ it.
 work mid-flight with nothing logged. A customer gets their 201 and never gets
 their email.
 
-`BackgroundTasks` closes that hole. Pass one to `serveRouter` and it is drained
+`BackgroundTasks` closes that hole. Pass one to `serve` and it is drained
 alongside the requests, inside the same budget:
 
 ```dart
 final tasks = BackgroundTasks();
-final server = await serveRouter(app, address, 8080, background: tasks);
+final server = await serve(app, address, 8080, background: tasks);
 
 // in a handler
 final tasks = await request.state<BackgroundTasks>();
@@ -160,7 +160,7 @@ curl -s localhost:8080/receipts
 The receipt is empty because the handler returned before the task ran — which is
 the point. `server.pendingTasks` reads 1 at that moment, and `close` waits for it.
 
-Using every core is `dart run example/clustered_isolates.dart`:
+Using every core is `dart run example/several_isolates.dart`:
 
 ```bash
 for i in $(seq 6); do curl -s localhost:8080/whoami; echo; done

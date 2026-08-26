@@ -38,7 +38,7 @@ final class ServerHandle {
 
   /// Stops accepting, then waits for the requests already accepted.
   ///
-  /// When a [BackgroundTasks] was passed to [serveRouter], its work is drained
+  /// When a [BackgroundTasks] was passed to [serve], its work is drained
   /// too, and within the same [drain] budget rather than a second one — the
   /// platform kills the process on its own schedule, and two budgets in series
   /// exceed it.
@@ -70,7 +70,7 @@ final class ServerHandle {
 /// Serves [router], counting requests so shutdown can wait for them.
 ///
 /// [shared] lets several isolates bind the same port, which is what
-/// `serveCluster` uses; on its own a single server has no reason to set it.
+/// `serveIsolates` uses; on its own a single server has no reason to set it.
 ///
 /// [background] is drained alongside the requests. When it is omitted, a
 /// [BackgroundTasks] attached to [router] with `withState` is used instead — so
@@ -78,11 +78,11 @@ final class ServerHandle {
 /// extra wiring to be drained.
 ///
 /// ```dart
-/// final server = await serveRouter(app, InternetAddress.anyIPv4, 8080);
+/// final server = await serve(app, InternetAddress.anyIPv4, 8080);
 /// await ProcessSignal.sigterm.watch().first;
 /// await server.close(drain: const Duration(seconds: 15));
 /// ```
-Future<ServerHandle> serveRouter(
+Future<ServerHandle> serve(
   Router router,
   Object address,
   int port, {

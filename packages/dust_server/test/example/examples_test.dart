@@ -12,7 +12,7 @@ import '../../example/compression.dart' as compression;
 import '../../example/background_tasks.dart' as background_tasks;
 import '../../example/body_limits.dart' as body_limits;
 import '../../example/client_ip.dart' as client_ip;
-import '../../example/clustered_isolates.dart' as clustered;
+import '../../example/several_isolates.dart' as several_isolates;
 import '../../example/cors.dart' as cors;
 import '../../example/cookies.dart' as cookies;
 import '../../example/credential_schemes.dart' as credential_schemes;
@@ -1822,7 +1822,7 @@ void main() {
     test('a request already accepted finishes after close begins', () async {
       // The whole point. A process that exits on the signal drops these, and
       // they are the slow ones — the ones most likely to be mid-write.
-      final app = await ExampleApp.serve(graceful_shutdown.buildApp());
+      final app = await ExampleApp.start(graceful_shutdown.buildApp());
 
       final slow = app.get('/slow');
       await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -1835,7 +1835,7 @@ void main() {
     test('close reports whether everything finished', () async {
       // The return value is the only way to learn that requests were abandoned,
       // and it is the thing most code throws away.
-      final app = await ExampleApp.serve(graceful_shutdown.buildApp());
+      final app = await ExampleApp.start(graceful_shutdown.buildApp());
 
       await app.get('/quick');
 
@@ -1843,7 +1843,7 @@ void main() {
     });
 
     test('nothing new is accepted once close has begun', () async {
-      final app = await ExampleApp.serve(graceful_shutdown.buildApp());
+      final app = await ExampleApp.start(graceful_shutdown.buildApp());
       final origin = app.origin;
 
       await app.stop();
@@ -1926,11 +1926,11 @@ void main() {
     });
   });
 
-  group('clustered_isolates', () {
+  group('several_isolates', () {
     test('the factory builds a working application on its own', () async {
       // The cluster itself is covered by the runtime's serving tests. What this
       // example owns is that its factory is a valid top-level one.
-      final app = await example(clustered.buildApp());
+      final app = await example(several_isolates.buildApp());
 
       final response = await app.get('/whoami');
 
@@ -1943,8 +1943,8 @@ void main() {
       // Two applications from one factory share nothing. In a cluster that is
       // exactly what each isolate gets, and why an in-memory counter counts a
       // fraction of the traffic.
-      final first = await example(clustered.buildApp());
-      final second = await example(clustered.buildApp());
+      final first = await example(several_isolates.buildApp());
+      final second = await example(several_isolates.buildApp());
 
       await first.get('/whoami');
       await first.get('/whoami');

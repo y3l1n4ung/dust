@@ -36,7 +36,7 @@ import 'package:dust_server/server.dart';
 ///
 /// Each prints one line per span on the server's stdout.
 Future<void> main() async {
-  final server = await serveRouter(
+  final server = await serve(
     buildApp(exporter: const PrintSpans()),
     InternetAddress.anyIPv4,
     8080,

@@ -38,7 +38,7 @@ import 'package:dust_server/server.dart';
 Future<void> main() async {
   final root = await _buildDirectory();
   final server =
-      await serveRouter(buildApp(root.path), InternetAddress.anyIPv4, 8080);
+      await serve(buildApp(root.path), InternetAddress.anyIPv4, 8080);
   stdout.writeln('serving ${root.path} on http://localhost:${server.port}');
 
   await ProcessSignal.sigint.watch().first;

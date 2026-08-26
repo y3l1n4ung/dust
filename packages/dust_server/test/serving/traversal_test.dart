@@ -42,7 +42,7 @@ void main() {
       secret = File('${root.parent.path}/dust-test-secret.txt');
       await secret.writeAsString('TOP SECRET');
 
-      server = await serveRouter(
+      server = await serve(
         Router()..mount('/', staticFiles(root.path)),
         InternetAddress.loopbackIPv4,
         0,
@@ -91,7 +91,7 @@ void main() {
     test('a single-page fallback does not become a traversal', () async {
       // With `html: true` an unknown path answers the document. That must be
       // the document, and never a file from outside the directory.
-      final spa = await serveRouter(
+      final spa = await serve(
         Router()..mount('/', staticFiles(root.path, html: true)),
         InternetAddress.loopbackIPv4,
         0,

@@ -28,7 +28,7 @@ void main() {
         return {'text': info.toString()};
       }));
 
-    server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+    server = await serve(app, InternetAddress.loopbackIPv4, 0);
   });
 
   tearDown(() => server.close());

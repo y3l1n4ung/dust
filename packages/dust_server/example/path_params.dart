@@ -37,7 +37,7 @@ import 'package:dust_server/server.dart';
 /// curl -s localhost:8080/teams/dust/members/ada
 /// ```
 Future<void> main() async {
-  final server = await serveRouter(buildApp(), InternetAddress.anyIPv4, 8080);
+  final server = await serve(buildApp(), InternetAddress.anyIPv4, 8080);
   stdout.writeln('listening on http://${server.address.host}:${server.port}');
 
   await ProcessSignal.sigint.watch().first;

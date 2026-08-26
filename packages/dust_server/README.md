@@ -41,7 +41,7 @@ final app = Router()
   ..withState(repository)
   ..fallback(singlePageApp('web/index.html'));
 
-final server = await serveRouter(app, InternetAddress.anyIPv4, 8080);
+final server = await serve(app, InternetAddress.anyIPv4, 8080);
 ```
 
 HTTP, WebSockets, server-rendered HTML, static assets, and isolate clustering,

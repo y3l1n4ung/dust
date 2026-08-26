@@ -25,7 +25,7 @@ import 'package:dust_server/server.dart';
 Future<void> main() async {
   final app = Router()..route('/health', get(health));
 
-  await serveRouter(app, InternetAddress.loopbackIPv4, 8080);
+  await serve(app, InternetAddress.loopbackIPv4, 8080);
 }
 
 Future<Map<String, Object?>> health(Request request) async => {'ok': true};
@@ -295,7 +295,7 @@ serves answers 404. `HEAD` falls back to `GET`.
 ## 11. Running it
 
 ```dart
-final server = await serveRouter(app, InternetAddress.anyIPv4, 8080);
+final server = await serve(app, InternetAddress.anyIPv4, 8080);
 
 await ProcessSignal.sigint.watch().first;
 await server.close(drain: const Duration(seconds: 10));

@@ -35,7 +35,7 @@ Router buildWedgingApp() {
 void main() {
   group('closing a cluster with a wedged isolate', () {
     test('returns instead of waiting forever', () async {
-      final cluster = await serveCluster(
+      final cluster = await serveIsolates(
         buildWedgingApp,
         InternetAddress.loopbackIPv4,
         0,
@@ -52,7 +52,7 @@ void main() {
     }, timeout: const Timeout(Duration(seconds: 40)));
 
     test('gives up after the drain budget plus its grace period', () async {
-      final cluster = await serveCluster(
+      final cluster = await serveIsolates(
         buildWedgingApp,
         InternetAddress.loopbackIPv4,
         0,
@@ -72,7 +72,7 @@ void main() {
     }, timeout: const Timeout(Duration(seconds: 40)));
 
     test('leaves the killed isolate holding its share of the port', () async {
-      final cluster = await serveCluster(
+      final cluster = await serveIsolates(
         buildWedgingApp,
         InternetAddress.loopbackIPv4,
         0,

@@ -6,11 +6,11 @@ import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
 void main() {
-  group('serveRouter', () {
+  group('serve', () {
     test('serves over a real socket', () async {
       final app = Router()
         ..route('/hello', get((request) async => textResponse('hello')));
-      final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+      final server = await serve(app, InternetAddress.loopbackIPv4, 0);
 
       final response = await http.get(
         Uri.parse('http://${server.address.host}:${server.port}/hello'),
@@ -22,7 +22,7 @@ void main() {
 
     test('reports nothing in flight when idle', () async {
       final app = Router()..route('/a', get((request) async => noContent()));
-      final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+      final server = await serve(app, InternetAddress.loopbackIPv4, 0);
 
       expect(server.inFlight, 0);
       await server.close();
@@ -37,7 +37,7 @@ void main() {
           await release.future;
           return noContent();
         }));
-      final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+      final server = await serve(app, InternetAddress.loopbackIPv4, 0);
       final origin = 'http://${server.address.host}:${server.port}';
 
       final pending = http.get(Uri.parse('$origin/slow'));
@@ -61,7 +61,7 @@ void main() {
           finished = true;
           return noContent();
         }));
-      final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+      final server = await serve(app, InternetAddress.loopbackIPv4, 0);
       final origin = 'http://${server.address.host}:${server.port}';
 
       final pending = http.get(Uri.parse('$origin/slow'));
@@ -86,7 +86,7 @@ void main() {
           await release.future;
           return noContent();
         }));
-      final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+      final server = await serve(app, InternetAddress.loopbackIPv4, 0);
       final origin = 'http://${server.address.host}:${server.port}';
 
       final pending = http.get(Uri.parse('$origin/slow'));
@@ -103,7 +103,7 @@ void main() {
 
     test('returns immediately when nothing is in flight', () async {
       final app = Router()..route('/a', get((request) async => noContent()));
-      final server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+      final server = await serve(app, InternetAddress.loopbackIPv4, 0);
 
       expect(await server.close(drain: const Duration(seconds: 5)), isTrue);
     });

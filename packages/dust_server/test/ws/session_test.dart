@@ -56,7 +56,7 @@ void main() {
       }))
       ..route('/observed', get((request) async => observed));
 
-    server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+    server = await serve(app, InternetAddress.loopbackIPv4, 0);
   });
 
   tearDown(() => server.close());

@@ -98,7 +98,7 @@ for one.
 
 axum has the same interface and does not need the method, because Rust drops a
 layer when its router goes. Dart has no destructor, so the gap is real here in
-a way it is not there. The machinery is already close: `serveRouter` walks the
+a way it is not there. The machinery is already close: `serve` walks the
 router to find a `BackgroundTasks` registry, and the same walk would find
 layers that want draining.
 
@@ -144,11 +144,11 @@ because `../../etc/passwd` is a valid filename as far as a client is concerned.
 
 ### 6. Shutdown drains, but nothing tests it under load
 
-`serveRouter` returns a handle that counts in-flight requests, and `close`
+`serve` returns a handle that counts in-flight requests, and `close`
 waits for them within a deadline. It has never been exercised against real
 traffic mid-deploy, which is the case that matters.
 
-A cluster shutdown is bounded now: `test/serving/cluster_shutdown_test.dart`
+A cluster shutdown is bounded now: `test/serving/isolates_shutdown_test.dart`
 wedges a worker isolate on a synchronous loop and shows `close` still returns
 inside `drain + 5s` and kills the isolate. What that test also shows is worse
 than it sounds — **killing the isolate does not release the socket it bound**,
@@ -188,12 +188,12 @@ compete. A trie would fix that; the numbers do not yet justify it.
 
 ### 10. One core unless you ask for more, and nothing says so
 
-`serveRouter` serves from the isolate that called it, and a Dart isolate is one
+`serve` serves from the isolate that called it, and a Dart isolate is one
 thread. On a four-core machine that is one core busy and three idle, under any
 load, with nothing in the logs or the metrics to say the ceiling is the
 process rather than the application.
 
-`serveCluster` fixes it — the same answer `uvicorn --workers` and `gunicorn -w`
+`serveIsolates` fixes it — the same answer `uvicorn --workers` and `gunicorn -w`
 give Python, for the same reason — but it is opt-in, and its own default is two
 isolates rather than the core count. An application that never calls it is
 correct, passes every test, and quietly wastes most of the machine.
@@ -241,7 +241,7 @@ will be its main consumer does not exist yet.
 
 Two known changes are still owed, both of them axum parity:
 
-- **`serveRouter` should be `serve`.** axum calls it `serve` even though its
+- **`serve` should be `serve`.** axum calls it `serve` even though its
   second argument is a `Router`; the qualifier names the argument type the
   caller can already see. It exists only to dodge a collision with
   `shelf_io.serve` that cannot happen, since shelf is imported prefixed.

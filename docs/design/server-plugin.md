@@ -61,7 +61,7 @@ The existing HTTP client sets the precedent. It is Dio-specific but ships as
 
 | Path | Responsibility |
 | :--- | :--- |
-| `packages/dust_server` | Annotations, `FromRequestParts`, `Router`, `Rejection`, `IntoResponse`, `Layer`, `MountedRoute`, the shipped layers, and `serveRouter`. |
+| `packages/dust_server` | Annotations, `FromRequestParts`, `Router`, `Rejection`, `IntoResponse`, `Layer`, `MountedRoute`, the shipped layers, and `serve`. |
 | `crates/dust_server_plugin` | `DustPlugin` implementation. |
 | `crates/dust_ir/src/server.rs` | `ServerIr`, matching the existing `http.rs`, `route.rs`, `db.rs` split. |
 
@@ -233,7 +233,7 @@ A **function**, not a getter, for two reasons that both bite:
   on access gives that, but silently: `noteRoutes.withState(repo)` compiles,
   configures a throwaway, and answers **500 at request time** claiming the state
   was never attached. Written as a call, the same mistake reads as one.
-* `serveCluster` takes a `RouterFactory`, which is `Router Function()`. A getter
+* `serveIsolates` takes a `RouterFactory`, which is `Router Function()`. A getter
   is not a value and cannot be passed, so a clustered application could not use
   the generated module at all.
 

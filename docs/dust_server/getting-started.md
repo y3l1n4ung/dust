@@ -24,7 +24,7 @@ pull in annotations, and a handler file does not pull in the server.
 | `package:dust_server/response.dart` | `Rejection`, `IntoResponse`, encoders, `guard`, `ServerErrors` |
 | `package:dust_server/router.dart` | `Router`, `Route`, `MethodRouter`, the verb builders, `Layer` |
 | `package:dust_server/layers.dart` | `RequestTimeout`, `RequestId`, `AccessLog` |
-| `package:dust_server/serving.dart` | `serveRouter`, `serveCluster`, static files |
+| `package:dust_server/serving.dart` | `serve`, `serveIsolates`, static files |
 | `package:dust_server/ws.dart` | WebSocket routes and sessions |
 | `package:dust_server/templating.dart` | template engines and HTML responses |
 

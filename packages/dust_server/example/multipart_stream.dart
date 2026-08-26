@@ -38,7 +38,7 @@ import 'package:dust_server/server.dart';
 /// ```
 Future<void> main() async {
   final uploads = await Directory.systemTemp.createTemp('dust-uploads-');
-  final server = await serveRouter(
+  final server = await serve(
     buildApp(uploads.path),
     InternetAddress.anyIPv4,
     8080,

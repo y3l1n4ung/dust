@@ -15,7 +15,7 @@ import 'package:dust_server/server.dart';
 /// > registered here is drained with everything else, and `close` reports
 /// > `false` if it did not finish.
 ///
-/// The registry can also be attached with `withState` alone — `serveRouter`
+/// The registry can also be attached with `withState` alone — `serve`
 /// finds it there when no `background:` is passed. That is what lets a
 /// **clustered** server drain its tasks: each isolate builds its own registry
 /// inside the factory, so nothing outside can hand one in.
@@ -43,7 +43,7 @@ import 'package:dust_server/server.dart';
 /// ```
 Future<void> main() async {
   final tasks = BackgroundTasks();
-  final server = await serveRouter(
+  final server = await serve(
     buildApp(tasks),
     InternetAddress.anyIPv4,
     8080,

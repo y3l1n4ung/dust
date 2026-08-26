@@ -33,7 +33,7 @@ import 'package:dust_server/server.dart';
 /// curl -sI localhost:8080/api/notes    # no CSP: it is not an HTML document
 /// ```
 Future<void> main() async {
-  final server = await serveRouter(buildApp(), InternetAddress.anyIPv4, 8080);
+  final server = await serve(buildApp(), InternetAddress.anyIPv4, 8080);
   stdout.writeln('listening on http://${server.address.host}:${server.port}');
 
   await ProcessSignal.sigint.watch().first;

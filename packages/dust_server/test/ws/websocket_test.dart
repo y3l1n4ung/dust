@@ -63,7 +63,7 @@ void main() {
       ..route('/http', get((request) async => textResponse('plain')))
       ..withState('shared');
 
-    server = await serveRouter(app, InternetAddress.loopbackIPv4, 0);
+    server = await serve(app, InternetAddress.loopbackIPv4, 0);
   });
 
   tearDown(() => server.close());

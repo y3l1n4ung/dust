@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0-beta.2] - 2026-08-25
+
+Naming, brought in line with axum. All three are breaking, with no deprecated
+forwarders — the package is one release old and the names are wrong now rather
+than later. See [axum parity](https://github.com/y3l1n4ung/dust/blob/main/docs/design/server-axum-parity.md).
+
+### Changed
+
+- `serveRouter` is now `serve`. The old name described its argument's type,
+  which the caller can already see.
+- `serveCluster` is now `serveIsolates`, and `ServerCluster` is now
+  `ServerIsolates`. "Cluster" reads as multiple machines; this forks isolates on
+  one box, the way `uvicorn --workers` forks processes. Naming the isolate is
+  also the clearest warning that state does not cross one.
+
+### Removed
+
+- `package:dust_server/router.dart` no longer re-exports shelf's `serve`. It
+  occupied the name the package needed for its own entry point. Import
+  `package:shelf/shelf_io.dart` directly if you were using it.
+
 ## [0.1.0-beta.1] - 2026-08-24
 
 First beta, and the first release of this package. The runtime is complete
@@ -45,7 +66,7 @@ one.
 - No metrics, sessions, or rate limiting in the runtime. Each is policy, and each
   ships as an example instead.
 - Range requests work for static files, not for a dynamic body.
-- `serveCluster` gives each isolate its own state; anything shared belongs
+- `serveIsolates` gives each isolate its own state; anything shared belongs
   outside the process.
 
 ### Seventeen defects found and fixed before this beta

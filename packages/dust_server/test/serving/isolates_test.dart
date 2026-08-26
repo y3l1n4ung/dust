@@ -23,9 +23,9 @@ Router buildClusterApp() {
 }
 
 void main() {
-  group('serveCluster', () {
+  group('serveIsolates', () {
     test('serves from one isolate when asked for one', () async {
-      final cluster = await serveCluster(
+      final cluster = await serveIsolates(
         buildClusterApp,
         InternetAddress.loopbackIPv4,
         0,
@@ -43,7 +43,7 @@ void main() {
     });
 
     test('shares one port across isolates', () async {
-      final cluster = await serveCluster(
+      final cluster = await serveIsolates(
         buildClusterApp,
         InternetAddress.loopbackIPv4,
         0,
@@ -69,7 +69,7 @@ void main() {
     });
 
     test('spreads work across more than one isolate', () async {
-      final cluster = await serveCluster(
+      final cluster = await serveIsolates(
         buildClusterApp,
         InternetAddress.loopbackIPv4,
         0,
@@ -96,7 +96,7 @@ void main() {
     });
 
     test('builds separate state in each isolate', () async {
-      final cluster = await serveCluster(
+      final cluster = await serveIsolates(
         buildClusterApp,
         InternetAddress.loopbackIPv4,
         0,
@@ -126,7 +126,7 @@ void main() {
     });
 
     test('stops serving once closed', () async {
-      final cluster = await serveCluster(
+      final cluster = await serveIsolates(
         buildClusterApp,
         InternetAddress.loopbackIPv4,
         0,
@@ -143,7 +143,7 @@ void main() {
 
     test('refuses a cluster of no isolates', () {
       expect(
-        () => serveCluster(
+        () => serveIsolates(
           buildClusterApp,
           InternetAddress.loopbackIPv4,
           0,

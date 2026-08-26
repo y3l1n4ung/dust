@@ -5,7 +5,7 @@ import 'package:dust_server/server.dart';
 
 /// Using every core.
 ///
-/// A Dart isolate runs on one core. `serveCluster` spawns several, all sharing
+/// A Dart isolate runs on one core. `serveIsolates` spawns several, all sharing
 /// one listening socket, and the OS spreads connections across them — so a
 /// four-core box serves roughly four times what one isolate does.
 ///
@@ -32,7 +32,7 @@ import 'package:dust_server/server.dart';
 /// waiting on a database is not CPU-bound in the first place. Measure before
 /// reaching for this.
 ///
-/// Run it with `dart run example/clustered_isolates.dart`:
+/// Run it with `dart run example/several_isolates.dart`:
 ///
 /// ```bash
 /// # Each request may land on a different isolate, so the counter jumps about
@@ -48,7 +48,7 @@ import 'package:dust_server/server.dart';
 /// The `seen` counts do not add up to six, and that is the lesson rather than a
 /// bug: each isolate is counting only what it handled.
 Future<void> main() async {
-  final cluster = await serveCluster(
+  final cluster = await serveIsolates(
     buildApp,
     InternetAddress.anyIPv4,
     8080,

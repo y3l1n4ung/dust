@@ -24,7 +24,7 @@ import 'package:dust_server/server.dart';
 /// curl -i localhost:8080/page -H 'x-page-size: big' # 400, not a number
 /// ```
 Future<void> main() async {
-  final server = await serveRouter(buildApp(), InternetAddress.anyIPv4, 8080);
+  final server = await serve(buildApp(), InternetAddress.anyIPv4, 8080);
   stdout.writeln('listening on http://${server.address.host}:${server.port}');
 
   await ProcessSignal.sigint.watch().first;

@@ -85,7 +85,7 @@ void main() {
     late ServerHandle server;
 
     setUp(() async {
-      server = await serveRouter(_app(), InternetAddress.loopbackIPv4, 0);
+      server = await serve(_app(), InternetAddress.loopbackIPv4, 0);
     });
 
     tearDown(() => server.close());

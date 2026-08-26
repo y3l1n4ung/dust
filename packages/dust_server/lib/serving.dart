@@ -3,7 +3,7 @@
 /// ```dart
 /// import 'package:dust_server/serving.dart';
 ///
-/// final server = await serveRouter(app, InternetAddress.anyIPv4, 8080);
+/// final server = await serve(app, InternetAddress.anyIPv4, 8080);
 /// await ProcessSignal.sigterm.watch().first;
 /// await server.close(drain: const Duration(seconds: 15));
 /// ```
