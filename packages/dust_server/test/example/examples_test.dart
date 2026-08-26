@@ -14,6 +14,9 @@ import '../../example/body_limits.dart' as body_limits;
 import '../../example/client_ip.dart' as client_ip;
 import '../../example/several_isolates.dart' as several_isolates;
 import '../../example/cors.dart' as cors;
+import '../../example/disposable_layers.dart' as disposable_layers;
+import '../../example/isolate_failure.dart' as isolate_failure;
+import '../../example/router_as_handler.dart' as router_as_handler;
 import '../../example/cookies.dart' as cookies;
 import '../../example/credential_schemes.dart' as credential_schemes;
 import '../../example/custom_extractor.dart' as custom_extractor;
@@ -1923,6 +1926,49 @@ void main() {
       await app.get('/legacy/rebuild');
 
       expect(spans.spans.single.name, 'legacy.rebuild');
+    });
+  });
+
+  group('disposable_layers', () {
+    test('serves, and flushes the counter exactly once on shutdown', () async {
+      final flushed = <String>[];
+      final app = Router()
+        ..layer(disposable_layers.RequestCounter(flushed.add))
+        ..route('/', get((request) async => 'counted'));
+
+      final server = await serve(app, InternetAddress.loopbackIPv4, 0);
+      final origin = 'http://127.0.0.1:${server.port}';
+
+      expect((await http.get(Uri.parse('$origin/'))).body, 'counted');
+      expect((await http.get(Uri.parse('$origin/'))).body, 'counted');
+      expect(flushed, isEmpty, reason: 'not until shutdown');
+
+      await server.close(drain: const Duration(seconds: 1));
+      expect(flushed, ['flushed 2 requests']);
+    });
+  });
+
+  group('isolate_failure', () {
+    // The isolate machinery itself is covered by test/serving/isolates_test.dart.
+    // What matters here is that the application each isolate builds is real.
+    test('builds an application that reports which process answered', () async {
+      final app = await example(isolate_failure.buildApp());
+
+      expect((await app.get('/')).body, 'ok');
+      expect(jsonDecode((await app.get('/health')).body), {'pid': pid});
+    });
+  });
+
+  group('router_as_handler', () {
+    test('serves the inner router through a shelf pipeline', () async {
+      final app = await example(router_as_handler.buildApp());
+
+      final root = await app.get('/');
+      expect(root.body, 'from the inner router');
+      expect(root.headers['x-served-through'], 'shelf-pipeline');
+
+      final who = await app.get('/who');
+      expect(jsonDecode(who.body), {'router': 'inner'});
     });
   });
 
