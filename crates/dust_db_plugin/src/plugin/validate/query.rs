@@ -58,6 +58,7 @@ pub(super) fn validate_placeholders(
 pub(super) fn validate_row_type_is_mapped(
     query: &QuerySpec,
     row_columns: &HashMap<String, HashSet<String>>,
+    ambiguous: &HashSet<String>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     // A call that brings its own mapper needs nothing generated.
@@ -67,8 +68,9 @@ pub(super) fn validate_row_type_is_mapped(
     let Some(row_type) = query_row_type(query) else {
         return;
     };
-    // `queryAs<Row>` asks for the row itself, which needs no mapping.
-    if row_type == DART_ROW || row_columns.contains_key(row_type) {
+    // `queryAs<Row>` asks for the row itself, which needs no mapping. An
+    // ambiguous name has its own diagnostic; adding this one would be noise.
+    if row_type == DART_ROW || row_columns.contains_key(row_type) || ambiguous.contains(row_type) {
         return;
     }
     diagnostics.push(query_error(

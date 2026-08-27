@@ -131,9 +131,10 @@ impl DustPlugin for DbPlugin {
         library: &DartFileIr,
         analysis: &mut WorkspaceAnalysisBuilder,
     ) {
-        if self.options.databases {
-            collect_db_workspace_analysis(library, analysis);
-        }
+        // Row classes are collected in both modes. A flattened row may live in
+        // another library, and row mapping is validated during a normal build,
+        // where the database half of the plugin is not running.
+        collect_db_workspace_analysis(library, analysis, self.options.databases);
     }
 
     fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {

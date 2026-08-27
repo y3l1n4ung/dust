@@ -66,7 +66,25 @@ Future<ExecResult> rename(Pool db, String name, int id) {
     let diagnostics = validate_alone(&register_plugin(), &library);
 
     assert_eq!(diagnostics, Vec::new());
-    let cache = fs::read_to_string(root.join(".dart_tool/dust/db_query_cache_v2.json")).unwrap();
+    // One cache file per library, so parallel worker threads never write the
+    // same path. The name is derived from the library's source path.
+    let cache_dir = root.join(".dart_tool/dust/db_query_cache_v2");
+    let mut cache_files = fs::read_dir(&cache_dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .collect::<Vec<_>>();
+    cache_files.sort();
+    assert_eq!(cache_files.len(), 1, "{cache_files:?}");
+    assert!(
+        cache_files[0]
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .starts_with("db-"),
+        "{cache_files:?}"
+    );
+    let cache = fs::read_to_string(&cache_files[0]).unwrap();
     let cache: serde_json::Value = serde_json::from_str(&cache).unwrap();
     let entries = cache["entries"].as_array().unwrap();
     let query_modes = entries
@@ -448,6 +466,74 @@ fn accepts_query_as_row_which_needs_no_mapping() {
             .iter()
             .any(|diagnostic| diagnostic.message.contains("row type has no row mapping")),
         "{diagnostics:?}"
+    );
+
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn rejects_a_row_class_name_two_libraries_share() {
+    let root = temp_root("sqlx_duplicate_row_name");
+    write_sqlite_project(&root, "");
+
+    let database = library_at(&root, "lib/database.dart", vec![database_class()], vec![]);
+    let rows = library_at(
+        &root,
+        "lib/user.dart",
+        vec![simple_user_row_class()],
+        vec![],
+    );
+    // A second `UserProfile`, in another library of the same package.
+    let other = library_at(
+        &root,
+        "lib/archive.dart",
+        vec![ClassIr {
+            fields: vec![field("archived", TypeIr::int(), Vec::new())],
+            ..simple_user_row_class()
+        }],
+        vec![],
+    );
+    let queries = library_at(
+        &root,
+        "lib/users_repo.dart",
+        vec![],
+        vec![query_as(
+            "UserProfile",
+            "SELECT id, display_name FROM users WHERE id = $1",
+            1,
+            "fetchOne",
+            10,
+        )],
+    );
+
+    let plugin = register_plugin();
+    let libraries = [&database, &rows, &other, &queries];
+    let reported = libraries
+        .into_iter()
+        .flat_map(|library| validate_in_package(&plugin, &libraries, library))
+        .collect::<Vec<_>>();
+
+    let ambiguous = reported
+        .iter()
+        .filter(|diagnostic| {
+            diagnostic
+                .message
+                .contains("more than one row class named `UserProfile`")
+        })
+        .collect::<Vec<_>>();
+    // Once for the package, naming both files.
+    assert_eq!(ambiguous.len(), 1, "{reported:?}");
+    assert!(
+        ambiguous[0].message.contains("lib/archive.dart")
+            && ambiguous[0].message.contains("lib/user.dart"),
+        "{ambiguous:?}"
+    );
+    // And the query is not additionally rejected against whichever won.
+    assert!(
+        !reported.iter().any(|diagnostic| diagnostic
+            .message
+            .contains("does not return required column")),
+        "{reported:?}"
     );
 
     let _ = fs::remove_dir_all(root);
