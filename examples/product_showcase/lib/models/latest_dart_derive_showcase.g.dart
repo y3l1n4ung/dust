@@ -223,16 +223,16 @@ final class $LatestDartProductCardDeserializer implements Deserializer<LatestDar
 }
 LatestDartProductCard _$LatestDartProductCardFromRow(Row row) {
   return LatestDartProductCard(
-      id: row.read<String>('id'),
-      title: row.read<String>('title'),
-      productUrl: row.read<String>('product_url'),
-      priceCents: row.read<int>('price_cents'),
-      rating: row.read<double>('rating'),
-      stockCount: row.read<int>('stock_count'),
-      active: row.readBool('active'),
-      launchedAt: row.readDateTime('launched_at'),
-      internalOnly: false,
-    );
+    id: row.read<String>('id'),
+    title: row.read<String>('title'),
+    productUrl: row.read<String>('product_url'),
+    priceCents: row.read<int>('price_cents'),
+    rating: row.read<double>('rating'),
+    stockCount: row.read<int>('stock_count'),
+    active: row.readBool('active'),
+    launchedAt: row.readDateTime('launched_at'),
+    internalOnly: false,
+  );
 }
 
 /// Row deserializer for [LatestDartProductCard].

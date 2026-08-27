@@ -102,12 +102,12 @@ final class $AccountViewSerializer implements Serializer<AccountView, Map<String
 }
 Account _$AccountFromRow(Row row) {
   return Account(
-      id: row.read<int>('id'),
-      email: row.read<String>('email'),
-      passwordHash: row.read<String>('password_hash'),
-      passwordSalt: row.read<String>('password_salt'),
-      scopes: row.read<String>('scopes'),
-    );
+    id: row.read<int>('id'),
+    email: row.read<String>('email'),
+    passwordHash: row.read<String>('password_hash'),
+    passwordSalt: row.read<String>('password_salt'),
+    scopes: row.read<String>('scopes'),
+  );
 }
 
 /// Row deserializer for [Account].
