@@ -74,8 +74,6 @@ final class $StockFromRow implements RowDeserializer<Stock> {
   Stock deserialize(Row row) => StockFromRow.fromRow(row);
 }
 
-final bool _$stockFromRowRegistered = registerRowMapper<Stock>(StockFromRow.fromRow);
-
 Map<String, Object?> _$StockSerialize(Stock instance) {
   return <String, Object?>{
     'item': instance.item,

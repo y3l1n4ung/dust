@@ -2,70 +2,53 @@ import 'package:dust_dart/db.dart';
 import 'package:test/test.dart';
 
 void main() {
-  tearDown(RowMapperRegistry.resetForTest);
-
-  test('queryAs accepts a direct mapper without registry registration',
-      () async {
+  test('queryAs decodes with the row deserializer it was given', () async {
     final executor = _CapturingExecutor();
 
     final user = await queryAs<_User>(
       'SELECT id FROM users',
       const [],
-      mapper: _User.fromRow,
+      using: const _UserFromRow(),
     ).fetchOne(executor);
 
     expect(user.id, 7);
     expect(executor.calls, <String>['fetchOne:SELECT id FROM users']);
   });
 
-  test('queryAs withMapper overrides the registry fallback', () async {
-    registerRowMapper<_User>((_) => const _User(1));
+  test('queryAs accepts a plain mapper function through the adapter', () async {
     final executor = _CapturingExecutor();
 
     final user = await queryAs<_User>(
       'SELECT id FROM users',
       const [],
-    ).withMapper((_) => const _User(9)).fetchOne(executor);
+      using: const RowMapperDeserializer<_User>(_User.fromRow),
+    ).fetchOne(executor);
+
+    expect(user.id, 7);
+  });
+
+  test('withDeserializer replaces the row mapping', () async {
+    final executor = _CapturingExecutor();
+
+    final user = await queryAs<_User>(
+      'SELECT id FROM users',
+      const [],
+      using: const _UserFromRow(),
+    ).withDeserializer(const _NineUser()).fetchOne(executor);
 
     expect(user.id, 9);
   });
 
-  test('queryAs accepts a row deserializer without registry registration',
-      () async {
+  test('withMapper replaces the row mapping with a function', () async {
     final executor = _CapturingExecutor();
 
     final user = await queryAs<_User>(
       'SELECT id FROM users',
       const [],
       using: const _UserFromRow(),
-    ).fetchOne(executor);
+    ).withMapper((_) => const _User(9)).fetchOne(executor);
 
-    expect(user.id, 7);
-  });
-
-  test('queryAs withDeserializer overrides the registry fallback', () async {
-    registerRowMapper<_User>((_) => const _User(1));
-    final executor = _CapturingExecutor();
-
-    final user = await queryAs<_User>(
-      'SELECT id FROM users',
-      const [],
-    ).withDeserializer(const _UserFromRow()).fetchOne(executor);
-
-    expect(user.id, 7);
-  });
-
-  test('an explicit mapper wins over a row deserializer', () async {
-    final executor = _CapturingExecutor();
-
-    final user = await queryAs<_User>(
-      'SELECT id FROM users',
-      const [],
-      mapper: (_) => const _User(3),
-      using: const _UserFromRow(),
-    ).fetchOne(executor);
-
-    expect(user.id, 3);
+    expect(user.id, 9);
   });
 
   test('a row deserializer tears off as a plain mapper', () async {
@@ -75,30 +58,36 @@ void main() {
     final user = await queryAs<_User>(
       'SELECT id FROM users',
       const [],
-      mapper: mapper,
+      using: RowMapperDeserializer<_User>(mapper),
     ).fetchOne(executor);
 
     expect(user.id, 7);
   });
 
-  test('a query with no mapping at all still falls back to the registry',
-      () async {
-    // The generated `$TFromRow` is what the analyzer can see; the registry is
-    // what is left when nothing passes one, and it fails at runtime.
-    final executor = _CapturingExecutor();
-
-    await expectLater(
-      queryAs<_User>('SELECT id FROM users', const []).fetchOne(executor),
-      throwsA(isA<SqlxError>()),
+  test('the query exposes the mapping it will decode with', () {
+    const query = QueryAs<_User>(
+      'SELECT id FROM users',
+      [],
+      using: _UserFromRow(),
     );
+
+    expect(query.rowMapper(const _StaticRow(4)).id, 4);
   });
 }
 
+/// Stands in for the `$TypeFromRow` witness Dust generates.
 final class _UserFromRow implements RowDeserializer<_User> {
   const _UserFromRow();
 
   @override
   _User deserialize(Row row) => _User.fromRow(row);
+}
+
+final class _NineUser implements RowDeserializer<_User> {
+  const _NineUser();
+
+  @override
+  _User deserialize(Row row) => const _User(9);
 }
 
 final class _User {

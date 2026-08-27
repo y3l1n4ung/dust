@@ -359,17 +359,17 @@ Dart has no static interface members. A type parameter `T` cannot reach a
 constructor, a static, or a factory, so `T` alone can never produce a decoder.
 That leaves three options:
 
-1. **A runtime registry.** What ships today — `RowMapperRegistry` is a
+1. **A runtime registry.** What used to ship — `RowMapperRegistry` was a
    process-wide `Map<Type, RowMapper>` filled by top-level initializers in
-   generated part files
-   ([`row_mapper.dart`](../../packages/dust_dart/lib/src/db/row_mapper.dart)).
-   A miss is a runtime `SqlxError.decode`, and whether it hits depends on
-   whether the part file was imported anywhere in the isolate.
+   generated part files. A miss was a runtime `SqlxError.decode`, and whether
+   it hit depended on whether the part file had been imported anywhere in the
+   isolate. **Deleted**; nothing outside `dust_dart`'s own tests used it, since
+   generated DAOs have always passed their mapper directly.
 2. **An explicit decoder argument** on every query — a value mechanically
    derivable from `T`, which is the work a generator exists to do.
 3. **Generated extensions.** Below.
 
-Option 2 now ships alongside option 1, because it is what JSON already does.
+Option 2 is what ships, because it is what JSON already does.
 `Serialize` can generate an instance interface — `mixin _$Order implements
 Serializable` — since the value exists before `serialize()` is called.
 `Deserialize` cannot, for the same reason `FromRow` cannot: it constructs.
@@ -389,14 +389,13 @@ final class $OrderFromRow implements RowDeserializer<Order> {
 }
 ```
 
-`queryAs(..., using: const $OrderFromRow())` is then an analyzer error for a row
-type Dust generated nothing for, because there is no `$TFromRow` to name. The
-registry stays as the fallback for a call that passes neither, and `dust db
-build` rejects that call outright when `T` has no mapping in the package —
-which it can only do because row classes resolve package-wide.
+`using:` is required, so a row type Dust generated nothing for is an analyzer
+error at the call — there is no `$TFromRow` to name. `dust db build` reports the
+same thing first, and can only do so because row classes resolve package-wide.
+`RowMapperDeserializer` wraps a plain function for a row type Dust does not own.
 
-Option 3 remains the end state: it removes the fallback rather than diagnosing
-it.
+Option 3 remains the end state: it removes the argument as well, by resolving
+the terminal from the static type instead.
 
 ### Terminals come from generated extensions
 
@@ -445,12 +444,12 @@ Three properties follow:
 
 - **A missing derive is a compile error.** `queryAs<Account>(...)` where
   `Account` does not derive `FromRow` means no extension exists, so `fetchAll`
-  is undefined. Passing `using:` already gets this; leaving it off gets a build
-  error from Dust instead, and the generated terminals close the gap.
+  is undefined. The required `using:` already gets this; what the terminals add
+  is getting it without the argument.
 - **A missing import is a compile error too**, rather than a silent
   non-registration.
 - **`RowMapperRegistry` is deleted**, along with the generated
-  `registerRowMapper` initializers.
+  `registerRowMapper` initializers. Done, ahead of the terminals.
 
 `RowMapper<T>` survives as the typedef `T Function(Row)` on the five executor
 primitives — the driver seam, which takes a function.
@@ -741,8 +740,9 @@ Inline queries take the executor per call and do not have this problem.
    both ([#500](https://github.com/y3l1n4ung/dust/issues/500)).
 3. **Read `nullable()` and `type_info()`**, shipping as warnings until the
    [type-mapping table](#open-questions) exists.
-4. **Terminals return `Result`;** generate them per row type; delete
-   `RowMapperRegistry`.
+4. **Terminals return `Result`;** generate them per row type.
+   ~~Delete `RowMapperRegistry`.~~ Done — the mapping is a required argument
+   until the terminals remove the need for one.
 5. **`queryRaw` becomes `unsafeSql`** on the database facade.
 6. **Name the enclosing function** in call-site diagnostics.
 7. **Rename to SQLx's pool vocabulary.**

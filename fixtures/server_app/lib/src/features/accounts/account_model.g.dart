@@ -123,8 +123,6 @@ final class $AccountFromRow implements RowDeserializer<Account> {
   Account deserialize(Row row) => AccountFromRow.fromRow(row);
 }
 
-final bool _$accountFromRowRegistered = registerRowMapper<Account>(AccountFromRow.fromRow);
-
 Map<String, Object?> _$AccountViewSerialize(AccountView instance) {
   return <String, Object?>{
     'id': instance.id,
