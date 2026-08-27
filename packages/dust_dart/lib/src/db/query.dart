@@ -8,17 +8,12 @@ import 'sqlx_error.dart';
 final class QueryAs<T> {
   /// Creates one typed row query.
   ///
-  /// [using] takes the generated row deserializer, `const $TFromRow()`, which
-  /// is what makes a missing row mapping an analyzer error rather than a
-  /// runtime one. [mapper] is the plain-function escape hatch for a row type
-  /// Dust did not generate.
-  const QueryAs(
-    this.sql,
-    this.parameters, {
-    RowMapper<T>? mapper,
-    RowDeserializer<T>? using,
-  })  : _mapper = mapper,
-        _using = using;
+  /// [using] is required, and is normally the generated `const $TypeFromRow()`.
+  /// A row type Dust generated nothing for has no such name, so the analyzer
+  /// reports it where it is written. For a row type Dust does not own, wrap a
+  /// function in [RowMapperDeserializer].
+  const QueryAs(this.sql, this.parameters, {required RowDeserializer<T> using})
+      : _using = using;
 
   /// Static SQL source.
   final String sql;
@@ -26,39 +21,35 @@ final class QueryAs<T> {
   /// Positional SQL parameter values.
   final List<Object?> parameters;
 
-  final RowMapper<T>? _mapper;
+  final RowDeserializer<T> _using;
 
-  final RowDeserializer<T>? _using;
+  /// The row mapping this query decodes with.
+  RowMapper<T> get rowMapper => _using.deserialize;
 
   /// Fetches exactly one row and maps it as [T].
   Future<T> fetchOne(DatabaseExecutor db) async {
-    return _unwrap(await db.fetchOne<T>(sql, parameters, _rowMapper));
+    return _unwrap(await db.fetchOne<T>(sql, parameters, rowMapper));
   }
 
   /// Fetches zero or one row and maps it as [T] when present.
   Future<T?> fetchOptional(DatabaseExecutor db) async {
-    return _unwrap(await db.fetchOptional<T>(sql, parameters, _rowMapper));
+    return _unwrap(await db.fetchOptional<T>(sql, parameters, rowMapper));
   }
 
   /// Fetches all rows and maps each as [T].
   Future<List<T>> fetchAll(DatabaseExecutor db) async {
-    return _unwrap(await db.fetchAll<T>(sql, parameters, _rowMapper));
+    return _unwrap(await db.fetchAll<T>(sql, parameters, rowMapper));
   }
 
   /// Returns a copy that maps rows with [mapper].
   QueryAs<T> withMapper(RowMapper<T> mapper) {
-    return QueryAs<T>(sql, parameters, mapper: mapper);
+    return QueryAs<T>(sql, parameters, using: RowMapperDeserializer<T>(mapper));
   }
 
   /// Returns a copy that maps rows with [using].
   QueryAs<T> withDeserializer(RowDeserializer<T> using) {
     return QueryAs<T>(sql, parameters, using: using);
   }
-
-  // An explicit mapper wins over an explicit deserializer, and both win over
-  // the registry, which is the only one of the three that can fail at runtime.
-  RowMapper<T> get _rowMapper =>
-      _mapper ?? _using?.deserialize ?? RowMapperRegistry.map<T>;
 }
 
 /// Scalar query returning the first selected column.
@@ -121,10 +112,9 @@ final class QueryExecute {
 QueryAs<T> queryAs<T>(
   String sql,
   List<Object?> parameters, {
-  RowMapper<T>? mapper,
-  RowDeserializer<T>? using,
+  required RowDeserializer<T> using,
 }) {
-  return QueryAs<T>(sql, parameters, mapper: mapper, using: using);
+  return QueryAs<T>(sql, parameters, using: using);
 }
 
 /// Creates a scalar query helper.

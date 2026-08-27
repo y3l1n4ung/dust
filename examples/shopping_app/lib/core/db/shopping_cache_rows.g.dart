@@ -30,7 +30,16 @@ extension CachedProductRowFromRow on CachedProductRow {
   }
 }
 
-final bool _$cachedProductRowFromRowRegistered = registerRowMapper<CachedProductRow>(CachedProductRowFromRow.fromRow);
+/// Row deserializer for [CachedProductRow].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class $CachedProductRowFromRow implements RowDeserializer<CachedProductRow> {
+  const $CachedProductRowFromRow();
+
+  @override
+  CachedProductRow deserialize(Row row) => CachedProductRowFromRow.fromRow(row);
+}
 
 extension CachedProductRatingRowFromRow on CachedProductRatingRow {
   static CachedProductRatingRow fromRow(Row row) {
@@ -41,7 +50,16 @@ extension CachedProductRatingRowFromRow on CachedProductRatingRow {
   }
 }
 
-final bool _$cachedProductRatingRowFromRowRegistered = registerRowMapper<CachedProductRatingRow>(CachedProductRatingRowFromRow.fromRow);
+/// Row deserializer for [CachedProductRatingRow].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class $CachedProductRatingRowFromRow implements RowDeserializer<CachedProductRatingRow> {
+  const $CachedProductRatingRowFromRow();
+
+  @override
+  CachedProductRatingRow deserialize(Row row) => CachedProductRatingRowFromRow.fromRow(row);
+}
 
 extension CachedWishlistRowFromRow on CachedWishlistRow {
   static CachedWishlistRow fromRow(Row row) {
@@ -53,4 +71,13 @@ extension CachedWishlistRowFromRow on CachedWishlistRow {
   }
 }
 
-final bool _$cachedWishlistRowFromRowRegistered = registerRowMapper<CachedWishlistRow>(CachedWishlistRowFromRow.fromRow);
+/// Row deserializer for [CachedWishlistRow].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class $CachedWishlistRowFromRow implements RowDeserializer<CachedWishlistRow> {
+  const $CachedWishlistRowFromRow();
+
+  @override
+  CachedWishlistRow deserialize(Row row) => CachedWishlistRowFromRow.fromRow(row);
+}

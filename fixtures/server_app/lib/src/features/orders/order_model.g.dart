@@ -135,8 +135,6 @@ final class $OrderFromRow implements RowDeserializer<Order> {
   Order deserialize(Row row) => OrderFromRow.fromRow(row);
 }
 
-final bool _$orderFromRowRegistered = registerRowMapper<Order>(OrderFromRow.fromRow);
-
 Map<String, Object?> _$OrderSerialize(Order instance) {
   return <String, Object?>{
     'id': instance.id,

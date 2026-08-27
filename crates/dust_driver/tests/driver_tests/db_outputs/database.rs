@@ -48,8 +48,6 @@ final class $UserProfileFromRow implements RowDeserializer<UserProfile> {
   UserProfile deserialize(Row row) => UserProfileFromRow.fromRow(row);
 }
 
-final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
-
 final class _$AppDatabase implements AppDatabase {
   _$AppDatabase._(this.connection);
 
@@ -116,8 +114,6 @@ final class $UserProfileFromRow implements RowDeserializer<UserProfile> {
   @override
   UserProfile deserialize(Row row) => UserProfileFromRow.fromRow(row);
 }
-
-final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
 "#
         )
     );

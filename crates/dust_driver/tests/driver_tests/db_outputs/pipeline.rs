@@ -47,8 +47,6 @@ final class $UserProfileFromRow implements RowDeserializer<UserProfile> {
   @override
   UserProfile deserialize(Row row) => UserProfileFromRow.fromRow(row);
 }
-
-final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
 "#
         )
     );

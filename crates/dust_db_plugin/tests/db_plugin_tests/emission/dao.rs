@@ -177,8 +177,6 @@ final class $UserProfileFromRow implements RowDeserializer<UserProfile> {
   UserProfile deserialize(Row row) => UserProfileFromRow.fromRow(row);
 }
 
-final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
-
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
@@ -235,8 +233,6 @@ final class $UserProfileFromRow implements RowDeserializer<UserProfile> {
   @override
   UserProfile deserialize(Row row) => UserProfileFromRow.fromRow(row);
 }
-
-final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
 
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
@@ -334,8 +330,6 @@ final class $UserProfileFromRow implements RowDeserializer<UserProfile> {
   @override
   UserProfile deserialize(Row row) => UserProfileFromRow.fromRow(row);
 }
-
-final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
 
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);

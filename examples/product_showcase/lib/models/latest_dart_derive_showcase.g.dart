@@ -237,7 +237,16 @@ extension LatestDartProductCardFromRow on LatestDartProductCard {
   }
 }
 
-final bool _$latestDartProductCardFromRowRegistered = registerRowMapper<LatestDartProductCard>(LatestDartProductCardFromRow.fromRow);
+/// Row deserializer for [LatestDartProductCard].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class $LatestDartProductCardFromRow implements RowDeserializer<LatestDartProductCard> {
+  const $LatestDartProductCardFromRow();
+
+  @override
+  LatestDartProductCard deserialize(Row row) => LatestDartProductCardFromRow.fromRow(row);
+}
 
 Map<String, Object?> _$LatestDartProductCardSerialize(LatestDartProductCard instance) {
   return <String, Object?>{

@@ -263,8 +263,8 @@ ordering, limits, and offsets are passed to SQLite and SQLx as written.
 `@Derive([FromRow()])` generates two things: a `TypeFromRow.fromRow(Row row)`
 mapper, and `$TypeFromRow`, a `const` witness implementing `RowDeserializer<Type>`.
 Both read columns by name through the driver-independent `Row` interface.
-Generated DAO methods pass the mapper directly, so normal generated database
-code does not depend on side-effect registration or import order.
+Generated DAO methods pass the mapper directly, so generated database code
+depends on neither side-effect registration nor import order.
 
 `RowDeserializer<T>` is the row-side mirror of `Deserializer<DartT, JsonT>`,
 and exists for the same reason. `serialize()` can be an instance method because
@@ -297,27 +297,27 @@ final user = await queryAs<UserRow>(
 ).fetchOne(database.connection);
 ```
 
-`using:` is worth preferring over `mapper:` because a row type Dust generated
-nothing for has no `$TypeFromRow` to name, so the analyzer reports it where you
-are typing. `mapper:` takes a plain function and remains the escape hatch for a
-row type Dust does not own:
+`using:` is required. Dart has no static interface members — a type parameter
+`T` cannot reach a constructor, a static, or a factory — so `T` alone can never
+produce a decoder, and the mapping has to be a value. Making it an argument is
+what moves a missing row mapping from the first request to the analyzer: a row
+type Dust generated nothing for has no `$TypeFromRow` to name.
+
+`dust db build` reports it too, before the analyzer runs:
+
+```
+error: queryAs<Widget> row type has no row mapping. Add `@Derive([FromRow()])`
+       to `Widget`, or pass one with `mapper:` or `using:`
+```
+
+For a row type Dust does not generate, wrap a plain function:
 
 ```dart
 final user = await queryAs<UserRow>(
   'SELECT id, email, name FROM users WHERE id = ?',
   [id],
-  mapper: UserRowFromRow.fromRow,
+  using: const RowMapperDeserializer(UserRowFromRow.fromRow),
 ).fetchOne(database.connection);
-```
-
-Passing neither falls back to `RowMapperRegistry`, which resolves at runtime and
-throws `SqlxError.decode` on the request that reaches it. `dust db build` rejects
-a `queryAs<T>` whose `T` has no row mapping anywhere in the package, so that
-throw is a build error rather than a production incident:
-
-```
-error: queryAs<Widget> row type has no row mapping. Add `@Derive([FromRow()])`
-       to `Widget`, or pass one with `mapper:` or `using:`
 ```
 
 ## Error Context

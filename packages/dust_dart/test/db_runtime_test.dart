@@ -2,8 +2,6 @@ import 'package:dust_dart/db.dart';
 import 'package:test/test.dart';
 
 void main() {
-  tearDown(RowMapperRegistry.resetForTest);
-
   test('DB annotations and value types expose stable configuration', () {
     const database = SqlxDatabase(driver: Driver.postgres);
     const typed = SqlxDatabase(type: SqlxDatabaseType.sqlite);
@@ -66,16 +64,25 @@ void main() {
   });
 
   test('query helpers delegate to DatabaseExecutor fetch methods', () async {
-    registerRowMapper<_User>(_UserFromRow.fromRow);
+    const using = RowMapperDeserializer<_User>(_UserFromRow.fromRow);
     final executor = _FakeExecutor();
     final client = _FakeDatabaseClient(executor);
 
-    final one = await queryAs<_User>('one', const []).fetchOne(executor);
+    final one = await queryAs<_User>(
+      'one',
+      const [],
+      using: using,
+    ).fetchOne(executor);
     final optional = await queryAs<_User>(
       'optional',
       const [],
+      using: using,
     ).fetchOptional(executor);
-    final all = await queryAs<_User>('all', const []).fetchAll(executor);
+    final all = await queryAs<_User>(
+      'all',
+      const [],
+      using: using,
+    ).fetchAll(executor);
     final scalar = await queryScalar<int>(
       'scalar',
       const [],

@@ -98,9 +98,7 @@ final class $UserRowFromRow implements RowDeserializer<UserRow> {
 
   @override
   UserRow deserialize(Row row) => UserRowFromRow.fromRow(row);
-}
-
-final bool _$userRowFromRowRegistered = registerRowMapper<UserRow>(UserRowFromRow.fromRow);"#
+}"#
     );
 }
 
