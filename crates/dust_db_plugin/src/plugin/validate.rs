@@ -76,6 +76,11 @@ fn validate_databases(
         query::validate_query_shape(query, diagnostics);
     }
 
+    let row_columns = package_row_column_map(analysis, &library.package_name);
+    for query in &queries {
+        query::validate_row_type_is_mapped(query, &row_columns, diagnostics);
+    }
+
     // The schema and the row classes come from the whole package. A project
     // that keeps the database class, the row classes, and the queries in three
     // files is the normal layout, and validating each file against itself left
@@ -85,7 +90,6 @@ fn validate_databases(
         return;
     };
     report_ambiguous_schema(library, &databases, diagnostics);
-    let row_columns = package_row_column_map(analysis, &library.package_name);
     sqlx::validate_sqlx_describe(library, db, &queries, &row_columns, options, diagnostics);
 }
 

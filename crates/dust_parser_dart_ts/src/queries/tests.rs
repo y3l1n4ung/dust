@@ -101,6 +101,24 @@ fn requires_exact_fetch_method_property() {
     assert_eq!(calls[0].fetch_method, None);
 }
 
+#[test]
+fn records_whether_a_call_brings_its_own_row_mapper() {
+    // SQL and parameters are the two positional arguments. Anything past them
+    // is `mapper:` or `using:`, and a call that brings one needs nothing
+    // generated for its row type.
+    let plain = calls_for("queryAs<UserRow>(r'SELECT id FROM users', []).fetchAll(db);");
+    let mapped = calls_for(
+        "queryAs<UserRow>(r'SELECT id FROM users', [], mapper: UserRowFromRow.fromRow).fetchAll(db);",
+    );
+    let using = calls_for(
+        "queryAs<UserRow>(r'SELECT id FROM users', [], using: const $UserRowFromRow()).fetchAll(db);",
+    );
+
+    assert!(!plain[0].has_row_mapper_argument);
+    assert!(mapped[0].has_row_mapper_argument);
+    assert!(using[0].has_row_mapper_argument);
+}
+
 fn calls_for(source: &str) -> Vec<ParsedQueryCallSurface> {
     let source = SourceText::new(FileId::new(1), format!("void main() {{\n{source}\n}}"));
     let mut parser = Parser::new();

@@ -7,7 +7,7 @@ use super::support::{
 #[test]
 fn build_allows_compatible_dust_package_versions() {
     let workspace = make_workspace();
-    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.3")]);
+    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.4")]);
     write_dust_file(
         &workspace.path().join("lib/user.dart"),
         &[DustImport::Derive],
@@ -60,7 +60,7 @@ fn build_rejects_too_old_dust_package_before_writing_outputs() {
             .contains("unsupported Dust package version")
     );
     assert!(diagnostic.message.contains("CLI 0.1.4"));
-    assert!(diagnostic.message.contains("`dust_dart` >=0.1.3 <0.2.0"));
+    assert!(diagnostic.message.contains("`dust_dart` >=0.1.4 <0.2.0"));
     assert!(diagnostic.message.contains("resolves 0.1.2"));
     assert!(
         diagnostic
@@ -130,7 +130,7 @@ fn build_ignores_resolved_dust_package_that_source_does_not_use() {
 #[test]
 fn build_requires_visible_dust_import_for_annotation_discovery() {
     let workspace = make_workspace();
-    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.3")]);
+    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.4")]);
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\

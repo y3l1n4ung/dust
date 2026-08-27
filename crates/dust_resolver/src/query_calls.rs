@@ -30,6 +30,7 @@ pub(crate) fn normalize_query_calls(
                 parameter_count: query.parameter_count,
                 params_source_is_list: query.params_source_is_list,
                 fetch_method: query.fetch_method.clone(),
+                has_row_mapper_argument: query.has_row_mapper_argument,
                 span: SpanIr::new(file_id, query.span),
             }
         })

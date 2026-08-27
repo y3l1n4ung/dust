@@ -40,3 +40,22 @@ abstract final class RowMapperRegistry {
 bool registerRowMapper<T>(RowMapper<T> mapper) {
   return RowMapperRegistry.register<T>(mapper);
 }
+
+/// Directional conversion contract for generated and custom row mappers.
+///
+/// This mirrors `Deserializer` on the JSON side, and for the same reason.
+/// `serialize()` can be an instance method because the value already exists;
+/// reading a row *constructs* one, so there is no instance to declare it on.
+/// The generated witness object carries the capability instead, which is what
+/// lets the analyzer see that a type has no row mapping — passing a type with
+/// no `@Derive([FromRow()])` names a `$TFromRow` that does not exist.
+abstract interface class RowDeserializer<T> {
+  /// Converts [row] into a Dart value.
+  T deserialize(Row row);
+}
+
+/// Plain-function view of a row deserializer.
+extension RowDeserializerMapper<T> on RowDeserializer<T> {
+  /// This deserializer as a [RowMapper], for APIs that take the function form.
+  RowMapper<T> get asMapper => deserialize;
+}

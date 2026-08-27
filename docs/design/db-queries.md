@@ -369,6 +369,35 @@ That leaves three options:
    derivable from `T`, which is the work a generator exists to do.
 3. **Generated extensions.** Below.
 
+Option 2 now ships alongside option 1, because it is what JSON already does.
+`Serialize` can generate an instance interface — `mixin _$Order implements
+Serializable` — since the value exists before `serialize()` is called.
+`Deserialize` cannot, for the same reason `FromRow` cannot: it constructs.
+Serde's answer there is a **const witness object**, `$OrderDeserializer
+implements Deserializer<Order, Map<String, Object?>>`, and the row side now
+mirrors it exactly:
+
+```dart
+abstract interface class RowDeserializer<T> {
+  T deserialize(Row row);
+}
+
+final class $OrderFromRow implements RowDeserializer<Order> {
+  const $OrderFromRow();
+  @override
+  Order deserialize(Row row) => OrderFromRow.fromRow(row);
+}
+```
+
+`queryAs(..., using: const $OrderFromRow())` is then an analyzer error for a row
+type Dust generated nothing for, because there is no `$TFromRow` to name. The
+registry stays as the fallback for a call that passes neither, and `dust db
+build` rejects that call outright when `T` has no mapping in the package —
+which it can only do because row classes resolve package-wide.
+
+Option 3 remains the end state: it removes the fallback rather than diagnosing
+it.
+
 ### Terminals come from generated extensions
 
 `queryAs<T>(sql, args)` returns a `Query<T>`: a data holder with `sql` and
@@ -416,7 +445,8 @@ Three properties follow:
 
 - **A missing derive is a compile error.** `queryAs<Account>(...)` where
   `Account` does not derive `FromRow` means no extension exists, so `fetchAll`
-  is undefined. Today the same mistake compiles and throws at runtime.
+  is undefined. Passing `using:` already gets this; leaving it off gets a build
+  error from Dust instead, and the generated terminals close the gap.
 - **A missing import is a compile error too**, rather than a silent
   non-registration.
 - **`RowMapperRegistry` is deleted**, along with the generated

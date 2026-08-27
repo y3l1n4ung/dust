@@ -29,6 +29,76 @@ void main() {
 
     expect(user.id, 9);
   });
+
+  test('queryAs accepts a row deserializer without registry registration',
+      () async {
+    final executor = _CapturingExecutor();
+
+    final user = await queryAs<_User>(
+      'SELECT id FROM users',
+      const [],
+      using: const _UserFromRow(),
+    ).fetchOne(executor);
+
+    expect(user.id, 7);
+  });
+
+  test('queryAs withDeserializer overrides the registry fallback', () async {
+    registerRowMapper<_User>((_) => const _User(1));
+    final executor = _CapturingExecutor();
+
+    final user = await queryAs<_User>(
+      'SELECT id FROM users',
+      const [],
+    ).withDeserializer(const _UserFromRow()).fetchOne(executor);
+
+    expect(user.id, 7);
+  });
+
+  test('an explicit mapper wins over a row deserializer', () async {
+    final executor = _CapturingExecutor();
+
+    final user = await queryAs<_User>(
+      'SELECT id FROM users',
+      const [],
+      mapper: (_) => const _User(3),
+      using: const _UserFromRow(),
+    ).fetchOne(executor);
+
+    expect(user.id, 3);
+  });
+
+  test('a row deserializer tears off as a plain mapper', () async {
+    final mapper = const _UserFromRow().asMapper;
+    final executor = _CapturingExecutor();
+
+    final user = await queryAs<_User>(
+      'SELECT id FROM users',
+      const [],
+      mapper: mapper,
+    ).fetchOne(executor);
+
+    expect(user.id, 7);
+  });
+
+  test('a query with no mapping at all still falls back to the registry',
+      () async {
+    // The generated `$TFromRow` is what the analyzer can see; the registry is
+    // what is left when nothing passes one, and it fails at runtime.
+    final executor = _CapturingExecutor();
+
+    await expectLater(
+      queryAs<_User>('SELECT id FROM users', const []).fetchOne(executor),
+      throwsA(isA<SqlxError>()),
+    );
+  });
+}
+
+final class _UserFromRow implements RowDeserializer<_User> {
+  const _UserFromRow();
+
+  @override
+  _User deserialize(Row row) => _User.fromRow(row);
 }
 
 final class _User {

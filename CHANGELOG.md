@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Row mapping has an interface. `@Derive([FromRow()])` now also generates
+  `$TypeFromRow`, a `const` witness implementing the new
+  `RowDeserializer<T>` in `dust_dart` — the row-side mirror of
+  `Deserializer<DartT, JsonT>`, and a witness for the same reason `Deserialize`
+  needs one: reading a row constructs a value, so there is no instance to
+  declare the method on. `queryAs(..., using:)` and `QueryAs.withDeserializer`
+  take it, and a row type Dust generated nothing for has no `$TypeFromRow` to
+  name, so the analyzer reports it rather than the first request.
+- `dust db build` rejects a `queryAs<T>` whose `T` has no row mapping anywhere
+  in the package. Such a call fell through to `RowMapperRegistry`, which
+  resolves at runtime and throws `SqlxError.decode` on the request that reaches
+  it — a guaranteed failure that used to build clean. A call that passes its
+  own `mapper:` or `using:` is left alone, and `queryAs<Row>` needs no mapping.
+
 ### Fixed
 
 - Database SQL validation now resolves the schema and the row classes across the

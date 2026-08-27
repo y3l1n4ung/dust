@@ -130,6 +130,7 @@ fn query_spec_from_call(call: &QueryCallIr) -> QuerySpec {
             .flatten(),
         parameter_count: call.parameter_count,
         params_source_is_list: call.params_source_is_list,
+        has_row_mapper_argument: call.has_row_mapper_argument,
         span: call.span,
         display_name: None,
     }
@@ -152,6 +153,8 @@ pub(crate) fn dao_query_specs(library: &DartFileIr) -> Vec<QuerySpec> {
                     scalar_type,
                     parameter_count: method.method.params.len(),
                     params_source_is_list: true,
+                    // A DAO method has no argument to pass one through.
+                    has_row_mapper_argument: false,
                     span: method.method.span,
                     display_name: Some(format!("{}.{}", dao.class.name, method.method.name)),
                 }

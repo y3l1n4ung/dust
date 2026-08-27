@@ -110,6 +110,8 @@ pub(crate) struct QuerySpec {
     pub(crate) parameter_count: usize,
     /// Whether bind parameters were supplied as a list expression.
     pub(crate) params_source_is_list: bool,
+    /// Whether the call site supplied its own row mapper or row deserializer.
+    pub(crate) has_row_mapper_argument: bool,
     /// Source span of the query call.
     pub(crate) span: SpanIr,
     /// Optional display name for diagnostics and cache keys.
@@ -216,6 +218,7 @@ mod tests {
             scalar_type: None,
             parameter_count: 0,
             params_source_is_list: true,
+            has_row_mapper_argument: false,
             span: span(),
             display_name: None,
         }

@@ -32,6 +32,17 @@ fn emits_sqlx_style_from_row_mapper() {
   }
 }
 
+/// Row deserializer for [UserProfile].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class $UserProfileFromRow implements RowDeserializer<UserProfile> {
+  const $UserProfileFromRow();
+
+  @override
+  UserProfile deserialize(Row row) => UserProfileFromRow.fromRow(row);
+}
+
 final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);"#
     );
 }

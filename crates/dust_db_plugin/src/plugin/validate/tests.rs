@@ -35,6 +35,7 @@ fn query(function: QueryFunction, fetch: FetchMode) -> QuerySpec {
         scalar_type: (function == QueryFunction::Scalar).then(TypeIr::int),
         parameter_count: 1,
         params_source_is_list: true,
+        has_row_mapper_argument: false,
         span: span(),
         display_name: Some("test.query".to_owned()),
     }

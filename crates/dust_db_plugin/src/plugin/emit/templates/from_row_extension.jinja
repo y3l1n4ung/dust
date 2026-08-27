@@ -4,4 +4,15 @@ extension {{ class_name }}FromRow on {{ class_name }} {
   }
 }
 
+/// Row deserializer for [{{ class_name }}].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class ${{ class_name }}FromRow implements RowDeserializer<{{ class_name }}> {
+  const ${{ class_name }}FromRow();
+
+  @override
+  {{ class_name }} deserialize(Row row) => {{ class_name }}FromRow.fromRow(row);
+}
+
 {{ registration }}

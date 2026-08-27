@@ -7,8 +7,18 @@ import 'sqlx_error.dart';
 /// Typed row query.
 final class QueryAs<T> {
   /// Creates one typed row query.
-  const QueryAs(this.sql, this.parameters, {RowMapper<T>? mapper})
-      : _mapper = mapper;
+  ///
+  /// [using] takes the generated row deserializer, `const $TFromRow()`, which
+  /// is what makes a missing row mapping an analyzer error rather than a
+  /// runtime one. [mapper] is the plain-function escape hatch for a row type
+  /// Dust did not generate.
+  const QueryAs(
+    this.sql,
+    this.parameters, {
+    RowMapper<T>? mapper,
+    RowDeserializer<T>? using,
+  })  : _mapper = mapper,
+        _using = using;
 
   /// Static SQL source.
   final String sql;
@@ -17,6 +27,8 @@ final class QueryAs<T> {
   final List<Object?> parameters;
 
   final RowMapper<T>? _mapper;
+
+  final RowDeserializer<T>? _using;
 
   /// Fetches exactly one row and maps it as [T].
   Future<T> fetchOne(DatabaseExecutor db) async {
@@ -38,7 +50,15 @@ final class QueryAs<T> {
     return QueryAs<T>(sql, parameters, mapper: mapper);
   }
 
-  RowMapper<T> get _rowMapper => _mapper ?? RowMapperRegistry.map<T>;
+  /// Returns a copy that maps rows with [using].
+  QueryAs<T> withDeserializer(RowDeserializer<T> using) {
+    return QueryAs<T>(sql, parameters, using: using);
+  }
+
+  // An explicit mapper wins over an explicit deserializer, and both win over
+  // the registry, which is the only one of the three that can fail at runtime.
+  RowMapper<T> get _rowMapper =>
+      _mapper ?? _using?.deserialize ?? RowMapperRegistry.map<T>;
 }
 
 /// Scalar query returning the first selected column.
@@ -102,8 +122,9 @@ QueryAs<T> queryAs<T>(
   String sql,
   List<Object?> parameters, {
   RowMapper<T>? mapper,
+  RowDeserializer<T>? using,
 }) {
-  return QueryAs<T>(sql, parameters, mapper: mapper);
+  return QueryAs<T>(sql, parameters, mapper: mapper, using: using);
 }
 
 /// Creates a scalar query helper.
