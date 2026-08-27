@@ -124,6 +124,17 @@ extension OrderFromRow on Order {
   }
 }
 
+/// Row deserializer for [Order].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class $OrderFromRow implements RowDeserializer<Order> {
+  const $OrderFromRow();
+
+  @override
+  Order deserialize(Row row) => OrderFromRow.fromRow(row);
+}
+
 final bool _$orderFromRowRegistered = registerRowMapper<Order>(OrderFromRow.fromRow);
 
 Map<String, Object?> _$OrderSerialize(Order instance) {

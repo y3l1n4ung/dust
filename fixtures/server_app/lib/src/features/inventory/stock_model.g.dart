@@ -63,6 +63,17 @@ extension StockFromRow on Stock {
   }
 }
 
+/// Row deserializer for [Stock].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class $StockFromRow implements RowDeserializer<Stock> {
+  const $StockFromRow();
+
+  @override
+  Stock deserialize(Row row) => StockFromRow.fromRow(row);
+}
+
 final bool _$stockFromRowRegistered = registerRowMapper<Stock>(StockFromRow.fromRow);
 
 Map<String, Object?> _$StockSerialize(Stock instance) {

@@ -146,6 +146,9 @@ fn query_call_surface(
         .map(String::as_str)
         .unwrap_or("const <Object?>[]");
     let (params_source_is_list, parameter_count) = parse_list_argument_count(params_source);
+    // `queryAs` takes SQL and parameters positionally; anything beyond them is
+    // `mapper:` or `using:`, the two ways a call brings its own row mapping.
+    let has_row_mapper_argument = args.len() > 2;
 
     ParsedQueryCallSurface {
         function,
@@ -155,6 +158,7 @@ fn query_call_surface(
         parameter_count,
         params_source_is_list,
         fetch_method,
+        has_row_mapper_argument,
         span,
     }
 }

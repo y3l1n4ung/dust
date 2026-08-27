@@ -112,6 +112,17 @@ extension AccountFromRow on Account {
   }
 }
 
+/// Row deserializer for [Account].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class $AccountFromRow implements RowDeserializer<Account> {
+  const $AccountFromRow();
+
+  @override
+  Account deserialize(Row row) => AccountFromRow.fromRow(row);
+}
+
 final bool _$accountFromRowRegistered = registerRowMapper<Account>(AccountFromRow.fromRow);
 
 Map<String, Object?> _$AccountViewSerialize(AccountView instance) {

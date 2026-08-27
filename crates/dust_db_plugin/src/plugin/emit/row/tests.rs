@@ -89,6 +89,17 @@ fn emits_basic_from_row_extension() {
   }
 }
 
+/// Row deserializer for [UserRow].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class $UserRowFromRow implements RowDeserializer<UserRow> {
+  const $UserRowFromRow();
+
+  @override
+  UserRow deserialize(Row row) => UserRowFromRow.fromRow(row);
+}
+
 final bool _$userRowFromRowRegistered = registerRowMapper<UserRow>(UserRowFromRow.fromRow);"#
     );
 }

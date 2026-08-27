@@ -74,6 +74,7 @@ fn query_call(
         sql_source_static: true,
         parameter_count,
         params_source_is_list: true,
+        has_row_mapper_argument: false,
         fetch_method: Some(fetch_method.to_owned()),
         span: SpanIr::new(FileId::new(7), TextRange::new(start, start + 1)),
     }

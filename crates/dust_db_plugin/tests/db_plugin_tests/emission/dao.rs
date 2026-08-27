@@ -166,6 +166,17 @@ fn expected_default_dao_output() -> &'static str {
   }
 }
 
+/// Row deserializer for [UserProfile].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class $UserProfileFromRow implements RowDeserializer<UserProfile> {
+  const $UserProfileFromRow();
+
+  @override
+  UserProfile deserialize(Row row) => UserProfileFromRow.fromRow(row);
+}
+
 final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
 
 final class _$UserDao implements UserDao {
@@ -212,6 +223,17 @@ fn expected_cardinality_output() -> &'static str {
       status: const UserStatusFromInt().decode(row.read<int>('status')),
     );
   }
+}
+
+/// Row deserializer for [UserProfile].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class $UserProfileFromRow implements RowDeserializer<UserProfile> {
+  const $UserProfileFromRow();
+
+  @override
+  UserProfile deserialize(Row row) => UserProfileFromRow.fromRow(row);
 }
 
 final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
@@ -300,6 +322,17 @@ fn expected_reordered_sqlite_output() -> &'static str {
       name: row.read<String>('display_name'),
     );
   }
+}
+
+/// Row deserializer for [UserProfile].
+///
+/// Pass it as the `using:` argument of a typed row query, so a row type with
+/// no mapping is an analyzer error rather than a failure on the first request.
+final class $UserProfileFromRow implements RowDeserializer<UserProfile> {
+  const $UserProfileFromRow();
+
+  @override
+  UserProfile deserialize(Row row) => UserProfileFromRow.fromRow(row);
 }
 
 final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);

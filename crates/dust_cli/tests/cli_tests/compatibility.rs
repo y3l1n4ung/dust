@@ -89,7 +89,7 @@ fn cli_build_renders_unsupported_package_version() {
     assert!(run.stdout.is_empty());
     assert!(run.stderr.contains("unsupported Dust package version"));
     assert!(run.stderr.contains("CLI 0.1.4"));
-    assert!(run.stderr.contains("`dust_dart` >=0.1.3 <0.2.0"));
+    assert!(run.stderr.contains("`dust_dart` >=0.1.4 <0.2.0"));
     assert!(run.stderr.contains("resolves 0.1.2"));
     assert!(run.stderr.contains("Upgrade the Dust package dependency"));
     assert!(!workspace.path().join("lib/user.g.dart").exists());
@@ -117,7 +117,7 @@ fn cli_doctor_renders_package_compatibility_matrix() {
     assert!(run.stderr.contains("doctor  workspace: issues"));
     assert!(run.stderr.contains("compat cli 0.1.4"));
     assert!(run.stderr.contains(
-        "compat dust_dart status=too-old usage=used resolved=0.1.2 supported=>=0.1.3 <0.2.0"
+        "compat dust_dart status=too-old usage=used resolved=0.1.2 supported=>=0.1.4 <0.2.0"
     ));
     assert!(
         run.stderr
