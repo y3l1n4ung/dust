@@ -2,7 +2,19 @@
 
 ## Install
 
-The package is unpublished, so depend on it by path from inside this workspace:
+```bash
+dart pub add dust_server
+```
+
+It is a prerelease, so `pub add` will not pick it up without an explicit
+constraint. Pin the exact version — the API can still change before 1.0:
+
+```yaml
+dependencies:
+  dust_server: 0.1.0-beta.2
+```
+
+Inside this workspace, depend on it by path instead:
 
 ```yaml
 dependencies:

@@ -10,8 +10,8 @@ Runtime support for Dust-generated Dart HTTP servers on `shelf`.
 > [docs/design/server-plugin.md](../../docs/design/server-plugin.md) does not
 > exist yet. This package is the runtime that generated code will call, built
 > first so the design is checked against working code rather than a sketch —
-> which found seventeen defects the generated code would otherwise have been
-> built on top of. See [CHANGELOG.md](CHANGELOG.md).
+> which has found more than twenty defects the generated code would otherwise
+> have been built on top of. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Documentation
 
@@ -58,7 +58,7 @@ real client, which is what keeps a directory that size from rotting.
 
 ## Tests
 
-Over 1,200 tests, 100% line coverage, gated in CI.
+100% line coverage, gated in CI.
 
 ```bash
 dart test
