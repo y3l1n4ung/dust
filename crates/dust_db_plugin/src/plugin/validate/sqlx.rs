@@ -11,8 +11,9 @@ use sqlx::{Column, Connection, Executor, sqlite::SqliteConnection};
 
 use crate::plugin::{
     DbPluginOptions,
+    analysis::PackageDatabase,
     migrations::applied_migration_files,
-    model::{DatabaseClass, DbDriver, QueryFunction, QuerySpec},
+    model::{DbDriver, QueryFunction, QuerySpec},
 };
 
 use super::{
@@ -25,7 +26,7 @@ use super::{
 /// Validates SQL queries through SQLx describe or the offline query cache.
 pub(super) fn validate_sqlx_describe(
     library: &dust_ir::DartFileIr,
-    db: &DatabaseClass<'_>,
+    db: &PackageDatabase,
     queries: &[QuerySpec],
     row_columns: &HashMap<String, HashSet<String>>,
     options: DbPluginOptions,
@@ -153,10 +154,17 @@ async fn describe_queries(
             Either::Right(count) => count,
         });
         if parameter_count != rewrite.expanded_parameter_count() {
+            // The bind list is built from the placeholders Dust replaced, so a
+            // disagreement here means the generated call would bind the wrong
+            // number of arguments. Show the SQL the database actually parsed:
+            // the `$n` that is not where it looks is visible in it.
             return Err(format!(
-                "SQLx query `{}` expects {parameter_count} expanded parameters but Dust rewrote {} placeholders",
+                "SQLx query `{}` would bind {} arguments to a statement the database reads as \
+                 having {parameter_count} parameters. A `$n` was rewritten somewhere it cannot \
+                 be bound:\n{}",
                 query.display_name(),
-                rewrite.expanded_parameter_count()
+                rewrite.expanded_parameter_count(),
+                rewrite.sql.trim()
             ));
         }
         validate_described_columns(query, row_columns, &describe)?;
