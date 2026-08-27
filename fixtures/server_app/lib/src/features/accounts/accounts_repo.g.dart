@@ -28,7 +28,7 @@ JOIN api_tokens t ON t.account_id = a.id
 WHERE t.token_hash = ? AND t.expires_at > ?
 ''',
       [tokenHash, now],
-      AccountFromRow.fromRow,
+      const $AccountRowDeserializer().deserialize,
     );
   }
 
@@ -40,7 +40,7 @@ SELECT id, email, password_hash, password_salt, scopes FROM accounts
 WHERE email = ?
 ''',
       [email],
-      AccountFromRow.fromRow,
+      const $AccountRowDeserializer().deserialize,
     );
   }
 

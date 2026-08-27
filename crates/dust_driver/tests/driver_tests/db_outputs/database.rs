@@ -27,25 +27,38 @@ fn db_build_writes_database_without_from_row_mapper() {
         generated_output(
             r#"part of 'app_database.dart';
 
-extension UserProfileFromRow on UserProfile {
-  static UserProfile fromRow(Row row) {
-    return UserProfile(
-      id: row.read<int>('id'),
-      name: row.read<String>('display_name'),
-      bio: row.readNullable<Object?>('bio') == null ? '' : row.read<String>('bio'),
-    );
-  }
+UserProfile _$UserProfileFromRow(Row row) {
+  return UserProfile(
+    id: row.read<int>('id'),
+    name: row.read<String>('display_name'),
+    bio: row.readNullable<Object?>('bio') == null ? '' : row.read<String>('bio'),
+  );
 }
 
 /// Row deserializer for [UserProfile].
-///
-/// Pass it as the `using:` argument of a typed row query, so a row type with
-/// no mapping is an analyzer error rather than a failure on the first request.
-final class $UserProfileFromRow implements RowDeserializer<UserProfile> {
-  const $UserProfileFromRow();
+final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> {
+  const $UserProfileRowDeserializer();
 
   @override
-  UserProfile deserialize(Row row) => UserProfileFromRow.fromRow(row);
+  UserProfile deserialize(Row row) => _$UserProfileFromRow(row);
+}
+
+/// Typed row query terminals for [UserProfile].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $UserProfileQuery on QueryAs<UserProfile> {
+  /// Fetches exactly one row.
+  Future<UserProfile> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$UserProfileFromRow);
+
+  /// Fetches zero or one row.
+  Future<UserProfile?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$UserProfileFromRow);
+
+  /// Fetches every row.
+  Future<List<UserProfile>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$UserProfileFromRow);
 }
 
 final class _$AppDatabase implements AppDatabase {
@@ -95,24 +108,37 @@ fn normal_build_writes_from_row_trait_without_database_output() {
         generated_output(
             r#"part of 'user_row.dart';
 
-extension UserProfileFromRow on UserProfile {
-  static UserProfile fromRow(Row row) {
-    return UserProfile(
-      id: row.read<int>('id'),
-      name: row.read<String>('display_name'),
-    );
-  }
+UserProfile _$UserProfileFromRow(Row row) {
+  return UserProfile(
+    id: row.read<int>('id'),
+    name: row.read<String>('display_name'),
+  );
 }
 
 /// Row deserializer for [UserProfile].
-///
-/// Pass it as the `using:` argument of a typed row query, so a row type with
-/// no mapping is an analyzer error rather than a failure on the first request.
-final class $UserProfileFromRow implements RowDeserializer<UserProfile> {
-  const $UserProfileFromRow();
+final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> {
+  const $UserProfileRowDeserializer();
 
   @override
-  UserProfile deserialize(Row row) => UserProfileFromRow.fromRow(row);
+  UserProfile deserialize(Row row) => _$UserProfileFromRow(row);
+}
+
+/// Typed row query terminals for [UserProfile].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $UserProfileQuery on QueryAs<UserProfile> {
+  /// Fetches exactly one row.
+  Future<UserProfile> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$UserProfileFromRow);
+
+  /// Fetches zero or one row.
+  Future<UserProfile?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$UserProfileFromRow);
+
+  /// Fetches every row.
+  Future<List<UserProfile>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$UserProfileFromRow);
 }
 "#
         )

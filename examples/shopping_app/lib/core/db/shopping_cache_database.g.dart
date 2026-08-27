@@ -53,7 +53,7 @@ FROM product_cache
 WHERE id = ?
 ''',
       [id],
-      CachedProductRowFromRow.fromRow,
+      const $CachedProductRowRowDeserializer().deserialize,
     );
   }
 
@@ -67,7 +67,7 @@ FROM product_cache
 ORDER BY title
 ''',
       [],
-      CachedProductRowFromRow.fromRow,
+      const $CachedProductRowRowDeserializer().deserialize,
     );
   }
 
@@ -112,7 +112,7 @@ FROM wishlist_cache
 ORDER BY saved_at DESC
 ''',
       [],
-      CachedWishlistRowFromRow.fromRow,
+      const $CachedWishlistRowRowDeserializer().deserialize,
     );
   }
 }

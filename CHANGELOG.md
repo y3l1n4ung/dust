@@ -8,13 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Row mapping has an interface. `@Derive([FromRow()])` now generates
-  `$TypeFromRow`, a `const` witness implementing the new `RowDeserializer<T>`
-  in `dust_dart` — the row-side mirror of `Deserializer<DartT, JsonT>`, and a
-  witness for the same reason `Deserialize` needs one: reading a row constructs
-  a value, so there is no instance to declare the method on.
+- Row mapping has an interface and generated query terminals.
+  `@Derive([FromRow()])` now emits a private `_$TypeFromRow(Row row)`, a public
+  `$TypeRowDeserializer` implementing the new `RowDeserializer<T>` in
+  `dust_dart`, and `extension $TypeQuery on QueryAs<Type>` carrying `fetchOne`,
+  `fetchOptional`, and `fetchAll`. Dart resolves an extension member from the
+  static type of the receiver, so `queryAs<Order>(sql, args).fetchOne(db)` is
+  picked at compile time and a row type with no `FromRow` has no terminal at
+  all — the call does not compile.
 - `dust db build` rejects a `queryAs<T>` whose `T` has no row mapping anywhere
   in the package, naming the type and the call site.
+- `QueryAs.fetchOneWith`, `fetchOptionalWith`, and `fetchAllWith` take the row
+  mapping as an argument, for a row type Dust does not generate.
 
 ### Removed
 
@@ -22,18 +27,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `registerRowMapper` initializer generated row files used to emit. A
   process-wide `Map<Type, RowMapper>` filled by top-level initializers made a
   missing row mapping a runtime `SqlxError.decode` that depended on whether the
-  part file had been imported anywhere in the isolate. Generated DAOs never used
-  it — they pass their mapper directly — so the only caller was `queryAs<T>`
-  with no mapping given, which is now a compile error instead.
+  part file had been imported anywhere in the isolate. Generated DAOs never
+  used it, and with generated terminals nothing else does either.
 
 ### Changed
 
-- **`queryAs<T>` requires `using:`**, normally the generated
-  `const $TypeFromRow()`. Dart has no static interface members, so with the
-  registry gone there is no way to get from `T` alone to a decoder; the mapping
-  becomes an argument, and a row type Dust generated nothing for has no
-  `$TypeFromRow` to name. `RowMapperDeserializer` wraps a plain function for a
-  row type Dust does not own. Generated `@SqlxDao` methods are unaffected.
+- Generated row output follows the naming the other derives use. The public
+  `extension TypeFromRow on Type` with its `static fromRow` is replaced by the
+  private `_$TypeFromRow` function — mirroring serde's `_$TypeSerialize` — and
+  the public `$TypeRowDeserializer` witness, mirroring `$TypeSerializer`.
+  Generated DAOs decode through the witness. Call sites of `queryAs<T>` are
+  unchanged.
 
 ### Fixed
 

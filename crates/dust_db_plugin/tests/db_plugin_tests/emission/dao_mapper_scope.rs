@@ -17,7 +17,7 @@ fn generated_dao_uses_direct_from_row_mapper() {
         .expect("plugin must generate one contribution");
 
     let source = &contribution.support_types[0];
-    assert!(source.contains("UserProfileFromRow.fromRow"));
+    assert!(source.contains("const $UserProfileRowDeserializer().deserialize"));
     assert!(!source.contains("RowMapperRegistry.map"));
     assert!(!source.contains("queryAs<"));
 }

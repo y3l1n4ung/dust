@@ -7,13 +7,7 @@ import 'sqlx_error.dart';
 /// Typed row query.
 final class QueryAs<T> {
   /// Creates one typed row query.
-  ///
-  /// [using] is required, and is normally the generated `const $TypeFromRow()`.
-  /// A row type Dust generated nothing for has no such name, so the analyzer
-  /// reports it where it is written. For a row type Dust does not own, wrap a
-  /// function in [RowMapperDeserializer].
-  const QueryAs(this.sql, this.parameters, {required RowDeserializer<T> using})
-      : _using = using;
+  const QueryAs(this.sql, this.parameters);
 
   /// Static SQL source.
   final String sql;
@@ -21,34 +15,23 @@ final class QueryAs<T> {
   /// Positional SQL parameter values.
   final List<Object?> parameters;
 
-  final RowDeserializer<T> _using;
-
-  /// The row mapping this query decodes with.
-  RowMapper<T> get rowMapper => _using.deserialize;
-
-  /// Fetches exactly one row and maps it as [T].
-  Future<T> fetchOne(DatabaseExecutor db) async {
-    return _unwrap(await db.fetchOne<T>(sql, parameters, rowMapper));
+  /// Fetches exactly one row, decoding it with [mapper].
+  ///
+  /// `@Derive([FromRow()])` generates `fetchOne` on top of this, so a row type
+  /// Dust owns needs no mapper at the call. Reach for this directly only for a
+  /// row type Dust does not generate.
+  Future<T> fetchOneWith(DatabaseExecutor db, RowMapper<T> mapper) async {
+    return _unwrap(await db.fetchOne<T>(sql, parameters, mapper));
   }
 
-  /// Fetches zero or one row and maps it as [T] when present.
-  Future<T?> fetchOptional(DatabaseExecutor db) async {
-    return _unwrap(await db.fetchOptional<T>(sql, parameters, rowMapper));
+  /// Fetches zero or one row, decoding it with [mapper] when present.
+  Future<T?> fetchOptionalWith(DatabaseExecutor db, RowMapper<T> mapper) async {
+    return _unwrap(await db.fetchOptional<T>(sql, parameters, mapper));
   }
 
-  /// Fetches all rows and maps each as [T].
-  Future<List<T>> fetchAll(DatabaseExecutor db) async {
-    return _unwrap(await db.fetchAll<T>(sql, parameters, rowMapper));
-  }
-
-  /// Returns a copy that maps rows with [mapper].
-  QueryAs<T> withMapper(RowMapper<T> mapper) {
-    return QueryAs<T>(sql, parameters, using: RowMapperDeserializer<T>(mapper));
-  }
-
-  /// Returns a copy that maps rows with [using].
-  QueryAs<T> withDeserializer(RowDeserializer<T> using) {
-    return QueryAs<T>(sql, parameters, using: using);
+  /// Fetches every row, decoding each with [mapper].
+  Future<List<T>> fetchAllWith(DatabaseExecutor db, RowMapper<T> mapper) async {
+    return _unwrap(await db.fetchAll<T>(sql, parameters, mapper));
   }
 }
 
@@ -109,12 +92,8 @@ final class QueryExecute {
 }
 
 /// Creates a typed row query helper.
-QueryAs<T> queryAs<T>(
-  String sql,
-  List<Object?> parameters, {
-  required RowDeserializer<T> using,
-}) {
-  return QueryAs<T>(sql, parameters, using: using);
+QueryAs<T> queryAs<T>(String sql, List<Object?> parameters) {
+  return QueryAs<T>(sql, parameters);
 }
 
 /// Creates a scalar query helper.

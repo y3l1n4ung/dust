@@ -260,17 +260,30 @@ ordering, limits, and offsets are passed to SQLite and SQLx as written.
 
 ## Row Mapping
 
-`@Derive([FromRow()])` generates two things: a `TypeFromRow.fromRow(Row row)`
-mapper, and `$TypeFromRow`, a `const` witness implementing `RowDeserializer<Type>`.
-Both read columns by name through the driver-independent `Row` interface.
-Generated DAO methods pass the mapper directly, so generated database code
-depends on neither side-effect registration nor import order.
+`@Derive([FromRow()])` generates three things, following the same naming the
+other derives use — a private conversion function, a public witness, and the
+query terminals:
 
-`RowDeserializer<T>` is the row-side mirror of `Deserializer<DartT, JsonT>`,
-and exists for the same reason. `serialize()` can be an instance method because
-the value already exists; reading a row *constructs* one, so there is no
-instance to declare it on and the capability lives on a separate witness object
-instead.
+```dart
+Order _$OrderFromRow(Row row) { ... }
+
+final class $OrderRowDeserializer implements RowDeserializer<Order> { ... }
+
+extension $OrderQuery on QueryAs<Order> {
+  Future<Order> fetchOne(DatabaseExecutor db) => fetchOneWith(db, _$OrderFromRow);
+  Future<Order?> fetchOptional(DatabaseExecutor db) => ...;
+  Future<List<Order>> fetchAll(DatabaseExecutor db) => ...;
+}
+```
+
+`_$OrderFromRow` mirrors serde's `_$OrderSerialize`, and `$OrderRowDeserializer`
+mirrors `$OrderSerializer`. `RowDeserializer<T>` is the row-side mirror of
+`Deserializer<DartT, JsonT>` and exists for the same reason: `serialize()` can
+be an instance method because the value already exists, while reading a row
+*constructs* one, so there is no instance to declare it on.
+
+Generated DAO methods decode through the witness, so generated database code
+depends on neither side-effect registration nor import order.
 
 `@Sqlx` supports these mapping options:
 
@@ -287,38 +300,39 @@ instead.
 Directly supported field types are `String`, `int`, `double`, `num`, `bool`,
 `DateTime`, and nullable variants. Use `json` or `tryFrom` for custom values.
 
-For manual typed queries outside generated DAOs, pass the generated witness:
+For typed queries outside generated DAOs, write the query and call the terminal.
+Nothing is passed:
 
 ```dart
 final user = await queryAs<UserRow>(
   'SELECT id, email, name FROM users WHERE id = ?',
   [id],
-  using: const $UserRowFromRow(),
 ).fetchOne(database.connection);
 ```
 
-`using:` is required. Dart has no static interface members — a type parameter
-`T` cannot reach a constructor, a static, or a factory — so `T` alone can never
-produce a decoder, and the mapping has to be a value. Making it an argument is
-what moves a missing row mapping from the first request to the analyzer: a row
-type Dust generated nothing for has no `$TypeFromRow` to name.
-
-`dust db build` reports it too, before the analyzer runs:
+Dart resolves an extension member from the **static type** of the receiver, so
+`fetchOne` here is `$UserRowQuery.fetchOne`, picked at compile time. A row type
+with no `@Derive([FromRow()])` has no terminals at all, so the call does not
+compile — no registry lookup, no global state, no argument. `dust db build`
+reports it first, with a better message:
 
 ```
 error: queryAs<Widget> row type has no row mapping. Add `@Derive([FromRow()])`
-       to `Widget`, or pass one with `mapper:` or `using:`
+       to `Widget`, or pass one with `fetchOneWith`
 ```
 
-For a row type Dust does not generate, wrap a plain function:
+For a row type Dust does not generate, the `With` terminals take the mapping:
 
 ```dart
-final user = await queryAs<UserRow>(
-  'SELECT id, email, name FROM users WHERE id = ?',
+final row = await queryAs<Legacy>(
+  'SELECT id FROM legacy WHERE id = ?',
   [id],
-  using: const RowMapperDeserializer(UserRowFromRow.fromRow),
-).fetchOne(database.connection);
+).fetchOneWith(database.connection, Legacy.fromRow);
 ```
+
+If the row library uses a `show` clause on `package:dust_dart/db.dart`, it needs
+`QueryAs`, `DatabaseExecutor`, `Row`, and `RowDeserializer` for the generated
+part to compile.
 
 ## Error Context
 

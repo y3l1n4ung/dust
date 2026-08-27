@@ -100,27 +100,40 @@ final class $AccountViewSerializer implements Serializer<AccountView, Map<String
   @override
   Map<String, Object?> serialize(AccountView value) => _$AccountViewSerialize(value);
 }
-extension AccountFromRow on Account {
-  static Account fromRow(Row row) {
-    return Account(
+Account _$AccountFromRow(Row row) {
+  return Account(
       id: row.read<int>('id'),
       email: row.read<String>('email'),
       passwordHash: row.read<String>('password_hash'),
       passwordSalt: row.read<String>('password_salt'),
       scopes: row.read<String>('scopes'),
     );
-  }
 }
 
 /// Row deserializer for [Account].
-///
-/// Pass it as the `using:` argument of a typed row query, so a row type with
-/// no mapping is an analyzer error rather than a failure on the first request.
-final class $AccountFromRow implements RowDeserializer<Account> {
-  const $AccountFromRow();
+final class $AccountRowDeserializer implements RowDeserializer<Account> {
+  const $AccountRowDeserializer();
 
   @override
-  Account deserialize(Row row) => AccountFromRow.fromRow(row);
+  Account deserialize(Row row) => _$AccountFromRow(row);
+}
+
+/// Typed row query terminals for [Account].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $AccountQuery on QueryAs<Account> {
+  /// Fetches exactly one row.
+  Future<Account> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$AccountFromRow);
+
+  /// Fetches zero or one row.
+  Future<Account?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$AccountFromRow);
+
+  /// Fetches every row.
+  Future<List<Account>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$AccountFromRow);
 }
 
 Map<String, Object?> _$AccountViewSerialize(AccountView instance) {

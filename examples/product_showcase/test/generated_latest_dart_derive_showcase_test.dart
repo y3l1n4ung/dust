@@ -129,7 +129,7 @@ void main() {
   });
 
   test('latest Dart showcase maps database rows through generated FromRow', () {
-    final card = LatestDartProductCardFromRow.fromRow(
+    final card = const $LatestDartProductCardRowDeserializer().deserialize(
       _MapRow({
         'id': 'sku-100',
         'title': 'Runner',

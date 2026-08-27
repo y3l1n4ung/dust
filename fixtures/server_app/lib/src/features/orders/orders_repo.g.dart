@@ -28,7 +28,7 @@ ORDER BY id DESC
 LIMIT ? OFFSET ?
 ''',
       [accountId, limit, offset],
-      OrderFromRow.fromRow,
+      const $OrderRowDeserializer().deserialize,
     );
   }
 
@@ -40,7 +40,7 @@ SELECT id, account_id, item, quantity, placed_at FROM orders
 WHERE id = ? AND account_id = ?
 ''',
       [id, accountId],
-      OrderFromRow.fromRow,
+      const $OrderRowDeserializer().deserialize,
     );
   }
 

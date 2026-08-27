@@ -64,25 +64,22 @@ void main() {
   });
 
   test('query helpers delegate to DatabaseExecutor fetch methods', () async {
-    const using = RowMapperDeserializer<_User>(_UserFromRow.fromRow);
+    const mapper = _UserFromRow.fromRow;
     final executor = _FakeExecutor();
     final client = _FakeDatabaseClient(executor);
 
     final one = await queryAs<_User>(
       'one',
       const [],
-      using: using,
-    ).fetchOne(executor);
+    ).fetchOneWith(executor, mapper);
     final optional = await queryAs<_User>(
       'optional',
       const [],
-      using: using,
-    ).fetchOptional(executor);
+    ).fetchOptionalWith(executor, mapper);
     final all = await queryAs<_User>(
       'all',
       const [],
-      using: using,
-    ).fetchAll(executor);
+    ).fetchAllWith(executor, mapper);
     final scalar = await queryScalar<int>(
       'scalar',
       const [],

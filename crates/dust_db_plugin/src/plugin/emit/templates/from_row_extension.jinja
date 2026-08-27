@@ -1,16 +1,29 @@
-extension {{ class_name }}FromRow on {{ class_name }} {
-  static {{ class_name }} fromRow(Row row) {
-    return {{ call }};
-  }
+{{ class_name }} _${{ class_name }}FromRow(Row row) {
+  return {{ call }};
 }
 
 /// Row deserializer for [{{ class_name }}].
-///
-/// Pass it as the `using:` argument of a typed row query, so a row type with
-/// no mapping is an analyzer error rather than a failure on the first request.
-final class ${{ class_name }}FromRow implements RowDeserializer<{{ class_name }}> {
-  const ${{ class_name }}FromRow();
+final class ${{ class_name }}RowDeserializer implements RowDeserializer<{{ class_name }}> {
+  const ${{ class_name }}RowDeserializer();
 
   @override
-  {{ class_name }} deserialize(Row row) => {{ class_name }}FromRow.fromRow(row);
+  {{ class_name }} deserialize(Row row) => _${{ class_name }}FromRow(row);
+}
+
+/// Typed row query terminals for [{{ class_name }}].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension ${{ class_name }}Query on QueryAs<{{ class_name }}> {
+  /// Fetches exactly one row.
+  Future<{{ class_name }}> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _${{ class_name }}FromRow);
+
+  /// Fetches zero or one row.
+  Future<{{ class_name }}?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _${{ class_name }}FromRow);
+
+  /// Fetches every row.
+  Future<List<{{ class_name }}>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _${{ class_name }}FromRow);
 }
