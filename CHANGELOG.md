@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Database SQL validation now resolves the schema and the row classes across the
+  whole package instead of within one file. A project that keeps the database
+  class, the row classes, and the queries in three files — the normal layout —
+  had validation silently off: a DAO in a file without `@SqlxDatabase` was never
+  described, so an unknown column reached the generated code and failed at
+  runtime, and `queryAs<T>` never checked coverage for a `T` declared elsewhere.
+  Both are build errors again. A package that declares more than one
+  `@SqlxDatabase` now says so once, rather than picking one per file.
+- Library discovery reads annotation names nested in an argument list, so
+  `@Derive([FromRow()])` — the documented way to declare a row mapper — is found
+  by every plugin that owns a name inside the brackets, not only by the one that
+  owns `Derive`. It had kept row classes out of `dust db build` entirely, so a
+  query was checked with no idea what columns its row type needed. Only
+  constructor calls count, and string literals are skipped, so the SQL handed to
+  `@Query` contributes nothing.
+- A focused build — `dust db build`, `dust check --db` — no longer rewrites the
+  generated output of a library whose code belongs to a plugin that is not
+  running in that mode. It emitted a file with the header and nothing else, over
+  what a full `dust build` had put there.
+- The SQL placeholder scanner understands comments. A `$n` in a `--` line
+  comment or a `/* */` block comment was counted as a bind parameter: either a
+  build error blaming SQL that is correct, or, in a file that was not described,
+  a generated call binding one more argument than the statement has placeholders
+  and the comment text rewritten to `?`. Postgres dollar-quoted bodies —
+  `$$body$$`, `$tag$body$tag$` — are understood too, which a migration holding a
+  `CREATE FUNCTION` body needs. Block comments do not nest, matching SQLite.
+- The diagnostic for a placeholder count mismatch names what happened and prints
+  the SQL the database parsed, instead of reporting that "Dust rewrote N
+  placeholders".
+
 ## [v0.1.4] - 2026-08-09
 
 ### Added

@@ -22,22 +22,6 @@ pub(super) fn validate_rows(rows: &[RowClass<'_>], diagnostics: &mut Vec<Diagnos
     }
 }
 
-/// Builds the required SQL column set for each row class.
-pub(super) fn row_column_map(rows: &[RowClass<'_>]) -> HashMap<String, HashSet<String>> {
-    let row_by_name = rows
-        .iter()
-        .map(|row| (row.class.name.as_str(), row))
-        .collect::<HashMap<_, _>>();
-    rows.iter()
-        .map(|row| {
-            (
-                row.class.name.clone(),
-                collect_row_columns(row, &row_by_name).into_iter().collect(),
-            )
-        })
-        .collect()
-}
-
 /// Validates one row class for duplicate and unsupported field mappings.
 fn validate_row(
     row: &RowClass<'_>,

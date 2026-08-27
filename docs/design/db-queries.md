@@ -127,12 +127,11 @@ static string literal`).
 The surface this document wants is largely the surface that ships. What follows
 is where it stops short.
 
-### Validation resolves per file (verified)
+### Validation resolved per file (fixed, [#499](https://github.com/y3l1n4ung/dust/issues/499))
 
-[`validate.rs:47`](../../crates/dust_db_plugin/src/plugin/validate.rs) returns
-early when the library being validated declares no `@SqlxDatabase` class, and
-the row-column map is built from `row_classes(library)` — the row classes in
-that same file.
+`validate.rs` used to return early when the library being validated declared no
+`@SqlxDatabase` class, and the row-column map was built from
+`row_classes(library)` — the row classes in that same file.
 
 Three consequences, all verified:
 
@@ -148,11 +147,26 @@ Three consequences, all verified:
    `Order` lives in `order_model.dart` and the lookup misses.
 
 A realistic layout puts the database class, the row classes, and the queries in
-three different files, so in `fixtures/server_app` this turns SQL validation off
-everywhere.
+three different files, so in `fixtures/server_app` this turned SQL validation off
+everywhere. It was the most important item in this document: without it nothing
+else here was actually checked in a normal project.
 
-**This is the most important item in this document.** Without it nothing else
-here is actually checked in a normal project.
+The database class and the row classes are now collected during the shared
+workspace scan, before any library is validated, and every library validates
+against the whole package. See [Validation scope](#validation-scope).
+
+Discovery had to widen with it. It read only the name written after the `@`, and
+a row mapper is normally declared `@Derive([FromRow()])`, so `dust db build`
+never opened the file declaring the row type a query is checked against. It now
+reads the constructor calls nested in an argument list too — skipping string
+literals, so `@Query` SQL contributes nothing — which finds the file by the name
+the DB plugin actually owns rather than by teaching it another plugin's wrapper.
+
+That exposed one more. A focused registry runs one plugin and registers the rest
+for symbol ownership only, so a library discovered for its row mapper was
+emitted from serde markers belonging to a plugin that was not running, replacing
+a full build's output with a bare header. Emission acts on those markers only
+when every registered plugin executes.
 
 ### Describe results are read for column names only (verified)
 
@@ -163,12 +177,12 @@ checks that required columns are present. `sqlx::Describe` also carries
 `crates/dust_db_plugin`. So `final int quantity` against a `TEXT` column passes,
 and a nullable column decoded into a non-nullable field passes.
 
-### Placeholder scanning ignores SQL comments (verified)
+### Placeholder scanning ignored SQL comments (fixed, [#500](https://github.com/y3l1n4ung/dust/issues/500))
 
 `rewrite_sqlite_placeholders`
-([`sql.rs`](../../crates/dust_db_plugin/src/plugin/sql.rs)) tracks single and
-double quotes, so a `$1` inside a string literal is not mistaken for a
-placeholder. It does not track `--` line comments or `/* */` block comments.
+([`sql.rs`](../../crates/dust_db_plugin/src/plugin/sql.rs)) tracked single and
+double quotes, so a `$1` inside a string literal was not mistaken for a
+placeholder. It did not track `--` line comments or `/* */` block comments.
 
 **False rejection**, in a file that is described:
 
@@ -199,8 +213,12 @@ the comment text rewritten. `dart test test/orders_test.dart` then failed.
 When the file *is* described, an expanded-count cross-check catches it — by
 accident, with a diagnostic that blames the rewriter rather than the comment.
 
-The scanner needs comment states alongside its quote states. Independent of
-everything else here.
+The scanner now copies through everything that can hold a `$1` without meaning
+one: string literals, quoted identifiers, both comment forms, and Postgres
+dollar-quoted bodies, which a `CREATE FUNCTION` body in a migration would
+otherwise trip over. Block comments do not nest, which is what SQLite does. The
+count cross-check that used to catch this by accident now names what went wrong
+and prints the SQL the database parsed.
 
 ### The two surfaces disagree on errors (verified)
 
@@ -598,13 +616,13 @@ Three decisions are dialect-shaped:
 already built) is the CI path. The cache key gains the driver, so a SQLite cache
 cannot satisfy a Postgres build. Same arrangement SQLx uses for `.sqlx/`.
 
-### The scanner needs dollar-quoting first
+### The scanner already understands dollar-quoting
 
-`rewrite_sqlite_placeholders` recognises `'` and `"` only. Postgres
-dollar-quoted strings — `$$body$$` and `$tag$body$tag$` — are neither, and a
-`$1` inside one would be counted as a parameter. Postgres needs no placeholder
-rewrite, but arity and gap validation still scan the text. A migration with a
-`CREATE FUNCTION` body is the obvious trigger.
+Postgres dollar-quoted strings — `$$body$$` and `$tag$body$tag$` — are neither
+`'` nor `"`, and a `$1` inside one would be counted as a parameter. Postgres
+needs no placeholder rewrite, but arity and gap validation still scan the text,
+and a migration with a `CREATE FUNCTION` body is the obvious trigger. That
+state went in with the comment fix rather than waiting for the driver.
 
 ## Advanced cases
 
@@ -687,9 +705,10 @@ Inline queries take the executor per call and do not have this problem.
 
 ## Work, in order
 
-1. **Resolve `@SqlxDatabase` and row classes per package.** Turns validation on.
-2. **Fix the placeholder scanner** — comment states now, dollar-quoting before
-   Postgres.
+1. ~~**Resolve `@SqlxDatabase` and row classes per package.**~~ Done — validation
+   is on ([#499](https://github.com/y3l1n4ung/dust/issues/499)).
+2. ~~**Fix the placeholder scanner.**~~ Done — comment states and dollar-quoting
+   both ([#500](https://github.com/y3l1n4ung/dust/issues/500)).
 3. **Read `nullable()` and `type_info()`**, shipping as warnings until the
    [type-mapping table](#open-questions) exists.
 4. **Terminals return `Result`;** generate them per row type; delete

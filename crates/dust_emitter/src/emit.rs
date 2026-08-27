@@ -72,6 +72,7 @@ pub fn emit_library_with_plan(
         has_contributions || primary_source_override.is_some(),
         &plan,
         &merged,
+        registry.executes_all(),
     ) {
         let source =
             primary_source_override.unwrap_or_else(|| assemble_source(library, &plan, &merged));
@@ -133,17 +134,27 @@ fn should_emit_primary(
     has_contributions: bool,
     plan: &SymbolPlan,
     merged: &MergedSections,
+    every_plugin_executes: bool,
 ) -> bool {
     has_contributions
         || !merged.shared_helpers.is_empty()
         || !merged.support_types.is_empty()
         || !merged.top_level_functions.is_empty()
         || !plan.reserved().is_empty()
-        || library.classes.iter().any(|class| {
-            !merged.members_for_class(&class.name).is_empty()
-                || class.fields.iter().any(|field| field.serde.is_some())
-        })
-        || library.enums.iter().any(|enum_ir| enum_ir.serde.is_some())
+        || library
+            .classes
+            .iter()
+            .any(|class| !merged.members_for_class(&class.name).is_empty())
+        // Serde markers in the source say some plugin has output for this
+        // library. Under a focused registry that plugin is not running, so
+        // acting on them writes a file with the header and nothing else, over
+        // whatever a full build had put there.
+        || (every_plugin_executes
+            && (library
+                .classes
+                .iter()
+                .any(|class| class.fields.iter().any(|field| field.serde.is_some()))
+                || library.enums.iter().any(|enum_ir| enum_ir.serde.is_some())))
 }
 
 /// Extracts the first plugin-provided primary source override.

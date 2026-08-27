@@ -1,6 +1,9 @@
+use dust_ir::TypeIr;
 use dust_plugin_api::{PluginContribution, PluginRegistry};
 
-use super::support::{FakePlugin, emit_with_registry, generated_output, sample_library};
+use super::support::{
+    FakePlugin, emit_with_registry, generated_output, sample_library, serde_marked_field,
+};
 
 #[test]
 fn emitter_writes_sections_in_fixed_order_and_wraps_mixins() {
@@ -111,4 +114,45 @@ fn emitter_sets_changed_false_when_output_matches_previous() {
 
     assert!(first.changed);
     assert!(!second.changed);
+}
+
+#[test]
+fn a_focused_registry_leaves_output_it_cannot_regenerate_alone() {
+    // A library whose only generated output belongs to a plugin that is not
+    // running: `dust db build` selects the Database plugin and registers the
+    // rest for symbol ownership only. Emitting from the serde markers alone
+    // would replace a full build's output with a bare header.
+    let mut library = sample_library("lib/user.g.dart".to_owned());
+    library.classes[0]
+        .fields
+        .push(serde_marked_field("name", TypeIr::string()));
+
+    let full = emit_with_registry(&library, &registry_with(false), None);
+    let focused = emit_with_registry(&library, &registry_with(true), None);
+
+    assert!(
+        full.source.contains("part of 'user.dart';"),
+        "{}",
+        full.source
+    );
+    assert!(full.changed);
+    assert_eq!(focused.source, String::new());
+    assert!(!focused.changed);
+}
+
+/// A registry holding one contributing-nothing plugin, executing or not.
+fn registry_with(symbols_only: bool) -> PluginRegistry {
+    let plugin = Box::new(FakePlugin {
+        name: "fake",
+        requested: Vec::new(),
+        diagnostics: Vec::new(),
+        contribution: PluginContribution::default(),
+    });
+    let mut registry = PluginRegistry::new();
+    if symbols_only {
+        registry.register_symbols_only(plugin).unwrap();
+    } else {
+        registry.register(plugin).unwrap();
+    }
+    registry
 }
