@@ -56,9 +56,9 @@ final class $StockSerializer implements Serializer<Stock, Map<String, Object?>> 
 }
 Stock _$StockFromRow(Row row) {
   return Stock(
-      item: row.read<String>('item'),
-      onHand: row.read<int>('on_hand'),
-    );
+    item: row.read<String>('item'),
+    onHand: row.read<int>('on_hand'),
+  );
 }
 
 /// Row deserializer for [Stock].

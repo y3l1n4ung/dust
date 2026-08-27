@@ -114,12 +114,12 @@ final class $OrderSerializer implements Serializer<Order, Map<String, Object?>> 
 }
 Order _$OrderFromRow(Row row) {
   return Order(
-      id: row.read<int>('id'),
-      accountId: row.read<int>('account_id'),
-      item: row.read<String>('item'),
-      quantity: row.read<int>('quantity'),
-      placedAt: row.read<String>('placed_at'),
-    );
+    id: row.read<int>('id'),
+    accountId: row.read<int>('account_id'),
+    item: row.read<String>('item'),
+    quantity: row.read<int>('quantity'),
+    placedAt: row.read<String>('placed_at'),
+  );
 }
 
 /// Row deserializer for [Order].

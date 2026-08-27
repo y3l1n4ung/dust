@@ -15,17 +15,17 @@ part of 'shopping_cache_rows.dart';
 
 CachedProductRow _$CachedProductRowFromRow(Row row) {
   return CachedProductRow(
-      id: row.read<int>('id'),
-      title: row.read<String>('title'),
-      price: row.read<double>('price'),
-      description: row.read<String>('description'),
-      category: row.read<String>('category'),
-      imageUrl: row.read<String>('image'),
-      rating: const $CachedProductRatingRowRowDeserializer().deserialize(row),
-      pinned: false,
-      payload: CachedProductPayload.fromJson(decodeJsonObject(row.read<String>('payload'))),
-      source: CacheSourceFromString().decode(row.read<String>('source')),
-    );
+    id: row.read<int>('id'),
+    title: row.read<String>('title'),
+    price: row.read<double>('price'),
+    description: row.read<String>('description'),
+    category: row.read<String>('category'),
+    imageUrl: row.read<String>('image'),
+    rating: const $CachedProductRatingRowRowDeserializer().deserialize(row),
+    pinned: false,
+    payload: CachedProductPayload.fromJson(decodeJsonObject(row.read<String>('payload'))),
+    source: CacheSourceFromString().decode(row.read<String>('source')),
+  );
 }
 
 /// Row deserializer for [CachedProductRow].
@@ -56,9 +56,9 @@ extension $CachedProductRowQuery on QueryAs<CachedProductRow> {
 
 CachedProductRatingRow _$CachedProductRatingRowFromRow(Row row) {
   return CachedProductRatingRow(
-      rate: row.read<double>('rating_rate'),
-      count: row.read<int>('rating_count'),
-    );
+    rate: row.read<double>('rating_rate'),
+    count: row.read<int>('rating_count'),
+  );
 }
 
 /// Row deserializer for [CachedProductRatingRow].
@@ -89,10 +89,10 @@ extension $CachedProductRatingRowQuery on QueryAs<CachedProductRatingRow> {
 
 CachedWishlistRow _$CachedWishlistRowFromRow(Row row) {
   return CachedWishlistRow(
-      productId: row.read<int>('product_id'),
-      title: row.read<String>('title'),
-      savedAt: row.readDateTime('saved_at'),
-    );
+    productId: row.read<int>('product_id'),
+    title: row.read<String>('title'),
+    savedAt: row.readDateTime('saved_at'),
+  );
 }
 
 /// Row deserializer for [CachedWishlistRow].
