@@ -221,9 +221,8 @@ final class $LatestDartProductCardDeserializer implements Deserializer<LatestDar
   @override
   LatestDartProductCard deserialize(Map<String, Object?> json) => _$LatestDartProductCardDeserialize(json);
 }
-extension LatestDartProductCardFromRow on LatestDartProductCard {
-  static LatestDartProductCard fromRow(Row row) {
-    return LatestDartProductCard(
+LatestDartProductCard _$LatestDartProductCardFromRow(Row row) {
+  return LatestDartProductCard(
       id: row.read<String>('id'),
       title: row.read<String>('title'),
       productUrl: row.read<String>('product_url'),
@@ -234,18 +233,32 @@ extension LatestDartProductCardFromRow on LatestDartProductCard {
       launchedAt: row.readDateTime('launched_at'),
       internalOnly: false,
     );
-  }
 }
 
 /// Row deserializer for [LatestDartProductCard].
-///
-/// Pass it as the `using:` argument of a typed row query, so a row type with
-/// no mapping is an analyzer error rather than a failure on the first request.
-final class $LatestDartProductCardFromRow implements RowDeserializer<LatestDartProductCard> {
-  const $LatestDartProductCardFromRow();
+final class $LatestDartProductCardRowDeserializer implements RowDeserializer<LatestDartProductCard> {
+  const $LatestDartProductCardRowDeserializer();
 
   @override
-  LatestDartProductCard deserialize(Row row) => LatestDartProductCardFromRow.fromRow(row);
+  LatestDartProductCard deserialize(Row row) => _$LatestDartProductCardFromRow(row);
+}
+
+/// Typed row query terminals for [LatestDartProductCard].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $LatestDartProductCardQuery on QueryAs<LatestDartProductCard> {
+  /// Fetches exactly one row.
+  Future<LatestDartProductCard> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$LatestDartProductCardFromRow);
+
+  /// Fetches zero or one row.
+  Future<LatestDartProductCard?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$LatestDartProductCardFromRow);
+
+  /// Fetches every row.
+  Future<List<LatestDartProductCard>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$LatestDartProductCardFromRow);
 }
 
 Map<String, Object?> _$LatestDartProductCardSerialize(LatestDartProductCard instance) {

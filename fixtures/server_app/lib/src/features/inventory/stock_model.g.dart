@@ -54,24 +54,37 @@ final class $StockSerializer implements Serializer<Stock, Map<String, Object?>> 
   @override
   Map<String, Object?> serialize(Stock value) => _$StockSerialize(value);
 }
-extension StockFromRow on Stock {
-  static Stock fromRow(Row row) {
-    return Stock(
+Stock _$StockFromRow(Row row) {
+  return Stock(
       item: row.read<String>('item'),
       onHand: row.read<int>('on_hand'),
     );
-  }
 }
 
 /// Row deserializer for [Stock].
-///
-/// Pass it as the `using:` argument of a typed row query, so a row type with
-/// no mapping is an analyzer error rather than a failure on the first request.
-final class $StockFromRow implements RowDeserializer<Stock> {
-  const $StockFromRow();
+final class $StockRowDeserializer implements RowDeserializer<Stock> {
+  const $StockRowDeserializer();
 
   @override
-  Stock deserialize(Row row) => StockFromRow.fromRow(row);
+  Stock deserialize(Row row) => _$StockFromRow(row);
+}
+
+/// Typed row query terminals for [Stock].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $StockQuery on QueryAs<Stock> {
+  /// Fetches exactly one row.
+  Future<Stock> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$StockFromRow);
+
+  /// Fetches zero or one row.
+  Future<Stock?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$StockFromRow);
+
+  /// Fetches every row.
+  Future<List<Stock>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$StockFromRow);
 }
 
 Map<String, Object?> _$StockSerialize(Stock instance) {

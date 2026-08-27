@@ -12,50 +12,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `RowDeserializer<T>`, the row-side mirror of `Deserializer<DartT, JsonT>`.
   Reading a row constructs a value, so — exactly as with `Deserialize` — there
-  is no instance to declare the method on and a generated witness object
-  carries the capability instead. `@Derive([FromRow()])` generates
-  `$TypeFromRow`, a `const` witness implementing it.
+  is no instance to declare the method on, and a generated witness object
+  carries the capability instead.
 - `RowMapperDeserializer<T>`, which wraps a plain `RowMapper<T>` function as a
-  `RowDeserializer<T>`. The escape hatch for a row type Dust does not generate.
-- `RowDeserializerMapper.asMapper`, the plain-function view, mirroring the
-  `DeserializerJsonMirror` extension on the JSON side.
-- `QueryAs.withDeserializer` and `QueryAs.rowMapper`.
+  `RowDeserializer<T>`, and `RowDeserializerMapper.asMapper`, the reverse view.
+  The latter mirrors `DeserializerJsonMirror` on the JSON side.
+- `QueryAs.fetchOneWith`, `fetchOptionalWith`, and `fetchAllWith`, which take
+  the row mapping as an argument. For a row type Dust does not generate.
 
 ### Removed
 
 - **`RowMapperRegistry` and `registerRowMapper` are gone**, along with the
-  `registerRowMapper` initializer that generated row files used to emit. A
+  `registerRowMapper` initializer generated row files used to emit. A
   process-wide `Map<Type, RowMapper>` filled by top-level initializers made a
   missing row mapping a runtime `SqlxError.decode`, and whether it hit depended
-  on whether the part file had been imported anywhere in the isolate. Nothing
-  outside this package's own tests used it: generated DAOs have always passed
-  their mapper directly.
+  on whether the part file had been imported anywhere in the isolate.
+- `QueryAs.fetchOne`, `fetchOptional`, and `fetchAll` are no longer instance
+  methods. They are generated per row type instead, as
+  `extension $TypeQuery on QueryAs<Type>`. Call sites are unchanged —
+  `queryAs<Order>(sql, args).fetchOne(db)` still works — but Dart now resolves
+  the terminal from the static type at compile time, so a row type with no
+  `@Derive([FromRow()])` has no terminal and the call does not compile. An
+  instance member would always beat an extension member, which is why they had
+  to move.
 
 ### Changed
 
-- **`queryAs<T>` requires `using:`.** With no registry there is no way to get
-  from `T` to a decoder — Dart has no static interface members — so the mapping
-  is an argument. Pass the generated `const $TypeFromRow()`; a row type Dust
-  generated nothing for has no such name, which is what moves the failure from
-  the first request to the analyzer. `dust db build` reports it too.
-- `QueryAs` takes a single `using:` rather than `mapper:` plus `using:`.
-  `withMapper` still takes a function and wraps it.
+- Generated row output follows the naming the other derives use. The public
+  `extension TypeFromRow on Type` with its `static fromRow` is replaced by a
+  private `_$TypeFromRow(Row row)` function, mirroring serde's
+  `_$TypeSerialize`, plus the public `$TypeRowDeserializer` witness, mirroring
+  `$TypeSerializer`.
 
 #### Migrating
 
+Nothing changes for `@SqlxDao`, and nothing changes for a `queryAs<T>` call
+whose `T` derives `FromRow`:
+
 ```dart
-// before — resolved at runtime, threw if nothing had registered
+// unchanged
 queryAs<Order>(sql, args).fetchOne(db);
-
-// after
-queryAs<Order>(sql, args, using: const $OrderFromRow()).fetchOne(db);
-
-// a row type Dust does not generate
-queryAs<Order>(sql, args, using: RowMapperDeserializer(myFromRow)).fetchOne(db);
 ```
 
-Generated `@SqlxDao` methods are unaffected; they never went through the
-registry.
+Two things move:
+
+```dart
+// before — a public generated extension
+final order = OrderFromRow.fromRow(row);
+// after — the public generated witness
+final order = const $OrderRowDeserializer().deserialize(row);
+
+// before — a mapper argument on the query, resolved through the registry
+queryAs<Legacy>(sql, args).fetchOne(db);
+// after — the mapping goes to the terminal
+queryAs<Legacy>(sql, args).fetchOneWith(db, Legacy.fromRow);
+```
+
+A row library that uses a `show` clause on `package:dust_dart/db.dart` needs
+`QueryAs` and `DatabaseExecutor` added to it.
 
 ## [0.1.3] - 2026-07-28
 

@@ -103,20 +103,16 @@ fn requires_exact_fetch_method_property() {
 
 #[test]
 fn records_whether_a_call_brings_its_own_row_mapper() {
-    // SQL and parameters are the two positional arguments. Anything past them
-    // is `mapper:` or `using:`, and a call that brings one needs nothing
-    // generated for its row type.
-    let plain = calls_for("queryAs<UserRow>(r'SELECT id FROM users', []).fetchAll(db);");
-    let mapped = calls_for(
-        "queryAs<UserRow>(r'SELECT id FROM users', [], mapper: UserRowFromRow.fromRow).fetchAll(db);",
-    );
-    let using = calls_for(
-        "queryAs<UserRow>(r'SELECT id FROM users', [], using: const $UserRowFromRow()).fetchAll(db);",
-    );
+    // The generated terminals decode with the mapping the row type owns. The
+    // `With` terminals take one as an argument, which is how a row type Dust
+    // did not generate is read, and the only case that needs nothing generated.
+    let generated = calls_for("queryAs<UserRow>(r'SELECT id FROM users', []).fetchAll(db);");
+    let supplied =
+        calls_for("queryAs<UserRow>(r'SELECT id FROM users', []).fetchAllWith(db, myMapper);");
 
-    assert!(!plain[0].has_row_mapper_argument);
-    assert!(mapped[0].has_row_mapper_argument);
-    assert!(using[0].has_row_mapper_argument);
+    assert!(!generated[0].has_row_mapper_argument);
+    assert!(supplied[0].has_row_mapper_argument);
+    assert_eq!(supplied[0].fetch_method.as_deref(), Some("fetchAllWith"));
 }
 
 fn calls_for(source: &str) -> Vec<ParsedQueryCallSurface> {

@@ -389,23 +389,22 @@ final class $OrderFromRow implements RowDeserializer<Order> {
 }
 ```
 
-`using:` is required, so a row type Dust generated nothing for is an analyzer
-error at the call — there is no `$TFromRow` to name. `dust db build` reports the
-same thing first, and can only do so because row classes resolve package-wide.
-`RowMapperDeserializer` wraps a plain function for a row type Dust does not own.
-
-Option 3 remains the end state: it removes the argument as well, by resolving
-the terminal from the static type instead.
+The witness is public API, and the `With` terminals take one for a row type Dust
+does not own. Nothing has to pass one for a row type it does: option 3 ships
+alongside it, below. `dust db build` reports a missing mapping first, and can
+only do so because row classes resolve package-wide.
 
 ### Terminals come from generated extensions
 
-`queryAs<T>(sql, args)` returns a `Query<T>`: a data holder with `sql` and
-`arguments`, no methods. The terminals are generated per row type, into the row
-class's own part file, beside the decoder:
+`queryAs<T>(sql, args)` returns a `QueryAs<T>`: a data holder with `sql`,
+`parameters`, and the three `…With` primitives, but no bare terminals. (The name
+stays `QueryAs` rather than the `Query<T>` first sketched here, because `Query`
+is already the DAO method annotation.) The terminals are generated per row type,
+into the row class's own part file, beside the decoder:
 
 ```dart
 // order_model.g.dart
-Order _$orderFromRow(Row row) => Order(
+Order _$OrderFromRow(Row row) => Order(
       id: row.readInt('id'),
       accountId: row.readInt('account_id'),
       item: row.readString('item'),
@@ -413,21 +412,21 @@ Order _$orderFromRow(Row row) => Order(
       placedAt: row.readString('placed_at'),
     );
 
-extension OrderQuery on Query<Order> {
-  Future<Result<Order, SqlxError>> fetchOne(Executor executor) =>
-      executor.fetchOne<Order>(sql, arguments, _$orderFromRow);
+extension $OrderQuery on QueryAs<Order> {
+  Future<Order> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$OrderFromRow);
 
-  Future<Result<Order?, SqlxError>> fetchOptional(Executor executor) =>
-      executor.fetchOptional<Order>(sql, arguments, _$orderFromRow);
+  Future<Order?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$OrderFromRow);
 
-  Future<Result<List<Order>, SqlxError>> fetchAll(Executor executor) =>
-      executor.fetchAll<Order>(sql, arguments, _$orderFromRow);
+  Future<List<Order>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$OrderFromRow);
 }
 ```
 
-The decoder is a plain top-level function of type `RowMapper<Order>`. It
-introduces no method name, so nothing can collide with `Serializable.serialize`
-or `Deserializer.deserialize` from
+The decoder is a plain top-level function of type `RowMapper<Order>`, named the
+way serde names `_$OrderSerialize`. It introduces no method name, so nothing can
+collide with `Serializable.serialize` or `Deserializer.deserialize` from
 [`serde.dart`](../../packages/dust_dart/lib/src/serde/serde.dart) — a row class
 deriving both `FromRow` and `Deserialize` gains two unrelated top-level
 functions.
@@ -437,19 +436,19 @@ Dart resolves extension members from the **static type** of the receiver, so
 time. No lookup, no global state, no argument. As close as Dart gets to what
 Rust's trait resolution does for SQLx.
 
-`Query<T>` must stay free of terminal methods, because an instance member always
-beats an extension member.
+`QueryAs<T>` must stay free of bare terminal methods, because an instance member
+always beats an extension member. The `…With` terminals are safe there: they are
+different names, and they take the mapping rather than assuming one.
 
 Three properties follow:
 
 - **A missing derive is a compile error.** `queryAs<Account>(...)` where
   `Account` does not derive `FromRow` means no extension exists, so `fetchAll`
-  is undefined. The required `using:` already gets this; what the terminals add
-  is getting it without the argument.
+  is undefined. Nothing is passed to get this.
 - **A missing import is a compile error too**, rather than a silent
   non-registration.
 - **`RowMapperRegistry` is deleted**, along with the generated
-  `registerRowMapper` initializers. Done, ahead of the terminals.
+  `registerRowMapper` initializers.
 
 `RowMapper<T>` survives as the typedef `T Function(Row)` on the five executor
 primitives — the driver seam, which takes a function.
@@ -740,9 +739,9 @@ Inline queries take the executor per call and do not have this problem.
    both ([#500](https://github.com/y3l1n4ung/dust/issues/500)).
 3. **Read `nullable()` and `type_info()`**, shipping as warnings until the
    [type-mapping table](#open-questions) exists.
-4. **Terminals return `Result`;** generate them per row type.
-   ~~Delete `RowMapperRegistry`.~~ Done — the mapping is a required argument
-   until the terminals remove the need for one.
+4. **Terminals return `Result`.** ~~Generate them per row type; delete
+   `RowMapperRegistry`.~~ Both done; what is left is the error surface, since
+   the generated terminals still throw the way the old instance methods did.
 5. **`queryRaw` becomes `unsafeSql`** on the database facade.
 6. **Name the enclosing function** in call-site diagnostics.
 7. **Rename to SQLx's pool vocabulary.**

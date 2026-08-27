@@ -112,27 +112,40 @@ final class $OrderSerializer implements Serializer<Order, Map<String, Object?>> 
   @override
   Map<String, Object?> serialize(Order value) => _$OrderSerialize(value);
 }
-extension OrderFromRow on Order {
-  static Order fromRow(Row row) {
-    return Order(
+Order _$OrderFromRow(Row row) {
+  return Order(
       id: row.read<int>('id'),
       accountId: row.read<int>('account_id'),
       item: row.read<String>('item'),
       quantity: row.read<int>('quantity'),
       placedAt: row.read<String>('placed_at'),
     );
-  }
 }
 
 /// Row deserializer for [Order].
-///
-/// Pass it as the `using:` argument of a typed row query, so a row type with
-/// no mapping is an analyzer error rather than a failure on the first request.
-final class $OrderFromRow implements RowDeserializer<Order> {
-  const $OrderFromRow();
+final class $OrderRowDeserializer implements RowDeserializer<Order> {
+  const $OrderRowDeserializer();
 
   @override
-  Order deserialize(Row row) => OrderFromRow.fromRow(row);
+  Order deserialize(Row row) => _$OrderFromRow(row);
+}
+
+/// Typed row query terminals for [Order].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $OrderQuery on QueryAs<Order> {
+  /// Fetches exactly one row.
+  Future<Order> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$OrderFromRow);
+
+  /// Fetches zero or one row.
+  Future<Order?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$OrderFromRow);
+
+  /// Fetches every row.
+  Future<List<Order>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$OrderFromRow);
 }
 
 Map<String, Object?> _$OrderSerialize(Order instance) {

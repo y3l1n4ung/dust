@@ -1,5 +1,12 @@
 import 'package:dust_dart/db.dart'
-    show FromRow, Row, RowDeserializer, Sqlx, SqlxRename;
+    show
+        DatabaseExecutor,
+        FromRow,
+        QueryAs,
+        Row,
+        RowDeserializer,
+        Sqlx,
+        SqlxRename;
 import 'package:dust_dart/serde.dart';
 
 part 'latest_dart_derive_showcase.g.dart';

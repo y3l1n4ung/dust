@@ -94,7 +94,7 @@ fn render_row_value(
     }
     if field.config.flatten {
         let ty = DYNAMIC_TYPES.render_non_nullable(&field.field.ty);
-        return format!("{ty}FromRow.fromRow(row)");
+        return format!("const ${ty}RowDeserializer().deserialize(row)");
     }
     let column = escape_dart_string(&field.column);
     let decoded = if field.config.json {
@@ -195,7 +195,9 @@ fn render_constructor_call(
     } else if args.join(", ").len() + name.len() <= 56 {
         format!("{name}({})", args.join(", "))
     } else {
-        format!("{name}(\n      {},\n    )", args.join(",\n      "))
+        // The call sits inside a top-level `_$TypeFromRow` function body, so one
+        // level of indent for the arguments and none for the closing paren.
+        format!("{name}(\n    {},\n  )", args.join(",\n    "))
     }
 }
 

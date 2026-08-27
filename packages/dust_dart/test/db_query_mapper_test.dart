@@ -2,102 +2,75 @@ import 'package:dust_dart/db.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('queryAs decodes with the row deserializer it was given', () async {
+  test('a generated terminal decodes with the row type own mapping', () async {
     final executor = _CapturingExecutor();
 
-    final user = await queryAs<_User>(
-      'SELECT id FROM users',
-      const [],
-      using: const _UserFromRow(),
-    ).fetchOne(executor);
+    final user = await queryAs<FakeUser>('SELECT id FROM users', const [])
+        .fetchOne(executor);
 
     expect(user.id, 7);
     expect(executor.calls, <String>['fetchOne:SELECT id FROM users']);
   });
 
-  test('queryAs accepts a plain mapper function through the adapter', () async {
+  test('the With terminals take a mapping for a row type Dust does not own',
+      () async {
     final executor = _CapturingExecutor();
 
-    final user = await queryAs<_User>(
+    final user = await queryAs<FakeUntyped>(
       'SELECT id FROM users',
       const [],
-      using: const RowMapperDeserializer<_User>(_User.fromRow),
-    ).fetchOne(executor);
+    ).fetchOneWith(executor, (row) => FakeUntyped(row.read<int>('id')));
 
     expect(user.id, 7);
   });
 
-  test('withDeserializer replaces the row mapping', () async {
-    final executor = _CapturingExecutor();
+  test('a row deserializer wraps a plain mapper function', () {
+    const deserializer = RowMapperDeserializer<FakeUser>(_$UserFromRow);
 
-    final user = await queryAs<_User>(
-      'SELECT id FROM users',
-      const [],
-      using: const _UserFromRow(),
-    ).withDeserializer(const _NineUser()).fetchOne(executor);
-
-    expect(user.id, 9);
+    expect(deserializer.deserialize(const _StaticRow(4)).id, 4);
   });
 
-  test('withMapper replaces the row mapping with a function', () async {
-    final executor = _CapturingExecutor();
+  test('a row deserializer tears off as a plain mapper', () {
+    final mapper = const $UserRowDeserializer().asMapper;
 
-    final user = await queryAs<_User>(
-      'SELECT id FROM users',
-      const [],
-      using: const _UserFromRow(),
-    ).withMapper((_) => const _User(9)).fetchOne(executor);
-
-    expect(user.id, 9);
-  });
-
-  test('a row deserializer tears off as a plain mapper', () async {
-    final mapper = const _UserFromRow().asMapper;
-    final executor = _CapturingExecutor();
-
-    final user = await queryAs<_User>(
-      'SELECT id FROM users',
-      const [],
-      using: RowMapperDeserializer<_User>(mapper),
-    ).fetchOne(executor);
-
-    expect(user.id, 7);
-  });
-
-  test('the query exposes the mapping it will decode with', () {
-    const query = QueryAs<_User>(
-      'SELECT id FROM users',
-      [],
-      using: _UserFromRow(),
-    );
-
-    expect(query.rowMapper(const _StaticRow(4)).id, 4);
+    expect(mapper(const _StaticRow(5)).id, 5);
   });
 }
 
-/// Stands in for the `$TypeFromRow` witness Dust generates.
-final class _UserFromRow implements RowDeserializer<_User> {
-  const _UserFromRow();
+// Hand-written stand-ins for what `@Derive([FromRow()])` generates, so this
+// package can test the shape without depending on the generator.
+
+FakeUser _$UserFromRow(Row row) => FakeUser(row.read<int>('id'));
+
+final class $UserRowDeserializer implements RowDeserializer<FakeUser> {
+  const $UserRowDeserializer();
 
   @override
-  _User deserialize(Row row) => _User.fromRow(row);
+  FakeUser deserialize(Row row) => _$UserFromRow(row);
 }
 
-final class _NineUser implements RowDeserializer<_User> {
-  const _NineUser();
+extension $UserQuery on QueryAs<FakeUser> {
+  Future<FakeUser> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$UserFromRow);
 
-  @override
-  _User deserialize(Row row) => const _User(9);
+  Future<FakeUser?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$UserFromRow);
+
+  Future<List<FakeUser>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$UserFromRow);
 }
 
-final class _User {
-  const _User(this.id);
+final class FakeUser {
+  const FakeUser(this.id);
 
   final int id;
+}
 
-  static _User fromRow(Row row) {
-    return _User(row.read<int>('id'));
-  }
+/// A row type with no generated mapping, so it has no terminals of its own.
+final class FakeUntyped {
+  const FakeUntyped(this.id);
+
+  final int id;
 }
 
 final class _CapturingExecutor implements DatabaseConnection {
