@@ -1,6 +1,6 @@
 use std::fs;
 
-use dust_workspace::{detect_workspace_root, discover_libraries};
+use dust_workspace::{SupportedAnnotations, detect_workspace_root, discover_libraries};
 use tempfile::tempdir;
 
 use crate::support::{test_annotations, write_file};
@@ -211,4 +211,56 @@ fn discover_libraries_ignores_override_and_unknown_annotations() {
     let libraries = discover_libraries(root.path(), &supported_annotations).unwrap();
 
     assert!(libraries.is_empty());
+}
+
+#[test]
+fn discover_libraries_reads_annotation_names_nested_in_an_argument_list() {
+    let root = tempdir().unwrap();
+    write_file(&root.path().join("pubspec.yaml"), "name: dust_test\n");
+    write_file(&root.path().join(".dart_tool/package_config.json"), "{}\n");
+
+    // The documented way to declare a row mapper. `Derive` is not in the
+    // supported set here, so only the name inside the brackets can find it.
+    write_file(
+        &root.path().join("lib/order.dart"),
+        "import 'package:dust_dart/db.dart';\n\
+         part 'order.g.dart';\n\
+         @Derive([ToString(), FromRow()])\n\
+         class Order {}\n",
+    );
+    // SQL handed to an annotation is not code: `count(*)` must not contribute
+    // `count`, and a name written inside the string must not discover the file.
+    write_file(
+        &root.path().join("lib/report.dart"),
+        "import 'package:dust_dart/db.dart';\n\
+         part 'report.g.dart';\n\
+         @Summary(r'SELECT count(*) FROM t -- FromRow()')\n\
+         class Report {}\n",
+    );
+
+    let supported: SupportedAnnotations = ["FromRow"].into_iter().collect();
+    let libraries = discover_libraries(root.path(), &supported).unwrap();
+
+    assert_eq!(libraries.len(), 1);
+    assert_eq!(libraries[0].source_path, root.path().join("lib/order.dart"));
+}
+
+#[test]
+fn discover_libraries_reads_a_prefixed_name_nested_in_an_argument_list() {
+    let root = tempdir().unwrap();
+    write_file(&root.path().join("pubspec.yaml"), "name: dust_test\n");
+    write_file(&root.path().join(".dart_tool/package_config.json"), "{}\n");
+
+    write_file(
+        &root.path().join("lib/order.dart"),
+        "import 'package:dust_dart/db.dart' as dust;\n\
+         part 'order.g.dart';\n\
+         @dust.Derive([dust.FromRow()])\n\
+         class Order {}\n",
+    );
+
+    let supported: SupportedAnnotations = ["FromRow"].into_iter().collect();
+    let libraries = discover_libraries(root.path(), &supported).unwrap();
+
+    assert_eq!(libraries.len(), 1);
 }

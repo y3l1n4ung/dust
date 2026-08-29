@@ -1,9 +1,12 @@
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
 use dust_plugin_api::{
-    DustPlugin, MetadataOutput, PluginContext, PluginContribution, PluginExecutionMode,
+    DustPlugin, MetadataOutput, PluginContext, PluginContribution, PluginExecutionMode, SymbolPlan,
+    WorkspaceAnalysis, WorkspaceAnalysisBuilder,
 };
 
+/// Package-wide DB facts collected during the workspace scan.
+mod analysis;
 /// Shared annotation names and claimed symbol lists.
 mod constants;
 /// Renders generated DB, DAO, and row-mapping Dart code.
@@ -19,6 +22,7 @@ mod sql;
 /// Validates DB annotations and SQL query metadata.
 mod validate;
 
+use self::analysis::collect_db_workspace_analysis;
 use self::constants::{
     CLAIMED_DATABASE_CONFIG_SYMBOLS, CLAIMED_ROW_CONFIG_SYMBOLS, SUPPORTED_DATABASE_ANNOTATIONS,
     SUPPORTED_ROW_ANNOTATIONS,
@@ -122,8 +126,22 @@ impl DustPlugin for DbPlugin {
         }
     }
 
+    fn collect_workspace_analysis_ir(
+        &self,
+        library: &DartFileIr,
+        analysis: &mut WorkspaceAnalysisBuilder,
+    ) {
+        if self.options.databases {
+            collect_db_workspace_analysis(library, analysis);
+        }
+    }
+
     fn validate(&self, library: &DartFileIr) -> Vec<Diagnostic> {
-        validate_db_library(library, self.options)
+        validate_db_library(library, self.options, &WorkspaceAnalysis::default())
+    }
+
+    fn validate_with_plan(&self, library: &DartFileIr, plan: &SymbolPlan) -> Vec<Diagnostic> {
+        validate_db_library(library, self.options, plan.workspace_analysis())
     }
 
     fn generate(

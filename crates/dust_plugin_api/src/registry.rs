@@ -186,6 +186,17 @@ impl PluginRegistry {
         }
     }
 
+    /// Returns whether every registered plugin executes.
+    ///
+    /// A focused registry — `dust db build` selecting the Database plugin —
+    /// registers the others for symbol ownership only. Their annotations are
+    /// still in the source, but nothing in this run will regenerate what they
+    /// own, so what they own must be left exactly as it is rather than
+    /// rewritten from a registry that cannot produce it.
+    pub fn executes_all(&self) -> bool {
+        self.plugins.iter().all(|plugin| plugin.executes)
+    }
+
     /// Runs validation across all registered plugins in registration order.
     pub fn validate_library(&self, file: &DartFileIr) -> Vec<Diagnostic> {
         self.validate_library_with_plan(file, &SymbolPlan::default())

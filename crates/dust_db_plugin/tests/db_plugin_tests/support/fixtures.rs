@@ -202,6 +202,23 @@ pub(crate) fn library_with_queries(
     }
 }
 
+/// One library of a package, at its own source path.
+///
+/// A real project splits the database class, the row classes, and the queries
+/// across files, so a fixture for that has to give each one its own path.
+pub(crate) fn library_at(
+    root: &std::path::Path,
+    source_path: &str,
+    classes: Vec<ClassIr>,
+    query_calls: Vec<QueryCallIr>,
+) -> DartFileIr {
+    DartFileIr {
+        source_path: source_path.to_owned(),
+        output_path: source_path.replace(".dart", ".g.dart"),
+        ..library_with_queries(root, classes, query_calls)
+    }
+}
+
 fn find_by_id_method() -> MethodIr {
     MethodIr {
         name: "findById".to_owned(),

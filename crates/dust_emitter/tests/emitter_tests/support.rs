@@ -2,7 +2,7 @@ use dust_diagnostics::Diagnostic;
 use dust_emitter::emit_library;
 use dust_ir::{
     ClassIr, ClassKindIr, ConstructorIr, ConstructorParamIr, DartFileIr, FieldIr, ParamKind,
-    SpanIr, SymbolId, TraitApplicationIr, TypeIr,
+    SerdeFieldConfigIr, SpanIr, SymbolId, TraitApplicationIr, TypeIr,
 };
 use dust_plugin_api::{
     DustPlugin, GENERATED_HEADER, PluginContext, PluginContribution, PluginRegistry,
@@ -25,6 +25,17 @@ pub(crate) fn field(name: &str, ty: TypeIr) -> FieldIr {
         has_default: false,
         serde: None,
         configs: Vec::new(),
+    }
+}
+
+/// A field carrying a serde marker, and nothing else a plugin would act on.
+pub(crate) fn serde_marked_field(name: &str, ty: TypeIr) -> FieldIr {
+    FieldIr {
+        serde: Some(SerdeFieldConfigIr {
+            rename: Some(name.to_owned()),
+            ..SerdeFieldConfigIr::default()
+        }),
+        ..field(name, ty)
     }
 }
 
