@@ -1,0 +1,63 @@
+codecov:
+  notify:
+    after_n_builds: 5
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: 90%
+
+comment:
+  layout: "header, diff, flags, components, files"
+  after_n_builds: 5
+  require_changes: true
+
+component_management:
+  individual_components:
+    - component_id: rust_engine
+      name: Rust engine
+      paths:
+        - "crates/**"
+      statuses:
+        - type: project
+          target: 90%
+    - component_id: dust_dart
+      name: dust_dart
+      paths:
+        - "packages/dust_dart/lib/**"
+      statuses:
+        - type: project
+          target: 95%
+    - component_id: dust_flutter
+      name: dust_flutter
+      paths:
+        - "packages/dust_flutter/lib/**"
+      statuses:
+        - type: project
+          target: 90%
+    - component_id: dust_db_sqlite3
+      name: dust_db_sqlite3
+      paths:
+        - "packages/dust_db_sqlite3/lib/**"
+      statuses:
+        - type: project
+          target: 90%
+    - component_id: dust_server
+      name: dust_server
+      paths:
+        - "packages/dust_server/lib/**"
+      statuses:
+        - type: project
+          target: 100%
+
+ignore:
+  - "**/*.g.dart"
+  - "**/*.dart.snapshot"

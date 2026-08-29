@@ -2,7 +2,10 @@
 
 **Built to make developers and AI agents happy.**
 
-[![CI](https://github.com/y3l1n4ung/dust/actions/workflows/ci.yml/badge.svg)](https://github.com/y3l1n4ung/dust/actions)
+[![CI](https://github.com/y3l1n4ung/dust/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/y3l1n4ung/dust/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/y3l1n4ung/dust/graph/badge.svg)](https://app.codecov.io/gh/y3l1n4ung/dust)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=y3l1n4ung_dust&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=y3l1n4ung_dust)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/y3l1n4ung/dust/badge)](https://scorecard.dev/viewer/?uri=github.com/y3l1n4ung/dust)
 [![Release](https://img.shields.io/github/v/release/y3l1n4ung/dust?logo=github&color=blue)](https://github.com/y3l1n4ung/dust/releases)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
