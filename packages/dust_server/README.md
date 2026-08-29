@@ -1,9 +1,14 @@
 # dust_server
 
+[![pub package](https://img.shields.io/pub/v/dust_server.svg)](https://pub.dev/packages/dust_server)
+[![pub points](https://img.shields.io/pub/points/dust_server)](https://pub.dev/packages/dust_server/score)
+[![downloads](https://img.shields.io/pub/dm/dust_server)](https://pub.dev/packages/dust_server)
+[![coverage](https://codecov.io/gh/y3l1n4ung/dust/graph/badge.svg?component=dust_server)](https://app.codecov.io/gh/y3l1n4ung/dust)
+
 Runtime support for Dust-generated Dart HTTP servers on `shelf`.
 
 > [!IMPORTANT]
-> **0.1.0-beta.1**. Complete enough to build on; the API may still change
+> **0.1.0-beta.2**. Complete enough to build on; the API may still change
 > before 1.0, so pin the exact version.
 >
 > The code generator described in

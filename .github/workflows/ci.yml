@@ -177,6 +177,9 @@ jobs:
     name: Rust
     needs: changes
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Skip docs-only change
         if: needs.changes.outputs.docs_only == 'true'
@@ -202,13 +205,34 @@ jobs:
           python3 scripts/validate_compatibility_contract.py --self-test
           python3 scripts/validate_compatibility_contract.py
 
-      - name: Install cargo-nextest
+      - name: Install Rust test and coverage tools
         if: needs.changes.outputs.docs_only != 'true'
-        uses: taiki-e/install-action@16a76bb73558798e4218983c40c25fee9f2f99a8 # nextest
+        uses: taiki-e/install-action@16a76bb73558798e4218983c40c25fee9f2f99a8 # cargo-nextest, cargo-llvm-cov
+        with:
+          tool: cargo-nextest,cargo-llvm-cov
 
-      - name: Test
+      - name: Test with a coverage floor
         if: needs.changes.outputs.docs_only != 'true'
-        run: ./scripts/rust/test.sh
+        run: ./scripts/rust/coverage.sh 90
+
+      - name: Upload coverage
+        if: needs.changes.outputs.docs_only != 'true'
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          disable_search: true
+          fail_ci_if_error: true
+          files: coverage/rust.lcov
+          flags: rust_engine
+          name: rust_engine
+          use_oidc: true
+
+      - name: Preserve coverage for SonarQube
+        if: needs.changes.outputs.docs_only != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-rust
+          path: coverage/rust.lcov
+          retention-days: 1
 
       - name: Clippy
         if: needs.changes.outputs.docs_only != 'true'
@@ -253,6 +277,9 @@ jobs:
     name: Dart / ${{ matrix.name }}
     needs: changes
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -261,12 +288,12 @@ jobs:
             path: packages/dust_dart
             dust_check: ''
             db_check: false
-            coverage_floor: ''
+            coverage_floor: '95'
           - name: dust_db_sqlite3
             path: packages/dust_db_sqlite3
             dust_check: ''
             db_check: false
-            coverage_floor: ''
+            coverage_floor: '90'
           - name: dust_server
             path: packages/dust_server
             dust_check: ''
@@ -327,10 +354,33 @@ jobs:
         if: needs.changes.outputs.docs_only != 'true' && matrix.coverage_floor != ''
         run: bash scripts/dart/coverage.sh ${{ matrix.path }} ${{ matrix.coverage_floor }}
 
+      - name: Upload coverage
+        if: needs.changes.outputs.docs_only != 'true' && matrix.coverage_floor != ''
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          disable_search: true
+          fail_ci_if_error: true
+          files: ${{ matrix.path }}/.coverage/lcov.info
+          flags: ${{ matrix.name }}
+          name: ${{ matrix.name }}
+          use_oidc: true
+
+      - name: Preserve coverage for SonarQube
+        if: needs.changes.outputs.docs_only != 'true' && matrix.coverage_floor != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-dart-${{ matrix.name }}
+          path: ${{ matrix.path }}/.coverage/lcov.info
+          include-hidden-files: true
+          retention-days: 1
+
   flutter-packages:
     name: Flutter / ${{ matrix.name }}
     needs: changes
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       matrix:
@@ -340,16 +390,19 @@ jobs:
             dust_check: ''
             db_check: false
             strict_generated: false
+            coverage_floor: '90'
           - name: benchmark_project
             path: examples/benchmark_project
             dust_check: examples/benchmark_project
             db_check: false
             strict_generated: false
+            coverage_floor: ''
           - name: shopping_app
             path: examples/shopping_app
             dust_check: examples/shopping_app
             db_check: true
             strict_generated: true
+            coverage_floor: ''
     steps:
       - name: Skip docs-only change
         if: needs.changes.outputs.docs_only == 'true'
@@ -403,9 +456,63 @@ jobs:
         run: flutter analyze --no-pub
 
       - name: Test
-        if: needs.changes.outputs.docs_only != 'true'
+        if: needs.changes.outputs.docs_only != 'true' && matrix.coverage_floor == ''
         working-directory: ${{ matrix.path }}
         run: flutter test
+
+      - name: Test with a coverage floor
+        if: needs.changes.outputs.docs_only != 'true' && matrix.coverage_floor != ''
+        run: bash scripts/flutter/coverage.sh ${{ matrix.path }} ${{ matrix.coverage_floor }}
+
+      - name: Upload coverage
+        if: needs.changes.outputs.docs_only != 'true' && matrix.coverage_floor != ''
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        with:
+          disable_search: true
+          fail_ci_if_error: true
+          files: ${{ matrix.path }}/coverage/lcov.info
+          flags: ${{ matrix.name }}
+          name: ${{ matrix.name }}
+          use_oidc: true
+
+      - name: Preserve coverage for SonarQube
+        if: needs.changes.outputs.docs_only != 'true' && matrix.coverage_floor != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-flutter-${{ matrix.name }}
+          path: ${{ matrix.path }}/coverage/lcov.info
+          retention-days: 1
+
+  sonarqube:
+    name: SonarQube
+    needs:
+      - changes
+      - rust-tests
+      - dart-packages
+      - flutter-packages
+    if: >-
+      needs.changes.outputs.docs_only != 'true' &&
+      (github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: coverage-*
+          path: .sonar/coverage
+
+      - name: Scan
+        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   serde-analyze:
     name: SerDe analyzer fixture

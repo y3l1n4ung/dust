@@ -32,40 +32,6 @@ echo "==> Dart coverage: $TARGET (floor ${FLOOR}%)"
     --report-on=lib
 )
 
-python3 - "$TARGET" "$FLOOR" <<'PY'
-import sys
-
-target, floor = sys.argv[1], float(sys.argv[2])
-total = covered = 0
-uncovered = {}
-current = None
-
-with open(f'{target}/.coverage/lcov.info') as report:
-    for line in report:
-        line = line.rstrip('\n')
-        if line.startswith('SF:'):
-            current, missing = line[3:], []
-        elif line.startswith('DA:'):
-            number, count = line[3:].split(',')
-            total += 1
-            if int(count) > 0:
-                covered += 1
-            else:
-                missing.append(number)
-        elif line == 'end_of_record' and missing:
-            uncovered[current] = missing
-
-if total == 0:
-    sys.exit('no coverage data; did the suite run?')
-
-percent = covered * 100 / total
-print(f'{covered}/{total} lines = {percent:.2f}%')
-
-for path, missing in uncovered.items():
-    print(f'  uncovered {path}: {", ".join(missing)}')
-
-if percent + 1e-9 < floor:
-    sys.exit(f'coverage {percent:.2f}% is below the {floor:.2f}% floor')
-PY
+python3 scripts/check_lcov_floor.py "$TARGET/.coverage/lcov.info" "$FLOOR"
 
 echo "==> Coverage passed"
