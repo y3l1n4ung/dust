@@ -13,44 +13,110 @@
 
 part of 'shopping_cache_rows.dart';
 
-extension CachedProductRowFromRow on CachedProductRow {
-  static CachedProductRow fromRow(Row row) {
-    return CachedProductRow(
-      id: row.read<int>('id'),
-      title: row.read<String>('title'),
-      price: row.read<double>('price'),
-      description: row.read<String>('description'),
-      category: row.read<String>('category'),
-      imageUrl: row.read<String>('image'),
-      rating: CachedProductRatingRowFromRow.fromRow(row),
-      pinned: false,
-      payload: CachedProductPayload.fromJson(decodeJsonObject(row.read<String>('payload'))),
-      source: CacheSourceFromString().decode(row.read<String>('source')),
-    );
-  }
+CachedProductRow _$CachedProductRowFromRow(Row row) {
+  return CachedProductRow(
+    id: row.read<int>('id'),
+    title: row.read<String>('title'),
+    price: row.read<double>('price'),
+    description: row.read<String>('description'),
+    category: row.read<String>('category'),
+    imageUrl: row.read<String>('image'),
+    rating: const $CachedProductRatingRowRowDeserializer().deserialize(row),
+    pinned: false,
+    payload: CachedProductPayload.fromJson(decodeJsonObject(row.read<String>('payload'))),
+    source: CacheSourceFromString().decode(row.read<String>('source')),
+  );
 }
 
-final bool _$cachedProductRowFromRowRegistered = registerRowMapper<CachedProductRow>(CachedProductRowFromRow.fromRow);
+/// Row deserializer for [CachedProductRow].
+final class $CachedProductRowRowDeserializer implements RowDeserializer<CachedProductRow> {
+  const $CachedProductRowRowDeserializer();
 
-extension CachedProductRatingRowFromRow on CachedProductRatingRow {
-  static CachedProductRatingRow fromRow(Row row) {
-    return CachedProductRatingRow(
-      rate: row.read<double>('rating_rate'),
-      count: row.read<int>('rating_count'),
-    );
-  }
+  @override
+  CachedProductRow deserialize(Row row) => _$CachedProductRowFromRow(row);
 }
 
-final bool _$cachedProductRatingRowFromRowRegistered = registerRowMapper<CachedProductRatingRow>(CachedProductRatingRowFromRow.fromRow);
+/// Typed row query terminals for [CachedProductRow].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $CachedProductRowQuery on QueryAs<CachedProductRow> {
+  /// Fetches exactly one row.
+  Future<CachedProductRow> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$CachedProductRowFromRow);
 
-extension CachedWishlistRowFromRow on CachedWishlistRow {
-  static CachedWishlistRow fromRow(Row row) {
-    return CachedWishlistRow(
-      productId: row.read<int>('product_id'),
-      title: row.read<String>('title'),
-      savedAt: row.readDateTime('saved_at'),
-    );
-  }
+  /// Fetches zero or one row.
+  Future<CachedProductRow?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$CachedProductRowFromRow);
+
+  /// Fetches every row.
+  Future<List<CachedProductRow>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$CachedProductRowFromRow);
 }
 
-final bool _$cachedWishlistRowFromRowRegistered = registerRowMapper<CachedWishlistRow>(CachedWishlistRowFromRow.fromRow);
+CachedProductRatingRow _$CachedProductRatingRowFromRow(Row row) {
+  return CachedProductRatingRow(
+    rate: row.read<double>('rating_rate'),
+    count: row.read<int>('rating_count'),
+  );
+}
+
+/// Row deserializer for [CachedProductRatingRow].
+final class $CachedProductRatingRowRowDeserializer implements RowDeserializer<CachedProductRatingRow> {
+  const $CachedProductRatingRowRowDeserializer();
+
+  @override
+  CachedProductRatingRow deserialize(Row row) => _$CachedProductRatingRowFromRow(row);
+}
+
+/// Typed row query terminals for [CachedProductRatingRow].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $CachedProductRatingRowQuery on QueryAs<CachedProductRatingRow> {
+  /// Fetches exactly one row.
+  Future<CachedProductRatingRow> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$CachedProductRatingRowFromRow);
+
+  /// Fetches zero or one row.
+  Future<CachedProductRatingRow?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$CachedProductRatingRowFromRow);
+
+  /// Fetches every row.
+  Future<List<CachedProductRatingRow>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$CachedProductRatingRowFromRow);
+}
+
+CachedWishlistRow _$CachedWishlistRowFromRow(Row row) {
+  return CachedWishlistRow(
+    productId: row.read<int>('product_id'),
+    title: row.read<String>('title'),
+    savedAt: row.readDateTime('saved_at'),
+  );
+}
+
+/// Row deserializer for [CachedWishlistRow].
+final class $CachedWishlistRowRowDeserializer implements RowDeserializer<CachedWishlistRow> {
+  const $CachedWishlistRowRowDeserializer();
+
+  @override
+  CachedWishlistRow deserialize(Row row) => _$CachedWishlistRowFromRow(row);
+}
+
+/// Typed row query terminals for [CachedWishlistRow].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $CachedWishlistRowQuery on QueryAs<CachedWishlistRow> {
+  /// Fetches exactly one row.
+  Future<CachedWishlistRow> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$CachedWishlistRowFromRow);
+
+  /// Fetches zero or one row.
+  Future<CachedWishlistRow?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$CachedWishlistRowFromRow);
+
+  /// Fetches every row.
+  Future<List<CachedWishlistRow>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$CachedWishlistRowFromRow);
+}

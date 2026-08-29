@@ -153,20 +153,42 @@ fn dao_method(
 }
 
 fn expected_default_dao_output() -> &'static str {
-    r#"extension UserProfileFromRow on UserProfile {
-  static UserProfile fromRow(Row row) {
-    return UserProfile(
-      id: row.read<int>('id'),
-      name: row.read<String>('display_name'),
-      bio: row.readNullable<Object?>('bio') == null ? '' : row.read<String>('bio'),
-      sessionActive: false,
-      preferences: UserPreferences.fromJson(decodeJsonObject(row.read<String>('preferences'))),
-      status: const UserStatusFromInt().decode(row.read<int>('status')),
-    );
-  }
+    r#"UserProfile _$UserProfileFromRow(Row row) {
+  return UserProfile(
+    id: row.read<int>('id'),
+    name: row.read<String>('display_name'),
+    bio: row.readNullable<Object?>('bio') == null ? '' : row.read<String>('bio'),
+    sessionActive: false,
+    preferences: UserPreferences.fromJson(decodeJsonObject(row.read<String>('preferences'))),
+    status: const UserStatusFromInt().decode(row.read<int>('status')),
+  );
 }
 
-final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
+/// Row deserializer for [UserProfile].
+final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> {
+  const $UserProfileRowDeserializer();
+
+  @override
+  UserProfile deserialize(Row row) => _$UserProfileFromRow(row);
+}
+
+/// Typed row query terminals for [UserProfile].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $UserProfileQuery on QueryAs<UserProfile> {
+  /// Fetches exactly one row.
+  Future<UserProfile> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$UserProfileFromRow);
+
+  /// Fetches zero or one row.
+  Future<UserProfile?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$UserProfileFromRow);
+
+  /// Fetches every row.
+  Future<List<UserProfile>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$UserProfileFromRow);
+}
 
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
@@ -178,7 +200,7 @@ final class _$UserDao implements UserDao {
     return _db.fetchOptional<UserProfile>(
       r'''SELECT id, display_name, bio FROM users WHERE id = ?''',
       [id],
-      UserProfileFromRow.fromRow,
+      const $UserProfileRowDeserializer().deserialize,
     );
   }
 
@@ -201,20 +223,42 @@ final class _$UserDao implements UserDao {
 }
 
 fn expected_cardinality_output() -> &'static str {
-    r#"extension UserProfileFromRow on UserProfile {
-  static UserProfile fromRow(Row row) {
-    return UserProfile(
-      id: row.read<int>('id'),
-      name: row.read<String>('display_name'),
-      bio: row.readNullable<Object?>('bio') == null ? '' : row.read<String>('bio'),
-      sessionActive: false,
-      preferences: UserPreferences.fromJson(decodeJsonObject(row.read<String>('preferences'))),
-      status: const UserStatusFromInt().decode(row.read<int>('status')),
-    );
-  }
+    r#"UserProfile _$UserProfileFromRow(Row row) {
+  return UserProfile(
+    id: row.read<int>('id'),
+    name: row.read<String>('display_name'),
+    bio: row.readNullable<Object?>('bio') == null ? '' : row.read<String>('bio'),
+    sessionActive: false,
+    preferences: UserPreferences.fromJson(decodeJsonObject(row.read<String>('preferences'))),
+    status: const UserStatusFromInt().decode(row.read<int>('status')),
+  );
 }
 
-final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
+/// Row deserializer for [UserProfile].
+final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> {
+  const $UserProfileRowDeserializer();
+
+  @override
+  UserProfile deserialize(Row row) => _$UserProfileFromRow(row);
+}
+
+/// Typed row query terminals for [UserProfile].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $UserProfileQuery on QueryAs<UserProfile> {
+  /// Fetches exactly one row.
+  Future<UserProfile> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$UserProfileFromRow);
+
+  /// Fetches zero or one row.
+  Future<UserProfile?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$UserProfileFromRow);
+
+  /// Fetches every row.
+  Future<List<UserProfile>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$UserProfileFromRow);
+}
 
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
@@ -226,7 +270,7 @@ final class _$UserDao implements UserDao {
     return _db.fetchOne<UserProfile>(
       r'''SELECT id, display_name FROM users WHERE id = ?''',
       [id],
-      UserProfileFromRow.fromRow,
+      const $UserProfileRowDeserializer().deserialize,
     );
   }
 
@@ -235,7 +279,7 @@ final class _$UserDao implements UserDao {
     return _db.fetchAll<UserProfile>(
       r'''SELECT id, display_name FROM users''',
       [],
-      UserProfileFromRow.fromRow,
+      const $UserProfileRowDeserializer().deserialize,
     );
   }
 
@@ -270,7 +314,7 @@ fn expected_imported_dao_output() -> &'static str {
     return _db.fetchOptional<UserProfile>(
       r'''SELECT id, display_name, bio FROM users WHERE id = ?''',
       [id],
-      UserProfileFromRow.fromRow,
+      const $UserProfileRowDeserializer().deserialize,
     );
   }
 
@@ -293,16 +337,38 @@ fn expected_imported_dao_output() -> &'static str {
 }
 
 fn expected_reordered_sqlite_output() -> &'static str {
-    r#"extension UserProfileFromRow on UserProfile {
-  static UserProfile fromRow(Row row) {
-    return UserProfile(
-      id: row.read<int>('id'),
-      name: row.read<String>('display_name'),
-    );
-  }
+    r#"UserProfile _$UserProfileFromRow(Row row) {
+  return UserProfile(
+    id: row.read<int>('id'),
+    name: row.read<String>('display_name'),
+  );
 }
 
-final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
+/// Row deserializer for [UserProfile].
+final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> {
+  const $UserProfileRowDeserializer();
+
+  @override
+  UserProfile deserialize(Row row) => _$UserProfileFromRow(row);
+}
+
+/// Typed row query terminals for [UserProfile].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $UserProfileQuery on QueryAs<UserProfile> {
+  /// Fetches exactly one row.
+  Future<UserProfile> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$UserProfileFromRow);
+
+  /// Fetches zero or one row.
+  Future<UserProfile?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$UserProfileFromRow);
+
+  /// Fetches every row.
+  Future<List<UserProfile>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$UserProfileFromRow);
+}
 
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
@@ -314,7 +380,7 @@ final class _$UserDao implements UserDao {
     return _db.fetchOptional<UserProfile>(
       r'''SELECT id, display_name FROM users WHERE org_id = ? OR id = ? OR backup_id = ?''',
       [orgId, id, id],
-      UserProfileFromRow.fromRow,
+      const $UserProfileRowDeserializer().deserialize,
     );
   }
 }"#

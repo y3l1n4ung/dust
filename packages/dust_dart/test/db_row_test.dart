@@ -2,39 +2,28 @@ import 'package:dust_dart/db.dart';
 import 'package:test/test.dart';
 
 void main() {
-  tearDown(RowMapperRegistry.resetForTest);
+  test('a generated row deserializer maps rows through its static fromRow', () {
+    const deserializer = _StandaloneUserFromRowDeserializer();
 
-  test('RowMapperRegistry maps rows through static fromRow references', () {
-    registerRowMapper<_StandaloneUser>(_StandaloneUserFromRow.fromRow);
-
-    final user = RowMapperRegistry.map<_StandaloneUser>(
+    final user = deserializer.deserialize(
       _MapRow(<String, Object?>{'id': 8, 'is_active': false}),
     );
 
     expect(user.id, 8);
     expect(user.isActive, isFalse);
-    expect(
-      RowMapperRegistry.map<Row>(_MapRow(const <String, Object?>{})),
-      isA<Row>(),
-    );
   });
 
-  test('RowMapperRegistry reports missing generated mappers', () {
-    expect(
-      () => RowMapperRegistry.map<_StandaloneUser>(
-        _MapRow(const <String, Object?>{}),
-      ),
-      throwsA(
-        isA<SqlxDecodeError>()
-            .having(
-                (error) => error.category, 'category', SqlxErrorCategory.decode)
-            .having(
-              (error) => error.operation,
-              'operation',
-              'RowMapperRegistry.map<_StandaloneUser>',
-            ),
-      ),
+  test('a row deserializer wraps a plain mapper function', () {
+    const deserializer = RowMapperDeserializer<_StandaloneUser>(
+      _StandaloneUserFromRow.fromRow,
     );
+
+    final user = deserializer.deserialize(
+      _MapRow(<String, Object?>{'id': 3, 'is_active': true}),
+    );
+
+    expect(user.id, 3);
+    expect(user.isActive, isTrue);
   });
 
   test('fake row covers the pasted Row interface shape', () {
@@ -159,4 +148,13 @@ final class _MapRow implements Row {
     if (value is T) return value as T;
     throw SqlxError.decode('Column `$column` cannot be read as $T.');
   }
+}
+
+/// Stands in for the `$TypeFromRow` witness Dust generates.
+final class _StandaloneUserFromRowDeserializer
+    implements RowDeserializer<_StandaloneUser> {
+  const _StandaloneUserFromRowDeserializer();
+
+  @override
+  _StandaloneUser deserialize(Row row) => _StandaloneUserFromRow.fromRow(row);
 }

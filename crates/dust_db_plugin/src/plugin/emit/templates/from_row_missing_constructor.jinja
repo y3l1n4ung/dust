@@ -1,5 +1,3 @@
-extension {{ class_name }}FromRow on {{ class_name }} {
-  static {{ class_name }} fromRow(Row row) {
-    throw StateError('No usable constructor found for {{ class_name }}');
-  }
+{{ class_name }} _${{ class_name }}FromRow(Row row) {
+  throw StateError('No usable constructor found for {{ class_name }}');
 }

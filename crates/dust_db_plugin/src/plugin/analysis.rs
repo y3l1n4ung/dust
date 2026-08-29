@@ -48,9 +48,10 @@ pub(crate) struct PackageDatabase {
 pub(crate) fn collect_db_workspace_analysis(
     library: &DartFileIr,
     analysis: &mut WorkspaceAnalysisBuilder,
+    databases: bool,
 ) {
     let package = library.package_name.as_str();
-    for db in database_classes(library) {
+    for db in database_classes(library).into_iter().filter(|_| databases) {
         let driver = match db.driver {
             DbDriver::Sqlite3 => "sqlite3",
             DbDriver::Postgres => "postgres",
@@ -61,7 +62,13 @@ pub(crate) fn collect_db_workspace_analysis(
         );
     }
     for row in row_classes(library) {
-        let mut fields = vec![package.to_owned(), row.class.name.clone()];
+        // The source path rides along so two row classes sharing a name can be
+        // told apart, and the file that declares each one can be named.
+        let mut fields = vec![
+            package.to_owned(),
+            row.class.name.clone(),
+            library.source_path.clone(),
+        ];
         for field in &row.class.fields {
             let config = sqlx_config(&field.configs);
             if config.skip {
@@ -124,8 +131,16 @@ pub(crate) fn package_row_column_map(
         .collect()
 }
 
-/// One row class's own columns and the rows flattened into it.
-type DeclaredRow = (Vec<String>, Vec<String>);
+/// One row class's declaring file, own columns, and the rows flattened into it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct DeclaredRow {
+    /// Package-relative path of the library that declares it.
+    pub(crate) source_path: String,
+    /// Columns the class reads directly.
+    columns: Vec<String>,
+    /// Row classes flattened into it.
+    flattened: Vec<String>,
+}
 
 /// Adds one row class's columns, following flattened rows.
 fn expand_row(
@@ -137,12 +152,12 @@ fn expand_row(
     if !seen.insert(name.to_owned()) {
         return;
     }
-    let Some((own, flattened)) = declared.get(name) else {
+    let Some(row) = declared.get(name) else {
         return;
     };
-    columns.extend(own.iter().cloned());
-    for row in flattened {
-        expand_row(row, declared, columns, seen);
+    columns.extend(row.columns.iter().cloned());
+    for flattened in &row.flattened {
+        expand_row(flattened, declared, columns, seen);
     }
 }
 
@@ -181,6 +196,7 @@ fn parse_row(value: &str, package: &str) -> Option<(String, DeclaredRow)> {
         return None;
     }
     let name = fields.next()?.to_owned();
+    let source_path = fields.next()?.to_owned();
     let mut columns = Vec::new();
     let mut flattened = Vec::new();
     for field in fields {
@@ -190,7 +206,45 @@ fn parse_row(value: &str, package: &str) -> Option<(String, DeclaredRow)> {
             flattened.push(row.to_owned());
         }
     }
-    Some((name, (columns, flattened)))
+    Some((
+        name,
+        DeclaredRow {
+            source_path,
+            columns,
+            flattened,
+        },
+    ))
+}
+
+/// Returns every row class name a package declares more than once.
+///
+/// The analysis is keyed by class name, because that is all a `queryAs<T>` type
+/// argument carries. Two libraries in one package may each declare an `Order`,
+/// which is legal Dart and leaves no way to tell which one a query means. The
+/// answer is to say so rather than pick one: silently choosing the wrong column
+/// set rejects a correct query, or passes a broken one.
+pub(crate) fn duplicate_row_types(
+    analysis: &WorkspaceAnalysis,
+    package: &str,
+) -> Vec<(String, Vec<String>)> {
+    let mut by_name = HashMap::<String, Vec<String>>::new();
+    for value in analysis.string_set(ROW_COLUMNS_KEY).unwrap_or_default() {
+        if let Some((name, row)) = parse_row(value, package) {
+            by_name.entry(name).or_default().push(row.source_path);
+        }
+    }
+    let mut duplicates = by_name
+        .into_iter()
+        .filter(|(_, paths)| paths.len() > 1)
+        .map(|(name, mut paths)| {
+            paths.sort();
+            paths.dedup();
+            (name, paths)
+        })
+        .filter(|(_, paths)| paths.len() > 1)
+        .collect::<Vec<_>>();
+    duplicates.sort();
+    duplicates
 }
 
 #[cfg(test)]

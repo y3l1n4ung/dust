@@ -1,3 +1,6 @@
+use std::collections::{HashMap, HashSet};
+
+use dust_dart_emit::DART_ROW;
 use dust_diagnostics::{Diagnostic, SourceLabel};
 
 use crate::plugin::{
@@ -44,6 +47,40 @@ pub(super) fn validate_placeholders(
     user_parameter_count: usize,
 ) -> Result<PlaceholderRewrite, String> {
     rewrite_sqlite_placeholders(sql, user_parameter_count)
+}
+
+/// Reports a `queryAs<T>` whose row type has no generated row mapping.
+///
+/// Without one the call falls through to `RowMapperRegistry`, which resolves at
+/// runtime and throws `SqlxError.decode` on the request that reaches it. The
+/// row classes resolve package-wide, so this can name the type exactly rather
+/// than guess from the file it happens to be looking at.
+pub(super) fn validate_row_type_is_mapped(
+    query: &QuerySpec,
+    row_columns: &HashMap<String, HashSet<String>>,
+    ambiguous: &HashSet<String>,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
+    // A call that brings its own mapper needs nothing generated.
+    if query.has_row_mapper_argument {
+        return;
+    }
+    let Some(row_type) = query_row_type(query) else {
+        return;
+    };
+    // `queryAs<Row>` asks for the row itself, which needs no mapping. An
+    // ambiguous name has its own diagnostic; adding this one would be noise.
+    if row_type == DART_ROW || row_columns.contains_key(row_type) || ambiguous.contains(row_type) {
+        return;
+    }
+    diagnostics.push(query_error(
+        query,
+        format!(
+            "queryAs<{row_type}> row type has no row mapping. Add \
+             `@Derive([FromRow()])` to `{row_type}`, or pass one with \
+             `mapper:` or `using:`"
+        ),
+    ));
 }
 
 /// Returns the row type for `queryAs<T>` specs.

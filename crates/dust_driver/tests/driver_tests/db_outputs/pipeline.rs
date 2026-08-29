@@ -28,16 +28,38 @@ fn normal_build_does_not_generate_sqlx_database_or_dao_output() {
         generated_output(
             r#"part of 'app_database.dart';
 
-extension UserProfileFromRow on UserProfile {
-  static UserProfile fromRow(Row row) {
-    return UserProfile(
-      id: row.read<int>('id'),
-      name: row.read<String>('display_name'),
-    );
-  }
+UserProfile _$UserProfileFromRow(Row row) {
+  return UserProfile(
+    id: row.read<int>('id'),
+    name: row.read<String>('display_name'),
+  );
 }
 
-final bool _$userProfileFromRowRegistered = registerRowMapper<UserProfile>(UserProfileFromRow.fromRow);
+/// Row deserializer for [UserProfile].
+final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> {
+  const $UserProfileRowDeserializer();
+
+  @override
+  UserProfile deserialize(Row row) => _$UserProfileFromRow(row);
+}
+
+/// Typed row query terminals for [UserProfile].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $UserProfileQuery on QueryAs<UserProfile> {
+  /// Fetches exactly one row.
+  Future<UserProfile> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$UserProfileFromRow);
+
+  /// Fetches zero or one row.
+  Future<UserProfile?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$UserProfileFromRow);
+
+  /// Fetches every row.
+  Future<List<UserProfile>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$UserProfileFromRow);
+}
 "#
         )
     );
@@ -147,5 +169,5 @@ fn normal_build_preserves_existing_database_output() {
     assert!(database_output.contains("final class _$AppDatabase"));
     assert!(database_output.contains("final class _$UserDao implements UserDao"));
     assert!(database_output.contains("Sqlite3Driver.open"));
-    assert!(row_output.contains("extension UserProfileFromRow on UserProfile"));
+    assert!(row_output.contains("UserProfile _$UserProfileFromRow(Row row)"));
 }

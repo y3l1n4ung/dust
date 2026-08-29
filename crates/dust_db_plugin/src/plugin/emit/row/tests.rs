@@ -83,13 +83,35 @@ fn emits_basic_from_row_extension() {
 
     assert_eq!(
         render_from_row_extension(&library, &class, &Default::default()),
-        r#"extension UserRowFromRow on UserRow {
-  static UserRow fromRow(Row row) {
-    return UserRow(id: row.read<int>('id'));
-  }
+        r#"UserRow _$UserRowFromRow(Row row) {
+  return UserRow(id: row.read<int>('id'));
 }
 
-final bool _$userRowFromRowRegistered = registerRowMapper<UserRow>(UserRowFromRow.fromRow);"#
+/// Row deserializer for [UserRow].
+final class $UserRowRowDeserializer implements RowDeserializer<UserRow> {
+  const $UserRowRowDeserializer();
+
+  @override
+  UserRow deserialize(Row row) => _$UserRowFromRow(row);
+}
+
+/// Typed row query terminals for [UserRow].
+///
+/// Resolved from the static type of the receiver, so a row type with no
+/// `FromRow` has no terminals and the call does not compile.
+extension $UserRowQuery on QueryAs<UserRow> {
+  /// Fetches exactly one row.
+  Future<UserRow> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$UserRowFromRow);
+
+  /// Fetches zero or one row.
+  Future<UserRow?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$UserRowFromRow);
+
+  /// Fetches every row.
+  Future<List<UserRow>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$UserRowFromRow);
+}"#
     );
 }
 
@@ -108,10 +130,8 @@ fn emits_no_constructor_from_row_failure_body() {
 
     assert_eq!(
         render_from_row_extension(&library, &class, &Default::default()),
-        r#"extension NoCtorRowFromRow on NoCtorRow {
-  static NoCtorRow fromRow(Row row) {
-    throw StateError('No usable constructor found for NoCtorRow');
-  }
+        r#"NoCtorRow _$NoCtorRowFromRow(Row row) {
+  throw StateError('No usable constructor found for NoCtorRow');
 }"#
     );
 }

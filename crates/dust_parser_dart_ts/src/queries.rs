@@ -146,6 +146,12 @@ fn query_call_surface(
         .map(String::as_str)
         .unwrap_or("const <Object?>[]");
     let (params_source_is_list, parameter_count) = parse_list_argument_count(params_source);
+    // The `With` terminals take the row mapping as an argument, which is how a
+    // row type Dust did not generate is read. Everything else gets its mapping
+    // from the generated terminal, and needs one to exist.
+    let has_row_mapper_argument = fetch_method
+        .as_deref()
+        .is_some_and(|method| method.ends_with("With"));
 
     ParsedQueryCallSurface {
         function,
@@ -155,6 +161,7 @@ fn query_call_surface(
         parameter_count,
         params_source_is_list,
         fetch_method,
+        has_row_mapper_argument,
         span,
     }
 }
@@ -281,7 +288,14 @@ fn fetch_method_for_query_call(query_call: Node<'_>, source: &SourceText) -> Opt
 fn is_fetch_method(method: &str) -> bool {
     matches!(
         method,
-        "fetchOptional" | "fetchOne" | "fetchAll" | "fetch" | "execute"
+        "fetchOptional"
+            | "fetchOne"
+            | "fetchAll"
+            | "fetch"
+            | "execute"
+            | "fetchOneWith"
+            | "fetchOptionalWith"
+            | "fetchAllWith"
     )
 }
 

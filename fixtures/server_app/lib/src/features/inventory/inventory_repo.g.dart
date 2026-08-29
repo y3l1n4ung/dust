@@ -23,7 +23,7 @@ final class _$InventoryRepo implements InventoryRepo {
     return _db.fetchOptional<Stock>(
       r'''SELECT item, on_hand FROM stock WHERE item = ?''',
       [item],
-      StockFromRow.fromRow,
+      const $StockRowDeserializer().deserialize,
     );
   }
 
@@ -32,7 +32,7 @@ final class _$InventoryRepo implements InventoryRepo {
     return _db.fetchAll<Stock>(
       r'''SELECT item, on_hand FROM stock ORDER BY item''',
       [],
-      StockFromRow.fromRow,
+      const $StockRowDeserializer().deserialize,
     );
   }
 

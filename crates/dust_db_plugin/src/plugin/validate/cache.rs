@@ -99,11 +99,10 @@ pub(super) fn write_query_cache(
     }
 
     let path = query_cache_path(library);
-    let mut cache = fs::read_to_string(&path)
-        .ok()
-        .and_then(|source| serde_json::from_str::<QueryCache>(&source).ok())
-        .filter(|cache| cache.version == QUERY_CACHE_VERSION)
-        .unwrap_or_default();
+    // Every query in this library is described in one pass, so the file is
+    // rewritten rather than merged into. Merging is what made a shared cache
+    // racy; there is nothing to preserve here that this pass did not produce.
+    let mut cache = QueryCache::default();
     for entry in entries {
         cache.entries.retain(|existing| {
             !(existing.migrations == entry.migrations
@@ -190,9 +189,23 @@ pub(super) fn stable_hash_hex(bytes: &[u8]) -> String {
     hash.finish_hex()
 }
 
-/// Returns the package-local DB query metadata cache path.
+/// Returns the DB query metadata cache path for one library.
+///
+/// One file per library, not one per package. Libraries are validated in
+/// parallel worker threads, so a shared path meant several threads
+/// read-modify-writing the same file at once: entries were lost, and the file
+/// was often left as invalid JSON. A library owns its own cache, so there is
+/// nothing to race over and nothing to merge.
 pub(super) fn query_cache_path(library: &dust_ir::DartFileIr) -> PathBuf {
-    Path::new(&library.package_root).join(".dart_tool/dust/db_query_cache_v2.json")
+    let source = Path::new(&library.source_path);
+    let stem = source
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or("library");
+    let digest = stable_hash_hex(library.source_path.as_bytes());
+    Path::new(&library.package_root)
+        .join(".dart_tool/dust/db_query_cache_v2")
+        .join(format!("{stem}-{digest}.json"))
 }
 
 /// Validates one query against a matching cache entry.

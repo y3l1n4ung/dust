@@ -17,6 +17,8 @@ pub struct ParsedQueryCallSurface {
     pub params_source_is_list: bool,
     /// The terminal fetch method name, if the call is chained.
     pub fetch_method: Option<String>,
+    /// Whether the call supplied its own row mapper or row deserializer.
+    pub has_row_mapper_argument: bool,
     /// The source span for the query helper invocation.
     pub span: TextRange,
 }

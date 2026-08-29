@@ -1,10 +1,12 @@
+use std::collections::{HashMap, HashSet};
+
 use dust_diagnostics::Diagnostic;
 use dust_ir::DartFileIr;
 use dust_plugin_api::WorkspaceAnalysis;
 
 use super::{
     DbPluginOptions,
-    analysis::{PackageDatabase, package_databases, package_row_column_map},
+    analysis::{PackageDatabase, duplicate_row_types, package_databases, package_row_column_map},
     model::{DbDriver, RowClass},
     parse::{database_classes, query_specs, row_classes},
 };
@@ -33,10 +35,18 @@ pub(crate) fn validate_db_library(
     }
 
     let rows = row_classes(library);
+    let package_rows = package_row_column_map(analysis, &library.package_name);
     let mut diagnostics = Vec::new();
-    rows::validate_rows(&rows, &mut diagnostics);
+    rows::validate_rows(&rows, &package_rows, &mut diagnostics);
     if options.databases {
-        validate_databases(library, options, &rows, analysis, &mut diagnostics);
+        validate_databases(
+            library,
+            options,
+            &rows,
+            analysis,
+            &package_rows,
+            &mut diagnostics,
+        );
     }
     diagnostics
 }
@@ -47,6 +57,7 @@ fn validate_databases(
     options: DbPluginOptions,
     rows: &[RowClass<'_>],
     analysis: &WorkspaceAnalysis,
+    row_columns: &HashMap<String, HashSet<String>>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     // These two carry a span, so they belong to the file that declares the
@@ -76,6 +87,11 @@ fn validate_databases(
         query::validate_query_shape(query, diagnostics);
     }
 
+    let ambiguous = report_ambiguous_row_types(library, analysis, diagnostics);
+    for query in &queries {
+        query::validate_row_type_is_mapped(query, row_columns, &ambiguous, diagnostics);
+    }
+
     // The schema and the row classes come from the whole package. A project
     // that keeps the database class, the row classes, and the queries in three
     // files is the normal layout, and validating each file against itself left
@@ -85,8 +101,49 @@ fn validate_databases(
         return;
     };
     report_ambiguous_schema(library, &databases, diagnostics);
-    let row_columns = package_row_column_map(analysis, &library.package_name);
-    sqlx::validate_sqlx_describe(library, db, &queries, &row_columns, options, diagnostics);
+    // A name that means two different row classes has no one column set to
+    // check against, so those queries are described without a row check rather
+    // than checked against whichever declaration happened to win.
+    let checkable = row_columns
+        .iter()
+        .filter(|(name, _)| !ambiguous.contains(*name))
+        .map(|(name, columns)| (name.clone(), columns.clone()))
+        .collect::<HashMap<_, _>>();
+    sqlx::validate_sqlx_describe(library, db, &queries, &checkable, options, diagnostics);
+}
+
+/// Reports row class names a package declares twice, returning the ambiguous set.
+///
+/// A `queryAs<T>` type argument is a bare name, so two libraries each declaring
+/// an `Order` leave no way to know which one a query means. Reported once per
+/// package, from the library that declares the first one by path.
+fn report_ambiguous_row_types(
+    library: &DartFileIr,
+    analysis: &WorkspaceAnalysis,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> HashSet<String> {
+    let duplicates = duplicate_row_types(analysis, &library.package_name);
+    let mut ambiguous = HashSet::new();
+    for (name, paths) in duplicates {
+        if paths
+            .first()
+            .is_some_and(|first| first == &library.source_path)
+        {
+            diagnostics.push(Diagnostic::error(format!(
+                "Package `{}` declares more than one row class named `{name}` ({}), so a \
+                 `queryAs<{name}>` has no one row type to be checked against. Rename one, or \
+                 keep one row class per name in a package.",
+                library.package_name,
+                paths
+                    .iter()
+                    .map(|path| format!("`{path}`"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )));
+        }
+        ambiguous.insert(name);
+    }
+    ambiguous
 }
 
 /// Reports a package that declares more than one database to validate against.

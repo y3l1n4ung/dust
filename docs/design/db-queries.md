@@ -359,25 +359,52 @@ Dart has no static interface members. A type parameter `T` cannot reach a
 constructor, a static, or a factory, so `T` alone can never produce a decoder.
 That leaves three options:
 
-1. **A runtime registry.** What ships today — `RowMapperRegistry` is a
+1. **A runtime registry.** What used to ship — `RowMapperRegistry` was a
    process-wide `Map<Type, RowMapper>` filled by top-level initializers in
-   generated part files
-   ([`row_mapper.dart`](../../packages/dust_dart/lib/src/db/row_mapper.dart)).
-   A miss is a runtime `SqlxError.decode`, and whether it hits depends on
-   whether the part file was imported anywhere in the isolate.
+   generated part files. A miss was a runtime `SqlxError.decode`, and whether
+   it hit depended on whether the part file had been imported anywhere in the
+   isolate. **Deleted**; nothing outside `dust_dart`'s own tests used it, since
+   generated DAOs have always passed their mapper directly.
 2. **An explicit decoder argument** on every query — a value mechanically
    derivable from `T`, which is the work a generator exists to do.
 3. **Generated extensions.** Below.
 
+Option 2 is what ships, because it is what JSON already does.
+`Serialize` can generate an instance interface — `mixin _$Order implements
+Serializable` — since the value exists before `serialize()` is called.
+`Deserialize` cannot, for the same reason `FromRow` cannot: it constructs.
+Serde's answer there is a **const witness object**, `$OrderDeserializer
+implements Deserializer<Order, Map<String, Object?>>`, and the row side now
+mirrors it exactly:
+
+```dart
+abstract interface class RowDeserializer<T> {
+  T deserialize(Row row);
+}
+
+final class $OrderFromRow implements RowDeserializer<Order> {
+  const $OrderFromRow();
+  @override
+  Order deserialize(Row row) => OrderFromRow.fromRow(row);
+}
+```
+
+The witness is public API, and the `With` terminals take one for a row type Dust
+does not own. Nothing has to pass one for a row type it does: option 3 ships
+alongside it, below. `dust db build` reports a missing mapping first, and can
+only do so because row classes resolve package-wide.
+
 ### Terminals come from generated extensions
 
-`queryAs<T>(sql, args)` returns a `Query<T>`: a data holder with `sql` and
-`arguments`, no methods. The terminals are generated per row type, into the row
-class's own part file, beside the decoder:
+`queryAs<T>(sql, args)` returns a `QueryAs<T>`: a data holder with `sql`,
+`parameters`, and the three `…With` primitives, but no bare terminals. (The name
+stays `QueryAs` rather than the `Query<T>` first sketched here, because `Query`
+is already the DAO method annotation.) The terminals are generated per row type,
+into the row class's own part file, beside the decoder:
 
 ```dart
 // order_model.g.dart
-Order _$orderFromRow(Row row) => Order(
+Order _$OrderFromRow(Row row) => Order(
       id: row.readInt('id'),
       accountId: row.readInt('account_id'),
       item: row.readString('item'),
@@ -385,21 +412,21 @@ Order _$orderFromRow(Row row) => Order(
       placedAt: row.readString('placed_at'),
     );
 
-extension OrderQuery on Query<Order> {
-  Future<Result<Order, SqlxError>> fetchOne(Executor executor) =>
-      executor.fetchOne<Order>(sql, arguments, _$orderFromRow);
+extension $OrderQuery on QueryAs<Order> {
+  Future<Order> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$OrderFromRow);
 
-  Future<Result<Order?, SqlxError>> fetchOptional(Executor executor) =>
-      executor.fetchOptional<Order>(sql, arguments, _$orderFromRow);
+  Future<Order?> fetchOptional(DatabaseExecutor db) =>
+      fetchOptionalWith(db, _$OrderFromRow);
 
-  Future<Result<List<Order>, SqlxError>> fetchAll(Executor executor) =>
-      executor.fetchAll<Order>(sql, arguments, _$orderFromRow);
+  Future<List<Order>> fetchAll(DatabaseExecutor db) =>
+      fetchAllWith(db, _$OrderFromRow);
 }
 ```
 
-The decoder is a plain top-level function of type `RowMapper<Order>`. It
-introduces no method name, so nothing can collide with `Serializable.serialize`
-or `Deserializer.deserialize` from
+The decoder is a plain top-level function of type `RowMapper<Order>`, named the
+way serde names `_$OrderSerialize`. It introduces no method name, so nothing can
+collide with `Serializable.serialize` or `Deserializer.deserialize` from
 [`serde.dart`](../../packages/dust_dart/lib/src/serde/serde.dart) — a row class
 deriving both `FromRow` and `Deserialize` gains two unrelated top-level
 functions.
@@ -409,14 +436,15 @@ Dart resolves extension members from the **static type** of the receiver, so
 time. No lookup, no global state, no argument. As close as Dart gets to what
 Rust's trait resolution does for SQLx.
 
-`Query<T>` must stay free of terminal methods, because an instance member always
-beats an extension member.
+`QueryAs<T>` must stay free of bare terminal methods, because an instance member
+always beats an extension member. The `…With` terminals are safe there: they are
+different names, and they take the mapping rather than assuming one.
 
 Three properties follow:
 
 - **A missing derive is a compile error.** `queryAs<Account>(...)` where
   `Account` does not derive `FromRow` means no extension exists, so `fetchAll`
-  is undefined. Today the same mistake compiles and throws at runtime.
+  is undefined. Nothing is passed to get this.
 - **A missing import is a compile error too**, rather than a silent
   non-registration.
 - **`RowMapperRegistry` is deleted**, along with the generated
@@ -711,8 +739,9 @@ Inline queries take the executor per call and do not have this problem.
    both ([#500](https://github.com/y3l1n4ung/dust/issues/500)).
 3. **Read `nullable()` and `type_info()`**, shipping as warnings until the
    [type-mapping table](#open-questions) exists.
-4. **Terminals return `Result`;** generate them per row type; delete
-   `RowMapperRegistry`.
+4. **Terminals return `Result`.** ~~Generate them per row type; delete
+   `RowMapperRegistry`.~~ Both done; what is left is the error surface, since
+   the generated terminals still throw the way the old instance methods did.
 5. **`queryRaw` becomes `unsafeSql`** on the database facade.
 6. **Name the enclosing function** in call-site diagnostics.
 7. **Rename to SQLx's pool vocabulary.**

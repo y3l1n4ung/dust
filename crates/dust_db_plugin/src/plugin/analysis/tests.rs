@@ -47,8 +47,8 @@ fn orders_duplicate_databases_by_class_name() {
 
 #[test]
 fn expands_rows_flattened_across_libraries() {
-    let order = packed(&["app", "Order", "c:id", "f:Money"]);
-    let money = packed(&["app", "Money", "c:amount", "c:currency"]);
+    let order = packed(&["app", "Order", "lib/order.dart", "c:id", "f:Money"]);
+    let money = packed(&["app", "Money", "lib/money.dart", "c:amount", "c:currency"]);
     let analysis = analysis(&[(ROW_COLUMNS_KEY, &order), (ROW_COLUMNS_KEY, &money)]);
 
     let columns = package_row_column_map(&analysis, "app");
@@ -65,8 +65,8 @@ fn expands_rows_flattened_across_libraries() {
 
 #[test]
 fn a_flatten_cycle_stops_rather_than_recursing() {
-    let left = packed(&["app", "Left", "c:left_id", "f:Right"]);
-    let right = packed(&["app", "Right", "c:right_id", "f:Left"]);
+    let left = packed(&["app", "Left", "lib/left.dart", "c:left_id", "f:Right"]);
+    let right = packed(&["app", "Right", "lib/right.dart", "c:right_id", "f:Left"]);
     let analysis = analysis(&[(ROW_COLUMNS_KEY, &left), (ROW_COLUMNS_KEY, &right)]);
 
     let columns = package_row_column_map(&analysis, "app");
@@ -83,7 +83,7 @@ fn a_flatten_cycle_stops_rather_than_recursing() {
 
 #[test]
 fn a_flatten_target_outside_the_package_contributes_nothing() {
-    let order = packed(&["app", "Order", "c:id", "f:Absent"]);
+    let order = packed(&["app", "Order", "lib/order.dart", "c:id", "f:Absent"]);
     let analysis = analysis(&[(ROW_COLUMNS_KEY, &order)]);
 
     let columns = package_row_column_map(&analysis, "app");
@@ -103,4 +103,37 @@ fn malformed_values_are_skipped_rather_than_panicking() {
 
     assert!(package_databases(&analysis, "app").is_empty());
     assert!(package_row_column_map(&analysis, "app").is_empty());
+    assert!(duplicate_row_types(&analysis, "app").is_empty());
+}
+
+#[test]
+fn reports_a_row_class_name_two_libraries_share() {
+    let inventory = packed(&["app", "Stock", "lib/inventory.dart", "c:item"]);
+    let archive = packed(&["app", "Stock", "lib/archive.dart", "c:archived"]);
+    let unique = packed(&["app", "Order", "lib/order.dart", "c:id"]);
+    let analysis = analysis(&[
+        (ROW_COLUMNS_KEY, &inventory),
+        (ROW_COLUMNS_KEY, &archive),
+        (ROW_COLUMNS_KEY, &unique),
+    ]);
+
+    assert_eq!(
+        duplicate_row_types(&analysis, "app"),
+        vec![(
+            "Stock".to_owned(),
+            vec![
+                "lib/archive.dart".to_owned(),
+                "lib/inventory.dart".to_owned()
+            ],
+        )]
+    );
+}
+
+#[test]
+fn one_row_class_declared_once_is_not_a_duplicate() {
+    let order = packed(&["app", "Order", "lib/order.dart", "c:id"]);
+    let theirs = packed(&["other", "Order", "lib/order.dart", "c:id"]);
+    let analysis = analysis(&[(ROW_COLUMNS_KEY, &order), (ROW_COLUMNS_KEY, &theirs)]);
+
+    assert!(duplicate_row_types(&analysis, "app").is_empty());
 }

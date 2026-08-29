@@ -10,7 +10,7 @@ use crate::plugin::{
     parse::{effective_column_name, sqlx_config},
 };
 
-use super::shared::{escape_dart_string, lower_first};
+use super::shared::escape_dart_string;
 
 /// Template context for a generated `FromRow` extension.
 #[derive(Serialize)]
@@ -19,8 +19,6 @@ struct FromRowContext<'a> {
     class_name: &'a str,
     /// Rendered constructor call for decoded fields.
     call: String,
-    /// Rendered row mapper registration statement.
-    registration: String,
 }
 
 /// Renders generated `FromRow` support for a row class.
@@ -49,7 +47,6 @@ pub(super) fn render_from_row_extension(
             FromRowContext {
                 class_name: &class.name,
                 call: String::new(),
-                registration: String::new(),
             },
         );
     };
@@ -75,12 +72,6 @@ pub(super) fn render_from_row_extension(
         })
         .collect::<Vec<_>>();
     let call = render_constructor_call(&class.name, constructor, &args);
-    let registration = format!(
-        "final bool {} = registerRowMapper<{}>({}FromRow.fromRow);",
-        row_registration_name(&class.name),
-        class.name,
-        class.name
-    );
 
     render_template(
         "from_row_extension",
@@ -88,14 +79,8 @@ pub(super) fn render_from_row_extension(
         FromRowContext {
             class_name: &class.name,
             call,
-            registration,
         },
     )
-}
-
-/// Returns the generated top-level row mapper registration variable name.
-fn row_registration_name(class_name: &str) -> String {
-    format!("_${}FromRowRegistered", lower_first(class_name))
 }
 
 /// Renders the Dart expression that reads one field from a row.
@@ -109,7 +94,7 @@ fn render_row_value(
     }
     if field.config.flatten {
         let ty = DYNAMIC_TYPES.render_non_nullable(&field.field.ty);
-        return format!("{ty}FromRow.fromRow(row)");
+        return format!("const ${ty}RowDeserializer().deserialize(row)");
     }
     let column = escape_dart_string(&field.column);
     let decoded = if field.config.json {
@@ -210,7 +195,9 @@ fn render_constructor_call(
     } else if args.join(", ").len() + name.len() <= 56 {
         format!("{name}({})", args.join(", "))
     } else {
-        format!("{name}(\n      {},\n    )", args.join(",\n      "))
+        // The call sits inside a top-level `_$TypeFromRow` function body, so one
+        // level of indent for the arguments and none for the closing paren.
+        format!("{name}(\n    {},\n  )", args.join(",\n    "))
     }
 }
 

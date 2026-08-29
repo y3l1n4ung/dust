@@ -6,8 +6,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Row mapping has an interface and generated query terminals.
+  `@Derive([FromRow()])` now emits a private `_$TypeFromRow(Row row)`, a public
+  `$TypeRowDeserializer` implementing the new `RowDeserializer<T>` in
+  `dust_dart`, and `extension $TypeQuery on QueryAs<Type>` carrying `fetchOne`,
+  `fetchOptional`, and `fetchAll`. Dart resolves an extension member from the
+  static type of the receiver, so `queryAs<Order>(sql, args).fetchOne(db)` is
+  picked at compile time and a row type with no `FromRow` has no terminal at
+  all — the call does not compile.
+- `dust db build` rejects a `queryAs<T>` whose `T` has no row mapping anywhere
+  in the package, naming the type and the call site.
+- `QueryAs.fetchOneWith`, `fetchOptionalWith`, and `fetchAllWith` take the row
+  mapping as an argument, for a row type Dust does not generate.
+
+### Removed
+
+- **`RowMapperRegistry` and `registerRowMapper`**, along with the
+  `registerRowMapper` initializer generated row files used to emit. A
+  process-wide `Map<Type, RowMapper>` filled by top-level initializers made a
+  missing row mapping a runtime `SqlxError.decode` that depended on whether the
+  part file had been imported anywhere in the isolate. Generated DAOs never
+  used it, and with generated terminals nothing else does either.
+
+### Changed
+
+- Generated row output follows the naming the other derives use. The public
+  `extension TypeFromRow on Type` with its `static fromRow` is replaced by the
+  private `_$TypeFromRow` function — mirroring serde's `_$TypeSerialize` — and
+  the public `$TypeRowDeserializer` witness, mirroring `$TypeSerializer`.
+  Generated DAOs decode through the witness. Call sites of `queryAs<T>` are
+  unchanged.
+
 ### Fixed
 
+- The DB query metadata cache is one file per library rather than one per
+  package. Libraries are validated in parallel worker threads, so a shared path
+  meant several threads read-modify-writing the same file at once: across 15
+  clean builds of a three-library fixture the file was invalid JSON six times
+  and held 4 or 8 of its 12 entries the rest. `dust db build` reported success
+  either way, and the offline CI path then failed on a cache the online build
+  had just written.
+- A `@Sqlx(flatten: true)` field whose row class is declared in another library
+  is accepted. The target was resolved against the file being validated, so the
+  normal layout — one row class per file — was rejected with "flattened SQLx
+  field must reference an @FromRow class" for a class that derives it. Columns
+  a flattened row duplicates are now reported across libraries too, rather than
+  silently skipped.
+- A package that declares the same row class name in two libraries says so,
+  instead of picking one. A `queryAs<T>` type argument is a bare name, so two
+  `Order` classes leave no way to know which one a query means; the package
+  analysis kept whichever sorted last, which rejected correct queries against
+  the wrong column set. Reported once, naming both files, and those queries are
+  described without a row check rather than checked against a guess.
 - Database SQL validation now resolves the schema and the row classes across the
   whole package instead of within one file. A project that keeps the database
   class, the row classes, and the queries in three files — the normal layout —

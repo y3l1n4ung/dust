@@ -96,10 +96,12 @@ fn is_scalar_type(ty: &TypeIr) -> bool {
 
 /// Parses an explicit query fetch method or returns the default for a helper.
 pub(super) fn parse_fetch_method(function: QueryFunction, method: Option<&str>) -> FetchMode {
+    // The `With` terminals differ from the generated ones only in taking the row
+    // mapping as an argument; the cardinality they ask for is the same.
     match method {
-        Some("fetchOptional") => return FetchMode::Optional,
-        Some("fetchOne") => return FetchMode::One,
-        Some("fetchAll") => return FetchMode::All,
+        Some("fetchOptional" | "fetchOptionalWith") => return FetchMode::Optional,
+        Some("fetchOne" | "fetchOneWith") => return FetchMode::One,
+        Some("fetchAll" | "fetchAllWith") => return FetchMode::All,
         Some("fetch") => return FetchMode::Raw,
         Some("execute") => return FetchMode::Execute,
         _ => {}

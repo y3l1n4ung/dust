@@ -101,6 +101,20 @@ fn requires_exact_fetch_method_property() {
     assert_eq!(calls[0].fetch_method, None);
 }
 
+#[test]
+fn records_whether_a_call_brings_its_own_row_mapper() {
+    // The generated terminals decode with the mapping the row type owns. The
+    // `With` terminals take one as an argument, which is how a row type Dust
+    // did not generate is read, and the only case that needs nothing generated.
+    let generated = calls_for("queryAs<UserRow>(r'SELECT id FROM users', []).fetchAll(db);");
+    let supplied =
+        calls_for("queryAs<UserRow>(r'SELECT id FROM users', []).fetchAllWith(db, myMapper);");
+
+    assert!(!generated[0].has_row_mapper_argument);
+    assert!(supplied[0].has_row_mapper_argument);
+    assert_eq!(supplied[0].fetch_method.as_deref(), Some("fetchAllWith"));
+}
+
 fn calls_for(source: &str) -> Vec<ParsedQueryCallSurface> {
     let source = SourceText::new(FileId::new(1), format!("void main() {{\n{source}\n}}"));
     let mut parser = Parser::new();

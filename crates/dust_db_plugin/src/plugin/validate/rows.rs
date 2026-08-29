@@ -11,14 +11,28 @@ use crate::plugin::{
 use super::types::{is_supported_scalar_type, render_type};
 
 /// Validates all row mapper classes in a library.
-pub(super) fn validate_rows(rows: &[RowClass<'_>], diagnostics: &mut Vec<Diagnostic>) {
+///
+/// `package_rows` carries every row class in the package with the columns it
+/// requires. A flattened row is normally declared in another file, so resolving
+/// the target against this library alone rejected a layout that is correct.
+pub(super) fn validate_rows(
+    rows: &[RowClass<'_>],
+    package_rows: &HashMap<String, HashSet<String>>,
+    diagnostics: &mut Vec<Diagnostic>,
+) {
     let row_by_name = rows
         .iter()
         .map(|row| (row.class.name.as_str(), row))
         .collect::<HashMap<_, _>>();
-    let row_names = row_by_name.keys().copied().collect::<HashSet<_>>();
+    // Local names are unioned in so a caller with no workspace analysis — the
+    // plain `validate` entry point — keeps working against its own library.
+    let row_names = row_by_name
+        .keys()
+        .copied()
+        .chain(package_rows.keys().map(String::as_str))
+        .collect::<HashSet<_>>();
     for row in rows {
-        validate_row(row, &row_by_name, &row_names, diagnostics);
+        validate_row(row, &row_by_name, &row_names, package_rows, diagnostics);
     }
 }
 
@@ -27,6 +41,7 @@ fn validate_row(
     row: &RowClass<'_>,
     row_by_name: &HashMap<&str, &RowClass<'_>>,
     row_names: &HashSet<&str>,
+    package_rows: &HashMap<String, HashSet<String>>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let mut seen = HashMap::<String, &FieldIr>::new();
@@ -37,7 +52,14 @@ fn validate_row(
             continue;
         }
         if config.flatten {
-            insert_flattened_columns(row.class, field, row_by_name, &mut seen, diagnostics);
+            insert_flattened_columns(
+                row.class,
+                field,
+                row_by_name,
+                package_rows,
+                &mut seen,
+                diagnostics,
+            );
             continue;
         }
         let column = effective_column_name(&row.config, &field.name, &config);
@@ -74,14 +96,30 @@ fn insert_flattened_columns<'a>(
     class: &ClassIr,
     field: &'a FieldIr,
     row_by_name: &HashMap<&str, &RowClass<'_>>,
+    package_rows: &HashMap<String, HashSet<String>>,
     seen: &mut HashMap<String, &'a FieldIr>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    if let Some(flattened) = field.ty.name().and_then(|name| row_by_name.get(name)) {
-        for column in collect_row_columns(flattened, row_by_name) {
-            if let Some(existing) = seen.insert(column.clone(), field) {
-                push_duplicate_column(class, field, existing, &column, diagnostics);
-            }
+    let Some(name) = field.ty.name() else {
+        return;
+    };
+    // Prefer this library, which knows declaration order and so can report a
+    // duplicate column deterministically. Fall back to the package, which is
+    // where a flattened row usually lives.
+    let columns = match row_by_name.get(name) {
+        Some(flattened) => collect_row_columns(flattened, row_by_name),
+        None => {
+            let mut columns = package_rows
+                .get(name)
+                .map(|columns| columns.iter().cloned().collect::<Vec<_>>())
+                .unwrap_or_default();
+            columns.sort();
+            columns
+        }
+    };
+    for column in columns {
+        if let Some(existing) = seen.insert(column.clone(), field) {
+            push_duplicate_column(class, field, existing, &column, diagnostics);
         }
     }
 }
