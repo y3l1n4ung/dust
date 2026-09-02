@@ -49,7 +49,7 @@ pub(crate) fn collect_route_inspection(cwd: &Path) -> RouteInspection {
         }
     };
 
-    let indexed = prepare_and_process_batch(
+    let batch = prepare_and_process_batch(
         BatchConfig {
             cache_root: &workspace.cache_root,
             package_root: &workspace.package_root,
@@ -72,17 +72,20 @@ pub(crate) fn collect_route_inspection(cwd: &Path) -> RouteInspection {
         &mut cache_report,
     );
 
-    let snapshots = indexed
+    let snapshots = batch
+        .outcomes
         .iter()
         .map(|outcome| outcome.outcome.analysis_snapshot.clone())
         .collect::<Vec<_>>();
     result.diagnostics.extend(
-        indexed
+        batch
+            .outcomes
             .iter()
             .flat_map(|outcome| outcome.outcome.diagnostics.clone()),
     );
     result.diagnostic_files.extend(
-        indexed
+        batch
+            .outcomes
             .into_iter()
             .filter(|outcome| {
                 outcome

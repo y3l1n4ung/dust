@@ -20,8 +20,7 @@ use crate::{
 };
 
 pub(crate) use apply::{ApplyOutcomeConfig, apply_indexed_outcomes, flush_cache_into_result};
-pub(crate) use batch::BatchConfig;
-pub(crate) use batch::prepare_and_process_batch;
+pub(crate) use batch::{BatchConfig, prepare_and_process_batch};
 pub(crate) use support::{
     CodegenToolHash, RegistrySelection, codegen_tool_hash_for_selection, default_registry,
     hash_text, read_workspace_config_hash, registry_for_selection,
@@ -64,7 +63,7 @@ fn run_build_inner(
             return result;
         }
     };
-    let indexed = prepare_and_process_batch(
+    let batch = prepare_and_process_batch(
         BatchConfig {
             cache_root: &workspace.cache_root,
             package_root: &workspace.package_root,
@@ -88,10 +87,11 @@ fn run_build_inner(
     );
 
     apply_indexed_outcomes(
-        indexed,
+        batch.outcomes,
         ApplyOutcomeConfig {
             cache_root: &workspace.cache_root,
             package_config_hash,
+            workspace_analysis_hash: batch.workspace_analysis_hash,
             fail_fast: request.fail_fast,
         },
         &mut cache,

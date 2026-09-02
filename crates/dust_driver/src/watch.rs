@@ -108,10 +108,11 @@ fn run_watch_inner(
     );
 
     if apply_indexed_outcomes(
-        initial,
+        initial.outcomes,
         ApplyOutcomeConfig {
             cache_root: &workspace.cache_root,
             package_config_hash,
+            workspace_analysis_hash: initial.workspace_analysis_hash,
             fail_fast: request.fail_fast,
         },
         &mut cache,
@@ -182,10 +183,11 @@ fn run_watch_inner(
         );
 
         if apply_indexed_outcomes(
-            rebuilt,
+            rebuilt.outcomes,
             ApplyOutcomeConfig {
                 cache_root: &workspace.cache_root,
                 package_config_hash,
+                workspace_analysis_hash: rebuilt.workspace_analysis_hash,
                 fail_fast: request.fail_fast,
             },
             &mut cache,

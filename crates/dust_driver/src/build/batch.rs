@@ -78,19 +78,38 @@ pub(crate) struct BatchConfig<'a> {
     pub(crate) progress: Option<&'a ProgressCallback<'a>>,
 }
 
+/// Result of batch processing including workspace analysis metadata.
+pub(crate) struct BatchResult {
+    /// Per-library build outcomes in discovery order.
+    pub(crate) outcomes: Vec<IndexedBuildOutcome>,
+    /// Hash of the workspace analysis active during this batch.
+    pub(crate) workspace_analysis_hash: u64,
+}
+
+/// A tentative cache hit awaiting workspace analysis hash verification.
+struct TentativeHit<'a> {
+    /// Discovery order index for deterministic output ordering.
+    index: usize,
+    /// Source library represented by this tentative hit.
+    library: &'a SourceLibrary,
+    /// Cached entry to verify against the current workspace analysis hash.
+    entry: dust_cache::CacheEntry,
+    /// Loaded source and output fingerprints for demotion to pending.
+    input: crate::build::process::LoadedLibraryInput,
+}
+
 /// Loads inputs, reuses cache hits, runs workspace analysis, and processes misses.
 pub(crate) fn prepare_and_process_batch(
     config: BatchConfig<'_>,
     libraries: &[SourceLibrary],
     cache_report: &mut CacheReport,
-) -> Vec<IndexedBuildOutcome> {
+) -> BatchResult {
     let completed = Arc::new(AtomicUsize::new(0));
     let reporter =
         ProgressReporter::new(config.progress, &completed, config.phase, libraries.len());
     reporter.started_batch();
 
     let loaded_results = load_library_inputs(config, libraries);
-    let route_analysis_changed = route_analysis_changed(&loaded_results, libraries, &config);
     let mut outcomes = Vec::with_capacity(libraries.len());
     let mut workspace_analysis = dust_plugin_api::WorkspaceAnalysisBuilder::default();
     if config.is_flutter_package {
@@ -98,7 +117,9 @@ pub(crate) fn prepare_and_process_batch(
             .add_string_set_value(PACKAGE_FEATURES_ANALYSIS_KEY, PACKAGE_FEATURE_FLUTTER);
     }
     let mut pending = Vec::with_capacity(libraries.len());
+    let mut tentative_hits: Vec<TentativeHit<'_>> = Vec::new();
 
+    // Pass 1: separate tentative cache hits from definite misses.
     for (index, input_result) in loaded_results.into_iter().enumerate() {
         let library = &libraries[index];
         let input = match input_result {
@@ -124,26 +145,13 @@ pub(crate) fn prepare_and_process_batch(
                 &input,
                 config.package_config_hash,
             ) && input.checked_output_hash == Some(Some(entry.expected_output_hash))
-                && !cached_router_depends_on_changed_routes(entry, route_analysis_changed)
             {
-                cache_report.hits += 1;
                 workspace_analysis.merge_snapshot(&entry.analysis_snapshot);
-                outcomes.push(build_cached_outcome(
+                tentative_hits.push(TentativeHit {
                     index,
                     library,
-                    entry.expected_output_hash,
-                    entry.auxiliary_output_paths.clone(),
-                    entry.suppress_primary_output,
-                    entry.analysis_snapshot.clone(),
-                ));
-                reporter.finish(ProgressSnapshot {
-                    library,
-                    cached: true,
-                    routed: crate::build::support::route_only_analysis(&entry.analysis_snapshot),
-                    written: false,
-                    changed: false,
-                    had_errors: false,
-                    elapsed_ms: 0,
+                    entry: entry.clone(),
+                    input,
                 });
                 continue;
             }
@@ -158,6 +166,7 @@ pub(crate) fn prepare_and_process_batch(
         ));
     }
 
+    // Scan cache-miss libraries and merge their analysis facts.
     let workspace_result = collect_workspace_analysis(
         &pending,
         config.package_root,
@@ -181,13 +190,51 @@ pub(crate) fn prepare_and_process_batch(
         pending.analysis_snapshot = analysis_snapshot;
     }
 
+    // Build the final workspace analysis and compute its content hash.
+    let built_analysis = workspace_analysis.build();
+    let workspace_analysis_hash = built_analysis.content_hash();
+
+    // Pass 2: verify tentative hits against the workspace analysis hash.
+    for hit in tentative_hits {
+        if hit.entry.workspace_analysis_hash == workspace_analysis_hash {
+            cache_report.hits += 1;
+            outcomes.push(build_cached_outcome(
+                hit.index,
+                hit.library,
+                hit.entry.expected_output_hash,
+                hit.entry.auxiliary_output_paths.clone(),
+                hit.entry.suppress_primary_output,
+                hit.entry.analysis_snapshot.clone(),
+            ));
+            reporter.finish(ProgressSnapshot {
+                library: hit.library,
+                cached: true,
+                routed: crate::build::support::route_only_analysis(&hit.entry.analysis_snapshot),
+                written: false,
+                changed: false,
+                had_errors: false,
+                elapsed_ms: 0,
+            });
+        } else {
+            cache_report.misses += 1;
+            let mut demoted = PendingLibrary::new(
+                hit.index,
+                FileId::new(config.file_id_base + hit.index as u32),
+                hit.library.clone(),
+                hit.input,
+            );
+            demoted.analysis_snapshot = hit.entry.analysis_snapshot;
+            pending.push(demoted);
+        }
+    }
+
     let processing = ProcessingConfig {
         package_root: config.package_root,
         package_name: config.package_name,
         dart_language_version: config.dart_language_version,
         catalog: config.catalog,
         registry: config.registry,
-        workspace_analysis: Arc::new(workspace_analysis.build()),
+        workspace_analysis: Arc::new(built_analysis),
         write_output: config.write_output,
     };
 
@@ -206,51 +253,8 @@ pub(crate) fn prepare_and_process_batch(
 
     outcomes.append(&mut processed);
     outcomes.sort_by_key(|outcome| outcome.index);
-    outcomes
-}
-
-/// Returns whether any route declaration analysis changed in this batch.
-fn route_analysis_changed(
-    loaded_results: &[Result<
-        crate::build::process::LoadedLibraryInput,
-        dust_diagnostics::Diagnostic,
-    >],
-    libraries: &[SourceLibrary],
-    config: &BatchConfig<'_>,
-) -> bool {
-    loaded_results.iter().enumerate().any(|(index, input)| {
-        let Ok(input) = input else {
-            return false;
-        };
-        let library = &libraries[index];
-        let cache_hit = config
-            .cache
-            .get(config.cache_root, &library.source_path)
-            .is_some_and(|entry| {
-                crate::build::support::matches_cache_metadata(
-                    entry,
-                    input,
-                    config.package_config_hash,
-                ) && input.checked_output_hash == Some(Some(entry.expected_output_hash))
-            });
-
-        !cache_hit && contains_route_analysis_marker(&input.source)
-    })
-}
-
-/// Returns whether a cached router must be rebuilt after route changes.
-fn cached_router_depends_on_changed_routes(
-    entry: &dust_cache::CacheEntry,
-    route_analysis_changed: bool,
-) -> bool {
-    route_analysis_changed
-        && entry
-            .analysis_snapshot
-            .string_set("dust_route.routers.v1")
-            .is_some()
-}
-
-/// Checks for route annotations using the fast source marker path.
-fn contains_route_analysis_marker(source: &str) -> bool {
-    source.contains("@AppRoute") || source.contains("@AppRouter")
+    BatchResult {
+        outcomes,
+        workspace_analysis_hash,
+    }
 }

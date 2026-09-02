@@ -34,7 +34,7 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
         }
     };
 
-    let indexed = prepare_and_process_batch(
+    let batch = prepare_and_process_batch(
         BatchConfig {
             cache_root: &workspace.cache_root,
             package_root: &workspace.package_root,
@@ -60,10 +60,11 @@ pub fn run_check(request: CheckRequest) -> CommandResult {
     let apply_config = ApplyOutcomeConfig {
         cache_root: &workspace.cache_root,
         package_config_hash,
+        workspace_analysis_hash: batch.workspace_analysis_hash,
         fail_fast: request.fail_fast,
     };
 
-    for indexed_outcome in indexed {
+    for indexed_outcome in batch.outcomes {
         let has_error = indexed_outcome
             .outcome
             .diagnostics
