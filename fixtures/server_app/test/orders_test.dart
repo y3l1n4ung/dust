@@ -1,8 +1,6 @@
-import 'dart:convert';
-
 import 'package:test/test.dart';
 
-import 'support.dart';
+import 'testing.dart';
 
 /// The order routes, over a real SQLite database and real tokens.
 ///
@@ -17,14 +15,18 @@ void main() {
       final token =
           await app.signIn('ada@example.com', 'correct horse battery');
 
-      await app.send('POST', '/orders',
-          body: const {'item': 'shirt', 'quantity': 2}, token: token);
+      await (app.client.post('/orders')
+              ..bearer(token)
+              ..json(const {'item': 'shirt', 'quantity': 2}))
+          .send();
 
-      final response = await app.send('GET', '/orders', token: token);
+      final response =
+          await (app.client.get('/orders')..bearer(token)).send();
+      final orders = response.json as List;
 
-      expect(response.statusCode, 200);
-      expect(jsonDecode(response.body), hasLength(1));
-      expect(jsonDecode(response.body).first['item'], 'shirt');
+      response.assertOk();
+      expect(orders, hasLength(1));
+      expect(orders.first['item'], 'shirt');
     });
 
     test('does not return another account orders', () async {
@@ -36,26 +38,28 @@ void main() {
       final bob =
           await app.signIn('bob@example.com', 'a different long password');
 
-      await app.send('POST', '/orders',
-          body: const {'item': 'ada shirt', 'quantity': 1}, token: ada);
+      await (app.client.post('/orders')
+              ..bearer(ada)
+              ..json(const {'item': 'ada shirt', 'quantity': 1}))
+          .send();
 
-      expect(jsonDecode((await app.send('GET', '/orders', token: bob)).body),
-          isEmpty);
+      expect(
+        (await (app.client.get('/orders')..bearer(bob)).send()).json,
+        isEmpty,
+      );
     });
 
     test('no token is 401', () async {
       final app = await testApp();
 
-      expect((await app.send('GET', '/orders')).statusCode, 401);
+      (await app.client.get('/orders').send()).assertUnauthorized();
     });
 
     test('a token that was never issued is 401', () async {
       final app = await testApp();
 
-      expect(
-        (await app.send('GET', '/orders', token: 'made-up')).statusCode,
-        401,
-      );
+      (await (app.client.get('/orders')..bearer('made-up')).send())
+          .assertUnauthorized();
     });
   });
 
@@ -66,14 +70,17 @@ void main() {
       final token =
           await app.signIn('ada@example.com', 'correct horse battery');
 
-      final placed = await app.send('POST', '/orders',
-          body: const {'item': 'shirt', 'quantity': 2}, token: token);
-      final id = jsonDecode(placed.body)['id'];
+      final placed = await (app.client.post('/orders')
+              ..bearer(token)
+              ..json(const {'item': 'shirt', 'quantity': 2}))
+          .send();
+      final id = (placed.json as Map)['id'];
 
-      final response = await app.send('GET', '/orders/$id', token: token);
+      final response =
+          await (app.client.get('/orders/$id')..bearer(token)).send();
 
-      expect(response.statusCode, 200);
-      expect(jsonDecode(response.body)['item'], 'shirt');
+      response.assertOk();
+      expect((response.json as Map)['item'], 'shirt');
     });
 
     test('another account order is 404, not 403', () async {
@@ -86,14 +93,17 @@ void main() {
       final bob =
           await app.signIn('bob@example.com', 'a different long password');
 
-      final placed = await app.send('POST', '/orders',
-          body: const {'item': 'ada shirt', 'quantity': 1}, token: ada);
-      final id = jsonDecode(placed.body)['id'];
+      final placed = await (app.client.post('/orders')
+              ..bearer(ada)
+              ..json(const {'item': 'ada shirt', 'quantity': 1}))
+          .send();
+      final id = (placed.json as Map)['id'];
 
-      final response = await app.send('GET', '/orders/$id', token: bob);
+      final response =
+          await (app.client.get('/orders/$id')..bearer(bob)).send();
 
-      expect(response.statusCode, 404);
-      expect(jsonDecode(response.body)['error'], 'no such order');
+      response.assertNotFound();
+      expect((response.json as Map)['error'], 'no such order');
     });
 
     test('an id that does not exist is the same 404', () async {
@@ -102,9 +112,8 @@ void main() {
       final token =
           await app.signIn('ada@example.com', 'correct horse battery');
 
-      final response = await app.send('GET', '/orders/9999', token: token);
-
-      expect(response.statusCode, 404);
+      (await (app.client.get('/orders/9999')..bearer(token)).send())
+          .assertNotFound();
     });
 
     test('a non-numeric id is 400 from the coercion', () async {
@@ -113,10 +122,8 @@ void main() {
       final token =
           await app.signIn('ada@example.com', 'correct horse battery');
 
-      expect(
-        (await app.send('GET', '/orders/abc', token: token)).statusCode,
-        400,
-      );
+      (await (app.client.get('/orders/abc')..bearer(token)).send())
+          .assertBadRequest();
     });
   });
 
@@ -128,11 +135,13 @@ void main() {
       final token =
           await app.signIn('ada@example.com', 'correct horse battery');
 
-      final response = await app.send('POST', '/orders',
-          body: const {'item': 'shirt', 'quantity': 2}, token: token);
+      final response = await (app.client.post('/orders')
+              ..bearer(token)
+              ..json(const {'item': 'shirt', 'quantity': 2}))
+          .send();
 
-      expect(response.statusCode, 201);
-      expect(jsonDecode(response.body)['accountId'], accountId);
+      response.assertCreated();
+      expect((response.json as Map)['accountId'], accountId);
     });
 
     test('the generated validator refuses a bad payload', () async {
@@ -141,11 +150,13 @@ void main() {
       final token =
           await app.signIn('ada@example.com', 'correct horse battery');
 
-      final response = await app.send('POST', '/orders',
-          body: const {'item': '', 'quantity': 99}, token: token);
+      final response = await (app.client.post('/orders')
+              ..bearer(token)
+              ..json(const {'item': '', 'quantity': 99}))
+          .send();
 
-      expect(response.statusCode, 422);
-      expect(jsonDecode(response.body)['fields'], {
+      response.assertUnprocessable();
+      expect((response.json as Map)['fields'], {
         'item': ['is required'],
         'quantity': ['must be 1 to 10'],
       });
@@ -161,12 +172,16 @@ void main() {
       final token =
           await app.signIn('reader@example.com', 'a read only long password');
 
-      final response = await app.send('POST', '/orders',
-          body: const {'item': 'shirt', 'quantity': 1}, token: token);
+      (await (app.client.post('/orders')
+                  ..bearer(token)
+                  ..json(const {'item': 'shirt', 'quantity': 1}))
+              .send())
+          .assertForbidden();
 
-      expect(response.statusCode, 403);
-      expect(jsonDecode((await app.send('GET', '/orders', token: token)).body),
-          isEmpty);
+      expect(
+        (await (app.client.get('/orders')..bearer(token)).send()).json,
+        isEmpty,
+      );
     });
   });
 
@@ -177,15 +192,19 @@ void main() {
       final token =
           await app.signIn('ada@example.com', 'correct horse battery');
 
-      final placed = await app.send('POST', '/orders',
-          body: const {'item': 'shirt', 'quantity': 1}, token: token);
-      final id = jsonDecode(placed.body)['id'];
+      final placed = await (app.client.post('/orders')
+              ..bearer(token)
+              ..json(const {'item': 'shirt', 'quantity': 1}))
+          .send();
+      final id = (placed.json as Map)['id'];
 
-      final response = await app.send('DELETE', '/orders/$id', token: token);
+      (await (app.client.delete('/orders/$id')..bearer(token)).send())
+          .assertNoContent();
 
-      expect(response.statusCode, 204);
-      expect(jsonDecode((await app.send('GET', '/orders', token: token)).body),
-          isEmpty);
+      expect(
+        (await (app.client.get('/orders')..bearer(token)).send()).json,
+        isEmpty,
+      );
     });
 
     test('cannot cancel another account order', () async {
@@ -196,15 +215,19 @@ void main() {
       final bob =
           await app.signIn('bob@example.com', 'a different long password');
 
-      final placed = await app.send('POST', '/orders',
-          body: const {'item': 'ada shirt', 'quantity': 1}, token: ada);
-      final id = jsonDecode(placed.body)['id'];
+      final placed = await (app.client.post('/orders')
+              ..bearer(ada)
+              ..json(const {'item': 'ada shirt', 'quantity': 1}))
+          .send();
+      final id = (placed.json as Map)['id'];
 
-      await app.send('DELETE', '/orders/$id', token: bob);
+      await (app.client.delete('/orders/$id')..bearer(bob)).send();
 
-      expect(jsonDecode((await app.send('GET', '/orders', token: ada)).body),
-          hasLength(1),
-          reason: 'ada order survived');
+      expect(
+        (await (app.client.get('/orders')..bearer(ada)).send()).json,
+        hasLength(1),
+        reason: 'ada order survived',
+      );
     });
   });
 }

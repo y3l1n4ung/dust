@@ -1,8 +1,6 @@
-import 'dart:convert';
-
 import 'package:test/test.dart';
 
-import 'support.dart';
+import 'testing.dart';
 
 /// Checkout, which is the feature that needs a transaction.
 ///
@@ -26,15 +24,18 @@ void main() {
     test('places the order and takes the stock', () async {
       final shop = await shopWith(5);
 
-      final response = await shop.app.send('POST', '/inventory/checkout',
-          body: const {'item': 'shirt', 'quantity': 2}, token: shop.token);
+      final response = await (shop.app.client.post('/inventory/checkout')
+              ..bearer(shop.token)
+              ..json(const {'item': 'shirt', 'quantity': 2}))
+          .send();
 
-      expect(response.statusCode, 201);
-      expect(jsonDecode(response.body)['quantity'], 2);
+      response.assertCreated();
+      expect((response.json as Map)['quantity'], 2);
 
-      final stock =
-          await shop.app.send('GET', '/inventory/stock', token: shop.token);
-      expect(jsonDecode(stock.body).first['onHand'], 3);
+      final stock = await (shop.app.client.get('/inventory/stock')
+              ..bearer(shop.token))
+          .send();
+      expect((stock.json as List).first['onHand'], 3);
     });
 
     test('refuses more than is left, with 409', () async {
@@ -42,11 +43,13 @@ void main() {
       // an ordinary outcome of a shop rather than a malformed request.
       final shop = await shopWith(1);
 
-      final response = await shop.app.send('POST', '/inventory/checkout',
-          body: const {'item': 'shirt', 'quantity': 5}, token: shop.token);
+      final response = await (shop.app.client.post('/inventory/checkout')
+              ..bearer(shop.token)
+              ..json(const {'item': 'shirt', 'quantity': 5}))
+          .send();
 
-      expect(response.statusCode, 409);
-      expect(jsonDecode(response.body)['error'], 'not enough stock left');
+      response.assertConflict();
+      expect((response.json as Map)['error'], 'not enough stock left');
     });
 
     test('a refused checkout writes no order', () async {
@@ -54,31 +57,40 @@ void main() {
       // the insert escaped the rollback.
       final shop = await shopWith(1);
 
-      await shop.app.send('POST', '/inventory/checkout',
-          body: const {'item': 'shirt', 'quantity': 5}, token: shop.token);
+      await (shop.app.client.post('/inventory/checkout')
+              ..bearer(shop.token)
+              ..json(const {'item': 'shirt', 'quantity': 5}))
+          .send();
 
-      final orders = await shop.app.send('GET', '/orders', token: shop.token);
-      expect(jsonDecode(orders.body), isEmpty);
+      expect(
+        (await (shop.app.client.get('/orders')..bearer(shop.token)).send())
+            .json,
+        isEmpty,
+      );
     });
 
     test('a refused checkout leaves the stock alone', () async {
       final shop = await shopWith(1);
 
-      await shop.app.send('POST', '/inventory/checkout',
-          body: const {'item': 'shirt', 'quantity': 5}, token: shop.token);
+      await (shop.app.client.post('/inventory/checkout')
+              ..bearer(shop.token)
+              ..json(const {'item': 'shirt', 'quantity': 5}))
+          .send();
 
-      final stock =
-          await shop.app.send('GET', '/inventory/stock', token: shop.token);
-      expect(jsonDecode(stock.body).first['onHand'], 1);
+      final stock = await (shop.app.client.get('/inventory/stock')
+              ..bearer(shop.token))
+          .send();
+      expect((stock.json as List).first['onHand'], 1);
     });
 
     test('an unknown item is refused the same way', () async {
       final shop = await shopWith(5);
 
-      final response = await shop.app.send('POST', '/inventory/checkout',
-          body: const {'item': 'hat', 'quantity': 1}, token: shop.token);
-
-      expect(response.statusCode, 409);
+      (await (shop.app.client.post('/inventory/checkout')
+                  ..bearer(shop.token)
+                  ..json(const {'item': 'hat', 'quantity': 1}))
+              .send())
+          .assertConflict();
     });
 
     test('two simultaneous buyers of the last one: exactly one wins', () async {
@@ -86,18 +98,23 @@ void main() {
       final shop = await shopWith(1);
 
       final attempts = await Future.wait([
-        shop.app.send('POST', '/inventory/checkout',
-            body: const {'item': 'shirt', 'quantity': 1}, token: shop.token),
-        shop.app.send('POST', '/inventory/checkout',
-            body: const {'item': 'shirt', 'quantity': 1}, token: shop.token),
+        (shop.app.client.post('/inventory/checkout')
+                ..bearer(shop.token)
+                ..json(const {'item': 'shirt', 'quantity': 1}))
+            .send(),
+        (shop.app.client.post('/inventory/checkout')
+                ..bearer(shop.token)
+                ..json(const {'item': 'shirt', 'quantity': 1}))
+            .send(),
       ]);
 
-      final codes = attempts.map((response) => response.statusCode).toList();
+      final codes = attempts.map((r) => r.statusCode).toList();
       expect(codes, containsAll([201, 409]));
 
-      final stock =
-          await shop.app.send('GET', '/inventory/stock', token: shop.token);
-      expect(jsonDecode(stock.body).first['onHand'], 0);
+      final stock = await (shop.app.client.get('/inventory/stock')
+              ..bearer(shop.token))
+          .send();
+      expect((stock.json as List).first['onHand'], 0);
     });
 
     test('ten buyers of five: five win, and stock lands on zero', () async {
@@ -105,16 +122,19 @@ void main() {
 
       final attempts = await Future.wait([
         for (var index = 0; index < 10; index++)
-          shop.app.send('POST', '/inventory/checkout',
-              body: const {'item': 'shirt', 'quantity': 1}, token: shop.token),
+          (shop.app.client.post('/inventory/checkout')
+                  ..bearer(shop.token)
+                  ..json(const {'item': 'shirt', 'quantity': 1}))
+              .send(),
       ]);
 
       expect(attempts.where((r) => r.statusCode == 201).length, 5);
       expect(attempts.where((r) => r.statusCode == 409).length, 5);
 
-      final stock =
-          await shop.app.send('GET', '/inventory/stock', token: shop.token);
-      expect(jsonDecode(stock.body).first['onHand'], 0);
+      final stock = await (shop.app.client.get('/inventory/stock')
+              ..bearer(shop.token))
+          .send();
+      expect((stock.json as List).first['onHand'], 0);
     });
 
     test('every success has an order row and every refusal has none', () async {
@@ -122,13 +142,18 @@ void main() {
 
       final attempts = await Future.wait([
         for (var index = 0; index < 10; index++)
-          shop.app.send('POST', '/inventory/checkout',
-              body: const {'item': 'shirt', 'quantity': 1}, token: shop.token),
+          (shop.app.client.post('/inventory/checkout')
+                  ..bearer(shop.token)
+                  ..json(const {'item': 'shirt', 'quantity': 1}))
+              .send(),
       ]);
       final placed = attempts.where((r) => r.statusCode == 201).length;
 
-      final orders = await shop.app.send('GET', '/orders', token: shop.token);
-      expect(jsonDecode(orders.body), hasLength(placed));
+      expect(
+        (await (shop.app.client.get('/orders')..bearer(shop.token)).send())
+            .json,
+        hasLength(placed),
+      );
     });
 
     test('stock never goes negative, whatever the arrival order', () async {
@@ -136,14 +161,19 @@ void main() {
 
       await Future.wait([
         for (var index = 0; index < 20; index++)
-          shop.app.send('POST', '/inventory/checkout',
-              body: {'item': 'shirt', 'quantity': index.isEven ? 1 : 2},
-              token: shop.token),
+          (shop.app.client.post('/inventory/checkout')
+                  ..bearer(shop.token)
+                  ..json({
+                    'item': 'shirt',
+                    'quantity': index.isEven ? 1 : 2,
+                  }))
+              .send(),
       ]);
 
-      final stock =
-          await shop.app.send('GET', '/inventory/stock', token: shop.token);
-      expect(jsonDecode(stock.body).first['onHand'], greaterThanOrEqualTo(0));
+      final stock = await (shop.app.client.get('/inventory/stock')
+              ..bearer(shop.token))
+          .send();
+      expect((stock.json as List).first['onHand'], greaterThanOrEqualTo(0));
     });
   });
 }
