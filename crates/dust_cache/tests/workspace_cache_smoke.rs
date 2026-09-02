@@ -61,6 +61,7 @@ fn cache_entry() -> CacheEntry {
         expected_output_hash: 44,
         auxiliary_output_paths: vec![PathBuf::from("lib/models/user.extra.g.dart")],
         suppress_primary_output: false,
+        workspace_analysis_hash: 0,
         analysis_snapshot: analysis.snapshot(),
     }
 }

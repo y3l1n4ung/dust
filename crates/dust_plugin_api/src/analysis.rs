@@ -53,6 +53,31 @@ impl WorkspaceAnalysis {
         self.string_set(key)
             .is_some_and(|values| values.iter().any(|entry| entry == value))
     }
+
+    /// Computes a deterministic FNV-1a hash of the entire workspace analysis.
+    ///
+    /// The hash is stable across builds because `BTreeMap` iterates in sorted
+    /// key order and each value `Vec` is pre-sorted during `build()`.
+    pub fn content_hash(&self) -> u64 {
+        let mut hash = 1469598103934665603_u64;
+        for (key, values) in &self.string_sets {
+            for byte in key.as_bytes() {
+                hash ^= u64::from(*byte);
+                hash = hash.wrapping_mul(1099511628211);
+            }
+            hash ^= 0;
+            hash = hash.wrapping_mul(1099511628211);
+            for value in values.iter() {
+                for byte in value.as_bytes() {
+                    hash ^= u64::from(*byte);
+                    hash = hash.wrapping_mul(1099511628211);
+                }
+                hash ^= 0;
+                hash = hash.wrapping_mul(1099511628211);
+            }
+        }
+        hash
+    }
 }
 
 /// A mutable builder used during the parse/scan phase to collect analysis facts.
@@ -132,6 +157,53 @@ mod tests {
         assert_eq!(
             snapshot.string_set("a"),
             Some(&["a".to_string(), "b".to_string()][..])
+        );
+    }
+
+    #[test]
+    fn content_hash_is_deterministic_regardless_of_insertion_order() {
+        let mut builder_a = WorkspaceAnalysisBuilder::default();
+        builder_a.add_string_set_value("z_key", "val_b");
+        builder_a.add_string_set_value("a_key", "val_a");
+        builder_a.add_string_set_value("z_key", "val_a");
+
+        let mut builder_b = WorkspaceAnalysisBuilder::default();
+        builder_b.add_string_set_value("a_key", "val_a");
+        builder_b.add_string_set_value("z_key", "val_a");
+        builder_b.add_string_set_value("z_key", "val_b");
+
+        assert_eq!(
+            builder_a.build().content_hash(),
+            builder_b.build().content_hash()
+        );
+    }
+
+    #[test]
+    fn content_hash_changes_when_values_differ() {
+        let mut builder_a = WorkspaceAnalysisBuilder::default();
+        builder_a.add_string_set_value("key", "alpha");
+
+        let mut builder_b = WorkspaceAnalysisBuilder::default();
+        builder_b.add_string_set_value("key", "beta");
+
+        assert_ne!(
+            builder_a.build().content_hash(),
+            builder_b.build().content_hash()
+        );
+    }
+
+    #[test]
+    fn content_hash_changes_when_key_added() {
+        let mut builder_a = WorkspaceAnalysisBuilder::default();
+        builder_a.add_string_set_value("key", "val");
+
+        let mut builder_b = WorkspaceAnalysisBuilder::default();
+        builder_b.add_string_set_value("key", "val");
+        builder_b.add_string_set_value("extra", "val");
+
+        assert_ne!(
+            builder_a.build().content_hash(),
+            builder_b.build().content_hash()
         );
     }
 

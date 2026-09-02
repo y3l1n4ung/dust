@@ -15,6 +15,8 @@ pub(crate) struct ApplyOutcomeConfig<'a> {
     pub(crate) cache_root: &'a Path,
     /// Hash of package and Dust configuration files.
     pub(crate) package_config_hash: u64,
+    /// Hash of the workspace analysis active during this build.
+    pub(crate) workspace_analysis_hash: u64,
     /// Whether applying should stop after the first error outcome.
     pub(crate) fail_fast: bool,
 }
@@ -58,6 +60,7 @@ pub(crate) fn apply_indexed_outcomes(
                         expected_output_hash,
                         auxiliary_output_paths: artifact.auxiliary_output_paths.clone(),
                         suppress_primary_output,
+                        workspace_analysis_hash: config.workspace_analysis_hash,
                         analysis_snapshot,
                     },
                 );

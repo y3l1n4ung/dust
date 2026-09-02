@@ -8,7 +8,7 @@ use dust_plugin_api::LibraryAnalysisSnapshot;
 use serde::{Deserialize, Serialize};
 
 /// The current on-disk Dust cache schema version.
-pub const CACHE_SCHEMA_VERSION: u32 = 6;
+pub const CACHE_SCHEMA_VERSION: u32 = 7;
 
 /// One cached build fingerprint for a source library.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -28,6 +28,9 @@ pub struct CacheEntry {
     /// Whether this library intentionally leaves the primary output absent.
     #[serde(default)]
     pub suppress_primary_output: bool,
+    /// Hash of the workspace analysis that was active when this entry was built.
+    #[serde(default)]
+    pub workspace_analysis_hash: u64,
     /// The cached parse-only plugin analysis facts for this library.
     #[serde(default)]
     pub analysis_snapshot: LibraryAnalysisSnapshot,
@@ -237,6 +240,7 @@ mod tests {
                 expected_output_hash: 4,
                 auxiliary_output_paths: Vec::new(),
                 suppress_primary_output: false,
+                workspace_analysis_hash: 0,
                 analysis_snapshot: LibraryAnalysisSnapshot::default(),
             },
         );
@@ -252,6 +256,7 @@ mod tests {
                 expected_output_hash: 4,
                 auxiliary_output_paths: Vec::new(),
                 suppress_primary_output: false,
+                workspace_analysis_hash: 0,
                 analysis_snapshot: LibraryAnalysisSnapshot::default(),
             })
         );
@@ -274,6 +279,7 @@ mod tests {
                 expected_output_hash: 40,
                 auxiliary_output_paths: Vec::new(),
                 suppress_primary_output: false,
+                workspace_analysis_hash: 0,
                 analysis_snapshot: LibraryAnalysisSnapshot::default(),
             },
         );
@@ -299,6 +305,7 @@ mod tests {
                 expected_output_hash: 4,
                 auxiliary_output_paths: Vec::new(),
                 suppress_primary_output: false,
+                workspace_analysis_hash: 0,
                 analysis_snapshot: LibraryAnalysisSnapshot::default(),
             },
         );
