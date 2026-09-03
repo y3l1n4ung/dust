@@ -133,8 +133,7 @@ final class TestResponse {
   /// Asserts body equals [expected].
   void assertText(String expected) {
     if (body != expected) {
-      throw TestAssertionError(
-          'expected body "$expected", got "$body"');
+      throw TestAssertionError('expected body "$expected", got "$body"');
     }
   }
 
@@ -150,8 +149,7 @@ final class TestResponse {
   void assertJson(Object? expected) {
     final decoded = json;
     if (!_deepEquals(decoded, expected)) {
-      throw TestAssertionError(
-          'expected JSON $expected, got $decoded');
+      throw TestAssertionError('expected JSON $expected, got $decoded');
     }
   }
 

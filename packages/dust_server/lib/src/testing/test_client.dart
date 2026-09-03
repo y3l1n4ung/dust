@@ -57,8 +57,7 @@ final class TestClient {
   /// without collisions.
   static Future<TestClient> serve(Router router,
       {bool saveCookies = false}) async {
-    final server =
-        await serving.serve(router, InternetAddress.loopbackIPv4, 0);
+    final server = await serving.serve(router, InternetAddress.loopbackIPv4, 0);
     final origin = 'http://${server.address.host}:${server.port}';
     final httpClient = HttpClient();
     return TestClient._(

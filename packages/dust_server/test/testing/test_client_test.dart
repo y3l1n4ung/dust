@@ -83,9 +83,8 @@ void main() {
     });
 
     test('POST with JSON body', () async {
-      final response = await (client.post('/echo')
-            ..json({'key': 'value'}))
-          .send();
+      final response =
+          await (client.post('/echo')..json({'key': 'value'})).send();
       response
         ..assertOk()
         ..assertJsonContains({'echo': '{"key":"value"}'});
@@ -132,9 +131,8 @@ void main() {
     });
 
     test('POST with JSON over real HTTP', () async {
-      final response = await (client.post('/echo')
-            ..json({'key': 'value'}))
-          .send();
+      final response =
+          await (client.post('/echo')..json({'key': 'value'})).send();
       response.assertOk();
     });
 
@@ -165,8 +163,7 @@ void main() {
     });
 
     test('bearer sets authorization header', () async {
-      final response = await (client.get('/headers')..bearer('tok_abc'))
-          .send();
+      final response = await (client.get('/headers')..bearer('tok_abc')).send();
       response
         ..assertOk()
         ..assertJsonContains({'authorization': 'Bearer tok_abc'});
@@ -174,9 +171,8 @@ void main() {
 
     test('basic sets authorization header', () async {
       final expected = 'Basic ${base64Encode(utf8.encode('user:pass'))}';
-      final response = await (client.get('/headers')
-            ..basic('user', 'pass'))
-          .send();
+      final response =
+          await (client.get('/headers')..basic('user', 'pass')).send();
       response
         ..assertOk()
         ..assertJsonContains({'authorization': expected});
@@ -472,8 +468,7 @@ void main() {
         '/users/42',
         pathParameters: {'id': '42'},
       );
-      final params =
-          request.context[pathParametersKey] as Map<String, String>;
+      final params = request.context[pathParametersKey] as Map<String, String>;
       expect(params['id'], '42');
     });
 

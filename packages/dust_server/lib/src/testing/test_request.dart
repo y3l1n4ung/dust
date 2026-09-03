@@ -26,7 +26,7 @@ final class TestRequest {
   final String _method;
   final String _path;
   final Future<TestResponse> Function(
-      String method, String path, Map<String, String> headers, Object? body)
+          String method, String path, Map<String, String> headers, Object? body)
       _execute;
 
   final Map<String, String> _headers = {};
