@@ -1,10 +1,8 @@
-import 'dart:convert';
-
 import 'package:dust_dart/db.dart';
 import 'package:server_app/server_app.dart';
 import 'package:test/test.dart';
 
-import 'support.dart';
+import 'testing.dart';
 
 /// Signing in, and the properties that make it real auth rather than a demo.
 
@@ -86,18 +84,17 @@ void main() {
       final app = await testApp();
       await app.createAccount('ada@example.com', 'correct horse battery');
 
-      final response = await app.send(
-        'POST',
-        '/auth/tokens',
-        body: const {
-          'email': 'ada@example.com',
-          'password': 'correct horse battery',
-        },
-      );
+      final response = await (app.client.post('/auth/tokens')
+              ..json(const {
+                'email': 'ada@example.com',
+                'password': 'correct horse battery',
+              }))
+          .send();
+      final body = response.json as Map;
 
-      expect(response.statusCode, 201);
-      expect(jsonDecode(response.body)['token'], isA<String>());
-      expect(jsonDecode(response.body)['expiresAt'], isA<String>());
+      response.assertCreated();
+      expect(body['token'], isA<String>());
+      expect(body['expiresAt'], isA<String>());
     });
 
     test('stores the fingerprint, never the token', () async {
@@ -139,22 +136,21 @@ void main() {
             .toIso8601String(),
       );
 
-      final response = await app.send('GET', '/orders', token: token);
-
-      expect(response.statusCode, 401);
+      (await (app.client.get('/orders')..bearer(token)).send())
+          .assertUnauthorized();
     });
 
     test('a wrong password is refused', () async {
       final app = await testApp();
       await app.createAccount('ada@example.com', 'correct horse battery');
 
-      final response = await app.send(
-        'POST',
-        '/auth/tokens',
-        body: const {'email': 'ada@example.com', 'password': 'wrong password'},
-      );
-
-      expect(response.statusCode, 401);
+      (await (app.client.post('/auth/tokens')
+                  ..json(const {
+                    'email': 'ada@example.com',
+                    'password': 'wrong password',
+                  }))
+              .send())
+          .assertUnauthorized();
     });
 
     test('an unknown email answers exactly like a wrong password', () async {
@@ -163,19 +159,18 @@ void main() {
       final app = await testApp();
       await app.createAccount('ada@example.com', 'correct horse battery');
 
-      final wrongPassword = await app.send(
-        'POST',
-        '/auth/tokens',
-        body: const {'email': 'ada@example.com', 'password': 'wrong password'},
-      );
-      final unknownEmail = await app.send(
-        'POST',
-        '/auth/tokens',
-        body: const {
-          'email': 'nobody@example.com',
-          'password': 'wrong password'
-        },
-      );
+      final wrongPassword = await (app.client.post('/auth/tokens')
+              ..json(const {
+                'email': 'ada@example.com',
+                'password': 'wrong password',
+              }))
+          .send();
+      final unknownEmail = await (app.client.post('/auth/tokens')
+              ..json(const {
+                'email': 'nobody@example.com',
+                'password': 'wrong password',
+              }))
+          .send();
 
       expect(unknownEmail.statusCode, wrongPassword.statusCode);
       expect(unknownEmail.body, wrongPassword.body);
@@ -185,14 +180,12 @@ void main() {
         () async {
       final app = await testApp();
 
-      final response = await app.send(
-        'POST',
-        '/auth/tokens',
-        body: const {'email': 'ada@example.com', 'password': 'short'},
-      );
+      final response = await (app.client.post('/auth/tokens')
+              ..json(const {'email': 'ada@example.com', 'password': 'short'}))
+          .send();
 
-      expect(response.statusCode, 422);
-      expect(jsonDecode(response.body)['fields'], {
+      response.assertUnprocessable();
+      expect((response.json as Map)['fields'], {
         'password': ['must be at least 12 characters'],
       });
     });
@@ -200,16 +193,13 @@ void main() {
     test('a malformed email is refused', () async {
       final app = await testApp();
 
-      final response = await app.send(
-        'POST',
-        '/auth/tokens',
-        body: const {
-          'email': 'not-an-email',
-          'password': 'correct horse battery'
-        },
-      );
-
-      expect(response.statusCode, 422);
+      (await (app.client.post('/auth/tokens')
+                  ..json(const {
+                    'email': 'not-an-email',
+                    'password': 'correct horse battery',
+                  }))
+              .send())
+          .assertUnprocessable();
     });
   });
 }
