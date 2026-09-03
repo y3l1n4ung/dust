@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0-beta.3] - 2026-09-03
+
+### Added
+
+- `TestClient` testing framework, exported via `package:dust_server/testing.dart`.
+  Three modes: `TestClient(router)` for in-process handler testing with no
+  socket, `TestClient.serve(router)` for real HTTP on port 0, and
+  `TestClient.origin(url)` for connecting to an existing server. `TestRequest`
+  uses void setters for Dart cascade syntax; `TestResponse` carries named status
+  assertions (`assertOk`, `assertCreated`, `assertConflict`, etc.), JSON
+  helpers, and header assertions.
+- `assertConflict()` (409) status assertion on `TestResponse`.
+
 ## [0.1.0-beta.2] - 2026-08-25
 
 Naming, brought in line with axum. All three are breaking, with no deprecated
