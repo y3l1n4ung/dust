@@ -1,6 +1,6 @@
 # 🌪️ Dust
 
-**Built to make developers and AI agents happy.**
+**Rust-powered, blazingly fast, full-stack code generation for Dart and Flutter.**
 
 [![CI](https://github.com/y3l1n4ung/dust/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/y3l1n4ung/dust/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/y3l1n4ung/dust/graph/badge.svg)](https://app.codecov.io/gh/y3l1n4ung/dust)
@@ -9,9 +9,8 @@
 [![Release](https://img.shields.io/github/v/release/y3l1n4ung/dust?logo=github&color=blue)](https://github.com/y3l1n4ung/dust/releases)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-Dust is Rust-powered code generation for Dart and Flutter, built for human
-developers and AI coding agents. It handles repetitive and complex code so you
-can focus on your product.
+Dust is beginner- and AI-agent-friendly, with designs inspired by the Rust
+ecosystem, including Rust's derive system, Serde, Axum, and SQLx.
 
 ## How Dust Works
 
