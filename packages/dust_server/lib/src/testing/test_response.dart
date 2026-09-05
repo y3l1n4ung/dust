@@ -13,25 +13,55 @@ import 'package:shelf/shelf.dart';
 /// ```
 final class TestResponse {
   /// @nodoc
+  ///
+  /// Header names are lowercased here rather than at each call site. Shelf
+  /// hands back a case-insensitive map whose keys keep the case the handler
+  /// wrote, and copying that into a plain map would take the case with it
+  /// while losing the insensitive lookup — so `Content-Type` from a handler
+  /// would miss `assertHeader('content-type', ...)` that the same assertion
+  /// finds over real HTTP, where `dart:io` has already lowercased.
   @internal
-  TestResponse(this.statusCode, this.headers, this.body);
+  factory TestResponse(
+    int statusCode,
+    Map<String, List<String>> headers,
+    String body,
+  ) {
+    final all = <String, List<String>>{};
+    for (final entry in headers.entries) {
+      all[entry.key.toLowerCase()] = List<String>.unmodifiable(entry.value);
+    }
+    return TestResponse._(
+      statusCode,
+      Map.unmodifiable(all),
+      Map.unmodifiable(<String, String>{
+        for (final entry in all.entries) entry.key: entry.value.join(', '),
+      }),
+      body,
+    );
+  }
+
+  TestResponse._(this.statusCode, this.headersAll, this.headers, this.body);
 
   /// @nodoc
   @internal
   static Future<TestResponse> fromShelf(Response response) async {
     final body = await response.readAsString();
-    return TestResponse(
-      response.statusCode,
-      Map.unmodifiable(response.headers),
-      body,
-    );
+    return TestResponse(response.statusCode, response.headersAll, body);
   }
 
   /// HTTP status code.
   final int statusCode;
 
-  /// Response headers (unmodifiable).
+  /// Response headers, one joined value per name (unmodifiable).
+  ///
+  /// A name the response sent more than once — `set-cookie` above all — joins
+  /// its values with `, `, which is not reversible for a cookie carrying an
+  /// `Expires` date. Read [headersAll] for those.
   final Map<String, String> headers;
+
+  /// Every value for every response header, keyed by lowercased name
+  /// (unmodifiable).
+  final Map<String, List<String>> headersAll;
 
   /// Response body as a string.
   final String body;
