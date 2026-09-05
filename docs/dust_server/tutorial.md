@@ -7,7 +7,7 @@ pieces isolated one per file, see the
 ```yaml
 # pubspec.yaml
 dependencies:
-  dust_dart: ^0.1.3
+  dust_dart: ^0.1.4
   dust_server:
     path: ../../packages/dust_server
 ```

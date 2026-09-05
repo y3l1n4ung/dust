@@ -4,6 +4,9 @@ import 'package:dust_server/server.dart';
 import 'package:dust_server/testing.dart';
 import 'package:test/test.dart';
 
+/// A PNG signature followed by bytes that are not valid UTF-8.
+const _pngHeader = <int>[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0xFF, 0xFE, 0x00];
+
 void main() {
   Router app() {
     final router = Router();
@@ -60,6 +63,49 @@ void main() {
     router.route(
       '/empty',
       get((_) async => Response(204)),
+    );
+    router.route(
+      '/verb',
+      any((request) async => textResponse(request.method)),
+    );
+    router.route(
+      '/list',
+      get((_) async => jsonResponse([1, 2, 3])),
+    );
+    router.route(
+      '/binary',
+      get(
+        (_) async => Response.ok(
+          _pngHeader,
+          headers: {'content-type': 'application/octet-stream'},
+        ),
+      ),
+    );
+    router.route(
+      '/mixed-case-headers',
+      get(
+        (_) async => Response.ok(
+          '{"ok":true}',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Trace-Id': 'abc123',
+          },
+        ),
+      ),
+    );
+    router.route(
+      '/two-cookies',
+      get(
+        (_) async => Response.ok(
+          'set',
+          headers: {
+            'set-cookie': [
+              'session=abc; Path=/; HttpOnly',
+              'prefs=dark; Path=/; Expires=Wed, 09 Jun 2027 10:18:14 GMT',
+            ],
+          },
+        ),
+      ),
     );
     return router;
   }
@@ -148,6 +194,199 @@ void main() {
     test('throws in handler mode', () {
       final client = TestClient(app());
       expect(() => client.origin, throwsStateError);
+    });
+  });
+
+  group('the rest of the surface', () {
+    late TestClient client;
+
+    setUp(() {
+      client = TestClient(app());
+    });
+
+    tearDown(() async {
+      await client.close();
+    });
+
+    test('put, patch and delete each reach the handler', () async {
+      (await client.put('/verb').send())
+        ..assertOk()
+        ..assertText('PUT');
+      (await client.patch('/verb').send())
+        ..assertOk()
+        ..assertText('PATCH');
+      (await client.delete('/verb').send())
+        ..assertOk()
+        ..assertText('DELETE');
+    });
+
+    test('head answers the status without a body', () async {
+      (await client.head('/verb').send()).assertOk();
+    });
+
+    test('a client-level expectFailure applies to every request', () async {
+      client.expectFailure();
+
+      (await client.get('/nope').send()).assertNotFound();
+    });
+
+    test('bytes carries an explicit content type', () async {
+      final response = await (client.post('/echo')
+            ..bytes(utf8.encode('raw'), contentType: 'application/x-thing'))
+          .send();
+
+      response
+        ..assertOk()
+        ..assertJsonContains({'echo': 'raw'});
+    });
+
+    test('contentType sets a type with no body of its own', () async {
+      final response =
+          await (client.post('/echo')..contentType('text/plain')).send();
+
+      response.assertOk();
+    });
+
+    test('origin mode drives a server someone else started', () async {
+      final served = await TestClient.serve(app());
+      addTearDown(served.close);
+      final borrowed = TestClient.origin(served.origin);
+      addTearDown(borrowed.close);
+
+      (await borrowed.get('/hello').send())
+        ..assertOk()
+        ..assertText('world');
+    });
+
+    test('every named status assertion checks its own code', () async {
+      (await client.get('/status/409').send()).assertConflict();
+      (await client.get('/status/405').send()).assertMethodNotAllowed();
+      (await client.get('/status/413').send()).assertPayloadTooLarge();
+      (await client.get('/status/415').send()).assertUnsupportedMediaType();
+      (await client.get('/status/422').send()).assertUnprocessable();
+      (await client.get('/status/503').send()).assertServiceUnavailable();
+    });
+
+    test('assertHeader reports the value it actually found', () async {
+      final response = await client.get('/hello').send();
+
+      expect(
+        () => response.assertHeader('content-type', 'application/json'),
+        throwsA(isA<TestAssertionError>()),
+      );
+    });
+
+    test('assertJson compares a list element by element', () async {
+      final response = await client.get('/list').send();
+
+      response
+        ..assertOk()
+        ..assertJson([1, 2, 3]);
+      expect(
+        () => response.assertJson([1, 2, 4]),
+        throwsA(isA<TestAssertionError>()),
+      );
+    });
+
+    test('assertJsonContains falls back to equality for a non-map', () async {
+      (await client.get('/list').send()).assertJsonContains([1, 2, 3]);
+    });
+
+    test('toString carries the status and the body', () async {
+      final response = await client.get('/hello').send();
+
+      expect(response.toString(), 'TestResponse(200, body: world)');
+    });
+
+    test('an assertion error prints its own message', () {
+      expect(TestAssertionError('boom').toString(), 'boom');
+    });
+
+    test('a binary body arrives byte for byte', () async {
+      final response = await client.get('/binary').send();
+
+      response.assertOk();
+      expect(response.bodyBytes, _pngHeader);
+    });
+
+    test('a binary body survives real HTTP too', () async {
+      final served = await TestClient.serve(app());
+      addTearDown(served.close);
+
+      final response = await served.get('/binary').send();
+
+      response.assertOk();
+      expect(response.bodyBytes, _pngHeader);
+    });
+
+    test('body decodes what it can rather than throwing', () async {
+      final response = await client.get('/binary').send();
+
+      expect(response.body, contains('�'));
+      expect(identical(response.body, response.body), isTrue);
+    });
+
+    test('json decodes once and hands back the same value', () async {
+      final response = await client.get('/list').send();
+
+      expect(identical(response.json, response.json), isTrue);
+    });
+
+    test('an invalid JSON body reports itself on every read', () async {
+      final response = await client.get('/hello').send();
+
+      expect(() => response.json, throwsA(isA<TestAssertionError>()));
+      expect(() => response.json, throwsA(isA<TestAssertionError>()));
+    });
+  });
+
+  group('response headers', () {
+    test('a handler that capitalizes a header name is found lowercase',
+        () async {
+      final client = TestClient(app());
+      addTearDown(client.close);
+
+      (await client.get('/mixed-case-headers').send())
+        ..assertOk()
+        ..assertContainsHeader('x-trace-id')
+        ..assertHeader('x-trace-id', 'abc123')
+        ..assertHeader('content-type', 'application/json');
+    });
+
+    test('real HTTP answers the same assertion the same way', () async {
+      final client = await TestClient.serve(app());
+      addTearDown(client.close);
+
+      (await client.get('/mixed-case-headers').send())
+        ..assertOk()
+        ..assertContainsHeader('x-trace-id')
+        ..assertHeader('x-trace-id', 'abc123')
+        ..assertHeader('content-type', 'application/json');
+    });
+
+    test('every set-cookie reaches the jar, Expires comma and all', () async {
+      final client = TestClient(app(), saveCookies: true);
+      addTearDown(client.close);
+
+      final response = await client.get('/two-cookies').send();
+      expect(response.headersAll['set-cookie'], hasLength(2));
+
+      (await client.get('/cookie-echo').send())
+        ..assertOk()
+        ..assertTextContains('session=abc')
+        ..assertTextContains('prefs=dark');
+    });
+
+    test('real HTTP keeps both cookies too', () async {
+      final client = await TestClient.serve(app(), saveCookies: true);
+      addTearDown(client.close);
+
+      await client.get('/two-cookies').send();
+
+      (await client.get('/cookie-echo').send())
+        ..assertOk()
+        ..assertTextContains('session=abc')
+        ..assertTextContains('prefs=dark');
     });
   });
 

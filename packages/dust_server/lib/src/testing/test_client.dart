@@ -151,7 +151,7 @@ final class TestClient {
     }
 
     if (_saveCookies) {
-      _extractCookies(response.headers);
+      _extractCookies(response.headersAll);
     }
 
     return response;
@@ -189,27 +189,34 @@ final class TestClient {
     }
 
     final ioResponse = await request.close();
-    final responseBody = await utf8.decodeStream(ioResponse);
-    final responseHeaders = <String, String>{};
+    final responseBytes = <int>[];
+    await for (final chunk in ioResponse) {
+      responseBytes.addAll(chunk);
+    }
+    final responseHeaders = <String, List<String>>{};
     ioResponse.headers.forEach((name, values) {
-      responseHeaders[name] = values.join(', ');
+      responseHeaders[name] = values;
     });
 
     return TestResponse(
       ioResponse.statusCode,
-      Map.unmodifiable(responseHeaders),
-      responseBody,
+      responseHeaders,
+      responseBytes,
     );
   }
 
-  void _extractCookies(Map<String, String> responseHeaders) {
-    final setCookie = responseHeaders['set-cookie'];
-    if (setCookie == null) return;
-
-    final pair = setCookie.split(';').first;
-    final equalsIndex = pair.indexOf('=');
-    if (equalsIndex < 0) return;
-    _cookieJar[pair.substring(0, equalsIndex).trim()] =
-        pair.substring(equalsIndex + 1).trim();
+  /// Reads every `set-cookie` the response sent, not the first.
+  ///
+  /// A joined header cannot be split back apart: an `Expires` date carries its
+  /// own comma, so a response setting two cookies used to contribute one, and
+  /// the second was dropped without a word.
+  void _extractCookies(Map<String, List<String>> responseHeaders) {
+    for (final setCookie in responseHeaders['set-cookie'] ?? const <String>[]) {
+      final pair = setCookie.split(';').first;
+      final equalsIndex = pair.indexOf('=');
+      if (equalsIndex < 0) continue;
+      _cookieJar[pair.substring(0, equalsIndex).trim()] =
+          pair.substring(equalsIndex + 1).trim();
+    }
   }
 }

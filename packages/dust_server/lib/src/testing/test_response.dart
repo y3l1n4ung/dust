@@ -13,31 +13,77 @@ import 'package:shelf/shelf.dart';
 /// ```
 final class TestResponse {
   /// @nodoc
+  ///
+  /// Header names are lowercased here rather than at each call site. Shelf
+  /// hands back a case-insensitive map whose keys keep the case the handler
+  /// wrote, and copying that into a plain map would take the case with it
+  /// while losing the insensitive lookup — so `Content-Type` from a handler
+  /// would miss `assertHeader('content-type', ...)` that the same assertion
+  /// finds over real HTTP, where `dart:io` has already lowercased.
   @internal
-  TestResponse(this.statusCode, this.headers, this.body);
+  factory TestResponse(
+    int statusCode,
+    Map<String, List<String>> headers,
+    List<int> bodyBytes,
+  ) {
+    final all = <String, List<String>>{};
+    for (final entry in headers.entries) {
+      all[entry.key.toLowerCase()] = List<String>.unmodifiable(entry.value);
+    }
+    return TestResponse._(
+      statusCode,
+      Map.unmodifiable(all),
+      Map.unmodifiable(<String, String>{
+        for (final entry in all.entries) entry.key: entry.value.join(', '),
+      }),
+      List<int>.unmodifiable(bodyBytes),
+    );
+  }
+
+  TestResponse._(
+      this.statusCode, this.headersAll, this.headers, this.bodyBytes);
 
   /// @nodoc
   @internal
   static Future<TestResponse> fromShelf(Response response) async {
-    final body = await response.readAsString();
-    return TestResponse(
-      response.statusCode,
-      Map.unmodifiable(response.headers),
-      body,
-    );
+    final bytes = <int>[];
+    await for (final chunk in response.read()) {
+      bytes.addAll(chunk);
+    }
+    return TestResponse(response.statusCode, response.headersAll, bytes);
   }
 
   /// HTTP status code.
   final int statusCode;
 
-  /// Response headers (unmodifiable).
+  /// Response headers, one joined value per name (unmodifiable).
+  ///
+  /// A name the response sent more than once — `set-cookie` above all — joins
+  /// its values with `, `, which is not reversible for a cookie carrying an
+  /// `Expires` date. Read [headersAll] for those.
   final Map<String, String> headers;
 
-  /// Response body as a string.
-  final String body;
+  /// Every value for every response header, keyed by lowercased name
+  /// (unmodifiable).
+  final Map<String, List<String>> headersAll;
 
-  /// Decodes body as JSON. Throws [TestAssertionError] on invalid JSON.
-  Object? get json {
+  /// The response body exactly as it arrived (unmodifiable).
+  ///
+  /// A handler answering with an image, a PDF, or any other bytes is testable
+  /// through this; [body] would have replaced whatever is not valid UTF-8.
+  final List<int> bodyBytes;
+
+  /// Response body decoded as UTF-8, computed once.
+  ///
+  /// Malformed sequences become the replacement character rather than
+  /// throwing, so a binary body can still be printed by a failing assertion.
+  /// Compare bytes through [bodyBytes] instead of asserting on that text.
+  late final String body = utf8.decode(bodyBytes, allowMalformed: true);
+
+  /// Decodes body as JSON, once. Throws [TestAssertionError] on invalid JSON.
+  late final Object? json = _decodeJson();
+
+  Object? _decodeJson() {
     try {
       return jsonDecode(body);
     } on FormatException catch (e) {

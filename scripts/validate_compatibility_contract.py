@@ -13,7 +13,12 @@ from dataclasses import dataclass
 from functools import total_ordering
 from pathlib import Path
 
-REQUIRED_PACKAGES = ("dust_dart", "dust_flutter", "dust_db_sqlite3")
+REQUIRED_PACKAGES = (
+    "dust_dart",
+    "dust_flutter",
+    "dust_db_sqlite3",
+    "dust_server",
+)
 
 
 @total_ordering
@@ -154,6 +159,34 @@ def validate_repository(root: Path, release_tag: str = "") -> None:
                 f"{package} {package_version} does not satisfy CLI {cli_version} "
                 f"range {constraint}"
             )
+        require_changelog_section(
+            root / "packages" / package / "CHANGELOG.md", package_version, package
+        )
+
+    if normalized_tag:
+        require_changelog_section(root / "CHANGELOG.md", release_tag, "Dust")
+
+
+def require_changelog_section(path: Path, version: str, label: str) -> None:
+    """Fail unless a changelog carries a dated section for one version.
+
+    The release workflow publishes whatever version a pubspec names, and skips
+    a version pub.dev already has. A package bumped without a changelog entry,
+    or left unbumped while its source moved, therefore publishes nothing and
+    says nothing. Tying the two together is the cheapest place to notice.
+    """
+
+    if not path.exists():
+        raise ValidationError(f"{path} is missing")
+
+    heading = re.compile(
+        rf"^## \[v?{re.escape(version.removeprefix('v'))}\] - \d{{4}}-\d{{2}}-\d{{2}}$",
+        re.MULTILINE,
+    )
+    if not heading.search(path.read_text(encoding="utf-8")):
+        raise ValidationError(
+            f"{path} has no dated section for {label} {version}"
+        )
 
 
 def find_cli_entry(contract: dict[str, object], cli_version: str, path: Path) -> dict[str, object]:
@@ -234,6 +267,14 @@ class CompatibilityScriptTests(unittest.TestCase):
         self.assertTrue(satisfies_constraint("0.1.3", ">=0.1.3 <0.2.0"))
         self.assertTrue(satisfies_constraint("0.1.9", ">=0.1.3 <0.2.0"))
 
+    def test_constraint_orders_a_prerelease_lower_bound(self) -> None:
+        self.assertTrue(
+            satisfies_constraint("0.1.0-beta.3", ">=0.1.0-beta.3 <0.2.0")
+        )
+        self.assertFalse(
+            satisfies_constraint("0.1.0-beta.2", ">=0.1.0-beta.3 <0.2.0")
+        )
+
     def test_constraint_rejects_too_old_and_too_new(self) -> None:
         self.assertFalse(satisfies_constraint("0.1.2", ">=0.1.3 <0.2.0"))
         self.assertFalse(satisfies_constraint("0.2.0", ">=0.1.3 <0.2.0"))
@@ -245,6 +286,34 @@ class CompatibilityScriptTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValidationError, "dust_dart 0.1.2"):
                 validate_repository(root)
+
+    def test_repository_validation_catches_a_bump_with_no_changelog(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_fixture_repo(root)
+            (root / "packages/dust_server/pubspec.yaml").write_text(
+                "name: dust_server\nversion: 0.1.0-beta.3\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                ValidationError, "no dated section for dust_server 0.1.0-beta.3"
+            ):
+                validate_repository(root)
+
+    def test_repository_validation_catches_a_tag_with_no_changelog(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_fixture_repo(root)
+            (root / "CHANGELOG.md").write_text(
+                "# Changelog\n\n## [Unreleased]\n\n## [v0.1.2] - 2026-07-10\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                ValidationError, "no dated section for Dust v0.1.3"
+            ):
+                validate_repository(root, "v0.1.3")
 
     def test_repository_validation_catches_release_tag_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -259,9 +328,8 @@ def write_fixture_repo(root: Path, dust_dart_version: str = "0.1.3") -> None:
     """Write a minimal fake repo for script self-tests."""
 
     (root / "compatibility").mkdir(parents=True)
-    (root / "packages/dust_dart").mkdir(parents=True)
-    (root / "packages/dust_flutter").mkdir(parents=True)
-    (root / "packages/dust_db_sqlite3").mkdir(parents=True)
+    for package in REQUIRED_PACKAGES:
+        (root / "packages" / package).mkdir(parents=True)
     (root / "Cargo.toml").write_text(
         '[workspace.package]\nversion = "0.1.3"\n',
         encoding="utf-8",
@@ -277,6 +345,7 @@ def write_fixture_repo(root: Path, dust_dart_version: str = "0.1.3") -> None:
                             "dust_dart": ">=0.1.3 <0.2.0",
                             "dust_flutter": ">=0.1.3 <0.2.0",
                             "dust_db_sqlite3": ">=0.1.3 <0.2.0",
+                            "dust_server": ">=0.1.0-beta.1 <0.2.0",
                         },
                     }
                 ],
@@ -288,11 +357,20 @@ def write_fixture_repo(root: Path, dust_dart_version: str = "0.1.3") -> None:
         "dust_dart": dust_dart_version,
         "dust_flutter": "0.1.3",
         "dust_db_sqlite3": "0.1.3",
+        "dust_server": "0.1.0-beta.2",
     }.items():
         (root / "packages" / package / "pubspec.yaml").write_text(
             f"name: {package}\nversion: {version}\n",
             encoding="utf-8",
         )
+        (root / "packages" / package / "CHANGELOG.md").write_text(
+            f"# Changelog\n\n## [Unreleased]\n\n## [{version}] - 2026-07-28\n",
+            encoding="utf-8",
+        )
+    (root / "CHANGELOG.md").write_text(
+        "# Changelog\n\n## [Unreleased]\n\n## [v0.1.3] - 2026-07-28\n",
+        encoding="utf-8",
+    )
 
 
 def run_self_tests() -> int:

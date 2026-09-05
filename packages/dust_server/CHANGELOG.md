@@ -6,6 +6,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.0-beta.3] - 2026-09-03
+
+### Added
+
+- `TestClient` testing framework, exported via `package:dust_server/testing.dart`.
+  Three modes: `TestClient(router)` for in-process handler testing with no
+  socket, `TestClient.serve(router)` for real HTTP on port 0, and
+  `TestClient.origin(url)` for connecting to an existing server. `TestRequest`
+  uses void setters for Dart cascade syntax; `TestResponse` carries named status
+  assertions (`assertOk`, `assertCreated`, `assertConflict`, etc.), JSON
+  helpers, and header assertions.
+- `TestResponse.headersAll`, every value for every response header, keyed by
+  lowercased name. A response may send `set-cookie` more than once, and the
+  joined form of that header is not reversible.
+- `TestResponse.bodyBytes`, the response body exactly as it arrived, so a
+  handler answering with an image or a PDF is testable.
+
+### Changed
+
+- Runtime constraint raised to `dust_dart: ^0.1.4`, which is the version this
+  release is built and tested against.
+
+### Fixed
+
+- `TestResponse.headers` lowercases every header name, so a handler that writes
+  `Content-Type` answers `assertHeader('content-type', ...)`. Shelf's header
+  map is case-insensitive but keeps the case the handler wrote, and copying it
+  into a plain map kept the case while losing the lookup — so the same
+  assertion passed under `TestClient.serve`, where `dart:io` had already
+  lowercased, and failed in handler mode.
+- The `saveCookies` jar keeps every `set-cookie` a response sends. It read one
+  joined string and split it on `;`, which kept the first cookie and dropped
+  the rest, and an `Expires` date carries its own comma.
+- A binary response body is no longer destroyed on the way to the assertion.
+  Both modes decoded the body as UTF-8 while reading it, which is lossy and
+  not reversible: a nine-byte PNG signature came back as fifteen bytes with
+  three of them replaced. `TestResponse` keeps the bytes and decodes `body`
+  from them on demand, allowing malformed sequences so a failing assertion can
+  still print something.
+- `TestResponse.body` and `.json` are computed once instead of on every read,
+  so a cascade of assertions decodes the body a single time.
+
 ## [0.1.0-beta.2] - 2026-08-25
 
 Naming, brought in line with axum. All three are breaking, with no deprecated
