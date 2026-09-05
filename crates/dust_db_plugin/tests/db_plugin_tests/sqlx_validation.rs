@@ -68,7 +68,7 @@ Future<ExecResult> rename(Pool db, String name, int id) {
     assert_eq!(diagnostics, Vec::new());
     // One cache file per library, so parallel worker threads never write the
     // same path. The name is derived from the library's source path.
-    let cache_dir = root.join(".dart_tool/dust/db_query_cache_v2");
+    let cache_dir = root.join(".dust_sql");
     let mut cache_files = fs::read_dir(&cache_dir)
         .unwrap()
         .map(|entry| entry.unwrap().path())
@@ -110,6 +110,14 @@ Future<ExecResult> rename(Pool db, String name, int id) {
                 "optional"
             ),
         ]
+    );
+    // The driver is part of the key: a cache written here must not satisfy a
+    // build targeting another dialect.
+    assert!(
+        entries
+            .iter()
+            .all(|entry| entry["driver"].as_str() == Some("sqlite3")),
+        "{entries:?}"
     );
 
     let _ = fs::remove_dir_all(root);

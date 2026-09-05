@@ -1,0 +1,105 @@
+{
+  "version": 3,
+  "entries": [
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "9d9e235709f1c403",
+      "sql_hash": "02b859329c58b7e2",
+      "sql": "\nINSERT OR REPLACE INTO product_cache (\n  id, title, price, description, category, image,\n  rating_rate, rating_count, payload, source\n) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n",
+      "user_parameter_count": 10,
+      "expanded_parameter_count": 10,
+      "fetch_mode": "execute",
+      "row_type": null,
+      "columns": []
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "9d9e235709f1c403",
+      "sql_hash": "22a7d55646c8e933",
+      "sql": "\nSELECT id, title, price, description, category, image,\n       rating_rate, rating_count, payload, source\nFROM product_cache\nORDER BY title\n",
+      "user_parameter_count": 0,
+      "expanded_parameter_count": 0,
+      "fetch_mode": "all",
+      "row_type": "CachedProductRow",
+      "columns": [
+        "id",
+        "title",
+        "price",
+        "description",
+        "category",
+        "image",
+        "rating_rate",
+        "rating_count",
+        "payload",
+        "source"
+      ]
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "9d9e235709f1c403",
+      "sql_hash": "3a1b15ad659f59d4",
+      "sql": "\nSELECT id, title, price, description, category, image,\n       rating_rate, rating_count, payload, source\nFROM product_cache\nWHERE id = $1\n",
+      "user_parameter_count": 1,
+      "expanded_parameter_count": 1,
+      "fetch_mode": "optional",
+      "row_type": "CachedProductRow",
+      "columns": [
+        "id",
+        "title",
+        "price",
+        "description",
+        "category",
+        "image",
+        "rating_rate",
+        "rating_count",
+        "payload",
+        "source"
+      ]
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "9d9e235709f1c403",
+      "sql_hash": "3bc0c6f6df1596fd",
+      "sql": "SELECT COUNT(*) FROM product_cache",
+      "user_parameter_count": 0,
+      "expanded_parameter_count": 0,
+      "fetch_mode": "one",
+      "row_type": null,
+      "columns": [
+        "COUNT(*)"
+      ]
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "9d9e235709f1c403",
+      "sql_hash": "b5147782795c50fb",
+      "sql": "\nINSERT OR REPLACE INTO wishlist_cache (product_id, title, saved_at)\nVALUES ($1, $2, $3)\n",
+      "user_parameter_count": 3,
+      "expanded_parameter_count": 3,
+      "fetch_mode": "execute",
+      "row_type": null,
+      "columns": []
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "9d9e235709f1c403",
+      "sql_hash": "cd212b79d3ccd6da",
+      "sql": "\nSELECT product_id, title, saved_at\nFROM wishlist_cache\nORDER BY saved_at DESC\n",
+      "user_parameter_count": 0,
+      "expanded_parameter_count": 0,
+      "fetch_mode": "all",
+      "row_type": "CachedWishlistRow",
+      "columns": [
+        "product_id",
+        "title",
+        "saved_at"
+      ]
+    }
+  ]
+}

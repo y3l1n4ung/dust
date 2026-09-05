@@ -10,6 +10,16 @@ pub(crate) enum DbDriver {
     Postgres,
 }
 
+impl DbDriver {
+    /// Returns the stable driver name used in analysis keys and cache entries.
+    pub(crate) const fn as_str(self) -> &'static str {
+        match self {
+            Self::Sqlite3 => "sqlite3",
+            Self::Postgres => "postgres",
+        }
+    }
+}
+
 /// Rename rule for SQLx row field names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum SqlxRenameRule {

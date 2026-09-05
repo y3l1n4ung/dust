@@ -1,0 +1,65 @@
+{
+  "version": 3,
+  "entries": [
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "e12cf916db18ef76",
+      "sql_hash": "07a0b2b153ff93d0",
+      "sql": "\nSELECT id, email, password_hash, password_salt, scopes FROM accounts\nWHERE email = $1\n",
+      "user_parameter_count": 1,
+      "expanded_parameter_count": 1,
+      "fetch_mode": "optional",
+      "row_type": "Account",
+      "columns": [
+        "id",
+        "email",
+        "password_hash",
+        "password_salt",
+        "scopes"
+      ]
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "e12cf916db18ef76",
+      "sql_hash": "48ca6bb5d12991ea",
+      "sql": "\nINSERT INTO api_tokens (account_id, token_hash, expires_at)\nVALUES ($1, $2, $3)\n",
+      "user_parameter_count": 3,
+      "expanded_parameter_count": 3,
+      "fetch_mode": "execute",
+      "row_type": null,
+      "columns": []
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "e12cf916db18ef76",
+      "sql_hash": "8a6ae235c619ceef",
+      "sql": "\nSELECT a.id, a.email, a.password_hash, a.password_salt, a.scopes\nFROM accounts a\nJOIN api_tokens t ON t.account_id = a.id\nWHERE t.token_hash = $1 AND t.expires_at > $2\n",
+      "user_parameter_count": 2,
+      "expanded_parameter_count": 2,
+      "fetch_mode": "optional",
+      "row_type": "Account",
+      "columns": [
+        "id",
+        "email",
+        "password_hash",
+        "password_salt",
+        "scopes"
+      ]
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "e12cf916db18ef76",
+      "sql_hash": "a3a3982ad9438bff",
+      "sql": "\nINSERT INTO accounts (email, password_hash, password_salt, scopes)\nVALUES ($1, $2, $3, $4)\n",
+      "user_parameter_count": 4,
+      "expanded_parameter_count": 4,
+      "fetch_mode": "execute",
+      "row_type": null,
+      "columns": []
+    }
+  ]
+}

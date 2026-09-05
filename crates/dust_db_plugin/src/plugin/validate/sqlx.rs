@@ -53,8 +53,14 @@ pub(super) fn validate_sqlx_describe(
     };
 
     if matches!(options.execution.validation, ValidationAccess::Offline) {
-        match validate_from_query_cache(library, &db.migrations, &schema_hash, queries, row_columns)
-        {
+        match validate_from_query_cache(
+            library,
+            db.driver.as_str(),
+            &db.migrations,
+            &schema_hash,
+            queries,
+            row_columns,
+        ) {
             Ok(()) => {}
             Err(error) => diagnostics.push(Diagnostic::error(error)),
         }
@@ -63,6 +69,7 @@ pub(super) fn validate_sqlx_describe(
 
     match run_sqlx_validation(
         &migrations_path,
+        db.driver.as_str(),
         &db.migrations,
         &schema_hash,
         queries,
@@ -82,6 +89,7 @@ pub(super) fn validate_sqlx_describe(
 /// Runs online SQLx validation inside a current-thread Tokio runtime.
 fn run_sqlx_validation(
     migrations_path: &Path,
+    driver: &str,
     migrations: &str,
     schema_hash: &str,
     queries: &[QuerySpec],
@@ -94,7 +102,15 @@ fn run_sqlx_validation(
     runtime.block_on(async move {
         let mut conn = connect_sqlite_for_validation().await?;
         apply_migrations(&mut conn, migrations_path).await?;
-        describe_queries(&mut conn, migrations, schema_hash, queries, row_columns).await
+        describe_queries(
+            &mut conn,
+            driver,
+            migrations,
+            schema_hash,
+            queries,
+            row_columns,
+        )
+        .await
     })
 }
 
@@ -134,6 +150,7 @@ async fn apply_migrations(
 /// Describes all queries and returns metadata suitable for cache writes.
 async fn describe_queries(
     conn: &mut SqliteConnection,
+    driver: &str,
     migrations: &str,
     schema_hash: &str,
     queries: &[QuerySpec],
@@ -169,6 +186,7 @@ async fn describe_queries(
         }
         validate_described_columns(query, row_columns, &describe)?;
         metadata.push(QueryCacheEntry {
+            driver: driver.to_owned(),
             migrations: migrations.to_owned(),
             schema_hash: schema_hash.to_owned(),
             sql_hash: stable_hash_hex(query.sql.as_bytes()),

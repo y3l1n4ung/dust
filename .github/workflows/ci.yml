@@ -335,11 +335,23 @@ jobs:
         if: needs.changes.outputs.docs_only != 'true' && matrix.dust_check != ''
         run: cargo run --quiet -p dust_cli -- build --clean --root ${{ matrix.dust_check }}
 
+      # Runs before the online build, so the cache it reads is the committed
+      # one and not something this job just produced. This is the path a
+      # checkout with no database takes, and the only path a Postgres project
+      # can take in CI.
+      - name: Dust database check from the committed query cache
+        if: needs.changes.outputs.docs_only != 'true' && matrix.db_check
+        run: cargo run --quiet -p dust_cli -- check --root ${{ matrix.dust_check }} --db --offline
+
       - name: Dust database build
         if: needs.changes.outputs.docs_only != 'true' && matrix.db_check
         run: |
           cargo run --quiet -p dust_cli -- build --root ${{ matrix.dust_check }} --db
           cargo run --quiet -p dust_cli -- check --root ${{ matrix.dust_check }} --db
+
+      - name: Committed query cache is current
+        if: needs.changes.outputs.docs_only != 'true' && matrix.db_check
+        run: git diff --exit-code -- ${{ matrix.dust_check }}/.dust_sql
 
       - name: Analyze
         if: needs.changes.outputs.docs_only != 'true'

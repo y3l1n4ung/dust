@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Database**: the offline query metadata cache moved from
+  `.dart_tool/dust/db_query_cache_v2/` to `.dust_sql/` at the package root, and
+  is now a committed build input rather than a build artifact. `.dart_tool/` is
+  gitignored, so nothing could validate from the cache on a clean checkout —
+  which is the only way CI can validate a Postgres project, since `describe`
+  there needs a live server. `dust clean` leaves `.dust_sql/` in place. Cache
+  format version 3; regenerate with an online `dust db build` and commit the
+  result.
+- **Database**: each cache entry records the driver it was described against.
+  The same SQL describes differently per dialect, so a cache written for one
+  driver is now rejected against another with an error naming both, rather than
+  reported as a missing entry.
+
 ## [v0.1.4] - 2026-09-03
 
 > [!IMPORTANT]

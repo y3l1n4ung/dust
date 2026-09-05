@@ -353,10 +353,10 @@ connections, and transaction control failures.
 
 `dust db build` applies migrations to an in-memory SQLite database by default,
 asks SQLx to describe each static query, writes generated Dart, and caches query
-metadata at:
+metadata in one file per library:
 
 ```text
-.dart_tool/dust/db_query_cache_v2.json
+.dust_sql/<library>-<hash>.json
 ```
 
 It validates migration SQL, placeholders, static query syntax, scalar column
@@ -387,10 +387,14 @@ dust check --db --offline
 Offline mode rejects missing entries, changed migrations, changed SQL, changed
 fetch shapes, and unsupported cache versions.
 
-> [!NOTE]
-> The metadata file lives under `.dart_tool`, so a clean CI runner must restore
-> that cache before using `--offline`. Run online validation when no trusted
-> cache is available.
+`.dust_sql/` sits beside `pubspec.yaml` and is **committed**. It is a build
+input rather than a build artifact: it is what lets a checkout with no database
+validate its SQL, so `dust clean` leaves it alone and CI reads it directly.
+Regenerate it with an online `dust db build` whenever migrations or query text
+change, and commit the result in the same change.
+
+Each entry records the driver it was described against, so a cache written for
+one dialect is rejected against another rather than silently accepted.
 
 ## Transactions
 

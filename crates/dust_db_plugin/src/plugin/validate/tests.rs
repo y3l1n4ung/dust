@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     fs,
+    path::Path,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -338,6 +339,7 @@ fn offline_query_cache_validates_shape_and_staleness() {
     let cache = QueryCache {
         version: QUERY_CACHE_VERSION,
         entries: vec![QueryCacheEntry {
+            driver: "sqlite3".to_owned(),
             migrations: "./migrations".to_owned(),
             schema_hash: "schema".to_owned(),
             sql_hash: super::cache::stable_hash_hex(query.sql.as_bytes()),
@@ -356,6 +358,7 @@ fn offline_query_cache_validates_shape_and_staleness() {
     assert_eq!(
         validate_from_query_cache(
             &library,
+            "sqlite3",
             "./migrations",
             "schema",
             std::slice::from_ref(&query),
@@ -364,9 +367,52 @@ fn offline_query_cache_validates_shape_and_staleness() {
         Ok(())
     );
     assert!(
-        validate_from_query_cache(&library, "./migrations", "stale", &[query], &row_columns)
-            .unwrap_err()
-            .contains("missing entry")
+        validate_from_query_cache(
+            &library,
+            "sqlite3",
+            "./migrations",
+            "stale",
+            std::slice::from_ref(&query),
+            &row_columns,
+        )
+        .unwrap_err()
+        .contains("missing entry")
+    );
+    // A cache written against SQLite cannot answer for Postgres, and the error
+    // has to say so rather than claim the query was never described.
+    let mismatch = validate_from_query_cache(
+        &library,
+        "postgres",
+        "./migrations",
+        "schema",
+        &[query],
+        &row_columns,
+    )
+    .unwrap_err();
+    assert!(
+        mismatch.contains("written for driver `sqlite3`"),
+        "{mismatch}"
+    );
+    assert!(mismatch.contains("targets `postgres`"), "{mismatch}");
+
+    let _ = fs::remove_dir_all(root);
+}
+
+#[test]
+fn query_cache_path_is_committed_next_to_the_package() {
+    let root = temp_root("cache_path");
+    let library = library(&root);
+    let path = query_cache_path(&library);
+
+    // The cache is a build input a checkout with no database validates from,
+    // so it lives beside the package and not under the ignored `.dart_tool/`.
+    assert_eq!(
+        path.parent().unwrap(),
+        Path::new(&library.package_root).join(".dust_sql")
+    );
+    assert!(
+        path.extension()
+            .is_some_and(|extension| extension == "json")
     );
 
     let _ = fs::remove_dir_all(root);

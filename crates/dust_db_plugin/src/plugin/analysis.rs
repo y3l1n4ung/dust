@@ -52,13 +52,9 @@ pub(crate) fn collect_db_workspace_analysis(
 ) {
     let package = library.package_name.as_str();
     for db in database_classes(library).into_iter().filter(|_| databases) {
-        let driver = match db.driver {
-            DbDriver::Sqlite3 => "sqlite3",
-            DbDriver::Postgres => "postgres",
-        };
         analysis.add_string_set_value(
             DATABASES_KEY,
-            pack([package, &db.class.name, driver, &db.migrations]),
+            pack([package, &db.class.name, db.driver.as_str(), &db.migrations]),
         );
     }
     for row in row_classes(library) {
