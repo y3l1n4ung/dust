@@ -270,9 +270,10 @@ Order _$OrderFromRow(Row row) { ... }
 final class $OrderRowDeserializer implements RowDeserializer<Order> { ... }
 
 extension $OrderQuery on QueryAs<Order> {
-  Future<Order> fetchOne(DatabaseExecutor db) => fetchOneWith(db, _$OrderFromRow);
-  Future<Order?> fetchOptional(DatabaseExecutor db) => ...;
-  Future<List<Order>> fetchAll(DatabaseExecutor db) => ...;
+  Future<Result<Order, SqlxError>> fetchOne(DatabaseExecutor db) =>
+      fetchOneWith(db, _$OrderFromRow);
+  Future<Result<Order?, SqlxError>> fetchOptional(DatabaseExecutor db) => ...;
+  Future<Result<List<Order>, SqlxError>> fetchAll(DatabaseExecutor db) => ...;
 }
 ```
 
@@ -308,7 +309,18 @@ final user = await queryAs<UserRow>(
   'SELECT id, email, name FROM users WHERE id = ?',
   [id],
 ).fetchOne(database.connection);
+
+switch (user) {
+  case Ok(:final value):
+    print(value.email);
+  case Err(:final error):
+    print('lookup failed: $error');
+}
 ```
+
+Every terminal returns `Result<T, SqlxError>`, matching generated DAO methods
+and the rest of `dust_dart`. A failed query is a value to handle, not an
+exception to catch.
 
 Dart resolves an extension member from the **static type** of the receiver, so
 `fetchOne` here is `$UserRowQuery.fetchOne`, picked at compile time. A row type
@@ -331,8 +343,8 @@ final row = await queryAs<Legacy>(
 ```
 
 If the row library uses a `show` clause on `package:dust_dart/db.dart`, it needs
-`QueryAs`, `DatabaseExecutor`, `Row`, and `RowDeserializer` for the generated
-part to compile.
+`QueryAs`, `DatabaseExecutor`, `Row`, `RowDeserializer`, `Result`, and
+`SqlxError` for the generated part to compile.
 
 ## Error Context
 

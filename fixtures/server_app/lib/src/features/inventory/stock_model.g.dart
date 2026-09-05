@@ -75,15 +75,15 @@ final class $StockRowDeserializer implements RowDeserializer<Stock> {
 /// `FromRow` has no terminals and the call does not compile.
 extension $StockQuery on QueryAs<Stock> {
   /// Fetches exactly one row.
-  Future<Stock> fetchOne(DatabaseExecutor db) =>
+  Future<Result<Stock, SqlxError>> fetchOne(DatabaseExecutor db) =>
       fetchOneWith(db, _$StockFromRow);
 
   /// Fetches zero or one row.
-  Future<Stock?> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<Stock?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
       fetchOptionalWith(db, _$StockFromRow);
 
   /// Fetches every row.
-  Future<List<Stock>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<Stock>, SqlxError>> fetchAll(DatabaseExecutor db) =>
       fetchAllWith(db, _$StockFromRow);
 }
 

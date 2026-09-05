@@ -17,27 +17,45 @@ CREATE TABLE users (
   );
 
   try {
+    // Every terminal returns `Result`: a failed query is a value to handle,
+    // not an exception to catch.
     final inserted = await queryExecute(
       'INSERT INTO users (email, name) VALUES (?, ?)',
       ['ada@example.com', 'Ada'],
     ).execute(db);
-    print('inserted rows: ${inserted.rowsAffected}');
+    final ExecResult insertResult;
+    switch (inserted) {
+      case Ok(:final value):
+        insertResult = value;
+        print('inserted rows: ${value.rowsAffected}');
+      case Err(:final error):
+        print('insert failed: $error');
+        return;
+    }
 
     final rows = await queryRaw(
       'SELECT id, email, name FROM users WHERE id = ?',
-      [inserted.lastInsertId],
+      [insertResult.lastInsertId],
     ).fetch(db);
-    final user = rows.single;
-    print(
-      'first user: ${user.read<String>('name')} <${user.read<String>('email')}>',
-    );
+    switch (rows) {
+      case Ok(:final value):
+        final user = value.single;
+        print(
+          'first user: ${user.read<String>('name')} '
+          '<${user.read<String>('email')}>',
+        );
+      case Err(:final error):
+        print('read failed: $error');
+        return;
+    }
 
     final renamed = await db.transaction((tx) async {
-      await queryExecute(
+      final updated = await queryExecute(
         'UPDATE users SET name = ? WHERE email = ?',
         ['Grace', 'ada@example.com'],
       ).execute(tx);
-      return const Ok<Unit, SqlxError>(unit);
+      // Returning the `Err` rolls the transaction back.
+      return updated.map((_) => unit);
     });
 
     renamed.match(

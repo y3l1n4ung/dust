@@ -97,13 +97,19 @@ void main() {
     expect(executor, isA<DatabaseConnection>());
     expect(executor, isA<Executor>());
     expect(client.executor, same(executor));
-    expect(one.id, 1);
-    expect(optional?.id, 2);
-    expect(all.map((user) => user.id), <int>[3, 4]);
-    expect(scalar, 42);
-    expect(nullableScalar, isNull);
-    expect(raw.single.read<int>('id'), 5);
-    expect(exec.rowsAffected, 6);
+    expect(one.match(ok: (user) => user.id, err: (_) => -1), 1);
+    expect(optional.match(ok: (user) => user?.id, err: (_) => -1), 2);
+    expect(
+      all.match(ok: (users) => users.map((user) => user.id), err: (_) => null),
+      <int>[3, 4],
+    );
+    expect(scalar.match(ok: (value) => value, err: (_) => -1), 42);
+    expect(nullableScalar.match(ok: (value) => value, err: (_) => -1), isNull);
+    expect(
+      raw.match(ok: (rows) => rows.single.read<int>('id'), err: (_) => -1),
+      5,
+    );
+    expect(exec.match(ok: (value) => value.rowsAffected, err: (_) => -1), 6);
     expect(
       rawx.match(ok: (rows) => rows.single.read<int>('id'), err: (_) => -1),
       5,
@@ -125,13 +131,15 @@ void main() {
     ]);
   });
 
-  test('query helpers throw StateError when Executor returns Err', () async {
+  test('query helpers hand back the executor Err rather than throwing',
+      () async {
     final executor = _FakeExecutor(fail: true);
 
+    final result = await queryExecute('broken', const []).execute(executor);
+
+    expect(result.isErr, isTrue);
     expect(
-      () => queryExecute('broken', const []).execute(executor),
-      throwsA(isA<StateError>()),
-    );
+        result.match(ok: (_) => null, err: (error) => error), isA<SqlxError>());
   });
 }
 

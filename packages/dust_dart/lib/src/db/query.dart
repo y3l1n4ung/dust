@@ -20,18 +20,27 @@ final class QueryAs<T> {
   /// `@Derive([FromRow()])` generates `fetchOne` on top of this, so a row type
   /// Dust owns needs no mapper at the call. Reach for this directly only for a
   /// row type Dust does not generate.
-  Future<T> fetchOneWith(DatabaseExecutor db, RowMapper<T> mapper) async {
-    return _unwrap(await db.fetchOne<T>(sql, parameters, mapper));
+  Future<Result<T, SqlxError>> fetchOneWith(
+    DatabaseExecutor db,
+    RowMapper<T> mapper,
+  ) {
+    return db.fetchOne<T>(sql, parameters, mapper);
   }
 
   /// Fetches zero or one row, decoding it with [mapper] when present.
-  Future<T?> fetchOptionalWith(DatabaseExecutor db, RowMapper<T> mapper) async {
-    return _unwrap(await db.fetchOptional<T>(sql, parameters, mapper));
+  Future<Result<T?, SqlxError>> fetchOptionalWith(
+    DatabaseExecutor db,
+    RowMapper<T> mapper,
+  ) {
+    return db.fetchOptional<T>(sql, parameters, mapper);
   }
 
   /// Fetches every row, decoding each with [mapper].
-  Future<List<T>> fetchAllWith(DatabaseExecutor db, RowMapper<T> mapper) async {
-    return _unwrap(await db.fetchAll<T>(sql, parameters, mapper));
+  Future<Result<List<T>, SqlxError>> fetchAllWith(
+    DatabaseExecutor db,
+    RowMapper<T> mapper,
+  ) {
+    return db.fetchAll<T>(sql, parameters, mapper);
   }
 }
 
@@ -47,13 +56,13 @@ final class QueryScalar<T> {
   final List<Object?> parameters;
 
   /// Fetches exactly one scalar value.
-  Future<T> fetchOne(DatabaseExecutor db) async {
-    return _unwrap(await db.fetchScalar<T>(sql, parameters));
+  Future<Result<T, SqlxError>> fetchOne(DatabaseExecutor db) {
+    return db.fetchScalar<T>(sql, parameters);
   }
 
   /// Fetches zero or one scalar value.
-  Future<T?> fetchOptional(DatabaseExecutor db) async {
-    return _unwrap(await db.fetchScalar<T?>(sql, parameters));
+  Future<Result<T?, SqlxError>> fetchOptional(DatabaseExecutor db) {
+    return db.fetchScalar<T?>(sql, parameters);
   }
 }
 
@@ -69,8 +78,8 @@ final class QueryRaw {
   final List<Object?> parameters;
 
   /// Fetches raw rows through [Executor.raw].
-  Future<List<Row>> fetch(Executor db) async {
-    return _unwrap(await db.raw.fetch(sql, parameters));
+  Future<Result<List<Row>, SqlxError>> fetch(Executor db) {
+    return db.raw.fetch(sql, parameters);
   }
 }
 
@@ -86,8 +95,8 @@ final class QueryExecute {
   final List<Object?> parameters;
 
   /// Executes this statement and returns execution metadata.
-  Future<ExecResult> execute(DatabaseExecutor db) async {
-    return _unwrap(await db.execute(sql, parameters));
+  Future<Result<ExecResult, SqlxError>> execute(DatabaseExecutor db) {
+    return db.execute(sql, parameters);
   }
 }
 
@@ -109,11 +118,4 @@ QueryRaw queryRaw(String sql, List<Object?> parameters) {
 /// Creates an execute statement query helper.
 QueryExecute queryExecute(String sql, List<Object?> parameters) {
   return QueryExecute(sql, parameters);
-}
-
-T _unwrap<T>(Result<T, SqlxError> result) {
-  return result.match(
-    ok: (value) => value,
-    err: (error) => throw StateError('SQL operation failed: $error'),
-  );
 }

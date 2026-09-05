@@ -4,6 +4,8 @@ import 'package:dust_dart/db.dart';
 import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:test/test.dart';
 
+import 'support/expect_ok.dart';
+
 void main() {
   test('sqlite migrations run once and apply upgrades in name order', () async {
     final directory = await Directory.systemTemp.createTemp('dust_sqlite_');
@@ -46,20 +48,20 @@ INSERT INTO users (id, name, active) VALUES (2, 'Grace', 0);
       await upgraded.close();
     });
 
-    final users = await queryRaw(
+    final users = expectOk(await queryRaw(
       'SELECT id, name, active FROM users ORDER BY id',
       const [],
-    ).fetch(upgraded);
+    ).fetch(upgraded));
     expect(users, hasLength(2));
     expect(users[0].read<String>('name'), 'Ada');
     expect(users[0].readBool('active'), isTrue);
     expect(users[1].read<String>('name'), 'Grace');
     expect(users[1].readBool('active'), isFalse);
 
-    final migrations = await queryRaw(
+    final migrations = expectOk(await queryRaw(
       'SELECT name FROM __dust_schema_migrations ORDER BY name',
       const [],
-    ).fetch(upgraded);
+    ).fetch(upgraded));
     expect(migrations.map((row) => row.read<String>('name')), <String>[
       '0001_create.sql',
       '0002_upgrade.sql',
@@ -94,10 +96,10 @@ INSERT INTO users (id, name, active) VALUES (2, 'Grace', 0);
       await reopened.close();
     });
 
-    final migrations = await queryRaw(
+    final migrations = expectOk(await queryRaw(
       'SELECT name FROM __dust_schema_migrations ORDER BY name',
       const [],
-    ).fetch(reopened);
+    ).fetch(reopened));
     expect(migrations.map((row) => row.read<String>('name')), <String>[
       '0001_create.sql',
     ]);
@@ -127,16 +129,16 @@ INSERT INTO users (id, name) VALUES (1, 'Ada');
       await pool.close();
     });
 
-    final users = await queryRaw(
+    final users = expectOk(await queryRaw(
       'SELECT id, name FROM users ORDER BY id',
       const [],
-    ).fetch(pool);
+    ).fetch(pool));
     expect(users.map((row) => row.read<String>('name')), <String>['Ada']);
 
-    final migrations = await queryRaw(
+    final migrations = expectOk(await queryRaw(
       'SELECT name FROM __dust_schema_migrations ORDER BY name',
       const [],
-    ).fetch(pool);
+    ).fetch(pool));
     expect(migrations.map((row) => row.read<String>('name')), <String>[
       '0001_create_users.up.sql',
     ]);

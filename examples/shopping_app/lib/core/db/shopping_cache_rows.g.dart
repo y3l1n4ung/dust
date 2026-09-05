@@ -42,15 +42,15 @@ final class $CachedProductRowRowDeserializer implements RowDeserializer<CachedPr
 /// `FromRow` has no terminals and the call does not compile.
 extension $CachedProductRowQuery on QueryAs<CachedProductRow> {
   /// Fetches exactly one row.
-  Future<CachedProductRow> fetchOne(DatabaseExecutor db) =>
+  Future<Result<CachedProductRow, SqlxError>> fetchOne(DatabaseExecutor db) =>
       fetchOneWith(db, _$CachedProductRowFromRow);
 
   /// Fetches zero or one row.
-  Future<CachedProductRow?> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<CachedProductRow?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
       fetchOptionalWith(db, _$CachedProductRowFromRow);
 
   /// Fetches every row.
-  Future<List<CachedProductRow>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<CachedProductRow>, SqlxError>> fetchAll(DatabaseExecutor db) =>
       fetchAllWith(db, _$CachedProductRowFromRow);
 }
 
@@ -75,15 +75,15 @@ final class $CachedProductRatingRowRowDeserializer implements RowDeserializer<Ca
 /// `FromRow` has no terminals and the call does not compile.
 extension $CachedProductRatingRowQuery on QueryAs<CachedProductRatingRow> {
   /// Fetches exactly one row.
-  Future<CachedProductRatingRow> fetchOne(DatabaseExecutor db) =>
+  Future<Result<CachedProductRatingRow, SqlxError>> fetchOne(DatabaseExecutor db) =>
       fetchOneWith(db, _$CachedProductRatingRowFromRow);
 
   /// Fetches zero or one row.
-  Future<CachedProductRatingRow?> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<CachedProductRatingRow?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
       fetchOptionalWith(db, _$CachedProductRatingRowFromRow);
 
   /// Fetches every row.
-  Future<List<CachedProductRatingRow>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<CachedProductRatingRow>, SqlxError>> fetchAll(DatabaseExecutor db) =>
       fetchAllWith(db, _$CachedProductRatingRowFromRow);
 }
 
@@ -109,14 +109,14 @@ final class $CachedWishlistRowRowDeserializer implements RowDeserializer<CachedW
 /// `FromRow` has no terminals and the call does not compile.
 extension $CachedWishlistRowQuery on QueryAs<CachedWishlistRow> {
   /// Fetches exactly one row.
-  Future<CachedWishlistRow> fetchOne(DatabaseExecutor db) =>
+  Future<Result<CachedWishlistRow, SqlxError>> fetchOne(DatabaseExecutor db) =>
       fetchOneWith(db, _$CachedWishlistRowFromRow);
 
   /// Fetches zero or one row.
-  Future<CachedWishlistRow?> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<CachedWishlistRow?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
       fetchOptionalWith(db, _$CachedWishlistRowFromRow);
 
   /// Fetches every row.
-  Future<List<CachedWishlistRow>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<CachedWishlistRow>, SqlxError>> fetchAll(DatabaseExecutor db) =>
       fetchAllWith(db, _$CachedWishlistRowFromRow);
 }

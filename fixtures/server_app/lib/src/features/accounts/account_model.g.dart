@@ -124,15 +124,15 @@ final class $AccountRowDeserializer implements RowDeserializer<Account> {
 /// `FromRow` has no terminals and the call does not compile.
 extension $AccountQuery on QueryAs<Account> {
   /// Fetches exactly one row.
-  Future<Account> fetchOne(DatabaseExecutor db) =>
+  Future<Result<Account, SqlxError>> fetchOne(DatabaseExecutor db) =>
       fetchOneWith(db, _$AccountFromRow);
 
   /// Fetches zero or one row.
-  Future<Account?> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<Account?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
       fetchOptionalWith(db, _$AccountFromRow);
 
   /// Fetches every row.
-  Future<List<Account>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<Account>, SqlxError>> fetchAll(DatabaseExecutor db) =>
       fetchAllWith(db, _$AccountFromRow);
 }
 

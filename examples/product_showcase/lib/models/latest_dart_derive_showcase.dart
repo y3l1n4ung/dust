@@ -3,9 +3,11 @@ import 'package:dust_dart/db.dart'
         DatabaseExecutor,
         FromRow,
         QueryAs,
+        Result,
         Row,
         RowDeserializer,
         Sqlx,
+        SqlxError,
         SqlxRename;
 import 'package:dust_dart/serde.dart';
 

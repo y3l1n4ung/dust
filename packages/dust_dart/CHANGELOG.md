@@ -6,6 +6,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.5]
+
+> [!IMPORTANT]
+> **Breaking, and `^0.1.4` upgrades into it.** Every inline query terminal now
+> returns `Result<T, SqlxError>` instead of throwing. A pubspec asking for
+> `dust_dart: ^0.1.4` resolves to 0.1.5, so an app that pins nothing gets the
+> change without asking for it. Run `dust build` to regenerate.
+
+### Changed
+
+- **Database**: the query terminals return `Result`. `QueryAs.fetchOneWith`,
+  `fetchOptionalWith` and `fetchAllWith`, `QueryScalar.fetchOne` and
+  `fetchOptional`, `QueryRaw.fetch`, `QueryExecute.execute`, and the generated
+  `extension $TypeQuery` terminals all hand back `Result<T, SqlxError>`.
+
+  Generated `@SqlxDao` methods have always returned `Result`; the inline path
+  wrapped the same executor call in an unwrap that threw
+  `StateError('SQL operation failed: ...')`, destroying the typed `SqlxError` on
+  the way out. Two paths through the same executor answered a failed query in
+  two different ways, and only one of them could be handled.
+
+### Migrating
+
+A call that used the value directly now matches on the result:
+
+```dart
+// Before
+final user = await queryAs<UserRow>(sql, [id]).fetchOne(db);
+print(user.email);
+
+// After
+final user = await queryAs<UserRow>(sql, [id]).fetchOne(db);
+switch (user) {
+  case Ok(:final value):
+    print(value.email);
+  case Err(:final error):
+    print('lookup failed: $error');
+}
+```
+
+To keep the throwing behavior at one call site, `unwrapOrElse` supplies it:
+
+```dart
+final user = (await queryAs<UserRow>(sql, [id]).fetchOne(db))
+    .unwrapOrElse((error) => throw StateError('$error'));
+```
+
+`@SqlxDao` methods are unaffected — they already returned `Result`.
+
 ## [0.1.4] - 2026-09-03
 
 ### Added

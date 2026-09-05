@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Database**: inline query terminals return `Result<T, SqlxError>` rather than
+  throwing. Generated `@SqlxDao` methods already did; the inline path unwrapped
+  the same executor call into a `StateError` that discarded the typed error, so
+  the two ways of running a query disagreed about what a failure is. Affects
+  `QueryAs.fetch*With`, `QueryScalar.fetchOne`/`fetchOptional`, `QueryRaw.fetch`,
+  `QueryExecute.execute`, and the generated `extension $TypeQuery` terminals.
+  Migration in
+  [`packages/dust_dart/CHANGELOG.md`](packages/dust_dart/CHANGELOG.md).
+
 - **Database**: the offline query metadata cache moved from
   `.dart_tool/dust/db_query_cache_v2/` to `.dust_sql/` at the package root, and
   is now a committed build input rather than a build artifact. `.dart_tool/` is

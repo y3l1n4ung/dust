@@ -65,19 +65,21 @@ void main() {
       await app.close();
     });
 
-    final columns = await queryRaw(
+    final columns = (await queryRaw(
       'PRAGMA table_info(product_cache)',
       const [],
-    ).fetch(app.pool);
+    ).fetch(app.pool))
+        .unwrapOrElse((error) => fail('$error'));
     expect(
       columns.map((row) => row.read<String>('name')),
       contains('last_synced_at'),
     );
 
-    final migrations = await queryRaw(
+    final migrations = (await queryRaw(
       'SELECT name FROM __dust_schema_migrations ORDER BY name',
       const [],
-    ).fetch(app.pool);
+    ).fetch(app.pool))
+        .unwrapOrElse((error) => fail('$error'));
     expect(migrations.map((row) => row.read<String>('name')), <String>[
       '0001_shopping_cache.sql',
       '0002_product_cache_sync_metadata.up.sql',

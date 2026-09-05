@@ -49,15 +49,15 @@ final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> 
 /// `FromRow` has no terminals and the call does not compile.
 extension $UserProfileQuery on QueryAs<UserProfile> {
   /// Fetches exactly one row.
-  Future<UserProfile> fetchOne(DatabaseExecutor db) =>
+  Future<Result<UserProfile, SqlxError>> fetchOne(DatabaseExecutor db) =>
       fetchOneWith(db, _$UserProfileFromRow);
 
   /// Fetches zero or one row.
-  Future<UserProfile?> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<UserProfile?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
       fetchOptionalWith(db, _$UserProfileFromRow);
 
   /// Fetches every row.
-  Future<List<UserProfile>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<UserProfile>, SqlxError>> fetchAll(DatabaseExecutor db) =>
       fetchAllWith(db, _$UserProfileFromRow);
 }
 "#

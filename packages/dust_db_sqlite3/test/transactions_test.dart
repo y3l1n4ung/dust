@@ -2,6 +2,8 @@ import 'package:dust_dart/db.dart';
 import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:test/test.dart';
 
+import 'support/expect_ok.dart';
+
 import 'support/user_name.dart';
 
 void main() {
@@ -12,15 +14,17 @@ void main() {
     });
 
     final result = await pool.transaction((tx) async {
-      await queryExecute(r'INSERT INTO users (id, name) VALUES (?, ?)', [
+      expectOk(
+          await queryExecute(r'INSERT INTO users (id, name) VALUES (?, ?)', [
         1,
         'Ada',
-      ]).execute(tx);
+      ]).execute(tx));
       throw StateError('boom');
     });
     expect(result, isA<Err<void, SqlxError>>());
 
-    final rows = await queryRaw('SELECT id FROM users', []).fetch(pool);
+    final rows =
+        expectOk(await queryRaw('SELECT id FROM users', []).fetch(pool));
     expect(rows, isEmpty);
   });
 
@@ -97,15 +101,17 @@ void main() {
     });
 
     final result = await pool.transaction<Unit>((tx) async {
-      await queryExecute(r'INSERT INTO users (id, name) VALUES (?, ?)', [
+      expectOk(
+          await queryExecute(r'INSERT INTO users (id, name) VALUES (?, ?)', [
         1,
         'Ada',
-      ]).execute(tx);
+      ]).execute(tx));
       return Err<Unit, SqlxError>(SqlxError.driver('abort'));
     });
     expect(result, isA<Err<Unit, SqlxError>>());
 
-    final rows = await queryRaw('SELECT id FROM users', []).fetch(pool);
+    final rows =
+        expectOk(await queryRaw('SELECT id FROM users', []).fetch(pool));
     expect(rows, isEmpty);
   });
 
@@ -127,9 +133,10 @@ void main() {
     });
     expect(result, isA<Ok<Unit, SqlxError>>());
 
-    final rows = await queryRaw('SELECT id FROM users ORDER BY id', []).fetch(
+    final rows =
+        expectOk(await queryRaw('SELECT id FROM users ORDER BY id', []).fetch(
       pool,
-    );
+    ));
     expect(rows.map((row) => row.read<int>('id')), <int>[1, 3]);
   });
 
@@ -151,9 +158,10 @@ void main() {
     });
     expect(result, isA<Ok<Unit, SqlxError>>());
 
-    final rows = await queryRaw('SELECT id FROM users ORDER BY id', []).fetch(
+    final rows =
+        expectOk(await queryRaw('SELECT id FROM users ORDER BY id', []).fetch(
       pool,
-    );
+    ));
     expect(rows.map((row) => row.read<int>('id')), <int>[1, 3]);
   });
 

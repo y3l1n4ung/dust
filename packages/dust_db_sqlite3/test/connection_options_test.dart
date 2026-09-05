@@ -4,6 +4,8 @@ import 'package:dust_dart/db.dart';
 import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:test/test.dart';
 
+import 'support/expect_ok.dart';
+
 void main() {
   test('sqlite connect options open in-memory database with pragmas', () async {
     final db = Sqlite3Driver.connect(
@@ -60,10 +62,11 @@ CREATE TABLE children (
         '0001.sql': 'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT);',
       },
     );
-    await queryExecute('INSERT INTO users (id, name) VALUES (?, ?)', const [
+    expectOk(
+        await queryExecute('INSERT INTO users (id, name) VALUES (?, ?)', const [
       1,
       'Ada',
-    ]).execute(writable);
+    ]).execute(writable));
     await writable.close();
 
     final readOnly = Sqlite3Driver.connect(SqliteConnectOptions.readOnly(path));
@@ -71,10 +74,10 @@ CREATE TABLE children (
       await readOnly.close();
     });
 
-    final users = await queryRaw(
+    final users = expectOk(await queryRaw(
       'SELECT name FROM users ORDER BY id',
       const [],
-    ).fetch(readOnly);
+    ).fetch(readOnly));
     expect(users.single.read<String>('name'), 'Ada');
 
     final write = await readOnly.execute(
