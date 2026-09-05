@@ -13,7 +13,12 @@ from dataclasses import dataclass
 from functools import total_ordering
 from pathlib import Path
 
-REQUIRED_PACKAGES = ("dust_dart", "dust_flutter", "dust_db_sqlite3")
+REQUIRED_PACKAGES = (
+    "dust_dart",
+    "dust_flutter",
+    "dust_db_sqlite3",
+    "dust_server",
+)
 
 
 @total_ordering
@@ -234,6 +239,14 @@ class CompatibilityScriptTests(unittest.TestCase):
         self.assertTrue(satisfies_constraint("0.1.3", ">=0.1.3 <0.2.0"))
         self.assertTrue(satisfies_constraint("0.1.9", ">=0.1.3 <0.2.0"))
 
+    def test_constraint_orders_a_prerelease_lower_bound(self) -> None:
+        self.assertTrue(
+            satisfies_constraint("0.1.0-beta.3", ">=0.1.0-beta.3 <0.2.0")
+        )
+        self.assertFalse(
+            satisfies_constraint("0.1.0-beta.2", ">=0.1.0-beta.3 <0.2.0")
+        )
+
     def test_constraint_rejects_too_old_and_too_new(self) -> None:
         self.assertFalse(satisfies_constraint("0.1.2", ">=0.1.3 <0.2.0"))
         self.assertFalse(satisfies_constraint("0.2.0", ">=0.1.3 <0.2.0"))
@@ -259,9 +272,8 @@ def write_fixture_repo(root: Path, dust_dart_version: str = "0.1.3") -> None:
     """Write a minimal fake repo for script self-tests."""
 
     (root / "compatibility").mkdir(parents=True)
-    (root / "packages/dust_dart").mkdir(parents=True)
-    (root / "packages/dust_flutter").mkdir(parents=True)
-    (root / "packages/dust_db_sqlite3").mkdir(parents=True)
+    for package in REQUIRED_PACKAGES:
+        (root / "packages" / package).mkdir(parents=True)
     (root / "Cargo.toml").write_text(
         '[workspace.package]\nversion = "0.1.3"\n',
         encoding="utf-8",
@@ -277,6 +289,7 @@ def write_fixture_repo(root: Path, dust_dart_version: str = "0.1.3") -> None:
                             "dust_dart": ">=0.1.3 <0.2.0",
                             "dust_flutter": ">=0.1.3 <0.2.0",
                             "dust_db_sqlite3": ">=0.1.3 <0.2.0",
+                            "dust_server": ">=0.1.0-beta.1 <0.2.0",
                         },
                     }
                 ],
@@ -288,6 +301,7 @@ def write_fixture_repo(root: Path, dust_dart_version: str = "0.1.3") -> None:
         "dust_dart": dust_dart_version,
         "dust_flutter": "0.1.3",
         "dust_db_sqlite3": "0.1.3",
+        "dust_server": "0.1.0-beta.2",
     }.items():
         (root / "packages" / package / "pubspec.yaml").write_text(
             f"name: {package}\nversion: {version}\n",

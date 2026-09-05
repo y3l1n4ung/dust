@@ -46,6 +46,15 @@ fn compatibility_contract_covers_current_packages() {
             package_version(root.join("packages/dust_db_sqlite3/pubspec.yaml").as_path())
         )
     );
+    // Generated handlers call Router.module, Rejection, QueryExtractable and
+    // intoResponse, so the CLI pins a dust_server range like any other runtime.
+    assert_eq!(
+        constraints["dust_server"],
+        format!(
+            ">={} <0.2.0",
+            package_version(root.join("packages/dust_server/pubspec.yaml").as_path())
+        )
+    );
 }
 
 #[test]
