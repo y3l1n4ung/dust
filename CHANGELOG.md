@@ -157,8 +157,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Server**: a bare `String` return is sent as text, and a 401 offers every
   scheme it accepts.
 - **Server**: `TestClient` header assertions answer the same way in handler
-  mode and over real HTTP, and the cookie jar keeps every `set-cookie` a
-  response sends rather than the first.
+  mode and over real HTTP, the cookie jar keeps every `set-cookie` a response
+  sends rather than the first, and a binary response body arrives as bytes
+  rather than being decoded as UTF-8 on the way in and losing what does not
+  survive it.
 - Dismissed dialogs, modal sheets, and other imperatively pushed routes on
   system back instead of popping the generated page underneath them. Back now
   also respects `PopScope` on a generated page, which the previous pop path

@@ -189,7 +189,10 @@ final class TestClient {
     }
 
     final ioResponse = await request.close();
-    final responseBody = await utf8.decodeStream(ioResponse);
+    final responseBytes = <int>[];
+    await for (final chunk in ioResponse) {
+      responseBytes.addAll(chunk);
+    }
     final responseHeaders = <String, List<String>>{};
     ioResponse.headers.forEach((name, values) {
       responseHeaders[name] = values;
@@ -198,7 +201,7 @@ final class TestClient {
     return TestResponse(
       ioResponse.statusCode,
       responseHeaders,
-      responseBody,
+      responseBytes,
     );
   }
 

@@ -4,6 +4,9 @@ import 'package:dust_server/server.dart';
 import 'package:dust_server/testing.dart';
 import 'package:test/test.dart';
 
+/// A PNG signature followed by bytes that are not valid UTF-8.
+const _pngHeader = <int>[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0xFF, 0xFE, 0x00];
+
 void main() {
   Router app() {
     final router = Router();
@@ -68,6 +71,15 @@ void main() {
     router.route(
       '/list',
       get((_) async => jsonResponse([1, 2, 3])),
+    );
+    router.route(
+      '/binary',
+      get(
+        (_) async => Response.ok(
+          _pngHeader,
+          headers: {'content-type': 'application/octet-stream'},
+        ),
+      ),
     );
     router.route(
       '/mixed-case-headers',
@@ -288,6 +300,43 @@ void main() {
 
     test('an assertion error prints its own message', () {
       expect(TestAssertionError('boom').toString(), 'boom');
+    });
+
+    test('a binary body arrives byte for byte', () async {
+      final response = await client.get('/binary').send();
+
+      response.assertOk();
+      expect(response.bodyBytes, _pngHeader);
+    });
+
+    test('a binary body survives real HTTP too', () async {
+      final served = await TestClient.serve(app());
+      addTearDown(served.close);
+
+      final response = await served.get('/binary').send();
+
+      response.assertOk();
+      expect(response.bodyBytes, _pngHeader);
+    });
+
+    test('body decodes what it can rather than throwing', () async {
+      final response = await client.get('/binary').send();
+
+      expect(response.body, contains('�'));
+      expect(identical(response.body, response.body), isTrue);
+    });
+
+    test('json decodes once and hands back the same value', () async {
+      final response = await client.get('/list').send();
+
+      expect(identical(response.json, response.json), isTrue);
+    });
+
+    test('an invalid JSON body reports itself on every read', () async {
+      final response = await client.get('/hello').send();
+
+      expect(() => response.json, throwsA(isA<TestAssertionError>()));
+      expect(() => response.json, throwsA(isA<TestAssertionError>()));
     });
   });
 

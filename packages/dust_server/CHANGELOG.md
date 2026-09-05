@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `TestResponse.headersAll`, every value for every response header, keyed by
   lowercased name. A response may send `set-cookie` more than once, and the
   joined form of that header is not reversible.
+- `TestResponse.bodyBytes`, the response body exactly as it arrived, so a
+  handler answering with an image or a PDF is testable.
 
 ### Changed
 
@@ -37,6 +39,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The `saveCookies` jar keeps every `set-cookie` a response sends. It read one
   joined string and split it on `;`, which kept the first cookie and dropped
   the rest, and an `Expires` date carries its own comma.
+- A binary response body is no longer destroyed on the way to the assertion.
+  Both modes decoded the body as UTF-8 while reading it, which is lossy and
+  not reversible: a nine-byte PNG signature came back as fifteen bytes with
+  three of them replaced. `TestResponse` keeps the bytes and decodes `body`
+  from them on demand, allowing malformed sequences so a failing assertion can
+  still print something.
+- `TestResponse.body` and `.json` are computed once instead of on every read,
+  so a cascade of assertions decodes the body a single time.
 
 ## [0.1.0-beta.2] - 2026-08-25
 

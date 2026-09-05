@@ -24,7 +24,7 @@ final class TestResponse {
   factory TestResponse(
     int statusCode,
     Map<String, List<String>> headers,
-    String body,
+    List<int> bodyBytes,
   ) {
     final all = <String, List<String>>{};
     for (final entry in headers.entries) {
@@ -36,17 +36,21 @@ final class TestResponse {
       Map.unmodifiable(<String, String>{
         for (final entry in all.entries) entry.key: entry.value.join(', '),
       }),
-      body,
+      List<int>.unmodifiable(bodyBytes),
     );
   }
 
-  TestResponse._(this.statusCode, this.headersAll, this.headers, this.body);
+  TestResponse._(
+      this.statusCode, this.headersAll, this.headers, this.bodyBytes);
 
   /// @nodoc
   @internal
   static Future<TestResponse> fromShelf(Response response) async {
-    final body = await response.readAsString();
-    return TestResponse(response.statusCode, response.headersAll, body);
+    final bytes = <int>[];
+    await for (final chunk in response.read()) {
+      bytes.addAll(chunk);
+    }
+    return TestResponse(response.statusCode, response.headersAll, bytes);
   }
 
   /// HTTP status code.
@@ -63,11 +67,23 @@ final class TestResponse {
   /// (unmodifiable).
   final Map<String, List<String>> headersAll;
 
-  /// Response body as a string.
-  final String body;
+  /// The response body exactly as it arrived (unmodifiable).
+  ///
+  /// A handler answering with an image, a PDF, or any other bytes is testable
+  /// through this; [body] would have replaced whatever is not valid UTF-8.
+  final List<int> bodyBytes;
 
-  /// Decodes body as JSON. Throws [TestAssertionError] on invalid JSON.
-  Object? get json {
+  /// Response body decoded as UTF-8, computed once.
+  ///
+  /// Malformed sequences become the replacement character rather than
+  /// throwing, so a binary body can still be printed by a failing assertion.
+  /// Compare bytes through [bodyBytes] instead of asserting on that text.
+  late final String body = utf8.decode(bodyBytes, allowMalformed: true);
+
+  /// Decodes body as JSON, once. Throws [TestAssertionError] on invalid JSON.
+  late final Object? json = _decodeJson();
+
+  Object? _decodeJson() {
     try {
       return jsonDecode(body);
     } on FormatException catch (e) {
