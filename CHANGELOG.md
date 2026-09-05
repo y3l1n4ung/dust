@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [v0.1.4] - 2026-09-03
 
+> [!IMPORTANT]
+> **Breaking, and `^0.1.3` upgrades into it.** `dust_dart` 0.1.4 removes
+> `RowMapperRegistry`, `registerRowMapper`, and the `QueryAs` instance
+> terminals `fetchOne`, `fetchOptional` and `fetchAll`. A pubspec asking for
+> `dust_dart: ^0.1.3` resolves to 0.1.4, so an app that pins nothing gets the
+> removal without asking for it. Run `dust build` to regenerate; call sites of
+> `queryAs<T>` do not change. The two moves that need an edit are written out
+> under Migrating in
+> [`packages/dust_dart/CHANGELOG.md`](packages/dust_dart/CHANGELOG.md).
+>
+> `dust_server` is also breaking, twice, but it is pre-1.0 and its ranges are
+> prerelease — see the Server entries below.
+
 ### Added
 
 - **Database**: row mapping has an interface and generated query terminals.
@@ -22,6 +35,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   mapping anywhere in the package, naming the type and the call site.
 - **Database**: `QueryAs.fetchOneWith`, `fetchOptionalWith`, and `fetchAllWith`
   take the row mapping as an argument, for a row type Dust does not generate.
+- **Server**: `dust_server`, a Dart HTTP runtime on shelf, is published for the
+  first time — `0.1.0-beta.1` through `0.1.0-beta.3` all fall in this release.
+  Generated handlers target it directly: `dust build` emits `Router.module`,
+  `Route`, the `Rejection` type, `QueryExtractable`, `StateExtractable`, and
+  `intoResponse()`, so it now carries a row in the CLI compatibility contract
+  like every other runtime package.
+- **Server**: `DisposableLayer`, `Service`, and a typed serve address, so a
+  layer holding a connection pool is disposed once when the server stops
+  rather than per request.
+- **Server**: a dead isolate is reported instead of silently absorbed, and the
+  diagnostic says why it cannot be restarted.
+- **Server**: response bodies stream — a body too large to encode is streamed
+  rather than failing, a multipart body is streamed rather than buffered, and
+  background work is drained alongside requests at shutdown.
+- **Server**: an extractor runs as a layer, under axum's names.
 - **Server**: `TestClient` testing framework, exported via
   `package:dust_server/testing.dart`. Three modes: handler (in-process, no
   socket), serve (real HTTP on port 0), and origin (connect to an existing
@@ -62,6 +90,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `_$TypeSerialize` — and the public `$TypeRowDeserializer` witness, mirroring
   `$TypeSerializer`. Generated DAOs decode through the witness. Call sites of
   `queryAs<T>` are unchanged.
+- **Server**: `serve`, `serveIsolates`, and the surrounding names follow axum,
+  which is the shape the rest of Dust's server design is written against. This
+  landed at `0.1.0-beta.2` with no deprecated aliases; a `0.1.0-beta.1` app is
+  renamed by hand. `packages/dust_server/CHANGELOG.md` lists each move.
+- **Server**: `dust_dart` runtime constraint raised to `^0.1.4`, alongside
+  `dust_db_sqlite3`. Both were asking for `^0.1.3`, which resolves to either
+  side of the `dust_dart` removals above.
 - Simplified generated route names. The router name still scopes the generated
   base route type and helpers, so `ShopRouter` generates `ShopRoute`,
   `parseShopRoute`, and `$ShopRouter`, while concrete route classes use their
@@ -107,6 +142,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Database**: the diagnostic for a placeholder count mismatch names what
   happened and prints the SQL the database parsed.
 - **Database**: cached libraries are invalidated when workspace analysis changes.
+- **Server**: a factory that threw inside an isolate hung startup forever
+  instead of reporting the failure.
+- **Server**: a shared layer is disposed once rather than per isolate, and a
+  timeout now says that it does not cover a streaming response.
+- **Server**: a failing event stream is reported instead of swallowed, and no
+  request id is echoed back from the client.
+- **Server**: a bad response header hung the connection, and numeric header
+  values were trimmed.
+- **Server**: an event stream is flushed rather than buffered, and any response
+  whose length is not known is flushed too.
+- **Server**: a WebSocket upgrade is treated as the success it is, in tracing,
+  the access log, and the layers around it.
+- **Server**: a bare `String` return is sent as text, and a 401 offers every
+  scheme it accepts.
+- **Server**: `TestClient` header assertions answer the same way in handler
+  mode and over real HTTP, and the cookie jar keeps every `set-cookie` a
+  response sends rather than the first.
 - Dismissed dialogs, modal sheets, and other imperatively pushed routes on
   system back instead of popping the generated page underneath them. Back now
   also respects `PopScope` on a generated page, which the previous pop path

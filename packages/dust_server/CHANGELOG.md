@@ -17,7 +17,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   uses void setters for Dart cascade syntax; `TestResponse` carries named status
   assertions (`assertOk`, `assertCreated`, `assertConflict`, etc.), JSON
   helpers, and header assertions.
-- `assertConflict()` (409) status assertion on `TestResponse`.
+- `TestResponse.headersAll`, every value for every response header, keyed by
+  lowercased name. A response may send `set-cookie` more than once, and the
+  joined form of that header is not reversible.
+
+### Changed
+
+- Runtime constraint raised to `dust_dart: ^0.1.4`, which is the version this
+  release is built and tested against.
+
+### Fixed
+
+- `TestResponse.headers` lowercases every header name, so a handler that writes
+  `Content-Type` answers `assertHeader('content-type', ...)`. Shelf's header
+  map is case-insensitive but keeps the case the handler wrote, and copying it
+  into a plain map kept the case while losing the lookup — so the same
+  assertion passed under `TestClient.serve`, where `dart:io` had already
+  lowercased, and failed in handler mode.
+- The `saveCookies` jar keeps every `set-cookie` a response sends. It read one
+  joined string and split it on `;`, which kept the first cookie and dropped
+  the rest, and an `Expires` date carries its own comma.
 
 ## [0.1.0-beta.2] - 2026-08-25
 

@@ -8,10 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.1.4] - 2026-09-03
 
-### Fixed
+Released alongside Dust 0.1.4. No behavior changes.
 
-- Await the transaction control result in `savepoint` and `exclusive`
-  transactions so the commit/release completes before returning.
+### Changed
+
+- Runtime constraint raised to `dust_dart: ^0.1.4`. 0.1.4 removes
+  `RowMapperRegistry`, `registerRowMapper`, and the `QueryAs` instance
+  terminals, and `^0.1.3` resolved to either side of that.
+- `runRoot` and `runSavepoint` return `await result.match(...)` rather than the
+  future itself, so the transaction's `try` covers the commit and release path
+  it wraps. Both control statements already ran before the scope was
+  deactivated — the callbacks are invoked synchronously by `match` — so this
+  fixes no observed defect and changes no behavior.
 
 ## [0.1.3] - 2026-07-28
 
