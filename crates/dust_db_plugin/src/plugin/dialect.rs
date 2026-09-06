@@ -25,6 +25,8 @@ pub(crate) struct Dialect {
     pub(crate) options_type: &'static str,
     /// Dart type implementing the unchecked SQL escape hatch.
     pub(crate) unsafe_type: &'static str,
+    /// Dart expression applying migrations from the generated facade.
+    pub(crate) migrate_expr: &'static str,
     /// Whether the driver rewrites `$n` into another placeholder form.
     ///
     /// SQLite has no `$n`, so its driver rewrites to `?` at bind time and a
@@ -47,6 +49,8 @@ const SQLITE3: Dialect = Dialect {
     factory_parameter: "String path",
     options_type: "SqliteConnectOptions",
     unsafe_type: "Sqlite3UnsafeSql",
+    // Applied while opening, so there is nothing left to do.
+    migrate_expr: "Future<Result<Unit, SqlxError>>.value(const Ok(unit))",
     rewrites_placeholders: true,
     validates: true,
 };
@@ -59,6 +63,7 @@ const POSTGRES: Dialect = Dialect {
     factory_parameter: "String url",
     options_type: "PgConnectOptions",
     unsafe_type: "PostgresUnsafeSql",
+    migrate_expr: "_driver.migrate()",
     rewrites_placeholders: false,
     validates: true,
 };
@@ -92,6 +97,7 @@ mod tests {
                 assert_ne!(left.name, right.name);
                 assert_ne!(left.runtime_type, right.runtime_type);
                 assert_ne!(left.unsafe_type, right.unsafe_type);
+                assert_ne!(left.migrate_expr, right.migrate_expr);
                 assert_ne!(left.options_type, right.options_type);
             }
         }

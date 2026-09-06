@@ -63,6 +63,14 @@ abstract interface class DatabaseClient {
   /// Open database connection used by generated DAOs.
   Connection get connection;
 
+  /// Applies any migrations the database was generated with.
+  ///
+  /// SQLite applies them while opening, so this has already happened and the
+  /// call returns `Ok`. PostgreSQL is reached over a network and cannot, so it
+  /// applies them here. Calling it either way is what lets one startup path
+  /// serve both.
+  Future<Result<Unit, SqlxError>> migrate();
+
   /// Unchecked SQL for administrative work.
   ///
   /// Deliberately here and not on [Executor]: a request handler holds

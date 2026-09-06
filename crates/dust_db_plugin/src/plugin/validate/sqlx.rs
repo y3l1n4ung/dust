@@ -58,7 +58,7 @@ pub(super) fn validate_sqlx_describe(
     if matches!(options.execution.validation, ValidationAccess::Offline) {
         match validate_from_query_cache(
             library,
-            db.driver.as_str(),
+            db.driver.dialect(),
             &db.migrations,
             &schema_hash,
             queries,

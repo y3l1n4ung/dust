@@ -18,6 +18,7 @@ use super::{
 };
 use crate::plugin::{
     migrations::applied_migration_files,
+    model::DbDriver,
     model::{FetchMode, QueryFunction, QuerySpec},
 };
 
@@ -412,7 +413,7 @@ fn offline_query_cache_validates_shape_and_staleness() {
     assert_eq!(
         validate_from_query_cache(
             &library,
-            "sqlite3",
+            DbDriver::Sqlite3.dialect(),
             "./migrations",
             "schema",
             std::slice::from_ref(&query),
@@ -423,7 +424,7 @@ fn offline_query_cache_validates_shape_and_staleness() {
     assert!(
         validate_from_query_cache(
             &library,
-            "sqlite3",
+            DbDriver::Sqlite3.dialect(),
             "./migrations",
             "stale",
             std::slice::from_ref(&query),
@@ -436,7 +437,7 @@ fn offline_query_cache_validates_shape_and_staleness() {
     // has to say so rather than claim the query was never described.
     let mismatch = validate_from_query_cache(
         &library,
-        "postgres",
+        DbDriver::Postgres.dialect(),
         "./migrations",
         "schema",
         &[query],

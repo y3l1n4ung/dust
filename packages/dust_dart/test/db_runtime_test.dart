@@ -163,6 +163,10 @@ final class _FakeDatabaseClient implements DatabaseClient {
 
   @override
   final UnsafeSql unsafe;
+
+  @override
+  Future<Result<Unit, SqlxError>> migrate() async =>
+      const Ok<Unit, SqlxError>(unit);
 }
 
 final class _FakeExecutor implements Pool {

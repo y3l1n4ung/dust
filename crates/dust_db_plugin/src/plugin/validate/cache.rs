@@ -6,7 +6,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::plugin::{migrations::applied_migration_files, model::QuerySpec};
+use crate::plugin::{dialect::Dialect, migrations::applied_migration_files, model::QuerySpec};
 
 use super::query::{query_row_type, validate_placeholders};
 
@@ -63,7 +63,7 @@ pub(super) struct QueryCacheEntry {
 /// Validates queries against the offline metadata cache.
 pub(super) fn validate_from_query_cache(
     library: &dust_ir::DartFileIr,
-    driver: &str,
+    dialect: &Dialect,
     migrations: &str,
     schema_hash: &str,
     queries: &[QuerySpec],
@@ -91,7 +91,7 @@ pub(super) fn validate_from_query_cache(
     }
 
     for query in queries {
-        validate_cached_query(driver, migrations, schema_hash, query, row_columns, &cache)?;
+        validate_cached_query(dialect, migrations, schema_hash, query, row_columns, &cache)?;
     }
     Ok(())
 }
@@ -225,7 +225,7 @@ pub(super) fn query_cache_path(library: &dust_ir::DartFileIr) -> PathBuf {
 
 /// Validates one query against a matching cache entry.
 fn validate_cached_query(
-    driver: &str,
+    dialect: &Dialect,
     migrations: &str,
     schema_hash: &str,
     query: &QuerySpec,
@@ -233,6 +233,15 @@ fn validate_cached_query(
     cache: &QueryCache,
 ) -> Result<(), String> {
     let rewrite = validate_placeholders(&query.sql, query.parameter_count)?;
+    // The bind count a statement implies is dialect-specific: a repeated `$1`
+    // is two binds where the driver rewrites to `?`, and one where the database
+    // reads `$n` itself. Checking the SQLite rule against a Postgres cache
+    // rejects a query the online build accepted.
+    let expected_parameters = if dialect.rewrites_placeholders {
+        rewrite.expanded_parameter_count()
+    } else {
+        query.parameter_count
+    };
     let sql_hash = stable_hash_hex(query.sql.as_bytes());
     let matches_query = |entry: &&QueryCacheEntry| {
         entry.migrations == migrations
@@ -245,16 +254,18 @@ fn validate_cached_query(
     let Some(entry) = cache
         .entries
         .iter()
-        .find(|entry| matches_query(entry) && entry.driver == driver)
+        .find(|entry| matches_query(entry) && entry.driver == dialect.name)
     else {
         // A cache built against another dialect is the likely reason on a
         // project that has just gained a second driver, and "missing entry"
         // sends the reader looking for the wrong thing.
         if let Some(other) = cache.entries.iter().find(matches_query) {
             return Err(format!(
-                "Database offline query metadata cache for `{}` was written for driver `{}`, but this build targets `{driver}`; run `dust db build` online against `{driver}` first",
+                "Database offline query metadata cache for `{}` was written for driver `{}`, but this build targets `{}`; run `dust db build` online against `{}` first",
                 query.display_name(),
-                other.driver
+                other.driver,
+                dialect.name,
+                dialect.name
             ));
         }
         return Err(format!(
@@ -270,7 +281,7 @@ fn validate_cached_query(
             query.parameter_count
         ));
     }
-    if entry.expanded_parameter_count != rewrite.expanded_parameter_count() {
+    if entry.expanded_parameter_count != expected_parameters {
         return Err(format!(
             "cached SQL metadata for `{}` has stale placeholder expansion; run `dust db build` online first",
             query.display_name()

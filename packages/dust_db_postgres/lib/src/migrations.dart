@@ -50,10 +50,21 @@ Future<Result<Unit, SqlxError>> _applyMigrations(
     for (final migration in pending) {
       if (applied.contains(migration.key)) continue;
 
-      final ran = await tx.execute(migration.value, const <Object?>[]);
-      if (ran case Err(:final error)) {
+      // Migration files hold more than one statement, and the extended query
+      // protocol the driver uses by default allows only one per prepared
+      // statement. Simple mode takes the whole file; it accepts no parameters,
+      // which a migration does not have.
+      try {
+        await (tx as PostgresExecutor).session.execute(
+              migration.value,
+              queryMode: pg.QueryMode.simple,
+            );
+      } catch (error) {
         return Err<Unit, SqlxError>(
-          _postgresMigrationError(migration.key, error),
+          _postgresMigrationError(
+            migration.key,
+            _asPostgresError(error, migration.key),
+          ),
         );
       }
 

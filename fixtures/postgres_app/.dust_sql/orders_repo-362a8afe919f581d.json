@@ -1,0 +1,95 @@
+{
+  "version": 3,
+  "entries": [
+    {
+      "driver": "postgres",
+      "migrations": "./migrations",
+      "schema_hash": "893f93e7be07e146",
+      "sql_hash": "1a9e98cc1522fc9d",
+      "sql": "\nSELECT id, account_id, item, quantity, express, placed_at FROM orders\nWHERE account_id = $1 AND (quantity >= $2 OR $2 = 0)\nORDER BY id\n",
+      "user_parameter_count": 2,
+      "expanded_parameter_count": 2,
+      "fetch_mode": "all",
+      "row_type": "Order",
+      "columns": [
+        "id",
+        "account_id",
+        "item",
+        "quantity",
+        "express",
+        "placed_at"
+      ]
+    },
+    {
+      "driver": "postgres",
+      "migrations": "./migrations",
+      "schema_hash": "893f93e7be07e146",
+      "sql_hash": "793f41ee7204476d",
+      "sql": "\nSELECT id, account_id, item, quantity, express, placed_at FROM orders\nWHERE account_id = $1\nORDER BY id\n",
+      "user_parameter_count": 1,
+      "expanded_parameter_count": 1,
+      "fetch_mode": "all",
+      "row_type": "Order",
+      "columns": [
+        "id",
+        "account_id",
+        "item",
+        "quantity",
+        "express",
+        "placed_at"
+      ]
+    },
+    {
+      "driver": "postgres",
+      "migrations": "./migrations",
+      "schema_hash": "893f93e7be07e146",
+      "sql_hash": "949aff575b47da7c",
+      "sql": "\nSELECT id, account_id, item, quantity, express, placed_at FROM orders\nWHERE id = ANY($1)\nORDER BY id\n",
+      "user_parameter_count": 1,
+      "expanded_parameter_count": 1,
+      "fetch_mode": "all",
+      "row_type": "Order",
+      "columns": [
+        "id",
+        "account_id",
+        "item",
+        "quantity",
+        "express",
+        "placed_at"
+      ]
+    },
+    {
+      "driver": "postgres",
+      "migrations": "./migrations",
+      "schema_hash": "893f93e7be07e146",
+      "sql_hash": "a4221846c7b2101e",
+      "sql": "SELECT count(*) FROM orders WHERE account_id = $1",
+      "user_parameter_count": 1,
+      "expanded_parameter_count": 1,
+      "fetch_mode": "one",
+      "row_type": null,
+      "columns": [
+        "count"
+      ]
+    },
+    {
+      "driver": "postgres",
+      "migrations": "./migrations",
+      "schema_hash": "893f93e7be07e146",
+      "sql_hash": "c5015fa45e68faaf",
+      "sql": "\nINSERT INTO orders (account_id, item, quantity, express)\nVALUES ($1, $2, $3, $4)\nRETURNING id, account_id, item, quantity, express, placed_at\n",
+      "user_parameter_count": 4,
+      "expanded_parameter_count": 4,
+      "fetch_mode": "one",
+      "row_type": "Order",
+      "columns": [
+        "id",
+        "account_id",
+        "item",
+        "quantity",
+        "express",
+        "placed_at"
+      ]
+    }
+  ]
+}

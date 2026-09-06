@@ -31,6 +31,8 @@ struct DatabaseContext<'a> {
     driver_type: &'a str,
     /// Dart expression producing the unchecked SQL escape hatch.
     unsafe_expr: &'a str,
+    /// Dart expression applying migrations.
+    migrate_expr: &'a str,
     /// Rendered migrations constant.
     migrations: String,
 }
@@ -77,6 +79,7 @@ pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>
             options_type: dialect.options_type,
             driver_type: dialect.runtime_type,
             unsafe_expr: &unsafe_expr,
+            migrate_expr: dialect.migrate_expr,
             migrations,
         },
     )
@@ -264,6 +267,9 @@ mod tests {
   Connection get connection => _driver;
 
   @override
+  Future<Result<Unit, SqlxError>> migrate() => Future<Result<Unit, SqlxError>>.value(const Ok(unit));
+
+  @override
   UnsafeSql get unsafe => Sqlite3UnsafeSql(_driver);
 
   Pool get pool => _driver;
@@ -298,6 +304,9 @@ const Map<String, String> _$appDatabaseMigrations = <String, String>{
 
   @override
   Connection get connection => _driver;
+
+  @override
+  Future<Result<Unit, SqlxError>> migrate() => _driver.migrate();
 
   @override
   UnsafeSql get unsafe => PostgresUnsafeSql(_driver);

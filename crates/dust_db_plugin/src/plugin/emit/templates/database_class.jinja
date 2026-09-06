@@ -15,6 +15,9 @@ final class {{ generated_name }} implements {{ class_name }} {
   Connection get connection => _driver;
 
   @override
+  Future<Result<Unit, SqlxError>> migrate() => {{ migrate_expr }};
+
+  @override
   UnsafeSql get unsafe => {{ unsafe_expr }};
 
   Pool get pool => _driver;

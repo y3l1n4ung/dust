@@ -32,6 +32,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 > `dust_dart: ^0.1.4` resolves to 0.1.5, so an app that pins nothing gets the
 > change without asking for it. Run `dust build` to regenerate.
 
+### Added
+
+- `DatabaseClient.migrate()`, applying the migrations a database was generated
+  with. SQLite applies them while opening, so it returns `Ok`; PostgreSQL is
+  reached over a network and applies them here.
+
 ### Changed
 
 - **Database**: the pool vocabulary follows SQLx. `DatabaseExecutor` is

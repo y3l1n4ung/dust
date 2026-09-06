@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Database**: `DatabaseClient.migrate()` applies the migrations a database was
+  generated with. SQLite applies them while opening and returns `Ok`;
+  PostgreSQL is reached over a network and cannot, so it applies them here. One
+  startup path serves both, and no application needs to know which.
+
+- **Database**: `fixtures/postgres_app` and a CI job that runs it against a
+  `postgres:16` service — validating from the committed query cache with no
+  server first, then building against a real one and checking the cache is
+  current.
+
 - **Database**: PostgreSQL generates and runs. `@SqlxDatabase(type:
   SqlxDatabaseType.postgres)` emits a facade over `PgPool` instead of reporting
   that Postgres is reserved, and the facade's signature follows the database —

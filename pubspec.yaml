@@ -11,6 +11,7 @@ workspace:
   - packages/dust_db_postgres
   - packages/dust_server
   - fixtures/server_app
+  - fixtures/postgres_app
   - examples/product_showcase
   - examples/benchmark_project
 

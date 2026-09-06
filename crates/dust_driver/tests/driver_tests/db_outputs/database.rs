@@ -82,6 +82,9 @@ final class _$AppDatabase implements AppDatabase {
   Connection get connection => _driver;
 
   @override
+  Future<Result<Unit, SqlxError>> migrate() => Future<Result<Unit, SqlxError>>.value(const Ok(unit));
+
+  @override
   UnsafeSql get unsafe => Sqlite3UnsafeSql(_driver);
 
   Pool get pool => _driver;
