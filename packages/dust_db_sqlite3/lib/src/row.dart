@@ -100,9 +100,17 @@ final class Sqlite3Row implements Row {
 
   static T? _coerce<T>(Object? value, String column) {
     if (value == null) return null;
-    if (T == double && value is int) return value.toDouble() as T;
-    if (T == num && value is num) return value as T;
+
+    // First, because it is what almost every read is: the value already has
+    // the type the caller asked for. It also settles `num`, which an `int` and
+    // a `double` both satisfy.
     if (value is T) return value as T;
+
+    // SQLite stores a whole number in a REAL column as an integer, so a column
+    // declared REAL hands back an `int` for `1.0`. Reading it as `double` is
+    // the schema's answer, not a conversion the caller asked for.
+    if (T == double && value is int) return value.toDouble() as T;
+
     throw _sqliteDecodeError(
       'Column `$column` cannot be read as $T.',
       operation: 'read:$column',

@@ -171,6 +171,54 @@ void main() {
     expect(rewrite.parameterOrder, isEmpty);
   });
 
+  group('binding in order', () {
+    // `$1, $2, ...` read in order with nothing left over is bound as it stands,
+    // so the common statement copies no argument list. Everything else still
+    // has to be reordered, and these are the cases that would break if the
+    // short circuit were taken too eagerly.
+
+    test('the usual statement binds its arguments as they stand', () {
+      final rewrite = rewritePlaceholders(r'SELECT $1, $2, $3');
+      expect(rewrite.bindsInOrder, isTrue);
+
+      const arguments = <Object?>['a', 'b', 'c'];
+      expect(
+        identical(orderParameters(rewrite, arguments), arguments),
+        isTrue,
+        reason: 'an in-order bind should not copy the argument list',
+      );
+    });
+
+    test('an out-of-order statement is still reordered', () {
+      final rewrite = rewritePlaceholders(r'SELECT $2, $1');
+      expect(rewrite.bindsInOrder, isFalse);
+      expect(
+        orderParameters(rewrite, const <Object?>['first', 'second']),
+        <Object?>['second', 'first'],
+      );
+    });
+
+    test('a repeated placeholder is still expanded', () {
+      final rewrite = rewritePlaceholders(r'SELECT $1, $1');
+      expect(rewrite.bindsInOrder, isFalse);
+      expect(
+        orderParameters(rewrite, const <Object?>['once']),
+        <Object?>['once', 'once'],
+      );
+    });
+
+    test('an argument the statement never binds is dropped, as before', () {
+      // The order is in order, but there is one argument too many — binding it
+      // would be one parameter more than the statement has placeholders.
+      final rewrite = rewritePlaceholders(r'SELECT $1');
+      expect(rewrite.bindsInOrder, isTrue);
+      expect(
+        orderParameters(rewrite, const <Object?>['kept', 'extra']),
+        <Object?>['kept'],
+      );
+    });
+  });
+
   test('a placeholder past the end of the arguments reports itself', () async {
     final result = await queryExecute(
       r'DELETE FROM users WHERE id = $3',

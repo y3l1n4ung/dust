@@ -9,7 +9,8 @@ library;
 /// One SQL statement rewritten for SQLite, with the bind order it implies.
 final class PlaceholderRewrite {
   /// Records a rewritten statement and the bind order it implies.
-  const PlaceholderRewrite(this.sql, this.parameterOrder);
+  PlaceholderRewrite(this.sql, this.parameterOrder)
+      : bindsInOrder = _isInOrder(parameterOrder);
 
   /// SQL with every `$n` placeholder replaced by `?`.
   final String sql;
@@ -19,6 +20,21 @@ final class PlaceholderRewrite {
   /// Empty when the statement holds no `$n` at all, which is how SQL written
   /// with native `?` placeholders passes through untouched.
   final List<int> parameterOrder;
+
+  /// Whether the placeholders read `$1, $2, ...` in order, each used once.
+  ///
+  /// The usual shape, and the one that needs no reordering at all — so a
+  /// caller's argument list can be bound as it stands. Settled when the rewrite
+  /// is built, because that is cached per statement while the bind runs on
+  /// every call.
+  final bool bindsInOrder;
+
+  static bool _isInOrder(List<int> order) {
+    for (var position = 0; position < order.length; position++) {
+      if (order[position] != position + 1) return false;
+    }
+    return true;
+  }
 }
 
 /// Rewrites of SQL already seen, keyed by the source text.
@@ -69,7 +85,7 @@ PlaceholderRewrite rewritePlaceholders(String sql) {
 
   final rewrite = PlaceholderRewrite(
     order.isEmpty ? sql : buffer.toString(),
-    order,
+    List<int>.unmodifiable(order),
   );
   _rewriteCache[sql] = rewrite;
   return rewrite;
@@ -85,6 +101,15 @@ List<Object?> orderParameters(
   List<Object?> parameters,
 ) {
   if (rewrite.parameterOrder.isEmpty) return parameters;
+
+  // `$1, $2, ...` in order with nothing left over binds as it stands, which is
+  // what nearly every statement is. Copying it would allocate a list per call
+  // to arrive at the same order.
+  if (rewrite.parameterOrder.length == parameters.length &&
+      rewrite.bindsInOrder) {
+    return parameters;
+  }
+
   return <Object?>[
     for (final index in rewrite.parameterOrder)
       if (index <= parameters.length)

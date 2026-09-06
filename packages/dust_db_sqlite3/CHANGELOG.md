@@ -22,6 +22,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   is static literals, but unchecked SQL can be assembled at the call site and an
   unbounded cache would grow with the request count.
 
+- Reading a column tests the value against the type asked for before anything
+  else, which is what almost every read is. The `num` special case it made
+  redundant is gone, so a read is one type test rather than three. Mapping six
+  columns over 1000 rows spent 249us above the driver and now spends 202us.
+
+- A statement whose placeholders read `$1, $2, ...` in order binds the caller's
+  argument list as it stands rather than copying it into bind order. That is
+  nearly every statement, and whether it holds was settled once when the
+  rewrite was cached rather than on each call.
+
 - Typed terminals no longer build a list of row adapters before mapping.
   `fetchOne` and `fetchScalar` wrap the one row they read, and `fetchAll` maps
   straight out of the result set. Only unchecked SQL still materialises rows,
