@@ -32,16 +32,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 > `dust_dart: ^0.1.4` resolves to 0.1.5, so an app that pins nothing gets the
 > change without asking for it. Run `dust build` to regenerate.
 
+### Changed
+
+- **Database**: the pool vocabulary follows SQLx. `DatabaseExecutor` is
+  `Executor` — the type a query runs against, which is what SQLx's `Executor`
+  means — `DatabaseConnection` is `Connection`, and `DatabaseTransaction` is
+  `Transaction`. `Pool` is unchanged. `SqliteConnectOptions` already matched
+  `sqlx-sqlite` exactly, so this finishes a precedent rather than setting one.
+
+  The old `Connection` and `Transaction` marker types are gone: they existed
+  only as aliases of the types that now carry those names.
+
 ### Removed
 
+- The `SqlxDriver` typedef.
 - `queryRaw`, `QueryRaw`, `RawSql`, `RawSqlx`, and the `Executor` interface.
 
-  `Executor` was `DatabaseExecutor` plus a `raw` channel, and every pool,
+  `Executor` was `Executor` plus a `raw` channel, and every pool,
   connection and transaction implemented it — so `db as Executor` always
   succeeded and the fence stopped nobody. With `raw` gone the type has nothing
   left to add, so it goes too. `Pool`, `Connection` and `Transaction` now extend
-  `DatabaseConnection`/`DatabaseTransaction` directly, and `transaction()` hands
-  its callback a `DatabaseTransaction`.
+  `Connection`/`Transaction` directly, and `transaction()` hands
+  its callback a `Transaction`.
 
   Unchecked SQL is `UnsafeSql` on the database facade. A DAO or handler holding
   an executor cannot reach it.
@@ -150,7 +162,7 @@ queryAs<Legacy>(sql, args).fetchOneWith(db, Legacy.fromRow);
 ```
 
 A row library that uses a `show` clause on `package:dust_dart/db.dart` needs
-`QueryAs` and `DatabaseExecutor` added to it.
+`QueryAs` and `Executor` added to it.
 
 ## [0.1.3] - 2026-07-28
 

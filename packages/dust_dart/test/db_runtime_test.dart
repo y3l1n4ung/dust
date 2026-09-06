@@ -63,7 +63,7 @@ void main() {
     expect(() => decodeJsonObject('[1]'), throwsA(isA<FormatException>()));
   });
 
-  test('query helpers delegate to DatabaseExecutor fetch methods', () async {
+  test('query helpers delegate to Executor fetch methods', () async {
     const mapper = _UserFromRow.fromRow;
     final executor = _FakeExecutor();
     final client = _FakeDatabaseClient(executor, _FakeUnsafeSql(executor));
@@ -92,8 +92,8 @@ void main() {
     final unsafeRows = await client.unsafe.fetch('rawx', const []);
     final unsafeExec = await client.unsafe.execute('rawxExec', const []);
 
-    expect(executor, isA<DatabaseExecutor>());
-    expect(executor, isA<DatabaseConnection>());
+    expect(executor, isA<Executor>());
+    expect(executor, isA<Connection>());
     expect(client.executor, same(executor));
     expect(one.match(ok: (user) => user.id, err: (_) => -1), 1);
     expect(optional.match(ok: (user) => user?.id, err: (_) => -1), 2);
@@ -159,7 +159,7 @@ final class _FakeDatabaseClient implements DatabaseClient {
   const _FakeDatabaseClient(this.connection, this.unsafe);
 
   @override
-  final DatabaseConnection connection;
+  final Connection connection;
 
   @override
   final UnsafeSql unsafe;
@@ -233,7 +233,7 @@ final class _FakeExecutor implements Pool {
 
   @override
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(DatabaseTransaction tx) fn,
+    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
   ) {
     throw UnimplementedError();
   }

@@ -589,6 +589,20 @@ one.
 | `PgConnectOptions`, `SqliteConnectOptions` | `SqliteConnectOptions` | unchanged |
 | — | `SqlxDriver` typedef | removed |
 
+The three trait names and the `SqlxDriver` typedef are done. Three rows are not,
+and are waiting on something real rather than on the rename:
+
+- **`PoolConnection`** is what `pool.acquire()` hands back. Nothing acquires
+  anything here — a driver holds one connection — so the name would describe
+  nothing and no call would ever produce one.
+- **`PoolOptions` / `SqlitePoolOptions`** size a pool. There is no pool to size.
+- **`SqliteConnection`** is a single connection where `SqlitePool` is a pool of
+  them. Both would alias the same class today, which reads as a distinction that
+  is not there.
+
+Adding names with nothing behind them would make the vocabulary match SQLx's
+table while meaning less than it appears to. They belong with real pooling.
+
 The collision resolves itself. `Executor` currently means "`DatabaseExecutor`
 plus unchecked `raw` SQL"
 ([`pool.dart:88`](../../packages/dust_dart/lib/src/db/pool.dart)). Once `raw`
@@ -739,12 +753,16 @@ Inline queries take the executor per call and do not have this problem.
    both ([#500](https://github.com/y3l1n4ung/dust/issues/500)).
 3. **Read `nullable()` and `type_info()`**, shipping as warnings until the
    [type-mapping table](#open-questions) exists.
-4. **Terminals return `Result`.** ~~Generate them per row type; delete
-   `RowMapperRegistry`.~~ Both done; what is left is the error surface, since
-   the generated terminals still throw the way the old instance methods did.
-5. **`queryRaw` becomes `unsafeSql`** on the database facade.
+4. ~~**Terminals return `Result`.**~~ Done — the generated terminals hand back
+   `Result` rather than throwing, so the inline path and a DAO agree about what
+   a failed query is.
+5. ~~**`queryRaw` becomes `unsafeSql`** on the database facade.~~ Done — with
+   the `raw` channel and the `Executor` interface that carried it, and a warning
+   at each use that a `dust:allow-unsafe-sql` comment silences one call at a
+   time.
 6. **Name the enclosing function** in call-site diagnostics.
-7. **Rename to SQLx's pool vocabulary.**
+7. ~~**Rename to SQLx's pool vocabulary.**~~ Done for the names that have
+   something behind them — see [Naming](#naming).
 8. **`dust_db_postgres` over `package:postgres`**, with the offline cache as the
    CI path.
 

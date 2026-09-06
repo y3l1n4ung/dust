@@ -74,12 +74,12 @@ abstract class AppDatabase implements DatabaseClient {
   }) = _$AppDatabase.open;
 
   @override
-  DatabaseConnection get connection;
+  Connection get connection;
 }
 
 @SqlxDao()
 abstract final class UserDao {
-  const factory UserDao(DatabaseExecutor db) = _$UserDao;
+  const factory UserDao(Executor db) = _$UserDao;
 
   @Query(r'SELECT id, email, name FROM users WHERE id = $1')
   Future<Result<UserRow?, SqlxError>> findById(int id);
@@ -272,10 +272,10 @@ Order _$OrderFromRow(Row row) { ... }
 final class $OrderRowDeserializer implements RowDeserializer<Order> { ... }
 
 extension $OrderQuery on QueryAs<Order> {
-  Future<Result<Order, SqlxError>> fetchOne(DatabaseExecutor db) =>
+  Future<Result<Order, SqlxError>> fetchOne(Executor db) =>
       fetchOneWith(db, _$OrderFromRow);
-  Future<Result<Order?, SqlxError>> fetchOptional(DatabaseExecutor db) => ...;
-  Future<Result<List<Order>, SqlxError>> fetchAll(DatabaseExecutor db) => ...;
+  Future<Result<Order?, SqlxError>> fetchOptional(Executor db) => ...;
+  Future<Result<List<Order>, SqlxError>> fetchAll(Executor db) => ...;
 }
 ```
 
@@ -345,7 +345,7 @@ final row = await queryAs<Legacy>(
 ```
 
 If the row library uses a `show` clause on `package:dust_dart/db.dart`, it needs
-`QueryAs`, `DatabaseExecutor`, `Row`, `RowDeserializer`, `Result`, and
+`QueryAs`, `Executor`, `Row`, `RowDeserializer`, `Result`, and
 `SqlxError` for the generated part to compile.
 
 ## Error Context

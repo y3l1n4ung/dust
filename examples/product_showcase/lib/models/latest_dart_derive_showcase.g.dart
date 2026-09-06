@@ -249,15 +249,15 @@ final class $LatestDartProductCardRowDeserializer implements RowDeserializer<Lat
 /// `FromRow` has no terminals and the call does not compile.
 extension $LatestDartProductCardQuery on QueryAs<LatestDartProductCard> {
   /// Fetches exactly one row.
-  Future<Result<LatestDartProductCard, SqlxError>> fetchOne(DatabaseExecutor db) =>
+  Future<Result<LatestDartProductCard, SqlxError>> fetchOne(Executor db) =>
       fetchOneWith(db, _$LatestDartProductCardFromRow);
 
   /// Fetches zero or one row.
-  Future<Result<LatestDartProductCard?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<LatestDartProductCard?, SqlxError>> fetchOptional(Executor db) =>
       fetchOptionalWith(db, _$LatestDartProductCardFromRow);
 
   /// Fetches every row.
-  Future<Result<List<LatestDartProductCard>, SqlxError>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<LatestDartProductCard>, SqlxError>> fetchAll(Executor db) =>
       fetchAllWith(db, _$LatestDartProductCardFromRow);
 }
 

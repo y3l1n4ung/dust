@@ -8,7 +8,7 @@ part 'orders_repo.g.dart';
 @SqlxDao()
 abstract final class OrdersRepo {
   /// Binds the queries to [db].
-  const factory OrdersRepo(DatabaseExecutor db) = _$OrdersRepo;
+  const factory OrdersRepo(Executor db) = _$OrdersRepo;
 
   /// One page of an account's orders, newest first.
   ///
@@ -68,7 +68,7 @@ DELETE FROM orders WHERE id = $1 AND account_id = $2
 /// query genuinely is dynamic and belongs on the facade's `unsafe` hatch, where
 /// it is visible as such.
 Future<Result<List<Order>, SqlxError>> searchOrders(
-  DatabaseExecutor db, {
+  Executor db, {
   required int accountId,
   String? item,
   int? minQuantity,

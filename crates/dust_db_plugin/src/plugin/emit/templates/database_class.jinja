@@ -12,7 +12,7 @@ final class {{ generated_name }} implements {{ class_name }} {
   final {{ driver_type }} _driver;
 
   @override
-  DatabaseConnection get connection => _driver;
+  Connection get connection => _driver;
 
   @override
   UnsafeSql get unsafe => {{ unsafe_expr }};

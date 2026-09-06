@@ -17,7 +17,7 @@ void main() {
         await app.close();
       });
 
-      expect(app.connection, isA<DatabaseConnection>());
+      expect(app.connection, isA<Connection>());
 
       await app.connection.seedProductCache();
       expect(
@@ -146,7 +146,7 @@ void main() {
   });
 }
 
-extension _ShoppingSeedQueries on DatabaseExecutor {
+extension _ShoppingSeedQueries on Executor {
   Future<void> seedProductCache() async {
     await queryExecute(
       r'INSERT INTO product_cache (id, title, price, description, category, image, rating_rate, rating_count, payload, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',

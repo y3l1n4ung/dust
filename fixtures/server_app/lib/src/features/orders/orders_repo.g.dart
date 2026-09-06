@@ -16,7 +16,7 @@ part of 'orders_repo.dart';
 final class _$OrdersRepo implements OrdersRepo {
   const _$OrdersRepo(this._db);
 
-  final DatabaseExecutor _db;
+  final Executor _db;
 
   @override
   Future<Result<List<Order>, SqlxError>> pageFor(int accountId, int limit, int offset) {

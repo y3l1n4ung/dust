@@ -1,6 +1,6 @@
 import 'package:dust_dart/db.dart'
     show
-        DatabaseExecutor,
+        Executor,
         FromRow,
         QueryAs,
         Result,

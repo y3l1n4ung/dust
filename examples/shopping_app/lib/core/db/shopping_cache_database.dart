@@ -21,7 +21,7 @@ abstract class ShoppingCacheDatabase implements DatabaseClient {
 
   /// Open database connection.
   @override
-  DatabaseConnection get connection;
+  Connection get connection;
 
   /// Backwards-compatible pool accessor.
   Pool get pool;
@@ -30,7 +30,7 @@ abstract class ShoppingCacheDatabase implements DatabaseClient {
 /// Shopping cache DAO.
 @SqlxDao()
 abstract final class ShoppingCacheDao {
-  const factory ShoppingCacheDao(DatabaseExecutor db) = _$ShoppingCacheDao;
+  const factory ShoppingCacheDao(Executor db) = _$ShoppingCacheDao;
 
   /// Finds cached product.
   @Query(r'''
@@ -95,7 +95,7 @@ ORDER BY saved_at DESC
 }
 
 /// Shopping cache queries.
-extension ShoppingCacheQueries on DatabaseExecutor {
+extension ShoppingCacheQueries on Executor {
   /// Finds cached product.
   Future<CachedProductRow?> findCachedProduct(int id) {
     return _unwrapSqlx(ShoppingCacheDao(this).findCachedProduct(id));
@@ -146,7 +146,7 @@ extension ShoppingCacheQueries on DatabaseExecutor {
 }
 
 /// Shopping product cache queries.
-extension ShoppingProductCacheQueries on DatabaseExecutor {
+extension ShoppingProductCacheQueries on Executor {
   /// Replaces product cache.
   Future<void> replaceProductCache(List<Product> products) {
     return transaction((tx) async {

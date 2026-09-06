@@ -101,15 +101,15 @@ final class $UserRowRowDeserializer implements RowDeserializer<UserRow> {
 /// `FromRow` has no terminals and the call does not compile.
 extension $UserRowQuery on QueryAs<UserRow> {
   /// Fetches exactly one row.
-  Future<Result<UserRow, SqlxError>> fetchOne(DatabaseExecutor db) =>
+  Future<Result<UserRow, SqlxError>> fetchOne(Executor db) =>
       fetchOneWith(db, _$UserRowFromRow);
 
   /// Fetches zero or one row.
-  Future<Result<UserRow?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<UserRow?, SqlxError>> fetchOptional(Executor db) =>
       fetchOptionalWith(db, _$UserRowFromRow);
 
   /// Fetches every row.
-  Future<Result<List<UserRow>, SqlxError>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<UserRow>, SqlxError>> fetchAll(Executor db) =>
       fetchAllWith(db, _$UserRowFromRow);
 }"#
     );

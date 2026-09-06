@@ -16,7 +16,7 @@ part of 'inventory_repo.dart';
 final class _$InventoryRepo implements InventoryRepo {
   const _$InventoryRepo(this._db);
 
-  final DatabaseExecutor _db;
+  final Executor _db;
 
   @override
   Future<Result<Stock?, SqlxError>> stockFor(String item) {

@@ -22,7 +22,7 @@ struct DatabaseContext<'a> {
     open_expr: String,
     /// Concrete driver type the facade holds.
     ///
-    /// The facade keeps the driver rather than a `DatabaseConnection` so that
+    /// The facade keeps the driver rather than a `Connection` so that
     /// `unsafe` needs no cast, and so that a handler holding an executor has no
     /// route to it.
     driver_type: &'a str,
@@ -256,7 +256,7 @@ mod tests {
   final Sqlite3Driver _driver;
 
   @override
-  DatabaseConnection get connection => _driver;
+  Connection get connection => _driver;
 
   @override
   UnsafeSql get unsafe => Sqlite3UnsafeSql(_driver);
@@ -284,7 +284,7 @@ const Map<String, String> _$appDatabaseMigrations = <String, String>{
   final Never _driver;
 
   @override
-  DatabaseConnection get connection => _driver;
+  Connection get connection => _driver;
 
   @override
   UnsafeSql get unsafe => throw UnsupportedError('Driver.postgres is not supported in Database v1');

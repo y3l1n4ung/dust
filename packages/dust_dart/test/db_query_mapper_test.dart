@@ -50,13 +50,13 @@ final class $UserRowDeserializer implements RowDeserializer<FakeUser> {
 }
 
 extension $UserQuery on QueryAs<FakeUser> {
-  Future<Result<FakeUser, SqlxError>> fetchOne(DatabaseExecutor db) =>
+  Future<Result<FakeUser, SqlxError>> fetchOne(Executor db) =>
       fetchOneWith(db, _$UserFromRow);
 
-  Future<Result<FakeUser?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<FakeUser?, SqlxError>> fetchOptional(Executor db) =>
       fetchOptionalWith(db, _$UserFromRow);
 
-  Future<Result<List<FakeUser>, SqlxError>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<FakeUser>, SqlxError>> fetchAll(Executor db) =>
       fetchAllWith(db, _$UserFromRow);
 }
 
@@ -73,7 +73,7 @@ final class FakeUntyped {
   final int id;
 }
 
-final class _CapturingExecutor implements DatabaseConnection {
+final class _CapturingExecutor implements Connection {
   final calls = <String>[];
 
   @override
@@ -125,7 +125,7 @@ final class _CapturingExecutor implements DatabaseConnection {
 
   @override
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(DatabaseTransaction tx) fn,
+    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
   ) {
     throw UnimplementedError();
   }

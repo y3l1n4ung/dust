@@ -179,7 +179,7 @@ void main() {
       await pool.close();
     });
 
-    late DatabaseTransaction captured;
+    late Transaction captured;
     final result = await pool.transaction<Unit>((tx) async {
       captured = tx;
       await _insertUser(tx, 1, 'Ada');
@@ -244,7 +244,7 @@ SqlitePool _userPool() {
   );
 }
 
-Future<void> _insertUser(DatabaseExecutor db, int id, String name) async {
+Future<void> _insertUser(Executor db, int id, String name) async {
   final result =
       await db.execute(r'INSERT INTO users (id, name) VALUES (?, ?)', [
     id,

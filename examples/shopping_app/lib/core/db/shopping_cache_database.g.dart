@@ -31,7 +31,7 @@ final class _$ShoppingCacheDatabase implements ShoppingCacheDatabase {
   final Sqlite3Driver _driver;
 
   @override
-  DatabaseConnection get connection => _driver;
+  Connection get connection => _driver;
 
   @override
   UnsafeSql get unsafe => Sqlite3UnsafeSql(_driver);
@@ -47,7 +47,7 @@ const Map<String, String> _$shoppingCacheDatabaseMigrations = <String, String>{
 final class _$ShoppingCacheDao implements ShoppingCacheDao {
   const _$ShoppingCacheDao(this._db);
 
-  final DatabaseExecutor _db;
+  final Executor _db;
 
   @override
   Future<Result<CachedProductRow?, SqlxError>> findCachedProduct(int id) {

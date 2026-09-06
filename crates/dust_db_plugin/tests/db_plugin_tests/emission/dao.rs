@@ -178,22 +178,22 @@ final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> 
 /// `FromRow` has no terminals and the call does not compile.
 extension $UserProfileQuery on QueryAs<UserProfile> {
   /// Fetches exactly one row.
-  Future<Result<UserProfile, SqlxError>> fetchOne(DatabaseExecutor db) =>
+  Future<Result<UserProfile, SqlxError>> fetchOne(Executor db) =>
       fetchOneWith(db, _$UserProfileFromRow);
 
   /// Fetches zero or one row.
-  Future<Result<UserProfile?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<UserProfile?, SqlxError>> fetchOptional(Executor db) =>
       fetchOptionalWith(db, _$UserProfileFromRow);
 
   /// Fetches every row.
-  Future<Result<List<UserProfile>, SqlxError>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<UserProfile>, SqlxError>> fetchAll(Executor db) =>
       fetchAllWith(db, _$UserProfileFromRow);
 }
 
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final DatabaseExecutor _db;
+  final Executor _db;
 
   @override
   Future<Result<UserProfile?, SqlxError>> findById(int id) {
@@ -248,22 +248,22 @@ final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> 
 /// `FromRow` has no terminals and the call does not compile.
 extension $UserProfileQuery on QueryAs<UserProfile> {
   /// Fetches exactly one row.
-  Future<Result<UserProfile, SqlxError>> fetchOne(DatabaseExecutor db) =>
+  Future<Result<UserProfile, SqlxError>> fetchOne(Executor db) =>
       fetchOneWith(db, _$UserProfileFromRow);
 
   /// Fetches zero or one row.
-  Future<Result<UserProfile?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<UserProfile?, SqlxError>> fetchOptional(Executor db) =>
       fetchOptionalWith(db, _$UserProfileFromRow);
 
   /// Fetches every row.
-  Future<Result<List<UserProfile>, SqlxError>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<UserProfile>, SqlxError>> fetchAll(Executor db) =>
       fetchAllWith(db, _$UserProfileFromRow);
 }
 
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final DatabaseExecutor _db;
+  final Executor _db;
 
   @override
   Future<Result<UserProfile, SqlxError>> findRequired(int id) {
@@ -306,7 +306,7 @@ fn expected_imported_dao_output() -> &'static str {
     r#"final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final DatabaseExecutor _db;
+  final Executor _db;
 
   @override
   Future<Result<UserProfile?, SqlxError>> findById(int id) {
@@ -357,22 +357,22 @@ final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> 
 /// `FromRow` has no terminals and the call does not compile.
 extension $UserProfileQuery on QueryAs<UserProfile> {
   /// Fetches exactly one row.
-  Future<Result<UserProfile, SqlxError>> fetchOne(DatabaseExecutor db) =>
+  Future<Result<UserProfile, SqlxError>> fetchOne(Executor db) =>
       fetchOneWith(db, _$UserProfileFromRow);
 
   /// Fetches zero or one row.
-  Future<Result<UserProfile?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<UserProfile?, SqlxError>> fetchOptional(Executor db) =>
       fetchOptionalWith(db, _$UserProfileFromRow);
 
   /// Fetches every row.
-  Future<Result<List<UserProfile>, SqlxError>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<UserProfile>, SqlxError>> fetchAll(Executor db) =>
       fetchAllWith(db, _$UserProfileFromRow);
 }
 
 final class _$UserDao implements UserDao {
   const _$UserDao(this._db);
 
-  final DatabaseExecutor _db;
+  final Executor _db;
 
   @override
   Future<Result<UserProfile?, SqlxError>> findForOrg(int id, int orgId) {

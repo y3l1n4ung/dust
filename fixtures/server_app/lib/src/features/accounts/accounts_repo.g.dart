@@ -16,7 +16,7 @@ part of 'accounts_repo.dart';
 final class _$AccountsRepo implements AccountsRepo {
   const _$AccountsRepo(this._db);
 
-  final DatabaseExecutor _db;
+  final Executor _db;
 
   @override
   Future<Result<Account?, SqlxError>> accountForToken(String tokenHash, String now) {

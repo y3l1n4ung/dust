@@ -31,7 +31,7 @@ final class _$AppDatabase implements AppDatabase {
   final Sqlite3Driver _driver;
 
   @override
-  DatabaseConnection get connection => _driver;
+  Connection get connection => _driver;
 
   @override
   UnsafeSql get unsafe => Sqlite3UnsafeSql(_driver);

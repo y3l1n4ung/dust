@@ -86,7 +86,7 @@ void main() {
     // difference from the old `raw`, which sat on Executor: `db as Executor`
     // always succeeded because every pool, connection and transaction
     // implements it.
-    expect(pool, isA<DatabaseExecutor>());
+    expect(pool, isA<Executor>());
     expect(pool, isNot(isA<DatabaseClient>()));
 
     final escaped = await pool.transaction<bool>((tx) async {

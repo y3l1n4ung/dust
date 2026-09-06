@@ -6,13 +6,13 @@ part 'accounts_repo.g.dart';
 
 /// Every query the accounts feature makes.
 ///
-/// One DAO per feature, bound to a [DatabaseExecutor] so the same queries run
+/// One DAO per feature, bound to a [Executor] so the same queries run
 /// on the connection or inside a transaction. A feature owning its own queries
 /// is what keeps a schema change to one directory.
 @SqlxDao()
 abstract final class AccountsRepo {
   /// Binds the queries to [db].
-  const factory AccountsRepo(DatabaseExecutor db) = _$AccountsRepo;
+  const factory AccountsRepo(Executor db) = _$AccountsRepo;
 
   /// The account a token belongs to, if it exists and has not expired.
   ///

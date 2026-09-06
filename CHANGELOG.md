@@ -30,8 +30,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   described and never enters the committed query cache — its text may be
   dynamic, so no build could reproduce the entry.
 
+### Changed
+
+- **Database**: the pool vocabulary follows SQLx. `DatabaseExecutor` becomes
+  `Executor`, `DatabaseConnection` becomes `Connection`, and
+  `DatabaseTransaction` becomes `Transaction`; `Pool` is unchanged. Dust's names
+  diverged for no reason and in one place inverted SQLx's, since `Executor` had
+  been taken by a different type. Rename call sites; the shapes are identical.
+
 ### Removed
 
+- **Database**: the `SqlxDriver` typedef, and the `Connection` and `Transaction`
+  marker types that aliased what are now the real names.
 - **Database**: `queryRaw`, `QueryRaw`, and the `raw` channel on executors, with
   the `Executor` interface that carried it. `Executor` was `DatabaseExecutor`
   plus `raw`, and `Pool`, `Connection` and `Transaction` all implemented it, so

@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Removed
 
 - The `raw` channel on drivers and transactions, with `dust_dart`'s `RawSql`.
-  `Sqlite3Executor` implements `DatabaseExecutor` now. Use the facade's
+  `Sqlite3Executor` implements `Executor` now. Use the facade's
   `unsafe`, or `Sqlite3UnsafeSql(driver)` where no facade exists.
 
 - A `List` argument is bound as JSON text, so a set membership test is one

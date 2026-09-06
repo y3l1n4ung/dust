@@ -136,15 +136,15 @@ final class $OrderRowDeserializer implements RowDeserializer<Order> {
 /// `FromRow` has no terminals and the call does not compile.
 extension $OrderQuery on QueryAs<Order> {
   /// Fetches exactly one row.
-  Future<Result<Order, SqlxError>> fetchOne(DatabaseExecutor db) =>
+  Future<Result<Order, SqlxError>> fetchOne(Executor db) =>
       fetchOneWith(db, _$OrderFromRow);
 
   /// Fetches zero or one row.
-  Future<Result<Order?, SqlxError>> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<Order?, SqlxError>> fetchOptional(Executor db) =>
       fetchOptionalWith(db, _$OrderFromRow);
 
   /// Fetches every row.
-  Future<Result<List<Order>, SqlxError>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<Order>, SqlxError>> fetchAll(Executor db) =>
       fetchAllWith(db, _$OrderFromRow);
 }
 

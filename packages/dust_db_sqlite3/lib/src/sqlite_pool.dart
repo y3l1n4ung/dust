@@ -13,7 +13,7 @@ part 'transaction.dart';
 part 'unsafe_sql.dart';
 
 /// SQLite-backed executor with access to the underlying native database.
-abstract interface class Sqlite3Executor implements DatabaseExecutor {
+abstract interface class Sqlite3Executor implements Executor {
   /// Native `package:sqlite3` database used by this executor.
   sqlite.Database get database;
 }
@@ -186,7 +186,7 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
 
   @override
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(DatabaseTransaction tx) fn,
+    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
   ) async {
     return _runTransaction(fn);
   }
@@ -288,5 +288,9 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
   }
 }
 
-/// Backwards-compatible SQLite pool name.
+/// The SQLite pool, named as `sqlx-sqlite` names it.
+///
+/// SQLx separates `SqlitePool` from `SqliteConnection` because a pool hands out
+/// connections. This driver holds one connection and is both, so there is one
+/// type here under the name callers reach for.
 typedef SqlitePool = Sqlite3Driver;

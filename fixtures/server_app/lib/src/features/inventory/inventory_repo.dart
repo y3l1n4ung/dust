@@ -12,7 +12,7 @@ abstract final class InventoryRepo {
   /// That parameter is why a repo and a database are different types: reserving
   /// stock and writing an order are one unit of work, and half of it is worse
   /// than neither.
-  const factory InventoryRepo(DatabaseExecutor db) = _$InventoryRepo;
+  const factory InventoryRepo(Executor db) = _$InventoryRepo;
 
   /// What is left of one item.
   @Query(r'SELECT item, on_hand FROM stock WHERE item = $1')

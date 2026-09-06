@@ -21,7 +21,7 @@ final class QueryAs<T> {
   /// Dust owns needs no mapper at the call. Reach for this directly only for a
   /// row type Dust does not generate.
   Future<Result<T, SqlxError>> fetchOneWith(
-    DatabaseExecutor db,
+    Executor db,
     RowMapper<T> mapper,
   ) {
     return db.fetchOne<T>(sql, parameters, mapper);
@@ -29,7 +29,7 @@ final class QueryAs<T> {
 
   /// Fetches zero or one row, decoding it with [mapper] when present.
   Future<Result<T?, SqlxError>> fetchOptionalWith(
-    DatabaseExecutor db,
+    Executor db,
     RowMapper<T> mapper,
   ) {
     return db.fetchOptional<T>(sql, parameters, mapper);
@@ -37,7 +37,7 @@ final class QueryAs<T> {
 
   /// Fetches every row, decoding each with [mapper].
   Future<Result<List<T>, SqlxError>> fetchAllWith(
-    DatabaseExecutor db,
+    Executor db,
     RowMapper<T> mapper,
   ) {
     return db.fetchAll<T>(sql, parameters, mapper);
@@ -56,12 +56,12 @@ final class QueryScalar<T> {
   final List<Object?> parameters;
 
   /// Fetches exactly one scalar value.
-  Future<Result<T, SqlxError>> fetchOne(DatabaseExecutor db) {
+  Future<Result<T, SqlxError>> fetchOne(Executor db) {
     return db.fetchScalar<T>(sql, parameters);
   }
 
   /// Fetches zero or one scalar value.
-  Future<Result<T?, SqlxError>> fetchOptional(DatabaseExecutor db) {
+  Future<Result<T?, SqlxError>> fetchOptional(Executor db) {
     return db.fetchScalar<T?>(sql, parameters);
   }
 }
@@ -78,7 +78,7 @@ final class QueryExecute {
   final List<Object?> parameters;
 
   /// Executes this statement and returns execution metadata.
-  Future<Result<ExecResult, SqlxError>> execute(DatabaseExecutor db) {
+  Future<Result<ExecResult, SqlxError>> execute(Executor db) {
     return db.execute(sql, parameters);
   }
 }
