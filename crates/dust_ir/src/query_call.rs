@@ -21,6 +21,8 @@ pub struct QueryCallIr {
     pub fetch_method: Option<String>,
     /// Whether the call supplied its own row mapper or row deserializer.
     pub has_row_mapper_argument: bool,
+    /// Whether a `dust:allow-unsafe-sql` marker covers this call.
+    pub unsafe_sql_allowed: bool,
     /// The source span for the query helper invocation.
     pub span: SpanIr,
 }
@@ -34,4 +36,6 @@ pub enum QueryFunctionIr {
     Scalar,
     /// `queryExecute(...)`.
     Execute,
+    /// Unchecked SQL through the database facade's `unsafe` escape hatch.
+    Unsafe,
 }

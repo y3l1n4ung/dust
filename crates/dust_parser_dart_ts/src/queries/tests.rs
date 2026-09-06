@@ -127,3 +127,43 @@ fn calls_for(source: &str) -> Vec<ParsedQueryCallSurface> {
 
     extract_query_calls(tree.root_node(), &source)
 }
+
+#[test]
+fn extracts_unchecked_sql_through_the_facade() {
+    let calls = calls_for("database.unsafe.fetch('PRAGMA table_info(users)', const []);");
+
+    assert_eq!(calls.len(), 1);
+    assert_eq!(calls[0].function, ParsedQueryFunction::Unsafe);
+    assert_eq!(calls[0].sql, "PRAGMA table_info(users)");
+    assert_eq!(calls[0].fetch_method.as_deref(), Some("fetch"));
+    assert!(!calls[0].unsafe_sql_allowed);
+}
+
+#[test]
+fn extracts_unchecked_sql_terminals_and_type_arguments() {
+    let calls = calls_for(
+        "db.unsafe.execute('VACUUM', const []);\n         db.unsafe.fetchAs<UserRow>('SELECT id FROM users', const [], mapper);",
+    );
+
+    assert_eq!(calls.len(), 2);
+    assert_eq!(calls[0].fetch_method.as_deref(), Some("execute"));
+    assert_eq!(calls[1].fetch_method.as_deref(), Some("fetchAs"));
+    assert_eq!(calls[1].type_arg_source.as_deref(), Some("UserRow"));
+}
+
+#[test]
+fn a_marker_comment_allows_one_unchecked_call() {
+    let above = calls_for(
+        "// dust:allow-unsafe-sql\n         database.unsafe.execute('VACUUM', const []);",
+    );
+    let trailing =
+        calls_for("database.unsafe.execute('VACUUM', const []); // dust:allow-unsafe-sql");
+    let unmarked = calls_for(
+        "// dust:allow-unsafe-sql\n\n         database.unsafe.execute('VACUUM', const []);",
+    );
+
+    assert!(above[0].unsafe_sql_allowed);
+    assert!(trailing[0].unsafe_sql_allowed);
+    // Two lines away is not "this call", or one marker would cover a file.
+    assert!(!unmarked[0].unsafe_sql_allowed);
+}

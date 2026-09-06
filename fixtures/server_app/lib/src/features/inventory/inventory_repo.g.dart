@@ -37,6 +37,19 @@ final class _$InventoryRepo implements InventoryRepo {
   }
 
   @override
+  Future<Result<List<Stock>, SqlxError>> stockForItems(List<String> items) {
+    return _db.fetchAll<Stock>(
+      r'''
+SELECT item, on_hand FROM stock
+WHERE item IN (SELECT value FROM json_each(?))
+ORDER BY item
+''',
+      [items],
+      const $StockRowDeserializer().deserialize,
+    );
+  }
+
+  @override
   Future<Result<ExecResult, SqlxError>> addStock(String item, int quantity) {
     return _db.execute(
       r'''

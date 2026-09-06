@@ -22,6 +22,19 @@ abstract final class InventoryRepo {
   @Query(r'SELECT item, on_hand FROM stock ORDER BY item')
   Future<Result<List<Stock>, SqlxError>> allStock();
 
+  /// What is left of each of [items].
+  ///
+  /// An `IN` list needs no dynamic SQL. The list is one bound value, the driver
+  /// encodes it, and `json_each` unpacks it — so the text is constant and
+  /// `describe` checks it like any other query. Building `IN (?, ?, ?)` at the
+  /// call site would put this query outside validation for no gain.
+  @Query(r'''
+SELECT item, on_hand FROM stock
+WHERE item IN (SELECT value FROM json_each($1))
+ORDER BY item
+''')
+  Future<Result<List<Stock>, SqlxError>> stockForItems(List<String> items);
+
   /// Adds stock, creating the row when it is the first of its kind.
   @Query(r'''
 INSERT INTO stock (item, on_hand) VALUES ($1, $2)

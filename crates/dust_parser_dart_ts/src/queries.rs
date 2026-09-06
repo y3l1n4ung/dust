@@ -24,7 +24,10 @@ pub(crate) fn extract_query_calls(
 
 /// Fast source check for query helper names.
 fn might_contain_query_helper(source: &str) -> bool {
-    source.contains("queryAs") || source.contains("queryScalar") || source.contains("queryExecute")
+    source.contains("queryAs")
+        || source.contains("queryScalar")
+        || source.contains("queryExecute")
+        || source.contains(".unsafe")
 }
 
 /// Recursively collects query helper calls.
@@ -36,6 +39,11 @@ fn collect_calls(node: Node<'_>, source: &SourceText, out: &mut Vec<ParsedQueryC
     }
     if node.kind() != "call_expression"
         && let Some(call) = lower_selector_query_chain(node, source)
+    {
+        out.push(call);
+    }
+    if node.kind() != "call_expression"
+        && let Some(call) = lower_unsafe_sql_chain(node, source)
     {
         out.push(call);
     }
@@ -116,6 +124,83 @@ fn lower_selector_query_chain(
     None
 }
 
+/// Lowers `<facade>.unsafe.fetch(...)`, `.fetchAs(...)`, or `.execute(...)`.
+///
+/// The escape hatch is a member chain rather than a helper function, so it
+/// parses as a selector chain and not as a call expression with a named
+/// callee. Collecting it here is what lets one warning per use be reported
+/// from the same place every other query call is validated.
+fn lower_unsafe_sql_chain(node: Node<'_>, source: &SourceText) -> Option<ParsedQueryCallSurface> {
+    if node.child_count() < 3 {
+        return None;
+    }
+
+    let children = named_children(node);
+    for (index, child) in children.iter().enumerate() {
+        if child.kind() != "selector"
+            || selector_property_name(*child, source).as_deref() != Some("unsafe")
+        {
+            continue;
+        }
+
+        let terminal = children.get(index + 1).filter(|s| s.kind() == "selector")?;
+        let method = selector_property_name(*terminal, source)
+            .filter(|name| matches!(name.as_str(), "fetch" | "fetchAs" | "execute"))?;
+
+        // `fetchAs<T>` carries its type argument in a selector of its own.
+        let mut args_index = index + 2;
+        let type_arg_source = children
+            .get(args_index)
+            .filter(|selector| selector.kind() == "selector")
+            .and_then(|selector| selector_type_arguments_source(*selector, source));
+        if type_arg_source.is_some() {
+            args_index += 1;
+        }
+
+        let args_selector = children
+            .get(args_index)
+            .filter(|s| s.kind() == "selector")?;
+        let args = selector_argument_sources(*args_selector, source)?;
+        let span = TextRange::new(child.start_byte() as u32, args_selector.end_byte() as u32);
+
+        let mut surface = query_call_surface(
+            ParsedQueryFunction::Unsafe,
+            type_arg_source,
+            args,
+            Some(method),
+            span,
+        );
+        surface.unsafe_sql_allowed = unsafe_sql_allowed_at(source, child.start_byte());
+        return Some(surface);
+    }
+
+    None
+}
+
+/// Marker comment that silences the warning for one unchecked SQL call.
+const UNSAFE_SQL_ALLOW_MARKER: &str = "dust:allow-unsafe-sql";
+
+/// Returns whether a marker comment covers the call starting at `offset`.
+///
+/// The marker is accepted on the call's own line or on the line above it, which
+/// are the two places a reader looks. Anything wider would let one marker cover
+/// a whole file, and the point is that each use reads as a deliberate line in a
+/// diff.
+fn unsafe_sql_allowed_at(source: &SourceText, offset: usize) -> bool {
+    let text = source.as_str();
+    let line_start = text[..offset].rfind('\n').map_or(0, |at| at + 1);
+    let line_end = text[offset..]
+        .find('\n')
+        .map_or(text.len(), |at| offset + at);
+    if text[line_start..line_end].contains(UNSAFE_SQL_ALLOW_MARKER) {
+        return true;
+    }
+    let previous_start = text[..line_start.saturating_sub(1)]
+        .rfind('\n')
+        .map_or(0, |at| at + 1);
+    text[previous_start..line_start].contains(UNSAFE_SQL_ALLOW_MARKER)
+}
+
 /// Returns whether a node has a direct query helper identifier child.
 fn has_direct_query_identifier(node: Node<'_>, source: &SourceText) -> bool {
     let mut cursor = node.walk();
@@ -159,6 +244,7 @@ fn query_call_surface(
         params_source_is_list,
         fetch_method,
         has_row_mapper_argument,
+        unsafe_sql_allowed: false,
         span,
     }
 }

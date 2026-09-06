@@ -69,6 +69,8 @@ pub(crate) enum QueryFunction {
     Scalar,
     /// Execute-only query, `queryExecute`.
     Execute,
+    /// Unchecked SQL through the database facade's `unsafe` escape hatch.
+    Unsafe,
     /// A DAO return shape with no checked query behind it.
     ///
     /// This used to be folded in with `queryRaw`, which meant an unsupported
@@ -127,6 +129,8 @@ pub(crate) struct QuerySpec {
     pub(crate) params_source_is_list: bool,
     /// Whether the call site supplied its own row mapper or row deserializer.
     pub(crate) has_row_mapper_argument: bool,
+    /// Whether a `dust:allow-unsafe-sql` marker covers this call.
+    pub(crate) unsafe_sql_allowed: bool,
     /// Source span of the query call.
     pub(crate) span: SpanIr,
     /// Optional display name for diagnostics and cache keys.
@@ -154,6 +158,7 @@ impl QuerySpec {
                     .unwrap_or(DART_DYNAMIC)
             ),
             QueryFunction::Execute => "queryExecute".to_owned(),
+            QueryFunction::Unsafe => "unsafeSql".to_owned(),
             QueryFunction::Unsupported => "query".to_owned(),
         }
     }
@@ -234,6 +239,7 @@ mod tests {
             parameter_count: 0,
             params_source_is_list: true,
             has_row_mapper_argument: false,
+            unsafe_sql_allowed: false,
             span: span(),
             display_name: None,
         }

@@ -5,6 +5,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+use dust_diagnostics::Severity;
 use dust_ir::{DartFileIr, SpanIr, TypeIr};
 use dust_text::{FileId, TextRange};
 
@@ -37,6 +38,7 @@ fn query(function: QueryFunction, fetch: FetchMode) -> QuerySpec {
         parameter_count: 1,
         params_source_is_list: true,
         has_row_mapper_argument: false,
+        unsafe_sql_allowed: false,
         span: span(),
         display_name: Some("test.query".to_owned()),
     }
@@ -170,6 +172,52 @@ fn query_shape_validation_rejects_invalid_fetch_shapes() {
             "queryExecute must end with execute",
         ]
     );
+}
+
+#[test]
+fn unchecked_sql_warns_once_per_call_and_skips_every_other_check() {
+    let mut diagnostics = Vec::new();
+    // Dynamic SQL and a non-list parameter argument are exactly what the escape
+    // hatch is for, so neither may be reported against it.
+    validate_query_shape(
+        &QuerySpec {
+            sql_source_static: false,
+            params_source_is_list: false,
+            ..query(QueryFunction::Unsafe, FetchMode::Unsupported)
+        },
+        &mut diagnostics,
+    );
+
+    assert_eq!(diagnostics.len(), 1, "{diagnostics:?}");
+    assert_eq!(diagnostics[0].severity, Severity::Warning);
+    assert!(
+        diagnostics[0]
+            .message
+            .contains("unchecked SQL bypasses build-time validation"),
+        "{diagnostics:?}"
+    );
+    assert!(
+        diagnostics[0]
+            .notes
+            .iter()
+            .any(|note| note.contains("dust:allow-unsafe-sql")),
+        "{diagnostics:?}"
+    );
+}
+
+#[test]
+fn a_marker_comment_silences_the_unchecked_sql_warning() {
+    let mut diagnostics = Vec::new();
+    validate_query_shape(
+        &QuerySpec {
+            unsafe_sql_allowed: true,
+            sql_source_static: false,
+            ..query(QueryFunction::Unsafe, FetchMode::Unsupported)
+        },
+        &mut diagnostics,
+    );
+
+    assert_eq!(diagnostics, Vec::new());
 }
 
 #[test]

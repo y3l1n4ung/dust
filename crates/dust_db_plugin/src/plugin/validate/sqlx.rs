@@ -158,7 +158,10 @@ async fn describe_queries(
 ) -> Result<Vec<QueryCacheEntry>, String> {
     let mut metadata = Vec::new();
     for query in queries {
-        if !query.sql_source_static {
+        // Unchecked SQL is not described and never enters the cache: its text
+        // may be dynamic, and pretending otherwise would put an entry in the
+        // committed cache that no build can reproduce.
+        if !query.sql_source_static || matches!(query.function, QueryFunction::Unsafe) {
             continue;
         }
         let rewrite = validate_placeholders(&query.sql, query.parameter_count)?;

@@ -51,3 +51,61 @@ DELETE FROM orders WHERE id = $1 AND account_id = $2
 ''')
   Future<Result<ExecResult, SqlxError>> deleteOrder(int id, int accountId);
 }
+
+/// One account's orders, narrowed by whichever filters were supplied.
+///
+/// Optional filters are separate queries, not one query built at run time.
+/// Every branch below is a constant string `dust db build` described against
+/// the schema, and the switch is exhaustive, so no combination reaches the
+/// database unchecked. Building the `WHERE` clause by hand would take all four
+/// outside validation to save three strings.
+///
+/// The SQL is written out at each call rather than pulled from a named
+/// constant: validation reads the literal at the call site, so a `const` holding
+/// the text is rejected as non-static. That is why these repeat themselves.
+///
+/// This stops scaling somewhere past three or four filters. At that point the
+/// query genuinely is dynamic and belongs on the facade's `unsafe` hatch, where
+/// it is visible as such.
+Future<Result<List<Order>, SqlxError>> searchOrders(
+  DatabaseExecutor db, {
+  required int accountId,
+  String? item,
+  int? minQuantity,
+}) {
+  final query = switch ((item, minQuantity)) {
+    (null, null) => queryAs<Order>(
+        r'''
+SELECT id, account_id, item, quantity, placed_at FROM orders
+WHERE account_id = $1
+ORDER BY id DESC
+''',
+        [accountId],
+      ),
+    (final item?, null) => queryAs<Order>(
+        r'''
+SELECT id, account_id, item, quantity, placed_at FROM orders
+WHERE account_id = $1 AND item = $2
+ORDER BY id DESC
+''',
+        [accountId, item],
+      ),
+    (null, final minQuantity?) => queryAs<Order>(
+        r'''
+SELECT id, account_id, item, quantity, placed_at FROM orders
+WHERE account_id = $1 AND quantity >= $2
+ORDER BY id DESC
+''',
+        [accountId, minQuantity],
+      ),
+    (final item?, final minQuantity?) => queryAs<Order>(
+        r'''
+SELECT id, account_id, item, quantity, placed_at FROM orders
+WHERE account_id = $1 AND item = $2 AND quantity >= $3
+ORDER BY id DESC
+''',
+        [accountId, item, minQuantity],
+      ),
+  };
+  return query.fetchAll(db);
+}

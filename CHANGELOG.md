@@ -21,6 +21,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the form above is describable, so build-time validation covers it. A
   `Uint8List` is still bound as a BLOB.
 
+### Added
+
+- **Database**: each use of the `unsafe` escape hatch warns, so unchecked SQL
+  reads as a deliberate line in a diff. Silence one call with a
+  `dust:allow-unsafe-sql` comment on it or on the line above; two lines away
+  does not count, so one marker can never cover a file. Unchecked SQL is not
+  described and never enters the committed query cache — its text may be
+  dynamic, so no build could reproduce the entry.
+
 ### Removed
 
 - **Database**: `queryRaw`, `QueryRaw`, and the `raw` channel on executors, with

@@ -482,6 +482,25 @@ only for validated queries, so the checked path stays the easy one.
 no cast takes an executor to a `DatabaseClient`, so a handler cannot reach
 unchecked SQL at all.
 
+Each use warns, so it reads as a deliberate line in a diff rather than
+disappearing into a file:
+
+```
+warning: unchecked SQL bypasses build-time validation
+  --> lib/src/shared/db/database.dart:35:12
+```
+
+Silence one call with a marker comment on it or on the line above:
+
+```dart
+// dust:allow-unsafe-sql
+await database.unsafe.execute('VACUUM', const []);
+```
+
+Two lines away does not count — one marker covers one call, never a file. The
+warning is reported for the libraries Dust scans, so a helper in a file with no
+Dust annotations is not seen.
+
 Most reasons to reach for it have a checked answer:
 
 | Instead of building SQL | Write |
