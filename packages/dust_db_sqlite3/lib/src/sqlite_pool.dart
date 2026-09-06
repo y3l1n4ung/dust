@@ -11,6 +11,7 @@ part 'operations.dart';
 part 'raw_sql.dart';
 part 'row.dart';
 part 'transaction.dart';
+part 'unsafe_sql.dart';
 
 /// SQLite-backed executor with access to the underlying native database.
 abstract interface class Sqlite3Executor implements Executor {

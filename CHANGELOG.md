@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Database**: `UnsafeSql` on the database facade, for the administrative SQL
+  validation cannot reach. `AppDatabase.unsafe` gives `fetch`, `fetchAs<T>` with
+  an explicit mapper, and `execute`. It is reachable from the facade and not
+  from an executor, so a request handler cannot get to unchecked SQL — unlike
+  `raw`, where `db as Executor` always succeeded.
 - **Database**: SQLite binds a `List` argument as JSON text, so a set
   membership test is one placeholder over constant SQL —
   `WHERE id IN (SELECT value FROM json_each(?))` with `[ids]`. SQLite has no

@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `Sqlite3UnsafeSql`, the SQLite implementation of `dust_dart`'s `UnsafeSql`. A
+  generated database facade exposes it as `unsafe`.
+
 - A `List` argument is bound as JSON text, so a set membership test is one
   placeholder over constant SQL:
 

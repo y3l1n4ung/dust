@@ -14,23 +14,29 @@
 part of 'database.dart';
 
 final class _$AppDatabase implements AppDatabase {
-  _$AppDatabase._(this.connection);
+  _$AppDatabase._(this._driver);
 
   factory _$AppDatabase.open(
     String path, {
     SqliteConnectOptions? options,
   }) {
-    final connection = Sqlite3Driver.open(
+    final driver = Sqlite3Driver.open(
       path,
       migrations: _$appDatabaseMigrations,
       options: options,
     );
-    return _$AppDatabase._(connection);
+    return _$AppDatabase._(driver);
   }
 
-  final DatabaseConnection connection;
+  final Sqlite3Driver _driver;
 
-  Pool get pool => connection as Pool;
+  @override
+  DatabaseConnection get connection => _driver;
+
+  @override
+  UnsafeSql get unsafe => Sqlite3UnsafeSql(_driver);
+
+  Pool get pool => _driver;
 }
 
 const Map<String, String> _$appDatabaseMigrations = <String, String>{

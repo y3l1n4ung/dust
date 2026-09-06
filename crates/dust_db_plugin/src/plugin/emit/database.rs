@@ -20,6 +20,14 @@ struct DatabaseContext<'a> {
     class_name: &'a str,
     /// Dart expression used to open the pool.
     open_expr: String,
+    /// Concrete driver type the facade holds.
+    ///
+    /// The facade keeps the driver rather than a `DatabaseConnection` so that
+    /// `unsafe` needs no cast, and so that a handler holding an executor has no
+    /// route to it.
+    driver_type: &'a str,
+    /// Dart expression producing the unchecked SQL escape hatch.
+    unsafe_expr: &'a str,
     /// Rendered migrations constant.
     migrations: String,
 }
@@ -46,6 +54,14 @@ pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>
             "throw UnsupportedError('Driver.postgres is not supported in Database v1')".to_owned()
         }
     };
+    let (driver_type, unsafe_expr) = match db.driver {
+        DbDriver::Sqlite3 => ("Sqlite3Driver", "Sqlite3UnsafeSql(_driver)"),
+        // The open expression already throws, so nothing here is reachable.
+        DbDriver::Postgres => (
+            "Never",
+            "throw UnsupportedError('Driver.postgres is not supported in Database v1')",
+        ),
+    };
     let migrations = render_migrations_map(library, &db.migrations, &migrations_name);
 
     render_template(
@@ -55,6 +71,8 @@ pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>
             generated_name: &generated_name,
             class_name,
             open_expr,
+            driver_type,
+            unsafe_expr,
             migrations,
         },
     )
@@ -221,23 +239,29 @@ mod tests {
     }
 
     const EXPECTED_SQLITE_DATABASE: &str = r#"final class _$AppDatabase implements AppDatabase {
-  _$AppDatabase._(this.connection);
+  _$AppDatabase._(this._driver);
 
   factory _$AppDatabase.open(
     String path, {
     SqliteConnectOptions? options,
   }) {
-    final connection = Sqlite3Driver.open(
+    final driver = Sqlite3Driver.open(
       path,
       migrations: _$appDatabaseMigrations,
       options: options,
     );
-    return _$AppDatabase._(connection);
+    return _$AppDatabase._(driver);
   }
 
-  final DatabaseConnection connection;
+  final Sqlite3Driver _driver;
 
-  Pool get pool => connection as Pool;
+  @override
+  DatabaseConnection get connection => _driver;
+
+  @override
+  UnsafeSql get unsafe => Sqlite3UnsafeSql(_driver);
+
+  Pool get pool => _driver;
 }
 
 const Map<String, String> _$appDatabaseMigrations = <String, String>{
@@ -247,19 +271,25 @@ const Map<String, String> _$appDatabaseMigrations = <String, String>{
 };"#;
 
     const EXPECTED_POSTGRES_DATABASE: &str = r#"final class _$AppDatabase implements AppDatabase {
-  _$AppDatabase._(this.connection);
+  _$AppDatabase._(this._driver);
 
   factory _$AppDatabase.open(
     String path, {
     SqliteConnectOptions? options,
   }) {
-    final connection = throw UnsupportedError('Driver.postgres is not supported in Database v1');
-    return _$AppDatabase._(connection);
+    final driver = throw UnsupportedError('Driver.postgres is not supported in Database v1');
+    return _$AppDatabase._(driver);
   }
 
-  final DatabaseConnection connection;
+  final Never _driver;
 
-  Pool get pool => connection as Pool;
+  @override
+  DatabaseConnection get connection => _driver;
+
+  @override
+  UnsafeSql get unsafe => throw UnsupportedError('Driver.postgres is not supported in Database v1');
+
+  Pool get pool => _driver;
 }
 
 const Map<String, String> _$appDatabaseMigrations = <String, String>{};"#;

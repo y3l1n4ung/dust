@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.1.5]
 
+### Added
+
+- `UnsafeSql` — `fetch`, `fetchAs<T>(sql, parameters, mapper)`, and `execute` —
+  for the administrative SQL build-time validation cannot reach: migrations,
+  `EXPLAIN`, one-off operations.
+
+  It hangs off `DatabaseClient` as `unsafe`, so a generated facade exposes it
+  and an executor does not. A request handler is handed an executor, and no cast
+  takes an executor to a `DatabaseClient`, which is the difference from `raw`:
+  `db as Executor` always succeeded, because every pool, connection and
+  transaction implements `Executor`.
+
+  The decoder is passed explicitly rather than resolved from the row type.
+  Generated terminals exist only for validated queries, and that asymmetry is
+  deliberate — the checked path is the ergonomic one.
+
+### Changed
+
 > [!IMPORTANT]
 > **Breaking, and `^0.1.4` upgrades into it.** Every inline query terminal now
 > returns `Result<T, SqlxError>` instead of throwing. A pubspec asking for

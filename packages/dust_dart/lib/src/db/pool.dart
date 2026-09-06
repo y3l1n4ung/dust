@@ -4,6 +4,7 @@ import '../fp/unit.dart';
 import 'exec_result.dart';
 import 'row_mapper.dart';
 import 'sqlx_error.dart';
+import 'unsafe_sql.dart';
 
 /// Executes typed SQLx-style queries against a database connection,
 /// transaction, or driver.
@@ -61,6 +62,14 @@ abstract interface class DatabaseExecutor {
 abstract interface class DatabaseClient {
   /// Open database connection used by generated DAOs.
   DatabaseConnection get connection;
+
+  /// Unchecked SQL for administrative work.
+  ///
+  /// Deliberately here and not on [DatabaseExecutor]: a request handler holds
+  /// an executor, and no cast takes an executor to a [DatabaseClient], so the
+  /// escape hatch is out of reach from a handler by type rather than by
+  /// convention.
+  UnsafeSql get unsafe;
 }
 
 /// Convenience methods for generated application database facades.

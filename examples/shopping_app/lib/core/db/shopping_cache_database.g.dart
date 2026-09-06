@@ -14,23 +14,29 @@
 part of 'shopping_cache_database.dart';
 
 final class _$ShoppingCacheDatabase implements ShoppingCacheDatabase {
-  _$ShoppingCacheDatabase._(this.connection);
+  _$ShoppingCacheDatabase._(this._driver);
 
   factory _$ShoppingCacheDatabase.open(
     String path, {
     SqliteConnectOptions? options,
   }) {
-    final connection = Sqlite3Driver.open(
+    final driver = Sqlite3Driver.open(
       path,
       migrations: _$shoppingCacheDatabaseMigrations,
       options: options,
     );
-    return _$ShoppingCacheDatabase._(connection);
+    return _$ShoppingCacheDatabase._(driver);
   }
 
-  final DatabaseConnection connection;
+  final Sqlite3Driver _driver;
 
-  Pool get pool => connection as Pool;
+  @override
+  DatabaseConnection get connection => _driver;
+
+  @override
+  UnsafeSql get unsafe => Sqlite3UnsafeSql(_driver);
+
+  Pool get pool => _driver;
 }
 
 const Map<String, String> _$shoppingCacheDatabaseMigrations = <String, String>{

@@ -66,7 +66,7 @@ void main() {
   test('query helpers delegate to DatabaseExecutor fetch methods', () async {
     const mapper = _UserFromRow.fromRow;
     final executor = _FakeExecutor();
-    final client = _FakeDatabaseClient(executor);
+    final client = _FakeDatabaseClient(executor, _FakeUnsafeSql(executor));
 
     final one = await queryAs<_User>(
       'one',
@@ -161,10 +161,46 @@ extension _UserFromRow on _User {
 }
 
 final class _FakeDatabaseClient implements DatabaseClient {
-  const _FakeDatabaseClient(this.connection);
+  const _FakeDatabaseClient(this.connection, this.unsafe);
 
   @override
   final DatabaseConnection connection;
+
+  @override
+  final UnsafeSql unsafe;
+}
+
+/// Stand-in for what a driver package supplies to a generated facade.
+final class _FakeUnsafeSql implements UnsafeSql {
+  const _FakeUnsafeSql(this._db);
+
+  final DatabaseExecutor _db;
+
+  @override
+  Future<Result<List<Row>, SqlxError>> fetch(
+    String sql,
+    List<Object?> parameters,
+  ) {
+    return (_db as Executor).raw.fetch(sql, parameters);
+  }
+
+  @override
+  Future<Result<List<T>, SqlxError>> fetchAs<T>(
+    String sql,
+    List<Object?> parameters,
+    RowMapper<T> mapper,
+  ) async {
+    final rows = await fetch(sql, parameters);
+    return rows.map((rows) => <T>[for (final row in rows) mapper(row)]);
+  }
+
+  @override
+  Future<Result<ExecResult, SqlxError>> execute(
+    String sql,
+    List<Object?> parameters,
+  ) {
+    return (_db as Executor).raw.execute(sql, parameters);
+  }
 }
 
 final class _FakeExecutor implements Pool {
