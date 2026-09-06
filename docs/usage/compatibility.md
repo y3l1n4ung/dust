@@ -14,9 +14,9 @@ by the workspace source.
 
 ## Dust CLI 0.1.4
 
-| Dust CLI | `dust_dart` | `dust_flutter` | `dust_db_sqlite3` | `dust_server` |
-| :--- | :--- | :--- | :--- | :--- |
-| `0.1.4` | `>=0.1.5 <0.2.0` | `>=0.1.4 <0.2.0` | `>=0.1.5 <0.2.0` | `>=0.1.0-beta.3 <0.2.0` |
+| Dust CLI | `dust_dart` | `dust_flutter` | `dust_db_sqlite3` | `dust_db_postgres` | `dust_server` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `0.1.4` | `>=0.1.5 <0.2.0` | `>=0.1.4 <0.2.0` | `>=0.1.5 <0.2.0` | `>=0.1.0 <0.2.0` | `>=0.1.0-beta.3 <0.2.0` |
 
 `dust_server` is in the table because generated handlers call its API directly —
 `Router.module`, `Route`, `Rejection`, `QueryExtractable`, `intoResponse` — so a

@@ -1,5 +1,5 @@
 name: dust_db_postgres
-description: PostgreSQL runtime support for generated Database code.
+description: PostgreSQL runtime for Dust Database. Executes build-time validated SQL and generated row mapping over package:postgres.
 version: 0.1.0
 homepage: https://github.com/y3l1n4ung/dust
 repository: https://github.com/y3l1n4ung/dust

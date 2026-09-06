@@ -28,6 +28,10 @@ First release. PostgreSQL runtime for generated Database code, wrapping
 
 ### Notes
 
+- Requires `dust_dart` 0.1.5 or newer, and a Dust CLI that generates PostgreSQL
+  code. Native targets only: PostgreSQL is reached over a socket, so this does
+  not run on the web.
+
 - **The SQL reaches the server unchanged.** Postgres reads `$1` natively, and
   values bind with an unspecified type so the server infers them. Nothing here
   rewrites query text — the SQLite runtime does the opposite, rewriting `$n` to

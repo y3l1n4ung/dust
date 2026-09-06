@@ -1,5 +1,5 @@
 name: dust_db_sqlite3
-description: SQLite runtime support for generated Database code.
+description: SQLite runtime for Dust Database. Executes build-time validated SQL and generated row mapping over package:sqlite3.
 version: 0.1.5
 homepage: https://github.com/y3l1n4ung/dust
 repository: https://github.com/y3l1n4ung/dust

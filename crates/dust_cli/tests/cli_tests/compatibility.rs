@@ -40,6 +40,16 @@ fn compatibility_contract_covers_current_packages() {
         )
     );
     assert_eq!(
+        constraints["dust_db_postgres"],
+        format!(
+            ">={} <0.2.0",
+            package_version(
+                root.join("packages/dust_db_postgres/pubspec.yaml")
+                    .as_path()
+            )
+        )
+    );
+    assert_eq!(
         constraints["dust_db_sqlite3"],
         format!(
             ">={} <0.2.0",
