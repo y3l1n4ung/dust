@@ -32,6 +32,7 @@ pub(crate) fn normalize_query_calls(
                 fetch_method: query.fetch_method.clone(),
                 has_row_mapper_argument: query.has_row_mapper_argument,
                 unsafe_sql_allowed: query.unsafe_sql_allowed,
+                enclosing_name: query.enclosing_name.clone(),
                 span: SpanIr::new(file_id, query.span),
             }
         })

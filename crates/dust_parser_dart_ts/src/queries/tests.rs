@@ -167,3 +167,66 @@ fn a_marker_comment_allows_one_unchecked_call() {
     // Two lines away is not "this call", or one marker would cover a file.
     assert!(!unmarked[0].unsafe_sql_allowed);
 }
+
+#[test]
+fn records_the_function_a_query_sits_in() {
+    let calls = source_calls(
+        "void placeOrder() {\n        \x20 queryExecute(r'DELETE FROM orders').execute(db);\n         }",
+    );
+
+    assert_eq!(calls[0].enclosing_name.as_deref(), Some("placeOrder"));
+}
+
+#[test]
+fn a_method_reports_its_class() {
+    let calls = source_calls(
+        "class OrdersService {\n        \x20 Future<void> place() async {\n        \x20   queryExecute(r'DELETE FROM orders').execute(db);\n        \x20 }\n         }",
+    );
+
+    assert_eq!(
+        calls[0].enclosing_name.as_deref(),
+        Some("OrdersService.place")
+    );
+}
+
+#[test]
+fn a_closure_reports_the_function_containing_it() {
+    // A closure has no name worth reporting, and the function around it is what
+    // a reader searches for.
+    let calls = source_calls(
+        "void placeOrder() {\n        \x20 run(() {\n        \x20   queryExecute(r'DELETE FROM orders').execute(db);\n        \x20 });\n         }",
+    );
+
+    assert_eq!(calls[0].enclosing_name.as_deref(), Some("placeOrder"));
+}
+
+#[test]
+fn a_query_outside_any_function_keeps_the_helper_name() {
+    let calls = source_calls("final probe = queryExecute(r'DELETE FROM orders');");
+
+    assert_eq!(calls.len(), 1);
+    assert_eq!(calls[0].enclosing_name, None);
+}
+
+#[test]
+fn a_second_function_does_not_inherit_the_first() {
+    let calls = source_calls(
+        "void first() {\n        \x20 queryExecute(r'DELETE FROM a').execute(db);\n         }\n         void second() {\n        \x20 queryExecute(r'DELETE FROM b').execute(db);\n         }",
+    );
+
+    assert_eq!(calls.len(), 2);
+    assert_eq!(calls[0].enclosing_name.as_deref(), Some("first"));
+    assert_eq!(calls[1].enclosing_name.as_deref(), Some("second"));
+}
+
+/// Parses [source] as a whole library rather than as a function body.
+fn source_calls(source: &str) -> Vec<ParsedQueryCallSurface> {
+    let source = SourceText::new(FileId::new(1), source.to_owned());
+    let mut parser = Parser::new();
+    parser
+        .set_language(&tree_sitter_dart::LANGUAGE.into())
+        .expect("tree-sitter Dart grammar loads");
+    let tree = parser.parse(source.as_str(), None).expect("source parses");
+
+    extract_query_calls(tree.root_node(), &source)
+}

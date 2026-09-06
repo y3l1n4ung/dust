@@ -133,7 +133,10 @@ fn query_spec_from_call(call: &QueryCallIr) -> QuerySpec {
         has_row_mapper_argument: call.has_row_mapper_argument,
         unsafe_sql_allowed: call.unsafe_sql_allowed,
         span: call.span,
-        display_name: None,
+        // A bare `queryExecute` says nothing in a file holding several queries.
+        // The enclosing function is what a reader searches for; a call with no
+        // enclosing function keeps the helper name.
+        display_name: call.enclosing_name.clone(),
     }
 }
 

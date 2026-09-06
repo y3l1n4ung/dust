@@ -71,6 +71,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Database**: a call-site query that fails validation is reported by the
+  function containing it — `OrdersService.cancelStale` rather than a bare
+  `queryExecute`, which said nothing in a file holding several queries. A query
+  inside a closure names the function around it, and one outside any function
+  keeps the helper name.
+
 - **Database**: placeholder rewriting moved from generated code into the driver.
   `.g.dart` now carries the SQL verbatim, `$n` and all, and binds arguments in
   declaration order; `dust_db_sqlite3` rewrites to `?` at bind time. Only DAO
