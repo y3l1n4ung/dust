@@ -1,0 +1,318 @@
+import 'package:dust_dart/db.dart';
+import 'package:postgres/postgres.dart' as pg;
+
+part 'connect_options.dart';
+part 'errors.dart';
+part 'migrations.dart';
+part 'row.dart';
+part 'transaction.dart';
+part 'unsafe_sql.dart';
+
+/// Runs Dust queries against one `package:postgres` session.
+///
+/// The SQL reaches the server unchanged. Postgres reads `$1` natively, and
+/// values bind with an unspecified type so the server infers them, which is why
+/// a plain `List<Object?>` works against a plain `String` query and why nothing
+/// on this side rewrites the text. SQLite needs the opposite: its driver
+/// rewrites `$n` to `?` at bind time.
+class PostgresExecutor implements Executor {
+  /// Binds queries to a session, and transactions to a session executor.
+  ///
+  /// The session executor is null inside a transaction, where the driver hands
+  /// out a `TxSession` that cannot open a transaction of its own.
+  PostgresExecutor(this._session, this._sessionExecutor);
+
+  final pg.Session _session;
+  final pg.SessionExecutor? _sessionExecutor;
+
+  /// Names savepoints uniquely within a process.
+  static int _savepointCounter = 0;
+
+  @override
+  Driver get driver => Driver.postgres;
+
+  /// Runs [sql] and returns its rows, mapping any failure to a `SqlxError`.
+  Future<Result<List<Row>, SqlxError>> _rows(
+    String sql,
+    List<Object?> parameters,
+  ) async {
+    try {
+      final result = await _session.execute(sql, parameters: parameters);
+      return Ok<List<Row>, SqlxError>(
+        <Row>[for (final row in result) PostgresRow(row, operation: sql)],
+      );
+    } catch (error) {
+      return Err<List<Row>, SqlxError>(_asPostgresError(error, sql));
+    }
+  }
+
+  /// Decodes [rows] with [mapper], reporting a mapper failure as a decode error.
+  Result<List<T>, SqlxError> _decode<T>(
+    List<Row> rows,
+    RowMapper<T> mapper,
+    String sql,
+  ) {
+    try {
+      return Ok<List<T>, SqlxError>(<T>[for (final row in rows) mapper(row)]);
+    } on SqlxError catch (error) {
+      return Err<List<T>, SqlxError>(error);
+    } catch (error) {
+      return Err<List<T>, SqlxError>(
+        _postgresDecodeError(
+          'PostgreSQL row mapping failed.',
+          cause: error,
+          operation: sql,
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Result<T, SqlxError>> fetchOne<T>(
+    String sql,
+    List<Object?> parameters,
+    RowMapper<T> mapper,
+  ) async {
+    final rows = await _rows(sql, parameters);
+    return rows.andThen((rows) {
+      if (rows.isEmpty) return Err<T, SqlxError>(_postgresNoRows(sql));
+      if (rows.length > 1) {
+        return Err<T, SqlxError>(
+          _postgresTooManyRows(expected: 1, actual: rows.length, query: sql),
+        );
+      }
+      return _decode(rows, mapper, sql).map((values) => values.single);
+    });
+  }
+
+  @override
+  Future<Result<T?, SqlxError>> fetchOptional<T>(
+    String sql,
+    List<Object?> parameters,
+    RowMapper<T> mapper,
+  ) async {
+    final rows = await _rows(sql, parameters);
+    return rows.andThen((rows) {
+      if (rows.isEmpty) return Ok<T?, SqlxError>(null);
+      if (rows.length > 1) {
+        return Err<T?, SqlxError>(
+          _postgresTooManyRows(expected: 1, actual: rows.length, query: sql),
+        );
+      }
+      return _decode(rows, mapper, sql).map<T?>((values) => values.single);
+    });
+  }
+
+  @override
+  Future<Result<List<T>, SqlxError>> fetchAll<T>(
+    String sql,
+    List<Object?> parameters,
+    RowMapper<T> mapper,
+  ) async {
+    final rows = await _rows(sql, parameters);
+    return rows.andThen((rows) => _decode(rows, mapper, sql));
+  }
+
+  @override
+  Future<Result<T, SqlxError>> fetchScalar<T>(
+    String sql,
+    List<Object?> parameters,
+  ) async {
+    final rows = await _rows(sql, parameters);
+    return rows.andThen((rows) {
+      if (rows.isEmpty) return Err<T, SqlxError>(_postgresNoRows(sql));
+      if (rows.length > 1) {
+        return Err<T, SqlxError>(
+          _postgresTooManyRows(expected: 1, actual: rows.length, query: sql),
+        );
+      }
+      try {
+        return Ok<T, SqlxError>(rows.single.readIndex<T>(0));
+      } on SqlxError catch (error) {
+        return Err<T, SqlxError>(error);
+      }
+    });
+  }
+
+  /// Runs a statement and reports how many rows it changed.
+  ///
+  /// There is no `lastInsertId`: Postgres has no counterpart to SQLite's
+  /// `last_insert_rowid()`, so a caller that needs the new row asks for it with
+  /// `RETURNING` and reads it like any other query.
+  @override
+  Future<Result<ExecResult, SqlxError>> execute(
+    String sql,
+    List<Object?> parameters,
+  ) async {
+    try {
+      final result = await _session.execute(sql, parameters: parameters);
+      return Ok<ExecResult, SqlxError>(
+        ExecResult(rowsAffected: result.affectedRows),
+      );
+    } catch (error) {
+      return Err<ExecResult, SqlxError>(_asPostgresError(error, sql));
+    }
+  }
+
+  /// Runs [fn] in a transaction, committing on `Ok` and reverting otherwise.
+  ///
+  /// A nested call becomes a savepoint on the enclosing transaction, because a
+  /// `TxSession` cannot open one of its own.
+  @override
+  Future<Result<T, SqlxError>> transaction<T>(
+    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
+  ) async {
+    final executor = _sessionExecutor;
+    if (executor == null) return _savepoint(fn);
+
+    try {
+      return await executor.runTx<Result<T, SqlxError>>((tx) async {
+        final result = await fn(PostgresTransaction(tx));
+        // `runTx` reverts only when the callback throws, and an `Err` is an
+        // ordinary return value, so it has to leave as a throw.
+        if (result.isErr) throw _RollbackSignal(result);
+        return result;
+      });
+    } on _RollbackSignal catch (signal) {
+      return signal.result as Result<T, SqlxError>;
+    } catch (error) {
+      return Err<T, SqlxError>(
+        _postgresTransactionError(
+          'PostgreSQL transaction failed.',
+          cause: error,
+          operation: 'transaction',
+        ),
+      );
+    }
+  }
+
+  /// Runs [fn] inside a savepoint on the transaction already in progress.
+  ///
+  /// `package:postgres` exposes no savepoint API, but a `TxSession` is a
+  /// `Session`, so the statements are available. After a successful
+  /// `ROLLBACK TO SAVEPOINT` the driver clears the transaction's stale error,
+  /// which is what lets the enclosing transaction still commit.
+  Future<Result<T, SqlxError>> _savepoint<T>(
+    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
+  ) async {
+    final name = 'dust_sp_${_savepointCounter++}';
+    try {
+      await _session.execute('SAVEPOINT $name');
+    } catch (error) {
+      return Err<T, SqlxError>(
+        _postgresTransactionError(
+          'PostgreSQL savepoint failed.',
+          cause: error,
+          operation: 'SAVEPOINT',
+        ),
+      );
+    }
+
+    Result<T, SqlxError> result;
+    try {
+      result = await fn(PostgresTransaction(_session));
+    } catch (error) {
+      await _releaseSavepoint(name, rollback: true);
+      return Err<T, SqlxError>(
+        _postgresTransactionError(
+          'PostgreSQL nested transaction failed.',
+          cause: error,
+          operation: 'SAVEPOINT',
+        ),
+      );
+    }
+
+    await _releaseSavepoint(name, rollback: result.isErr);
+    return result;
+  }
+
+  /// Ends a savepoint, either releasing it or rolling back to it.
+  Future<void> _releaseSavepoint(String name, {required bool rollback}) async {
+    final command =
+        rollback ? 'ROLLBACK TO SAVEPOINT $name' : 'RELEASE SAVEPOINT $name';
+    try {
+      await _session.execute(command);
+    } catch (_) {
+      // The enclosing transaction owns the outcome from here: if the savepoint
+      // cannot be ended the transaction is already failing, and reporting this
+      // instead would hide the error that caused it.
+    }
+  }
+
+  @override
+  Future<Result<Unit, SqlxError>> close() async {
+    try {
+      await _sessionExecutor?.close();
+      return const Ok<Unit, SqlxError>(unit);
+    } catch (error) {
+      return Err<Unit, SqlxError>(
+        _postgresConnectionError(
+          'PostgreSQL close failed.',
+          cause: error,
+          operation: 'close',
+        ),
+      );
+    }
+  }
+}
+
+/// A PostgreSQL pool, named as `sqlx-postgres` names it.
+///
+/// `package:postgres` pools run statements directly as well as handing out
+/// transactions, so this is both the pool and the connection Dust asks for.
+final class PgPool extends PostgresExecutor implements Pool {
+  PgPool._(pg.Pool<Object?> pool, this._migrations)
+      : _pool = pool,
+        super(pool, pool);
+
+  final pg.Pool<Object?> _pool;
+  final Map<String, String> _migrations;
+
+  /// Opens a pool from a connection URL and applies unapplied migrations.
+  ///
+  /// The URL is `postgres://user:password@host:port/database`.
+  static PgPool connect(
+    String url, {
+    Map<String, String> migrations = const <String, String>{},
+    PgConnectOptions? options,
+  }) {
+    final pool = pg.Pool<Object?>.withEndpoints(
+      <pg.Endpoint>[_endpointFor(url)],
+      settings: pg.PoolSettings(
+        sslMode: options?._settings.sslMode,
+        connectTimeout: options?.connectTimeout,
+        queryTimeout: options?.queryTimeout,
+        applicationName: options?.applicationName,
+      ),
+    );
+    return PgPool._(pool, migrations);
+  }
+
+  /// Applies any migrations this pool was opened with.
+  ///
+  /// Separate from opening because it has to await: `PgPool.connect` returns a
+  /// pool synchronously so a generated facade can hold one without its
+  /// constructor becoming a future.
+  Future<Result<Unit, SqlxError>> migrate() =>
+      _applyMigrations(this, _migrations);
+
+  /// Unchecked SQL, for the administrative work validation cannot reach.
+  UnsafeSql get unsafe => PostgresUnsafeSql(this);
+
+  /// The underlying driver pool, for driver-specific work Dust does not wrap.
+  pg.Pool<Object?> get pool => _pool;
+}
+
+/// Parses a connection URL into the driver's endpoint type.
+pg.Endpoint _endpointFor(String url) {
+  final uri = Uri.parse(url);
+  final userInfo = uri.userInfo.split(':');
+  return pg.Endpoint(
+    host: uri.host.isEmpty ? 'localhost' : uri.host,
+    port: uri.hasPort ? uri.port : 5432,
+    database: uri.pathSegments.isEmpty ? 'postgres' : uri.pathSegments.first,
+    username:
+        userInfo.isEmpty || userInfo.first.isEmpty ? null : userInfo.first,
+    password: userInfo.length > 1 ? userInfo[1] : null,
+  );
+}

@@ -8,6 +8,7 @@ CHECK_MODE=false
 TARGETS=(
   "packages/dust_dart"
   "packages/dust_db_sqlite3"
+  "packages/dust_db_postgres"
   "packages/dust_server"
 )
 

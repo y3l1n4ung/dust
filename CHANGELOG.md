@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Database**: `dust_db_postgres`, the PostgreSQL runtime, wrapping
+  `package:postgres` the way `dust_db_sqlite3` wraps `package:sqlite3`. The
+  query text does not change between dialects — PostgreSQL reads `$1` natively
+  where SQLite rewrites it — and a Dart `List` binds as a PostgreSQL array, so
+  `= ANY($1)` needs no encoding. Nested transactions are savepoints this package
+  issues itself, since `package:postgres` exposes no savepoint API.
+
+  Generation does not target it yet: `@SqlxDatabase(type:
+  SqlxDatabaseType.postgres)` still reports that Postgres is reserved. The
+  runtime lands first so the plugin has something to emit against.
+
 - **Database**: `UnsafeSql` on the database facade, for the administrative SQL
   validation cannot reach. `AppDatabase.unsafe` gives `fetch`, `fetchAs<T>` with
   an explicit mapper, and `execute`. It is reachable from the facade and not
