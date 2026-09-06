@@ -82,7 +82,7 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     return _selectResult(sql, parameters).match(
       ok: (result) {
         if (result.isEmpty) return Ok<T?, SqlxError>(null);
-        return _mapRow<T?>(sql, Sqlite3Row(result.first), (row) => mapper(row));
+        return _mapRow<T?>(sql, _firstRow(result), (row) => mapper(row));
       },
       err: (error) => Err<T?, SqlxError>(error),
     );
@@ -97,11 +97,14 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     return _selectResult(sql, parameters).match(
       ok: (result) {
         try {
-          // Mapped straight out of the result: the adapter is what the mapper
-          // reads through, and nothing keeps it afterwards.
-          return Ok<List<T>, SqlxError>(
-            <T>[for (final row in result) mapper(Sqlite3Row(row))],
-          );
+          // Mapped straight out of the result's own row data: the adapter is
+          // what the mapper reads through, and nothing keeps it afterwards.
+          final names = result.columnNames;
+          final index = sqliteColumnIndex(names);
+          return Ok<List<T>, SqlxError>(<T>[
+            for (final data in result.rows)
+              mapper(Sqlite3Row._shared(data, names, index)),
+          ]);
         } on SqlxError catch (error) {
           return Err<List<T>, SqlxError>(error);
         } catch (error) {
@@ -134,7 +137,7 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
             _sqliteTooManyRows(expected: 1, actual: result.length, query: sql),
           );
         }
-        return _mapRow<T>(sql, Sqlite3Row(result.single), mapper);
+        return _mapRow<T>(sql, _firstRow(result), mapper);
       },
       err: (error) => Err<T, SqlxError>(error),
     );
@@ -156,7 +159,7 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
             _sqliteTooManyRows(expected: 1, actual: result.length, query: sql),
           );
         }
-        final row = Sqlite3Row(result.single);
+        final row = _firstRow(result);
         try {
           if (null is T) {
             return Ok<T, SqlxError>(row.readIndexNullable<Object?>(0) as T);
@@ -240,6 +243,16 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     }
   }
 
+  /// Wraps the first row of [result] for a one-row terminal.
+  Sqlite3Row _firstRow(sqlite.ResultSet result) {
+    final names = result.columnNames;
+    return Sqlite3Row._shared(
+      result.rows.first,
+      names,
+      sqliteColumnIndex(names),
+    );
+  }
+
   /// Runs [sql] and wraps every row, for callers that need them all as rows.
   ///
   /// Only unchecked SQL does: it has no mapper, so the rows are what it
@@ -248,9 +261,13 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     String sql,
     List<Object?> parameters,
   ) {
-    return _selectResult(sql, parameters).map(
-      (result) => <Row>[for (final row in result) Sqlite3Row(row)],
-    );
+    return _selectResult(sql, parameters).map((result) {
+      final names = result.columnNames;
+      final index = sqliteColumnIndex(names);
+      return <Row>[
+        for (final data in result.rows) Sqlite3Row._shared(data, names, index),
+      ];
+    });
   }
 
   Result<ExecResult, SqlxError> _executeResult(

@@ -22,6 +22,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   is static literals, but unchecked SQL can be assembled at the call site and an
   unbounded cache would grow with the request count.
 
+- Rows are read out of the result set's own data rather than through the
+  driver's `Row`, whose constructor copies that data with `List.unmodifiable`
+  for every row. Column names resolve through one index built for the whole
+  result. Over 1000 rows of six columns the copy and the lookups through it
+  measured about 90us, over half of what the adapter cost above the driver.
+
 - Reading a column tests the value against the type asked for before anything
   else, which is what almost every read is. The `num` special case it made
   redundant is gone, so a read is one type test rather than three. Mapping six

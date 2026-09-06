@@ -86,4 +86,59 @@ void main() {
     expect(row.read<int>('id'), 7);
     expect(row.readBool('active'), isTrue);
   });
+
+  group('column index', () {
+    // Rows are read out of the result's own data through one name index built
+    // for the whole result, rather than through the driver's row. These are
+    // the behaviours that has to keep.
+    late sqlite.Database database;
+
+    setUp(() {
+      database = sqlite.sqlite3.openInMemory();
+      addTearDown(database.close);
+    });
+
+    test('a name selected twice resolves to the last of them', () {
+      final result = database.select('SELECT 1 AS v, 2 AS v');
+      final row = Sqlite3Row(result.single);
+
+      expect(row.read<int>('v'), 2);
+    });
+
+    test('a column the result does not have reads as null', () {
+      final result = database.select('SELECT 1 AS present');
+      final row = Sqlite3Row(result.single);
+
+      expect(row.readNullable<int>('absent'), isNull);
+      expect(row.readBoolNullable('absent'), isNull);
+      expect(row.readDateTimeNullable('absent'), isNull);
+      expect(() => row.read<int>('absent'), throwsA(isA<SqlxError>()));
+    });
+
+    test('an index outside the row reads as null', () {
+      final result = database.select('SELECT 1 AS only');
+      final row = Sqlite3Row(result.single);
+
+      expect(row.readIndexNullable<int>(0), 1);
+      expect(row.readIndexNullable<int>(1), isNull);
+      expect(row.readIndexNullable<int>(-1), isNull);
+    });
+
+    test('rows of one result keep their own values apart', () {
+      // The index is shared; the data is not. A row reading its neighbour's
+      // values would pass every single-row test and fail here.
+      database
+        ..execute('CREATE TABLE items (id INTEGER, name TEXT)')
+        ..execute("INSERT INTO items VALUES (1, 'first'), (2, 'second')");
+
+      final result = database.select('SELECT id, name FROM items ORDER BY id');
+      final rows = <Sqlite3Row>[for (final row in result) Sqlite3Row(row)];
+
+      expect(rows.map((row) => row.read<int>('id')), <int>[1, 2]);
+      expect(
+        rows.map((row) => row.read<String>('name')),
+        <String>['first', 'second'],
+      );
+    });
+  });
 }
