@@ -14,11 +14,12 @@ First release. PostgreSQL runtime for generated Database code, wrapping
 ### Performance
 
 - Prepared statements are held per pooled connection rather than parsed and
-  closed on every call. `Session.execute` parses, describes, runs and closes a
-  statement each time, and the describe reply is a round trip of its own: a
-  single-row `SELECT` against a local server measured 1023us that way and 321us
-  through a statement prepared once. End to end, `fetchOne` went 975us to
-  ~355us and `fetchScalar` 1025us to ~305us.
+  closed on every call. `Session.execute` sends Parse and waits for it, then
+  Bind/Execute, then Close and waits for that — three server round trips where
+  a held statement needs one. A single-row `SELECT` against a local server
+  measured 1023us that way and 321us reusing a statement, which is the ratio
+  the round trips predict. End to end, `fetchOne` went 975us to ~355us and
+  `fetchScalar` 1025us to ~305us.
 
   A statement belongs to the connection that parsed it, so queries run through
   `withConnection` and each connection keeps its own, bounded at 64. A
