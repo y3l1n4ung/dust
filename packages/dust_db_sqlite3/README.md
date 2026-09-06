@@ -210,7 +210,7 @@ raw and native access do not receive Dust's build-time SQL validation.
 
 - [Database guide](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/db.md)
 - [Shopping app database](https://github.com/y3l1n4ung/dust/blob/main/examples/shopping_app/lib/core/db/shopping_cache_database.dart)
-- [Package example](https://github.com/y3l1n4ung/dust/blob/main/packages/dust_db_sqlite3/example/dust_db_sqlite3_example.dart)
+- [Examples](https://github.com/y3l1n4ung/dust/blob/main/packages/dust_db_sqlite3/example) — one file per question, from opening a database to what a failure looks like
 
 Report problems through the
 [Dust issue tracker](https://github.com/y3l1n4ung/dust/issues). Contributions

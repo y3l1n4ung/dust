@@ -17,6 +17,11 @@ First release. PostgreSQL runtime for generated Database code, wrapping
   URL, with `PgPool` as the `sqlx-postgres` alias.
 - `PostgresExecutor`, `PgConnectOptions`, `PostgresRow`, and
   `PostgresUnsafeSql`.
+- 23 examples in `example/`, one per question, indexed by `example/README.md`.
+- `fetchScalar<T?>` answers `Ok(null)` for a NULL value and for no row, rather
+  than a decode or cardinality error. This is what `QueryScalar.fetchOptional`
+  asks for, so an aggregate over no rows now reads as optional on both drivers;
+  it already behaved this way on SQLite.
 - `?sslmode=` is read from the connection URL — `disable`, `require` or
   `verify-full` — so a URL that works with `psql` works here. Explicit
   `PgConnectOptions` win over it. libpq's `prefer` and `allow` are rejected
@@ -28,10 +33,13 @@ First release. PostgreSQL runtime for generated Database code, wrapping
 
 ### Testing
 
-- 66 tests at 100% line coverage, gated in CI against a `postgres:16` service.
+- 91 tests at 100% line coverage, gated in CI against a `postgres:16` service.
   Everything that needs a server is skipped — and reported as skipped — when
   `DUST_DATABASE_URL` is unset, since there is no in-memory PostgreSQL to fall
   back to.
+- Every file in `example/` is run by the suite and asserted on its output. An
+  example that compiles but prints the wrong answer is still broken, and only
+  running it catches that — it is how the nullable-scalar bug above was found.
 
 ### Notes
 

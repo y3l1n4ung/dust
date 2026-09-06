@@ -177,6 +177,7 @@ server and CI validates from the committed query cache instead.
 
 ## Documentation
 
+- [Examples](https://github.com/y3l1n4ung/dust/blob/main/packages/dust_db_postgres/example) — one file per question, from opening a pool to `jsonb` and `timestamptz`
 - [Database usage guide](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/db.md)
 - [Design notes](https://github.com/y3l1n4ung/dust/blob/main/docs/design/db-queries.md)
 

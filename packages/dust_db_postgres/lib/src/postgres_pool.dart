@@ -129,13 +129,25 @@ abstract base class _PostgresSession implements PostgresExecutor {
   ) async {
     final rows = await _rows(sql, parameters);
     return rows.andThen((rows) {
-      if (rows.isEmpty) return Err<T, SqlxError>(_postgresNoRows(sql));
+      // A nullable T is what `QueryScalar.fetchOptional` asks for, so no row
+      // and a NULL value are both answers rather than failures. A non-nullable
+      // one keeps saying so: the caller declared the value has to be there.
+      final nullable = null is T;
+      if (rows.isEmpty) {
+        if (nullable) return Ok<T, SqlxError>(null as T);
+        return Err<T, SqlxError>(_postgresNoRows(sql));
+      }
       if (rows.length > 1) {
         return Err<T, SqlxError>(
           _postgresTooManyRows(expected: 1, actual: rows.length, query: sql),
         );
       }
       try {
+        if (nullable) {
+          return Ok<T, SqlxError>(
+            rows.single.readIndexNullable<Object?>(0) as T,
+          );
+        }
         return Ok<T, SqlxError>(rows.single.readIndex<T>(0));
       } on SqlxError catch (error) {
         return Err<T, SqlxError>(error);

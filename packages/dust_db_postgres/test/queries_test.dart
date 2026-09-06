@@ -197,6 +197,27 @@ void main() {
 
       expect(expectErr(item).category, SqlxErrorCategory.decode);
     });
+
+    test('returns a null scalar when the type admits one', () async {
+      // What `QueryScalar.fetchOptional` asks for. An aggregate over no rows
+      // is NULL, so a caller that declared the value optional gets it rather
+      // than a decode error.
+      final total = await db.fetchScalar<int?>(
+        r'SELECT max(id) FROM query_orders WHERE item = $1',
+        <Object?>['absent'],
+      );
+
+      expect(expectOk(total), isNull);
+    });
+
+    test('returns null for no rows when the type admits one', () async {
+      final item = await db.fetchScalar<String?>(
+        r'SELECT item FROM query_orders WHERE item = $1',
+        <Object?>['absent'],
+      );
+
+      expect(expectOk(item), isNull);
+    });
   });
 
   group('execute', () {

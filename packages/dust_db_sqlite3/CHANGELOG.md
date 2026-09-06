@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.1.5]
 
+### Added
+
+- 23 examples in `example/`, one per question, indexed by `example/README.md`:
+  connecting, reading, writing, values, and what a failure looks like. The
+  package shipped one 67-line file before this.
+
 ### Testing
 
 - Coverage 92% to 97%, with the floor raised to match. The new tests are the
@@ -15,6 +21,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   validation rule, each journal and synchronous mode, a database used after
   closing, a migration SQLite refuses, and the control-statement failures a
   transaction reports rather than throws.
+- Every file in `example/` is run by the suite and asserted on its output. An
+  example that compiles but prints the wrong answer is still broken, and only
+  running it catches that.
 
 ### Added
 

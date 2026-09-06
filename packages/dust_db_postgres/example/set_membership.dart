@@ -1,6 +1,6 @@
-import 'dart:io';
-
 import 'package:dust_db_postgres/dust_db_postgres.dart';
+
+import 'support.dart';
 
 /// An `IN` list without dynamic SQL.
 ///
@@ -13,11 +13,8 @@ import 'package:dust_db_postgres/dust_db_postgres.dart';
 ///   dart run example/set_membership.dart
 /// ```
 Future<void> main() async {
-  final url = Platform.environment['DUST_DATABASE_URL'];
-  if (url == null) {
-    print('Set DUST_DATABASE_URL to a PostgreSQL database this may write to.');
-    return;
-  }
+  final url = databaseUrl;
+  if (url == null) return printMissingDatabaseUrl();
 
   final db = PostgresDriver.connect(url);
   try {
