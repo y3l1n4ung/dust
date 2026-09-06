@@ -26,6 +26,13 @@ First release. PostgreSQL runtime for generated Database code, wrapping
   PostgreSQL advisory lock. Unlike SQLite, where one process holds the file,
   several servers can start against the same database at once.
 
+### Testing
+
+- 66 tests at 100% line coverage, gated in CI against a `postgres:16` service.
+  Everything that needs a server is skipped — and reported as skipped — when
+  `DUST_DATABASE_URL` is unset, since there is no in-memory PostgreSQL to fall
+  back to.
+
 ### Notes
 
 - Requires `dust_dart` 0.1.5 or newer, and a Dust CLI that generates PostgreSQL

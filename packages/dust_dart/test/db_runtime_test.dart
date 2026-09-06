@@ -126,6 +126,23 @@ void main() {
     ]);
   });
 
+  test('the facade delegates transactions and closing to its connection',
+      () async {
+    // `DatabaseClientExecution` is what an application calls; the connection
+    // underneath is what actually does the work.
+    final executor = _FakeExecutor();
+    final client = _FakeDatabaseClient(executor, _FakeUnsafeSql(executor));
+
+    expect(client.executor, same(executor));
+    expect((await client.close()).isOk, isTrue);
+    expect(
+      () => client.transaction<Unit>(
+        (tx) async => const Ok<Unit, SqlxError>(unit),
+      ),
+      throwsA(isA<UnimplementedError>()),
+    );
+  });
+
   test('query helpers hand back the executor Err rather than throwing',
       () async {
     final executor = _FakeExecutor(fail: true);

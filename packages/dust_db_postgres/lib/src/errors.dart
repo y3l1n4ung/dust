@@ -1,6 +1,10 @@
 part of 'postgres_pool.dart';
 
 /// Wraps a connection failure as a driver error.
+///
+/// Reached only from the guard around `close`, which the driver does not fail
+/// today; see the note there.
+// coverage:ignore-start
 SqlxError _postgresConnectionError(
   String message, {
   Object? cause,
@@ -13,6 +17,7 @@ SqlxError _postgresConnectionError(
     operation: operation,
   );
 }
+// coverage:ignore-end
 
 /// Wraps a failed statement as a driver error.
 SqlxError _postgresQueryError(

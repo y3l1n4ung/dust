@@ -34,6 +34,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Tests for the `SqlxError` factories and the `DatabaseClient` helpers, taking
+  the package to 100% line coverage.
+
 - `DatabaseClient.migrate()`, applying the migrations a database was generated
   with. SQLite applies them while opening, so it returns `Ok`; PostgreSQL is
   reached over a network and applies them here.

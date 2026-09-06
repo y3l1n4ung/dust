@@ -85,4 +85,43 @@ void main() {
 
     expect(() => row.readDateTime('at'), throwsA(isA<SqlxError>()));
   });
+
+  test('an index outside the row is reported', () {
+    final row = PostgresRow(_row(<String, Object?>{'id': 1}));
+
+    expect(() => row.readIndex<int>(5), throwsA(isA<SqlxError>()));
+    expect(() => row.readIndexNullable<int>(-1), throwsA(isA<SqlxError>()));
+  });
+
+  test('a null at an index is reported when a value is required', () {
+    final row = PostgresRow(_row(<String, Object?>{'id': null}));
+
+    expect(row.readIndexNullable<int>(0), isNull);
+    expect(() => row.readIndex<int>(0), throwsA(isA<SqlxError>()));
+  });
+
+  test('a column that is neither bool nor int is not a boolean', () {
+    final row = PostgresRow(_row(<String, Object?>{'live': 'yes'}));
+
+    expect(() => row.readBool('live'), throwsA(isA<SqlxError>()));
+  });
+
+  test('a null boolean is reported when a value is required', () {
+    final row = PostgresRow(_row(<String, Object?>{'live': null}));
+
+    expect(() => row.readBool('live'), throwsA(isA<SqlxError>()));
+  });
+
+  test('a column that is neither DateTime nor text is not a date', () {
+    final row = PostgresRow(_row(<String, Object?>{'at': 7}));
+
+    expect(() => row.readDateTime('at'), throwsA(isA<SqlxError>()));
+  });
+
+  test('a null timestamp is reported when a value is required', () {
+    final row = PostgresRow(_row(<String, Object?>{'at': null}));
+
+    expect(row.readDateTimeNullable('at'), isNull);
+    expect(() => row.readDateTime('at'), throwsA(isA<SqlxError>()));
+  });
 }

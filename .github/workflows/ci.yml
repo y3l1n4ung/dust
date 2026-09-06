@@ -659,6 +659,12 @@ jobs:
         working-directory: packages/dust_db_postgres
         run: dart test
 
+      # The runtime is only exercised with a server, so its coverage floor
+      # belongs here rather than in the package matrix, which has none.
+      - name: PostgreSQL runtime coverage
+        if: needs.changes.outputs.docs_only != 'true'
+        run: bash scripts/dart/coverage.sh packages/dust_db_postgres 100
+
   http-analyze:
     name: HTTP analyzer fixture
     needs: changes

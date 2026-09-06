@@ -253,6 +253,12 @@ abstract base class _PostgresSession implements PostgresExecutor {
     try {
       await _sessionExecutor?.close();
       return const Ok<Unit, SqlxError>(unit);
+      // `package:postgres` does not fail this call today: closing an already
+      // closed pool returns normally, and so does closing one with a statement
+      // in flight — both were tried. The guard stays because a driver that
+      // starts throwing should not turn into an unhandled exception here, and
+      // it is excluded rather than covered by a test that cannot be written.
+      // coverage:ignore-start
     } catch (error) {
       return Err<Unit, SqlxError>(
         _postgresConnectionError(
@@ -261,6 +267,7 @@ abstract base class _PostgresSession implements PostgresExecutor {
           operation: 'close',
         ),
       );
+      // coverage:ignore-end
     }
   }
 }
