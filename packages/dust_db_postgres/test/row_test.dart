@@ -124,4 +124,51 @@ void main() {
     expect(row.readDateTimeNullable('at'), isNull);
     expect(() => row.readDateTime('at'), throwsA(isA<SqlxError>()));
   });
+
+  group('column index', () {
+    test('an unnamed column is reachable by its position', () {
+      // `SELECT 1` names nothing, and the driver's own column map keys such a
+      // column `[0]`. Reading it that way has to keep working.
+      final schema = pg.ResultSchema(<pg.ResultSchemaColumn>[
+        pg.ResultSchemaColumn(typeOid: 0, type: pg.Type.unspecified),
+      ]);
+      final row = PostgresRow(
+        pg.ResultRow(schema: schema, values: <Object?>[7]),
+      );
+
+      expect(row.read<int>('[0]'), 7);
+      expect(row.readIndex<int>(0), 7);
+    });
+
+    test('a name selected twice resolves to the last of them', () {
+      final schema = pg.ResultSchema(<pg.ResultSchemaColumn>[
+        pg.ResultSchemaColumn(
+            typeOid: 0, type: pg.Type.unspecified, columnName: 'id'),
+        pg.ResultSchemaColumn(
+            typeOid: 0, type: pg.Type.unspecified, columnName: 'id'),
+      ]);
+      final row = PostgresRow(
+        pg.ResultRow(schema: schema, values: <Object?>[1, 2]),
+      );
+
+      expect(row.read<int>('id'), 2);
+    });
+
+    test('rows sharing one schema read the same names', () {
+      // What `_rows` relies on: one index built per result, used by every row.
+      final schema = pg.ResultSchema(<pg.ResultSchemaColumn>[
+        pg.ResultSchemaColumn(
+            typeOid: 0, type: pg.Type.unspecified, columnName: 'name'),
+      ]);
+      final index = postgresColumnIndex(schema);
+      final rows = <PostgresRow>[
+        for (final name in <String>['Ada', 'Grace'])
+          PostgresRow(pg.ResultRow(schema: schema, values: <Object?>[name])),
+      ];
+
+      expect(index, <String, int>{'name': 0});
+      expect(<String>[for (final row in rows) row.read<String>('name')],
+          <String>['Ada', 'Grace']);
+    });
+  });
 }

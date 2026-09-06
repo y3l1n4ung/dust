@@ -8,12 +8,39 @@ part of 'postgres_pool.dart';
 final class PostgresRow implements Row {
   /// Wraps one driver row.
   PostgresRow(this._row, {String operation = ''})
-      : _columns = _row.toColumnMap(),
+      : _sharedIndex = null,
         _operation = operation;
 
+  /// Wraps one row of a result whose rows share [_sharedIndex].
+  PostgresRow._shared(this._row, this._sharedIndex, this._operation);
+
   final pg.ResultRow _row;
-  final Map<String, dynamic> _columns;
+
+  /// Column positions shared by every row of one result, when there is one.
+  final Map<String, int>? _sharedIndex;
+
+  /// Column positions for this row.
+  ///
+  /// `late` so a row read only by index never builds one: `fetchScalar` and
+  /// `readIndex` do not need names. The result's own index is used when there
+  /// is one, so a query returning a thousand rows builds this once rather than
+  /// a thousand times.
+  late final Map<String, int> _columnIndex =
+      _sharedIndex ?? postgresColumnIndex(_row.schema);
+
   final String _operation;
+
+  /// Reads a column by name, or throws when the result has no such column.
+  Object? _column(String column) {
+    final index = _columnIndex[column];
+    if (index == null) {
+      throw _postgresDecodeError(
+        'PostgreSQL result has no column `$column`.',
+        operation: _operation,
+      );
+    }
+    return _row[index];
+  }
 
   @override
   T read<T>(String column) {
@@ -24,13 +51,7 @@ final class PostgresRow implements Row {
 
   @override
   T? readNullable<T>(String column) {
-    if (!_columns.containsKey(column)) {
-      throw _postgresDecodeError(
-        'PostgreSQL result has no column `$column`.',
-        operation: _operation,
-      );
-    }
-    final value = _columns[column];
+    final value = _column(column);
     if (value == null) return null;
     if (value is! T) {
       throw _postgresDecodeError(
@@ -38,7 +59,9 @@ final class PostgresRow implements Row {
         operation: _operation,
       );
     }
-    return value;
+    // The guard above establishes this; Dart does not promote to a type
+    // variable on its own.
+    return value as T;
   }
 
   @override
@@ -73,7 +96,7 @@ final class PostgresRow implements Row {
 
   @override
   bool? readBoolNullable(String column) {
-    final value = _columns[column];
+    final value = _column(column);
     if (value == null) return null;
     if (value is bool) return value;
     if (value is int) return value != 0;
@@ -96,7 +119,7 @@ final class PostgresRow implements Row {
 
   @override
   DateTime? readDateTimeNullable(String column) {
-    final value = _columns[column];
+    final value = _column(column);
     if (value == null) return null;
     if (value is DateTime) return value.toUtc();
     if (value is String) {
@@ -114,4 +137,21 @@ final class PostgresRow implements Row {
       operation: _operation,
     );
   }
+}
+
+/// Maps column name to position for one result schema.
+///
+/// The driver offers `ResultRow.toColumnMap()`, which allocates a map of every
+/// value for every row. Rows of one result share a schema, so the positions can
+/// be worked out once and the values read straight out of the row.
+///
+/// An unnamed column is keyed `[i]`, and a name appearing twice resolves to the
+/// last of them — both as `toColumnMap` does, since a query is free to select
+/// either and the behaviour should not depend on how the row is read.
+Map<String, int> postgresColumnIndex(pg.ResultSchema schema) {
+  final index = <String, int>{};
+  for (final (position, column) in schema.columns.indexed) {
+    index[column.columnName ?? '[$position]'] = position;
+  }
+  return index;
 }

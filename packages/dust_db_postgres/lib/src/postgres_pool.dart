@@ -47,8 +47,11 @@ abstract base class _PostgresSession implements PostgresExecutor {
   ) async {
     try {
       final result = await _session.execute(sql, parameters: parameters);
+      // One index for the whole result rather than one map per row: every row
+      // shares the schema, so the names only have to be resolved once.
+      final index = postgresColumnIndex(result.schema);
       return Ok<List<Row>, SqlxError>(
-        <Row>[for (final row in result) PostgresRow(row, operation: sql)],
+        <Row>[for (final row in result) PostgresRow._shared(row, index, sql)],
       );
     } catch (error) {
       return Err<List<Row>, SqlxError>(_asPostgresError(error, sql));

@@ -18,6 +18,12 @@ First release. PostgreSQL runtime for generated Database code, wrapping
 - `PostgresExecutor`, `PgConnectOptions`, `PostgresRow`, and
   `PostgresUnsafeSql`.
 - 23 examples in `example/`, one per question, indexed by `example/README.md`.
+- Row reads resolve column names through one index per result rather than
+  `ResultRow.toColumnMap()`, which allocates a map of every value for every row.
+  Rows of one result share a schema, so the positions are worked out once and
+  values are read straight out of the row. Over 20k rows of 12 columns the
+  removed step measured 23-34ms against 9ms. The index is also lazy, so
+  `fetchScalar` and any `readIndex` build none at all.
 - `fetchScalar<T?>` answers `Ok(null)` for a NULL value and for no row, rather
   than a decode or cardinality error. This is what `QueryScalar.fetchOptional`
   asks for, so an aggregate over no rows now reads as optional on both drivers;
