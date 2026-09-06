@@ -12,6 +12,7 @@ use sqlx::{Column, Connection, Executor, postgres::PgConnection, sqlite::SqliteC
 use crate::plugin::{
     DbPluginOptions,
     analysis::PackageDatabase,
+    column_alias::parse_column_alias,
     dialect::Dialect,
     migrations::applied_migration_files,
     model::{DbDriver, QueryFunction, QuerySpec},
@@ -277,7 +278,7 @@ where
             columns: describe
                 .columns()
                 .iter()
-                .map(|column| column.name().to_owned())
+                .map(|column| parse_column_alias(column.name()).name)
                 .collect(),
         });
     }
@@ -302,10 +303,12 @@ fn validate_described_columns<DB: sqlx::Database>(
     let Some(required_columns) = row_columns.get(row_type) else {
         return Ok(());
     };
+    // A `foo!` or `foo?` alias is a nullability override, and the marker is not
+    // part of the name a row class spells.
     let returned_columns = describe
         .columns()
         .iter()
-        .map(|column| column.name().to_owned())
+        .map(|column| parse_column_alias(column.name()).name)
         .collect::<HashSet<_>>();
     if let Some(missing) = required_columns
         .iter()

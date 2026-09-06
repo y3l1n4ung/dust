@@ -443,6 +443,29 @@ await database.connection.transaction((tx) async {
 Transaction executors are scope-bound. Do not store `tx` and use it after the
 callback returns; operations on a closed transaction return `Err(SqlxError)`.
 
+## Column Aliases
+
+The database infers whether a column can be null, and inference is sometimes
+wrong in ways no schema can express: a `LEFT JOIN` makes a `NOT NULL` column
+nullable in its result, and `max(x)` over an empty set is `NULL` while
+`count(*)` is not.
+
+Say so in the alias, as SQLx does:
+
+```sql
+SELECT o.total  as "total?",   -- nullable, whatever the schema says
+       max(o.id) as "id!"      -- not null, whatever inference says
+FROM orders o LEFT JOIN payments p ON p.order_id = o.id
+```
+
+The marker is part of the alias, so it reaches Dust as part of the column name
+and is removed before the column is matched to a row field. A row class still
+spells the column `total`, and the generated decoder still reads
+`row.read<int>('total')`.
+
+Only a trailing `!` or `?` is a marker. A name that merely contains one is left
+alone.
+
 ## Set Membership
 
 An `IN` list does not need dynamic SQL. Bind the list itself and read it back

@@ -193,6 +193,45 @@ Future<UserProfile> find(Pool db, int id) {
     let _ = fs::remove_dir_all(root);
 }
 
+/// A `foo!` alias names the column `foo`, not a column called `foo!`.
+///
+/// The marker overrides what the database inferred about nullability, which a
+/// `LEFT JOIN` otherwise gets wrong. It is part of the alias, so it reaches
+/// describe as part of the name and has to come off before the column is
+/// matched against a row class.
+#[test]
+fn accepts_a_column_alias_carrying_a_nullability_override() {
+    let root = temp_root("sqlx_alias_override");
+    write_sqlite_project(
+        &root,
+        r#"
+Future<UserProfile> find(Pool db, int id) {
+  return queryAs<UserProfile>(
+    r'SELECT id, display_name FROM users WHERE id = $1',
+    [id],
+  ).fetchOne(db);
+}
+"#,
+    );
+
+    let library = library_with_queries(
+        &root,
+        vec![simple_user_row_class(), database_class()],
+        vec![query_as(
+            "UserProfile",
+            r#"SELECT id as "id!", display_name as "display_name?" FROM users WHERE id = $1"#,
+            1,
+            "fetchOne",
+            10,
+        )],
+    );
+    let diagnostics = validate_alone(&register_plugin(), &library);
+
+    assert_eq!(diagnostics, Vec::new());
+
+    let _ = fs::remove_dir_all(root);
+}
+
 #[test]
 fn rejects_offline_query_without_metadata_cache() {
     let root = temp_root("sqlx_missing_offline_cache");

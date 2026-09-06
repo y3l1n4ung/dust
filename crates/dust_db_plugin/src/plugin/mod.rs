@@ -7,6 +7,8 @@ use dust_plugin_api::{
 
 /// Package-wide DB facts collected during the workspace scan.
 mod analysis;
+/// SQLx column-alias overrides.
+mod column_alias;
 /// Shared annotation names and claimed symbol lists.
 mod constants;
 /// Renders generated DB, DAO, and row-mapping Dart code.

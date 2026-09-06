@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Database**: SQLx's column-alias overrides. `SELECT x as "total?"` marks a
+  column nullable and `as "total!"` marks it not null, whatever the database
+  inferred — which a `LEFT JOIN` otherwise gets wrong, since it makes a
+  `NOT NULL` column nullable in its result. The marker is part of the alias, so
+  it arrives as part of the column name and is removed before the column is
+  matched to a row field; a row class spells the column `total` and the
+  generated decoder reads `total`.
+
 - **Database**: `DatabaseClient.migrate()` applies the migrations a database was
   generated with. SQLite applies them while opening and returns `Ok`;
   PostgreSQL is reached over a network and cannot, so it applies them here. One
