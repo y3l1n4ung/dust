@@ -16,6 +16,11 @@ First release. PostgreSQL runtime for generated Database code, wrapping
 - `PgPool`, a pool that also runs statements, opened from a connection URL.
 - `PostgresExecutor` implementing the five `Executor` primitives, `PgConnectOptions`,
   `PostgresRow`, `PostgresTransaction`, and `PostgresUnsafeSql`.
+- `?sslmode=` is read from the connection URL — `disable`, `require` or
+  `verify-full` — so a URL that works with `psql` works here. Explicit
+  `PgConnectOptions` win over it. libpq's `prefer` and `allow` are rejected
+  rather than mapped, since they mean "try TLS, fall back to plaintext" and
+  guessing either way would decide something the caller left to the connection.
 - Migrations applied in name order inside one transaction, guarded by a
   PostgreSQL advisory lock. Unlike SQLite, where one process holds the file,
   several servers can start against the same database at once.

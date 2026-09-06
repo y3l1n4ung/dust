@@ -279,7 +279,8 @@ final class PgPool extends PostgresExecutor implements Pool {
     final pool = pg.Pool<Object?>.withEndpoints(
       <pg.Endpoint>[_endpointFor(url)],
       settings: pg.PoolSettings(
-        sslMode: options?._settings.sslMode,
+        // Explicit options win; the URL decides when they say nothing.
+        sslMode: (options?.sslMode ?? _sslModeFor(url))?._driverMode,
         connectTimeout: options?.connectTimeout,
         queryTimeout: options?.queryTimeout,
         applicationName: options?.applicationName,
@@ -301,6 +302,31 @@ final class PgPool extends PostgresExecutor implements Pool {
 
   /// The underlying driver pool, for driver-specific work Dust does not wrap.
   pg.Pool<Object?> get pool => _pool;
+}
+
+/// Reads `?sslmode=` from a connection URL.
+///
+/// Every PostgreSQL tool carries the setting there — libpq, `psql`, SQLx — so a
+/// URL that works elsewhere works here. Returns null when the URL says nothing,
+/// leaving the driver's own default in charge.
+///
+/// `prefer` and `allow` are libpq modes this driver has no equivalent for. They
+/// mean "try TLS, fall back to plaintext", and mapping them to either side
+/// would silently decide something the caller asked to have decided per
+/// connection, so they are rejected rather than guessed.
+PgSslMode? _sslModeFor(String url) {
+  final value = Uri.parse(url).queryParameters['sslmode'];
+  return switch (value) {
+    null => null,
+    'disable' => PgSslMode.disable,
+    'require' => PgSslMode.require,
+    'verify-full' || 'verify_full' => PgSslMode.verifyFull,
+    _ => throw ArgumentError.value(
+        value,
+        'sslmode',
+        'Supported values are disable, require and verify-full',
+      ),
+  };
 }
 
 /// Parses a connection URL into the driver's endpoint type.

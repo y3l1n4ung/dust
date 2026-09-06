@@ -9,14 +9,18 @@ part of 'postgres_pool.dart';
 final class PgConnectOptions {
   /// Creates one set of connection settings.
   const PgConnectOptions({
-    this.sslMode = PgSslMode.require,
+    this.sslMode,
     this.connectTimeout,
     this.queryTimeout,
     this.applicationName,
   });
 
   /// Whether the connection requires TLS.
-  final PgSslMode sslMode;
+  ///
+  /// Null leaves it to the connection URL's `?sslmode=`, and then to the
+  /// driver's own default, which requires TLS. Deciding here instead would
+  /// override a URL that already says what it wants.
+  final PgSslMode? sslMode;
 
   /// How long to wait for a connection to be established.
   final Duration? connectTimeout;
@@ -26,18 +30,6 @@ final class PgConnectOptions {
 
   /// Name reported to the server, which shows up in `pg_stat_activity`.
   final String? applicationName;
-
-  /// These settings as the driver's own type.
-  pg.ConnectionSettings get _settings => pg.ConnectionSettings(
-        sslMode: switch (sslMode) {
-          PgSslMode.disable => pg.SslMode.disable,
-          PgSslMode.require => pg.SslMode.require,
-          PgSslMode.verifyFull => pg.SslMode.verifyFull,
-        },
-        connectTimeout: connectTimeout,
-        queryTimeout: queryTimeout,
-        applicationName: applicationName,
-      );
 }
 
 /// How strictly a connection requires TLS.
@@ -46,8 +38,19 @@ enum PgSslMode {
   disable,
 
   /// TLS without verifying the server certificate.
+  ///
+  /// This accepts *every* certificate, so it stops eavesdropping but not an
+  /// attacker who can position themselves in the middle. Prefer [verifyFull]
+  /// anywhere the network is not already trusted.
   require,
 
   /// TLS with full certificate verification.
-  verifyFull,
+  verifyFull;
+
+  /// This mode as the driver's own enum.
+  pg.SslMode get _driverMode => switch (this) {
+        PgSslMode.disable => pg.SslMode.disable,
+        PgSslMode.require => pg.SslMode.require,
+        PgSslMode.verifyFull => pg.SslMode.verifyFull,
+      };
 }

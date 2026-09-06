@@ -41,8 +41,13 @@ reads it natively, and `dust_db_sqlite3` rewrites it to `?` at bind time.
 skipped unless `DUST_DATABASE_URL` points at a database it may write to:
 
 ```bash
-DUST_DATABASE_URL=postgres://localhost/dust_test dart test
+DUST_DATABASE_URL='postgres://user:pass@localhost:5432/dust_test?sslmode=disable' dart test
 ```
+
+`?sslmode=` is read from the URL, as every other PostgreSQL tool reads it —
+`disable`, `require` or `verify-full`. Explicit `PgConnectOptions` win over it.
+libpq's `prefer` and `allow` are rejected rather than guessed: they mean "try
+TLS, fall back to plaintext", and this driver has no such mode.
 
 There is no in-memory PostgreSQL, which is also why `dust db build` needs a
 server and CI validates from the committed query cache instead.

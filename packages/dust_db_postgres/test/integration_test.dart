@@ -29,10 +29,18 @@ void main() {
 
   late PgPool pool;
 
+  // A real table, not a `TEMP` one. A temporary table belongs to the session
+  // that made it, and a pool hands out a different connection per operation, so
+  // a temp table created here is invisible to the next statement. Dropping it
+  // in tearDown leaves the database as it was found.
   setUp(() async {
     pool = PgPool.connect(url);
     expectOk(await pool.execute(
-      'CREATE TEMP TABLE orders ('
+      'DROP TABLE IF EXISTS orders',
+      const <Object?>[],
+    ));
+    expectOk(await pool.execute(
+      'CREATE TABLE orders ('
       'id BIGSERIAL PRIMARY KEY, '
       'item TEXT NOT NULL, '
       'quantity INTEGER NOT NULL, '
@@ -42,6 +50,7 @@ void main() {
   });
 
   tearDown(() async {
+    await pool.execute('DROP TABLE IF EXISTS orders', const <Object?>[]);
     await pool.close();
   });
 
