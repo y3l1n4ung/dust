@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Database**: PostgreSQL generates and runs. `@SqlxDatabase(type:
+  SqlxDatabaseType.postgres)` emits a facade over `PgPool` instead of reporting
+  that Postgres is reserved, and the facade's signature follows the database —
+  `connect(String url)` where SQLite has `open(String path)`.
+
+  SQL is not checked against the schema for PostgreSQL yet: `describe` needs a
+  live server and the sqlx Postgres backend, neither of which is wired up. The
+  build warns rather than refusing, since the runtime works and a query reaching
+  the database unchecked is a smaller problem than a database nobody can use.
+
+- **Database**: what the engine knows about each database now lives in one
+  place. Picking a runtime type, deciding whether SQL can be validated, and
+  naming the escape hatch were three separate `match` arms, so adding a database
+  meant finding all of them and missing one meant generated code naming a type
+  from the wrong driver. A dialect is a value; adding MySQL is one more of them.
+
 - **Database**: `dust_db_postgres`, the PostgreSQL runtime, wrapping
   `package:postgres` the way `dust_db_sqlite3` wraps `package:sqlite3`. The
   query text does not change between dialects — PostgreSQL reads `$1` natively

@@ -1,9 +1,9 @@
 final class {{ generated_name }} implements {{ class_name }} {
   {{ generated_name }}._(this._driver);
 
-  factory {{ generated_name }}.open(
-    String path, {
-    SqliteConnectOptions? options,
+  factory {{ generated_name }}.{{ factory }}(
+    {{ factory_parameter }}, {
+    {{ options_type }}? options,
   }) {
     final driver = {{ open_expr }};
     return {{ generated_name }}._(driver);

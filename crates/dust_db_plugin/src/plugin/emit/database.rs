@@ -4,10 +4,7 @@ use dust_dart_emit::render_template;
 use dust_ir::DartFileIr;
 use serde::Serialize;
 
-use crate::plugin::{
-    migrations::applied_migration_files,
-    model::{DatabaseClass, DbDriver},
-};
+use crate::plugin::{migrations::applied_migration_files, model::DatabaseClass};
 
 use super::shared::{escape_dart_string, lower_first};
 
@@ -20,6 +17,12 @@ struct DatabaseContext<'a> {
     class_name: &'a str,
     /// Dart expression used to open the pool.
     open_expr: String,
+    /// Constructor name the runtime type offers.
+    factory: &'a str,
+    /// Parameter that constructor takes.
+    factory_parameter: &'a str,
+    /// Dart type carrying per-connection settings.
+    options_type: &'a str,
     /// Concrete driver type the facade holds.
     ///
     /// The facade keeps the driver rather than a `Connection` so that
@@ -46,22 +49,20 @@ pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>
     let class_name = &db.class.name;
     let generated_name = format!("_${class_name}");
     let migrations_name = format!("_${}Migrations", lower_first(class_name));
-    let open_expr = match db.driver {
-        DbDriver::Sqlite3 => format!(
-            "Sqlite3Driver.open(\n      path,\n      migrations: {migrations_name},\n      options: options,\n    )"
-        ),
-        DbDriver::Postgres => {
-            "throw UnsupportedError('Driver.postgres is not supported in Database v1')".to_owned()
-        }
-    };
-    let (driver_type, unsafe_expr) = match db.driver {
-        DbDriver::Sqlite3 => ("Sqlite3Driver", "Sqlite3UnsafeSql(_driver)"),
-        // The open expression already throws, so nothing here is reachable.
-        DbDriver::Postgres => (
-            "Never",
-            "throw UnsupportedError('Driver.postgres is not supported in Database v1')",
-        ),
-    };
+    // Everything dialect-specific comes from one place, so adding a database
+    // is a new `Dialect` rather than another arm here.
+    let dialect = db.driver.dialect();
+    let open_expr = format!(
+        "{}.{}(\n      {},\n      migrations: {migrations_name},\n      options: options,\n    )",
+        dialect.runtime_type,
+        dialect.factory,
+        dialect
+            .factory_parameter
+            .rsplit(' ')
+            .next()
+            .unwrap_or("path"),
+    );
+    let unsafe_expr = format!("{}(_driver)", dialect.unsafe_type);
     let migrations = render_migrations_map(library, &db.migrations, &migrations_name);
 
     render_template(
@@ -71,8 +72,11 @@ pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>
             generated_name: &generated_name,
             class_name,
             open_expr,
-            driver_type,
-            unsafe_expr,
+            factory: dialect.factory,
+            factory_parameter: dialect.factory_parameter,
+            options_type: dialect.options_type,
+            driver_type: dialect.runtime_type,
+            unsafe_expr: &unsafe_expr,
             migrations,
         },
     )
@@ -125,6 +129,7 @@ mod tests {
     use dust_text::{FileId, TextRange};
 
     use super::*;
+    use crate::plugin::model::DbDriver;
 
     fn span() -> SpanIr {
         SpanIr::new(FileId::new(1), TextRange::new(0_u32, 1_u32))
@@ -223,7 +228,7 @@ mod tests {
     }
 
     #[test]
-    fn emits_postgres_database_as_v1_unsupported() {
+    fn emits_postgres_database_against_its_own_runtime() {
         let db_class = class("AppDatabase");
         let library = library(std::path::Path::new(""), vec![db_class.clone()]);
         let db = DatabaseClass {
@@ -270,24 +275,32 @@ const Map<String, String> _$appDatabaseMigrations = <String, String>{
   '003_reversible.up.sql': 'ALTER TABLE logs ADD COLUMN tag TEXT;\n',
 };"#;
 
+    /// Each dialect names its own runtime, and nothing of the other leaks in.
+    ///
+    /// The facade signature follows the database rather than pretending they
+    /// are alike: SQLite opens a path, PostgreSQL connects to a URL.
     const EXPECTED_POSTGRES_DATABASE: &str = r#"final class _$AppDatabase implements AppDatabase {
   _$AppDatabase._(this._driver);
 
-  factory _$AppDatabase.open(
-    String path, {
-    SqliteConnectOptions? options,
+  factory _$AppDatabase.connect(
+    String url, {
+    PgConnectOptions? options,
   }) {
-    final driver = throw UnsupportedError('Driver.postgres is not supported in Database v1');
+    final driver = PgPool.connect(
+      url,
+      migrations: _$appDatabaseMigrations,
+      options: options,
+    );
     return _$AppDatabase._(driver);
   }
 
-  final Never _driver;
+  final PgPool _driver;
 
   @override
   Connection get connection => _driver;
 
   @override
-  UnsafeSql get unsafe => throw UnsupportedError('Driver.postgres is not supported in Database v1');
+  UnsafeSql get unsafe => PostgresUnsafeSql(_driver);
 
   Pool get pool => _driver;
 }

@@ -10,6 +10,9 @@ mod analysis;
 /// Shared annotation names and claimed symbol lists.
 mod constants;
 /// Renders generated DB, DAO, and row-mapping Dart code.
+/// What the engine knows about each database.
+mod dialect;
+/// Generated Dart output.
 mod emit;
 /// Shared migration discovery rules.
 mod migrations;

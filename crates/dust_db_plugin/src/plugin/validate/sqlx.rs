@@ -13,7 +13,7 @@ use crate::plugin::{
     DbPluginOptions,
     analysis::PackageDatabase,
     migrations::applied_migration_files,
-    model::{DbDriver, QueryFunction, QuerySpec},
+    model::{QueryFunction, QuerySpec},
 };
 
 use super::{
@@ -32,7 +32,9 @@ pub(super) fn validate_sqlx_describe(
     options: DbPluginOptions,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
-    if queries.is_empty() || !matches!(db.driver, DbDriver::Sqlite3) {
+    // A dialect the engine cannot describe is reported once by the caller; it
+    // must not also be described here against the wrong backend.
+    if queries.is_empty() || !db.driver.dialect().validates {
         return;
     }
     let migrations_path = Path::new(&library.package_root).join(&db.migrations);

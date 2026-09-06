@@ -7,7 +7,7 @@ use dust_plugin_api::WorkspaceAnalysis;
 use super::{
     DbPluginOptions,
     analysis::{PackageDatabase, duplicate_row_types, package_databases, package_row_column_map},
-    model::{DbDriver, RowClass},
+    model::RowClass,
     parse::{database_classes, query_specs, row_classes},
 };
 
@@ -69,14 +69,21 @@ fn validate_databases(
                 db.class.name
             )));
         }
-        if matches!(db.driver, DbDriver::Postgres) {
+        // A dialect whose SQL the engine cannot describe yet still generates and
+        // runs; it just does so unchecked, and the build says so rather than
+        // refusing work the runtime supports.
+        let dialect = db.driver.dialect();
+        if !dialect.validates {
             diagnostics.push(
-                Diagnostic::error("Driver.postgres is reserved for a future Database release")
-                    .with_label(dust_diagnostics::SourceLabel::new(
-                        db.class.span.file_id,
-                        db.class.span.range,
-                        "use Driver.sqlite3 in v1",
-                    )),
+                Diagnostic::warning(format!(
+                    "SQL is not validated against the schema for `{}` yet",
+                    dialect.name
+                ))
+                .with_note(
+                    "Generated code and the runtime work. Queries reach the database \
+                     without having been checked against your migrations, so a typo in \
+                     one is found at run time rather than at build time.",
+                ),
             );
         }
     }
