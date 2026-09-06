@@ -10,6 +10,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Performance
 
+Compiled ahead of time, which is how a server runs it, against an in-memory
+database and best of three:
+
+| Query | Before | After |
+| :--- | ---: | ---: |
+| `fetchOne`, one row of six columns | 6.17us | 2.82us |
+| `fetchScalar` | 3.63us | 1.21us |
+| `fetchAll`, 1000 rows of six columns | 673us | 547us |
+| A transaction doing one insert | 5.56us | 3.23us |
+
+The changes behind those numbers:
+
 - Prepared statements are held for reuse rather than compiled on every call.
   Preparing was most of what a small query cost: against an in-memory database
   a single-row `SELECT` took 5.7us re-prepared and 2.2us from a held statement,
