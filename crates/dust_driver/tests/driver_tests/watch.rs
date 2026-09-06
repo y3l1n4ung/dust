@@ -1,8 +1,11 @@
-use std::{fs, thread, time::Duration};
+use std::{fs, thread};
 
 use dust_driver::{CommandRequest, WatchRequest, run, run_watch};
 
-use super::support::{DustImport, generated_output, make_workspace, write_dust_file, write_file};
+use super::support::{
+    DustImport, generated_output, make_workspace, replace_dust_file_atomically,
+    replace_file_atomically, wait_for_path, write_dust_file,
+};
 
 #[test]
 fn watch_runs_initial_build_for_existing_candidates() {
@@ -58,9 +61,10 @@ fn watch_rebuilds_only_the_changed_library() {
 
     let root = workspace.path().to_path_buf();
     let user_path = root.join("lib/user.dart");
+    let initial_output = root.join("lib/user.g.dart");
     let modifier = thread::spawn(move || {
-        thread::sleep(Duration::from_millis(25));
-        write_dust_file(
+        wait_for_path(&initial_output);
+        replace_dust_file_atomically(
             &user_path,
             &[DustImport::Derive],
             "part 'user.g.dart';\n\
@@ -78,7 +82,7 @@ fn watch_rebuilds_only_the_changed_library() {
         fail_fast: false,
         jobs: None,
         poll_interval_ms: 20,
-        max_cycles: Some(3),
+        max_cycles: Some(20),
     });
     modifier.join().unwrap();
 
@@ -193,9 +197,10 @@ fn watch_rebuilds_all_libraries_when_package_config_changes() {
 
     let root = workspace.path().to_path_buf();
     let package_config = root.join(".dart_tool/package_config.json");
+    let initial_output = root.join("lib/user.g.dart");
     let modifier = thread::spawn(move || {
-        thread::sleep(Duration::from_millis(25));
-        write_file(&package_config, "{\"configVersion\":2}\n");
+        wait_for_path(&initial_output);
+        replace_file_atomically(&package_config, "{\"configVersion\":2}\n");
     });
 
     let result = run_watch(WatchRequest {
@@ -203,7 +208,7 @@ fn watch_rebuilds_all_libraries_when_package_config_changes() {
         fail_fast: false,
         jobs: None,
         poll_interval_ms: 20,
-        max_cycles: Some(3),
+        max_cycles: Some(20),
     });
     modifier.join().unwrap();
 
@@ -244,9 +249,10 @@ fn watch_rebuilds_all_libraries_when_dust_config_changes() {
 
     let root = workspace.path().to_path_buf();
     let dust_config = root.join("dust.yaml");
+    let initial_output = root.join("lib/user.g.dart");
     let modifier = thread::spawn(move || {
-        thread::sleep(Duration::from_millis(25));
-        write_file(&dust_config, "outputs:\n  primary_suffix: .g.dart\n");
+        wait_for_path(&initial_output);
+        replace_file_atomically(&dust_config, "outputs:\n  primary_suffix: .g.dart\n");
     });
 
     let result = run_watch(WatchRequest {
@@ -254,7 +260,7 @@ fn watch_rebuilds_all_libraries_when_dust_config_changes() {
         fail_fast: false,
         jobs: None,
         poll_interval_ms: 20,
-        max_cycles: Some(3),
+        max_cycles: Some(20),
     });
     modifier.join().unwrap();
 

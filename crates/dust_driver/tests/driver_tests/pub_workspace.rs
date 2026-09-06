@@ -1,7 +1,8 @@
 use dust_driver::{BuildRequest, CleanRequest, WatchRequest, run_build, run_clean, run_watch};
 
 use super::support::{
-    DustImport, generated_output, make_pub_workspace_member, write_dust_file, write_file,
+    DustImport, generated_output, make_pub_workspace_member, replace_file_atomically,
+    wait_for_path, write_dust_file, write_file,
 };
 
 #[test]
@@ -80,9 +81,7 @@ fn watch_rebuilds_member_package_when_shared_workspace_config_changes() {
     let shared_package_config = workspace.path().join(".dart_tool/package_config.json");
     let modifier = std::thread::spawn(move || {
         wait_for_path(&initial_output);
-        let replacement = shared_package_config.with_extension("json.next");
-        std::fs::write(&replacement, "{\"configVersion\":3}\n").unwrap();
-        std::fs::rename(replacement, shared_package_config).unwrap();
+        replace_file_atomically(&shared_package_config, "{\"configVersion\":3}\n");
     });
 
     let result = run_watch(WatchRequest {
@@ -103,18 +102,6 @@ fn watch_rebuilds_member_package_when_shared_workspace_config_changes() {
             package_root.join("lib/user.dart")
         ]
     );
-}
-
-fn wait_for_path(path: &std::path::Path) {
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
-    while !path.exists() {
-        assert!(
-            std::time::Instant::now() < deadline,
-            "timed out waiting for `{}`",
-            path.display()
-        );
-        std::thread::sleep(std::time::Duration::from_millis(5));
-    }
 }
 
 #[test]
