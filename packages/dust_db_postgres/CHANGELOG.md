@@ -13,9 +13,10 @@ First release. PostgreSQL runtime for generated Database code, wrapping
 
 ### Added
 
-- `PgPool`, a pool that also runs statements, opened from a connection URL.
-- `PostgresExecutor` implementing the five `Executor` primitives, `PgConnectOptions`,
-  `PostgresRow`, `PostgresTransaction`, and `PostgresUnsafeSql`.
+- `PostgresDriver`, a pool that also runs statements, opened from a connection
+  URL, with `PgPool` as the `sqlx-postgres` alias.
+- `PostgresExecutor`, `PgConnectOptions`, `PostgresRow`, and
+  `PostgresUnsafeSql`.
 - `?sslmode=` is read from the connection URL — `disable`, `require` or
   `verify-full` — so a URL that works with `psql` works here. Explicit
   `PgConnectOptions` win over it. libpq's `prefer` and `allow` are rejected

@@ -8,6 +8,12 @@ part 'row.dart';
 part 'transaction.dart';
 part 'unsafe_sql.dart';
 
+/// A PostgreSQL executor with access to the underlying driver session.
+abstract interface class PostgresExecutor implements Executor {
+  /// Native `package:postgres` session used by this executor.
+  pg.Session get session;
+}
+
 /// Runs Dust queries against one `package:postgres` session.
 ///
 /// The SQL reaches the server unchanged. Postgres reads `$1` natively, and
@@ -15,15 +21,18 @@ part 'unsafe_sql.dart';
 /// a plain `List<Object?>` works against a plain `String` query and why nothing
 /// on this side rewrites the text. SQLite needs the opposite: its driver
 /// rewrites `$n` to `?` at bind time.
-class PostgresExecutor implements Executor {
+abstract base class _PostgresSession implements PostgresExecutor {
   /// Binds queries to a session, and transactions to a session executor.
   ///
   /// The session executor is null inside a transaction, where the driver hands
   /// out a `TxSession` that cannot open a transaction of its own.
-  PostgresExecutor(this._session, this._sessionExecutor);
+  _PostgresSession(this._session, this._sessionExecutor);
 
   final pg.Session _session;
   final pg.SessionExecutor? _sessionExecutor;
+
+  @override
+  pg.Session get session => _session;
 
   /// Names savepoints uniquely within a process.
   static int _savepointCounter = 0;
@@ -167,7 +176,7 @@ class PostgresExecutor implements Executor {
 
     try {
       return await executor.runTx<Result<T, SqlxError>>((tx) async {
-        final result = await fn(PostgresTransaction(tx));
+        final result = await fn(_PostgresTransaction(tx));
         // `runTx` reverts only when the callback throws, and an `Err` is an
         // ordinary return value, so it has to leave as a throw.
         if (result.isErr) throw _RollbackSignal(result);
@@ -210,7 +219,7 @@ class PostgresExecutor implements Executor {
 
     Result<T, SqlxError> result;
     try {
-      result = await fn(PostgresTransaction(_session));
+      result = await fn(_PostgresTransaction(_session));
     } catch (error) {
       await _releaseSavepoint(name, rollback: true);
       return Err<T, SqlxError>(
@@ -256,12 +265,12 @@ class PostgresExecutor implements Executor {
   }
 }
 
-/// A PostgreSQL pool, named as `sqlx-postgres` names it.
+/// PostgreSQL driver backed by one `package:postgres` pool.
 ///
-/// `package:postgres` pools run statements directly as well as handing out
-/// transactions, so this is both the pool and the connection Dust asks for.
-final class PgPool extends PostgresExecutor implements Pool {
-  PgPool._(pg.Pool<Object?> pool, this._migrations)
+/// A pool in `package:postgres` runs statements directly as well as handing out
+/// transactions, so one type is both the pool and the connection Dust asks for.
+final class PostgresDriver extends _PostgresSession implements Pool {
+  PostgresDriver._(pg.Pool<Object?> pool, this._migrations)
       : _pool = pool,
         super(pool, pool);
 
@@ -271,7 +280,7 @@ final class PgPool extends PostgresExecutor implements Pool {
   /// Opens a pool from a connection URL and applies unapplied migrations.
   ///
   /// The URL is `postgres://user:password@host:port/database`.
-  static PgPool connect(
+  static PostgresDriver connect(
     String url, {
     Map<String, String> migrations = const <String, String>{},
     PgConnectOptions? options,
@@ -286,14 +295,14 @@ final class PgPool extends PostgresExecutor implements Pool {
         applicationName: options?.applicationName,
       ),
     );
-    return PgPool._(pool, migrations);
+    return PostgresDriver._(pool, migrations);
   }
 
-  /// Applies any migrations this pool was opened with.
+  /// Applies any migrations this driver was opened with.
   ///
-  /// Separate from opening because it has to await: `PgPool.connect` returns a
-  /// pool synchronously so a generated facade can hold one without its
-  /// constructor becoming a future.
+  /// Separate from opening because it has to await: `connect` returns
+  /// synchronously so a generated facade can hold one without its constructor
+  /// becoming a future.
   Future<Result<Unit, SqlxError>> migrate() =>
       _applyMigrations(this, _migrations);
 
@@ -342,3 +351,6 @@ pg.Endpoint _endpointFor(String url) {
     password: userInfo.length > 1 ? userInfo[1] : null,
   );
 }
+
+/// Backwards-compatible PostgreSQL pool name, as `sqlx-postgres` names it.
+typedef PgPool = PostgresDriver;

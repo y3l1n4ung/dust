@@ -1596,6 +1596,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "sqlx-core",
+ "sqlx-postgres",
  "sqlx-sqlite",
  "syn",
  "tokio",

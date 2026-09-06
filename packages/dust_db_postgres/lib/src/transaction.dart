@@ -18,8 +18,7 @@ final class _RollbackSignal implements Exception {
 /// transaction a `TxSession`, which is a `Session` and not a `SessionExecutor`,
 /// so it cannot open a transaction of its own. A nested call takes the
 /// savepoint path instead.
-final class PostgresTransaction extends PostgresExecutor
+final class _PostgresTransaction extends _PostgresSession
     implements Transaction {
-  /// Binds the queries to one open transaction session.
-  PostgresTransaction(pg.Session session) : super(session, null);
+  _PostgresTransaction(pg.Session session) : super(session, null);
 }

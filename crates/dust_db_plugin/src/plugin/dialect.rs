@@ -1,13 +1,9 @@
 //! What the engine knows about one database, in one place.
 //!
-//! Everything dialect-specific used to be a `match` at the point of use: emit
-//! matched to pick a runtime type, validation matched to decide whether to run
-//! at all, and a third match decided the escape hatch. Adding a database meant
-//! finding all of them, and missing one meant generated code that named a type
-//! from the wrong driver.
-//!
-//! A dialect is a value instead. Adding MySQL is one more `Dialect`, and the
-//! compiler names every place that has to answer for it.
+//! Emit, validation, and the escape hatch each used to `match` on the driver at
+//! the point of use, so adding a database meant finding every arm and missing
+//! one meant generated code naming a type from the wrong driver. A dialect is a
+//! value instead.
 
 use super::model::DbDriver;
 
@@ -29,10 +25,17 @@ pub(crate) struct Dialect {
     pub(crate) options_type: &'static str,
     /// Dart type implementing the unchecked SQL escape hatch.
     pub(crate) unsafe_type: &'static str,
+    /// Whether the driver rewrites `$n` into another placeholder form.
+    ///
+    /// SQLite has no `$n`, so its driver rewrites to `?` at bind time and a
+    /// repeated `$1` becomes two binds. PostgreSQL reads `$n` itself and binds
+    /// a repeated one once. The engine has to describe the text the database
+    /// will actually receive, and expect the bind count that dialect implies.
+    pub(crate) rewrites_placeholders: bool,
     /// Whether SQL for this dialect is checked against the schema at build time.
     ///
-    /// False means the runtime works but `describe` is not wired up, so queries
-    /// reach the database unchecked and the build says so.
+    /// False means the runtime works but `describe` does not, so queries reach
+    /// the database unchecked and the build warns rather than refusing.
     pub(crate) validates: bool,
 }
 
@@ -44,20 +47,20 @@ const SQLITE3: Dialect = Dialect {
     factory_parameter: "String path",
     options_type: "SqliteConnectOptions",
     unsafe_type: "Sqlite3UnsafeSql",
+    rewrites_placeholders: true,
     validates: true,
 };
 
 /// PostgreSQL through `package:postgres`.
 const POSTGRES: Dialect = Dialect {
     name: "postgres",
-    runtime_type: "PgPool",
+    runtime_type: "PostgresDriver",
     factory: "connect",
     factory_parameter: "String url",
     options_type: "PgConnectOptions",
     unsafe_type: "PostgresUnsafeSql",
-    // `describe` needs a live server and the sqlx Postgres backend, neither of
-    // which is wired up yet.
-    validates: false,
+    rewrites_placeholders: false,
+    validates: true,
 };
 
 impl DbDriver {
@@ -79,10 +82,10 @@ impl DbDriver {
 mod tests {
     use super::*;
 
+    /// A copied dialect that kept another driver's type names would emit code
+    /// naming the wrong package, and nothing else would catch it.
     #[test]
     fn every_driver_names_a_distinct_runtime() {
-        // A copied `Dialect` that kept another driver's type names would emit
-        // code naming the wrong package, and nothing else would catch it.
         let dialects = [DbDriver::Sqlite3.dialect(), DbDriver::Postgres.dialect()];
         for (index, left) in dialects.iter().enumerate() {
             for right in dialects.iter().skip(index + 1) {

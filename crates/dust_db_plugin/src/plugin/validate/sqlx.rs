@@ -7,13 +7,14 @@ use std::{
 use dust_diagnostics::Diagnostic;
 use dust_plugin_api::{MetadataOutput, ValidationAccess};
 use either::Either;
-use sqlx::{Column, Connection, Executor, sqlite::SqliteConnection};
+use sqlx::{Column, Connection, Executor, postgres::PgConnection, sqlite::SqliteConnection};
 
 use crate::plugin::{
     DbPluginOptions,
     analysis::PackageDatabase,
+    dialect::Dialect,
     migrations::applied_migration_files,
-    model::{QueryFunction, QuerySpec},
+    model::{DbDriver, QueryFunction, QuerySpec},
 };
 
 use super::{
@@ -71,7 +72,7 @@ pub(super) fn validate_sqlx_describe(
 
     match run_sqlx_validation(
         &migrations_path,
-        db.driver.as_str(),
+        db.driver,
         &db.migrations,
         &schema_hash,
         queries,
@@ -91,7 +92,7 @@ pub(super) fn validate_sqlx_describe(
 /// Runs online SQLx validation inside a current-thread Tokio runtime.
 fn run_sqlx_validation(
     migrations_path: &Path,
-    driver: &str,
+    driver: DbDriver,
     migrations: &str,
     schema_hash: &str,
     queries: &[QuerySpec],
@@ -101,37 +102,98 @@ fn run_sqlx_validation(
         .enable_all()
         .build()
         .map_err(|error| format!("failed to create SQL validation runtime: {error}"))?;
+    // The one place a dialect's backend is chosen; everything past it is
+    // generic over the connection.
     runtime.block_on(async move {
-        let mut conn = connect_sqlite_for_validation().await?;
-        apply_migrations(&mut conn, migrations_path).await?;
-        describe_queries(
-            &mut conn,
-            driver,
-            migrations,
-            schema_hash,
-            queries,
-            row_columns,
-        )
-        .await
+        match driver {
+            DbDriver::Sqlite3 => {
+                let mut conn =
+                    connect_for_validation::<SqliteConnection>(driver, Some("sqlite::memory:"))
+                        .await?;
+                apply_migrations(&mut conn, migrations_path).await?;
+                describe_queries(
+                    &mut conn,
+                    driver.dialect(),
+                    migrations,
+                    schema_hash,
+                    queries,
+                    row_columns,
+                )
+                .await
+            }
+            DbDriver::Postgres => {
+                // No in-memory Postgres, so there is no default to fall back
+                // to: validation needs a server or it does not run.
+                let mut conn = connect_for_validation::<PgConnection>(driver, None).await?;
+                // Migrations are applied inside a transaction that is never
+                // committed, so validating leaves the developer's database as
+                // it found it. `describe` sees the schema either way.
+                let mut tx = conn.begin().await.map_err(|error| {
+                    format!("failed to open the SQL validation transaction: {error}")
+                })?;
+                // Migrations go into a scratch schema, not the developer's own:
+                // a database the application has already run against holds the
+                // tables, and the first `CREATE TABLE` would fail. The rollback
+                // removes the schema with everything in it.
+                for setup in [
+                    "CREATE SCHEMA dust_validation",
+                    "SET LOCAL search_path TO dust_validation",
+                ] {
+                    (&mut *tx).execute(setup).await.map_err(|error| {
+                        format!("failed to prepare the SQL validation schema: {error}")
+                    })?;
+                }
+                apply_migrations(&mut *tx, migrations_path).await?;
+                let described = describe_queries(
+                    &mut *tx,
+                    driver.dialect(),
+                    migrations,
+                    schema_hash,
+                    queries,
+                    row_columns,
+                )
+                .await;
+                // A failure to roll back matters more than the describe result.
+                tx.rollback().await.map_err(|error| {
+                    format!("failed to roll back the SQL validation transaction: {error}")
+                })?;
+                described
+            }
+        }
     })
 }
 
-/// Opens the SQLite database used for SQL validation.
-async fn connect_sqlite_for_validation() -> Result<SqliteConnection, String> {
-    let database_url =
-        std::env::var("DUST_DATABASE_URL").unwrap_or_else(|_| "sqlite::memory:".to_owned());
-    SqliteConnection::connect(&database_url)
-        .await
-        .map_err(|error| {
-            format!("failed to connect SQL validation database `{database_url}`: {error}")
-        })
+/// Opens the database SQL is validated against.
+///
+/// `DUST_DATABASE_URL` names it. SQLite has an in-memory default because it can
+/// build the schema from the migrations alone; PostgreSQL has no equivalent, so
+/// it says what is missing rather than failing to connect to nothing.
+async fn connect_for_validation<C: Connection>(
+    driver: DbDriver,
+    fallback: Option<&str>,
+) -> Result<C, String> {
+    let database_url = match (std::env::var("DUST_DATABASE_URL").ok(), fallback) {
+        (Some(url), _) => url,
+        (None, Some(fallback)) => fallback.to_owned(),
+        (None, None) => {
+            return Err(format!(
+                "validating SQL for `{}` needs a database: set DUST_DATABASE_URL, or build with \
+                 --offline to validate from the committed query cache",
+                driver.as_str()
+            ));
+        }
+    };
+    C::connect(&database_url).await.map_err(|error| {
+        format!("failed to connect SQL validation database `{database_url}`: {error}")
+    })
 }
 
 /// Applies migration files to the validation database.
-async fn apply_migrations(
-    conn: &mut SqliteConnection,
-    migrations_path: &Path,
-) -> Result<(), String> {
+async fn apply_migrations<C>(conn: &mut C, migrations_path: &Path) -> Result<(), String>
+where
+    C: Connection,
+    for<'e> &'e mut C: Executor<'e, Database = C::Database>,
+{
     for migration in applied_migration_files(migrations_path)? {
         let sql = fs::read_to_string(&migration.path).map_err(|error| {
             format!(
@@ -150,14 +212,18 @@ async fn apply_migrations(
 }
 
 /// Describes all queries and returns metadata suitable for cache writes.
-async fn describe_queries(
-    conn: &mut SqliteConnection,
-    driver: &str,
+async fn describe_queries<C>(
+    conn: &mut C,
+    dialect: &Dialect,
     migrations: &str,
     schema_hash: &str,
     queries: &[QuerySpec],
     row_columns: &HashMap<String, HashSet<String>>,
-) -> Result<Vec<QueryCacheEntry>, String> {
+) -> Result<Vec<QueryCacheEntry>, String>
+where
+    C: Connection,
+    for<'e> &'e mut C: Executor<'e, Database = C::Database>,
+{
     let mut metadata = Vec::new();
     for query in queries {
         // Unchecked SQL is not described and never enters the cache: its text
@@ -166,16 +232,24 @@ async fn describe_queries(
         if !query.sql_source_static || matches!(query.function, QueryFunction::Unsafe) {
             continue;
         }
+        // Arity and gap checking is dialect-independent, so it always runs. Which
+        // text the database is asked about is not: SQLite receives `?` and
+        // PostgreSQL receives the `$n` as written.
         let rewrite = validate_placeholders(&query.sql, query.parameter_count)?;
+        let (described_sql, expected_parameters) = if dialect.rewrites_placeholders {
+            (rewrite.sql.as_str(), rewrite.expanded_parameter_count())
+        } else {
+            (query.sql.as_str(), query.parameter_count)
+        };
         let describe = conn
-            .describe(rewrite.sql.as_str())
+            .describe(described_sql)
             .await
             .map_err(|error| format!("SQLx rejected `{}`: {error}", query.display_name()))?;
         let parameter_count = describe.parameters().map_or(0, |params| match params {
             Either::Left(values) => values.len(),
             Either::Right(count) => count,
         });
-        if parameter_count != rewrite.expanded_parameter_count() {
+        if parameter_count != expected_parameters {
             // The bind list is built from the placeholders Dust replaced, so a
             // disagreement here means the generated call would bind the wrong
             // number of arguments. Show the SQL the database actually parsed:
@@ -185,19 +259,19 @@ async fn describe_queries(
                  having {parameter_count} parameters. A `$n` was rewritten somewhere it cannot \
                  be bound:\n{}",
                 query.display_name(),
-                rewrite.expanded_parameter_count(),
-                rewrite.sql.trim()
+                expected_parameters,
+                described_sql.trim()
             ));
         }
         validate_described_columns(query, row_columns, &describe)?;
         metadata.push(QueryCacheEntry {
-            driver: driver.to_owned(),
+            driver: dialect.name.to_owned(),
             migrations: migrations.to_owned(),
             schema_hash: schema_hash.to_owned(),
             sql_hash: stable_hash_hex(query.sql.as_bytes()),
             sql: query.sql.clone(),
             user_parameter_count: query.parameter_count,
-            expanded_parameter_count: rewrite.expanded_parameter_count(),
+            expanded_parameter_count: expected_parameters,
             fetch_mode: query.fetch.as_str().to_owned(),
             row_type: query.row_type.clone(),
             columns: describe
@@ -211,10 +285,10 @@ async fn describe_queries(
 }
 
 /// Validates SQLx-described columns against scalar and row requirements.
-fn validate_described_columns(
+fn validate_described_columns<DB: sqlx::Database>(
     query: &QuerySpec,
     row_columns: &HashMap<String, HashSet<String>>,
-    describe: &sqlx::Describe<sqlx::Sqlite>,
+    describe: &sqlx::Describe<DB>,
 ) -> Result<(), String> {
     if matches!(query.function, QueryFunction::Scalar) && describe.columns().len() != 1 {
         return Err(format!(

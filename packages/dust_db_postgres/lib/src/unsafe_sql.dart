@@ -15,7 +15,7 @@ final class PostgresUnsafeSql implements UnsafeSql {
     String sql,
     List<Object?> parameters,
   ) async {
-    return _executor._rows(sql, parameters);
+    return _executor.fetchAll<Row>(sql, parameters, (row) => row);
   }
 
   @override
@@ -24,7 +24,7 @@ final class PostgresUnsafeSql implements UnsafeSql {
     List<Object?> parameters,
     RowMapper<T> mapper,
   ) async {
-    final rows = await _executor._rows(sql, parameters);
+    final rows = await fetch(sql, parameters);
     return rows.andThen((rows) {
       try {
         return Ok<List<T>, SqlxError>(<T>[for (final row in rows) mapper(row)]);

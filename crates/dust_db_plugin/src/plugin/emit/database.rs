@@ -286,7 +286,7 @@ const Map<String, String> _$appDatabaseMigrations = <String, String>{
     String url, {
     PgConnectOptions? options,
   }) {
-    final driver = PgPool.connect(
+    final driver = PostgresDriver.connect(
       url,
       migrations: _$appDatabaseMigrations,
       options: options,
@@ -294,7 +294,7 @@ const Map<String, String> _$appDatabaseMigrations = <String, String>{
     return _$AppDatabase._(driver);
   }
 
-  final PgPool _driver;
+  final PostgresDriver _driver;
 
   @override
   Connection get connection => _driver;

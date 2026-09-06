@@ -13,10 +13,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   that Postgres is reserved, and the facade's signature follows the database —
   `connect(String url)` where SQLite has `open(String path)`.
 
-  SQL is not checked against the schema for PostgreSQL yet: `describe` needs a
-  live server and the sqlx Postgres backend, neither of which is wired up. The
-  build warns rather than refusing, since the runtime works and a query reaching
-  the database unchecked is a smaller problem than a database nobody can use.
+  SQL is checked against the schema, the same as SQLite: `dust db build` reads
+  `DUST_DATABASE_URL` and describes every static query. Migrations are applied
+  into a scratch schema inside a transaction that is rolled back, so validating
+  leaves the database as it found it and works against one that already holds
+  the schema. `--offline` validates from the committed cache with no server, and
+  a cache written for another driver is refused.
 
 - **Database**: what the engine knows about each database now lives in one
   place. Picking a runtime type, deciding whether SQL can be validated, and
