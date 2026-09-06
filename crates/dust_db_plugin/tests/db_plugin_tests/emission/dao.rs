@@ -285,9 +285,8 @@ final class _$UserDao implements UserDao {
 
   @override
   Future<Result<List<Row>, SqlxError>> rawRows() {
-    return _db.raw.fetch(
-      r'''SELECT id, display_name FROM users''',
-      [],
+    return Err<List<Row>, SqlxError>(
+      SqlxError.decode('A DAO cannot return untyped rows. Use a row type with @Derive([FromRow()]), or the unsafe escape hatch on the database facade.'),
     );
   }
 

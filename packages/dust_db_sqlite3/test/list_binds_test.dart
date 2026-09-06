@@ -5,6 +5,7 @@ import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:test/test.dart';
 
 import 'support/expect_ok.dart';
+import 'support/unsafe_rows.dart';
 
 /// Opens an in-memory pool holding one table with a text and a blob column.
 SqlitePool _pool() {
@@ -43,15 +44,13 @@ void main() {
 
     // Constant SQL, one placeholder, one bound value — the shape `describe`
     // accepts, and the reason no caller needs dynamic `IN (?, ?, ?)`.
-    final rows = expectOk(
-      await queryRaw(
+    final rows = await unsafeRows(
+        pool,
         r'SELECT name FROM items '
         r'WHERE id IN (SELECT value FROM json_each(?)) ORDER BY id',
         [
           const <int>[1, 3],
-        ],
-      ).fetch(pool),
-    );
+        ]);
 
     expect(
       rows.map((row) => row.read<String>('name')),
@@ -71,12 +70,10 @@ void main() {
       ).execute(pool),
     );
 
-    final rows = expectOk(
-      await queryRaw(
+    final rows = await unsafeRows(
+        pool,
         r'SELECT name FROM items WHERE id IN (SELECT value FROM json_each(?))',
-        [const <int>[]],
-      ).fetch(pool),
-    );
+        [const <int>[]]);
 
     expect(rows, isEmpty);
   });
@@ -96,12 +93,11 @@ void main() {
     );
 
     // A JSON-encoded payload would come back as the five characters `[1,2,3]`.
-    final stored = expectOk(
-      await queryRaw(
-        r'SELECT length(payload) AS size, typeof(payload) AS kind FROM items',
-        const <Object?>[],
-      ).fetch(pool),
-    ).single;
+    final stored = (await unsafeRows(
+      pool,
+      r'SELECT length(payload) AS size, typeof(payload) AS kind FROM items',
+    ))
+        .single;
 
     expect(stored.read<int>('size'), 3);
     expect(stored.read<String>('kind'), 'blob');

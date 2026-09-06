@@ -5,7 +5,7 @@ final class _TransactionCoordinator {
 
   Future<Result<T, SqlxError>> runRoot<T>(
     sqlite.Database database,
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(DatabaseTransaction tx) fn,
   ) async {
     final begin = _executeControl(
       database,
@@ -58,7 +58,7 @@ final class _TransactionCoordinator {
 
   Future<Result<T, SqlxError>> runSavepoint<T>(
     sqlite.Database database,
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(DatabaseTransaction tx) fn,
   ) async {
     final name = '_dust_tx_${++_nextSavepointId}';
     final begin = _executeControl(
@@ -149,9 +149,6 @@ final class _SingleConnectionPool implements Transaction, Sqlite3Executor {
   Driver get driver => _driver.driver;
 
   @override
-  RawSql get raw => _driver.raw;
-
-  @override
   Future<Result<T?, SqlxError>> fetchOptional<T>(
     String sql,
     List<Object?> parameters,
@@ -196,7 +193,7 @@ final class _SingleConnectionPool implements Transaction, Sqlite3Executor {
 
   @override
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(DatabaseTransaction tx) fn,
   ) {
     final error = _driver._closedError();
     if (error != null) return Future.value(Err<T, SqlxError>(error));
@@ -216,7 +213,7 @@ final class _SingleConnectionPool implements Transaction, Sqlite3Executor {
 
 extension _Sqlite3TransactionRunner on Sqlite3Driver {
   Future<Result<T, SqlxError>> _runTransaction<T>(
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(DatabaseTransaction tx) fn,
   ) {
     final error = _closedError();
     if (error != null) return Future.value(Err<T, SqlxError>(error));

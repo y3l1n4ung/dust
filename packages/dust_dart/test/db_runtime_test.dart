@@ -88,14 +88,12 @@ void main() {
       'nullable',
       const [],
     ).fetchOptional(executor);
-    final raw = await queryRaw('raw', const []).fetch(executor);
     final exec = await queryExecute('exec', const []).execute(executor);
-    final rawx = await RawSqlx(executor).fetch('rawx', const []);
-    final rawxExec = await RawSqlx(executor).execute('rawxExec', const []);
+    final unsafeRows = await client.unsafe.fetch('rawx', const []);
+    final unsafeExec = await client.unsafe.execute('rawxExec', const []);
 
     expect(executor, isA<DatabaseExecutor>());
     expect(executor, isA<DatabaseConnection>());
-    expect(executor, isA<Executor>());
     expect(client.executor, same(executor));
     expect(one.match(ok: (user) => user.id, err: (_) => -1), 1);
     expect(optional.match(ok: (user) => user?.id, err: (_) => -1), 2);
@@ -105,17 +103,15 @@ void main() {
     );
     expect(scalar.match(ok: (value) => value, err: (_) => -1), 42);
     expect(nullableScalar.match(ok: (value) => value, err: (_) => -1), isNull);
-    expect(
-      raw.match(ok: (rows) => rows.single.read<int>('id'), err: (_) => -1),
-      5,
-    );
+
     expect(exec.match(ok: (value) => value.rowsAffected, err: (_) => -1), 6);
     expect(
-      rawx.match(ok: (rows) => rows.single.read<int>('id'), err: (_) => -1),
+      unsafeRows.match(
+          ok: (rows) => rows.single.read<int>('id'), err: (_) => -1),
       5,
     );
     expect(
-      rawxExec.match(ok: (value) => value.rowsAffected, err: (_) => -1),
+      unsafeExec.match(ok: (value) => value.rowsAffected, err: (_) => -1),
       1,
     );
     expect(executor.calls, <String>[
@@ -124,10 +120,9 @@ void main() {
       'fetchAll:all',
       'fetchScalar:scalar',
       'fetchScalar:nullable',
-      'raw.fetch:raw',
       'execute:exec',
-      'raw.fetch:rawx',
-      'raw.execute:rawxExec',
+      'unsafe.fetch:rawx',
+      'unsafe.execute:rawxExec',
     ]);
   });
 
@@ -170,39 +165,6 @@ final class _FakeDatabaseClient implements DatabaseClient {
   final UnsafeSql unsafe;
 }
 
-/// Stand-in for what a driver package supplies to a generated facade.
-final class _FakeUnsafeSql implements UnsafeSql {
-  const _FakeUnsafeSql(this._db);
-
-  final DatabaseExecutor _db;
-
-  @override
-  Future<Result<List<Row>, SqlxError>> fetch(
-    String sql,
-    List<Object?> parameters,
-  ) {
-    return (_db as Executor).raw.fetch(sql, parameters);
-  }
-
-  @override
-  Future<Result<List<T>, SqlxError>> fetchAs<T>(
-    String sql,
-    List<Object?> parameters,
-    RowMapper<T> mapper,
-  ) async {
-    final rows = await fetch(sql, parameters);
-    return rows.map((rows) => <T>[for (final row in rows) mapper(row)]);
-  }
-
-  @override
-  Future<Result<ExecResult, SqlxError>> execute(
-    String sql,
-    List<Object?> parameters,
-  ) {
-    return (_db as Executor).raw.execute(sql, parameters);
-  }
-}
-
 final class _FakeExecutor implements Pool {
   _FakeExecutor({this.fail = false});
 
@@ -211,9 +173,6 @@ final class _FakeExecutor implements Pool {
 
   @override
   Driver get driver => Driver.sqlite3;
-
-  @override
-  RawSql get raw => _FakeRawSql(this);
 
   @override
   Future<Result<T?, SqlxError>> fetchOptional<T>(
@@ -274,9 +233,9 @@ final class _FakeExecutor implements Pool {
 
   @override
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(DatabaseTransaction tx) fn,
   ) {
-    return fn(this);
+    throw UnimplementedError();
   }
 
   @override
@@ -285,8 +244,9 @@ final class _FakeExecutor implements Pool {
   }
 }
 
-final class _FakeRawSql implements RawSql {
-  const _FakeRawSql(this._executor);
+/// Stand-in for what a driver package hands a generated facade.
+final class _FakeUnsafeSql implements UnsafeSql {
+  const _FakeUnsafeSql(this._executor);
 
   final _FakeExecutor _executor;
 
@@ -295,7 +255,7 @@ final class _FakeRawSql implements RawSql {
     String sql,
     List<Object?> parameters,
   ) async {
-    _executor.calls.add('raw.fetch:$sql');
+    _executor.calls.add('unsafe.fetch:$sql');
     if (_executor.fail) {
       return Err<List<Row>, SqlxError>(SqlxError.driver('failed'));
     }
@@ -303,11 +263,21 @@ final class _FakeRawSql implements RawSql {
   }
 
   @override
+  Future<Result<List<T>, SqlxError>> fetchAs<T>(
+    String sql,
+    List<Object?> parameters,
+    RowMapper<T> mapper,
+  ) async {
+    final rows = await fetch(sql, parameters);
+    return rows.map((rows) => <T>[for (final row in rows) mapper(row)]);
+  }
+
+  @override
   Future<Result<ExecResult, SqlxError>> execute(
     String sql,
     List<Object?> parameters,
   ) async {
-    _executor.calls.add('raw.execute:$sql');
+    _executor.calls.add('unsafe.execute:$sql');
     if (_executor.fail) {
       return Err<ExecResult, SqlxError>(SqlxError.driver('failed'));
     }

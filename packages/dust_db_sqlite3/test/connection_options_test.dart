@@ -5,6 +5,7 @@ import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:test/test.dart';
 
 import 'support/expect_ok.dart';
+import 'support/unsafe_rows.dart';
 
 void main() {
   test('sqlite connect options open in-memory database with pragmas', () async {
@@ -74,10 +75,8 @@ CREATE TABLE children (
       await readOnly.close();
     });
 
-    final users = expectOk(await queryRaw(
-      'SELECT name FROM users ORDER BY id',
-      const [],
-    ).fetch(readOnly));
+    final users = await unsafeRows(
+        readOnly, 'SELECT name FROM users ORDER BY id', const []);
     expect(users.single.read<String>('name'), 'Ada');
 
     final write = await readOnly.execute(

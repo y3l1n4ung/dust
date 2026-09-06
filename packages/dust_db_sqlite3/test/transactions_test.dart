@@ -3,6 +3,7 @@ import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:test/test.dart';
 
 import 'support/expect_ok.dart';
+import 'support/unsafe_rows.dart';
 import 'support/user_name.dart';
 
 void main() {
@@ -22,8 +23,7 @@ void main() {
     });
     expect(result, isA<Err<void, SqlxError>>());
 
-    final rows =
-        expectOk(await queryRaw('SELECT id FROM users', []).fetch(pool));
+    final rows = await unsafeRows(pool, 'SELECT id FROM users', []);
     expect(rows, isEmpty);
   });
 
@@ -68,10 +68,6 @@ void main() {
           'SELECT COUNT(*) FROM users',
           const [],
         );
-        final rawRows = await tx.raw.fetch(
-          'SELECT id, name FROM users',
-          const [],
-        );
         final nested = await tx.transaction((nestedTx) => nestedTx.close());
 
         expect(
@@ -81,7 +77,6 @@ void main() {
         expect(one.match(ok: (value) => value.name, err: (_) => 'err'), 'Ada');
         expect(all.match(ok: (value) => value.length, err: (_) => -1), 1);
         expect(count.match(ok: (value) => value, err: (_) => -1), 1);
-        expect(rawRows.match(ok: (rows) => rows.length, err: (_) => -1), 1);
         expect(nested, isA<Ok<Unit, SqlxError>>());
         return const Ok<String, SqlxError>('committed');
       });
@@ -109,8 +104,7 @@ void main() {
     });
     expect(result, isA<Err<Unit, SqlxError>>());
 
-    final rows =
-        expectOk(await queryRaw('SELECT id FROM users', []).fetch(pool));
+    final rows = await unsafeRows(pool, 'SELECT id FROM users', []);
     expect(rows, isEmpty);
   });
 
@@ -132,10 +126,7 @@ void main() {
     });
     expect(result, isA<Ok<Unit, SqlxError>>());
 
-    final rows =
-        expectOk(await queryRaw('SELECT id FROM users ORDER BY id', []).fetch(
-      pool,
-    ));
+    final rows = await unsafeRows(pool, 'SELECT id FROM users ORDER BY id', []);
     expect(rows.map((row) => row.read<int>('id')), <int>[1, 3]);
   });
 
@@ -157,10 +148,7 @@ void main() {
     });
     expect(result, isA<Ok<Unit, SqlxError>>());
 
-    final rows =
-        expectOk(await queryRaw('SELECT id FROM users ORDER BY id', []).fetch(
-      pool,
-    ));
+    final rows = await unsafeRows(pool, 'SELECT id FROM users ORDER BY id', []);
     expect(rows.map((row) => row.read<int>('id')), <int>[1, 3]);
   });
 
@@ -191,7 +179,7 @@ void main() {
       await pool.close();
     });
 
-    late Executor captured;
+    late DatabaseTransaction captured;
     final result = await pool.transaction<Unit>((tx) async {
       captured = tx;
       await _insertUser(tx, 1, 'Ada');
@@ -219,7 +207,8 @@ void main() {
 
     final result = await pool.transaction<Unit>((tx) async {
       await _insertUser(tx, 1, 'Ada');
-      final manualRollback = await tx.raw.execute('ROLLBACK', const []);
+      final manualRollback =
+          await Sqlite3UnsafeSql(pool).execute('ROLLBACK', const []);
       expect(manualRollback, isA<Ok<ExecResult, SqlxError>>());
       return const Ok<Unit, SqlxError>(unit);
     });
@@ -227,14 +216,15 @@ void main() {
     expect(result, isA<Err<Unit, SqlxError>>());
   });
 
-  test('sqlite raw channel reports driver errors without throwing', () async {
+  test('unchecked SQL reports driver errors without throwing', () async {
     final pool = SqlitePool.open(':memory:');
     addTearDown(() async {
       await pool.close();
     });
+    final unsafe = Sqlite3UnsafeSql(pool);
 
-    final fetch = await pool.raw.fetch('SELECT * FROM missing_table', const []);
-    final execute = await pool.raw.execute(
+    final fetch = await unsafe.fetch('SELECT * FROM missing_table', const []);
+    final execute = await unsafe.execute(
       'INSERT INTO missing_table VALUES (1)',
       const [],
     );

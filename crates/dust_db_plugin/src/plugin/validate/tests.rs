@@ -129,7 +129,10 @@ fn placeholder_validation_handles_quotes_and_escaped_single_quotes() {
 #[test]
 fn query_shape_validation_rejects_invalid_fetch_shapes() {
     let mut diagnostics = Vec::new();
-    validate_query_shape(&query(QueryFunction::As, FetchMode::Raw), &mut diagnostics);
+    validate_query_shape(
+        &query(QueryFunction::As, FetchMode::Execute),
+        &mut diagnostics,
+    );
     validate_query_shape(
         &QuerySpec {
             row_type: None,
@@ -144,9 +147,12 @@ fn query_shape_validation_rejects_invalid_fetch_shapes() {
         },
         &mut diagnostics,
     );
-    validate_query_shape(&query(QueryFunction::Raw, FetchMode::One), &mut diagnostics);
     validate_query_shape(
-        &query(QueryFunction::Execute, FetchMode::Raw),
+        &query(QueryFunction::Unsupported, FetchMode::Unsupported),
+        &mut diagnostics,
+    );
+    validate_query_shape(
+        &query(QueryFunction::Execute, FetchMode::One),
         &mut diagnostics,
     );
 
@@ -160,7 +166,7 @@ fn query_shape_validation_rejects_invalid_fetch_shapes() {
             "queryAs<T> must end with fetchOne, fetchOptional, or fetchAll",
             "queryAs<T> must specify a row type",
             "queryScalar<T> must use a supported scalar type",
-            "queryRaw must end with fetch",
+            "Database query has an unsupported return type. Return `Future<Result<T, SqlxError>>` for a row type, a supported scalar, `ExecResult`, or `Unit`. Untyped rows come from the database facade's `unsafe` escape hatch, not from a DAO",
             "queryExecute must end with execute",
         ]
     );
@@ -193,14 +199,14 @@ fn query_shape_validation_rejects_non_static_sql_and_non_list_params() {
     validate_query_shape(
         &QuerySpec {
             sql_source_static: false,
-            ..query(QueryFunction::Raw, FetchMode::Raw)
+            ..query(QueryFunction::Execute, FetchMode::Execute)
         },
         &mut diagnostics,
     );
     validate_query_shape(
         &QuerySpec {
             params_source_is_list: false,
-            ..query(QueryFunction::Raw, FetchMode::Raw)
+            ..query(QueryFunction::Execute, FetchMode::Execute)
         },
         &mut diagnostics,
     );

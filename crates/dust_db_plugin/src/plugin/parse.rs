@@ -114,7 +114,6 @@ fn query_spec_from_call(call: &QueryCallIr) -> QuerySpec {
     let function = match call.function {
         QueryFunctionIr::As => QueryFunction::As,
         QueryFunctionIr::Scalar => QueryFunction::Scalar,
-        QueryFunctionIr::Raw => QueryFunction::Raw,
         QueryFunctionIr::Execute => QueryFunction::Execute,
     };
     QuerySpec {

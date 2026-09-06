@@ -67,10 +67,15 @@ pub(crate) enum QueryFunction {
     As,
     /// Scalar query, `queryScalar<T>`.
     Scalar,
-    /// Raw row query, `queryRaw`.
-    Raw,
     /// Execute-only query, `queryExecute`.
     Execute,
+    /// A DAO return shape with no checked query behind it.
+    ///
+    /// This used to be folded in with `queryRaw`, which meant an unsupported
+    /// return type was validated as an untyped row query and then failed at
+    /// runtime. There is no untyped row path from an executor any more, so the
+    /// shape is reported at build time instead.
+    Unsupported,
 }
 
 /// Fetch cardinality used by generated DB calls.
@@ -82,10 +87,10 @@ pub(crate) enum FetchMode {
     Optional,
     /// Return all rows.
     All,
-    /// Return raw row data.
-    Raw,
     /// Execute without row decoding.
     Execute,
+    /// No fetch behaviour, because the return shape is unsupported.
+    Unsupported,
 }
 
 impl FetchMode {
@@ -95,8 +100,8 @@ impl FetchMode {
             Self::One => "one",
             Self::Optional => "optional",
             Self::All => "all",
-            Self::Raw => "raw",
             Self::Execute => "execute",
+            Self::Unsupported => "unsupported",
         }
     }
 }
@@ -148,8 +153,8 @@ impl QuerySpec {
                     .and_then(TypeIr::name)
                     .unwrap_or(DART_DYNAMIC)
             ),
-            QueryFunction::Raw => "queryRaw".to_owned(),
             QueryFunction::Execute => "queryExecute".to_owned(),
+            QueryFunction::Unsupported => "query".to_owned(),
         }
     }
 }
@@ -239,13 +244,13 @@ mod tests {
         assert_eq!(FetchMode::One.as_str(), "one");
         assert_eq!(FetchMode::Optional.as_str(), "optional");
         assert_eq!(FetchMode::All.as_str(), "all");
-        assert_eq!(FetchMode::Raw.as_str(), "raw");
+        assert_eq!(FetchMode::Unsupported.as_str(), "unsupported");
         assert_eq!(FetchMode::Execute.as_str(), "execute");
     }
 
     #[test]
     fn query_display_name_prefers_explicit_source_name() {
-        let mut spec = query(QueryFunction::Raw);
+        let mut spec = query(QueryFunction::Unsupported);
         spec.display_name = Some("UserDao.findById".to_owned());
 
         assert_eq!(spec.display_name(), "UserDao.findById");
@@ -267,7 +272,7 @@ mod tests {
         let dynamic_scalar = query(QueryFunction::Scalar);
         assert_eq!(dynamic_scalar.display_name(), "queryScalar<dynamic>");
 
-        assert_eq!(query(QueryFunction::Raw).display_name(), "queryRaw");
+        assert_eq!(query(QueryFunction::Unsupported).display_name(), "query");
         assert_eq!(query(QueryFunction::Execute).display_name(), "queryExecute");
     }
 }

@@ -71,7 +71,7 @@ pub(crate) fn write_static_sql_validation_workspace(root: &std::path::Path, quer
                Pool get pool;\n\
              }}\n\
              extension UserQueries on Pool {{\n\
-               Future<List<Row>> rows(List<Object?> params) {{\n\
+               Future<Result<ExecResult, SqlxError>> rows(List<Object?> params) {{\n\
                  {query_body}\n\
                }}\n\
              }}\n"

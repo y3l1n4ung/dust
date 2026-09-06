@@ -20,7 +20,6 @@ pub(crate) fn normalize_query_calls(
                 function: match query.function {
                     ParsedQueryFunction::As => QueryFunctionIr::As,
                     ParsedQueryFunction::Scalar => QueryFunctionIr::Scalar,
-                    ParsedQueryFunction::Raw => QueryFunctionIr::Raw,
                     ParsedQueryFunction::Execute => QueryFunctionIr::Execute,
                 },
                 type_arg: query.type_arg_source.as_ref().map(|_| type_outcome.value),

@@ -24,10 +24,7 @@ pub(crate) fn extract_query_calls(
 
 /// Fast source check for query helper names.
 fn might_contain_query_helper(source: &str) -> bool {
-    source.contains("queryAs")
-        || source.contains("queryScalar")
-        || source.contains("queryRaw")
-        || source.contains("queryExecute")
+    source.contains("queryAs") || source.contains("queryScalar") || source.contains("queryExecute")
 }
 
 /// Recursively collects query helper calls.
@@ -199,7 +196,6 @@ fn query_function_name(name: &str) -> Option<ParsedQueryFunction> {
     match name {
         "queryAs" => Some(ParsedQueryFunction::As),
         "queryScalar" => Some(ParsedQueryFunction::Scalar),
-        "queryRaw" => Some(ParsedQueryFunction::Raw),
         "queryExecute" => Some(ParsedQueryFunction::Execute),
         _ => None,
     }

@@ -21,6 +21,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the form above is describable, so build-time validation covers it. A
   `Uint8List` is still bound as a BLOB.
 
+### Removed
+
+- **Database**: `queryRaw`, `QueryRaw`, and the `raw` channel on executors, with
+  the `Executor` interface that carried it. `Executor` was `DatabaseExecutor`
+  plus `raw`, and `Pool`, `Connection` and `Transaction` all implemented it, so
+  `db as Executor` always succeeded — a fence that stopped nobody. Unchecked SQL
+  is now `unsafe` on the database facade, which an executor cannot reach.
+
+  A DAO method returning `List<Row>` is reported at build time instead of
+  generating an unchecked fetch, and `queryRaw` is no longer parsed.
+
 ### Changed
 
 - **Database**: inline query terminals return `Result<T, SqlxError>` rather than

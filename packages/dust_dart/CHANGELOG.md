@@ -32,6 +32,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 > `dust_dart: ^0.1.4` resolves to 0.1.5, so an app that pins nothing gets the
 > change without asking for it. Run `dust build` to regenerate.
 
+### Removed
+
+- `queryRaw`, `QueryRaw`, `RawSql`, `RawSqlx`, and the `Executor` interface.
+
+  `Executor` was `DatabaseExecutor` plus a `raw` channel, and every pool,
+  connection and transaction implemented it — so `db as Executor` always
+  succeeded and the fence stopped nobody. With `raw` gone the type has nothing
+  left to add, so it goes too. `Pool`, `Connection` and `Transaction` now extend
+  `DatabaseConnection`/`DatabaseTransaction` directly, and `transaction()` hands
+  its callback a `DatabaseTransaction`.
+
+  Unchecked SQL is `UnsafeSql` on the database facade. A DAO or handler holding
+  an executor cannot reach it.
+
 ### Changed
 
 - **Database**: the query terminals return `Result`. `QueryAs.fetchOneWith`,

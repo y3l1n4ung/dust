@@ -3,6 +3,7 @@ import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:test/test.dart';
 
 import 'support/expect_ok.dart';
+import 'support/unsafe_rows.dart';
 import 'support/user_name.dart';
 
 void main() {
@@ -35,10 +36,8 @@ CREATE TABLE users (
     expect(inserted.rowsAffected, 1);
     expect(inserted.lastInsertId, 1);
 
-    final rows = expectOk(await queryRaw(
-      r'SELECT id, name, active, created_at FROM users WHERE id = ?',
-      [1],
-    ).fetch(pool));
+    final rows = await unsafeRows(pool,
+        r'SELECT id, name, active, created_at FROM users WHERE id = ?', [1]);
     expect(rows.single.read<int>('id'), 1);
     expect(rows.single.read<String>('name'), 'Ada');
     expect(rows.single.read<double>('id'), 1.0);
@@ -59,9 +58,9 @@ CREATE TABLE users (
     expect(txResult, isA<Ok<void, SqlxError>>());
 
     final updated =
-        expectOk(await queryRaw(r'SELECT name FROM users WHERE id = ?', [
+        await unsafeRows(pool, r'SELECT name FROM users WHERE id = ?', [
       1,
-    ]).fetch(pool));
+    ]);
     expect(updated.single.read<String>('name'), 'Grace');
   });
 
@@ -139,26 +138,20 @@ CREATE TABLE users (
       );
       expect(decode, isA<Err<UserName, SqlxError>>());
 
-      final boolRows = expectOk(await queryRaw(
-        r'SELECT active FROM users WHERE id = ?',
-        [1],
-      ).fetch(pool));
+      final boolRows =
+          await unsafeRows(pool, r'SELECT active FROM users WHERE id = ?', [1]);
       expect(boolRows.single.readBool('active'), isTrue);
       expect(boolRows.single.readBoolNullable('missing'), isNull);
 
-      final badBoolRows = expectOk(await queryRaw(
-        r'SELECT active FROM users WHERE id = ?',
-        [2],
-      ).fetch(pool));
+      final badBoolRows =
+          await unsafeRows(pool, r'SELECT active FROM users WHERE id = ?', [2]);
       expect(
         () => badBoolRows.single.readBool('active'),
         throwsA(isA<SqlxDecodeError>()),
       );
 
-      final nullNameRows = expectOk(await queryRaw(
-        r'SELECT name FROM users WHERE id = ?',
-        [2],
-      ).fetch(pool));
+      final nullNameRows =
+          await unsafeRows(pool, r'SELECT name FROM users WHERE id = ?', [2]);
       expect(
         () => nullNameRows.single.read<String>('name'),
         throwsA(isA<SqlxDecodeError>()),

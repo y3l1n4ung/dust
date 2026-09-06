@@ -125,7 +125,7 @@ final class _CapturingExecutor implements DatabaseConnection {
 
   @override
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(DatabaseTransaction tx) fn,
   ) {
     throw UnimplementedError();
   }

@@ -33,17 +33,16 @@ CREATE TABLE users (
         return;
     }
 
-    final rows = await queryRaw(
-      'SELECT id, email, name FROM users WHERE id = ?',
+    // A product query goes through a checked helper. `queryScalar` needs no
+    // row type, so it is the smallest one a driver example can show; a real
+    // application reads whole rows with `queryAs<T>` and a generated mapping.
+    final name = await queryScalar<String>(
+      'SELECT name FROM users WHERE id = ?',
       [insertResult.lastInsertId],
-    ).fetch(db);
-    switch (rows) {
+    ).fetchOne(db);
+    switch (name) {
       case Ok(:final value):
-        final user = value.single;
-        print(
-          'first user: ${user.read<String>('name')} '
-          '<${user.read<String>('email')}>',
-        );
+        print('first user: $value');
       case Err(:final error):
         print('read failed: $error');
         return;

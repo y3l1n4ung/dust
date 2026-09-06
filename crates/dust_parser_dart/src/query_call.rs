@@ -30,8 +30,6 @@ pub enum ParsedQueryFunction {
     As,
     /// `queryScalar<T>(...)`.
     Scalar,
-    /// `queryRaw(...)`.
-    Raw,
     /// `queryExecute(...)`.
     Execute,
 }

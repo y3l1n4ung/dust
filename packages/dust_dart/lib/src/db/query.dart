@@ -66,23 +66,6 @@ final class QueryScalar<T> {
   }
 }
 
-/// Untyped row query.
-final class QueryRaw {
-  /// Creates one raw row query.
-  const QueryRaw(this.sql, this.parameters);
-
-  /// Static SQL source.
-  final String sql;
-
-  /// Positional SQL parameter values.
-  final List<Object?> parameters;
-
-  /// Fetches raw rows through [Executor.raw].
-  Future<Result<List<Row>, SqlxError>> fetch(Executor db) {
-    return db.raw.fetch(sql, parameters);
-  }
-}
-
 /// Statement query.
 final class QueryExecute {
   /// Creates one execute statement query.
@@ -108,11 +91,6 @@ QueryAs<T> queryAs<T>(String sql, List<Object?> parameters) {
 /// Creates a scalar query helper.
 QueryScalar<T> queryScalar<T>(String sql, List<Object?> parameters) {
   return QueryScalar<T>(sql, parameters);
-}
-
-/// Creates a raw row query helper.
-QueryRaw queryRaw(String sql, List<Object?> parameters) {
-  return QueryRaw(sql, parameters);
 }
 
 /// Creates an execute statement query helper.

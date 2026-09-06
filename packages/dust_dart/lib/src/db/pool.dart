@@ -51,7 +51,7 @@ abstract interface class DatabaseExecutor {
 
   /// Runs [fn] inside a database transaction.
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(DatabaseTransaction tx) fn,
   );
 
   /// Closes resources owned by this driver.
@@ -79,7 +79,7 @@ extension DatabaseClientExecution on DatabaseClient {
 
   /// Runs [fn] inside a database transaction.
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(DatabaseTransaction tx) fn,
   ) {
     return connection.transaction(fn);
   }
@@ -88,15 +88,6 @@ extension DatabaseClientExecution on DatabaseClient {
   Future<Result<Unit, SqlxError>> close() {
     return connection.close();
   }
-}
-
-/// Legacy name for [DatabaseExecutor] with explicit raw SQL access.
-///
-/// New generated DAO code should depend on [DatabaseExecutor]. Use [Executor]
-/// only when an advanced raw SQL escape hatch is required.
-abstract interface class Executor implements DatabaseExecutor {
-  /// Explicit unchecked SQL access for dynamic/admin queries.
-  RawSql get raw;
 }
 
 /// Backwards-compatible name for the DB execution contract.
@@ -109,52 +100,13 @@ abstract interface class DatabaseConnection implements DatabaseExecutor {}
 abstract interface class DatabaseTransaction implements DatabaseExecutor {}
 
 /// Backwards-compatible long-lived database pool name.
-abstract interface class Pool implements DatabaseConnection, Executor {}
+abstract interface class Pool implements DatabaseConnection {}
 
 /// Backwards-compatible single database connection name.
-abstract interface class Connection implements DatabaseConnection, Executor {}
+abstract interface class Connection implements DatabaseConnection {}
 
 /// Backwards-compatible transaction-scoped executor name.
-abstract interface class Transaction implements DatabaseTransaction, Executor {}
-
-/// Explicit unchecked SQL access.
-abstract interface class RawSql {
-  /// Runs unchecked SQL and returns rows.
-  Future<Result<List<Row>, SqlxError>> fetch(
-    String sql,
-    List<Object?> parameters,
-  );
-
-  /// Runs an unchecked statement.
-  Future<Result<ExecResult, SqlxError>> execute(
-    String sql,
-    List<Object?> parameters,
-  );
-}
-
-/// Public unchecked SQL wrapper for app-level composition.
-final class RawSqlx implements RawSql {
-  /// Creates one raw SQL wrapper.
-  const RawSqlx(this._db);
-
-  final Executor _db;
-
-  @override
-  Future<Result<List<Row>, SqlxError>> fetch(
-    String sql,
-    List<Object?> parameters,
-  ) {
-    return _db.raw.fetch(sql, parameters);
-  }
-
-  @override
-  Future<Result<ExecResult, SqlxError>> execute(
-    String sql,
-    List<Object?> parameters,
-  ) {
-    return _db.raw.execute(sql, parameters);
-  }
-}
+abstract interface class Transaction implements DatabaseTransaction {}
 
 /// Driver-agnostic typed view over one database result row.
 ///

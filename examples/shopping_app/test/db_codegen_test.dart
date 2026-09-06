@@ -65,20 +65,22 @@ void main() {
       await app.close();
     });
 
-    final columns = (await queryRaw(
+    // Schema inspection is administrative SQL, so it goes through the facade's
+    // escape hatch. A handler holding an executor cannot reach this.
+    final columns = (await app.unsafe.fetch(
       'PRAGMA table_info(product_cache)',
       const [],
-    ).fetch(app.pool))
+    ))
         .unwrapOrElse((error) => fail('$error'));
     expect(
       columns.map((row) => row.read<String>('name')),
       contains('last_synced_at'),
     );
 
-    final migrations = (await queryRaw(
+    final migrations = (await app.unsafe.fetch(
       'SELECT name FROM __dust_schema_migrations ORDER BY name',
       const [],
-    ).fetch(app.pool))
+    ))
         .unwrapOrElse((error) => fail('$error'));
     expect(migrations.map((row) => row.read<String>('name')), <String>[
       '0001_shopping_cache.sql',

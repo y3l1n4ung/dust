@@ -59,7 +59,7 @@ Future<ExecResult> rename(Pool db, String name, int id) {
                 "fetchOne",
                 30,
             ),
-            query_raw("SELECT id, display_name FROM users", 0, 10),
+            query_execute("SELECT id, display_name FROM users", 0, 10),
             query_execute("UPDATE users SET display_name = $1 WHERE id = $2", 2, 20),
         ],
     );
@@ -99,7 +99,7 @@ Future<ExecResult> rename(Pool db, String name, int id) {
     assert_eq!(
         query_modes,
         vec![
-            ("SELECT id, display_name FROM users", "raw"),
+            ("SELECT id, display_name FROM users", "execute"),
             ("SELECT COUNT(*) FROM users", "one"),
             (
                 "UPDATE users SET display_name = $1 WHERE id = $2",
@@ -141,14 +141,14 @@ Future<List<Row>> bad(Pool db) {
     let library = library_with_queries(
         &root,
         vec![database_class()],
-        vec![query_raw("SELECT * FROM missing_table", 0, 10)],
+        vec![query_execute("SELECT * FROM missing_table", 0, 10)],
     );
     let diagnostics = validate_alone(&register_plugin(), &library);
 
     assert!(
         diagnostics
             .iter()
-            .any(|diagnostic| diagnostic.message.contains("SQLx rejected `queryRaw`")),
+            .any(|diagnostic| diagnostic.message.contains("SQLx rejected `queryExecute`")),
         "{diagnostics:?}"
     );
 
@@ -251,7 +251,7 @@ fn describes_queries_in_a_library_without_the_database_class() {
         &root,
         "lib/users_repo.dart",
         vec![],
-        vec![query_raw("SELECT no_such_column FROM users", 0, 10)],
+        vec![query_execute("SELECT no_such_column FROM users", 0, 10)],
     );
 
     let diagnostics =
@@ -260,7 +260,7 @@ fn describes_queries_in_a_library_without_the_database_class() {
     assert!(
         diagnostics
             .iter()
-            .any(|diagnostic| diagnostic.message.contains("SQLx rejected `queryRaw`")),
+            .any(|diagnostic| diagnostic.message.contains("SQLx rejected `queryExecute`")),
         "{diagnostics:?}"
     );
 
@@ -314,7 +314,7 @@ fn a_query_in_a_package_with_no_database_is_left_alone() {
         &root,
         "lib/users_repo.dart",
         vec![],
-        vec![query_raw("SELECT * FROM missing_table", 0, 10)],
+        vec![query_execute("SELECT * FROM missing_table", 0, 10)],
     );
 
     assert_eq!(

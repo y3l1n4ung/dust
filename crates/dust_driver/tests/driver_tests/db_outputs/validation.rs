@@ -10,7 +10,7 @@ use crate::support::make_workspace;
 fn db_check_rejects_sql_variable() {
     assert_static_sql_rejected(
         "final sql = 'SELECT id FROM users';\n\
-         return queryRaw(sql, []).fetch(this);",
+         return queryExecute(sql, []).execute(this);",
     );
 }
 
@@ -18,7 +18,7 @@ fn db_check_rejects_sql_variable() {
 fn db_check_rejects_const_sql_variable() {
     assert_static_sql_rejected(
         "const sql = 'SELECT id FROM users';\n\
-         return queryRaw(sql, []).fetch(this);",
+         return queryExecute(sql, []).execute(this);",
     );
 }
 
@@ -26,13 +26,13 @@ fn db_check_rejects_const_sql_variable() {
 fn db_check_rejects_interpolated_sql_literal() {
     assert_static_sql_rejected(
         "const table = 'users';\n\
-         return queryRaw('SELECT id FROM $table', []).fetch(this);",
+         return queryExecute('SELECT id FROM $table', []).execute(this);",
     );
 }
 
 #[test]
 fn db_check_rejects_concatenated_sql_literals() {
-    assert_static_sql_rejected("return queryRaw('SELECT id ' 'FROM users', []).fetch(this);");
+    assert_static_sql_rejected("return queryExecute('SELECT id ' 'FROM users', []).execute(this);");
 }
 
 #[test]
@@ -40,7 +40,7 @@ fn db_check_rejects_non_list_query_parameters() {
     let workspace = make_workspace();
     write_static_sql_validation_workspace(
         workspace.path(),
-        "return queryRaw('SELECT id FROM users WHERE id = 1', params).fetch(this);",
+        "return queryExecute('SELECT id FROM users WHERE id = 1', params).execute(this);",
     );
 
     let result = run_check(CheckRequest {
@@ -68,7 +68,7 @@ fn db_check_accepts_runtime_values_inside_parameter_list_literal() {
     let workspace = make_workspace();
     write_static_sql_validation_workspace(
         workspace.path(),
-        "return queryRaw(r'SELECT id FROM users WHERE id = $1', [params.first]).fetch(this);",
+        "return queryExecute(r'SELECT id FROM users WHERE id = $1', [params.first]).execute(this);",
     );
 
     let result = run_check(CheckRequest {
@@ -89,7 +89,7 @@ fn db_check_accepts_raw_multiline_sql_literal() {
     let workspace = make_workspace();
     write_static_sql_validation_workspace(
         workspace.path(),
-        "return queryRaw(r'''\nSELECT id\nFROM users\nWHERE id = $1\n''', [params.first]).fetch(this);",
+        "return queryExecute(r'''\nSELECT id\nFROM users\nWHERE id = $1\n''', [params.first]).execute(this);",
     );
 
     let result = run_check(CheckRequest {
@@ -108,7 +108,7 @@ fn db_check_accepts_raw_multiline_sql_literal() {
 #[test]
 fn db_check_rejects_unknown_table_via_sqlx() {
     assert_sqlx_rejected(
-        "return queryRaw('SELECT id FROM missing_users', []).fetch(this);",
+        "return queryExecute('SELECT id FROM missing_users', []).execute(this);",
         "SQLx rejected",
     );
 }
@@ -116,7 +116,7 @@ fn db_check_rejects_unknown_table_via_sqlx() {
 #[test]
 fn db_check_rejects_unknown_column_via_sqlx() {
     assert_sqlx_rejected(
-        "return queryRaw('SELECT missing_id FROM users', []).fetch(this);",
+        "return queryExecute('SELECT missing_id FROM users', []).execute(this);",
         "SQLx rejected",
     );
 }
@@ -162,7 +162,7 @@ fn db_check_rejects_from_row_query_missing_required_column() {
 #[test]
 fn db_check_rejects_placeholder_count_mismatch_before_runtime() {
     assert_sqlx_rejected(
-        "return queryRaw(r'SELECT id FROM users WHERE id = $1', []).fetch(this);",
+        "return queryExecute(r'SELECT id FROM users WHERE id = $1', []).execute(this);",
         "query binds 0 args but SQL expects 1 parameters",
     );
 }

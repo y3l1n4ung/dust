@@ -32,8 +32,6 @@ pub enum QueryFunctionIr {
     As,
     /// `queryScalar<T>(...)`.
     Scalar,
-    /// `queryRaw(...)`.
-    Raw,
     /// `queryExecute(...)`.
     Execute,
 }

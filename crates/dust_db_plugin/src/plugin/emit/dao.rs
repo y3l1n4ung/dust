@@ -11,7 +11,7 @@ use crate::plugin::{
     sql::rewrite_sqlite_placeholders,
 };
 
-use super::shared::{is_scalar_type, render_sql_literal};
+use super::shared::{escape_dart_string, is_scalar_type, render_sql_literal};
 
 /// Template context for a generated DAO implementation class.
 #[derive(Serialize)]
@@ -91,8 +91,8 @@ struct ListBodyContext<'a> {
 struct UnsupportedBodyContext {
     /// Unsupported Dart type rendered for diagnostics.
     ty: String,
-    /// Static error message emitted in generated code.
-    message: &'static str,
+    /// Error message emitted in generated code, escaped for a Dart literal.
+    message: String,
 }
 
 /// Renders a generated DAO implementation class.
@@ -250,14 +250,7 @@ fn render_dao_method_body(
         return render_list_body(ok_type, row_names, sql, args);
     }
     let Some(row_name) = ok_type.name() else {
-        return render_template(
-            "dao_body_unsupported",
-            include_str!("templates/dao_body_unsupported.jinja"),
-            UnsupportedBodyContext {
-                ty: DYNAMIC_TYPES.render(ok_type),
-                message: "Unsupported DAO return type.",
-            },
-        );
+        return render_unsupported_body(ok_type, "Unsupported DAO return type.");
     };
     if ok_type.is_nullable() {
         return render_template(
@@ -288,21 +281,14 @@ fn render_list_body(
     sql: &str,
     args: &str,
 ) -> String {
+    // `List<Row>` and a bare `List` both used to generate an unchecked
+    // `_db.raw.fetch`. A DAO holds an executor, and unchecked SQL is reachable
+    // only from the database facade now, so there is nothing to generate.
     let Some(item) = ok_type.args().first() else {
-        return render_query_body(
-            "dao_body_raw_fetch",
-            "templates/dao_body_raw_fetch.jinja",
-            sql,
-            args,
-        );
+        return render_unsupported_body(ok_type, UNTYPED_ROWS_MESSAGE);
     };
     if item.is_named(DART_ROW) {
-        return render_query_body(
-            "dao_body_raw_fetch",
-            "templates/dao_body_raw_fetch.jinja",
-            sql,
-            args,
-        );
+        return render_unsupported_body(ok_type, UNTYPED_ROWS_MESSAGE);
     }
     let item_name = item.name().unwrap_or(DART_OBJECT);
     if row_names.contains(item_name) {
@@ -316,12 +302,22 @@ fn render_list_body(
             },
         );
     }
+    render_unsupported_body(ok_type, "Unsupported DAO list item type.")
+}
+
+/// Message for a DAO method asking for rows no row type describes.
+const UNTYPED_ROWS_MESSAGE: &str = "A DAO cannot return untyped rows. Use a row type with @Derive([FromRow()]), or the unsafe escape hatch on the database facade.";
+
+/// Renders the generated body that reports an unsupported DAO return type.
+fn render_unsupported_body(ok_type: &dust_ir::TypeIr, message: &str) -> String {
     render_template(
         "dao_body_unsupported",
         include_str!("templates/dao_body_unsupported.jinja"),
         UnsupportedBodyContext {
             ty: DYNAMIC_TYPES.render(ok_type),
-            message: "Unsupported DAO list item type.",
+            // The message lands inside a single-quoted Dart string, so an
+            // apostrophe in it would emit code that does not parse.
+            message: escape_dart_string(message),
         },
     )
 }
@@ -331,7 +327,6 @@ fn render_query_body(name: &str, template: &'static str, sql: &str, args: &str) 
     let source = match template {
         "templates/dao_body_execute.jinja" => include_str!("templates/dao_body_execute.jinja"),
         "templates/dao_body_unit.jinja" => include_str!("templates/dao_body_unit.jinja"),
-        "templates/dao_body_raw_fetch.jinja" => include_str!("templates/dao_body_raw_fetch.jinja"),
         _ => unreachable!("unknown DAO query body template"),
     };
     render_template(name, source, QueryBodyContext { sql, args })

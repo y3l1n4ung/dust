@@ -36,17 +36,6 @@ pub(crate) fn query_scalar(
     )
 }
 
-pub(crate) fn query_raw(sql: &str, parameter_count: usize, start: u32) -> QueryCallIr {
-    query_call(
-        QueryFunctionIr::Raw,
-        None,
-        sql,
-        parameter_count,
-        "fetch",
-        start,
-    )
-}
-
 pub(crate) fn query_execute(sql: &str, parameter_count: usize, start: u32) -> QueryCallIr {
     query_call(
         QueryFunctionIr::Execute,

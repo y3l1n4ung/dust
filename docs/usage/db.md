@@ -235,12 +235,14 @@ executor call:
 | `RowType?` | Returns zero or one mapped row. |
 | `List<RowType>` | Maps every returned row. |
 | `String`, `int`, `double`, `num`, `bool`, or `DateTime` | Reads one scalar from column zero. |
-| `List<Row>` | Returns raw driver-agnostic rows. |
 | `ExecResult` | Executes the statement and returns affected rows and last insert ID. |
 | `Unit` | Executes the statement and discards execution metadata. |
 
 DAO query methods must be abstract, return the exact `Future<Result<...,
 SqlxError>>` shape, and use required positional parameters.
+
+A DAO cannot return `List<Row>`. Untyped rows come from the facade's
+[`unsafe`](#unchecked-sql) escape hatch, which a DAO's executor cannot reach.
 
 ## SQL Placeholders
 
@@ -460,29 +462,59 @@ no rows.
 
 A `Uint8List` is bound as a BLOB rather than encoded, since that is what it is.
 
-## Dynamic SQL
+## Unchecked SQL
 
-Use `raw` only when SQL cannot be static, such as an admin-selected table. Raw
-SQL is an advanced escape hatch. It is unchecked and uses native SQLite
-placeholders:
+Migrations, `EXPLAIN`, one-off administrative work — the cases build-time
+validation cannot reach. `unsafe` lives on the database facade:
 
 ```dart
-final result = await database.pool.raw.fetch(
-  'SELECT * FROM users WHERE id = ?',
-  [id],
+final columns = await database.unsafe.fetch(
+  'PRAGMA table_info(users)',
+  const [],
 );
 ```
+
+It offers `fetch` for untyped rows, `fetchAs<T>` with an explicit mapper, and
+`execute`. The mapper is passed by hand on purpose: generated terminals exist
+only for validated queries, so the checked path stays the easy one.
+
+`unsafe` is **not** on `Executor`. A request handler is handed an executor, and
+no cast takes an executor to a `DatabaseClient`, so a handler cannot reach
+unchecked SQL at all.
+
+Most reasons to reach for it have a checked answer:
+
+| Instead of building SQL | Write |
+| :--- | :--- |
+| `IN (?, ?, ?)` | one bound list over `json_each` — see [Set Membership](#set-membership) |
+| optional filters | a `switch` over the supplied combination, each branch a constant query |
+| a dynamic `ORDER BY` | a `switch` over an enum |
+
+A sort column is an identifier and no dialect binds one, so string building is
+the only mechanism available — which is exactly why it is the classic injection
+site, and why it belongs in a `switch`:
+
+```dart
+final orders = await switch (sort) {
+  OrderSort.newest => queryAs<Order>(_byPlacedAt, [accountId]),
+  OrderSort.item => queryAs<Order>(_byItem, [accountId]),
+}
+    .fetchAll(database.connection);
+```
+
+Every branch is a constant string `describe` accepted, and the switch is
+exhaustive.
 
 For advanced SQLite-specific operations, access the native database explicitly:
 
 ```dart
-final sqlite = (database.pool as Sqlite3Executor).database;
+final sqlite = (database.connection as Sqlite3Executor).database;
 final version = sqlite.select('SELECT sqlite_version()').single[0];
 ```
 
 > [!TIP]
 > Prefer `database.connection` plus generated DAOs for product queries. Keep
-> `pool.raw` and native access small because neither path receives Dust's
+> `unsafe` and native access small because neither path receives Dust's
 > build-time SQL validation.
 
 ## Example

@@ -8,13 +8,12 @@ part 'connect_options.dart';
 part 'errors.dart';
 part 'migrations.dart';
 part 'operations.dart';
-part 'raw_sql.dart';
 part 'row.dart';
 part 'transaction.dart';
 part 'unsafe_sql.dart';
 
 /// SQLite-backed executor with access to the underlying native database.
-abstract interface class Sqlite3Executor implements Executor {
+abstract interface class Sqlite3Executor implements DatabaseExecutor {
   /// Native `package:sqlite3` database used by this executor.
   sqlite.Database get database;
 }
@@ -70,9 +69,6 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
 
   @override
   Driver get driver => Driver.sqlite3;
-
-  @override
-  RawSql get raw => _SqliteRawSql(this);
 
   @override
   Future<Result<T?, SqlxError>> fetchOptional<T>(
@@ -190,7 +186,7 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
 
   @override
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(DatabaseTransaction tx) fn,
   ) async {
     return _runTransaction(fn);
   }

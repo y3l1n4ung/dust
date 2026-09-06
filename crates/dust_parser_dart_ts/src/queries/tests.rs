@@ -22,7 +22,7 @@ fn extracts_query_calls() {
 
 #[test]
 fn rejects_dynamic_sql_and_non_list_params() {
-    let calls = calls_for("queryRaw('SELECT * FROM $table', args).fetch(db);");
+    let calls = calls_for("queryExecute('DELETE FROM $table', args).execute(db);");
 
     assert_eq!(calls.len(), 1);
     assert!(!calls[0].sql_source_static);
@@ -32,28 +32,29 @@ fn rejects_dynamic_sql_and_non_list_params() {
 #[test]
 fn ignores_strings_comments_and_prefixes() {
     let calls = calls_for(
-        "final text = 'queryRaw(r\"SELECT 1\", [])'; // queryRaw(r'SELECT 1', [])\nmyqueryRaw(r'SELECT 1', []);",
+        "final text = 'queryExecute(r\"SELECT 1\", [])'; // queryExecute(r'SELECT 1', [])\nmyqueryExecute(r'SELECT 1', []);",
     );
 
     assert_eq!(calls.len(), 0);
 }
 
 #[test]
-fn extracts_multiline_raw_sql() {
+fn extracts_multiline_sql() {
     let calls =
-        calls_for("queryRaw(r'''\nSELECT *\nFROM users\nWHERE id = $1\n''', [id]).fetch(db);");
+        calls_for("queryExecute(r'''\nDELETE FROM users\nWHERE id = $1\n''', [id]).execute(db);");
 
     assert_eq!(calls.len(), 1);
-    assert_eq!(calls[0].function, ParsedQueryFunction::Raw);
-    assert_eq!(calls[0].sql, "\nSELECT *\nFROM users\nWHERE id = $1\n");
+    assert_eq!(calls[0].function, ParsedQueryFunction::Execute);
+    assert_eq!(calls[0].sql, "\nDELETE FROM users\nWHERE id = $1\n");
     assert_eq!(calls[0].parameter_count, 1);
-    assert_eq!(calls[0].fetch_method.as_deref(), Some("fetch"));
+    assert_eq!(calls[0].fetch_method.as_deref(), Some("execute"));
 }
 
 #[test]
 fn rejects_concatenated_and_variable_sql() {
-    let calls =
-        calls_for("queryRaw('SELECT * ' 'FROM users', []).fetch(db); queryRaw(sql, []).fetch(db);");
+    let calls = calls_for(
+        "queryExecute('DELETE ' 'FROM users', []).execute(db); queryExecute(sql, []).execute(db);",
+    );
 
     assert_eq!(calls.len(), 2);
     assert!(!calls[0].sql_source_static);
@@ -65,7 +66,7 @@ fn extracts_fetch_modes_and_default_params() {
     let calls = calls_for(
         r#"
 queryScalar<int>(r'SELECT COUNT(*) FROM users', const <Object?>[]).fetchOptional(db);
-queryRaw(r'SELECT * FROM users').fetch(db);
+queryExecute(r'UPDATE users SET active = 1').execute(db);
 queryExecute(r'DELETE FROM users').execute(db);
 queryAs<List<UserRow>>(r'SELECT * FROM users', [orgId]).fetchAll(db);
 "#,
@@ -76,8 +77,9 @@ queryAs<List<UserRow>>(r'SELECT * FROM users', [orgId]).fetchAll(db);
     assert_eq!(calls[0].fetch_method.as_deref(), Some("fetchOptional"));
     assert_eq!(calls[0].type_arg_source.as_deref(), Some("int"));
     assert_eq!(calls[0].parameter_count, 0);
-    assert_eq!(calls[1].function, ParsedQueryFunction::Raw);
-    assert_eq!(calls[1].fetch_method.as_deref(), Some("fetch"));
+    // No parameter list at all, so the count defaults to zero.
+    assert_eq!(calls[1].function, ParsedQueryFunction::Execute);
+    assert_eq!(calls[1].fetch_method.as_deref(), Some("execute"));
     assert_eq!(calls[1].parameter_count, 0);
     assert_eq!(calls[2].function, ParsedQueryFunction::Execute);
     assert_eq!(calls[2].fetch_method.as_deref(), Some("execute"));
@@ -88,14 +90,14 @@ queryAs<List<UserRow>>(r'SELECT * FROM users', [orgId]).fetchAll(db);
 
 #[test]
 fn ignores_unbalanced_query_calls() {
-    let calls = calls_for("queryRaw <Row r'SELECT 1'; queryRaw(r'SELECT 1', []");
+    let calls = calls_for("queryExecute <Row r'SELECT 1'; queryExecute(r'SELECT 1', []");
 
     assert_eq!(calls.len(), 0);
 }
 
 #[test]
 fn requires_exact_fetch_method_property() {
-    let calls = calls_for("queryRaw(r'SELECT 1', []).fetching(db);");
+    let calls = calls_for("queryExecute(r'SELECT 1', []).fetching(db);");
 
     assert_eq!(calls.len(), 1);
     assert_eq!(calls[0].fetch_method, None);

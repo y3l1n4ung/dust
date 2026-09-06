@@ -33,17 +33,32 @@ pub(super) fn query_shape_from_return(
     ok_type: Option<&TypeIr>,
 ) -> (QueryFunction, FetchMode, Option<String>, Option<TypeIr>) {
     let Some(ok_type) = ok_type else {
-        return (QueryFunction::Raw, FetchMode::Raw, None, None);
+        return (
+            QueryFunction::Unsupported,
+            FetchMode::Unsupported,
+            None,
+            None,
+        );
     };
     if ok_type.is_named(DART_EXEC_RESULT) || ok_type.is_named(DART_UNIT) {
         return (QueryFunction::Execute, FetchMode::Execute, None, None);
     }
     if ok_type.is_named(DART_LIST) {
         let Some(item) = ok_type.args().first() else {
-            return (QueryFunction::Raw, FetchMode::Raw, None, None);
+            return (
+                QueryFunction::Unsupported,
+                FetchMode::Unsupported,
+                None,
+                None,
+            );
         };
         if item.is_named(DART_ROW) {
-            return (QueryFunction::Raw, FetchMode::Raw, None, None);
+            return (
+                QueryFunction::Unsupported,
+                FetchMode::Unsupported,
+                None,
+                None,
+            );
         }
         return (
             QueryFunction::As,
@@ -102,13 +117,12 @@ pub(super) fn parse_fetch_method(function: QueryFunction, method: Option<&str>) 
         Some("fetchOptional" | "fetchOptionalWith") => return FetchMode::Optional,
         Some("fetchOne" | "fetchOneWith") => return FetchMode::One,
         Some("fetchAll" | "fetchAllWith") => return FetchMode::All,
-        Some("fetch") => return FetchMode::Raw,
         Some("execute") => return FetchMode::Execute,
         _ => {}
     }
     match function {
         QueryFunction::Execute => FetchMode::Execute,
-        QueryFunction::Raw => FetchMode::Raw,
+        QueryFunction::Unsupported => FetchMode::Unsupported,
         _ => FetchMode::One,
     }
 }
