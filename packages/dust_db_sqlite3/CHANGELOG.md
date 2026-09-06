@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.5]
+
+### Added
+
+- A `List` argument is bound as JSON text, so a set membership test is one
+  placeholder over constant SQL:
+
+  ```dart
+  queryAs<Order>(
+    'SELECT id, item FROM orders WHERE id IN (SELECT value FROM json_each(?))',
+    [ids],
+  ).fetchAll(pool);
+  ```
+
+  SQLite has no array type and `package:sqlite3` will not bind a nested `List`,
+  so callers previously reached for dynamic `IN (?, ?, ?)` — the most common
+  reason to build SQL by hand. The SQL above is constant and describable, so
+  build-time validation covers it.
+
+  A `Uint8List` is left alone: it is how a BLOB is bound, and encoding it would
+  write a JSON array of byte values in place of the bytes. A list holding a
+  value JSON cannot represent returns `Err(SqlxError.query)` naming the cause.
+
 ## [0.1.4] - 2026-09-03
 
 Released alongside Dust 0.1.4. No behavior changes.

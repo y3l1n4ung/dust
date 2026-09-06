@@ -441,6 +441,25 @@ await database.connection.transaction((tx) async {
 Transaction executors are scope-bound. Do not store `tx` and use it after the
 callback returns; operations on a closed transaction return `Err(SqlxError)`.
 
+## Set Membership
+
+An `IN` list does not need dynamic SQL. Bind the list itself and read it back
+with `json_each`:
+
+```dart
+final orders = await queryAs<Order>(
+  'SELECT id, item FROM orders WHERE id IN (SELECT value FROM json_each(?))',
+  [ids],
+).fetchAll(database.connection);
+```
+
+One placeholder, one bound value, and the SQL is constant — so `dust db build`
+validates it like any other query. SQLite has no array type, so the driver binds
+a `List` as JSON text; callers do not call `jsonEncode`. An empty list selects
+no rows.
+
+A `Uint8List` is bound as a BLOB rather than encoded, since that is what it is.
+
 ## Dynamic SQL
 
 Use `raw` only when SQL cannot be static, such as an admin-selected table. Raw

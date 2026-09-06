@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Database**: SQLite binds a `List` argument as JSON text, so a set
+  membership test is one placeholder over constant SQL —
+  `WHERE id IN (SELECT value FROM json_each(?))` with `[ids]`. SQLite has no
+  array type and `package:sqlite3` will not bind a nested list, so building
+  `IN (?, ?, ?)` by hand was the most common reason to reach for unchecked SQL;
+  the form above is describable, so build-time validation covers it. A
+  `Uint8List` is still bound as a BLOB.
+
 ### Changed
 
 - **Database**: inline query terminals return `Result<T, SqlxError>` rather than

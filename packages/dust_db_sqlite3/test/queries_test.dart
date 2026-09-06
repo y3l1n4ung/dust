@@ -3,7 +3,6 @@ import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:test/test.dart';
 
 import 'support/expect_ok.dart';
-
 import 'support/user_name.dart';
 
 void main() {

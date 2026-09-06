@@ -30,10 +30,48 @@ void _applyConnectOptions(
   }
 }
 
+/// Whether [value] is a list Dust binds as JSON text.
+///
+/// A `Uint8List` is how a BLOB is bound, so it is excluded: encoding one would
+/// silently write a JSON array of byte values in place of the bytes.
+bool _isJsonListBind(Object? value) => value is List && value is! Uint8List;
+
+/// Encodes `List` arguments as JSON text so one placeholder carries a set.
+///
+/// SQLite has no array type. A set membership test is written
+/// `WHERE id IN (SELECT value FROM json_each($1))` — constant SQL, one
+/// placeholder, describable at build time — and `package:sqlite3` will not bind
+/// a nested `List`. Encoding here rather than at the call site is what keeps
+/// callers from reaching for dynamic SQL to build an `IN (?, ?, ?)`.
+List<Object?> _encodeListParameters(List<Object?> parameters) {
+  if (!parameters.any(_isJsonListBind)) return parameters;
+  return <Object?>[
+    for (final parameter in parameters)
+      if (_isJsonListBind(parameter))
+        _encodeJsonListBind(parameter! as List<Object?>)
+      else
+        parameter,
+  ];
+}
+
+/// Encodes one list argument, reporting a value JSON cannot carry.
+String _encodeJsonListBind(List<Object?> values) {
+  try {
+    return jsonEncode(values);
+  } catch (error) {
+    throw _sqliteQueryError(
+      'SQLite binds a List argument as JSON text for the `json_each` idiom, '
+      'and this list holds a value JSON cannot represent.',
+      cause: error,
+      operation: 'bind',
+    );
+  }
+}
+
 extension _Sqlite3DriverOperations on Sqlite3Driver {
   List<Row> _queryUnchecked(String sql, List<Object?> parameters) {
     _checkOpen();
-    final result = _database.select(sql, parameters);
+    final result = _database.select(sql, _encodeListParameters(parameters));
     return <Row>[for (final row in result) Sqlite3Row(row)];
   }
 
@@ -41,7 +79,7 @@ extension _Sqlite3DriverOperations on Sqlite3Driver {
     _checkOpen();
     final statement = _database.prepare(sql);
     try {
-      statement.execute(parameters);
+      statement.execute(_encodeListParameters(parameters));
       return ExecResult(
         rowsAffected: _database.updatedRows,
         lastInsertId: _database.lastInsertRowId,
