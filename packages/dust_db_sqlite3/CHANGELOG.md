@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.1.5]
 
+### Testing
+
+- Coverage 92% to 97%, with the floor raised to match. The new tests are the
+  ones that were missing rather than filler: every `SqliteConnectOptions`
+  validation rule, each journal and synchronous mode, a database used after
+  closing, a migration SQLite refuses, and the control-statement failures a
+  transaction reports rather than throws.
+
 ### Added
 
 - The driver rewrites `$n` placeholders to SQLite's `?` at bind time, reordering

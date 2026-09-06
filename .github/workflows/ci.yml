@@ -289,12 +289,12 @@ jobs:
             path: packages/dust_dart
             dust_check: ''
             db_check: false
-            coverage_floor: '95'
+            coverage_floor: '100'
           - name: dust_db_sqlite3
             path: packages/dust_db_sqlite3
             dust_check: ''
             db_check: false
-            coverage_floor: '90'
+            coverage_floor: '96'
           - name: dust_server
             path: packages/dust_server
             dust_check: ''
