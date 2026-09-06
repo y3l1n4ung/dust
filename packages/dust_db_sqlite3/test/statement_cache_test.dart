@@ -103,6 +103,74 @@ CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
     expect(again.unwrapOrElse((error) => throw error), 0);
   });
 
+  test('many transactions in a row each commit their own work', () async {
+    // BEGIN, COMMIT and ROLLBACK are held like any other statement, so a
+    // transaction per request reuses all three. Reusing one wrongly would show
+    // up as work landing in the wrong transaction, or not landing at all.
+    for (var i = 1; i <= 30; i++) {
+      final committed = await db.transaction<Unit>((tx) async {
+        final inserted = await tx.execute(
+          r'INSERT INTO items (id, name) VALUES ($1, $2)',
+          <Object?>[i, 'name$i'],
+        );
+        return inserted.map((_) => unit);
+      });
+      expect(committed.isOk, isTrue);
+
+      // Every odd row is written and then rolled back, so it must not survive.
+      if (i.isOdd) {
+        await db.transaction<Unit>((tx) async {
+          await tx.execute(
+            r'INSERT INTO items (id, name) VALUES ($1, $2)',
+            <Object?>[1000 + i, 'rolled back'],
+          );
+          return Err<Unit, SqlxError>(
+            SqlxError.query('undo', operation: 'test'),
+          );
+        });
+      }
+    }
+
+    final kept = await db.fetchScalar<int>(
+      'SELECT count(*) FROM items',
+      const [],
+    );
+    expect(kept.unwrapOrElse((error) => throw error), 30);
+  });
+
+  test('nested savepoints repeat without colliding', () async {
+    // Savepoint names carry a counter and are deliberately not held, so this
+    // is the case that would break if they ever were.
+    for (var i = 1; i <= 10; i++) {
+      await db.transaction<Unit>((tx) async {
+        await tx.execute(
+          r'INSERT INTO items (id, name) VALUES ($1, $2)',
+          <Object?>[i, 'outer$i'],
+        );
+        await tx.transaction<Unit>((nested) async {
+          await nested.execute(
+            r'INSERT INTO items (id, name) VALUES ($1, $2)',
+            <Object?>[1000 + i, 'inner$i'],
+          );
+          return Err<Unit, SqlxError>(
+            SqlxError.query('undo', operation: 'test'),
+          );
+        });
+        return const Ok<Unit, SqlxError>(unit);
+      });
+    }
+
+    final names = await db.fetchAll<String>(
+      'SELECT name FROM items ORDER BY id',
+      const [],
+      (row) => row.read<String>('name'),
+    );
+    expect(
+      names.unwrapOrElse((error) => throw error),
+      <String>[for (var i = 1; i <= 10; i++) 'outer$i'],
+    );
+  });
+
   test('closing releases the statements, and using one afterwards is a value',
       () async {
     await db.fetchScalar<int>('SELECT count(*) FROM items', const []);

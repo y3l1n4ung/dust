@@ -13,11 +13,30 @@ final class _ConnectionState {
   /// Prepared statements held for this connection.
   final _StatementCache statements = _StatementCache();
 
+  /// Runs one control statement whose text never varies.
+  ///
+  /// `BEGIN`, `COMMIT` and `ROLLBACK` are the same three strings for the life
+  /// of the process, so they are held like any other statement — a transaction
+  /// per request would otherwise compile two of them every time, which
+  /// measured about 0.7us of a 3.6us transaction.
+  ///
+  /// Savepoints do not come here: their names carry a counter, so every one is
+  /// a statement seen once, and caching them would fill the cache with entries
+  /// that can never hit.
+  SqlxError? _control(sqlite.Database database, String sql, String message) {
+    try {
+      statements.statementFor(database, sql).execute();
+      return null;
+    } catch (error) {
+      return _sqliteTransactionError(message, cause: error, operation: sql);
+    }
+  }
+
   Future<Result<T, SqlxError>> runRoot<T>(
     sqlite.Database database,
     Future<Result<T, SqlxError>> Function(Transaction tx) fn,
   ) async {
-    final begin = _executeControl(
+    final begin = _control(
       database,
       'BEGIN',
       'SQLite transaction begin failed.',
@@ -29,7 +48,7 @@ final class _ConnectionState {
       final result = await fn(tx);
       return await result.match<Future<Result<T, SqlxError>>>(
         ok: (value) async {
-          final commit = _executeControl(
+          final commit = _control(
             database,
             'COMMIT',
             'SQLite transaction commit failed.',
@@ -38,7 +57,7 @@ final class _ConnectionState {
           return Ok<T, SqlxError>(value);
         },
         err: (error) async {
-          final rollback = _executeControl(
+          final rollback = _control(
             database,
             'ROLLBACK',
             'SQLite transaction rollback failed.',
@@ -48,7 +67,7 @@ final class _ConnectionState {
         },
       );
     } catch (error) {
-      final rollback = _executeControl(
+      final rollback = _control(
         database,
         'ROLLBACK',
         'SQLite transaction rollback failed.',
@@ -232,6 +251,11 @@ extension _Sqlite3TransactionRunner on Sqlite3Driver {
   }
 }
 
+/// Runs one control statement whose text is written for this call.
+///
+/// Savepoint statements name a counter, so each is seen once. Compiling and
+/// discarding is the right thing for a statement that cannot be reused; see
+/// `_ConnectionState._control` for the ones that can.
 SqlxError? _executeControl(
   sqlite.Database database,
   String sql,

@@ -22,6 +22,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   is static literals, but unchecked SQL can be assembled at the call site and an
   unbounded cache would grow with the request count.
 
+- `BEGIN`, `COMMIT` and `ROLLBACK` are held like any other statement. Those
+  three strings never vary, so a transaction per request was compiling two of
+  them every time — about 0.7us of a 3.6us transaction, now 3.1us. Savepoints
+  stay uncached: their names carry a counter, so each is a statement seen once
+  and holding them would fill the cache with entries that can never hit.
+
 - Rows are read out of the result set's own data rather than through the
   driver's `Row`, whose constructor copies that data with `List.unmodifiable`
   for every row. Column names resolve through one index built for the whole
