@@ -110,12 +110,12 @@ abstract base class _PostgresSession implements PostgresExecutor {
   }
 
   /// Wraps the single row of [result] for a one-row terminal.
+  ///
+  /// No index is built here. There is one row, so there is nothing to share it
+  /// with, and the adapter builds one only if a name is actually read —
+  /// `fetchScalar` reads column zero and never needs one.
   PostgresRow _singleRow(pg.Result result, String sql) {
-    return PostgresRow._shared(
-      result.single,
-      postgresColumnIndex(result.schema),
-      sql,
-    );
+    return PostgresRow(result.single, operation: sql);
   }
 
   @override

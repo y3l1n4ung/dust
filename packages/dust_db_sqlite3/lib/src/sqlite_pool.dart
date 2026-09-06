@@ -244,13 +244,12 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
   }
 
   /// Wraps the first row of [result] for a one-row terminal.
+  ///
+  /// No index is built here. There is one row, so there is nothing to share it
+  /// with, and the adapter builds one only if a name is actually read —
+  /// `fetchScalar` reads column zero and never needs one.
   Sqlite3Row _firstRow(sqlite.ResultSet result) {
-    final names = result.columnNames;
-    return Sqlite3Row._shared(
-      result.rows.first,
-      names,
-      sqliteColumnIndex(names),
-    );
+    return Sqlite3Row._shared(result.rows.first, result.columnNames, null);
   }
 
   /// Runs [sql] and wraps every row, for callers that need them all as rows.

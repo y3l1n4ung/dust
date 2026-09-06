@@ -22,6 +22,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   is static literals, but unchecked SQL can be assembled at the call site and an
   unbounded cache would grow with the request count.
 
+- A one-row terminal builds no column-name index unless a name is read.
+  There is one row, so there is nothing to share an index with, and
+  `fetchScalar` reads column zero and never needs one: 1.52us to 1.44us.
+
 - `BEGIN`, `COMMIT` and `ROLLBACK` are held like any other statement. Those
   three strings never vary, so a transaction per request was compiling two of
   them every time — about 0.7us of a 3.6us transaction, now 3.1us. Savepoints

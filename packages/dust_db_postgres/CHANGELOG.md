@@ -31,6 +31,10 @@ First release. PostgreSQL runtime for generated Database code, wrapping
   retried once with a freshly parsed statement, so a schema change costs one
   failed call rather than every call after it.
 
+- A one-row terminal builds no column-name index unless a name is read.
+  There is one row, so there is nothing to share an index with, and
+  `fetchScalar` reads column zero and never needs one.
+
 - Row reads resolve column names through one index per result, and typed
   terminals no longer build a list of row adapters before mapping.
 
