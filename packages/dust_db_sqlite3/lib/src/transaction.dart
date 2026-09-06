@@ -1,7 +1,17 @@
 part of 'sqlite_pool.dart';
 
-final class _TransactionCoordinator {
+/// State belonging to one open database, not to one driver over it.
+///
+/// A transaction is a second `Sqlite3Driver` over the same `sqlite.Database`,
+/// so anything scoped to the connection has to be shared with it rather than
+/// rebuilt: savepoint names have to stay unique across nesting, and a prepared
+/// statement is worth reusing whether the caller holds the pool or a
+/// transaction on it.
+final class _ConnectionState {
   var _nextSavepointId = 0;
+
+  /// Prepared statements held for this connection.
+  final _StatementCache statements = _StatementCache();
 
   Future<Result<T, SqlxError>> runRoot<T>(
     sqlite.Database database,
@@ -124,22 +134,22 @@ final class _TransactionScope {
 final class _SingleConnectionPool implements Transaction, Sqlite3Executor {
   _SingleConnectionPool(
     sqlite.Database database,
-    _TransactionCoordinator transactions,
-  ) : this._scoped(database, transactions, _TransactionScope());
+    _ConnectionState connection,
+  ) : this._scoped(database, connection, _TransactionScope());
 
   _SingleConnectionPool._scoped(
     sqlite.Database database,
-    this._transactions,
+    this._connection,
     this._scope,
   ) : _driver = Sqlite3Driver._(
           database,
           ownsDatabase: false,
-          transactions: _transactions,
+          connection: _connection,
           transactionScope: _scope,
         );
 
   final Sqlite3Driver _driver;
-  final _TransactionCoordinator _transactions;
+  final _ConnectionState _connection;
   final _TransactionScope _scope;
 
   @override
@@ -197,7 +207,7 @@ final class _SingleConnectionPool implements Transaction, Sqlite3Executor {
   ) {
     final error = _driver._closedError();
     if (error != null) return Future.value(Err<T, SqlxError>(error));
-    return _transactions.runSavepoint(database, fn);
+    return _connection.runSavepoint(database, fn);
   }
 
   @override
@@ -217,8 +227,8 @@ extension _Sqlite3TransactionRunner on Sqlite3Driver {
   ) {
     final error = _closedError();
     if (error != null) return Future.value(Err<T, SqlxError>(error));
-    if (!_ownsDatabase) return _transactions.runSavepoint(database, fn);
-    return _transactions.runRoot(database, fn);
+    if (!_ownsDatabase) return _connection.runSavepoint(database, fn);
+    return _connection.runRoot(database, fn);
   }
 }
 

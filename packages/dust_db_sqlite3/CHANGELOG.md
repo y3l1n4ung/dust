@@ -8,6 +8,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.1.5]
 
+### Performance
+
+- Prepared statements are held for reuse rather than compiled on every call.
+  Preparing was most of what a small query cost: against an in-memory database
+  a single-row `SELECT` took 5.7us re-prepared and 2.2us from a held statement,
+  so a server answering the same query per request spent more time compiling
+  SQL than reading rows. End to end, `fetchOne` went 8.07us to 3.97us and
+  `fetchScalar` 4.04us to 1.66us.
+
+  The cache is per connection and shared with transactions over it, keyed by
+  SQL text, and bounded at 128 with least-recently-used eviction — Dust's SQL
+  is static literals, but unchecked SQL can be assembled at the call site and an
+  unbounded cache would grow with the request count.
+
+- Typed terminals no longer build a list of row adapters before mapping.
+  `fetchOne` and `fetchScalar` wrap the one row they read, and `fetchAll` maps
+  straight out of the result set. Only unchecked SQL still materialises rows,
+  because rows are what it returns.
+
 ### Added
 
 - 23 examples in `example/`, one per question, indexed by `example/README.md`:

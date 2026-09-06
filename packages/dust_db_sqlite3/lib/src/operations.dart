@@ -69,30 +69,35 @@ String _encodeJsonListBind(List<Object?> values) {
 }
 
 extension _Sqlite3DriverOperations on Sqlite3Driver {
-  List<Row> _queryUnchecked(String sql, List<Object?> parameters) {
+  /// Runs [sql] and returns the driver's own result set.
+  ///
+  /// Rows are wrapped by the caller rather than here, so a terminal reading one
+  /// row builds one adapter instead of a list of them.
+  sqlite.ResultSet _selectUnchecked(String sql, List<Object?> parameters) {
     _checkOpen();
     final rewrite = rewritePlaceholders(sql);
-    final result = _database.select(
+    final statement = _connection.statements.statementFor(
+      _database,
       rewrite.sql,
+    );
+    return statement.select(
       _encodeListParameters(orderParameters(rewrite, parameters)),
     );
-    return <Row>[for (final row in result) Sqlite3Row(row)];
   }
 
   ExecResult _executeUnchecked(String sql, List<Object?> parameters) {
     _checkOpen();
     final rewrite = rewritePlaceholders(sql);
-    final statement = _database.prepare(rewrite.sql);
-    try {
-      statement.execute(
-        _encodeListParameters(orderParameters(rewrite, parameters)),
-      );
-      return ExecResult(
-        rowsAffected: _database.updatedRows,
-        lastInsertId: _database.lastInsertRowId,
-      );
-    } finally {
-      statement.close();
-    }
+    final statement = _connection.statements.statementFor(
+      _database,
+      rewrite.sql,
+    );
+    statement.execute(
+      _encodeListParameters(orderParameters(rewrite, parameters)),
+    );
+    return ExecResult(
+      rowsAffected: _database.updatedRows,
+      lastInsertId: _database.lastInsertRowId,
+    );
   }
 }

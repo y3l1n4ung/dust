@@ -12,6 +12,7 @@ part 'migrations.dart';
 part 'operations.dart';
 part 'row.dart';
 part 'transaction.dart';
+part 'statement_cache.dart';
 part 'unsafe_sql.dart';
 
 /// SQLite-backed executor with access to the underlying native database.
@@ -25,10 +26,10 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
   Sqlite3Driver._(
     this._database, {
     required bool ownsDatabase,
-    _TransactionCoordinator? transactions,
+    _ConnectionState? connection,
     _TransactionScope? transactionScope,
   })  : _ownsDatabase = ownsDatabase,
-        _transactions = transactions ?? _TransactionCoordinator(),
+        _connection = connection ?? _ConnectionState(),
         _transactionScope = transactionScope;
 
   /// Opens a database at [path] and applies unapplied migrations in name order.
@@ -62,7 +63,7 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
 
   final sqlite.Database _database;
   final bool _ownsDatabase;
-  final _TransactionCoordinator _transactions;
+  final _ConnectionState _connection;
   final _TransactionScope? _transactionScope;
   var _closed = false;
 
@@ -78,11 +79,10 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     List<Object?> parameters,
     RowMapper<T> mapper,
   ) async {
-    final rows = _queryResult(sql, parameters);
-    return rows.match(
-      ok: (rows) {
-        if (rows.isEmpty) return Ok<T?, SqlxError>(null);
-        return _mapRow<T?>(sql, rows.first, (row) => mapper(row));
+    return _selectResult(sql, parameters).match(
+      ok: (result) {
+        if (result.isEmpty) return Ok<T?, SqlxError>(null);
+        return _mapRow<T?>(sql, Sqlite3Row(result.first), (row) => mapper(row));
       },
       err: (error) => Err<T?, SqlxError>(error),
     );
@@ -94,11 +94,14 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     List<Object?> parameters,
     RowMapper<T> mapper,
   ) async {
-    final rows = _queryResult(sql, parameters);
-    return rows.match(
-      ok: (rows) {
+    return _selectResult(sql, parameters).match(
+      ok: (result) {
         try {
-          return Ok<List<T>, SqlxError>([for (final row in rows) mapper(row)]);
+          // Mapped straight out of the result: the adapter is what the mapper
+          // reads through, and nothing keeps it afterwards.
+          return Ok<List<T>, SqlxError>(
+            <T>[for (final row in result) mapper(Sqlite3Row(row))],
+          );
         } on SqlxError catch (error) {
           return Err<List<T>, SqlxError>(error);
         } catch (error) {
@@ -121,18 +124,17 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     List<Object?> parameters,
     RowMapper<T> mapper,
   ) async {
-    final rows = _queryResult(sql, parameters);
-    return rows.match(
-      ok: (rows) {
-        if (rows.isEmpty) {
+    return _selectResult(sql, parameters).match(
+      ok: (result) {
+        if (result.isEmpty) {
           return Err<T, SqlxError>(_sqliteNoRows(sql));
         }
-        if (rows.length > 1) {
+        if (result.length > 1) {
           return Err<T, SqlxError>(
-            _sqliteTooManyRows(expected: 1, actual: rows.length, query: sql),
+            _sqliteTooManyRows(expected: 1, actual: result.length, query: sql),
           );
         }
-        return _mapRow<T>(sql, rows.single, mapper);
+        return _mapRow<T>(sql, Sqlite3Row(result.single), mapper);
       },
       err: (error) => Err<T, SqlxError>(error),
     );
@@ -143,25 +145,23 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     String sql,
     List<Object?> parameters,
   ) async {
-    final rows = _queryResult(sql, parameters);
-    return rows.match(
-      ok: (rows) {
-        if (rows.isEmpty) {
+    return _selectResult(sql, parameters).match(
+      ok: (result) {
+        if (result.isEmpty) {
           if (null is T) return Ok<T, SqlxError>(null as T);
           return Err<T, SqlxError>(_sqliteNoRows(sql));
         }
-        if (rows.length > 1) {
+        if (result.length > 1) {
           return Err<T, SqlxError>(
-            _sqliteTooManyRows(expected: 1, actual: rows.length, query: sql),
+            _sqliteTooManyRows(expected: 1, actual: result.length, query: sql),
           );
         }
+        final row = Sqlite3Row(result.single);
         try {
           if (null is T) {
-            return Ok<T, SqlxError>(
-              rows.single.readIndexNullable<Object?>(0) as T,
-            );
+            return Ok<T, SqlxError>(row.readIndexNullable<Object?>(0) as T);
           }
-          return Ok<T, SqlxError>(rows.single.readIndex<T>(0));
+          return Ok<T, SqlxError>(row.readIndex<T>(0));
         } on SqlxError catch (error) {
           return Err<T, SqlxError>(error);
         } catch (error) {
@@ -198,6 +198,9 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     if (!_ownsDatabase || _closed) return const Ok<Unit, SqlxError>(unit);
     _closed = true;
     try {
+      // Before the database, so the cache never holds a statement belonging to
+      // a database that is already gone.
+      _connection.statements.close();
       _database.close();
       return const Ok<Unit, SqlxError>(unit);
     } catch (error) {
@@ -211,20 +214,23 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     }
   }
 
-  Result<List<Row>, SqlxError> _queryResult(
+  /// Runs [sql], reporting a failure as a value rather than a throw.
+  Result<sqlite.ResultSet, SqlxError> _selectResult(
     String sql,
     List<Object?> parameters,
   ) {
     try {
-      return Ok<List<Row>, SqlxError>(_queryUnchecked(sql, parameters));
+      return Ok<sqlite.ResultSet, SqlxError>(
+        _selectUnchecked(sql, parameters),
+      );
     } on SqlxError catch (error) {
-      return Err<List<Row>, SqlxError>(error);
+      return Err<sqlite.ResultSet, SqlxError>(error);
     } on PlaceholderBindError catch (error) {
-      return Err<List<Row>, SqlxError>(
+      return Err<sqlite.ResultSet, SqlxError>(
         _sqliteQueryError(error.message, operation: error.sql),
       );
     } catch (error) {
-      return Err<List<Row>, SqlxError>(
+      return Err<sqlite.ResultSet, SqlxError>(
         _sqliteQueryError(
           'SQLite query failed.',
           cause: error,
@@ -232,6 +238,19 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
         ),
       );
     }
+  }
+
+  /// Runs [sql] and wraps every row, for callers that need them all as rows.
+  ///
+  /// Only unchecked SQL does: it has no mapper, so the rows are what it
+  /// returns. The typed terminals wrap what they read instead.
+  Result<List<Row>, SqlxError> _queryResult(
+    String sql,
+    List<Object?> parameters,
+  ) {
+    return _selectResult(sql, parameters).map(
+      (result) => <Row>[for (final row in result) Sqlite3Row(row)],
+    );
   }
 
   Result<ExecResult, SqlxError> _executeResult(
