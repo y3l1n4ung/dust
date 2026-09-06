@@ -56,7 +56,7 @@ final class _$ShoppingCacheDao implements ShoppingCacheDao {
 SELECT id, title, price, description, category, image,
        rating_rate, rating_count, payload, source
 FROM product_cache
-WHERE id = ?
+WHERE id = $1
 ''',
       [id],
       const $CachedProductRowRowDeserializer().deserialize,
@@ -92,7 +92,7 @@ ORDER BY title
 INSERT OR REPLACE INTO product_cache (
   id, title, price, description, category, image,
   rating_rate, rating_count, payload, source
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ''',
       [id, title, price, description, category, image, ratingRate, ratingCount, payload, source],
     );
@@ -103,7 +103,7 @@ INSERT OR REPLACE INTO product_cache (
     return _db.execute(
       r'''
 INSERT OR REPLACE INTO wishlist_cache (product_id, title, saved_at)
-VALUES (?, ?, ?)
+VALUES ($1, $2, $3)
 ''',
       [productId, title, savedAt],
     );

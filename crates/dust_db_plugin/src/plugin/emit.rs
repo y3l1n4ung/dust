@@ -45,9 +45,6 @@ pub(crate) fn emit_db_library(
 
     if options.databases {
         let databases = databases.expect("database classes are collected in database mode");
-        let driver = databases
-            .first()
-            .map_or(super::model::DbDriver::Sqlite3, |db| db.driver);
         for db in databases {
             sections.push(render_database_class(library, &db));
         }
@@ -58,7 +55,7 @@ pub(crate) fn emit_db_library(
             .chain(imported_rows.iter().map(String::as_str))
             .collect::<HashSet<_>>();
         for dao in daos.expect("DAO classes are collected in database mode") {
-            sections.push(render_dao_class(&dao, &row_names, driver));
+            sections.push(render_dao_class(&dao, &row_names));
         }
     }
 

@@ -32,6 +32,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Database**: placeholder rewriting moved from generated code into the driver.
+  `.g.dart` now carries the SQL verbatim, `$n` and all, and binds arguments in
+  declaration order; `dust_db_sqlite3` rewrites to `?` at bind time. Only DAO
+  methods were ever rewritten, so the same `$1` meant one thing in a `@Query`
+  and another in an inline `queryAs`, and a repeated `$1` expanded on one path
+  and not the other. Which placeholder form the database receives is the
+  driver's business — Postgres takes `$n` unchanged — so generated code could
+  not pick one without being wrong for the other dialect.
+
 - **Database**: the pool vocabulary follows SQLx. `DatabaseExecutor` becomes
   `Executor`, `DatabaseConnection` becomes `Connection`, and
   `DatabaseTransaction` becomes `Transaction`; `Pool` is unchanged. Dust's names

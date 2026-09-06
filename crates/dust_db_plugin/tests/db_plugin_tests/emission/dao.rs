@@ -102,8 +102,13 @@ fn emits_dao_mapper_for_imported_from_row_return_type() {
     let _ = fs::remove_dir_all(root);
 }
 
+/// Emitted SQL keeps `$n` and binds arguments in declaration order.
+///
+/// Rewriting here would have to pick a dialect: Postgres takes `$n` unchanged
+/// and SQLite does not. The driver rewrites at bind time, which is also what
+/// makes a `@SqlxDao` method and an inline query agree about the same text.
 #[test]
-fn emits_sqlite_query_with_repeated_and_reordered_args() {
+fn emits_sql_verbatim_so_the_driver_owns_the_placeholder_form() {
     let mut dao = dao_class();
     dao.methods = vec![dao_method(
         "findForOrg",
@@ -198,7 +203,7 @@ final class _$UserDao implements UserDao {
   @override
   Future<Result<UserProfile?, SqlxError>> findById(int id) {
     return _db.fetchOptional<UserProfile>(
-      r'''SELECT id, display_name, bio FROM users WHERE id = ?''',
+      r'''SELECT id, display_name, bio FROM users WHERE id = $1''',
       [id],
       const $UserProfileRowDeserializer().deserialize,
     );
@@ -215,7 +220,7 @@ final class _$UserDao implements UserDao {
   @override
   Future<Result<ExecResult, SqlxError>> rename(String name, int id) {
     return _db.execute(
-      r'''UPDATE users SET display_name = ? WHERE id = ?''',
+      r'''UPDATE users SET display_name = $1 WHERE id = $2''',
       [name, id],
     );
   }
@@ -268,7 +273,7 @@ final class _$UserDao implements UserDao {
   @override
   Future<Result<UserProfile, SqlxError>> findRequired(int id) {
     return _db.fetchOne<UserProfile>(
-      r'''SELECT id, display_name FROM users WHERE id = ?''',
+      r'''SELECT id, display_name FROM users WHERE id = $1''',
       [id],
       const $UserProfileRowDeserializer().deserialize,
     );
@@ -311,7 +316,7 @@ fn expected_imported_dao_output() -> &'static str {
   @override
   Future<Result<UserProfile?, SqlxError>> findById(int id) {
     return _db.fetchOptional<UserProfile>(
-      r'''SELECT id, display_name, bio FROM users WHERE id = ?''',
+      r'''SELECT id, display_name, bio FROM users WHERE id = $1''',
       [id],
       const $UserProfileRowDeserializer().deserialize,
     );
@@ -328,7 +333,7 @@ fn expected_imported_dao_output() -> &'static str {
   @override
   Future<Result<ExecResult, SqlxError>> rename(String name, int id) {
     return _db.execute(
-      r'''UPDATE users SET display_name = ? WHERE id = ?''',
+      r'''UPDATE users SET display_name = $1 WHERE id = $2''',
       [name, id],
     );
   }
@@ -377,8 +382,8 @@ final class _$UserDao implements UserDao {
   @override
   Future<Result<UserProfile?, SqlxError>> findForOrg(int id, int orgId) {
     return _db.fetchOptional<UserProfile>(
-      r'''SELECT id, display_name FROM users WHERE org_id = ? OR id = ? OR backup_id = ?''',
-      [orgId, id, id],
+      r'''SELECT id, display_name FROM users WHERE org_id = $2 OR id = $1 OR backup_id = $1''',
+      [id, orgId],
       const $UserProfileRowDeserializer().deserialize,
     );
   }

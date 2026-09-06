@@ -21,7 +21,7 @@ final class _$InventoryRepo implements InventoryRepo {
   @override
   Future<Result<Stock?, SqlxError>> stockFor(String item) {
     return _db.fetchOptional<Stock>(
-      r'''SELECT item, on_hand FROM stock WHERE item = ?''',
+      r'''SELECT item, on_hand FROM stock WHERE item = $1''',
       [item],
       const $StockRowDeserializer().deserialize,
     );
@@ -41,7 +41,7 @@ final class _$InventoryRepo implements InventoryRepo {
     return _db.fetchAll<Stock>(
       r'''
 SELECT item, on_hand FROM stock
-WHERE item IN (SELECT value FROM json_each(?))
+WHERE item IN (SELECT value FROM json_each($1))
 ORDER BY item
 ''',
       [items],
@@ -53,10 +53,10 @@ ORDER BY item
   Future<Result<ExecResult, SqlxError>> addStock(String item, int quantity) {
     return _db.execute(
       r'''
-INSERT INTO stock (item, on_hand) VALUES (?, ?)
-ON CONFLICT (item) DO UPDATE SET on_hand = on_hand + ?
+INSERT INTO stock (item, on_hand) VALUES ($1, $2)
+ON CONFLICT (item) DO UPDATE SET on_hand = on_hand + $2
 ''',
-      [item, quantity, quantity],
+      [item, quantity],
     );
   }
 
@@ -64,10 +64,10 @@ ON CONFLICT (item) DO UPDATE SET on_hand = on_hand + ?
   Future<Result<ExecResult, SqlxError>> reserve(int quantity, String item) {
     return _db.execute(
       r'''
-UPDATE stock SET on_hand = on_hand - ?
-WHERE item = ? AND on_hand >= ?
+UPDATE stock SET on_hand = on_hand - $1
+WHERE item = $2 AND on_hand >= $1
 ''',
-      [quantity, item, quantity],
+      [quantity, item],
     );
   }
 }

@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:dust_dart/db.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 
+import 'placeholders.dart';
+
 part 'connect_options.dart';
 part 'errors.dart';
 part 'migrations.dart';
@@ -217,6 +219,10 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
       return Ok<List<Row>, SqlxError>(_queryUnchecked(sql, parameters));
     } on SqlxError catch (error) {
       return Err<List<Row>, SqlxError>(error);
+    } on PlaceholderBindError catch (error) {
+      return Err<List<Row>, SqlxError>(
+        _sqliteQueryError(error.message, operation: error.sql),
+      );
     } catch (error) {
       return Err<List<Row>, SqlxError>(
         _sqliteQueryError(
@@ -238,6 +244,10 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
       );
     } on SqlxError catch (error) {
       return Err<ExecResult, SqlxError>(error);
+    } on PlaceholderBindError catch (error) {
+      return Err<ExecResult, SqlxError>(
+        _sqliteQueryError(error.message, operation: error.sql),
+      );
     } catch (error) {
       return Err<ExecResult, SqlxError>(
         _sqliteQueryError(

@@ -6,10 +6,7 @@ use dust_dart_emit::{
 use dust_ir::{MethodIr, ParamKind};
 use serde::Serialize;
 
-use crate::plugin::{
-    model::{DaoClass, DaoMethod, DbDriver},
-    sql::rewrite_sqlite_placeholders,
-};
+use crate::plugin::model::{DaoClass, DaoMethod};
 
 use super::shared::{escape_dart_string, is_scalar_type, render_sql_literal};
 
@@ -96,11 +93,7 @@ struct UnsupportedBodyContext {
 }
 
 /// Renders a generated DAO implementation class.
-pub(super) fn render_dao_class(
-    dao: &DaoClass<'_>,
-    row_names: &HashSet<&str>,
-    driver: DbDriver,
-) -> String {
+pub(super) fn render_dao_class(dao: &DaoClass<'_>, row_names: &HashSet<&str>) -> String {
     let class_name = &dao.class.name;
     let generated_name = dao
         .class
@@ -112,7 +105,7 @@ pub(super) fn render_dao_class(
     let methods = dao
         .methods
         .iter()
-        .map(|method| render_dao_method(method, row_names, driver))
+        .map(|method| render_dao_method(method, row_names))
         .collect::<Vec<_>>()
         .join("\n\n");
 
@@ -128,15 +121,11 @@ pub(super) fn render_dao_class(
 }
 
 /// Renders one generated DAO method.
-fn render_dao_method(
-    method: &DaoMethod<'_>,
-    row_names: &HashSet<&str>,
-    driver: DbDriver,
-) -> String {
+fn render_dao_method(method: &DaoMethod<'_>, row_names: &HashSet<&str>) -> String {
     let method_ir = method.method;
     let return_type = DYNAMIC_TYPES.render(&method_ir.return_type);
     let params = render_method_params(method_ir);
-    let rendered_query = render_driver_query(method, driver);
+    let rendered_query = render_driver_query(method);
     let body = render_dao_method_body(method, row_names, &rendered_query.sql, &rendered_query.args);
 
     render_template(
@@ -151,28 +140,20 @@ fn render_dao_method(
     )
 }
 
-/// Renders SQL and argument order for the target database driver.
-fn render_driver_query(method: &DaoMethod<'_>, driver: DbDriver) -> RenderedQuery {
-    let params = method.method.params.as_slice();
-    if matches!(driver, DbDriver::Sqlite3) {
-        if let Ok(rewrite) = rewrite_sqlite_placeholders(&method.sql, params.len()) {
-            let args = rewrite
-                .parameter_order
-                .iter()
-                .filter_map(|index| params.get(index.saturating_sub(1)))
-                .map(|param| param.name.as_str())
-                .collect::<Vec<_>>()
-                .join(", ");
-            return RenderedQuery {
-                sql: render_sql_literal(&rewrite.sql),
-                args,
-            };
-        }
-    }
-
+/// Renders the SQL literal and bind arguments for a DAO method.
+///
+/// The SQL is emitted verbatim, `$n` and all. Which placeholder form the
+/// database receives is the driver's business: Postgres takes `$n` unchanged
+/// and SQLite rewrites it at bind time, so generated code that picked one would
+/// be wrong for the other. It also kept a `@SqlxDao` method and an inline query
+/// from agreeing about what the same text means, since only the first was ever
+/// rewritten.
+fn render_driver_query(method: &DaoMethod<'_>) -> RenderedQuery {
     RenderedQuery {
         sql: render_sql_literal(&method.sql),
-        args: params
+        args: method
+            .method
+            .params
             .iter()
             .map(|param| param.name.as_str())
             .collect::<Vec<_>>()

@@ -10,6 +10,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The driver rewrites `$n` placeholders to SQLite's `?` at bind time, reordering
+  and repeating arguments as the statement reads them. Generated code used to do
+  this, and only for `@SqlxDao` methods, so the same `$1` meant one thing in a
+  DAO and another in an inline query. A repeated `$1` now binds its argument
+  twice on either path.
+
+  The scanner is ported from the one `dust_db_plugin` checks with at build time,
+  case for case: string literals, quoted identifiers with doubled-quote escapes,
+  both comment forms, and Postgres dollar-quoted bodies are copied through
+  untouched. Rewrites are cached per statement text.
+
 - `Sqlite3UnsafeSql`, the SQLite implementation of `dust_dart`'s `UnsafeSql`. A
   generated database facade exposes it as `unsafe`.
 

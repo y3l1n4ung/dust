@@ -71,15 +71,22 @@ String _encodeJsonListBind(List<Object?> values) {
 extension _Sqlite3DriverOperations on Sqlite3Driver {
   List<Row> _queryUnchecked(String sql, List<Object?> parameters) {
     _checkOpen();
-    final result = _database.select(sql, _encodeListParameters(parameters));
+    final rewrite = rewritePlaceholders(sql);
+    final result = _database.select(
+      rewrite.sql,
+      _encodeListParameters(orderParameters(rewrite, parameters)),
+    );
     return <Row>[for (final row in result) Sqlite3Row(row)];
   }
 
   ExecResult _executeUnchecked(String sql, List<Object?> parameters) {
     _checkOpen();
-    final statement = _database.prepare(sql);
+    final rewrite = rewritePlaceholders(sql);
+    final statement = _database.prepare(rewrite.sql);
     try {
-      statement.execute(_encodeListParameters(parameters));
+      statement.execute(
+        _encodeListParameters(orderParameters(rewrite, parameters)),
+      );
       return ExecResult(
         rowsAffected: _database.updatedRows,
         lastInsertId: _database.lastInsertRowId,

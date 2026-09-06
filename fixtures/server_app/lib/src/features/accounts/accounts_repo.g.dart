@@ -25,7 +25,7 @@ final class _$AccountsRepo implements AccountsRepo {
 SELECT a.id, a.email, a.password_hash, a.password_salt, a.scopes
 FROM accounts a
 JOIN api_tokens t ON t.account_id = a.id
-WHERE t.token_hash = ? AND t.expires_at > ?
+WHERE t.token_hash = $1 AND t.expires_at > $2
 ''',
       [tokenHash, now],
       const $AccountRowDeserializer().deserialize,
@@ -37,7 +37,7 @@ WHERE t.token_hash = ? AND t.expires_at > ?
     return _db.fetchOptional<Account>(
       r'''
 SELECT id, email, password_hash, password_salt, scopes FROM accounts
-WHERE email = ?
+WHERE email = $1
 ''',
       [email],
       const $AccountRowDeserializer().deserialize,
@@ -49,7 +49,7 @@ WHERE email = ?
     return _db.execute(
       r'''
 INSERT INTO accounts (email, password_hash, password_salt, scopes)
-VALUES (?, ?, ?, ?)
+VALUES ($1, $2, $3, $4)
 ''',
       [email, passwordHash, passwordSalt, scopes],
     );
@@ -60,7 +60,7 @@ VALUES (?, ?, ?, ?)
     return _db.execute(
       r'''
 INSERT INTO api_tokens (account_id, token_hash, expires_at)
-VALUES (?, ?, ?)
+VALUES ($1, $2, $3)
 ''',
       [accountId, tokenHash, expiresAt],
     );
