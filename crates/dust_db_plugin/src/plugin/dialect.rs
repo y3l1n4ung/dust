@@ -10,6 +10,8 @@ use super::model::DbDriver;
 /// One database, and the Dart runtime that talks to it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct Dialect {
+    /// The driver this describes.
+    pub(crate) driver: DbDriver,
     /// Stable name used in analysis keys and query cache entries.
     pub(crate) name: &'static str,
     /// Dart type the generated facade holds.
@@ -34,6 +36,14 @@ pub(crate) struct Dialect {
     /// a repeated one once. The engine has to describe the text the database
     /// will actually receive, and expect the bind count that dialect implies.
     pub(crate) rewrites_placeholders: bool,
+    /// Whether the dialect's nullability inference is worth reporting.
+    ///
+    /// SQLite describes a `PRIMARY KEY` column as nullable, so checking its
+    /// inference warns about correct code: `fixtures/server_app` produced five
+    /// such warnings, every one of them wrong. PostgreSQL describes the same
+    /// shapes accurately. The column-alias overrides are what a dialect with
+    /// untrustworthy inference leaves callers, and they work either way.
+    pub(crate) checks_nullability: bool,
     /// Whether SQL for this dialect is checked against the schema at build time.
     ///
     /// False means the runtime works but `describe` does not, so queries reach
@@ -43,6 +53,7 @@ pub(crate) struct Dialect {
 
 /// SQLite through `package:sqlite3`.
 const SQLITE3: Dialect = Dialect {
+    driver: DbDriver::Sqlite3,
     name: "sqlite3",
     runtime_type: "Sqlite3Driver",
     factory: "open",
@@ -52,11 +63,13 @@ const SQLITE3: Dialect = Dialect {
     // Applied while opening, so there is nothing left to do.
     migrate_expr: "Future<Result<Unit, SqlxError>>.value(const Ok(unit))",
     rewrites_placeholders: true,
+    checks_nullability: false,
     validates: true,
 };
 
 /// PostgreSQL through `package:postgres`.
 const POSTGRES: Dialect = Dialect {
+    driver: DbDriver::Postgres,
     name: "postgres",
     runtime_type: "PostgresDriver",
     factory: "connect",
@@ -65,6 +78,7 @@ const POSTGRES: Dialect = Dialect {
     unsafe_type: "PostgresUnsafeSql",
     migrate_expr: "_driver.migrate()",
     rewrites_placeholders: false,
+    checks_nullability: true,
     validates: true,
 };
 

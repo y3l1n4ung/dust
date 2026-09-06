@@ -32,6 +32,12 @@ const UNIT: char = '\u{1f}';
 const COLUMN: &str = "c:";
 /// Marks a row class flattened into another one.
 const FLATTEN: &str = "f:";
+/// Separates a column's name from the Dart field behind it.
+///
+/// Checking a described column against its field needs the field's type and
+/// nullability, and the two can be declared in different libraries, so they
+/// travel with the column name through package analysis.
+const FIELD: char = '\u{1e}';
 
 /// One `@SqlxDatabase` class found somewhere in the package.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -80,7 +86,11 @@ pub(crate) fn collect_db_workspace_analysis(
                 continue;
             }
             let column = effective_column_name(&row.config, &field.name, &config);
-            fields.push(format!("{COLUMN}{column}"));
+            let dart_type = field.ty.name().unwrap_or_default();
+            let nullable = u8::from(field.ty.is_nullable());
+            fields.push(format!(
+                "{COLUMN}{column}{FIELD}{dart_type}{FIELD}{nullable}"
+            ));
         }
         analysis.add_string_set_value(ROW_COLUMNS_KEY, fields.join(&UNIT.to_string()));
     }
@@ -109,7 +119,7 @@ pub(crate) fn package_databases(
 pub(crate) fn package_row_column_map(
     analysis: &WorkspaceAnalysis,
     package: &str,
-) -> HashMap<String, HashSet<String>> {
+) -> HashMap<String, Vec<RowColumn>> {
     let declared = analysis
         .string_set(ROW_COLUMNS_KEY)
         .unwrap_or_default()
@@ -119,7 +129,7 @@ pub(crate) fn package_row_column_map(
     declared
         .keys()
         .map(|name| {
-            let mut columns = HashSet::new();
+            let mut columns = Vec::new();
             let mut seen = HashSet::new();
             expand_row(name, &declared, &mut columns, &mut seen);
             (name.clone(), columns)
@@ -127,13 +137,43 @@ pub(crate) fn package_row_column_map(
         .collect()
 }
 
+/// One column a row class reads, and the Dart field behind it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct RowColumn {
+    /// Column name as the query must spell it.
+    pub(crate) name: String,
+    /// Dart type of the field reading it, empty when unnamed.
+    pub(crate) dart_type: String,
+    /// Whether the field accepts null.
+    pub(crate) nullable: bool,
+}
+
+impl RowColumn {
+    /// Reads one packed column entry, tolerating one written without a field.
+    ///
+    /// A value from an older cache or a partially written set carries the name
+    /// alone; treating it as an unnamed non-null field keeps the column check
+    /// working and leaves the type check with nothing to say.
+    fn parse(packed: &str) -> Self {
+        let mut parts = packed.split(FIELD);
+        let name = parts.next().unwrap_or_default().to_owned();
+        let dart_type = parts.next().unwrap_or_default().to_owned();
+        let nullable = parts.next() == Some("1");
+        Self {
+            name,
+            dart_type,
+            nullable,
+        }
+    }
+}
+
 /// One row class's declaring file, own columns, and the rows flattened into it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct DeclaredRow {
     /// Package-relative path of the library that declares it.
     pub(crate) source_path: String,
-    /// Columns the class reads directly.
-    columns: Vec<String>,
+    /// Columns the class reads directly, with the field behind each.
+    columns: Vec<RowColumn>,
     /// Row classes flattened into it.
     flattened: Vec<String>,
 }
@@ -142,7 +182,7 @@ pub(crate) struct DeclaredRow {
 fn expand_row(
     name: &str,
     declared: &HashMap<String, DeclaredRow>,
-    columns: &mut HashSet<String>,
+    columns: &mut Vec<RowColumn>,
     seen: &mut HashSet<String>,
 ) {
     if !seen.insert(name.to_owned()) {
@@ -197,7 +237,7 @@ fn parse_row(value: &str, package: &str) -> Option<(String, DeclaredRow)> {
     let mut flattened = Vec::new();
     for field in fields {
         if let Some(column) = field.strip_prefix(COLUMN) {
-            columns.push(column.to_owned());
+            columns.push(RowColumn::parse(column));
         } else if let Some(row) = field.strip_prefix(FLATTEN) {
             flattened.push(row.to_owned());
         }

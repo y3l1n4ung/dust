@@ -11,8 +11,9 @@ use sqlx::{Column, Connection, Executor, postgres::PgConnection, sqlite::SqliteC
 
 use crate::plugin::{
     DbPluginOptions,
-    analysis::PackageDatabase,
-    column_alias::parse_column_alias,
+    analysis::{PackageDatabase, RowColumn},
+    column_alias::{NullabilityOverride, parse_column_alias},
+    column_types::accepts,
     dialect::Dialect,
     migrations::applied_migration_files,
     model::{DbDriver, QueryFunction, QuerySpec},
@@ -31,6 +32,7 @@ pub(super) fn validate_sqlx_describe(
     db: &PackageDatabase,
     queries: &[QuerySpec],
     row_columns: &HashMap<String, HashSet<String>>,
+    typed_columns: &HashMap<String, Vec<RowColumn>>,
     options: DbPluginOptions,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
@@ -71,14 +73,23 @@ pub(super) fn validate_sqlx_describe(
         return;
     }
 
-    match run_sqlx_validation(
+    // Type and nullability findings are warnings, so they are collected rather
+    // than short-circuiting the describe run.
+    let mut warnings = Vec::new();
+    let validated = run_sqlx_validation(
         &migrations_path,
-        db.driver,
-        &db.migrations,
-        &schema_hash,
-        queries,
-        row_columns,
-    ) {
+        &DescribeRequest {
+            dialect: db.driver.dialect(),
+            migrations: &db.migrations,
+            schema_hash: &schema_hash,
+            queries,
+            row_columns,
+            typed_columns,
+        },
+        &mut warnings,
+    );
+    diagnostics.extend(warnings.into_iter().map(Diagnostic::warning));
+    match validated {
         Ok(metadata) => {
             if matches!(options.execution.metadata, MetadataOutput::Write) {
                 if let Err(error) = write_query_cache(library, metadata) {
@@ -91,14 +102,29 @@ pub(super) fn validate_sqlx_describe(
 }
 
 /// Runs online SQLx validation inside a current-thread Tokio runtime.
+/// Everything a describe run needs about the queries it is checking.
+struct DescribeRequest<'a> {
+    /// The database being described against.
+    dialect: &'a Dialect,
+    /// Migration directory, as the cache records it.
+    migrations: &'a str,
+    /// Hash of the migrations the schema came from.
+    schema_hash: &'a str,
+    /// Queries to describe.
+    queries: &'a [QuerySpec],
+    /// Columns each row class requires, by name.
+    row_columns: &'a HashMap<String, HashSet<String>>,
+    /// Columns each row class requires, with the field behind each.
+    typed_columns: &'a HashMap<String, Vec<RowColumn>>,
+}
+
+/// Runs SQLx validation inside a current-thread Tokio runtime.
 fn run_sqlx_validation(
     migrations_path: &Path,
-    driver: DbDriver,
-    migrations: &str,
-    schema_hash: &str,
-    queries: &[QuerySpec],
-    row_columns: &HashMap<String, HashSet<String>>,
+    request: &DescribeRequest<'_>,
+    warnings: &mut Vec<String>,
 ) -> Result<Vec<QueryCacheEntry>, String> {
+    let driver = request.dialect.driver;
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
@@ -112,15 +138,7 @@ fn run_sqlx_validation(
                     connect_for_validation::<SqliteConnection>(driver, Some("sqlite::memory:"))
                         .await?;
                 apply_migrations(&mut conn, migrations_path).await?;
-                describe_queries(
-                    &mut conn,
-                    driver.dialect(),
-                    migrations,
-                    schema_hash,
-                    queries,
-                    row_columns,
-                )
-                .await
+                describe_queries(&mut conn, request, warnings).await
             }
             DbDriver::Postgres => {
                 // No in-memory Postgres, so there is no default to fall back
@@ -145,15 +163,7 @@ fn run_sqlx_validation(
                     })?;
                 }
                 apply_migrations(&mut *tx, migrations_path).await?;
-                let described = describe_queries(
-                    &mut *tx,
-                    driver.dialect(),
-                    migrations,
-                    schema_hash,
-                    queries,
-                    row_columns,
-                )
-                .await;
+                let described = describe_queries(&mut *tx, request, warnings).await;
                 // A failure to roll back matters more than the describe result.
                 tx.rollback().await.map_err(|error| {
                     format!("failed to roll back the SQL validation transaction: {error}")
@@ -215,16 +225,21 @@ where
 /// Describes all queries and returns metadata suitable for cache writes.
 async fn describe_queries<C>(
     conn: &mut C,
-    dialect: &Dialect,
-    migrations: &str,
-    schema_hash: &str,
-    queries: &[QuerySpec],
-    row_columns: &HashMap<String, HashSet<String>>,
+    request: &DescribeRequest<'_>,
+    warnings: &mut Vec<String>,
 ) -> Result<Vec<QueryCacheEntry>, String>
 where
     C: Connection,
     for<'e> &'e mut C: Executor<'e, Database = C::Database>,
 {
+    let DescribeRequest {
+        dialect,
+        migrations,
+        schema_hash,
+        queries,
+        row_columns,
+        typed_columns,
+    } = *request;
     let mut metadata = Vec::new();
     for query in queries {
         // Unchecked SQL is not described and never enters the cache: its text
@@ -265,6 +280,12 @@ where
             ));
         }
         validate_described_columns(query, row_columns, &describe)?;
+        warnings.extend(describe_column_warnings(
+            query,
+            dialect,
+            typed_columns,
+            &describe,
+        ));
         metadata.push(QueryCacheEntry {
             driver: dialect.name.to_owned(),
             migrations: migrations.to_owned(),
@@ -320,4 +341,62 @@ fn validate_described_columns<DB: sqlx::Database>(
         ));
     }
     Ok(())
+}
+
+/// Reports described types and nullability that disagree with the row class.
+///
+/// Warnings rather than errors: the accepted type table is deliberately
+/// permissive, and a dialect whose inference is wrong about nullability has the
+/// column-alias overrides as its answer. A finding here is worth reading, not
+/// worth failing a build over yet.
+fn describe_column_warnings<DB: sqlx::Database>(
+    query: &QuerySpec,
+    dialect: &Dialect,
+    typed_columns: &HashMap<String, Vec<RowColumn>>,
+    describe: &sqlx::Describe<DB>,
+) -> Vec<String> {
+    let mut warnings = Vec::new();
+    let Some(row_type) = query_row_type(query) else {
+        return warnings;
+    };
+    let Some(fields) = typed_columns.get(row_type) else {
+        return warnings;
+    };
+
+    for (index, column) in describe.columns().iter().enumerate() {
+        let alias = parse_column_alias(column.name());
+        let Some(field) = fields.iter().find(|field| field.name == alias.name) else {
+            continue;
+        };
+
+        let sql_type = column.type_info().to_string();
+        if !accepts(dialect.driver, &field.dart_type, &sql_type) {
+            warnings.push(format!(
+                "SQLx query `{}` reads column `{}` of type `{sql_type}` into `{}`, which cannot hold it",
+                query.display_name(),
+                alias.name,
+                field.dart_type,
+            ));
+        }
+
+        // An override says what the database could not know, so it settles the
+        // question. Inference is only consulted for a dialect whose inference
+        // is worth consulting.
+        let described_nullable = match alias.nullability {
+            NullabilityOverride::NotNull => Some(false),
+            NullabilityOverride::Nullable => Some(true),
+            NullabilityOverride::Inferred if dialect.checks_nullability => describe.nullable(index),
+            NullabilityOverride::Inferred => None,
+        };
+        if described_nullable == Some(true) && !field.nullable {
+            warnings.push(format!(
+                "SQLx query `{}` reads nullable column `{}` into non-nullable `{}`. Make the field nullable, or write `as \"{}!\"` if the database is wrong about it",
+                query.display_name(),
+                alias.name,
+                field.dart_type,
+                alias.name,
+            ));
+        }
+    }
+    warnings
 }

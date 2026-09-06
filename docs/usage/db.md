@@ -466,6 +466,57 @@ spells the column `total`, and the generated decoder still reads
 Only a trailing `!` or `?` is a marker. A name that merely contains one is left
 alone.
 
+## Type and Nullability Checks
+
+`dust db build` compares each described column against the field reading it and
+reports what disagrees. Both findings are **warnings**, not errors.
+
+A column whose type no Dart field can hold:
+
+```
+warning: SQLx query `OrdersRepo.byItem` reads column `item` of type `TEXT`
+         into `int`, which cannot hold it
+```
+
+A nullable column read into a non-nullable field:
+
+```
+warning: SQLx query `OrdersRepo.byItem` reads nullable column `total` into
+         non-nullable `int`. Make the field nullable, or write `as "total!"`
+         if the database is wrong about it
+```
+
+### Accepted type pairs
+
+Anything not listed is accepted rather than reported, so a converter type, an
+enum read through `tryFrom`, or a type this table has not learned costs nothing.
+
+| Dart | SQLite | PostgreSQL |
+| :--- | :--- | :--- |
+| `int` | `INTEGER`, `NUMERIC`, `BOOLEAN` | `INT2`, `INT4`, `INT8`, `OID` |
+| `double` | `REAL`, `NUMERIC`, `INTEGER` | `FLOAT4`, `FLOAT8`, `NUMERIC` |
+| `num` | `INTEGER`, `REAL`, `NUMERIC` | the `int` and `double` rows |
+| `bool` | `INTEGER`, `BOOLEAN`, `NUMERIC` | `BOOL` |
+| `String` | `TEXT` | `TEXT`, `VARCHAR`, `CHAR`, `UUID`, `JSON`, `JSONB` |
+| `DateTime` | `TEXT`, `DATETIME` | `TIMESTAMP`, `TIMESTAMPTZ`, `DATE` |
+
+SQLite's rows are wide because it has type affinity rather than types: a column
+declared `NUMERIC` holds whatever was written to it, and it has no boolean or
+date type at all, so an integer reads into `bool` and text into `DateTime`.
+PostgreSQL has real types, so its rows are narrow.
+
+`numeric` is accepted into `double` provisionally. It is arbitrary-precision and
+Dart has no counterpart, so the mapping is not settled; reading it as a `double`
+loses precision.
+
+### Nullability is checked per dialect
+
+PostgreSQL describes nullability accurately and is checked. **SQLite is not**:
+it describes a `PRIMARY KEY` column as nullable, which would warn about correct
+code — `fixtures/server_app` produced five such warnings, every one wrong. The
+column-alias overrides work on either dialect, so `as "total?"` still marks a
+column nullable where SQLite cannot say so itself.
+
 ## Set Membership
 
 An `IN` list does not need dynamic SQL. Bind the list itself and read it back

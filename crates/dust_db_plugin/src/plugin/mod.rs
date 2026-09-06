@@ -9,6 +9,8 @@ use dust_plugin_api::{
 mod analysis;
 /// SQLx column-alias overrides.
 mod column_alias;
+/// Accepted Dart/SQL type pairs per dialect.
+mod column_types;
 /// Shared annotation names and claimed symbol lists.
 mod constants;
 /// Renders generated DB, DAO, and row-mapping Dart code.

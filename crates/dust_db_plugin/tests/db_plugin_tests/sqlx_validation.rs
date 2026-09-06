@@ -219,7 +219,7 @@ Future<UserProfile> find(Pool db, int id) {
         vec![simple_user_row_class(), database_class()],
         vec![query_as(
             "UserProfile",
-            r#"SELECT id as "id!", display_name as "display_name?" FROM users WHERE id = $1"#,
+            r#"SELECT id as "id!", display_name as "display_name!" FROM users WHERE id = $1"#,
             1,
             "fetchOne",
             10,
@@ -228,6 +228,49 @@ Future<UserProfile> find(Pool db, int id) {
     let diagnostics = validate_alone(&register_plugin(), &library);
 
     assert_eq!(diagnostics, Vec::new());
+
+    let _ = fs::remove_dir_all(root);
+}
+
+/// A `?` marker makes a column nullable, and a non-nullable field is told.
+///
+/// The finding is a warning: the database is often right about nullability and
+/// the marker exists for when it is not, so this is worth reading rather than
+/// worth failing a build over.
+#[test]
+fn warns_when_a_nullable_column_reads_into_a_non_nullable_field() {
+    let root = temp_root("sqlx_nullable_column");
+    write_sqlite_project(
+        &root,
+        r#"
+Future<UserProfile> find(Pool db, int id) {
+  return queryAs<UserProfile>(
+    r'SELECT id, display_name FROM users WHERE id = $1',
+    [id],
+  ).fetchOne(db);
+}
+"#,
+    );
+
+    let library = library_with_queries(
+        &root,
+        vec![simple_user_row_class(), database_class()],
+        vec![query_as(
+            "UserProfile",
+            r#"SELECT id, display_name as "display_name?" FROM users WHERE id = $1"#,
+            1,
+            "fetchOne",
+            10,
+        )],
+    );
+    let diagnostics = validate_alone(&register_plugin(), &library);
+
+    assert!(
+        diagnostics.iter().any(|diagnostic| diagnostic
+            .message
+            .contains("reads nullable column `display_name` into non-nullable")),
+        "{diagnostics:?}"
+    );
 
     let _ = fs::remove_dir_all(root);
 }

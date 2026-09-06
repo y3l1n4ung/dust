@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Database**: described column types and nullability are checked against the
+  row class and reported as warnings. A `TEXT` column read into an `int` is
+  named, and so is a nullable column read into a non-nullable field.
+
+  The accepted type pairs are documented per dialect and deliberately
+  permissive: anything the table does not cover is accepted rather than
+  reported, so a converter type or an enum read through `tryFrom` costs nothing.
+  SQLite's rows are wide because it has affinity rather than types.
+
+  Nullability is checked for PostgreSQL only. SQLite describes a `PRIMARY KEY`
+  column as nullable, which warned about five correct queries in
+  `fixtures/server_app`; the column-alias overrides work on either dialect.
+
 - **Database**: SQLx's column-alias overrides. `SELECT x as "total?"` marks a
   column nullable and `as "total!"` marks it not null, whatever the database
   inferred — which a `LEFT JOIN` otherwise gets wrong, since it makes a

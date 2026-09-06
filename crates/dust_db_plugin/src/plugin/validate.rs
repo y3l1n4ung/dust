@@ -6,7 +6,9 @@ use dust_plugin_api::WorkspaceAnalysis;
 
 use super::{
     DbPluginOptions,
-    analysis::{PackageDatabase, duplicate_row_types, package_databases, package_row_column_map},
+    analysis::{
+        PackageDatabase, RowColumn, duplicate_row_types, package_databases, package_row_column_map,
+    },
     model::RowClass,
     parse::{database_classes, query_specs, row_classes},
 };
@@ -37,13 +39,28 @@ pub(crate) fn validate_db_library(
     let rows = row_classes(library);
     let package_rows = package_row_column_map(analysis, &library.package_name);
     let mut diagnostics = Vec::new();
-    rows::validate_rows(&rows, &package_rows, &mut diagnostics);
+    // The column checks below work in names; the typed columns are what the
+    // described-column checks need.
+    let package_column_names = package_rows
+        .iter()
+        .map(|(row, columns)| {
+            (
+                row.clone(),
+                columns
+                    .iter()
+                    .map(|column| column.name.clone())
+                    .collect::<HashSet<_>>(),
+            )
+        })
+        .collect::<HashMap<_, _>>();
+    rows::validate_rows(&rows, &package_column_names, &mut diagnostics);
     if options.databases {
         validate_databases(
             library,
             options,
             &rows,
             analysis,
+            &package_column_names,
             &package_rows,
             &mut diagnostics,
         );
@@ -58,6 +75,7 @@ fn validate_databases(
     rows: &[RowClass<'_>],
     analysis: &WorkspaceAnalysis,
     row_columns: &HashMap<String, HashSet<String>>,
+    typed_columns: &HashMap<String, Vec<RowColumn>>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     // These two carry a span, so they belong to the file that declares the
@@ -116,7 +134,15 @@ fn validate_databases(
         .filter(|(name, _)| !ambiguous.contains(*name))
         .map(|(name, columns)| (name.clone(), columns.clone()))
         .collect::<HashMap<_, _>>();
-    sqlx::validate_sqlx_describe(library, db, &queries, &checkable, options, diagnostics);
+    sqlx::validate_sqlx_describe(
+        library,
+        db,
+        &queries,
+        &checkable,
+        typed_columns,
+        options,
+        diagnostics,
+    );
 }
 
 /// Reports row class names a package declares twice, returning the ambiguous set.

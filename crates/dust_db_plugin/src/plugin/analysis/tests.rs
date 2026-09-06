@@ -53,13 +53,8 @@ fn expands_rows_flattened_across_libraries() {
 
     let columns = package_row_column_map(&analysis, "app");
     assert_eq!(
-        columns.get("Order"),
-        Some(
-            &["id", "amount", "currency"]
-                .into_iter()
-                .map(str::to_owned)
-                .collect()
-        )
+        column_names(&columns, "Order"),
+        vec!["id", "amount", "currency"]
     );
 }
 
@@ -70,15 +65,7 @@ fn a_flatten_cycle_stops_rather_than_recursing() {
     let analysis = analysis(&[(ROW_COLUMNS_KEY, &left), (ROW_COLUMNS_KEY, &right)]);
 
     let columns = package_row_column_map(&analysis, "app");
-    assert_eq!(
-        columns.get("Left"),
-        Some(
-            &["left_id", "right_id"]
-                .into_iter()
-                .map(str::to_owned)
-                .collect()
-        )
-    );
+    assert_eq!(column_names(&columns, "Left"), vec!["left_id", "right_id"]);
 }
 
 #[test]
@@ -87,10 +74,7 @@ fn a_flatten_target_outside_the_package_contributes_nothing() {
     let analysis = analysis(&[(ROW_COLUMNS_KEY, &order)]);
 
     let columns = package_row_column_map(&analysis, "app");
-    assert_eq!(
-        columns.get("Order"),
-        Some(&["id"].into_iter().map(str::to_owned).collect())
-    );
+    assert_eq!(column_names(&columns, "Order"), vec!["id"]);
 }
 
 #[test]
@@ -136,4 +120,15 @@ fn one_row_class_declared_once_is_not_a_duplicate() {
     let analysis = analysis(&[(ROW_COLUMNS_KEY, &order), (ROW_COLUMNS_KEY, &theirs)]);
 
     assert!(duplicate_row_types(&analysis, "app").is_empty());
+}
+
+/// Column names a row class reads, in the order analysis expanded them.
+fn column_names(
+    columns: &std::collections::HashMap<String, Vec<super::RowColumn>>,
+    row: &str,
+) -> Vec<String> {
+    columns
+        .get(row)
+        .map(|columns| columns.iter().map(|column| column.name.clone()).collect())
+        .unwrap_or_default()
 }
