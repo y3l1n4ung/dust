@@ -264,6 +264,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Database**: `DUST_DATABASE_URL` is used only when its scheme names the
+  project's own driver. One workspace can hold projects on both drivers while
+  the variable names one database; a SQLite project handed a PostgreSQL URL used
+  to try to open it and report whatever the other driver's URL parser disliked
+  (`unknown query parameter \`sslmode\``). It now falls back to its in-memory
+  schema, and a PostgreSQL project handed a SQLite URL says which scheme it
+  needs.
 - **Database**: the query metadata cache is one file per library rather than one
   per package. Libraries are validated in parallel worker threads, so a shared
   path meant several threads read-modify-writing the same file at once: across

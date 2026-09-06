@@ -179,18 +179,28 @@ fn run_sqlx_validation(
 /// `DUST_DATABASE_URL` names it. SQLite has an in-memory default because it can
 /// build the schema from the migrations alone; PostgreSQL has no equivalent, so
 /// it says what is missing rather than failing to connect to nothing.
+///
+/// A URL for another driver is ignored rather than opened. One workspace can
+/// hold projects on both drivers while one environment variable names one
+/// database, and a SQLite project handed a PostgreSQL URL would otherwise fail
+/// with whatever the other driver's URL parser disliked.
 async fn connect_for_validation<C: Connection>(
     driver: DbDriver,
     fallback: Option<&str>,
 ) -> Result<C, String> {
-    let database_url = match (std::env::var("DUST_DATABASE_URL").ok(), fallback) {
+    let dialect = driver.dialect();
+    let named = std::env::var("DUST_DATABASE_URL")
+        .ok()
+        .filter(|url| dialect.accepts_url(url));
+    let database_url = match (named, fallback) {
         (Some(url), _) => url,
         (None, Some(fallback)) => fallback.to_owned(),
         (None, None) => {
             return Err(format!(
-                "validating SQL for `{}` needs a database: set DUST_DATABASE_URL, or build with \
-                 --offline to validate from the committed query cache",
-                driver.as_str()
+                "validating SQL for `{}` needs a database: set DUST_DATABASE_URL to a `{}` URL, \
+                 or build with --offline to validate from the committed query cache",
+                driver.as_str(),
+                dialect.url_schemes.join("`/`")
             ));
         }
     };

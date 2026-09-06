@@ -44,6 +44,13 @@ pub(crate) struct Dialect {
     /// shapes accurately. The column-alias overrides are what a dialect with
     /// untrustworthy inference leaves callers, and they work either way.
     pub(crate) checks_nullability: bool,
+    /// URL schemes `DUST_DATABASE_URL` may use for this dialect.
+    ///
+    /// One workspace can hold projects on both drivers, and one environment
+    /// variable names one database. Without this, a SQLite project handed a
+    /// PostgreSQL URL tries to open it as a file and reports whatever the
+    /// other driver's URL parser disliked.
+    pub(crate) url_schemes: &'static [&'static str],
     /// Whether SQL for this dialect is checked against the schema at build time.
     ///
     /// False means the runtime works but `describe` does not, so queries reach
@@ -64,6 +71,7 @@ const SQLITE3: Dialect = Dialect {
     migrate_expr: "Future<Result<Unit, SqlxError>>.value(const Ok(unit))",
     rewrites_placeholders: true,
     checks_nullability: false,
+    url_schemes: &["sqlite"],
     validates: true,
 };
 
@@ -79,6 +87,7 @@ const POSTGRES: Dialect = Dialect {
     migrate_expr: "_driver.migrate()",
     rewrites_placeholders: false,
     checks_nullability: true,
+    url_schemes: &["postgres", "postgresql"],
     validates: true,
 };
 
@@ -94,6 +103,21 @@ impl DbDriver {
     /// Returns the stable driver name used in analysis keys and cache entries.
     pub(crate) const fn as_str(self) -> &'static str {
         self.dialect().name
+    }
+}
+
+impl Dialect {
+    /// Whether `url` names a database this dialect can validate against.
+    ///
+    /// A URL with no scheme is a bare SQLite path, which only SQLite accepts.
+    pub(crate) fn accepts_url(&self, url: &str) -> bool {
+        match url.split_once("://") {
+            Some((scheme, _)) => self
+                .url_schemes
+                .iter()
+                .any(|known| scheme.eq_ignore_ascii_case(known)),
+            None => self.driver == DbDriver::Sqlite3,
+        }
     }
 }
 
@@ -115,6 +139,24 @@ mod tests {
                 assert_ne!(left.options_type, right.options_type);
             }
         }
+    }
+
+    /// One `DUST_DATABASE_URL` and two drivers in a workspace: each project
+    /// has to recognise the URL that is not for it, rather than trying to open
+    /// it and reporting the other driver's parse error.
+    #[test]
+    fn a_dialect_only_accepts_its_own_urls() {
+        let sqlite = DbDriver::Sqlite3.dialect();
+        let postgres = DbDriver::Postgres.dialect();
+
+        assert!(sqlite.accepts_url("sqlite://app.db"));
+        assert!(sqlite.accepts_url("app.db"));
+        assert!(!sqlite.accepts_url("postgres://user@localhost/app?sslmode=disable"));
+
+        assert!(postgres.accepts_url("postgres://user@localhost/app"));
+        assert!(postgres.accepts_url("POSTGRESQL://user@localhost/app"));
+        assert!(!postgres.accepts_url("sqlite://app.db"));
+        assert!(!postgres.accepts_url("app.db"));
     }
 
     #[test]
