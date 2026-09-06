@@ -271,4 +271,15 @@ void main() {
 
     expect(expectErr(orders).category, SqlxErrorCategory.decode);
   });
+
+  test('a one-row terminal reports a blown-up mapper the same way', () async {
+    // A single-row read decodes on its own path, so it needs its own case.
+    final order = await db.fetchOne<int>(
+      r'SELECT id FROM query_orders WHERE item = $1',
+      <Object?>['shirt'],
+      (row) => throw StateError('mapper blew up'),
+    );
+
+    expect(expectErr(order).category, SqlxErrorCategory.decode);
+  });
 }

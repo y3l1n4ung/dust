@@ -26,9 +26,10 @@ void main() {
 
   Future<PostgresDriver> driverWith(Map<String, String> migrations) async {
     final driver = connect(migrations: migrations);
-    await reset(driver, <String>['migrated_users'], withMigrations: true);
+    final names = migrations.keys.toList();
+    await reset(driver, <String>['migrated_users'], migrations: names);
     addTearDown(() async {
-      await reset(driver, <String>['migrated_users'], withMigrations: true);
+      await reset(driver, <String>['migrated_users'], migrations: names);
       await driver.close();
     });
     return driver;

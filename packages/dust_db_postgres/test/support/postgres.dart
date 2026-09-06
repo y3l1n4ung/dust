@@ -37,25 +37,28 @@ PostgresDriver connect({
   );
 }
 
-/// Drops [tables], leaving nothing behind.
+/// Drops [tables], and forgets [migrations] was ever applied.
 ///
 /// A temporary table would belong to one pooled connection and be invisible to
 /// the next statement, so these tests own real tables and remove them.
 ///
-/// The migration bookkeeping is left alone unless [withMigrations] is set: test
-/// files run concurrently against one database, and every file dropping the
-/// shared table would race the file that is migrating.
+/// The bookkeeping table itself is never dropped, only the rows this test put
+/// there. Test files run concurrently against one database, and a file dropping
+/// the shared table would fail whichever file happens to be migrating — which
+/// it did, about half the time.
 Future<void> reset(
   PostgresDriver driver,
   List<String> tables, {
-  bool withMigrations = false,
+  List<String> migrations = const <String>[],
 }) async {
-  final all = <String>[
-    ...tables,
-    if (withMigrations) '__dust_schema_migrations',
-  ];
-  for (final table in all) {
+  for (final table in tables) {
     await driver.unsafe.execute('DROP TABLE IF EXISTS $table', const []);
+  }
+  for (final migration in migrations) {
+    await driver.unsafe.execute(
+      r'DELETE FROM __dust_schema_migrations WHERE name = $1',
+      <Object?>[migration],
+    );
   }
 }
 
