@@ -62,6 +62,25 @@ Future<void> reset(
   }
 }
 
+/// Which of [names] the bookkeeping table has recorded, in name order.
+///
+/// Scoped to the names the caller asked about rather than reading the whole
+/// table. The table is shared, `dart test` runs files concurrently, and the
+/// examples suite migrates its own `example_*` names into it — asserting on
+/// every row made this test fail whenever the two overlapped.
+Future<List<String>> recordedFor(
+  PostgresDriver driver,
+  List<String> names,
+) async {
+  final recorded = await driver.unsafe.fetchAs<String>(
+    r'SELECT name FROM __dust_schema_migrations '
+    r'WHERE name = ANY($1) ORDER BY name',
+    <Object?>[names],
+    (row) => row.read<String>('name'),
+  );
+  return expectOk(recorded);
+}
+
 /// Creates a table for one test and drops it afterwards.
 Future<PostgresDriver> tableFor(String ddl, String table) async {
   final driver = connect();

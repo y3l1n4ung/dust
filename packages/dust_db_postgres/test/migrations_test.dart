@@ -80,14 +80,8 @@ void main() {
     // consulted, so this passing is the assertion.
     expectOk(await driver.migrate());
 
-    final applied = expectOk(
-      await driver.unsafe.fetchAs<String>(
-        'SELECT name FROM __dust_schema_migrations ORDER BY name',
-        const <Object?>[],
-        (row) => row.read<String>('name'),
-      ),
-    );
-    expect(applied, <String>['0001.sql']);
+    expect(
+        await recordedFor(driver, <String>['0001.sql']), <String>['0001.sql']);
   });
 
   test('a down migration is never applied going forward', () async {
@@ -98,14 +92,11 @@ void main() {
 
     expectOk(await driver.migrate());
 
-    final applied = expectOk(
-      await driver.unsafe.fetchAs<String>(
-        'SELECT name FROM __dust_schema_migrations',
-        const <Object?>[],
-        (row) => row.read<String>('name'),
-      ),
+    // Both names are asked for; only the one going forward should be there.
+    expect(
+      await recordedFor(driver, <String>['0001.up.sql', '0001.down.sql']),
+      <String>['0001.up.sql'],
     );
-    expect(applied, <String>['0001.up.sql']);
   });
 
   test('no migrations is not an error', () async {
