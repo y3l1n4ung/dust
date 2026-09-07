@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.2.0-beta.1] - 2026-09-07
+## [0.2.0] - 2026-09-07
 
 ### Changed
 
@@ -14,9 +14,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   had to widen because `dust_dart` went to 0.2.0, and a package that pins
   `^0.1.4` cannot resolve against it.
 
-- Version tracks the CLI's minor rather than continuing the `0.1.0-beta` line.
-  Generated handlers call this package's API directly, so the compatibility
-  table reads better when the two move together.
+- Leaves the `0.1.0-beta` line for the CLI's own version. Generated handlers
+  call this package's API directly, so the compatibility table reads better
+  when the two move together — and pub.dev's automated publishing is configured
+  per package with a `v{version}` tag pattern, which only matches while the two
+  are equal. Every release so far was pushed by hand because `v0.1.4` could not
+  publish `0.1.0-beta.3`; `v0.2.0` publishes `0.2.0`.
 
 ## [0.1.0-beta.3] - 2026-09-03
 

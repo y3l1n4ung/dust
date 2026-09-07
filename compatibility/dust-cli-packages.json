@@ -8,7 +8,7 @@
         "dust_flutter": ">=0.1.4 <0.3.0",
         "dust_db_sqlite3": ">=0.2.0 <0.3.0",
         "dust_db_postgres": ">=0.2.0 <0.3.0",
-        "dust_server": ">=0.2.0-beta.1 <0.3.0"
+        "dust_server": ">=0.2.0 <0.3.0"
       }
     },
     {
