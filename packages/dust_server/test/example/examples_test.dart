@@ -20,6 +20,9 @@ import '../../example/router_as_handler.dart' as router_as_handler;
 import '../../example/cookies.dart' as cookies;
 import '../../example/credential_schemes.dart' as credential_schemes;
 import '../../example/custom_extractor.dart' as custom_extractor;
+import '../../example/database_errors.dart' as database_errors;
+import '../../example/database_pagination.dart' as database_pagination;
+import '../../example/database_transactions.dart' as database_transactions;
 import '../../example/customize_rejection.dart' as customize_rejection;
 import '../../example/error_handling.dart' as error_handling;
 import '../../example/global_404.dart' as global_404;
@@ -36,7 +39,9 @@ import '../../example/multipart_form.dart' as multipart_form;
 import '../../example/multipart_stream.dart' as multipart_stream;
 import '../../example/normalize_path.dart' as normalize_path;
 import '../../example/optional_extraction.dart' as optional_extraction;
+import '../../example/sqlite_database.dart' as sqlite_database;
 import 'package:dust_db_postgres/dust_db_postgres.dart';
+import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 
 import '../../example/postgres_database.dart' as postgres_database;
 import '../../example/parse_body_by_content_type.dart' as by_content_type;
@@ -2669,6 +2674,149 @@ void main() {
 
       expect(app.object(response)['receiptQueued'], isFalse);
       expect(app.object(await app.get('/receipts'))['sent'], isEmpty);
+    });
+  });
+
+  group('sqlite_database', () {
+    test('serves rows and writes one back', () async {
+      final directory = Directory.systemTemp.createTempSync('dust_notes_test');
+      final database = sqlite_database.openDatabase(
+        '${directory.path}/notes.db',
+      );
+      addTearDown(() async {
+        await database.close();
+        directory.deleteSync(recursive: true);
+      });
+      final app = await ExampleApp.start(sqlite_database.buildApp(database));
+
+      expect(jsonDecode((await app.get('/notes')).body), isEmpty);
+
+      final written = await app.post('/notes', const {'body': 'over HTTP'});
+      expect(written.statusCode, 201);
+      expect(app.object(written)['body'], 'over HTTP');
+
+      final listed =
+          jsonDecode((await app.get('/notes')).body) as List<Object?>;
+      expect((listed.single! as Map<String, Object?>)['body'], 'over HTTP');
+    });
+  });
+
+  group('database_transactions', () {
+    late Sqlite3Driver database;
+    late ExampleApp app;
+
+    setUp(() async {
+      database = database_transactions.openDatabase();
+      addTearDown(database.close);
+      app = await ExampleApp.start(database_transactions.buildApp(database));
+    });
+
+    test('a checkout that fits commits both writes', () async {
+      final placed = await app.post(
+        '/checkout',
+        const {'item': 'shirt', 'quantity': 2},
+      );
+
+      expect(placed.statusCode, 201);
+      expect(app.object(placed)['quantity'], 2);
+
+      final stock = jsonDecode((await app.get('/stock')).body) as List<Object?>;
+      expect((stock.single! as Map<String, Object?>)['onHand'], 3);
+    });
+
+    test('a checkout that does not fit reserves nothing', () async {
+      final refused = await app.post(
+        '/checkout',
+        const {'item': 'shirt', 'quantity': 99},
+      );
+
+      // 409, because somebody buying the last one is an ordinary outcome.
+      expect(refused.statusCode, 409);
+
+      // The whole point: the reservation above it was rolled back.
+      final stock = jsonDecode((await app.get('/stock')).body) as List<Object?>;
+      expect((stock.single! as Map<String, Object?>)['onHand'], 5);
+    });
+  });
+
+  group('database_errors', () {
+    late ExampleApp app;
+
+    setUp(() async {
+      final database = database_errors.openDatabase();
+      addTearDown(database.close);
+      app = await ExampleApp.start(database_errors.buildApp(database));
+    });
+
+    test('a row that is there is a 200', () async {
+      final response = await app.get('/users/1');
+
+      expect(response.statusCode, 200);
+      expect(app.object(response)['email'], 'ada@example.com');
+    });
+
+    test('a row that is not there is a 404, not a 500', () async {
+      expect((await app.get('/users/404')).statusCode, 404);
+    });
+
+    test('a duplicate is a 409, not a 500', () async {
+      expect(
+        (await app.post('/users', const {'email': 'grace@example.com'}))
+            .statusCode,
+        201,
+      );
+      expect(
+        (await app.post('/users', const {'email': 'grace@example.com'}))
+            .statusCode,
+        409,
+      );
+    });
+  });
+
+  group('database_pagination', () {
+    late ExampleApp app;
+
+    setUp(() async {
+      final database = database_pagination.openDatabase();
+      addTearDown(database.close);
+      app = await ExampleApp.start(database_pagination.buildApp(database));
+    });
+
+    test('limit and offset page through the rows', () async {
+      final first =
+          jsonDecode((await app.get('/notes?limit=2')).body) as List<Object?>;
+      final second = jsonDecode((await app.get('/notes?limit=2&offset=2')).body)
+          as List<Object?>;
+
+      expect(first.length, 2);
+      expect(second.length, 2);
+      expect(first.first, isNot(second.first));
+    });
+
+    test('sorting picks a constant statement, not a concatenated one',
+        () async {
+      final byBody =
+          jsonDecode((await app.get('/notes?sort=body')).body) as List<Object?>;
+
+      expect(
+        [for (final row in byBody) (row! as Map<String, Object?>)['body']],
+        <String>['alpha', 'bravo', 'charlie', 'delta'],
+      );
+    });
+
+    test('a sort column nothing offers is a 400', () async {
+      // The reason the switch exists: this reaches no SQL at all.
+      expect(
+        (await app.get('/notes?sort=;%20DROP%20TABLE%20notes')).statusCode,
+        400,
+      );
+    });
+
+    test('an oversized limit is clamped rather than trusted', () async {
+      final all = jsonDecode((await app.get('/notes?limit=1000000')).body)
+          as List<Object?>;
+
+      expect(all.length, 4);
     });
   });
 

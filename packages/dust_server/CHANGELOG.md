@@ -10,15 +10,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- `example/postgres_database.dart`, serving queries from PostgreSQL. It shows
-  the two things PostgreSQL asks for that SQLite does not — `migrate()` as a
-  separate call before serving, and a transaction holding one pooled connection
-  — and that a handler is given an `Executor` and cannot tell which database
-  answered.
+- Five database examples, indexed under their own heading. Nothing in the
+  previous 52 touched a database, which left out the combination every server
+  that stores something is:
 
-  It is the one example the package matrix cannot run, since there is no
-  in-memory PostgreSQL, so it is skipped there and run by the job that has a
-  server.
+  - `sqlite_database.dart` — a driver opened in `main`, attached with
+    `withState`, read back by a handler that opens and closes nothing.
+  - `database_transactions.dart` — a checkout that reserves stock and writes an
+    order, or does neither. `Ok` commits and `Err` rolls back, so there is no
+    path out of the closure that skips the decision.
+  - `database_errors.dart` — a missing row as 404 and a duplicate as 409,
+    because answering 500 for both is how a duplicate email pages somebody.
+  - `database_pagination.dart` — `limit` and `offset` bind, and a sort column
+    is a `switch` over an enum, since no dialect binds an identifier and
+    `'ORDER BY $sort'` is how a list endpoint becomes an injection.
+  - `postgres_database.dart` — what changes over a socket: `migrate()` as a
+    separate call before serving, and a transaction holding one pooled
+    connection.
+
+  The four SQLite ones run anywhere. The PostgreSQL one is the only example the
+  package matrix cannot run, since there is no in-memory PostgreSQL, so it is
+  skipped there and run by the job that has a server.
 
 ### Changed
 

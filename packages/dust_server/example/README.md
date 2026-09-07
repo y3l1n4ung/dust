@@ -63,12 +63,26 @@ repository.
 | Question | File |
 | :--- | :--- |
 | Passing a database or client to a handler | [`state.dart`](state.dart) |
-| Serving queries from PostgreSQL | [`postgres_database.dart`](postgres_database.dart) |
 | Writing an extractor of your own | [`custom_extractor.dart`](custom_extractor.dart) |
 | Making a missing value `None` instead of a 400 | [`optional_extraction.dart`](optional_extraction.dart) |
 | Handing the failure to the handler instead of short-circuiting | [`fallible_extraction.dart`](fallible_extraction.dart) |
 | Requiring a bearer token | [`bearer_auth.dart`](bearer_auth.dart) |
 | Accepting an API key, a cookie, or Basic — whichever arrives | [`credential_schemes.dart`](credential_schemes.dart) |
+
+## Databases
+
+A driver is opened once in `main`, attached with `withState`, and read back by a
+handler that never opens or closes anything itself. These use SQLite, which
+needs nothing installed; the PostgreSQL one shows what changes when the database
+is over a socket.
+
+| Question | File |
+| :--- | :--- |
+| Serving queries from a database | [`sqlite_database.dart`](sqlite_database.dart) |
+| A request that must be all-or-nothing | [`database_transactions.dart`](database_transactions.dart) |
+| Turning a database failure into the right status code | [`database_errors.dart`](database_errors.dart) |
+| Paging and sorting from the query string, without concatenating SQL | [`database_pagination.dart`](database_pagination.dart) |
+| What changes on PostgreSQL | [`postgres_database.dart`](postgres_database.dart) |
 
 ## Layers
 
