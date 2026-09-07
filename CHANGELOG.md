@@ -264,6 +264,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Parser**: a comment between an annotation and the declaration it applies to
+  no longer drops the declaration. Dart treats such a comment as trivia and
+  keeps the metadata attached — the analyzer reports
+  `override_on_non_overriding_member` for an `@override` separated from its
+  method by a doc comment — but the parser returned the comment where it
+  expected the declaration and skipped the member entirely. A `@SqlxDao` method
+  documented this way generated nothing, and the failure surfaced as Dart
+  complaining about a missing override rather than as a diagnostic. All three
+  comment forms were affected, not only doc comments.
 - **Database**: `DUST_DATABASE_URL` is used only when its scheme names the
   project's own driver. One workspace can hold projects on both drivers while
   the variable names one database; a SQLite project handed a PostgreSQL URL used

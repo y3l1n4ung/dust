@@ -61,3 +61,59 @@ enum Status {
     assert_eq!(variant_annotation.prefix.as_deref(), Some("d"));
     assert_eq!(variant_annotation.qualified_name, "d.SerDe");
 }
+
+/// Dart treats a comment between metadata and a declaration as trivia, so the
+/// annotation still applies. The analyzer proves it: `@override` followed by a
+/// doc comment still reports `override_on_non_overriding_member`.
+///
+/// The parser has to agree, or a `@Query` written this way is dropped and the
+/// method silently vanishes from generated code.
+#[test]
+fn a_comment_between_metadata_and_a_member_does_not_detach_it() {
+    let result = parse(
+        24,
+        r#"
+class Repository {
+  @Query('SELECT 1')
+
+  /// A doc comment in the gap.
+  Future<int> documented();
+
+  @Query('SELECT 2')
+  // A line comment in the gap.
+  Future<int> lineCommented();
+
+  @Query('SELECT 3')
+  /* A block comment in the gap. */
+  Future<int> blockCommented();
+
+  @Query('SELECT 4')
+  Future<int> noComment();
+}
+"#,
+    );
+
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    let class = &result.library.classes[0];
+
+    let names: Vec<&str> = class
+        .methods
+        .iter()
+        .map(|method| method.name.as_str())
+        .collect();
+    assert_eq!(
+        names,
+        vec!["documented", "lineCommented", "blockCommented", "noComment"],
+        "a comment in the gap dropped a method",
+    );
+
+    for method in &class.methods {
+        assert_eq!(
+            method.annotations.len(),
+            1,
+            "`{}` lost its annotation to a comment",
+            method.name,
+        );
+        assert_eq!(method.annotations[0].name, "Query");
+    }
+}
