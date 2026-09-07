@@ -1,10 +1,17 @@
 import 'dart:io';
 
 import 'package:dust_dart/db.dart';
+import 'package:dust_server/server.dart';
+import 'package:dust_server/testing.dart';
 import 'package:postgres_app/postgres_app.dart';
 import 'package:test/test.dart';
 
-/// What generated PostgreSQL code does against a real server.
+/// What generated PostgreSQL code does against a real server, and what
+/// `dust_server` does when it serves it.
+///
+/// One file rather than two: the fixture owns one schema, and `dart test` runs
+/// files concurrently, so a second file dropping the same tables would race
+/// this one.
 ///
 /// Skipped unless `DUST_DATABASE_URL` names a database this run may write to.
 /// There is no in-memory PostgreSQL, so a fixture cannot bring its own — the
@@ -19,6 +26,8 @@ void main() {
 
   late AppDatabase database;
   late OrdersRepo orders;
+  late ServerHandle server;
+  late TestClient client;
   late int accountId;
 
   setUp(() async {
@@ -37,9 +46,13 @@ void main() {
       (row) => row.read<int>('id'),
     );
     accountId = _ok(account).single;
+
+    server = await serve(_buildApp(database), InternetAddress.loopbackIPv4, 0);
+    client = TestClient.origin('http://${server.address.host}:${server.port}');
   });
 
   tearDown(() async {
+    await server.close();
     await _reset(database);
     await database.close();
   });
@@ -103,6 +116,116 @@ void main() {
 
     expect(result.isErr, isTrue);
   });
+
+  group('over HTTP', () {
+    test('a DAO read reaches the client as JSON', () async {
+      _ok(await orders.place(accountId, 'shirt', 2, true));
+      _ok(await orders.place(accountId, 'socks', 1, false));
+
+      final response = await client.get('/orders/$accountId').send();
+
+      expect(response.statusCode, 200);
+      final rows = response.json! as List<Object?>;
+      expect(rows.length, 2);
+      expect((rows.first! as Map<String, Object?>)['item'], 'shirt');
+      // A real boolean over the wire, not SQLite's 0 or 1.
+      expect((rows.first! as Map<String, Object?>)['express'], true);
+    });
+
+    test('a scalar query answers a request', () async {
+      _ok(await orders.place(accountId, 'shirt', 1, false));
+
+      final response = await client.get('/orders/$accountId/count').send();
+
+      expect(response.statusCode, 200);
+      expect(response.json, 1);
+    });
+
+    test('a write inside a transaction is visible to the next request', () async {
+      final placed = await (client.post('/orders/$accountId')
+            ..json(const <String, Object?>{'item': 'hat', 'quantity': 3}))
+          .send();
+
+      expect(placed.statusCode, 201);
+      expect((placed.json! as Map<String, Object?>)['item'], 'hat');
+
+      final count = await client.get('/orders/$accountId/count').send();
+      expect(count.json, 1);
+    });
+
+    test('a rolled back transaction leaves nothing for the next request',
+        () async {
+      // `quantity` is CHECKed above zero, so the insert fails inside the
+      // transaction and the handler answers 500 rather than writing a row.
+      final refused = await (client.post('/orders/$accountId')
+            ..json(const <String, Object?>{'item': 'hat', 'quantity': 0}))
+          .send();
+
+      expect(refused.statusCode, 500);
+
+      final count = await client.get('/orders/$accountId/count').send();
+      expect(count.json, 0);
+    });
+  });
+}
+
+/// Routes over one open database, wired the way `dust_server`'s own examples
+/// wire them.
+Router _buildApp(AppDatabase database) {
+  final orders = OrdersRepo(database.connection);
+
+  Future<Object?> list(Request request) async {
+    final accountId = await request.path<int>('accountId');
+    return switch (await orders.forAccount(accountId)) {
+      Ok(:final value) => <Object?>[
+          for (final order in value)
+            <String, Object?>{
+              'id': order.id,
+              'item': order.item,
+              'quantity': order.quantity,
+              'express': order.express,
+            },
+        ],
+      Err() => throw StateError('query failed'),
+    };
+  }
+
+  Future<Object?> count(Request request) async {
+    final accountId = await request.path<int>('accountId');
+    return switch (await orders.countFor(accountId)) {
+      Ok(:final value) => value,
+      Err() => throw StateError('query failed'),
+    };
+  }
+
+  Future<Result<Map<String, Object?>, Rejection>> place(Request request) async {
+    final accountId = await request.path<int>('accountId');
+    final body = await request.body<Map<String, Object?>>((json) => json);
+
+    // The DAO runs on the transaction rather than the pool, and does not know
+    // which it has.
+    final placed = await database.connection.transaction<Order>((tx) async {
+      return OrdersRepo(tx).place(
+        accountId,
+        body['item']! as String,
+        body['quantity']! as int,
+        false,
+      );
+    });
+
+    return switch (placed) {
+      Ok(:final value) => Ok(<String, Object?>{
+          'id': value.id,
+          'item': value.item,
+        }),
+      // The CHECK refused it inside the transaction, so nothing was written.
+      Err() => const Err(Rejection.internal()),
+    };
+  }
+
+  return Router()
+    ..route('/orders/{accountId}', get(list).post(place, status: 201))
+    ..route('/orders/{accountId}/count', get(count));
 }
 
 /// Drops everything the fixture owns, including the migration bookkeeping.
