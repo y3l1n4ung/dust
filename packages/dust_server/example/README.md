@@ -63,6 +63,7 @@ repository.
 | Question | File |
 | :--- | :--- |
 | Passing a database or client to a handler | [`state.dart`](state.dart) |
+| Serving queries from PostgreSQL | [`postgres_database.dart`](postgres_database.dart) |
 | Writing an extractor of your own | [`custom_extractor.dart`](custom_extractor.dart) |
 | Making a missing value `None` instead of a 400 | [`optional_extraction.dart`](optional_extraction.dart) |
 | Handing the failure to the handler instead of short-circuiting | [`fallible_extraction.dart`](fallible_extraction.dart) |

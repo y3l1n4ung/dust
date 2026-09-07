@@ -36,6 +36,9 @@ import '../../example/multipart_form.dart' as multipart_form;
 import '../../example/multipart_stream.dart' as multipart_stream;
 import '../../example/normalize_path.dart' as normalize_path;
 import '../../example/optional_extraction.dart' as optional_extraction;
+import 'package:dust_db_postgres/dust_db_postgres.dart';
+
+import '../../example/postgres_database.dart' as postgres_database;
 import '../../example/parse_body_by_content_type.dart' as by_content_type;
 import '../../example/path_params.dart' as path_params;
 import '../../example/query_params.dart' as query_params;
@@ -2667,6 +2670,51 @@ void main() {
       expect(app.object(response)['receiptQueued'], isFalse);
       expect(app.object(await app.get('/receipts'))['sent'], isEmpty);
     });
+  });
+
+  group('postgres_database', () {
+    // The only example that needs something the suite cannot bring: there is
+    // no in-memory PostgreSQL. Skipped, and reported as skipped, rather than
+    // failing a checkout that has no server.
+    final url = Platform.environment['DUST_DATABASE_URL'];
+
+    test('serves rows out of PostgreSQL and writes one back', () async {
+      final database = PostgresDriver.connect(
+        url!,
+        migrations: const <String, String>{
+          '0001_create_notes.sql': 'CREATE TABLE IF NOT EXISTS example_notes ('
+              'id BIGSERIAL PRIMARY KEY, body TEXT NOT NULL);',
+        },
+      );
+      addTearDown(() async {
+        await database.unsafe.execute(
+          'DROP TABLE IF EXISTS example_notes',
+          const [],
+        );
+        await database.unsafe.execute(
+          r'DELETE FROM __dust_schema_migrations WHERE name = $1',
+          const <Object?>['0001_create_notes.sql'],
+        );
+        await database.close();
+      });
+      expect((await database.migrate()).isOk, isTrue);
+      await database.unsafe.execute('DELETE FROM example_notes', const []);
+
+      final app = await ExampleApp.start(
+        postgres_database.buildApp(database),
+      );
+
+      expect(jsonDecode((await app.get('/notes')).body), isEmpty);
+
+      final written = await app.post('/notes', const {'body': 'over HTTP'});
+      expect(written.statusCode, 201);
+      expect(app.object(written)['body'], 'over HTTP');
+
+      final listed =
+          jsonDecode((await app.get('/notes')).body) as List<Object?>;
+      expect(listed.length, 1);
+      expect((listed.single! as Map<String, Object?>)['body'], 'over HTTP');
+    }, skip: url == null ? 'set DUST_DATABASE_URL to run' : null);
   });
 }
 

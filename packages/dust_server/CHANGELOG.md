@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.2.0] - 2026-09-07
 
+### Added
+
+- `example/postgres_database.dart`, serving queries from PostgreSQL. It shows
+  the two things PostgreSQL asks for that SQLite does not — `migrate()` as a
+  separate call before serving, and a transaction holding one pooled connection
+  — and that a handler is given an `Executor` and cannot tell which database
+  answered.
+
+  It is the one example the package matrix cannot run, since there is no
+  in-memory PostgreSQL, so it is skipped there and run by the job that has a
+  server.
+
 ### Changed
 
 - Requires `dust_dart` 0.2.0. No API of this package changed; the constraint

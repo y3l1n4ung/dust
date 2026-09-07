@@ -659,6 +659,14 @@ jobs:
         working-directory: packages/dust_db_postgres
         run: dart test
 
+      # `example/postgres_database.dart` is the one dust_server example that
+      # cannot run in the package matrix, which has no database. Skipped there,
+      # so this is the only job that actually serves PostgreSQL over HTTP.
+      - name: Serve PostgreSQL through dust_server
+        if: needs.changes.outputs.docs_only != 'true'
+        working-directory: packages/dust_server
+        run: dart test test/example/examples_test.dart --plain-name postgres_database
+
       # The runtime is only exercised with a server, so its coverage floor
       # belongs here rather than in the package matrix, which has none.
       - name: PostgreSQL runtime coverage

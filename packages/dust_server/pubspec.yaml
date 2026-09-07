@@ -31,6 +31,9 @@ dependencies:
 
 dev_dependencies:
   coverage: ^1.11.0
+  # For example/postgres_database.dart only. The runtime itself needs no
+  # database; the example shows one being served.
+  dust_db_postgres:
   # For example/sessions.dart only. Signing a session needs HMAC, and
   # hand-rolling one is never the right answer; the runtime itself needs none.
   crypto: ^3.0.6
