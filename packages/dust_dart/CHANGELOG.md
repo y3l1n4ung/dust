@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.1.5]
+## [0.2.0] - 2026-09-07
 
 ### Added
 
@@ -27,10 +27,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 > [!IMPORTANT]
-> **Breaking, and `^0.1.4` upgrades into it.** Every inline query terminal now
-> returns `Result<T, SqlxError>` instead of throwing. A pubspec asking for
-> `dust_dart: ^0.1.4` resolves to 0.1.5, so an app that pins nothing gets the
-> change without asking for it. Run `dust build` to regenerate.
+> **Breaking.** Every inline query terminal now returns `Result<T, SqlxError>`
+> instead of throwing. This is why the version is 0.2.0 rather than 0.1.5: a
+> pubspec asking for `dust_dart: ^0.1.4` resolves up to 0.1.x but stops before
+> 0.2.0, so an app upgrades when it says so rather than on the next `pub get`.
+> Upgrading is `dust_dart: ^0.2.0` and a `dust build` to regenerate.
 
 ### Added
 

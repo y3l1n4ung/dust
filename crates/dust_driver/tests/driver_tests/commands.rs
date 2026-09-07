@@ -53,7 +53,7 @@ fn check_reports_stale_before_build_and_fresh_after_build() {
 #[test]
 fn doctor_reports_workspace_and_registered_plugins() {
     let workspace = make_workspace();
-    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.5")]);
+    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.2.0")]);
     write_dust_file(
         &workspace.path().join("lib/user.dart"),
         &[DustImport::Derive],
@@ -71,7 +71,7 @@ fn doctor_reports_workspace_and_registered_plugins() {
     assert!(!result.has_errors(), "{:?}", result.diagnostics);
     let doctor = result.doctor.as_ref().unwrap();
 
-    assert_eq!(doctor.cli_version, "0.1.4");
+    assert_eq!(doctor.cli_version, "0.2.0");
     assert_eq!(doctor.package_root, workspace.path());
     assert_eq!(
         doctor.package_config_path,
@@ -99,10 +99,10 @@ fn doctor_reports_workspace_and_registered_plugins() {
         DoctorPackageCompatibilityStatus::Compatible
     );
     assert!(dust_dart.used_by_workspace);
-    assert_eq!(dust_dart.resolved_version.as_deref(), Some("0.1.5"));
+    assert_eq!(dust_dart.resolved_version.as_deref(), Some("0.2.0"));
     assert_eq!(
         dust_dart.supported_constraint.as_deref(),
-        Some(">=0.1.5 <0.2.0")
+        Some(">=0.2.0 <0.3.0")
     );
     assert_eq!(
         doctor_package(doctor, "dust_flutter").status,
@@ -113,7 +113,7 @@ fn doctor_reports_workspace_and_registered_plugins() {
 #[test]
 fn doctor_reports_member_package_root_and_shared_package_config() {
     let (workspace, package_root) = make_pub_workspace_member();
-    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.1.5")]);
+    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.2.0")]);
     write_dust_file(
         &package_root.join("lib/user.dart"),
         &[DustImport::Derive],
@@ -180,7 +180,7 @@ fn doctor_reports_too_old_dust_package() {
 #[test]
 fn doctor_reports_too_new_dust_package() {
     let workspace = make_workspace();
-    write_resolved_dust_packages(workspace.path(), &[("dust_flutter", "0.2.0")]);
+    write_resolved_dust_packages(workspace.path(), &[("dust_flutter", "0.3.0")]);
     write_dust_file(
         &workspace.path().join("lib/counter.dart"),
         &[DustImport::State],
@@ -200,7 +200,7 @@ fn doctor_reports_too_new_dust_package() {
         dust_flutter.status,
         DoctorPackageCompatibilityStatus::TooNew
     );
-    assert_eq!(dust_flutter.resolved_version.as_deref(), Some("0.2.0"));
+    assert_eq!(dust_flutter.resolved_version.as_deref(), Some("0.3.0"));
     assert_eq!(
         dust_flutter.action.as_deref(),
         Some("Upgrade the Dust CLI first, or pin the package to a supported range.")

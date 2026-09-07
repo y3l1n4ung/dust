@@ -17,6 +17,7 @@ REQUIRED_PACKAGES = (
     "dust_dart",
     "dust_flutter",
     "dust_db_sqlite3",
+    "dust_db_postgres",
     "dust_server",
 )
 
@@ -345,6 +346,7 @@ def write_fixture_repo(root: Path, dust_dart_version: str = "0.1.3") -> None:
                             "dust_dart": ">=0.1.3 <0.2.0",
                             "dust_flutter": ">=0.1.3 <0.2.0",
                             "dust_db_sqlite3": ">=0.1.3 <0.2.0",
+                            "dust_db_postgres": ">=0.1.3 <0.2.0",
                             "dust_server": ">=0.1.0-beta.1 <0.2.0",
                         },
                     }
@@ -357,6 +359,7 @@ def write_fixture_repo(root: Path, dust_dart_version: str = "0.1.3") -> None:
         "dust_dart": dust_dart_version,
         "dust_flutter": "0.1.3",
         "dust_db_sqlite3": "0.1.3",
+        "dust_db_postgres": "0.1.3",
         "dust_server": "0.1.0-beta.2",
     }.items():
         (root / "packages" / package / "pubspec.yaml").write_text(

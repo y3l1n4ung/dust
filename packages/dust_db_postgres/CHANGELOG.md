@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.1.0]
+## [0.2.0] - 2026-09-07
 
 First release. PostgreSQL runtime for generated Database code, wrapping
 `package:postgres` the way `dust_db_sqlite3` wraps `package:sqlite3`.
@@ -74,7 +74,7 @@ First release. PostgreSQL runtime for generated Database code, wrapping
 
 ### Notes
 
-- Requires `dust_dart` 0.1.5 or newer, and a Dust CLI that generates PostgreSQL
+- Requires `dust_dart` 0.2.0 or newer, and a Dust CLI that generates PostgreSQL
   code. Native targets only: PostgreSQL is reached over a socket, so this does
   not run on the web.
 

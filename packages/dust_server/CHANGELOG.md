@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.0-beta.1] - 2026-09-07
+
+### Changed
+
+- Requires `dust_dart` 0.2.0. No API of this package changed; the constraint
+  had to widen because `dust_dart` went to 0.2.0, and a package that pins
+  `^0.1.4` cannot resolve against it.
+
+- Version tracks the CLI's minor rather than continuing the `0.1.0-beta` line.
+  Generated handlers call this package's API directly, so the compatibility
+  table reads better when the two move together.
+
 ## [0.1.0-beta.3] - 2026-09-03
 
 ### Added

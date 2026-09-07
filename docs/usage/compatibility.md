@@ -12,6 +12,22 @@ Run `dust doctor` to see the active CLI version, each Dust runtime package found
 in `package_config.json`, the supported range, and whether the package is used
 by the workspace source.
 
+## Dust CLI 0.2.0
+
+| Dust CLI | `dust_dart` | `dust_flutter` | `dust_db_sqlite3` | `dust_db_postgres` | `dust_server` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `0.2.0` | `>=0.2.0 <0.3.0` | `>=0.1.4 <0.3.0` | `>=0.2.0 <0.3.0` | `>=0.2.0 <0.3.0` | `>=0.2.0-beta.1 <0.3.0` |
+
+0.2.0 is a minor bump rather than a patch because two things break across it.
+Inline query terminals return `Result<T, SqlxError>` instead of throwing, and
+the query cache format moved to version 3, so every committed `.dust_sql/` is
+stale until `dust build --db` writes it again. A pubspec asking for `^0.1.4`
+stops before 0.2.0, which is the point: an app takes both changes when it says
+so rather than on its next `pub get`.
+
+`dust_flutter` stayed at 0.1.4. Nothing in it changed, and generated Flutter
+code from this CLI still compiles against it.
+
 ## Dust CLI 0.1.4
 
 | Dust CLI | `dust_dart` | `dust_flutter` | `dust_db_sqlite3` | `dust_db_postgres` | `dust_server` |
