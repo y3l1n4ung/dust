@@ -13,6 +13,7 @@ final class PgConnectOptions {
     this.connectTimeout,
     this.queryTimeout,
     this.applicationName,
+    this.maxConnectionAge,
   });
 
   /// Whether the connection requires TLS.
@@ -30,6 +31,15 @@ final class PgConnectOptions {
 
   /// Name reported to the server, which shows up in `pg_stat_activity`.
   final String? applicationName;
+
+  /// How long the pool keeps one connection before retiring it.
+  ///
+  /// Worth setting behind a proxy or load balancer that drops idle connections
+  /// on its own schedule: retiring first means the pool replaces a connection
+  /// rather than handing out one the far end has already closed.
+  ///
+  /// Null leaves connections in the pool for as long as it wants them.
+  final Duration? maxConnectionAge;
 }
 
 /// How strictly a connection requires TLS.

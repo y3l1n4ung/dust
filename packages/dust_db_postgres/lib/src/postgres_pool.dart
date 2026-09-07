@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dust_dart/db.dart';
 import 'package:postgres/postgres.dart' as pg;
 
@@ -353,6 +355,7 @@ final class PostgresDriver extends _PostgresSession implements Pool {
         connectTimeout: options?.connectTimeout,
         queryTimeout: options?.queryTimeout,
         applicationName: options?.applicationName,
+        maxConnectionAge: options?.maxConnectionAge,
       ),
     );
     return PostgresDriver._(pool, migrations);

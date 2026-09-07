@@ -69,6 +69,53 @@ CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
     expect((await db.fetchScalar<int>(select, const [])).unwrapOr(-1), 0);
   });
 
+  test('a held statement follows the table being rebuilt under it', () async {
+    // Harsher than adding a column: the table is dropped and recreated with a
+    // different shape while a statement for it is held. SQLite recompiles on
+    // SQLITE_SCHEMA, and the cache must not defeat that by handing back a
+    // statement compiled against the old table.
+    const count = 'SELECT count(*) FROM items';
+    expect((await db.fetchScalar<int>(count, const [])).unwrapOr(-1), 0);
+
+    final unsafe = Sqlite3UnsafeSql(db);
+    expect((await unsafe.execute('DROP TABLE items', const [])).isOk, isTrue);
+    expect(
+      (await unsafe.execute(
+        'CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT NOT NULL, '
+        'note TEXT)',
+        const [],
+      ))
+          .isOk,
+      isTrue,
+    );
+    await db.execute(
+      r'INSERT INTO items (name, note) VALUES ($1, $2)',
+      const <Object?>['rebuilt', 'and noted'],
+    );
+
+    expect((await db.fetchScalar<int>(count, const [])).unwrapOr(-1), 1);
+
+    final note = await db.fetchScalar<String>(
+      'SELECT note FROM items',
+      const [],
+    );
+    expect(note.unwrapOrElse((error) => throw error), 'and noted');
+  });
+
+  test('a statement held for a table that goes away reports it as a value',
+      () async {
+    const count = 'SELECT count(*) FROM items';
+    expect((await db.fetchScalar<int>(count, const [])).unwrapOr(-1), 0);
+
+    expect(
+      (await Sqlite3UnsafeSql(db).execute('DROP TABLE items', const [])).isOk,
+      isTrue,
+    );
+
+    final gone = await db.fetchScalar<int>(count, const []);
+    expect(gone.isErr, isTrue);
+  });
+
   test('a transaction runs the pool statements, and both stay usable',
       () async {
     const insert = r'INSERT INTO items (name) VALUES ($1)';

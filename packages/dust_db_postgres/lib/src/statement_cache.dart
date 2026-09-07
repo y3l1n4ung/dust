@@ -69,10 +69,17 @@ final class _StatementCache {
     pg.Connection connection,
     String sql,
   ) async {
-    final held = _byConnection.putIfAbsent(
-      connection,
-      () => <String, pg.Statement>{},
-    );
+    final held = _byConnection.putIfAbsent(connection, () {
+      // The pool retires connections — an age limit, a session limit, an error
+      // — and every replacement is a new object, so this map is keyed by
+      // something that does not live as long as the driver. Without dropping
+      // the entry when its connection goes, the map grows for the life of the
+      // process and holds statements whose connection is already gone.
+      unawaited(
+        connection.closed.whenComplete(() => _byConnection.remove(connection)),
+      );
+      return <String, pg.Statement>{};
+    });
 
     final cached = held.remove(sql);
     if (cached != null) {

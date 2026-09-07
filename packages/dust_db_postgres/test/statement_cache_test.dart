@@ -122,6 +122,43 @@ void main() {
     expect(names, <String>['before', 'inside', 'after']);
   });
 
+  test('a retired connection takes its held statements with it', () async {
+    // The cache is keyed by connection, and the pool retires connections on
+    // its own schedule. With `maxConnectionAge` this short, every query gets a
+    // fresh one — so the entries for the retired connections have to go, or the
+    // map grows for the life of the process holding dead statements.
+    final db = PostgresDriver.connect(
+      databaseUrl!,
+      options: const PgConnectOptions(
+        sslMode: PgSslMode.disable,
+        maxConnectionAge: Duration(milliseconds: 1),
+      ),
+    );
+    addTearDown(db.close);
+
+    for (var i = 0; i < 20; i++) {
+      final value = await db.fetchScalar<int>('SELECT $i', const []);
+      expect(expectOk(value), i);
+      await Future<void>.delayed(const Duration(milliseconds: 2));
+    }
+
+    // Still answering after 20 connections have come and gone.
+    expect(expectOk(await db.fetchScalar<int>('SELECT 1', const [])), 1);
+  });
+
+  test('concurrent queries share the cache without tripping over each other',
+      () async {
+    // `withConnection` hands each caller its own connection, so several may be
+    // preparing into the cache at once.
+    final db = await driver();
+    await Future.wait<void>(<Future<void>>[
+      for (var i = 0; i < 24; i++)
+        db.fetchScalar<int>('SELECT ${i % 6}', const []).then((result) {
+          expect(expectOk(result), i % 6);
+        }),
+    ]);
+  });
+
   test('closing releases the statements, and using one afterwards is a value',
       () async {
     final db = connect();

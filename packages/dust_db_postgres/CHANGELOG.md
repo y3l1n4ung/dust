@@ -31,6 +31,11 @@ First release. PostgreSQL runtime for generated Database code, wrapping
   retried once with a freshly parsed statement, so a schema change costs one
   failed call rather than every call after it.
 
+- A retired connection's held statements are dropped with it. The cache is
+  keyed by connection and the pool retires them on its own schedule — an age
+  limit, a session limit, an error — so without this the map grew for the life
+  of the process, holding statements whose connection was already gone.
+
 - A one-row terminal builds no column-name index unless a name is read.
   There is one row, so there is nothing to share an index with, and
   `fetchScalar` reads column zero and never needs one.
@@ -44,6 +49,10 @@ First release. PostgreSQL runtime for generated Database code, wrapping
   URL, with `PgPool` as the `sqlx-postgres` alias.
 - `PostgresExecutor`, `PgConnectOptions`, `PostgresRow`, and
   `PostgresUnsafeSql`.
+- `PgConnectOptions.maxConnectionAge`, how long the pool keeps a connection
+  before retiring it. Worth setting behind a proxy that drops idle connections
+  on its own schedule: retiring first means the pool replaces a connection
+  rather than handing out one the far end has already closed.
 - 23 examples in `example/`, one per question, indexed by `example/README.md`.
 - Column names resolve through one index per result rather than
   `ResultRow.toColumnMap()`, which allocates a map of every value for every row.
@@ -64,7 +73,7 @@ First release. PostgreSQL runtime for generated Database code, wrapping
 
 ### Testing
 
-- 101 tests at 100% line coverage, gated in CI against a `postgres:16` service.
+- 103 tests at 100% line coverage, gated in CI against a `postgres:16` service.
   Everything that needs a server is skipped — and reported as skipped — when
   `DUST_DATABASE_URL` is unset, since there is no in-memory PostgreSQL to fall
   back to.
