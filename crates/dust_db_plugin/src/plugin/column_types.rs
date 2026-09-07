@@ -142,6 +142,40 @@ mod tests {
     }
 
     #[test]
+    fn num_accepts_either_side_of_the_integer_and_float_split() {
+        // `num` is the Dart type that admits both, so every numeric column has
+        // to satisfy it on either dialect. Nothing else exercised the
+        // PostgreSQL half of that.
+        for sql in ["INT2", "INT4", "INT8", "BIGINT", "SMALLINT"] {
+            assert!(accepts(DbDriver::Postgres, "num", sql), "{sql}");
+        }
+        for sql in [
+            "FLOAT4",
+            "FLOAT8",
+            "REAL",
+            "DOUBLE PRECISION",
+            "NUMERIC",
+            "DECIMAL",
+        ] {
+            assert!(accepts(DbDriver::Postgres, "num", sql), "{sql}");
+        }
+        assert!(!accepts(DbDriver::Postgres, "num", "TEXT"));
+
+        for sql in ["INTEGER", "REAL", "NUMERIC"] {
+            assert!(accepts(DbDriver::Sqlite3, "num", sql), "{sql}");
+        }
+    }
+
+    #[test]
+    fn a_dart_type_the_table_says_nothing_about_is_accepted() {
+        // A converter type or an enum read through `tryFrom` is not something
+        // to guess at, on either dialect.
+        assert!(accepts(DbDriver::Sqlite3, "Money", "TEXT"));
+        assert!(accepts(DbDriver::Postgres, "Money", "TEXT"));
+        assert!(accepts(DbDriver::Sqlite3, "Uint8List", "BLOB"));
+    }
+
+    #[test]
     fn size_and_precision_do_not_change_the_type() {
         assert!(accepts(DbDriver::Postgres, "String", "VARCHAR(64)"));
         assert!(accepts(DbDriver::Sqlite3, "int", "NUMERIC(10, 2)"));
