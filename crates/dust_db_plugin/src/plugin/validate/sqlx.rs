@@ -423,9 +423,12 @@ fn describe_column_warnings<DB: sqlx::Database>(
 
 #[cfg(test)]
 mod tests {
+    use dust_ir::SpanIr;
+    use dust_text::{FileId, TextRange};
     use sqlx::sqlite::SqliteConnection;
 
     use super::*;
+    use crate::plugin::model::FetchMode;
 
     /// SQLite is a real sqlx backend that needs no server, so the paths this
     /// file shares between the two dialects can be exercised in-process. Only
@@ -507,6 +510,163 @@ mod tests {
 
         assert!(error.contains("failed to apply migration"), "{error}");
         assert!(error.contains("0001_broken.sql"), "{error}");
+    }
+
+    /// One query spec, with the fields a describe test cares about.
+    fn query(sql: &str, function: QueryFunction, parameters: usize) -> QuerySpec {
+        QuerySpec {
+            function,
+            fetch: FetchMode::All,
+            sql: sql.to_owned(),
+            sql_source_static: true,
+            row_type: Some("Item".to_owned()),
+            scalar_type: None,
+            parameter_count: parameters,
+            params_source_is_list: false,
+            has_row_mapper_argument: false,
+            unsafe_sql_allowed: false,
+            span: SpanIr::new(FileId::new(7), TextRange::new(0_u32, 1_u32)),
+            display_name: Some("Items.all".to_owned()),
+        }
+    }
+
+    /// Describes [queries] against a schema built from [setup].
+    async fn describe(
+        setup: &str,
+        queries: &[QuerySpec],
+        row_columns: HashMap<String, HashSet<String>>,
+        typed_columns: HashMap<String, Vec<RowColumn>>,
+    ) -> (Result<Vec<QueryCacheEntry>, String>, Vec<String>) {
+        let mut conn = memory_connection().await;
+        conn.execute(setup).await.expect("schema must build");
+        let mut warnings = Vec::new();
+        let result = describe_queries(
+            &mut conn,
+            &DescribeRequest {
+                dialect: DbDriver::Sqlite3.dialect(),
+                migrations: "./migrations",
+                schema_hash: "hash",
+                queries,
+                row_columns: &row_columns,
+                typed_columns: &typed_columns,
+            },
+            &mut warnings,
+        )
+        .await;
+        (result, warnings)
+    }
+
+    const ITEMS: &str = "CREATE TABLE items (id INTEGER NOT NULL, name TEXT);";
+
+    #[tokio::test]
+    async fn a_described_query_becomes_a_cache_entry() {
+        let (result, warnings) = describe(
+            ITEMS,
+            &[query(
+                "SELECT id FROM items WHERE id = $1",
+                QueryFunction::As,
+                1,
+            )],
+            HashMap::from([("Item".to_owned(), HashSet::from(["id".to_owned()]))]),
+            HashMap::new(),
+        )
+        .await;
+
+        let entries = result.expect("a valid query describes");
+        assert_eq!(entries.len(), 1);
+        assert!(warnings.is_empty(), "{warnings:?}");
+    }
+
+    #[tokio::test]
+    async fn a_query_missing_a_column_the_row_needs_is_reported() {
+        let (result, _) = describe(
+            ITEMS,
+            &[query("SELECT id FROM items", QueryFunction::As, 0)],
+            HashMap::from([(
+                "Item".to_owned(),
+                HashSet::from(["id".to_owned(), "name".to_owned()]),
+            )]),
+            HashMap::new(),
+        )
+        .await;
+
+        let error = result.expect_err("a missing column must be reported");
+        assert!(
+            error.contains("does not return required column `name`"),
+            "{error}"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_scalar_query_returning_two_columns_is_reported() {
+        let (result, _) = describe(
+            ITEMS,
+            &[query(
+                "SELECT id, name FROM items",
+                QueryFunction::Scalar,
+                0,
+            )],
+            HashMap::new(),
+            HashMap::new(),
+        )
+        .await;
+
+        let error = result.expect_err("a scalar reads one column");
+        assert!(error.contains("exactly one scalar column"), "{error}");
+    }
+
+    #[tokio::test]
+    async fn a_column_read_into_the_wrong_dart_type_warns() {
+        // A warning rather than an error: the accepted-type table is
+        // deliberately permissive, so a finding here is worth reading rather
+        // than worth failing a build over.
+        let (result, warnings) = describe(
+            ITEMS,
+            &[query("SELECT name FROM items", QueryFunction::As, 0)],
+            HashMap::new(),
+            HashMap::from([(
+                "Item".to_owned(),
+                vec![RowColumn {
+                    name: "name".to_owned(),
+                    dart_type: "int".to_owned(),
+                    nullable: false,
+                }],
+            )]),
+        )
+        .await;
+
+        result.expect("a type disagreement is a warning, not an error");
+        assert_eq!(warnings.len(), 1, "{warnings:?}");
+        assert!(warnings[0].contains("name"), "{}", warnings[0]);
+    }
+
+    #[tokio::test]
+    async fn sql_the_database_rejects_names_the_query() {
+        let (result, _) = describe(
+            ITEMS,
+            &[query("SELECT nope FROM items", QueryFunction::As, 0)],
+            HashMap::new(),
+            HashMap::new(),
+        )
+        .await;
+
+        let error = result.expect_err("unknown column must fail");
+        assert!(error.contains("Items.all"), "{error}");
+    }
+
+    #[tokio::test]
+    async fn unchecked_and_dynamic_sql_are_never_described() {
+        // Neither may enter the committed cache: one has text a build cannot
+        // reproduce, and the other is deliberately outside validation.
+        let mut dynamic = query("SELECT id FROM items", QueryFunction::As, 0);
+        dynamic.sql_source_static = false;
+        let unchecked = query("SELECT whatever", QueryFunction::Unsafe, 0);
+
+        let (result, warnings) =
+            describe(ITEMS, &[dynamic, unchecked], HashMap::new(), HashMap::new()).await;
+
+        assert!(result.expect("skipping is not a failure").is_empty());
+        assert!(warnings.is_empty(), "{warnings:?}");
     }
 
     #[tokio::test]
