@@ -144,34 +144,50 @@ fn run_sqlx_validation(
                 // No in-memory Postgres, so there is no default to fall back
                 // to: validation needs a server or it does not run.
                 let mut conn = connect_for_validation::<PgConnection>(driver, None).await?;
-                // Migrations are applied inside a transaction that is never
-                // committed, so validating leaves the developer's database as
-                // it found it. `describe` sees the schema either way.
-                let mut tx = conn.begin().await.map_err(|error| {
-                    format!("failed to open the SQL validation transaction: {error}")
-                })?;
-                // Migrations go into a scratch schema, not the developer's own:
-                // a database the application has already run against holds the
-                // tables, and the first `CREATE TABLE` would fail. The rollback
-                // removes the schema with everything in it.
-                for setup in [
-                    "CREATE SCHEMA dust_validation",
-                    "SET LOCAL search_path TO dust_validation",
-                ] {
-                    (&mut *tx).execute(setup).await.map_err(|error| {
-                        format!("failed to prepare the SQL validation schema: {error}")
-                    })?;
-                }
-                apply_migrations(&mut *tx, migrations_path).await?;
-                let described = describe_queries(&mut *tx, request, warnings).await;
-                // A failure to roll back matters more than the describe result.
-                tx.rollback().await.map_err(|error| {
-                    format!("failed to roll back the SQL validation transaction: {error}")
-                })?;
-                described
+                describe_in_scratch_schema(&mut conn, migrations_path, request, warnings).await
             }
         }
     })
+}
+
+/// Describes queries against a throwaway schema, leaving the database as found.
+///
+/// Split out of the match arm so it can be tested: everything here needs a
+/// server, and a test that has one can call it directly rather than reaching
+/// through a whole plugin run.
+async fn describe_in_scratch_schema(
+    conn: &mut PgConnection,
+    migrations_path: &Path,
+    request: &DescribeRequest<'_>,
+    warnings: &mut Vec<String>,
+) -> Result<Vec<QueryCacheEntry>, String> {
+    // Migrations are applied inside a transaction that is never committed, so
+    // validating leaves the developer's database as it found it. `describe`
+    // sees the schema either way.
+    let mut tx = conn
+        .begin()
+        .await
+        .map_err(|error| format!("failed to open the SQL validation transaction: {error}"))?;
+    // Migrations go into a scratch schema, not the developer's own: a database
+    // the application has already run against holds the tables, and the first
+    // `CREATE TABLE` would fail. The rollback removes the schema with
+    // everything in it.
+    for setup in [
+        "CREATE SCHEMA dust_validation",
+        "SET LOCAL search_path TO dust_validation",
+    ] {
+        (&mut *tx)
+            .execute(setup)
+            .await
+            .map_err(|error| format!("failed to prepare the SQL validation schema: {error}"))?;
+    }
+    apply_migrations(&mut *tx, migrations_path).await?;
+    let described = describe_queries(&mut *tx, request, warnings).await;
+    // A failure to roll back matters more than the describe result.
+    tx.rollback()
+        .await
+        .map_err(|error| format!("failed to roll back the SQL validation transaction: {error}"))?;
+    described
 }
 
 /// Opens the database SQL is validated against.
@@ -667,6 +683,127 @@ mod tests {
 
         assert!(result.expect("skipping is not a failure").is_empty());
         assert!(warnings.is_empty(), "{warnings:?}");
+    }
+
+    /// The database a PostgreSQL test may write to, when one is named.
+    ///
+    /// There is no in-memory PostgreSQL, so these cannot bring their own. They
+    /// return rather than fail when `DUST_DATABASE_URL` is unset, and the CI
+    /// job that has a server is the one that runs them.
+    fn postgres_url() -> Option<String> {
+        std::env::var("DUST_DATABASE_URL")
+            .ok()
+            .filter(|url| DbDriver::Postgres.dialect().accepts_url(url))
+    }
+
+    #[tokio::test]
+    async fn postgres_describes_inside_a_scratch_schema_and_leaves_no_trace() {
+        let Some(url) = postgres_url() else {
+            return;
+        };
+        let mut conn = PgConnection::connect(&url)
+            .await
+            .expect("DUST_DATABASE_URL must connect");
+        let dir = migrations_dir(&[(
+            "0001_create.sql",
+            "CREATE TABLE scratch_items (id BIGINT NOT NULL, name TEXT);",
+        )]);
+        let mut warnings = Vec::new();
+
+        let entries = describe_in_scratch_schema(
+            &mut conn,
+            dir.path(),
+            &DescribeRequest {
+                dialect: DbDriver::Postgres.dialect(),
+                migrations: "./migrations",
+                schema_hash: "hash",
+                queries: &[query(
+                    "SELECT id FROM scratch_items WHERE id = $1",
+                    QueryFunction::As,
+                    1,
+                )],
+                row_columns: &HashMap::from([(
+                    "Item".to_owned(),
+                    HashSet::from(["id".to_owned()]),
+                )]),
+                typed_columns: &HashMap::new(),
+            },
+            &mut warnings,
+        )
+        .await
+        .expect("a valid query describes against PostgreSQL");
+
+        assert_eq!(entries.len(), 1);
+
+        // The whole point of the transaction: the schema the migrations built
+        // is gone, and so is the table.
+        let leaked: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM information_schema.schemata WHERE schema_name = 'dust_validation'")
+                .fetch_one(&mut conn)
+                .await
+                .expect("catalog query");
+        assert_eq!(leaked, 0, "validation left its scratch schema behind");
+    }
+
+    #[tokio::test]
+    async fn postgres_reports_sql_the_server_rejects() {
+        let Some(url) = postgres_url() else {
+            return;
+        };
+        let mut conn = PgConnection::connect(&url)
+            .await
+            .expect("DUST_DATABASE_URL must connect");
+        let dir = migrations_dir(&[("0001_create.sql", "CREATE TABLE scratch_items (id BIGINT);")]);
+        let mut warnings = Vec::new();
+
+        let error = describe_in_scratch_schema(
+            &mut conn,
+            dir.path(),
+            &DescribeRequest {
+                dialect: DbDriver::Postgres.dialect(),
+                migrations: "./migrations",
+                schema_hash: "hash",
+                queries: &[query(
+                    "SELECT nope FROM scratch_items",
+                    QueryFunction::As,
+                    0,
+                )],
+                row_columns: &HashMap::new(),
+                typed_columns: &HashMap::new(),
+            },
+            &mut warnings,
+        )
+        .await
+        .expect_err("an unknown column must be reported");
+
+        assert!(error.contains("Items.all"), "{error}");
+
+        // Rolled back even though describing failed.
+        let leaked: i64 =
+            sqlx::query_scalar("SELECT count(*) FROM information_schema.schemata WHERE schema_name = 'dust_validation'")
+                .fetch_one(&mut conn)
+                .await
+                .expect("catalog query");
+        assert_eq!(
+            leaked, 0,
+            "a failed describe left its scratch schema behind"
+        );
+    }
+
+    #[tokio::test]
+    async fn postgres_needs_a_url_and_says_so() {
+        // The one dialect with no in-memory default. Reached through the real
+        // entry point, so the message a developer sees is the one asserted.
+        let error = connect_for_validation::<PgConnection>(DbDriver::Postgres, None)
+            .await
+            .err();
+
+        // With a URL set this connects; without one it explains itself. Both
+        // are correct, and only the second is worth asserting on.
+        if postgres_url().is_none() {
+            let error = error.expect("no URL and no fallback cannot connect");
+            assert!(error.contains("`postgres`/`postgresql`"), "{error}");
+        }
     }
 
     #[tokio::test]

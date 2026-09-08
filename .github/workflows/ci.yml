@@ -654,6 +654,14 @@ jobs:
         working-directory: fixtures/postgres_app
         run: dart test
 
+      # The engine's PostgreSQL describe path — connecting, the scratch schema,
+      # migrations, rollback — cannot run in the `rust` job, which has no
+      # database. These tests return early without `DUST_DATABASE_URL`, so this
+      # is the only place they do anything.
+      - name: Test the PostgreSQL validation path against a server
+        if: needs.changes.outputs.docs_only != 'true'
+        run: cargo test -p dust_db_plugin
+
       - name: Test the PostgreSQL runtime against a server
         if: needs.changes.outputs.docs_only != 'true'
         working-directory: packages/dust_db_postgres
