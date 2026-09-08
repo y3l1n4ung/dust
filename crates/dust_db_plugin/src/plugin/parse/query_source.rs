@@ -126,3 +126,129 @@ pub(super) fn parse_fetch_method(function: QueryFunction, method: Option<&str>) 
         _ => FetchMode::One,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The `Ok` type of a DAO method's `Result`, which is what decides the
+    /// terminal the generator emits.
+    fn list_of(item: TypeIr) -> TypeIr {
+        TypeIr::generic(DART_LIST, vec![item])
+    }
+
+    #[test]
+    fn a_method_with_no_ok_type_is_unsupported() {
+        let (function, fetch, row, scalar) = query_shape_from_return(None);
+
+        assert_eq!(function, QueryFunction::Unsupported);
+        assert_eq!(fetch, FetchMode::Unsupported);
+        assert!(row.is_none());
+        assert!(scalar.is_none());
+    }
+
+    #[test]
+    fn exec_result_and_unit_both_mean_execute() {
+        for ok in [TypeIr::named(DART_EXEC_RESULT), TypeIr::named(DART_UNIT)] {
+            let (function, fetch, ..) = query_shape_from_return(Some(&ok));
+            assert_eq!(function, QueryFunction::Execute, "{ok:?}");
+            assert_eq!(fetch, FetchMode::Execute, "{ok:?}");
+        }
+    }
+
+    #[test]
+    fn a_list_of_a_row_type_fetches_all_of_them() {
+        let ok = list_of(TypeIr::named("Order"));
+
+        let (function, fetch, row, _) = query_shape_from_return(Some(&ok));
+
+        assert_eq!(function, QueryFunction::As);
+        assert_eq!(fetch, FetchMode::All);
+        assert_eq!(row.as_deref(), Some("Order"));
+    }
+
+    #[test]
+    fn a_list_with_nothing_in_it_is_unsupported() {
+        // `List` with no type argument names no row class, so there is nothing
+        // to generate a mapping for.
+        let ok = TypeIr::named(DART_LIST);
+
+        let (function, fetch, ..) = query_shape_from_return(Some(&ok));
+
+        assert_eq!(function, QueryFunction::Unsupported);
+        assert_eq!(fetch, FetchMode::Unsupported);
+    }
+
+    #[test]
+    fn a_list_of_raw_rows_is_unsupported() {
+        // `List<Row>` is the unchecked shape: it asks for no mapping, so a
+        // checked terminal cannot be generated for it.
+        let ok = list_of(TypeIr::named(DART_ROW));
+
+        let (function, fetch, ..) = query_shape_from_return(Some(&ok));
+
+        assert_eq!(function, QueryFunction::Unsupported);
+        assert_eq!(fetch, FetchMode::Unsupported);
+    }
+
+    #[test]
+    fn every_scalar_dart_type_reads_one_column() {
+        for name in [
+            DART_STRING,
+            DART_INT,
+            DART_DOUBLE,
+            DART_NUM,
+            DART_BOOL,
+            DART_DATE_TIME,
+        ] {
+            let ok = TypeIr::named(name);
+
+            let (function, _, _, scalar) = query_shape_from_return(Some(&ok));
+
+            assert_eq!(function, QueryFunction::Scalar, "{name}");
+            assert_eq!(
+                scalar
+                    .and_then(|ty| ty.name().map(str::to_owned))
+                    .as_deref(),
+                Some(name)
+            );
+        }
+    }
+
+    #[test]
+    fn a_named_terminal_wins_over_the_helper_default() {
+        for (method, expected) in [
+            ("fetchOptional", FetchMode::Optional),
+            ("fetchOptionalWith", FetchMode::Optional),
+            ("fetchOne", FetchMode::One),
+            ("fetchOneWith", FetchMode::One),
+            ("fetchAll", FetchMode::All),
+            ("fetchAllWith", FetchMode::All),
+            ("execute", FetchMode::Execute),
+        ] {
+            assert_eq!(
+                parse_fetch_method(QueryFunction::As, Some(method)),
+                expected,
+                "{method}",
+            );
+        }
+    }
+
+    #[test]
+    fn without_a_named_terminal_the_helper_decides() {
+        assert_eq!(
+            parse_fetch_method(QueryFunction::Execute, None),
+            FetchMode::Execute,
+        );
+        assert_eq!(
+            parse_fetch_method(QueryFunction::Unsupported, None),
+            FetchMode::Unsupported,
+        );
+        // Everything else reads one row unless the call says otherwise.
+        assert_eq!(parse_fetch_method(QueryFunction::As, None), FetchMode::One);
+        assert_eq!(
+            parse_fetch_method(QueryFunction::Scalar, Some("somethingElse")),
+            FetchMode::One,
+        );
+    }
+}
