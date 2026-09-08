@@ -188,25 +188,35 @@ async fn connect_for_validation<C: Connection>(
     driver: DbDriver,
     fallback: Option<&str>,
 ) -> Result<C, String> {
-    let dialect = driver.dialect();
-    let named = std::env::var("DUST_DATABASE_URL")
-        .ok()
-        .filter(|url| dialect.accepts_url(url));
-    let database_url = match (named, fallback) {
-        (Some(url), _) => url,
-        (None, Some(fallback)) => fallback.to_owned(),
-        (None, None) => {
-            return Err(format!(
-                "validating SQL for `{}` needs a database: set DUST_DATABASE_URL to a `{}` URL, \
-                 or build with --offline to validate from the committed query cache",
-                driver.as_str(),
-                dialect.url_schemes.join("`/`")
-            ));
-        }
-    };
+    let database_url =
+        validation_database_url(driver, std::env::var("DUST_DATABASE_URL").ok(), fallback)?;
     C::connect(&database_url).await.map_err(|error| {
         format!("failed to connect SQL validation database `{database_url}`: {error}")
     })
+}
+
+/// Chooses the database URL to validate against.
+///
+/// Separate from connecting so it can be tested without a process-wide
+/// environment variable: the choice is the part with rules in it, and reading
+/// `DUST_DATABASE_URL` inside a test would race every other test in the binary.
+fn validation_database_url(
+    driver: DbDriver,
+    named: Option<String>,
+    fallback: Option<&str>,
+) -> Result<String, String> {
+    let dialect = driver.dialect();
+    let named = named.filter(|url| dialect.accepts_url(url));
+    match (named, fallback) {
+        (Some(url), _) => Ok(url),
+        (None, Some(fallback)) => Ok(fallback.to_owned()),
+        (None, None) => Err(format!(
+            "validating SQL for `{}` needs a database: set DUST_DATABASE_URL to a `{}` URL, \
+             or build with --offline to validate from the committed query cache",
+            driver.as_str(),
+            dialect.url_schemes.join("`/`")
+        )),
+    }
 }
 
 /// Applies migration files to the validation database.
@@ -409,4 +419,103 @@ fn describe_column_warnings<DB: sqlx::Database>(
         }
     }
     warnings
+}
+
+#[cfg(test)]
+mod tests {
+    use sqlx::sqlite::SqliteConnection;
+
+    use super::*;
+
+    /// SQLite is a real sqlx backend that needs no server, so the paths this
+    /// file shares between the two dialects can be exercised in-process. Only
+    /// connecting to PostgreSQL genuinely needs one.
+    async fn memory_connection() -> SqliteConnection {
+        SqliteConnection::connect("sqlite::memory:")
+            .await
+            .expect("in-memory SQLite must open")
+    }
+
+    fn migrations_dir(files: &[(&str, &str)]) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().expect("temp dir");
+        for (name, sql) in files {
+            fs::write(dir.path().join(name), sql).expect("write migration");
+        }
+        dir
+    }
+
+    #[test]
+    fn a_url_for_another_driver_is_ignored_rather_than_opened() {
+        // One workspace, two drivers, one environment variable. A SQLite
+        // project handed a PostgreSQL URL falls back to its own default.
+        let chosen = validation_database_url(
+            DbDriver::Sqlite3,
+            Some("postgres://user@localhost/app?sslmode=disable".to_owned()),
+            Some("sqlite::memory:"),
+        );
+
+        assert_eq!(chosen.as_deref(), Ok("sqlite::memory:"));
+    }
+
+    #[test]
+    fn a_url_for_this_driver_wins_over_the_fallback() {
+        let chosen = validation_database_url(
+            DbDriver::Postgres,
+            Some("postgres://user@localhost/app".to_owned()),
+            Some("ignored"),
+        );
+
+        assert_eq!(chosen.as_deref(), Ok("postgres://user@localhost/app"));
+    }
+
+    #[test]
+    fn a_driver_with_no_url_and_no_fallback_says_which_scheme_it_needs() {
+        let error = validation_database_url(DbDriver::Postgres, None, None)
+            .expect_err("PostgreSQL has no in-memory default");
+
+        assert!(error.contains("`postgres`/`postgresql`"), "{error}");
+        assert!(error.contains("--offline"), "{error}");
+    }
+
+    #[tokio::test]
+    async fn migrations_are_applied_in_name_order() {
+        // `0002` depends on `0001` having run, so applying them out of order
+        // fails rather than passing quietly.
+        let dir = migrations_dir(&[
+            ("0001_create.sql", "CREATE TABLE items (id INTEGER);"),
+            ("0002_alter.sql", "ALTER TABLE items ADD COLUMN name TEXT;"),
+        ]);
+        let mut conn = memory_connection().await;
+
+        apply_migrations(&mut conn, dir.path())
+            .await
+            .expect("migrations must apply");
+
+        conn.execute("SELECT id, name FROM items")
+            .await
+            .expect("both migrations must have run");
+    }
+
+    #[tokio::test]
+    async fn a_migration_the_database_refuses_names_the_file() {
+        let dir = migrations_dir(&[("0001_broken.sql", "CREATE TABLE (;")]);
+        let mut conn = memory_connection().await;
+
+        let error = apply_migrations(&mut conn, dir.path())
+            .await
+            .expect_err("invalid SQL must fail");
+
+        assert!(error.contains("failed to apply migration"), "{error}");
+        assert!(error.contains("0001_broken.sql"), "{error}");
+    }
+
+    #[tokio::test]
+    async fn a_migrations_directory_with_nothing_in_it_is_not_an_error() {
+        let dir = migrations_dir(&[]);
+        let mut conn = memory_connection().await;
+
+        apply_migrations(&mut conn, dir.path())
+            .await
+            .expect("no migrations is not a failure");
+    }
 }
