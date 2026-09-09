@@ -129,6 +129,11 @@ To keep Dust fast and maintainable, please follow these core principles:
 - **No Panics:** Avoid `.expect()` or `.unwrap()` in plugin code. Use `Diagnostic::error` instead.
 - **Deterministic:** Generated output must be deterministic and byte-for-byte identical on every run.
 - **Small & Clean:** Keep generated Dart code small, readable, and analyzer-clean.
+- **Small Files:** Hand-written source under `crates/*/src` and `packages/*/lib`
+  stays under 300 lines. `scripts/check_source_size.py` enforces it in the lint
+  gate and in CI. Files that predate the rule are pinned in that script at their
+  current size: they may shrink, never grow, and the pin must be deleted once the
+  file is back under the limit, so the list only ever gets shorter.
 
 ---
 

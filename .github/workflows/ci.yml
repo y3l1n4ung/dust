@@ -206,6 +206,12 @@ jobs:
           python3 scripts/validate_compatibility_contract.py --self-test
           python3 scripts/validate_compatibility_contract.py
 
+      - name: Check source file size
+        if: needs.changes.outputs.docs_only != 'true'
+        run: |
+          python3 scripts/check_source_size.py --self-test
+          python3 scripts/check_source_size.py
+
       - name: Install Rust test and coverage tools
         if: needs.changes.outputs.docs_only != 'true'
         uses: taiki-e/install-action@16a76bb73558798e4218983c40c25fee9f2f99a8 # cargo-nextest, cargo-llvm-cov

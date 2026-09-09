@@ -31,6 +31,9 @@ esac
 
 ./scripts/format.sh --check --scope "$SCOPE"
 
+echo "==> Source size"
+python3 scripts/check_source_size.py
+
 if [[ "$SCOPE" != packages ]]; then
   ./scripts/rust/lint.sh
 fi
