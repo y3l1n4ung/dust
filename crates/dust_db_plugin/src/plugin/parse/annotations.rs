@@ -7,6 +7,7 @@ use dust_plugin_api::short_symbol_name;
 
 use crate::plugin::{
     constants::{DAO, DATABASE, SQLX, SQLX_DAO, SQLX_DATABASE},
+    dialect::Dialect,
     model::{DbDriver, SqlxConfig, SqlxRenameRule},
 };
 
@@ -110,7 +111,7 @@ pub(super) fn parse_database_config(config: &ConfigApplicationIr) -> Option<Data
     if let Some(parsed) = config
         .named_member("type")
         .as_deref()
-        .and_then(parse_database_type)
+        .and_then(parse_driver)
     {
         driver = parsed;
     }
@@ -158,22 +159,12 @@ fn rename_to_serde(rule: SqlxRenameRule) -> SerdeRenameRuleIr {
     }
 }
 
-/// Parses a database driver enum member from source text.
+/// Parses a database driver or database type enum member from source text.
+///
+/// `Driver.sqlite3` and `SqlxDatabaseType.sqlite` are two spellings of one
+/// dialect, and the dialect owns both.
 fn parse_driver(source: &str) -> Option<DbDriver> {
-    match source.trim().rsplit('.').next()? {
-        "sqlite3" => Some(DbDriver::Sqlite3),
-        "postgres" => Some(DbDriver::Postgres),
-        _ => None,
-    }
-}
-
-/// Parses a database type enum member from source text.
-fn parse_database_type(source: &str) -> Option<DbDriver> {
-    match source.trim().rsplit('.').next()? {
-        "sqlite" | "sqlite3" => Some(DbDriver::Sqlite3),
-        "postgres" => Some(DbDriver::Postgres),
-        _ => None,
-    }
+    Dialect::from_annotation(source).map(|dialect| dialect.driver)
 }
 
 /// Parses a SQLx rename rule enum member from source text.

@@ -17,6 +17,7 @@ use dust_ir::DartFileIr;
 use dust_plugin_api::{WorkspaceAnalysis, WorkspaceAnalysisBuilder};
 
 use super::{
+    dialect::Dialect,
     model::DbDriver,
     parse::{database_classes, effective_column_name, row_classes, sqlx_config},
 };
@@ -212,11 +213,7 @@ fn parse_database(value: &str, package: &str) -> Option<PackageDatabase> {
         return None;
     }
     let name = fields.next()?.to_owned();
-    let driver = match fields.next()? {
-        "sqlite3" => DbDriver::Sqlite3,
-        "postgres" => DbDriver::Postgres,
-        _ => return None,
-    };
+    let driver = Dialect::from_name(fields.next()?)?.driver;
     let migrations = fields.next()?.to_owned();
     Some(PackageDatabase {
         name,

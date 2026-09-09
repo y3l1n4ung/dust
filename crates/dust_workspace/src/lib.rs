@@ -31,3 +31,14 @@ pub use pubspec::{
 };
 pub use root::detect_workspace_root;
 pub use workspace::{SourceLibrary, WorkspacePlan, discover_workspace};
+
+/// Dust runtime packages discovery recognises in Dart imports.
+///
+/// Exposed so crates that keep their own list of Dust packages can be tested
+/// against this one instead of drifting from it.
+pub fn dust_runtime_packages() -> Vec<&'static str> {
+    discover::DUST_RUNTIME_PACKAGES
+        .iter()
+        .map(|(package, _)| *package)
+        .collect()
+}

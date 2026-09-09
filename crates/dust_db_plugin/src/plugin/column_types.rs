@@ -33,10 +33,7 @@ pub(crate) fn accepts(driver: DbDriver, dart_type: &str, sql_type: &str) -> bool
 
 /// Returns the SQL types a Dart type may read, if the table covers it.
 fn accepted_sql_types(driver: DbDriver, dart_type: &str) -> Option<&'static [&'static str]> {
-    match driver {
-        DbDriver::Sqlite3 => sqlite_types(dart_type),
-        DbDriver::Postgres => postgres_types(dart_type),
-    }
+    (driver.dialect().accepted_sql_types)(dart_type)
 }
 
 /// SQLite's accepted pairs.
@@ -44,7 +41,7 @@ fn accepted_sql_types(driver: DbDriver, dart_type: &str) -> Option<&'static [&'s
 /// Affinity makes these wide. `INTEGER` reads into `bool` because SQLite has no
 /// boolean, and `TEXT` reads into `DateTime` because it has no date type
 /// either — both are how the row adapter already behaves.
-fn sqlite_types(dart_type: &str) -> Option<&'static [&'static str]> {
+pub(crate) fn sqlite_types(dart_type: &str) -> Option<&'static [&'static str]> {
     Some(match dart_type {
         "int" => &["INTEGER", "NUMERIC", "BOOLEAN", "NULL"],
         "double" => &["REAL", "NUMERIC", "INTEGER", "NULL"],
@@ -61,7 +58,7 @@ fn sqlite_types(dart_type: &str) -> Option<&'static [&'static str]> {
 /// Real types, so these are narrower. `numeric` is absent from every row on
 /// purpose: it is arbitrary-precision and Dart has no counterpart, so which
 /// Dart type may read it is still open.
-fn postgres_types(dart_type: &str) -> Option<&'static [&'static str]> {
+pub(crate) fn postgres_types(dart_type: &str) -> Option<&'static [&'static str]> {
     Some(match dart_type {
         "int" => &[
             "INT2", "INT4", "INT8", "SMALLINT", "INTEGER", "BIGINT", "OID",

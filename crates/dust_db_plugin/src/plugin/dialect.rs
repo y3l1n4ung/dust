@@ -3,17 +3,62 @@
 //! Emit, validation, and the escape hatch each used to `match` on the driver at
 //! the point of use, so adding a database meant finding every arm and missing
 //! one meant generated code naming a type from the wrong driver. A dialect is a
-//! value instead.
+//! value instead, and [`DIALECTS`] is the registry every lookup reads.
+//!
+//! # Adding a database
+//!
+//! In the engine:
+//!
+//! 1. A `Dialect` const here, and an entry in [`DIALECTS`].
+//! 2. A `DbDriver` variant in `model.rs`, and a `DbDriverIr` variant in
+//!    `dust_ir`, so the resolver can carry it.
+//! 3. A type table in `column_types.rs`, named by the dialect's
+//!    `accepted_sql_types`.
+//! 4. An arm in `validate/sqlx.rs`, which is the one place that has to name a
+//!    concrete `sqlx` backend. Everything past the connection is generic.
+//!
+//! Nothing else in the engine matches on the driver: names, aliases, emitted
+//! Dart types and URL schemes all come from the dialect.
+//!
+//! Outside the engine, a database also needs a Dart runtime package
+//! implementing `Executor`, `Connection`, `Transaction`, `Pool` and `Row` from
+//! `dust_dart`, a `Driver` enum member there, and the package added to
+//! workspace discovery, the compatibility contract, and the per-package lists
+//! in `scripts/dart/`, CI and Sonar.
+//!
+//! `driver_tests::compatibility` checks the first three of those agree with
+//! this registry, because they silently did not once already.
 
-use super::model::DbDriver;
+use super::{column_types, model::DbDriver};
 
 /// One database, and the Dart runtime that talks to it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) struct Dialect {
     /// The driver this describes.
     pub(crate) driver: DbDriver,
     /// Stable name used in analysis keys and query cache entries.
+    ///
+    /// This is the one spelling of the driver. Parsing an annotation, reading
+    /// a packed analysis value and writing a cache entry all go through it, so
+    /// a new dialect cannot be spelled one way in one place and another
+    /// elsewhere.
     pub(crate) name: &'static str,
+    /// Dart package providing this dialect's runtime.
+    ///
+    /// The engine does not emit the import — user source brings it in — but
+    /// workspace discovery and the compatibility contract both have to know
+    /// the package exists, and a test holds them to this list.
+    pub(crate) runtime_package: &'static str,
+    /// Extra spellings `@SqlxDatabase(type: ...)` accepts for this dialect.
+    ///
+    /// `Driver.sqlite3` and `SqlxDatabaseType.sqlite` name the same database.
+    /// Aliases live with the dialect rather than in a parser-side match.
+    pub(crate) annotation_aliases: &'static [&'static str],
+    /// SQL types each Dart type may be read from, if the dialect has an opinion.
+    ///
+    /// A dialect brings its own table, so adding a database does not mean
+    /// finding a `match` in the type checker.
+    pub(crate) accepted_sql_types: fn(&str) -> Option<&'static [&'static str]>,
     /// Dart type the generated facade holds.
     pub(crate) runtime_type: &'static str,
     /// Constructor the runtime type offers.
@@ -62,6 +107,9 @@ pub(crate) struct Dialect {
 const SQLITE3: Dialect = Dialect {
     driver: DbDriver::Sqlite3,
     name: "sqlite3",
+    runtime_package: "dust_db_sqlite3",
+    annotation_aliases: &["sqlite"],
+    accepted_sql_types: column_types::sqlite_types,
     runtime_type: "Sqlite3Driver",
     factory: "open",
     factory_parameter: "String path",
@@ -79,6 +127,9 @@ const SQLITE3: Dialect = Dialect {
 const POSTGRES: Dialect = Dialect {
     driver: DbDriver::Postgres,
     name: "postgres",
+    runtime_package: "dust_db_postgres",
+    annotation_aliases: &["postgresql"],
+    accepted_sql_types: column_types::postgres_types,
     runtime_type: "PostgresDriver",
     factory: "connect",
     factory_parameter: "String url",
@@ -90,6 +141,24 @@ const POSTGRES: Dialect = Dialect {
     url_schemes: &["postgres", "postgresql"],
     validates: true,
 };
+
+/// Every dialect the engine supports.
+///
+/// The registry, not a `match` at each point of use: lookups by name and by
+/// annotation spelling read this, so a new dialect is one const and one entry.
+pub(crate) const DIALECTS: &[&Dialect] = &[&SQLITE3, &POSTGRES];
+
+/// Dart packages providing a database runtime this engine can target.
+///
+/// Workspace discovery and the CLI compatibility contract each keep their own
+/// list of Dust runtime packages, and both have to include these. Exposing the
+/// registry lets a test say so rather than leaving the lists to drift.
+pub fn database_runtime_packages() -> Vec<&'static str> {
+    DIALECTS
+        .iter()
+        .map(|dialect| dialect.runtime_package)
+        .collect()
+}
 
 impl DbDriver {
     /// Returns everything the engine knows about this driver.
@@ -107,6 +176,26 @@ impl DbDriver {
 }
 
 impl Dialect {
+    /// Looks a dialect up by its canonical name.
+    pub(crate) fn from_name(name: &str) -> Option<&'static Dialect> {
+        DIALECTS
+            .iter()
+            .copied()
+            .find(|dialect| dialect.name == name)
+    }
+
+    /// Looks a dialect up by any spelling an annotation may use.
+    ///
+    /// Takes the last dotted segment, so `Driver.sqlite3`, `sqlite3` and
+    /// `SqlxDatabaseType.sqlite` all arrive here as a bare word.
+    pub(crate) fn from_annotation(source: &str) -> Option<&'static Dialect> {
+        let member = source.trim().rsplit('.').next()?;
+        DIALECTS
+            .iter()
+            .copied()
+            .find(|dialect| dialect.name == member || dialect.annotation_aliases.contains(&member))
+    }
+
     /// Whether `url` names a database this dialect can validate against.
     ///
     /// A URL with no scheme is a bare SQLite path, which only SQLite accepts.
@@ -129,14 +218,14 @@ mod tests {
     /// naming the wrong package, and nothing else would catch it.
     #[test]
     fn every_driver_names_a_distinct_runtime() {
-        let dialects = [DbDriver::Sqlite3.dialect(), DbDriver::Postgres.dialect()];
-        for (index, left) in dialects.iter().enumerate() {
-            for right in dialects.iter().skip(index + 1) {
+        for (index, left) in DIALECTS.iter().enumerate() {
+            for right in DIALECTS.iter().skip(index + 1) {
                 assert_ne!(left.name, right.name);
                 assert_ne!(left.runtime_type, right.runtime_type);
                 assert_ne!(left.unsafe_type, right.unsafe_type);
                 assert_ne!(left.migrate_expr, right.migrate_expr);
                 assert_ne!(left.options_type, right.options_type);
+                assert_ne!(left.runtime_package, right.runtime_package);
             }
         }
     }
@@ -157,6 +246,43 @@ mod tests {
         assert!(postgres.accepts_url("POSTGRESQL://user@localhost/app"));
         assert!(!postgres.accepts_url("sqlite://app.db"));
         assert!(!postgres.accepts_url("app.db"));
+    }
+
+    /// Two dialects answering to one spelling would make `@Database(driver:)`
+    /// mean whichever came first in the registry.
+    #[test]
+    fn no_two_dialects_answer_to_the_same_annotation_spelling() {
+        let mut seen = Vec::new();
+        for dialect in DIALECTS {
+            for spelling in std::iter::once(&dialect.name).chain(dialect.annotation_aliases) {
+                assert!(
+                    !seen.contains(spelling),
+                    "`{spelling}` names more than one dialect"
+                );
+                seen.push(spelling);
+            }
+            assert!(!dialect.runtime_package.is_empty());
+        }
+    }
+
+    #[test]
+    fn an_annotation_resolves_through_either_enum_spelling() {
+        for source in ["Driver.sqlite3", "SqlxDatabaseType.sqlite", "sqlite3"] {
+            assert_eq!(
+                Dialect::from_annotation(source).map(|dialect| dialect.driver),
+                Some(DbDriver::Sqlite3),
+                "{source}"
+            );
+        }
+        for source in ["Driver.postgres", "SqlxDatabaseType.postgres", "postgresql"] {
+            assert_eq!(
+                Dialect::from_annotation(source).map(|dialect| dialect.driver),
+                Some(DbDriver::Postgres),
+                "{source}"
+            );
+        }
+        assert!(Dialect::from_annotation("Driver.mysql").is_none());
+        assert!(Dialect::from_name("mysql").is_none());
     }
 
     #[test]

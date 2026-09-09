@@ -16,6 +16,7 @@ mod constants;
 /// Renders generated DB, DAO, and row-mapping Dart code.
 /// What the engine knows about each database.
 mod dialect;
+pub use dialect::database_runtime_packages;
 /// Generated Dart output.
 mod emit;
 /// Shared migration discovery rules.

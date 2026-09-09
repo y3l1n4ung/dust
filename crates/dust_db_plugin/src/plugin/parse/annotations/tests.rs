@@ -56,18 +56,18 @@ fn parses_database_and_rename_variants() {
     assert_eq!(parse_driver("Driver.postgres"), Some(DbDriver::Postgres));
     assert_eq!(parse_driver("Driver.mysql"), None);
     assert_eq!(
-        parse_database_type("SqlxDatabaseType.sqlite"),
+        parse_driver("SqlxDatabaseType.sqlite"),
         Some(DbDriver::Sqlite3)
     );
     assert_eq!(
-        parse_database_type("SqlxDatabaseType.sqlite3"),
+        parse_driver("SqlxDatabaseType.sqlite3"),
         Some(DbDriver::Sqlite3)
     );
     assert_eq!(
-        parse_database_type("SqlxDatabaseType.postgres"),
+        parse_driver("SqlxDatabaseType.postgres"),
         Some(DbDriver::Postgres)
     );
-    assert_eq!(parse_database_type("SqlxDatabaseType.mysql"), None);
+    assert_eq!(parse_driver("SqlxDatabaseType.mysql"), None);
 
     let db_config = parse_database_config(&config(
         "dust_dart::SqlxDatabase",

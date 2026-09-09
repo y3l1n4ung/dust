@@ -20,7 +20,10 @@ mod imports;
 use self::imports::*;
 
 /// Dust packages whose runtime versions affect generated Dart output.
-const DUST_RUNTIME_PACKAGES: &[(&str, &str)] = &[
+///
+/// A package missing here is invisible to version validation: nothing records
+/// that the workspace uses it, so an incompatible version is never reported.
+pub(crate) const DUST_RUNTIME_PACKAGES: &[(&str, &str)] = &[
     ("dust_dart", "package:dust_dart/"),
     ("dust_flutter", "package:dust_flutter/"),
     ("dust_db_sqlite3", "package:dust_db_sqlite3/"),
