@@ -131,9 +131,10 @@ To keep Dust fast and maintainable, please follow these core principles:
 - **Small & Clean:** Keep generated Dart code small, readable, and analyzer-clean.
 - **Small Files:** Hand-written source under `crates/*/src` and `packages/*/lib`
   stays under 300 lines. `scripts/check_source_size.py` enforces it in the lint
-  gate and in CI. Files that predate the rule are pinned in that script at their
-  current size: they may shrink, never grow, and the pin must be deleted once the
-  file is back under the limit, so the list only ever gets shorter.
+  gate and in CI; tests and generated Dart are not counted. Every file in the
+  repository is under the limit, and the script's `BASELINE` is empty. It can pin
+  a file at its current size while a split is in progress, but a pin may only
+  shrink and must be removed once the file is under the limit.
 
 ---
 

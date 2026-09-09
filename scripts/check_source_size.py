@@ -5,11 +5,11 @@ CONTRIBUTING's "Small & Clean" rule has no teeth without a number. This check
 supplies one: every hand-written production source file stays under
 ``LINE_LIMIT`` lines.
 
-Twenty-four files predate the rule. Rather than block the milestone on a
-refactor of all of them, each is pinned in ``BASELINE`` at the size it had when
-the check landed: it may shrink, never grow. A pin that is no longer needed is
-itself an error, so the baseline cannot quietly outlive the file it excuses,
-and the list only ever gets shorter.
+``BASELINE`` is empty, and is meant to stay that way. It exists so a file can
+be pinned at its current size while it is being split rather than blocking a
+branch, but every file in the repository is under the limit today. A pin that
+is no longer needed is itself an error, so nothing can be parked there and
+forgotten.
 """
 
 from __future__ import annotations
@@ -22,34 +22,10 @@ from pathlib import Path
 
 LINE_LIMIT = 300
 
-# Files that were already over the limit when this check was added, pinned at
-# the size they had then. Shrink them; do not add to this list.
-BASELINE: dict[str, int] = {
-    "crates/dust_driver/src/lower.rs": 781,
-    "crates/dust_parser_dart_ts/src/queries.rs": 529,
-    "crates/dust_parser_dart/src/surface.rs": 528,
-    "crates/dust_http_client_plugin/src/plugin/emit/class.rs": 499,
-    "crates/dust_workspace/src/discover.rs": 481,
-    "crates/dust_plugin_derive/src/features/validate/emit.rs": 466,
-    "crates/dust_parser_dart_ts/src/declarations.rs": 458,
-    "crates/dust_http_client_plugin/src/plugin/emit/test_file.rs": 456,
-    "crates/dust_resolver/src/resolve.rs": 454,
-    "packages/dust_flutter/lib/src/state/view_model.dart": 450,
-    "crates/dust_cli/src/args.rs": 442,
-    "crates/dust_parser_dart_ts/src/language_gates.rs": 423,
-    "crates/dust_state_plugin/src/plugin/emit/render.rs": 423,
-    "crates/dust_resolver/src/serde.rs": 377,
-    "crates/dust_parser_dart_ts/src/annotations/values.rs": 364,
-    "crates/dust_http_client_plugin/src/plugin/parse/http.rs": 342,
-    "crates/dust_resolver/src/resolve_support.rs": 331,
-    "crates/dust_driver/src/result.rs": 329,
-    "crates/dust_plugin_serde/src/validate.rs": 325,
-    "crates/dust_plugin_serde/src/emit_class.rs": 317,
-    "crates/dust_ir/src/traits.rs": 316,
-    "crates/dust_db_plugin/src/plugin/emit/dao.rs": 314,
-    "crates/dust_parser_dart_ts/src/i18n/lower.rs": 313,
-    "crates/dust_route_plugin/src/plugin/build/mod.rs": 303,
-}
+# Temporary exemptions, pinned at the size the file had when it was added here.
+# A pinned file may only shrink, and its entry must go once it is under the
+# limit. Empty is the intended state; adding to it needs a reason.
+BASELINE: dict[str, int] = {}
 
 # Hand-written production source. Tests and generated output are excluded: test
 # files grow with the cases they cover, and generated Dart is the emitter's

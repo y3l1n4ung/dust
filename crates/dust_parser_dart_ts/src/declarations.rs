@@ -14,6 +14,18 @@ use crate::{
     types::{extract_type_before, extract_type_node},
 };
 
+/// Walking a declaration's tree-sitter node for annotations, names and types.
+mod nodes;
+use self::nodes::*;
+
+/// Extracting top-level variable declarations in their three Dart spellings.
+mod variables;
+use self::variables::*;
+
+/// Extracting extension and extension type declarations.
+mod extensions;
+use self::extensions::*;
+
 /// Parsed top-level declarations not covered by class and enum extraction.
 pub(crate) struct ParsedTopLevelDeclarations {
     /// Parsed mixin declarations.
@@ -191,53 +203,6 @@ fn extract_mixin(node: Node<'_>, source: &SourceText) -> ParsedMixinSurface {
     }
 }
 
-/// Extracts an extension surface from an extension declaration.
-fn extract_extension(node: Node<'_>, source: &SourceText) -> ParsedExtensionSurface {
-    let name = node
-        .child_by_field_name("name")
-        .map(|name| node_text(name, source));
-    let parsed_on_type = node
-        .child_by_field_name("class")
-        .and_then(|ty| extract_type_node(ty, ty.end_byte(), source));
-    let on_type_source = parsed_on_type.as_ref().map(|ty| ty.source.clone());
-
-    ParsedExtensionSurface {
-        name,
-        on_type_source,
-        parsed_on_type,
-        annotations: direct_annotations(node, source),
-        span: text_range(node),
-    }
-}
-
-/// Extracts an extension type and its representation metadata.
-fn extract_extension_type(node: Node<'_>, source: &SourceText) -> ParsedExtensionTypeSurface {
-    let name = node
-        .child_by_field_name("name")
-        .map(|name| node_text(name, source))
-        .unwrap_or_default();
-    let representation = node.child_by_field_name("representation");
-    let representation_name = representation
-        .and_then(|representation| representation.child_by_field_name("name"))
-        .map(|name| node_text(name, source))
-        .unwrap_or_default();
-    let parsed_representation_type = representation
-        .and_then(|representation| representation.child_by_field_name("type"))
-        .and_then(|ty| extract_type_node(ty, ty.end_byte(), source));
-    let representation_type_source = parsed_representation_type
-        .as_ref()
-        .map(|ty| ty.source.clone());
-
-    ParsedExtensionTypeSurface {
-        name,
-        representation_name,
-        representation_type_source,
-        parsed_representation_type,
-        annotations: direct_annotations(node, source),
-        span: text_range(node),
-    }
-}
-
 /// Extracts a top-level function surface from a function signature.
 fn extract_function(
     signature: Node<'_>,
@@ -263,106 +228,6 @@ fn extract_function(
         annotations,
         span: text_range(signature),
     }
-}
-
-/// Extracts initialized top-level variable declarations.
-fn extract_initialized_variables(
-    list: Node<'_>,
-    type_node: Option<Node<'_>>,
-    annotations: &[ParsedAnnotation],
-    source: &SourceText,
-) -> Vec<ParsedTopLevelVariableSurface> {
-    let parsed_type = type_node.and_then(|ty| extract_type_node(ty, list.start_byte(), source));
-    let type_source = parsed_type.as_ref().map(|ty| ty.source.clone());
-    let mut variables = Vec::new();
-    let mut cursor = list.walk();
-    for initialized in list
-        .children(&mut cursor)
-        .filter(|child| child.is_named() && child.kind() == "initialized_identifier")
-    {
-        let name = initialized
-            .child_by_field_name("name")
-            .map(|name| node_text(name, source))
-            .unwrap_or_default();
-        let initializer_source = initialized
-            .child_by_field_name("value")
-            .map(|value| node_text(value, source));
-        let initializer_span = initialized.child_by_field_name("value").map(text_range);
-        variables.push(ParsedTopLevelVariableSurface {
-            name,
-            type_source: type_source.clone(),
-            parsed_type: parsed_type.clone(),
-            initializer_source,
-            initializer_span,
-            annotations: annotations.to_vec(),
-            span: text_range(initialized),
-        });
-    }
-    variables
-}
-
-/// Extracts static final top-level variable declarations.
-fn extract_static_final_variables(
-    list: Node<'_>,
-    type_node: Option<Node<'_>>,
-    annotations: &[ParsedAnnotation],
-    source: &SourceText,
-) -> Vec<ParsedTopLevelVariableSurface> {
-    let parsed_type = type_node.and_then(|ty| extract_type_node(ty, list.start_byte(), source));
-    let type_source = parsed_type.as_ref().map(|ty| ty.source.clone());
-    let mut variables = Vec::new();
-    let mut cursor = list.walk();
-    for declaration in list
-        .children(&mut cursor)
-        .filter(|child| child.is_named() && child.kind() == "static_final_declaration")
-    {
-        let name = declaration
-            .child_by_field_name("name")
-            .map(|name| node_text(name, source))
-            .unwrap_or_default();
-        let initializer_source = declaration
-            .child_by_field_name("value")
-            .map(|value| node_text(value, source));
-        let initializer_span = declaration.child_by_field_name("value").map(text_range);
-        variables.push(ParsedTopLevelVariableSurface {
-            name,
-            type_source: type_source.clone(),
-            parsed_type: parsed_type.clone(),
-            initializer_source,
-            initializer_span,
-            annotations: annotations.to_vec(),
-            span: text_range(declaration),
-        });
-    }
-    variables
-}
-
-/// Extracts external top-level variables that have no initializer node.
-fn extract_external_variables(
-    list: Node<'_>,
-    type_node: Option<Node<'_>>,
-    annotations: &[ParsedAnnotation],
-    source: &SourceText,
-) -> Vec<ParsedTopLevelVariableSurface> {
-    let parsed_type = type_node.and_then(|ty| extract_type_node(ty, list.start_byte(), source));
-    let type_source = parsed_type.as_ref().map(|ty| ty.source.clone());
-    let mut variables = Vec::new();
-    let mut cursor = list.walk();
-    for identifier in list
-        .children(&mut cursor)
-        .filter(|child| child.is_named() && child.kind() == "identifier")
-    {
-        variables.push(ParsedTopLevelVariableSurface {
-            name: node_text(identifier, source),
-            type_source: type_source.clone(),
-            parsed_type: parsed_type.clone(),
-            initializer_source: None,
-            initializer_span: None,
-            annotations: annotations.to_vec(),
-            span: text_range(identifier),
-        });
-    }
-    variables
 }
 
 /// Extracts a typedef declaration and any aliased type source.
@@ -393,66 +258,4 @@ fn extract_typedef(node: Node<'_>, source: &SourceText) -> ParsedTypedefSurface 
         annotations: direct_annotations(node, source),
         span: text_range(node),
     }
-}
-
-/// Extracts annotation children directly attached to a declaration.
-fn direct_annotations(node: Node<'_>, source: &SourceText) -> Vec<ParsedAnnotation> {
-    let mut annotations = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.children(&mut cursor).filter(|child| child.is_named()) {
-        if child.kind() == "annotation" {
-            annotations.push(extract_annotation(child, source));
-        }
-    }
-    annotations
-}
-
-/// Finds a direct child with the requested tree-sitter kind.
-fn direct_child<'tree>(node: Node<'tree>, kind: &str) -> Option<Node<'tree>> {
-    let mut cursor = node.walk();
-    node.children(&mut cursor)
-        .find(|child| child.kind() == kind)
-}
-
-/// Finds a direct named child with the requested kind before deeper traversal.
-fn direct_named_child_before<'tree>(node: Node<'tree>, kind: &str) -> Option<Node<'tree>> {
-    let mut cursor = node.walk();
-    node.children(&mut cursor)
-        .find(|child| child.is_named() && child.kind() == kind)
-}
-
-/// Finds the last type identifier before a byte boundary.
-fn first_type_identifier_before<'tree>(
-    node: Node<'tree>,
-    boundary_byte: usize,
-) -> Option<Node<'tree>> {
-    let mut cursor = node.walk();
-    node.children(&mut cursor)
-        .filter(|child| {
-            child.is_named()
-                && child.kind() == "type_identifier"
-                && child.start_byte() < boundary_byte
-        })
-        .last()
-}
-
-/// Alias for finding a previous type identifier before a byte boundary.
-fn previous_type_identifier<'tree>(node: Node<'tree>, boundary_byte: usize) -> Option<Node<'tree>> {
-    first_type_identifier_before(node, boundary_byte)
-}
-
-/// Finds the first type node after a byte boundary.
-fn first_type_node_after<'tree>(node: Node<'tree>, boundary_byte: usize) -> Option<Node<'tree>> {
-    let mut cursor = node.walk();
-    node.children(&mut cursor).find(|child| {
-        child.is_named() && is_type_node_kind(child.kind()) && child.start_byte() >= boundary_byte
-    })
-}
-
-/// Returns whether a tree-sitter kind can begin a Dart type source.
-fn is_type_node_kind(kind: &str) -> bool {
-    matches!(
-        kind,
-        "type_identifier" | "void_type" | "function_type" | "record_type"
-    )
 }

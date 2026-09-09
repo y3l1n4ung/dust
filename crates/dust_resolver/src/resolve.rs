@@ -27,6 +27,18 @@ use crate::{
     state::normalize_state,
 };
 
+/// Deciding whether a declaration needs a generated part, and checking the part URI.
+mod parts;
+use self::parts::*;
+
+/// Checking that annotations reached through an import prefix are spelled with it.
+mod prefixes;
+use self::prefixes::*;
+
+/// Resolving one class body into the resolver's own representation.
+mod classes;
+use self::classes::*;
+
 /// Resolves one parsed library against a symbol catalog.
 pub fn resolve_library(
     file_id: FileId,
@@ -121,162 +133,6 @@ pub fn resolve_library_with_partless_configs(
     }
 }
 
-/// Reports annotation prefixes that are not declared by an import directive.
-fn validate_annotation_prefixes(
-    file_id: FileId,
-    library: &ParsedDartFileSurface,
-    diagnostics: &mut Vec<Diagnostic>,
-) {
-    let prefixes = library
-        .directives
-        .iter()
-        .filter_map(|directive| match directive {
-            ParsedDirective::Import {
-                prefix: Some(prefix),
-                ..
-            } => Some(prefix.as_str()),
-            _ => None,
-        })
-        .collect::<BTreeSet<_>>();
-
-    let mut check = |annotations: &[ParsedAnnotation]| {
-        for annotation in annotations {
-            let Some(prefix) = annotation.prefix.as_deref() else {
-                continue;
-            };
-            if prefixes.contains(prefix) {
-                continue;
-            }
-            diagnostics.push(
-                Diagnostic::error(format!(
-                    "annotation prefix `{prefix}` is not declared by an import"
-                ))
-                .with_label(SourceLabel::new(
-                    file_id,
-                    annotation.span,
-                    format!("add `as {prefix}` to the matching import or remove the prefix"),
-                )),
-            );
-        }
-    };
-
-    for directive in &library.directives {
-        if let ParsedDirective::Library { annotations, .. } = directive {
-            check(annotations);
-        }
-    }
-    for class in &library.classes {
-        check(&class.annotations);
-        for field in &class.fields {
-            check(&field.annotations);
-        }
-        for constructor in &class.constructors {
-            check(&constructor.annotations);
-            for param in &constructor.params {
-                check(&param.annotations);
-            }
-        }
-        for method in &class.methods {
-            check(&method.annotations);
-            for param in &method.params {
-                check(&param.annotations);
-            }
-        }
-    }
-    for enum_surface in &library.enums {
-        check(&enum_surface.annotations);
-        for variant in &enum_surface.variants {
-            check(&variant.annotations);
-        }
-    }
-    for mixin in &library.mixins {
-        check(&mixin.annotations);
-        for field in &mixin.fields {
-            check(&field.annotations);
-        }
-    }
-    for extension in &library.extensions {
-        check(&extension.annotations);
-    }
-    for extension_type in &library.extension_types {
-        check(&extension_type.annotations);
-    }
-    for function in &library.functions {
-        check(&function.annotations);
-        for param in &function.params {
-            check(&param.annotations);
-        }
-    }
-    for variable in &library.variables {
-        check(&variable.annotations);
-    }
-    for typedef in &library.typedefs {
-        check(&typedef.annotations);
-    }
-}
-
-/// Returns whether a resolved class requires a generated part file.
-fn class_needs_part(class: &ResolvedClass, partless_config_symbols: &[&str]) -> bool {
-    !class.traits.is_empty()
-        || class
-            .configs
-            .iter()
-            .any(|config| !partless_config_symbols.contains(&config.symbol.0.as_str()))
-        || class.constructors.iter().any(|constructor| {
-            constructor
-                .configs
-                .iter()
-                .any(|config| !partless_config_symbols.contains(&config.symbol.0.as_str()))
-        })
-        || class.fields.iter().any(|field| {
-            field
-                .configs
-                .iter()
-                .any(|config| !partless_config_symbols.contains(&config.symbol.0.as_str()))
-        })
-        || class.methods.iter().any(|method| {
-            !method.traits.is_empty()
-                || method
-                    .configs
-                    .iter()
-                    .any(|config| !partless_config_symbols.contains(&config.symbol.0.as_str()))
-                || method.params.iter().any(|param| {
-                    !param.traits.is_empty()
-                        || param.configs.iter().any(|config| {
-                            !partless_config_symbols.contains(&config.symbol.0.as_str())
-                        })
-                })
-        })
-}
-
-/// Returns whether a resolved class contains any Dust-owned symbol.
-fn class_has_dust_symbol(class: &ResolvedClass) -> bool {
-    !class.traits.is_empty()
-        || !class.configs.is_empty()
-        || class
-            .constructors
-            .iter()
-            .any(|constructor| !constructor.configs.is_empty())
-        || class.fields.iter().any(|field| !field.configs.is_empty())
-        || class.methods.iter().any(|method| {
-            !method.traits.is_empty()
-                || !method.configs.is_empty()
-                || method
-                    .params
-                    .iter()
-                    .any(|param| !param.traits.is_empty() || !param.configs.is_empty())
-        })
-}
-
-/// Returns whether a resolved enum requires a generated part file.
-fn enum_needs_part(enum_ir: &ResolvedEnum, partless_config_symbols: &[&str]) -> bool {
-    !enum_ir.traits.is_empty()
-        || enum_ir
-            .configs
-            .iter()
-            .any(|config| !partless_config_symbols.contains(&config.symbol.0.as_str()))
-}
-
 /// Resolves one parsed enum into semantic data.
 fn resolve_enum(
     file_id: FileId,
@@ -356,99 +212,4 @@ fn expected_part_uri(output_path: &str) -> String {
         .and_then(|name| name.to_str())
         .unwrap_or("file.g.dart")
         .to_owned()
-}
-
-/// Resolves one parsed class into semantic data.
-fn resolve_class(
-    file_id: FileId,
-    class: &ParsedClassSurface,
-    catalog: &SymbolCatalog,
-    diagnostics: &mut Vec<Diagnostic>,
-) -> ResolvedClass {
-    let mut traits = Vec::new();
-    let mut configs = Vec::new();
-
-    resolve_declaration_annotations(
-        file_id,
-        &class.annotations,
-        catalog,
-        diagnostics,
-        &mut traits,
-        &mut configs,
-    );
-
-    let mut fields: Vec<crate::ResolvedField> = class
-        .fields
-        .iter()
-        .map(|field| resolve_field(file_id, field, catalog, diagnostics))
-        .collect();
-
-    let mut methods: Vec<crate::ResolvedMethod> = class
-        .methods
-        .iter()
-        .map(|method| resolve_method(file_id, method, catalog, diagnostics))
-        .collect();
-
-    let mut constructors: Vec<crate::ResolvedConstructor> = class
-        .constructors
-        .iter()
-        .map(|constructor| resolve_constructor(file_id, constructor, catalog, diagnostics))
-        .collect();
-
-    let serde = normalize_class_serde(&class.name, &configs, diagnostics);
-    normalize_route(&mut configs);
-    normalize_state(&mut configs);
-    normalize_http(&mut configs, &mut methods);
-    normalize_db(&mut configs, &mut fields, &mut constructors, &mut methods);
-
-    ResolvedClass {
-        kind: match class.kind {
-            ParsedClassKind::Class => ClassKindIr::Class,
-            ParsedClassKind::SealedClass => ClassKindIr::SealedClass,
-            ParsedClassKind::MixinClass => ClassKindIr::MixinClass,
-        },
-        name: class.name.clone(),
-        is_abstract: class.is_abstract,
-        is_interface: class.is_interface,
-        superclass_name: class.superclass_name.clone(),
-        span: SpanIr::new(file_id, class.span),
-        fields,
-        constructors,
-        methods,
-        traits,
-        configs,
-        serde,
-        requires_lowering_diagnostics: false,
-    }
-}
-
-/// Marks classes whose lowering diagnostics are relevant to generated output.
-fn mark_required_lowering_diagnostics(classes: &mut [ResolvedClass]) {
-    let mut names = classes
-        .iter()
-        .filter(|class| !class.traits.is_empty() || !class.configs.is_empty())
-        .map(|class| class.name.clone())
-        .collect::<HashSet<_>>();
-
-    for class in classes.iter() {
-        for field in &class.fields {
-            for config in &field.configs {
-                if let Some(NormalizedConfigIr::Db(DbConfigIr::Sqlx(sqlx))) =
-                    config.normalized.as_ref()
-                    && let Some(converter) = &sqlx.try_from_class_name
-                {
-                    names.insert(converter.clone());
-                }
-            }
-        }
-        if let Some(serde) = &class.serde {
-            for variant in &serde.variants {
-                names.insert(variant.target_class_name.clone());
-            }
-        }
-    }
-
-    for class in classes {
-        class.requires_lowering_diagnostics = names.contains(&class.name);
-    }
 }

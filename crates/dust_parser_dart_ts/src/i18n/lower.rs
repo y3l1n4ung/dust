@@ -7,6 +7,10 @@ use crate::syntax::node_text;
 
 use super::{I18nTranslationKind, I18nTranslationUse};
 
+/// The shape of one i18n call, as the lowering reads it.
+mod shape;
+use self::shape::*;
+
 /// Lowers one query match into an i18n entry.
 pub(super) fn lower_match(
     source: &SourceText,
@@ -283,31 +287,4 @@ fn text_range(start: usize, end: usize) -> TextRange {
 /// Converts a byte offset into Dust text size.
 fn offset(value: usize) -> TextSize {
     TextSize::new(u32::try_from(value).unwrap_or(u32::MAX))
-}
-
-/// Matched i18n call metadata.
-struct I18nCallShape {
-    /// Recognized call kind.
-    kind: I18nCallKind,
-    /// Full source span for the call.
-    span: TextRange,
-}
-
-impl I18nCallShape {
-    /// Returns the public translation API kind when this is a translation call.
-    fn translation_kind(&self) -> Option<I18nTranslationKind> {
-        match self.kind {
-            I18nCallKind::Translation(kind) => Some(kind),
-            I18nCallKind::HardcodedText => None,
-        }
-    }
-}
-
-/// Recognized call kinds relevant to i18n scanning.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum I18nCallKind {
-    /// A public i18n translation API call.
-    Translation(I18nTranslationKind),
-    /// A direct Flutter `Text("literal")` call.
-    HardcodedText,
 }
