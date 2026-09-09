@@ -112,6 +112,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `DatabaseTransaction` becomes `Transaction`; `Pool` is unchanged. Dust's names
   diverged for no reason and in one place inverted SQLx's, since `Executor` had
   been taken by a different type. Rename call sites; the shapes are identical.
+- **Database**: adding a database is a `Dialect` entry rather than a search for
+  every `match` on the driver. Analysis, both annotation parsers and the column
+  type checker read the dialect registry, so a driver is named, spelled and
+  aliased in exactly one place.
+- Repository: hand-written source files stay under 300 lines, checked in the
+  lint gate and in CI. A publishable package is named once, in the root pubspec
+  workspace, and the lint, format and test targets are derived from it; Sonar is
+  checked for a coverage report per package, which is what silently failed
+  before.
+
+
+### Fixed
+
+- **Database**: `dust_db_postgres` is recognised as a workspace runtime
+  package. It was in the CLI's compatibility contract but not in the import
+  table workspace discovery scans, so `dust doctor` reported it unused against
+  a project that imports it, and a build resolving an incompatible version was
+  accepted rather than refused. A test now holds the dialect registry, workspace
+  discovery and the contract to each other.
 
 ### Removed
 

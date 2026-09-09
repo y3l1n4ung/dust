@@ -16,7 +16,7 @@ by the workspace source.
 
 | Dust CLI | `dust_dart` | `dust_flutter` | `dust_db_sqlite3` | `dust_db_postgres` | `dust_server` |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `0.2.0` | `>=0.2.0 <0.3.0` | `>=0.1.4 <0.3.0` | `>=0.2.0 <0.3.0` | `>=0.2.0 <0.3.0` | `>=0.2.0 <0.3.0` |
+| `0.2.0` | `>=0.2.0 <0.3.0` | `>=0.1.5 <0.3.0` | `>=0.2.0 <0.3.0` | `>=0.2.0 <0.3.0` | `>=0.2.0 <0.3.0` |
 
 0.2.0 is a minor bump rather than a patch because two things break across it.
 Inline query terminals return `Result<T, SqlxError>` instead of throwing, and
@@ -25,8 +25,10 @@ stale until `dust build --db` writes it again. A pubspec asking for `^0.1.4`
 stops before 0.2.0, which is the point: an app takes both changes when it says
 so rather than on its next `pub get`.
 
-`dust_flutter` stayed at 0.1.4. Nothing in it changed, and generated Flutter
-code from this CLI still compiles against it.
+`dust_flutter` is 0.1.5, a patch: `view_model.dart` was split into three files
+that the library still exports together, so nothing a caller writes changes.
+The floor moves with it because a supported row names the version each package
+is actually at, not the oldest one that happens to work.
 
 ## Dust CLI 0.1.4
 
