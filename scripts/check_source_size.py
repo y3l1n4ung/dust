@@ -5,11 +5,20 @@ CONTRIBUTING's "Small & Clean" rule has no teeth without a number. This check
 supplies one: every hand-written production source file stays under
 ``LINE_LIMIT`` lines.
 
+Every hand-written Rust, Dart, Python and shell file counts, wherever it lives:
+crate and package source, their tests, the example and fixture projects, and
+the scripts in this directory. Tests are included because a 2,000-line test
+file is as hard to read as a 2,000-line module; splitting one by what it covers
+costs nothing and makes a failure easier to place.
+
+Generated Dart is the exception, recognised by the `.g.dart` suffix or by the
+header the emitter writes. It is the emitter's output rather than something a
+person reads or edits, and its size is a fact about the emitter.
+
 ``BASELINE`` is empty, and is meant to stay that way. It exists so a file can
 be pinned at its current size while it is being split rather than blocking a
-branch, but every file in the repository is under the limit today. A pin that
-is no longer needed is itself an error, so nothing can be parked there and
-forgotten.
+branch. A pin that is no longer needed is itself an error, so nothing can be
+parked there and forgotten.
 """
 
 from __future__ import annotations
@@ -27,13 +36,21 @@ LINE_LIMIT = 300
 # limit. Empty is the intended state; adding to it needs a reason.
 BASELINE: dict[str, int] = {}
 
-# Hand-written production source. Tests and generated output are excluded: test
-# files grow with the cases they cover, and generated Dart is the emitter's
-# output rather than something a reviewer reads. Under `src`, that means both
-# `tests.rs` modules and inline `#[cfg(test)]` blocks.
+# Every hand-written source file, wherever it lives. Only generated Dart is
+# excluded, by the `.g.dart` suffix.
 SOURCE_GLOBS = (
     ("crates", "*/src/**/*.rs"),
+    ("crates", "*/tests/**/*.rs"),
+    ("crates", "*/benches/**/*.rs"),
     ("packages", "*/lib/**/*.dart"),
+    ("packages", "*/test/**/*.dart"),
+    ("packages", "*/example/**/*.dart"),
+    ("examples", "*/lib/**/*.dart"),
+    ("examples", "*/test/**/*.dart"),
+    ("fixtures", "*/lib/**/*.dart"),
+    ("fixtures", "*/test/**/*.dart"),
+    ("scripts", "**/*.py"),
+    ("scripts", "**/*.sh"),
 )
 
 
@@ -48,42 +65,26 @@ def source_files(root: Path) -> list[Path]:
 
 
 def _is_excluded(path: Path) -> bool:
-    """Returns whether `path` is generated output or a test-only module."""
-    return path.name.endswith(".g.dart") or path.name == "tests.rs"
+    """Returns whether `path` is generated output rather than hand-written.
+
+    The `.g.dart` suffix covers most of it, but the emitter also writes test
+    files under `test/generated/`, which carry the same header. Splitting one
+    of those achieves nothing: the next `dust build` writes it back.
+    """
+    if path.name.endswith(".g.dart"):
+        return True
+    with path.open(encoding="utf-8", errors="replace") as handle:
+        return "GENERATED CODE - DO NOT MODIFY BY HAND" in handle.readline()
 
 
 def line_count(path: Path) -> int:
-    """Returns the reviewable lines in `path`.
+    """Returns the number of lines in `path`.
 
-    Inline ``#[cfg(test)] mod tests { ... }`` blocks do not count. They are
-    tests, and tests grow with the cases they cover; charging them against a
-    module's budget would push authors to write fewer of them.
+    Every line counts, inline ``#[cfg(test)]`` modules included. A file is as
+    long as it reads, and an exemption that shrinks the number without
+    shrinking the file only moves the problem somewhere the check cannot see.
     """
-    lines = path.read_text(encoding="utf-8").splitlines()
-    if path.suffix != ".rs":
-        return len(lines)
-
-    counted = 0
-    index = 0
-    while index < len(lines):
-        if lines[index].strip() == "#[cfg(test)]":
-            index = _skip_block(lines, index)
-            continue
-        counted += 1
-        index += 1
-    return counted
-
-
-def _skip_block(lines: list[str], start: int) -> int:
-    """Returns the index after the braced item that begins at `start`."""
-    depth = 0
-    opened = False
-    for index in range(start, len(lines)):
-        depth += lines[index].count("{") - lines[index].count("}")
-        opened = opened or "{" in lines[index]
-        if opened and depth <= 0:
-            return index + 1
-    return len(lines)
+    return len(path.read_text(encoding="utf-8").splitlines())
 
 
 def check(root: Path) -> list[str]:
@@ -165,27 +166,41 @@ class CheckSourceSizeTests(unittest.TestCase):
             self._workspace(root, "packages/demo/lib/big.g.dart", LINE_LIMIT + 100)
             self.assertEqual(check(root), [])
 
-    def test_tests_are_not_scanned(self) -> None:
+    def test_generated_header_is_skipped(self) -> None:
         BASELINE.clear()
         with tempfile.TemporaryDirectory() as name:
             root = Path(name)
-            self._workspace(root, "crates/demo/tests/big.rs", LINE_LIMIT + 100)
-            self._workspace(root, "packages/demo/test/big_test.dart", LINE_LIMIT + 100)
-            self._workspace(root, "crates/demo/src/feature/tests.rs", LINE_LIMIT + 100)
+            path = root / "packages/demo/test/generated/api_test.dart"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                "// GENERATED CODE - DO NOT MODIFY BY HAND\n"
+                + "// line\n" * (LINE_LIMIT + 100),
+                encoding="utf-8",
+            )
             self.assertEqual(check(root), [])
 
-    def test_inline_test_module_does_not_count(self) -> None:
+    def test_tests_are_scanned_too(self) -> None:
+        BASELINE.clear()
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            self._workspace(root, "crates/demo/tests/big.rs", LINE_LIMIT + 1)
+            self._workspace(root, "packages/demo/test/big_test.dart", LINE_LIMIT + 1)
+            self._workspace(root, "crates/demo/src/feature/tests.rs", LINE_LIMIT + 1)
+            self._workspace(root, "examples/demo/lib/big.dart", LINE_LIMIT + 1)
+            self.assertEqual(len(check(root)), 4)
+
+    def test_inline_test_module_counts(self) -> None:
         BASELINE.clear()
         with tempfile.TemporaryDirectory() as name:
             root = Path(name)
             path = root / "crates/demo/src/lib.rs"
             path.parent.mkdir(parents=True, exist_ok=True)
-            body = "// line\n" * LINE_LIMIT
-            tests = "#[cfg(test)]\nmod tests {\n" + "    // case\n" * 400 + "}\n"
+            body = "// line\n" * 100
+            tests = "#[cfg(test)]\nmod tests {\n" + "    // case\n" * LINE_LIMIT + "}\n"
             path.write_text(body + tests, encoding="utf-8")
 
-            self.assertEqual(line_count(path), LINE_LIMIT)
-            self.assertEqual(check(root), [])
+            self.assertEqual(line_count(path), 100 + LINE_LIMIT + 3)
+            self.assertEqual(len(check(root)), 1)
 
     def test_pinned_file_may_shrink_but_not_grow(self) -> None:
         BASELINE.clear()
