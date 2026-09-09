@@ -4,9 +4,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
-TARGETS=(
-  "packages/dust_flutter"
-)
+# Read from the root pubspec workspace, so adding a package is one edit.
+TARGETS=()
+while IFS= read -r package; do
+  TARGETS+=("$package")
+done < <("$ROOT_DIR/scripts/workspace_packages.sh" flutter)
 
 if [[ "${1:-}" == "--examples" ]]; then
   TARGETS=(

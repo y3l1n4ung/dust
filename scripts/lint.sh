@@ -34,6 +34,9 @@ esac
 echo "==> Source size"
 python3 scripts/check_source_size.py
 
+echo "==> Coverage reporting"
+python3 scripts/check_coverage_reports.py
+
 if [[ "$SCOPE" != packages ]]; then
   ./scripts/rust/lint.sh
 fi
