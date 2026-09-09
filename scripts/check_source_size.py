@@ -5,7 +5,7 @@ CONTRIBUTING's "Small & Clean" rule has no teeth without a number. This check
 supplies one: every hand-written production source file stays under
 ``LINE_LIMIT`` lines.
 
-Twenty-eight files predate the rule. Rather than block the milestone on a
+Twenty-four files predate the rule. Rather than block the milestone on a
 refactor of all of them, each is pinned in ``BASELINE`` at the size it had when
 the check landed: it may shrink, never grow. A pin that is no longer needed is
 itself an error, so the baseline cannot quietly outlive the file it excuses,
@@ -35,22 +35,18 @@ BASELINE: dict[str, int] = {
     "crates/dust_http_client_plugin/src/plugin/emit/test_file.rs": 456,
     "crates/dust_resolver/src/resolve.rs": 454,
     "packages/dust_flutter/lib/src/state/view_model.dart": 450,
-    "packages/dust_db_postgres/lib/src/postgres_pool.dart": 443,
     "crates/dust_cli/src/args.rs": 442,
-    "crates/dust_db_plugin/src/plugin/validate/sqlx.rs": 439,
     "crates/dust_parser_dart_ts/src/language_gates.rs": 423,
     "crates/dust_state_plugin/src/plugin/emit/render.rs": 423,
     "crates/dust_resolver/src/serde.rs": 377,
     "crates/dust_parser_dart_ts/src/annotations/values.rs": 364,
     "crates/dust_http_client_plugin/src/plugin/parse/http.rs": 342,
-    "packages/dust_db_sqlite3/lib/src/sqlite_pool.dart": 341,
     "crates/dust_resolver/src/resolve_support.rs": 331,
     "crates/dust_driver/src/result.rs": 329,
     "crates/dust_plugin_serde/src/validate.rs": 325,
     "crates/dust_plugin_serde/src/emit_class.rs": 317,
     "crates/dust_ir/src/traits.rs": 316,
     "crates/dust_db_plugin/src/plugin/emit/dao.rs": 314,
-    "crates/dust_db_plugin/src/plugin/validate/cache.rs": 314,
     "crates/dust_parser_dart_ts/src/i18n/lower.rs": 313,
     "crates/dust_route_plugin/src/plugin/build/mod.rs": 303,
 }

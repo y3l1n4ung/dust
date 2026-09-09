@@ -17,6 +17,10 @@ use super::{
 mod cache;
 /// Validates annotated DAO classes and methods.
 mod dao;
+/// Describes queries against a live database and checks the columns.
+mod describe;
+/// Stable hashing for the offline query cache.
+mod hash;
 /// Validates parsed query specs.
 mod query;
 /// Validates row mapper classes and columns.

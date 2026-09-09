@@ -11,9 +11,10 @@ use dust_text::{FileId, TextRange};
 
 use super::{
     cache::{
-        QUERY_CACHE_VERSION, QueryCache, QueryCacheEntry, query_cache_path, schema_hash,
+        QUERY_CACHE_VERSION, QueryCache, QueryCacheEntry, query_cache_path,
         validate_cached_columns, validate_from_query_cache,
     },
+    hash::schema_hash,
     query::{validate_placeholders, validate_query_shape},
 };
 use crate::plugin::{
@@ -397,7 +398,7 @@ fn offline_query_cache_validates_shape_and_staleness() {
             driver: "sqlite3".to_owned(),
             migrations: "./migrations".to_owned(),
             schema_hash: "schema".to_owned(),
-            sql_hash: super::cache::stable_hash_hex(query.sql.as_bytes()),
+            sql_hash: super::hash::stable_hash_hex(query.sql.as_bytes()),
             sql: query.sql.clone(),
             user_parameter_count: 1,
             expanded_parameter_count: 1,

@@ -101,3 +101,55 @@ extension _Sqlite3DriverOperations on Sqlite3Driver {
     );
   }
 }
+
+/// Runs [body], reporting a failure as a value rather than a throw.
+///
+/// Selecting and executing fail the same way and differ only in what they run
+/// and what to call it, so they share one guard. `SqlxError` passes through: a
+/// mapper or the driver's own error reporting already shaped it, and rewrapping
+/// it here would bury the operation that actually failed.
+Result<T, SqlxError> _guardSqlite<T>(
+  String sql,
+  String message,
+  T Function() body,
+) {
+  try {
+    return Ok<T, SqlxError>(body());
+  } on SqlxError catch (error) {
+    return Err<T, SqlxError>(error);
+  } on PlaceholderBindError catch (error) {
+    return Err<T, SqlxError>(
+      _sqliteQueryError(error.message, operation: error.sql),
+    );
+  } catch (error) {
+    return Err<T, SqlxError>(
+      _sqliteQueryError(message, cause: error, operation: sql),
+    );
+  }
+}
+
+/// Wraps the first row of [result] for a one-row terminal.
+///
+/// No index is built here. There is one row, so there is nothing to share it
+/// with, and the adapter builds one only if a name is actually read —
+/// `fetchScalar` reads column zero and never needs one.
+Sqlite3Row _firstRow(sqlite.ResultSet result) {
+  return Sqlite3Row._shared(result.rows.first, result.columnNames, null);
+}
+
+/// Applies [mapper] to [row], reporting a throw as a decode error.
+Result<T, SqlxError> _mapRow<T>(String sql, Row row, RowMapper<T> mapper) {
+  try {
+    return Ok<T, SqlxError>(mapper(row));
+  } on SqlxError catch (error) {
+    return Err<T, SqlxError>(error);
+  } catch (error) {
+    return Err<T, SqlxError>(
+      _sqliteDecodeError(
+        'SQLite row decode failed.',
+        cause: error,
+        operation: sql,
+      ),
+    );
+  }
+}

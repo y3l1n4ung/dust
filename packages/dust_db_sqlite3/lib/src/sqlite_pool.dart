@@ -222,34 +222,11 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     String sql,
     List<Object?> parameters,
   ) {
-    try {
-      return Ok<sqlite.ResultSet, SqlxError>(
-        _selectUnchecked(sql, parameters),
-      );
-    } on SqlxError catch (error) {
-      return Err<sqlite.ResultSet, SqlxError>(error);
-    } on PlaceholderBindError catch (error) {
-      return Err<sqlite.ResultSet, SqlxError>(
-        _sqliteQueryError(error.message, operation: error.sql),
-      );
-    } catch (error) {
-      return Err<sqlite.ResultSet, SqlxError>(
-        _sqliteQueryError(
-          'SQLite query failed.',
-          cause: error,
-          operation: sql,
-        ),
-      );
-    }
-  }
-
-  /// Wraps the first row of [result] for a one-row terminal.
-  ///
-  /// No index is built here. There is one row, so there is nothing to share it
-  /// with, and the adapter builds one only if a name is actually read —
-  /// `fetchScalar` reads column zero and never needs one.
-  Sqlite3Row _firstRow(sqlite.ResultSet result) {
-    return Sqlite3Row._shared(result.rows.first, result.columnNames, null);
+    return _guardSqlite(
+      sql,
+      'SQLite query failed.',
+      () => _selectUnchecked(sql, parameters),
+    );
   }
 
   /// Runs [sql] and wraps every row, for callers that need them all as rows.
@@ -273,41 +250,11 @@ final class Sqlite3Driver implements Pool, Sqlite3Executor {
     String sql,
     List<Object?> parameters,
   ) {
-    try {
-      return Ok<ExecResult, SqlxError>(
-        _executeUnchecked(sql, parameters),
-      );
-    } on SqlxError catch (error) {
-      return Err<ExecResult, SqlxError>(error);
-    } on PlaceholderBindError catch (error) {
-      return Err<ExecResult, SqlxError>(
-        _sqliteQueryError(error.message, operation: error.sql),
-      );
-    } catch (error) {
-      return Err<ExecResult, SqlxError>(
-        _sqliteQueryError(
-          'SQLite execute failed.',
-          cause: error,
-          operation: sql,
-        ),
-      );
-    }
-  }
-
-  Result<T, SqlxError> _mapRow<T>(String sql, Row row, RowMapper<T> mapper) {
-    try {
-      return Ok<T, SqlxError>(mapper(row));
-    } on SqlxError catch (error) {
-      return Err<T, SqlxError>(error);
-    } catch (error) {
-      return Err<T, SqlxError>(
-        _sqliteDecodeError(
-          'SQLite row decode failed.',
-          cause: error,
-          operation: sql,
-        ),
-      );
-    }
+    return _guardSqlite(
+      sql,
+      'SQLite execute failed.',
+      () => _executeUnchecked(sql, parameters),
+    );
   }
 
   void _checkOpen() {

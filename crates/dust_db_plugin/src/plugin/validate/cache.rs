@@ -6,9 +6,12 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::plugin::{dialect::Dialect, migrations::applied_migration_files, model::QuerySpec};
+use crate::plugin::{dialect::Dialect, model::QuerySpec};
 
-use super::query::{query_row_type, validate_placeholders};
+use super::{
+    hash::stable_hash_hex,
+    query::{query_row_type, validate_placeholders},
+};
 
 /// Version for the persisted DB query metadata cache format.
 pub(super) const QUERY_CACHE_VERSION: u32 = 3;
@@ -171,31 +174,6 @@ pub(super) fn validate_cached_columns(
     Ok(())
 }
 
-/// Computes a stable schema hash from migration file names and contents.
-pub(super) fn schema_hash(migrations_path: &Path) -> Result<String, String> {
-    let mut hash = StableHash::new();
-    for migration in applied_migration_files(migrations_path)? {
-        hash.update(migration.name.as_bytes());
-        hash.update(b"\0");
-        let source = fs::read(&migration.path).map_err(|error| {
-            format!(
-                "failed to read migration `{}`: {error}",
-                migration.path.display()
-            )
-        })?;
-        hash.update(&source);
-        hash.update(b"\0");
-    }
-    Ok(hash.finish_hex())
-}
-
-/// Computes a stable hexadecimal hash for cache keys.
-pub(super) fn stable_hash_hex(bytes: &[u8]) -> String {
-    let mut hash = StableHash::new();
-    hash.update(bytes);
-    hash.finish_hex()
-}
-
 /// Directory holding the committed DB query metadata cache.
 ///
 /// Package root rather than `.dart_tool/`, because this is a build input and
@@ -288,27 +266,4 @@ fn validate_cached_query(
         ));
     }
     validate_cached_columns(query, row_columns, &entry.columns)
-}
-
-/// Small deterministic FNV-1a hasher for cache keys.
-struct StableHash(u64);
-
-impl StableHash {
-    /// Creates a hasher with the FNV offset basis.
-    const fn new() -> Self {
-        Self(1469598103934665603)
-    }
-
-    /// Adds bytes to the stable hash.
-    fn update(&mut self, bytes: &[u8]) {
-        for byte in bytes {
-            self.0 ^= u64::from(*byte);
-            self.0 = self.0.wrapping_mul(1099511628211);
-        }
-    }
-
-    /// Returns the final hash as a fixed-width hex string.
-    fn finish_hex(self) -> String {
-        format!("{:016x}", self.0)
-    }
 }

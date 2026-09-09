@@ -4,6 +4,8 @@ import 'package:dust_dart/db.dart';
 import 'package:postgres/postgres.dart' as pg;
 
 part 'connect_options.dart';
+part 'connection_url.dart';
+part 'driver.dart';
 part 'errors.dart';
 part 'migrations.dart';
 part 'row.dart';
@@ -36,9 +38,6 @@ abstract base class _PostgresSession implements PostgresExecutor {
 
   @override
   pg.Session get session => _session;
-
-  /// Names savepoints uniquely within a process.
-  static int _savepointCounter = 0;
 
   @override
   Driver get driver => Driver.postgres;
@@ -227,7 +226,7 @@ abstract base class _PostgresSession implements PostgresExecutor {
     Future<Result<T, SqlxError>> Function(Transaction tx) fn,
   ) async {
     final executor = _sessionExecutor;
-    if (executor == null) return _savepoint(fn);
+    if (executor == null) return _runInSavepoint(_session, fn);
 
     try {
       return await executor.runTx<Result<T, SqlxError>>((tx) async {
@@ -247,59 +246,6 @@ abstract base class _PostgresSession implements PostgresExecutor {
           operation: 'transaction',
         ),
       );
-    }
-  }
-
-  /// Runs [fn] inside a savepoint on the transaction already in progress.
-  ///
-  /// `package:postgres` exposes no savepoint API, but a `TxSession` is a
-  /// `Session`, so the statements are available. After a successful
-  /// `ROLLBACK TO SAVEPOINT` the driver clears the transaction's stale error,
-  /// which is what lets the enclosing transaction still commit.
-  Future<Result<T, SqlxError>> _savepoint<T>(
-    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
-  ) async {
-    final name = 'dust_sp_${_savepointCounter++}';
-    try {
-      await _session.execute('SAVEPOINT $name');
-    } catch (error) {
-      return Err<T, SqlxError>(
-        _postgresTransactionError(
-          'PostgreSQL savepoint failed.',
-          cause: error,
-          operation: 'SAVEPOINT',
-        ),
-      );
-    }
-
-    Result<T, SqlxError> result;
-    try {
-      result = await fn(_PostgresTransaction(_session));
-    } catch (error) {
-      await _releaseSavepoint(name, rollback: true);
-      return Err<T, SqlxError>(
-        _postgresTransactionError(
-          'PostgreSQL nested transaction failed.',
-          cause: error,
-          operation: 'SAVEPOINT',
-        ),
-      );
-    }
-
-    await _releaseSavepoint(name, rollback: result.isErr);
-    return result;
-  }
-
-  /// Ends a savepoint, either releasing it or rolling back to it.
-  Future<void> _releaseSavepoint(String name, {required bool rollback}) async {
-    final command =
-        rollback ? 'ROLLBACK TO SAVEPOINT $name' : 'RELEASE SAVEPOINT $name';
-    try {
-      await _session.execute(command);
-    } catch (_) {
-      // The enclosing transaction owns the outcome from here: if the savepoint
-      // cannot be ended the transaction is already failing, and reporting this
-      // instead would hide the error that caused it.
     }
   }
 
@@ -326,118 +272,3 @@ abstract base class _PostgresSession implements PostgresExecutor {
     }
   }
 }
-
-/// PostgreSQL driver backed by one `package:postgres` pool.
-///
-/// A pool in `package:postgres` runs statements directly as well as handing out
-/// transactions, so one type is both the pool and the connection Dust asks for.
-final class PostgresDriver extends _PostgresSession implements Pool {
-  PostgresDriver._(pg.Pool<Object?> pool, this._migrations)
-      : _pool = pool,
-        super(pool, pool);
-
-  final pg.Pool<Object?> _pool;
-  final Map<String, String> _migrations;
-
-  /// Opens a pool from a connection URL and applies unapplied migrations.
-  ///
-  /// The URL is `postgres://user:password@host:port/database`.
-  static PostgresDriver connect(
-    String url, {
-    Map<String, String> migrations = const <String, String>{},
-    PgConnectOptions? options,
-  }) {
-    final pool = pg.Pool<Object?>.withEndpoints(
-      <pg.Endpoint>[_endpointFor(url)],
-      settings: pg.PoolSettings(
-        // Explicit options win; the URL decides when they say nothing.
-        sslMode: (options?.sslMode ?? _sslModeFor(url))?._driverMode,
-        connectTimeout: options?.connectTimeout,
-        queryTimeout: options?.queryTimeout,
-        applicationName: options?.applicationName,
-        maxConnectionAge: options?.maxConnectionAge,
-      ),
-    );
-    return PostgresDriver._(pool, migrations);
-  }
-
-  /// Applies any migrations this driver was opened with.
-  ///
-  /// Separate from opening because it has to await: `connect` returns
-  /// synchronously so a generated facade can hold one without its constructor
-  /// becoming a future.
-  Future<Result<Unit, SqlxError>> migrate() =>
-      _applyMigrations(this, _migrations);
-
-  /// Prepared statements held per pooled connection.
-  final _StatementCache _statements = _StatementCache();
-
-  /// Runs [sql] through a statement this connection already parsed.
-  ///
-  /// `withConnection` rather than the pool's own `execute`, because a prepared
-  /// statement belongs to the connection that parsed it. Holding the connection
-  /// for the call costs a little and the statement saves much more: measured
-  /// against a local server, 1023us a call became 321us.
-  @override
-  Future<pg.Result> _run(String sql, List<Object?> parameters) {
-    return _pool.withConnection(
-      (connection) => _statements.run(connection, sql, parameters),
-    );
-  }
-
-  @override
-  Future<Result<Unit, SqlxError>> close() async {
-    // Before the pool, so the cache never holds a statement belonging to a
-    // connection that is already gone.
-    await _statements.close();
-    return super.close();
-  }
-
-  /// Unchecked SQL, for the administrative work validation cannot reach.
-  UnsafeSql get unsafe => PostgresUnsafeSql(this);
-
-  /// The underlying driver pool, for driver-specific work Dust does not wrap.
-  pg.Pool<Object?> get pool => _pool;
-}
-
-/// Reads `?sslmode=` from a connection URL.
-///
-/// Every PostgreSQL tool carries the setting there — libpq, `psql`, SQLx — so a
-/// URL that works elsewhere works here. Returns null when the URL says nothing,
-/// leaving the driver's own default in charge.
-///
-/// `prefer` and `allow` are libpq modes this driver has no equivalent for. They
-/// mean "try TLS, fall back to plaintext", and mapping them to either side
-/// would silently decide something the caller asked to have decided per
-/// connection, so they are rejected rather than guessed.
-PgSslMode? _sslModeFor(String url) {
-  final value = Uri.parse(url).queryParameters['sslmode'];
-  return switch (value) {
-    null => null,
-    'disable' => PgSslMode.disable,
-    'require' => PgSslMode.require,
-    'verify-full' || 'verify_full' => PgSslMode.verifyFull,
-    _ => throw ArgumentError.value(
-        value,
-        'sslmode',
-        'Supported values are disable, require and verify-full',
-      ),
-  };
-}
-
-/// Parses a connection URL into the driver's endpoint type.
-pg.Endpoint _endpointFor(String url) {
-  final uri = Uri.parse(url);
-  final userInfo = uri.userInfo.split(':');
-  return pg.Endpoint(
-    host: uri.host.isEmpty ? 'localhost' : uri.host,
-    port: uri.hasPort ? uri.port : 5432,
-    database: uri.pathSegments.isEmpty ? 'postgres' : uri.pathSegments.first,
-    username:
-        userInfo.isEmpty || userInfo.first.isEmpty ? null : userInfo.first,
-    password: userInfo.length > 1 ? userInfo[1] : null,
-  );
-}
-
-/// Backwards-compatible PostgreSQL pool name, as `sqlx-postgres` names it.
-typedef PgPool = PostgresDriver;
