@@ -1,13 +1,42 @@
 part of 'sqlite_pool.dart';
 
-final class _TransactionCoordinator {
+/// State belonging to one open database, not to one driver over it.
+///
+/// A transaction is a second `Sqlite3Driver` over the same `sqlite.Database`,
+/// so anything scoped to the connection has to be shared with it rather than
+/// rebuilt: savepoint names have to stay unique across nesting, and a prepared
+/// statement is worth reusing whether the caller holds the pool or a
+/// transaction on it.
+final class _ConnectionState {
   var _nextSavepointId = 0;
+
+  /// Prepared statements held for this connection.
+  final _StatementCache statements = _StatementCache();
+
+  /// Runs one control statement whose text never varies.
+  ///
+  /// `BEGIN`, `COMMIT` and `ROLLBACK` are the same three strings for the life
+  /// of the process, so they are held like any other statement — a transaction
+  /// per request would otherwise compile two of them every time, which
+  /// measured about 0.7us of a 3.6us transaction.
+  ///
+  /// Savepoints do not come here: their names carry a counter, so every one is
+  /// a statement seen once, and caching them would fill the cache with entries
+  /// that can never hit.
+  SqlxError? _control(sqlite.Database database, String sql, String message) {
+    try {
+      statements.statementFor(database, sql).execute();
+      return null;
+    } catch (error) {
+      return _sqliteTransactionError(message, cause: error, operation: sql);
+    }
+  }
 
   Future<Result<T, SqlxError>> runRoot<T>(
     sqlite.Database database,
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
   ) async {
-    final begin = _executeControl(
+    final begin = _control(
       database,
       'BEGIN',
       'SQLite transaction begin failed.',
@@ -19,7 +48,7 @@ final class _TransactionCoordinator {
       final result = await fn(tx);
       return await result.match<Future<Result<T, SqlxError>>>(
         ok: (value) async {
-          final commit = _executeControl(
+          final commit = _control(
             database,
             'COMMIT',
             'SQLite transaction commit failed.',
@@ -28,7 +57,7 @@ final class _TransactionCoordinator {
           return Ok<T, SqlxError>(value);
         },
         err: (error) async {
-          final rollback = _executeControl(
+          final rollback = _control(
             database,
             'ROLLBACK',
             'SQLite transaction rollback failed.',
@@ -38,7 +67,7 @@ final class _TransactionCoordinator {
         },
       );
     } catch (error) {
-      final rollback = _executeControl(
+      final rollback = _control(
         database,
         'ROLLBACK',
         'SQLite transaction rollback failed.',
@@ -58,7 +87,7 @@ final class _TransactionCoordinator {
 
   Future<Result<T, SqlxError>> runSavepoint<T>(
     sqlite.Database database,
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
   ) async {
     final name = '_dust_tx_${++_nextSavepointId}';
     final begin = _executeControl(
@@ -124,22 +153,22 @@ final class _TransactionScope {
 final class _SingleConnectionPool implements Transaction, Sqlite3Executor {
   _SingleConnectionPool(
     sqlite.Database database,
-    _TransactionCoordinator transactions,
-  ) : this._scoped(database, transactions, _TransactionScope());
+    _ConnectionState connection,
+  ) : this._scoped(database, connection, _TransactionScope());
 
   _SingleConnectionPool._scoped(
     sqlite.Database database,
-    this._transactions,
+    this._connection,
     this._scope,
   ) : _driver = Sqlite3Driver._(
           database,
           ownsDatabase: false,
-          transactions: _transactions,
+          connection: _connection,
           transactionScope: _scope,
         );
 
   final Sqlite3Driver _driver;
-  final _TransactionCoordinator _transactions;
+  final _ConnectionState _connection;
   final _TransactionScope _scope;
 
   @override
@@ -147,9 +176,6 @@ final class _SingleConnectionPool implements Transaction, Sqlite3Executor {
 
   @override
   Driver get driver => _driver.driver;
-
-  @override
-  RawSql get raw => _driver.raw;
 
   @override
   Future<Result<T?, SqlxError>> fetchOptional<T>(
@@ -196,11 +222,11 @@ final class _SingleConnectionPool implements Transaction, Sqlite3Executor {
 
   @override
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
   ) {
     final error = _driver._closedError();
     if (error != null) return Future.value(Err<T, SqlxError>(error));
-    return _transactions.runSavepoint(database, fn);
+    return _connection.runSavepoint(database, fn);
   }
 
   @override
@@ -216,15 +242,20 @@ final class _SingleConnectionPool implements Transaction, Sqlite3Executor {
 
 extension _Sqlite3TransactionRunner on Sqlite3Driver {
   Future<Result<T, SqlxError>> _runTransaction<T>(
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
   ) {
     final error = _closedError();
     if (error != null) return Future.value(Err<T, SqlxError>(error));
-    if (!_ownsDatabase) return _transactions.runSavepoint(database, fn);
-    return _transactions.runRoot(database, fn);
+    if (!_ownsDatabase) return _connection.runSavepoint(database, fn);
+    return _connection.runRoot(database, fn);
   }
 }
 
+/// Runs one control statement whose text is written for this call.
+///
+/// Savepoint statements name a counter, so each is seen once. Compiling and
+/// discarding is the right thing for a statement that cannot be reused; see
+/// `_ConnectionState._control` for the ones that can.
 SqlxError? _executeControl(
   sqlite.Database database,
   String sql,

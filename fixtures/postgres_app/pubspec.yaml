@@ -1,0 +1,17 @@
+name: postgres_app
+description: PostgreSQL Database fixture, validated and exercised against a real server.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+
+resolution: workspace
+
+dependencies:
+  dust_dart:
+  dust_db_postgres:
+
+dev_dependencies:
+  test: ^1.26.0
+  very_good_analysis: ^10.3.0

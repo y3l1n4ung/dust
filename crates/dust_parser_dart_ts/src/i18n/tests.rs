@@ -126,18 +126,34 @@ Widget build(BuildContext context) {
 
 #[test]
 fn scans_shopping_app_i18n_sample_without_dynamic_warnings() {
-    let source = source_text(include_str!(
-        "../../../../examples/shopping_app/lib/features/products/views/products_screen.dart"
-    ));
+    // The screen is one Dart library across four part files, so the sample is
+    // every part of it rather than the file that happens to hold `build`.
+    const PARTS: [&str; 4] = [
+        include_str!(
+            "../../../../examples/shopping_app/lib/features/products/views/products_screen.dart"
+        ),
+        include_str!(
+            "../../../../examples/shopping_app/lib/features/products/views/products_screen_chrome.dart"
+        ),
+        include_str!(
+            "../../../../examples/shopping_app/lib/features/products/views/products_screen_list.dart"
+        ),
+        include_str!(
+            "../../../../examples/shopping_app/lib/features/products/views/products_screen_card.dart"
+        ),
+    ];
 
-    let result = scan_i18n_source(&source);
-    let keys = result
-        .entries
-        .iter()
-        .map(|entry| entry.key.as_str())
-        .collect::<Vec<_>>();
+    let mut keys = Vec::new();
+    let mut diagnostics = Vec::new();
+    let sources = PARTS.map(source_text);
+    for source in &sources {
+        let result = scan_i18n_source(source);
+        keys.extend(result.entries.iter().map(|entry| entry.key.clone()));
+        diagnostics.extend(result.diagnostics);
+    }
+    let keys = keys.iter().map(String::as_str).collect::<Vec<_>>();
 
-    assert!(result.diagnostics.is_empty());
+    assert!(diagnostics.is_empty());
     assert!(keys.contains(&"shop_title"));
     assert!(keys.contains(&"shop_search_hint"));
     assert!(keys.contains(&"shop_no_products"));

@@ -1,0 +1,137 @@
+{
+  "version": 3,
+  "entries": [
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "e12cf916db18ef76",
+      "sql_hash": "341b8ca42327e152",
+      "sql": "\nSELECT id, account_id, item, quantity, placed_at FROM orders\nWHERE account_id = $1\nORDER BY id DESC\n",
+      "user_parameter_count": 1,
+      "expanded_parameter_count": 1,
+      "fetch_mode": "one",
+      "row_type": "Order",
+      "columns": [
+        "id",
+        "account_id",
+        "item",
+        "quantity",
+        "placed_at"
+      ]
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "e12cf916db18ef76",
+      "sql_hash": "3e75e67207ef25c5",
+      "sql": "\nSELECT id, account_id, item, quantity, placed_at FROM orders\nWHERE account_id = $1 AND item = $2 AND quantity >= $3\nORDER BY id DESC\n",
+      "user_parameter_count": 3,
+      "expanded_parameter_count": 3,
+      "fetch_mode": "one",
+      "row_type": "Order",
+      "columns": [
+        "id",
+        "account_id",
+        "item",
+        "quantity",
+        "placed_at"
+      ]
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "e12cf916db18ef76",
+      "sql_hash": "597ef7969db3a305",
+      "sql": "\nSELECT id, account_id, item, quantity, placed_at FROM orders\nWHERE account_id = $1 AND item = $2\nORDER BY id DESC\n",
+      "user_parameter_count": 2,
+      "expanded_parameter_count": 2,
+      "fetch_mode": "one",
+      "row_type": "Order",
+      "columns": [
+        "id",
+        "account_id",
+        "item",
+        "quantity",
+        "placed_at"
+      ]
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "e12cf916db18ef76",
+      "sql_hash": "6f2232df3b5ae8c8",
+      "sql": "\nDELETE FROM orders WHERE id = $1 AND account_id = $2\n",
+      "user_parameter_count": 2,
+      "expanded_parameter_count": 2,
+      "fetch_mode": "execute",
+      "row_type": null,
+      "columns": []
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "e12cf916db18ef76",
+      "sql_hash": "95d920db02fc4694",
+      "sql": "\nSELECT id, account_id, item, quantity, placed_at FROM orders\nWHERE id = $1 AND account_id = $2\n",
+      "user_parameter_count": 2,
+      "expanded_parameter_count": 2,
+      "fetch_mode": "optional",
+      "row_type": "Order",
+      "columns": [
+        "id",
+        "account_id",
+        "item",
+        "quantity",
+        "placed_at"
+      ]
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "e12cf916db18ef76",
+      "sql_hash": "c53df55a6fba1fb1",
+      "sql": "\nSELECT id, account_id, item, quantity, placed_at FROM orders\nWHERE account_id = $1\nORDER BY id DESC\nLIMIT $2 OFFSET $3\n",
+      "user_parameter_count": 3,
+      "expanded_parameter_count": 3,
+      "fetch_mode": "all",
+      "row_type": "Order",
+      "columns": [
+        "id",
+        "account_id",
+        "item",
+        "quantity",
+        "placed_at"
+      ]
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "e12cf916db18ef76",
+      "sql_hash": "d88e53a6bc6d5743",
+      "sql": "\nSELECT id, account_id, item, quantity, placed_at FROM orders\nWHERE account_id = $1 AND quantity >= $2\nORDER BY id DESC\n",
+      "user_parameter_count": 2,
+      "expanded_parameter_count": 2,
+      "fetch_mode": "one",
+      "row_type": "Order",
+      "columns": [
+        "id",
+        "account_id",
+        "item",
+        "quantity",
+        "placed_at"
+      ]
+    },
+    {
+      "driver": "sqlite3",
+      "migrations": "./migrations",
+      "schema_hash": "e12cf916db18ef76",
+      "sql_hash": "eef9fb8bc5e643ff",
+      "sql": "\nINSERT INTO orders (account_id, item, quantity, placed_at)\nVALUES ($1, $2, $3, $4)\n",
+      "user_parameter_count": 4,
+      "expanded_parameter_count": 4,
+      "fetch_mode": "execute",
+      "row_type": null,
+      "columns": []
+    }
+  ]
+}

@@ -6,6 +6,169 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Database**: described column types and nullability are checked against the
+  row class and reported as warnings. A `TEXT` column read into an `int` is
+  named, and so is a nullable column read into a non-nullable field.
+
+  The accepted type pairs are documented per dialect and deliberately
+  permissive: anything the table does not cover is accepted rather than
+  reported, so a converter type or an enum read through `tryFrom` costs nothing.
+  SQLite's rows are wide because it has affinity rather than types.
+
+  Nullability is checked for PostgreSQL only. SQLite describes a `PRIMARY KEY`
+  column as nullable, which warned about five correct queries in
+  `fixtures/server_app`; the column-alias overrides work on either dialect.
+
+- **Database**: SQLx's column-alias overrides. `SELECT x as "total?"` marks a
+  column nullable and `as "total!"` marks it not null, whatever the database
+  inferred — which a `LEFT JOIN` otherwise gets wrong, since it makes a
+  `NOT NULL` column nullable in its result. The marker is part of the alias, so
+  it arrives as part of the column name and is removed before the column is
+  matched to a row field; a row class spells the column `total` and the
+  generated decoder reads `total`.
+
+- **Database**: `DatabaseClient.migrate()` applies the migrations a database was
+  generated with. SQLite applies them while opening and returns `Ok`;
+  PostgreSQL is reached over a network and cannot, so it applies them here. One
+  startup path serves both, and no application needs to know which.
+
+- **Database**: `fixtures/postgres_app` and a CI job that runs it against a
+  `postgres:16` service — validating from the committed query cache with no
+  server first, then building against a real one and checking the cache is
+  current.
+
+- **Database**: PostgreSQL generates and runs. `@SqlxDatabase(type:
+  SqlxDatabaseType.postgres)` emits a facade over `PgPool` instead of reporting
+  that Postgres is reserved, and the facade's signature follows the database —
+  `connect(String url)` where SQLite has `open(String path)`.
+
+  SQL is checked against the schema, the same as SQLite: `dust db build` reads
+  `DUST_DATABASE_URL` and describes every static query. Migrations are applied
+  into a scratch schema inside a transaction that is rolled back, so validating
+  leaves the database as it found it and works against one that already holds
+  the schema. `--offline` validates from the committed cache with no server, and
+  a cache written for another driver is refused.
+
+- **Database**: what the engine knows about each database now lives in one
+  place. Picking a runtime type, deciding whether SQL can be validated, and
+  naming the escape hatch were three separate `match` arms, so adding a database
+  meant finding all of them and missing one meant generated code naming a type
+  from the wrong driver. A dialect is a value; adding MySQL is one more of them.
+
+- **Database**: `dust_db_postgres`, the PostgreSQL runtime, wrapping
+  `package:postgres` the way `dust_db_sqlite3` wraps `package:sqlite3`. The
+  query text does not change between dialects — PostgreSQL reads `$1` natively
+  where SQLite rewrites it — and a Dart `List` binds as a PostgreSQL array, so
+  `= ANY($1)` needs no encoding. Nested transactions are savepoints this package
+  issues itself, since `package:postgres` exposes no savepoint API.
+
+  Generation does not target it yet: `@SqlxDatabase(type:
+  SqlxDatabaseType.postgres)` still reports that Postgres is reserved. The
+  runtime lands first so the plugin has something to emit against.
+
+- **Database**: `UnsafeSql` on the database facade, for the administrative SQL
+  validation cannot reach. `AppDatabase.unsafe` gives `fetch`, `fetchAs<T>` with
+  an explicit mapper, and `execute`. It is reachable from the facade and not
+  from an executor, so a request handler cannot get to unchecked SQL — unlike
+  `raw`, where `db as Executor` always succeeded.
+- **Database**: SQLite binds a `List` argument as JSON text, so a set
+  membership test is one placeholder over constant SQL —
+  `WHERE id IN (SELECT value FROM json_each(?))` with `[ids]`. SQLite has no
+  array type and `package:sqlite3` will not bind a nested list, so building
+  `IN (?, ?, ?)` by hand was the most common reason to reach for unchecked SQL;
+  the form above is describable, so build-time validation covers it. A
+  `Uint8List` is still bound as a BLOB.
+
+### Added
+
+- **Database**: each use of the `unsafe` escape hatch warns, so unchecked SQL
+  reads as a deliberate line in a diff. Silence one call with a
+  `dust:allow-unsafe-sql` comment on it or on the line above; two lines away
+  does not count, so one marker can never cover a file. Unchecked SQL is not
+  described and never enters the committed query cache — its text may be
+  dynamic, so no build could reproduce the entry.
+
+### Changed
+
+- **Database**: a call-site query that fails validation is reported by the
+  function containing it — `OrdersService.cancelStale` rather than a bare
+  `queryExecute`, which said nothing in a file holding several queries. A query
+  inside a closure names the function around it, and one outside any function
+  keeps the helper name.
+
+- **Database**: placeholder rewriting moved from generated code into the driver.
+  `.g.dart` now carries the SQL verbatim, `$n` and all, and binds arguments in
+  declaration order; `dust_db_sqlite3` rewrites to `?` at bind time. Only DAO
+  methods were ever rewritten, so the same `$1` meant one thing in a `@Query`
+  and another in an inline `queryAs`, and a repeated `$1` expanded on one path
+  and not the other. Which placeholder form the database receives is the
+  driver's business — Postgres takes `$n` unchanged — so generated code could
+  not pick one without being wrong for the other dialect.
+
+- **Database**: the pool vocabulary follows SQLx. `DatabaseExecutor` becomes
+  `Executor`, `DatabaseConnection` becomes `Connection`, and
+  `DatabaseTransaction` becomes `Transaction`; `Pool` is unchanged. Dust's names
+  diverged for no reason and in one place inverted SQLx's, since `Executor` had
+  been taken by a different type. Rename call sites; the shapes are identical.
+- **Database**: adding a database is a `Dialect` entry rather than a search for
+  every `match` on the driver. Analysis, both annotation parsers and the column
+  type checker read the dialect registry, so a driver is named, spelled and
+  aliased in exactly one place.
+- Repository: hand-written source files stay under 300 lines, checked in the
+  lint gate and in CI. A publishable package is named once, in the root pubspec
+  workspace, and the lint, format and test targets are derived from it; Sonar is
+  checked for a coverage report per package, which is what silently failed
+  before.
+
+
+### Fixed
+
+- **Database**: `dust_db_postgres` is recognised as a workspace runtime
+  package. It was in the CLI's compatibility contract but not in the import
+  table workspace discovery scans, so `dust doctor` reported it unused against
+  a project that imports it, and a build resolving an incompatible version was
+  accepted rather than refused. A test now holds the dialect registry, workspace
+  discovery and the contract to each other.
+
+### Removed
+
+- **Database**: the `SqlxDriver` typedef, and the `Connection` and `Transaction`
+  marker types that aliased what are now the real names.
+- **Database**: `queryRaw`, `QueryRaw`, and the `raw` channel on executors, with
+  the `Executor` interface that carried it. `Executor` was `DatabaseExecutor`
+  plus `raw`, and `Pool`, `Connection` and `Transaction` all implemented it, so
+  `db as Executor` always succeeded — a fence that stopped nobody. Unchecked SQL
+  is now `unsafe` on the database facade, which an executor cannot reach.
+
+  A DAO method returning `List<Row>` is reported at build time instead of
+  generating an unchecked fetch, and `queryRaw` is no longer parsed.
+
+### Changed
+
+- **Database**: inline query terminals return `Result<T, SqlxError>` rather than
+  throwing. Generated `@SqlxDao` methods already did; the inline path unwrapped
+  the same executor call into a `StateError` that discarded the typed error, so
+  the two ways of running a query disagreed about what a failure is. Affects
+  `QueryAs.fetch*With`, `QueryScalar.fetchOne`/`fetchOptional`, `QueryRaw.fetch`,
+  `QueryExecute.execute`, and the generated `extension $TypeQuery` terminals.
+  Migration in
+  [`packages/dust_dart/CHANGELOG.md`](packages/dust_dart/CHANGELOG.md).
+
+- **Database**: the offline query metadata cache moved from
+  `.dart_tool/dust/db_query_cache_v2/` to `.dust_sql/` at the package root, and
+  is now a committed build input rather than a build artifact. `.dart_tool/` is
+  gitignored, so nothing could validate from the cache on a clean checkout —
+  which is the only way CI can validate a Postgres project, since `describe`
+  there needs a live server. `dust clean` leaves `.dust_sql/` in place. Cache
+  format version 3; regenerate with an online `dust db build` and commit the
+  result.
+- **Database**: each cache entry records the driver it was described against.
+  The same SQL describes differently per dialect, so a cache written for one
+  driver is now rejected against another with an error naming both, rather than
+  reported as a missing entry.
+
 ## [v0.1.4] - 2026-09-03
 
 > [!IMPORTANT]
@@ -120,6 +283,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Parser**: a comment between an annotation and the declaration it applies to
+  no longer drops the declaration. Dart treats such a comment as trivia and
+  keeps the metadata attached — the analyzer reports
+  `override_on_non_overriding_member` for an `@override` separated from its
+  method by a doc comment — but the parser returned the comment where it
+  expected the declaration and skipped the member entirely. A `@SqlxDao` method
+  documented this way generated nothing, and the failure surfaced as Dart
+  complaining about a missing override rather than as a diagnostic. All three
+  comment forms were affected, not only doc comments.
+- **Database**: `DUST_DATABASE_URL` is used only when its scheme names the
+  project's own driver. One workspace can hold projects on both drivers while
+  the variable names one database; a SQLite project handed a PostgreSQL URL used
+  to try to open it and report whatever the other driver's URL parser disliked
+  (`unknown query parameter \`sslmode\``). It now falls back to its in-memory
+  schema, and a PostgreSQL project handed a SQLite URL says which scheme it
+  needs.
 - **Database**: the query metadata cache is one file per library rather than one
   per package. Libraries are validated in parallel worker threads, so a shared
   path meant several threads read-modify-writing the same file at once: across

@@ -129,6 +129,18 @@ To keep Dust fast and maintainable, please follow these core principles:
 - **No Panics:** Avoid `.expect()` or `.unwrap()` in plugin code. Use `Diagnostic::error` instead.
 - **Deterministic:** Generated output must be deterministic and byte-for-byte identical on every run.
 - **Small & Clean:** Keep generated Dart code small, readable, and analyzer-clean.
+- **One List:** A publishable package is named once, in the root `pubspec.yaml`
+  workspace. `scripts/workspace_packages.sh` derives the lint, format and test
+  targets from it, `scripts/check_coverage_reports.py` fails if Sonar has no
+  coverage report for a package the gate tests, and
+  `scripts/check_workflow_paths.py` fails if a workflow names a file that no
+  longer exists.
+- **Small Files:** Hand-written source under `crates/*/src` and `packages/*/lib`
+  stays under 300 lines. `scripts/check_source_size.py` enforces it in the lint
+  gate and in CI; tests and generated Dart are not counted. Every file in the
+  repository is under the limit, and the script's `BASELINE` is empty. It can pin
+  a file at its current size while a split is in progress, but a pin may only
+  shrink and must be removed once the file is under the limit.
 
 ---
 

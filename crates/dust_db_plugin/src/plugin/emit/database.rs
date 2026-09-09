@@ -4,10 +4,7 @@ use dust_dart_emit::render_template;
 use dust_ir::DartFileIr;
 use serde::Serialize;
 
-use crate::plugin::{
-    migrations::applied_migration_files,
-    model::{DatabaseClass, DbDriver},
-};
+use crate::plugin::{migrations::applied_migration_files, model::DatabaseClass};
 
 use super::shared::{escape_dart_string, lower_first};
 
@@ -20,6 +17,22 @@ struct DatabaseContext<'a> {
     class_name: &'a str,
     /// Dart expression used to open the pool.
     open_expr: String,
+    /// Constructor name the runtime type offers.
+    factory: &'a str,
+    /// Parameter that constructor takes.
+    factory_parameter: &'a str,
+    /// Dart type carrying per-connection settings.
+    options_type: &'a str,
+    /// Concrete driver type the facade holds.
+    ///
+    /// The facade keeps the driver rather than a `Connection` so that
+    /// `unsafe` needs no cast, and so that a handler holding an executor has no
+    /// route to it.
+    driver_type: &'a str,
+    /// Dart expression producing the unchecked SQL escape hatch.
+    unsafe_expr: &'a str,
+    /// Dart expression applying migrations.
+    migrate_expr: &'a str,
     /// Rendered migrations constant.
     migrations: String,
 }
@@ -38,14 +51,20 @@ pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>
     let class_name = &db.class.name;
     let generated_name = format!("_${class_name}");
     let migrations_name = format!("_${}Migrations", lower_first(class_name));
-    let open_expr = match db.driver {
-        DbDriver::Sqlite3 => format!(
-            "Sqlite3Driver.open(\n      path,\n      migrations: {migrations_name},\n      options: options,\n    )"
-        ),
-        DbDriver::Postgres => {
-            "throw UnsupportedError('Driver.postgres is not supported in Database v1')".to_owned()
-        }
-    };
+    // Everything dialect-specific comes from one place, so adding a database
+    // is a new `Dialect` rather than another arm here.
+    let dialect = db.driver.dialect();
+    let open_expr = format!(
+        "{}.{}(\n      {},\n      migrations: {migrations_name},\n      options: options,\n    )",
+        dialect.runtime_type,
+        dialect.factory,
+        dialect
+            .factory_parameter
+            .rsplit(' ')
+            .next()
+            .unwrap_or("path"),
+    );
+    let unsafe_expr = format!("{}(_driver)", dialect.unsafe_type);
     let migrations = render_migrations_map(library, &db.migrations, &migrations_name);
 
     render_template(
@@ -55,6 +74,12 @@ pub(super) fn render_database_class(library: &DartFileIr, db: &DatabaseClass<'_>
             generated_name: &generated_name,
             class_name,
             open_expr,
+            factory: dialect.factory,
+            factory_parameter: dialect.factory_parameter,
+            options_type: dialect.options_type,
+            driver_type: dialect.runtime_type,
+            unsafe_expr: &unsafe_expr,
+            migrate_expr: dialect.migrate_expr,
             migrations,
         },
     )
@@ -97,170 +122,5 @@ fn render_migrations_map(library: &DartFileIr, migrations: &str, name: &str) -> 
 }
 
 #[cfg(test)]
-mod tests {
-    use std::{
-        fs,
-        time::{SystemTime, UNIX_EPOCH},
-    };
-
-    use dust_ir::{ClassIr, ClassKindIr, DartFileIr, SpanIr};
-    use dust_text::{FileId, TextRange};
-
-    use super::*;
-
-    fn span() -> SpanIr {
-        SpanIr::new(FileId::new(1), TextRange::new(0_u32, 1_u32))
-    }
-
-    fn class(name: &str) -> ClassIr {
-        ClassIr {
-            kind: ClassKindIr::Class,
-            name: name.to_owned(),
-            is_abstract: true,
-            is_interface: false,
-            superclass_name: None,
-            span: span(),
-            fields: Vec::new(),
-            constructors: Vec::new(),
-            methods: Vec::new(),
-            traits: Vec::new(),
-            configs: Vec::new(),
-            serde: None,
-        }
-    }
-
-    fn library(root: &std::path::Path, classes: Vec<ClassIr>) -> DartFileIr {
-        DartFileIr {
-            package_root: root.display().to_string(),
-            package_name: "emit_test".to_owned(),
-            source_path: "lib/db.dart".to_owned(),
-            output_path: "lib/db.g.dart".to_owned(),
-            imports: Vec::new(),
-            library: None,
-            library_annotations: Vec::new(),
-            import_directives: Vec::new(),
-            export_directives: Vec::new(),
-            part_directives: Vec::new(),
-            part_of: None,
-            span: span(),
-            classes,
-            mixins: Vec::new(),
-            extensions: Vec::new(),
-            extension_types: Vec::new(),
-            functions: Vec::new(),
-            variables: Vec::new(),
-            typedefs: Vec::new(),
-            enums: Vec::new(),
-            query_calls: Vec::new(),
-        }
-    }
-
-    fn temp_root(name: &str) -> std::path::PathBuf {
-        let stamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        std::env::temp_dir().join(format!("dust_db_emit_{name}_{stamp}"))
-    }
-
-    #[test]
-    fn emits_database_class_with_sorted_escaped_migrations() {
-        let root = temp_root("migrations");
-        let migrations = root.join("migrations");
-        fs::create_dir_all(&migrations).unwrap();
-        fs::write(
-            migrations.join("002_quote.sql"),
-            "INSERT INTO logs(message) VALUES('cost $1');\n",
-        )
-        .unwrap();
-        fs::write(
-            migrations.join("003_reversible.up.sql"),
-            "ALTER TABLE logs ADD COLUMN tag TEXT;\n",
-        )
-        .unwrap();
-        fs::write(
-            migrations.join("003_reversible.down.sql"),
-            "ALTER TABLE logs DROP COLUMN tag;\n",
-        )
-        .unwrap();
-        fs::write(
-            migrations.join("001_schema.sql"),
-            "CREATE TABLE logs(message TEXT);\n",
-        )
-        .unwrap();
-
-        let db_class = class("AppDatabase");
-        let library = library(&root, vec![db_class.clone()]);
-        let db = DatabaseClass {
-            class: &db_class,
-            driver: DbDriver::Sqlite3,
-            migrations: "migrations".to_owned(),
-        };
-
-        assert_eq!(
-            render_database_class(&library, &db),
-            EXPECTED_SQLITE_DATABASE
-        );
-        let _ = fs::remove_dir_all(root);
-    }
-
-    #[test]
-    fn emits_postgres_database_as_v1_unsupported() {
-        let db_class = class("AppDatabase");
-        let library = library(std::path::Path::new(""), vec![db_class.clone()]);
-        let db = DatabaseClass {
-            class: &db_class,
-            driver: DbDriver::Postgres,
-            migrations: "migrations".to_owned(),
-        };
-
-        assert_eq!(
-            render_database_class(&library, &db),
-            EXPECTED_POSTGRES_DATABASE
-        );
-    }
-
-    const EXPECTED_SQLITE_DATABASE: &str = r#"final class _$AppDatabase implements AppDatabase {
-  _$AppDatabase._(this.connection);
-
-  factory _$AppDatabase.open(
-    String path, {
-    SqliteConnectOptions? options,
-  }) {
-    final connection = Sqlite3Driver.open(
-      path,
-      migrations: _$appDatabaseMigrations,
-      options: options,
-    );
-    return _$AppDatabase._(connection);
-  }
-
-  final DatabaseConnection connection;
-
-  Pool get pool => connection as Pool;
-}
-
-const Map<String, String> _$appDatabaseMigrations = <String, String>{
-  '001_schema.sql': 'CREATE TABLE logs(message TEXT);\n',
-  '002_quote.sql': 'INSERT INTO logs(message) VALUES(\'cost \$1\');\n',
-  '003_reversible.up.sql': 'ALTER TABLE logs ADD COLUMN tag TEXT;\n',
-};"#;
-
-    const EXPECTED_POSTGRES_DATABASE: &str = r#"final class _$AppDatabase implements AppDatabase {
-  _$AppDatabase._(this.connection);
-
-  factory _$AppDatabase.open(
-    String path, {
-    SqliteConnectOptions? options,
-  }) {
-    final connection = throw UnsupportedError('Driver.postgres is not supported in Database v1');
-    return _$AppDatabase._(connection);
-  }
-
-  final DatabaseConnection connection;
-
-  Pool get pool => connection as Pool;
-}
-
-const Map<String, String> _$appDatabaseMigrations = <String, String>{};"#;
-}
+#[path = "database/tests.rs"]
+mod tests;

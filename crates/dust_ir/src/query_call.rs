@@ -21,6 +21,10 @@ pub struct QueryCallIr {
     pub fetch_method: Option<String>,
     /// Whether the call supplied its own row mapper or row deserializer.
     pub has_row_mapper_argument: bool,
+    /// Whether a `dust:allow-unsafe-sql` marker covers this call.
+    pub unsafe_sql_allowed: bool,
+    /// Function or `Class.method` containing the call, when there is one.
+    pub enclosing_name: Option<String>,
     /// The source span for the query helper invocation.
     pub span: SpanIr,
 }
@@ -32,8 +36,8 @@ pub enum QueryFunctionIr {
     As,
     /// `queryScalar<T>(...)`.
     Scalar,
-    /// `queryRaw(...)`.
-    Raw,
     /// `queryExecute(...)`.
     Execute,
+    /// Unchecked SQL through the database facade's `unsafe` escape hatch.
+    Unsafe,
 }

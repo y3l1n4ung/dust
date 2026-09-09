@@ -122,7 +122,7 @@ fn offline_db_check_rejects_unsupported_query_metadata_version() {
 
 /// Returns every per-library DB query cache file in a workspace.
 fn query_cache_files(root: &std::path::Path) -> Vec<std::path::PathBuf> {
-    let dir = root.join(".dart_tool/dust/db_query_cache_v2");
+    let dir = root.join(".dust_sql");
     let Ok(entries) = fs::read_dir(&dir) else {
         return Vec::new();
     };

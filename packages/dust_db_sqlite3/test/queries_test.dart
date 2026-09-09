@@ -2,6 +2,8 @@ import 'package:dust_dart/db.dart';
 import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:test/test.dart';
 
+import 'support/expect_ok.dart';
+import 'support/unsafe_rows.dart';
 import 'support/user_name.dart';
 
 void main() {
@@ -27,17 +29,15 @@ CREATE TABLE users (
       1,
     );
 
-    final inserted = await queryExecute(
+    final inserted = expectOk(await queryExecute(
       r'INSERT INTO users (id, name, active, created_at) VALUES (?, ?, ?, ?)',
       [1, 'Ada', 1, '2026-01-01T10:00:00+06:30'],
-    ).execute(pool);
+    ).execute(pool));
     expect(inserted.rowsAffected, 1);
     expect(inserted.lastInsertId, 1);
 
-    final rows = await queryRaw(
-      r'SELECT id, name, active, created_at FROM users WHERE id = ?',
-      [1],
-    ).fetch(pool);
+    final rows = await unsafeRows(pool,
+        r'SELECT id, name, active, created_at FROM users WHERE id = ?', [1]);
     expect(rows.single.read<int>('id'), 1);
     expect(rows.single.read<String>('name'), 'Ada');
     expect(rows.single.read<double>('id'), 1.0);
@@ -49,17 +49,18 @@ CREATE TABLE users (
     );
 
     final txResult = await pool.transaction((tx) async {
-      await queryExecute(r'UPDATE users SET name = ? WHERE id = ?', [
+      expectOk(await queryExecute(r'UPDATE users SET name = ? WHERE id = ?', [
         'Grace',
         1,
-      ]).execute(tx);
+      ]).execute(tx));
       return const Ok<void, SqlxError>(null);
     });
     expect(txResult, isA<Ok<void, SqlxError>>());
 
-    final updated = await queryRaw(r'SELECT name FROM users WHERE id = ?', [
+    final updated =
+        await unsafeRows(pool, r'SELECT name FROM users WHERE id = ?', [
       1,
-    ]).fetch(pool);
+    ]);
     expect(updated.single.read<String>('name'), 'Grace');
   });
 
@@ -77,14 +78,14 @@ CREATE TABLE users (
         await pool.close();
       });
 
-      await queryExecute(
+      expectOk(await queryExecute(
         r'INSERT INTO users (id, name, active) VALUES (?, ?, ?)',
         [1, 'Ada', 'true'],
-      ).execute(pool);
-      await queryExecute(
+      ).execute(pool));
+      expectOk(await queryExecute(
         r'INSERT INTO users (id, name, active) VALUES (?, ?, ?)',
         [2, null, 'maybe'],
-      ).execute(pool);
+      ).execute(pool));
 
       final optional = await pool.fetchOptional<UserName>(
         r'SELECT id, name FROM users WHERE id = ?',
@@ -137,26 +138,20 @@ CREATE TABLE users (
       );
       expect(decode, isA<Err<UserName, SqlxError>>());
 
-      final boolRows = await queryRaw(
-        r'SELECT active FROM users WHERE id = ?',
-        [1],
-      ).fetch(pool);
+      final boolRows =
+          await unsafeRows(pool, r'SELECT active FROM users WHERE id = ?', [1]);
       expect(boolRows.single.readBool('active'), isTrue);
       expect(boolRows.single.readBoolNullable('missing'), isNull);
 
-      final badBoolRows = await queryRaw(
-        r'SELECT active FROM users WHERE id = ?',
-        [2],
-      ).fetch(pool);
+      final badBoolRows =
+          await unsafeRows(pool, r'SELECT active FROM users WHERE id = ?', [2]);
       expect(
         () => badBoolRows.single.readBool('active'),
         throwsA(isA<SqlxDecodeError>()),
       );
 
-      final nullNameRows = await queryRaw(
-        r'SELECT name FROM users WHERE id = ?',
-        [2],
-      ).fetch(pool);
+      final nullNameRows =
+          await unsafeRows(pool, r'SELECT name FROM users WHERE id = ?', [2]);
       expect(
         () => nullNameRows.single.read<String>('name'),
         throwsA(isA<SqlxDecodeError>()),
@@ -226,12 +221,12 @@ CREATE TABLE users (
       );
       expect(emptyRequired, isA<Err<int, SqlxError>>());
 
-      await queryExecute(r'INSERT INTO numbers (value) VALUES (?)', [
+      expectOk(await queryExecute(r'INSERT INTO numbers (value) VALUES (?)', [
         1,
-      ]).execute(pool);
-      await queryExecute(r'INSERT INTO numbers (value) VALUES (?)', [
+      ]).execute(pool));
+      expectOk(await queryExecute(r'INSERT INTO numbers (value) VALUES (?)', [
         2,
-      ]).execute(pool);
+      ]).execute(pool));
 
       final tooMany = await pool.fetchScalar<int>(
         'SELECT value FROM numbers ORDER BY value',
@@ -250,9 +245,9 @@ CREATE TABLE users (
       expect(first.match(ok: (value) => value, err: (_) => -1), 1);
       expect(nullableValue.match(ok: (value) => value, err: (_) => -1), 1);
 
-      await queryExecute(r'INSERT INTO numbers (value) VALUES (?)', [
+      expectOk(await queryExecute(r'INSERT INTO numbers (value) VALUES (?)', [
         null,
-      ]).execute(pool);
+      ]).execute(pool));
       final nullRequired = await pool.fetchScalar<int>(
         'SELECT value FROM numbers WHERE value IS NULL',
         const [],

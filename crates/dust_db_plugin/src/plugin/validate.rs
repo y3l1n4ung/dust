@@ -6,8 +6,10 @@ use dust_plugin_api::WorkspaceAnalysis;
 
 use super::{
     DbPluginOptions,
-    analysis::{PackageDatabase, duplicate_row_types, package_databases, package_row_column_map},
-    model::{DbDriver, RowClass},
+    analysis::{
+        PackageDatabase, RowColumn, duplicate_row_types, package_databases, package_row_column_map,
+    },
+    model::RowClass,
     parse::{database_classes, query_specs, row_classes},
 };
 
@@ -15,6 +17,10 @@ use super::{
 mod cache;
 /// Validates annotated DAO classes and methods.
 mod dao;
+/// Describes queries against a live database and checks the columns.
+mod describe;
+/// Stable hashing for the offline query cache.
+mod hash;
 /// Validates parsed query specs.
 mod query;
 /// Validates row mapper classes and columns.
@@ -37,13 +43,28 @@ pub(crate) fn validate_db_library(
     let rows = row_classes(library);
     let package_rows = package_row_column_map(analysis, &library.package_name);
     let mut diagnostics = Vec::new();
-    rows::validate_rows(&rows, &package_rows, &mut diagnostics);
+    // The column checks below work in names; the typed columns are what the
+    // described-column checks need.
+    let package_column_names = package_rows
+        .iter()
+        .map(|(row, columns)| {
+            (
+                row.clone(),
+                columns
+                    .iter()
+                    .map(|column| column.name.clone())
+                    .collect::<HashSet<_>>(),
+            )
+        })
+        .collect::<HashMap<_, _>>();
+    rows::validate_rows(&rows, &package_column_names, &mut diagnostics);
     if options.databases {
         validate_databases(
             library,
             options,
             &rows,
             analysis,
+            &package_column_names,
             &package_rows,
             &mut diagnostics,
         );
@@ -58,6 +79,7 @@ fn validate_databases(
     rows: &[RowClass<'_>],
     analysis: &WorkspaceAnalysis,
     row_columns: &HashMap<String, HashSet<String>>,
+    typed_columns: &HashMap<String, Vec<RowColumn>>,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     // These two carry a span, so they belong to the file that declares the
@@ -69,14 +91,21 @@ fn validate_databases(
                 db.class.name
             )));
         }
-        if matches!(db.driver, DbDriver::Postgres) {
+        // A dialect whose SQL the engine cannot describe yet still generates and
+        // runs; it just does so unchecked, and the build says so rather than
+        // refusing work the runtime supports.
+        let dialect = db.driver.dialect();
+        if !dialect.validates {
             diagnostics.push(
-                Diagnostic::error("Driver.postgres is reserved for a future Database release")
-                    .with_label(dust_diagnostics::SourceLabel::new(
-                        db.class.span.file_id,
-                        db.class.span.range,
-                        "use Driver.sqlite3 in v1",
-                    )),
+                Diagnostic::warning(format!(
+                    "SQL is not validated against the schema for `{}` yet",
+                    dialect.name
+                ))
+                .with_note(
+                    "Generated code and the runtime work. Queries reach the database \
+                     without having been checked against your migrations, so a typo in \
+                     one is found at run time rather than at build time.",
+                ),
             );
         }
     }
@@ -109,7 +138,15 @@ fn validate_databases(
         .filter(|(name, _)| !ambiguous.contains(*name))
         .map(|(name, columns)| (name.clone(), columns.clone()))
         .collect::<HashMap<_, _>>();
-    sqlx::validate_sqlx_describe(library, db, &queries, &checkable, options, diagnostics);
+    sqlx::validate_sqlx_describe(
+        library,
+        db,
+        &queries,
+        &checkable,
+        typed_columns,
+        options,
+        diagnostics,
+    );
 }
 
 /// Reports row class names a package declares twice, returning the ambiguous set.

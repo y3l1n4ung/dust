@@ -4,14 +4,15 @@ import '../fp/unit.dart';
 import 'exec_result.dart';
 import 'row_mapper.dart';
 import 'sqlx_error.dart';
+import 'unsafe_sql.dart';
 
 /// Executes typed SQLx-style queries against a database connection,
 /// transaction, or driver.
 ///
-/// Generated DAO code receives a [DatabaseExecutor] and calls `fetchOptional`,
+/// Generated DAO code receives a [Executor] and calls `fetchOptional`,
 /// `fetchAll`, `fetchOne`, `fetchScalar`, or `execute` depending on the
 /// annotated method return type.
-abstract interface class DatabaseExecutor {
+abstract interface class Executor {
   /// Database driver used by this executor.
   Driver get driver;
 
@@ -50,7 +51,7 @@ abstract interface class DatabaseExecutor {
 
   /// Runs [fn] inside a database transaction.
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
   );
 
   /// Closes resources owned by this driver.
@@ -60,17 +61,33 @@ abstract interface class DatabaseExecutor {
 /// Open generated application database facade.
 abstract interface class DatabaseClient {
   /// Open database connection used by generated DAOs.
-  DatabaseConnection get connection;
+  Connection get connection;
+
+  /// Applies any migrations the database was generated with.
+  ///
+  /// SQLite applies them while opening, so this has already happened and the
+  /// call returns `Ok`. PostgreSQL is reached over a network and cannot, so it
+  /// applies them here. Calling it either way is what lets one startup path
+  /// serve both.
+  Future<Result<Unit, SqlxError>> migrate();
+
+  /// Unchecked SQL for administrative work.
+  ///
+  /// Deliberately here and not on [Executor]: a request handler holds
+  /// an executor, and no cast takes an executor to a [DatabaseClient], so the
+  /// escape hatch is out of reach from a handler by type rather than by
+  /// convention.
+  UnsafeSql get unsafe;
 }
 
 /// Convenience methods for generated application database facades.
 extension DatabaseClientExecution on DatabaseClient {
   /// Typed query executor for this database.
-  DatabaseExecutor get executor => connection;
+  Executor get executor => connection;
 
   /// Runs [fn] inside a database transaction.
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
   ) {
     return connection.transaction(fn);
   }
@@ -81,71 +98,22 @@ extension DatabaseClientExecution on DatabaseClient {
   }
 }
 
-/// Legacy name for [DatabaseExecutor] with explicit raw SQL access.
+/// An open database connection.
 ///
-/// New generated DAO code should depend on [DatabaseExecutor]. Use [Executor]
-/// only when an advanced raw SQL escape hatch is required.
-abstract interface class Executor implements DatabaseExecutor {
-  /// Explicit unchecked SQL access for dynamic/admin queries.
-  RawSql get raw;
-}
+/// SQLx's `Connection`.
+abstract interface class Connection implements Executor {}
 
-/// Backwards-compatible name for the DB execution contract.
-typedef SqlxDriver = DatabaseExecutor;
+/// A transaction-scoped executor.
+///
+/// SQLx's `Transaction<'_, DB>`, scoped to a closure rather than to a guard:
+/// Rust's `Drop` rolls an uncommitted transaction back and Dart has no
+/// destructors, so the closure is the only shape that is safe by construction.
+abstract interface class Transaction implements Executor {}
 
-/// Open database connection.
-abstract interface class DatabaseConnection implements DatabaseExecutor {}
-
-/// Transaction-scoped database executor.
-abstract interface class DatabaseTransaction implements DatabaseExecutor {}
-
-/// Backwards-compatible long-lived database pool name.
-abstract interface class Pool implements DatabaseConnection, Executor {}
-
-/// Backwards-compatible single database connection name.
-abstract interface class Connection implements DatabaseConnection, Executor {}
-
-/// Backwards-compatible transaction-scoped executor name.
-abstract interface class Transaction implements DatabaseTransaction, Executor {}
-
-/// Explicit unchecked SQL access.
-abstract interface class RawSql {
-  /// Runs unchecked SQL and returns rows.
-  Future<Result<List<Row>, SqlxError>> fetch(
-    String sql,
-    List<Object?> parameters,
-  );
-
-  /// Runs an unchecked statement.
-  Future<Result<ExecResult, SqlxError>> execute(
-    String sql,
-    List<Object?> parameters,
-  );
-}
-
-/// Public unchecked SQL wrapper for app-level composition.
-final class RawSqlx implements RawSql {
-  /// Creates one raw SQL wrapper.
-  const RawSqlx(this._db);
-
-  final Executor _db;
-
-  @override
-  Future<Result<List<Row>, SqlxError>> fetch(
-    String sql,
-    List<Object?> parameters,
-  ) {
-    return _db.raw.fetch(sql, parameters);
-  }
-
-  @override
-  Future<Result<ExecResult, SqlxError>> execute(
-    String sql,
-    List<Object?> parameters,
-  ) {
-    return _db.raw.execute(sql, parameters);
-  }
-}
+/// A long-lived database pool.
+///
+/// SQLx's `Pool<DB>`. Driver packages name their own — `SqlitePool`.
+abstract interface class Pool implements Connection {}
 
 /// Driver-agnostic typed view over one database result row.
 ///

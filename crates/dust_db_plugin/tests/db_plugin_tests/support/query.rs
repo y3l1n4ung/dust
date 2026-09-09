@@ -36,17 +36,6 @@ pub(crate) fn query_scalar(
     )
 }
 
-pub(crate) fn query_raw(sql: &str, parameter_count: usize, start: u32) -> QueryCallIr {
-    query_call(
-        QueryFunctionIr::Raw,
-        None,
-        sql,
-        parameter_count,
-        "fetch",
-        start,
-    )
-}
-
 pub(crate) fn query_execute(sql: &str, parameter_count: usize, start: u32) -> QueryCallIr {
     query_call(
         QueryFunctionIr::Execute,
@@ -75,6 +64,8 @@ fn query_call(
         parameter_count,
         params_source_is_list: true,
         has_row_mapper_argument: false,
+        unsafe_sql_allowed: false,
+        enclosing_name: None,
         fetch_method: Some(fetch_method.to_owned()),
         span: SpanIr::new(FileId::new(7), TextRange::new(start, start + 1)),
     }

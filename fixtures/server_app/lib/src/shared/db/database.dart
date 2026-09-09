@@ -16,7 +16,7 @@ abstract class AppDatabase implements DatabaseClient {
 
   /// The open connection.
   @override
-  DatabaseConnection get connection;
+  Connection get connection;
 }
 
 /// What a file-backed database wants when more than one isolate has it open.

@@ -49,36 +49,45 @@ final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> 
 /// `FromRow` has no terminals and the call does not compile.
 extension $UserProfileQuery on QueryAs<UserProfile> {
   /// Fetches exactly one row.
-  Future<UserProfile> fetchOne(DatabaseExecutor db) =>
+  Future<Result<UserProfile, SqlxError>> fetchOne(Executor db) =>
       fetchOneWith(db, _$UserProfileFromRow);
 
   /// Fetches zero or one row.
-  Future<UserProfile?> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<UserProfile?, SqlxError>> fetchOptional(Executor db) =>
       fetchOptionalWith(db, _$UserProfileFromRow);
 
   /// Fetches every row.
-  Future<List<UserProfile>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<UserProfile>, SqlxError>> fetchAll(Executor db) =>
       fetchAllWith(db, _$UserProfileFromRow);
 }
 
 final class _$AppDatabase implements AppDatabase {
-  _$AppDatabase._(this.connection);
+  _$AppDatabase._(this._driver);
 
   factory _$AppDatabase.open(
     String path, {
     SqliteConnectOptions? options,
   }) {
-    final connection = Sqlite3Driver.open(
+    final driver = Sqlite3Driver.open(
       path,
       migrations: _$appDatabaseMigrations,
       options: options,
     );
-    return _$AppDatabase._(connection);
+    return _$AppDatabase._(driver);
   }
 
-  final DatabaseConnection connection;
+  final Sqlite3Driver _driver;
 
-  Pool get pool => connection as Pool;
+  @override
+  Connection get connection => _driver;
+
+  @override
+  Future<Result<Unit, SqlxError>> migrate() => Future<Result<Unit, SqlxError>>.value(const Ok(unit));
+
+  @override
+  UnsafeSql get unsafe => Sqlite3UnsafeSql(_driver);
+
+  Pool get pool => _driver;
 }
 
 const Map<String, String> _$appDatabaseMigrations = <String, String>{
@@ -129,15 +138,15 @@ final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> 
 /// `FromRow` has no terminals and the call does not compile.
 extension $UserProfileQuery on QueryAs<UserProfile> {
   /// Fetches exactly one row.
-  Future<UserProfile> fetchOne(DatabaseExecutor db) =>
+  Future<Result<UserProfile, SqlxError>> fetchOne(Executor db) =>
       fetchOneWith(db, _$UserProfileFromRow);
 
   /// Fetches zero or one row.
-  Future<UserProfile?> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<UserProfile?, SqlxError>> fetchOptional(Executor db) =>
       fetchOptionalWith(db, _$UserProfileFromRow);
 
   /// Fetches every row.
-  Future<List<UserProfile>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<UserProfile>, SqlxError>> fetchAll(Executor db) =>
       fetchAllWith(db, _$UserProfileFromRow);
 }
 "#

@@ -23,6 +23,16 @@ enum SqlxDatabaseType {
 /// Declares the top-level generated SQLx database open/configuration type.
 final class SqlxDatabase {
   /// Creates one database generation marker.
+  ///
+  /// [Driver] and [SqlxDatabaseType] name the same databases, and this maps one
+  /// to the other. A const initializer cannot read a field off an enum value,
+  /// so the mapping is a conditional with a default rather than a lookup, and a
+  /// driver nobody adds a branch for silently becomes SQLite.
+  ///
+  /// `dust_dart_test.dart` walks [Driver.values] and fails on exactly that, so
+  /// a new driver cannot be added without adding its branch here. The
+  /// generator does not read this value — it parses the annotation source — so
+  /// the mistake would only ever show up in a caller's own code.
   const SqlxDatabase({
     SqlxDatabaseType? type,
     Driver? driver,

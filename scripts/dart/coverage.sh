@@ -25,8 +25,12 @@ echo "==> Dart coverage: $TARGET (floor ${FLOOR}%)"
   cd "$TARGET"
   rm -rf .coverage
   dart test --coverage=.coverage
+  # `--check-ignore` honours `// coverage:ignore-*` comments. Without it the
+  # headers generated code already carries were counted like any other line,
+  # and a guard that cannot be reached had no way to say so.
   dart run coverage:format_coverage \
     --lcov \
+    --check-ignore \
     --in=.coverage \
     --out=.coverage/lcov.info \
     --report-on=lib

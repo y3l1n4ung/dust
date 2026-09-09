@@ -14,23 +14,32 @@
 part of 'shopping_cache_database.dart';
 
 final class _$ShoppingCacheDatabase implements ShoppingCacheDatabase {
-  _$ShoppingCacheDatabase._(this.connection);
+  _$ShoppingCacheDatabase._(this._driver);
 
   factory _$ShoppingCacheDatabase.open(
     String path, {
     SqliteConnectOptions? options,
   }) {
-    final connection = Sqlite3Driver.open(
+    final driver = Sqlite3Driver.open(
       path,
       migrations: _$shoppingCacheDatabaseMigrations,
       options: options,
     );
-    return _$ShoppingCacheDatabase._(connection);
+    return _$ShoppingCacheDatabase._(driver);
   }
 
-  final DatabaseConnection connection;
+  final Sqlite3Driver _driver;
 
-  Pool get pool => connection as Pool;
+  @override
+  Connection get connection => _driver;
+
+  @override
+  Future<Result<Unit, SqlxError>> migrate() => Future<Result<Unit, SqlxError>>.value(const Ok(unit));
+
+  @override
+  UnsafeSql get unsafe => Sqlite3UnsafeSql(_driver);
+
+  Pool get pool => _driver;
 }
 
 const Map<String, String> _$shoppingCacheDatabaseMigrations = <String, String>{
@@ -41,7 +50,7 @@ const Map<String, String> _$shoppingCacheDatabaseMigrations = <String, String>{
 final class _$ShoppingCacheDao implements ShoppingCacheDao {
   const _$ShoppingCacheDao(this._db);
 
-  final DatabaseExecutor _db;
+  final Executor _db;
 
   @override
   Future<Result<CachedProductRow?, SqlxError>> findCachedProduct(int id) {
@@ -50,7 +59,7 @@ final class _$ShoppingCacheDao implements ShoppingCacheDao {
 SELECT id, title, price, description, category, image,
        rating_rate, rating_count, payload, source
 FROM product_cache
-WHERE id = ?
+WHERE id = $1
 ''',
       [id],
       const $CachedProductRowRowDeserializer().deserialize,
@@ -86,7 +95,7 @@ ORDER BY title
 INSERT OR REPLACE INTO product_cache (
   id, title, price, description, category, image,
   rating_rate, rating_count, payload, source
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 ''',
       [id, title, price, description, category, image, ratingRate, ratingCount, payload, source],
     );
@@ -97,7 +106,7 @@ INSERT OR REPLACE INTO product_cache (
     return _db.execute(
       r'''
 INSERT OR REPLACE INTO wishlist_cache (product_id, title, saved_at)
-VALUES (?, ?, ?)
+VALUES ($1, $2, $3)
 ''',
       [productId, title, savedAt],
     );

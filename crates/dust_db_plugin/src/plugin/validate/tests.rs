@@ -1,23 +1,31 @@
 use std::{
     collections::{HashMap, HashSet},
     fs,
+    path::Path,
     time::{SystemTime, UNIX_EPOCH},
 };
 
+use dust_diagnostics::Severity;
 use dust_ir::{DartFileIr, SpanIr, TypeIr};
 use dust_text::{FileId, TextRange};
 
 use super::{
     cache::{
-        QUERY_CACHE_VERSION, QueryCache, QueryCacheEntry, query_cache_path, schema_hash,
+        QUERY_CACHE_VERSION, QueryCache, QueryCacheEntry, query_cache_path,
         validate_cached_columns, validate_from_query_cache,
     },
+    hash::schema_hash,
     query::{validate_placeholders, validate_query_shape},
 };
 use crate::plugin::{
     migrations::applied_migration_files,
+    model::DbDriver,
     model::{FetchMode, QueryFunction, QuerySpec},
 };
+
+/// Migration ordering, reversible pairs, and the offline query cache.
+#[path = "tests/migrations.rs"]
+mod migrations;
 
 /// Builds a small source span for validation test fixtures.
 fn span() -> SpanIr {
@@ -36,6 +44,7 @@ fn query(function: QueryFunction, fetch: FetchMode) -> QuerySpec {
         parameter_count: 1,
         params_source_is_list: true,
         has_row_mapper_argument: false,
+        unsafe_sql_allowed: false,
         span: span(),
         display_name: Some("test.query".to_owned()),
     }
@@ -128,7 +137,10 @@ fn placeholder_validation_handles_quotes_and_escaped_single_quotes() {
 #[test]
 fn query_shape_validation_rejects_invalid_fetch_shapes() {
     let mut diagnostics = Vec::new();
-    validate_query_shape(&query(QueryFunction::As, FetchMode::Raw), &mut diagnostics);
+    validate_query_shape(
+        &query(QueryFunction::As, FetchMode::Execute),
+        &mut diagnostics,
+    );
     validate_query_shape(
         &QuerySpec {
             row_type: None,
@@ -143,9 +155,12 @@ fn query_shape_validation_rejects_invalid_fetch_shapes() {
         },
         &mut diagnostics,
     );
-    validate_query_shape(&query(QueryFunction::Raw, FetchMode::One), &mut diagnostics);
     validate_query_shape(
-        &query(QueryFunction::Execute, FetchMode::Raw),
+        &query(QueryFunction::Unsupported, FetchMode::Unsupported),
+        &mut diagnostics,
+    );
+    validate_query_shape(
+        &query(QueryFunction::Execute, FetchMode::One),
         &mut diagnostics,
     );
 
@@ -159,10 +174,56 @@ fn query_shape_validation_rejects_invalid_fetch_shapes() {
             "queryAs<T> must end with fetchOne, fetchOptional, or fetchAll",
             "queryAs<T> must specify a row type",
             "queryScalar<T> must use a supported scalar type",
-            "queryRaw must end with fetch",
+            "Database query has an unsupported return type. Return `Future<Result<T, SqlxError>>` for a row type, a supported scalar, `ExecResult`, or `Unit`. Untyped rows come from the database facade's `unsafe` escape hatch, not from a DAO",
             "queryExecute must end with execute",
         ]
     );
+}
+
+#[test]
+fn unchecked_sql_warns_once_per_call_and_skips_every_other_check() {
+    let mut diagnostics = Vec::new();
+    // Dynamic SQL and a non-list parameter argument are exactly what the escape
+    // hatch is for, so neither may be reported against it.
+    validate_query_shape(
+        &QuerySpec {
+            sql_source_static: false,
+            params_source_is_list: false,
+            ..query(QueryFunction::Unsafe, FetchMode::Unsupported)
+        },
+        &mut diagnostics,
+    );
+
+    assert_eq!(diagnostics.len(), 1, "{diagnostics:?}");
+    assert_eq!(diagnostics[0].severity, Severity::Warning);
+    assert!(
+        diagnostics[0]
+            .message
+            .contains("unchecked SQL bypasses build-time validation"),
+        "{diagnostics:?}"
+    );
+    assert!(
+        diagnostics[0]
+            .notes
+            .iter()
+            .any(|note| note.contains("dust:allow-unsafe-sql")),
+        "{diagnostics:?}"
+    );
+}
+
+#[test]
+fn a_marker_comment_silences_the_unchecked_sql_warning() {
+    let mut diagnostics = Vec::new();
+    validate_query_shape(
+        &QuerySpec {
+            unsafe_sql_allowed: true,
+            sql_source_static: false,
+            ..query(QueryFunction::Unsafe, FetchMode::Unsupported)
+        },
+        &mut diagnostics,
+    );
+
+    assert_eq!(diagnostics, Vec::new());
 }
 
 #[test]
@@ -192,14 +253,14 @@ fn query_shape_validation_rejects_non_static_sql_and_non_list_params() {
     validate_query_shape(
         &QuerySpec {
             sql_source_static: false,
-            ..query(QueryFunction::Raw, FetchMode::Raw)
+            ..query(QueryFunction::Execute, FetchMode::Execute)
         },
         &mut diagnostics,
     );
     validate_query_shape(
         &QuerySpec {
             params_source_is_list: false,
-            ..query(QueryFunction::Raw, FetchMode::Raw)
+            ..query(QueryFunction::Execute, FetchMode::Execute)
         },
         &mut diagnostics,
     );
@@ -214,181 +275,5 @@ fn query_shape_validation_rejects_non_static_sql_and_non_list_params() {
             "Database query SQL must be a static string literal",
             "Database query parameters must be a List literal in v1",
         ]
-    );
-}
-
-#[test]
-fn migration_files_are_sorted_and_schema_hash_is_stable() {
-    let root = temp_root("migrations");
-    fs::create_dir_all(root.join("migrations")).unwrap();
-    fs::write(root.join("migrations/002_second.sql"), "SELECT 2;\n").unwrap();
-    fs::write(root.join("migrations/001_first.sql"), "SELECT 1;\n").unwrap();
-
-    let files = applied_migration_files(&root.join("migrations")).unwrap();
-    let names = files
-        .iter()
-        .map(|migration| migration.name.clone())
-        .collect::<Vec<_>>();
-    assert_eq!(names, vec!["001_first.sql", "002_second.sql"]);
-    assert_eq!(
-        schema_hash(&root.join("migrations")).unwrap(),
-        schema_hash(&root.join("migrations")).unwrap()
-    );
-
-    let _ = fs::remove_dir_all(root);
-}
-
-#[test]
-fn reversible_migration_files_apply_only_up_files() {
-    let root = temp_root("reversible_migrations");
-    fs::create_dir_all(root.join("migrations")).unwrap();
-    fs::write(
-        root.join("migrations/001_create_users.up.sql"),
-        "CREATE TABLE users(id INTEGER PRIMARY KEY);\n",
-    )
-    .unwrap();
-    fs::write(
-        root.join("migrations/001_create_users.down.sql"),
-        "DROP TABLE users;\n",
-    )
-    .unwrap();
-    fs::write(root.join("migrations/002_seed.sql"), "SELECT 1;\n").unwrap();
-
-    let files = applied_migration_files(&root.join("migrations")).unwrap();
-    let names = files
-        .iter()
-        .map(|migration| migration.name.clone())
-        .collect::<Vec<_>>();
-    assert_eq!(names, vec!["001_create_users.up.sql", "002_seed.sql"]);
-
-    let schema = schema_hash(&root.join("migrations")).unwrap();
-    fs::write(
-        root.join("migrations/001_create_users.down.sql"),
-        "DROP TABLE users; SELECT 1;\n",
-    )
-    .unwrap();
-    assert_eq!(schema_hash(&root.join("migrations")).unwrap(), schema);
-
-    fs::write(
-        root.join("migrations/001_create_users.up.sql"),
-        "CREATE TABLE users(id INTEGER PRIMARY KEY, name TEXT);\n",
-    )
-    .unwrap();
-    assert_ne!(schema_hash(&root.join("migrations")).unwrap(), schema);
-
-    let _ = fs::remove_dir_all(root);
-}
-
-#[test]
-fn reversible_migration_files_reject_incomplete_pairs() {
-    let root = temp_root("orphan_down");
-    fs::create_dir_all(root.join("migrations")).unwrap();
-    fs::write(
-        root.join("migrations/001_create_users.down.sql"),
-        "DROP TABLE users;\n",
-    )
-    .unwrap();
-
-    assert!(
-        applied_migration_files(&root.join("migrations"))
-            .unwrap_err()
-            .contains(".down.sql file without matching .up.sql file")
-    );
-    let _ = fs::remove_dir_all(root);
-
-    let root = temp_root("orphan_up");
-    fs::create_dir_all(root.join("migrations")).unwrap();
-    fs::write(
-        root.join("migrations/001_create_users.up.sql"),
-        "CREATE TABLE users(id INTEGER PRIMARY KEY);\n",
-    )
-    .unwrap();
-
-    assert!(
-        applied_migration_files(&root.join("migrations"))
-            .unwrap_err()
-            .contains(".up.sql file without matching .down.sql file")
-    );
-    let _ = fs::remove_dir_all(root);
-}
-
-#[test]
-fn reversible_migration_files_reject_simple_duplicate_ids() {
-    let root = temp_root("duplicate_migrations");
-    fs::create_dir_all(root.join("migrations")).unwrap();
-    fs::write(root.join("migrations/001_users.sql"), "SELECT 1;\n").unwrap();
-    fs::write(root.join("migrations/001_users.up.sql"), "SELECT 2;\n").unwrap();
-    fs::write(root.join("migrations/001_users.down.sql"), "SELECT 3;\n").unwrap();
-
-    assert!(
-        applied_migration_files(&root.join("migrations"))
-            .unwrap_err()
-            .contains("both simple and reversible files")
-    );
-    let _ = fs::remove_dir_all(root);
-}
-
-#[test]
-fn offline_query_cache_validates_shape_and_staleness() {
-    let root = temp_root("cache");
-    let library = library(&root);
-    let cache_path = query_cache_path(&library);
-    fs::create_dir_all(cache_path.parent().unwrap()).unwrap();
-    let query = query(QueryFunction::As, FetchMode::One);
-    let cache = QueryCache {
-        version: QUERY_CACHE_VERSION,
-        entries: vec![QueryCacheEntry {
-            migrations: "./migrations".to_owned(),
-            schema_hash: "schema".to_owned(),
-            sql_hash: super::cache::stable_hash_hex(query.sql.as_bytes()),
-            sql: query.sql.clone(),
-            user_parameter_count: 1,
-            expanded_parameter_count: 1,
-            fetch_mode: "one".to_owned(),
-            row_type: Some("UserRow".to_owned()),
-            columns: vec!["id".to_owned()],
-        }],
-    };
-    fs::write(&cache_path, serde_json::to_string_pretty(&cache).unwrap()).unwrap();
-
-    let mut row_columns = HashMap::new();
-    row_columns.insert("UserRow".to_owned(), HashSet::from(["id".to_owned()]));
-    assert_eq!(
-        validate_from_query_cache(
-            &library,
-            "./migrations",
-            "schema",
-            std::slice::from_ref(&query),
-            &row_columns,
-        ),
-        Ok(())
-    );
-    assert!(
-        validate_from_query_cache(&library, "./migrations", "stale", &[query], &row_columns)
-            .unwrap_err()
-            .contains("missing entry")
-    );
-
-    let _ = fs::remove_dir_all(root);
-}
-
-#[test]
-fn cached_column_validation_reports_missing_row_columns() {
-    let mut row_columns = HashMap::new();
-    row_columns.insert(
-        "UserRow".to_owned(),
-        HashSet::from(["id".to_owned(), "email".to_owned()]),
-    );
-
-    let error = validate_cached_columns(
-        &query(QueryFunction::As, FetchMode::One),
-        &row_columns,
-        &["id".to_owned()],
-    )
-    .unwrap_err();
-
-    assert_eq!(
-        error,
-        "cached SQL metadata for `test.query` does not return required column `email` for row `UserRow`"
     );
 }

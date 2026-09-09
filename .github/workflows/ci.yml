@@ -206,6 +206,24 @@ jobs:
           python3 scripts/validate_compatibility_contract.py --self-test
           python3 scripts/validate_compatibility_contract.py
 
+      - name: Check source file size
+        if: needs.changes.outputs.docs_only != 'true'
+        run: |
+          python3 scripts/check_source_size.py --self-test
+          python3 scripts/check_source_size.py
+
+      - name: Check Sonar coverage reporting
+        if: needs.changes.outputs.docs_only != 'true'
+        run: |
+          python3 scripts/check_coverage_reports.py --self-test
+          python3 scripts/check_coverage_reports.py
+
+      - name: Check workflow file paths
+        if: needs.changes.outputs.docs_only != 'true'
+        run: |
+          python3 scripts/check_workflow_paths.py --self-test
+          python3 scripts/check_workflow_paths.py
+
       - name: Install Rust test and coverage tools
         if: needs.changes.outputs.docs_only != 'true'
         uses: taiki-e/install-action@16a76bb73558798e4218983c40c25fee9f2f99a8 # cargo-nextest, cargo-llvm-cov
@@ -289,12 +307,12 @@ jobs:
             path: packages/dust_dart
             dust_check: ''
             db_check: false
-            coverage_floor: '95'
+            coverage_floor: '100'
           - name: dust_db_sqlite3
             path: packages/dust_db_sqlite3
             dust_check: ''
             db_check: false
-            coverage_floor: '90'
+            coverage_floor: '96'
           - name: dust_server
             path: packages/dust_server
             dust_check: ''
@@ -335,11 +353,23 @@ jobs:
         if: needs.changes.outputs.docs_only != 'true' && matrix.dust_check != ''
         run: cargo run --quiet -p dust_cli -- build --clean --root ${{ matrix.dust_check }}
 
+      # Runs before the online build, so the cache it reads is the committed
+      # one and not something this job just produced. This is the path a
+      # checkout with no database takes, and the only path a Postgres project
+      # can take in CI.
+      - name: Dust database check from the committed query cache
+        if: needs.changes.outputs.docs_only != 'true' && matrix.db_check
+        run: cargo run --quiet -p dust_cli -- check --root ${{ matrix.dust_check }} --db --offline
+
       - name: Dust database build
         if: needs.changes.outputs.docs_only != 'true' && matrix.db_check
         run: |
           cargo run --quiet -p dust_cli -- build --root ${{ matrix.dust_check }} --db
           cargo run --quiet -p dust_cli -- check --root ${{ matrix.dust_check }} --db
+
+      - name: Committed query cache is current
+        if: needs.changes.outputs.docs_only != 'true' && matrix.db_check
+        run: git diff --exit-code -- ${{ matrix.dust_check }}/.dust_sql
 
       - name: Analyze
         if: needs.changes.outputs.docs_only != 'true'
@@ -491,6 +521,7 @@ jobs:
       - rust
       - dart-packages
       - flutter-packages
+      - postgres-fixture
     if: >-
       needs.changes.outputs.docs_only != 'true' &&
       (github.event_name != 'pull_request' ||
@@ -566,6 +597,141 @@ jobs:
         if: needs.changes.outputs.docs_only != 'true'
         working-directory: fixtures/serde_json_app
         run: dart test
+
+  postgres-fixture:
+    name: PostgreSQL fixture
+    needs: changes
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dust
+          POSTGRES_PASSWORD: dust
+          POSTGRES_DB: dust_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dust"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DUST_DATABASE_URL: postgres://dust:dust@localhost:5432/dust_test?sslmode=disable
+    steps:
+      - name: Skip docs-only change
+        if: needs.changes.outputs.docs_only == 'true'
+        run: echo "Docs-only change detected; skipping the PostgreSQL fixture."
+
+      - name: Checkout
+        if: needs.changes.outputs.docs_only != 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter SDK for mixed workspace resolution
+        if: needs.changes.outputs.docs_only != 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Rust toolchain
+        if: needs.changes.outputs.docs_only != 'true'
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - name: Pub get
+        if: needs.changes.outputs.docs_only != 'true'
+        run: dart pub get
+
+      # Runs before the online build, so the cache read is the committed one.
+      # This is the path a checkout with no database takes, and the only path
+      # available to a project whose SQL cannot be described without a server.
+      - name: Validate from the committed query cache
+        if: needs.changes.outputs.docs_only != 'true'
+        env:
+          DUST_DATABASE_URL: ''
+        run: cargo run --quiet -p dust_cli -- check --root fixtures/postgres_app --db --offline
+
+      - name: Dust build against PostgreSQL
+        if: needs.changes.outputs.docs_only != 'true'
+        run: |
+          cargo run --quiet -p dust_cli -- build --clean --root fixtures/postgres_app
+          cargo run --quiet -p dust_cli -- build --root fixtures/postgres_app --db
+          cargo run --quiet -p dust_cli -- check --root fixtures/postgres_app --db
+
+      - name: Committed query cache is current
+        if: needs.changes.outputs.docs_only != 'true'
+        run: git diff --exit-code -- fixtures/postgres_app/.dust_sql
+
+      - name: Analyze generated PostgreSQL output
+        if: needs.changes.outputs.docs_only != 'true'
+        working-directory: fixtures/postgres_app
+        run: dart analyze --fatal-infos
+
+      - name: Test the fixture against PostgreSQL
+        if: needs.changes.outputs.docs_only != 'true'
+        working-directory: fixtures/postgres_app
+        run: dart test
+
+      # The engine's PostgreSQL describe path — connecting, the scratch schema,
+      # migrations, rollback — cannot run in the `rust` job, which has no
+      # database. These tests return early without `DUST_DATABASE_URL`, so this
+      # is the only place they do anything.
+      - name: Install Rust coverage tools
+        if: needs.changes.outputs.docs_only != 'true'
+        uses: taiki-e/install-action@16a76bb73558798e4218983c40c25fee9f2f99a8 # cargo-nextest, cargo-llvm-cov
+        with:
+          tool: cargo-nextest,cargo-llvm-cov
+
+      - name: Test the PostgreSQL validation path against a server
+        if: needs.changes.outputs.docs_only != 'true'
+        run: |
+          mkdir -p coverage
+          cargo llvm-cov nextest -p dust_db_plugin \
+            --lcov --output-path coverage/rust-postgres.lcov
+
+      # The `rust` job has no database, so the PostgreSQL describe path reads as
+      # dead there. This report is the half only this job can measure.
+      - name: Preserve PostgreSQL engine coverage for SonarQube
+        if: needs.changes.outputs.docs_only != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-rust-postgres
+          path: coverage/rust-postgres.lcov
+          retention-days: 1
+
+      - name: Test the PostgreSQL runtime against a server
+        if: needs.changes.outputs.docs_only != 'true'
+        working-directory: packages/dust_db_postgres
+        run: dart test
+
+      # `example/postgres_database.dart` is the one dust_server example that
+      # cannot run in the package matrix, which has no database. Skipped there,
+      # so this is the only job that actually serves PostgreSQL over HTTP.
+      #
+      # The whole directory, not one file: the suites are split by topic and a
+      # named file goes stale the next time they are split again.
+      - name: Serve PostgreSQL through dust_server
+        if: needs.changes.outputs.docs_only != 'true'
+        working-directory: packages/dust_server
+        run: dart test test/example --plain-name postgres_database
+
+      # The runtime is only exercised with a server, so its coverage floor
+      # belongs here rather than in the package matrix, which has none.
+      - name: PostgreSQL runtime coverage
+        if: needs.changes.outputs.docs_only != 'true'
+        run: bash scripts/dart/coverage.sh packages/dust_db_postgres 100
+
+      # Only this job can produce it, and without it Sonar counts every line of
+      # a package at 100% coverage as uncovered.
+      - name: Preserve PostgreSQL runtime coverage for SonarQube
+        if: needs.changes.outputs.docs_only != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-dart-dust_db_postgres
+          path: packages/dust_db_postgres/.coverage/lcov.info
+          include-hidden-files: true
+          retention-days: 1
 
   http-analyze:
     name: HTTP analyzer fixture

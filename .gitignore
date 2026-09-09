@@ -35,3 +35,10 @@ cargo-flamegraph.trace/
 perf.data
 perf.data.old
 *.speedscope.json
+
+# Generated API documentation, from `dart doc`.
+doc/api/
+
+# Python bytecode from scripts/.
+__pycache__/
+*.py[cod]

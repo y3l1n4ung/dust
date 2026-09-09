@@ -7,6 +7,7 @@ use dust_plugin_api::short_symbol_name;
 
 use crate::plugin::{
     constants::{DAO, DATABASE, SQLX, SQLX_DAO, SQLX_DATABASE},
+    dialect::Dialect,
     model::{DbDriver, SqlxConfig, SqlxRenameRule},
 };
 
@@ -110,7 +111,7 @@ pub(super) fn parse_database_config(config: &ConfigApplicationIr) -> Option<Data
     if let Some(parsed) = config
         .named_member("type")
         .as_deref()
-        .and_then(parse_database_type)
+        .and_then(parse_driver)
     {
         driver = parsed;
     }
@@ -158,22 +159,12 @@ fn rename_to_serde(rule: SqlxRenameRule) -> SerdeRenameRuleIr {
     }
 }
 
-/// Parses a database driver enum member from source text.
+/// Parses a database driver or database type enum member from source text.
+///
+/// `Driver.sqlite3` and `SqlxDatabaseType.sqlite` are two spellings of one
+/// dialect, and the dialect owns both.
 fn parse_driver(source: &str) -> Option<DbDriver> {
-    match source.trim().rsplit('.').next()? {
-        "sqlite3" => Some(DbDriver::Sqlite3),
-        "postgres" => Some(DbDriver::Postgres),
-        _ => None,
-    }
-}
-
-/// Parses a database type enum member from source text.
-fn parse_database_type(source: &str) -> Option<DbDriver> {
-    match source.trim().rsplit('.').next()? {
-        "sqlite" | "sqlite3" => Some(DbDriver::Sqlite3),
-        "postgres" => Some(DbDriver::Postgres),
-        _ => None,
-    }
+    Dialect::from_annotation(source).map(|dialect| dialect.driver)
 }
 
 /// Parses a SQLx rename rule enum member from source text.
@@ -192,118 +183,5 @@ fn parse_rename_rule(source: &str) -> Option<SqlxRenameRule> {
 }
 
 #[cfg(test)]
-mod tests {
-    use dust_ir::{ConfigApplicationIr, SpanIr, SymbolId};
-    use dust_text::{FileId, TextRange};
-
-    use super::*;
-
-    fn span() -> SpanIr {
-        SpanIr::new(FileId::new(1), TextRange::new(0_u32, 1_u32))
-    }
-
-    fn config(symbol: &str, args: Option<&str>) -> ConfigApplicationIr {
-        ConfigApplicationIr::new(SymbolId::new(symbol), args.map(str::to_owned), span())
-    }
-
-    #[test]
-    fn parses_sqlx_config_and_effective_column_rules() {
-        let config = sqlx_config(&[
-            config("other::Sqlx", Some("(rename: 'ignored')")),
-            config(
-                "dust_dart::Sqlx",
-                Some(
-                    "(rename: 'display_name', renameAll: SqlxRename.snakeCase, flatten: true, defaultValue: '', skip: true, json: true, tryFrom: const UserStatusFromInt(), unknown: true)",
-                ),
-            ),
-        ]);
-
-        assert_eq!(config.rename.as_deref(), Some("display_name"));
-        assert_eq!(config.rename_all, Some(SqlxRenameRule::Snake));
-        assert!(config.flatten);
-        assert_eq!(config.default_value_source.as_deref(), Some("''"));
-        assert!(config.skip);
-        assert!(config.json);
-        assert_eq!(
-            config.try_from_source.as_deref(),
-            Some("const UserStatusFromInt()")
-        );
-        assert_eq!(
-            effective_column_name(&config, "createdAt", &SqlxConfig::default()),
-            "created_at"
-        );
-        assert_eq!(
-            effective_column_name(
-                &config,
-                "createdAt",
-                &SqlxConfig {
-                    rename: Some("created_at_override".to_owned()),
-                    ..SqlxConfig::default()
-                },
-            ),
-            "created_at_override"
-        );
-    }
-
-    #[test]
-    fn parses_database_and_rename_variants() {
-        assert_eq!(parse_driver("Driver.sqlite3"), Some(DbDriver::Sqlite3));
-        assert_eq!(parse_driver("Driver.postgres"), Some(DbDriver::Postgres));
-        assert_eq!(parse_driver("Driver.mysql"), None);
-        assert_eq!(
-            parse_database_type("SqlxDatabaseType.sqlite"),
-            Some(DbDriver::Sqlite3)
-        );
-        assert_eq!(
-            parse_database_type("SqlxDatabaseType.sqlite3"),
-            Some(DbDriver::Sqlite3)
-        );
-        assert_eq!(
-            parse_database_type("SqlxDatabaseType.postgres"),
-            Some(DbDriver::Postgres)
-        );
-        assert_eq!(parse_database_type("SqlxDatabaseType.mysql"), None);
-
-        let db_config = parse_database_config(&config(
-            "dust_dart::SqlxDatabase",
-            Some("(driver: Driver.postgres, migrations: './db/migrations', ignored: true)"),
-        ))
-        .unwrap();
-        assert_eq!(db_config.driver, DbDriver::Postgres);
-        assert_eq!(db_config.migrations, "./db/migrations");
-
-        assert_eq!(
-            parse_rename_rule("SqlxRename.lowerCase"),
-            Some(SqlxRenameRule::Lower)
-        );
-        assert_eq!(
-            parse_rename_rule("SqlxRename.upperCase"),
-            Some(SqlxRenameRule::Upper)
-        );
-        assert_eq!(
-            parse_rename_rule("SqlxRename.pascalCase"),
-            Some(SqlxRenameRule::Pascal)
-        );
-        assert_eq!(
-            parse_rename_rule("SqlxRename.camelCase"),
-            Some(SqlxRenameRule::Camel)
-        );
-        assert_eq!(
-            parse_rename_rule("SqlxRename.snakeCase"),
-            Some(SqlxRenameRule::Snake)
-        );
-        assert_eq!(
-            parse_rename_rule("SqlxRename.screamingSnakeCase"),
-            Some(SqlxRenameRule::ScreamingSnake)
-        );
-        assert_eq!(
-            parse_rename_rule("SqlxRename.kebabCase"),
-            Some(SqlxRenameRule::Kebab)
-        );
-        assert_eq!(
-            parse_rename_rule("SqlxRename.screamingKebabCase"),
-            Some(SqlxRenameRule::ScreamingKebab)
-        );
-        assert_eq!(parse_rename_rule("SqlxRename.unknown"), None);
-    }
-}
+#[path = "annotations/tests.rs"]
+mod tests;

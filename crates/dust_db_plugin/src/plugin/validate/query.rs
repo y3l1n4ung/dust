@@ -12,6 +12,28 @@ use super::types::is_supported_scalar_type;
 
 /// Validates SQL source, parameters, placeholders, and fetch shape.
 pub(super) fn validate_query_shape(query: &QuerySpec, diagnostics: &mut Vec<Diagnostic>) {
+    // Unchecked SQL is checked for nothing by definition — dynamic text is the
+    // reason it exists. It gets one warning per use instead, so it reads as a
+    // deliberate line in a diff rather than disappearing into a file.
+    if matches!(query.function, QueryFunction::Unsafe) {
+        if !query.unsafe_sql_allowed {
+            diagnostics.push(
+                Diagnostic::warning("unchecked SQL bypasses build-time validation")
+                    .with_label(SourceLabel::new(
+                        query.span.file_id,
+                        query.span.range,
+                        "unchecked SQL",
+                    ))
+                    .with_note(
+                        "An IN list binds one list over json_each, optional filters are a switch \
+                         over described queries, and a sort column is a switch over an enum. If \
+                         this is administrative SQL, silence this with a `dust:allow-unsafe-sql` \
+                         comment on the call or the line above it.",
+                    ),
+            );
+        }
+        return;
+    }
     if !query.sql_source_static {
         diagnostics.push(query_error(
             query,
@@ -31,13 +53,18 @@ pub(super) fn validate_query_shape(query: &QuerySpec, diagnostics: &mut Vec<Diag
     match query.function {
         QueryFunction::As => validate_query_as(query, diagnostics),
         QueryFunction::Scalar => validate_query_scalar(query, diagnostics),
-        QueryFunction::Raw if query.fetch != FetchMode::Raw => {
-            diagnostics.push(query_error(query, "queryRaw must end with fetch"))
-        }
         QueryFunction::Execute if query.fetch != FetchMode::Execute => {
             diagnostics.push(query_error(query, "queryExecute must end with execute"))
         }
-        QueryFunction::Raw | QueryFunction::Execute => {}
+        // Reported here rather than left to the runtime `Err` the emitted body
+        // carries: a DAO holds an executor, and there is no untyped row path
+        // from one, so no return type can rescue this at run time.
+        QueryFunction::Unsupported => diagnostics.push(query_error(
+            query,
+            "Database query has an unsupported return type. Return `Future<Result<T, SqlxError>>` for a row type, a supported scalar, `ExecResult`, or `Unit`. Untyped rows come from the database facade's `unsafe` escape hatch, not from a DAO",
+        )),
+        // Returned above; it is never checked as a query.
+        QueryFunction::Execute | QueryFunction::Unsafe => {}
     }
 }
 

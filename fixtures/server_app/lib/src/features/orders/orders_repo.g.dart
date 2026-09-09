@@ -16,16 +16,16 @@ part of 'orders_repo.dart';
 final class _$OrdersRepo implements OrdersRepo {
   const _$OrdersRepo(this._db);
 
-  final DatabaseExecutor _db;
+  final Executor _db;
 
   @override
   Future<Result<List<Order>, SqlxError>> pageFor(int accountId, int limit, int offset) {
     return _db.fetchAll<Order>(
       r'''
 SELECT id, account_id, item, quantity, placed_at FROM orders
-WHERE account_id = ?
+WHERE account_id = $1
 ORDER BY id DESC
-LIMIT ? OFFSET ?
+LIMIT $2 OFFSET $3
 ''',
       [accountId, limit, offset],
       const $OrderRowDeserializer().deserialize,
@@ -37,7 +37,7 @@ LIMIT ? OFFSET ?
     return _db.fetchOptional<Order>(
       r'''
 SELECT id, account_id, item, quantity, placed_at FROM orders
-WHERE id = ? AND account_id = ?
+WHERE id = $1 AND account_id = $2
 ''',
       [id, accountId],
       const $OrderRowDeserializer().deserialize,
@@ -49,7 +49,7 @@ WHERE id = ? AND account_id = ?
     return _db.execute(
       r'''
 INSERT INTO orders (account_id, item, quantity, placed_at)
-VALUES (?, ?, ?, ?)
+VALUES ($1, $2, $3, $4)
 ''',
       [accountId, item, quantity, placedAt],
     );
@@ -59,7 +59,7 @@ VALUES (?, ?, ?, ?)
   Future<Result<ExecResult, SqlxError>> deleteOrder(int id, int accountId) {
     return _db.execute(
       r'''
-DELETE FROM orders WHERE id = ? AND account_id = ?
+DELETE FROM orders WHERE id = $1 AND account_id = $2
 ''',
       [id, accountId],
     );

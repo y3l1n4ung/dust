@@ -1,17 +1,26 @@
 final class {{ generated_name }} implements {{ class_name }} {
-  {{ generated_name }}._(this.connection);
+  {{ generated_name }}._(this._driver);
 
-  factory {{ generated_name }}.open(
-    String path, {
-    SqliteConnectOptions? options,
+  factory {{ generated_name }}.{{ factory }}(
+    {{ factory_parameter }}, {
+    {{ options_type }}? options,
   }) {
-    final connection = {{ open_expr }};
-    return {{ generated_name }}._(connection);
+    final driver = {{ open_expr }};
+    return {{ generated_name }}._(driver);
   }
 
-  final DatabaseConnection connection;
+  final {{ driver_type }} _driver;
 
-  Pool get pool => connection as Pool;
+  @override
+  Connection get connection => _driver;
+
+  @override
+  Future<Result<Unit, SqlxError>> migrate() => {{ migrate_expr }};
+
+  @override
+  UnsafeSql get unsafe => {{ unsafe_expr }};
+
+  Pool get pool => _driver;
 }
 
 {{ migrations }}

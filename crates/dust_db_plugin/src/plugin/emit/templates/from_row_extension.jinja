@@ -16,14 +16,14 @@ final class ${{ class_name }}RowDeserializer implements RowDeserializer<{{ class
 /// `FromRow` has no terminals and the call does not compile.
 extension ${{ class_name }}Query on QueryAs<{{ class_name }}> {
   /// Fetches exactly one row.
-  Future<{{ class_name }}> fetchOne(DatabaseExecutor db) =>
+  Future<Result<{{ class_name }}, SqlxError>> fetchOne(Executor db) =>
       fetchOneWith(db, _${{ class_name }}FromRow);
 
   /// Fetches zero or one row.
-  Future<{{ class_name }}?> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<{{ class_name }}?, SqlxError>> fetchOptional(Executor db) =>
       fetchOptionalWith(db, _${{ class_name }}FromRow);
 
   /// Fetches every row.
-  Future<List<{{ class_name }}>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<{{ class_name }}>, SqlxError>> fetchAll(Executor db) =>
       fetchAllWith(db, _${{ class_name }}FromRow);
 }

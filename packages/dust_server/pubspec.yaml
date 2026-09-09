@@ -1,6 +1,6 @@
 name: dust_server
 description: Runtime support for Dust-generated Dart HTTP servers on shelf.
-version: 0.1.0-beta.3
+version: 0.2.0
 homepage: https://github.com/y3l1n4ung/dust
 repository: https://github.com/y3l1n4ung/dust
 issue_tracker: https://github.com/y3l1n4ung/dust/issues
@@ -18,7 +18,7 @@ environment:
 resolution: workspace
 
 dependencies:
-  dust_dart: ^0.1.4
+  dust_dart: ^0.2.0
   http_parser: ^4.1.2
   meta: ^1.16.0
   mime: ^2.0.0
@@ -31,6 +31,11 @@ dependencies:
 
 dev_dependencies:
   coverage: ^1.11.0
+  # For the database examples only. The runtime itself needs no database; the
+  # examples show one being served. SQLite needs nothing installed, so those
+  # run anywhere; the PostgreSQL one is skipped without a server.
+  dust_db_postgres:
+  dust_db_sqlite3:
   # For example/sessions.dart only. Signing a session needs HMAC, and
   # hand-rolling one is never the right answer; the runtime itself needs none.
   crypto: ^3.0.6

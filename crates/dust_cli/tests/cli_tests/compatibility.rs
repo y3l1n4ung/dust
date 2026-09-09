@@ -11,7 +11,7 @@ fn compatibility_contract_covers_current_packages() {
     let contract = read_json(root.join("compatibility/dust-cli-packages.json").as_path());
     assert_eq!(contract["schemaVersion"], 1);
     let current_cli_version = workspace_version(root.join("Cargo.toml").as_path());
-    assert_eq!(current_cli_version, "0.1.4");
+    assert_eq!(current_cli_version, "0.2.0");
 
     let entry = contract["entries"]
         .as_array()
@@ -28,21 +28,31 @@ fn compatibility_contract_covers_current_packages() {
     assert_eq!(
         constraints["dust_dart"],
         format!(
-            ">={} <0.2.0",
+            ">={} <0.3.0",
             package_version(root.join("packages/dust_dart/pubspec.yaml").as_path())
         )
     );
     assert_eq!(
         constraints["dust_flutter"],
         format!(
-            ">={} <0.2.0",
+            ">={} <0.3.0",
             package_version(root.join("packages/dust_flutter/pubspec.yaml").as_path())
+        )
+    );
+    assert_eq!(
+        constraints["dust_db_postgres"],
+        format!(
+            ">={} <0.3.0",
+            package_version(
+                root.join("packages/dust_db_postgres/pubspec.yaml")
+                    .as_path()
+            )
         )
     );
     assert_eq!(
         constraints["dust_db_sqlite3"],
         format!(
-            ">={} <0.2.0",
+            ">={} <0.3.0",
             package_version(root.join("packages/dust_db_sqlite3/pubspec.yaml").as_path())
         )
     );
@@ -51,7 +61,7 @@ fn compatibility_contract_covers_current_packages() {
     assert_eq!(
         constraints["dust_server"],
         format!(
-            ">={} <0.2.0",
+            ">={} <0.3.0",
             package_version(root.join("packages/dust_server/pubspec.yaml").as_path())
         )
     );
@@ -97,8 +107,8 @@ fn cli_build_renders_unsupported_package_version() {
     assert_ne!(run.exit_code, 0);
     assert!(run.stdout.is_empty());
     assert!(run.stderr.contains("unsupported Dust package version"));
-    assert!(run.stderr.contains("CLI 0.1.4"));
-    assert!(run.stderr.contains("`dust_dart` >=0.1.4 <0.2.0"));
+    assert!(run.stderr.contains("CLI 0.2.0"));
+    assert!(run.stderr.contains("`dust_dart` >=0.2.0 <0.3.0"));
     assert!(run.stderr.contains("resolves 0.1.2"));
     assert!(run.stderr.contains("Upgrade the Dust package dependency"));
     assert!(!workspace.path().join("lib/user.g.dart").exists());
@@ -124,9 +134,9 @@ fn cli_doctor_renders_package_compatibility_matrix() {
     assert_eq!(run.exit_code, 1);
     assert!(run.stdout.is_empty());
     assert!(run.stderr.contains("doctor  workspace: issues"));
-    assert!(run.stderr.contains("compat cli 0.1.4"));
+    assert!(run.stderr.contains("compat cli 0.2.0"));
     assert!(run.stderr.contains(
-        "compat dust_dart status=too-old usage=used resolved=0.1.2 supported=>=0.1.4 <0.2.0"
+        "compat dust_dart status=too-old usage=used resolved=0.1.2 supported=>=0.2.0 <0.3.0"
     ));
     assert!(
         run.stderr

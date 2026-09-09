@@ -21,7 +21,15 @@ use crate::result::{DoctorPackageCompatibility, DoctorPackageCompatibilityStatus
 const COMPATIBILITY_CONTRACT: &str = include_str!("../../../compatibility/dust-cli-packages.json");
 
 /// Dust packages whose public runtime APIs can be called by generated code.
-const DUST_PACKAGES: &[&str] = &["dust_dart", "dust_flutter", "dust_db_sqlite3"];
+///
+/// Every database runtime the DB plugin knows about belongs here, and
+/// `driver_tests::compatibility` holds this list to the plugin's own registry.
+const DUST_PACKAGES: &[&str] = &[
+    "dust_dart",
+    "dust_flutter",
+    "dust_db_sqlite3",
+    "dust_db_postgres",
+];
 
 /// Validates resolved Dust runtime package versions for a workspace.
 pub(crate) fn validate_workspace_package_versions(

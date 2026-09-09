@@ -17,11 +17,28 @@ pub(crate) fn node_text(node: Node<'_>, source: &SourceText) -> String {
         .to_owned()
 }
 
-/// Returns the first named child that is not an annotation.
+/// Returns the declaration a member's metadata belongs to.
+///
+/// Skips the annotations themselves, and the comments that may sit between
+/// them and the declaration. Dart treats a comment there as trivia and keeps
+/// the metadata attached — the analyzer proves it, reporting
+/// `override_on_non_overriding_member` for an `@override` separated from its
+/// method by a doc comment. Returning the comment instead dropped the whole
+/// member, so a `@Query` written with a doc comment under it generated
+/// nothing and the failure surfaced as a missing override in Dart.
 pub(crate) fn first_non_annotation_named_child<'tree>(node: Node<'tree>) -> Option<Node<'tree>> {
     let mut cursor = node.walk();
     node.children(&mut cursor)
-        .find(|child| child.is_named() && child.kind() != "annotation")
+        .find(|child| child.is_named() && !is_metadata_trivia(*child))
+}
+
+/// Whether a node is metadata or the trivia Dart allows between it and the
+/// declaration it applies to.
+fn is_metadata_trivia(node: Node<'_>) -> bool {
+    matches!(
+        node.kind(),
+        "annotation" | "comment" | "documentation_comment"
+    )
 }
 
 /// Returns the first direct named child of the requested kind.

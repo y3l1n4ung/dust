@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-09-09
+
+### Changed
+
+- Split `view_model.dart` into `view_model.dart`, `async_state.dart` and
+  `observers.dart`. The library exports the same types from the same import, so
+  nothing a caller writes changes; the files are each small enough to read.
+
 ## [0.1.4] - 2026-09-03
 
 ### Added

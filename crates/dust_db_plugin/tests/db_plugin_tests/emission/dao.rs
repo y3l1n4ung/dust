@@ -6,6 +6,11 @@ use dust_plugin_api::{DustPlugin, SymbolPlan};
 
 use crate::support::*;
 
+/// The Dart a DAO is expected to emit, one fixture per shape.
+#[path = "dao/expected.rs"]
+mod expected;
+use self::expected::*;
+
 #[test]
 fn emits_sqlx_style_dao_redirecting_factory_impl() {
     let plugin = register_plugin();
@@ -102,8 +107,13 @@ fn emits_dao_mapper_for_imported_from_row_return_type() {
     let _ = fs::remove_dir_all(root);
 }
 
+/// Emitted SQL keeps `$n` and binds arguments in declaration order.
+///
+/// Rewriting here would have to pick a dialect: Postgres takes `$n` unchanged
+/// and SQLite does not. The driver rewrites at bind time, which is also what
+/// makes a `@SqlxDao` method and an inline query agree about the same text.
 #[test]
-fn emits_sqlite_query_with_repeated_and_reordered_args() {
+fn emits_sql_verbatim_so_the_driver_owns_the_placeholder_form() {
     let mut dao = dao_class();
     dao.methods = vec![dao_method(
         "findForOrg",
@@ -150,238 +160,4 @@ fn dao_method(
         traits: Vec::new(),
         configs: vec![config("dust_dart::Query", query)],
     }
-}
-
-fn expected_default_dao_output() -> &'static str {
-    r#"UserProfile _$UserProfileFromRow(Row row) {
-  return UserProfile(
-    id: row.read<int>('id'),
-    name: row.read<String>('display_name'),
-    bio: row.readNullable<Object?>('bio') == null ? '' : row.read<String>('bio'),
-    sessionActive: false,
-    preferences: UserPreferences.fromJson(decodeJsonObject(row.read<String>('preferences'))),
-    status: const UserStatusFromInt().decode(row.read<int>('status')),
-  );
-}
-
-/// Row deserializer for [UserProfile].
-final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> {
-  const $UserProfileRowDeserializer();
-
-  @override
-  UserProfile deserialize(Row row) => _$UserProfileFromRow(row);
-}
-
-/// Typed row query terminals for [UserProfile].
-///
-/// Resolved from the static type of the receiver, so a row type with no
-/// `FromRow` has no terminals and the call does not compile.
-extension $UserProfileQuery on QueryAs<UserProfile> {
-  /// Fetches exactly one row.
-  Future<UserProfile> fetchOne(DatabaseExecutor db) =>
-      fetchOneWith(db, _$UserProfileFromRow);
-
-  /// Fetches zero or one row.
-  Future<UserProfile?> fetchOptional(DatabaseExecutor db) =>
-      fetchOptionalWith(db, _$UserProfileFromRow);
-
-  /// Fetches every row.
-  Future<List<UserProfile>> fetchAll(DatabaseExecutor db) =>
-      fetchAllWith(db, _$UserProfileFromRow);
-}
-
-final class _$UserDao implements UserDao {
-  const _$UserDao(this._db);
-
-  final DatabaseExecutor _db;
-
-  @override
-  Future<Result<UserProfile?, SqlxError>> findById(int id) {
-    return _db.fetchOptional<UserProfile>(
-      r'''SELECT id, display_name, bio FROM users WHERE id = ?''',
-      [id],
-      const $UserProfileRowDeserializer().deserialize,
-    );
-  }
-
-  @override
-  Future<Result<int, SqlxError>> count() {
-    return _db.fetchScalar<int>(
-      r'''SELECT COUNT(*) FROM users''',
-      [],
-    );
-  }
-
-  @override
-  Future<Result<ExecResult, SqlxError>> rename(String name, int id) {
-    return _db.execute(
-      r'''UPDATE users SET display_name = ? WHERE id = ?''',
-      [name, id],
-    );
-  }
-}"#
-}
-
-fn expected_cardinality_output() -> &'static str {
-    r#"UserProfile _$UserProfileFromRow(Row row) {
-  return UserProfile(
-    id: row.read<int>('id'),
-    name: row.read<String>('display_name'),
-    bio: row.readNullable<Object?>('bio') == null ? '' : row.read<String>('bio'),
-    sessionActive: false,
-    preferences: UserPreferences.fromJson(decodeJsonObject(row.read<String>('preferences'))),
-    status: const UserStatusFromInt().decode(row.read<int>('status')),
-  );
-}
-
-/// Row deserializer for [UserProfile].
-final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> {
-  const $UserProfileRowDeserializer();
-
-  @override
-  UserProfile deserialize(Row row) => _$UserProfileFromRow(row);
-}
-
-/// Typed row query terminals for [UserProfile].
-///
-/// Resolved from the static type of the receiver, so a row type with no
-/// `FromRow` has no terminals and the call does not compile.
-extension $UserProfileQuery on QueryAs<UserProfile> {
-  /// Fetches exactly one row.
-  Future<UserProfile> fetchOne(DatabaseExecutor db) =>
-      fetchOneWith(db, _$UserProfileFromRow);
-
-  /// Fetches zero or one row.
-  Future<UserProfile?> fetchOptional(DatabaseExecutor db) =>
-      fetchOptionalWith(db, _$UserProfileFromRow);
-
-  /// Fetches every row.
-  Future<List<UserProfile>> fetchAll(DatabaseExecutor db) =>
-      fetchAllWith(db, _$UserProfileFromRow);
-}
-
-final class _$UserDao implements UserDao {
-  const _$UserDao(this._db);
-
-  final DatabaseExecutor _db;
-
-  @override
-  Future<Result<UserProfile, SqlxError>> findRequired(int id) {
-    return _db.fetchOne<UserProfile>(
-      r'''SELECT id, display_name FROM users WHERE id = ?''',
-      [id],
-      const $UserProfileRowDeserializer().deserialize,
-    );
-  }
-
-  @override
-  Future<Result<List<UserProfile>, SqlxError>> list() {
-    return _db.fetchAll<UserProfile>(
-      r'''SELECT id, display_name FROM users''',
-      [],
-      const $UserProfileRowDeserializer().deserialize,
-    );
-  }
-
-  @override
-  Future<Result<List<Row>, SqlxError>> rawRows() {
-    return _db.raw.fetch(
-      r'''SELECT id, display_name FROM users''',
-      [],
-    );
-  }
-
-  @override
-  Future<Result<Unit, SqlxError>> deleteAll() {
-    return _db.execute(
-      r'''DELETE FROM users''',
-      [],
-    ).then(
-      (result) => result.andThen<Unit>((_) => const Ok<Unit, SqlxError>(unit)),
-    );
-  }
-}"#
-}
-
-fn expected_imported_dao_output() -> &'static str {
-    r#"final class _$UserDao implements UserDao {
-  const _$UserDao(this._db);
-
-  final DatabaseExecutor _db;
-
-  @override
-  Future<Result<UserProfile?, SqlxError>> findById(int id) {
-    return _db.fetchOptional<UserProfile>(
-      r'''SELECT id, display_name, bio FROM users WHERE id = ?''',
-      [id],
-      const $UserProfileRowDeserializer().deserialize,
-    );
-  }
-
-  @override
-  Future<Result<int, SqlxError>> count() {
-    return _db.fetchScalar<int>(
-      r'''SELECT COUNT(*) FROM users''',
-      [],
-    );
-  }
-
-  @override
-  Future<Result<ExecResult, SqlxError>> rename(String name, int id) {
-    return _db.execute(
-      r'''UPDATE users SET display_name = ? WHERE id = ?''',
-      [name, id],
-    );
-  }
-}"#
-}
-
-fn expected_reordered_sqlite_output() -> &'static str {
-    r#"UserProfile _$UserProfileFromRow(Row row) {
-  return UserProfile(
-    id: row.read<int>('id'),
-    name: row.read<String>('display_name'),
-  );
-}
-
-/// Row deserializer for [UserProfile].
-final class $UserProfileRowDeserializer implements RowDeserializer<UserProfile> {
-  const $UserProfileRowDeserializer();
-
-  @override
-  UserProfile deserialize(Row row) => _$UserProfileFromRow(row);
-}
-
-/// Typed row query terminals for [UserProfile].
-///
-/// Resolved from the static type of the receiver, so a row type with no
-/// `FromRow` has no terminals and the call does not compile.
-extension $UserProfileQuery on QueryAs<UserProfile> {
-  /// Fetches exactly one row.
-  Future<UserProfile> fetchOne(DatabaseExecutor db) =>
-      fetchOneWith(db, _$UserProfileFromRow);
-
-  /// Fetches zero or one row.
-  Future<UserProfile?> fetchOptional(DatabaseExecutor db) =>
-      fetchOptionalWith(db, _$UserProfileFromRow);
-
-  /// Fetches every row.
-  Future<List<UserProfile>> fetchAll(DatabaseExecutor db) =>
-      fetchAllWith(db, _$UserProfileFromRow);
-}
-
-final class _$UserDao implements UserDao {
-  const _$UserDao(this._db);
-
-  final DatabaseExecutor _db;
-
-  @override
-  Future<Result<UserProfile?, SqlxError>> findForOrg(int id, int orgId) {
-    return _db.fetchOptional<UserProfile>(
-      r'''SELECT id, display_name FROM users WHERE org_id = ? OR id = ? OR backup_id = ?''',
-      [orgId, id, id],
-      const $UserProfileRowDeserializer().deserialize,
-    );
-  }
-}"#
 }

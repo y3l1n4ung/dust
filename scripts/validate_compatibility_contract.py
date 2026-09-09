@@ -8,89 +8,17 @@ import json
 import re
 import sys
 import tempfile
-import unittest
-from dataclasses import dataclass
-from functools import total_ordering
 from pathlib import Path
+
+from compatibility_version import Version
 
 REQUIRED_PACKAGES = (
     "dust_dart",
     "dust_flutter",
     "dust_db_sqlite3",
+    "dust_db_postgres",
     "dust_server",
 )
-
-
-@total_ordering
-@dataclass(frozen=True, order=False)
-class Version:
-    """Comparable SemVer-like version used by Dust package metadata."""
-
-    major: int
-    minor: int
-    patch: int
-    prerelease: tuple[str, ...] = ()
-
-    @classmethod
-    def parse(cls, source: str) -> "Version":
-        value = source.strip()
-        value = value.split("+", 1)[0]
-        core, _, prerelease = value.partition("-")
-        parts = core.split(".")
-        if len(parts) != 3 or not all(part.isdigit() for part in parts):
-            raise ValueError(f"invalid version {source!r}; expected MAJOR.MINOR.PATCH")
-        return cls(
-            int(parts[0]),
-            int(parts[1]),
-            int(parts[2]),
-            tuple(prerelease.split(".")) if prerelease else (),
-        )
-
-    def __lt__(self, other: "Version") -> bool:
-        core = (self.major, self.minor, self.patch)
-        other_core = (other.major, other.minor, other.patch)
-        if core != other_core:
-            return core < other_core
-        return prerelease_less(self.prerelease, other.prerelease)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Version):
-            return NotImplemented
-        return (
-            self.major,
-            self.minor,
-            self.patch,
-            self.prerelease,
-        ) == (
-            other.major,
-            other.minor,
-            other.patch,
-            other.prerelease,
-        )
-
-
-def prerelease_less(left: tuple[str, ...], right: tuple[str, ...]) -> bool:
-    """Return SemVer prerelease ordering for two prerelease tuples."""
-
-    if not left and not right:
-        return False
-    if not left:
-        return False
-    if not right:
-        return True
-
-    for left_part, right_part in zip(left, right):
-        if left_part == right_part:
-            continue
-        left_numeric = left_part.isdigit()
-        right_numeric = right_part.isdigit()
-        if left_numeric and right_numeric:
-            return int(left_part) < int(right_part)
-        if left_numeric != right_numeric:
-            return left_numeric
-        return left_part < right_part
-
-    return len(left) < len(right)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -260,121 +188,12 @@ def parse_constraint_token(token: str) -> tuple[str, str]:
     raise ValidationError(f"unsupported version constraint token {token!r}")
 
 
-class CompatibilityScriptTests(unittest.TestCase):
-    """Self-tests for compatibility validation."""
-
-    def test_constraint_accepts_current_range(self) -> None:
-        self.assertTrue(satisfies_constraint("0.1.3", ">=0.1.3 <0.2.0"))
-        self.assertTrue(satisfies_constraint("0.1.9", ">=0.1.3 <0.2.0"))
-
-    def test_constraint_orders_a_prerelease_lower_bound(self) -> None:
-        self.assertTrue(
-            satisfies_constraint("0.1.0-beta.3", ">=0.1.0-beta.3 <0.2.0")
-        )
-        self.assertFalse(
-            satisfies_constraint("0.1.0-beta.2", ">=0.1.0-beta.3 <0.2.0")
-        )
-
-    def test_constraint_rejects_too_old_and_too_new(self) -> None:
-        self.assertFalse(satisfies_constraint("0.1.2", ">=0.1.3 <0.2.0"))
-        self.assertFalse(satisfies_constraint("0.2.0", ">=0.1.3 <0.2.0"))
-
-    def test_repository_validation_catches_mismatched_package(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            write_fixture_repo(root, dust_dart_version="0.1.2")
-
-            with self.assertRaisesRegex(ValidationError, "dust_dart 0.1.2"):
-                validate_repository(root)
-
-    def test_repository_validation_catches_a_bump_with_no_changelog(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            write_fixture_repo(root)
-            (root / "packages/dust_server/pubspec.yaml").write_text(
-                "name: dust_server\nversion: 0.1.0-beta.3\n",
-                encoding="utf-8",
-            )
-
-            with self.assertRaisesRegex(
-                ValidationError, "no dated section for dust_server 0.1.0-beta.3"
-            ):
-                validate_repository(root)
-
-    def test_repository_validation_catches_a_tag_with_no_changelog(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            write_fixture_repo(root)
-            (root / "CHANGELOG.md").write_text(
-                "# Changelog\n\n## [Unreleased]\n\n## [v0.1.2] - 2026-07-10\n",
-                encoding="utf-8",
-            )
-
-            with self.assertRaisesRegex(
-                ValidationError, "no dated section for Dust v0.1.3"
-            ):
-                validate_repository(root, "v0.1.3")
-
-    def test_repository_validation_catches_release_tag_mismatch(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            write_fixture_repo(root)
-
-            with self.assertRaisesRegex(ValidationError, "release tag"):
-                validate_repository(root, "v0.1.4")
-
-
-def write_fixture_repo(root: Path, dust_dart_version: str = "0.1.3") -> None:
-    """Write a minimal fake repo for script self-tests."""
-
-    (root / "compatibility").mkdir(parents=True)
-    for package in REQUIRED_PACKAGES:
-        (root / "packages" / package).mkdir(parents=True)
-    (root / "Cargo.toml").write_text(
-        '[workspace.package]\nversion = "0.1.3"\n',
-        encoding="utf-8",
-    )
-    (root / "compatibility/dust-cli-packages.json").write_text(
-        json.dumps(
-            {
-                "schemaVersion": 1,
-                "entries": [
-                    {
-                        "cliVersion": "0.1.3",
-                        "packageConstraints": {
-                            "dust_dart": ">=0.1.3 <0.2.0",
-                            "dust_flutter": ">=0.1.3 <0.2.0",
-                            "dust_db_sqlite3": ">=0.1.3 <0.2.0",
-                            "dust_server": ">=0.1.0-beta.1 <0.2.0",
-                        },
-                    }
-                ],
-            }
-        ),
-        encoding="utf-8",
-    )
-    for package, version in {
-        "dust_dart": dust_dart_version,
-        "dust_flutter": "0.1.3",
-        "dust_db_sqlite3": "0.1.3",
-        "dust_server": "0.1.0-beta.2",
-    }.items():
-        (root / "packages" / package / "pubspec.yaml").write_text(
-            f"name: {package}\nversion: {version}\n",
-            encoding="utf-8",
-        )
-        (root / "packages" / package / "CHANGELOG.md").write_text(
-            f"# Changelog\n\n## [Unreleased]\n\n## [{version}] - 2026-07-28\n",
-            encoding="utf-8",
-        )
-    (root / "CHANGELOG.md").write_text(
-        "# Changelog\n\n## [Unreleased]\n\n## [v0.1.3] - 2026-07-28\n",
-        encoding="utf-8",
-    )
-
-
 def run_self_tests() -> int:
-    """Run unit tests for this script."""
+    """Run this script's own tests, which live in `compatibility_tests.py`."""
+
+    import unittest
+
+    from compatibility_tests import CompatibilityScriptTests
 
     suite = unittest.defaultTestLoader.loadTestsFromTestCase(CompatibilityScriptTests)
     result = unittest.TextTestRunner(verbosity=2).run(suite)

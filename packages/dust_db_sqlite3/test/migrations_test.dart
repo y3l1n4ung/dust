@@ -1,8 +1,9 @@
 import 'dart:io';
 
-import 'package:dust_dart/db.dart';
 import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:test/test.dart';
+
+import 'support/unsafe_rows.dart';
 
 void main() {
   test('sqlite migrations run once and apply upgrades in name order', () async {
@@ -46,20 +47,16 @@ INSERT INTO users (id, name, active) VALUES (2, 'Grace', 0);
       await upgraded.close();
     });
 
-    final users = await queryRaw(
-      'SELECT id, name, active FROM users ORDER BY id',
-      const [],
-    ).fetch(upgraded);
+    final users = await unsafeRows(
+        upgraded, 'SELECT id, name, active FROM users ORDER BY id', const []);
     expect(users, hasLength(2));
     expect(users[0].read<String>('name'), 'Ada');
     expect(users[0].readBool('active'), isTrue);
     expect(users[1].read<String>('name'), 'Grace');
     expect(users[1].readBool('active'), isFalse);
 
-    final migrations = await queryRaw(
-      'SELECT name FROM __dust_schema_migrations ORDER BY name',
-      const [],
-    ).fetch(upgraded);
+    final migrations = await unsafeRows(upgraded,
+        'SELECT name FROM __dust_schema_migrations ORDER BY name', const []);
     expect(migrations.map((row) => row.read<String>('name')), <String>[
       '0001_create.sql',
       '0002_upgrade.sql',
@@ -94,10 +91,8 @@ INSERT INTO users (id, name, active) VALUES (2, 'Grace', 0);
       await reopened.close();
     });
 
-    final migrations = await queryRaw(
-      'SELECT name FROM __dust_schema_migrations ORDER BY name',
-      const [],
-    ).fetch(reopened);
+    final migrations = await unsafeRows(reopened,
+        'SELECT name FROM __dust_schema_migrations ORDER BY name', const []);
     expect(migrations.map((row) => row.read<String>('name')), <String>[
       '0001_create.sql',
     ]);
@@ -127,16 +122,12 @@ INSERT INTO users (id, name) VALUES (1, 'Ada');
       await pool.close();
     });
 
-    final users = await queryRaw(
-      'SELECT id, name FROM users ORDER BY id',
-      const [],
-    ).fetch(pool);
+    final users = await unsafeRows(
+        pool, 'SELECT id, name FROM users ORDER BY id', const []);
     expect(users.map((row) => row.read<String>('name')), <String>['Ada']);
 
-    final migrations = await queryRaw(
-      'SELECT name FROM __dust_schema_migrations ORDER BY name',
-      const [],
-    ).fetch(pool);
+    final migrations = await unsafeRows(pool,
+        'SELECT name FROM __dust_schema_migrations ORDER BY name', const []);
     expect(migrations.map((row) => row.read<String>('name')), <String>[
       '0001_create_users.up.sql',
     ]);

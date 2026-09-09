@@ -126,9 +126,15 @@ void main() {
       // must not also give up on the resource.
       final closed = <String>[];
       final gate = Completer<void>();
+      // The handler says when it has been entered. Sleeping a fixed interval
+      // instead is a race: under load the request has not reached the handler
+      // yet, `close` finds nothing in flight, and the drain settles — which is
+      // the opposite of what this test is about.
+      final entered = Completer<void>();
       final app = Router()
         ..layer(_Owning('after-wedge', closed))
         ..route('/hang', get((request) async {
+          entered.complete();
           await gate.future;
           return 'late';
         }));
@@ -140,7 +146,7 @@ void main() {
               (Object _) => http.Response('', 499),
             ),
       );
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await entered.future.timeout(const Duration(seconds: 10));
 
       final settled =
           await server.close(drain: const Duration(milliseconds: 200));

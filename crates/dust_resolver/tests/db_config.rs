@@ -159,14 +159,14 @@ fn normalizes_standalone_query_calls_into_ir() {
     let source = SourceText::new(
         FileId::new(275),
         r#"
-Future<UserRow?> loadUser(DatabaseExecutor db, int id) {
+Future<UserRow?> loadUser(Executor db, int id) {
   return queryAs<UserRow>(
     r'SELECT id, name FROM users WHERE id = $1',
     [id],
   ).fetchOptional(db);
 }
 
-Future<int> countUsers(DatabaseExecutor db) {
+Future<int> countUsers(Executor db) {
   return queryScalar<int>(
     'SELECT COUNT(*) FROM users',
     const <Object?>[],

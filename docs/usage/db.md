@@ -74,12 +74,12 @@ abstract class AppDatabase implements DatabaseClient {
   }) = _$AppDatabase.open;
 
   @override
-  DatabaseConnection get connection;
+  Connection get connection;
 }
 
 @SqlxDao()
 abstract final class UserDao {
-  const factory UserDao(DatabaseExecutor db) = _$UserDao;
+  const factory UserDao(Executor db) = _$UserDao;
 
   @Query(r'SELECT id, email, name FROM users WHERE id = $1')
   Future<Result<UserRow?, SqlxError>> findById(int id);
@@ -235,12 +235,14 @@ executor call:
 | `RowType?` | Returns zero or one mapped row. |
 | `List<RowType>` | Maps every returned row. |
 | `String`, `int`, `double`, `num`, `bool`, or `DateTime` | Reads one scalar from column zero. |
-| `List<Row>` | Returns raw driver-agnostic rows. |
 | `ExecResult` | Executes the statement and returns affected rows and last insert ID. |
 | `Unit` | Executes the statement and discards execution metadata. |
 
 DAO query methods must be abstract, return the exact `Future<Result<...,
 SqlxError>>` shape, and use required positional parameters.
+
+A DAO cannot return `List<Row>`. Untyped rows come from the facade's
+[`unsafe`](#unchecked-sql) escape hatch, which a DAO's executor cannot reach.
 
 ## SQL Placeholders
 
@@ -270,9 +272,10 @@ Order _$OrderFromRow(Row row) { ... }
 final class $OrderRowDeserializer implements RowDeserializer<Order> { ... }
 
 extension $OrderQuery on QueryAs<Order> {
-  Future<Order> fetchOne(DatabaseExecutor db) => fetchOneWith(db, _$OrderFromRow);
-  Future<Order?> fetchOptional(DatabaseExecutor db) => ...;
-  Future<List<Order>> fetchAll(DatabaseExecutor db) => ...;
+  Future<Result<Order, SqlxError>> fetchOne(Executor db) =>
+      fetchOneWith(db, _$OrderFromRow);
+  Future<Result<Order?, SqlxError>> fetchOptional(Executor db) => ...;
+  Future<Result<List<Order>, SqlxError>> fetchAll(Executor db) => ...;
 }
 ```
 
@@ -308,7 +311,18 @@ final user = await queryAs<UserRow>(
   'SELECT id, email, name FROM users WHERE id = ?',
   [id],
 ).fetchOne(database.connection);
+
+switch (user) {
+  case Ok(:final value):
+    print(value.email);
+  case Err(:final error):
+    print('lookup failed: $error');
+}
 ```
+
+Every terminal returns `Result<T, SqlxError>`, matching generated DAO methods
+and the rest of `dust_dart`. A failed query is a value to handle, not an
+exception to catch.
 
 Dart resolves an extension member from the **static type** of the receiver, so
 `fetchOne` here is `$UserRowQuery.fetchOne`, picked at compile time. A row type
@@ -331,8 +345,8 @@ final row = await queryAs<Legacy>(
 ```
 
 If the row library uses a `show` clause on `package:dust_dart/db.dart`, it needs
-`QueryAs`, `DatabaseExecutor`, `Row`, and `RowDeserializer` for the generated
-part to compile.
+`QueryAs`, `Executor`, `Row`, `RowDeserializer`, `Result`, and
+`SqlxError` for the generated part to compile.
 
 ## Error Context
 
@@ -353,10 +367,10 @@ connections, and transaction control failures.
 
 `dust db build` applies migrations to an in-memory SQLite database by default,
 asks SQLx to describe each static query, writes generated Dart, and caches query
-metadata at:
+metadata in one file per library:
 
 ```text
-.dart_tool/dust/db_query_cache_v2.json
+.dust_sql/<library>-<hash>.json
 ```
 
 It validates migration SQL, placeholders, static query syntax, scalar column
@@ -387,10 +401,14 @@ dust check --db --offline
 Offline mode rejects missing entries, changed migrations, changed SQL, changed
 fetch shapes, and unsupported cache versions.
 
-> [!NOTE]
-> The metadata file lives under `.dart_tool`, so a clean CI runner must restore
-> that cache before using `--offline`. Run online validation when no trusted
-> cache is available.
+`.dust_sql/` sits beside `pubspec.yaml` and is **committed**. It is a build
+input rather than a build artifact: it is what lets a checkout with no database
+validate its SQL, so `dust clean` leaves it alone and CI reads it directly.
+Regenerate it with an online `dust db build` whenever migrations or query text
+change, and commit the result in the same change.
+
+Each entry records the driver it was described against, so a cache written for
+one dialect is rejected against another rather than silently accepted.
 
 ## Transactions
 
@@ -425,29 +443,171 @@ await database.connection.transaction((tx) async {
 Transaction executors are scope-bound. Do not store `tx` and use it after the
 callback returns; operations on a closed transaction return `Err(SqlxError)`.
 
-## Dynamic SQL
+## Column Aliases
 
-Use `raw` only when SQL cannot be static, such as an admin-selected table. Raw
-SQL is an advanced escape hatch. It is unchecked and uses native SQLite
-placeholders:
+The database infers whether a column can be null, and inference is sometimes
+wrong in ways no schema can express: a `LEFT JOIN` makes a `NOT NULL` column
+nullable in its result, and `max(x)` over an empty set is `NULL` while
+`count(*)` is not.
+
+Say so in the alias, as SQLx does:
+
+```sql
+SELECT o.total  as "total?",   -- nullable, whatever the schema says
+       max(o.id) as "id!"      -- not null, whatever inference says
+FROM orders o LEFT JOIN payments p ON p.order_id = o.id
+```
+
+The marker is part of the alias, so it reaches Dust as part of the column name
+and is removed before the column is matched to a row field. A row class still
+spells the column `total`, and the generated decoder still reads
+`row.read<int>('total')`.
+
+Only a trailing `!` or `?` is a marker. A name that merely contains one is left
+alone.
+
+## Type and Nullability Checks
+
+`dust db build` compares each described column against the field reading it and
+reports what disagrees. Both findings are **warnings**, not errors.
+
+A column whose type no Dart field can hold:
+
+```
+warning: SQLx query `OrdersRepo.byItem` reads column `item` of type `TEXT`
+         into `int`, which cannot hold it
+```
+
+A nullable column read into a non-nullable field:
+
+```
+warning: SQLx query `OrdersRepo.byItem` reads nullable column `total` into
+         non-nullable `int`. Make the field nullable, or write `as "total!"`
+         if the database is wrong about it
+```
+
+### Accepted type pairs
+
+Anything not listed is accepted rather than reported, so a converter type, an
+enum read through `tryFrom`, or a type this table has not learned costs nothing.
+
+| Dart | SQLite | PostgreSQL |
+| :--- | :--- | :--- |
+| `int` | `INTEGER`, `NUMERIC`, `BOOLEAN` | `INT2`, `INT4`, `INT8`, `OID` |
+| `double` | `REAL`, `NUMERIC`, `INTEGER` | `FLOAT4`, `FLOAT8`, `NUMERIC` |
+| `num` | `INTEGER`, `REAL`, `NUMERIC` | the `int` and `double` rows |
+| `bool` | `INTEGER`, `BOOLEAN`, `NUMERIC` | `BOOL` |
+| `String` | `TEXT` | `TEXT`, `VARCHAR`, `CHAR`, `UUID`, `JSON`, `JSONB` |
+| `DateTime` | `TEXT`, `DATETIME` | `TIMESTAMP`, `TIMESTAMPTZ`, `DATE` |
+
+SQLite's rows are wide because it has type affinity rather than types: a column
+declared `NUMERIC` holds whatever was written to it, and it has no boolean or
+date type at all, so an integer reads into `bool` and text into `DateTime`.
+PostgreSQL has real types, so its rows are narrow.
+
+`numeric` is accepted into `double` provisionally. It is arbitrary-precision and
+Dart has no counterpart, so the mapping is not settled; reading it as a `double`
+loses precision.
+
+### Nullability is checked per dialect
+
+PostgreSQL describes nullability accurately and is checked. **SQLite is not**:
+it describes a `PRIMARY KEY` column as nullable, which would warn about correct
+code — `fixtures/server_app` produced five such warnings, every one wrong. The
+column-alias overrides work on either dialect, so `as "total?"` still marks a
+column nullable where SQLite cannot say so itself.
+
+## Set Membership
+
+An `IN` list does not need dynamic SQL. Bind the list itself and read it back
+with `json_each`:
 
 ```dart
-final result = await database.pool.raw.fetch(
-  'SELECT * FROM users WHERE id = ?',
-  [id],
+final orders = await queryAs<Order>(
+  'SELECT id, item FROM orders WHERE id IN (SELECT value FROM json_each(?))',
+  [ids],
+).fetchAll(database.connection);
+```
+
+One placeholder, one bound value, and the SQL is constant — so `dust db build`
+validates it like any other query. SQLite has no array type, so the driver binds
+a `List` as JSON text; callers do not call `jsonEncode`. An empty list selects
+no rows.
+
+A `Uint8List` is bound as a BLOB rather than encoded, since that is what it is.
+
+## Unchecked SQL
+
+Migrations, `EXPLAIN`, one-off administrative work — the cases build-time
+validation cannot reach. `unsafe` lives on the database facade:
+
+```dart
+final columns = await database.unsafe.fetch(
+  'PRAGMA table_info(users)',
+  const [],
 );
 ```
+
+It offers `fetch` for untyped rows, `fetchAs<T>` with an explicit mapper, and
+`execute`. The mapper is passed by hand on purpose: generated terminals exist
+only for validated queries, so the checked path stays the easy one.
+
+`unsafe` is **not** on `Executor`. A request handler is handed an executor, and
+no cast takes an executor to a `DatabaseClient`, so a handler cannot reach
+unchecked SQL at all.
+
+Each use warns, so it reads as a deliberate line in a diff rather than
+disappearing into a file:
+
+```
+warning: unchecked SQL bypasses build-time validation
+  --> lib/src/shared/db/database.dart:35:12
+```
+
+Silence one call with a marker comment on it or on the line above:
+
+```dart
+// dust:allow-unsafe-sql
+await database.unsafe.execute('VACUUM', const []);
+```
+
+Two lines away does not count — one marker covers one call, never a file. The
+warning is reported for the libraries Dust scans, so a helper in a file with no
+Dust annotations is not seen.
+
+Most reasons to reach for it have a checked answer:
+
+| Instead of building SQL | Write |
+| :--- | :--- |
+| `IN (?, ?, ?)` | one bound list over `json_each` — see [Set Membership](#set-membership) |
+| optional filters | a `switch` over the supplied combination, each branch a constant query |
+| a dynamic `ORDER BY` | a `switch` over an enum |
+
+A sort column is an identifier and no dialect binds one, so string building is
+the only mechanism available — which is exactly why it is the classic injection
+site, and why it belongs in a `switch`:
+
+```dart
+final orders = await switch (sort) {
+  OrderSort.newest => queryAs<Order>(_byPlacedAt, [accountId]),
+  OrderSort.item => queryAs<Order>(_byItem, [accountId]),
+}
+    .fetchAll(database.connection);
+```
+
+Every branch is a constant string `describe` accepted, and the switch is
+exhaustive.
 
 For advanced SQLite-specific operations, access the native database explicitly:
 
 ```dart
-final sqlite = (database.pool as Sqlite3Executor).database;
+final sqlite = (database.connection as Sqlite3Executor).database;
 final version = sqlite.select('SELECT sqlite_version()').single[0];
 ```
 
 > [!TIP]
 > Prefer `database.connection` plus generated DAOs for product queries. Keep
-> `pool.raw` and native access small because neither path receives Dust's
+> `unsafe` and native access small because neither path receives Dust's
 > build-time SQL validation.
 
 ## Example

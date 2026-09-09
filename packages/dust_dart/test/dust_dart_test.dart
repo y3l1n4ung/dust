@@ -33,4 +33,27 @@ void main() {
     const result = Ok<int, SqlxError>(1);
     expect(result.match(ok: (value) => value, err: (_) => 0), 1);
   });
+
+  test('every Driver maps to its own SqlxDatabaseType', () {
+    // The mapping in `SqlxDatabase` is a conditional with a default, so a
+    // driver added without a branch there becomes SQLite rather than failing.
+    const expected = <Driver, SqlxDatabaseType>{
+      Driver.sqlite3: SqlxDatabaseType.sqlite,
+      Driver.postgres: SqlxDatabaseType.postgres,
+    };
+
+    expect(
+      expected.keys.toSet(),
+      Driver.values.toSet(),
+      reason: 'a Driver with no expected SqlxDatabaseType was added; give it a '
+          'branch in the SqlxDatabase constructor and an entry here',
+    );
+    for (final entry in expected.entries) {
+      expect(
+        SqlxDatabase(driver: entry.key).type,
+        entry.value,
+        reason: '${entry.key} maps to the wrong SqlxDatabaseType',
+      );
+    }
+  });
 }

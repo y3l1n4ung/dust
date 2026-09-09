@@ -12,7 +12,7 @@ abstract final class InventoryRepo {
   /// That parameter is why a repo and a database are different types: reserving
   /// stock and writing an order are one unit of work, and half of it is worse
   /// than neither.
-  const factory InventoryRepo(DatabaseExecutor db) = _$InventoryRepo;
+  const factory InventoryRepo(Executor db) = _$InventoryRepo;
 
   /// What is left of one item.
   @Query(r'SELECT item, on_hand FROM stock WHERE item = $1')
@@ -21,6 +21,19 @@ abstract final class InventoryRepo {
   /// Everything in stock.
   @Query(r'SELECT item, on_hand FROM stock ORDER BY item')
   Future<Result<List<Stock>, SqlxError>> allStock();
+
+  /// What is left of each of [items].
+  ///
+  /// An `IN` list needs no dynamic SQL. The list is one bound value, the driver
+  /// encodes it, and `json_each` unpacks it — so the text is constant and
+  /// `describe` checks it like any other query. Building `IN (?, ?, ?)` at the
+  /// call site would put this query outside validation for no gain.
+  @Query(r'''
+SELECT item, on_hand FROM stock
+WHERE item IN (SELECT value FROM json_each($1))
+ORDER BY item
+''')
+  Future<Result<List<Stock>, SqlxError>> stockForItems(List<String> items);
 
   /// Adds stock, creating the row when it is the first of its kind.
   @Query(r'''

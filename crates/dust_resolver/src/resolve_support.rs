@@ -13,6 +13,10 @@ use crate::{
     SymbolKind, annotations::annotation_argument_values, serde::normalize_field_serde,
 };
 
+/// Resolving an annotation and its trait application to catalog symbols.
+mod annotations;
+pub(crate) use self::annotations::*;
+
 /// Positional and named annotation argument values.
 type AnnotationArguments = (Vec<AnnotationValueIr>, BTreeMap<String, AnnotationValueIr>);
 
@@ -274,89 +278,6 @@ pub(crate) fn resolve_field(
     }
 }
 
-/// Resolves an annotation by canonical symbol identity, then short-name compatibility.
-fn resolve_annotation<'a>(
-    catalog: &'a SymbolCatalog,
-    annotation: &ParsedAnnotation,
-) -> Option<&'a crate::ResolvedSymbol> {
-    catalog
-        .resolve_qualified_config(&annotation.qualified_name)
-        .or_else(|| catalog.resolve_config(&annotation.name))
-        .or_else(|| catalog.resolve_qualified_trait(&annotation.qualified_name))
-        .or_else(|| catalog.resolve_trait(&annotation.name))
-}
-
-/// Resolves a trait annotation by canonical name, then short-name compatibility.
-fn resolve_annotation_trait<'a>(
-    catalog: &'a SymbolCatalog,
-    annotation: &ParsedAnnotation,
-) -> Option<&'a crate::ResolvedSymbol> {
-    catalog
-        .resolve_qualified_trait(&annotation.qualified_name)
-        .or_else(|| catalog.resolve_trait(&annotation.name))
-}
-
-/// Returns the first generated part URI from parsed directives.
-pub(crate) fn first_part_uri(directives: &[ParsedDirective]) -> Option<String> {
-    directives.iter().find_map(|directive| match directive {
-        ParsedDirective::Part { uri, .. } => Some(uri.clone()),
-        _ => None,
-    })
-}
-
-/// Pushes one resolved symbol into the matching trait or config list.
-fn push_resolved_symbol(
-    file_id: FileId,
-    application: ResolvedAnnotationSymbol,
-    traits: &mut Vec<TraitApplicationIr>,
-    configs: &mut Vec<ConfigApplicationIr>,
-) {
-    match application.kind {
-        SymbolKind::Trait => traits.push(TraitApplicationIr {
-            symbol: application.symbol,
-            span: SpanIr::new(file_id, application.span),
-        }),
-        SymbolKind::Config => {
-            let (positional_args, named_args) = application.arguments;
-            configs.push(ConfigApplicationIr::with_arguments(
-                application.symbol,
-                application.arguments_source,
-                positional_args,
-                named_args,
-                SpanIr::new(file_id, application.span),
-            ));
-        }
-    }
-}
-
 #[cfg(test)]
-mod tests {
-    use std::collections::BTreeMap;
-
-    use super::derive_member_names;
-    use dust_ir::{AnnotationValueIr, NameIr, SpanIr};
-    use dust_text::{FileId, TextRange};
-
-    #[test]
-    fn derive_members_come_from_structured_constructor_values() {
-        let span = SpanIr::new(FileId::new(1), TextRange::new(0_u32, 10_u32));
-        let values = vec![AnnotationValueIr::List(vec![
-            AnnotationValueIr::Constructor {
-                name: NameIr {
-                    source: "d.ToString".to_owned(),
-                    short: "ToString".to_owned(),
-                    prefix: Some("d".to_owned()),
-                    span,
-                },
-                positional_args: Vec::new(),
-                named_args: BTreeMap::new(),
-            },
-            AnnotationValueIr::Expression(dust_ir::ExprSourceIr {
-                source: "Unknown()".to_owned(),
-                span,
-            }),
-        ])];
-
-        assert_eq!(derive_member_names(&values), ["ToString"]);
-    }
-}
+#[path = "resolve_support/tests.rs"]
+mod tests;

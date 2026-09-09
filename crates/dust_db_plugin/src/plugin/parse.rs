@@ -114,8 +114,8 @@ fn query_spec_from_call(call: &QueryCallIr) -> QuerySpec {
     let function = match call.function {
         QueryFunctionIr::As => QueryFunction::As,
         QueryFunctionIr::Scalar => QueryFunction::Scalar,
-        QueryFunctionIr::Raw => QueryFunction::Raw,
         QueryFunctionIr::Execute => QueryFunction::Execute,
+        QueryFunctionIr::Unsafe => QueryFunction::Unsafe,
     };
     QuerySpec {
         function,
@@ -131,8 +131,12 @@ fn query_spec_from_call(call: &QueryCallIr) -> QuerySpec {
         parameter_count: call.parameter_count,
         params_source_is_list: call.params_source_is_list,
         has_row_mapper_argument: call.has_row_mapper_argument,
+        unsafe_sql_allowed: call.unsafe_sql_allowed,
         span: call.span,
-        display_name: None,
+        // A bare `queryExecute` says nothing in a file holding several queries.
+        // The enclosing function is what a reader searches for; a call with no
+        // enclosing function keeps the helper name.
+        display_name: call.enclosing_name.clone(),
     }
 }
 
@@ -155,6 +159,8 @@ pub(crate) fn dao_query_specs(library: &DartFileIr) -> Vec<QuerySpec> {
                     params_source_is_list: true,
                     // A DAO method has no argument to pass one through.
                     has_row_mapper_argument: false,
+                    // A DAO cannot reach unchecked SQL, so nothing to allow.
+                    unsafe_sql_allowed: false,
                     span: method.method.span,
                     display_name: Some(format!("{}.{}", dao.class.name, method.method.name)),
                 }

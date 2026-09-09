@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-07
+
+### Added
+
+- Five database examples, indexed under their own heading. Nothing in the
+  previous 52 touched a database, which left out the combination every server
+  that stores something is:
+
+  - `sqlite_database.dart` — a driver opened in `main`, attached with
+    `withState`, read back by a handler that opens and closes nothing.
+  - `database_transactions.dart` — a checkout that reserves stock and writes an
+    order, or does neither. `Ok` commits and `Err` rolls back, so there is no
+    path out of the closure that skips the decision.
+  - `database_errors.dart` — a missing row as 404 and a duplicate as 409,
+    because answering 500 for both is how a duplicate email pages somebody.
+  - `database_pagination.dart` — `limit` and `offset` bind, and a sort column
+    is a `switch` over an enum, since no dialect binds an identifier and
+    `'ORDER BY $sort'` is how a list endpoint becomes an injection.
+  - `postgres_database.dart` — what changes over a socket: `migrate()` as a
+    separate call before serving, and a transaction holding one pooled
+    connection.
+
+  The four SQLite ones run anywhere. The PostgreSQL one is the only example the
+  package matrix cannot run, since there is no in-memory PostgreSQL, so it is
+  skipped there and run by the job that has a server.
+
+### Changed
+
+- Requires `dust_dart` 0.2.0. No API of this package changed; the constraint
+  had to widen because `dust_dart` went to 0.2.0, and a package that pins
+  `^0.1.4` cannot resolve against it.
+
+- Leaves the `0.1.0-beta` line for the CLI's own version. Generated handlers
+  call this package's API directly, so the compatibility table reads better
+  when the two move together — and pub.dev's automated publishing is configured
+  per package with a `v{version}` tag pattern, which only matches while the two
+  are equal. Every release so far was pushed by hand because `v0.1.4` could not
+  publish `0.1.0-beta.3`; `v0.2.0` publishes `0.2.0`.
+
 ## [0.1.0-beta.3] - 2026-09-03
 
 ### Added

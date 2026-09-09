@@ -20,8 +20,8 @@ pub(crate) fn normalize_query_calls(
                 function: match query.function {
                     ParsedQueryFunction::As => QueryFunctionIr::As,
                     ParsedQueryFunction::Scalar => QueryFunctionIr::Scalar,
-                    ParsedQueryFunction::Raw => QueryFunctionIr::Raw,
                     ParsedQueryFunction::Execute => QueryFunctionIr::Execute,
+                    ParsedQueryFunction::Unsafe => QueryFunctionIr::Unsafe,
                 },
                 type_arg: query.type_arg_source.as_ref().map(|_| type_outcome.value),
                 type_arg_source: query.type_arg_source.clone(),
@@ -31,6 +31,8 @@ pub(crate) fn normalize_query_calls(
                 params_source_is_list: query.params_source_is_list,
                 fetch_method: query.fetch_method.clone(),
                 has_row_mapper_argument: query.has_row_mapper_argument,
+                unsafe_sql_allowed: query.unsafe_sql_allowed,
+                enclosing_name: query.enclosing_name.clone(),
                 span: SpanIr::new(file_id, query.span),
             }
         })

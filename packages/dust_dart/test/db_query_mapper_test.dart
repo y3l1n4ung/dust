@@ -8,7 +8,7 @@ void main() {
     final user = await queryAs<FakeUser>('SELECT id FROM users', const [])
         .fetchOne(executor);
 
-    expect(user.id, 7);
+    expect(user.match(ok: (user) => user.id, err: (_) => -1), 7);
     expect(executor.calls, <String>['fetchOne:SELECT id FROM users']);
   });
 
@@ -21,7 +21,7 @@ void main() {
       const [],
     ).fetchOneWith(executor, (row) => FakeUntyped(row.read<int>('id')));
 
-    expect(user.id, 7);
+    expect(user.match(ok: (user) => user.id, err: (_) => -1), 7);
   });
 
   test('a row deserializer wraps a plain mapper function', () {
@@ -50,13 +50,13 @@ final class $UserRowDeserializer implements RowDeserializer<FakeUser> {
 }
 
 extension $UserQuery on QueryAs<FakeUser> {
-  Future<FakeUser> fetchOne(DatabaseExecutor db) =>
+  Future<Result<FakeUser, SqlxError>> fetchOne(Executor db) =>
       fetchOneWith(db, _$UserFromRow);
 
-  Future<FakeUser?> fetchOptional(DatabaseExecutor db) =>
+  Future<Result<FakeUser?, SqlxError>> fetchOptional(Executor db) =>
       fetchOptionalWith(db, _$UserFromRow);
 
-  Future<List<FakeUser>> fetchAll(DatabaseExecutor db) =>
+  Future<Result<List<FakeUser>, SqlxError>> fetchAll(Executor db) =>
       fetchAllWith(db, _$UserFromRow);
 }
 
@@ -73,7 +73,7 @@ final class FakeUntyped {
   final int id;
 }
 
-final class _CapturingExecutor implements DatabaseConnection {
+final class _CapturingExecutor implements Connection {
   final calls = <String>[];
 
   @override
@@ -125,7 +125,7 @@ final class _CapturingExecutor implements DatabaseConnection {
 
   @override
   Future<Result<T, SqlxError>> transaction<T>(
-    Future<Result<T, SqlxError>> Function(Executor tx) fn,
+    Future<Result<T, SqlxError>> Function(Transaction tx) fn,
   ) {
     throw UnimplementedError();
   }
