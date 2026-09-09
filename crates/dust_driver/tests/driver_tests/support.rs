@@ -13,6 +13,7 @@ pub(crate) enum DustImport {
     Http,
     Route,
     State,
+    DbPostgres,
 }
 
 pub(crate) fn generated_output(body: &str) -> String {
@@ -28,6 +29,7 @@ fn dust_source(imports: &[DustImport], contents: &str) -> String {
             DustImport::Http => "import 'package:dust_dart/http.dart';\n",
             DustImport::Route => "import 'package:dust_flutter/route.dart';\n",
             DustImport::State => "import 'package:dust_flutter/state.dart';\n",
+            DustImport::DbPostgres => "import 'package:dust_db_postgres/dust_db_postgres.dart';\n",
         })
         .collect::<String>();
     format!("{import_block}{contents}")

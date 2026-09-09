@@ -152,3 +152,41 @@ fn build_requires_visible_dust_import_for_annotation_discovery() {
     assert!(result.build_artifacts.is_empty());
     assert!(!workspace.path().join("lib/user.g.dart").exists());
 }
+
+#[test]
+fn build_rejects_too_old_dust_db_postgres() {
+    let workspace = make_workspace();
+    write_resolved_dust_packages(
+        workspace.path(),
+        &[("dust_dart", "0.2.0"), ("dust_db_postgres", "0.1.9")],
+    );
+    write_dust_file(
+        &workspace.path().join("lib/orders.dart"),
+        &[DustImport::Derive, DustImport::DbPostgres],
+        "part 'orders.g.dart';\n\
+         @ToString()\n\
+         class Order {\n\
+           final String id;\n\
+           const Order(this.id);\n\
+         }\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+        db: Default::default(),
+    });
+
+    assert!(result.has_errors(), "{:?}", result.diagnostics);
+    let diagnostic = &result.diagnostics[0];
+    assert!(
+        diagnostic.message.contains("`dust_db_postgres`"),
+        "{diagnostic:?}"
+    );
+    assert!(
+        diagnostic.message.contains("resolves 0.1.9"),
+        "{diagnostic:?}"
+    );
+    assert!(!workspace.path().join("lib/orders.g.dart").exists());
+}

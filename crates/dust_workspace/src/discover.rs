@@ -16,6 +16,7 @@ const DUST_RUNTIME_PACKAGES: &[(&str, &str)] = &[
     ("dust_dart", "package:dust_dart/"),
     ("dust_flutter", "package:dust_flutter/"),
     ("dust_db_sqlite3", "package:dust_db_sqlite3/"),
+    ("dust_db_postgres", "package:dust_db_postgres/"),
 ];
 
 /// Deduplicated set of annotation names owned by Dust plugins.
