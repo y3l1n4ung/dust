@@ -218,6 +218,12 @@ jobs:
           python3 scripts/check_coverage_reports.py --self-test
           python3 scripts/check_coverage_reports.py
 
+      - name: Check workflow file paths
+        if: needs.changes.outputs.docs_only != 'true'
+        run: |
+          python3 scripts/check_workflow_paths.py --self-test
+          python3 scripts/check_workflow_paths.py
+
       - name: Install Rust test and coverage tools
         if: needs.changes.outputs.docs_only != 'true'
         uses: taiki-e/install-action@16a76bb73558798e4218983c40c25fee9f2f99a8 # cargo-nextest, cargo-llvm-cov
@@ -702,10 +708,13 @@ jobs:
       # `example/postgres_database.dart` is the one dust_server example that
       # cannot run in the package matrix, which has no database. Skipped there,
       # so this is the only job that actually serves PostgreSQL over HTTP.
+      #
+      # The whole directory, not one file: the suites are split by topic and a
+      # named file goes stale the next time they are split again.
       - name: Serve PostgreSQL through dust_server
         if: needs.changes.outputs.docs_only != 'true'
         working-directory: packages/dust_server
-        run: dart test test/example/examples_test.dart --plain-name postgres_database
+        run: dart test test/example --plain-name postgres_database
 
       # The runtime is only exercised with a server, so its coverage floor
       # belongs here rather than in the package matrix, which has none.
