@@ -281,6 +281,12 @@ During refresh, the builder continues to use the `data` callback with the
 preserved value. Read `AsyncState<T>` directly when the UI must distinguish
 `AsyncInitial`, `AsyncLoading`, `AsyncData`, and `AsyncFailure`.
 
+`AsyncState<T>` compares by value, so the state type's own `==` decides whether
+a load counts as a change. Reloading data that compares equal to what is already
+visible does not rebuild listeners. A ViewModel that mutates a value in place
+and re-emits the same instance produces no rebuild, here as in synchronous mode;
+emit a new value instead.
+
 ## Stale Async Actions
 
 For asynchronous commands on a synchronous ViewModel, use `runAction` so stale
