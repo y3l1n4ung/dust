@@ -40,6 +40,9 @@ python3 scripts/check_coverage_reports.py
 echo "==> Workflow paths"
 python3 scripts/check_workflow_paths.py
 
+echo "==> Release versions"
+python3 scripts/check_release_versions.py
+
 if [[ "$SCOPE" != packages ]]; then
   ./scripts/rust/lint.sh
 fi
