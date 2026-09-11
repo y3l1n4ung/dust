@@ -252,17 +252,23 @@ mod tests {
         assert!(!result.clean.unwrap().cache_cleared);
     }
 
+    /// Takes write off a directory so removing a file inside it fails.
+    ///
+    /// Owner-only, `0o500` rather than `0o555`: the test needs this process to
+    /// lose write, and nothing needs group or other to reach a temp directory
+    /// at all. Granting them read and execute is what makes a mode "loose".
     #[cfg(unix)]
     fn make_dir_readonly(path: &Path) {
         let mut perms = fs::metadata(path).unwrap().permissions();
-        perms.set_mode(0o555);
+        perms.set_mode(0o500);
         fs::set_permissions(path, perms).unwrap();
     }
 
+    /// Gives write back, so the temp directory can be cleaned up.
     #[cfg(unix)]
     fn make_dir_writable(path: &Path) {
         let mut perms = fs::metadata(path).unwrap().permissions();
-        perms.set_mode(0o755);
+        perms.set_mode(0o700);
         fs::set_permissions(path, perms).unwrap();
     }
 

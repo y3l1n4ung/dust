@@ -6,7 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.1.5] - 2026-09-09
+## [0.2.0] - 2026-09-09
+
+### Fixed
+
+- `AsyncState<T>` compares by value, so an async ViewModel honours its state
+  type's own `==` the way a synchronous one already did. A generated ViewModel
+  only notifies when the next state differs from the current one, and the
+  wrapper compared by identity, so re-emitting equal data rebuilt every listener
+  and `expect(state, AsyncData(page))` never matched.
+
+  `AsyncFailure` includes the stack trace in its comparison: a retry that fails
+  the same way is a new failure and the UI should see it.
+
+  This can suppress a rebuild that used to happen. If a ViewModel mutates a
+  value in place and re-emits it, the two states are now equal and no rebuild
+  follows; emit a new value instead, which is what the synchronous path already
+  required.
+
+### Added
+
+- `AsyncState<T>` variants have a `toString`. Debug output and failed
+  expectations said `Instance of 'AsyncData<HomePageData>'`, which named neither
+  the state nor what it held.
 
 ### Changed
 

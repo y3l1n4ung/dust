@@ -1,4 +1,10 @@
 /// The lifecycle states a generated async view model moves through.
+///
+/// Each state compares by value. A generated view model only notifies when its
+/// next state differs from the current one, so a state that wraps data without
+/// comparing it makes that check useless: an async view model re-emitting equal
+/// data rebuilt every listener, while a synchronous one holding the same type
+/// did not. The type's own `==` decides, as it already did outside async mode.
 library;
 
 /// Lifecycle state for generated async ViewModels.
@@ -37,6 +43,15 @@ final class AsyncInitial<T> extends AsyncState<T> {
 
   @override
   bool get isLoading => false;
+
+  @override
+  bool operator ==(Object other) => other is AsyncInitial<T>;
+
+  @override
+  int get hashCode => (AsyncInitial<T>).hashCode;
+
+  @override
+  String toString() => 'AsyncInitial<$T>()';
 }
 
 /// Async data is loading.
@@ -61,6 +76,21 @@ final class AsyncLoading<T> extends AsyncState<T> {
 
   @override
   bool get isRefreshing => hasPreviousData;
+
+  @override
+  bool operator ==(Object other) =>
+      other is AsyncLoading<T> &&
+      other.previousData == previousData &&
+      other.hasPreviousData == hasPreviousData;
+
+  @override
+  int get hashCode =>
+      Object.hash(AsyncLoading<T>, previousData, hasPreviousData);
+
+  @override
+  String toString() => hasPreviousData
+      ? 'AsyncLoading<$T>(refreshing: $previousData)'
+      : 'AsyncLoading<$T>()';
 }
 
 /// Async data loaded successfully.
@@ -76,6 +106,15 @@ final class AsyncData<T> extends AsyncState<T> {
 
   @override
   bool get isLoading => false;
+
+  @override
+  bool operator ==(Object other) => other is AsyncData<T> && other.data == data;
+
+  @override
+  int get hashCode => Object.hash(AsyncData<T>, data);
+
+  @override
+  String toString() => 'AsyncData<$T>($data)';
 }
 
 /// Async load failed.
@@ -108,4 +147,23 @@ final class AsyncFailure<T> extends AsyncState<T> {
 
   @override
   bool get isLoading => false;
+
+  /// Two failures are the same only when their stack traces match too: a retry
+  /// that fails the same way is a new failure, and the UI should see it.
+  @override
+  bool operator ==(Object other) =>
+      other is AsyncFailure<T> &&
+      other.error == error &&
+      other.stackTrace == stackTrace &&
+      other.previousData == previousData &&
+      other.hasPreviousData == hasPreviousData;
+
+  @override
+  int get hashCode => Object.hash(
+      AsyncFailure<T>, error, stackTrace, previousData, hasPreviousData);
+
+  @override
+  String toString() => hasPreviousData
+      ? 'AsyncFailure<$T>($error, stale: $previousData)'
+      : 'AsyncFailure<$T>($error)';
 }

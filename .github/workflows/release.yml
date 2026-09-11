@@ -296,6 +296,12 @@ jobs:
           RELEASE_TAG: ${{ needs.release-inputs.outputs.release_tag }}
         run: python3 scripts/validate_compatibility_contract.py --release-tag "$RELEASE_TAG"
 
+      # Before any package is published, not after: the publish step runs them
+      # in order and stops at the first refusal, so a mismatch leaves a partial
+      # release that cannot be undone.
+      - name: Check every package can publish from this tag
+        run: python3 scripts/check_release_versions.py
+
       - name: Download packaged binaries
         uses: actions/download-artifact@v4
         with:

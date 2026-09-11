@@ -135,6 +135,11 @@ To keep Dust fast and maintainable, please follow these core principles:
   coverage report for a package the gate tests, and
   `scripts/check_workflow_paths.py` fails if a workflow names a file that no
   longer exists.
+- **Lockstep Versions:** Every publishable package carries the CLI's version,
+  even when its own changes would only be a patch. All five publish from one
+  `v{version}` tag and pub.dev refuses a package whose version differs from it,
+  so a package on its own track cannot publish at all.
+  `scripts/check_release_versions.py` enforces this.
 - **Small Files:** Hand-written source under `crates/*/src` and `packages/*/lib`
   stays under 300 lines. `scripts/check_source_size.py` enforces it in the lint
   gate and in CI; tests and generated Dart are not counted. Every file in the
