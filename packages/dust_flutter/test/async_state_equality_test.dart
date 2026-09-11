@@ -139,6 +139,91 @@ void main() {
     });
   });
 
+  group('hash codes', () {
+    test('equal states hash equally, and each variant hashes distinctly', () {
+      // Every variant's `hashCode`, so a map or set keyed by state behaves.
+      expect(
+        const AsyncInitial<Page>().hashCode,
+        const AsyncInitial<Page>().hashCode,
+      );
+      expect(
+        const AsyncLoading<Page>(
+          previousData: Page('home'),
+          hasPreviousData: true,
+        ).hashCode,
+        const AsyncLoading<Page>(
+          previousData: Page('home'),
+          hasPreviousData: true,
+        ).hashCode,
+      );
+
+      final error = StateError('offline');
+      final trace = StackTrace.current;
+      expect(
+        AsyncFailure<Page>(error, trace).hashCode,
+        AsyncFailure<Page>(error, trace).hashCode,
+      );
+
+      // Added one at a time: the repeated element is the point of the
+      // assertion, and a set literal holding one does not get past the
+      // analyzer.
+      final states = <AsyncState<Page>>{};
+      for (final state in <AsyncState<Page>>[
+        const AsyncInitial<Page>(),
+        const AsyncLoading<Page>(),
+        const AsyncData(Page('home')),
+        AsyncFailure<Page>(error, trace),
+        const AsyncData(Page('home')),
+      ]) {
+        states.add(state);
+      }
+      expect(states, hasLength(4), reason: 'the repeated data state collapses');
+    });
+  });
+
+  group('predicates', () {
+    test('each variant answers the lifecycle questions', () {
+      const initial = AsyncInitial<Page>();
+      expect(initial.isLoading, isFalse);
+      expect(initial.hasData, isFalse);
+      expect(initial.hasPreviousData, isFalse);
+      expect(initial.isRefreshing, isFalse);
+      expect(initial.data, isNull);
+      expect(initial.previousData, isNull);
+      expect(initial.error, isNull);
+      expect(initial.stackTrace, isNull);
+
+      const loading = AsyncLoading<Page>();
+      expect(loading.isLoading, isTrue);
+      expect(loading.isRefreshing, isFalse);
+      expect(loading.hasData, isFalse);
+
+      const refreshing = AsyncLoading<Page>(
+        previousData: Page('home'),
+        hasPreviousData: true,
+      );
+      expect(refreshing.isRefreshing, isTrue);
+      expect(refreshing.hasData, isTrue);
+      expect(refreshing.data, const Page('home'));
+
+      const data = AsyncData(Page('home'));
+      expect(data.isLoading, isFalse);
+      expect(data.hasData, isTrue);
+
+      final stale = AsyncFailure<Page>(
+        StateError('offline'),
+        StackTrace.empty,
+        previousData: const Page('home'),
+        hasPreviousData: true,
+      );
+      expect(stale.isLoading, isFalse);
+      expect(stale.hasData, isTrue);
+      expect(stale.data, const Page('home'));
+      expect(stale.error, isA<StateError>());
+      expect(stale.stackTrace, StackTrace.empty);
+    });
+  });
+
   group('toString', () {
     test('names the state and what it carries', () {
       expect(const AsyncInitial<Page>().toString(), 'AsyncInitial<Page>()');
@@ -157,6 +242,15 @@ void main() {
       expect(
         AsyncFailure<Page>(StateError('offline'), StackTrace.empty).toString(),
         startsWith('AsyncFailure<Page>('),
+      );
+      expect(
+        AsyncFailure<Page>(
+          StateError('offline'),
+          StackTrace.empty,
+          previousData: const Page('home'),
+          hasPreviousData: true,
+        ).toString(),
+        contains('stale:'),
       );
     });
   });
