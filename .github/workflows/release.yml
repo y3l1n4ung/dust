@@ -302,6 +302,13 @@ jobs:
       - name: Check every package can publish from this tag
         run: python3 scripts/check_release_versions.py
 
+      # Network-dependent, so it lives here rather than in the lint gate. A
+      # package pub.dev has never seen cannot have automated publishing
+      # configured, and finding that out mid-publish strands the packages
+      # already out.
+      - name: Check every package is publishable at all
+        run: python3 scripts/check_publish_readiness.py
+
       - name: Download packaged binaries
         uses: actions/download-artifact@v4
         with:

@@ -140,6 +140,11 @@ To keep Dust fast and maintainable, please follow these core principles:
   `v{version}` tag and pub.dev refuses a package whose version differs from it,
   so a package on its own track cannot publish at all.
   `scripts/check_release_versions.py` enforces this.
+- **First Publish By Hand:** A new package's first version has to be published
+  manually. Automated publishing is configured on a package's pub.dev page, and
+  that page does not exist until the package does, so a tag cannot publish a
+  name pub.dev has never seen. `scripts/check_publish_readiness.py` checks this
+  in the release job before anything is published.
 - **Small Files:** Hand-written source under `crates/*/src` and `packages/*/lib`
   stays under 300 lines. `scripts/check_source_size.py` enforces it in the lint
   gate and in CI; tests and generated Dart are not counted. Every file in the
