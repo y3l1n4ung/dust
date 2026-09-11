@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [v0.2.0] - 2026-09-11
+
 ### Added
 
 - **Database**: described column types and nullability are checked against the
@@ -81,7 +83,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the form above is describable, so build-time validation covers it. A
   `Uint8List` is still bound as a BLOB.
 
-### Added
 
 - **Database**: each use of the `unsafe` escape hatch warns, so unchecked SQL
   reads as a deliberate line in a diff. Silence one call with a
@@ -123,29 +124,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   before.
 
 
-### Fixed
-
-- **Database**: `dust_db_postgres` is recognised as a workspace runtime
-  package. It was in the CLI's compatibility contract but not in the import
-  table workspace discovery scans, so `dust doctor` reported it unused against
-  a project that imports it, and a build resolving an incompatible version was
-  accepted rather than refused. A test now holds the dialect registry, workspace
-  discovery and the contract to each other.
-
-### Removed
-
-- **Database**: the `SqlxDriver` typedef, and the `Connection` and `Transaction`
-  marker types that aliased what are now the real names.
-- **Database**: `queryRaw`, `QueryRaw`, and the `raw` channel on executors, with
-  the `Executor` interface that carried it. `Executor` was `DatabaseExecutor`
-  plus `raw`, and `Pool`, `Connection` and `Transaction` all implemented it, so
-  `db as Executor` always succeeded — a fence that stopped nobody. Unchecked SQL
-  is now `unsafe` on the database facade, which an executor cannot reach.
-
-  A DAO method returning `List<Row>` is reported at build time instead of
-  generating an unchecked fetch, and `queryRaw` is no longer parsed.
-
-### Changed
 
 - **Database**: inline query terminals return `Result<T, SqlxError>` rather than
   throwing. Generated `@SqlxDao` methods already did; the inline path unwrapped
@@ -168,6 +146,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The same SQL describes differently per dialect, so a cache written for one
   driver is now rejected against another with an error naming both, rather than
   reported as a missing entry.
+
+### Fixed
+
+- **Database**: `dust_db_postgres` is recognised as a workspace runtime
+  package. It was in the CLI's compatibility contract but not in the import
+  table workspace discovery scans, so `dust doctor` reported it unused against
+  a project that imports it, and a build resolving an incompatible version was
+  accepted rather than refused. A test now holds the dialect registry, workspace
+  discovery and the contract to each other.
+
+### Removed
+
+- **Database**: the `SqlxDriver` typedef, and the `Connection` and `Transaction`
+  marker types that aliased what are now the real names.
+- **Database**: `queryRaw`, `QueryRaw`, and the `raw` channel on executors, with
+  the `Executor` interface that carried it. `Executor` was `DatabaseExecutor`
+  plus `raw`, and `Pool`, `Connection` and `Transaction` all implemented it, so
+  `db as Executor` always succeeded — a fence that stopped nobody. Unchecked SQL
+  is now `unsafe` on the database facade, which an executor cannot reach.
+
+  A DAO method returning `List<Row>` is reported at build time instead of
+  generating an unchecked fetch, and `queryRaw` is no longer parsed.
 
 ## [v0.1.4] - 2026-09-03
 
