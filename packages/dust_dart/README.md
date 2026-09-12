@@ -84,6 +84,10 @@ Prefer focused imports when a file uses one feature area:
 
 ## Functional Types
 
+These are Dust's own types, not a re-export of `fpdart` or `dartz`. Generated
+code returns them, so a runtime built on a functional package would put that
+package in the dependency graph of every project running `dust build`.
+
 `Option<T>` distinguishes absence from presence, including a present `null`.
 `Result<T, E>` represents typed success or failure:
 
@@ -100,6 +104,10 @@ final label = parseCount('42').match(
   err: (error) => error,
 );
 ```
+
+`Result` is the fuller of the two. `Option` currently offers `isSome`, `isNone`,
+`map`, `andThen`, `unwrapOr`, `unwrapOrElse` and `match`; the Rust operations it
+does not have yet are tracked rather than assumed.
 
 ## Documentation
 
