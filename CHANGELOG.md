@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Database**: `@Query` SQL renders to a Dart literal that compiles and carries
+  the SQL that was written. The text was wrapped in `r'''...'''` whenever it did
+  not already contain the delimiter, which breaks four ways.
+
+  Two refuse to compile: SQL ending on a quote merges with the closing
+  delimiter, and SQL containing `'''` closes the literal early. Any query
+  filtering on a string constant hits the first, and `dust db build` reported
+  success before the generated file failed to parse.
+
+  Two are worse, because they compile. SQL ending on two quotes loses one to the
+  delimiter, and SQL containing a carriage return loses it to the source reader.
+  Both produce a query that runs against the database carrying SQL nobody wrote.
+
+  All four now take the escaped form. A quote anywhere but the end still stays
+  raw, and so do `$n` placeholders, backslashes, tabs and newlines, which is
+  what keeps generated SQL readable.
+
 ## [v0.2.0] - 2026-09-11
 
 ### Added
