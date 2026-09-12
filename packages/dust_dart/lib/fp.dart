@@ -2,7 +2,14 @@
 ///
 /// Import this library when app code wants Dust-owned `Option`, `Result`, or
 /// `Unit` types without taking a dependency on an external functional package.
-/// Dust keeps this contract stable during `0.1.x`.
+/// These are Dust's own types rather than a re-export of `fpdart` or `dartz`.
+/// Generated code returns them, so they cannot be optional, and a runtime that
+/// pulled in a functional package would put that package in the dependency
+/// graph of every project that runs `dust build`. Owning three small types
+/// costs less than that.
+///
+/// The contract is stable within a major version, and `Option` is still
+/// growing: see the tracking issue for the methods it does not have yet.
 ///
 /// ```dart
 /// import 'package:dust_dart/fp.dart';
