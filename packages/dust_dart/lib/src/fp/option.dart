@@ -21,6 +21,20 @@ sealed class Option<T> {
   /// ```
   const Option();
 
+  /// Wraps a nullable value: `null` becomes [None], anything else [Some].
+  ///
+  /// This is the one place a Dart `null` turns into absence. Build a
+  /// `Some<T?>(null)` directly when `null` is a present value you want to
+  /// keep, such as a field explicitly cleared rather than left out.
+  ///
+  /// ```dart
+  /// final missing = Option<String>.fromNullable(null); // None()
+  /// final present = Option<String>.fromNullable('John'); // Some(John)
+  /// ```
+  factory Option.fromNullable(T? value) {
+    return value == null ? None<T>() : Some<T>(value);
+  }
+
   /// Whether this option is [Some].
   ///
   /// ```dart

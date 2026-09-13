@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `Option<T>` operations from Rust: `Option.fromNullable`, `toNullable`,
+  `toIterable`, `contains`, `isSomeAnd`, `isNoneOr`, `unwrap`, `expect`,
+  `mapOr`, `mapOrElse`, `inspect`, `filter`, `and`, `or`, `orElse`, `xor`,
+  `zip`, `zipWith`, `unzip`, `okOr`, `okOrElse`, `flatten` and `transpose`.
+  A present `null` is preserved everywhere except `toNullable`, lazy forms do
+  not call callbacks whose branch does not apply, and `unwrap` and `expect`
+  throw `StateError` on `None`.
+
 - `UnsafeSql` — `fetch`, `fetchAs<T>(sql, parameters, mapper)`, and `execute` —
   for the administrative SQL build-time validation cannot reach: migrations,
   `EXPLAIN`, one-off operations.
