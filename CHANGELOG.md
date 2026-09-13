@@ -10,6 +10,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **fp**: `Option<T>` gains the Rust operations it was missing, so it is no
+  longer the thin half of `fp.dart`:
+  - construction and null interop: `Option.fromNullable`, `toNullable`,
+    `toIterable`
+  - queries: `contains`, `isSomeAnd`, `isNoneOr`, `unwrap`, `expect`
+  - transforms: `mapOr`, `mapOrElse`, `inspect`, `filter`
+  - choosing: `and`, `or`, `orElse`, `xor`
+  - combining and `Result` interop: `zip`, `zipWith`, `unzip`, `okOr`,
+    `okOrElse`, `flatten`, `transpose`
+
+  A present `null` stays present throughout: `Some<T?>(null)` is `Ok(null)`
+  from `okOr`, and only `toNullable` collapses it. Lazy forms (`mapOrElse`,
+  `orElse`, `okOrElse`) never call a callback whose branch does not apply.
+  `unwrap` and `expect` throw `StateError` on `None`.
+
+  JSON and database support for `Option` fields is not part of this: it waits
+  on deciding what `None()` and `Some(null)` mean on the wire (#88, #541).
+
 - **Database**: described column types and nullability are checked against the
   row class and reported as warnings. A `TEXT` column read into an `int` is
   named, and so is a nullable column read into a non-nullable field.

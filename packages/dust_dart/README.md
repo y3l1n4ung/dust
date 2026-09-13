@@ -105,9 +105,28 @@ final label = parseCount('42').match(
 );
 ```
 
-`Result` is the fuller of the two. `Option` currently offers `isSome`, `isNone`,
-`map`, `andThen`, `unwrapOr`, `unwrapOrElse` and `match`; the Rust operations it
-does not have yet are tracked rather than assumed.
+`Option` follows Rust's names:
+
+| Kind | Methods |
+| :--- | :--- |
+| Build and read | `Option.fromNullable`, `isSome`, `isNone`, `toNullable`, `toIterable` |
+| Query | `contains`, `isSomeAnd`, `isNoneOr` |
+| Extract | `unwrap`, `expect`, `unwrapOr`, `unwrapOrElse`, `match` |
+| Transform | `map`, `mapOr`, `mapOrElse`, `andThen`, `inspect`, `filter` |
+| Choose | `and`, `or`, `orElse`, `xor` |
+| Combine | `zip`, `zipWith`, `unzip`, `flatten` |
+| With `Result` | `okOr`, `okOrElse`, `transpose` |
+
+`Some<T?>(null)` is a present value and stays one; only `toNullable` turns it
+back into a bare `null`. `unwrap` and `expect` throw `StateError` on `None`.
+
+```dart
+Result<int, String> readAge(Map<String, Object?> json) {
+  return Option<int>.fromNullable(json['age'] as int?)
+      .filter((value) => value >= 0)
+      .okOr('age is missing or negative');
+}
+```
 
 ## Documentation
 
