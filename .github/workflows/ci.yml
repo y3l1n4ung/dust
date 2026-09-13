@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Validate changelog format
         shell: bash
@@ -90,7 +90,7 @@ jobs:
       docs_only: ${{ steps.classify.outputs.docs_only }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -160,7 +160,7 @@ jobs:
 
       - name: Checkout
         if: needs.changes.outputs.docs_only != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Validate Bash installer
         if: needs.changes.outputs.docs_only != 'true' && matrix.shell == 'bash'
@@ -188,7 +188,7 @@ jobs:
 
       - name: Checkout
         if: needs.changes.outputs.docs_only != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install Rust toolchain
         if: needs.changes.outputs.docs_only != 'true'
@@ -274,7 +274,7 @@ jobs:
 
       - name: Checkout
         if: needs.changes.outputs.docs_only != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install Rust toolchain
         if: needs.changes.outputs.docs_only != 'true'
@@ -336,7 +336,7 @@ jobs:
 
       - name: Checkout
         if: needs.changes.outputs.docs_only != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Flutter SDK for mixed workspace resolution
         if: needs.changes.outputs.docs_only != 'true'
@@ -447,7 +447,7 @@ jobs:
 
       - name: Checkout
         if: needs.changes.outputs.docs_only != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Flutter
         if: needs.changes.outputs.docs_only != 'true'
@@ -537,7 +537,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout full history
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -563,7 +563,7 @@ jobs:
 
       - name: Checkout
         if: needs.changes.outputs.docs_only != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Flutter SDK for Dart tooling
         if: needs.changes.outputs.docs_only != 'true'
@@ -631,7 +631,7 @@ jobs:
 
       - name: Checkout
         if: needs.changes.outputs.docs_only != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Flutter SDK for mixed workspace resolution
         if: needs.changes.outputs.docs_only != 'true'
@@ -750,7 +750,7 @@ jobs:
 
       - name: Checkout
         if: needs.changes.outputs.docs_only != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Flutter SDK for Dart tooling
         if: needs.changes.outputs.docs_only != 'true'
@@ -802,7 +802,7 @@ jobs:
 
       - name: Checkout
         if: needs.changes.outputs.docs_only != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Flutter
         if: needs.changes.outputs.docs_only != 'true'
