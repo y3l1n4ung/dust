@@ -4,14 +4,17 @@ use dust_dart_emit::{
 };
 use dust_ir::{BuiltinType, FieldIr, TypeIr};
 
-use crate::writer_type::{access_receiver, non_null_encode_expr, non_nullable};
+use crate::{
+    enum_codecs::EnumCodecs,
+    writer_type::{access_receiver, non_null_encode_expr, non_nullable},
+};
 
 /// Renders a JSON encode expression for a class field.
 pub(crate) fn encode_field_expr(
     expr: &str,
     field: &FieldIr,
     serializable_classes: &[&str],
-    serializable_enums: &[&str],
+    serializable_enums: EnumCodecs<'_>,
 ) -> String {
     match field
         .serde
@@ -28,7 +31,7 @@ pub(crate) fn encode_expr(
     expr: &str,
     ty: &TypeIr,
     serializable_classes: &[&str],
-    serializable_enums: &[&str],
+    serializable_enums: EnumCodecs<'_>,
 ) -> String {
     if nullable_identity_encode(ty) {
         return expr.to_owned();
@@ -54,7 +57,7 @@ pub(crate) fn decode_field_expr(
     key: &str,
     field: &FieldIr,
     deserializable_classes: &[&str],
-    deserializable_enums: &[&str],
+    deserializable_enums: EnumCodecs<'_>,
 ) -> String {
     match field
         .serde
@@ -78,7 +81,7 @@ pub(crate) fn decode_expr(
     key: &str,
     ty: &TypeIr,
     deserializable_classes: &[&str],
-    deserializable_enums: &[&str],
+    deserializable_enums: EnumCodecs<'_>,
 ) -> String {
     if ty.is_nullable() {
         let inner = non_nullable(ty);
@@ -105,7 +108,7 @@ fn encode_non_nullable_expr(
     expr: &str,
     ty: &TypeIr,
     serializable_classes: &[&str],
-    serializable_enums: &[&str],
+    serializable_enums: EnumCodecs<'_>,
 ) -> String {
     match ty {
         TypeIr::Builtin { .. } | TypeIr::Dynamic | TypeIr::Unknown => expr.to_owned(),
@@ -139,10 +142,10 @@ fn encode_non_nullable_expr(
             }
         }
         TypeIr::Named { name, .. } => {
-            if contains_symbol(serializable_classes, name.as_ref())
-                || contains_symbol(serializable_enums, name.as_ref())
-            {
+            if contains_symbol(serializable_classes, name.as_ref()) {
                 format!("_${name}Serialize({expr})")
+            } else if let Some(encoded) = serializable_enums.encode(name, expr) {
+                encoded
             } else {
                 format!("{expr}.toJson()")
             }
@@ -156,7 +159,7 @@ fn decode_non_nullable_expr(
     key: &str,
     ty: &TypeIr,
     deserializable_classes: &[&str],
-    deserializable_enums: &[&str],
+    deserializable_enums: EnumCodecs<'_>,
 ) -> String {
     match ty {
         TypeIr::Builtin { kind, .. } => match kind {
@@ -221,8 +224,8 @@ fn decode_non_nullable_expr(
         TypeIr::Named { name, .. } => {
             if contains_symbol(deserializable_classes, name.as_ref()) {
                 format!("_${name}Deserialize(JsonHelper.asMap({raw}, {key}))")
-            } else if contains_symbol(deserializable_enums, name.as_ref()) {
-                format!("_${name}Deserialize({raw}, {key})")
+            } else if let Some(decoded) = deserializable_enums.decode(name, raw, key) {
+                decoded
             } else {
                 format!("{name}.fromJson(JsonHelper.asMap({raw}, {key}))")
             }
