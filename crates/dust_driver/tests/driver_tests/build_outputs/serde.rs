@@ -196,3 +196,58 @@ Account _$AccountFromJson(Map<String, Object?> json) =>
         )
     );
 }
+
+/// #536: an enum declared in one library and read from another round-tripped
+/// asymmetrically. The enum's own helpers are library-private, so a class in a
+/// different library fell through to `.toJson()` and `Status.fromJson(...)`,
+/// members an enum does not have. Its public `$StatusSerializer` and
+/// `$StatusDeserializer` are what another library can reach.
+#[test]
+fn build_serializes_an_enum_declared_in_another_library() {
+    let workspace = make_workspace();
+    write_dust_file(
+        &workspace.path().join("lib/status.dart"),
+        &[DustImport::Derive],
+        "part 'status.g.dart';\n\
+         @Derive([Serialize(), Deserialize()])\n\
+         enum Status { draft, published }\n",
+    );
+    write_dust_file(
+        &workspace.path().join("lib/product.dart"),
+        &[DustImport::Derive],
+        "import 'status.dart';\n\
+         part 'product.g.dart';\n\
+         @Derive([Serialize(), Deserialize()])\n\
+         class Product {\n\
+           const Product({required this.status, this.previous, required this.history});\n\
+           final Status status;\n\
+           final Status? previous;\n\
+           final List<Status> history;\n\
+           factory Product.fromJson(Map<String, Object?> json) => _$ProductFromJson(json);\n\
+         }\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+        db: Default::default(),
+    });
+    assert!(!result.has_errors(), "{:?}", result.diagnostics);
+
+    let product = fs::read_to_string(workspace.path().join("lib/product.g.dart")).unwrap();
+    for member in [".toJson()", "Status.fromJson("] {
+        assert!(
+            !product.contains(member),
+            "an enum has no `{member}`, yet product.g.dart calls it:\n{product}"
+        );
+    }
+    assert!(
+        product.contains("const $StatusSerializer().serialize("),
+        "{product}"
+    );
+    assert!(
+        product.contains("const $StatusDeserializer().deserialize("),
+        "{product}"
+    );
+}

@@ -117,8 +117,11 @@ impl DustPlugin for SerdePlugin {
     fn generate(
         &self,
         library: &DartFileIr,
-        _context: &PluginContext<'_>,
+        context: &PluginContext<'_>,
     ) -> Vec<PluginContribution> {
-        vec![emit_library(library)]
+        vec![emit_library(
+            library,
+            context.symbol_plan.workspace_analysis(),
+        )]
     }
 }

@@ -3,6 +3,7 @@ use dust_ir::ClassIr;
 use heck::AsPascalCase;
 use serde::Serialize;
 
+use crate::enum_codecs::EnumCodecs;
 use crate::{
     emit_support::format_prefixed_expr,
     writer::{
@@ -53,7 +54,7 @@ pub(crate) fn emit_serialize_mixin_members(helper_class_name: &str) -> Vec<Strin
 pub(crate) fn emit_to_json_helper(
     class: &ClassIr,
     serializable_classes: &[&str],
-    serializable_enums: &[&str],
+    serializable_enums: EnumCodecs<'_>,
 ) -> String {
     let mut lines = Vec::new();
     for field in &class.fields {
@@ -107,7 +108,7 @@ pub(crate) fn emit_serializer_support_type(class_name: &str) -> String {
 pub(crate) fn emit_from_json_helper(
     class: &ClassIr,
     deserializable_classes: &[&str],
-    deserializable_enums: &[&str],
+    deserializable_enums: EnumCodecs<'_>,
 ) -> Option<String> {
     let constructor = find_deserialize_constructor(class)?;
     let mut lines = Vec::new();

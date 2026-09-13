@@ -6,25 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Fixed
-
-- **Database**: `@Query` SQL renders to a Dart literal that compiles and carries
-  the SQL that was written. The text was wrapped in `r'''...'''` whenever it did
-  not already contain the delimiter, which breaks four ways.
-
-  Two refuse to compile: SQL ending on a quote merges with the closing
-  delimiter, and SQL containing `'''` closes the literal early. Any query
-  filtering on a string constant hits the first, and `dust db build` reported
-  success before the generated file failed to parse.
-
-  Two are worse, because they compile. SQL ending on two quotes loses one to the
-  delimiter, and SQL containing a carriage return loses it to the source reader.
-  Both produce a query that runs against the database carrying SQL nobody wrote.
-
-  All four now take the escaped form. A quote anywhere but the end still stays
-  raw, and so do `$n` placeholders, backslashes, tabs and newlines, which is
-  what keeps generated SQL readable.
-
 ## [v0.2.0] - 2026-09-11
 
 ### Added
@@ -168,6 +149,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Database**: `@Query` SQL renders to a Dart literal that compiles and carries
+  the SQL that was written. The text was wrapped in `r'''...'''` whenever it did
+  not already contain the delimiter, which breaks four ways.
+
+  Two refuse to compile: SQL ending on a quote merges with the closing
+  delimiter, and SQL containing `'''` closes the literal early. Any query
+  filtering on a string constant hits the first, and `dust db build` reported
+  success before the generated file failed to parse.
+
+  Two are worse, because they compile. SQL ending on two quotes loses one to the
+  delimiter, and SQL containing a carriage return loses it to the source reader.
+  Both produce a query that runs against the database carrying SQL nobody wrote.
+
+  All four now take the escaped form. A quote anywhere but the end still stays
+  raw, and so do `$n` placeholders, backslashes, tabs and newlines, which is
+  what keeps generated SQL readable.
+- **SerDe**: an enum declared in one library now round-trips through a class in
+  another. The enum's helpers are private to its own library, so a class
+  elsewhere fell through to `status.toJson()` and `Status.fromJson(...)`,
+  neither of which an enum has: the generated code did not compile, and where
+  it was reached at runtime a value the encoder wrote could not be read back.
+  Those use sites now go through the enum's public `$StatusSerializer` and
+  `$StatusDeserializer`, including nullable fields, collections and
+  import-prefixed types.
 - **Database**: `dust_db_postgres` is recognised as a workspace runtime
   package. It was in the CLI's compatibility contract but not in the import
   table workspace discovery scans, so `dust doctor` reported it unused against

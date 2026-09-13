@@ -10,6 +10,15 @@ pub(crate) const JSON_SERIALIZABLE_TYPES_KEY: &str = "dust_plugin_serde.json_ser
 /// Types that can deserialize from JSON.
 pub(crate) const JSON_DESERIALIZABLE_TYPES_KEY: &str =
     "dust_plugin_serde.json_deserializable_types.v1";
+/// Enums that can serialize to JSON.
+///
+/// Kept apart from the mixed type sets above: a use site in another library
+/// has to know a type is an enum to reach it through its support type rather
+/// than through `toJson`, which an enum does not have.
+pub(crate) const JSON_SERIALIZABLE_ENUMS_KEY: &str = "dust_plugin_serde.json_serializable_enums.v1";
+/// Enums that can deserialize from JSON.
+pub(crate) const JSON_DESERIALIZABLE_ENUMS_KEY: &str =
+    "dust_plugin_serde.json_deserializable_enums.v1";
 
 /// Collects workspace-wide JSON capability facts from canonical IR.
 pub(crate) fn collect_workspace_analysis_ir(
@@ -29,9 +38,11 @@ pub(crate) fn collect_workspace_analysis_ir(
         analysis.add_string_set_value(JSON_TYPES_KEY, enum_.name.clone());
         if enum_has_trait(enum_, "dust_dart::Serialize") {
             analysis.add_string_set_value(JSON_SERIALIZABLE_TYPES_KEY, enum_.name.clone());
+            analysis.add_string_set_value(JSON_SERIALIZABLE_ENUMS_KEY, enum_.name.clone());
         }
         if enum_has_trait(enum_, "dust_dart::Deserialize") {
             analysis.add_string_set_value(JSON_DESERIALIZABLE_TYPES_KEY, enum_.name.clone());
+            analysis.add_string_set_value(JSON_DESERIALIZABLE_ENUMS_KEY, enum_.name.clone());
         }
     }
 }

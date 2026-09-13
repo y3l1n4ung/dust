@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
 use dust_ir::{ClassIr, DartFileIr, EnumIr};
-use dust_plugin_api::PluginContribution;
+use dust_plugin_api::{PluginContribution, WorkspaceAnalysis};
 
 use crate::{
+    analysis::{JSON_DESERIALIZABLE_ENUMS_KEY, JSON_SERIALIZABLE_ENUMS_KEY},
     emit_class::{
         emit_deserializer_support_type, emit_from_json_helper, emit_serialize_mixin_members,
         emit_serializer_support_type, emit_to_json_helper,
@@ -16,13 +17,17 @@ use crate::{
         emit_sealed_from_json_helper, emit_sealed_to_json_helper, is_sealed_serde_class,
     },
     emit_variant_class::{emit_generated_variant_class, generated_variant_classes},
+    enum_codecs::EnumCodecs,
 };
 
 /// Orchestrates the emission of all SerDe-related code for a library.
 ///
 /// This function identifies which models (classes and enums) have requested
 /// serialization or deserialization and generates the corresponding Dart code.
-pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
+pub(crate) fn emit_library(
+    library: &DartFileIr,
+    analysis: &WorkspaceAnalysis,
+) -> PluginContribution {
     let mut contribution = PluginContribution::default();
     let generated_variants = generated_variant_classes(library);
     let mut serializable_classes = library
@@ -64,6 +69,20 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
             .map(|variant| variant.class.name.as_str()),
     );
     let sealed_base_by_variant = sealed_base_by_variant(library);
+    // Enums elsewhere in the workspace are reachable only through their public
+    // support types, so a use site needs Pass 2's view as well as its own.
+    let serializable_enums = EnumCodecs {
+        local: &serializable_enums,
+        workspace: analysis
+            .string_set(JSON_SERIALIZABLE_ENUMS_KEY)
+            .unwrap_or_default(),
+    };
+    let deserializable_enums = EnumCodecs {
+        local: &deserializable_enums,
+        workspace: analysis
+            .string_set(JSON_DESERIALIZABLE_ENUMS_KEY)
+            .unwrap_or_default(),
+    };
 
     // Generate class-specific code.
     for class in &library.classes {
@@ -90,7 +109,7 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
                 contribution.top_level_functions.push(emit_to_json_helper(
                     class,
                     &serializable_classes,
-                    &serializable_enums,
+                    serializable_enums,
                 ));
             }
         }
@@ -102,7 +121,7 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
                     emitted_helper = true;
                 }
             } else if let Some(helper) =
-                emit_from_json_helper(class, &deserializable_classes, &deserializable_enums)
+                emit_from_json_helper(class, &deserializable_classes, deserializable_enums)
             {
                 contribution.top_level_functions.push(helper);
                 emitted_helper = true;
@@ -132,14 +151,14 @@ pub(crate) fn emit_library(library: &DartFileIr) -> PluginContribution {
             contribution.top_level_functions.push(emit_to_json_helper(
                 &variant.class,
                 &serializable_classes,
-                &serializable_enums,
+                serializable_enums,
             ));
         }
         if variant.deserializable {
             if let Some(helper) = emit_from_json_helper(
                 &variant.class,
                 &deserializable_classes,
-                &deserializable_enums,
+                deserializable_enums,
             ) {
                 contribution.top_level_functions.push(helper);
             }

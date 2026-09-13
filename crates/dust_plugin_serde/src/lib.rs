@@ -16,6 +16,8 @@ mod emit_sealed;
 mod emit_support;
 /// Renders generated sealed variant classes.
 mod emit_variant_class;
+/// How a use site reaches an enum's JSON helpers, in its library or another.
+mod enum_codecs;
 /// Plugin registration and Dust plugin implementation.
 mod plugin;
 /// Validates serde-compatible model shapes.

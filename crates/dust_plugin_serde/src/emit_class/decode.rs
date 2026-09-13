@@ -1,13 +1,14 @@
 //! Emitting the decode side of a generated codec, field by field.
 
 use super::*;
+use crate::enum_codecs::EnumCodecs;
 
 /// Emits the expression that decodes one class field.
 pub(super) fn emit_field_decode(
     class: &ClassIr,
     field: &dust_ir::FieldIr,
     deserializable_classes: &[&str],
-    deserializable_enums: &[&str],
+    deserializable_enums: EnumCodecs<'_>,
     lines: &mut Vec<String>,
 ) -> String {
     let serde = field.serde.as_ref();
@@ -73,7 +74,7 @@ pub(super) fn emit_alias_decode(
     primary_key: &str,
     aliases: &[String],
     deserializable_classes: &[&str],
-    deserializable_enums: &[&str],
+    deserializable_enums: EnumCodecs<'_>,
     lines: &mut Vec<String>,
 ) -> String {
     let raw_name = format!("raw{}", AsPascalCase(&field.name));
