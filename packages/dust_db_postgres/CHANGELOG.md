@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-09-07
+## [0.2.0] - 2026-09-13
 
 First release. PostgreSQL runtime for generated Database code, wrapping
 `package:postgres` the way `dust_db_sqlite3` wraps `package:sqlite3`.
