@@ -15,6 +15,14 @@
 ///
 /// final count = parseCount('42').andThen(requirePositive);
 /// ```
+///
+/// Build a result as the type it is read through. Generics are covariant, so
+/// an `Ok<int, NotFound>` can sit in a `Result<int, AppError>` variable, but
+/// [andThen], [orElse], [unwrapOr], and [unwrapOrElse] still check their
+/// arguments against `NotFound` and throw a [TypeError] for an `AppError`.
+/// Declare functions with the error type their callers read, or widen first
+/// with `mapErr<AppError>((error) => error)`. [map], [mapErr], and [match] are
+/// safe on any value.
 sealed class Result<T, E> {
   /// Creates one result value.
   ///
@@ -64,6 +72,9 @@ sealed class Result<T, E> {
   ///
   /// Use this when the next step can also fail.
   ///
+  /// Throws a [TypeError] when this value was built with a narrower type than
+  /// the one it is read through; see [Result].
+  ///
   /// ```dart
   /// Result<int, String> parseCount(String text) {
   ///   final value = int.tryParse(text);
@@ -83,6 +94,9 @@ sealed class Result<T, E> {
   ///
   /// Use this for fallback reads or error recovery that can still fail.
   ///
+  /// Throws a [TypeError] when this value was built with a narrower type than
+  /// the one it is read through; see [Result].
+  ///
   /// ```dart
   /// Result<int, String> readPrimary() => const Err('cache miss');
   /// Result<int, String> readFallback(String error) => const Ok(42);
@@ -93,6 +107,9 @@ sealed class Result<T, E> {
 
   /// Returns the successful value, or [fallback] when this result failed.
   ///
+  /// Throws a [TypeError] when this value was built with a narrower type than
+  /// the one it is read through; see [Result].
+  ///
   /// ```dart
   /// final count = const Err<int, String>('invalid').unwrapOr(0);
   /// final existing = const Ok<int, String>(7).unwrapOr(0);
@@ -100,6 +117,9 @@ sealed class Result<T, E> {
   T unwrapOr(T fallback);
 
   /// Returns the successful value, or computes one from the error.
+  ///
+  /// Throws a [TypeError] when this value was built with a narrower type than
+  /// the one it is read through; see [Result].
   ///
   /// ```dart
   /// final count = const Err<int, String>('invalid')

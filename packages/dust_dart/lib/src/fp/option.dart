@@ -11,6 +11,10 @@
 ///   Some<String?>(:final value) => value ?? 'present null',
 /// };
 /// ```
+///
+/// Build an option as the type it is read through. An `Option<num>` holding
+/// `None<int>()` compiles, but [unwrapOr] and [unwrapOrElse] then reject a
+/// `double` fallback with a [TypeError]. The other members are safe.
 sealed class Option<T> {
   /// Creates one option value.
   ///
@@ -73,6 +77,9 @@ sealed class Option<T> {
 
   /// Returns the present value, or [fallback] when this option is absent.
   ///
+  /// Throws a [TypeError] when this value was built with a narrower type than
+  /// the one it is read through; see [Option].
+  ///
   /// ```dart
   /// final count = const None<int>().unwrapOr(0);
   /// final existing = const Some<int>(7).unwrapOr(0);
@@ -80,6 +87,9 @@ sealed class Option<T> {
   T unwrapOr(T fallback);
 
   /// Returns the present value, or computes one when this option is absent.
+  ///
+  /// Throws a [TypeError] when this value was built with a narrower type than
+  /// the one it is read through; see [Option].
   ///
   /// ```dart
   /// final count = const None<int>().unwrapOrElse(() => 0);
