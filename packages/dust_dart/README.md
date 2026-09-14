@@ -128,6 +128,24 @@ Result<int, String> readAge(Map<String, Object?> json) {
 }
 ```
 
+`Result` follows the same names:
+
+| Kind | Methods |
+| :--- | :--- |
+| Query | `isOk`, `isErr`, `isOkAnd`, `isErrAnd`, `ok`, `err` |
+| Extract | `unwrap`, `expect`, `unwrapErr`, `expectErr`, `unwrapOr`, `unwrapOrElse`, `match` |
+| Transform | `map`, `mapErr`, `mapOr`, `mapOrElse`, `andThen`, `inspect`, `inspectErr` |
+| Choose | `and`, `or`, `orElse` |
+| Combine | `flatten`, `transpose`, and `collect` on an `Iterable<Result>` |
+
+`unwrap` and `expect` throw `StateError` naming the error; `collect` returns
+the first error and reads nothing after it.
+
+```dart
+Result<List<int>, String> parseAll(List<String> texts) =>
+    texts.map(parseCount).collect();
+```
+
 ## Documentation
 
 - [Data classes](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/derive.md)
