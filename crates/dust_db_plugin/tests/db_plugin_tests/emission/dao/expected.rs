@@ -144,7 +144,7 @@ final class _$UserDao implements UserDao {
       r'''DELETE FROM users''',
       [],
     ).then(
-      (result) => result.andThen<Unit>((_) => const Ok<Unit, SqlxError>(unit)),
+      (result) => result.map<Unit>((_) => unit),
     );
   }
 }"#
