@@ -128,6 +128,24 @@ Result<int, String> readAge(Map<String, Object?> json) {
 }
 ```
 
+`Result` follows the same names:
+
+| Kind | Methods |
+| :--- | :--- |
+| Query | `isOk`, `isErr`, `isOkAnd`, `isErrAnd`, `ok`, `err` |
+| Extract | `unwrap`, `expect`, `unwrapErr`, `expectErr`, `unwrapOr`, `unwrapOrElse`, `match` |
+| Transform | `map`, `mapErr`, `mapOr`, `mapOrElse`, `andThen`, `inspect`, `inspectErr` |
+| Choose | `and`, `or`, `orElse` |
+| Combine | `flatten`, `transpose`, and `collect` on an `Iterable<Result>` |
+
+`unwrap` and `expect` throw `StateError` naming the error; `collect` returns
+the first error and reads nothing after it.
+
+```dart
+Result<List<int>, String> parseAll(List<String> texts) =>
+    texts.map(parseCount).collect();
+```
+
 ### Build a result as the type you read it as
 
 Dart generics are covariant: a `Result<int, NotFound>` can be stored in a
