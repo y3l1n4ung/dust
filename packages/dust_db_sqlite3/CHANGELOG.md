@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-14
+
+### Changed
+
+- Requires `dust_dart` `^0.2.1`. No other changes.
+
 ## [0.2.0] - 2026-09-13
 
 ### Performance

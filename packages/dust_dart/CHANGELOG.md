@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-14
+
+### Changed
+
+- `andThen`, `orElse`, `unwrapOr`, and `unwrapOrElse` on `Result`, and
+  `unwrapOr` and `unwrapOrElse` on `Option`, throw a `TypeError` when a value
+  built with a narrow type is read through a wider one. The README section
+  "Build a result as the type you read it as" and the member docs explain how
+  to avoid it. No API change.
+
 ## [0.2.0] - 2026-09-13
 
 ### Added

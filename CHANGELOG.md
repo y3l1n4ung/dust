@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [v0.2.1] - 2026-09-14
+
+### Fixed
+
+- **db**: A DAO method returning `Result<Unit, SqlxError>` is generated as
+  `result.map<Unit>((_) => unit)` instead of an `andThen` that built a fresh
+  `Ok`. `map` is safe on any `Result`, and it stays a member when `andThen`
+  moves to an extension in 0.3.0, so the generated code compiles whatever the
+  app's library imports.
+
+### Changed
+
+- **fp**: `andThen`, `orElse`, `unwrapOr`, and `unwrapOrElse` on `Result`, and
+  `unwrapOr` and `unwrapOrElse` on `Option`, throw a `TypeError` when a value
+  built with a narrow type is read through a wider one, such as an
+  `Ok<int, NotFound>` held in a `Result<int, AppError>`. The analyzer accepts
+  those calls. The README and the member docs now say how to avoid it, and a
+  test pins the behavior. Moving the members to extensions fixes it, but breaks
+  callers that do not import `fp.dart`, so that change is planned for 0.3.0.
+- **dust_db_postgres**: 0.2.0 was published before `dust_dart` 0.2.0 existed,
+  so pub.dev could not resolve it and scored it 50 of 160. 0.2.1 has no code
+  changes and is analyzed against a published `dust_dart`.
+- **compatibility**: CLI 0.2.1 supports every Dust package at `>=0.2.1 <0.3.0`,
+  and `dust_db_sqlite3`, `dust_db_postgres`, and `dust_server` require
+  `dust_dart` `^0.2.1`.
+
 ## [v0.2.0] - 2026-09-13
 
 ### Added
