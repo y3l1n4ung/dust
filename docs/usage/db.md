@@ -358,6 +358,21 @@ developers, and the error also carries structured fields for logs and tests:
 - `driver`, when known
 - `operation`, such as the SQL string, migration name, or transaction command
 - `cause`, when the lower-level driver provided one
+- `kind`, when a statement broke an integrity constraint: `uniqueViolation`,
+  `foreignKeyViolation`, `notNullViolation`, or `checkViolation`. SQLite and
+  PostgreSQL both fill it from their own error codes, so matching on it works
+  the same on either database, where matching on message text does not.
+
+```dart
+switch (await users.insert(email)) {
+  case Ok(:final value):
+    return value;
+  case Err(error: SqlxError(kind: SqlxErrorKind.uniqueViolation)):
+    return const Err('that email is already registered');
+  case Err(:final error):
+    return Err('could not save: ${error.message}');
+}
+```
 
 Generated DAOs and the SQLite runtime use these categories for common failures:
 missing tables, migration errors, decode failures, wrong row counts, closed

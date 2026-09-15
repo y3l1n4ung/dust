@@ -57,6 +57,27 @@ void main() {
     expect(error.cause, same(cause));
   });
 
+  group('kind', () {
+    test('a query or transaction failure carries the constraint it broke', () {
+      expect(
+        SqlxError.query('dup', kind: SqlxErrorKind.uniqueViolation).kind,
+        SqlxErrorKind.uniqueViolation,
+      );
+      expect(
+        SqlxError.transaction('fk', kind: SqlxErrorKind.foreignKeyViolation)
+            .kind,
+        SqlxErrorKind.foreignKeyViolation,
+      );
+    });
+
+    test('is null when no constraint was named', () {
+      expect(SqlxError.query('boom').kind, isNull);
+      expect(SqlxError.driver('boom').kind, isNull);
+      expect(SqlxError.decode('boom').kind, isNull);
+      expect(SqlxError.noRows('SELECT 1').kind, isNull);
+    });
+  });
+
   group('cardinality', () {
     test('no rows reads as none where one was wanted', () {
       final error = SqlxError.noRows('SELECT 1', driver: Driver.sqlite3);

@@ -1,28 +1,7 @@
 import 'annotations.dart';
+import 'sqlx_error_kinds.dart';
 
-/// Broad category for one SQLx-style runtime error.
-enum SqlxErrorCategory {
-  /// Generic driver failure when a narrower category is not known.
-  driver,
-
-  /// Opening, configuring, closing, or using a closed connection failed.
-  connection,
-
-  /// Applying startup migrations failed.
-  migration,
-
-  /// Running a query or statement failed.
-  query,
-
-  /// Decoding a row or scalar value failed.
-  decode,
-
-  /// A query returned the wrong number of rows.
-  cardinality,
-
-  /// Beginning, committing, rolling back, or running a transaction failed.
-  transaction,
-}
+export 'sqlx_error_kinds.dart';
 
 /// Base class for Database SQLx-style runtime errors.
 sealed class SqlxError implements Exception {
@@ -84,6 +63,7 @@ sealed class SqlxError implements Exception {
     Object? cause,
     Driver? driver,
     String? operation,
+    SqlxErrorKind? kind,
   }) {
     return SqlxDriverError(
       message,
@@ -91,6 +71,7 @@ sealed class SqlxError implements Exception {
       category: SqlxErrorCategory.query,
       driver: driver,
       operation: operation,
+      kind: kind,
     );
   }
 
@@ -100,6 +81,7 @@ sealed class SqlxError implements Exception {
     Object? cause,
     Driver? driver,
     String? operation,
+    SqlxErrorKind? kind,
   }) {
     return SqlxDriverError(
       message,
@@ -107,6 +89,7 @@ sealed class SqlxError implements Exception {
       category: SqlxErrorCategory.transaction,
       driver: driver,
       operation: operation,
+      kind: kind,
     );
   }
 
@@ -184,6 +167,12 @@ sealed class SqlxError implements Exception {
 
   /// Original lower-level error, when available.
   Object? get cause;
+
+  /// The integrity constraint the statement broke, when the driver knows.
+  ///
+  /// Null for every other failure, and for a constraint the driver did not
+  /// recognise.
+  SqlxErrorKind? get kind => null;
 }
 
 /// Error reported by a database driver.
@@ -195,10 +184,14 @@ final class SqlxDriverError extends SqlxError {
     this.category = SqlxErrorCategory.driver,
     this.driver,
     this.operation,
+    this.kind,
   });
 
   @override
   final SqlxErrorCategory category;
+
+  @override
+  final SqlxErrorKind? kind;
 
   /// Human-readable error message.
   @override
