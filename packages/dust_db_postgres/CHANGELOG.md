@@ -6,13 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.2.1] - 2026-09-14
+## [0.3.0] - 2026-09-15
 
-### Changed
+### Migrating
 
-- Requires `dust_dart` `^0.2.1`. No other code changes. 0.2.0 was published before `dust_dart` 0.2.0 existed, so
-  pub.dev could not resolve its dependencies and scored it 50 of 160. This
-  version is analyzed against a published `dust_dart`.
+- The pool opens up to ten connections where it opened one. Pass
+  `PgConnectOptions(maxConnections: 1)` to keep the old size.
+
+### Fixed
+
+- `package:postgres` defaults a pool to one connection, so every statement ran
+  in turn and one long transaction stalled every request. The default is now
+  `PgConnectOptions.defaultMaxConnections`, ten, as in `sqlx`.
+
+### Added
+
+- `PgConnectOptions.maxConnections`. Zero or less is refused at connect.
+- `SqlxError.kind` is filled from SQLSTATE class 23: 23505 unique, 23503
+  foreign key, 23502 not null, 23514 check, including a deferred foreign key
+  that fails at `COMMIT`.
+- The library re-exports `dust_dart`'s `Result` extensions, so code importing
+  only this package can still call `unwrapOr` and `andThen` on a query result.
 
 ## [0.2.0] - 2026-09-13
 

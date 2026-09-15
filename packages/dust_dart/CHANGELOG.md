@@ -6,15 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.2.1] - 2026-09-14
+## [0.3.0] - 2026-09-15
 
-### Changed
+### Migrating
 
 - `andThen`, `orElse`, `unwrapOr`, and `unwrapOrElse` on `Result`, and
-  `unwrapOr` and `unwrapOrElse` on `Option`, throw a `TypeError` when a value
-  built with a narrow type is read through a wider one. The README section
-  "Build a result as the type you read it as" and the member docs explain how
-  to avoid it. No API change.
+  `unwrapOr` and `unwrapOrElse` on `Option`, are extensions (`ResultChain`,
+  `OptionUnwrap`). Import `package:dust_dart/fp.dart`, or a library exporting
+  it, wherever they are called. A call through `dynamic` no longer resolves.
+
+### Fixed
+
+- Those methods no longer throw a `TypeError` on a value read through a wider
+  type than it was built with, such as an `Ok<int, NotFound>` held in a
+  `Result<int, AppError>` (#566).
+
+### Added
+
+- `Result`: `isOkAnd`, `isErrAnd`, `ok`, `err`, `unwrap`, `expect`,
+  `unwrapErr`, `expectErr`, `mapOr`, `mapOrElse`, `inspect`, `inspectErr`,
+  `and`, `or`, `flatten`, `transpose`, and `collect` on an `Iterable<Result>`.
+  `unwrap` and `expect` throw `StateError` naming the error; lazy callbacks run
+  only for the variant that applies.
+- `SqlxError.kind` and `SqlxErrorKind`: `uniqueViolation`,
+  `foreignKeyViolation`, `notNullViolation`, `checkViolation`, or null.
+  `SqlxError.query` and `SqlxError.transaction` accept it.
 
 ## [0.2.0] - 2026-09-13
 

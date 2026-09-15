@@ -7,7 +7,7 @@ use super::support::{
 #[test]
 fn build_allows_compatible_dust_package_versions() {
     let workspace = make_workspace();
-    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.2.1")]);
+    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.3.0")]);
     write_dust_file(
         &workspace.path().join("lib/user.dart"),
         &[DustImport::Derive],
@@ -59,8 +59,8 @@ fn build_rejects_too_old_dust_package_before_writing_outputs() {
             .message
             .contains("unsupported Dust package version")
     );
-    assert!(diagnostic.message.contains("CLI 0.2.1"));
-    assert!(diagnostic.message.contains("`dust_dart` >=0.2.1 <0.3.0"));
+    assert!(diagnostic.message.contains("CLI 0.3.0"));
+    assert!(diagnostic.message.contains("`dust_dart` >=0.3.0 <0.4.0"));
     assert!(diagnostic.message.contains("resolves 0.1.2"));
     assert!(
         diagnostic
@@ -73,7 +73,7 @@ fn build_rejects_too_old_dust_package_before_writing_outputs() {
 #[test]
 fn check_rejects_too_new_dust_package_before_processing_libraries() {
     let workspace = make_workspace();
-    write_resolved_dust_packages(workspace.path(), &[("dust_flutter", "0.3.0")]);
+    write_resolved_dust_packages(workspace.path(), &[("dust_flutter", "0.4.0")]);
     write_dust_file(
         &workspace.path().join("lib/counter.dart"),
         &[DustImport::State],
@@ -96,8 +96,8 @@ fn check_rejects_too_new_dust_package_before_processing_libraries() {
             .message
             .contains("unsupported Dust package version")
     );
-    assert!(diagnostic.message.contains("`dust_flutter` >=0.2.1 <0.3.0"));
-    assert!(diagnostic.message.contains("resolves 0.3.0"));
+    assert!(diagnostic.message.contains("`dust_flutter` >=0.3.0 <0.4.0"));
+    assert!(diagnostic.message.contains("resolves 0.4.0"));
     assert!(diagnostic.notes.contains(
         &"Upgrade the Dust CLI first, or pin the package to a supported range.".to_owned()
     ));
@@ -130,7 +130,7 @@ fn build_ignores_resolved_dust_package_that_source_does_not_use() {
 #[test]
 fn build_requires_visible_dust_import_for_annotation_discovery() {
     let workspace = make_workspace();
-    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.2.1")]);
+    write_resolved_dust_packages(workspace.path(), &[("dust_dart", "0.3.0")]);
     write_file(
         &workspace.path().join("lib/user.dart"),
         "part 'user.g.dart';\n\
@@ -158,7 +158,7 @@ fn build_rejects_too_old_dust_db_postgres() {
     let workspace = make_workspace();
     write_resolved_dust_packages(
         workspace.path(),
-        &[("dust_dart", "0.2.1"), ("dust_db_postgres", "0.1.9")],
+        &[("dust_dart", "0.3.0"), ("dust_db_postgres", "0.1.9")],
     );
     write_dust_file(
         &workspace.path().join("lib/orders.dart"),

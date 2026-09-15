@@ -6,31 +6,56 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [v0.2.1] - 2026-09-14
+## [v0.3.0] - 2026-09-15
+
+### Migrating
+
+- **fp**: `andThen`, `orElse`, `unwrapOr`, and `unwrapOrElse` are extensions
+  now. A file that calls them needs `import 'package:dust_dart/fp.dart';` or a
+  library that exports it (`core.dart`, `db.dart`, `dust_dart.dart`,
+  `package:dust_server/server.dart`). Files importing only `dust_db_sqlite3`
+  or `dust_db_postgres` need nothing: both re-export the `Result` extensions.
+  Every example and fixture in this repository compiled unchanged.
+- **dust_db_postgres**: the pool opens up to ten connections instead of one.
+  Pass `PgConnectOptions(maxConnections: 1)` to keep the old behavior.
 
 ### Fixed
 
-- **db**: A DAO method returning `Result<Unit, SqlxError>` is generated as
-  `result.map<Unit>((_) => unit)` instead of an `andThen` that built a fresh
-  `Ok`. `map` is safe on any `Result`, and it stays a member when `andThen`
-  moves to an extension in 0.3.0, so the generated code compiles whatever the
-  app's library imports.
+- **fp**: chaining a widened value no longer throws. As class members,
+  `andThen`, `orElse`, `unwrapOr`, and `unwrapOrElse` on `Result`, and
+  `unwrapOr` and `unwrapOrElse` on `Option`, checked their arguments against
+  the type a value was built with: an `Ok<int, NotFound>` held in a
+  `Result<int, AppError>` threw a `TypeError` when chained with a step failing
+  with another `AppError`, although the analyzer accepted the call (#566).
+- **db**: a generated DAO method returning `Result<Unit, SqlxError>` uses
+  `map` rather than `andThen`, so it compiles whatever the app's library
+  imports.
+- **dust_db_postgres**: `package:postgres` defaults a pool to one connection
+  and the driver never said otherwise, so every statement from every request
+  ran in turn. The pool now opens up to ten, `sqlx`'s default.
 
-### Changed
+### Added
 
-- **fp**: `andThen`, `orElse`, `unwrapOr`, and `unwrapOrElse` on `Result`, and
-  `unwrapOr` and `unwrapOrElse` on `Option`, throw a `TypeError` when a value
-  built with a narrow type is read through a wider one, such as an
-  `Ok<int, NotFound>` held in a `Result<int, AppError>`. The analyzer accepts
-  those calls. The README and the member docs now say how to avoid it, and a
-  test pins the behavior. Moving the members to extensions fixes it, but breaks
-  callers that do not import `fp.dart`, so that change is planned for 0.3.0.
-- **dust_db_postgres**: 0.2.0 was published before `dust_dart` 0.2.0 existed,
-  so pub.dev could not resolve it and scored it 50 of 160. 0.2.1 has no code
-  changes and is analyzed against a published `dust_dart`.
-- **compatibility**: CLI 0.2.1 supports every Dust package at `>=0.2.1 <0.3.0`,
-  and `dust_db_sqlite3`, `dust_db_postgres`, and `dust_server` require
-  `dust_dart` `^0.2.1`.
+- **fp**: `Result` gains the Rust operations `Option` already had:
+  - queries: `isOkAnd`, `isErrAnd`, `ok`, `err`
+  - extraction: `unwrap`, `expect`, `unwrapErr`, `expectErr`
+  - transforms: `mapOr`, `mapOrElse`, `inspect`, `inspectErr`
+  - choosing: `and`, `or`
+  - combining: `flatten`, `transpose`, and `collect` on an `Iterable<Result>`,
+    which stops at the first error
+- **db**: `SqlxError.kind` names the integrity constraint a statement broke:
+  `uniqueViolation`, `foreignKeyViolation`, `notNullViolation`, or
+  `checkViolation`, as `sqlx` names them. SQLite fills it from extended result
+  codes and PostgreSQL from SQLSTATE, so matching on it works on either
+  database, where matching on message text did not.
+- **dust_server**: `Rejection.fromSqlxError` answers a database failure: a
+  missing row is a 404, a duplicate a 409, and anything else a 500 whose error
+  goes to `ServerErrors.report` rather than to the client.
+- **dust_db_postgres**: `PgConnectOptions.maxConnections` sets the pool size.
+- **dust_flutter**: two runnable examples, `async_view_model.dart` (loading
+  from a `Result` while keeping the error's type in `AsyncFailure`, refresh,
+  retry) and `stale_actions.dart` (search-as-you-type with `runAction`, and an
+  effect for an empty result), with widget tests (#546).
 
 ## [v0.2.0] - 2026-09-13
 

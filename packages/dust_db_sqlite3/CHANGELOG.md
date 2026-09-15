@@ -6,11 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.2.1] - 2026-09-14
+## [0.3.0] - 2026-09-15
+
+### Added
+
+- `SqlxError.kind` is filled from SQLite's extended result codes:
+  `SQLITE_CONSTRAINT_UNIQUE` and `SQLITE_CONSTRAINT_PRIMARYKEY` are
+  `uniqueViolation`, and the foreign key, not null, and check codes map to
+  their kinds, including a deferred foreign key that fails at `COMMIT`.
+- The library re-exports `dust_dart`'s `Result` extensions, so code importing
+  only this package can still call `unwrapOr` and `andThen` on a query result.
 
 ### Changed
 
-- Requires `dust_dart` `^0.2.1`. No other changes.
+- Requires `dust_dart` `^0.3.0`.
 
 ## [0.2.0] - 2026-09-13
 

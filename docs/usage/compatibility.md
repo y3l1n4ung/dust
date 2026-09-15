@@ -12,13 +12,24 @@ Run `dust doctor` to see the active CLI version, each Dust runtime package found
 in `package_config.json`, the supported range, and whether the package is used
 by the workspace source.
 
-## Dust CLI 0.2.1
+## Dust CLI 0.3.0
 
 | Dust CLI | `dust_dart` | `dust_flutter` | `dust_db_sqlite3` | `dust_db_postgres` | `dust_server` |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `0.2.1` | `>=0.2.1 <0.3.0` | `>=0.2.1 <0.3.0` | `>=0.2.1 <0.3.0` | `>=0.2.1 <0.3.0` | `>=0.2.1 <0.3.0` |
+| `0.3.0` | `>=0.3.0 <0.4.0` | `>=0.3.0 <0.4.0` | `>=0.3.0 <0.4.0` | `>=0.3.0 <0.4.0` | `>=0.3.0 <0.4.0` |
 
-A patch: nothing breaks, so `^0.2.0` in a pubspec already resolves to it.
+0.3.0 is a minor bump because one thing breaks across it. `andThen`, `orElse`,
+`unwrapOr`, and `unwrapOrElse` moved from `Result` and `Option` into
+extensions, which fixes a `TypeError` on a widened value but puts the methods
+in scope only where they are imported. A file calling them needs an import of
+`package:dust_dart/fp.dart`, or of a library that exports it: `core.dart`,
+`db.dart`, `dust_dart.dart`, or `package:dust_server/server.dart`. The database
+runtimes re-export the `Result` extensions, so a file that imports only
+`dust_db_sqlite3` or `dust_db_postgres` keeps compiling. A pubspec asking for
+`^0.2.0` stops before 0.3.0, so an app takes the change when it says so.
+
+`dust_db_postgres` also opens a pool of ten connections by default where it
+opened one; set `PgConnectOptions.maxConnections` to keep the old size.
 
 ## Dust CLI 0.2.0
 

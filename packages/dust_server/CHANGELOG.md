@@ -6,11 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.2.1] - 2026-09-14
+## [0.3.0] - 2026-09-15
+
+### Added
+
+- `Rejection.fromSqlxError`: a query that found no row is a 404 carrying the
+  caller's `notFound` message, a `SqlxErrorKind.uniqueViolation` is a 409
+  carrying `conflict`, and anything else is a 500 that reports the error
+  through `ServerErrors.report` and says nothing about the database. It reads
+  `SqlxError.kind`, so it behaves the same on SQLite and PostgreSQL.
+- `example/database_errors.dart` uses it instead of matching SQLite's message
+  text.
 
 ### Changed
 
-- Requires `dust_dart` `^0.2.1`. No other changes.
+- Requires `dust_dart` `^0.3.0`.
 
 ## [0.2.0] - 2026-09-13
 

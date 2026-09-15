@@ -40,7 +40,7 @@ fn doctor_reports_too_old_dust_package() {
 #[test]
 fn doctor_reports_too_new_dust_package() {
     let workspace = make_workspace();
-    write_resolved_dust_packages(workspace.path(), &[("dust_flutter", "0.3.0")]);
+    write_resolved_dust_packages(workspace.path(), &[("dust_flutter", "0.4.0")]);
     write_dust_file(
         &workspace.path().join("lib/counter.dart"),
         &[DustImport::State],
@@ -60,7 +60,7 @@ fn doctor_reports_too_new_dust_package() {
         dust_flutter.status,
         DoctorPackageCompatibilityStatus::TooNew
     );
-    assert_eq!(dust_flutter.resolved_version.as_deref(), Some("0.3.0"));
+    assert_eq!(dust_flutter.resolved_version.as_deref(), Some("0.4.0"));
     assert_eq!(
         dust_flutter.action.as_deref(),
         Some("Upgrade the Dust CLI first, or pin the package to a supported range.")
