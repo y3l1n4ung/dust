@@ -1,7 +1,10 @@
 import 'dart:convert';
 
+import 'package:dust_dart/db.dart'
+    show SqlxCardinalityError, SqlxError, SqlxErrorKind;
 import 'package:shelf/shelf.dart';
 
+import 'error_reporting.dart';
 import 'into_response.dart';
 
 /// A typed extraction failure.
@@ -62,6 +65,41 @@ final class Rejection implements IntoResponse {
   /// A 500 rejection.
   const Rejection.internal([String message = 'Internal server error'])
       : this._(500, message);
+
+  /// The status a database failure deserves.
+  ///
+  /// - a query that found no row, where one was required, is a 404 carrying
+  ///   [notFound]
+  /// - a duplicate value, [SqlxErrorKind.uniqueViolation], is a 409 carrying
+  ///   [conflict]
+  /// - anything else is a 500 whose body says nothing about the database. The
+  ///   error itself goes to [ServerErrors.report], so it is logged rather than
+  ///   lost.
+  ///
+  /// A query that returned too many rows is a 500 too: the SQL is wrong, which
+  /// is not something the client can fix.
+  ///
+  /// ```dart
+  /// return switch (await users.findById(id)) {
+  ///   Ok(:final value) => Ok(value),
+  ///   Err(:final error) =>
+  ///     Err(Rejection.fromSqlxError(error, notFound: 'no such user')),
+  /// };
+  /// ```
+  factory Rejection.fromSqlxError(
+    SqlxError error, {
+    String notFound = 'Not found',
+    String conflict = 'Conflict',
+  }) {
+    if (error is SqlxCardinalityError && error.actual == 0) {
+      return Rejection.notFound(notFound);
+    }
+    if (error.kind == SqlxErrorKind.uniqueViolation) {
+      return Rejection.conflict(conflict);
+    }
+    ServerErrors.report(error, StackTrace.current);
+    return const Rejection.internal();
+  }
 
   /// A rejection with an explicit status code.
   const Rejection.status(int status, String message) : this._(status, message);
