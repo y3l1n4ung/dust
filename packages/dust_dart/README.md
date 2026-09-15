@@ -146,48 +146,6 @@ Result<List<int>, String> parseAll(List<String> texts) =>
     texts.map(parseCount).collect();
 ```
 
-### Build a result as the type you read it as
-
-Dart generics are covariant: a `Result<int, NotFound>` can be stored in a
-`Result<int, AppError>` variable. `andThen`, `orElse`, `unwrapOr`, and
-`unwrapOrElse` on `Result`, and `unwrapOr` and `unwrapOrElse` on `Option`, still
-check their arguments against the type the value was built with. The analyzer
-accepts the call, and it throws a `TypeError` when it runs:
-
-```dart
-Result<int, NotFound> find(int id) => id > 0 ? Ok(id) : Err(NotFound());
-Result<int, Invalid> validate(int value) =>
-    value < 100 ? Ok(value) : Err(Invalid());
-
-Result<int, AppError> update(int id) {
-  final Result<int, AppError> found = find(id);
-  return found.andThen(validate); // TypeError: expects Result<int, NotFound>
-}
-```
-
-Declare each function with the error type its caller reads, so the value is
-built as that type:
-
-```dart
-Result<int, AppError> find(int id) => id > 0 ? Ok(id) : Err(NotFound());
-Result<int, AppError> validate(int value) =>
-    value < 100 ? Ok(value) : Err(Invalid());
-
-Result<int, AppError> update(int id) => find(id).andThen(validate);
-```
-
-When a function you do not own returns the narrow type, widen it with `mapErr`
-first. `map`, `mapErr`, and `match` are safe on any value:
-
-```dart
-Result<int, AppError> update(int id) => find(id)
-    .mapErr<AppError>((error) => error)
-    .andThen((value) => validate(value).mapErr<AppError>((error) => error));
-```
-
-The same applies to `Option`: `const Option<num> count = None<int>();` makes
-`count.unwrapOr(2.5)` throw, and `None<num>()` does not.
-
 ## Documentation
 
 - [Data classes](https://github.com/y3l1n4ung/dust/blob/main/docs/usage/derive.md)

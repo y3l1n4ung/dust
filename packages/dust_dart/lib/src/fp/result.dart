@@ -15,14 +15,6 @@
 ///
 /// final count = parseCount('42').andThen(requirePositive);
 /// ```
-///
-/// Build a result as the type it is read through. Generics are covariant, so
-/// an `Ok<int, NotFound>` can sit in a `Result<int, AppError>` variable, but
-/// [andThen], [orElse], [unwrapOr], and [unwrapOrElse] still check their
-/// arguments against `NotFound` and throw a [TypeError] for an `AppError`.
-/// Declare functions with the error type their callers read, or widen first
-/// with `mapErr<AppError>((error) => error)`. [map], [mapErr], and [match] are
-/// safe on any value.
 sealed class Result<T, E> {
   /// Creates one result value.
   ///
@@ -67,67 +59,6 @@ sealed class Result<T, E> {
   ///     .mapErr((error) => 'error: $error');
   /// ```
   Result<T, F> mapErr<F>(F Function(E error) mapper);
-
-  /// Chains another result-producing operation when this result is successful.
-  ///
-  /// Use this when the next step can also fail.
-  ///
-  /// Throws a [TypeError] when this value was built with a narrower type than
-  /// the one it is read through; see [Result].
-  ///
-  /// ```dart
-  /// Result<int, String> parseCount(String text) {
-  ///   final value = int.tryParse(text);
-  ///   return value == null ? const Err('invalid') : Ok(value);
-  /// }
-  ///
-  /// Result<int, String> requirePositive(int value) {
-  ///   return value > 0 ? Ok(value) : const Err('must be positive');
-  /// }
-  ///
-  /// final parsed = parseCount('2').andThen(requirePositive);
-  /// final failed = parseCount('-1').andThen(requirePositive);
-  /// ```
-  Result<R, E> andThen<R>(Result<R, E> Function(T value) next);
-
-  /// Chains another result-producing operation when this result failed.
-  ///
-  /// Use this for fallback reads or error recovery that can still fail.
-  ///
-  /// Throws a [TypeError] when this value was built with a narrower type than
-  /// the one it is read through; see [Result].
-  ///
-  /// ```dart
-  /// Result<int, String> readPrimary() => const Err('cache miss');
-  /// Result<int, String> readFallback(String error) => const Ok(42);
-  ///
-  /// final value = readPrimary().orElse(readFallback);
-  /// ```
-  Result<T, F> orElse<F>(Result<T, F> Function(E error) next);
-
-  /// Returns the successful value, or [fallback] when this result failed.
-  ///
-  /// Throws a [TypeError] when this value was built with a narrower type than
-  /// the one it is read through; see [Result].
-  ///
-  /// ```dart
-  /// final count = const Err<int, String>('invalid').unwrapOr(0);
-  /// final existing = const Ok<int, String>(7).unwrapOr(0);
-  /// ```
-  T unwrapOr(T fallback);
-
-  /// Returns the successful value, or computes one from the error.
-  ///
-  /// Throws a [TypeError] when this value was built with a narrower type than
-  /// the one it is read through; see [Result].
-  ///
-  /// ```dart
-  /// final count = const Err<int, String>('invalid')
-  ///     .unwrapOrElse((error) => error.length);
-  /// final existing = const Ok<int, String>(7)
-  ///     .unwrapOrElse((error) => error.length);
-  /// ```
-  T unwrapOrElse(T Function(E error) fallback);
 
   /// Pattern matches this result.
   ///
@@ -176,22 +107,6 @@ final class Ok<T, E> extends Result<T, E> {
   Result<T, F> mapErr<F>(F Function(E error) mapper) {
     return Ok<T, F>(value);
   }
-
-  @override
-  Result<R, E> andThen<R>(Result<R, E> Function(T value) next) {
-    return next(value);
-  }
-
-  @override
-  Result<T, F> orElse<F>(Result<T, F> Function(E error) next) {
-    return Ok<T, F>(value);
-  }
-
-  @override
-  T unwrapOr(T fallback) => value;
-
-  @override
-  T unwrapOrElse(T Function(E error) fallback) => value;
 
   @override
   R match<R>({
@@ -248,22 +163,6 @@ final class Err<T, E> extends Result<T, E> {
   }
 
   @override
-  Result<R, E> andThen<R>(Result<R, E> Function(T value) next) {
-    return Err<R, E>(error);
-  }
-
-  @override
-  Result<T, F> orElse<F>(Result<T, F> Function(E error) next) {
-    return next(error);
-  }
-
-  @override
-  T unwrapOr(T fallback) => fallback;
-
-  @override
-  T unwrapOrElse(T Function(E error) fallback) => fallback(error);
-
-  @override
   R match<R>({
     required R Function(T value) ok,
     required R Function(E error) err,
@@ -281,4 +180,84 @@ final class Err<T, E> extends Result<T, E> {
 
   @override
   String toString() => 'Err($error)';
+}
+
+/// Chaining and extraction on [Result].
+///
+/// An extension rather than members of [Result], so the types come from the
+/// static type at the call site. As members they were checked against the
+/// type a value was built with, and an `Ok<int, NotFound>` held in a
+/// `Result<int, AppError>` threw a `TypeError` when chained with a step that
+/// fails with another `AppError`.
+extension ResultChain<T, E> on Result<T, E> {
+  /// Chains another result-producing operation when this result is successful.
+  ///
+  /// Use this when the next step can also fail.
+  ///
+  /// ```dart
+  /// Result<int, String> parseCount(String text) {
+  ///   final value = int.tryParse(text);
+  ///   return value == null ? const Err('invalid') : Ok(value);
+  /// }
+  ///
+  /// Result<int, String> requirePositive(int value) {
+  ///   return value > 0 ? Ok(value) : const Err('must be positive');
+  /// }
+  ///
+  /// final parsed = parseCount('2').andThen(requirePositive);
+  /// final failed = parseCount('-1').andThen(requirePositive);
+  /// ```
+  Result<R, E> andThen<R>(Result<R, E> Function(T value) next) {
+    return switch (this) {
+      Ok<T, E>(:final value) => next(value),
+      Err<T, E>(:final error) => Err<R, E>(error),
+    };
+  }
+
+  /// Chains another result-producing operation when this result failed.
+  ///
+  /// Use this for fallback reads or error recovery that can still fail.
+  ///
+  /// ```dart
+  /// Result<int, String> readPrimary() => const Err('cache miss');
+  /// Result<int, String> readFallback(String error) => const Ok(42);
+  ///
+  /// final value = readPrimary().orElse(readFallback);
+  /// ```
+  Result<T, F> orElse<F>(Result<T, F> Function(E error) next) {
+    return switch (this) {
+      Ok<T, E>(:final value) => Ok<T, F>(value),
+      Err<T, E>(:final error) => next(error),
+    };
+  }
+
+  /// Returns the successful value, or [fallback] when this result failed.
+  ///
+  /// ```dart
+  /// final count = const Err<int, String>('invalid').unwrapOr(0);
+  /// final existing = const Ok<int, String>(7).unwrapOr(0);
+  /// ```
+  T unwrapOr(T fallback) {
+    return switch (this) {
+      Ok<T, E>(:final value) => value,
+      Err<T, E>() => fallback,
+    };
+  }
+
+  /// Returns the successful value, or computes one from the error.
+  ///
+  /// [fallback] is not called for an [Ok].
+  ///
+  /// ```dart
+  /// final count = const Err<int, String>('invalid')
+  ///     .unwrapOrElse((error) => error.length);
+  /// final existing = const Ok<int, String>(7)
+  ///     .unwrapOrElse((error) => error.length);
+  /// ```
+  T unwrapOrElse(T Function(E error) fallback) {
+    return switch (this) {
+      Ok<T, E>(:final value) => value,
+      Err<T, E>(:final error) => fallback(error),
+    };
+  }
 }

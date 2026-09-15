@@ -1,11 +1,14 @@
 import 'package:dust_dart/fp.dart';
 import 'package:test/test.dart';
 
-// Pins what the README's "Build a result as the type you read it as" section
-// says. In 0.2.x, andThen, orElse, unwrapOr and unwrapOrElse check their
-// arguments against the type a value was built with, so reading a narrow value
-// through a wider type compiles and then throws. If that changes, update the
-// README section and these expectations together.
+// A value built with a narrow type and read through a wider one.
+//
+// Dart generics are covariant, so a `Result<int, NotFound>` can be held in a
+// `Result<int, AppError>` variable. Until 0.3.0, `andThen`, `orElse`,
+// `unwrapOr`, and `unwrapOrElse` were members, checked their arguments against
+// the type the value was built with, and threw a `TypeError` here although the
+// analyzer accepted every call. As extensions their types come from the call
+// site, so none of these may throw.
 
 sealed class AppError {}
 
@@ -13,50 +16,50 @@ final class NotFound extends AppError {}
 
 final class Invalid extends AppError {}
 
-// Crashes: each function names its own narrow error type.
-Result<int, NotFound> findNarrow(int id) => id > 0 ? Ok(id) : Err(NotFound());
-Result<int, Invalid> validateNarrow(int value) =>
+Result<int, NotFound> find(int id) => id > 0 ? Ok(id) : Err(NotFound());
+Result<int, Invalid> validate(int value) =>
     value < 100 ? Ok(value) : Err(Invalid());
 
-Result<int, AppError> updateNarrow(int id) {
-  final Result<int, AppError> found = findNarrow(id);
-  return found.andThen(validateNarrow);
+Result<int, AppError> update(int id) {
+  final Result<int, AppError> found = find(id);
+  return found.andThen(validate);
 }
 
-// Works: each function returns the error type its caller reads.
-Result<int, AppError> find(int id) => id > 0 ? Ok(id) : Err(NotFound());
-Result<int, AppError> validate(int value) =>
-    value < 100 ? Ok(value) : Err(Invalid());
-
-Result<int, AppError> update(int id) => find(id).andThen(validate);
-
-// Works: widen a narrow result before chaining.
-Result<int, AppError> updateWidened(int id) =>
-    findNarrow(id).mapErr<AppError>((error) => error).andThen(
-        (value) => validateNarrow(value).mapErr<AppError>((error) => error));
+String describe(Result<int, AppError> result) =>
+    result.match(ok: (value) => 'ok $value', err: (e) => '${e.runtimeType}');
 
 void main() {
-  test('narrow crashes',
-      () => expect(() => updateNarrow(5), throwsA(isA<TypeError>())));
-  test('declared wide works', () {
-    expect(update(5), const Ok<int, AppError>(5));
-    expect(update(-1).isErr, isTrue);
-    expect(update(500).match(ok: (_) => '', err: (e) => '${e.runtimeType}'),
-        'Invalid');
+  group('Result read through a wider type', () {
+    test('andThen accepts a step that fails with another error', () {
+      expect(describe(update(5)), 'ok 5');
+      expect(describe(update(-1)), 'NotFound');
+      expect(describe(update(500)), 'Invalid');
+    });
+
+    test('orElse accepts a recovery of the wider type', () {
+      const Result<num, String> narrow = Err<int, String>('missing');
+
+      expect(
+        narrow.orElse((_) => const Ok<num, String>(2.5)),
+        const Ok<num, String>(2.5),
+      );
+    });
+
+    test('unwrapOr and unwrapOrElse accept a fallback of the wider type', () {
+      const Result<num, String> narrow = Err<int, String>('missing');
+
+      expect(narrow.unwrapOr(2.5), 2.5);
+      expect(narrow.unwrapOrElse((_) => 2.5), 2.5);
+    });
   });
-  test('widened works', () {
-    expect(
-        updateWidened(500).match(ok: (_) => '', err: (e) => '${e.runtimeType}'),
-        'Invalid');
-    expect(
-        updateWidened(-1).match(ok: (_) => '', err: (e) => '${e.runtimeType}'),
-        'NotFound');
-    expect(updateWidened(5), const Ok<int, AppError>(5));
-  });
-  test('Option unwrapOr crash and fix', () {
-    const Option<num> narrow = None<int>();
-    expect(() => narrow.unwrapOr(2.5), throwsA(isA<TypeError>()));
-    const Option<num> wide = None<num>();
-    expect(wide.unwrapOr(2.5), 2.5);
+
+  group('Option read through a wider type', () {
+    test('unwrapOr and unwrapOrElse accept a fallback of the wider type', () {
+      const Option<num> narrow = None<int>();
+
+      expect(narrow.unwrapOr(2.5), 2.5);
+      expect(narrow.unwrapOrElse(() => 2.5), 2.5);
+      expect(const Some<int>(1).unwrapOr(0), 1);
+    });
   });
 }
