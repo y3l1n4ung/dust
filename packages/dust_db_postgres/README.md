@@ -118,9 +118,14 @@ AppDatabase.connect(
     sslMode: PgSslMode.verifyFull,
     connectTimeout: Duration(seconds: 5),
     applicationName: 'orders-api',
+    maxConnections: 20,
   ),
 );
 ```
+
+The pool opens up to 10 connections unless `maxConnections` says otherwise,
+matching `sqlx`. A transaction holds one connection until it ends. Keep the
+total across every process under the server's `max_connections`.
 
 ## Migrations
 
