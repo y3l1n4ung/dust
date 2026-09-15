@@ -36,6 +36,7 @@ SqlxError _sqliteQueryError(
     cause: cause,
     driver: Driver.sqlite3,
     operation: operation,
+    kind: _sqliteErrorKind(cause),
   );
 }
 
@@ -62,6 +63,7 @@ SqlxError _sqliteTransactionError(
     cause: cause,
     driver: Driver.sqlite3,
     operation: operation,
+    kind: _sqliteErrorKind(cause),
   );
 }
 
@@ -89,4 +91,19 @@ SqlxError _sqliteNullColumn(String column, String operation) {
     driver: Driver.sqlite3,
     operation: operation,
   );
+}
+
+/// The constraint a SQLite failure broke, read from its extended result code.
+///
+/// The codes are SQLite's `SQLITE_CONSTRAINT_*` values. A primary key counts
+/// as unique, as it does in `sqlx`: both reject a duplicate.
+SqlxErrorKind? _sqliteErrorKind(Object? cause) {
+  if (cause is! sqlite.SqliteException) return null;
+  return switch (cause.extendedResultCode) {
+    2067 || 1555 => SqlxErrorKind.uniqueViolation,
+    787 => SqlxErrorKind.foreignKeyViolation,
+    1299 => SqlxErrorKind.notNullViolation,
+    275 => SqlxErrorKind.checkViolation,
+    _ => null,
+  };
 }
