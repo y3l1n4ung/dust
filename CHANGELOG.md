@@ -6,6 +6,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Migrating
+
+- **fp**: `andThen`, `orElse`, `unwrapOr`, and `unwrapOrElse` are extensions
+  now. A file that calls them needs `import 'package:dust_dart/fp.dart';` or a
+  library that exports it (`core.dart`, `db.dart`, `dust_dart.dart`,
+  `package:dust_server/server.dart`). Files importing only `dust_db_sqlite3`
+  or `dust_db_postgres` need nothing: both re-export the `Result` extensions.
+  Every example and fixture in this repository compiled unchanged.
+- **dust_db_postgres**: the pool opens up to ten connections instead of one.
+  Pass `PgConnectOptions(maxConnections: 1)` to keep the old behavior.
+
+### Fixed
+
+- **fp**: chaining a widened value no longer throws. As class members,
+  `andThen`, `orElse`, `unwrapOr`, and `unwrapOrElse` on `Result`, and
+  `unwrapOr` and `unwrapOrElse` on `Option`, checked their arguments against
+  the type a value was built with: an `Ok<int, NotFound>` held in a
+  `Result<int, AppError>` threw a `TypeError` when chained with a step failing
+  with another `AppError`, although the analyzer accepted the call (#566).
+- **db**: a generated DAO method returning `Result<Unit, SqlxError>` uses
+  `map` rather than `andThen`, so it compiles whatever the app's library
+  imports.
+- **dust_db_postgres**: `package:postgres` defaults a pool to one connection
+  and the driver never said otherwise, so every statement from every request
+  ran in turn. The pool now opens up to ten, `sqlx`'s default.
+
+### Added
+
+- **fp**: `Result` gains the Rust operations `Option` already had:
+  - queries: `isOkAnd`, `isErrAnd`, `ok`, `err`
+  - extraction: `unwrap`, `expect`, `unwrapErr`, `expectErr`
+  - transforms: `mapOr`, `mapOrElse`, `inspect`, `inspectErr`
+  - choosing: `and`, `or`
+  - combining: `flatten`, `transpose`, and `collect` on an `Iterable<Result>`,
+    which stops at the first error
+- **db**: `SqlxError.kind` names the integrity constraint a statement broke:
+  `uniqueViolation`, `foreignKeyViolation`, `notNullViolation`, or
+  `checkViolation`, as `sqlx` names them. SQLite fills it from extended result
+  codes and PostgreSQL from SQLSTATE, so matching on it works on either
+  database, where matching on message text did not.
+- **dust_server**: `Rejection.fromSqlxError` answers a database failure: a
+  missing row is a 404, a duplicate a 409, and anything else a 500 whose error
+  goes to `ServerErrors.report` rather than to the client.
+- **dust_db_postgres**: `PgConnectOptions.maxConnections` sets the pool size.
+- **dust_flutter**: two runnable examples, `async_view_model.dart` (loading
+  from a `Result` while keeping the error's type in `AsyncFailure`, refresh,
+  retry) and `stale_actions.dart` (search-as-you-type with `runAction`, and an
+  effect for an empty result), with widget tests (#546).
+
 ## [v0.2.0] - 2026-09-13
 
 ### Added

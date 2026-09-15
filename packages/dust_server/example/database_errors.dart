@@ -1,25 +1,24 @@
 import 'dart:io';
 
-import 'package:dust_dart/db.dart';
 import 'package:dust_db_sqlite3/dust_db_sqlite3.dart';
 import 'package:dust_server/server.dart';
 
 /// Turning a database failure into the right status code.
 ///
 /// A query returns `Result<T, SqlxError>` rather than throwing, so the failure
-/// arrives as a value with a `category` on it. Mapping that category is what
-/// separates "this request was wrong" from "the database is down" — and
-/// answering 500 for both is how a duplicate email pages somebody at 3am.
+/// arrives as a value. Telling its kinds apart is what separates "this request
+/// was wrong" from "the database is down" — and answering 500 for both is how a
+/// duplicate email pages somebody at 3am.
 ///
-/// Three cases worth telling apart:
+/// `Rejection.fromSqlxError` tells three cases apart:
 ///
-/// * **A row that is not there** is `cardinality`, and a 404. `fetchOne` says
-///   so; `fetchOptional` would hand back `null` instead and let you decide.
-/// * **A constraint the database refused** is `query`, and usually a 409. The
-///   specific constraint is in `cause`, because which constraints exist is the
-///   schema's business rather than something a portable category can name.
-/// * **Everything else** is a 500, and the message goes to the log rather than
-///   to the client.
+/// * **A row that is not there** is a 404. `fetchOne` says so; `fetchOptional`
+///   would hand back `null` instead and let you decide.
+/// * **A duplicate** is a 409. The error's `kind` is
+///   `SqlxErrorKind.uniqueViolation`, which SQLite and PostgreSQL both report,
+///   so nothing matches on the driver's message text.
+/// * **Everything else** is a 500. The error goes to `ServerErrors.report`
+///   rather than to the client.
 ///
 /// ```shell
 /// dart run example/database_errors.dart
@@ -86,7 +85,8 @@ Future<Result<Map<String, Object?>, Rejection>> readUser(
 
   return switch (user) {
     Ok(:final value) => Ok(value),
-    Err(:final error) => Err(_statusFor(error, 'user $id')),
+    Err(:final error) =>
+      Err(Rejection.fromSqlxError(error, notFound: 'no such user $id')),
   };
 }
 
@@ -111,23 +111,8 @@ Future<Result<Map<String, Object?>, Rejection>> register(
 
   return switch (created) {
     Ok(:final value) => Ok(value),
-    Err(:final error) => Err(_statusFor(error, 'that email')),
-  };
-}
-
-/// One database failure as one status code.
-Rejection _statusFor(SqlxError error, String subject) {
-  // Message text belongs to the driver, so match on what it means. This check
-  // is deliberately narrow: anything it does not recognise stays a 500.
-  final duplicate = error.category == SqlxErrorCategory.query &&
-      '${error.cause}'.contains('UNIQUE constraint failed');
-
-  return switch (error.category) {
-    SqlxErrorCategory.cardinality => Rejection.notFound('no such $subject'),
-    SqlxErrorCategory.query when duplicate =>
-      Rejection.conflict('$subject is already taken'),
-    // The client cannot do anything about the rest, and should not be told
-    // which of them it was.
-    _ => const Rejection.internal(),
+    Err(:final error) => Err(
+        Rejection.fromSqlxError(error, conflict: 'that email is already taken'),
+      ),
   };
 }
