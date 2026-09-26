@@ -89,6 +89,20 @@ CounterViewModelScope(
 
 Beta APIs may still receive refinements while these features are hardened.
 
+## Examples
+
+Each runs with `flutter run example/<file>`, without `dust build`, by extending
+the runtime base a generated ViewModel extends:
+
+- [`async_view_model.dart`](example/async_view_model.dart): loading from a
+  `Result`, keeping the error's type in `AsyncFailure`, refresh that keeps data
+  on screen, and retry.
+- [`stale_actions.dart`](example/stale_actions.dart): search-as-you-type where
+  a slow answer never overwrites a newer one, and a one-off effect for an empty
+  result.
+- [`dust_flutter_example.dart`](example/dust_flutter_example.dart): the route,
+  ViewModel, and i18n annotations `dust build` reads.
+
 ## Libraries
 
 | Import | Provides |

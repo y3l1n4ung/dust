@@ -20,6 +20,15 @@ final class PostgresDriver extends _PostgresSession implements Pool {
     Map<String, String> migrations = const <String, String>{},
     PgConnectOptions? options,
   }) {
+    final maxConnections =
+        options?.maxConnections ?? PgConnectOptions.defaultMaxConnections;
+    if (maxConnections < 1) {
+      throw ArgumentError.value(
+        maxConnections,
+        'maxConnections',
+        'a pool needs at least one connection',
+      );
+    }
     final pool = pg.Pool<Object?>.withEndpoints(
       <pg.Endpoint>[_endpointFor(url)],
       settings: pg.PoolSettings(
@@ -29,6 +38,7 @@ final class PostgresDriver extends _PostgresSession implements Pool {
         queryTimeout: options?.queryTimeout,
         applicationName: options?.applicationName,
         maxConnectionAge: options?.maxConnectionAge,
+        maxConnectionCount: maxConnections,
       ),
     );
     return PostgresDriver._(pool, migrations);

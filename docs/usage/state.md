@@ -254,6 +254,21 @@ class HomeViewModel extends $HomeViewModel {
 
 The scope automatically calls `load()` through `onInit()`.
 
+When the data source returns a `Result`, as a generated DAO does, throw the
+error value itself from `loadData`:
+
+```dart
+@override
+Future<List<Order>> loadData() async {
+  final orders = await args.orders.recent();
+  return orders.unwrapOrElse((error) => throw error);
+}
+```
+
+The base class catches it into `AsyncFailure`, and `error` is still the
+`SqlxError`, so the page can tell a missing row from an outage. `unwrap()`
+would throw a `StateError` carrying only its message.
+
 | API | Behavior |
 | :--- | :--- |
 | `load()` | Loads fresh data without preserving visible data. |

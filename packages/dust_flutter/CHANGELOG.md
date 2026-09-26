@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `example/async_view_model.dart`: an async ViewModel loading from a
+  `Result`-returning repository. Throwing the `Err` value from `loadData` keeps
+  its type in `AsyncFailure.error`, so the page can offer retry for one failure
+  and not another. Refresh keeps data on screen.
+- `example/stale_actions.dart`: search-as-you-type with `runAction`, where a
+  slow answer for an older query is dropped, and an effect for an empty result.
+- Widget tests for both, and a README section listing the examples (#546).
+
 ## [0.2.0] - 2026-09-13
 
 ### Fixed

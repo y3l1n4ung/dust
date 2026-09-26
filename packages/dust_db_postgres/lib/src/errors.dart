@@ -30,6 +30,7 @@ SqlxError _postgresQueryError(
     cause: cause,
     driver: Driver.postgres,
     operation: operation,
+    kind: _postgresErrorKind(cause),
   );
 }
 
@@ -58,6 +59,7 @@ SqlxError _postgresTransactionError(
     cause: cause,
     driver: Driver.postgres,
     operation: operation,
+    kind: _postgresErrorKind(cause),
   );
 }
 
@@ -101,4 +103,20 @@ SqlxError _asPostgresError(Object error, String sql) {
     cause: error,
     operation: sql,
   );
+}
+
+/// The constraint a PostgreSQL failure broke, read from its SQLSTATE.
+///
+/// The codes are class 23, integrity constraint violation, in the PostgreSQL
+/// error code appendix. An exclusion constraint (23P01) has no `sqlx` kind and
+/// stays null.
+SqlxErrorKind? _postgresErrorKind(Object? cause) {
+  if (cause is! pg.ServerException) return null;
+  return switch (cause.code) {
+    '23505' => SqlxErrorKind.uniqueViolation,
+    '23503' => SqlxErrorKind.foreignKeyViolation,
+    '23502' => SqlxErrorKind.notNullViolation,
+    '23514' => SqlxErrorKind.checkViolation,
+    _ => null,
+  };
 }

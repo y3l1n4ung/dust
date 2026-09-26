@@ -182,6 +182,9 @@ errors also expose structured context for logging:
 - `driver`: `Driver.sqlite3` when the SQLite runtime produced the error
 - `operation`: SQL string, migration name, transaction command, or read action
 - `cause`: lower-level driver error when available
+- `kind`: the constraint a statement broke, read from SQLite's extended result
+  code: `uniqueViolation` (including a duplicate primary key),
+  `foreignKeyViolation`, `notNullViolation`, or `checkViolation`
 
 Generated DAOs pass `TypeFromRow.fromRow` mappers directly.
 

@@ -2,5 +2,5 @@
       {{ sql }},
       [{{ args }}],
     ).then(
-      (result) => result.andThen<Unit>((_) => const Ok<Unit, SqlxError>(unit)),
+      (result) => result.map<Unit>((_) => unit),
     );

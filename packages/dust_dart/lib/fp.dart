@@ -24,4 +24,7 @@ export 'src/fp/option_combine.dart';
 export 'src/fp/option_query.dart';
 export 'src/fp/option_transform.dart';
 export 'src/fp/result.dart';
+export 'src/fp/result_combine.dart';
+export 'src/fp/result_query.dart';
+export 'src/fp/result_transform.dart';
 export 'src/fp/unit.dart';

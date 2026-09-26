@@ -14,6 +14,7 @@ final class PgConnectOptions {
     this.queryTimeout,
     this.applicationName,
     this.maxConnectionAge,
+    this.maxConnections,
   });
 
   /// Whether the connection requires TLS.
@@ -40,6 +41,20 @@ final class PgConnectOptions {
   ///
   /// Null leaves connections in the pool for as long as it wants them.
   final Duration? maxConnectionAge;
+
+  /// The most connections the pool opens at once.
+  ///
+  /// Null means [defaultMaxConnections], which is `sqlx`'s default. Every
+  /// transaction holds one connection until it ends, so this is also the most
+  /// transactions that can run at the same time; the rest wait for one.
+  ///
+  /// Keep the total across every process under the server's
+  /// `max_connections`, which is 100 on a stock PostgreSQL and often lower on
+  /// a hosted one.
+  final int? maxConnections;
+
+  /// The pool size used when [maxConnections] is null.
+  static const defaultMaxConnections = 10;
 }
 
 /// How strictly a connection requires TLS.

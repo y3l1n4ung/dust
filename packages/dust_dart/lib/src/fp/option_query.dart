@@ -83,7 +83,7 @@ extension OptionQuery<T> on Option<T> {
   /// Returns the present value, or throws when absent.
   ///
   /// Throws a [StateError] for [None]. Prefer [expect] where the reason a
-  /// value must exist is worth saying, and [Option.unwrapOr] where it need
+  /// value must exist is worth saying, and [OptionUnwrap.unwrapOr] where it need
   /// not exist at all.
   ///
   /// ```dart
