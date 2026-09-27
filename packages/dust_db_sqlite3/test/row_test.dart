@@ -87,6 +87,19 @@ void main() {
     expect(row.readBool('active'), isTrue);
   });
 
+  test('reads columns without trailing nullability markers', () {
+    final database = sqlite.sqlite3.openInMemory();
+    addTearDown(database.close);
+
+    final row = Sqlite3Row(
+      database.select('SELECT 42 AS "total!", 7 AS "maybe?"').single,
+    );
+
+    expect(row.read<int>('total'), 42);
+    expect(row.readNullable<int>('maybe'), 7);
+    expect(row.read<int>('total!'), 42);
+  });
+
   group('column index', () {
     // Rows are read out of the result's own data through one name index built
     // for the whole result, rather than through the driver's row. These are

@@ -39,7 +39,9 @@ final class Sqlite3Row implements Row {
   /// Null rather than a throw, because that is what the driver's own row does
   /// and a caller cannot tell an absent column from a NULL one either way.
   Object? _column(String column) {
-    final index = _columnIndex[column];
+    final index = _columnIndex[column] ??
+        _columnIndex['$column!'] ??
+        _columnIndex['$column?'];
     if (index == null) return null;
     return _data[index];
   }

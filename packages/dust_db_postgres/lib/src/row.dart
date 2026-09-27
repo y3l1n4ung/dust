@@ -32,7 +32,9 @@ final class PostgresRow implements Row {
 
   /// Reads a column by name, or throws when the result has no such column.
   Object? _column(String column) {
-    final index = _columnIndex[column];
+    final index = _columnIndex[column] ??
+        _columnIndex['$column!'] ??
+        _columnIndex['$column?'];
     if (index == null) {
       throw _postgresDecodeError(
         'PostgreSQL result has no column `$column`.',
