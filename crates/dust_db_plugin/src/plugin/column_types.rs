@@ -100,6 +100,44 @@ pub(crate) fn postgres_types(dart_type: &str) -> Option<&'static [&'static str]>
             "TIMESTAMP WITH TIME ZONE",
             "TIMESTAMP WITHOUT TIME ZONE",
         ],
+        "List<int>" => &[
+            "INT2[]",
+            "INT4[]",
+            "INT8[]",
+            "SMALLINT[]",
+            "INTEGER[]",
+            "BIGINT[]",
+        ],
+        "List<double>" => &["FLOAT4[]", "FLOAT8[]", "REAL[]", "DOUBLE PRECISION[]"],
+        "List<num>" => &[
+            "INT2[]",
+            "INT4[]",
+            "INT8[]",
+            "FLOAT4[]",
+            "FLOAT8[]",
+            "SMALLINT[]",
+            "INTEGER[]",
+            "BIGINT[]",
+            "REAL[]",
+            "DOUBLE PRECISION[]",
+        ],
+        "List<bool>" => &["BOOL[]", "BOOLEAN[]"],
+        "List<String>" => &[
+            "TEXT[]",
+            "VARCHAR[]",
+            "CHAR[]",
+            "BPCHAR[]",
+            "NAME[]",
+            "CITEXT[]",
+            "UUID[]",
+        ],
+        "List<DateTime>" => &[
+            "TIMESTAMP[]",
+            "TIMESTAMPTZ[]",
+            "DATE[]",
+            "TIMESTAMP WITH TIME ZONE[]",
+            "TIMESTAMP WITHOUT TIME ZONE[]",
+        ],
         _ => return None,
     })
 }
@@ -192,5 +230,12 @@ mod tests {
         // Arbitrary precision with no Dart counterpart. Accepting it is the
         // quiet answer until the mapping is chosen.
         assert!(accepts(DbDriver::Postgres, "double", "NUMERIC"));
+    }
+
+    #[test]
+    fn postgres_arrays_keep_their_element_types() {
+        assert!(accepts(DbDriver::Postgres, "List<String>", "TEXT[]"));
+        assert!(accepts(DbDriver::Postgres, "List<int>", "INT8[]"));
+        assert!(!accepts(DbDriver::Postgres, "List<int>", "TEXT[]"));
     }
 }

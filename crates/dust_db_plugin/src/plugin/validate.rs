@@ -9,7 +9,6 @@ use super::{
     analysis::{
         PackageDatabase, RowColumn, duplicate_row_types, package_databases, package_row_column_map,
     },
-    model::RowClass,
     parse::{database_classes, query_specs, row_classes},
 };
 
@@ -44,6 +43,20 @@ pub(crate) fn validate_db_library(
 
     let rows = row_classes(library);
     let package_rows = package_row_column_map(analysis, &library.package_name);
+    let mut databases = package_databases(analysis, &library.package_name);
+    for database in database_classes(library) {
+        if databases
+            .iter()
+            .all(|known| known.name != database.class.name)
+        {
+            databases.push(PackageDatabase {
+                name: database.class.name.clone(),
+                driver: database.driver,
+                migrations: database.migrations,
+            });
+        }
+    }
+    databases.sort_by(|left, right| left.name.cmp(&right.name));
     let mut diagnostics = Vec::new();
     // The column checks below work in names; the typed columns are what the
     // described-column checks need.
@@ -59,13 +72,13 @@ pub(crate) fn validate_db_library(
             )
         })
         .collect::<HashMap<_, _>>();
-    rows::validate_rows(&rows, &package_column_names, &mut diagnostics);
+    rows::validate_rows(&rows, &package_column_names, &databases, &mut diagnostics);
     if options.databases {
         validate_databases(
             library,
             options,
-            &rows,
             analysis,
+            &databases,
             &package_column_names,
             &package_rows,
             &mut diagnostics,
@@ -78,8 +91,8 @@ pub(crate) fn validate_db_library(
 fn validate_databases(
     library: &DartFileIr,
     options: DbPluginOptions,
-    rows: &[RowClass<'_>],
     analysis: &WorkspaceAnalysis,
+    databases: &[PackageDatabase],
     row_columns: &HashMap<String, HashSet<String>>,
     typed_columns: &HashMap<String, Vec<RowColumn>>,
     diagnostics: &mut Vec<Diagnostic>,
@@ -112,7 +125,7 @@ fn validate_databases(
         }
     }
 
-    dao::validate_daos(library, rows, diagnostics);
+    dao::validate_daos(library, &row_classes(library), diagnostics);
     let queries = query_specs(library);
     for query in &queries {
         query::validate_query_shape(query, diagnostics);
@@ -127,11 +140,10 @@ fn validate_databases(
     // that keeps the database class, the row classes, and the queries in three
     // files is the normal layout, and validating each file against itself left
     // every one of those queries undescribed.
-    let databases = package_databases(analysis, &library.package_name);
     let Some(db) = databases.first() else {
         return;
     };
-    report_ambiguous_schema(library, &databases, diagnostics);
+    report_ambiguous_schema(library, databases, diagnostics);
     // A name that means two different row classes has no one column set to
     // check against, so those queries are described without a row check rather
     // than checked against whichever declaration happened to win.

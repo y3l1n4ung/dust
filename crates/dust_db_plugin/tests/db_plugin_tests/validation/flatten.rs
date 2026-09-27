@@ -145,16 +145,75 @@ fn validates_conflicting_sqlx_field_options() {
 }
 
 #[test]
-fn validates_unsupported_plain_row_field_type() {
+fn accepts_supported_postgres_array_row_fields() {
     let mut class = row_class();
-    class.fields = vec![field("tags", TypeIr::named("List<String>"), Vec::new())];
-    class.constructors[0].params = vec![named_param("tags", TypeIr::named("List<String>"), false)];
+    class.fields = vec![
+        field("tags", TypeIr::list_of(TypeIr::string()), Vec::new()),
+        field(
+            "scores",
+            TypeIr::list_of(TypeIr::int()).nullable(),
+            Vec::new(),
+        ),
+    ];
+    class.constructors[0].params = vec![
+        named_param("tags", TypeIr::list_of(TypeIr::string()), false),
+        named_param("scores", TypeIr::list_of(TypeIr::int()).nullable(), false),
+    ];
+    let mut database = database_class();
+    database.configs = vec![config(
+        "dust_dart::SqlxDatabase",
+        "(type: SqlxDatabaseType.postgres, migrations: './migrations')",
+    )];
+    let library = library(vec![database, class]);
+    let diagnostics = validate_in_package(&register_plugin(), &[&library], &library);
+
+    assert!(
+        !diagnostics.iter().any(|diagnostic| diagnostic
+            .message
+            .contains("unsupported SQLx row field type")),
+        "{diagnostics:?}"
+    );
+}
+
+#[test]
+fn rejects_array_row_fields_for_sqlite() {
+    let mut class = row_class();
+    class.fields = vec![field("tags", TypeIr::list_of(TypeIr::string()), Vec::new())];
+    class.constructors[0].params = vec![named_param(
+        "tags",
+        TypeIr::list_of(TypeIr::string()),
+        false,
+    )];
+    let library = library(vec![database_class(), class]);
+    let diagnostics = register_plugin().validate(&library);
+
+    assert!(
+        diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.message.contains("SQLite has no array type")),
+        "{diagnostics:?}"
+    );
+}
+
+#[test]
+fn rejects_array_elements_without_builtin_row_support() {
+    let mut class = row_class();
+    class.fields = vec![field(
+        "values",
+        TypeIr::list_of(TypeIr::named("Money")),
+        Vec::new(),
+    )];
+    class.constructors[0].params = vec![named_param(
+        "values",
+        TypeIr::list_of(TypeIr::named("Money")),
+        false,
+    )];
     let diagnostics = register_plugin().validate(&library(vec![class]));
 
     assert!(
         diagnostics.iter().any(|diagnostic| diagnostic
             .message
-            .contains("unsupported SQLx row field type")),
+            .contains("unsupported SQLx row field type `List<Money>`")),
         "{diagnostics:?}"
     );
 }

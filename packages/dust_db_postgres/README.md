@@ -152,6 +152,10 @@ reads it natively, and `dust_db_sqlite3` rewrites it to `?` at bind time.
 | Timestamps | `timestamptz`, decoded to `DateTime` | ISO-8601 text, parsed |
 | Nested transaction | a savepoint this package issues | a savepoint |
 
+Generated `FromRow` mappings read PostgreSQL array columns directly into
+`List<String>`, `List<int>`, and the other supported scalar list types. SQLite
+has no array counterpart.
+
 `ExecResult.lastInsertId` is always null here: PostgreSQL has no counterpart to
 SQLite's `last_insert_rowid()`.
 
