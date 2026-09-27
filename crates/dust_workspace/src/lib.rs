@@ -27,7 +27,8 @@ pub use output_policy::{
 };
 pub use package_config::{PackageConfig, PackageConfigKind, load_package_config};
 pub use pubspec::{
-    load_dart_sdk_lower_bound, load_flutter_assets, load_is_flutter_package, load_package_name,
+    load_dart_sdk_lower_bound, load_flutter_assets, load_is_flutter_package,
+    load_is_pub_workspace_root, load_package_name,
 };
 pub use root::detect_workspace_root;
 pub use workspace::{SourceLibrary, WorkspacePlan, discover_workspace};

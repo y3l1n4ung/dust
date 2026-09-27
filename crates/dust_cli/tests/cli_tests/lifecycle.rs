@@ -2,7 +2,9 @@ use std::{thread, time::Duration};
 
 use dust_cli::run_cli;
 
-use super::helpers::{DustImport, make_workspace, write_dust_file, write_file};
+use super::helpers::{
+    DustImport, make_pub_workspace_member, make_workspace, write_dust_file, write_file,
+};
 
 #[test]
 fn cli_clean_removes_dust_outputs_and_cache() {
@@ -64,6 +66,22 @@ fn cli_check_returns_stale_exit_code_before_build() {
     assert_eq!(run.exit_code, 2);
     assert!(run.stdout.is_empty());
     assert!(run.stderr.contains("stale"));
+}
+
+#[test]
+fn cli_build_and_check_reject_pub_workspace_root_without_libraries() {
+    let (workspace, _) = make_pub_workspace_member();
+    let root = workspace.path().to_str().unwrap();
+
+    for command in ["build", "check"] {
+        let run = run_cli([command, "--root", root]);
+
+        assert_eq!(run.exit_code, 1);
+        assert!(run.stdout.is_empty());
+        assert!(run.stderr.contains(
+            "no Dart libraries found; run Dust inside a workspace member or pass --root <member>"
+        ));
+    }
 }
 
 #[test]

@@ -44,6 +44,10 @@ When changing Dust versions, check the
 
 Run `dust --help` or `dust <command> --help` for the current options.
 
+In a pub workspace, run `dust build` and `dust check` from a member package (or
+pass `--root <member>`). Running either command at a root that declares
+`workspace:` fails instead of succeeding without checking any libraries.
+
 `dust upgrade --check` reads release metadata only. `dust upgrade --dry-run`
 downloads and verifies the selected release without replacing the installed
 binary. Package compatibility is tracked separately in the
