@@ -144,7 +144,7 @@ pub(crate) fn emit_validate(
     let result_name = method_allocator.allocate("result");
     let mut throw_allocator = NameAllocator::new(std::iter::empty::<&str>());
     let invalid_errors_name = throw_allocator.allocate("errors");
-    let fields = render_fields(class, emit_form_helpers);
+    let fields = render_fields(library, class, emit_form_helpers);
     let context = ValidateContext {
         class_name: &class.name,
         extension_name,

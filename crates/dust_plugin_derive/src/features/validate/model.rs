@@ -1,4 +1,5 @@
-use dust_ir::{AnnotationValueIr, ClassIr, ConfigApplicationIr, FieldIr};
+use dust_dart_emit::parse_string_literal;
+use dust_ir::{AnnotationValueIr, ClassIr, ConfigApplicationIr, DartFileIr, FieldIr};
 
 use crate::features::{VALIDATE_SYMBOL, eq_hash::has_trait};
 
@@ -66,7 +67,10 @@ pub(crate) fn has_validate_trait(class: &ClassIr) -> bool {
 }
 
 /// Returns parsed validation configs for fields on a class.
-pub(crate) fn field_validations(class: &ClassIr) -> Vec<FieldValidation<'_>> {
+pub(crate) fn field_validations<'a>(
+    library: &DartFileIr,
+    class: &'a ClassIr,
+) -> Vec<FieldValidation<'a>> {
     class
         .fields
         .iter()
@@ -75,7 +79,7 @@ pub(crate) fn field_validations(class: &ClassIr) -> Vec<FieldValidation<'_>> {
                 .configs
                 .iter()
                 .filter(|config| config.symbol.0 == VALIDATE_SYMBOL)
-                .filter_map(parse_validate_config)
+                .filter_map(|config| parse_validate_config_with_library(Some(library), config))
                 .collect::<Vec<_>>();
             (!annotations.is_empty()).then_some(FieldValidation { field, annotations })
         })
@@ -83,15 +87,27 @@ pub(crate) fn field_validations(class: &ClassIr) -> Vec<FieldValidation<'_>> {
 }
 
 /// Parses one `@Validate` config application.
+#[cfg(test)]
 pub(crate) fn parse_validate_config(config: &ConfigApplicationIr) -> Option<ValidateConfig> {
+    parse_validate_config_with_library(None, config)
+}
+
+/// Parses one `@Validate` config with optional library context.
+fn parse_validate_config_with_library(
+    library: Option<&DartFileIr>,
+    config: &ConfigApplicationIr,
+) -> Option<ValidateConfig> {
     if !config.positional_args.is_empty() {
         return None;
     }
-    Some(parse_structured_validate_config(config))
+    Some(parse_structured_validate_config(library, config))
 }
 
 /// Parses Validate options directly from canonical annotation values.
-fn parse_structured_validate_config(config: &ConfigApplicationIr) -> ValidateConfig {
+fn parse_structured_validate_config(
+    library: Option<&DartFileIr>,
+    config: &ConfigApplicationIr,
+) -> ValidateConfig {
     let mut parsed = ValidateConfig::default();
     for (name, value) in &config.named_args {
         match (name.as_str(), value) {
@@ -117,24 +133,39 @@ fn parse_structured_validate_config(config: &ConfigApplicationIr) -> ValidateCon
             ) if name.short == "Range" && positional_args.is_empty() => {
                 parsed.range = parse_range(named_args);
             }
-            ("contains", AnnotationValueIr::String(value)) => parsed.contains = Some(value.clone()),
-            ("doesNotContain", AnnotationValueIr::String(value)) => {
-                parsed.does_not_contain = Some(value.clone());
+            ("contains", value) => parsed.contains = resolve_string_value(library, value),
+            ("doesNotContain", value) => {
+                parsed.does_not_contain = resolve_string_value(library, value);
             }
-            ("regex", AnnotationValueIr::String(value)) => parsed.regex = Some(value.clone()),
-            ("mustMatch", AnnotationValueIr::String(value)) => {
-                parsed.must_match = Some(value.clone());
-            }
+            ("regex", value) => parsed.regex = resolve_string_value(library, value),
+            ("mustMatch", value) => parsed.must_match = resolve_string_value(library, value),
             ("nested", AnnotationValueIr::Bool(value)) => parsed.nested = *value,
             ("custom", AnnotationValueIr::Member(value)) => {
                 parsed.custom = Some(value.source.clone());
             }
             ("required", AnnotationValueIr::Bool(value)) => parsed.required = *value,
-            ("message", AnnotationValueIr::String(value)) => parsed.message = Some(value.clone()),
+            ("message", value) => parsed.message = resolve_string_value(library, value),
             _ => {}
         }
     }
     parsed
+}
+
+/// Resolves a string literal or a same-library top-level string constant.
+pub(super) fn resolve_string_value(
+    library: Option<&DartFileIr>,
+    value: &AnnotationValueIr,
+) -> Option<String> {
+    match value {
+        AnnotationValueIr::String(value) => Some(value.clone()),
+        AnnotationValueIr::Member(name) if name.prefix.is_none() => library?
+            .variables
+            .iter()
+            .find(|variable| variable.name.short == name.short)
+            .and_then(|variable| variable.initializer.as_ref())
+            .and_then(|initializer| parse_string_literal(&initializer.source)),
+        _ => None,
+    }
 }
 
 /// Parses a `Length(...)` annotation value.

@@ -132,6 +132,19 @@ final String email;
 Rules run in annotation order and all failures are returned. When one
 annotation contains multiple rules, its `message` applies to each rule.
 
+String-valued options can reference top-level `const String` values declared
+in the same library:
+
+```dart
+const notBlank = r'\S';
+const blankMessage = "can't be blank";
+
+@Validate(regex: notBlank, message: blankMessage)
+final String body;
+```
+
+Imported or prefixed constants are not resolved; use a literal for those.
+
 ## Cross-Field Validation
 
 `mustMatch` compares the annotated field with another field on the same model:

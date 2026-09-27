@@ -3,8 +3,12 @@
 use super::*;
 
 /// Builds template contexts for all validated fields on a class.
-pub(super) fn render_fields(class: &ClassIr, emit_form_helpers: bool) -> Vec<FieldContext> {
-    field_validations(class)
+pub(super) fn render_fields(
+    library: &DartFileIr,
+    class: &ClassIr,
+    emit_form_helpers: bool,
+) -> Vec<FieldContext> {
+    field_validations(library, class)
         .into_iter()
         .map(|validation| {
             let input_kind = input_kind(&validation.field.ty);

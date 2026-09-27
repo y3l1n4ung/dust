@@ -26,7 +26,7 @@ pub(crate) fn validate_validate(
     if emit_form_helpers {
         validate_public_validator_names(library, class, &mut diagnostics);
     }
-    for validation in field_validations(class) {
+    for validation in field_validations(library, class) {
         for config in &validation.annotations {
             validate_field_config(library, class, validation.field, config, &mut diagnostics);
         }
@@ -37,7 +37,7 @@ pub(crate) fn validate_validate(
             .iter()
             .filter(|config| config.symbol.0 == VALIDATE_SYMBOL)
         {
-            validate_config_shape(config, &mut diagnostics);
+            validate_config_shape(library, config, &mut diagnostics);
         }
     }
     diagnostics
@@ -50,7 +50,7 @@ fn validate_public_validator_names(
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let declaration_names = library_declaration_names(library);
-    for validation in field_validations(class) {
+    for validation in field_validations(library, class) {
         if input_kind(&validation.field.ty).is_none() {
             continue;
         }
