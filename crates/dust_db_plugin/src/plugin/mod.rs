@@ -7,6 +7,8 @@ use dust_plugin_api::{
 
 /// Package-wide DB facts collected during the workspace scan.
 mod analysis;
+/// External database inputs that participate in build caching.
+mod cache_input;
 /// SQLx column-alias overrides.
 mod column_alias;
 /// Accepted Dart/SQL type pairs per dialect.
@@ -40,6 +42,7 @@ use self::validate::validate_db_library;
 
 /// Stable name used to select the Database validating-plugin profile.
 pub const DATABASE_PLUGIN_NAME: &str = "Database";
+pub use self::cache_input::database_migration_cache_matches;
 
 /// Runtime options for the Database plugin.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

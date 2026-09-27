@@ -26,6 +26,12 @@ pub(super) fn load_library_inputs(
                         let cache_fingerprint = config
                             .cache
                             .get(config.cache_root, &library.source_path)
+                            .filter(|entry| {
+                                dust_db_plugin::database_migration_cache_matches(
+                                    config.package_root,
+                                    &entry.analysis_snapshot,
+                                )
+                            })
                             .map(|entry| CacheFingerprint {
                                 source_hash: entry.source_hash,
                                 package_config_hash: entry.package_config_hash,

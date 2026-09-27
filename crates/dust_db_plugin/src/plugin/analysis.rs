@@ -11,7 +11,10 @@
 //! the store is shared across a workspace and two packages may each declare a
 //! row class called `Order`.
 
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    path::Path,
+};
 
 use dust_ir::DartFileIr;
 use dust_plugin_api::{WorkspaceAnalysis, WorkspaceAnalysisBuilder};
@@ -20,6 +23,7 @@ use super::{
     dialect::Dialect,
     model::DbDriver,
     parse::{database_classes, effective_column_name, row_classes, sqlx_config},
+    validate::schema_hash,
 };
 
 /// Database classes declared anywhere in the package.
@@ -28,7 +32,7 @@ pub(crate) const DATABASES_KEY: &str = "dust_db_plugin.databases.v1";
 pub(crate) const ROW_COLUMNS_KEY: &str = "dust_db_plugin.row_columns.v1";
 
 /// Separates the fields packed into one analysis value.
-const UNIT: char = '\u{1f}';
+pub(super) const UNIT: char = '\u{1f}';
 /// Marks a column a row class reads directly.
 const COLUMN: &str = "c:";
 /// Marks a row class flattened into another one.
@@ -59,9 +63,17 @@ pub(crate) fn collect_db_workspace_analysis(
 ) {
     let package = library.package_name.as_str();
     for db in database_classes(library).into_iter().filter(|_| databases) {
+        let migrations = Path::new(&library.package_root).join(&db.migrations);
+        let schema = schema_hash(&migrations).unwrap_or_default();
         analysis.add_string_set_value(
             DATABASES_KEY,
-            pack([package, &db.class.name, db.driver.as_str(), &db.migrations]),
+            pack([
+                package,
+                &db.class.name,
+                db.driver.as_str(),
+                &db.migrations,
+                &schema,
+            ]),
         );
     }
     for row in row_classes(library) {

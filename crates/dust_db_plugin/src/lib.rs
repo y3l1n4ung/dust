@@ -6,6 +6,6 @@
 mod plugin;
 
 pub use plugin::{
-    DATABASE_PLUGIN_NAME, DbPlugin, database_runtime_packages, register_plugin,
-    register_row_plugin, register_validating_plugin,
+    DATABASE_PLUGIN_NAME, DbPlugin, database_migration_cache_matches, database_runtime_packages,
+    register_plugin, register_row_plugin, register_validating_plugin,
 };
