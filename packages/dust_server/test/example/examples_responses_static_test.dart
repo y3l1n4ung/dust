@@ -128,7 +128,7 @@ void main() {
       );
 
       expect(response.statusCode, 404);
-      expect(app.object(response)['error'], 'no such route');
+      expect(app.object(response)['error'], 'no route for /api/nothing');
     });
 
     test('an Accept header alone is enough to ask for JSON', () async {

@@ -53,13 +53,40 @@ final class LayerScope {
   final List<Middleware> middleware;
 
   /// Whether [path] falls inside this scope.
-  bool covers(String path) {
-    if (prefix.isEmpty) return true;
-    if (!path.startsWith(prefix)) return false;
+  bool covers(String path) => pathIsInsidePrefix(path, prefix);
+}
 
-    // `/apiary` is not inside `/api`. Only a segment boundary counts.
-    final rest = path.substring(prefix.length);
-    return rest.isEmpty || rest.startsWith('/');
+/// Whether [path] falls inside [prefix] at a segment boundary.
+@internal
+bool pathIsInsidePrefix(String path, String prefix) {
+  if (prefix.isEmpty) return true;
+  if (!path.startsWith(prefix)) return false;
+
+  // `/apiary` is not inside `/api`. Only a segment boundary counts.
+  final rest = path.substring(prefix.length);
+  return rest.isEmpty || rest.startsWith('/');
+}
+
+/// Returns every non-empty prefix introduced by [Router.nest].
+@internal
+List<String> flattenNestedPrefixes(Router root) {
+  final prefixes = <String>[];
+  _collectNestedPrefixes(root, '', prefixes, includeOwnPrefix: false);
+  return prefixes;
+}
+
+void _collectNestedPrefixes(
+  Router group,
+  String prefix,
+  List<String> into, {
+  bool includeOwnPrefix = true,
+}) {
+  final path = joinPaths(prefix, group.prefix);
+  if (includeOwnPrefix && group.prefix.isNotEmpty) {
+    into.add(normalizePrefix(path));
+  }
+  for (final child in group.internals.children) {
+    _collectNestedPrefixes(child, path, into);
   }
 }
 

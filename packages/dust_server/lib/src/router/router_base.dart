@@ -207,6 +207,8 @@ final class Router implements Service {
   /// Answers requests no route matched, instead of the default 404.
   ///
   /// Read from the outermost router, as axum does for a top-level fallback.
+  /// Unknown paths inside a [nest]ed prefix keep the default 404 instead of
+  /// reaching an outer fallback such as a single-page app.
   void fallback(Handler handler) {
     _requireOpen();
     internals.fallback = handler;

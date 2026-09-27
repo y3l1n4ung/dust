@@ -12,8 +12,9 @@ final app = Router()
 await serve(app, InternetAddress.anyIPv4, 8080);
 ```
 
-`fallback` is the right place for it. API routes win, and everything they do
-not claim is a page view.
+`fallback` is the right place for it. API routes win, and paths outside the
+nested `/api` prefix become page views. A typo such as `/api/ordres` keeps the
+router's JSON 404 instead of returning the application shell with status 200.
 
 ## What HTML mode adds
 

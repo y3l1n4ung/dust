@@ -2,14 +2,15 @@ import 'dart:io';
 
 import 'package:dust_server/server.dart';
 
-/// One fallback for everything unmatched.
+/// A fallback for unmatched paths outside nested routers.
 ///
 /// Without a fallback, an unmatched path answers a plain JSON 404. `fallback`
 /// takes it over — which matters most for a server doing two jobs at once, where
 /// the right 404 depends on who is asking:
 ///
 /// * a browser wants a page it can read;
-/// * an API client wants JSON it can parse.
+/// * an API client wants JSON it can parse, so a miss under a nested API prefix
+///   keeps the router's default JSON 404.
 ///
 /// The fallback runs after matching, so it sees the paths nothing claimed and
 /// nothing else. A 405 does not reach it: a path that exists for another method
@@ -19,7 +20,7 @@ import 'package:dust_server/server.dart';
 ///
 /// ```bash
 /// curl -s  localhost:8080/nothing                        # HTML
-/// curl -s  localhost:8080/api/nothing                    # JSON
+/// curl -s  localhost:8080/api/nothing                    # default JSON 404
 /// curl -si -X PUT localhost:8080/api/notes               # 405, not the fallback
 /// curl -s  localhost:8080/nothing -H 'accept: application/json'
 /// ```
@@ -49,13 +50,10 @@ Response home(Request request) => htmlResponse('<h1>Home</h1>');
 
 /// Everything nothing else claimed.
 ///
-/// The path decides the format, not the `Accept` header alone: a request under
-/// `/api` is from a client whatever it says it accepts, and a browser following
-/// a stale link sends `Accept: text/html` for a path that has nothing to do with
-/// HTML. Checking both, path first, gets it right more often than either alone.
+/// The `Accept` header decides the format here. Paths under the nested `/api`
+/// router do not reach this outer fallback.
 Response missing(Request request) {
-  final path = '/${request.url.path}';
-  final wantsJson = path.startsWith('/api/') ||
+  final wantsJson =
       (request.headers['accept'] ?? '').contains('application/json');
 
   if (wantsJson) {

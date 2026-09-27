@@ -20,6 +20,7 @@ Handler composeHandler(Router root) {
   sealTree(root);
 
   final matcher = RouteMatcher(flattenRoutes(root));
+  final nestedPrefixes = flattenNestedPrefixes(root);
 
   Future<Response> routing(Request request) async {
     final path = '/${request.url.path}';
@@ -34,7 +35,11 @@ Handler composeHandler(Router root) {
         handler(_prepare(request, parameters, matchedPath, mountPrefix)),
       MethodMismatch(:final allowed) =>
         methodNotAllowed(request.method, path, allowed),
-      NoMatch() => root.internals.fallback?.call(request) ?? notFound(path),
+      NoMatch() => nestedPrefixes.any(
+          (prefix) => pathIsInsidePrefix(path, prefix),
+        )
+            ? notFound(path)
+            : root.internals.fallback?.call(request) ?? notFound(path),
     };
   }
 
