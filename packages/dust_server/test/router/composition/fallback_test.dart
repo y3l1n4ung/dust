@@ -46,5 +46,27 @@ void main() {
         {'error': 'no route for /zzz'},
       );
     });
+
+    test('does not serve the outer fallback inside a nested prefix', () async {
+      final app = Router()
+        ..nest('/api', Router()..route('/notes', get(label('notes'))))
+        ..fallback(label('spa'));
+
+      final apiMiss = await app.handler(request('GET', '/api/nots'));
+
+      expect(apiMiss.statusCode, 404);
+      expect(
+        jsonDecode(await apiMiss.readAsString()),
+        {'error': 'no route for /api/nots'},
+      );
+      expect(
+        await (await app.handler(request('GET', '/orders/41'))).readAsString(),
+        'spa',
+      );
+      expect(
+        await (await app.handler(request('GET', '/apiary'))).readAsString(),
+        'spa',
+      );
+    });
   });
 }
