@@ -1,9 +1,40 @@
-use dust_driver::{BuildRequest, CleanRequest, WatchRequest, run_build, run_clean, run_watch};
+use dust_driver::{
+    BuildRequest, CheckRequest, CleanRequest, WatchRequest, run_build, run_check, run_clean,
+    run_watch,
+};
 
 use super::support::{
     DustImport, generated_output, make_pub_workspace_member, replace_file_atomically,
     wait_for_path, write_dust_file, write_file,
 };
+
+#[test]
+fn build_and_check_reject_pub_workspace_root_without_libraries() {
+    let (workspace, _) = make_pub_workspace_member();
+
+    let build = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+        db: Default::default(),
+    });
+    let check = run_check(CheckRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+        db: Default::default(),
+    });
+
+    for result in [build, check] {
+        assert!(result.has_errors());
+        assert_eq!(result.diagnostics.len(), 1);
+        assert!(
+            result.diagnostics[0]
+                .message
+                .contains("no Dart libraries found")
+        );
+    }
+}
 
 #[test]
 fn build_uses_member_cache_root_and_shared_package_config_for_pub_workspace() {

@@ -18,8 +18,17 @@ struct Pubspec {
     /// Dart environment constraints.
     #[serde(default)]
     environment: BTreeMap<String, serde_yaml::Value>,
+    /// Pub workspace members declared by the root package.
+    workspace: Option<serde_yaml::Value>,
     /// Optional Flutter-specific configuration.
     flutter: Option<FlutterPubspec>,
+}
+
+/// Returns whether `pubspec.yaml` declares a pub workspace.
+pub fn load_is_pub_workspace_root(package_root: &Path) -> Result<bool, Diagnostic> {
+    let path = package_root.join("pubspec.yaml");
+    let parsed = parse_pubspec(&path)?;
+    Ok(parsed.workspace.is_some())
 }
 
 /// Flutter-specific pubspec fields used by Dust.

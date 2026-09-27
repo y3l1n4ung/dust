@@ -69,6 +69,7 @@ impl CachedDriverContext {
             registry,
             catalog,
         } = DriverContext::load(cwd, selection)?;
+        validate_workspace_libraries(&workspace)?;
         validate_workspace_package_versions(&workspace)?;
         let tool_hash = codegen_tool_hash_for_selection(selection);
         let package_config_hash = read_workspace_config_hash(
@@ -92,6 +93,17 @@ impl CachedDriverContext {
             cache_report,
         })
     }
+}
+
+/// Rejects commands that would otherwise succeed without checking any Dart libraries.
+fn validate_workspace_libraries(workspace: &WorkspacePlan) -> Result<(), Diagnostic> {
+    if workspace.is_pub_workspace_root && workspace.libraries.is_empty() {
+        return Err(Diagnostic::error(
+            "no Dart libraries found; run Dust inside a workspace member or pass --root <member>",
+        ));
+    }
+
+    Ok(())
 }
 
 /// Loads the workspace cache and converts IO failures into diagnostics.
