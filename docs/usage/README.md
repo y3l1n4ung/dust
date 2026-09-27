@@ -43,6 +43,8 @@ When changing Dust versions, check the
 | `dust i18n check` | Validates ARB files and localization setup without writing. |
 
 Run `dust --help` or `dust <command> --help` for the current options.
+`--root` accepts equivalent relative or absolute package paths, including pub
+workspace members.
 
 In a pub workspace, run `dust build` and `dust check` from a member package (or
 pass `--root <member>`). Running either command at a root that declares

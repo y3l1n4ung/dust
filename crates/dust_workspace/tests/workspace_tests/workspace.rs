@@ -1,6 +1,6 @@
 use dust_dart_syntax::DartLanguageVersion;
 use dust_workspace::{PackageConfigKind, discover_workspace};
-use tempfile::tempdir;
+use tempfile::{tempdir, tempdir_in};
 
 use crate::support::{test_annotations, write_file};
 
@@ -83,4 +83,37 @@ fn discover_workspace_reads_dart_sdk_lower_bound() {
         plan.dart_sdk_lower_bound,
         Some(DartLanguageVersion::DART_3_8)
     );
+}
+
+#[test]
+fn discover_workspace_resolves_relative_pub_workspace_member() {
+    let cwd = std::env::current_dir().unwrap();
+    let root = tempdir_in(&cwd).unwrap();
+    let package_root = root.path().join("packages/shared");
+    write_file(
+        &root.path().join("pubspec.yaml"),
+        "name: dust_workspace\nworkspace:\n  - packages/shared\n",
+    );
+    write_file(
+        &root.path().join(".dart_tool/package_config.json"),
+        "{\"configVersion\":2}\n",
+    );
+    write_file(
+        &package_root.join("pubspec.yaml"),
+        "name: shared\nresolution: workspace\n",
+    );
+    write_file(
+        &package_root.join(".dart_tool/pub/workspace_ref.json"),
+        "{\"configVersion\":1}\n",
+    );
+    write_file(
+        &package_root.join("lib/user.dart"),
+        "import 'package:dust_dart/derive.dart';\npart 'user.g.dart';\n@ToString()\nclass User {}\n",
+    );
+    let relative_package_root = package_root.strip_prefix(&cwd).unwrap();
+
+    let plan = discover_workspace(relative_package_root, &test_annotations()).unwrap();
+
+    assert_eq!(plan.package_root, package_root);
+    assert_eq!(plan.libraries.len(), 1);
 }

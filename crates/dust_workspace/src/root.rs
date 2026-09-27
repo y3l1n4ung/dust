@@ -8,8 +8,14 @@ use dust_diagnostics::Diagnostic;
 /// - `pubspec.yaml`
 /// - `dust.yaml`
 pub fn detect_workspace_root(cwd: &Path) -> Result<PathBuf, Diagnostic> {
+    let cwd = std::path::absolute(cwd).map_err(|error| {
+        Diagnostic::error(format!(
+            "failed to resolve workspace path `{}`: {error}",
+            cwd.display()
+        ))
+    })?;
     let mut current = if cwd.is_dir() {
-        cwd.to_path_buf()
+        cwd
     } else {
         cwd.parent()
             .ok_or_else(|| {
