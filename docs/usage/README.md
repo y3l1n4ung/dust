@@ -43,6 +43,8 @@ When changing Dust versions, check the
 | `dust i18n check` | Validates ARB files and localization setup without writing. |
 
 Run `dust --help` or `dust <command> --help` for the current options.
+`--root` accepts equivalent relative or absolute package paths, including pub
+workspace members.
 
 `dust upgrade --check` reads release metadata only. `dust upgrade --dry-run`
 downloads and verifies the selected release without replacing the installed
