@@ -99,6 +99,35 @@ const Map<String, String> _$appDatabaseMigrations = <String, String>{
 }
 
 #[test]
+fn migration_change_invalidates_cached_database_output() {
+    let workspace = make_workspace();
+    write_db_workspace(workspace.path(), false);
+    let request = || BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: true,
+        jobs: None,
+        db: DbRequestOptions {
+            only_db: true,
+            offline: false,
+        },
+    };
+
+    let first = run_build(request());
+    assert!(!first.has_errors(), "{:?}", first.diagnostics);
+
+    fs::write(
+        workspace.path().join("migrations/0001_init.sql"),
+        "CREATE TABLE users (\n  id INTEGER PRIMARY KEY,\n  display_name TEXT NOT NULL,\n  bio TEXT NOT NULL DEFAULT ''\n);\nCREATE TABLE projects (id INTEGER PRIMARY KEY);\n",
+    )
+    .unwrap();
+    let second = run_build(request());
+    let output = fs::read_to_string(workspace.path().join("lib/app_database.g.dart")).unwrap();
+
+    assert!(!second.has_errors(), "{:?}", second.diagnostics);
+    assert!(output.contains("CREATE TABLE projects"), "{output}");
+}
+
+#[test]
 fn normal_build_writes_from_row_trait_without_database_output() {
     let workspace = make_workspace();
     write_row_only_workspace(workspace.path());

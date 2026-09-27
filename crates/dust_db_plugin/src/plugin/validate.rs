@@ -30,6 +30,8 @@ mod sqlx;
 /// Shared DB validation type helpers.
 mod types;
 
+pub(super) use hash::schema_hash;
+
 /// Validates DB plugin annotations and SQL query metadata for a library.
 pub(crate) fn validate_db_library(
     library: &DartFileIr,

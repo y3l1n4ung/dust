@@ -10,7 +10,7 @@ use std::{fs, path::Path};
 use crate::plugin::migrations::applied_migration_files;
 
 /// Computes a stable schema hash from migration file names and contents.
-pub(super) fn schema_hash(migrations_path: &Path) -> Result<String, String> {
+pub(in crate::plugin) fn schema_hash(migrations_path: &Path) -> Result<String, String> {
     let mut hash = StableHash::new();
     for migration in applied_migration_files(migrations_path)? {
         hash.update(migration.name.as_bytes());
