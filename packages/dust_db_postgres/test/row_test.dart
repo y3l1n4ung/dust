@@ -27,6 +27,16 @@ void main() {
     expect(row.readNullable<String>('name'), 'Ada');
   });
 
+  test('reads columns without trailing nullability markers', () {
+    final row = PostgresRow(
+      _row(<String, Object?>{'total!': 42, 'maybe?': 'value'}),
+    );
+
+    expect(row.read<int>('total'), 42);
+    expect(row.readNullable<String>('maybe'), 'value');
+    expect(row.read<int>('total!'), 42);
+  });
+
   test('a null in a required column is reported, not returned', () {
     final row = PostgresRow(_row(<String, Object?>{'name': null}));
 
