@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-28
+
 ### Added
 
 - `Rejection.fromSqlxError`: a query that found no row is a 404 carrying the
@@ -16,6 +18,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `example/database_errors.dart` uses it instead of matching SQLite's message
   text.
 
+### Fixed
+
+- Unknown paths inside a nested router keep the router's JSON 404 instead of
+  falling through to a root SPA fallback. Paths outside the nested prefix still
+  receive the fallback (#587).
 
 ## [0.2.0] - 2026-09-13
 

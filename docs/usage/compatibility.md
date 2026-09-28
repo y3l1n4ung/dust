@@ -12,6 +12,16 @@ Run `dust doctor` to see the active CLI version, each Dust runtime package found
 in `package_config.json`, the supported range, and whether the package is used
 by the workspace source.
 
+## Dust CLI 0.2.1
+
+| Dust CLI | `dust_dart` | `dust_flutter` | `dust_db_sqlite3` | `dust_db_postgres` | `dust_server` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `0.2.1` | `>=0.2.1 <0.3.0` | `>=0.2.1 <0.3.0` | `>=0.2.1 <0.3.0` | `>=0.2.1 <0.3.0` | `>=0.2.1 <0.3.0` |
+
+0.2.1 is a lockstep patch release. The CLI fixes migration-cache and pub
+workspace discovery, both database runtimes read SQLx-style marked aliases,
+and `dust_server` keeps nested API misses out of a root SPA fallback.
+
 ## Dust CLI 0.2.0
 
 | Dust CLI | `dust_dart` | `dust_flutter` | `dust_db_sqlite3` | `dust_db_postgres` | `dust_server` |

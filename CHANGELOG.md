@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [v0.2.1] - 2026-09-28
+
 ### Migrating
 
 - **fp**: `andThen`, `orElse`, `unwrapOr`, and `unwrapOrElse` are extensions
@@ -19,6 +21,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **CLI**: `dust build` and `dust check` reject a pub workspace root that
+  discovers no Dust libraries instead of reporting success without checking a
+  member package. Run from a member or pass `--root <member>` (#586).
+- **CLI**: a relative `--root`, including `.`, is resolved before pub workspace
+  discovery, so it behaves like the equivalent absolute path (#588).
+- **Database**: changing a migration invalidates cached database output and
+  dependent query analysis instead of leaving generated code stale (#585).
+- **Database**: SQLite and PostgreSQL rows read SQLx-style aliases ending in
+  `!` or `?` by their generated unmarked field name (#584).
+- **dust_server**: an unknown path inside a nested router keeps the router's
+  JSON 404 instead of falling through to a root SPA fallback (#587).
 - **fp**: chaining a widened value no longer throws. As class members,
   `andThen`, `orElse`, `unwrapOr`, and `unwrapOrElse` on `Result`, and
   `unwrapOr` and `unwrapOrElse` on `Option`, checked their arguments against
