@@ -16,6 +16,7 @@ use std::{
     path::Path,
 };
 
+use dust_dart_emit::DYNAMIC_TYPES;
 use dust_ir::DartFileIr;
 use dust_plugin_api::{WorkspaceAnalysis, WorkspaceAnalysisBuilder};
 
@@ -99,7 +100,7 @@ pub(crate) fn collect_db_workspace_analysis(
                 continue;
             }
             let column = effective_column_name(&row.config, &field.name, &config);
-            let dart_type = field.ty.name().unwrap_or_default();
+            let dart_type = DYNAMIC_TYPES.render_non_nullable(&field.ty);
             let nullable = u8::from(field.ty.is_nullable());
             fields.push(format!(
                 "{COLUMN}{column}{FIELD}{dart_type}{FIELD}{nullable}"

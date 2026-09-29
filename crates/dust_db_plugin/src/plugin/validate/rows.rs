@@ -4,7 +4,8 @@ use dust_diagnostics::{Diagnostic, SourceLabel};
 use dust_ir::{ClassIr, FieldIr, TypeIr};
 
 use crate::plugin::{
-    model::{RowClass, SqlxConfig},
+    analysis::PackageDatabase,
+    model::{DbDriver, RowClass, SqlxConfig},
     parse::{effective_column_name, sqlx_config},
 };
 
@@ -18,6 +19,7 @@ use super::types::{is_supported_scalar_type, render_type};
 pub(super) fn validate_rows(
     rows: &[RowClass<'_>],
     package_rows: &HashMap<String, HashSet<String>>,
+    databases: &[PackageDatabase],
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let row_by_name = rows
@@ -32,7 +34,14 @@ pub(super) fn validate_rows(
         .chain(package_rows.keys().map(String::as_str))
         .collect::<HashSet<_>>();
     for row in rows {
-        validate_row(row, &row_by_name, &row_names, package_rows, diagnostics);
+        validate_row(
+            row,
+            &row_by_name,
+            &row_names,
+            package_rows,
+            databases,
+            diagnostics,
+        );
     }
 }
 
@@ -42,12 +51,13 @@ fn validate_row(
     row_by_name: &HashMap<&str, &RowClass<'_>>,
     row_names: &HashSet<&str>,
     package_rows: &HashMap<String, HashSet<String>>,
+    databases: &[PackageDatabase],
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     let mut seen = HashMap::<String, &FieldIr>::new();
     for field in &row.class.fields {
         let config = sqlx_config(&field.configs);
-        validate_field_shape(row.class, field, &config, row_names, diagnostics);
+        validate_field_shape(row.class, field, &config, row_names, databases, diagnostics);
         if config.skip {
             continue;
         }
@@ -130,6 +140,7 @@ fn validate_field_shape(
     field: &FieldIr,
     config: &SqlxConfig,
     row_names: &HashSet<&str>,
+    databases: &[PackageDatabase],
     diagnostics: &mut Vec<Diagnostic>,
 ) {
     if config.skip
@@ -151,6 +162,21 @@ fn validate_field_shape(
     }
     validate_flatten_shape(field, config, row_names, diagnostics);
     validate_conflicting_options(field, config, diagnostics);
+    if !config.skip
+        && !config.flatten
+        && !config.json
+        && config.try_from_source.is_none()
+        && is_list_type(&field.ty)
+        && databases
+            .iter()
+            .any(|database| database.driver == DbDriver::Sqlite3)
+    {
+        diagnostics.push(error_on_field(
+            field,
+            "SQLite has no array type; use a child table, JSON, or `Sqlx(tryFrom: ...)`",
+        ));
+        return;
+    }
     if !config.flatten
         && !config.json
         && config.try_from_source.is_none()
@@ -216,7 +242,13 @@ fn validate_conflicting_options(
 
 /// Returns true when a type can be read directly from a SQL row.
 fn is_supported_row_type(ty: &TypeIr) -> bool {
-    is_supported_scalar_type(ty) || ty.is_nullable() && is_supported_scalar_type(ty)
+    is_supported_scalar_type(ty)
+        || is_list_type(ty) && ty.args().len() == 1 && is_supported_scalar_type(&ty.args()[0])
+}
+
+/// Returns whether a field uses Dart's generic list type.
+fn is_list_type(ty: &TypeIr) -> bool {
+    ty.is_named("List")
 }
 
 /// Reports duplicate SQL columns on a row class.

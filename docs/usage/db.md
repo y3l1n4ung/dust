@@ -301,7 +301,9 @@ depends on neither side-effect registration nor import order.
 | `tryFrom` | Decodes a database value with a `SqlxTryFrom` converter. |
 
 Directly supported field types are `String`, `int`, `double`, `num`, `bool`,
-`DateTime`, and nullable variants. Use `json` or `tryFrom` for custom values.
+`DateTime`, and nullable variants. PostgreSQL rows also support `List<T>` of
+those types, including nullable lists. SQLite has no array type; use a child
+table, `json`, or `tryFrom` there.
 
 For typed queries outside generated DAOs, write the query and call the terminal.
 Nothing is passed:
@@ -514,6 +516,7 @@ enum read through `tryFrom`, or a type this table has not learned costs nothing.
 | `bool` | `INTEGER`, `BOOLEAN`, `NUMERIC` | `BOOL` |
 | `String` | `TEXT` | `TEXT`, `VARCHAR`, `CHAR`, `UUID`, `JSON`, `JSONB` |
 | `DateTime` | `TEXT`, `DATETIME` | `TIMESTAMP`, `TIMESTAMPTZ`, `DATE` |
+| `List<T>` | not supported | the matching PostgreSQL array type |
 
 SQLite's rows are wide because it has type affinity rather than types: a column
 declared `NUMERIC` holds whatever was written to it, and it has no boolean or

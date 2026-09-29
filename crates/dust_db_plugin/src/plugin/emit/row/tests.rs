@@ -135,3 +135,15 @@ fn emits_no_constructor_from_row_failure_body() {
 }"#
     );
 }
+
+#[test]
+fn emits_typed_list_row_reads() {
+    assert_eq!(
+        render_builtin_decode(&TypeIr::list_of(TypeIr::string()), "tags"),
+        "row.read<List<String>>('tags')"
+    );
+    assert_eq!(
+        render_builtin_decode(&TypeIr::list_of(TypeIr::int()).nullable(), "ids"),
+        "row.readNullable<List<int>>('ids')"
+    );
+}

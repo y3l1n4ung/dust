@@ -122,13 +122,14 @@ fn render_row_value(
 /// Renders builtin row-read calls for directly supported Dart types.
 fn render_builtin_decode(ty: &TypeIr, column: &str) -> String {
     let nullable = ty.is_nullable();
+    let rendered = DYNAMIC_TYPES.render_non_nullable(ty);
     match ty.name() {
         Some(DART_BOOL) if nullable => format!("row.readBoolNullable('{column}')"),
         Some(DART_BOOL) => format!("row.readBool('{column}')"),
         Some(DART_DATE_TIME) if nullable => format!("row.readDateTimeNullable('{column}')"),
         Some(DART_DATE_TIME) => format!("row.readDateTime('{column}')"),
-        Some(name) if nullable => format!("row.readNullable<{name}>('{column}')"),
-        Some(name) => format!("row.read<{name}>('{column}')"),
+        Some(_) if nullable => format!("row.readNullable<{rendered}>('{column}')"),
+        Some(_) => format!("row.read<{rendered}>('{column}')"),
         None => format!("row.read<Object?>('{column}')"),
     }
 }
