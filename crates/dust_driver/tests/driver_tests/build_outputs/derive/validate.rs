@@ -98,6 +98,81 @@ fn build_writes_flutter_form_helpers_for_flutter_packages() {
     assert!(output.contains("static String? validateEmailInput(String? value)"));
 }
 
+#[test]
+fn build_resolves_validate_string_constants_from_the_same_library() {
+    let workspace = make_workspace();
+    write_dust_file(
+        &workspace.path().join("lib/comment.dart"),
+        &[DustImport::Derive],
+        "part 'comment.g.dart';\n\
+         const notBlank = r'\\S';\n\
+         const blankMessage = \"can't be blank\";\n\
+         @Derive([Validate()])\n\
+         class NewComment with _$NewComment {\n\
+           const NewComment({required this.body});\n\
+           @Validate(regex: notBlank, message: blankMessage)\n\
+           final String body;\n\
+         }\n",
+    );
+
+    let result = run_build(BuildRequest {
+        cwd: workspace.path().to_path_buf(),
+        fail_fast: false,
+        jobs: None,
+        db: Default::default(),
+    });
+    let output = fs::read_to_string(workspace.path().join("lib/comment.g.dart")).unwrap();
+
+    assert_eq!(result.diagnostics, vec![]);
+    assert_eq!(
+        output,
+        generated_output(
+            r#"part of 'comment.dart';
+
+mixin _$NewComment implements Validatable {
+  /// Validates this `NewComment`.
+  ///
+  /// Usage:
+  /// ```dart
+  /// final result = value.validate();
+  /// if (result case Invalid(:final errors)) {
+  ///   print(errors.first.message);
+  /// }
+  /// ```
+  ValidationResult validate() {
+    final self = this as NewComment;
+    final errors = <ValidationError>[];
+    _NewCommentValidation._validateBody(self.body, errors);
+    return errors.isEmpty ? const Valid() : Invalid(errors);
+  }
+
+  /// Throws [ValidationException] when this `NewComment` is invalid.
+  ///
+  /// Usage:
+  /// ```dart
+  /// value.validateOrThrow();
+  /// ```
+  void validateOrThrow() {
+    final result = validate();
+    if (result case Invalid(errors: final errors)) {
+      throw ValidationException(errors);
+    }
+  }
+}
+
+extension _NewCommentValidation on NewComment {
+  static void _validateBody(String body, List<ValidationError> errors) {
+    if (!RegExp('\\S').hasMatch(body)) {
+      errors.add(ValidationError(field: 'body', message: 'can\'t be blank'));
+    }
+  }
+
+}
+"#,
+        )
+    );
+}
+
 fn write_signup_request(root: &std::path::Path) {
     write_dust_file(
         &root.join("lib/signup.dart"),

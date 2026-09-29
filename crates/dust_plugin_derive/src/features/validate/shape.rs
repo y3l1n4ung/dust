@@ -1,10 +1,13 @@
 use std::collections::BTreeMap;
 
 use dust_diagnostics::Diagnostic;
-use dust_ir::{AnnotationNumberKindIr, AnnotationValueIr, ConfigApplicationIr};
+use dust_ir::{AnnotationNumberKindIr, AnnotationValueIr, ConfigApplicationIr, DartFileIr};
+
+use super::model::resolve_string_value;
 
 /// Validates structured `@Validate(...)` argument shapes.
 pub(super) fn validate_config_shape(
+    library: &DartFileIr,
     config: &ConfigApplicationIr,
     diagnostics: &mut Vec<Diagnostic>,
 ) {
@@ -25,10 +28,10 @@ pub(super) fn validate_config_shape(
             "length" => validate_length_record(value, diagnostics),
             "range" => validate_range_record(value, diagnostics),
             "contains" | "doesNotContain" | "regex" | "mustMatch" | "message"
-                if !matches!(value, AnnotationValueIr::String(_)) =>
+                if resolve_string_value(Some(library), value).is_none() =>
             {
                 diagnostics.push(Diagnostic::error(format!(
-                    "`@Validate({name}: ...)` expects a string literal"
+                    "`@Validate({name}: ...)` expects a string literal or same-library const String"
                 )));
             }
             "custom" if !matches!(value, AnnotationValueIr::Member(_)) => {
