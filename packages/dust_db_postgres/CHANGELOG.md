@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-28
+
 ### Migrating
 
 - The pool opens up to ten connections where it opened one. Pass
@@ -13,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Rows read SQLx-style aliases ending in `!` or `?` by their generated
+  unmarked field name while preserving exact reads of marked names (#584).
 - `package:postgres` defaults a pool to one connection, so every statement ran
   in turn and one long transaction stalled every request. The default is now
   `PgConnectOptions.defaultMaxConnections`, ten, as in `sqlx`.
