@@ -411,6 +411,29 @@ jobs:
           include-hidden-files: true
           retention-days: 1
 
+  sqlite-min-sdk:
+    name: Dart / dust_db_sqlite3 / minimum SDK
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip docs-only change
+        if: needs.changes.outputs.docs_only == 'true'
+        run: echo "Docs-only change detected; skipping SQLite minimum SDK validation."
+
+      - name: Checkout
+        if: needs.changes.outputs.docs_only != 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Dart 3.10
+        if: needs.changes.outputs.docs_only != 'true'
+        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+        with:
+          sdk: '3.10.0'
+
+      - name: Test minimum SDK consumer
+        if: needs.changes.outputs.docs_only != 'true'
+        run: bash scripts/test_sqlite_min_sdk.sh
+
   flutter-packages:
     name: Flutter / ${{ matrix.name }}
     needs: changes

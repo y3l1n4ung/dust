@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The declared minimum Dart SDK is now 3.10, matching the existing
+  `sqlite3 ^3.3.0` dependency instead of advertising an unresolvable Dart
+  3.6-3.9 combination.
+
 ## [0.2.1] - 2026-09-28
 
 ### Fixed
