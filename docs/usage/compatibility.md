@@ -12,6 +12,12 @@ Run `dust doctor` to see the active CLI version, each Dust runtime package found
 in `package_config.json`, the supported range, and whether the package is used
 by the workspace source.
 
+## Runtime SDK Floors
+
+`dust_dart`, `dust_flutter`, `dust_db_postgres`, and `dust_server` support Dart
+3.6 or newer. `dust_db_sqlite3` requires Dart 3.10 or Flutter 3.38 or newer,
+matching the minimum SDK of its `sqlite3 ^3.3.0` dependency.
+
 ## Dust CLI 0.2.1
 
 | Dust CLI | `dust_dart` | `dust_flutter` | `dust_db_sqlite3` | `dust_db_postgres` | `dust_server` |

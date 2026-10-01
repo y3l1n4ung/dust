@@ -16,6 +16,9 @@ or query builder.
 
 ## Installation
 
+This package requires Dart 3.10 or Flutter 3.38 or newer. Other Dust runtime
+packages keep their existing Dart 3.6 floor.
+
 Add the Database annotations and SQLite runtime:
 
 ```bash
